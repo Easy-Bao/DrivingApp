@@ -27,6 +27,8 @@ class ProfileCubit extends Cubit<ProfileState> {
           phone: cached.phone,
           email: cached.email,
           address: cached.address,
+          gender: cached.gender,
+          avatarPath: cached.avatarPath,
           isLoading: false,
         ),
       );
@@ -45,15 +47,21 @@ class ProfileCubit extends Cubit<ProfileState> {
           phone: profile!.phone,
           email: profile!.email,
           address: profile!.address,
+          gender: profile!.gender,
+          avatarPath: profile!.avatarPath,
           isLoading: false,
         ),
       );
     } catch (error, stackTrace) {
-      dev.log('Error syncing profile values in cubit: $error\n$stackTrace');
+      dev.log(
+        'Error syncing profile values in cubit.',
+        error: error,
+        stackTrace: stackTrace,
+      );
       emit(
         state.copyWith(
           isLoading: false,
-          errorMessage: ErrorHandler.getErrorMessage(error),
+          errorMessage: ErrorHandler.getErrorMessage(error, stackTrace),
         ),
       );
     }
@@ -64,6 +72,8 @@ class ProfileCubit extends Cubit<ProfileState> {
     required String phone,
     required String email,
     required String address,
+    required String gender,
+    required String avatarPath,
   }) async {
     if (isClosed) return false;
     emit(state.copyWith(isSaving: true, clearError: true));
@@ -73,6 +83,8 @@ class ProfileCubit extends Cubit<ProfileState> {
       phone: phone,
       email: email,
       address: address,
+      gender: gender,
+      avatarPath: avatarPath,
     );
     if (isClosed) return false;
 
@@ -93,6 +105,8 @@ class ProfileCubit extends Cubit<ProfileState> {
             phone: profile.phone,
             email: profile.email,
             address: profile.address,
+            gender: gender,
+            avatarPath: avatarPath,
             isSaving: false,
           ),
         );

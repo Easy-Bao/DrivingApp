@@ -26,6 +26,8 @@ class PassengerProfileRepository implements IPassengerProfileRepository {
       phone: _preferences.getString('passenger_phone') ?? '',
       email: _preferences.getString('passenger_email') ?? '',
       address: _preferences.getString('passenger_address') ?? '',
+      gender: _preferences.getString('passenger_gender') ?? '',
+      avatarPath: _preferences.getString('passenger_avatar_path') ?? '',
     );
   }
 
@@ -45,6 +47,8 @@ class PassengerProfileRepository implements IPassengerProfileRepository {
         phone: remote.phone.isEmpty ? cached.phone : remote.phone,
         email: remote.email.isEmpty ? cached.email : remote.email,
         address: remote.address.isEmpty ? cached.address : remote.address,
+        gender: remote.gender.isEmpty ? cached.gender : remote.gender,
+        avatarPath: cached.avatarPath,
         preferredRideType: remote.preferredRideType,
       );
       await _cache(profile);
@@ -60,6 +64,8 @@ class PassengerProfileRepository implements IPassengerProfileRepository {
     required String phone,
     required String email,
     required String address,
+    required String gender,
+    required String avatarPath,
   }) async {
     final normalizedName = name.trim();
     final normalizedPhone = phone.trim();
@@ -79,6 +85,7 @@ class PassengerProfileRepository implements IPassengerProfileRepository {
           'phone': normalizedPhone,
           'email': normalizedEmail,
           'address': address.trim(),
+          'gender': gender.trim(),
         },
       );
       final remote = ProfileModel.fromJson(response);
@@ -90,6 +97,8 @@ class PassengerProfileRepository implements IPassengerProfileRepository {
         phone: remote.phone.isEmpty ? normalizedPhone : remote.phone,
         email: remote.email.isEmpty ? normalizedEmail : remote.email,
         address: remote.address.isEmpty ? address.trim() : remote.address,
+        gender: remote.gender.isEmpty ? gender.trim() : remote.gender,
+        avatarPath: avatarPath.trim(),
         preferredRideType: remote.preferredRideType,
       );
       await _cache(profile);
@@ -113,6 +122,8 @@ class PassengerProfileRepository implements IPassengerProfileRepository {
       _preferences.setString('passenger_phone', profile.phone),
       _preferences.setString('passenger_email', profile.email),
       _preferences.setString('passenger_address', profile.address),
+      _preferences.setString('passenger_gender', profile.gender),
+      _preferences.setString('passenger_avatar_path', profile.avatarPath),
     ]);
   }
 }

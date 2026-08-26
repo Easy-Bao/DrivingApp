@@ -35,6 +35,8 @@ void main() {
         'phoneNumber': '+63 900',
         'emailAddress': 'passenger@example.com',
         'homeAddress': 'Home',
+        'gender': 'Female',
+        'avatar_path': '/tmp/passenger.png',
         'preferredRideType': 'solo',
         'rating': double.nan,
         'averageRating': 5,
@@ -46,6 +48,8 @@ void main() {
     expect(profile.phone, '+63 900');
     expect(profile.email, 'passenger@example.com');
     expect(profile.address, 'Home');
+    expect(profile.gender, 'Female');
+    expect(profile.avatarPath, '/tmp/passenger.png');
     expect(profile.preferredRideType, 'solo');
     expect(profile.rating, 5);
     expect(profile.isOnline, isFalse);

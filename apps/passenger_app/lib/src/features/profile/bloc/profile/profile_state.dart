@@ -5,6 +5,8 @@ class ProfileState extends Equatable {
   final String phone;
   final String email;
   final String address;
+  final String gender;
+  final String avatarPath;
   final bool isLoading;
   final bool isSaving;
   final String? errorMessage;
@@ -14,6 +16,8 @@ class ProfileState extends Equatable {
     this.phone = '',
     this.email = '',
     this.address = '',
+    this.gender = '',
+    this.avatarPath = '',
     this.isLoading = false,
     this.isSaving = false,
     this.errorMessage,
@@ -24,6 +28,8 @@ class ProfileState extends Equatable {
     String? phone,
     String? email,
     String? address,
+    String? gender,
+    String? avatarPath,
     bool? isLoading,
     bool? isSaving,
     String? errorMessage,
@@ -34,6 +40,8 @@ class ProfileState extends Equatable {
       phone: phone ?? this.phone,
       email: email ?? this.email,
       address: address ?? this.address,
+      gender: gender ?? this.gender,
+      avatarPath: avatarPath ?? this.avatarPath,
       isLoading: isLoading ?? this.isLoading,
       isSaving: isSaving ?? this.isSaving,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
@@ -46,6 +54,8 @@ class ProfileState extends Equatable {
     phone,
     email,
     address,
+    gender,
+    avatarPath,
     isLoading,
     isSaving,
     errorMessage,

@@ -72,6 +72,8 @@
 	<string>EasyRide uses your location to track an active ride in the background.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>EasyRide uses your location for ride booking, pickup, and navigation.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>EasyRide uses your photo library to set a profile photo.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>

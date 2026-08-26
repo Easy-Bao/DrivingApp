@@ -11,5 +11,7 @@ abstract class IPassengerProfileRepository {
     required String phone,
     required String email,
     required String address,
+    required String gender,
+    required String avatarPath,
   });
 }

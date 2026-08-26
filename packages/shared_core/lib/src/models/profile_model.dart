@@ -9,6 +9,8 @@ class ProfileModel {
     this.phone = '',
     this.email = '',
     this.address = '',
+    this.gender = '',
+    this.avatarPath = '',
     this.preferredRideType = '',
     this.vehicleType = '',
     this.plateNumber = '',
@@ -23,6 +25,8 @@ class ProfileModel {
   final String phone;
   final String email;
   final String address;
+  final String gender;
+  final String avatarPath;
   final String preferredRideType;
   final String vehicleType;
   final String plateNumber;
@@ -57,6 +61,9 @@ class ProfileModel {
             'homeAddress',
           ]) ??
           '',
+      gender: _readString(payload, const ['gender']) ?? '',
+      avatarPath:
+          _readString(payload, const ['avatar_path', 'avatarPath']) ?? '',
       preferredRideType:
           _readString(payload, const [
             'preferred_ride_type',

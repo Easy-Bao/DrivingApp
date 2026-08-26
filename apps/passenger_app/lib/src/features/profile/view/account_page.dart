@@ -5,253 +5,204 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
-import 'package:passenger_app/src/features/auth/auth_routes.dart';
-import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/profile/bloc/profile/profile_cubit.dart';
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
+import 'package:passenger_app/src/features/profile/view/widgets/profile_avatar_widget.dart';
 import 'package:passenger_app/src/features/settings/settings_routes.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-class AccountPage extends StatefulWidget {
-  const AccountPage({super.key});
+class AccountPage extends StatelessWidget {
+  final VoidCallback? onProfileTap;
 
-  @override
-  State<AccountPage> createState() => _AccountPageState();
-}
-
-class _AccountPageState extends State<AccountPage> {
-  bool _isLoggingOut = false;
+  const AccountPage({super.key, this.onProfileTap});
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<SessionBloc, SessionState>(
-      listenWhen: (_, current) =>
-          current is GuestSession || current is SessionFailure,
-      listener: _handleSessionState,
-      child: BlocBuilder<ProfileCubit, ProfileState>(
-        builder: (context, state) {
-          final initials = _getInitials(state.name);
-
-          return Scaffold(
-            backgroundColor: AppTheme.surface,
-            body: SafeArea(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final compact = constraints.maxHeight < 650;
-                  return Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      20,
-                      compact ? 4 : 10,
-                      20,
-                      MediaQuery.paddingOf(context).bottom + 76,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const Text(
-                          'Account',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w900,
-                            color: AppTheme.primaryColor,
+    return BlocBuilder<ProfileCubit, ProfileState>(
+      builder: (context, state) {
+        return Scaffold(
+          backgroundColor: AppTheme.surface,
+          body: SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final horizontalPadding = constraints.maxWidth < 360
+                    ? 20.0
+                    : 24.0;
+                return SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    20,
+                    horizontalPadding,
+                    MediaQuery.paddingOf(context).bottom + 98,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        'Account',
+                        style: TextStyle(
+                          fontSize: 27,
+                          height: 1.1,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.8,
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+                      const SizedBox(height: 26),
+                      _buildProfileSummary(context, state),
+                      const SizedBox(height: 38),
+                      _buildSectionTitle('Places and Safety'),
+                      const SizedBox(height: 12),
+                      _buildMenuGroup([
+                        _AccountMenuItem(
+                          title: 'Saved Places',
+                          subtitle: 'Home, work, and favorite destinations',
+                          onTap: () => context.pushNamed(ProfileRoutes.help),
+                        ),
+                        _AccountMenuItem(
+                          title: 'Safety Center',
+                          subtitle: 'Ride safety tools and guidance',
+                          onTap: () => CustomToast.show(
+                            context,
+                            'Safety Center is coming soon.',
                           ),
                         ),
-                        SizedBox(height: compact ? 12 : 18),
-                        _buildProfileSummary(context, state, initials),
-                        SizedBox(height: compact ? 16 : 22),
-                        _buildSectionTitle('Places and Safety'),
-                        const SizedBox(height: 7),
-                        _buildMenuGroup([
-                          _AccountMenuItem(
-                            icon: LucideIcons.map_pin,
-                            title: 'Saved Places',
-                            subtitle: 'Home, work, and favorite destinations',
-                            onTap: () => context.pushNamed(ProfileRoutes.help),
-                          ),
-                          _AccountMenuItem(
-                            icon: LucideIcons.shield,
-                            title: 'Safety Center',
-                            subtitle: 'Ride safety tools and guidance',
-                            onTap: () => CustomToast.show(
-                              context,
-                              'Safety Center is coming soon.',
-                            ),
-                          ),
-                        ], compact: compact),
-                        SizedBox(height: compact ? 14 : 20),
-                        _buildSectionTitle('Support'),
-                        const SizedBox(height: 7),
-                        _buildMenuGroup([
-                          _AccountMenuItem(
-                            icon: LucideIcons.message_circle_question_mark,
-                            title: 'Help Center',
-                            subtitle: 'Get help with rides and payments',
-                            onTap: () =>
-                                context.pushNamed(ProfileRoutes.helpCenter),
-                          ),
-                          _AccountMenuItem(
-                            icon: LucideIcons.settings,
-                            title: 'Settings',
-                            subtitle: 'Notifications and app preferences',
-                            onTap: () =>
-                                context.pushNamed(SettingsRoutes.settings),
-                          ),
-                        ], compact: compact),
-                        const Spacer(),
-                        OutlinedButton.icon(
-                          onPressed: _isLoggingOut
-                              ? null
-                              : () => _handleLogout(context),
-                          icon: _isLoggingOut
-                              ? const SizedBox(
-                                  width: 17,
-                                  height: 17,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppTheme.cancel,
-                                  ),
-                                )
-                              : const Icon(LucideIcons.log_out, size: 17),
-                          label: Text(
-                            _isLoggingOut ? 'Logging Out…' : 'Log Out',
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppTheme.cancel,
-                            side: BorderSide(
-                              color: AppTheme.cancel.withValues(alpha: 0.24),
-                            ),
-                            backgroundColor: AppTheme.cancel.withValues(
-                              alpha: 0.05,
-                            ),
-                            shape: const StadiumBorder(),
-                          ),
+                      ]),
+                      const SizedBox(height: 32),
+                      _buildSectionTitle('Support'),
+                      const SizedBox(height: 12),
+                      _buildMenuGroup([
+                        _AccountMenuItem(
+                          title: 'Help Center',
+                          subtitle: 'Get help with rides and payments',
+                          onTap: () =>
+                              context.pushNamed(ProfileRoutes.helpCenter),
                         ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+                        _AccountMenuItem(
+                          title: 'Settings',
+                          subtitle: 'Notifications and app preferences',
+                          onTap: () =>
+                              context.pushNamed(SettingsRoutes.settings),
+                        ),
+                      ]),
+                    ],
+                  ),
+                );
+              },
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildProfileSummary(
-    BuildContext context,
-    ProfileState state,
-    String initials,
-  ) {
-    return Row(
-      children: [
-        Container(
-          width: 52,
-          height: 52,
-          decoration: const BoxDecoration(
-            color: AppTheme.secondaryColor,
-            shape: BoxShape.circle,
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            initials,
-            style: const TextStyle(
-              color: AppTheme.primaryColor,
-              fontSize: 19,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildProfileSummary(BuildContext context, ProfileState state) {
+    final displayName = state.name.isEmpty ? 'Passenger' : state.name;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: const ValueKey<String>('passenger-profile-summary'),
+        onTap: () => _openProfileInfo(context),
+        borderRadius: BorderRadius.circular(24),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
             children: [
-              Text(
-                state.name.isNotEmpty ? state.name : 'Passenger',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.primaryColor,
+              ProfileAvatarWidget(
+                initials: _getInitials(displayName),
+                imagePath: state.avatarPath,
+                size: 76,
+              ),
+              const SizedBox(width: 18),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      displayName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        height: 1.15,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.35,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    Text(
+                      state.phone.isEmpty
+                          ? 'Add your mobile number'
+                          : state.phone,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.tertiaryColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                state.phone.isNotEmpty ? state.phone : 'No Phone Number',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.tertiaryColor,
-                  fontWeight: FontWeight.w600,
-                ),
+              const SizedBox(width: 10),
+              Icon(
+                LucideIcons.chevron_right,
+                color: AppTheme.primaryColor.withValues(alpha: 0.38),
+                size: 24,
               ),
             ],
           ),
         ),
-        IconButton(
-          tooltip: 'Edit Profile',
-          icon: const Icon(
-            LucideIcons.pencil,
-            color: AppTheme.primaryColor,
-            size: 18,
-          ),
-          onPressed: () async {
-            await context.pushNamed(ProfileRoutes.profileInfo);
-            if (!context.mounted) return;
-            unawaited(BlocProvider.of<ProfileCubit>(context).loadProfile());
-          },
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _buildMenuGroup(
-    List<_AccountMenuItem> items, {
-    required bool compact,
-  }) {
+  Future<void> _pushProfileInfo(BuildContext context) async {
+    await context.pushNamed(ProfileRoutes.profileInfo);
+    if (!context.mounted) return;
+    unawaited(BlocProvider.of<ProfileCubit>(context).loadProfile());
+  }
+
+  void _openProfileInfo(BuildContext context) {
+    final onProfileTap = this.onProfileTap;
+    if (onProfileTap != null) {
+      onProfileTap();
+      return;
+    }
+    unawaited(_pushProfileInfo(context));
+  }
+
+  Widget _buildMenuGroup(List<_AccountMenuItem> items) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         for (var index = 0; index < items.length; index++) ...[
-          _buildMenuTile(items[index], compact: compact),
-          if (index != items.length - 1) const SizedBox(height: 8),
+          _buildMenuTile(items[index]),
+          if (index != items.length - 1)
+            Divider(
+              height: 1,
+              indent: 2,
+              endIndent: 2,
+              color: AppTheme.borderSide.withValues(alpha: 0.65),
+            ),
         ],
       ],
     );
   }
 
-  void _handleSessionState(BuildContext context, SessionState state) {
-    switch (state) {
-      case GuestSession():
-        context.goNamed(AuthRoutes.signin);
-      case SessionFailure():
-        if (_isLoggingOut) {
-          setState(() => _isLoggingOut = false);
-          CustomToast.show(
-            context,
-            'Unable to log out. Please try again.',
-            isError: true,
-          );
-        }
-      case SessionLoading() || AuthenticatedSession():
-        break;
-    }
-  }
-
-  Widget _buildMenuTile(_AccountMenuItem item, {required bool compact}) {
+  Widget _buildMenuTile(_AccountMenuItem item) {
     return InkWell(
+      key: ValueKey<String>('passenger-account-item-${item.title}'),
       onTap: item.onTap,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(16),
       child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: compact ? 8 : 10,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 17),
         child: Row(
           children: [
-            Icon(item.icon, color: AppTheme.primaryColor, size: 17),
-            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -259,30 +210,32 @@ class _AccountPageState extends State<AccountPage> {
                   Text(
                     item.title,
                     style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      height: 1.2,
+                      fontWeight: FontWeight.w800,
                       color: AppTheme.primaryColor,
                     ),
                   ),
-                  if (!compact) ...[
-                    const SizedBox(height: 1),
-                    Text(
-                      item.subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: AppTheme.tertiaryColor,
-                      ),
+                  const SizedBox(height: 5),
+                  Text(
+                    item.subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      height: 1.2,
+                      color: AppTheme.tertiaryColor,
+                      fontWeight: FontWeight.w500,
                     ),
-                  ],
+                  ),
                 ],
               ),
             ),
+            const SizedBox(width: 14),
             Icon(
               LucideIcons.chevron_right,
-              color: AppTheme.primaryColor.withValues(alpha: 0.25),
-              size: 15,
+              color: AppTheme.primaryColor.withValues(alpha: 0.32),
+              size: 23,
             ),
           ],
         ),
@@ -291,44 +244,35 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w900,
-          color: AppTheme.primaryColor.withValues(alpha: 0.4),
-          letterSpacing: 1.0,
-        ),
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 13,
+        height: 1.2,
+        fontWeight: FontWeight.w900,
+        color: AppTheme.primaryColor.withValues(alpha: 0.42),
+        letterSpacing: 0.7,
       ),
     );
   }
 
   String _getInitials(String name) {
-    if (name.isEmpty) return 'U';
-    final parts = name.trim().split(' ');
+    final trimmedName = name.trim();
+    if (trimmedName.isEmpty) return 'P';
+    final parts = trimmedName.split(RegExp(r'\s+'));
     if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[parts.length - 1][0]}'.toUpperCase();
+      return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
     }
-    return parts[0][0].toUpperCase();
-  }
-
-  void _handleLogout(BuildContext context) {
-    if (_isLoggingOut) return;
-    setState(() => _isLoggingOut = true);
-    BlocProvider.of<SessionBloc>(context).add(const SessionLogoutRequested());
+    return parts.first[0].toUpperCase();
   }
 }
 
 class _AccountMenuItem {
-  final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
 
   const _AccountMenuItem({
-    required this.icon,
     required this.title,
     required this.subtitle,
     required this.onTap,

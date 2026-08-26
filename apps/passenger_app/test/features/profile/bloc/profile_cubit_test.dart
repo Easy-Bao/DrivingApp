@@ -10,12 +10,14 @@ class _FakeProfileRepository implements IPassengerProfileRepository {
     phone: '+63 900 000 0000',
     email: 'cached@example.com',
     address: 'Cached address',
+    gender: 'Prefer not to say',
   );
   ProfileModel remote = const ProfileModel(
     name: 'Remote Passenger',
     phone: '+63 911 111 1111',
     email: 'remote@example.com',
     address: 'Remote address',
+    gender: 'Female',
   );
 
   @override
@@ -33,12 +35,16 @@ class _FakeProfileRepository implements IPassengerProfileRepository {
     required String phone,
     required String email,
     required String address,
+    required String gender,
+    required String avatarPath,
   }) async {
     cached = ProfileModel(
       name: name,
       phone: phone,
       email: email,
       address: address,
+      gender: gender,
+      avatarPath: avatarPath,
     );
     return Right(cached);
   }
@@ -57,11 +63,14 @@ void main() {
       phone: '+63 922 222 2222',
       email: 'updated@example.com',
       address: 'Updated address',
+      gender: 'Male',
+      avatarPath: '',
     );
 
     expect(saved, isTrue);
     expect(cubit.state.name, 'Updated Passenger');
     expect(cubit.state.address, 'Updated address');
+    expect(cubit.state.gender, 'Male');
     expect(cubit.state.isSaving, isFalse);
     await cubit.close();
   });

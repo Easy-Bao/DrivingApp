@@ -3,23 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
+import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/profile/bloc/profile/profile_cubit.dart';
 import 'package:passenger_app/src/features/profile/view/account_page.dart';
+import 'package:passenger_app/src/features/profile/view/widgets/profile_avatar_widget.dart';
 
 class MockProfileCubit extends MockCubit<ProfileState>
     implements ProfileCubit {}
 
-class MockSessionBloc extends MockBloc<SessionEvent, SessionState>
-    implements SessionBloc {}
-
 void main() {
   late MockProfileCubit profileCubit;
-  late MockSessionBloc sessionBloc;
 
   setUp(() {
     profileCubit = MockProfileCubit();
-    sessionBloc = MockSessionBloc();
     when(() => profileCubit.state).thenReturn(
       const ProfileState(
         name: 'Test Passenger',
@@ -27,29 +23,27 @@ void main() {
         email: 'passenger@example.com',
       ),
     );
-    when(
-      () => sessionBloc.state,
-    ).thenReturn(const AuthenticatedSession(passengerId: 'passenger-1'));
   });
 
-  testWidgets('requests app-wide session logout from the account page', (
+  testWidgets('opens profile info from both the name and avatar', (
     tester,
   ) async {
+    var profileTapCount = 0;
     await tester.pumpWidget(
-      MultiBlocProvider(
-        providers: [
-          BlocProvider<ProfileCubit>.value(value: profileCubit),
-          BlocProvider<SessionBloc>.value(value: sessionBloc),
-        ],
-        child: const MaterialApp(home: AccountPage()),
+      MaterialApp(
+        theme: AppTheme.themeData,
+        home: BlocProvider<ProfileCubit>.value(
+          value: profileCubit,
+          child: AccountPage(onProfileTap: () => profileTapCount++),
+        ),
       ),
     );
 
-    await tester.ensureVisible(find.text('Log Out'));
-    await tester.tap(find.text('Log Out'));
-    await tester.pump();
+    await tester.tap(find.text('Test Passenger'));
+    await tester.tap(find.byType(ProfileAvatarWidget));
 
-    verify(() => sessionBloc.add(const SessionLogoutRequested())).called(1);
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(profileTapCount, 2);
+    expect(find.byIcon(Icons.edit), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 }
