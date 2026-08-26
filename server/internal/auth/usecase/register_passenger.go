@@ -21,10 +21,11 @@ type RegisterInput struct {
 type RegisterService struct {
 	repository domain.UserRepository
 	tokens     domain.TokenIssuer
+	sessions   domain.RefreshSessionStore
 }
 
-func NewRegisterService(repository domain.UserRepository, tokens domain.TokenIssuer) *RegisterService {
-	return &RegisterService{repository: repository, tokens: tokens}
+func NewRegisterService(repository domain.UserRepository, tokens domain.TokenIssuer, sessions domain.RefreshSessionStore) *RegisterService {
+	return &RegisterService{repository: repository, tokens: tokens, sessions: sessions}
 }
 
 func (service *RegisterService) Passenger(ctx context.Context, input RegisterInput) (domain.User, string, error) {
@@ -35,8 +36,8 @@ func (service *RegisterService) Driver(ctx context.Context, input RegisterInput)
 	return service.register(ctx, input, domain.Driver)
 }
 
-func (service *RegisterService) IssueRefreshToken(account domain.User) (string, error) {
-	return issueRefreshToken(service.tokens, intSubject(account.ID), account.Role)
+func (service *RegisterService) IssueRefreshToken(ctx context.Context, account domain.User) (string, error) {
+	return issueRefreshToken(ctx, service.sessions, intSubject(account.ID), account.Role)
 }
 
 func (service *RegisterService) PreparePassenger(ctx context.Context, input RegisterInput) (domain.PendingRegistration, error) {

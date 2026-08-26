@@ -78,3 +78,32 @@ func TestPassengerProfilesCarryProfileAttributes(t *testing.T) {
 		}
 	}
 }
+
+func TestRefreshSessionsCarryRotatableSessionFields(t *testing.T) {
+	for _, column := range []string{
+		"user_id",
+		"token_hash",
+		"expires_at",
+		"created_at",
+		"last_used_at",
+		"revoked_at",
+	} {
+		if _, exists := entmigrate.RefreshSessionsTable.Column(column); !exists {
+			t.Fatalf("refresh_sessions.%s is missing from the generated schema", column)
+		}
+	}
+	wantedIndexes := map[string]bool{
+		"refreshsession_user_id_expires_at":    false,
+		"refreshsession_expires_at_revoked_at": false,
+	}
+	for _, index := range entmigrate.RefreshSessionsTable.Indexes {
+		if _, exists := wantedIndexes[index.Name]; exists {
+			wantedIndexes[index.Name] = true
+		}
+	}
+	for name, exists := range wantedIndexes {
+		if !exists {
+			t.Fatalf("refresh session index %q is missing", name)
+		}
+	}
+}

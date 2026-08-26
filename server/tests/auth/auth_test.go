@@ -48,7 +48,7 @@ func (issuer) Issue(subject string) (string, error) { return "token:" + subject,
 
 func TestPassengerAndDriverRegistrationUseCases(t *testing.T) {
 	repository := &repository{users: map[string]domain.User{}}
-	service := usecase.NewRegisterService(repository, issuer{})
+	service := usecase.NewRegisterService(repository, issuer{}, newTestRefreshSessionStore())
 	passenger, passengerToken, err := service.Passenger(context.Background(), usecase.RegisterInput{Email: "passenger@example.test", Phone: "+639171234501", Name: "Passenger", Password: "secret-8"})
 	if err != nil || passenger.Role != domain.Passenger || passengerToken != "token:1" {
 		t.Fatalf("passenger registration = %#v, %q, %v", passenger, passengerToken, err)
@@ -61,16 +61,17 @@ func TestPassengerAndDriverRegistrationUseCases(t *testing.T) {
 
 func TestAuthenticationRejectsWrongPassword(t *testing.T) {
 	repository := &repository{users: map[string]domain.User{}}
-	register := usecase.NewRegisterService(repository, issuer{})
+	sessions := newTestRefreshSessionStore()
+	register := usecase.NewRegisterService(repository, issuer{}, sessions)
 	_, _, _ = register.Passenger(context.Background(), usecase.RegisterInput{Email: "user@example.test", Phone: "+639171234503", Name: "User", Password: "secret-8"})
-	authenticate := usecase.NewAuthenticateService(repository, issuer{})
+	authenticate := usecase.NewAuthenticateService(repository, issuer{}, sessions)
 	if _, _, err := authenticate.Execute(context.Background(), "user@example.test", "wrong"); err != domain.ErrInvalidCredentials {
 		t.Fatalf("expected invalid credentials, got %v", err)
 	}
 }
 
 func TestRegistrationRejectsIncompleteRoleContracts(t *testing.T) {
-	service := usecase.NewRegisterService(&repository{users: map[string]domain.User{}}, issuer{})
+	service := usecase.NewRegisterService(&repository{users: map[string]domain.User{}}, issuer{}, newTestRefreshSessionStore())
 
 	if _, _, err := service.Passenger(context.Background(), usecase.RegisterInput{
 		Email: "passenger@example.test", Name: "Passenger", Password: "secret-8",
@@ -93,7 +94,7 @@ func TestAuthenticationNormalizesEmailBeforeLookup(t *testing.T) {
 			PasswordHash: usecase.HashPassword("secret-8"),
 		},
 	}}
-	authenticate := usecase.NewAuthenticateService(repository, issuer{})
+	authenticate := usecase.NewAuthenticateService(repository, issuer{}, newTestRefreshSessionStore())
 
 	if _, _, err := authenticate.Execute(context.Background(), " PASSENGER@EXAMPLE.TEST ", "secret-8"); err != nil {
 		t.Fatalf("normalized login returned error: %v", err)
@@ -111,7 +112,7 @@ func TestAuthenticationUpgradesLegacyPasswordHashAfterSuccessfulLogin(t *testing
 			PasswordHash: legacyHash,
 		},
 	}}
-	authenticate := usecase.NewAuthenticateService(repository, issuer{})
+	authenticate := usecase.NewAuthenticateService(repository, issuer{}, newTestRefreshSessionStore())
 	if _, _, err := authenticate.Execute(context.Background(), "legacy@example.test", "legacy-8"); err != nil {
 		t.Fatalf("legacy authentication returned error: %v", err)
 	}

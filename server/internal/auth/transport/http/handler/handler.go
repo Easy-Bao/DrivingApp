@@ -87,9 +87,9 @@ func (handler *Handler) registerDecoded(w http.ResponseWriter, r *http.Request, 
 		writeError(w, status, safeAuthError(err))
 		return
 	}
-	refreshToken, err := handler.register.IssueRefreshToken(account)
+	refreshToken, err := handler.register.IssueRefreshToken(r.Context(), account)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "authentication service is unavailable")
+		writeError(w, http.StatusServiceUnavailable, safeAuthError(err))
 		return
 	}
 	writeJSON(w, http.StatusCreated, authSessionResponse(account, token, refreshToken, !account.IsVerified))
@@ -111,9 +111,13 @@ func (handler *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	if !decode(w, r, &input) {
 		return
 	}
-	tokens, err := handler.authenticate.Refresh(input.Token)
+	tokens, err := handler.authenticate.Refresh(r.Context(), input.Token)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, "session expired or unauthorized")
+		status := http.StatusServiceUnavailable
+		if errors.Is(err, domain.ErrInvalidRefreshToken) {
+			status = http.StatusUnauthorized
+		}
+		writeError(w, status, safeAuthError(err))
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -123,6 +127,22 @@ func (handler *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 			"refreshToken": tokens.RefreshToken,
 		},
 	})
+}
+
+func (handler *Handler) Logout(w http.ResponseWriter, r *http.Request) {
+	var input dto.RefreshToken
+	if !decode(w, r, &input) {
+		return
+	}
+	if err := handler.authenticate.Logout(r.Context(), input.Token); err != nil {
+		status := http.StatusServiceUnavailable
+		if errors.Is(err, domain.ErrInvalidRefreshToken) {
+			status = http.StatusUnauthorized
+		}
+		writeError(w, status, safeAuthError(err))
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (handler *Handler) login(w http.ResponseWriter, r *http.Request, role domain.Role) {
@@ -170,9 +190,9 @@ func (handler *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, safeAuthError(err))
 		return
 	}
-	refreshToken, err := handler.otp.IssueRefreshToken(account)
+	refreshToken, err := handler.otp.IssueRefreshToken(r.Context(), account)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "authentication service is unavailable")
+		writeError(w, http.StatusServiceUnavailable, safeAuthError(err))
 		return
 	}
 	response := authSessionResponse(account, token, refreshToken, false)
@@ -264,6 +284,10 @@ func safeAuthError(err error) string {
 		return "Verification is temporarily unavailable. Please try again."
 	case errors.Is(err, domain.ErrPendingRegistrationNotFound):
 		return "Your registration could not be found. Please start again."
+	case errors.Is(err, domain.ErrInvalidRefreshToken):
+		return "Your session has expired. Please sign in again."
+	case errors.Is(err, domain.ErrRefreshSessionUnavailable):
+		return "Authentication is temporarily unavailable. Please try again."
 	default:
 		return "We could not complete that request. Please try again."
 	}

@@ -15,6 +15,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent/notification"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerprofile"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerreview"
+	"github.com/Easy-Bao/DrivingApp/server/ent/refreshsession"
 	"github.com/Easy-Bao/DrivingApp/server/ent/review"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ride"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ridesettlement"
@@ -255,6 +256,20 @@ func init() {
 	passengerreviewDescCreatedAt := passengerreviewFields[5].Descriptor()
 	// passengerreview.DefaultCreatedAt holds the default value on creation for the created_at field.
 	passengerreview.DefaultCreatedAt = passengerreviewDescCreatedAt.Default.(func() time.Time)
+	refreshsessionFields := schema.RefreshSession{}.Fields()
+	_ = refreshsessionFields
+	// refreshsessionDescUserID is the schema descriptor for user_id field.
+	refreshsessionDescUserID := refreshsessionFields[0].Descriptor()
+	// refreshsession.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
+	refreshsession.UserIDValidator = refreshsessionDescUserID.Validators[0].(func(int) error)
+	// refreshsessionDescTokenHash is the schema descriptor for token_hash field.
+	refreshsessionDescTokenHash := refreshsessionFields[1].Descriptor()
+	// refreshsession.TokenHashValidator is a validator for the "token_hash" field. It is called by the builders before save.
+	refreshsession.TokenHashValidator = refreshsessionDescTokenHash.Validators[0].(func(string) error)
+	// refreshsessionDescCreatedAt is the schema descriptor for created_at field.
+	refreshsessionDescCreatedAt := refreshsessionFields[3].Descriptor()
+	// refreshsession.DefaultCreatedAt holds the default value on creation for the created_at field.
+	refreshsession.DefaultCreatedAt = refreshsessionDescCreatedAt.Default.(func() time.Time)
 	reviewFields := schema.Review{}.Fields()
 	_ = reviewFields
 	// reviewDescDriverID is the schema descriptor for driver_id field.

@@ -47,10 +47,10 @@ func TestIntegrityMigrationIncludesFinancialAndParticipantConstraints(t *testing
 	}
 }
 
-func TestMigrationPlanEndsWithPassengerProfileAttributes(t *testing.T) {
+func TestMigrationPlanEndsWithRefreshSessions(t *testing.T) {
 	runner := NewRunner(nil, nil)
 	last := runner.migrations[len(runner.migrations)-1]
-	if last.version != 2026082601 || last.name != "add_passenger_profile_attributes" {
+	if last.version != 2026082701 || last.name != "add_refresh_sessions" {
 		t.Fatalf("last migration = %d %q", last.version, last.name)
 	}
 }

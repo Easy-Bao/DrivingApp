@@ -35,10 +35,9 @@ const (
 )
 
 const (
-	AccessTokenLifetime  = 24 * time.Hour
+	AccessTokenLifetime  = 30 * time.Minute
 	RefreshTokenLifetime = 30 * 24 * time.Hour
 	accessTokenType      = "access"
-	refreshTokenType     = "refresh"
 )
 
 func NewTokenManager(secret string) *TokenManager {
@@ -51,14 +50,6 @@ func (manager *TokenManager) Issue(subject string) (string, error) {
 
 func (manager *TokenManager) IssueWithRole(subject, role string) (string, error) {
 	return manager.issue(subject, role, accessTokenType, manager.lifetime)
-}
-
-func (manager *TokenManager) IssueRefresh(subject string) (string, error) {
-	return manager.IssueRefreshWithRole(subject, "")
-}
-
-func (manager *TokenManager) IssueRefreshWithRole(subject, role string) (string, error) {
-	return manager.issue(subject, role, refreshTokenType, RefreshTokenLifetime)
 }
 
 func (manager *TokenManager) issue(subject, role, tokenType string, lifetime time.Duration) (string, error) {
@@ -98,18 +89,7 @@ func (manager *TokenManager) VerifyIdentity(rawToken string) (Identity, error) {
 	if err != nil {
 		return Identity{}, err
 	}
-	if identity.TokenType != "" && identity.TokenType != accessTokenType {
-		return Identity{}, ErrInvalidToken
-	}
-	return identity, nil
-}
-
-func (manager *TokenManager) VerifyRefresh(rawToken string) (Identity, error) {
-	identity, err := manager.verify(rawToken)
-	if err != nil {
-		return Identity{}, err
-	}
-	if identity.TokenType != refreshTokenType {
+	if identity.TokenType != accessTokenType {
 		return Identity{}, ErrInvalidToken
 	}
 	return identity, nil

@@ -3,6 +3,7 @@ package security
 import (
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestTokenManagerIssuesAndVerifiesSubject(t *testing.T) {
@@ -46,27 +47,14 @@ func TestTokenManagerCarriesRoleAndRejectsUnexpectedHeader(t *testing.T) {
 	}
 }
 
-func TestTokenManagerSeparatesRefreshTokensFromAccessTokens(t *testing.T) {
+func TestTokenManagerRejectsNonAccessTokenClaims(t *testing.T) {
 	manager := NewTokenManager("test-secret")
-	refreshToken, err := manager.IssueRefreshWithRole("user-7", "passenger")
+	refreshToken, err := manager.issue("user-7", "passenger", "refresh", time.Hour)
 	if err != nil {
-		t.Fatalf("IssueRefreshWithRole() returned error: %v", err)
-	}
-
-	identity, err := manager.VerifyRefresh(refreshToken)
-	if err != nil || identity.Subject != "user-7" || identity.Role != "passenger" {
-		t.Fatalf("refresh identity = %#v, %v", identity, err)
+		t.Fatalf("issue non-access token: %v", err)
 	}
 	if _, err := manager.Verify(refreshToken); err == nil {
-		t.Fatal("expected refresh token to be rejected as an access token")
-	}
-
-	accessToken, err := manager.IssueWithRole("user-7", "passenger")
-	if err != nil {
-		t.Fatalf("IssueWithRole() returned error: %v", err)
-	}
-	if _, err := manager.VerifyRefresh(accessToken); err == nil {
-		t.Fatal("expected access token to be rejected as a refresh token")
+		t.Fatal("expected non-access token to be rejected")
 	}
 }
 

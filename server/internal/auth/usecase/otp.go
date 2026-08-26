@@ -18,20 +18,22 @@ type OTPService struct {
 	store         domain.OTPStore
 	gateway       domain.OTPGateway
 	tokens        domain.TokenIssuer
+	sessions      domain.RefreshSessionStore
 	pending       domain.PendingRegistrationStore
 	registrations *RegisterService
 }
 
-func NewOTPService(users domain.VerifiedUserRepository, store domain.OTPStore, gateway domain.OTPGateway, tokens domain.TokenIssuer) *OTPService {
-	return &OTPService{users: users, store: store, gateway: gateway, tokens: tokens}
+func NewOTPService(users domain.VerifiedUserRepository, store domain.OTPStore, gateway domain.OTPGateway, tokens domain.TokenIssuer, sessions domain.RefreshSessionStore) *OTPService {
+	return &OTPService{users: users, store: store, gateway: gateway, tokens: tokens, sessions: sessions}
 }
 
-func NewOTPServiceWithPending(users domain.VerifiedUserRepository, store domain.OTPStore, gateway domain.OTPGateway, tokens domain.TokenIssuer, pending domain.PendingRegistrationStore, registrations *RegisterService) *OTPService {
+func NewOTPServiceWithPending(users domain.VerifiedUserRepository, store domain.OTPStore, gateway domain.OTPGateway, tokens domain.TokenIssuer, pending domain.PendingRegistrationStore, registrations *RegisterService, sessions domain.RefreshSessionStore) *OTPService {
 	return &OTPService{
 		users:         users,
 		store:         store,
 		gateway:       gateway,
 		tokens:        tokens,
+		sessions:      sessions,
 		pending:       pending,
 		registrations: registrations,
 	}
@@ -116,8 +118,8 @@ func (service *OTPService) VerifyPassenger(ctx context.Context, email, code stri
 	return account, token, nil
 }
 
-func (service *OTPService) IssueRefreshToken(account domain.User) (string, error) {
-	return issueRefreshToken(service.tokens, strconv.Itoa(account.ID), account.Role)
+func (service *OTPService) IssueRefreshToken(ctx context.Context, account domain.User) (string, error) {
+	return issueRefreshToken(ctx, service.sessions, strconv.Itoa(account.ID), account.Role)
 }
 
 func (service *OTPService) RequestPasswordReset(ctx context.Context, email string) error {
@@ -146,6 +148,12 @@ func (service *OTPService) ResetPasswordForRole(ctx context.Context, email, code
 	}
 	if err := service.store.Consume(ctx, "reset", account.Email, strings.TrimSpace(code)); err != nil {
 		return domain.ErrInvalidOTP
+	}
+	if service.sessions == nil {
+		return domain.ErrRefreshSessionUnavailable
+	}
+	if err := service.sessions.RevokeAll(ctx, account.ID, time.Now().UTC()); err != nil {
+		return unavailableSessionError(err)
 	}
 	return service.users.UpdatePassword(ctx, account.ID, HashPassword(password))
 }

@@ -111,8 +111,9 @@ func main() {
 	defer redisClient.Close()
 
 	authRepository := authpostgres.NewUserRepository(databaseClient)
-	registerService := authusecase.NewRegisterService(authRepository, verifier)
-	authenticateService := authusecase.NewAuthenticateService(authRepository, verifier)
+	refreshSessionRepository := authpostgres.NewRefreshSessionRepository(databaseClient)
+	registerService := authusecase.NewRegisterService(authRepository, verifier, refreshSessionRepository)
+	authenticateService := authusecase.NewAuthenticateService(authRepository, verifier, refreshSessionRepository)
 
 	authRouter := authhttp.NewRouter(registerService, authenticateService, authusecase.NewOTPServiceWithPending(
 		authRepository,
@@ -121,6 +122,7 @@ func main() {
 		verifier,
 		authredis.NewPendingRegistrationStore(redisClient),
 		registerService,
+		refreshSessionRepository,
 	))
 	privateDocumentStorage, err := documentstorage.NewFileStorage(documentStorageDirectory())
 	if err != nil {

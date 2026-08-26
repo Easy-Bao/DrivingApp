@@ -21,6 +21,20 @@ type TokenIssuer interface {
 	Issue(subject string) (string, error)
 }
 
+type RefreshSession struct {
+	UserID    int
+	TokenHash string
+	ExpiresAt time.Time
+}
+
+type RefreshSessionStore interface {
+	Create(ctx context.Context, session RefreshSession) error
+	FindActive(ctx context.Context, tokenHash string, now time.Time) (RefreshSession, error)
+	Rotate(ctx context.Context, tokenHash string, replacement RefreshSession, now time.Time) error
+	Revoke(ctx context.Context, tokenHash string, now time.Time) error
+	RevokeAll(ctx context.Context, userID int, now time.Time) error
+}
+
 type OTPGateway interface {
 	Send(ctx context.Context, email, code string) error
 }

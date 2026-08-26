@@ -40,6 +40,15 @@ func NewRunner(database *sql.DB, client *ent.Client) *Runner {
 			entmigrate.WithForeignKeys(true),
 		)
 	}
+	refreshSessionSchema := func(ctx context.Context, connection *sql.Conn) error {
+		if err := schemaSync(ctx, connection); err != nil {
+			return err
+		}
+		return executeStatements(ctx, connection, []string{
+			addForeignKey("refresh_sessions_user_fk", "refresh_sessions", "user_id", "users", "id", "CASCADE"),
+			validateForeignKey("refresh_sessions", "refresh_sessions_user_fk"),
+		})
+	}
 	return &Runner{
 		database: database,
 		timeout:  defaultTimeout,
@@ -73,6 +82,11 @@ func NewRunner(database *sql.DB, client *ent.Client) *Runner {
 				version: 2026082601,
 				name:    "add_passenger_profile_attributes",
 				apply:   applyPassengerProfileAttributes,
+			},
+			{
+				version: 2026082701,
+				name:    "add_refresh_sessions",
+				apply:   refreshSessionSchema,
 			},
 		},
 	}

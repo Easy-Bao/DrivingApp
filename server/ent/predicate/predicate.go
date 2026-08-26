@@ -36,6 +36,9 @@ type PassengerProfile func(*sql.Selector)
 // PassengerReview is the predicate function for passengerreview builders.
 type PassengerReview func(*sql.Selector)
 
+// RefreshSession is the predicate function for refreshsession builders.
+type RefreshSession func(*sql.Selector)
+
 // Review is the predicate function for review builders.
 type Review func(*sql.Selector)
 

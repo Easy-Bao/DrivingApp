@@ -14,7 +14,8 @@ func TestPassengerRegistrationCreatesAccountOnlyAfterOTP(t *testing.T) {
 	repository := newPendingUserRepository()
 	pending := &pendingRegistrationStore{}
 	gateway := &otpGateway{}
-	register := usecase.NewRegisterService(repository, otpIssuer{})
+	sessions := newTestRefreshSessionStore()
+	register := usecase.NewRegisterService(repository, otpIssuer{}, sessions)
 	service := usecase.NewOTPServiceWithPending(
 		repository,
 		&otpMemoryStore{values: map[string]string{}},
@@ -22,6 +23,7 @@ func TestPassengerRegistrationCreatesAccountOnlyAfterOTP(t *testing.T) {
 		otpIssuer{},
 		pending,
 		register,
+		sessions,
 	)
 
 	registration, err := service.RegisterPassenger(context.Background(), usecase.RegisterInput{
@@ -53,7 +55,8 @@ func TestRetryingUnverifiedPassengerRegistrationReplacesPendingData(t *testing.T
 	repository := newPendingUserRepository()
 	pending := &pendingRegistrationStore{}
 	gateway := &otpGateway{}
-	register := usecase.NewRegisterService(repository, otpIssuer{})
+	sessions := newTestRefreshSessionStore()
+	register := usecase.NewRegisterService(repository, otpIssuer{}, sessions)
 	service := usecase.NewOTPServiceWithPending(
 		repository,
 		&otpMemoryStore{values: map[string]string{}},
@@ -61,6 +64,7 @@ func TestRetryingUnverifiedPassengerRegistrationReplacesPendingData(t *testing.T
 		otpIssuer{},
 		pending,
 		register,
+		sessions,
 	)
 
 	_, err := service.RegisterPassenger(context.Background(), usecase.RegisterInput{
@@ -94,7 +98,8 @@ func TestPassengerRegistrationRejectsVerifiedEmail(t *testing.T) {
 		ID: 1, Email: "passenger@example.test", Role: domain.Passenger, IsVerified: true,
 	}
 	pending := &pendingRegistrationStore{}
-	register := usecase.NewRegisterService(repository, otpIssuer{})
+	sessions := newTestRefreshSessionStore()
+	register := usecase.NewRegisterService(repository, otpIssuer{}, sessions)
 	service := usecase.NewOTPServiceWithPending(
 		repository,
 		&otpMemoryStore{values: map[string]string{}},
@@ -102,6 +107,7 @@ func TestPassengerRegistrationRejectsVerifiedEmail(t *testing.T) {
 		otpIssuer{},
 		pending,
 		register,
+		sessions,
 	)
 
 	if _, err := service.RegisterPassenger(context.Background(), usecase.RegisterInput{

@@ -24,6 +24,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent/notification"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerprofile"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerreview"
+	"github.com/Easy-Bao/DrivingApp/server/ent/refreshsession"
 	"github.com/Easy-Bao/DrivingApp/server/ent/review"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ride"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ridesettlement"
@@ -56,6 +57,8 @@ type Client struct {
 	PassengerProfile *PassengerProfileClient
 	// PassengerReview is the client for interacting with the PassengerReview builders.
 	PassengerReview *PassengerReviewClient
+	// RefreshSession is the client for interacting with the RefreshSession builders.
+	RefreshSession *RefreshSessionClient
 	// Review is the client for interacting with the Review builders.
 	Review *ReviewClient
 	// Ride is the client for interacting with the Ride builders.
@@ -87,6 +90,7 @@ func (c *Client) init() {
 	c.Notification = NewNotificationClient(c.config)
 	c.PassengerProfile = NewPassengerProfileClient(c.config)
 	c.PassengerReview = NewPassengerReviewClient(c.config)
+	c.RefreshSession = NewRefreshSessionClient(c.config)
 	c.Review = NewReviewClient(c.config)
 	c.Ride = NewRideClient(c.config)
 	c.RideSettlement = NewRideSettlementClient(c.config)
@@ -194,6 +198,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Notification:        NewNotificationClient(cfg),
 		PassengerProfile:    NewPassengerProfileClient(cfg),
 		PassengerReview:     NewPassengerReviewClient(cfg),
+		RefreshSession:      NewRefreshSessionClient(cfg),
 		Review:              NewReviewClient(cfg),
 		Ride:                NewRideClient(cfg),
 		RideSettlement:      NewRideSettlementClient(cfg),
@@ -228,6 +233,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Notification:        NewNotificationClient(cfg),
 		PassengerProfile:    NewPassengerProfileClient(cfg),
 		PassengerReview:     NewPassengerReviewClient(cfg),
+		RefreshSession:      NewRefreshSessionClient(cfg),
 		Review:              NewReviewClient(cfg),
 		Ride:                NewRideClient(cfg),
 		RideSettlement:      NewRideSettlementClient(cfg),
@@ -264,7 +270,8 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.AuditEvent, c.Bid, c.BidOffer, c.BidSession, c.DriverDocument,
 		c.DriverProfile, c.DriverWalletAccount, c.Notification, c.PassengerProfile,
-		c.PassengerReview, c.Review, c.Ride, c.RideSettlement, c.User, c.WalletLedger,
+		c.PassengerReview, c.RefreshSession, c.Review, c.Ride, c.RideSettlement,
+		c.User, c.WalletLedger,
 	} {
 		n.Use(hooks...)
 	}
@@ -276,7 +283,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.AuditEvent, c.Bid, c.BidOffer, c.BidSession, c.DriverDocument,
 		c.DriverProfile, c.DriverWalletAccount, c.Notification, c.PassengerProfile,
-		c.PassengerReview, c.Review, c.Ride, c.RideSettlement, c.User, c.WalletLedger,
+		c.PassengerReview, c.RefreshSession, c.Review, c.Ride, c.RideSettlement,
+		c.User, c.WalletLedger,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -305,6 +313,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.PassengerProfile.mutate(ctx, m)
 	case *PassengerReviewMutation:
 		return c.PassengerReview.mutate(ctx, m)
+	case *RefreshSessionMutation:
+		return c.RefreshSession.mutate(ctx, m)
 	case *ReviewMutation:
 		return c.Review.mutate(ctx, m)
 	case *RideMutation:
@@ -1650,6 +1660,139 @@ func (c *PassengerReviewClient) mutate(ctx context.Context, m *PassengerReviewMu
 	}
 }
 
+// RefreshSessionClient is a client for the RefreshSession schema.
+type RefreshSessionClient struct {
+	config
+}
+
+// NewRefreshSessionClient returns a client for the RefreshSession from the given config.
+func NewRefreshSessionClient(c config) *RefreshSessionClient {
+	return &RefreshSessionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `refreshsession.Hooks(f(g(h())))`.
+func (c *RefreshSessionClient) Use(hooks ...Hook) {
+	c.hooks.RefreshSession = append(c.hooks.RefreshSession, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `refreshsession.Intercept(f(g(h())))`.
+func (c *RefreshSessionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.RefreshSession = append(c.inters.RefreshSession, interceptors...)
+}
+
+// Create returns a builder for creating a RefreshSession entity.
+func (c *RefreshSessionClient) Create() *RefreshSessionCreate {
+	mutation := newRefreshSessionMutation(c.config, OpCreate)
+	return &RefreshSessionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RefreshSession entities.
+func (c *RefreshSessionClient) CreateBulk(builders ...*RefreshSessionCreate) *RefreshSessionCreateBulk {
+	return &RefreshSessionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RefreshSessionClient) MapCreateBulk(slice any, setFunc func(*RefreshSessionCreate, int)) *RefreshSessionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RefreshSessionCreateBulk{err: fmt.Errorf("calling to RefreshSessionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RefreshSessionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RefreshSessionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RefreshSession.
+func (c *RefreshSessionClient) Update() *RefreshSessionUpdate {
+	mutation := newRefreshSessionMutation(c.config, OpUpdate)
+	return &RefreshSessionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RefreshSessionClient) UpdateOne(_m *RefreshSession) *RefreshSessionUpdateOne {
+	mutation := newRefreshSessionMutation(c.config, OpUpdateOne, withRefreshSession(_m))
+	return &RefreshSessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RefreshSessionClient) UpdateOneID(id int) *RefreshSessionUpdateOne {
+	mutation := newRefreshSessionMutation(c.config, OpUpdateOne, withRefreshSessionID(id))
+	return &RefreshSessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RefreshSession.
+func (c *RefreshSessionClient) Delete() *RefreshSessionDelete {
+	mutation := newRefreshSessionMutation(c.config, OpDelete)
+	return &RefreshSessionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RefreshSessionClient) DeleteOne(_m *RefreshSession) *RefreshSessionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RefreshSessionClient) DeleteOneID(id int) *RefreshSessionDeleteOne {
+	builder := c.Delete().Where(refreshsession.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RefreshSessionDeleteOne{builder}
+}
+
+// Query returns a query builder for RefreshSession.
+func (c *RefreshSessionClient) Query() *RefreshSessionQuery {
+	return &RefreshSessionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRefreshSession},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a RefreshSession entity by its id.
+func (c *RefreshSessionClient) Get(ctx context.Context, id int) (*RefreshSession, error) {
+	return c.Query().Where(refreshsession.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RefreshSessionClient) GetX(ctx context.Context, id int) *RefreshSession {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *RefreshSessionClient) Hooks() []Hook {
+	return c.hooks.RefreshSession
+}
+
+// Interceptors returns the client interceptors.
+func (c *RefreshSessionClient) Interceptors() []Interceptor {
+	return c.inters.RefreshSession
+}
+
+func (c *RefreshSessionClient) mutate(ctx context.Context, m *RefreshSessionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RefreshSessionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RefreshSessionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RefreshSessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RefreshSessionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown RefreshSession mutation op: %q", m.Op())
+	}
+}
+
 // ReviewClient is a client for the Review schema.
 type ReviewClient struct {
 	config
@@ -2319,12 +2462,13 @@ func (c *WalletLedgerClient) mutate(ctx context.Context, m *WalletLedgerMutation
 type (
 	hooks struct {
 		AuditEvent, Bid, BidOffer, BidSession, DriverDocument, DriverProfile,
-		DriverWalletAccount, Notification, PassengerProfile, PassengerReview, Review,
-		Ride, RideSettlement, User, WalletLedger []ent.Hook
+		DriverWalletAccount, Notification, PassengerProfile, PassengerReview,
+		RefreshSession, Review, Ride, RideSettlement, User, WalletLedger []ent.Hook
 	}
 	inters struct {
 		AuditEvent, Bid, BidOffer, BidSession, DriverDocument, DriverProfile,
-		DriverWalletAccount, Notification, PassengerProfile, PassengerReview, Review,
-		Ride, RideSettlement, User, WalletLedger []ent.Interceptor
+		DriverWalletAccount, Notification, PassengerProfile, PassengerReview,
+		RefreshSession, Review, Ride, RideSettlement, User,
+		WalletLedger []ent.Interceptor
 	}
 )

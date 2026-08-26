@@ -24,6 +24,10 @@ func ValidateEntSchema(ctx context.Context, client *ent.Client) error {
 			_, err := client.User.Query().Limit(0).All(ctx)
 			return err
 		}},
+		{name: "refresh_sessions", check: func() error {
+			_, err := client.RefreshSession.Query().Limit(0).All(ctx)
+			return err
+		}},
 		{name: "driver_profiles", check: func() error {
 			_, err := client.DriverProfile.Query().Limit(0).All(ctx)
 			return err

@@ -129,6 +129,18 @@ func (f PassengerReviewFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Va
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PassengerReviewMutation", m)
 }
 
+// The RefreshSessionFunc type is an adapter to allow the use of ordinary
+// function as RefreshSession mutator.
+type RefreshSessionFunc func(context.Context, *ent.RefreshSessionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f RefreshSessionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.RefreshSessionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RefreshSessionMutation", m)
+}
+
 // The ReviewFunc type is an adapter to allow the use of ordinary
 // function as Review mutator.
 type ReviewFunc func(context.Context, *ent.ReviewMutation) (ent.Value, error)
