@@ -32,6 +32,10 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
 
   late final AnimationController _expandController;
   late final Animation<double> _expandAnimation;
+  late final Animation<double> _mapFadeAnimation;
+  late final Animation<double> _resultsFadeAnimation;
+  late final Animation<double> _mapPinFadeAnimation;
+  late final Animation<double> _collapsedControlsFadeAnimation;
 
   Timer? _debounce;
   List<PlaceModel> _results = [];
@@ -59,6 +63,13 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
       parent: _expandController,
       curve: Curves.fastOutSlowIn,
     );
+    _mapFadeAnimation = Tween<double>(
+      begin: 1,
+      end: 0,
+    ).animate(_expandAnimation);
+    _resultsFadeAnimation = _fadeAfter(0.2);
+    _mapPinFadeAnimation = _fadeAfter(0.4);
+    _collapsedControlsFadeAnimation = _fadeUntil(0.4);
 
     _focusNode.addListener(_onFocusChanged);
     _searchController.addListener(_onSearchChanged);
@@ -89,6 +100,20 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
     if (currentScroll >= maxScroll - 160) {
       _loadNextLazyBatch();
     }
+  }
+
+  Animation<double> _fadeAfter(double start) {
+    return Tween<double>(
+      begin: 0,
+      end: 1,
+    ).chain(CurveTween(curve: Interval(start, 1))).animate(_expandAnimation);
+  }
+
+  Animation<double> _fadeUntil(double end) {
+    return Tween<double>(
+      begin: 1,
+      end: 0,
+    ).chain(CurveTween(curve: Interval(0, end))).animate(_expandAnimation);
   }
 
   void _loadNextLazyBatch() {
@@ -490,8 +515,8 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
             return Stack(
               children: [
                 Positioned.fill(
-                  child: Opacity(
-                    opacity: (1.0 - t).clamp(0.0, 1.0),
+                  child: FadeTransition(
+                    opacity: _mapFadeAnimation,
                     child: IgnorePointer(
                       ignoring: t > 0.5,
                       child: GestureDetector(
@@ -547,8 +572,8 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                 ),
                               if (t > 0.2)
                                 Expanded(
-                                  child: Opacity(
-                                    opacity: ((t - 0.2) / 0.8).clamp(0.0, 1.0),
+                                  child: FadeTransition(
+                                    opacity: _resultsFadeAnimation,
                                     child: Material(
                                       color: AppTheme.surface.withValues(
                                         alpha: 0,
@@ -884,11 +909,8 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                             ),
                                           ),
                                         if (t >= 0.4)
-                                          Opacity(
-                                            opacity: ((t - 0.4) / 0.6).clamp(
-                                              0.0,
-                                              1.0,
-                                            ),
+                                          FadeTransition(
+                                            opacity: _mapPinFadeAnimation,
                                             child: Transform.scale(
                                               scale: ((t - 0.4) / 0.6).clamp(
                                                 0.0,
@@ -933,8 +955,8 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                             Positioned(
                               left: 0,
                               top: 3,
-                              child: Opacity(
-                                opacity: (1.0 - (t / 0.4)).clamp(0.0, 1.0),
+                              child: FadeTransition(
+                                opacity: _collapsedControlsFadeAnimation,
                                 child: Transform.scale(
                                   scale: (1.0 - t * 0.5).clamp(0.0, 1.0),
                                   child: GestureDetector(
@@ -975,8 +997,8 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                           Positioned(
                             right: 0,
                             top: 3,
-                            child: Opacity(
-                              opacity: (1.0 - (t / 0.4)).clamp(0.0, 1.0),
+                            child: FadeTransition(
+                              opacity: _collapsedControlsFadeAnimation,
                               child: Transform.scale(
                                 scale: (1.0 - t * 0.5).clamp(0.0, 1.0),
                                 child: GestureDetector(

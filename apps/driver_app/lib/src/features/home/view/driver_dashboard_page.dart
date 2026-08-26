@@ -877,38 +877,45 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   Widget _buildStatusIndicator(DashboardState state) {
     if (state.isOnline) {
-      return AnimatedBuilder(
-        animation: _pulseCtrl,
-        builder: (_, _) => Opacity(
-          opacity: 0.4 + _pulseCtrl.value * 0.6,
-          child: Column(
-            children: [
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: AppTheme.secondaryColor.withValues(alpha: 0.22),
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Icon(
-                    LucideIcons.radar,
-                    size: 32,
-                    color: AppTheme.accent,
+      return RepaintBoundary(
+        child: AnimatedBuilder(
+          animation: _pulseCtrl,
+          builder: (_, _) {
+            final pulseOpacity = 0.4 + _pulseCtrl.value * 0.6;
+            final accentColor = AppTheme.accent.withValues(
+              alpha: AppTheme.accent.a * pulseOpacity,
+            );
+            return Column(
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: AppTheme.secondaryColor.withValues(
+                      alpha: 0.22 * pulseOpacity,
+                    ),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Icon(
+                      LucideIcons.radar,
+                      size: 32,
+                      color: accentColor,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Looking for rides...',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.accent,
+                const SizedBox(height: 16),
+                Text(
+                  'Looking for rides...',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: accentColor,
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            );
+          },
         ),
       );
     }
