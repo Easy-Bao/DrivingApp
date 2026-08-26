@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
 	home "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home"
@@ -38,6 +40,39 @@ func (resolver addressResolver) ResolveAddress(
 	home.Coordinates,
 ) (string, error) {
 	return resolver.address, nil
+}
+
+type coordinatedRecentDestinationReader struct {
+	started chan<- struct{}
+	release <-chan struct{}
+}
+
+func (reader coordinatedRecentDestinationReader) ReadRecentDestinations(
+	context.Context,
+	int,
+	int,
+) ([]home.RecentDestination, error) {
+	close(reader.started)
+	<-reader.release
+	return []home.RecentDestination{{
+		Status:   "completed",
+		Title:    "Aikido of Mountain View",
+		Subtitle: "Mountain View",
+	}}, nil
+}
+
+type coordinatedAddressResolver struct {
+	started chan<- struct{}
+	release <-chan struct{}
+}
+
+func (resolver coordinatedAddressResolver) ResolveAddress(
+	context.Context,
+	home.Coordinates,
+) (string, error) {
+	close(resolver.started)
+	<-resolver.release
+	return "Mountain View", nil
 }
 
 func TestGuestHomeReturnsLocationWithoutPassengerHistory(t *testing.T) {
@@ -109,6 +144,75 @@ func TestAuthenticatedHomeFiltersRecentDestinations(t *testing.T) {
 	}
 	if snapshot.RecentLocations[0].Title != "Mall, Pagadian City" || snapshot.RecentLocations[1].Title != "Park, Pagadian City" {
 		t.Fatalf("shortened destinations = %#v", snapshot.RecentLocations)
+	}
+}
+
+func TestAuthenticatedHomeLoadsLocationAndHistoryConcurrently(t *testing.T) {
+	addressStarted := make(chan struct{})
+	destinationsStarted := make(chan struct{})
+	release := make(chan struct{})
+	var releaseOnce sync.Once
+	releaseAll := func() {
+		releaseOnce.Do(func() { close(release) })
+	}
+	service := home.NewService(
+		coordinatedRecentDestinationReader{
+			started: destinationsStarted,
+			release: release,
+		},
+		coordinatedAddressResolver{
+			started: addressStarted,
+			release: release,
+		},
+	)
+
+	result := make(chan struct {
+		snapshot home.Snapshot
+		err      error
+	}, 1)
+	go func() {
+		snapshot, err := service.Get(
+			context.Background(),
+			intPointer(42),
+			&home.Coordinates{Latitude: 7.8, Longitude: 123.4},
+		)
+		result <- struct {
+			snapshot home.Snapshot
+			err      error
+		}{snapshot: snapshot, err: err}
+	}()
+	defer releaseAll()
+
+	waitForSignal(t, addressStarted, "address resolution")
+	waitForSignal(t, destinationsStarted, "recent destinations")
+	releaseAll()
+
+	select {
+	case response := <-result:
+		if response.err != nil {
+			t.Fatalf("load home: %v", response.err)
+		}
+		if response.snapshot.CurrentAddress != "Mountain View" {
+			t.Fatalf("current address = %q, want Mountain View", response.snapshot.CurrentAddress)
+		}
+		if len(response.snapshot.RecentLocations) != 1 {
+			t.Fatalf("recent locations = %#v, want one location", response.snapshot.RecentLocations)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("home query did not finish after both dependencies were released")
+	}
+}
+
+func intPointer(value int) *int {
+	return &value
+}
+
+func waitForSignal(t *testing.T, signal <-chan struct{}, dependency string) {
+	t.Helper()
+	select {
+	case <-signal:
+	case <-time.After(time.Second):
+		t.Fatalf("%s did not start concurrently", dependency)
 	}
 }
 

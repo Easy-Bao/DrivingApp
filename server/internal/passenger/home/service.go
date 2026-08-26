@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"sync"
 )
 
 const recentDestinationLimit = 25
@@ -42,15 +43,15 @@ func (service *Service) Get(
 		if !coordinates.Valid() {
 			return Snapshot{}, ErrInvalidCoordinates
 		}
-		if service.addressResolver != nil {
+	}
+
+	if passengerID == nil {
+		if coordinates != nil && service.addressResolver != nil {
 			address, err := service.addressResolver.ResolveAddress(ctx, *coordinates)
 			if err == nil {
 				snapshot.CurrentAddress = strings.TrimSpace(address)
 			}
 		}
-	}
-
-	if passengerID == nil {
 		return snapshot, nil
 	}
 	if *passengerID <= 0 {
@@ -60,13 +61,28 @@ func (service *Service) Get(
 		return Snapshot{}, ErrQueryUnavailable
 	}
 
+	var (
+		address      string
+		addressError error
+		waitGroup    sync.WaitGroup
+	)
+	if coordinates != nil && service.addressResolver != nil {
+		waitGroup.Go(func() {
+			address, addressError = service.addressResolver.ResolveAddress(ctx, *coordinates)
+		})
+	}
+
 	destinations, err := service.recentDestinations.ReadRecentDestinations(
 		ctx,
 		*passengerID,
 		recentDestinationLimit,
 	)
+	waitGroup.Wait()
 	if err != nil {
 		return Snapshot{}, err
+	}
+	if addressError == nil {
+		snapshot.CurrentAddress = strings.TrimSpace(address)
 	}
 	snapshot.RecentLocations = recentLocations(destinations)
 	return snapshot, nil
