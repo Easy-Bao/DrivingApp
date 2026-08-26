@@ -27,9 +27,8 @@ class DriverActivityRepository implements IDriverActivityRepository {
       );
     }
     if (error is DataParsingException) {
-      return FailureMapper.fromException(
-        error,
-        validationMessage: 'Driver activity data is invalid. Please try again.',
+      return const ValidationFailure(
+        'Driver activity data is invalid. Please try again.',
       );
     }
     if (error is CacheException) {
