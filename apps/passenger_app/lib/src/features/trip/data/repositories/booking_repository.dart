@@ -162,7 +162,10 @@ Failure _mapFailure(Object error) {
     );
   }
   if (error is ServerException) {
-    return ServerFailure.withStatusCode(error.message, error.statusCode);
+    return FailureMapper.fromException(
+      error,
+      serverMessage: 'Booking services are temporarily unavailable.',
+    );
   }
   if (error is FormatException || error is DataParsingException) {
     return const ValidationFailure('The booking response is invalid.');

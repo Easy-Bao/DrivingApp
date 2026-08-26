@@ -114,7 +114,10 @@ Failure _mapFailure(Object error) {
     );
   }
   if (error is ServerException) {
-    return ServerFailure.withStatusCode(error.message, error.statusCode);
+    return FailureMapper.fromException(
+      error,
+      serverMessage: 'Driver profiles are temporarily unavailable.',
+    );
   }
   if (error is FormatException || error is DataParsingException) {
     return const ValidationFailure('Driver profile data is invalid.');

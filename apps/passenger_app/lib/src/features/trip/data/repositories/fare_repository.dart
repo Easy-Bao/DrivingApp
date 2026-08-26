@@ -68,7 +68,10 @@ class FareRepository implements IFareRepository {
         return const Left(RouteCalculationFailure());
       }
       return Left(
-        ServerFailure.withStatusCode(error.message, error.statusCode),
+        FailureMapper.fromException(
+          error,
+          serverMessage: 'Fare calculation is unavailable.',
+        ),
       );
     } catch (_) {
       return const Left(ServerFailure('Fare calculation is unavailable.'));

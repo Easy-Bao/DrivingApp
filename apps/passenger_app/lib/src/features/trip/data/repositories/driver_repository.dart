@@ -59,10 +59,13 @@ class DriverRepository implements IDriverRepository {
       );
     }
     if (error is DataParsingException) {
-      return ValidationFailure(error.message);
+      return FailureMapper.fromException(
+        error,
+        validationMessage: 'Nearby driver data is invalid. Please try again.',
+      );
     }
     if (error is CacheException) {
-      return CacheFailure(error.message);
+      return FailureMapper.fromException(error);
     }
     return const ServerFailure(
       'Driver availability is temporarily unavailable. Please try again.',

@@ -101,13 +101,21 @@ class DashboardRepository implements IDashboardRepository {
       if (error.statusCode == 0) {
         return const NetworkFailure();
       }
-      return ServerFailure.withStatusCode(error.message, error.statusCode);
+      return FailureMapper.fromException(
+        error,
+        serverMessage:
+            'Unable to update your driver availability. Please try again.',
+      );
     }
     if (error is DataParsingException) {
-      return ValidationFailure(error.message);
+      return FailureMapper.fromException(
+        error,
+        validationMessage:
+            'Driver availability data is invalid. Please try again.',
+      );
     }
     if (error is CacheException) {
-      return CacheFailure(error.message);
+      return FailureMapper.fromException(error);
     }
     return const ServerFailure(
       'Unable to update your driver availability. Please try again.',

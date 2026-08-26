@@ -198,20 +198,11 @@ class ChatRepository implements IChatRepository {
 }
 
 Failure _mapChatFailure(Object error, String message) {
-  if (error is DioException) {
-    final statusCode = error.response?.statusCode;
-    if (statusCode == null) {
-      if (error.type == DioExceptionType.connectionTimeout ||
-          error.type == DioExceptionType.sendTimeout ||
-          error.type == DioExceptionType.receiveTimeout) {
-        return const ServerFailure.withStatusCode(
-          'Chat request timed out.',
-          504,
-        );
-      }
-      return NetworkFailure(message);
-    }
-    return ServerFailure.withStatusCode(message, statusCode);
-  }
-  return ServerFailure(message);
+  return FailureMapper.fromException(
+    error,
+    serverMessage: message,
+    networkMessage:
+        'Unable to connect to chat. Check your connection and try again.',
+    timeoutMessage: 'Chat request timed out. Please try again.',
+  );
 }

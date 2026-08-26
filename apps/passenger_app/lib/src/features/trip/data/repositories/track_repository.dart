@@ -42,7 +42,13 @@ class TrackRepository implements ITrackRepository {
       }
       return const Left(ServerFailure('No status data returned from server.'));
     } on ServerException catch (e) {
-      return Left(ServerFailure.withStatusCode(e.message, e.statusCode));
+      return Left(
+        FailureMapper.fromException(
+          e,
+          serverMessage:
+              'Ride status is temporarily unavailable. Please try again.',
+        ),
+      );
     } catch (_) {
       return const Left(
         ServerFailure(
@@ -68,7 +74,10 @@ class TrackRepository implements ITrackRepository {
       return Right(ride);
     } on ServerException catch (error) {
       return Left(
-        ServerFailure.withStatusCode(error.message, error.statusCode),
+        FailureMapper.fromException(
+          error,
+          serverMessage: 'Ride details are temporarily unavailable.',
+        ),
       );
     } catch (_) {
       return const Left(
@@ -89,7 +98,10 @@ class TrackRepository implements ITrackRepository {
       );
     } on ServerException catch (error) {
       return Left(
-        ServerFailure.withStatusCode(error.message, error.statusCode),
+        FailureMapper.fromException(
+          error,
+          serverMessage: 'Driver contact details are temporarily unavailable.',
+        ),
       );
     } catch (_) {
       return const Left(
@@ -116,7 +128,13 @@ class TrackRepository implements ITrackRepository {
         ServerFailure('Driver location coordinates unavailable.'),
       );
     } on ServerException catch (e) {
-      return Left(ServerFailure.withStatusCode(e.message, e.statusCode));
+      return Left(
+        FailureMapper.fromException(
+          e,
+          serverMessage:
+              'Driver location is temporarily unavailable. Please try again.',
+        ),
+      );
     } catch (_) {
       return const Left(
         ServerFailure(
@@ -143,7 +161,13 @@ class TrackRepository implements ITrackRepository {
         ServerFailure('Failed to update ride status on server.'),
       );
     } on ServerException catch (e) {
-      return Left(ServerFailure.withStatusCode(e.message, e.statusCode));
+      return Left(
+        FailureMapper.fromException(
+          e,
+          serverMessage:
+              'The ride status could not be updated. Please try again.',
+        ),
+      );
     } catch (_) {
       return const Left(
         ServerFailure(
@@ -170,7 +194,10 @@ class TrackRepository implements ITrackRepository {
           : const Left(NetworkFailure('Passenger location was not accepted.'));
     } on ServerException catch (error) {
       return Left(
-        ServerFailure.withStatusCode(error.message, error.statusCode),
+        FailureMapper.fromException(
+          error,
+          serverMessage: 'Unable to share your current trip location.',
+        ),
       );
     } catch (_) {
       return const Left(

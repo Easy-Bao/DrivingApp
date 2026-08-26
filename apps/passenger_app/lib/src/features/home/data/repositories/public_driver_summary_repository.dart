@@ -49,7 +49,11 @@ class PublicDriverSummaryRepository implements IPublicDriverSummaryRepository {
       );
     }
     if (error is DataParsingException) {
-      return ValidationFailure(error.message);
+      return FailureMapper.fromException(
+        error,
+        serverMessage:
+            'Driver summaries are temporarily unavailable. Please try again.',
+      );
     }
     return const ServerFailure(
       'Driver summaries are temporarily unavailable. Please try again.',

@@ -104,7 +104,11 @@ class HomeRepository implements IHomeRepository {
       );
     }
     if (error is DataParsingException) {
-      return ValidationFailure(error.message);
+      return FailureMapper.fromException(
+        error,
+        serverMessage:
+            'Home data is temporarily unavailable. Please try again.',
+      );
     }
     return const ServerFailure(
       'Home data is temporarily unavailable. Please try again.',

@@ -110,7 +110,10 @@ Failure _mapFailure(Object error) {
     }
   }
   if (error is ServerException) {
-    return ServerFailure.withStatusCode(error.message, error.statusCode);
+    return FailureMapper.fromException(
+      error,
+      serverMessage: 'Your driver account is temporarily unavailable.',
+    );
   }
   if (error is FormatException || error is DataParsingException) {
     return const ValidationFailure('Driver account data is invalid.');

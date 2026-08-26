@@ -90,13 +90,21 @@ class AuthRepository implements IAuthRepository {
         return const Left(InvalidCredentialsFailure());
       }
       if (error.statusCode == 0) {
-        return Left(NetworkFailure(error.message));
+        return const Left(NetworkFailure());
       }
       return Left(
-        ServerFailure.withStatusCode(error.message, error.statusCode),
+        FailureMapper.fromException(
+          error,
+          serverMessage: 'Unable to sign in right now. Please try again.',
+        ),
       );
     } on DataParsingException catch (error) {
-      return Left(ServerFailure(error.message));
+      return Left(
+        FailureMapper.fromException(
+          error,
+          serverMessage: 'Unable to sign in right now. Please try again.',
+        ),
+      );
     } catch (_) {
       return const Left(
         ServerFailure('Unable to sign in right now. Please try again.'),

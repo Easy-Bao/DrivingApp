@@ -176,7 +176,11 @@ Failure _mapFailure(Object error, {required String action}) {
     );
   }
   if (error is ServerException) {
-    return ServerFailure.withStatusCode(error.message, error.statusCode);
+    return FailureMapper.fromException(
+      error,
+      serverMessage: 'Unable to $action right now.',
+      validationMessage: 'Unable to $action with the supplied ride.',
+    );
   }
   if (error is FormatException || error is DataParsingException) {
     return ValidationFailure('Unable to $action because the data is invalid.');

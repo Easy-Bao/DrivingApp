@@ -27,10 +27,13 @@ class DriverActivityRepository implements IDriverActivityRepository {
       );
     }
     if (error is DataParsingException) {
-      return ValidationFailure(error.message);
+      return FailureMapper.fromException(
+        error,
+        validationMessage: 'Driver activity data is invalid. Please try again.',
+      );
     }
     if (error is CacheException) {
-      return CacheFailure(error.message);
+      return FailureMapper.fromException(error);
     }
     return const ServerFailure(
       'Driver trip history is temporarily unavailable. Please try again.',

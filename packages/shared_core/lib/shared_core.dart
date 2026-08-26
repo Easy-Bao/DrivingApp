@@ -9,6 +9,7 @@ export 'src/enums/ride_status.dart';
 export 'src/errors/app_failure.dart';
 export 'src/errors/error_handler.dart';
 export 'src/errors/exceptions.dart';
+export 'src/errors/failure_mapper.dart';
 export 'src/errors/failures.dart';
 export 'src/fare/config/rating_pricing_config.dart';
 export 'src/fare/models/fare_service_model.dart';
