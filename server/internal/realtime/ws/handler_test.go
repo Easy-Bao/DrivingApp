@@ -2,6 +2,7 @@ package ws
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -57,6 +58,33 @@ func TestChatWebSocketRejectsNonChatEvents(t *testing.T) {
 	}
 	if !validEvent([]byte(`{"type":"message"}`)) {
 		t.Fatal("chat socket rejected a chat event")
+	}
+	if !validEvent([]byte(`{"type":"typing","is_typing":true}`)) {
+		t.Fatal("chat socket rejected a typing event")
+	}
+	if validEvent([]byte(`{"type":"typing","is_typing":"true"}`)) {
+		t.Fatal("chat socket accepted a malformed typing event")
+	}
+}
+
+func TestEnrichChatEventCanonicalizesTypingIdentity(t *testing.T) {
+	enriched := enrichChatEvent(
+		[]byte(`{"type":"typing","isTyping":true,"sender_id":"attacker"}`),
+		"303",
+		"7",
+	)
+	if enriched == nil {
+		t.Fatal("typing event was rejected")
+	}
+	var event map[string]any
+	if err := json.Unmarshal(enriched, &event); err != nil {
+		t.Fatal(err)
+	}
+	if event["room_id"] != "303" || event["sender_id"] != "7" || event["is_typing"] != true {
+		t.Fatalf("enriched typing event = %#v", event)
+	}
+	if _, exists := event["isTyping"]; exists {
+		t.Fatalf("legacy typing key was not removed: %#v", event)
 	}
 }
 

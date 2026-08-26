@@ -111,6 +111,20 @@ class ChatRepository implements IChatRepository {
   }
 
   @override
+  Future<Either<Failure, void>> sendTypingStatus(bool isTyping) async {
+    if (!isSessionConnected) {
+      return const Left(NetworkFailure('Chat session is disconnected.'));
+    }
+
+    try {
+      remoteDataSource.sendWebSocketTypingStatus(isTyping);
+      return const Right(null);
+    } catch (error) {
+      return const Left(NetworkFailure('Unable to update chat status.'));
+    }
+  }
+
+  @override
   Future<Either<Failure, List<ChatMessage>>> fetchRoomMessages(
     String roomId,
   ) async {
@@ -184,12 +198,30 @@ class ChatRepository implements IChatRepository {
           );
         }
 
+        if (type == 'typing') {
+          final senderId =
+              decoded['sender_id'] as String? ??
+              decoded['senderId'] as String? ??
+              '';
+          final isTyping =
+              decoded['is_typing'] as bool? ?? decoded['isTyping'] as bool?;
+          if (senderId.isEmpty || isTyping == null) {
+            return const Left(ServerFailure('Unable to read chat status.'));
+          }
+          return Right(
+            ChatTypingChanged(
+              isTyping: isTyping,
+              isFromPeer: senderId != currentUserId,
+            ),
+          );
+        }
+
         if (type == 'room_locked' || type == 'locked') {
           final reason = decoded['reason'] as String? ?? 'Trip completed';
           return Right(ChatRoomLocked(reason));
         }
 
-        return Left(ServerFailure('Unknown websocket chat event type: $type'));
+        return const Left(ServerFailure('Unable to read chat event.'));
       } catch (error) {
         return const Left(ServerFailure('Unable to read chat message.'));
       }

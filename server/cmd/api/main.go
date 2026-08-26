@@ -204,6 +204,7 @@ func main() {
 	chatEventHandler := chatws.NewEventHandler(chatService)
 	events.Register("CHAT_MESSAGE", chatEventHandler)
 	events.Register("message", chatEventHandler)
+	events.Register("typing", chatEventHandler)
 	router.Handle(
 		api.V1Prefix+"/chat/ws",
 		ws.NewHandlerWithSink(ws.NewHub(), verifier, events, chatService).

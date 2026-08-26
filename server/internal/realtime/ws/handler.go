@@ -145,7 +145,7 @@ func isChatEvent(message []byte) bool {
 	if json.Unmarshal(message, &event) != nil {
 		return false
 	}
-	return event.Type == "CHAT_MESSAGE" || event.Type == "message"
+	return event.Type == "CHAT_MESSAGE" || event.Type == "message" || event.Type == "typing"
 }
 
 func validEvent(message []byte) bool {
@@ -158,9 +158,22 @@ func validEvent(message []byte) bool {
 	switch event.Type {
 	case "CHAT_MESSAGE", "message":
 		return true
+	case "typing":
+		return validTypingEvent(message)
 	default:
 		return false
 	}
+}
+
+func validTypingEvent(message []byte) bool {
+	var event struct {
+		IsTyping       *bool `json:"is_typing"`
+		IsTypingLegacy *bool `json:"isTyping"`
+	}
+	if json.Unmarshal(message, &event) != nil {
+		return false
+	}
+	return event.IsTyping != nil || event.IsTypingLegacy != nil
 }
 
 func enrichChatEvent(message []byte, roomID, clientID string) []byte {
@@ -168,7 +181,8 @@ func enrichChatEvent(message []byte, roomID, clientID string) []byte {
 	if json.Unmarshal(message, &event) != nil {
 		return nil
 	}
-	if event["type"] != "CHAT_MESSAGE" && event["type"] != "message" {
+	eventType, _ := event["type"].(string)
+	if eventType != "CHAT_MESSAGE" && eventType != "message" && eventType != "typing" {
 		return message
 	}
 	if roomID == "" || clientID == "" {
@@ -176,6 +190,17 @@ func enrichChatEvent(message []byte, roomID, clientID string) []byte {
 	}
 	event["room_id"] = roomID
 	event["sender_id"] = clientID
+	if eventType == "typing" {
+		isTyping, ok := event["is_typing"].(bool)
+		if !ok {
+			isTyping, ok = event["isTyping"].(bool)
+		}
+		if !ok {
+			return nil
+		}
+		event["is_typing"] = isTyping
+		delete(event, "isTyping")
+	}
 	return marshalEvent(event)
 }
 

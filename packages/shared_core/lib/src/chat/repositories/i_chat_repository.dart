@@ -14,6 +14,8 @@ abstract class IChatRepository {
 
   Future<Either<Failure, void>> sendChatMessage(String text);
 
+  Future<Either<Failure, void>> sendTypingStatus(bool isTyping);
+
   Future<Either<Failure, List<ChatMessage>>> fetchRoomMessages(String roomId);
 
   Future<Either<Failure, void>> resolveChatRoom(String roomId);

@@ -11,6 +11,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class DriverChatPage extends StatefulWidget {
   final String? roomId;
@@ -34,12 +35,11 @@ class DriverChatPage extends StatefulWidget {
   State<DriverChatPage> createState() => _DriverChatPageState();
 }
 
-class _DriverChatPageState extends State<DriverChatPage>
-    with SingleTickerProviderStateMixin {
+class _DriverChatPageState extends State<DriverChatPage> {
   final TextEditingController _msgCtrl = TextEditingController();
   final ScrollController _scrollCtrl = ScrollController();
-  late AnimationController _typingCtrl;
-  final _passengerTyping = false;
+  Timer? _typingStopTimer;
+  bool _isTyping = false;
   bool _isTripFinished = false;
 
   late ChatCubit _chatCubit;
@@ -79,11 +79,6 @@ class _DriverChatPageState extends State<DriverChatPage>
   @override
   void initState() {
     super.initState();
-    _typingCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    )..repeat(reverse: true);
-
     final currentRoomId = widget.roomId;
     final currentUserId = widget.userId;
 
@@ -123,21 +118,49 @@ class _DriverChatPageState extends State<DriverChatPage>
 
   @override
   void dispose() {
+    _typingStopTimer?.cancel();
+    _isTyping = false;
     unawaited(_chatCubit.close());
     _msgCtrl.dispose();
     _scrollCtrl.dispose();
-    _typingCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _send(String text) async {
     if (text.trim().isEmpty) return;
+    await _stopTyping();
     final sent = await _chatCubit.sendMessage(text);
     if (!mounted) return;
     if (sent) {
       _msgCtrl.clear();
       _scrollDown();
     }
+  }
+
+  void _onDraftChanged(String value) {
+    final canSendMessage =
+        _chatCubit.state.isConnected && !_chatCubit.state.isRoomLocked;
+    if (!canSendMessage || value.trim().isEmpty) {
+      unawaited(_stopTyping());
+      return;
+    }
+
+    if (!_isTyping) {
+      _isTyping = true;
+      unawaited(_chatCubit.updateTypingStatus(true));
+    }
+    _typingStopTimer?.cancel();
+    _typingStopTimer = Timer(const Duration(milliseconds: 1200), () {
+      unawaited(_stopTyping());
+    });
+  }
+
+  Future<void> _stopTyping() async {
+    _typingStopTimer?.cancel();
+    _typingStopTimer = null;
+    if (!_isTyping) return;
+    _isTyping = false;
+    await _chatCubit.updateTypingStatus(false);
   }
 
   void _scrollDown() {
@@ -165,9 +188,10 @@ class _DriverChatPageState extends State<DriverChatPage>
       value: _chatCubit,
       child: BlocConsumer<ChatCubit, ChatState>(
         listenWhen: (previous, current) =>
-            previous.messages != current.messages,
+            previous.messages != current.messages ||
+            previous.isPeerTyping != current.isPeerTyping,
         listener: (_, state) {
-          if (state.messages.isNotEmpty) _scrollDown();
+          if (state.messages.isNotEmpty || state.isPeerTyping) _scrollDown();
         },
         builder: (context, state) {
           final chatHistoryMessages = state.messages;
@@ -276,12 +300,20 @@ class _DriverChatPageState extends State<DriverChatPage>
                     padding: const EdgeInsets.all(16),
                     physics: const BouncingScrollPhysics(),
                     itemCount:
-                        chatHistoryMessages.length + (_passengerTyping ? 1 : 0),
+                        chatHistoryMessages.length +
+                        (state.isPeerTyping ? 1 : 0),
                     itemBuilder: (ctx, i) {
-                      if (i == chatHistoryMessages.length && _passengerTyping) {
+                      if (i == chatHistoryMessages.length &&
+                          state.isPeerTyping) {
                         return _buildTyping();
                       }
-                      return _buildBubble(chatHistoryMessages[i]);
+                      return _buildBubble(
+                        chatHistoryMessages[i],
+                        animate: identical(
+                          state.lastDeliveredMessage,
+                          chatHistoryMessages[i],
+                        ),
+                      );
                     },
                   ),
                 ),
@@ -376,6 +408,7 @@ class _DriverChatPageState extends State<DriverChatPage>
                                   vertical: 11,
                                 ),
                               ),
+                              onChanged: _onDraftChanged,
                               onSubmitted: (_) =>
                                   unawaited(_send(_msgCtrl.text)),
                             ),
@@ -454,100 +487,90 @@ class _DriverChatPageState extends State<DriverChatPage>
     );
   }
 
-  Widget _buildBubble(ChatMessage msg) {
+  Widget _buildBubble(ChatMessage msg, {required bool animate}) {
     final isMe = msg.senderId == widget.userId;
     final timeStr = _fmtTime(msg.createdAt);
 
-    return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Column(
-        crossAxisAlignment: isMe
-            ? CrossAxisAlignment.end
-            : CrossAxisAlignment.start,
-        children: [
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 4),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery.sizeOf(context).width * 0.75,
-            ),
-            decoration: BoxDecoration(
-              color: isMe ? AppTheme.primaryColor : AppTheme.neutralColor,
-              borderRadius: BorderRadius.only(
-                topLeft: const Radius.circular(20),
-                topRight: const Radius.circular(20),
-                bottomLeft: Radius.circular(isMe ? 20 : 4),
-                bottomRight: Radius.circular(isMe ? 4 : 20),
+    return AppChatMessageTransition(
+      key: ValueKey<ChatMessage>(msg),
+      animate: animate,
+      isOutgoing: isMe,
+      child: Align(
+        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+        child: Column(
+          crossAxisAlignment: isMe
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
+          children: [
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.sizeOf(context).width * 0.75,
               ),
-              boxShadow: [
-                if (isMe)
-                  BoxShadow(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.15),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
+              decoration: BoxDecoration(
+                color: isMe ? AppTheme.primaryColor : AppTheme.neutralColor,
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(20),
+                  topRight: const Radius.circular(20),
+                  bottomLeft: Radius.circular(isMe ? 20 : 4),
+                  bottomRight: Radius.circular(isMe ? 4 : 20),
+                ),
+                boxShadow: [
+                  if (isMe)
+                    BoxShadow(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.15),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                ],
+              ),
+              child: Text(
+                msg.text,
+                style: TextStyle(
+                  color: isMe ? AppTheme.surface : AppTheme.primaryColor,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  height: 1.3,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    timeStr,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-              ],
-            ),
-            child: Text(
-              msg.text,
-              style: TextStyle(
-                color: isMe ? AppTheme.surface : AppTheme.primaryColor,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                height: 1.3,
+                  if (isMe) ...[
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.done_all,
+                      size: 13,
+                      color: AppTheme.complete,
+                    ),
+                  ],
+                ],
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Text(
-              timeStr,
-              style: TextStyle(
-                fontSize: 10,
-                color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-        ],
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildTyping() {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: const BoxDecoration(
-          color: AppTheme.neutralColor,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-            bottomLeft: Radius.circular(4),
-            bottomRight: Radius.circular(20),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(3, (i) {
-            return FadeTransition(
-              opacity: _typingCtrl,
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 2),
-                width: 6,
-                height: 6,
-                decoration: const BoxDecoration(
-                  color: AppTheme.tertiaryColor,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            );
-          }),
-        ),
-      ),
+    return AppChatTypingIndicator(
+      bubbleColor: AppTheme.neutralColor,
+      dotColor: AppTheme.tertiaryColor,
+      semanticLabel: '${widget.peerName ?? 'Passenger'} is typing',
     );
   }
 }

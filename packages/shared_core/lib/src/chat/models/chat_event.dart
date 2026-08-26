@@ -16,6 +16,13 @@ class ChatMessageReceived extends ChatEvent {
   const ChatMessageReceived(this.message);
 }
 
+class ChatTypingChanged extends ChatEvent {
+  final bool isTyping;
+  final bool isFromPeer;
+
+  const ChatTypingChanged({required this.isTyping, required this.isFromPeer});
+}
+
 class ChatRoomLocked extends ChatEvent {
   final String reason;
 

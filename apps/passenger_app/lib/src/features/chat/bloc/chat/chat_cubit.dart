@@ -6,8 +6,11 @@ import 'package:shared_core/shared_core.dart';
 export 'package:passenger_app/src/features/chat/bloc/chat/chat_state.dart';
 
 class ChatCubit extends Cubit<ChatState> {
+  static const _peerTypingTimeout = Duration(seconds: 3);
+
   final IChatRepository _chatRepository;
   StreamSubscription? _chatSubscription;
+  Timer? _peerTypingTimer;
 
   ChatCubit({required IChatRepository chatRepository})
     : _chatRepository = chatRepository,
@@ -76,15 +79,34 @@ class ChatCubit extends Cubit<ChatState> {
                 ),
                 (chatEvent) {
                   if (chatEvent is ChatHistoryReceived) {
-                    emit(state.copyWith(messages: chatEvent.messages));
+                    _peerTypingTimer?.cancel();
+                    emit(
+                      state.copyWith(
+                        messages: chatEvent.messages,
+                        isPeerTyping: false,
+                        lastDeliveredMessage: null,
+                      ),
+                    );
                   } else if (chatEvent is ChatMessageReceived) {
                     final updated = List<ChatMessage>.from(state.messages)
                       ..add(chatEvent.message);
-                    emit(state.copyWith(messages: updated));
+                    _peerTypingTimer?.cancel();
+                    emit(
+                      state.copyWith(
+                        messages: updated,
+                        isPeerTyping: false,
+                        lastDeliveredMessage: chatEvent.message,
+                      ),
+                    );
+                  } else if (chatEvent is ChatTypingChanged &&
+                      chatEvent.isFromPeer) {
+                    _updatePeerTyping(chatEvent.isTyping);
                   } else if (chatEvent is ChatRoomLocked) {
+                    _peerTypingTimer?.cancel();
                     emit(
                       state.copyWith(
                         isRoomLocked: true,
+                        isPeerTyping: false,
                         lockReasonMessage: ErrorHandler.getErrorMessage(
                           const ChatRoomLockedFailure(),
                         ),
@@ -139,6 +161,25 @@ class ChatCubit extends Cubit<ChatState> {
     return result.isRight();
   }
 
+  Future<void> updateTypingStatus(bool isTyping) async {
+    if (isClosed || state.isRoomLocked) return;
+    await _chatRepository.sendTypingStatus(isTyping);
+  }
+
+  void _updatePeerTyping(bool isTyping) {
+    _peerTypingTimer?.cancel();
+    if (isClosed) return;
+
+    emit(state.copyWith(isPeerTyping: isTyping));
+    if (isTyping) {
+      _peerTypingTimer = Timer(_peerTypingTimeout, () {
+        if (!isClosed) {
+          emit(state.copyWith(isPeerTyping: false));
+        }
+      });
+    }
+  }
+
   Future<void> resolveChatRoom(String roomId) async {
     try {
       final result = await _chatRepository.resolveChatRoom(roomId);
@@ -174,6 +215,7 @@ class ChatCubit extends Cubit<ChatState> {
 
   @override
   Future<void> close() async {
+    _peerTypingTimer?.cancel();
     await _chatSubscription?.cancel();
     await _chatRepository.terminateChatConnection();
     await _chatRepository.dispose();

@@ -9,8 +9,10 @@ import 'package:shared_core/shared_core.dart';
 class FakeChatRemoteDataSource implements ChatRemoteDataSource {
   bool sent = false;
   String? sentPayload;
+  String? typingPayload;
   String? connectionToken;
   bool disposed = false;
+  Stream<String> eventStream = const Stream.empty();
 
   @override
   Future<void> establishWebSocketConnection(
@@ -27,10 +29,15 @@ class FakeChatRemoteDataSource implements ChatRemoteDataSource {
   }
 
   @override
+  void sendWebSocketTypingStatus(bool isTyping) {
+    typingPayload = jsonEncode({'type': 'typing', 'is_typing': isTyping});
+  }
+
+  @override
   Future<void> terminateWebSocketConnection() async {}
 
   @override
-  Stream<String> get webSocketEventStream => const Stream.empty();
+  Stream<String> get webSocketEventStream => eventStream;
 
   @override
   bool get isWebSocketConnected => true;
@@ -117,6 +124,49 @@ void main() {
       'type': 'message',
       'text': 'On my way',
     });
+  });
+
+  test('sends typing status as an ephemeral chat event', () async {
+    final remoteDataSource = FakeChatRemoteDataSource();
+    final repository = ChatRepository(
+      remoteDataSource: remoteDataSource,
+      currentUserId: '7',
+      clientDio: Dio(),
+    );
+
+    final result = await repository.sendTypingStatus(true);
+
+    expect(result.isRight(), isTrue);
+    expect(jsonDecode(remoteDataSource.typingPayload!), {
+      'type': 'typing',
+      'is_typing': true,
+    });
+  });
+
+  test('maps peer typing events without exposing transport details', () async {
+    final remoteDataSource = FakeChatRemoteDataSource()
+      ..eventStream = Stream<String>.value(
+        jsonEncode({
+          'type': 'typing',
+          'room_id': '303',
+          'sender_id': '8',
+          'is_typing': true,
+        }),
+      );
+    final repository = ChatRepository(
+      remoteDataSource: remoteDataSource,
+      currentUserId: '7',
+      clientDio: Dio(),
+    );
+
+    final event = await repository.chatEventsStream.first;
+
+    ChatEvent? chatEvent;
+    event.fold((_) {}, (value) => chatEvent = value);
+    expect(chatEvent, isA<ChatTypingChanged>());
+    final typingEvent = chatEvent! as ChatTypingChanged;
+    expect(typingEvent.isTyping, isTrue);
+    expect(typingEvent.isFromPeer, isTrue);
   });
 
   test('disposes the websocket data source with the repository', () async {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:driver_app/src/features/chat/bloc/chat/chat_cubit.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
@@ -80,4 +82,49 @@ void main() {
       await cubit.close();
     },
   );
+
+  test('tracks peer typing and clears it when the peer stops', () async {
+    final repository = MockChatRepository();
+    final events = StreamController<Either<Failure, ChatEvent>>();
+    when(
+      () => repository.establishChatConnection(
+        roomId: 'ride-1',
+        chatUri: Uri.parse('wss://example.test/chat/ride-1'),
+        token: any(named: 'token'),
+      ),
+    ).thenAnswer((_) async => const Right(null));
+    when(() => repository.chatEventsStream).thenAnswer((_) => events.stream);
+    when(
+      () => repository.fetchRoomMessages('ride-1'),
+    ).thenAnswer((_) async => const Right(<ChatMessage>[]));
+    when(
+      () => repository.terminateChatConnection(),
+    ).thenAnswer((_) async => const Right(null));
+    when(() => repository.dispose()).thenAnswer((_) async {});
+
+    final cubit = ChatCubit(chatRepository: repository);
+
+    await cubit.connectToChatRoom(
+      roomId: 'ride-1',
+      wsUri: Uri.parse('wss://example.test/chat/ride-1'),
+    );
+    events.add(
+      const Right<Failure, ChatEvent>(
+        ChatTypingChanged(isTyping: true, isFromPeer: true),
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(cubit.state.isPeerTyping, isTrue);
+
+    events.add(
+      const Right<Failure, ChatEvent>(
+        ChatTypingChanged(isTyping: false, isFromPeer: true),
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(cubit.state.isPeerTyping, isFalse);
+
+    await cubit.close();
+    await events.close();
+  });
 }

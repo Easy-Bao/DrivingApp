@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 abstract class ChatRemoteDataSource {
@@ -8,6 +9,8 @@ abstract class ChatRemoteDataSource {
   });
 
   void sendWebSocketChatMessage(String messagePayload);
+
+  void sendWebSocketTypingStatus(bool isTyping);
 
   Future<void> terminateWebSocketConnection();
 
@@ -74,6 +77,14 @@ class WebSocketChatRemoteDataSource implements ChatRemoteDataSource {
     final socket = _chatWebSocket;
     if (socket != null && socket.readyState == WebSocket.open) {
       socket.add(messagePayload);
+    }
+  }
+
+  @override
+  void sendWebSocketTypingStatus(bool isTyping) {
+    final socket = _chatWebSocket;
+    if (socket != null && socket.readyState == WebSocket.open) {
+      socket.add(jsonEncode({'type': 'typing', 'is_typing': isTyping}));
     }
   }
 
