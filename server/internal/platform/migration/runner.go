@@ -88,6 +88,11 @@ func NewRunner(database *sql.DB, client *ent.Client) *Runner {
 				name:    "add_refresh_sessions",
 				apply:   refreshSessionSchema,
 			},
+			{
+				version: 2026082702,
+				name:    "enforce_ride_state_constraints",
+				apply:   applyRideStateConstraints,
+			},
 		},
 	}
 }

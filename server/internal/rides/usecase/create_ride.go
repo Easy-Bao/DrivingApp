@@ -44,7 +44,10 @@ func (service *Service) PricingConfig() PricingConfig {
 	return service.pricingConfig
 }
 func (service *Service) CreateRide(ctx context.Context, passengerID int, fareCentavos int64) (domain.Ride, error) {
-	ride, err := service.repository.CreateRide(ctx, domain.Ride{PassengerID: passengerID, Status: "requested", FareCentavos: fareCentavos, RideType: "Solo Ride"})
+	if passengerID <= 0 || fareCentavos <= 0 {
+		return domain.Ride{}, domain.ErrInvalidTrip
+	}
+	ride, err := service.repository.CreateRide(ctx, domain.Ride{PassengerID: passengerID, Status: string(domain.RideRequested), FareCentavos: fareCentavos, RideType: "Solo Ride"})
 	if err != nil {
 		return domain.Ride{}, err
 	}
@@ -77,6 +80,15 @@ func (service *Service) Get(ctx context.Context, id int) (domain.Ride, error) {
 }
 
 func (service *Service) CreateRideWithDetails(ctx context.Context, ride domain.Ride) (domain.Ride, error) {
+	if ride.PassengerID <= 0 {
+		return domain.Ride{}, domain.ErrInvalidTrip
+	}
+	if ride.Status != "" {
+		status, ok := domain.NormalizeRideStatus(ride.Status)
+		if !ok || status != domain.RideRequested {
+			return domain.Ride{}, domain.ErrInvalidTrip
+		}
+	}
 	metrics, err := service.authoritativeRoute(ctx, ride.PickupLatitude, ride.PickupLongitude, ride.DropoffLatitude, ride.DropoffLongitude, ride.DistanceKm, ride.DurationMinutes)
 	if err != nil {
 		return domain.Ride{}, err
@@ -84,9 +96,7 @@ func (service *Service) CreateRideWithDetails(ctx context.Context, ride domain.R
 	ride.DistanceKm = metrics.DistanceKm
 	ride.DurationMinutes = metrics.DurationMinutes
 	ride.FareCentavos = service.CalculateFare(metrics.DistanceKm, metrics.DurationMinutes)
-	if ride.Status == "" {
-		ride.Status = "requested"
-	}
+	ride.Status = string(domain.RideRequested)
 	if ride.RideType == "" {
 		ride.RideType = "solo"
 	}
@@ -177,28 +187,23 @@ func (service *Service) UpdateStatus(ctx context.Context, rideID, actorID int, n
 	if current.PassengerID != actorID && (current.DriverID == nil || *current.DriverID != actorID) {
 		return domain.Ride{}, domain.ErrUnauthorizedRide
 	}
-	if current.PassengerID == actorID && next != "canceled" && next != "cancelled" {
-		return domain.Ride{}, domain.ErrUnauthorizedRide
-	}
-	if current.DriverID == nil && next != "canceled" && next != "cancelled" {
-		return domain.Ride{}, domain.ErrUnauthorizedRide
-	}
-	allowed := map[string]map[string]bool{
-		"requested":  {"accepted": true, "canceled": true, "cancelled": true},
-		"assigned":   {"arrived": true, "canceled": true, "cancelled": true},
-		"accepted":   {"arrived": true, "canceled": true, "cancelled": true},
-		"arrived":    {"in_transit": true, "canceled": true, "cancelled": true},
-		"in_transit": {"completed": true, "canceled": true, "cancelled": true},
-	}
-	if !allowed[current.Status][next] {
+	currentStatus, currentOK := domain.NormalizeRideStatus(current.Status)
+	nextStatus, nextOK := domain.NormalizeRideStatus(next)
+	if !currentOK || !nextOK || !domain.CanTransition(string(currentStatus), string(nextStatus)) {
 		return domain.Ride{}, domain.ErrInvalidStatusTransition
 	}
-	updated, err := repository.UpdateStatus(ctx, rideID, actorID, current.Status, next)
+	if current.PassengerID == actorID && nextStatus != domain.RideCancelled {
+		return domain.Ride{}, domain.ErrUnauthorizedRide
+	}
+	if current.DriverID == nil && nextStatus != domain.RideCancelled {
+		return domain.Ride{}, domain.ErrUnauthorizedRide
+	}
+	updated, err := repository.UpdateStatus(ctx, rideID, actorID, string(currentStatus), string(nextStatus))
 	if err != nil {
 		return domain.Ride{}, err
 	}
 	service.publishRide(ctx, rideStatusChangedEvent, updated, map[string]any{
-		"previous_status": current.Status,
+		"previous_status": string(currentStatus),
 		"ride":            updated,
 	})
 	return updated, nil

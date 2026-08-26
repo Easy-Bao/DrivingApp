@@ -26,11 +26,30 @@ type Repository struct {
 	platformCommissionBPS int64
 }
 
+var activeRideStatuses = []string{
+	string(domain.RideRequested),
+	string(domain.RideAssigned),
+	string(domain.RideAccepted),
+	string(domain.RideArrived),
+	string(domain.RideInTransit),
+}
+
 func NewRepository(client *ent.Client, platformCommissionBPS int64) *Repository {
 	return &Repository{client: client, platformCommissionBPS: platformCommissionBPS}
 }
 func (repository *Repository) CreateRide(ctx context.Context, value domain.Ride) (domain.Ride, error) {
-	builder := repository.client.Ride.Create().SetPassengerID(value.PassengerID).SetStatus(value.Status).SetFareCentavos(value.FareCentavos).SetRideType(value.RideType)
+	if value.PassengerID <= 0 || value.FareCentavos <= 0 {
+		return domain.Ride{}, domain.ErrInvalidTrip
+	}
+	status := value.Status
+	if status == "" {
+		status = string(domain.RideRequested)
+	}
+	normalizedStatus, ok := domain.NormalizeRideStatus(status)
+	if !ok || normalizedStatus != domain.RideRequested {
+		return domain.Ride{}, domain.ErrInvalidTrip
+	}
+	builder := repository.client.Ride.Create().SetPassengerID(value.PassengerID).SetStatus(string(normalizedStatus)).SetFareCentavos(value.FareCentavos).SetRideType(value.RideType)
 	builder.SetPickupLatitude(value.PickupLatitude).SetPickupLongitude(value.PickupLongitude).SetPickupName(value.PickupName)
 	builder.SetDropoffLatitude(value.DropoffLatitude).SetDropoffLongitude(value.DropoffLongitude).SetDropoffName(value.DropoffName)
 	builder.SetDistanceKm(value.DistanceKm).SetDurationMinutes(value.DurationMinutes)
@@ -41,6 +60,15 @@ func (repository *Repository) CreateRide(ctx context.Context, value domain.Ride)
 	return fromRide(item), nil
 }
 func (repository *Repository) CreateBid(ctx context.Context, value domain.Bid) (domain.Bid, error) {
+	if value.RideID <= 0 || value.DriverID <= 0 || value.FareCentavos <= 0 {
+		return domain.Bid{}, domain.ErrInvalidFareOffer
+	}
+	if value.Status == "" {
+		value.Status = "pending"
+	}
+	if value.Status != "pending" {
+		return domain.Bid{}, domain.ErrInvalidFareOffer
+	}
 	transaction, err := repository.client.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
 	if err != nil {
 		return domain.Bid{}, err
@@ -86,7 +114,7 @@ func (repository *Repository) Get(ctx context.Context, id int) (domain.Ride, err
 func (repository *Repository) ActiveRidesForDriver(ctx context.Context, driverID int) ([]domain.Ride, error) {
 	items, err := repository.client.Ride.Query().Where(
 		ride.DriverIDEQ(driverID),
-		ride.StatusIn("assigned", "accepted", "arrived", "in_transit"),
+		ride.StatusIn(activeRideStatuses...),
 	).Order(ride.ByID()).All(ctx)
 	if err != nil {
 		return nil, err
@@ -112,7 +140,7 @@ func (repository *Repository) AcceptBid(ctx context.Context, bidID, driverID int
 		_ = transaction.Rollback()
 		return domain.Bid{}, domain.Ride{}, domain.ErrDriverUnavailable
 	}
-	active, err := transaction.Ride.Query().Where(ride.DriverIDEQ(profile.UserID), ride.StatusIn("assigned", "accepted", "arrived", "in_transit")).Count(ctx)
+	active, err := transaction.Ride.Query().Where(ride.DriverIDEQ(profile.UserID), ride.StatusIn(activeRideStatuses...)).Count(ctx)
 	if err != nil {
 		_ = transaction.Rollback()
 		return domain.Bid{}, domain.Ride{}, err
@@ -177,7 +205,7 @@ func (repository *Repository) AcceptRide(ctx context.Context, rideID, driverID i
 	if err != nil {
 		return domain.Ride{}, err
 	}
-	active, err := transaction.Ride.Query().Where(ride.DriverIDEQ(driverID), ride.StatusIn("assigned", "accepted", "arrived", "in_transit")).Count(ctx)
+	active, err := transaction.Ride.Query().Where(ride.DriverIDEQ(driverID), ride.StatusIn(activeRideStatuses...)).Count(ctx)
 	if err != nil {
 		return domain.Ride{}, err
 	}
@@ -294,8 +322,13 @@ func (repository *Repository) SettleCash(ctx context.Context, rideID, driverID i
 }
 
 func (repository *Repository) UpdateStatus(ctx context.Context, rideID, actorID int, currentStatus, status string) (domain.Ride, error) {
-	update := repository.client.Ride.UpdateOneID(rideID).Where(ride.StatusEQ(currentStatus), ride.Or(ride.PassengerIDEQ(actorID), ride.DriverIDEQ(actorID))).SetStatus(status)
-	if status == "completed" || status == "canceled" || status == "cancelled" {
+	current, currentOK := domain.NormalizeRideStatus(currentStatus)
+	next, nextOK := domain.NormalizeRideStatus(status)
+	if !currentOK || !nextOK {
+		return domain.Ride{}, domain.ErrInvalidStatusTransition
+	}
+	update := repository.client.Ride.UpdateOneID(rideID).Where(ride.StatusEQ(string(current)), ride.Or(ride.PassengerIDEQ(actorID), ride.DriverIDEQ(actorID))).SetStatus(string(next))
+	if domain.IsTerminal(string(next)) {
 		update.SetCompletedAt(time.Now())
 	}
 	item, err := update.Save(ctx)
@@ -311,21 +344,22 @@ func (repository *Repository) CreateSession(ctx context.Context, value domain.Bi
 		return domain.BidSession{}, err
 	}
 	defer transaction.Rollback()
+	now := time.Now()
 	if _, err := transaction.BidSession.Update().Where(
 		bidsession.PassengerIDEQ(value.PassengerID),
 		bidsession.StatusEQ("open"),
-		bidsession.ExpiresAtLTE(time.Now()),
+		bidsession.ExpiresAtLTE(now),
 	).SetStatus("expired").Save(ctx); err != nil {
 		return domain.BidSession{}, err
 	}
-	activeSession, err := transaction.BidSession.Query().Where(bidsession.PassengerIDEQ(value.PassengerID), bidsession.StatusEQ("open"), bidsession.ExpiresAtGT(time.Now())).Exist(ctx)
+	activeSession, err := transaction.BidSession.Query().Where(bidsession.PassengerIDEQ(value.PassengerID), bidsession.StatusEQ("open"), bidsession.ExpiresAtGT(now)).Exist(ctx)
 	if err != nil {
 		return domain.BidSession{}, err
 	}
 	if activeSession {
 		return domain.BidSession{}, domain.ErrActiveBooking
 	}
-	activeRide, err := transaction.Ride.Query().Where(ride.PassengerIDEQ(value.PassengerID), ride.StatusIn("requested", "assigned", "accepted", "arrived", "in_transit")).Exist(ctx)
+	activeRide, err := transaction.Ride.Query().Where(ride.PassengerIDEQ(value.PassengerID), ride.StatusIn(activeRideStatuses...)).Exist(ctx)
 	if err != nil {
 		return domain.BidSession{}, err
 	}
@@ -367,14 +401,15 @@ func (repository *Repository) CreateSession(ctx context.Context, value domain.Bi
 }
 
 func (repository *Repository) ActiveSessions(ctx context.Context, driverID *int) ([]domain.BidSession, error) {
-	query := repository.client.BidSession.Query().Where(bidsession.StatusEQ("open"), bidsession.ExpiresAtGT(time.Now()))
+	now := time.Now()
+	query := repository.client.BidSession.Query().Where(bidsession.StatusEQ("open"), bidsession.ExpiresAtGT(now))
 	pendingSessionIDs := map[int]struct{}{}
 	if driverID != nil {
 		profile, err := repository.client.DriverProfile.Query().Where(driverprofile.UserIDEQ(*driverID), driverprofile.IsOnlineEQ(true)).Only(ctx)
 		if err != nil {
 			return nil, domain.ErrDriverUnavailable
 		}
-		active, err := repository.client.Ride.Query().Where(ride.DriverIDEQ(profile.UserID), ride.StatusIn("assigned", "accepted", "arrived", "in_transit")).Count(ctx)
+		active, err := repository.client.Ride.Query().Where(ride.DriverIDEQ(profile.UserID), ride.StatusIn(activeRideStatuses[1:]...)).Count(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -420,37 +455,50 @@ func (repository *Repository) Offers(ctx context.Context, sessionID int) ([]doma
 }
 
 func (repository *Repository) PlaceOffer(ctx context.Context, value domain.BidOffer) (domain.BidOffer, error) {
-	session, err := repository.client.BidSession.Get(ctx, value.SessionID)
-	if err != nil || session.Status != "open" || !session.ExpiresAt.After(time.Now()) {
+	transaction, err := repository.client.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	if err != nil {
+		return domain.BidOffer{}, err
+	}
+	defer transaction.Rollback()
+	now := time.Now()
+	session, err := transaction.BidSession.Query().Where(
+		bidsession.IDEQ(value.SessionID),
+		bidsession.StatusEQ("open"),
+		bidsession.ExpiresAtGT(now),
+	).Only(ctx)
+	if err != nil {
 		return domain.BidOffer{}, domain.ErrDriverUnavailable
 	}
 	if session.TargetDriverID != 0 && session.TargetDriverID != value.DriverID {
 		return domain.BidOffer{}, domain.ErrDriverUnavailable
 	}
-	profile, err := repository.client.DriverProfile.Query().Where(driverprofile.UserIDEQ(value.DriverID), driverprofile.IsOnlineEQ(true)).Only(ctx)
+	profile, err := transaction.DriverProfile.Query().Where(driverprofile.UserIDEQ(value.DriverID), driverprofile.IsOnlineEQ(true)).Only(ctx)
 	if err != nil {
 		return domain.BidOffer{}, domain.ErrDriverUnavailable
 	}
-	active, err := repository.client.Ride.Query().Where(ride.DriverIDEQ(profile.UserID), ride.StatusIn("assigned", "accepted", "arrived", "in_transit")).Count(ctx)
+	active, err := transaction.Ride.Query().Where(ride.DriverIDEQ(profile.UserID), ride.StatusIn(activeRideStatuses...)).Count(ctx)
 	if err != nil {
 		return domain.BidOffer{}, err
 	}
 	if active >= 5 {
 		return domain.BidOffer{}, domain.ErrDriverAtCapacity
 	}
-	existing, err := repository.client.BidOffer.Query().Where(bidoffer.SessionIDEQ(value.SessionID), bidoffer.DriverIDEQ(value.DriverID), bidoffer.StatusEQ("pending")).Exist(ctx)
+	existing, err := transaction.BidOffer.Query().Where(bidoffer.SessionIDEQ(value.SessionID), bidoffer.DriverIDEQ(value.DriverID), bidoffer.StatusEQ("pending")).Exist(ctx)
 	if err != nil {
 		return domain.BidOffer{}, err
 	}
 	if existing {
 		return domain.BidOffer{}, domain.ErrDuplicateBid
 	}
-	builder := repository.client.BidOffer.Create().SetSessionID(value.SessionID).SetDriverID(value.DriverID).SetDriverName(profile.Name).SetPlateNumber(profile.PlateNumber).SetVehicleType(profile.VehicleType).SetProposedFareCentavos(value.ProposedFareCentavos).SetStatus("pending")
+	builder := transaction.BidOffer.Create().SetSessionID(value.SessionID).SetDriverID(value.DriverID).SetDriverName(profile.Name).SetPlateNumber(profile.PlateNumber).SetVehicleType(profile.VehicleType).SetProposedFareCentavos(value.ProposedFareCentavos).SetStatus("pending")
 	item, err := builder.Save(ctx)
 	if err != nil {
 		if ent.IsConstraintError(err) {
 			return domain.BidOffer{}, domain.ErrDuplicateBid
 		}
+		return domain.BidOffer{}, err
+	}
+	if err := transaction.Commit(); err != nil {
 		return domain.BidOffer{}, err
 	}
 	return fromOffer(item), nil
@@ -461,7 +509,9 @@ func (repository *Repository) AcceptOffer(ctx context.Context, sessionID, offerI
 	if err != nil {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
 	}
-	session, err := transaction.BidSession.Query().Where(bidsession.IDEQ(sessionID), bidsession.StatusEQ("open"), bidsession.ExpiresAtGT(time.Now())).Only(ctx)
+	defer transaction.Rollback()
+	now := time.Now()
+	session, err := transaction.BidSession.Query().Where(bidsession.IDEQ(sessionID), bidsession.StatusEQ("open"), bidsession.ExpiresAtGT(now)).Only(ctx)
 	if err != nil {
 		_ = transaction.Rollback()
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
@@ -485,7 +535,7 @@ func (repository *Repository) AcceptOffer(ctx context.Context, sessionID, offerI
 		_ = transaction.Rollback()
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, domain.ErrDriverUnavailable
 	}
-	activeDriverRides, err := transaction.Ride.Query().Where(ride.DriverIDEQ(profile.UserID), ride.StatusIn("assigned", "accepted", "arrived", "in_transit")).Count(ctx)
+	activeDriverRides, err := transaction.Ride.Query().Where(ride.DriverIDEQ(profile.UserID), ride.StatusIn(activeRideStatuses...)).Count(ctx)
 	if err != nil {
 		_ = transaction.Rollback()
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
@@ -494,7 +544,7 @@ func (repository *Repository) AcceptOffer(ctx context.Context, sessionID, offerI
 		_ = transaction.Rollback()
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, domain.ErrDriverAtCapacity
 	}
-	activePassengerRide, err := transaction.Ride.Query().Where(ride.PassengerIDEQ(session.PassengerID), ride.StatusIn("requested", "assigned", "accepted", "arrived", "in_transit")).Exist(ctx)
+	activePassengerRide, err := transaction.Ride.Query().Where(ride.PassengerIDEQ(session.PassengerID), ride.StatusIn(activeRideStatuses...)).Exist(ctx)
 	if err != nil {
 		_ = transaction.Rollback()
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
@@ -578,7 +628,7 @@ func (repository *Repository) AcceptOffer(ctx context.Context, sessionID, offerI
 }
 
 func (repository *Repository) CancelSession(ctx context.Context, sessionID, passengerID int) (domain.BidSession, error) {
-	item, err := repository.client.BidSession.UpdateOneID(sessionID).Where(bidsession.PassengerIDEQ(passengerID), bidsession.StatusEQ("open")).SetStatus("canceled").Save(ctx)
+	item, err := repository.client.BidSession.UpdateOneID(sessionID).Where(bidsession.PassengerIDEQ(passengerID), bidsession.StatusEQ("open")).SetStatus("cancelled").Save(ctx)
 	if err != nil {
 		return domain.BidSession{}, err
 	}
@@ -735,7 +785,7 @@ func completedDuring(selector *entsql.Selector, start, end string) string {
 func (repository *Repository) DriverTrips(ctx context.Context, driverID int, history domain.TripHistoryQuery) ([]domain.Ride, error) {
 	query := repository.client.Ride.Query().Where(ride.DriverIDEQ(driverID))
 	if history.ActiveOnly {
-		query = query.Where(ride.StatusIn("assigned", "accepted", "arrived", "in_transit"))
+		query = query.Where(ride.StatusIn(activeRideStatuses[1:]...))
 	}
 	items, err := query.
 		Order(ride.ByCreatedAt(entsql.OrderDesc()), ride.ByID(entsql.OrderDesc())).
@@ -1071,7 +1121,7 @@ func (repository *Repository) OnlineDrivers(ctx context.Context, driverIDs []int
 		}
 		if err := repository.client.Ride.Query().Where(
 			ride.DriverIDIn(availableIDs...),
-			ride.StatusIn("assigned", "accepted", "arrived", "in_transit"),
+			ride.StatusIn(activeRideStatuses[1:]...),
 		).GroupBy(ride.FieldDriverID).Aggregate(
 			ent.As(ent.Count(), "passenger_count"),
 		).Scan(ctx, &countRows); err != nil {

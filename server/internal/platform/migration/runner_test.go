@@ -50,7 +50,23 @@ func TestIntegrityMigrationIncludesFinancialAndParticipantConstraints(t *testing
 func TestMigrationPlanEndsWithRefreshSessions(t *testing.T) {
 	runner := NewRunner(nil, nil)
 	last := runner.migrations[len(runner.migrations)-1]
-	if last.version != 2026082701 || last.name != "add_refresh_sessions" {
+	if last.version != 2026082702 || last.name != "enforce_ride_state_constraints" {
 		t.Fatalf("last migration = %d %q", last.version, last.name)
+	}
+}
+
+func TestRideStateMigrationCanonicalizesAndConstrainsStatuses(t *testing.T) {
+	joined := strings.Join(rideStateConstraintStatements, "\n")
+	for _, expected := range []string{
+		"UPDATE rides SET status = 'cancelled' WHERE status = 'canceled'",
+		"rides_status_check",
+		"rides_driver_assignment_check",
+		"bid_sessions_status_check",
+		"ride_settlements_payment_status_check",
+		"VALIDATE CONSTRAINT rides_status_check",
+	} {
+		if !strings.Contains(joined, expected) {
+			t.Fatalf("ride state migration is missing %q", expected)
+		}
 	}
 }
