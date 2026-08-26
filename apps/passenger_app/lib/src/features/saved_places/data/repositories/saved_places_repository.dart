@@ -52,6 +52,7 @@ class SavedPlacesRepository implements ISavedPlacesRepository {
               savedAddress: p.savedAddress,
               latitude: p.latitude,
               longitude: p.longitude,
+              isDefault: p.isDefault,
             ),
           )
           .toList();

@@ -154,6 +154,40 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
                 const SizedBox(height: 16),
                 const Divider(height: 1, color: AppTheme.borderSide),
                 ListTile(
+                  leading: Icon(
+                    place.isDefault
+                        ? LucideIcons.circle_check
+                        : LucideIcons.circle,
+                    color: place.isDefault
+                        ? AppTheme.primaryColor
+                        : AppTheme.tertiaryColor,
+                  ),
+                  title: Text(
+                    place.isDefault
+                        ? 'Default Home quick action'
+                        : 'Set as Home quick action',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                  subtitle: Text(
+                    place.isDefault
+                        ? 'Shown as the only saved place on Home'
+                        : 'Show this place as the only saved place on Home',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.primaryColor.withValues(alpha: 0.55),
+                    ),
+                  ),
+                  onTap: place.isDefault
+                      ? () => Navigator.of(sheetContext).pop()
+                      : () {
+                          Navigator.of(sheetContext).pop();
+                          unawaited(_setDefaultPlace(index));
+                        },
+                ),
+                ListTile(
                   leading: const Icon(
                     LucideIcons.pencil,
                     color: AppTheme.primaryColor,
@@ -202,6 +236,17 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
         },
       ),
     );
+  }
+
+  Future<void> _setDefaultPlace(int index) async {
+    final cubit = BlocProvider.of<SavedPlacesCubit>(context);
+    await cubit.setDefaultPlace(index);
+    if (!mounted) return;
+
+    final error = cubit.state.errorMessage;
+    if (error != null) {
+      CustomToast.show(context, error, isError: true);
+    }
   }
 
   @override
@@ -305,6 +350,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
           label: 'Home',
           address: homePlace?.savedAddress ?? 'Choose a location',
           isConfigured: homePlace != null,
+          isDefault: homePlace?.isDefault ?? false,
           onTap: () {
             if (homePlace == null) {
               unawaited(_addOrUpdatePlace('Home', 'house'));
@@ -319,6 +365,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
           label: 'Work',
           address: workPlace?.savedAddress ?? 'Choose a location',
           isConfigured: workPlace != null,
+          isDefault: workPlace?.isDefault ?? false,
           onTap: () {
             if (workPlace == null) {
               unawaited(_addOrUpdatePlace('Work', 'briefcase'));
@@ -337,6 +384,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
               label: place.label,
               address: place.savedAddress ?? 'Location unavailable',
               isConfigured: place.hasLocation,
+              isDefault: place.isDefault,
               onTap: () => _showPlaceOptions(place, indexForPlace(place)),
             ),
             const SizedBox(height: 12),
@@ -420,6 +468,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
     required String label,
     required String address,
     required bool isConfigured,
+    required bool isDefault,
     required VoidCallback onTap,
   }) {
     return InkWell(
@@ -482,11 +531,28 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
                 ],
               ),
             ),
-            Icon(
-              isConfigured ? LucideIcons.pencil : LucideIcons.plus,
-              color: AppTheme.tertiaryColor,
-              size: isConfigured ? 16 : 18,
-            ),
+            if (isDefault)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.secondaryColor,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Text(
+                  'Default',
+                  style: TextStyle(
+                    color: AppTheme.primaryColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              )
+            else
+              Icon(
+                isConfigured ? LucideIcons.pencil : LucideIcons.plus,
+                color: AppTheme.tertiaryColor,
+                size: isConfigured ? 16 : 18,
+              ),
           ],
         ),
       ),

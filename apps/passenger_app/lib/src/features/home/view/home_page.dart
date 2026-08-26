@@ -18,13 +18,13 @@ import 'package:passenger_app/src/features/home/view/widgets/pending_booking_ban
 import 'package:passenger_app/src/features/home/view/widgets/public_driver_summary_card_widget.dart';
 import 'package:passenger_app/src/features/home/view/widgets/recent_activity_empty_state_widget.dart';
 import 'package:passenger_app/src/features/home/view/widgets/recent_ride_history_preview_widget.dart';
+import 'package:passenger_app/src/features/home/view/widgets/saved_place_quick_actions_widget.dart';
 import 'package:passenger_app/src/features/location/bloc/location_access/location_access_cubit.dart';
 import 'package:passenger_app/src/features/location/bloc/location_access/location_access_state.dart';
 import 'package:passenger_app/src/features/location/location_routes.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_state.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
-import 'package:passenger_app/src/features/saved_places/view/saved_place_icon.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking/booking_bloc.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
@@ -154,37 +154,22 @@ class _HomePageState extends State<HomePage> {
                       borderRadius: BorderRadius.all(Radius.circular(20)),
                     ),
                   ),
-                  Bone.button(
-                    width: 90,
-                    height: 38,
-                    borderRadius: BorderRadius.all(Radius.circular(20)),
-                  ),
                 ],
               ),
             ),
           );
         }
 
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          child: Row(
-            children: [
-              ...state.places.asMap().entries.map((entry) {
-                final index = entry.key;
-                final place = entry.value;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 10),
-                  child: GestureDetector(
-                    onTap: () => _handleSavedPlaceTap(place),
-                    onLongPress: () => _showChipOptions(index, place.label),
-                    child: _buildSavedPlaceChip(place),
-                  ),
-                );
-              }),
-              _buildAddPlaceChip(),
-            ],
-          ),
+        return SavedPlaceQuickActionsWidget(
+          places: state.places,
+          onPlaceTap: (place) => unawaited(_handleSavedPlaceTap(place)),
+          onPlaceLongPress: (place) {
+            final index = state.places.indexOf(place);
+            if (index >= 0) {
+              unawaited(_showChipOptions(index, place.label));
+            }
+          },
+          onAddPlace: _openNewSavedPlaceFlow,
         );
       },
     );
@@ -401,41 +386,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildAddPlaceChip() {
-    return GestureDetector(
-      onTap: _openNewSavedPlaceFlow,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-        decoration: BoxDecoration(
-          color: AppTheme.surface.withValues(alpha: 0),
-          border: Border.all(
-            color: AppTheme.primaryColor.withValues(alpha: 0.25),
-          ),
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              LucideIcons.plus,
-              size: 16,
-              color: AppTheme.primaryColor.withValues(alpha: 0.7),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              'Add place',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.primaryColor.withValues(alpha: 0.7),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> _openNewSavedPlaceFlow() async {
     if (_isSavedPlaceFlowOpen) return;
     _isSavedPlaceFlowOpen = true;
@@ -459,49 +409,6 @@ class _HomePageState extends State<HomePage> {
     } finally {
       _isSavedPlaceFlowOpen = false;
     }
-  }
-
-  Widget _buildSavedPlaceChip(SavedPlace place) {
-    final hasLocation = place.hasLocation;
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-      decoration: BoxDecoration(
-        color: hasLocation
-            ? AppTheme.activeControlBackground
-            : AppTheme.interactiveSurface,
-        border: Border.all(
-          color: hasLocation
-              ? AppTheme.activeControlBackground
-              : AppTheme.borderSide,
-          width: hasLocation ? 1.5 : 1.0,
-        ),
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            _iconFromName(place.iconName),
-            size: 16,
-            color: hasLocation
-                ? AppTheme.activeControlForeground
-                : AppTheme.primaryColor,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            place.label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: hasLocation
-                  ? AppTheme.activeControlForeground
-                  : AppTheme.primaryColor,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildSearchBar() {
@@ -601,8 +508,6 @@ class _HomePageState extends State<HomePage> {
       }
     }
   }
-
-  IconData _iconFromName(String name) => savedPlaceIconFromName(name);
 
   Future<void> _loadSavedPlaces() async {
     if (!mounted) return;

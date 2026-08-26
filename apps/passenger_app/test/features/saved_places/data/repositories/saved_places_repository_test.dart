@@ -32,6 +32,7 @@ void main() {
         savedAddress: 'Mountain View',
         latitude: 14.5995,
         longitude: 120.9842,
+        isDefault: true,
       ),
     ]);
 
@@ -39,5 +40,6 @@ void main() {
     expect(stored.single['label'], 'Home');
     expect(stored.single['savedAddress'], 'Mountain View');
     expect(stored.single['latitude'], 14.5995);
+    expect(stored.single['isDefault'], isTrue);
   });
 }

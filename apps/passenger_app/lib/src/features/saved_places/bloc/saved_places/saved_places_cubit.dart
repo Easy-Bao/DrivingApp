@@ -3,6 +3,7 @@ import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_
 import 'package:passenger_app/src/features/saved_places/data/models/saved_place_model.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/features/saved_places/domain/repositories/i_saved_places_repository.dart';
+import 'package:passenger_app/src/features/saved_places/domain/saved_place_defaults.dart';
 import 'package:shared_core/shared_core.dart';
 
 class SavedPlacesCubit extends Cubit<SavedPlacesState> {
@@ -17,11 +18,24 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
 
     try {
       final rawPlaces = await _repository.loadPlaces();
-      final models = rawPlaces
+      final parsedPlaces = rawPlaces
           .map((raw) => SavedPlaceModel.fromJson(raw))
           .toList();
+      final places = normalizeSavedPlaceDefaults(parsedPlaces);
+      String? repairErrorMessage;
+      if (_needsDefaultRepair(parsedPlaces)) {
+        try {
+          await _repository.savePlaces(places);
+        } catch (error, stackTrace) {
+          repairErrorMessage = ErrorHandler.getErrorMessage(error, stackTrace);
+        }
+      }
       emit(
-        SavedPlacesState(places: models, isLoading: false, errorMessage: null),
+        SavedPlacesState(
+          places: places,
+          isLoading: false,
+          errorMessage: repairErrorMessage,
+        ),
       );
     } catch (error) {
       emit(
@@ -35,43 +49,51 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
   }
 
   Future<void> addPlace(SavedPlace place) async {
-    final previous = state;
-    final updated = [...state.places, place];
-    emit(state.copyWith(places: updated, clearErrorMessage: true));
-    try {
-      await _repository.savePlaces(updated);
-    } catch (error) {
-      emit(
-        previous.copyWith(errorMessage: ErrorHandler.getErrorMessage(error)),
-      );
-    }
+    await _persistPlaces([...state.places, place]);
   }
 
   Future<void> removePlace(int index) async {
     if (index < 0 || index >= state.places.length) return;
-    final previous = state;
     final updated = [...state.places]..removeAt(index);
-    emit(state.copyWith(places: updated, clearErrorMessage: true));
-    try {
-      await _repository.savePlaces(updated);
-    } catch (error) {
-      emit(
-        previous.copyWith(errorMessage: ErrorHandler.getErrorMessage(error)),
-      );
-    }
+    await _persistPlaces(updated);
   }
 
   Future<void> replacePlace(int index, SavedPlace place) async {
     if (index < 0 || index >= state.places.length) return;
+    final replacement = place.copyWith(
+      isDefault: place.isDefault || state.places[index].isDefault,
+    );
+    final updated = [...state.places]..[index] = replacement;
+    await _persistPlaces(updated);
+  }
+
+  Future<void> setDefaultPlace(int index) async {
+    if (index < 0 || index >= state.places.length) return;
+
+    final updated = [
+      for (var placeIndex = 0; placeIndex < state.places.length; placeIndex++)
+        state.places[placeIndex].copyWith(isDefault: placeIndex == index),
+    ];
+    await _persistPlaces(updated);
+  }
+
+  Future<void> _persistPlaces(List<SavedPlace> places) async {
     final previous = state;
-    final updated = [...state.places]..[index] = place;
-    emit(state.copyWith(places: updated, clearErrorMessage: true));
+    final normalizedPlaces = normalizeSavedPlaceDefaults(places);
+    emit(state.copyWith(places: normalizedPlaces, clearErrorMessage: true));
     try {
-      await _repository.savePlaces(updated);
-    } catch (error) {
+      await _repository.savePlaces(normalizedPlaces);
+    } catch (error, stackTrace) {
       emit(
-        previous.copyWith(errorMessage: ErrorHandler.getErrorMessage(error)),
+        previous.copyWith(
+          errorMessage: ErrorHandler.getErrorMessage(error, stackTrace),
+        ),
       );
     }
+  }
+
+  bool _needsDefaultRepair(List<SavedPlace> places) {
+    if (places.isEmpty) return false;
+    return places.where((place) => place.isDefault).length != 1;
   }
 }

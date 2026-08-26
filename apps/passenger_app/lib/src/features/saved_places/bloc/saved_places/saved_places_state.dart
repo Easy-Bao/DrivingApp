@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
+import 'package:passenger_app/src/features/saved_places/domain/saved_place_defaults.dart';
 
 class SavedPlacesState extends Equatable {
   final List<SavedPlace> places;
@@ -26,6 +27,10 @@ class SavedPlacesState extends Equatable {
           : errorMessage ?? this.errorMessage,
     );
   }
+
+  int get defaultPlaceIndex => defaultSavedPlaceIndex(places);
+
+  SavedPlace? get defaultPlace => defaultSavedPlace(places);
 
   @override
   List<Object?> get props => [places, isLoading, errorMessage];

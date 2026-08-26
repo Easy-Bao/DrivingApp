@@ -9,6 +9,7 @@ class SavedPlaceModel extends SavedPlace {
     super.savedAddress,
     super.latitude,
     super.longitude,
+    super.isDefault,
   });
 
   Map<String, dynamic> toJson() => {
@@ -17,6 +18,7 @@ class SavedPlaceModel extends SavedPlace {
     if (savedAddress != null) 'savedAddress': savedAddress,
     if (latitude != null) 'latitude': latitude,
     if (longitude != null) 'longitude': longitude,
+    'isDefault': isDefault,
   };
 
   factory SavedPlaceModel.fromJson(Map<String, dynamic> json) {
@@ -29,10 +31,23 @@ class SavedPlaceModel extends SavedPlace {
       savedAddress: savedAddress.isEmpty ? null : savedAddress,
       latitude: SafeParse.toNullableDouble(json['latitude']),
       longitude: SafeParse.toNullableDouble(json['longitude']),
+      isDefault: _parseBoolean(json['isDefault'] ?? json['is_default']),
     );
   }
 
   static String encodeList(List<SavedPlaceModel> places) {
     return jsonEncode(places.map((p) => p.toJson()).toList());
   }
+}
+
+bool _parseBoolean(Object? value) {
+  return switch (value) {
+    final bool booleanValue => booleanValue,
+    final num numericValue => numericValue != 0,
+    final String stringValue => switch (stringValue.trim().toLowerCase()) {
+      'true' || '1' => true,
+      _ => false,
+    },
+    _ => false,
+  };
 }
