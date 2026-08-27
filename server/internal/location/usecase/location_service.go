@@ -113,7 +113,7 @@ func (service *LocationService) Route(ctx context.Context, origin, destination d
 	}
 	normalizedOptions, err := options.Normalize()
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrInvalidRouteOptions, err)
+		return nil, fmt.Errorf("%w: %w", ErrInvalidRouteOptions, err)
 	}
 	return service.provider.Route(ctx, origin, destination, normalizedOptions)
 }

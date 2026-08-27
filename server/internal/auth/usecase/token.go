@@ -110,5 +110,5 @@ func unavailableSessionError(err error) error {
 	if err == nil {
 		return domain.ErrRefreshSessionUnavailable
 	}
-	return fmt.Errorf("%w: %v", domain.ErrRefreshSessionUnavailable, err)
+	return fmt.Errorf("%w: %w", domain.ErrRefreshSessionUnavailable, err)
 }
