@@ -1,5 +1,6 @@
 import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:shared_core/shared_core.dart';
 
@@ -7,16 +8,25 @@ class DriverDashboardStatsRowWidget extends StatelessWidget {
   final bool isLoadingStats;
   final double earnings;
   final int completedTrips;
+  final String? errorMessage;
+  final VoidCallback? onRetry;
 
   const DriverDashboardStatsRowWidget({
     super.key,
     required this.isLoadingStats,
     required this.earnings,
     required this.completedTrips,
+    this.errorMessage,
+    this.onRetry,
   });
 
   @override
   Widget build(BuildContext context) {
+    final errorMessage = this.errorMessage;
+    if (errorMessage != null && !isLoadingStats) {
+      return _buildErrorCard(errorMessage);
+    }
+
     return Skeletonizer.zone(
       enabled: isLoadingStats,
       child: Padding(
@@ -38,6 +48,45 @@ class DriverDashboardStatsRowWidget extends StatelessWidget {
                 skeletonWidth: 32,
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorCard(String message) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF4F4),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFFFC5C5)),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              LucideIcons.circle_alert,
+              size: 20,
+              color: Color(0xFFD92D3A),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(
+                  fontSize: 12,
+                  height: 1.35,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF8F1D29),
+                ),
+              ),
+            ),
+            if (onRetry != null) ...[
+              const SizedBox(width: 8),
+              TextButton(onPressed: onRetry, child: const Text('Try again')),
+            ],
           ],
         ),
       ),

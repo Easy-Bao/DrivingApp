@@ -8,30 +8,58 @@ import 'package:shared_core/shared_core.dart';
 class DashboardCubit extends Cubit<DashboardState> {
   final IDashboardRepository _repository;
   bool _isDispatchRequestInFlight = false;
+  Future<void>? _initialization;
 
   DashboardCubit({required IDashboardRepository repository})
     : _repository = repository,
       super(const DashboardState());
 
   Future<void> initialize() async {
-    final onlineStatusResult = await _repository.getPersistedOnlineStatus();
-    onlineStatusResult.fold(
-      (failure) =>
-          dev.log('Unable to restore driver online status: ${failure.message}'),
-      (isOnline) => emit(state.copyWith(isOnline: isOnline)),
-    );
+    final existingInitialization = _initialization;
+    if (existingInitialization != null) {
+      await existingInitialization;
+      return;
+    }
+
+    final initialization = _initialize();
+    _initialization = initialization;
+    try {
+      await initialization;
+    } finally {
+      if (identical(_initialization, initialization)) {
+        _initialization = null;
+      }
+    }
+  }
+
+  Future<void> _initialize() async {
+    try {
+      final onlineStatusResult = await _repository.getPersistedOnlineStatus();
+      onlineStatusResult.fold(
+        (failure) => dev.log(
+          'Unable to restore driver online status: ${failure.message}',
+        ),
+        (isOnline) => emit(state.copyWith(isOnline: isOnline)),
+      );
+    } catch (error, stackTrace) {
+      dev.log(
+        'Unable to restore driver online status.',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
     await loadStats();
   }
 
   Future<void> loadStats() async {
-    emit(state.copyWith(isLoadingStats: true, errorMessage: null));
+    emit(state.copyWith(isLoadingStats: true, statsErrorMessage: null));
     try {
       final result = await _repository.getDashboardStats();
       result.fold(
         (failure) => emit(
           state.copyWith(
             isLoadingStats: false,
-            errorMessage: ErrorHandler.getErrorMessage(failure),
+            statsErrorMessage: ErrorHandler.getErrorMessage(failure),
           ),
         ),
         (stats) => emit(
@@ -39,7 +67,7 @@ class DashboardCubit extends Cubit<DashboardState> {
             isLoadingStats: false,
             earnings: stats.earnings,
             completedTrips: stats.completedTrips,
-            errorMessage: null,
+            statsErrorMessage: null,
           ),
         ),
       );
@@ -48,7 +76,7 @@ class DashboardCubit extends Cubit<DashboardState> {
       emit(
         state.copyWith(
           isLoadingStats: false,
-          errorMessage: ErrorHandler.getErrorMessage(error),
+          statsErrorMessage: ErrorHandler.getErrorMessage(error),
         ),
       );
     }

@@ -81,7 +81,7 @@ void main() {
         const DashboardState(isLoadingStats: true),
         const DashboardState(
           isLoadingStats: false,
-          errorMessage:
+          statsErrorMessage:
               'We encountered an unexpected issue while processing your request. Please try again in a few moments.',
         ),
       ],
@@ -108,6 +108,24 @@ void main() {
         await cubit.close();
       },
     );
+
+    test('coalesces concurrent initialization requests', () async {
+      when(() => repo.getPersistedOnlineStatus()).thenAnswer((_) async {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        return const Right(false);
+      });
+      when(() => repo.getDashboardStats()).thenAnswer(
+        (_) async =>
+            const Right(DriverDashboardStats(earnings: 0, completedTrips: 0)),
+      );
+
+      final cubit = _makeCubit(repo);
+      await Future.wait([cubit.initialize(), cubit.initialize()]);
+
+      verify(() => repo.getPersistedOnlineStatus()).called(1);
+      verify(() => repo.getDashboardStats()).called(1);
+      await cubit.close();
+    });
   });
 
   group('DashboardCubit — dispatch feed', () {

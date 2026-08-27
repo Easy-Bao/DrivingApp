@@ -970,6 +970,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       isLoadingStats: state.isLoadingStats,
       earnings: state.earnings,
       completedTrips: state.completedTrips,
+      errorMessage: state.statsErrorMessage,
+      onRetry: () =>
+          unawaited(BlocProvider.of<DashboardCubit>(context).loadStats()),
     );
   }
 
