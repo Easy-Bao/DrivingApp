@@ -9,33 +9,36 @@ import 'package:shared_preferences/shared_preferences.dart';
 class SavedPlacesRepository implements ISavedPlacesRepository {
   static const String _storageKey = 'passenger_saved_places_v1';
 
+  final SharedPreferences _preferences;
+
+  SavedPlacesRepository({required SharedPreferences preferences})
+    : _preferences = preferences;
+
   @override
   Future<List<Map<String, dynamic>>> loadPlaces() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_storageKey);
+      final raw = _preferences.getString(_storageKey);
       if (raw == null || raw.trim().isEmpty) {
         return const [];
       }
 
       final decoded = jsonDecode(raw);
       if (decoded is! List<dynamic>) {
-        await prefs.remove(_storageKey);
+        await _preferences.remove(_storageKey);
         return const [];
       }
 
       final places = <Map<String, dynamic>>[];
       for (final item in decoded) {
         if (item is! Map) {
-          await prefs.remove(_storageKey);
+          await _preferences.remove(_storageKey);
           return const [];
         }
         places.add(Map<String, dynamic>.from(item));
       }
       return places;
     } catch (error) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_storageKey);
+      await _preferences.remove(_storageKey);
       return const [];
     }
   }
@@ -43,7 +46,6 @@ class SavedPlacesRepository implements ISavedPlacesRepository {
   @override
   Future<void> savePlaces(List<SavedPlace> places) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
       final models = places
           .map(
             (p) => SavedPlaceModel(
@@ -56,7 +58,10 @@ class SavedPlacesRepository implements ISavedPlacesRepository {
             ),
           )
           .toList();
-      await prefs.setString(_storageKey, SavedPlaceModel.encodeList(models));
+      await _preferences.setString(
+        _storageKey,
+        SavedPlaceModel.encodeList(models),
+      );
     } catch (error) {
       throw const CacheFailure('Failed to write saved places to storage.');
     }

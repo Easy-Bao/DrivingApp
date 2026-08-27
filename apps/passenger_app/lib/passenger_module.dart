@@ -18,6 +18,7 @@ import 'package:passenger_app/src/features/settings/settings_module.dart';
 import 'package:passenger_app/src/features/trip/trip_module.dart';
 import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_navigation_shell.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PassengerModule extends Module {
   @override
@@ -31,7 +32,9 @@ class PassengerModule extends Module {
     TripModule.binds(i);
 
     i
-      ..addLazySingleton<ISavedPlacesRepository>((i) => SavedPlacesRepository())
+      ..addLazySingleton<ISavedPlacesRepository>(
+        (i) => SavedPlacesRepository(preferences: i.get<SharedPreferences>()),
+      )
       ..addLazySingleton<SavedPlacesCubit>(
         (i) => SavedPlacesCubit(repository: i.get<ISavedPlacesRepository>()),
       )

@@ -6,10 +6,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   const storageKey = 'passenger_saved_places_v1';
   late SavedPlacesRepository repository;
+  late SharedPreferences preferences;
 
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
-    repository = SavedPlacesRepository();
+    preferences = await SharedPreferences.getInstance();
+    repository = SavedPlacesRepository(preferences: preferences);
   });
 
   test('empty storage is treated as no saved places', () async {
@@ -18,9 +20,10 @@ void main() {
 
   test('malformed storage is cleared instead of shown as an error', () async {
     SharedPreferences.setMockInitialValues({storageKey: '{invalid json'});
+    preferences = await SharedPreferences.getInstance();
+    repository = SavedPlacesRepository(preferences: preferences);
 
     expect(await repository.loadPlaces(), isEmpty);
-    final preferences = await SharedPreferences.getInstance();
     expect(preferences.getString(storageKey), isNull);
   });
 
