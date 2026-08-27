@@ -73,12 +73,10 @@ func (handler *Handler) registerDecoded(w http.ResponseWriter, r *http.Request, 
 		})
 		return
 	}
-	var account domain.User
-	var token string
-	var err error
-	if driver {
-		account, token, err = handler.register.Driver(r.Context(), toRegisterInput(input))
-	}
+	account, token, err := handler.register.Driver(
+		r.Context(),
+		toRegisterInput(input),
+	)
 	if err != nil {
 		status := http.StatusBadRequest
 		if errors.Is(err, domain.ErrEmailTaken) || errors.Is(err, domain.ErrAccountConflict) {
