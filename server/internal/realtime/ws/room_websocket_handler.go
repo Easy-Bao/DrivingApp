@@ -5,10 +5,17 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
 	"github.com/gorilla/websocket"
+)
+
+const (
+	chatPongWait  = 60 * time.Second
+	chatPingEvery = 54 * time.Second
+	chatWriteWait = 10 * time.Second
 )
 
 type Handler struct {
@@ -108,6 +115,12 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 	defer connection.Close()
 
 	connection.SetReadLimit(16 << 10)
+	if err := connection.SetReadDeadline(time.Now().Add(chatPongWait)); err != nil {
+		return
+	}
+	connection.SetPongHandler(func(string) error {
+		return connection.SetReadDeadline(time.Now().Add(chatPongWait))
+	})
 	outbound := handler.hub.Add(clientID, roomID)
 	serverMessages := make(chan []byte, 4)
 	writerDone := make(chan struct{})
@@ -154,17 +167,33 @@ func writePump(connection *websocket.Conn, outbound <-chan []byte, serverMessage
 	defer close(done)
 	defer connection.Close()
 
+	ticker := time.NewTicker(chatPingEvery)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case message, ok := <-outbound:
 			if !ok {
 				return
 			}
+			if err := connection.SetWriteDeadline(time.Now().Add(chatWriteWait)); err != nil {
+				return
+			}
 			if err := connection.WriteMessage(websocket.TextMessage, message); err != nil {
 				return
 			}
 		case message := <-serverMessages:
+			if err := connection.SetWriteDeadline(time.Now().Add(chatWriteWait)); err != nil {
+				return
+			}
 			if err := connection.WriteMessage(websocket.TextMessage, message); err != nil {
+				return
+			}
+		case <-ticker.C:
+			if err := connection.SetWriteDeadline(time.Now().Add(chatWriteWait)); err != nil {
+				return
+			}
+			if err := connection.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
 		}
