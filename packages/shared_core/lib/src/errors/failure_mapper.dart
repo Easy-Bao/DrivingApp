@@ -32,85 +32,56 @@ class FailureMapper {
     String timeoutMessage = _defaultTimeoutMessage,
     String cacheMessage = _defaultCacheMessage,
   }) {
-    if (error is InvalidCredentialsFailure) {
-      return const InvalidCredentialsFailure();
-    }
-    if (error is EmailAlreadyRegisteredFailure) {
-      return const EmailAlreadyRegisteredFailure();
-    }
-    if (error is ChatRoomLockedFailure) {
-      return const ChatRoomLockedFailure();
-    }
-    if (error is NoDriversAvailableFailure) {
-      return const NoDriversAvailableFailure();
-    }
-    if (error is RouteCalculationFailure) {
-      return const RouteCalculationFailure();
-    }
-    if (error is PaymentDeclinedFailure) {
-      return const PaymentDeclinedFailure();
-    }
-    if (error is LocationFailure) {
-      return const LocationFailure();
-    }
-    if (error is AuthFailure) {
-      return const AuthFailure();
-    }
-    if (error is NetworkFailure || error is SocketException) {
-      return NetworkFailure(networkMessage);
-    }
-    if (error is CacheFailure || error is CacheException) {
-      return CacheFailure(cacheMessage);
-    }
-    if (error is ValidationFailure) {
-      return ValidationFailure(validationMessage);
-    }
-    if (error is ServerFailure) {
-      return _fromStatusCode(
-        error.statusCode,
-        serverMessage: serverMessage,
-        validationMessage: validationMessage,
+    Failure mapStatus(int? statusCode) => _fromStatusCode(
+      statusCode,
+      serverMessage: serverMessage,
+      validationMessage: validationMessage,
+      networkMessage: networkMessage,
+      timeoutMessage: timeoutMessage,
+    );
+
+    return switch (error) {
+      InvalidCredentialsFailure() => const InvalidCredentialsFailure(),
+      EmailAlreadyRegisteredFailure() => const EmailAlreadyRegisteredFailure(),
+      ChatRoomLockedFailure() => const ChatRoomLockedFailure(),
+      NoDriversAvailableFailure() => const NoDriversAvailableFailure(),
+      RouteCalculationFailure() => const RouteCalculationFailure(),
+      PaymentDeclinedFailure() => const PaymentDeclinedFailure(),
+      LocationFailure() => const LocationFailure(),
+      AuthFailure() => const AuthFailure(),
+      NetworkFailure() || SocketException() => NetworkFailure(networkMessage),
+      CacheFailure() || CacheException() => CacheFailure(cacheMessage),
+      ValidationFailure() => ValidationFailure(validationMessage),
+      final ServerFailure failure => mapStatus(failure.statusCode),
+      final DioException dioError => _fromDioException(
+        dioError,
+        mapStatus: mapStatus,
         networkMessage: networkMessage,
         timeoutMessage: timeoutMessage,
-      );
-    }
+      ),
+      ServerException(statusCode: 0) => NetworkFailure(networkMessage),
+      final ServerException exception => mapStatus(exception.statusCode),
+      TimeoutException() => ServerFailure.withStatusCode(timeoutMessage, 504),
+      DataParsingException() ||
+      FormatException() => ServerFailure(serverMessage),
+      _ => ServerFailure(serverMessage),
+    };
+  }
 
-    if (error is DioException) {
-      final statusCode = error.response?.statusCode;
-      if (statusCode == null && _isTimeout(error)) {
-        return ServerFailure.withStatusCode(timeoutMessage, 504);
-      }
-      if (statusCode == null && _isOffline(error)) {
-        return NetworkFailure(networkMessage);
-      }
-      return _fromStatusCode(
-        statusCode,
-        serverMessage: serverMessage,
-        validationMessage: validationMessage,
-        networkMessage: networkMessage,
-        timeoutMessage: timeoutMessage,
-      );
-    }
-
-    if (error is ServerException) {
-      if (error.statusCode == 0) return NetworkFailure(networkMessage);
-      return _fromStatusCode(
-        error.statusCode,
-        serverMessage: serverMessage,
-        validationMessage: validationMessage,
-        networkMessage: networkMessage,
-        timeoutMessage: timeoutMessage,
-      );
-    }
-
-    if (error is TimeoutException) {
+  static Failure _fromDioException(
+    DioException error, {
+    required Failure Function(int? statusCode) mapStatus,
+    required String networkMessage,
+    required String timeoutMessage,
+  }) {
+    final statusCode = error.response?.statusCode;
+    if (statusCode == null && _isTimeout(error)) {
       return ServerFailure.withStatusCode(timeoutMessage, 504);
     }
-    if (error is DataParsingException || error is FormatException) {
-      return ServerFailure(serverMessage);
+    if (statusCode == null && _isOffline(error)) {
+      return NetworkFailure(networkMessage);
     }
-
-    return ServerFailure(serverMessage);
+    return mapStatus(statusCode);
   }
 
   static Failure _fromStatusCode(
