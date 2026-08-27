@@ -2,6 +2,7 @@ package migration
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"entgo.io/ent/dialect"
@@ -29,9 +30,9 @@ func ValidateCompatibleSchema(ctx context.Context, database dialect.ExecQuerier)
 			return fmt.Errorf("inspect %s.id: %w", table, err)
 		}
 		dataType, err := entsql.ScanString(rows)
-		_ = rows.Close()
-		if err != nil {
-			return fmt.Errorf("inspect %s.id: %w", table, err)
+		closeErr := rows.Close()
+		if joinedErr := errors.Join(err, closeErr); joinedErr != nil {
+			return fmt.Errorf("inspect %s.id: %w", table, joinedErr)
 		}
 		if dataType == "" {
 			continue

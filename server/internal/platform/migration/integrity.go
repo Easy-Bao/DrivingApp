@@ -2,6 +2,7 @@ package migration
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"entgo.io/ent/dialect"
@@ -19,9 +20,9 @@ func expireStaleBidSessions(ctx context.Context, connection dialect.ExecQuerier)
 		return fmt.Errorf("inspect bid session table: %w", err)
 	}
 	exists, err := entsql.ScanBool(rows)
-	_ = rows.Close()
-	if err != nil {
-		return fmt.Errorf("inspect bid session table: %w", err)
+	closeErr := rows.Close()
+	if joinedErr := errors.Join(err, closeErr); joinedErr != nil {
+		return fmt.Errorf("inspect bid session table: %w", joinedErr)
 	}
 	if !exists {
 		return nil

@@ -2,6 +2,7 @@ package migration
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"time"
@@ -210,8 +211,12 @@ func migrationApplied(ctx context.Context, executor dialect.ExecQuerier, version
 	); err != nil {
 		return false, err
 	}
-	defer rows.Close()
-	return entsql.ScanBool(rows)
+	value, scanErr := entsql.ScanBool(rows)
+	closeErr := rows.Close()
+	if err := errors.Join(scanErr, closeErr); err != nil {
+		return false, err
+	}
+	return value, nil
 }
 
 func validateMigrationPlan(items []migration) error {
