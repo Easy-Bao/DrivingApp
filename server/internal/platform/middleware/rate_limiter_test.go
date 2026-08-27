@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -198,6 +199,29 @@ func TestRateLimiterBypassesHealthAndPreflight(t *testing.T) {
 		if response.Code != http.StatusNoContent {
 			t.Fatalf("%s %s status = %d", request.method, request.path, response.Code)
 		}
+	}
+}
+
+func TestMemoryCounterStorePrunesExpiredEntries(t *testing.T) {
+	store := NewMemoryCounterStore()
+	for index := 0; index < memoryCounterCleanupInterval*2; index++ {
+		if _, err := store.Increment(context.Background(), fmt.Sprintf("client-%d", index), time.Nanosecond); err != nil {
+			t.Fatalf("increment %d: %v", index, err)
+		}
+	}
+
+	if len(store.entries) >= memoryCounterCleanupInterval*2 {
+		t.Fatalf("expired counter entries were retained: %d", len(store.entries))
+	}
+}
+
+func TestMemoryCounterStoreHonorsCancelledContext(t *testing.T) {
+	store := NewMemoryCounterStore()
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	if _, err := store.Increment(ctx, "cancelled", time.Minute); !errors.Is(err, context.Canceled) {
+		t.Fatalf("increment error = %v, want context canceled", err)
 	}
 }
 

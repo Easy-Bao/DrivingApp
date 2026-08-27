@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -37,12 +38,26 @@ func (store *RedisCounterStore) Increment(ctx context.Context, key string, windo
 	if store == nil || store.client == nil {
 		return 0, fmt.Errorf("redis counter store is not configured")
 	}
-	return store.client.Eval(ctx, atomicIncrementScript, []string{key}, window.Milliseconds()).Int64()
+	if ctx == nil {
+		return 0, errors.New("counter context is nil")
+	}
+	if err := ctx.Err(); err != nil {
+		return 0, err
+	}
+	if window <= 0 {
+		return 0, errors.New("counter window must be positive")
+	}
+	expirationMilliseconds := window.Milliseconds()
+	if expirationMilliseconds <= 0 {
+		expirationMilliseconds = 1
+	}
+	return store.client.Eval(ctx, atomicIncrementScript, []string{key}, expirationMilliseconds).Int64()
 }
 
 type MemoryCounterStore struct {
-	mu      sync.Mutex
-	entries map[string]memoryCounter
+	mu         sync.Mutex
+	entries    map[string]memoryCounter
+	operations uint64
 }
 
 type memoryCounter struct {
@@ -50,14 +65,33 @@ type memoryCounter struct {
 	expires time.Time
 }
 
+const memoryCounterCleanupInterval = 128
+
 func NewMemoryCounterStore() *MemoryCounterStore {
 	return &MemoryCounterStore{entries: make(map[string]memoryCounter)}
 }
 
-func (store *MemoryCounterStore) Increment(_ context.Context, key string, window time.Duration) (int64, error) {
+func (store *MemoryCounterStore) Increment(ctx context.Context, key string, window time.Duration) (int64, error) {
+	if ctx == nil {
+		return 0, errors.New("counter context is nil")
+	}
+	if err := ctx.Err(); err != nil {
+		return 0, err
+	}
+	if window <= 0 {
+		return 0, errors.New("counter window must be positive")
+	}
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	now := time.Now()
+	store.operations++
+	if store.operations%memoryCounterCleanupInterval == 0 {
+		for entryKey, entry := range store.entries {
+			if !now.Before(entry.expires) {
+				delete(store.entries, entryKey)
+			}
+		}
+	}
 	entry, ok := store.entries[key]
 	if !ok || !now.Before(entry.expires) {
 		entry = memoryCounter{expires: now.Add(window)}
@@ -145,7 +179,7 @@ func (limiter *RateLimiter) Middleware(next http.Handler) http.Handler {
 		writer.Header().Set("X-RateLimit-Limit", strconv.FormatInt(policy.limit, 10))
 		writer.Header().Set("X-RateLimit-Remaining", strconv.FormatInt(maxInt64(0, policy.limit-count), 10))
 		if count > policy.limit {
-			writer.Header().Set("Retry-After", strconv.FormatInt(int64(limiter.config.Window/time.Second), 10))
+			writer.Header().Set("Retry-After", strconv.FormatInt(retryAfterSeconds(limiter.config.Window), 10))
 			writeSecurityError(writer, http.StatusTooManyRequests, "too many requests")
 			return
 		}
@@ -213,11 +247,19 @@ func normalizedRateLimitConfig(config RateLimitConfig) RateLimitConfig {
 }
 
 func windowKey(now time.Time, window time.Duration) int64 {
-	windowSeconds := int64(window / time.Second)
-	if windowSeconds <= 0 {
-		windowSeconds = 1
+	windowNanoseconds := window.Nanoseconds()
+	if windowNanoseconds <= 0 {
+		windowNanoseconds = time.Second.Nanoseconds()
 	}
-	return now.Unix() / windowSeconds
+	return now.UnixNano() / windowNanoseconds
+}
+
+func retryAfterSeconds(window time.Duration) int64 {
+	seconds := int64(window / time.Second)
+	if window%time.Second != 0 {
+		seconds++
+	}
+	return maxInt64(1, seconds)
 }
 
 func maxInt64(left, right int64) int64 {
