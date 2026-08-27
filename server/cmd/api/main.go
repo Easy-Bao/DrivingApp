@@ -21,7 +21,6 @@ import (
 	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/auth/transport/http"
 	authusecase "github.com/Easy-Bao/DrivingApp/server/internal/auth/usecase"
 	documentpostgres "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/adapter/postgres"
-	documentstorage "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/adapter/storage"
 	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/transport/http"
 	documentusecase "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/mapbox"
@@ -38,6 +37,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	platformmigration "github.com/Easy-Bao/DrivingApp/server/internal/platform/migration"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
+	storagepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment"
 	assignmentadapter "github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment/adapter"
 	chatadapter "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/adapter"
@@ -124,19 +124,13 @@ func main() {
 		registerService,
 		refreshSessionRepository,
 	))
-	privateDocumentStorage, err := documentstorage.NewFileStorage(documentStorageDirectory())
-	if err != nil {
-		log.Fatal(err)
-	}
-	usersRouter := usershttp.NewRouter(usersusecase.NewService(userspostgres.NewProfileRepository(databaseClient, privateDocumentStorage)), verifier)
+	privateObjectStore := storagepostgres.NewObjectStore(databaseClient)
+	usersRouter := usershttp.NewRouter(usersusecase.NewService(userspostgres.NewProfileRepository(databaseClient, privateObjectStore)), verifier)
 	documentRepository := documentpostgres.NewRepository(databaseClient)
 	documentRouter := documenthttp.NewRouter(
 		documentusecase.NewService(
 			documentRepository,
-			documentstorage.NewCompatibleStorage(
-				privateDocumentStorage,
-				documentstorage.NewRedisLegacyReader(redisClient),
-			),
+			privateObjectStore,
 			securityConfig.UploadBodyLimit,
 		),
 		verifier,
@@ -295,11 +289,4 @@ func requiredJWTSecret() string {
 		log.Fatal(err)
 	}
 	return secret
-}
-
-func documentStorageDirectory() string {
-	if directory := strings.TrimSpace(os.Getenv("DOCUMENT_STORAGE_DIR")); directory != "" {
-		return directory
-	}
-	return "var/private/documents"
 }

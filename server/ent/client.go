@@ -24,6 +24,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent/notification"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerprofile"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerreview"
+	"github.com/Easy-Bao/DrivingApp/server/ent/privateobject"
 	"github.com/Easy-Bao/DrivingApp/server/ent/refreshsession"
 	"github.com/Easy-Bao/DrivingApp/server/ent/review"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ride"
@@ -57,6 +58,8 @@ type Client struct {
 	PassengerProfile *PassengerProfileClient
 	// PassengerReview is the client for interacting with the PassengerReview builders.
 	PassengerReview *PassengerReviewClient
+	// PrivateObject is the client for interacting with the PrivateObject builders.
+	PrivateObject *PrivateObjectClient
 	// RefreshSession is the client for interacting with the RefreshSession builders.
 	RefreshSession *RefreshSessionClient
 	// Review is the client for interacting with the Review builders.
@@ -90,6 +93,7 @@ func (c *Client) init() {
 	c.Notification = NewNotificationClient(c.config)
 	c.PassengerProfile = NewPassengerProfileClient(c.config)
 	c.PassengerReview = NewPassengerReviewClient(c.config)
+	c.PrivateObject = NewPrivateObjectClient(c.config)
 	c.RefreshSession = NewRefreshSessionClient(c.config)
 	c.Review = NewReviewClient(c.config)
 	c.Ride = NewRideClient(c.config)
@@ -198,6 +202,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Notification:        NewNotificationClient(cfg),
 		PassengerProfile:    NewPassengerProfileClient(cfg),
 		PassengerReview:     NewPassengerReviewClient(cfg),
+		PrivateObject:       NewPrivateObjectClient(cfg),
 		RefreshSession:      NewRefreshSessionClient(cfg),
 		Review:              NewReviewClient(cfg),
 		Ride:                NewRideClient(cfg),
@@ -233,6 +238,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Notification:        NewNotificationClient(cfg),
 		PassengerProfile:    NewPassengerProfileClient(cfg),
 		PassengerReview:     NewPassengerReviewClient(cfg),
+		PrivateObject:       NewPrivateObjectClient(cfg),
 		RefreshSession:      NewRefreshSessionClient(cfg),
 		Review:              NewReviewClient(cfg),
 		Ride:                NewRideClient(cfg),
@@ -270,8 +276,8 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.AuditEvent, c.Bid, c.BidOffer, c.BidSession, c.DriverDocument,
 		c.DriverProfile, c.DriverWalletAccount, c.Notification, c.PassengerProfile,
-		c.PassengerReview, c.RefreshSession, c.Review, c.Ride, c.RideSettlement,
-		c.User, c.WalletLedger,
+		c.PassengerReview, c.PrivateObject, c.RefreshSession, c.Review, c.Ride,
+		c.RideSettlement, c.User, c.WalletLedger,
 	} {
 		n.Use(hooks...)
 	}
@@ -283,8 +289,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.AuditEvent, c.Bid, c.BidOffer, c.BidSession, c.DriverDocument,
 		c.DriverProfile, c.DriverWalletAccount, c.Notification, c.PassengerProfile,
-		c.PassengerReview, c.RefreshSession, c.Review, c.Ride, c.RideSettlement,
-		c.User, c.WalletLedger,
+		c.PassengerReview, c.PrivateObject, c.RefreshSession, c.Review, c.Ride,
+		c.RideSettlement, c.User, c.WalletLedger,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -313,6 +319,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.PassengerProfile.mutate(ctx, m)
 	case *PassengerReviewMutation:
 		return c.PassengerReview.mutate(ctx, m)
+	case *PrivateObjectMutation:
+		return c.PrivateObject.mutate(ctx, m)
 	case *RefreshSessionMutation:
 		return c.RefreshSession.mutate(ctx, m)
 	case *ReviewMutation:
@@ -1660,6 +1668,139 @@ func (c *PassengerReviewClient) mutate(ctx context.Context, m *PassengerReviewMu
 	}
 }
 
+// PrivateObjectClient is a client for the PrivateObject schema.
+type PrivateObjectClient struct {
+	config
+}
+
+// NewPrivateObjectClient returns a client for the PrivateObject from the given config.
+func NewPrivateObjectClient(c config) *PrivateObjectClient {
+	return &PrivateObjectClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `privateobject.Hooks(f(g(h())))`.
+func (c *PrivateObjectClient) Use(hooks ...Hook) {
+	c.hooks.PrivateObject = append(c.hooks.PrivateObject, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `privateobject.Intercept(f(g(h())))`.
+func (c *PrivateObjectClient) Intercept(interceptors ...Interceptor) {
+	c.inters.PrivateObject = append(c.inters.PrivateObject, interceptors...)
+}
+
+// Create returns a builder for creating a PrivateObject entity.
+func (c *PrivateObjectClient) Create() *PrivateObjectCreate {
+	mutation := newPrivateObjectMutation(c.config, OpCreate)
+	return &PrivateObjectCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of PrivateObject entities.
+func (c *PrivateObjectClient) CreateBulk(builders ...*PrivateObjectCreate) *PrivateObjectCreateBulk {
+	return &PrivateObjectCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PrivateObjectClient) MapCreateBulk(slice any, setFunc func(*PrivateObjectCreate, int)) *PrivateObjectCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PrivateObjectCreateBulk{err: fmt.Errorf("calling to PrivateObjectClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PrivateObjectCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PrivateObjectCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for PrivateObject.
+func (c *PrivateObjectClient) Update() *PrivateObjectUpdate {
+	mutation := newPrivateObjectMutation(c.config, OpUpdate)
+	return &PrivateObjectUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *PrivateObjectClient) UpdateOne(_m *PrivateObject) *PrivateObjectUpdateOne {
+	mutation := newPrivateObjectMutation(c.config, OpUpdateOne, withPrivateObject(_m))
+	return &PrivateObjectUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *PrivateObjectClient) UpdateOneID(id int) *PrivateObjectUpdateOne {
+	mutation := newPrivateObjectMutation(c.config, OpUpdateOne, withPrivateObjectID(id))
+	return &PrivateObjectUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for PrivateObject.
+func (c *PrivateObjectClient) Delete() *PrivateObjectDelete {
+	mutation := newPrivateObjectMutation(c.config, OpDelete)
+	return &PrivateObjectDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *PrivateObjectClient) DeleteOne(_m *PrivateObject) *PrivateObjectDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *PrivateObjectClient) DeleteOneID(id int) *PrivateObjectDeleteOne {
+	builder := c.Delete().Where(privateobject.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &PrivateObjectDeleteOne{builder}
+}
+
+// Query returns a query builder for PrivateObject.
+func (c *PrivateObjectClient) Query() *PrivateObjectQuery {
+	return &PrivateObjectQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypePrivateObject},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a PrivateObject entity by its id.
+func (c *PrivateObjectClient) Get(ctx context.Context, id int) (*PrivateObject, error) {
+	return c.Query().Where(privateobject.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *PrivateObjectClient) GetX(ctx context.Context, id int) *PrivateObject {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *PrivateObjectClient) Hooks() []Hook {
+	return c.hooks.PrivateObject
+}
+
+// Interceptors returns the client interceptors.
+func (c *PrivateObjectClient) Interceptors() []Interceptor {
+	return c.inters.PrivateObject
+}
+
+func (c *PrivateObjectClient) mutate(ctx context.Context, m *PrivateObjectMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&PrivateObjectCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&PrivateObjectUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&PrivateObjectUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&PrivateObjectDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown PrivateObject mutation op: %q", m.Op())
+	}
+}
+
 // RefreshSessionClient is a client for the RefreshSession schema.
 type RefreshSessionClient struct {
 	config
@@ -2463,12 +2604,13 @@ type (
 	hooks struct {
 		AuditEvent, Bid, BidOffer, BidSession, DriverDocument, DriverProfile,
 		DriverWalletAccount, Notification, PassengerProfile, PassengerReview,
-		RefreshSession, Review, Ride, RideSettlement, User, WalletLedger []ent.Hook
+		PrivateObject, RefreshSession, Review, Ride, RideSettlement, User,
+		WalletLedger []ent.Hook
 	}
 	inters struct {
 		AuditEvent, Bid, BidOffer, BidSession, DriverDocument, DriverProfile,
 		DriverWalletAccount, Notification, PassengerProfile, PassengerReview,
-		RefreshSession, Review, Ride, RideSettlement, User,
+		PrivateObject, RefreshSession, Review, Ride, RideSettlement, User,
 		WalletLedger []ent.Interceptor
 	}
 )

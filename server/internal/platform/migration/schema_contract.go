@@ -84,6 +84,10 @@ func ValidateEntSchema(ctx context.Context, client *ent.Client) error {
 			_, err := client.AuditEvent.Query().Limit(0).All(ctx)
 			return err
 		}},
+		{name: "private_objects", check: func() error {
+			_, err := client.PrivateObject.Query().Limit(0).All(ctx)
+			return err
+		}},
 	}
 
 	for _, check := range checks {

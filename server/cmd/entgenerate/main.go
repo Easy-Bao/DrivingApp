@@ -42,6 +42,7 @@ func main() {
 		{sourcePath: "driver/documents", outputPrefix: "driver_documents"},
 		{sourcePath: "rides", outputPrefix: "rides"},
 		{sourcePath: "admin", outputPrefix: "admin"},
+		{sourcePath: "platform/storage", outputPrefix: "platform_storage"},
 	}
 	for _, module := range modules {
 		source := filepath.Join(root, "internal", module.sourcePath, "schema")

@@ -114,13 +114,13 @@ then requests profiles for those IDs through `GET /api/v1/drivers/online?ids=`.
 and returns `distances_km` and `durations_min`; it performs one provider matrix
 request for multiple destinations and a directions request for one destination.
 
-### Private driver documents
+### Private uploads
 
-New driver documents are immutable objects under `DOCUMENT_STORAGE_DIR`; the
-directory is created with owner-only permissions and is never mounted as a
-public static route. Docker Compose persists it in the `document-data` volume.
-Legacy Redis-backed objects remain readable only through the same authorized
-content endpoints while deployments transition to filesystem storage.
+Driver documents and passenger avatars are immutable private objects stored in
+PostgreSQL through the Ent object-store adapter. Feature tables retain only
+ownership, workflow, and content metadata; the binary data never uses a local
+filesystem directory or Redis as a source of truth. Authorized endpoints read
+objects only after the owning feature verifies the requesting identity.
 
 `POST /api/v1/driver/documents?type=driver_license` accepts a raw PDF, JPEG, or
 PNG body. The supported type values are `driver_license`,
@@ -199,10 +199,10 @@ docker compose logs -f api
 # Rebuild after server code changes
 docker compose up --build -d api
 
-# Stop containers but preserve the PostgreSQL database and private documents
+# Stop containers but preserve the PostgreSQL database and private uploads
 docker compose down
 
-# Stop containers and permanently delete the local database and documents
+# Stop containers and permanently delete the local database
 docker compose down --volumes
 ```
 
@@ -216,9 +216,8 @@ docker compose down --volumes
 | Redis | `6379` | Cache, location state, and request protection |
 
 Change the corresponding values in `.env` if any of those ports are already
-in use. PostgreSQL data and private driver documents are stored in the
-Docker-managed `postgres-data` and `document-data` volumes, so both survive
-normal `docker compose down` commands.
+in use. PostgreSQL data is stored in the Docker-managed `postgres-data` volume
+and survives a normal `docker compose down` command.
 
 ## Verify
 

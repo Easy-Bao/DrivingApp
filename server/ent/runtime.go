@@ -15,6 +15,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent/notification"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerprofile"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerreview"
+	"github.com/Easy-Bao/DrivingApp/server/ent/privateobject"
 	"github.com/Easy-Bao/DrivingApp/server/ent/refreshsession"
 	"github.com/Easy-Bao/DrivingApp/server/ent/review"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ride"
@@ -256,6 +257,46 @@ func init() {
 	passengerreviewDescCreatedAt := passengerreviewFields[5].Descriptor()
 	// passengerreview.DefaultCreatedAt holds the default value on creation for the created_at field.
 	passengerreview.DefaultCreatedAt = passengerreviewDescCreatedAt.Default.(func() time.Time)
+	privateobjectFields := schema.PrivateObject{}.Fields()
+	_ = privateobjectFields
+	// privateobjectDescStorageKey is the schema descriptor for storage_key field.
+	privateobjectDescStorageKey := privateobjectFields[0].Descriptor()
+	// privateobject.StorageKeyValidator is a validator for the "storage_key" field. It is called by the builders before save.
+	privateobject.StorageKeyValidator = privateobjectDescStorageKey.Validators[0].(func(string) error)
+	// privateobjectDescContent is the schema descriptor for content field.
+	privateobjectDescContent := privateobjectFields[1].Descriptor()
+	// privateobject.ContentValidator is a validator for the "content" field. It is called by the builders before save.
+	privateobject.ContentValidator = privateobjectDescContent.Validators[0].(func([]byte) error)
+	// privateobjectDescContentType is the schema descriptor for content_type field.
+	privateobjectDescContentType := privateobjectFields[2].Descriptor()
+	// privateobject.ContentTypeValidator is a validator for the "content_type" field. It is called by the builders before save.
+	privateobject.ContentTypeValidator = privateobjectDescContentType.Validators[0].(func(string) error)
+	// privateobjectDescSizeBytes is the schema descriptor for size_bytes field.
+	privateobjectDescSizeBytes := privateobjectFields[3].Descriptor()
+	// privateobject.SizeBytesValidator is a validator for the "size_bytes" field. It is called by the builders before save.
+	privateobject.SizeBytesValidator = privateobjectDescSizeBytes.Validators[0].(func(int64) error)
+	// privateobjectDescChecksumSha256 is the schema descriptor for checksum_sha256 field.
+	privateobjectDescChecksumSha256 := privateobjectFields[4].Descriptor()
+	// privateobject.ChecksumSha256Validator is a validator for the "checksum_sha256" field. It is called by the builders before save.
+	privateobject.ChecksumSha256Validator = func() func(string) error {
+		validators := privateobjectDescChecksumSha256.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(checksum_sha256 string) error {
+			for _, fn := range fns {
+				if err := fn(checksum_sha256); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// privateobjectDescCreatedAt is the schema descriptor for created_at field.
+	privateobjectDescCreatedAt := privateobjectFields[5].Descriptor()
+	// privateobject.DefaultCreatedAt holds the default value on creation for the created_at field.
+	privateobject.DefaultCreatedAt = privateobjectDescCreatedAt.Default.(func() time.Time)
 	refreshsessionFields := schema.RefreshSession{}.Fields()
 	_ = refreshsessionFields
 	// refreshsessionDescUserID is the schema descriptor for user_id field.

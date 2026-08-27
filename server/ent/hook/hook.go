@@ -129,6 +129,18 @@ func (f PassengerReviewFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Va
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PassengerReviewMutation", m)
 }
 
+// The PrivateObjectFunc type is an adapter to allow the use of ordinary
+// function as PrivateObject mutator.
+type PrivateObjectFunc func(context.Context, *ent.PrivateObjectMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f PrivateObjectFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.PrivateObjectMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PrivateObjectMutation", m)
+}
+
 // The RefreshSessionFunc type is an adapter to allow the use of ordinary
 // function as RefreshSession mutator.
 type RefreshSessionFunc func(context.Context, *ent.RefreshSessionMutation) (ent.Value, error)

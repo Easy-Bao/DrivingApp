@@ -48,10 +48,10 @@ func TestIntegrityMigrationIncludesFinancialAndParticipantConstraints(t *testing
 	}
 }
 
-func TestMigrationPlanEndsWithRefreshSessions(t *testing.T) {
+func TestMigrationPlanEndsWithPrivateObjectStorage(t *testing.T) {
 	runner := NewRunner(nil)
 	last := runner.migrations[len(runner.migrations)-1]
-	if last.version != 2026082702 || last.name != "enforce_ride_state_constraints" {
+	if last.version != 2026082703 || last.name != "add_private_object_storage" {
 		t.Fatalf("last migration = %d %q", last.version, last.name)
 	}
 }

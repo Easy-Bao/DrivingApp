@@ -1,6 +1,10 @@
 package domain
 
-import "context"
+import (
+	"context"
+
+	platformstorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage"
+)
 
 type Repository interface {
 	Create(ctx context.Context, document Document) (Document, error)
@@ -10,8 +14,4 @@ type Repository interface {
 	Review(ctx context.Context, id, reviewerID int, status Status) (Document, error)
 }
 
-type ObjectStorage interface {
-	Store(ctx context.Context, content []byte) (string, error)
-	Read(ctx context.Context, key string, maxBytes int64) ([]byte, error)
-	Delete(ctx context.Context, key string) error
-}
+type ObjectStorage = platformstorage.ObjectStore

@@ -99,6 +99,11 @@ func NewRunner(driver dialect.Driver) *Runner {
 				name:    "enforce_ride_state_constraints",
 				apply:   applyRideStateConstraints,
 			},
+			{
+				version: 2026082703,
+				name:    "add_private_object_storage",
+				apply:   schemaSync,
+			},
 		},
 	}
 }

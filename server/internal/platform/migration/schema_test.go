@@ -79,6 +79,21 @@ func TestPassengerProfilesCarryProfileAttributes(t *testing.T) {
 	}
 }
 
+func TestPrivateObjectsCarryDurableBinaryIntegrityFields(t *testing.T) {
+	for _, column := range []string{
+		"storage_key",
+		"content",
+		"content_type",
+		"size_bytes",
+		"checksum_sha256",
+		"created_at",
+	} {
+		if _, exists := entmigrate.PrivateObjectsTable.Column(column); !exists {
+			t.Fatalf("private_objects.%s is missing from the generated schema", column)
+		}
+	}
+}
+
 func TestRefreshSessionsCarryRotatableSessionFields(t *testing.T) {
 	for _, column := range []string{
 		"user_id",

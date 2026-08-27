@@ -289,6 +289,22 @@ var (
 			},
 		},
 	}
+	// PrivateObjectsColumns holds the columns for the "private_objects" table.
+	PrivateObjectsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "storage_key", Type: field.TypeString, Unique: true, Size: 80},
+		{Name: "content", Type: field.TypeBytes},
+		{Name: "content_type", Type: field.TypeString, Size: 128},
+		{Name: "size_bytes", Type: field.TypeInt64},
+		{Name: "checksum_sha256", Type: field.TypeString, Size: 64},
+		{Name: "created_at", Type: field.TypeTime, Default: schema.Expr("CURRENT_TIMESTAMP")},
+	}
+	// PrivateObjectsTable holds the schema information for the "private_objects" table.
+	PrivateObjectsTable = &schema.Table{
+		Name:       "private_objects",
+		Columns:    PrivateObjectsColumns,
+		PrimaryKey: []*schema.Column{PrivateObjectsColumns[0]},
+	}
 	// RefreshSessionsColumns holds the columns for the "refresh_sessions" table.
 	RefreshSessionsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -493,6 +509,7 @@ var (
 		NotificationsTable,
 		PassengerProfilesTable,
 		PassengerReviewsTable,
+		PrivateObjectsTable,
 		RefreshSessionsTable,
 		ReviewsTable,
 		RidesTable,

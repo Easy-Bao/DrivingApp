@@ -3,6 +3,8 @@ package domain
 import (
 	"context"
 	"errors"
+
+	platformstorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage"
 )
 
 const MaxAvatarBytes int64 = 2 << 20
@@ -24,8 +26,4 @@ type AvatarRepository interface {
 	GetAvatar(ctx context.Context, userID int) (Avatar, error)
 }
 
-type AvatarStorage interface {
-	Store(ctx context.Context, content []byte) (string, error)
-	Read(ctx context.Context, key string, maxBytes int64) ([]byte, error)
-	Delete(ctx context.Context, key string) error
-}
+type AvatarStorage = platformstorage.ObjectStore

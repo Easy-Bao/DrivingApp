@@ -32,6 +32,8 @@ type Tx struct {
 	PassengerProfile *PassengerProfileClient
 	// PassengerReview is the client for interacting with the PassengerReview builders.
 	PassengerReview *PassengerReviewClient
+	// PrivateObject is the client for interacting with the PrivateObject builders.
+	PrivateObject *PrivateObjectClient
 	// RefreshSession is the client for interacting with the RefreshSession builders.
 	RefreshSession *RefreshSessionClient
 	// Review is the client for interacting with the Review builders.
@@ -185,6 +187,7 @@ func (tx *Tx) init() {
 	tx.Notification = NewNotificationClient(tx.config)
 	tx.PassengerProfile = NewPassengerProfileClient(tx.config)
 	tx.PassengerReview = NewPassengerReviewClient(tx.config)
+	tx.PrivateObject = NewPrivateObjectClient(tx.config)
 	tx.RefreshSession = NewRefreshSessionClient(tx.config)
 	tx.Review = NewReviewClient(tx.config)
 	tx.Ride = NewRideClient(tx.config)
