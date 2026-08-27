@@ -7,7 +7,12 @@ import (
 	"time"
 )
 
-var ErrCircuitOpen = errors.New("downstream circuit is open")
+var (
+	ErrCircuitOpen          = errors.New("downstream circuit is open")
+	ErrCircuitNotConfigured = errors.New("circuit breaker is not configured")
+	ErrCircuitContextNil    = errors.New("circuit breaker context is nil")
+	ErrCircuitOperationNil  = errors.New("circuit breaker operation is nil")
+)
 
 type CircuitBreaker struct {
 	mu               sync.Mutex
@@ -32,6 +37,15 @@ func NewCircuitBreaker(failureThreshold int, resetAfter time.Duration) *CircuitB
 }
 
 func (breaker *CircuitBreaker) Do(ctx context.Context, operation func(context.Context) error) error {
+	if breaker == nil {
+		return ErrCircuitNotConfigured
+	}
+	if ctx == nil {
+		return ErrCircuitContextNil
+	}
+	if operation == nil {
+		return ErrCircuitOperationNil
+	}
 	if err := ctx.Err(); err != nil {
 		return err
 	}

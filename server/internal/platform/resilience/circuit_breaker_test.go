@@ -37,3 +37,18 @@ func TestCircuitBreakerAllowsOneProbeAfterReset(t *testing.T) {
 		t.Fatalf("post-probe error = %v, want nil", err)
 	}
 }
+
+func TestCircuitBreakerRejectsMissingDependencies(t *testing.T) {
+	var breaker *CircuitBreaker
+	if err := breaker.Do(context.Background(), func(context.Context) error { return nil }); !errors.Is(err, ErrCircuitNotConfigured) {
+		t.Fatalf("nil breaker error = %v, want %v", err, ErrCircuitNotConfigured)
+	}
+
+	configured := NewCircuitBreaker(1, time.Minute)
+	if err := configured.Do(nil, func(context.Context) error { return nil }); !errors.Is(err, ErrCircuitContextNil) {
+		t.Fatalf("nil context error = %v, want %v", err, ErrCircuitContextNil)
+	}
+	if err := configured.Do(context.Background(), nil); !errors.Is(err, ErrCircuitOperationNil) {
+		t.Fatalf("nil operation error = %v, want %v", err, ErrCircuitOperationNil)
+	}
+}
