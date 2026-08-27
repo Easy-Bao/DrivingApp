@@ -2,6 +2,7 @@ package response
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 )
 
@@ -23,9 +24,18 @@ type Problem struct {
 }
 
 func JSON(writer http.ResponseWriter, status int, value any) {
-	writer.Header().Set("Content-Type", "application/json")
-	writer.WriteHeader(status)
-	_ = json.NewEncoder(writer).Encode(value)
+	payload, err := json.Marshal(value)
+	if err != nil {
+		slog.Error("encode json response failed", "error", err, "status", status)
+		WriteProblem(writer, Problem{
+			Status:  http.StatusInternalServerError,
+			Title:   "Something went wrong on our end",
+			Detail:  "We encountered an unexpected issue while processing your request. Please try again in a few moments.",
+			Message: "We encountered an unexpected issue while processing your request. Please try again in a few moments.",
+		})
+		return
+	}
+	writeJSON(writer, status, payload)
 }
 
 func Error(writer http.ResponseWriter, status int, message string) {
@@ -42,6 +52,9 @@ func Error(writer http.ResponseWriter, status int, message string) {
 
 func WriteProblem(writer http.ResponseWriter, problem Problem) {
 	if problem.Status == 0 {
+		problem.Status = http.StatusInternalServerError
+	}
+	if problem.Status < 100 || problem.Status > 999 {
 		problem.Status = http.StatusInternalServerError
 	}
 	if problem.Type == "" {
@@ -65,9 +78,21 @@ func WriteProblem(writer http.ResponseWriter, problem Problem) {
 	if problem.RequestID == "" {
 		problem.RequestID = writer.Header().Get("X-Request-ID")
 	}
+	payload, err := json.Marshal(problem)
+	if err != nil {
+		slog.Error("encode problem response failed", "error", err, "status", problem.Status)
+		return
+	}
 	writer.Header().Set("Content-Type", "application/problem+json")
-	writer.WriteHeader(problem.Status)
-	_ = json.NewEncoder(writer).Encode(problem)
+	writeJSON(writer, problem.Status, payload)
+}
+
+func writeJSON(writer http.ResponseWriter, status int, payload []byte) {
+	writer.WriteHeader(status)
+	payload = append(payload, '\n')
+	if _, err := writer.Write(payload); err != nil {
+		slog.Debug("write json response failed", "error", err, "status", status)
+	}
 }
 
 func ProblemCode(status int) string {
