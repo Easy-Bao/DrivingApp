@@ -290,26 +290,13 @@ class DashboardRepository implements IDashboardRepository {
       );
       final offersFuture = includeOffers
           ? _rideOfferDataSource.fetchActiveBids()
-          : Future<List<dynamic>>.value(const []);
-      final responses = await Future.wait<dynamic>([tripsFuture, offersFuture]);
-      final tripResult =
-          responses[0] as Either<Failure, OffsetPage<Map<String, dynamic>>>;
-      OffsetPage<Map<String, dynamic>>? tripPage;
-      final Failure? tripFailure = tripResult.fold((failure) => failure, (
-        page,
-      ) {
-        tripPage = page;
-        return null;
-      });
-      if (tripFailure != null) return Left(tripFailure);
-      final offers = (responses[1] as List<dynamic>)
-          .whereType<Map>()
-          .map((value) => Map<String, dynamic>.from(value))
-          .toList(growable: false);
-      return Right(
-        DriverDispatchSnapshot(
-          activeTrips: tripPage!.items,
-          rideOffers: offers,
+          : Future.value(const <Map<String, dynamic>>[]);
+      final tripResult = await tripsFuture;
+      final offers = await offersFuture;
+      return tripResult.fold(
+        Left.new,
+        (page) => Right(
+          DriverDispatchSnapshot(activeTrips: page.items, rideOffers: offers),
         ),
       );
     } catch (error) {

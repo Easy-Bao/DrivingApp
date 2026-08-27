@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 
 abstract class RideOfferRemoteDataSource {
-  Future<List<dynamic>> fetchActiveBids();
+  Future<List<Map<String, dynamic>>> fetchActiveBids();
 
   Future<bool> placeBid({
     required String sessionId,
@@ -18,9 +18,12 @@ class RideOfferRemoteDataSourceImpl implements RideOfferRemoteDataSource {
   RideOfferRemoteDataSourceImpl(this._dio);
 
   @override
-  Future<List<dynamic>> fetchActiveBids() async {
+  Future<List<Map<String, dynamic>>> fetchActiveBids() async {
     final response = await _dio.get<List<dynamic>>('/api/v1/bids/active');
-    return response.data ?? const <dynamic>[];
+    return [
+      for (final item in response.data ?? const <dynamic>[])
+        if (item is Map) Map<String, dynamic>.from(item),
+    ];
   }
 
   @override
