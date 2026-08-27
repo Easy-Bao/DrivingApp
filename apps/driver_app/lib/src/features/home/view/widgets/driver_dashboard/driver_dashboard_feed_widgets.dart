@@ -434,6 +434,13 @@ class DriverPoolBidCard extends StatelessWidget {
 class DriverDashboardSectionLabel extends StatelessWidget {
   const DriverDashboardSectionLabel(this.label, {super.key});
 
+  const DriverDashboardSectionLabel.activeRides({
+    required int activeRideCount,
+    super.key,
+  }) : label = 'Your active rides ($activeRideCount/$maximumActiveRides)';
+
+  static const maximumActiveRides = 5;
+
   final String label;
 
   @override

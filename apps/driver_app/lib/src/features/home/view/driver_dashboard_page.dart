@@ -496,10 +496,11 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     if (_submittingBidId != null) return;
     final cubit = BlocProvider.of<DashboardCubit>(context);
     final activeTrips = cubit.state.activeTrips;
-    if (activeTrips.length >= 5) {
+    if (activeTrips.length >= DriverDashboardSectionLabel.maximumActiveRides) {
       CustomToast.show(
         context,
-        'You cannot accept more than 5 concurrent rides.',
+        'You cannot accept more than '
+        '${DriverDashboardSectionLabel.maximumActiveRides} concurrent rides.',
         isError: true,
       );
       return;
@@ -770,8 +771,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                         physics: const BouncingScrollPhysics(),
                         children: [
                           if (activeTrips.isNotEmpty) ...[
-                            DriverDashboardSectionLabel(
-                              'Your active rides (__ACTIVE_COUNT__/5)',
+                            DriverDashboardSectionLabel.activeRides(
+                              activeRideCount: activeTrips.length,
                             ),
                             const SizedBox(height: 10),
                             ...activeTrips.asMap().entries.map(
