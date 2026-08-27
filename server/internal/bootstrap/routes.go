@@ -68,10 +68,8 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 		refreshSessionRepository,
 	))
 
-	usersRouter := usershttp.NewRouter(
-		usersusecase.NewProfileService(userspostgres.NewProfileRepository(databaseClient, privateObjectStore)),
-		verifier,
-	)
+	profileRepository := userspostgres.NewProfileRepository(databaseClient, privateObjectStore).WithLogger(applicationLogger)
+	usersRouter := usershttp.NewRouter(usersusecase.NewProfileService(profileRepository), verifier)
 	documentRouter := documenthttp.NewRouter(
 		documentusecase.NewDocumentService(
 			documentpostgres.NewDocumentRepository(databaseClient),
@@ -116,7 +114,7 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 	locationService := locationusecase.NewLocationServiceWithCache(
 		mapboxProvider,
 		locationredis.NewCache(redisClient),
-	)
+	).WithLogger(applicationLogger)
 	passengerRideContextQuery := passengerridecontext.NewRideContextQueryService(
 		passengerridecontextadapter.NewRidesReader(ridesService),
 		passengerridecontextadapter.NewLocationResolver(locationService),

@@ -3,9 +3,10 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	entsql "entgo.io/ent/dialect/sql"
 	"github.com/Easy-Bao/DrivingApp/server/ent"
@@ -18,13 +19,21 @@ import (
 type ProfileRepository struct {
 	client        *ent.Client
 	avatarStorage domain.AvatarStorage
+	logger        *slog.Logger
 }
 
 func NewProfileRepository(
 	client *ent.Client,
 	avatarStorage domain.AvatarStorage,
 ) *ProfileRepository {
-	return &ProfileRepository{client: client, avatarStorage: avatarStorage}
+	return &ProfileRepository{client: client, avatarStorage: avatarStorage, logger: slog.Default()}
+}
+
+func (repository *ProfileRepository) WithLogger(logger *slog.Logger) *ProfileRepository {
+	if logger != nil {
+		repository.logger = logger
+	}
+	return repository
 }
 
 func (repository *ProfileRepository) Get(ctx context.Context, userID int) (domain.Profile, error) {
@@ -88,17 +97,23 @@ func (repository *ProfileRepository) SaveAvatar(ctx context.Context, userID int,
 		SetAvatarContentType(contentType).
 		Save(ctx)
 	if err != nil {
-		_ = repository.avatarStorage.Delete(context.WithoutCancel(ctx), storageKey)
+		repository.cleanupAvatar(ctx, storageKey)
 		return domain.Profile{}, err
 	}
 
 	oldStorageKey := strings.TrimSpace(passengerProfile.AvatarStorageKey)
 	if oldStorageKey != "" && oldStorageKey != storageKey {
-		if cleanupErr := repository.avatarStorage.Delete(context.WithoutCancel(ctx), oldStorageKey); cleanupErr != nil {
-			log.Printf("passenger avatar cleanup failed: %v", cleanupErr)
-		}
+		repository.cleanupAvatar(ctx, oldStorageKey)
 	}
 	return repository.Get(ctx, userID)
+}
+
+func (repository *ProfileRepository) cleanupAvatar(ctx context.Context, storageKey string) {
+	cleanupContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Second)
+	defer cancel()
+	if err := repository.avatarStorage.Delete(cleanupContext, storageKey); err != nil {
+		repository.logger.WarnContext(ctx, "delete passenger avatar object failed", "error", err, "operation", "delete")
+	}
 }
 
 func (repository *ProfileRepository) GetAvatar(ctx context.Context, userID int) (domain.Avatar, error) {

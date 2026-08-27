@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
@@ -27,6 +28,7 @@ const (
 type LocationService struct {
 	provider domain.Provider
 	cache    domain.Cache
+	logger   *slog.Logger
 }
 
 func NewLocationService(provider domain.Provider) *LocationService {
@@ -34,7 +36,14 @@ func NewLocationService(provider domain.Provider) *LocationService {
 }
 
 func NewLocationServiceWithCache(provider domain.Provider, cache domain.Cache) *LocationService {
-	return &LocationService{provider: provider, cache: cache}
+	return &LocationService{provider: provider, cache: cache, logger: slog.Default()}
+}
+
+func (service *LocationService) WithLogger(logger *slog.Logger) *LocationService {
+	if logger != nil {
+		service.logger = logger
+	}
+	return service
 }
 
 func (service *LocationService) Search(ctx context.Context, query string, origin domain.Coordinates) ([]domain.Place, error) {
@@ -54,8 +63,8 @@ func (service *LocationService) Search(ctx context.Context, query string, origin
 		return places, nil
 	}
 	places, err := service.provider.Search(ctx, query, origin)
-	if err == nil && service.cache != nil {
-		_ = service.cache.Set(ctx, key, places)
+	if err == nil {
+		service.cacheSet(ctx, key, places)
 	}
 	return places, err
 }
@@ -73,8 +82,8 @@ func (service *LocationService) Nearby(ctx context.Context, origin domain.Coordi
 		return places, nil
 	}
 	places, err := service.provider.Nearby(ctx, origin, page)
-	if err == nil && service.cache != nil {
-		_ = service.cache.Set(ctx, key, places)
+	if err == nil {
+		service.cacheSet(ctx, key, places)
 	}
 	return places, err
 }
@@ -92,8 +101,8 @@ func (service *LocationService) ReverseGeocode(ctx context.Context, coordinates 
 	if err != nil {
 		return nil, err
 	}
-	if service.cache != nil && result != nil {
-		_ = service.cache.Set(ctx, key, result)
+	if result != nil {
+		service.cacheSet(ctx, key, result)
 	}
 	return result, nil
 }
@@ -124,10 +133,19 @@ func (service *LocationService) Matrix(ctx context.Context, origin domain.Coordi
 		return &matrix, nil
 	}
 	result, err := service.provider.Matrix(ctx, origin, destinations)
-	if err == nil && service.cache != nil {
-		_ = service.cache.Set(ctx, key, result)
+	if err == nil {
+		service.cacheSet(ctx, key, result)
 	}
 	return result, err
+}
+
+func (service *LocationService) cacheSet(ctx context.Context, key string, value any) {
+	if service.cache == nil {
+		return
+	}
+	if err := service.cache.Set(ctx, key, value); err != nil {
+		service.logger.DebugContext(ctx, "store location cache entry failed", "error", err, "operation", "set")
+	}
 }
 
 func matrixCacheKey(origin domain.Coordinates, destinations []domain.Coordinates) string {
