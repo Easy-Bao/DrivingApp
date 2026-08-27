@@ -31,7 +31,7 @@ func TestRoleSpecificLoginRoutes(t *testing.T) {
 	}}
 	authenticate := usecase.NewAuthenticateService(repository, issuer{}, newTestRefreshSessionStore())
 	mux := chi.NewRouter()
-	authhttp.NewRouter(nil, authenticate).RegisterRoutes(mux)
+	authhttp.NewRouter(nil, authenticate, nil).RegisterRoutes(mux)
 
 	tests := []struct {
 		name           string
@@ -90,7 +90,7 @@ func TestLoginAndRefreshIssueRotatingSessionTokens(t *testing.T) {
 	manager := security.NewTokenManager("refresh-http-test-secret")
 	authenticate := usecase.NewAuthenticateService(repository, manager, newTestRefreshSessionStore())
 	mux := chi.NewRouter()
-	authhttp.NewRouter(nil, authenticate).RegisterRoutes(mux)
+	authhttp.NewRouter(nil, authenticate, nil).RegisterRoutes(mux)
 
 	loginRequest := httptest.NewRequest(
 		http.MethodPost,
@@ -150,7 +150,11 @@ func TestLoginRejectsFieldsOutsideTheRequestContract(t *testing.T) {
 		},
 	}}
 	mux := chi.NewRouter()
-	authhttp.NewRouter(nil, usecase.NewAuthenticateService(repository, issuer{}, newTestRefreshSessionStore())).RegisterRoutes(mux)
+	authhttp.NewRouter(
+		nil,
+		usecase.NewAuthenticateService(repository, issuer{}, newTestRefreshSessionStore()),
+		nil,
+	).RegisterRoutes(mux)
 
 	for _, body := range []string{
 		`{"email":"passenger@example.test","password":"secret","role":"driver"}`,

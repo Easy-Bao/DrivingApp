@@ -8,12 +8,12 @@ import (
 
 type Router struct{ handler *Handler }
 
-func NewRouter(register *usecase.RegisterService, authenticate *usecase.AuthenticateService, otp ...*usecase.OTPService) *Router {
-	var service *usecase.OTPService
-	if len(otp) > 0 {
-		service = otp[0]
-	}
-	return &Router{handler: NewHandler(register, authenticate, service)}
+func NewRouter(
+	register *usecase.RegisterService,
+	authenticate *usecase.AuthenticateService,
+	otp *usecase.OTPService,
+) *Router {
+	return &Router{handler: NewHandler(register, authenticate, otp)}
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {
