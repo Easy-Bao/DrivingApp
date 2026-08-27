@@ -21,17 +21,17 @@ func NewHandler(register *usecase.RegisterService, authenticate *usecase.Authent
 	return &Handler{register: register, authenticate: authenticate, otp: otp}
 }
 func (handler *Handler) PassengerRegister(w http.ResponseWriter, r *http.Request) {
-	handler.registerAccount(w, r, false)
+	handler.registerAccount(w, r, domain.Passenger)
 }
 func (handler *Handler) DriverRegister(w http.ResponseWriter, r *http.Request) {
-	handler.registerAccount(w, r, true)
+	handler.registerAccount(w, r, domain.Driver)
 }
-func (handler *Handler) registerAccount(w http.ResponseWriter, r *http.Request, driver bool) {
+func (handler *Handler) registerAccount(w http.ResponseWriter, r *http.Request, role domain.Role) {
 	var input dto.RegistrationRequest
 	if !decode(w, r, &input) {
 		return
 	}
-	handler.registerDecoded(w, r, input, driver)
+	handler.registerDecoded(w, r, input, role)
 }
 
 func (handler *Handler) GenericRegister(w http.ResponseWriter, r *http.Request) {
@@ -43,25 +43,32 @@ func (handler *Handler) GenericRegister(w http.ResponseWriter, r *http.Request) 
 		response.Error(w, http.StatusBadRequest, "role must be passenger or driver")
 		return
 	}
-	handler.registerDecoded(w, r, input.RegistrationRequest, input.Role == string(domain.Driver))
+	handler.registerDecoded(
+		w,
+		r,
+		input.RegistrationRequest,
+		domain.Role(input.Role),
+	)
 }
 
-func (handler *Handler) registerDecoded(w http.ResponseWriter, r *http.Request, input dto.RegistrationRequest, driver bool) {
-	if !driver {
+func (handler *Handler) registerDecoded(
+	w http.ResponseWriter,
+	r *http.Request,
+	input dto.RegistrationRequest,
+	role domain.Role,
+) {
+	if role != domain.Passenger && role != domain.Driver {
+		response.Error(w, http.StatusBadRequest, "role must be passenger or driver")
+		return
+	}
+	if role == domain.Passenger {
 		if handler.otp == nil {
 			response.Error(w, http.StatusServiceUnavailable, "passenger verification is unavailable")
 			return
 		}
 		pending, err := handler.otp.RegisterPassenger(r.Context(), toRegisterInput(input))
 		if err != nil {
-			status := http.StatusBadRequest
-			if errors.Is(err, domain.ErrEmailTaken) || errors.Is(err, domain.ErrAccountConflict) {
-				status = http.StatusConflict
-			}
-			if errors.Is(err, domain.ErrOTPUnavailable) {
-				status = http.StatusServiceUnavailable
-			}
-			response.Error(w, status, safeAuthError(err))
+			response.Error(w, registrationErrorStatus(err), safeAuthError(err))
 			return
 		}
 		response.JSON(w, http.StatusAccepted, map[string]any{
@@ -78,11 +85,7 @@ func (handler *Handler) registerDecoded(w http.ResponseWriter, r *http.Request, 
 		toRegisterInput(input),
 	)
 	if err != nil {
-		status := http.StatusBadRequest
-		if errors.Is(err, domain.ErrEmailTaken) || errors.Is(err, domain.ErrAccountConflict) {
-			status = http.StatusConflict
-		}
-		response.Error(w, status, safeAuthError(err))
+		response.Error(w, registrationErrorStatus(err), safeAuthError(err))
 		return
 	}
 	refreshToken, err := handler.register.IssueRefreshToken(r.Context(), account)
@@ -281,6 +284,17 @@ func safeAuthError(err error) string {
 		return "Authentication is temporarily unavailable. Please try again."
 	default:
 		return "We could not complete that request. Please try again."
+	}
+}
+
+func registrationErrorStatus(err error) int {
+	switch {
+	case errors.Is(err, domain.ErrEmailTaken), errors.Is(err, domain.ErrAccountConflict):
+		return http.StatusConflict
+	case errors.Is(err, domain.ErrOTPUnavailable):
+		return http.StatusServiceUnavailable
+	default:
+		return http.StatusBadRequest
 	}
 }
 
