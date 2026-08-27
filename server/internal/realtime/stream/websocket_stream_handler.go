@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/event"
 	"github.com/gorilla/websocket"
@@ -43,14 +44,18 @@ func NewHandler(hub *Hub, authenticator IdentityAuthenticator, allowedOrigins []
 }
 
 func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	if handler == nil || handler.hub == nil || handler.authenticator == nil {
+		response.Error(writer, http.StatusServiceUnavailable, "Live updates are temporarily unavailable. Please try again shortly.")
+		return
+	}
 	identity, ok := handler.identity(request)
 	if !ok {
-		http.Error(writer, "unauthorized", http.StatusUnauthorized)
+		response.Error(writer, http.StatusUnauthorized, "Your session has expired. Please sign in again to continue.")
 		return
 	}
 	topics, err := topicsForIdentity(identity)
 	if err != nil {
-		http.Error(writer, "forbidden", http.StatusForbidden)
+		response.Error(writer, http.StatusForbidden, "You do not have permission to receive these live updates.")
 		return
 	}
 
@@ -90,7 +95,9 @@ func (handler *Handler) originAllowed(request *http.Request) bool {
 
 func (handler *Handler) readPump(connection *websocket.Conn) {
 	connection.SetReadLimit(maximumMessageSize)
-	_ = connection.SetReadDeadline(time.Now().Add(pongWait))
+	if err := connection.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
+		return
+	}
 	connection.SetPongHandler(func(string) error {
 		return connection.SetReadDeadline(time.Now().Add(pongWait))
 	})
@@ -115,12 +122,16 @@ func (handler *Handler) writePump(connection *websocket.Conn, events <-chan even
 			if !ok {
 				return
 			}
-			_ = connection.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := connection.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
+				return
+			}
 			if err := connection.WriteJSON(envelope); err != nil {
 				return
 			}
 		case <-ticker.C:
-			_ = connection.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := connection.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
+				return
+			}
 			if err := connection.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
