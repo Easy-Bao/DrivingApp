@@ -9,7 +9,6 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment"
-	chatadapter "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/adapter"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/domain"
 	chath "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/transport/http"
 	chatusecase "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/usecase"
@@ -50,7 +49,7 @@ func TestChatHTTPRoutesRequireRoomMembership(t *testing.T) {
 	history := &roomHistory{members: map[string]bool{"ride-1:7": true}}
 	router := chi.NewRouter()
 	chath.NewRouter(
-		chatusecase.NewChatService(chatadapter.NewHub(), history).
+		chatusecase.NewChatService(history).
 			WithRideAssignmentLookup(chatAssignmentLookup{
 				assignment: assignment.Assignment{
 					RideID: "ride-1", PassengerID: "7", DriverID: "9", Status: "assigned",
@@ -95,7 +94,7 @@ func TestChatCreateRoomReportsResolvedRoom(t *testing.T) {
 	}
 	router := chi.NewRouter()
 	chath.NewRouter(
-		chatusecase.NewChatService(chatadapter.NewHub(), history).
+		chatusecase.NewChatService(history).
 			WithRideAssignmentLookup(chatAssignmentLookup{
 				assignment: assignment.Assignment{
 					RideID: "ride-1", PassengerID: "7", DriverID: "8", Status: "assigned",
@@ -127,7 +126,7 @@ func TestChatCreateRoomRejectsClientSuppliedParticipants(t *testing.T) {
 	}
 	router := chi.NewRouter()
 	chath.NewRouter(
-		chatusecase.NewChatService(chatadapter.NewHub(), &roomHistory{}),
+		chatusecase.NewChatService(&roomHistory{}),
 		tokenManager,
 	).RegisterRoutes(router)
 

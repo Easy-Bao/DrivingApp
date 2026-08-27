@@ -17,7 +17,6 @@ const (
 )
 
 type ChatService struct {
-	publisher   domain.Publisher
 	history     domain.RoomRepository
 	events      EventPublisher
 	assignments assignment.Lookup
@@ -27,8 +26,8 @@ type EventPublisher interface {
 	Publish(ctx context.Context, envelope event.Envelope) error
 }
 
-func NewChatService(publisher domain.Publisher, history domain.RoomRepository) *ChatService {
-	return &ChatService{publisher: publisher, history: history}
+func NewChatService(history domain.RoomRepository) *ChatService {
+	return &ChatService{history: history}
 }
 
 func (service *ChatService) WithEventPublisher(publisher EventPublisher) *ChatService {
@@ -64,9 +63,6 @@ func (service *ChatService) Relay(ctx context.Context, message domain.Message) e
 		return domain.ErrForbidden
 	}
 	if err := service.history.Append(ctx, message); err != nil {
-		return err
-	}
-	if err := service.publisher.Publish(message); err != nil {
 		return err
 	}
 	service.publishRealtimeMessage(ctx, message)

@@ -20,7 +20,6 @@ type Message struct {
 	Body      string `json:"body"`
 	CreatedAt string `json:"created_at"`
 }
-type Publisher interface{ Publish(message Message) error }
 
 type HistoryRepository interface {
 	CreateRoom(ctx context.Context, roomID, passengerID, driverID string) error

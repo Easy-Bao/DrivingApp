@@ -130,7 +130,7 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 	passengerridecontexthttp.NewRouter(passengerRideContextQuery, verifier).RegisterRoutes(router)
 
 	chatHistory := chatadapter.NewChatHistoryStore(redisClient)
-	chatService := chatusecase.NewChatService(chatadapter.NewHub(), chatHistory).
+	chatService := chatusecase.NewChatService(chatHistory).
 		WithEventPublisher(realtimePublisher).
 		WithRideAssignmentLookup(rideAssignments)
 	events := ws.NewEventRouter()
