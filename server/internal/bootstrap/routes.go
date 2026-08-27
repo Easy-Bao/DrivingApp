@@ -107,7 +107,7 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 	ridesRouter := rideshttp.NewRouter(ridesService, verifier)
 	adminRouter := adminhttp.NewRouter(adminusecase.NewDashboardStatsService(adminpostgres.NewDashboardStatsRepository(databaseClient)), verifier, adminAuthorizer)
 	geoService := geousecase.NewLocationTrackingService(
-		geo.NewDriverLocationStore(redisClient),
+		geo.NewDriverLocationStore(redisClient).WithLogger(applicationLogger),
 		geousecase.WithRideAssignments(rideAssignments),
 		geousecase.WithEventPublisher(realtimePublisher),
 		geousecase.WithLogger(applicationLogger),

@@ -3,6 +3,7 @@ package adapter
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/domain"
@@ -28,10 +29,20 @@ end
 return #expired
 `
 
-type DriverLocationStore struct{ client *redis.Client }
+type DriverLocationStore struct {
+	client *redis.Client
+	logger *slog.Logger
+}
 
 func NewDriverLocationStore(client *redis.Client) *DriverLocationStore {
-	return &DriverLocationStore{client: client}
+	return &DriverLocationStore{client: client, logger: slog.Default()}
+}
+
+func (repository *DriverLocationStore) WithLogger(logger *slog.Logger) *DriverLocationStore {
+	if logger != nil {
+		repository.logger = logger
+	}
+	return repository
 }
 func (repository *DriverLocationStore) Upsert(ctx context.Context, point domain.DriverPoint) error {
 	payload, err := json.Marshal(point)
@@ -72,7 +83,9 @@ func (repository *DriverLocationStore) Remove(ctx context.Context, driverID stri
 func (repository *DriverLocationStore) Nearby(ctx context.Context, latitude, longitude, radiusKm float64) ([]domain.DriverPoint, error) {
 	// GEO members do not support individual TTLs. Sweep the companion expiry
 	// index before searching so expired payloads cannot consume result slots.
-	_ = repository.cleanupExpiredDrivers(ctx)
+	if err := repository.cleanupExpiredDrivers(ctx); err != nil {
+		repository.logger.WarnContext(ctx, "clean up expired driver locations failed", "error", err)
+	}
 
 	// Only the member IDs are needed here. GeoSearchLocation expects a nested
 	// location response when using RESP3, but Redis returns a flat member list
@@ -127,11 +140,13 @@ func (repository *DriverLocationStore) Nearby(ctx context.Context, latitude, lon
 	if len(staleLocations) > 0 {
 		// Expired payloads leave geo members behind; cleanup is best effort so a
 		// transient Redis write failure does not hide valid nearby drivers.
-		_, _ = repository.client.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+		if _, err := repository.client.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
 			pipe.ZRem(ctx, driverLocationsKey, staleLocations)
 			pipe.ZRem(ctx, driverLocationExpiryKey, staleLocations)
 			return nil
-		})
+		}); err != nil {
+			repository.logger.WarnContext(ctx, "remove stale driver locations failed", "error", err)
+		}
 	}
 	return result, nil
 }
