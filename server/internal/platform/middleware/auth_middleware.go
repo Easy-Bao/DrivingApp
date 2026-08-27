@@ -26,12 +26,12 @@ func RequireAuth(tokenManager *security.TokenManager) func(http.Handler) http.Ha
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			identity, ok := IdentityFromRequest(request, tokenManager)
 			if !ok {
-				response.Error(writer, http.StatusUnauthorized, "unauthorized")
+				response.Error(writer, http.StatusUnauthorized, "Your session has expired. Please sign in again to continue.")
 				return
 			}
 			userID, err := strconv.Atoi(identity.Subject)
 			if err != nil || userID <= 0 {
-				response.Error(writer, http.StatusUnauthorized, "unauthorized")
+				response.Error(writer, http.StatusUnauthorized, "Your session has expired. Please sign in again to continue.")
 				return
 			}
 			contextValue := context.WithValue(request.Context(), identityKey, identity)
@@ -52,11 +52,11 @@ func RequireRole(roles ...string) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			principal, ok := PrincipalFromRequest(request)
 			if !ok {
-				response.Error(writer, http.StatusUnauthorized, "unauthorized")
+				response.Error(writer, http.StatusUnauthorized, "Your session has expired. Please sign in again to continue.")
 				return
 			}
 			if _, ok := allowed[principal.Role]; !ok {
-				response.Error(writer, http.StatusForbidden, "forbidden")
+				response.Error(writer, http.StatusForbidden, "You do not have permission to access this resource.")
 				return
 			}
 			next.ServeHTTP(writer, request)
@@ -69,11 +69,11 @@ func RequireAdmin(authorizer *security.AdminAuthorizer) func(http.Handler) http.
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			principal, ok := PrincipalFromRequest(request)
 			if !ok {
-				response.Error(writer, http.StatusUnauthorized, "unauthorized")
+				response.Error(writer, http.StatusUnauthorized, "Your session has expired. Please sign in again to continue.")
 				return
 			}
 			if authorizer == nil || !authorizer.IsAdmin(strconv.Itoa(principal.UserID)) {
-				response.Error(writer, http.StatusForbidden, "forbidden")
+				response.Error(writer, http.StatusForbidden, "You do not have permission to access this resource.")
 				return
 			}
 			next.ServeHTTP(writer, request)
@@ -100,16 +100,18 @@ func IdentityFromRequest(request *http.Request, tokenManager *security.TokenMana
 }
 
 func BearerToken(header string) (string, bool) {
-	const prefix = "Bearer "
-	header = strings.TrimSpace(header)
-	if len(header) <= len(prefix) || !strings.HasPrefix(header, prefix) {
+	parts := strings.Fields(header)
+	if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
 		return "", false
 	}
-	token := strings.TrimSpace(strings.TrimPrefix(header, prefix))
+	token := parts[1]
 	return token, token != ""
 }
 
 func Identity(request *http.Request) (security.Identity, bool) {
+	if request == nil {
+		return security.Identity{}, false
+	}
 	identity, ok := request.Context().Value(identityKey).(security.Identity)
 	return identity, ok && identity.Subject != ""
 }

@@ -31,6 +31,11 @@ func TestIdentityFromRequestUsesOneBearerParsingContract(t *testing.T) {
 			t.Fatalf("header %q was accepted", header)
 		}
 	}
+	lowercaseScheme := httptest.NewRequest(http.MethodGet, "/", nil)
+	lowercaseScheme.Header.Set("Authorization", "bearer "+token)
+	if _, ok := IdentityFromRequest(lowercaseScheme, manager); !ok {
+		t.Fatal("case-insensitive bearer scheme was rejected")
+	}
 }
 
 func TestRequireAuthStoresTheVerifiedIdentity(t *testing.T) {

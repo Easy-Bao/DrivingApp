@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
 )
@@ -71,6 +72,9 @@ func RequestID(next http.Handler) http.Handler {
 }
 
 func RequestIDFromRequest(request *http.Request) string {
+	if request == nil {
+		return ""
+	}
 	requestID, _ := request.Context().Value(requestIDKey{}).(string)
 	return requestID
 }
@@ -85,7 +89,7 @@ func RequestBodyLimit(jsonLimit, uploadLimit int64) func(http.Handler) http.Hand
 
 			limit := jsonLimit
 			contentType := strings.ToLower(request.Header.Get("Content-Type"))
-			if strings.HasPrefix(contentType, "multipart/") || strings.Contains(request.URL.Path, "/documents") {
+			if strings.HasPrefix(contentType, "multipart/") || classifyEndpoint(request) == endpointDocumentUpload {
 				limit = uploadLimit
 			}
 			if request.ContentLength > limit {
@@ -186,7 +190,7 @@ func validRequestID(value string) bool {
 func newRequestID() string {
 	var bytes [16]byte
 	if _, err := rand.Read(bytes[:]); err != nil {
-		return "request-unknown"
+		return "request-" + strconv.FormatInt(time.Now().UnixNano(), 10)
 	}
 	return hex.EncodeToString(bytes[:])
 }
