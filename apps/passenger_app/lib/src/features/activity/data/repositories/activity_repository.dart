@@ -96,9 +96,8 @@ class ActivityRepository implements IActivityRepository {
         offset: 0,
       );
       final summaryFuture = _remoteDataSource.fetchSummary(passengerId);
-      final responses = await Future.wait<dynamic>([pageFuture, summaryFuture]);
-      final rawPage = responses[0] as OffsetPage<Map<String, dynamic>>;
-      final summary = responses[1] as Map<String, dynamic>;
+      final rawPage = await pageFuture;
+      final summary = await summaryFuture;
       return Right(
         ActivityOverview(
           rides: _mapPage(rawPage),
