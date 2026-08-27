@@ -99,6 +99,24 @@ func IdentityFromRequest(request *http.Request, tokenManager *security.TokenMana
 	return identity, err == nil && identity.Subject != ""
 }
 
+func AuthenticatedUserID(request *http.Request, tokenManager *security.TokenManager) (int, bool) {
+	if request == nil {
+		return 0, false
+	}
+	if principal, ok := PrincipalFromRequest(request); ok {
+		return principal.UserID, true
+	}
+	identity, ok := IdentityFromRequest(request, tokenManager)
+	if !ok {
+		return 0, false
+	}
+	userID, err := strconv.Atoi(identity.Subject)
+	if err != nil || userID <= 0 {
+		return 0, false
+	}
+	return userID, true
+}
+
 func BearerToken(header string) (string, bool) {
 	parts := strings.Fields(header)
 	if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {

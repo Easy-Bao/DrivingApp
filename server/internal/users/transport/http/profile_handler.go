@@ -27,12 +27,7 @@ func NewHandler(service *usecase.ProfileService, verifier *security.TokenManager
 	return &Handler{service: service, verifier: verifier}
 }
 func (handler *Handler) identity(r *http.Request) (int, bool) {
-	if principal, ok := middleware.PrincipalFromRequest(r); ok {
-		return principal.UserID, true
-	}
-	identity, ok := middleware.IdentityFromRequest(r, handler.verifier)
-	value, parseErr := strconv.Atoi(identity.Subject)
-	return value, ok && parseErr == nil
+	return middleware.AuthenticatedUserID(r, handler.verifier)
 }
 func (handler *Handler) Me(w http.ResponseWriter, r *http.Request) {
 	id, ok := handler.identity(r)

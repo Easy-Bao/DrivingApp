@@ -25,12 +25,7 @@ func NewHandler(service *usecase.RideService, verifier *security.TokenManager) *
 	return &Handler{service: service, verifier: verifier}
 }
 func (handler *Handler) identity(r *http.Request) (int, bool) {
-	if principal, ok := middleware.PrincipalFromRequest(r); ok {
-		return principal.UserID, true
-	}
-	identity, ok := middleware.IdentityFromRequest(r, handler.verifier)
-	id, parseErr := strconv.Atoi(identity.Subject)
-	return id, ok && parseErr == nil
+	return middleware.AuthenticatedUserID(r, handler.verifier)
 }
 func (handler *Handler) CreateRide(w http.ResponseWriter, r *http.Request) {
 	passengerID, ok := handler.identity(r)

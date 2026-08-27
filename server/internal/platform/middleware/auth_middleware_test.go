@@ -106,6 +106,23 @@ func TestRequireAuthRejectsNonNumericSubject(t *testing.T) {
 	}
 }
 
+func TestAuthenticatedUserIDRejectsNonPositiveSubjects(t *testing.T) {
+	manager := security.NewTokenManager("auth-middleware-test-secret")
+	for _, subject := range []string{"0", "-1", "not-an-account"} {
+		t.Run(subject, func(t *testing.T) {
+			token, err := manager.IssueWithRole(subject, security.RolePassenger)
+			if err != nil {
+				t.Fatal(err)
+			}
+			request := httptest.NewRequest(http.MethodGet, "/", nil)
+			request.Header.Set("Authorization", "Bearer "+token)
+			if userID, ok := AuthenticatedUserID(request, manager); ok || userID != 0 {
+				t.Fatalf("authenticated user id = %d, ok = %t", userID, ok)
+			}
+		})
+	}
+}
+
 func TestRequireAdminUsesTheVerifiedPrincipalAtTheRouteBoundary(t *testing.T) {
 	manager := security.NewTokenManager("admin-middleware-test-secret")
 	adminToken, err := manager.IssueWithRole("42", security.RolePassenger)
