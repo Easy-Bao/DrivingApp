@@ -57,8 +57,8 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 	authRepository := authpostgres.NewUserRepository(databaseClient)
 	refreshSessionRepository := authpostgres.NewRefreshSessionRepository(databaseClient)
 	registerService := authusecase.NewRegisterService(authRepository, verifier, refreshSessionRepository)
-	authenticateService := authusecase.NewAuthenticateService(authRepository, verifier, refreshSessionRepository)
-	authRouter := authhttp.NewRouter(registerService, authenticateService, authusecase.NewOTPServiceWithPending(
+	authenticateService := authusecase.NewAuthenticateService(authRepository, verifier, refreshSessionRepository).WithLogger(applicationLogger)
+	otpService := authusecase.NewOTPServiceWithPending(
 		authRepository,
 		authredis.NewOTPStore(redisClient),
 		email.NewGoMailGatewayFromEnv(),
@@ -66,7 +66,8 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 		authredis.NewPendingRegistrationStore(redisClient),
 		registerService,
 		refreshSessionRepository,
-	))
+	).WithLogger(applicationLogger)
+	authRouter := authhttp.NewRouter(registerService, authenticateService, otpService)
 
 	profileRepository := userspostgres.NewProfileRepository(databaseClient, privateObjectStore).WithLogger(applicationLogger)
 	usersRouter := usershttp.NewRouter(usersusecase.NewProfileService(profileRepository), verifier)

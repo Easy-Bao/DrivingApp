@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"strconv"
 	"strings"
 	"time"
@@ -14,10 +15,23 @@ type AuthenticateService struct {
 	repository domain.UserRepository
 	tokens     domain.TokenIssuer
 	sessions   domain.RefreshSessionStore
+	logger     *slog.Logger
 }
 
 func NewAuthenticateService(repository domain.UserRepository, tokens domain.TokenIssuer, sessions domain.RefreshSessionStore) *AuthenticateService {
-	return &AuthenticateService{repository: repository, tokens: tokens, sessions: sessions}
+	return &AuthenticateService{
+		repository: repository,
+		tokens:     tokens,
+		sessions:   sessions,
+		logger:     slog.Default(),
+	}
+}
+
+func (service *AuthenticateService) WithLogger(logger *slog.Logger) *AuthenticateService {
+	if logger != nil {
+		service.logger = logger
+	}
+	return service
 }
 
 func (service *AuthenticateService) Execute(ctx context.Context, email, password string) (domain.User, string, error) {
@@ -48,8 +62,11 @@ func (service *AuthenticateService) execute(ctx context.Context, email, password
 		return domain.User{}, SessionTokens{}, domain.ErrInvalidCredentials
 	}
 	if IsLegacyPasswordHash(account.PasswordHash) {
-		if upgradedHash, hashErr := HashPasswordWithError(password); hashErr == nil {
-			_ = service.repository.UpdatePassword(ctx, account.ID, upgradedHash)
+		upgradedHash, hashErr := HashPasswordWithError(password)
+		if hashErr != nil {
+			service.logger.WarnContext(ctx, "upgrade legacy password hash failed", "error", hashErr)
+		} else if err := service.repository.UpdatePassword(ctx, account.ID, upgradedHash); err != nil {
+			service.logger.WarnContext(ctx, "persist upgraded password hash failed", "error", err)
 		}
 	}
 	tokens, err := issueSessionTokens(ctx, service.sessions, service.tokens, strconv.Itoa(account.ID), account.Role)

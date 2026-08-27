@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 	"time"
@@ -21,10 +22,18 @@ type OTPService struct {
 	sessions      domain.RefreshSessionStore
 	pending       domain.PendingRegistrationStore
 	registrations *RegisterService
+	logger        *slog.Logger
 }
 
 func NewOTPService(users domain.VerifiedUserRepository, store domain.OTPStore, gateway domain.OTPGateway, tokens domain.TokenIssuer, sessions domain.RefreshSessionStore) *OTPService {
-	return &OTPService{users: users, store: store, gateway: gateway, tokens: tokens, sessions: sessions}
+	return &OTPService{
+		users:    users,
+		store:    store,
+		gateway:  gateway,
+		tokens:   tokens,
+		sessions: sessions,
+		logger:   slog.Default(),
+	}
 }
 
 func NewOTPServiceWithPending(users domain.VerifiedUserRepository, store domain.OTPStore, gateway domain.OTPGateway, tokens domain.TokenIssuer, pending domain.PendingRegistrationStore, registrations *RegisterService, sessions domain.RefreshSessionStore) *OTPService {
@@ -36,7 +45,15 @@ func NewOTPServiceWithPending(users domain.VerifiedUserRepository, store domain.
 		sessions:      sessions,
 		pending:       pending,
 		registrations: registrations,
+		logger:        slog.Default(),
 	}
+}
+
+func (service *OTPService) WithLogger(logger *slog.Logger) *OTPService {
+	if logger != nil {
+		service.logger = logger
+	}
+	return service
 }
 
 func (service *OTPService) RegisterPassenger(ctx context.Context, input RegisterInput) (domain.PendingRegistration, error) {
@@ -62,7 +79,9 @@ func (service *OTPService) RegisterPassenger(ctx context.Context, input Register
 		return domain.PendingRegistration{}, err
 	}
 	if err := service.requestCode(ctx, "verification", registration.Email); err != nil {
-		_ = service.pending.Delete(ctx, registration.Email)
+		if cleanupErr := service.pending.Delete(ctx, registration.Email); cleanupErr != nil {
+			service.logger.WarnContext(ctx, "remove failed passenger registration cleanup", "error", cleanupErr)
+		}
 		return domain.PendingRegistration{}, err
 	}
 	return registration, nil
@@ -113,7 +132,7 @@ func (service *OTPService) VerifyPassenger(ctx context.Context, email, code stri
 		return domain.User{}, "", err
 	}
 	if err := service.pending.Delete(ctx, registration.Email); err != nil {
-		return domain.User{}, "", err
+		service.logger.WarnContext(ctx, "remove verified passenger registration cleanup", "error", err)
 	}
 	return account, token, nil
 }

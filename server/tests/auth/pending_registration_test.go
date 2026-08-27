@@ -92,6 +92,38 @@ func TestRetryingUnverifiedPassengerRegistrationReplacesPendingData(t *testing.T
 	}
 }
 
+func TestPassengerVerificationSucceedsWhenPendingCleanupFails(t *testing.T) {
+	repository := newPendingUserRepository()
+	pending := &pendingRegistrationStore{deleteErr: errors.New("temporary cleanup failure")}
+	gateway := &otpGateway{}
+	sessions := newTestRefreshSessionStore()
+	register := usecase.NewRegisterService(repository, otpIssuer{}, sessions)
+	service := usecase.NewOTPServiceWithPending(
+		repository,
+		&otpMemoryStore{values: map[string]string{}},
+		gateway,
+		otpIssuer{},
+		pending,
+		register,
+		sessions,
+	)
+
+	registration, err := service.RegisterPassenger(context.Background(), usecase.RegisterInput{
+		Email: "cleanup@example.test", Phone: "+639171234512", Name: "Passenger", Password: "secret-8",
+	})
+	if err != nil {
+		t.Fatalf("register passenger: %v", err)
+	}
+
+	account, token, err := service.VerifyPassenger(context.Background(), registration.Email, gateway.sent)
+	if err != nil {
+		t.Fatalf("verify passenger after cleanup failure: %v", err)
+	}
+	if account.ID != 1 || token != "token:1" {
+		t.Fatalf("verified account = %#v, token = %q", account, token)
+	}
+}
+
 func TestPassengerRegistrationRejectsVerifiedEmail(t *testing.T) {
 	repository := newPendingUserRepository()
 	repository.users["passenger@example.test"] = domain.User{
@@ -170,7 +202,10 @@ func (repository *pendingUserRepository) MarkVerified(_ context.Context, id int)
 	return nil
 }
 
-type pendingRegistrationStore struct{ registration *domain.PendingRegistration }
+type pendingRegistrationStore struct {
+	registration *domain.PendingRegistration
+	deleteErr    error
+}
 
 func (store *pendingRegistrationStore) Put(_ context.Context, registration domain.PendingRegistration, _ time.Duration) error {
 	copy := registration
@@ -186,6 +221,9 @@ func (store *pendingRegistrationStore) Get(_ context.Context, email string) (dom
 }
 
 func (store *pendingRegistrationStore) Delete(_ context.Context, _ string) error {
+	if store.deleteErr != nil {
+		return store.deleteErr
+	}
 	store.registration = nil
 	return nil
 }
