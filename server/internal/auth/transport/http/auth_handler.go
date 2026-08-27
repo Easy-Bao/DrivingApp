@@ -93,7 +93,7 @@ func (handler *Handler) registerDecoded(
 		response.Error(w, http.StatusServiceUnavailable, safeAuthError(err))
 		return
 	}
-	response.JSON(w, http.StatusCreated, authSessionResponse(account, token, refreshToken, !account.IsVerified))
+	response.JSON(w, http.StatusCreated, authSessionResponse(account, token, refreshToken, !account.IsVerified, false))
 }
 func (handler *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	handler.login(w, r, "")
@@ -156,7 +156,7 @@ func (handler *Handler) login(w http.ResponseWriter, r *http.Request, role domai
 		response.Error(w, http.StatusUnauthorized, "email or password is incorrect")
 		return
 	}
-	response.JSON(w, http.StatusOK, authSessionResponse(account, tokens.AccessToken, tokens.RefreshToken, !account.IsVerified))
+	response.JSON(w, http.StatusOK, authSessionResponse(account, tokens.AccessToken, tokens.RefreshToken, !account.IsVerified, false))
 }
 
 func (handler *Handler) RequestOTP(w http.ResponseWriter, r *http.Request) {
@@ -196,9 +196,7 @@ func (handler *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusServiceUnavailable, safeAuthError(err))
 		return
 	}
-	sessionResponse := authSessionResponse(account, token, refreshToken, false)
-	sessionResponse["data"].(map[string]any)["verified"] = true
-	response.JSON(w, http.StatusOK, sessionResponse)
+	response.JSON(w, http.StatusOK, authSessionResponse(account, token, refreshToken, false, true))
 }
 
 func (handler *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
@@ -298,14 +296,15 @@ func registrationErrorStatus(err error) int {
 	}
 }
 
-func authSessionResponse(account domain.User, accessToken, refreshToken string, needsVerification bool) map[string]any {
-	data := map[string]any{
-		"user":              dto.NewAccountResponse(account),
-		"token":             accessToken,
-		"needsVerification": needsVerification,
+func authSessionResponse(account domain.User, accessToken, refreshToken string, needsVerification, verified bool) dto.SessionResponse {
+	return dto.SessionResponse{
+		Success: true,
+		Data: dto.SessionData{
+			User:              dto.NewAccountResponse(account),
+			Token:             accessToken,
+			RefreshToken:      refreshToken,
+			NeedsVerification: needsVerification,
+			Verified:          verified,
+		},
 	}
-	if refreshToken != "" {
-		data["refreshToken"] = refreshToken
-	}
-	return map[string]any{"success": true, "data": data}
 }

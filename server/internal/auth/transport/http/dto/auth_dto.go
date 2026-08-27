@@ -40,6 +40,19 @@ type RefreshToken struct {
 	Token string `json:"refreshToken"`
 }
 
+type SessionResponse struct {
+	Success bool        `json:"success"`
+	Data    SessionData `json:"data"`
+}
+
+type SessionData struct {
+	User              AccountResponse `json:"user"`
+	Token             string          `json:"token"`
+	RefreshToken      string          `json:"refreshToken,omitempty"`
+	NeedsVerification bool            `json:"needsVerification"`
+	Verified          bool            `json:"verified,omitempty"`
+}
+
 type AccountResponse struct {
 	ID                int         `json:"id"`
 	Email             string      `json:"email"`
