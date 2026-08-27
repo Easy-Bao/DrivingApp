@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 abstract class BookingRemoteDataSource {
   Future<Map<String, dynamic>> createSession(Map<String, dynamic> body);
 
-  Future<List<dynamic>> fetchOffers(String sessionId);
+  Future<List<Map<String, dynamic>>> fetchOffers(String sessionId);
 
   Future<Map<String, dynamic>> acceptOffer({
     required String sessionId,
@@ -28,11 +28,14 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
   }
 
   @override
-  Future<List<dynamic>> fetchOffers(String sessionId) async {
+  Future<List<Map<String, dynamic>>> fetchOffers(String sessionId) async {
     final response = await _dio.get<List<dynamic>>(
       '/api/v1/bids/${Uri.encodeComponent(sessionId)}/offers',
     );
-    return response.data ?? const <dynamic>[];
+    return [
+      for (final item in response.data ?? const <dynamic>[])
+        if (item is Map) Map<String, dynamic>.from(item),
+    ];
   }
 
   @override

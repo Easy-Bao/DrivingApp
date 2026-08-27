@@ -81,7 +81,7 @@ void main() {
     'keeps an actionable offer when optional driver display fields are blank',
     () async {
       when(() => dataSource.fetchOffers('26')).thenAnswer(
-        (_) async => <dynamic>[
+        (_) async => <Map<String, dynamic>>[
           <String, dynamic>{
             'id': 25,
             'session_id': 26,

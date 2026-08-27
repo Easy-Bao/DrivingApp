@@ -55,11 +55,7 @@ class BookingRepository implements IBookingRepository {
       final rawOffers = await _dataSource.fetchOffers(sessionId);
       return Right(
         rawOffers
-            .whereType<Map>()
-            .map(
-              (value) =>
-                  BookingOffer.tryParse(Map<String, dynamic>.from(value)),
-            )
+            .map(BookingOffer.tryParse)
             .whereType<BookingOffer>()
             .toList(growable: false),
       );
