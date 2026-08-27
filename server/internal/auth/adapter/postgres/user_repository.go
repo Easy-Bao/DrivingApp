@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/Easy-Bao/DrivingApp/server/ent"
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverprofile"
@@ -16,7 +15,7 @@ type UserRepository struct{ client *ent.Client }
 func NewUserRepository(client *ent.Client) *UserRepository { return &UserRepository{client: client} }
 
 func (repository *UserRepository) Create(ctx context.Context, account domain.User) (domain.User, error) {
-	transaction, err := repository.client.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	transaction, err := repository.client.Tx(ctx)
 	if err != nil {
 		return domain.User{}, err
 	}

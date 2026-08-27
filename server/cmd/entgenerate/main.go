@@ -64,8 +64,9 @@ func main() {
 	}
 
 	if err := entc.Generate(aggregate, &gen.Config{
-		Target:  filepath.Join(root, "ent"),
-		Package: "github.com/Easy-Bao/DrivingApp/server/ent",
+		Target:   filepath.Join(root, "ent"),
+		Package:  "github.com/Easy-Bao/DrivingApp/server/ent",
+		Features: []gen.Feature{gen.FeatureLock},
 	}); err != nil {
 		panic(fmt.Errorf("generate Ent graph: %w", err))
 	}

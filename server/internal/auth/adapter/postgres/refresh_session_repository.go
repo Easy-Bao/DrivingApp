@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"time"
 
@@ -51,7 +50,7 @@ func (repository *RefreshSessionRepository) FindActive(ctx context.Context, toke
 }
 
 func (repository *RefreshSessionRepository) Rotate(ctx context.Context, tokenHash string, replacement domain.RefreshSession, now time.Time) error {
-	transaction, err := repository.client.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	transaction, err := repository.client.Tx(ctx)
 	if err != nil {
 		return fmt.Errorf("begin refresh session rotation: %w", err)
 	}
@@ -63,6 +62,7 @@ func (repository *RefreshSessionRepository) Rotate(ctx context.Context, tokenHas
 			refreshsession.RevokedAtIsNil(),
 			refreshsession.ExpiresAtGT(now),
 		).
+		ForUpdate().
 		Only(ctx)
 	if ent.IsNotFound(err) {
 		return domain.ErrInvalidRefreshToken

@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"net/url"
 	"os"
@@ -22,6 +21,14 @@ type PostgresPoolConfig struct {
 	ConnectionMaxLifetime time.Duration
 	ConnectionMaxIdleTime time.Duration
 	PingTimeout           time.Duration
+}
+
+// PostgresConnection keeps the Ent client and its dialect driver together.
+// The migration runner uses the driver to keep PostgreSQL-specific schema work
+// on the same Ent-owned transaction as the migration ledger.
+type PostgresConnection struct {
+	Client *ent.Client
+	Driver dialect.Driver
 }
 
 func DefaultPostgresPoolConfig() PostgresPoolConfig {
@@ -46,10 +53,26 @@ func PostgresPoolConfigFromEnv() PostgresPoolConfig {
 }
 
 func OpenPostgres(databaseURL string) (*ent.Client, error) {
-	return OpenPostgresWithConfig(databaseURL, PostgresPoolConfigFromEnv())
+	connection, err := OpenPostgresConnectionWithConfig(databaseURL, PostgresPoolConfigFromEnv())
+	if err != nil {
+		return nil, err
+	}
+	return connection.Client, nil
 }
 
 func OpenPostgresWithConfig(databaseURL string, config PostgresPoolConfig) (*ent.Client, error) {
+	connection, err := OpenPostgresConnectionWithConfig(databaseURL, config)
+	if err != nil {
+		return nil, err
+	}
+	return connection.Client, nil
+}
+
+func OpenPostgresConnection(databaseURL string) (*PostgresConnection, error) {
+	return OpenPostgresConnectionWithConfig(databaseURL, PostgresPoolConfigFromEnv())
+}
+
+func OpenPostgresConnectionWithConfig(databaseURL string, config PostgresPoolConfig) (*PostgresConnection, error) {
 	if strings.TrimSpace(databaseURL) == "" {
 		return nil, fmt.Errorf("database URL is required")
 	}
@@ -57,24 +80,27 @@ func OpenPostgresWithConfig(databaseURL string, config PostgresPoolConfig) (*ent
 		return nil, err
 	}
 	databaseURL = NormalizePostgresURL(strings.TrimSpace(databaseURL))
-	connection, err := sql.Open("postgres", databaseURL)
+	driver, err := entsql.Open(dialect.Postgres, databaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("open PostgreSQL connection: %w", err)
 	}
-	connection.SetMaxOpenConns(config.MaxOpenConnections)
-	connection.SetMaxIdleConns(config.MaxIdleConnections)
-	connection.SetConnMaxLifetime(config.ConnectionMaxLifetime)
-	connection.SetConnMaxIdleTime(config.ConnectionMaxIdleTime)
+	pool := driver.DB()
+	pool.SetMaxOpenConns(config.MaxOpenConnections)
+	pool.SetMaxIdleConns(config.MaxIdleConnections)
+	pool.SetConnMaxLifetime(config.ConnectionMaxLifetime)
+	pool.SetConnMaxIdleTime(config.ConnectionMaxIdleTime)
 
 	pingContext, cancel := context.WithTimeout(context.Background(), config.PingTimeout)
 	defer cancel()
-	if err := connection.PingContext(pingContext); err != nil {
-		_ = connection.Close()
+	if err := pool.PingContext(pingContext); err != nil {
+		_ = driver.Close()
 		return nil, fmt.Errorf("ping PostgreSQL: %w", err)
 	}
 
-	driver := entsql.OpenDB(dialect.Postgres, connection)
-	return ent.NewClient(ent.Driver(driver)), nil
+	return &PostgresConnection{
+		Client: ent.NewClient(ent.Driver(driver)),
+		Driver: driver,
+	}, nil
 }
 
 func (config PostgresPoolConfig) validate() error {

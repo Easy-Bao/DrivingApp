@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"strings"
 	"time"
@@ -69,15 +68,15 @@ func (repository *Repository) CreateBid(ctx context.Context, value domain.Bid) (
 	if value.Status != "pending" {
 		return domain.Bid{}, domain.ErrInvalidFareOffer
 	}
-	transaction, err := repository.client.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	transaction, err := repository.client.Tx(ctx)
 	if err != nil {
 		return domain.Bid{}, err
 	}
 	defer transaction.Rollback()
-	if _, err := transaction.DriverProfile.Query().Where(driverprofile.UserIDEQ(value.DriverID), driverprofile.IsOnlineEQ(true)).Only(ctx); err != nil {
+	if _, err := transaction.DriverProfile.Query().Where(driverprofile.UserIDEQ(value.DriverID), driverprofile.IsOnlineEQ(true)).ForUpdate().Only(ctx); err != nil {
 		return domain.Bid{}, domain.ErrDriverUnavailable
 	}
-	if _, err := transaction.Ride.Query().Where(ride.IDEQ(value.RideID), ride.StatusEQ("requested")).Only(ctx); err != nil {
+	if _, err := transaction.Ride.Query().Where(ride.IDEQ(value.RideID), ride.StatusEQ("requested")).ForUpdate().Only(ctx); err != nil {
 		return domain.Bid{}, domain.ErrDriverUnavailable
 	}
 	exists, err := transaction.Bid.Query().Where(bid.RideIDEQ(value.RideID), bid.DriverIDEQ(value.DriverID), bid.StatusEQ("pending")).Exist(ctx)
@@ -126,16 +125,16 @@ func (repository *Repository) ActiveRidesForDriver(ctx context.Context, driverID
 	return result, nil
 }
 func (repository *Repository) AcceptBid(ctx context.Context, bidID, driverID int) (domain.Bid, domain.Ride, error) {
-	transaction, err := repository.client.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	transaction, err := repository.client.Tx(ctx)
 	if err != nil {
 		return domain.Bid{}, domain.Ride{}, err
 	}
-	offer, err := transaction.Bid.Query().Where(bid.IDEQ(bidID), bid.DriverIDEQ(driverID), bid.StatusEQ("pending")).Only(ctx)
+	offer, err := transaction.Bid.Query().Where(bid.IDEQ(bidID), bid.DriverIDEQ(driverID), bid.StatusEQ("pending")).ForUpdate().Only(ctx)
 	if err != nil {
 		_ = transaction.Rollback()
 		return domain.Bid{}, domain.Ride{}, err
 	}
-	profile, err := transaction.DriverProfile.Query().Where(driverprofile.UserIDEQ(driverID), driverprofile.IsOnlineEQ(true)).Only(ctx)
+	profile, err := transaction.DriverProfile.Query().Where(driverprofile.UserIDEQ(driverID), driverprofile.IsOnlineEQ(true)).ForUpdate().Only(ctx)
 	if err != nil {
 		_ = transaction.Rollback()
 		return domain.Bid{}, domain.Ride{}, domain.ErrDriverUnavailable
@@ -154,7 +153,7 @@ func (repository *Repository) AcceptBid(ctx context.Context, bidID, driverID int
 		_ = transaction.Rollback()
 		return domain.Bid{}, domain.Ride{}, err
 	}
-	trip, err := transaction.Ride.Query().Where(ride.IDEQ(offer.RideID), ride.StatusEQ("requested")).Only(ctx)
+	trip, err := transaction.Ride.Query().Where(ride.IDEQ(offer.RideID), ride.StatusEQ("requested")).ForUpdate().Only(ctx)
 	if err != nil {
 		_ = transaction.Rollback()
 		return domain.Bid{}, domain.Ride{}, err
@@ -192,16 +191,16 @@ func (repository *Repository) AcceptBid(ctx context.Context, bidID, driverID int
 }
 
 func (repository *Repository) AcceptRide(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
-	transaction, err := repository.client.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	transaction, err := repository.client.Tx(ctx)
 	if err != nil {
 		return domain.Ride{}, err
 	}
 	defer transaction.Rollback()
-	profile, err := transaction.DriverProfile.Query().Where(driverprofile.UserIDEQ(driverID), driverprofile.IsOnlineEQ(true)).Only(ctx)
+	profile, err := transaction.DriverProfile.Query().Where(driverprofile.UserIDEQ(driverID), driverprofile.IsOnlineEQ(true)).ForUpdate().Only(ctx)
 	if err != nil {
 		return domain.Ride{}, domain.ErrDriverUnavailable
 	}
-	item, err := transaction.Ride.Query().Where(ride.IDEQ(rideID), ride.StatusEQ("requested")).Only(ctx)
+	item, err := transaction.Ride.Query().Where(ride.IDEQ(rideID), ride.StatusEQ("requested")).ForUpdate().Only(ctx)
 	if err != nil {
 		return domain.Ride{}, err
 	}
@@ -242,12 +241,12 @@ func (repository *Repository) AcceptRide(ctx context.Context, rideID, driverID i
 }
 
 func (repository *Repository) SettleCash(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
-	transaction, err := repository.client.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	transaction, err := repository.client.Tx(ctx)
 	if err != nil {
 		return domain.Ride{}, err
 	}
 	defer transaction.Rollback()
-	rideItem, err := transaction.Ride.Query().Where(ride.IDEQ(rideID), ride.DriverIDEQ(driverID), ride.StatusEQ("completed")).Only(ctx)
+	rideItem, err := transaction.Ride.Query().Where(ride.IDEQ(rideID), ride.DriverIDEQ(driverID), ride.StatusEQ("completed")).ForUpdate().Only(ctx)
 	if err != nil {
 		return domain.Ride{}, err
 	}
@@ -339,12 +338,15 @@ func (repository *Repository) UpdateStatus(ctx context.Context, rideID, actorID 
 }
 
 func (repository *Repository) CreateSession(ctx context.Context, value domain.BidSession) (domain.BidSession, error) {
-	transaction, err := repository.client.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	transaction, err := repository.client.Tx(ctx)
 	if err != nil {
 		return domain.BidSession{}, err
 	}
 	defer transaction.Rollback()
 	now := time.Now()
+	if _, err := transaction.User.Query().Where(user.IDEQ(value.PassengerID)).ForUpdate().Only(ctx); err != nil {
+		return domain.BidSession{}, err
+	}
 	if _, err := transaction.BidSession.Update().Where(
 		bidsession.PassengerIDEQ(value.PassengerID),
 		bidsession.StatusEQ("open"),
@@ -455,7 +457,7 @@ func (repository *Repository) Offers(ctx context.Context, sessionID int) ([]doma
 }
 
 func (repository *Repository) PlaceOffer(ctx context.Context, value domain.BidOffer) (domain.BidOffer, error) {
-	transaction, err := repository.client.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	transaction, err := repository.client.Tx(ctx)
 	if err != nil {
 		return domain.BidOffer{}, err
 	}
@@ -465,14 +467,14 @@ func (repository *Repository) PlaceOffer(ctx context.Context, value domain.BidOf
 		bidsession.IDEQ(value.SessionID),
 		bidsession.StatusEQ("open"),
 		bidsession.ExpiresAtGT(now),
-	).Only(ctx)
+	).ForUpdate().Only(ctx)
 	if err != nil {
 		return domain.BidOffer{}, domain.ErrDriverUnavailable
 	}
 	if session.TargetDriverID != 0 && session.TargetDriverID != value.DriverID {
 		return domain.BidOffer{}, domain.ErrDriverUnavailable
 	}
-	profile, err := transaction.DriverProfile.Query().Where(driverprofile.UserIDEQ(value.DriverID), driverprofile.IsOnlineEQ(true)).Only(ctx)
+	profile, err := transaction.DriverProfile.Query().Where(driverprofile.UserIDEQ(value.DriverID), driverprofile.IsOnlineEQ(true)).ForUpdate().Only(ctx)
 	if err != nil {
 		return domain.BidOffer{}, domain.ErrDriverUnavailable
 	}
@@ -505,13 +507,13 @@ func (repository *Repository) PlaceOffer(ctx context.Context, value domain.BidOf
 }
 
 func (repository *Repository) AcceptOffer(ctx context.Context, sessionID, offerID, passengerID int) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
-	transaction, err := repository.client.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	transaction, err := repository.client.Tx(ctx)
 	if err != nil {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
 	}
 	defer transaction.Rollback()
 	now := time.Now()
-	session, err := transaction.BidSession.Query().Where(bidsession.IDEQ(sessionID), bidsession.StatusEQ("open"), bidsession.ExpiresAtGT(now)).Only(ctx)
+	session, err := transaction.BidSession.Query().Where(bidsession.IDEQ(sessionID), bidsession.StatusEQ("open"), bidsession.ExpiresAtGT(now)).ForUpdate().Only(ctx)
 	if err != nil {
 		_ = transaction.Rollback()
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
@@ -520,7 +522,7 @@ func (repository *Repository) AcceptOffer(ctx context.Context, sessionID, offerI
 		_ = transaction.Rollback()
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, domain.ErrUnauthorizedSession
 	}
-	offerQuery := transaction.BidOffer.Query().Where(bidoffer.IDEQ(offerID), bidoffer.SessionIDEQ(sessionID), bidoffer.StatusEQ("pending"))
+	offerQuery := transaction.BidOffer.Query().Where(bidoffer.IDEQ(offerID), bidoffer.SessionIDEQ(sessionID), bidoffer.StatusEQ("pending")).ForUpdate()
 	offer, err := offerQuery.Only(ctx)
 	if err != nil {
 		_ = transaction.Rollback()
@@ -530,7 +532,7 @@ func (repository *Repository) AcceptOffer(ctx context.Context, sessionID, offerI
 		_ = transaction.Rollback()
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, domain.ErrUnauthorizedSession
 	}
-	profile, err := transaction.DriverProfile.Query().Where(driverprofile.UserIDEQ(offer.DriverID), driverprofile.IsOnlineEQ(true)).Only(ctx)
+	profile, err := transaction.DriverProfile.Query().Where(driverprofile.UserIDEQ(offer.DriverID), driverprofile.IsOnlineEQ(true)).ForUpdate().Only(ctx)
 	if err != nil {
 		_ = transaction.Rollback()
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, domain.ErrDriverUnavailable
