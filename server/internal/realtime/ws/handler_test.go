@@ -126,7 +126,7 @@ func TestChatWebSocketDoesNotBroadcastRejectedMessages(t *testing.T) {
 func TestQueueMessageStopsWhenWriterHasExited(t *testing.T) {
 	done := make(chan struct{})
 	close(done)
-	messages := make(chan []byte)
+	messages := make(chan []byte, 1)
 
 	if queueMessage(messages, done, []byte(`{"error":"closed"}`)) {
 		t.Fatal("queued a message after the writer exited")

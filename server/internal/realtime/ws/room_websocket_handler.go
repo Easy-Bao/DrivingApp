@@ -202,6 +202,12 @@ func writePump(connection *websocket.Conn, outbound <-chan []byte, serverMessage
 
 func queueMessage(messages chan<- []byte, done <-chan struct{}, message []byte) bool {
 	select {
+	case <-done:
+		return false
+	default:
+	}
+
+	select {
 	case messages <- message:
 		return true
 	case <-done:
