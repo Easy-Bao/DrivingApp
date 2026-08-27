@@ -6,11 +6,6 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 )
 
-func HashPassword(password string) string {
-	hash, _ := security.HashPassword(password)
-	return hash
-}
-
 func HashPasswordWithError(password string) (string, error) {
 	return security.HashPassword(password)
 }

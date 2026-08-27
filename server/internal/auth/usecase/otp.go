@@ -155,7 +155,11 @@ func (service *OTPService) ResetPasswordForRole(ctx context.Context, email, code
 	if err := service.sessions.RevokeAll(ctx, account.ID, time.Now().UTC()); err != nil {
 		return unavailableSessionError(err)
 	}
-	return service.users.UpdatePassword(ctx, account.ID, HashPassword(password))
+	passwordHash, err := HashPasswordWithError(password)
+	if err != nil {
+		return err
+	}
+	return service.users.UpdatePassword(ctx, account.ID, passwordHash)
 }
 
 func (service *OTPService) requestCode(ctx context.Context, purpose, email string) error {

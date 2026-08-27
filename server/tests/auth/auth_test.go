@@ -91,7 +91,7 @@ func TestAuthenticationNormalizesEmailBeforeLookup(t *testing.T) {
 			ID:           9,
 			Email:        "passenger@example.test",
 			Role:         domain.Passenger,
-			PasswordHash: usecase.HashPassword("secret-8"),
+			PasswordHash: testPasswordHash(t, "secret-8"),
 		},
 	}}
 	authenticate := usecase.NewAuthenticateService(repository, issuer{}, newTestRefreshSessionStore())

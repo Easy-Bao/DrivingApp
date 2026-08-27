@@ -17,7 +17,7 @@ func TestRefreshSessionsAreOpaqueAndRotateOnce(t *testing.T) {
 			ID:           7,
 			Email:        "passenger@example.test",
 			Role:         domain.Passenger,
-			PasswordHash: usecase.HashPassword("secret-8"),
+			PasswordHash: testPasswordHash(t, "secret-8"),
 		},
 	}}
 	sessions := newTestRefreshSessionStore()
@@ -55,7 +55,7 @@ func TestLogoutRevokesRefreshSession(t *testing.T) {
 			ID:           8,
 			Email:        "passenger@example.test",
 			Role:         domain.Passenger,
-			PasswordHash: usecase.HashPassword("secret-8"),
+			PasswordHash: testPasswordHash(t, "secret-8"),
 		},
 	}}
 	sessions := newTestRefreshSessionStore()

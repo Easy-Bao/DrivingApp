@@ -84,7 +84,7 @@ func TestRetryingUnverifiedPassengerRegistrationReplacesPendingData(t *testing.T
 	if err != nil {
 		t.Fatalf("get pending registration: %v", err)
 	}
-	if stored.Name != "Second" || stored.PasswordHash == usecase.HashPassword("first-password") {
+	if stored.Name != "Second" || stored.PasswordHash == testPasswordHash(t, "first-password") {
 		t.Fatalf("pending registration was not replaced: %#v", stored)
 	}
 	if len(repository.users) != 0 {

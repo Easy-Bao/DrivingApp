@@ -20,13 +20,13 @@ func TestRoleSpecificLoginRoutes(t *testing.T) {
 			ID:           42,
 			Email:        "driver@example.test",
 			Role:         domain.Driver,
-			PasswordHash: usecase.HashPassword("secret"),
+			PasswordHash: testPasswordHash(t, "secret"),
 		},
 		"passenger@example.test": {
 			ID:           43,
 			Email:        "passenger@example.test",
 			Role:         domain.Passenger,
-			PasswordHash: usecase.HashPassword("secret"),
+			PasswordHash: testPasswordHash(t, "secret"),
 		},
 	}}
 	authenticate := usecase.NewAuthenticateService(repository, issuer{}, newTestRefreshSessionStore())
@@ -84,7 +84,7 @@ func TestLoginAndRefreshIssueRotatingSessionTokens(t *testing.T) {
 			ID:           43,
 			Email:        "passenger@example.test",
 			Role:         domain.Passenger,
-			PasswordHash: usecase.HashPassword("secret"),
+			PasswordHash: testPasswordHash(t, "secret"),
 		},
 	}}
 	manager := security.NewTokenManager("refresh-http-test-secret")
@@ -146,7 +146,7 @@ func TestLoginRejectsFieldsOutsideTheRequestContract(t *testing.T) {
 			ID:           43,
 			Email:        "passenger@example.test",
 			Role:         domain.Passenger,
-			PasswordHash: usecase.HashPassword("secret"),
+			PasswordHash: testPasswordHash(t, "secret"),
 		},
 	}}
 	mux := chi.NewRouter()
