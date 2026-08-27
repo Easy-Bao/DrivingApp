@@ -50,7 +50,7 @@ func TestChatHTTPRoutesRequireRoomMembership(t *testing.T) {
 	history := &roomHistory{members: map[string]bool{"ride-1:7": true}}
 	router := chi.NewRouter()
 	chath.NewRouter(
-		chatusecase.NewService(chatadapter.NewHub(), history).
+		chatusecase.NewChatService(chatadapter.NewHub(), history).
 			WithRideAssignmentLookup(chatAssignmentLookup{
 				assignment: assignment.Assignment{
 					RideID: "ride-1", PassengerID: "7", DriverID: "9", Status: "assigned",
@@ -95,7 +95,7 @@ func TestChatCreateRoomReportsResolvedRoom(t *testing.T) {
 	}
 	router := chi.NewRouter()
 	chath.NewRouter(
-		chatusecase.NewService(chatadapter.NewHub(), history).
+		chatusecase.NewChatService(chatadapter.NewHub(), history).
 			WithRideAssignmentLookup(chatAssignmentLookup{
 				assignment: assignment.Assignment{
 					RideID: "ride-1", PassengerID: "7", DriverID: "8", Status: "assigned",
@@ -127,7 +127,7 @@ func TestChatCreateRoomRejectsClientSuppliedParticipants(t *testing.T) {
 	}
 	router := chi.NewRouter()
 	chath.NewRouter(
-		chatusecase.NewService(chatadapter.NewHub(), &roomHistory{}),
+		chatusecase.NewChatService(chatadapter.NewHub(), &roomHistory{}),
 		tokenManager,
 	).RegisterRoutes(router)
 

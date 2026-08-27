@@ -9,7 +9,7 @@ import (
 
 type Router struct{ handler *locationhandler.Handler }
 
-func NewRouter(service *usecase.Service) *Router {
+func NewRouter(service *usecase.LocationService) *Router {
 	return &Router{handler: locationhandler.NewHandler(service)}
 }
 

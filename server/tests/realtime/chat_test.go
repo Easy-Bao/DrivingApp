@@ -65,7 +65,7 @@ func (history *chatHistory) IsLocked(context.Context, string) (bool, error) {
 
 func TestChatCreateRoomDoesNotReplaceParticipants(t *testing.T) {
 	history := &chatHistory{passengerID: "passenger-1", driverID: "driver-1"}
-	service := usecase.NewService(chatadapter.NewHub(), history).
+	service := usecase.NewChatService(chatadapter.NewHub(), history).
 		WithRideAssignmentLookup(chatAssignmentLookup{
 			assignment: assignment.Assignment{
 				RideID: "ride-1", PassengerID: "passenger-1", DriverID: "driver-1", Status: "assigned",
@@ -87,7 +87,7 @@ func TestChatCreateRoomDoesNotReplaceParticipants(t *testing.T) {
 
 func TestChatCreateRoomRequiresTheAssignedRideParticipants(t *testing.T) {
 	history := &chatHistory{}
-	service := usecase.NewService(chatadapter.NewHub(), history).
+	service := usecase.NewChatService(chatadapter.NewHub(), history).
 		WithRideAssignmentLookup(chatAssignmentLookup{
 			assignment: assignment.Assignment{
 				RideID:      "ride-1",
@@ -117,7 +117,7 @@ func TestChatCreateRoomRequiresTheAssignedRideParticipants(t *testing.T) {
 
 func TestChatCreateRoomUsesAuthoritativeParticipants(t *testing.T) {
 	history := &chatHistory{}
-	service := usecase.NewService(chatadapter.NewHub(), history).
+	service := usecase.NewChatService(chatadapter.NewHub(), history).
 		WithRideAssignmentLookup(chatAssignmentLookup{
 			assignment: assignment.Assignment{
 				RideID:      "ride-1",
@@ -143,7 +143,7 @@ func TestChatCreateRoomUsesAuthoritativeParticipants(t *testing.T) {
 
 func TestChatRelayRejectsResolvedRoom(t *testing.T) {
 	history := &chatHistory{passengerID: "passenger-1", driverID: "driver-1", locked: true}
-	service := usecase.NewService(chatadapter.NewHub(), history)
+	service := usecase.NewChatService(chatadapter.NewHub(), history)
 
 	err := service.Relay(context.Background(), domain.Message{
 		RoomID:   "ride-1",
@@ -170,7 +170,7 @@ func (publisher *chatEventPublisher) Publish(_ context.Context, envelope event.E
 func TestChatRelayPersistsBeforeBroadcasting(t *testing.T) {
 	hub := chatadapter.NewHub()
 	history := &chatHistory{}
-	service := usecase.NewService(hub, history)
+	service := usecase.NewChatService(hub, history)
 
 	if err := service.Relay(context.Background(), domain.Message{RoomID: "ride-1", SenderID: "7", Body: "hello"}); err != nil {
 		t.Fatal(err)
@@ -183,7 +183,7 @@ func TestChatRelayPersistsBeforeBroadcasting(t *testing.T) {
 func TestChatRelayPublishesPassengerScopedNotification(t *testing.T) {
 	history := &chatHistory{passengerID: "passenger-1", driverID: "driver-1"}
 	events := &chatEventPublisher{}
-	service := usecase.NewService(chatadapter.NewHub(), history).
+	service := usecase.NewChatService(chatadapter.NewHub(), history).
 		WithEventPublisher(events)
 
 	if err := service.Relay(context.Background(), domain.Message{

@@ -24,7 +24,7 @@ func (calculator RouteCalculatorFunc) CalculateRoute(ctx context.Context, origin
 	return calculator(ctx, originLat, originLng, destinationLat, destinationLng)
 }
 
-type Service struct {
+type RideService struct {
 	repository        domain.Repository
 	routeCalculator   RouteCalculator
 	pricingConfig     PricingConfig
@@ -32,18 +32,18 @@ type Service struct {
 	reportingLocation *time.Location
 }
 
-func NewService(repository domain.Repository, pricingConfig PricingConfig, publishers ...domain.EventPublisher) *Service {
-	return &Service{repository: repository, pricingConfig: pricingConfig, eventPublisher: firstPublisher(publishers), reportingLocation: defaultReportingLocation}
+func NewRideService(repository domain.Repository, pricingConfig PricingConfig, publishers ...domain.EventPublisher) *RideService {
+	return &RideService{repository: repository, pricingConfig: pricingConfig, eventPublisher: firstPublisher(publishers), reportingLocation: defaultReportingLocation}
 }
 
-func NewServiceWithRouteCalculator(repository domain.Repository, calculator RouteCalculator, pricingConfig PricingConfig, publishers ...domain.EventPublisher) *Service {
-	return &Service{repository: repository, routeCalculator: calculator, pricingConfig: pricingConfig, eventPublisher: firstPublisher(publishers), reportingLocation: defaultReportingLocation}
+func NewRideServiceWithRouteCalculator(repository domain.Repository, calculator RouteCalculator, pricingConfig PricingConfig, publishers ...domain.EventPublisher) *RideService {
+	return &RideService{repository: repository, routeCalculator: calculator, pricingConfig: pricingConfig, eventPublisher: firstPublisher(publishers), reportingLocation: defaultReportingLocation}
 }
 
-func (service *Service) PricingConfig() PricingConfig {
+func (service *RideService) PricingConfig() PricingConfig {
 	return service.pricingConfig
 }
-func (service *Service) CreateRide(ctx context.Context, passengerID int, fareCentavos int64) (domain.Ride, error) {
+func (service *RideService) CreateRide(ctx context.Context, passengerID int, fareCentavos int64) (domain.Ride, error) {
 	if passengerID <= 0 || fareCentavos <= 0 {
 		return domain.Ride{}, domain.ErrInvalidTrip
 	}
@@ -54,7 +54,7 @@ func (service *Service) CreateRide(ctx context.Context, passengerID int, fareCen
 	service.publishRide(ctx, rideCreatedEvent, ride, map[string]any{"ride": ride})
 	return ride, nil
 }
-func (service *Service) SubmitBid(ctx context.Context, rideID, driverID int, fareCentavos int64) (domain.Bid, error) {
+func (service *RideService) SubmitBid(ctx context.Context, rideID, driverID int, fareCentavos int64) (domain.Bid, error) {
 	if rideID <= 0 || driverID <= 0 || fareCentavos <= 0 {
 		return domain.Bid{}, domain.ErrInvalidFareOffer
 	}
@@ -67,7 +67,7 @@ func (service *Service) SubmitBid(ctx context.Context, rideID, driverID int, far
 	}
 	return bid, nil
 }
-func (service *Service) AcceptBid(ctx context.Context, bidID, driverID int) (domain.Bid, domain.Ride, error) {
+func (service *RideService) AcceptBid(ctx context.Context, bidID, driverID int) (domain.Bid, domain.Ride, error) {
 	bid, ride, err := service.repository.AcceptBid(ctx, bidID, driverID)
 	if err != nil {
 		return domain.Bid{}, domain.Ride{}, err
@@ -75,11 +75,11 @@ func (service *Service) AcceptBid(ctx context.Context, bidID, driverID int) (dom
 	service.publishRide(ctx, rideMatchedEvent, ride, map[string]any{"ride": ride, "bid": bid})
 	return bid, ride, nil
 }
-func (service *Service) Get(ctx context.Context, id int) (domain.Ride, error) {
+func (service *RideService) Get(ctx context.Context, id int) (domain.Ride, error) {
 	return service.repository.Get(ctx, id)
 }
 
-func (service *Service) CreateRideWithDetails(ctx context.Context, ride domain.Ride) (domain.Ride, error) {
+func (service *RideService) CreateRideWithDetails(ctx context.Context, ride domain.Ride) (domain.Ride, error) {
 	if ride.PassengerID <= 0 {
 		return domain.Ride{}, domain.ErrInvalidTrip
 	}
@@ -108,7 +108,7 @@ func (service *Service) CreateRideWithDetails(ctx context.Context, ride domain.R
 	return created, nil
 }
 
-func (service *Service) Fare(ctx context.Context, originLat, originLng, destinationLat, destinationLng *float64, distanceKm, durationMinutes float64) (RouteMetrics, int64, error) {
+func (service *RideService) Fare(ctx context.Context, originLat, originLng, destinationLat, destinationLng *float64, distanceKm, durationMinutes float64) (RouteMetrics, int64, error) {
 	if service.routeCalculator != nil {
 		if originLat == nil || originLng == nil || destinationLat == nil || destinationLng == nil {
 			return RouteMetrics{}, 0, domain.ErrInvalidTrip
@@ -126,7 +126,7 @@ func (service *Service) Fare(ctx context.Context, originLat, originLng, destinat
 	return metrics, service.CalculateFare(distanceKm, durationMinutes), nil
 }
 
-func (service *Service) authoritativeRoute(ctx context.Context, pickupLatitude, pickupLongitude, dropoffLatitude, dropoffLongitude, distanceKm, durationMinutes float64) (RouteMetrics, error) {
+func (service *RideService) authoritativeRoute(ctx context.Context, pickupLatitude, pickupLongitude, dropoffLatitude, dropoffLongitude, distanceKm, durationMinutes float64) (RouteMetrics, error) {
 	if service.routeCalculator == nil {
 		if err := validateTrip(pickupLatitude, pickupLongitude, dropoffLatitude, dropoffLongitude, distanceKm, durationMinutes); err != nil {
 			return RouteMetrics{}, err
@@ -146,7 +146,7 @@ func (service *Service) authoritativeRoute(ctx context.Context, pickupLatitude, 
 	return metrics, nil
 }
 
-func (service *Service) AcceptRide(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
+func (service *RideService) AcceptRide(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
 	repository, ok := service.repository.(domain.LifecycleRepository)
 	if !ok {
 		return domain.Ride{}, errors.New("ride lifecycle persistence is unavailable")
@@ -159,7 +159,7 @@ func (service *Service) AcceptRide(ctx context.Context, rideID, driverID int) (d
 	return ride, nil
 }
 
-func (service *Service) SettleCash(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
+func (service *RideService) SettleCash(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
 	repository, ok := service.repository.(domain.PaymentRepository)
 	if !ok {
 		return domain.Ride{}, errors.New("cash settlement persistence is unavailable")
@@ -175,7 +175,7 @@ func (service *Service) SettleCash(ctx context.Context, rideID, driverID int) (d
 	return ride, nil
 }
 
-func (service *Service) UpdateStatus(ctx context.Context, rideID, actorID int, next string) (domain.Ride, error) {
+func (service *RideService) UpdateStatus(ctx context.Context, rideID, actorID int, next string) (domain.Ride, error) {
 	repository, ok := service.repository.(domain.LifecycleRepository)
 	if !ok {
 		return domain.Ride{}, errors.New("ride lifecycle persistence is unavailable")
@@ -209,7 +209,7 @@ func (service *Service) UpdateStatus(ctx context.Context, rideID, actorID int, n
 	return updated, nil
 }
 
-func (service *Service) CalculateFare(distanceKm, durationMinutes float64) int64 {
+func (service *RideService) CalculateFare(distanceKm, durationMinutes float64) int64 {
 	return service.pricingConfig.FareCentavos(distanceKm, durationMinutes)
 }
 
@@ -226,7 +226,7 @@ func validateTrip(pickupLatitude, pickupLongitude, dropoffLatitude, dropoffLongi
 	return nil
 }
 
-func (service *Service) DriverStats(ctx context.Context, driverID int) (domain.DriverStats, error) {
+func (service *RideService) DriverStats(ctx context.Context, driverID int) (domain.DriverStats, error) {
 	repository, ok := service.repository.(domain.DriverStatisticsRepository)
 	if !ok {
 		return domain.DriverStats{}, errors.New("driver analytics persistence is unavailable")
@@ -235,7 +235,7 @@ func (service *Service) DriverStats(ctx context.Context, driverID int) (domain.D
 	return repository.DriverStats(ctx, driverID, dayStart, dayEnd)
 }
 
-func (service *Service) DriverEarnings(ctx context.Context, driverID int) (domain.DriverEarningsSummary, error) {
+func (service *RideService) DriverEarnings(ctx context.Context, driverID int) (domain.DriverEarningsSummary, error) {
 	repository, ok := service.repository.(domain.DriverEarningsRepository)
 	if !ok {
 		return domain.DriverEarningsSummary{}, errors.New("driver earnings persistence is unavailable")
@@ -254,7 +254,7 @@ func (service *Service) DriverEarnings(ctx context.Context, driverID int) (domai
 	return summarizeDriverEarnings(entries, now, location), nil
 }
 
-func (service *Service) DriverTrips(ctx context.Context, driverID int, query domain.TripHistoryQuery) ([]domain.Ride, error) {
+func (service *RideService) DriverTrips(ctx context.Context, driverID int, query domain.TripHistoryQuery) ([]domain.Ride, error) {
 	repository, ok := service.repository.(domain.TripHistoryRepository)
 	if !ok {
 		return nil, errors.New("driver trip persistence is unavailable")
@@ -265,7 +265,7 @@ func (service *Service) DriverTrips(ctx context.Context, driverID int, query dom
 	return repository.DriverTrips(ctx, driverID, query)
 }
 
-func (service *Service) PassengerRides(ctx context.Context, passengerID int, query domain.TripHistoryQuery) ([]domain.Ride, error) {
+func (service *RideService) PassengerRides(ctx context.Context, passengerID int, query domain.TripHistoryQuery) ([]domain.Ride, error) {
 	repository, ok := service.repository.(domain.TripHistoryRepository)
 	if !ok {
 		return nil, errors.New("passenger ride persistence is unavailable")
@@ -276,7 +276,7 @@ func (service *Service) PassengerRides(ctx context.Context, passengerID int, que
 	return repository.PassengerRides(ctx, passengerID, query)
 }
 
-func (service *Service) PassengerActivitySummary(ctx context.Context, passengerID int) (domain.PassengerActivitySummary, error) {
+func (service *RideService) PassengerActivitySummary(ctx context.Context, passengerID int) (domain.PassengerActivitySummary, error) {
 	repository, ok := service.repository.(domain.PassengerActivitySummaryRepository)
 	if !ok {
 		return domain.PassengerActivitySummary{}, errors.New("passenger activity persistence is unavailable")
@@ -285,7 +285,7 @@ func (service *Service) PassengerActivitySummary(ctx context.Context, passengerI
 	return repository.PassengerActivitySummary(ctx, passengerID, weekStart, weekEnd)
 }
 
-func (service *Service) PassengerRecentRides(ctx context.Context, passengerID, limit int) ([]domain.Ride, error) {
+func (service *RideService) PassengerRecentRides(ctx context.Context, passengerID, limit int) ([]domain.Ride, error) {
 	if passengerID <= 0 || limit <= 0 || limit > 100 {
 		return nil, errors.New("invalid passenger recent rides request")
 	}
@@ -302,7 +302,7 @@ func (service *Service) PassengerRecentRides(ctx context.Context, passengerID, l
 	return rides, nil
 }
 
-func (service *Service) DriverReviews(ctx context.Context, driverID, limit, offset int) ([]domain.Review, error) {
+func (service *RideService) DriverReviews(ctx context.Context, driverID, limit, offset int) ([]domain.Review, error) {
 	repository, ok := service.repository.(domain.ReviewRepository)
 	if !ok {
 		return nil, errors.New("driver review persistence is unavailable")
@@ -310,7 +310,7 @@ func (service *Service) DriverReviews(ctx context.Context, driverID, limit, offs
 	return repository.DriverReviews(ctx, driverID, limit, offset)
 }
 
-func (service *Service) CreateReview(ctx context.Context, review domain.Review) (domain.Review, error) {
+func (service *RideService) CreateReview(ctx context.Context, review domain.Review) (domain.Review, error) {
 	repository, ok := service.repository.(domain.ReviewRepository)
 	if !ok {
 		return domain.Review{}, errors.New("driver review persistence is unavailable")
@@ -321,7 +321,7 @@ func (service *Service) CreateReview(ctx context.Context, review domain.Review) 
 	return repository.CreateReview(ctx, review)
 }
 
-func (service *Service) CreatePassengerReview(ctx context.Context, review domain.PassengerReview) (domain.PassengerReview, error) {
+func (service *RideService) CreatePassengerReview(ctx context.Context, review domain.PassengerReview) (domain.PassengerReview, error) {
 	repository, ok := service.repository.(domain.PassengerReviewRepository)
 	if !ok {
 		return domain.PassengerReview{}, errors.New("passenger review persistence is unavailable")
@@ -332,7 +332,7 @@ func (service *Service) CreatePassengerReview(ctx context.Context, review domain
 	return repository.CreatePassengerReview(ctx, review)
 }
 
-func (service *Service) OnlineDrivers(ctx context.Context, driverIDs []int) ([]domain.OnlineDriver, error) {
+func (service *RideService) OnlineDrivers(ctx context.Context, driverIDs []int) ([]domain.OnlineDriver, error) {
 	repository, ok := service.repository.(domain.DriverAvailabilityRepository)
 	if !ok {
 		return nil, errors.New("online driver persistence is unavailable")
@@ -343,7 +343,7 @@ func (service *Service) OnlineDrivers(ctx context.Context, driverIDs []int) ([]d
 	return repository.OnlineDrivers(ctx, driverIDs)
 }
 
-func (service *Service) PublicDriverSummaries(ctx context.Context, limit int) ([]domain.PublicDriverSummary, error) {
+func (service *RideService) PublicDriverSummaries(ctx context.Context, limit int) ([]domain.PublicDriverSummary, error) {
 	repository, ok := service.repository.(domain.DriverAvailabilityRepository)
 	if !ok {
 		return nil, errors.New("public driver summaries are unavailable")

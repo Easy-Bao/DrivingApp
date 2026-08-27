@@ -14,7 +14,7 @@ type Router struct {
 	verifier *security.TokenManager
 }
 
-func NewRouter(service *usecase.Service, verifier *security.TokenManager) *Router {
+func NewRouter(service *usecase.ChatService, verifier *security.TokenManager) *Router {
 	return &Router{handler: handler.NewHandler(service, verifier), verifier: verifier}
 }
 

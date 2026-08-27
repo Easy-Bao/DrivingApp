@@ -33,7 +33,7 @@ func (*roomRepositoryStub) IsLocked(context.Context, string) (bool, error) { ret
 
 func TestEventHandlerKeepsServerIdentityAndTimestamp(t *testing.T) {
 	history := &roomRepositoryStub{}
-	handler := NewEventHandler(usecase.NewService(chatadapter.NewHub(), history))
+	handler := NewEventHandler(usecase.NewChatService(chatadapter.NewHub(), history))
 	before := time.Now().UTC()
 
 	err := handler.Handle(context.Background(), []byte(`{

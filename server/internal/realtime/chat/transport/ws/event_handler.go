@@ -9,9 +9,11 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/usecase"
 )
 
-type EventHandler struct{ service *usecase.Service }
+type EventHandler struct{ service *usecase.ChatService }
 
-func NewEventHandler(service *usecase.Service) *EventHandler { return &EventHandler{service: service} }
+func NewEventHandler(service *usecase.ChatService) *EventHandler {
+	return &EventHandler{service: service}
+}
 
 func (handler *EventHandler) Handle(ctx context.Context, message []byte) error {
 	var event struct {

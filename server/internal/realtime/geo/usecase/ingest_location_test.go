@@ -57,7 +57,7 @@ func (stub *locationEventPublisherStub) Publish(_ context.Context, envelope even
 }
 
 func TestIngestRejectsInvalidCoordinates(t *testing.T) {
-	service := NewService(&locationRepositoryStub{})
+	service := NewLocationTrackingService(&locationRepositoryStub{})
 	if err := service.Ingest(context.Background(), domain.DriverPoint{DriverID: "7", Latitude: 91, Longitude: 122}); err == nil {
 		t.Fatal("expected invalid latitude to be rejected")
 	}
@@ -67,7 +67,7 @@ func TestIngestRejectsInvalidCoordinates(t *testing.T) {
 }
 
 func TestNearbyRejectsUnboundedRadius(t *testing.T) {
-	service := NewService(&locationRepositoryStub{})
+	service := NewLocationTrackingService(&locationRepositoryStub{})
 	if _, err := service.Nearby(context.Background(), 6.7, 122.1, 0); err == nil {
 		t.Fatal("expected zero radius to be rejected")
 	}
@@ -79,7 +79,7 @@ func TestNearbyRejectsUnboundedRadius(t *testing.T) {
 func TestIngestPublishesAnActiveRideLocationToBothParticipants(t *testing.T) {
 	repository := &locationRepositoryStub{}
 	publisher := &locationEventPublisherStub{}
-	service := NewService(
+	service := NewLocationTrackingService(
 		repository,
 		WithRideAssignments(assignmentLookupStub{assignments: []assignment.Assignment{{RideID: "ride-7", DriverID: "driver-1", PassengerID: "passenger-2", Status: "assigned"}}}),
 		WithEventPublisher(publisher),
@@ -101,7 +101,7 @@ func TestIngestPublishesAnActiveRideLocationToBothParticipants(t *testing.T) {
 }
 
 func TestPassengerLocationRequiresTheRidePassenger(t *testing.T) {
-	service := NewService(
+	service := NewLocationTrackingService(
 		&locationRepositoryStub{},
 		WithRideAssignments(assignmentLookupStub{assignments: []assignment.Assignment{{RideID: "ride-7", DriverID: "driver-1", PassengerID: "passenger-2", Status: "assigned"}}}),
 	)

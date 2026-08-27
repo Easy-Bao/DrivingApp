@@ -13,12 +13,12 @@ import (
 )
 
 type Handler struct {
-	service *usecase.Service
+	service *usecase.LocationService
 }
 
 const maxRoutePayloadBytes = 16 << 10
 
-func NewHandler(service *usecase.Service) *Handler {
+func NewHandler(service *usecase.LocationService) *Handler {
 	return &Handler{service: service}
 }
 

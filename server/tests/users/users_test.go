@@ -15,7 +15,7 @@ func (r *repository) Save(_ context.Context, profile domain.Profile) (domain.Pro
 	return profile, nil
 }
 func TestProfileUpdateUsesTheDomainService(t *testing.T) {
-	service := usecase.NewService(&repository{})
+	service := usecase.NewProfileService(&repository{})
 	profile, err := service.Update(context.Background(), domain.Profile{UserID: 4, Role: "driver", Name: "Bao Bao Driver"})
 	if err != nil || profile.UserID != 4 {
 		t.Fatalf("profile update = %#v, %v", profile, err)

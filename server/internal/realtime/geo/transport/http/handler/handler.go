@@ -16,11 +16,11 @@ import (
 )
 
 type Handler struct {
-	service *usecase.Service
+	service *usecase.LocationTrackingService
 	auth    *security.TokenManager
 }
 
-func NewHandler(service *usecase.Service, auth ...*security.TokenManager) *Handler {
+func NewHandler(service *usecase.LocationTrackingService, auth ...*security.TokenManager) *Handler {
 	var tokenManager *security.TokenManager
 	if len(auth) > 0 {
 		tokenManager = auth[0]

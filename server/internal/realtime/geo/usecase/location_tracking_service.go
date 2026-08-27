@@ -13,31 +13,31 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/domain"
 )
 
-type Service struct {
+type LocationTrackingService struct {
 	repository     domain.Repository
 	assignments    assignment.Lookup
 	eventPublisher domain.EventPublisher
 }
 
-type Option func(*Service)
+type Option func(*LocationTrackingService)
 
 func WithRideAssignments(assignments assignment.Lookup) Option {
-	return func(service *Service) { service.assignments = assignments }
+	return func(service *LocationTrackingService) { service.assignments = assignments }
 }
 
 func WithEventPublisher(publisher domain.EventPublisher) Option {
-	return func(service *Service) { service.eventPublisher = publisher }
+	return func(service *LocationTrackingService) { service.eventPublisher = publisher }
 }
 
-func NewService(repository domain.Repository, options ...Option) *Service {
-	service := &Service{repository: repository}
+func NewLocationTrackingService(repository domain.Repository, options ...Option) *LocationTrackingService {
+	service := &LocationTrackingService{repository: repository}
 	for _, option := range options {
 		option(service)
 	}
 	return service
 }
 
-func (service *Service) Ingest(ctx context.Context, point domain.DriverPoint) error {
+func (service *LocationTrackingService) Ingest(ctx context.Context, point domain.DriverPoint) error {
 	if !validCoordinates(point.Latitude, point.Longitude) || !validMotion(point.Heading, point.Speed) || point.DriverID == "" {
 		return domain.ErrInvalidLocation
 	}
@@ -59,14 +59,14 @@ func (service *Service) Ingest(ctx context.Context, point domain.DriverPoint) er
 	}
 	return nil
 }
-func (service *Service) Nearby(ctx context.Context, latitude, longitude, radiusKm float64) ([]domain.DriverPoint, error) {
+func (service *LocationTrackingService) Nearby(ctx context.Context, latitude, longitude, radiusKm float64) ([]domain.DriverPoint, error) {
 	if !validCoordinates(latitude, longitude) || math.IsNaN(radiusKm) || math.IsInf(radiusKm, 0) || radiusKm <= 0 || radiusKm > 50 {
 		return nil, domain.ErrInvalidLocation
 	}
 	return service.repository.Nearby(ctx, latitude, longitude, radiusKm)
 }
 
-func (service *Service) Remove(ctx context.Context, driverID string) error {
+func (service *LocationTrackingService) Remove(ctx context.Context, driverID string) error {
 	repository, ok := service.repository.(domain.LocationRepository)
 	if !ok {
 		return errors.New("driver location removal is unavailable")
@@ -77,7 +77,7 @@ func (service *Service) Remove(ctx context.Context, driverID string) error {
 	return repository.Remove(ctx, driverID)
 }
 
-func (service *Service) Get(ctx context.Context, driverID string) (domain.DriverPoint, error) {
+func (service *LocationTrackingService) Get(ctx context.Context, driverID string) (domain.DriverPoint, error) {
 	repository, ok := service.repository.(domain.LocationRepository)
 	if !ok {
 		return domain.DriverPoint{}, errors.New("location lookup is unavailable")
@@ -85,7 +85,7 @@ func (service *Service) Get(ctx context.Context, driverID string) (domain.Driver
 	return repository.Get(ctx, driverID)
 }
 
-func (service *Service) UpdatePassenger(ctx context.Context, rideID, passengerID string, point domain.DriverPoint) error {
+func (service *LocationTrackingService) UpdatePassenger(ctx context.Context, rideID, passengerID string, point domain.DriverPoint) error {
 	repository, ok := service.repository.(domain.LocationRepository)
 	if !ok {
 		return errors.New("passenger location persistence is unavailable")
@@ -109,7 +109,7 @@ func (service *Service) UpdatePassenger(ctx context.Context, rideID, passengerID
 	return nil
 }
 
-func (service *Service) GetPassengerForDriver(ctx context.Context, rideID, driverID string) (domain.DriverPoint, error) {
+func (service *LocationTrackingService) GetPassengerForDriver(ctx context.Context, rideID, driverID string) (domain.DriverPoint, error) {
 	repository, ok := service.repository.(domain.LocationRepository)
 	if !ok {
 		return domain.DriverPoint{}, errors.New("passenger location lookup is unavailable")
@@ -124,7 +124,7 @@ func (service *Service) GetPassengerForDriver(ctx context.Context, rideID, drive
 	return repository.GetPassenger(ctx, rideID)
 }
 
-func (service *Service) GetDriverForRide(ctx context.Context, rideID, passengerID string) (domain.DriverPoint, error) {
+func (service *LocationTrackingService) GetDriverForRide(ctx context.Context, rideID, passengerID string) (domain.DriverPoint, error) {
 	repository, ok := service.repository.(domain.LocationRepository)
 	if !ok {
 		return domain.DriverPoint{}, errors.New("driver location lookup is unavailable")
@@ -139,7 +139,7 @@ func (service *Service) GetDriverForRide(ctx context.Context, rideID, passengerI
 	return repository.Get(ctx, rideAssignment.DriverID)
 }
 
-func (service *Service) activeRidesForDriver(ctx context.Context, driverID string) ([]assignment.Assignment, error) {
+func (service *LocationTrackingService) activeRidesForDriver(ctx context.Context, driverID string) ([]assignment.Assignment, error) {
 	if service.assignments == nil {
 		return nil, nil
 	}
@@ -156,7 +156,7 @@ func (service *Service) activeRidesForDriver(ctx context.Context, driverID strin
 	return active, nil
 }
 
-func (service *Service) assignmentForRide(ctx context.Context, rideID string) (assignment.Assignment, error) {
+func (service *LocationTrackingService) assignmentForRide(ctx context.Context, rideID string) (assignment.Assignment, error) {
 	if service.assignments == nil {
 		return assignment.Assignment{}, domain.ErrRideAssignmentUnavailable
 	}
@@ -170,7 +170,7 @@ func (service *Service) assignmentForRide(ctx context.Context, rideID string) (a
 	return rideAssignment, nil
 }
 
-func (service *Service) publish(ctx context.Context, eventType event.Type, scope event.Scope, payload map[string]any) {
+func (service *LocationTrackingService) publish(ctx context.Context, eventType event.Type, scope event.Scope, payload map[string]any) {
 	if service.eventPublisher == nil {
 		return
 	}

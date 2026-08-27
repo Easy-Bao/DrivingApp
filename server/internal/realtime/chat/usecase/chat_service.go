@@ -16,7 +16,7 @@ const (
 	maxMessageBytes     = 4096
 )
 
-type Service struct {
+type ChatService struct {
 	publisher   domain.Publisher
 	history     domain.RoomRepository
 	events      EventPublisher
@@ -27,22 +27,22 @@ type EventPublisher interface {
 	Publish(ctx context.Context, envelope event.Envelope) error
 }
 
-func NewService(publisher domain.Publisher, history domain.RoomRepository) *Service {
-	return &Service{publisher: publisher, history: history}
+func NewChatService(publisher domain.Publisher, history domain.RoomRepository) *ChatService {
+	return &ChatService{publisher: publisher, history: history}
 }
 
-func (service *Service) WithEventPublisher(publisher EventPublisher) *Service {
+func (service *ChatService) WithEventPublisher(publisher EventPublisher) *ChatService {
 	service.events = publisher
 	return service
 }
 
-func (service *Service) WithRideAssignmentLookup(
+func (service *ChatService) WithRideAssignmentLookup(
 	lookup assignment.Lookup,
-) *Service {
+) *ChatService {
 	service.assignments = lookup
 	return service
 }
-func (service *Service) Relay(ctx context.Context, message domain.Message) error {
+func (service *ChatService) Relay(ctx context.Context, message domain.Message) error {
 	if !validRoomID(message.RoomID) || !validParticipantID(message.SenderID) || len(message.Body) == 0 || len(message.Body) > maxMessageBytes {
 		return domain.ErrInvalidMessage
 	}
@@ -73,7 +73,7 @@ func (service *Service) Relay(ctx context.Context, message domain.Message) error
 	return nil
 }
 
-func (service *Service) publishRealtimeMessage(ctx context.Context, message domain.Message) {
+func (service *ChatService) publishRealtimeMessage(ctx context.Context, message domain.Message) {
 	if service.events == nil || service.history == nil {
 		return
 	}
@@ -103,7 +103,7 @@ func (service *Service) publishRealtimeMessage(ctx context.Context, message doma
 	_ = service.events.Publish(ctx, envelope)
 }
 
-func (service *Service) OpenRideRoom(ctx context.Context, rideID, actorID string) error {
+func (service *ChatService) OpenRideRoom(ctx context.Context, rideID, actorID string) error {
 	if !validRoomID(rideID) || !validParticipantID(actorID) {
 		return domain.ErrInvalidRoom
 	}
@@ -134,7 +134,7 @@ func (service *Service) OpenRideRoom(ctx context.Context, rideID, actorID string
 	return service.history.CreateRoom(ctx, rideID, rideAssignment.PassengerID, rideAssignment.DriverID)
 }
 
-func (service *Service) communicationAssignment(ctx context.Context, rideID, actorID string) (assignment.Assignment, error) {
+func (service *ChatService) communicationAssignment(ctx context.Context, rideID, actorID string) (assignment.Assignment, error) {
 	if service.assignments == nil {
 		return assignment.Assignment{}, domain.ErrRoomUnavailable
 	}
@@ -149,7 +149,7 @@ func (service *Service) communicationAssignment(ctx context.Context, rideID, act
 	return rideAssignment, nil
 }
 
-func (service *Service) Messages(ctx context.Context, roomID string) ([]domain.Message, error) {
+func (service *ChatService) Messages(ctx context.Context, roomID string) ([]domain.Message, error) {
 	if !validRoomID(roomID) {
 		return nil, domain.ErrInvalidRoom
 	}
@@ -159,7 +159,7 @@ func (service *Service) Messages(ctx context.Context, roomID string) ([]domain.M
 	return service.history.Messages(ctx, roomID)
 }
 
-func (service *Service) Resolve(ctx context.Context, roomID string) error {
+func (service *ChatService) Resolve(ctx context.Context, roomID string) error {
 	if !validRoomID(roomID) {
 		return domain.ErrInvalidRoom
 	}
@@ -169,7 +169,7 @@ func (service *Service) Resolve(ctx context.Context, roomID string) error {
 	return service.history.Resolve(ctx, roomID)
 }
 
-func (service *Service) CanAccessRoom(ctx context.Context, roomID, userID string) (bool, error) {
+func (service *ChatService) CanAccessRoom(ctx context.Context, roomID, userID string) (bool, error) {
 	if !validRoomID(roomID) || !validParticipantID(userID) || service.history == nil {
 		return false, nil
 	}
@@ -193,21 +193,21 @@ func (service *Service) CanAccessRoom(ctx context.Context, roomID, userID string
 	return true, nil
 }
 
-func (service *Service) MessagesForUser(ctx context.Context, roomID, userID string) ([]domain.Message, error) {
+func (service *ChatService) MessagesForUser(ctx context.Context, roomID, userID string) ([]domain.Message, error) {
 	if !service.hasAccess(ctx, roomID, userID) {
 		return nil, domain.ErrForbidden
 	}
 	return service.Messages(ctx, roomID)
 }
 
-func (service *Service) ResolveForUser(ctx context.Context, roomID, userID string) error {
+func (service *ChatService) ResolveForUser(ctx context.Context, roomID, userID string) error {
 	if !service.hasAccess(ctx, roomID, userID) {
 		return domain.ErrForbidden
 	}
 	return service.Resolve(ctx, roomID)
 }
 
-func (service *Service) hasAccess(ctx context.Context, roomID, userID string) bool {
+func (service *ChatService) hasAccess(ctx context.Context, roomID, userID string) bool {
 	allowed, err := service.CanAccessRoom(ctx, roomID, userID)
 	return err == nil && allowed
 }

@@ -67,7 +67,7 @@ func (provider *routeProviderSpy) Route(_ context.Context, _, _ domain.Coordinat
 }
 
 func TestServiceRejectsEmptySearch(t *testing.T) {
-	service := usecase.NewService(providerStub{})
+	service := usecase.NewLocationService(providerStub{})
 	_, err := service.Search(context.Background(), "  ", domain.Coordinates{})
 	if err != usecase.ErrEmptySearch {
 		t.Fatalf("expected ErrEmptySearch, got %v", err)
@@ -75,7 +75,7 @@ func TestServiceRejectsEmptySearch(t *testing.T) {
 }
 
 func TestServiceDelegatesSearch(t *testing.T) {
-	service := usecase.NewService(providerStub{})
+	service := usecase.NewLocationService(providerStub{})
 	places, err := service.Search(context.Background(), "Pagadian", domain.Coordinates{})
 	if err != nil {
 		t.Fatalf("search failed: %v", err)
@@ -87,7 +87,7 @@ func TestServiceDelegatesSearch(t *testing.T) {
 
 func TestServiceSupportsNearbyPlacesAndCaching(t *testing.T) {
 	cache := &cacheStub{values: map[string]any{}}
-	service := usecase.NewServiceWithCache(providerStub{}, cache)
+	service := usecase.NewLocationServiceWithCache(providerStub{}, cache)
 	places, err := service.Nearby(context.Background(), domain.Coordinates{Latitude: 7.8, Longitude: 123.4}, 1)
 	if err != nil || len(places) != 1 || places[0].Name != "Nearby Place" {
 		t.Fatalf("nearby places = %#v, %v", places, err)
@@ -99,7 +99,7 @@ func TestServiceSupportsNearbyPlacesAndCaching(t *testing.T) {
 }
 
 func TestServiceRejectsUnboundedSearchAndInvalidRouteCoordinates(t *testing.T) {
-	service := usecase.NewService(providerStub{})
+	service := usecase.NewLocationService(providerStub{})
 	if _, err := service.Search(context.Background(), strings.Repeat("x", 257), domain.Coordinates{}); err != usecase.ErrSearchTooLong {
 		t.Fatalf("long search error = %v, want %v", err, usecase.ErrSearchTooLong)
 	}
@@ -115,7 +115,7 @@ func TestServiceRejectsUnboundedSearchAndInvalidRouteCoordinates(t *testing.T) {
 
 func TestServiceOwnsRouteOptionValidationAndNormalization(t *testing.T) {
 	provider := &routeProviderSpy{}
-	service := usecase.NewService(provider)
+	service := usecase.NewLocationService(provider)
 	origin := domain.Coordinates{Latitude: 7.8, Longitude: 123.4}
 	destination := domain.Coordinates{Latitude: 7.9, Longitude: 123.5}
 

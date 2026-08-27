@@ -9,10 +9,10 @@ import (
 )
 
 type RidesReader struct {
-	service *ridesusecase.Service
+	service *ridesusecase.RideService
 }
 
-func NewRidesReader(service *ridesusecase.Service) *RidesReader {
+func NewRidesReader(service *ridesusecase.RideService) *RidesReader {
 	return &RidesReader{service: service}
 }
 

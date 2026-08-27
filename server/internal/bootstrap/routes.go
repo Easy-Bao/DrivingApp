@@ -68,11 +68,11 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 	))
 
 	usersRouter := usershttp.NewRouter(
-		usersusecase.NewService(userspostgres.NewProfileRepository(databaseClient, privateObjectStore)),
+		usersusecase.NewProfileService(userspostgres.NewProfileRepository(databaseClient, privateObjectStore)),
 		verifier,
 	)
 	documentRouter := documenthttp.NewRouter(
-		documentusecase.NewService(
+		documentusecase.NewDocumentService(
 			documentpostgres.NewRepository(databaseClient),
 			privateObjectStore,
 			config.Security.UploadBodyLimit,
@@ -93,7 +93,7 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 	eventHub := stream.NewHub()
 	assignmentProjection := assignmentadapter.NewMemoryProjection()
 	realtimePublisher := eventadapter.NewMemoryPublisher(assignmentProjection, eventHub)
-	ridesService := ridesusecase.NewServiceWithRouteCalculator(
+	ridesService := ridesusecase.NewRideServiceWithRouteCalculator(
 		ridesRepository,
 		routeCalculator,
 		config.Pricing,
@@ -105,13 +105,13 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 	)
 
 	ridesRouter := rideshttp.NewRouter(ridesService, verifier)
-	adminRouter := adminhttp.NewRouter(adminusecase.NewService(adminpostgres.NewRepository(databaseClient)), verifier, adminAuthorizer)
-	geoService := geousecase.NewService(
+	adminRouter := adminhttp.NewRouter(adminusecase.NewDashboardStatsService(adminpostgres.NewRepository(databaseClient)), verifier, adminAuthorizer)
+	geoService := geousecase.NewLocationTrackingService(
 		geo.NewRedisRepository(redisClient),
 		geousecase.WithRideAssignments(rideAssignments),
 		geousecase.WithEventPublisher(realtimePublisher),
 	)
-	locationService := locationusecase.NewServiceWithCache(
+	locationService := locationusecase.NewLocationServiceWithCache(
 		mapboxProvider,
 		locationredis.NewCache(redisClient),
 	)
@@ -130,7 +130,7 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 	passengerridecontexthttp.NewRouter(passengerRideContextQuery, verifier).RegisterRoutes(router)
 
 	chatHistory := chatadapter.NewRedisRepository(redisClient)
-	chatService := chatusecase.NewService(chatadapter.NewHub(), chatHistory).
+	chatService := chatusecase.NewChatService(chatadapter.NewHub(), chatHistory).
 		WithEventPublisher(realtimePublisher).
 		WithRideAssignmentLookup(rideAssignments)
 	events := ws.NewEventRouter()

@@ -24,7 +24,7 @@ func TestUpdateStatusPublishesToBothRideParticipants(t *testing.T) {
 		ride: domain.Ride{ID: 9, PassengerID: 7, DriverID: intPointer(11), Status: "accepted"},
 	}
 	publisher := &eventPublisherStub{}
-	service := NewService(repository, testPricingConfig(t), publisher)
+	service := NewRideService(repository, testPricingConfig(t), publisher)
 
 	updated, err := service.UpdateStatus(context.Background(), 9, 11, "arrived")
 	if err != nil {
@@ -48,7 +48,7 @@ func TestUpdateStatusPublishesToBothRideParticipants(t *testing.T) {
 func TestCreateSessionPublishesToPassengerAndTargetDriver(t *testing.T) {
 	repository := &ridesRepositoryStub{}
 	publisher := &eventPublisherStub{}
-	service := NewService(repository, testPricingConfig(t), publisher)
+	service := NewRideService(repository, testPricingConfig(t), publisher)
 
 	_, err := service.CreateSession(context.Background(), domain.BidSession{
 		ID:             31,
@@ -76,7 +76,7 @@ func TestCreateSessionPublishesToPassengerAndTargetDriver(t *testing.T) {
 func TestCreateOpenSessionPublishesToTheDriverPool(t *testing.T) {
 	repository := &ridesRepositoryStub{}
 	publisher := &eventPublisherStub{}
-	service := NewService(repository, testPricingConfig(t), publisher)
+	service := NewRideService(repository, testPricingConfig(t), publisher)
 
 	_, err := service.CreateSession(context.Background(), domain.BidSession{
 		ID:             32,
@@ -105,7 +105,7 @@ func TestPublishingFailureDoesNotRollbackPersistedStatus(t *testing.T) {
 		ride: domain.Ride{ID: 9, PassengerID: 7, DriverID: intPointer(11), Status: "accepted"},
 	}
 	publisher := &eventPublisherStub{err: errors.New("redis unavailable")}
-	service := NewService(repository, testPricingConfig(t), publisher)
+	service := NewRideService(repository, testPricingConfig(t), publisher)
 
 	updated, err := service.UpdateStatus(context.Background(), 9, 11, "arrived")
 	if err != nil {

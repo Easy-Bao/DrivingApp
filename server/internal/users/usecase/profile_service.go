@@ -8,21 +8,23 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/domain"
 )
 
-type Service struct{ repository domain.Repository }
+type ProfileService struct{ repository domain.Repository }
 
-func NewService(repository domain.Repository) *Service { return &Service{repository: repository} }
-func (service *Service) Get(ctx context.Context, userID int) (domain.Profile, error) {
+func NewProfileService(repository domain.Repository) *ProfileService {
+	return &ProfileService{repository: repository}
+}
+func (service *ProfileService) Get(ctx context.Context, userID int) (domain.Profile, error) {
 	return service.repository.Get(ctx, userID)
 }
-func (service *Service) Update(ctx context.Context, profile domain.Profile) (domain.Profile, error) {
+func (service *ProfileService) Update(ctx context.Context, profile domain.Profile) (domain.Profile, error) {
 	return service.repository.Save(ctx, profile)
 }
 
-func (service *Service) MaxAvatarBytes() int64 {
+func (service *ProfileService) MaxAvatarBytes() int64 {
 	return domain.MaxAvatarBytes
 }
 
-func (service *Service) SaveAvatar(ctx context.Context, userID int, content []byte) (domain.Profile, error) {
+func (service *ProfileService) SaveAvatar(ctx context.Context, userID int, content []byte) (domain.Profile, error) {
 	if userID <= 0 || len(content) == 0 || int64(len(content)) > domain.MaxAvatarBytes {
 		return domain.Profile{}, domain.ErrInvalidAvatar
 	}
@@ -37,7 +39,7 @@ func (service *Service) SaveAvatar(ctx context.Context, userID int, content []by
 	return repository.SaveAvatar(ctx, userID, content, contentType)
 }
 
-func (service *Service) Avatar(ctx context.Context, userID int) (domain.Avatar, error) {
+func (service *ProfileService) Avatar(ctx context.Context, userID int) (domain.Avatar, error) {
 	if userID <= 0 {
 		return domain.Avatar{}, domain.ErrAvatarNotFound
 	}
@@ -48,7 +50,7 @@ func (service *Service) Avatar(ctx context.Context, userID int) (domain.Avatar, 
 	return repository.GetAvatar(ctx, userID)
 }
 
-func (service *Service) Notifications(ctx context.Context, userID, limit, offset int) ([]domain.Notification, error) {
+func (service *ProfileService) Notifications(ctx context.Context, userID, limit, offset int) ([]domain.Notification, error) {
 	repository, ok := service.repository.(domain.NotificationRepository)
 	if !ok {
 		return []domain.Notification{}, nil

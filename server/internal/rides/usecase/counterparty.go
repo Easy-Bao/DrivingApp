@@ -7,7 +7,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
 )
 
-func (service *Service) Counterparty(ctx context.Context, rideID, actorID int) (domain.Counterparty, error) {
+func (service *RideService) Counterparty(ctx context.Context, rideID, actorID int) (domain.Counterparty, error) {
 	if rideID <= 0 || actorID <= 0 {
 		return domain.Counterparty{}, domain.ErrUnauthorizedRide
 	}

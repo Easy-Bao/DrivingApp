@@ -10,7 +10,7 @@ import (
 
 var ErrBiddingPersistenceUnavailable = errors.New("bidding persistence is unavailable")
 
-func (service *Service) CreateSession(ctx context.Context, session domain.BidSession) (domain.BidSession, error) {
+func (service *RideService) CreateSession(ctx context.Context, session domain.BidSession) (domain.BidSession, error) {
 	repository, ok := service.repository.(domain.BiddingRepository)
 	if !ok {
 		return domain.BidSession{}, ErrBiddingPersistenceUnavailable
@@ -49,7 +49,7 @@ func (service *Service) CreateSession(ctx context.Context, session domain.BidSes
 	return created, nil
 }
 
-func (service *Service) ActiveSessions(ctx context.Context, driverID *int) ([]domain.BidSession, error) {
+func (service *RideService) ActiveSessions(ctx context.Context, driverID *int) ([]domain.BidSession, error) {
 	repository, ok := service.repository.(domain.BiddingRepository)
 	if !ok {
 		return nil, ErrBiddingPersistenceUnavailable
@@ -57,7 +57,7 @@ func (service *Service) ActiveSessions(ctx context.Context, driverID *int) ([]do
 	return repository.ActiveSessions(ctx, driverID)
 }
 
-func (service *Service) Offers(ctx context.Context, sessionID int) ([]domain.BidOffer, error) {
+func (service *RideService) Offers(ctx context.Context, sessionID int) ([]domain.BidOffer, error) {
 	repository, ok := service.repository.(domain.BiddingRepository)
 	if !ok {
 		return nil, ErrBiddingPersistenceUnavailable
@@ -65,7 +65,7 @@ func (service *Service) Offers(ctx context.Context, sessionID int) ([]domain.Bid
 	return repository.Offers(ctx, sessionID)
 }
 
-func (service *Service) PlaceOffer(ctx context.Context, offer domain.BidOffer) (domain.BidOffer, error) {
+func (service *RideService) PlaceOffer(ctx context.Context, offer domain.BidOffer) (domain.BidOffer, error) {
 	repository, ok := service.repository.(domain.BiddingRepository)
 	if !ok {
 		return domain.BidOffer{}, ErrBiddingPersistenceUnavailable
@@ -95,7 +95,7 @@ func (service *Service) PlaceOffer(ctx context.Context, offer domain.BidOffer) (
 	return created, nil
 }
 
-func (service *Service) AcceptOffer(ctx context.Context, sessionID, offerID, passengerID int) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
+func (service *RideService) AcceptOffer(ctx context.Context, sessionID, offerID, passengerID int) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
 	repository, ok := service.repository.(domain.BiddingRepository)
 	if !ok {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, ErrBiddingPersistenceUnavailable
@@ -115,7 +115,7 @@ func (service *Service) AcceptOffer(ctx context.Context, sessionID, offerID, pas
 	return session, offer, ride, nil
 }
 
-func (service *Service) CancelSession(ctx context.Context, sessionID, passengerID int) (domain.BidSession, error) {
+func (service *RideService) CancelSession(ctx context.Context, sessionID, passengerID int) (domain.BidSession, error) {
 	repository, ok := service.repository.(domain.BiddingRepository)
 	if !ok {
 		return domain.BidSession{}, ErrBiddingPersistenceUnavailable
@@ -131,7 +131,7 @@ func (service *Service) CancelSession(ctx context.Context, sessionID, passengerI
 	return session, nil
 }
 
-func (service *Service) CancelOffer(ctx context.Context, sessionID, driverID int) (domain.BidOffer, error) {
+func (service *RideService) CancelOffer(ctx context.Context, sessionID, driverID int) (domain.BidOffer, error) {
 	repository, ok := service.repository.(domain.BiddingRepository)
 	if !ok {
 		return domain.BidOffer{}, ErrBiddingPersistenceUnavailable
@@ -148,7 +148,7 @@ func (service *Service) CancelOffer(ctx context.Context, sessionID, driverID int
 	return offer, nil
 }
 
-func (service *Service) Session(ctx context.Context, sessionID int) (domain.BidSession, error) {
+func (service *RideService) Session(ctx context.Context, sessionID int) (domain.BidSession, error) {
 	repository, ok := service.repository.(domain.BiddingRepository)
 	if !ok {
 		return domain.BidSession{}, ErrBiddingPersistenceUnavailable

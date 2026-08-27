@@ -24,20 +24,20 @@ const (
 	maxMatrixDestinations = 10
 )
 
-type Service struct {
+type LocationService struct {
 	provider domain.Provider
 	cache    domain.Cache
 }
 
-func NewService(provider domain.Provider) *Service {
-	return NewServiceWithCache(provider, nil)
+func NewLocationService(provider domain.Provider) *LocationService {
+	return NewLocationServiceWithCache(provider, nil)
 }
 
-func NewServiceWithCache(provider domain.Provider, cache domain.Cache) *Service {
-	return &Service{provider: provider, cache: cache}
+func NewLocationServiceWithCache(provider domain.Provider, cache domain.Cache) *LocationService {
+	return &LocationService{provider: provider, cache: cache}
 }
 
-func (service *Service) Search(ctx context.Context, query string, origin domain.Coordinates) ([]domain.Place, error) {
+func (service *LocationService) Search(ctx context.Context, query string, origin domain.Coordinates) ([]domain.Place, error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
 		return nil, ErrEmptySearch
@@ -60,7 +60,7 @@ func (service *Service) Search(ctx context.Context, query string, origin domain.
 	return places, err
 }
 
-func (service *Service) Nearby(ctx context.Context, origin domain.Coordinates, page int) ([]domain.Place, error) {
+func (service *LocationService) Nearby(ctx context.Context, origin domain.Coordinates, page int) ([]domain.Place, error) {
 	if page < 1 || page > maxNearbyPage {
 		return nil, ErrInvalidNearbyPage
 	}
@@ -79,7 +79,7 @@ func (service *Service) Nearby(ctx context.Context, origin domain.Coordinates, p
 	return places, err
 }
 
-func (service *Service) ReverseGeocode(ctx context.Context, coordinates domain.Coordinates) (*domain.Place, error) {
+func (service *LocationService) ReverseGeocode(ctx context.Context, coordinates domain.Coordinates) (*domain.Place, error) {
 	if !coordinates.Valid() {
 		return nil, ErrInvalidCoordinates
 	}
@@ -98,7 +98,7 @@ func (service *Service) ReverseGeocode(ctx context.Context, coordinates domain.C
 	return result, nil
 }
 
-func (service *Service) Route(ctx context.Context, origin, destination domain.Coordinates, options domain.RouteOptions) (*domain.Route, error) {
+func (service *LocationService) Route(ctx context.Context, origin, destination domain.Coordinates, options domain.RouteOptions) (*domain.Route, error) {
 	if !origin.Valid() || !destination.Valid() {
 		return nil, ErrInvalidCoordinates
 	}
@@ -109,7 +109,7 @@ func (service *Service) Route(ctx context.Context, origin, destination domain.Co
 	return service.provider.Route(ctx, origin, destination, normalizedOptions)
 }
 
-func (service *Service) Matrix(ctx context.Context, origin domain.Coordinates, destinations []domain.Coordinates) (*domain.Matrix, error) {
+func (service *LocationService) Matrix(ctx context.Context, origin domain.Coordinates, destinations []domain.Coordinates) (*domain.Matrix, error) {
 	if !origin.Valid() || len(destinations) == 0 || len(destinations) > maxMatrixDestinations {
 		return nil, ErrInvalidMatrix
 	}

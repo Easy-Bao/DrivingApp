@@ -8,10 +8,10 @@ import (
 )
 
 type Handler struct {
-	service *usecase.Service
+	service *usecase.DashboardStatsService
 }
 
-func NewHandler(service *usecase.Service) *Handler {
+func NewHandler(service *usecase.DashboardStatsService) *Handler {
 	return &Handler{service: service}
 }
 func (handler *Handler) Stats(w http.ResponseWriter, r *http.Request) {

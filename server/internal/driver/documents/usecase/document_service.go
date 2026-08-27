@@ -21,25 +21,25 @@ var allowedContentTypes = map[string]struct{}{
 	"image/png":       {},
 }
 
-type Service struct {
+type DocumentService struct {
 	repository       domain.Repository
 	storage          domain.ObjectStorage
 	maxDocumentBytes int64
 }
 
-func NewService(repository domain.Repository, storage domain.ObjectStorage, maxDocumentBytes ...int64) *Service {
+func NewDocumentService(repository domain.Repository, storage domain.ObjectStorage, maxDocumentBytes ...int64) *DocumentService {
 	limit := defaultMaxDocumentBytes
 	if len(maxDocumentBytes) > 0 && maxDocumentBytes[0] > 0 {
 		limit = maxDocumentBytes[0]
 	}
-	return &Service{repository: repository, storage: storage, maxDocumentBytes: limit}
+	return &DocumentService{repository: repository, storage: storage, maxDocumentBytes: limit}
 }
 
-func (service *Service) MaxDocumentBytes() int64 {
+func (service *DocumentService) MaxDocumentBytes() int64 {
 	return service.maxDocumentBytes
 }
 
-func (service *Service) Upload(ctx context.Context, driverID int, rawType, claimedContentType string, content []byte) (domain.Document, error) {
+func (service *DocumentService) Upload(ctx context.Context, driverID int, rawType, claimedContentType string, content []byte) (domain.Document, error) {
 	if driverID <= 0 || len(content) == 0 || int64(len(content)) > service.maxDocumentBytes {
 		return domain.Document{}, domain.ErrInvalidDocument
 	}
@@ -74,14 +74,14 @@ func (service *Service) Upload(ctx context.Context, driverID int, rawType, claim
 	return domain.Document{}, err
 }
 
-func (service *Service) Status(ctx context.Context, driverID int) ([]domain.Document, error) {
+func (service *DocumentService) Status(ctx context.Context, driverID int) ([]domain.Document, error) {
 	if driverID <= 0 {
 		return nil, domain.ErrInvalidDocument
 	}
 	return service.repository.ListByDriver(ctx, driverID, 20)
 }
 
-func (service *Service) ReviewQueue(ctx context.Context, status domain.Status, limit, offset int) ([]domain.Document, error) {
+func (service *DocumentService) ReviewQueue(ctx context.Context, status domain.Status, limit, offset int) ([]domain.Document, error) {
 	if status != domain.Pending && status != domain.Approved && status != domain.Rejected {
 		return nil, domain.ErrInvalidDocument
 	}
@@ -91,14 +91,14 @@ func (service *Service) ReviewQueue(ctx context.Context, status domain.Status, l
 	return service.repository.ListForReview(ctx, status, limit, offset)
 }
 
-func (service *Service) Review(ctx context.Context, id, reviewerID int, status domain.Status) (domain.Document, error) {
+func (service *DocumentService) Review(ctx context.Context, id, reviewerID int, status domain.Status) (domain.Document, error) {
 	if id <= 0 || reviewerID <= 0 || (status != domain.Approved && status != domain.Rejected) {
 		return domain.Document{}, domain.ErrInvalidDocument
 	}
 	return service.repository.Review(ctx, id, reviewerID, status)
 }
 
-func (service *Service) DriverContent(ctx context.Context, driverID, documentID int) (domain.Content, error) {
+func (service *DocumentService) DriverContent(ctx context.Context, driverID, documentID int) (domain.Content, error) {
 	document, err := service.repository.Get(ctx, documentID)
 	if err != nil {
 		return domain.Content{}, err
@@ -109,7 +109,7 @@ func (service *Service) DriverContent(ctx context.Context, driverID, documentID 
 	return service.readContent(ctx, document)
 }
 
-func (service *Service) AdminContent(ctx context.Context, documentID int) (domain.Content, error) {
+func (service *DocumentService) AdminContent(ctx context.Context, documentID int) (domain.Content, error) {
 	document, err := service.repository.Get(ctx, documentID)
 	if err != nil {
 		return domain.Content{}, err
@@ -117,7 +117,7 @@ func (service *Service) AdminContent(ctx context.Context, documentID int) (domai
 	return service.readContent(ctx, document)
 }
 
-func (service *Service) readContent(ctx context.Context, document domain.Document) (domain.Content, error) {
+func (service *DocumentService) readContent(ctx context.Context, document domain.Document) (domain.Content, error) {
 	content, err := service.storage.Read(ctx, document.StorageKey, service.maxDocumentBytes)
 	if err != nil {
 		return domain.Content{}, errors.Join(

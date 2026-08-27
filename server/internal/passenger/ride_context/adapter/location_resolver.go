@@ -11,10 +11,10 @@ import (
 )
 
 type LocationResolver struct {
-	service *locationusecase.Service
+	service *locationusecase.LocationService
 }
 
-func NewLocationResolver(service *locationusecase.Service) *LocationResolver {
+func NewLocationResolver(service *locationusecase.LocationService) *LocationResolver {
 	return &LocationResolver{service: service}
 }
 

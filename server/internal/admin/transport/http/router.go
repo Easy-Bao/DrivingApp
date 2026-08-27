@@ -15,7 +15,7 @@ type Router struct {
 	authorizer *security.AdminAuthorizer
 }
 
-func NewRouter(service *usecase.Service, verifier *security.TokenManager, authorizer *security.AdminAuthorizer) *Router {
+func NewRouter(service *usecase.DashboardStatsService, verifier *security.TokenManager, authorizer *security.AdminAuthorizer) *Router {
 	return &Router{handler: handler.NewHandler(service), verifier: verifier, authorizer: authorizer}
 }
 

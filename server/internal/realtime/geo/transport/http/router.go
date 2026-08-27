@@ -14,7 +14,7 @@ type Router struct {
 	auth    *security.TokenManager
 }
 
-func NewRouter(service *usecase.Service, auth ...*security.TokenManager) *Router {
+func NewRouter(service *usecase.LocationTrackingService, auth ...*security.TokenManager) *Router {
 	var tokenManager *security.TokenManager
 	if len(auth) > 0 {
 		tokenManager = auth[0]

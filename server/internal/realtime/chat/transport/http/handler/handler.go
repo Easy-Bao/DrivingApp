@@ -3,21 +3,21 @@ package handler
 import (
 	"net/http"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/usecase"
 	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
-	service  *usecase.Service
+	service  *usecase.ChatService
 	verifier *security.TokenManager
 }
 
-func NewHandler(service *usecase.Service, verifier *security.TokenManager) *Handler {
+func NewHandler(service *usecase.ChatService, verifier *security.TokenManager) *Handler {
 	return &Handler{service: service, verifier: verifier}
 }
 

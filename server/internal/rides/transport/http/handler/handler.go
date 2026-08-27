@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/rides/transport/http/dto"
 	"github.com/Easy-Bao/DrivingApp/server/internal/rides/usecase"
@@ -17,11 +17,11 @@ import (
 )
 
 type Handler struct {
-	service  *usecase.Service
+	service  *usecase.RideService
 	verifier *security.TokenManager
 }
 
-func NewHandler(service *usecase.Service, verifier *security.TokenManager) *Handler {
+func NewHandler(service *usecase.RideService, verifier *security.TokenManager) *Handler {
 	return &Handler{service: service, verifier: verifier}
 }
 func (handler *Handler) identity(r *http.Request) (int, bool) {

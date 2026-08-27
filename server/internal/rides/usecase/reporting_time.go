@@ -20,14 +20,14 @@ func LoadReportingLocation(name string) (*time.Location, error) {
 	return location, nil
 }
 
-func (service *Service) WithReportingLocation(location *time.Location) *Service {
+func (service *RideService) WithReportingLocation(location *time.Location) *RideService {
 	if location != nil {
 		service.reportingLocation = location
 	}
 	return service
 }
 
-func (service *Service) reportingDayBounds(now time.Time) (time.Time, time.Time) {
+func (service *RideService) reportingDayBounds(now time.Time) (time.Time, time.Time) {
 	location := service.reportingLocation
 	if location == nil {
 		location = defaultReportingLocation
@@ -37,7 +37,7 @@ func (service *Service) reportingDayBounds(now time.Time) (time.Time, time.Time)
 	return start.UTC(), start.AddDate(0, 0, 1).UTC()
 }
 
-func (service *Service) reportingWeekBounds(now time.Time) (time.Time, time.Time) {
+func (service *RideService) reportingWeekBounds(now time.Time) (time.Time, time.Time) {
 	location := service.reportingLocation
 	if location == nil {
 		location = defaultReportingLocation

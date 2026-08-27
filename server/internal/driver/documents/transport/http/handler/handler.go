@@ -19,10 +19,10 @@ import (
 const maxReviewPayloadBytes int64 = 1 << 10
 
 type Handler struct {
-	service *usecase.Service
+	service *usecase.DocumentService
 }
 
-func NewHandler(service *usecase.Service) *Handler {
+func NewHandler(service *usecase.DocumentService) *Handler {
 	return &Handler{service: service}
 }
 
