@@ -114,7 +114,7 @@ class DriverRepository implements IDriverRepository {
         longitude: lng,
       );
       final validPoints = <Map<String, dynamic>>[];
-      for (final rawPoint in nearbyPoints.whereType<Map<String, dynamic>>()) {
+      for (final rawPoint in nearbyPoints) {
         final driverId = _stringValue(
           rawPoint['driver_id'] ?? rawPoint['driverId'],
         );
@@ -158,7 +158,6 @@ class DriverRepository implements IDriverRepository {
           },
       };
       final rawList = profiles
-          .whereType<Map<String, dynamic>>()
           .map((profile) {
             final profileId = _stringValue(profile['id'] ?? profile['user_id']);
             final point = pointsByDriverId[profileId];
@@ -209,13 +208,12 @@ class DriverRepository implements IDriverRepository {
   }
 
   List<DriverModel> _processNearbyDrivers(
-    List<dynamic> rawDrivers,
+    List<Map<String, dynamic>> rawDrivers,
     double userLat,
     double userLng,
   ) {
-    final List<DriverModel> drivers = [];
+    final drivers = <DriverModel>[];
     for (final d in rawDrivers) {
-      if (d is! Map<String, dynamic>) continue;
       final driverLat = SafeParse.toNullableDouble(d['lat']);
       final driverLng = SafeParse.toNullableDouble(d['lng']);
       if (driverLat == null ||

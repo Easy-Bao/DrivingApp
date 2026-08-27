@@ -79,8 +79,8 @@ void main() {
       const longitude = 123.434;
       final dataSource = MockDriverDiscoveryRemoteDataSource();
       final locationApiClient = MockLocationApiClient();
-      final onlineDrivers = Completer<List<dynamic>>();
-      final nearbyDrivers = Completer<List<dynamic>>();
+      final onlineDrivers = Completer<List<Map<String, dynamic>>>();
+      final nearbyDrivers = Completer<List<Map<String, dynamic>>>();
 
       when(
         () => dataSource.fetchOnlineDrivers(any()),

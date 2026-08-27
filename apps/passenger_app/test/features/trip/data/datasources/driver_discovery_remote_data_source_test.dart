@@ -6,29 +6,74 @@ import 'package:passenger_app/src/features/trip/data/datasources/driver_discover
 class MockDio extends Mock implements Dio {}
 
 void main() {
-  test('requests profiles only for bounded nearby driver ids', () async {
+  test(
+    'normalizes online driver objects at the data-source boundary',
+    () async {
+      final dio = MockDio();
+      final dataSource = DriverDiscoveryRemoteDataSourceImpl(dio);
+      when(
+        () => dio.get<List<dynamic>>(
+          any(),
+          queryParameters: any<Map<String, dynamic>>(named: 'queryParameters'),
+        ),
+      ).thenAnswer(
+        (_) async => Response<List<dynamic>>(
+          requestOptions: RequestOptions(path: '/api/v1/drivers/online'),
+          statusCode: 200,
+          data: <dynamic>[
+            <String, dynamic>{'id': 7},
+            'malformed driver',
+            <String, dynamic>{'id': 9},
+          ],
+        ),
+      );
+
+      final result = await dataSource.fetchOnlineDrivers(const ['7', '9']);
+
+      expect(result, <Map<String, dynamic>>[
+        <String, dynamic>{'id': 7},
+        <String, dynamic>{'id': 9},
+      ]);
+
+      verify(
+        () => dio.get<List<dynamic>>(
+          '/api/v1/drivers/online',
+          queryParameters: <String, dynamic>{'ids': '7,9'},
+        ),
+      ).called(1);
+    },
+  );
+
+  test('normalizes nearby driver objects from the response envelope', () async {
     final dio = MockDio();
     final dataSource = DriverDiscoveryRemoteDataSourceImpl(dio);
     when(
-      () => dio.get<List<dynamic>>(
-        any(),
+      () => dio.get<Map<String, dynamic>>(
+        '/api/v1/telemetry/location/nearby',
         queryParameters: any<Map<String, dynamic>>(named: 'queryParameters'),
       ),
     ).thenAnswer(
-      (_) async => Response<List<dynamic>>(
-        requestOptions: RequestOptions(path: '/api/v1/drivers/online'),
+      (_) async => Response<Map<String, dynamic>>(
+        requestOptions: RequestOptions(
+          path: '/api/v1/telemetry/location/nearby',
+        ),
         statusCode: 200,
-        data: const [],
+        data: <String, dynamic>{
+          'drivers': <dynamic>[
+            <String, dynamic>{'driver_id': 7},
+            'malformed driver',
+          ],
+        },
       ),
     );
 
-    await dataSource.fetchOnlineDrivers(const ['7', '9']);
+    final result = await dataSource.fetchNearbyDrivers(
+      latitude: 7.828,
+      longitude: 123.434,
+    );
 
-    verify(
-      () => dio.get<List<dynamic>>(
-        '/api/v1/drivers/online',
-        queryParameters: <String, dynamic>{'ids': '7,9'},
-      ),
-    ).called(1);
+    expect(result, <Map<String, dynamic>>[
+      <String, dynamic>{'driver_id': 7},
+    ]);
   });
 }
