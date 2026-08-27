@@ -13,8 +13,6 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/domain"
 )
 
-const defaultMaxDocumentBytes int64 = 10 << 20
-
 var allowedContentTypes = map[string]struct{}{
 	"application/pdf": {},
 	"image/jpeg":      {},
@@ -27,12 +25,16 @@ type DocumentService struct {
 	maxDocumentBytes int64
 }
 
-func NewDocumentService(repository domain.Repository, storage domain.ObjectStorage, maxDocumentBytes ...int64) *DocumentService {
-	limit := defaultMaxDocumentBytes
-	if len(maxDocumentBytes) > 0 && maxDocumentBytes[0] > 0 {
-		limit = maxDocumentBytes[0]
+func NewDocumentService(
+	repository domain.Repository,
+	storage domain.ObjectStorage,
+	maxDocumentBytes int64,
+) *DocumentService {
+	return &DocumentService{
+		repository:       repository,
+		storage:          storage,
+		maxDocumentBytes: maxDocumentBytes,
 	}
-	return &DocumentService{repository: repository, storage: storage, maxDocumentBytes: limit}
 }
 
 func (service *DocumentService) MaxDocumentBytes() int64 {
