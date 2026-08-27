@@ -31,62 +31,126 @@ class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
   AppMapController? _mapController;
   String _fullAddress = '';
   bool _isLoading = true;
+  bool _routeDataLoaded = false;
+  Future<void>? _routeDataRequest;
+  Future<void>? _routeRenderRequest;
+  ({double lat, double lng})? _originCoordinate;
+  RouteModel? _route;
 
   @override
   void initState() {
     super.initState();
-    unawaited(_loadRouteData());
+    _ensureRouteDataLoaded();
+  }
+
+  void _ensureRouteDataLoaded() {
+    if (_routeDataLoaded) {
+      unawaited(_ensureRouteDataRendered());
+      return;
+    }
+    if (_routeDataRequest != null) return;
+
+    final request = _loadRouteData();
+    _routeDataRequest = request;
+    unawaited(
+      request.whenComplete(() {
+        if (identical(_routeDataRequest, request)) {
+          _routeDataRequest = null;
+        }
+      }),
+    );
   }
 
   Future<void> _loadRouteData() async {
-    final position = await LocationService.getCurrentPosition();
-    final originLat = position?.latitude ?? widget.destinationLat;
-    final originLng = position?.longitude ?? widget.destinationLng;
+    try {
+      final position = await LocationService.getCurrentPosition();
+      final origin = (
+        lat: position?.latitude ?? widget.destinationLat,
+        lng: position?.longitude ?? widget.destinationLng,
+      );
 
-    final place = await MapProvider.getPlaceFromCoordinates(
-      widget.destinationLat,
-      widget.destinationLng,
+      _originCoordinate = origin;
+      final placeRequest = MapProvider.getPlaceFromCoordinates(
+        widget.destinationLat,
+        widget.destinationLng,
+      );
+      final routeRequest = MapProvider.getRoute(
+        origin.lat,
+        origin.lng,
+        widget.destinationLat,
+        widget.destinationLng,
+      );
+      final place = await placeRequest;
+      _route = await routeRequest;
+
+      if (!mounted) return;
+      _routeDataLoaded = true;
+      setState(() {
+        _fullAddress = place?.fullAddress ?? widget.placeSubtitle;
+        _isLoading = false;
+      });
+      await _ensureRouteDataRendered();
+    } catch (error) {
+      if (!mounted) return;
+      _routeDataLoaded = true;
+      setState(() {
+        _fullAddress = widget.placeSubtitle;
+        _isLoading = false;
+      });
+      debugPrint('Unable to load activity route: $error');
+    }
+  }
+
+  Future<void> _ensureRouteDataRendered() {
+    final ongoingRequest = _routeRenderRequest;
+    if (ongoingRequest != null) return ongoingRequest;
+
+    final request = _renderRouteData();
+    _routeRenderRequest = request;
+    unawaited(
+      request.whenComplete(() {
+        if (identical(_routeRenderRequest, request)) {
+          _routeRenderRequest = null;
+        }
+      }),
     );
+    return request;
+  }
 
-    final route = await MapProvider.getRoute(
-      originLat,
-      originLng,
-      widget.destinationLat,
-      widget.destinationLng,
-    );
+  Future<void> _renderRouteData() async {
+    final controller = _mapController;
+    final origin = _originCoordinate;
+    if (controller == null || origin == null) return;
 
-    if (!mounted) return;
-    setState(() {
-      _fullAddress = place?.fullAddress ?? widget.placeSubtitle;
-      _isLoading = false;
-    });
-
-    if (_mapController != null) {
+    try {
       await MapProvider.addMarker(
-        _mapController!,
-        originLat,
-        originLng,
+        controller,
+        origin.lat,
+        origin.lng,
         isOrigin: true,
         color: TripMapMarkerStyle.ownLocation,
       );
       await MapProvider.addMarker(
-        _mapController!,
+        controller,
         widget.destinationLat,
         widget.destinationLng,
         color: TripMapMarkerStyle.tripLocation,
       );
-      await MapProvider.fitBounds(_mapController!, [
-        LatLng(originLat, originLng),
+      await MapProvider.fitBounds(controller, [
+        LatLng(origin.lat, origin.lng),
         LatLng(widget.destinationLat, widget.destinationLng),
       ]);
-      if (route != null) {
-        await MapProvider.addPolyline(
-          _mapController!,
-          route.polylinePoints,
-          color: AppTheme.primaryColor,
-          width: 5.0,
-        );
-      }
+
+      final route = _route;
+      if (route == null) return;
+      await MapProvider.addPolyline(
+        controller,
+        route.polylinePoints,
+        color: AppTheme.primaryColor,
+        width: 5.0,
+      );
+    } catch (error) {
+      debugPrint('Unable to render activity route: $error');
     }
   }
 
@@ -101,9 +165,9 @@ class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
               latitude: widget.destinationLat,
               longitude: widget.destinationLng,
               zoom: 13.0,
-              onMapCreated: (c) async {
+              onMapCreated: (c) {
                 _mapController = c;
-                if (!_isLoading) await _loadRouteData();
+                _ensureRouteDataLoaded();
               },
             ),
           ),

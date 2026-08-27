@@ -16,9 +16,12 @@ class MapProvider {
   MapProvider._();
 
   static const double nearbyRadiusKm = 5.0;
+  static const _routeCacheTtl = Duration(seconds: 20);
 
   static bool _initialized = false;
   static MapNativeService? _nativeService;
+  static final AsyncTtlCache<RouteRequestKey, RouteModel?> _routeCache =
+      AsyncTtlCache(ttl: _routeCacheTtl, maxEntries: 24);
 
   static Future<void> initialize({
     String? token,
@@ -26,6 +29,7 @@ class MapProvider {
   }) async {
     if (_initialized) return;
     _nativeService = nativeService;
+    _routeCache.clear();
     if (token != null && token.isNotEmpty) {
       mapbox.MapboxOptions.setAccessToken(token);
     }
@@ -111,6 +115,42 @@ class MapProvider {
       throw StateError('MapProvider not initialized.');
     }
 
+    final key = RouteRequestKey(
+      originLat: originLat,
+      originLng: originLng,
+      destLat: destLat,
+      destLng: destLng,
+      preference: preference,
+      profile: profile,
+      excludePoints: excludePoints,
+    );
+
+    return _routeCache.getOrLoad(
+      key,
+      () => _requestRoute(
+        nativeService,
+        originLat: originLat,
+        originLng: originLng,
+        destLat: destLat,
+        destLng: destLng,
+        preference: preference,
+        profile: profile,
+        excludePoints: excludePoints,
+      ),
+      shouldCache: (route) => route != null,
+    );
+  }
+
+  static Future<RouteModel?> _requestRoute(
+    MapNativeService nativeService, {
+    required double originLat,
+    required double originLng,
+    required double destLat,
+    required double destLng,
+    required RoutePreference preference,
+    required RouteProfile profile,
+    required List<({double lat, double lng})> excludePoints,
+  }) async {
     try {
       final either = await nativeService.getRoute(
         originLat: originLat,
