@@ -1,6 +1,7 @@
 package http
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
@@ -39,19 +40,7 @@ func (handler *Handler) CreateRoom(writer http.ResponseWriter, request *http.Req
 		return
 	}
 	if err := handler.service.OpenRideRoom(request.Context(), input.RideID, identity); err != nil {
-		status := http.StatusInternalServerError
-		if err == domain.ErrInvalidRoom {
-			status = http.StatusBadRequest
-		} else if err == domain.ErrRoomConflict {
-			status = http.StatusConflict
-		} else if err == domain.ErrRoomLocked {
-			status = http.StatusLocked
-		} else if err == domain.ErrForbidden {
-			status = http.StatusForbidden
-		} else if err == domain.ErrRoomUnavailable {
-			status = http.StatusServiceUnavailable
-		}
-		response.Error(writer, status, "could not create chat room")
+		response.Error(writer, chatErrorStatus(err), "could not create chat room")
 		return
 	}
 	response.JSON(writer, http.StatusCreated, map[string]any{"room_id": input.RideID, "status": "open"})
@@ -65,11 +54,7 @@ func (handler *Handler) Messages(writer http.ResponseWriter, request *http.Reque
 	}
 	items, err := handler.service.MessagesForUser(request.Context(), chi.URLParam(request, "roomID"), identity)
 	if err != nil {
-		status := http.StatusInternalServerError
-		if err == domain.ErrForbidden {
-			status = http.StatusForbidden
-		}
-		response.Error(writer, status, "could not load chat messages")
+		response.Error(writer, chatErrorStatus(err), "could not load chat messages")
 		return
 	}
 	result := make([]map[string]string, 0, len(items))
@@ -87,11 +72,7 @@ func (handler *Handler) Resolve(writer http.ResponseWriter, request *http.Reques
 	}
 	roomID := chi.URLParam(request, "roomID")
 	if err := handler.service.ResolveForUser(request.Context(), roomID, identity); err != nil {
-		status := http.StatusInternalServerError
-		if err == domain.ErrForbidden {
-			status = http.StatusForbidden
-		}
-		response.Error(writer, status, "could not resolve chat room")
+		response.Error(writer, chatErrorStatus(err), "could not resolve chat room")
 		return
 	}
 	response.JSON(writer, http.StatusOK, map[string]any{"room_id": roomID, "status": "resolved"})
@@ -100,4 +81,21 @@ func (handler *Handler) Resolve(writer http.ResponseWriter, request *http.Reques
 func (handler *Handler) identity(request *http.Request) (string, bool) {
 	identity, ok := middleware.IdentityFromRequest(request, handler.verifier)
 	return identity.Subject, ok
+}
+
+func chatErrorStatus(err error) int {
+	switch {
+	case errors.Is(err, domain.ErrInvalidRoom):
+		return http.StatusBadRequest
+	case errors.Is(err, domain.ErrRoomConflict):
+		return http.StatusConflict
+	case errors.Is(err, domain.ErrRoomLocked):
+		return http.StatusLocked
+	case errors.Is(err, domain.ErrForbidden):
+		return http.StatusForbidden
+	case errors.Is(err, domain.ErrRoomUnavailable):
+		return http.StatusServiceUnavailable
+	default:
+		return http.StatusInternalServerError
+	}
 }
