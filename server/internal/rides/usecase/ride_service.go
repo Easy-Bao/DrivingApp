@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"math"
 	"time"
 
@@ -30,6 +31,7 @@ type RideService struct {
 	pricingConfig     PricingConfig
 	eventPublisher    domain.EventPublisher
 	reportingLocation *time.Location
+	logger            *slog.Logger
 }
 
 func NewRideService(
@@ -42,6 +44,7 @@ func NewRideService(
 		pricingConfig:     pricingConfig,
 		eventPublisher:    publisher,
 		reportingLocation: defaultReportingLocation,
+		logger:            slog.Default(),
 	}
 }
 
@@ -57,7 +60,15 @@ func NewRideServiceWithRouteCalculator(
 		pricingConfig:     pricingConfig,
 		eventPublisher:    publisher,
 		reportingLocation: defaultReportingLocation,
+		logger:            slog.Default(),
 	}
+}
+
+func (service *RideService) WithLogger(logger *slog.Logger) *RideService {
+	if logger != nil {
+		service.logger = logger
+	}
+	return service
 }
 
 func (service *RideService) PricingConfig() PricingConfig {

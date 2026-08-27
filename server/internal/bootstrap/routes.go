@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/Easy-Bao/DrivingApp/server/ent"
 	adminpostgres "github.com/Easy-Bao/DrivingApp/server/internal/admin/adapter/postgres"
@@ -48,7 +49,7 @@ import (
 	redisclient "github.com/redis/go-redis/v9"
 )
 
-func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclient.Client) (*chi.Mux, *stream.Hub) {
+func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclient.Client, applicationLogger *slog.Logger) (*chi.Mux, *stream.Hub) {
 	verifier := security.NewTokenManager(config.JWTSecret)
 	adminAuthorizer := security.NewAdminAuthorizer(config.AdminUserIDs)
 	privateObjectStore := storagepostgres.NewObjectStore(databaseClient)
@@ -98,7 +99,7 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 		routeCalculator,
 		config.Pricing,
 		realtimePublisher,
-	).WithReportingLocation(config.ReportingLocation)
+	).WithReportingLocation(config.ReportingLocation).WithLogger(applicationLogger)
 	rideAssignments := assignment.NewResolver(
 		assignmentProjection,
 		assignmentadapter.NewRideRepositoryLookup(ridesRepository),
@@ -110,6 +111,7 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 		geo.NewDriverLocationStore(redisClient),
 		geousecase.WithRideAssignments(rideAssignments),
 		geousecase.WithEventPublisher(realtimePublisher),
+		geousecase.WithLogger(applicationLogger),
 	)
 	locationService := locationusecase.NewLocationServiceWithCache(
 		mapboxProvider,
@@ -132,7 +134,8 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 	chatHistory := chatadapter.NewChatHistoryStore(redisClient)
 	chatService := chatusecase.NewChatService(chatHistory).
 		WithEventPublisher(realtimePublisher).
-		WithRideAssignmentLookup(rideAssignments)
+		WithRideAssignmentLookup(rideAssignments).
+		WithLogger(applicationLogger)
 	events := ws.NewEventRouter()
 	chatEventHandler := chatws.NewEventHandler(chatService)
 	events.Register("CHAT_MESSAGE", chatEventHandler)

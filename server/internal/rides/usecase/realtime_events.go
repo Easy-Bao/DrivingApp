@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"log"
 	"strconv"
 	"time"
 
@@ -54,11 +53,11 @@ func (service *RideService) publish(ctx context.Context, eventType event.Type, s
 	}
 	envelope, err := event.New(event.NewID(), eventType, time.Now(), scope, payload)
 	if err != nil {
-		log.Printf("realtime event construction failed: %v", err)
+		service.logger.ErrorContext(ctx, "construct realtime ride event failed", "error", err, "event_type", eventType)
 		return
 	}
 	if err := service.eventPublisher.Publish(ctx, envelope); err != nil {
-		log.Printf("realtime event publishing failed: %v", err)
+		service.logger.WarnContext(ctx, "publish realtime ride event failed", "error", err, "event_type", eventType)
 	}
 }
 

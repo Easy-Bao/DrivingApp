@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -21,6 +21,7 @@ type Application struct {
 	databaseClient *ent.Client
 	redisClient    redisClient
 	eventHub       *stream.Hub
+	logger         *slog.Logger
 }
 
 type redisClient interface {
@@ -65,14 +66,15 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 		}
 	}()
 
-	router, eventHub := newRouter(config, databaseClient, redisClient)
+	applicationLogger := logger.New(serviceName)
+	router, eventHub := newRouter(config, databaseClient, redisClient, applicationLogger)
 	secureHandler := middleware.SecureHTTPWithIdempotency(
 		router,
 		config.Security,
 		middleware.NewRateLimiterFromEnv(middleware.NewRedisCounterStore(redisClient)),
-		middleware.NewIdempotency(middleware.NewRedisIdempotencyStore(redisClient), 10*time.Minute).WithLogger(logger.New(serviceName)),
+		middleware.NewIdempotency(middleware.NewRedisIdempotencyStore(redisClient), 10*time.Minute).WithLogger(applicationLogger),
 	)
-	handler := proxyTrust.Middleware(middleware.Logging(logger.New(serviceName))(secureHandler))
+	handler := proxyTrust.Middleware(middleware.Logging(applicationLogger)(secureHandler))
 
 	application := &Application{
 		server: &http.Server{
@@ -86,6 +88,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 		databaseClient: databaseClient,
 		redisClient:    redisClient,
 		eventHub:       eventHub,
+		logger:         applicationLogger,
 	}
 	application.server.RegisterOnShutdown(eventHub.Close)
 	closeDatabase = false
@@ -106,7 +109,11 @@ func (application *Application) Run(ctx context.Context) error {
 	go func() {
 		serverErrors <- application.server.ListenAndServe()
 	}()
-	log.Printf("%s listening on %s", serviceName, application.server.Addr)
+	applicationLogger := application.logger
+	if applicationLogger == nil {
+		applicationLogger = slog.Default()
+	}
+	applicationLogger.InfoContext(ctx, "api listening", "address", application.server.Addr)
 
 	select {
 	case serverErr := <-serverErrors:
@@ -115,7 +122,7 @@ func (application *Application) Run(ctx context.Context) error {
 		}
 		return serverErr
 	case <-ctx.Done():
-		shutdownContext, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		shutdownContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), 15*time.Second)
 		defer cancel()
 		if err := application.server.Shutdown(shutdownContext); err != nil {
 			return fmt.Errorf("api shutdown failed: %w", err)

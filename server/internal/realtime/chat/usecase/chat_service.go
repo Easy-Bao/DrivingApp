@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+	"errors"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -20,6 +22,7 @@ type ChatService struct {
 	history     domain.RoomRepository
 	events      EventPublisher
 	assignments assignment.Lookup
+	logger      *slog.Logger
 }
 
 type EventPublisher interface {
@@ -27,7 +30,7 @@ type EventPublisher interface {
 }
 
 func NewChatService(history domain.RoomRepository) *ChatService {
-	return &ChatService{history: history}
+	return &ChatService{history: history, logger: slog.Default()}
 }
 
 func (service *ChatService) WithEventPublisher(publisher EventPublisher) *ChatService {
@@ -39,6 +42,13 @@ func (service *ChatService) WithRideAssignmentLookup(
 	lookup assignment.Lookup,
 ) *ChatService {
 	service.assignments = lookup
+	return service
+}
+
+func (service *ChatService) WithLogger(logger *slog.Logger) *ChatService {
+	if logger != nil {
+		service.logger = logger
+	}
 	return service
 }
 func (service *ChatService) Relay(ctx context.Context, message domain.Message) error {
@@ -74,7 +84,11 @@ func (service *ChatService) publishRealtimeMessage(ctx context.Context, message 
 		return
 	}
 	passengerID, driverID, err := service.history.RoomParticipants(ctx, message.RoomID)
-	if err != nil || passengerID == "" || driverID == "" {
+	if err != nil {
+		service.logger.WarnContext(ctx, "load chat room participants for notification failed", "error", err)
+		return
+	}
+	if passengerID == "" || driverID == "" {
 		return
 	}
 	occurredAt, err := time.Parse(time.RFC3339Nano, message.CreatedAt)
@@ -94,9 +108,12 @@ func (service *ChatService) publishRealtimeMessage(ctx context.Context, message 
 		},
 	)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "construct chat notification event failed", "error", err)
 		return
 	}
-	_ = service.events.Publish(ctx, envelope)
+	if err := service.events.Publish(ctx, envelope); err != nil {
+		service.logger.WarnContext(ctx, "publish chat notification event failed", "error", err)
+	}
 }
 
 func (service *ChatService) OpenRideRoom(ctx context.Context, rideID, actorID string) error {
@@ -136,6 +153,7 @@ func (service *ChatService) communicationAssignment(ctx context.Context, rideID,
 	}
 	rideAssignment, found, err := service.assignments.ForRide(ctx, rideID)
 	if err != nil {
+		service.logger.WarnContext(ctx, "load ride assignment for chat authorization failed", "error", err)
 		return assignment.Assignment{}, domain.ErrRoomUnavailable
 	}
 	if !found || !rideAssignment.AllowsCommunication() ||
@@ -170,7 +188,7 @@ func (service *ChatService) CanAccessRoom(ctx context.Context, roomID, userID st
 		return false, nil
 	}
 	if _, err := service.communicationAssignment(ctx, roomID, userID); err != nil {
-		if err == domain.ErrForbidden {
+		if errors.Is(err, domain.ErrForbidden) {
 			return false, nil
 		}
 		return false, err

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"math"
 	"time"
 
@@ -17,6 +17,7 @@ type LocationTrackingService struct {
 	repository     domain.Repository
 	assignments    assignment.Lookup
 	eventPublisher domain.EventPublisher
+	logger         *slog.Logger
 }
 
 type Option func(*LocationTrackingService)
@@ -29,8 +30,16 @@ func WithEventPublisher(publisher domain.EventPublisher) Option {
 	return func(service *LocationTrackingService) { service.eventPublisher = publisher }
 }
 
+func WithLogger(logger *slog.Logger) Option {
+	return func(service *LocationTrackingService) {
+		if logger != nil {
+			service.logger = logger
+		}
+	}
+}
+
 func NewLocationTrackingService(repository domain.Repository, options ...Option) *LocationTrackingService {
-	service := &LocationTrackingService{repository: repository}
+	service := &LocationTrackingService{repository: repository, logger: slog.Default()}
 	for _, option := range options {
 		option(service)
 	}
@@ -46,7 +55,7 @@ func (service *LocationTrackingService) Ingest(ctx context.Context, point domain
 	}
 	assignments, err := service.activeRidesForDriver(ctx, point.DriverID)
 	if err != nil {
-		log.Printf("realtime ride assignment lookup failed: %v", err)
+		service.logger.WarnContext(ctx, "load realtime ride assignments failed", "error", err)
 	}
 	if len(assignments) == 0 {
 		service.publish(ctx, event.DriverLocationUpdated, event.Scope{DriverID: point.DriverID}, map[string]any{"location": point})
@@ -176,11 +185,11 @@ func (service *LocationTrackingService) publish(ctx context.Context, eventType e
 	}
 	envelope, err := event.New(event.NewID(), eventType, time.Now(), scope, payload)
 	if err != nil {
-		log.Printf("realtime location event construction failed: %v", err)
+		service.logger.ErrorContext(ctx, "construct realtime location event failed", "error", err, "event_type", eventType)
 		return
 	}
 	if err := service.eventPublisher.Publish(ctx, envelope); err != nil {
-		log.Printf("realtime location event publishing failed: %v", err)
+		service.logger.WarnContext(ctx, "publish realtime location event failed", "error", err, "event_type", eventType)
 	}
 }
 
