@@ -93,8 +93,6 @@ class RouteModel extends Equatable {
 }
 
 extension RouteModelExtension on RouteModel {
-  Duration get estimatedTime => Duration(seconds: durationSeconds);
-
   /// Returns only finite GeoJSON coordinates that Mapbox can render.
   /// Mapbox coordinates are ordered longitude first.
   List<List<double>> get validPolylinePoints => polylinePoints
@@ -121,22 +119,4 @@ bool _isValidPolylinePoint(List<double> point) {
       point[1] <= 90 &&
       point[0] >= -180 &&
       point[0] <= 180;
-}
-
-class RouteModelLegacyAdapter {
-  RouteModelLegacyAdapter._();
-
-  static RouteModel create({
-    required List<List<double>> polylinePoints,
-    required double distanceKm,
-    required Duration estimatedTime,
-    String summary = '',
-  }) {
-    return RouteModel(
-      polylinePoints: polylinePoints,
-      distanceKm: distanceKm,
-      durationSeconds: estimatedTime.inSeconds,
-      summary: summary,
-    );
-  }
 }
