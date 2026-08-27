@@ -23,7 +23,25 @@ func (failingIdempotencyStore) Set(context.Context, string, []byte, time.Duratio
 func (failingIdempotencyStore) SetNX(context.Context, string, []byte, time.Duration) (bool, error) {
 	return false, errors.New("idempotency store unavailable")
 }
-func (failingIdempotencyStore) Delete(context.Context, string) error { return nil }
+func (failingIdempotencyStore) DeleteIfValue(context.Context, string, []byte) error { return nil }
+
+func TestMemoryIdempotencyStoreOnlyReleasesTheCurrentLockOwner(t *testing.T) {
+	store := NewMemoryIdempotencyStore()
+	if err := store.Set(context.Background(), "lock", []byte("new-owner"), time.Minute); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := store.DeleteIfValue(context.Background(), "lock", []byte("old-owner")); err != nil {
+		t.Fatal(err)
+	}
+	value, err := store.Get(context.Background(), "lock")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(value) != "new-owner" {
+		t.Fatalf("lock value = %q, want current owner to remain", value)
+	}
+}
 
 func TestIdempotencyReplaysSuccessfulResponse(t *testing.T) {
 	var calls atomic.Int32

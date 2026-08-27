@@ -70,7 +70,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 		router,
 		config.Security,
 		middleware.NewRateLimiterFromEnv(middleware.NewRedisCounterStore(redisClient)),
-		middleware.NewIdempotency(middleware.NewRedisIdempotencyStore(redisClient), 10*time.Minute),
+		middleware.NewIdempotency(middleware.NewRedisIdempotencyStore(redisClient), 10*time.Minute).WithLogger(logger.New(serviceName)),
 	)
 	handler := proxyTrust.Middleware(middleware.Logging(logger.New(serviceName))(secureHandler))
 

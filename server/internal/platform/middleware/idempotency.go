@@ -3,11 +3,13 @@ package middleware
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 	"sync"
@@ -20,7 +22,7 @@ type IdempotencyStore interface {
 	Get(ctx context.Context, key string) ([]byte, error)
 	Set(ctx context.Context, key string, value []byte, expiration time.Duration) error
 	SetNX(ctx context.Context, key string, value []byte, expiration time.Duration) (bool, error)
-	Delete(ctx context.Context, key string) error
+	DeleteIfValue(ctx context.Context, key string, value []byte) error
 }
 
 type RedisIdempotencyStore struct {
@@ -56,11 +58,12 @@ func (store *RedisIdempotencyStore) SetNX(ctx context.Context, key string, value
 	return store.client.SetNX(ctx, key, value, expiration).Result()
 }
 
-func (store *RedisIdempotencyStore) Delete(ctx context.Context, key string) error {
+func (store *RedisIdempotencyStore) DeleteIfValue(ctx context.Context, key string, value []byte) error {
 	if store == nil || store.client == nil {
 		return fmt.Errorf("redis idempotency store is not configured")
 	}
-	return store.client.Del(ctx, key).Err()
+	const releaseLockScript = `if redis.call("GET", KEYS[1]) == ARGV[1] then return redis.call("DEL", KEYS[1]) else return 0 end`
+	return store.client.Eval(ctx, releaseLockScript, []string{key}, value).Err()
 }
 
 type MemoryIdempotencyStore struct {
@@ -106,10 +109,13 @@ func (store *MemoryIdempotencyStore) SetNX(_ context.Context, key string, value 
 	return true, nil
 }
 
-func (store *MemoryIdempotencyStore) Delete(_ context.Context, key string) error {
+func (store *MemoryIdempotencyStore) DeleteIfValue(_ context.Context, key string, value []byte) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
-	delete(store.entries, key)
+	entry, ok := store.entries[key]
+	if ok && bytes.Equal(entry.value, value) {
+		delete(store.entries, key)
+	}
 	return nil
 }
 
@@ -117,6 +123,7 @@ type Idempotency struct {
 	store       IdempotencyStore
 	expiration  time.Duration
 	lockTimeout time.Duration
+	logger      *slog.Logger
 }
 
 const maxIdempotencyBodyBytes int64 = 10 << 20
@@ -125,7 +132,19 @@ func NewIdempotency(store IdempotencyStore, expiration time.Duration) *Idempoten
 	if expiration <= 0 {
 		expiration = 10 * time.Minute
 	}
-	return &Idempotency{store: store, expiration: expiration, lockTimeout: time.Minute}
+	return &Idempotency{
+		store:       store,
+		expiration:  expiration,
+		lockTimeout: time.Minute,
+		logger:      slog.Default(),
+	}
+}
+
+func (idempotency *Idempotency) WithLogger(logger *slog.Logger) *Idempotency {
+	if logger != nil {
+		idempotency.logger = logger
+	}
+	return idempotency
 }
 
 func (idempotency *Idempotency) Middleware(next http.Handler) http.Handler {
@@ -170,7 +189,13 @@ func (idempotency *Idempotency) Middleware(next http.Handler) http.Handler {
 			replayIdempotentResponse(writer, cached, fingerprint)
 			return
 		}
-		acquired, err := idempotency.store.SetNX(request.Context(), lockKey, []byte(fingerprint), idempotency.lockTimeout)
+		lockToken, err := newLockToken()
+		if err != nil {
+			writer.Header().Set("Retry-After", "1")
+			writeSecurityError(writer, http.StatusServiceUnavailable, "request protection is temporarily unavailable")
+			return
+		}
+		acquired, err := idempotency.store.SetNX(request.Context(), lockKey, lockToken, idempotency.lockTimeout)
 		if err != nil {
 			writer.Header().Set("Retry-After", "1")
 			writeSecurityError(writer, http.StatusServiceUnavailable, "request protection is temporarily unavailable")
@@ -180,7 +205,7 @@ func (idempotency *Idempotency) Middleware(next http.Handler) http.Handler {
 			writeSecurityError(writer, http.StatusConflict, "request with this idempotency key is already in progress")
 			return
 		}
-		defer func() { _ = idempotency.store.Delete(context.Background(), lockKey) }()
+		defer idempotency.releaseLock(request, lockKey, lockToken)
 
 		capture := &idempotentResponseWriter{ResponseWriter: writer}
 		next.ServeHTTP(capture, request)
@@ -191,11 +216,26 @@ func (idempotency *Idempotency) Middleware(next http.Handler) http.Handler {
 				Headers:     cloneHeaders(capture.Header()),
 				Body:        capture.body.Bytes(),
 			})
-			if marshalErr == nil {
-				_ = idempotency.store.Set(context.Background(), resultKey, record, idempotency.expiration)
+			if marshalErr != nil {
+				idempotency.logger.ErrorContext(request.Context(), "encode idempotency response failed", "error", marshalErr)
+			} else {
+				resultContext, cancel := context.WithTimeout(context.WithoutCancel(request.Context()), time.Second)
+				setErr := idempotency.store.Set(resultContext, resultKey, record, idempotency.expiration)
+				cancel()
+				if setErr != nil {
+					idempotency.logger.WarnContext(request.Context(), "store idempotency response failed", "error", setErr, "key_hash", hashIdempotencyKey(idempotencyKey))
+				}
 			}
 		}
 	})
+}
+
+func (idempotency *Idempotency) releaseLock(request *http.Request, key string, token []byte) {
+	cleanupContext, cancel := context.WithTimeout(context.WithoutCancel(request.Context()), time.Second)
+	defer cancel()
+	if err := idempotency.store.DeleteIfValue(cleanupContext, key, token); err != nil {
+		idempotency.logger.WarnContext(request.Context(), "release idempotency lock failed", "error", err, "key_hash", hashIdempotencyKey(request.Header.Get("Idempotency-Key")))
+	}
 }
 
 type idempotentResponse struct {
@@ -263,6 +303,19 @@ func requestFingerprint(request *http.Request, body []byte) string {
 	_, _ = hash.Write([]byte(request.Method + "\n" + request.URL.RequestURI() + "\n" + authorizationScope(request) + "\n"))
 	_, _ = hash.Write(body)
 	return hex.EncodeToString(hash.Sum(nil))
+}
+
+func newLockToken() ([]byte, error) {
+	token := make([]byte, 16)
+	if _, err := rand.Read(token); err != nil {
+		return nil, fmt.Errorf("generate idempotency lock token: %w", err)
+	}
+	return token, nil
+}
+
+func hashIdempotencyKey(key string) string {
+	hash := sha256.Sum256([]byte(key))
+	return hex.EncodeToString(hash[:8])
 }
 
 func cloneHeaders(headers http.Header) map[string][]string {
