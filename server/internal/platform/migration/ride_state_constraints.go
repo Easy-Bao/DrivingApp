@@ -2,10 +2,11 @@ package migration
 
 import (
 	"context"
-	"database/sql"
+
+	"entgo.io/ent/dialect"
 )
 
-func applyRideStateConstraints(ctx context.Context, connection *sql.Conn) error {
+func applyRideStateConstraints(ctx context.Context, connection dialect.ExecQuerier) error {
 	return executeStatements(ctx, connection, rideStateConstraintStatements)
 }
 

@@ -2,10 +2,11 @@ package migration
 
 import (
 	"context"
-	"database/sql"
+
+	"entgo.io/ent/dialect"
 )
 
-func applyPassengerProfileAttributes(ctx context.Context, connection *sql.Conn) error {
+func applyPassengerProfileAttributes(ctx context.Context, connection dialect.ExecQuerier) error {
 	statements := []string{
 		`ALTER TABLE passenger_profiles ADD COLUMN IF NOT EXISTS gender VARCHAR(32) NOT NULL DEFAULT 'Prefer not to say'`,
 		`ALTER TABLE passenger_profiles ADD COLUMN IF NOT EXISTS avatar_storage_key VARCHAR(160)`,

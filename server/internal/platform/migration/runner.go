@@ -2,11 +2,12 @@ package migration
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"sort"
 	"time"
 
+	"entgo.io/ent/dialect"
+	entsql "entgo.io/ent/dialect/sql"
 	"github.com/Easy-Bao/DrivingApp/server/ent"
 	entmigrate "github.com/Easy-Bao/DrivingApp/server/ent/migrate"
 )
@@ -19,39 +20,44 @@ const (
 type migration struct {
 	version int64
 	name    string
-	apply   func(context.Context, *sql.Conn) error
+	apply   func(context.Context, dialect.ExecQuerier) error
 }
 
 type Runner struct {
-	database   *sql.DB
+	driver     dialect.Driver
 	migrations []migration
 	timeout    time.Duration
 }
 
-func NewRunner(database *sql.DB, client *ent.Client) *Runner {
-	schemaSync := func(ctx context.Context, _ *sql.Conn) error {
-		if client == nil {
-			return fmt.Errorf("migration schema client is required")
-		}
-		return client.Schema.Create(
+func NewRunner(driver dialect.Driver) *Runner {
+	dialectName := dialect.Postgres
+	if driver != nil {
+		dialectName = driver.Dialect()
+	}
+	schemaSync := func(ctx context.Context, executor dialect.ExecQuerier) error {
+		migrationClient := ent.NewClient(ent.Driver(&migrationDriver{
+			executor:    executor,
+			dialectName: dialectName,
+		}))
+		return migrationClient.Schema.Create(
 			ctx,
 			entmigrate.WithDropColumn(false),
 			entmigrate.WithDropIndex(false),
 			entmigrate.WithForeignKeys(true),
 		)
 	}
-	refreshSessionSchema := func(ctx context.Context, connection *sql.Conn) error {
-		if err := schemaSync(ctx, connection); err != nil {
+	refreshSessionSchema := func(ctx context.Context, executor dialect.ExecQuerier) error {
+		if err := schemaSync(ctx, executor); err != nil {
 			return err
 		}
-		return executeStatements(ctx, connection, []string{
+		return executeStatements(ctx, executor, []string{
 			addForeignKey("refresh_sessions_user_fk", "refresh_sessions", "user_id", "users", "id", "CASCADE"),
 			validateForeignKey("refresh_sessions", "refresh_sessions_user_fk"),
 		})
 	}
 	return &Runner{
-		database: database,
-		timeout:  defaultTimeout,
+		driver:  driver,
+		timeout: defaultTimeout,
 		migrations: []migration{
 			{
 				version: 2026082301,
@@ -98,8 +104,8 @@ func NewRunner(database *sql.DB, client *ent.Client) *Runner {
 }
 
 func (runner *Runner) Run(ctx context.Context) error {
-	if runner.database == nil {
-		return fmt.Errorf("migration database is required")
+	if runner.driver == nil {
+		return fmt.Errorf("migration driver is required")
 	}
 	if err := validateMigrationPlan(runner.migrations); err != nil {
 		return err
@@ -110,61 +116,97 @@ func (runner *Runner) Run(ctx context.Context) error {
 		defer cancel()
 	}
 
-	connection, err := runner.database.Conn(ctx)
+	transaction, err := runner.driver.Tx(ctx)
 	if err != nil {
-		return fmt.Errorf("reserve migration connection: %w", err)
+		return fmt.Errorf("begin migration transaction: %w", err)
 	}
-	defer connection.Close()
+	defer transaction.Rollback()
 
-	if _, err := connection.ExecContext(
+	if err := transaction.Exec(
 		ctx,
-		"SELECT pg_advisory_lock($1)",
-		migrationLockID,
+		"SELECT pg_advisory_xact_lock($1)",
+		[]any{migrationLockID},
+		nil,
 	); err != nil {
 		return fmt.Errorf("acquire migration lock: %w", err)
 	}
-	defer releaseMigrationLock(connection)
 
-	if _, err := connection.ExecContext(ctx, `
+	if err := transaction.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS schema_migrations (
 			version BIGINT PRIMARY KEY,
 			name TEXT NOT NULL,
 			applied_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-		)`); err != nil {
+		)`, []any{}, nil); err != nil {
 		return fmt.Errorf("create migration ledger: %w", err)
 	}
-	if err := ValidateCompatibleSchema(ctx, connection); err != nil {
+	if err := ValidateCompatibleSchema(ctx, transaction); err != nil {
 		return err
 	}
-	if err := expireStaleBidSessions(ctx, connection); err != nil {
+	if err := expireStaleBidSessions(ctx, transaction); err != nil {
 		return err
 	}
 
 	for _, item := range runner.migrations {
-		var applied bool
-		if err := connection.QueryRowContext(
-			ctx,
-			"SELECT EXISTS (SELECT 1 FROM schema_migrations WHERE version = $1)",
-			item.version,
-		).Scan(&applied); err != nil {
+		applied, err := migrationApplied(ctx, transaction, item.version)
+		if err != nil {
 			return fmt.Errorf("read migration %d state: %w", item.version, err)
 		}
 		if applied {
 			continue
 		}
-		if err := item.apply(ctx, connection); err != nil {
+		if err := item.apply(ctx, transaction); err != nil {
 			return fmt.Errorf("apply migration %d (%s): %w", item.version, item.name, err)
 		}
-		if _, err := connection.ExecContext(
+		if err := transaction.Exec(
 			ctx,
 			"INSERT INTO schema_migrations (version, name) VALUES ($1, $2)",
-			item.version,
-			item.name,
+			[]any{item.version, item.name},
+			nil,
 		); err != nil {
 			return fmt.Errorf("record migration %d: %w", item.version, err)
 		}
 	}
+	if err := transaction.Commit(); err != nil {
+		return fmt.Errorf("commit migrations: %w", err)
+	}
 	return nil
+}
+
+type migrationDriver struct {
+	executor    dialect.ExecQuerier
+	dialectName string
+}
+
+func (driver *migrationDriver) Exec(ctx context.Context, query string, args, result any) error {
+	return driver.executor.Exec(ctx, query, args, result)
+}
+
+func (driver *migrationDriver) Query(ctx context.Context, query string, args, result any) error {
+	return driver.executor.Query(ctx, query, args, result)
+}
+
+// Tx returns a no-op nested transaction so Ent schema migration statements stay
+// inside the runner's already-open transaction.
+func (driver *migrationDriver) Tx(context.Context) (dialect.Tx, error) {
+	return dialect.NopTx(driver), nil
+}
+
+func (*migrationDriver) Close() error { return nil }
+
+func (driver *migrationDriver) Dialect() string { return driver.dialectName }
+
+func migrationApplied(ctx context.Context, executor dialect.ExecQuerier, version int64) (bool, error) {
+	rows := &entsql.Rows{}
+	if err := executor.Query(
+		ctx,
+		"SELECT EXISTS (SELECT 1 FROM schema_migrations WHERE version = $1)",
+		[]any{version},
+		rows,
+	); err != nil {
+		return false, err
+	}
+	defer rows.Close()
+	return entsql.ScanBool(rows)
 }
 
 func validateMigrationPlan(items []migration) error {
@@ -187,10 +229,4 @@ func validateMigrationPlan(items []migration) error {
 		return fmt.Errorf("migrations must be ordered by version")
 	}
 	return nil
-}
-
-func releaseMigrationLock(connection *sql.Conn) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	_, _ = connection.ExecContext(ctx, "SELECT pg_advisory_unlock($1)", migrationLockID)
 }

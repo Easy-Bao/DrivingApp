@@ -2,10 +2,11 @@ package migration
 
 import (
 	"context"
-	"database/sql"
+
+	"entgo.io/ent/dialect"
 )
 
-func applyPrivateDocumentMetadata(ctx context.Context, connection *sql.Conn) error {
+func applyPrivateDocumentMetadata(ctx context.Context, connection dialect.ExecQuerier) error {
 	statements := []string{
 		`ALTER TABLE driver_documents ADD COLUMN IF NOT EXISTS content_type VARCHAR(64) NOT NULL DEFAULT 'application/octet-stream'`,
 		`ALTER TABLE driver_documents ADD COLUMN IF NOT EXISTS size_bytes BIGINT NOT NULL DEFAULT 0`,

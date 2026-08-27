@@ -2,15 +2,13 @@ package migration
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
+
+	"entgo.io/ent/dialect"
+	entsql "entgo.io/ent/dialect/sql"
 )
 
-type rowQuerier interface {
-	QueryRowContext(context.Context, string, ...any) *sql.Row
-}
-
-func ValidateCompatibleSchema(ctx context.Context, database rowQuerier) error {
+func ValidateCompatibleSchema(ctx context.Context, database dialect.ExecQuerier) error {
 	for _, table := range []string{
 		"users",
 		"rides",
@@ -18,18 +16,25 @@ func ValidateCompatibleSchema(ctx context.Context, database rowQuerier) error {
 		"reviews",
 		"notifications",
 	} {
-		var dataType string
-		err := database.QueryRowContext(ctx, `
-			SELECT data_type
-			FROM information_schema.columns
-			WHERE table_schema = 'public'
-			  AND table_name = $1
-			  AND column_name = 'id'`, table).Scan(&dataType)
-		if err == sql.ErrNoRows {
-			continue
-		}
+		rows := &entsql.Rows{}
+		err := database.Query(ctx, `
+			SELECT COALESCE((
+				SELECT data_type
+				FROM information_schema.columns
+				WHERE table_schema = 'public'
+				  AND table_name = $1
+				  AND column_name = 'id'
+			), '')`, []any{table}, rows)
 		if err != nil {
 			return fmt.Errorf("inspect %s.id: %w", table, err)
+		}
+		dataType, err := entsql.ScanString(rows)
+		_ = rows.Close()
+		if err != nil {
+			return fmt.Errorf("inspect %s.id: %w", table, err)
+		}
+		if dataType == "" {
+			continue
 		}
 		if dataType != "integer" && dataType != "bigint" {
 			return fmt.Errorf(

@@ -2,31 +2,40 @@ package migration
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
+
+	"entgo.io/ent/dialect"
+	entsql "entgo.io/ent/dialect/sql"
 )
 
-func expireStaleBidSessions(ctx context.Context, connection *sql.Conn) error {
-	var exists bool
-	if err := connection.QueryRowContext(
+func expireStaleBidSessions(ctx context.Context, connection dialect.ExecQuerier) error {
+	rows := &entsql.Rows{}
+	if err := connection.Query(
 		ctx,
 		"SELECT to_regclass('public.bid_sessions') IS NOT NULL",
-	).Scan(&exists); err != nil {
+		[]any{},
+		rows,
+	); err != nil {
+		return fmt.Errorf("inspect bid session table: %w", err)
+	}
+	exists, err := entsql.ScanBool(rows)
+	_ = rows.Close()
+	if err != nil {
 		return fmt.Errorf("inspect bid session table: %w", err)
 	}
 	if !exists {
 		return nil
 	}
-	if _, err := connection.ExecContext(ctx, `
+	if err := connection.Exec(ctx, `
 		UPDATE bid_sessions
 		SET status = 'expired'
-		WHERE status = 'open' AND expires_at <= CURRENT_TIMESTAMP`); err != nil {
+		WHERE status = 'open' AND expires_at <= CURRENT_TIMESTAMP`, []any{}, nil); err != nil {
 		return fmt.Errorf("expire stale bid sessions: %w", err)
 	}
 	return nil
 }
 
-func applyFinancialBackfill(ctx context.Context, connection *sql.Conn) error {
+func applyFinancialBackfill(ctx context.Context, connection dialect.ExecQuerier) error {
 	statements := []string{
 		`INSERT INTO driver_wallet_accounts (
 			driver_id, balance_centavos, version, updated_at
@@ -63,7 +72,7 @@ func applyFinancialBackfill(ctx context.Context, connection *sql.Conn) error {
 	return executeStatements(ctx, connection, statements)
 }
 
-func applyRelationalIntegrity(ctx context.Context, connection *sql.Conn) error {
+func applyRelationalIntegrity(ctx context.Context, connection dialect.ExecQuerier) error {
 	if err := executeStatements(ctx, connection, indexStatements); err != nil {
 		return err
 	}
@@ -73,7 +82,7 @@ func applyRelationalIntegrity(ctx context.Context, connection *sql.Conn) error {
 	return executeStatements(ctx, connection, validationStatements)
 }
 
-func applyReportingIndexes(ctx context.Context, connection *sql.Conn) error {
+func applyReportingIndexes(ctx context.Context, connection dialect.ExecQuerier) error {
 	return executeStatements(ctx, connection, []string{
 		`CREATE INDEX IF NOT EXISTS ride_driver_id_status_completed_at ON rides (driver_id, status, completed_at)`,
 		`CREATE INDEX IF NOT EXISTS ride_passenger_id_status_completed_at ON rides (passenger_id, status, completed_at)`,
@@ -81,9 +90,9 @@ func applyReportingIndexes(ctx context.Context, connection *sql.Conn) error {
 	})
 }
 
-func executeStatements(ctx context.Context, connection *sql.Conn, statements []string) error {
+func executeStatements(ctx context.Context, connection dialect.ExecQuerier, statements []string) error {
 	for index, statement := range statements {
-		if _, err := connection.ExecContext(ctx, statement); err != nil {
+		if err := connection.Exec(ctx, statement, []any{}, nil); err != nil {
 			return fmt.Errorf("statement %d failed: %w", index+1, err)
 		}
 	}

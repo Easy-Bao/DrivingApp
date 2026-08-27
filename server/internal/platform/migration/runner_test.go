@@ -2,21 +2,22 @@ package migration
 
 import (
 	"context"
-	"database/sql"
 	"strings"
 	"testing"
+
+	"entgo.io/ent/dialect"
 )
 
 func TestMigrationPlanRejectsDuplicateOrUnorderedVersions(t *testing.T) {
 	if err := validateMigrationPlan([]migration{
-		{version: 2, name: "second", apply: func(context.Context, *sql.Conn) error { return nil }},
-		{version: 1, name: "first", apply: func(context.Context, *sql.Conn) error { return nil }},
+		{version: 2, name: "second", apply: func(context.Context, dialect.ExecQuerier) error { return nil }},
+		{version: 1, name: "first", apply: func(context.Context, dialect.ExecQuerier) error { return nil }},
 	}); err == nil {
 		t.Fatal("expected unordered migrations to be rejected")
 	}
 	if err := validateMigrationPlan([]migration{
-		{version: 1, name: "first", apply: func(context.Context, *sql.Conn) error { return nil }},
-		{version: 1, name: "duplicate", apply: func(context.Context, *sql.Conn) error { return nil }},
+		{version: 1, name: "first", apply: func(context.Context, dialect.ExecQuerier) error { return nil }},
+		{version: 1, name: "duplicate", apply: func(context.Context, dialect.ExecQuerier) error { return nil }},
 	}); err == nil {
 		t.Fatal("expected duplicate migration versions to be rejected")
 	}
@@ -48,7 +49,7 @@ func TestIntegrityMigrationIncludesFinancialAndParticipantConstraints(t *testing
 }
 
 func TestMigrationPlanEndsWithRefreshSessions(t *testing.T) {
-	runner := NewRunner(nil, nil)
+	runner := NewRunner(nil)
 	last := runner.migrations[len(runner.migrations)-1]
 	if last.version != 2026082702 || last.name != "enforce_ride_state_constraints" {
 		t.Fatalf("last migration = %d %q", last.version, last.name)
