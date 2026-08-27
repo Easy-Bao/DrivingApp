@@ -20,12 +20,11 @@ type ProfileRepository struct {
 	avatarStorage domain.AvatarStorage
 }
 
-func NewProfileRepository(client *ent.Client, avatarStorage ...domain.AvatarStorage) *ProfileRepository {
-	var storage domain.AvatarStorage
-	if len(avatarStorage) > 0 {
-		storage = avatarStorage[0]
-	}
-	return &ProfileRepository{client: client, avatarStorage: storage}
+func NewProfileRepository(
+	client *ent.Client,
+	avatarStorage domain.AvatarStorage,
+) *ProfileRepository {
+	return &ProfileRepository{client: client, avatarStorage: avatarStorage}
 }
 
 func (repository *ProfileRepository) Get(ctx context.Context, userID int) (domain.Profile, error) {
