@@ -13,12 +13,11 @@ type Router struct {
 	auth    *security.TokenManager
 }
 
-func NewRouter(service *usecase.LocationTrackingService, auth ...*security.TokenManager) *Router {
-	var tokenManager *security.TokenManager
-	if len(auth) > 0 {
-		tokenManager = auth[0]
-	}
-	return &Router{handler: NewHandler(service, tokenManager), auth: tokenManager}
+func NewRouter(
+	service *usecase.LocationTrackingService,
+	auth *security.TokenManager,
+) *Router {
+	return &Router{handler: NewHandler(service, auth), auth: auth}
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {
