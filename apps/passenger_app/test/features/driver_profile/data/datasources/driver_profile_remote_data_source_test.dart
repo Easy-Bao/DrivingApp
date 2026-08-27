@@ -6,6 +6,37 @@ import 'package:passenger_app/src/features/driver_profile/data/datasources/drive
 class MockDio extends Mock implements Dio {}
 
 void main() {
+  test(
+    'normalizes driver review objects at the data-source boundary',
+    () async {
+      final dio = MockDio();
+      final dataSource = DriverProfileRemoteDataSourceImpl(dio);
+      when(
+        () => dio.get<List<dynamic>>(
+          '/api/v1/drivers/42/reviews',
+          queryParameters: {'offset': 0, 'limit': 20},
+        ),
+      ).thenAnswer(
+        (_) async => Response<List<dynamic>>(
+          requestOptions: RequestOptions(path: '/api/v1/drivers/42/reviews'),
+          statusCode: 200,
+          data: <dynamic>[
+            <String, dynamic>{'id': 1},
+            'malformed review',
+            <String, dynamic>{'id': 2},
+          ],
+        ),
+      );
+
+      final result = await dataSource.fetchReviews('42');
+
+      expect(result, <Map<String, dynamic>>[
+        <String, dynamic>{'id': 1},
+        <String, dynamic>{'id': 2},
+      ]);
+    },
+  );
+
   test('accepts the created response from driver review submission', () async {
     final dio = MockDio();
     final dataSource = DriverProfileRemoteDataSourceImpl(dio);

@@ -53,11 +53,7 @@ class DriverProfileRepository implements IDriverProfileRepository {
       );
       return Right(
         raw
-            .whereType<Map>()
-            .map(
-              (value) =>
-                  DriverReview.fromJson(Map<String, dynamic>.from(value)),
-            )
+            .map(DriverReview.fromJson)
             .where((review) => review.rating > 0 && review.rating <= 5)
             .toList(growable: false),
       );

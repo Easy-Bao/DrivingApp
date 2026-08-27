@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 abstract class DriverProfileRemoteDataSource {
   Future<Map<String, dynamic>> fetchStats(String driverId);
 
-  Future<List<dynamic>> fetchReviews(
+  Future<List<Map<String, dynamic>>> fetchReviews(
     String driverId, {
     int page = 1,
     int limit = 20,
@@ -32,7 +32,7 @@ class DriverProfileRemoteDataSourceImpl
   }
 
   @override
-  Future<List<dynamic>> fetchReviews(
+  Future<List<Map<String, dynamic>>> fetchReviews(
     String driverId, {
     int page = 1,
     int limit = 20,
@@ -44,7 +44,10 @@ class DriverProfileRemoteDataSourceImpl
       '/api/v1/drivers/${Uri.encodeComponent(driverId)}/reviews',
       queryParameters: {'offset': (page - 1) * limit, 'limit': limit},
     );
-    return response.data ?? const <dynamic>[];
+    return [
+      for (final item in response.data ?? const <dynamic>[])
+        if (item is Map) Map<String, dynamic>.from(item),
+    ];
   }
 
   @override
