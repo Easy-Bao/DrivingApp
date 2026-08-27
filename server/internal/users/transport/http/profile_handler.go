@@ -36,7 +36,7 @@ func (handler *Handler) identity(r *http.Request) (int, bool) {
 func (handler *Handler) Me(w http.ResponseWriter, r *http.Request) {
 	id, ok := handler.identity(r)
 	if !ok {
-		writeError(w, 401, "unauthorized")
+		response.Error(w, 401, "unauthorized")
 		return
 	}
 	profile, err := handler.service.Get(r.Context(), id)
@@ -44,17 +44,17 @@ func (handler *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		writeProfileReadError(w, err)
 		return
 	}
-	writeJSON(w, 200, profile)
+	response.JSON(w, 200, profile)
 }
 func (handler *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	id, ok := handler.identity(r)
 	if !ok {
-		writeError(w, 401, "unauthorized")
+		response.Error(w, 401, "unauthorized")
 		return
 	}
 	var input dto.UpdateProfileRequest
 	if sharedrequest.DecodeJSON(w, r, &input, 16<<10) != nil {
-		writeError(w, 400, "invalid JSON")
+		response.Error(w, 400, "invalid JSON")
 		return
 	}
 	current, err := handler.service.Get(r.Context(), id)
@@ -65,17 +65,17 @@ func (handler *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	if input.Gender != nil {
 		normalizedGender, valid := domain.NormalizeGender(*input.Gender)
 		if !valid {
-			writeError(w, http.StatusUnprocessableEntity, "Please choose a valid gender.")
+			response.Error(w, http.StatusUnprocessableEntity, "Please choose a valid gender.")
 			return
 		}
 		input.Gender = &normalizedGender
 	}
 	profile, err := handler.service.Update(r.Context(), applyProfileUpdate(current, input))
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "Your profile is temporarily unavailable. Please try again.")
+		response.Error(w, http.StatusInternalServerError, "Your profile is temporarily unavailable. Please try again.")
 		return
 	}
-	writeJSON(w, 200, profile)
+	response.JSON(w, 200, profile)
 }
 
 func applyProfileUpdate(current domain.Profile, input dto.UpdateProfileRequest) domain.Profile {
@@ -109,12 +109,12 @@ func applyProfileUpdate(current domain.Profile, input dto.UpdateProfileRequest) 
 func (handler *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 	actorID, ok := handler.identity(r)
 	if !ok {
-		writeError(w, 401, "unauthorized")
+		response.Error(w, 401, "unauthorized")
 		return
 	}
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || id != actorID {
-		writeError(w, 403, "forbidden")
+		response.Error(w, 403, "forbidden")
 		return
 	}
 	profile, err := handler.service.Get(r.Context(), id)
@@ -122,18 +122,18 @@ func (handler *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 		writeProfileReadError(w, err)
 		return
 	}
-	writeJSON(w, 200, profile)
+	response.JSON(w, 200, profile)
 }
 
 func (handler *Handler) ProfileUpdate(w http.ResponseWriter, r *http.Request) {
 	actorID, ok := handler.identity(r)
 	targetID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if !ok {
-		writeError(w, 401, "unauthorized")
+		response.Error(w, 401, "unauthorized")
 		return
 	}
 	if err != nil || actorID != targetID {
-		writeError(w, 403, "forbidden")
+		response.Error(w, 403, "forbidden")
 		return
 	}
 	handler.Update(w, r)
@@ -142,11 +142,11 @@ func (handler *Handler) ProfileUpdate(w http.ResponseWriter, r *http.Request) {
 func (handler *Handler) Avatar(w http.ResponseWriter, r *http.Request) {
 	actorID, targetID, ok := handler.profileTarget(r)
 	if !ok {
-		writeError(w, http.StatusUnauthorized, "unauthorized")
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	if actorID != targetID {
-		writeError(w, http.StatusForbidden, "forbidden")
+		response.Error(w, http.StatusForbidden, "forbidden")
 		return
 	}
 	avatar, err := handler.service.Avatar(r.Context(), targetID)
@@ -164,18 +164,18 @@ func (handler *Handler) Avatar(w http.ResponseWriter, r *http.Request) {
 func (handler *Handler) AvatarUpload(w http.ResponseWriter, r *http.Request) {
 	actorID, targetID, ok := handler.profileTarget(r)
 	if !ok {
-		writeError(w, http.StatusUnauthorized, "unauthorized")
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	if actorID != targetID {
-		writeError(w, http.StatusForbidden, "forbidden")
+		response.Error(w, http.StatusForbidden, "forbidden")
 		return
 	}
 
 	maxBytes := handler.service.MaxAvatarBytes()
 	r.Body = http.MaxBytesReader(w, r.Body, maxBytes+(1<<20))
 	if err := r.ParseMultipartForm(maxBytes); err != nil {
-		writeError(w, http.StatusBadRequest, "Please choose a JPEG or PNG photo under 2 MB.")
+		response.Error(w, http.StatusBadRequest, "Please choose a JPEG or PNG photo under 2 MB.")
 		return
 	}
 	if r.MultipartForm != nil {
@@ -183,13 +183,13 @@ func (handler *Handler) AvatarUpload(w http.ResponseWriter, r *http.Request) {
 	}
 	file, _, err := r.FormFile("photo")
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "Please choose a profile photo to upload.")
+		response.Error(w, http.StatusBadRequest, "Please choose a profile photo to upload.")
 		return
 	}
 	defer file.Close()
 	content, err := io.ReadAll(io.LimitReader(file, maxBytes+1))
 	if err != nil || int64(len(content)) > maxBytes {
-		writeError(w, http.StatusRequestEntityTooLarge, "The profile photo is too large.")
+		response.Error(w, http.StatusRequestEntityTooLarge, "The profile photo is too large.")
 		return
 	}
 	profile, err := handler.service.SaveAvatar(r.Context(), targetID, content)
@@ -197,7 +197,7 @@ func (handler *Handler) AvatarUpload(w http.ResponseWriter, r *http.Request) {
 		writeAvatarError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, profile)
+	response.JSON(w, http.StatusOK, profile)
 }
 
 func (handler *Handler) profileTarget(r *http.Request) (int, int, bool) {
@@ -215,77 +215,77 @@ func (handler *Handler) profileTarget(r *http.Request) (int, int, bool) {
 func writeAvatarError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, domain.ErrInvalidAvatar):
-		writeError(w, http.StatusUnprocessableEntity, "Please choose a JPEG or PNG photo under 2 MB.")
+		response.Error(w, http.StatusUnprocessableEntity, "Please choose a JPEG or PNG photo under 2 MB.")
 	case errors.Is(err, domain.ErrAvatarNotFound):
-		writeError(w, http.StatusNotFound, "Profile photo not found.")
+		response.Error(w, http.StatusNotFound, "Profile photo not found.")
 	case errors.Is(err, domain.ErrAvatarCorrupt):
-		writeError(w, http.StatusServiceUnavailable, "Your profile photo is temporarily unavailable.")
+		response.Error(w, http.StatusServiceUnavailable, "Your profile photo is temporarily unavailable.")
 	default:
-		writeError(w, http.StatusInternalServerError, "Your profile photo is temporarily unavailable. Please try again.")
+		response.Error(w, http.StatusInternalServerError, "Your profile photo is temporarily unavailable. Please try again.")
 	}
 }
 
 func writeProfileReadError(w http.ResponseWriter, err error) {
 	if ent.IsNotFound(err) {
-		writeError(w, http.StatusNotFound, "Profile not found.")
+		response.Error(w, http.StatusNotFound, "Profile not found.")
 		return
 	}
-	writeError(w, http.StatusInternalServerError, "Your profile is temporarily unavailable.")
+	response.Error(w, http.StatusInternalServerError, "Your profile is temporarily unavailable.")
 }
 
 func (handler *Handler) Notifications(w http.ResponseWriter, r *http.Request) {
 	actorID, ok := handler.identity(r)
 	if !ok {
-		writeError(w, 401, "unauthorized")
+		response.Error(w, 401, "unauthorized")
 		return
 	}
 	targetID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || targetID != actorID {
-		writeError(w, 403, "forbidden")
+		response.Error(w, 403, "forbidden")
 		return
 	}
 	page, err := sharedrequest.ParseOffsetPagination(r.URL.Query(), 50, 100)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid pagination")
+		response.Error(w, http.StatusBadRequest, "invalid pagination")
 		return
 	}
 	items, err := handler.service.Notifications(r.Context(), targetID, page.Limit, page.Offset)
 	if err != nil {
-		writeError(w, 500, "Notifications are temporarily unavailable.")
+		response.Error(w, 500, "Notifications are temporarily unavailable.")
 		return
 	}
-	writeJSON(w, 200, response.NewOffsetPage(items, page.Limit, page.Offset))
+	response.JSON(w, 200, response.NewOffsetPage(items, page.Limit, page.Offset))
 }
 
 func (handler *Handler) Online(w http.ResponseWriter, r *http.Request) {
 	actorID, ok := handler.identity(r)
 	if !ok {
-		writeError(w, 401, "unauthorized")
+		response.Error(w, 401, "unauthorized")
 		return
 	}
 	targetID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
-		writeError(w, 403, "forbidden")
+		response.Error(w, 403, "forbidden")
 		return
 	}
 	profile, err := handler.service.Get(r.Context(), actorID)
 	if err != nil {
 		if ent.IsNotFound(err) {
-			writeError(w, http.StatusForbidden, "driver profile required")
+			response.Error(w, http.StatusForbidden, "driver profile required")
 			return
 		}
-		writeError(w, http.StatusInternalServerError, "could not load driver profile")
+		response.Error(w, http.StatusInternalServerError, "could not load driver profile")
 		return
 	}
 	// Older clients persisted the driver-profile ID instead of the account ID.
 	// The profile is still resolved from the verified account, so accepting that
 	// legacy path value does not broaden access to another driver's profile.
 	if targetID != actorID && targetID != profile.ID {
-		writeError(w, 403, "forbidden")
+		response.Error(w, 403, "forbidden")
 		return
 	}
 	if profile.Role != "driver" {
-		writeError(w, 403, "driver profile required")
+		response.Error(w, 403, "driver profile required")
 		return
 	}
 	var input struct {
@@ -293,7 +293,7 @@ func (handler *Handler) Online(w http.ResponseWriter, r *http.Request) {
 		LegacyIsOnline *bool `json:"isOnline"`
 	}
 	if sharedrequest.DecodeJSON(w, r, &input, 4<<10) != nil {
-		writeError(w, 400, "invalid online status")
+		response.Error(w, 400, "invalid online status")
 		return
 	}
 	if input.IsOnline != nil {
@@ -301,19 +301,13 @@ func (handler *Handler) Online(w http.ResponseWriter, r *http.Request) {
 	} else if input.LegacyIsOnline != nil {
 		profile.IsOnline = *input.LegacyIsOnline
 	} else {
-		writeError(w, 400, "is_online is required")
+		response.Error(w, 400, "is_online is required")
 		return
 	}
 	updated, err := handler.service.Update(r.Context(), profile)
 	if err != nil {
-		writeError(w, 500, "could not update online status")
+		response.Error(w, 500, "could not update online status")
 		return
 	}
-	writeJSON(w, 200, updated)
-}
-func writeJSON(w http.ResponseWriter, status int, value any) {
-	response.JSON(w, status, value)
-}
-func writeError(w http.ResponseWriter, status int, message string) {
-	response.Error(w, status, message)
+	response.JSON(w, 200, updated)
 }

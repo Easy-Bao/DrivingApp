@@ -23,19 +23,19 @@ func NewHandler(query ridecontext.RideContextQuery, verifier *security.TokenMana
 func (handler *Handler) GetRideContext(writer http.ResponseWriter, request *http.Request) {
 	passengerID, status := handler.passengerID(request)
 	if status != 0 {
-		writeError(writer, status, statusMessage(status))
+		response.Error(writer, status, statusMessage(status))
 		return
 	}
 
 	coordinates, err := coordinatesFromQuery(request)
 	if err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid location coordinates")
+		response.Error(writer, http.StatusBadRequest, "invalid location coordinates")
 		return
 	}
 
 	snapshot, err := handler.query.Load(request.Context(), passengerID, coordinates)
 	if err != nil {
-		writeError(writer, http.StatusBadGateway, "passenger ridecontext data unavailable")
+		response.Error(writer, http.StatusBadGateway, "passenger ridecontext data unavailable")
 		return
 	}
 	response.JSON(writer, http.StatusOK, toResponse(snapshot))
@@ -115,8 +115,4 @@ func statusMessage(status int) string {
 		return "passenger access required"
 	}
 	return "unauthorized"
-}
-
-func writeError(writer http.ResponseWriter, status int, message string) {
-	response.Error(writer, status, message)
 }

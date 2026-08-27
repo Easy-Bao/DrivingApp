@@ -29,7 +29,7 @@ func NewHandler(service *usecase.DocumentService) *Handler {
 func (handler *Handler) Upload(writer http.ResponseWriter, request *http.Request) {
 	driverID, ok := actorID(request)
 	if !ok {
-		writeError(writer, http.StatusUnauthorized, "unauthorized")
+		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	limit := handler.service.MaxDocumentBytes()
@@ -37,14 +37,14 @@ func (handler *Handler) Upload(writer http.ResponseWriter, request *http.Request
 	if err != nil {
 		var maxBytesError *http.MaxBytesError
 		if errors.As(err, &maxBytesError) {
-			writeError(writer, http.StatusRequestEntityTooLarge, "The document is too large.")
+			response.Error(writer, http.StatusRequestEntityTooLarge, "The document is too large.")
 			return
 		}
-		writeError(writer, http.StatusBadRequest, "The document body could not be read.")
+		response.Error(writer, http.StatusBadRequest, "The document body could not be read.")
 		return
 	}
 	if int64(len(content)) > limit {
-		writeError(writer, http.StatusRequestEntityTooLarge, "The document is too large.")
+		response.Error(writer, http.StatusRequestEntityTooLarge, "The document is too large.")
 		return
 	}
 	item, err := handler.service.Upload(
@@ -58,13 +58,13 @@ func (handler *Handler) Upload(writer http.ResponseWriter, request *http.Request
 		writeServiceError(writer, err)
 		return
 	}
-	writeJSON(writer, http.StatusCreated, item)
+	response.JSON(writer, http.StatusCreated, item)
 }
 
 func (handler *Handler) Status(writer http.ResponseWriter, request *http.Request) {
 	driverID, ok := actorID(request)
 	if !ok {
-		writeError(writer, http.StatusUnauthorized, "unauthorized")
+		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	items, err := handler.service.Status(request.Context(), driverID)
@@ -72,18 +72,18 @@ func (handler *Handler) Status(writer http.ResponseWriter, request *http.Request
 		writeServiceError(writer, err)
 		return
 	}
-	writeJSON(writer, http.StatusOK, map[string]any{"documents": items})
+	response.JSON(writer, http.StatusOK, map[string]any{"documents": items})
 }
 
 func (handler *Handler) DriverContent(writer http.ResponseWriter, request *http.Request) {
 	driverID, ok := actorID(request)
 	if !ok {
-		writeError(writer, http.StatusUnauthorized, "unauthorized")
+		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	documentID, err := documentID(request)
 	if err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid document id")
+		response.Error(writer, http.StatusBadRequest, "invalid document id")
 		return
 	}
 	content, err := handler.service.DriverContent(request.Context(), driverID, documentID)
@@ -101,7 +101,7 @@ func (handler *Handler) ReviewQueue(writer http.ResponseWriter, request *http.Re
 	}
 	page, err := sharedrequest.ParseOffsetPagination(request.URL.Query(), 25, 100)
 	if err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid pagination")
+		response.Error(writer, http.StatusBadRequest, "invalid pagination")
 		return
 	}
 	items, err := handler.service.ReviewQueue(request.Context(), status, page.Limit, page.Offset)
@@ -109,28 +109,28 @@ func (handler *Handler) ReviewQueue(writer http.ResponseWriter, request *http.Re
 		writeServiceError(writer, err)
 		return
 	}
-	writeJSON(writer, http.StatusOK, response.NewOffsetPage(items, page.Limit, page.Offset))
+	response.JSON(writer, http.StatusOK, response.NewOffsetPage(items, page.Limit, page.Offset))
 }
 
 func (handler *Handler) Review(writer http.ResponseWriter, request *http.Request) {
 	reviewerID, ok := actorID(request)
 	if !ok {
-		writeError(writer, http.StatusUnauthorized, "unauthorized")
+		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	documentID, err := documentID(request)
 	if err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid document id")
+		response.Error(writer, http.StatusBadRequest, "invalid document id")
 		return
 	}
 	var payload dto.ReviewRequest
 	if sharedrequest.DecodeJSON(writer, request, &payload, maxReviewPayloadBytes) != nil {
-		writeError(writer, http.StatusBadRequest, "invalid review payload")
+		response.Error(writer, http.StatusBadRequest, "invalid review payload")
 		return
 	}
 	status, err := domain.ParseReviewStatus(payload.Status)
 	if err != nil {
-		writeError(writer, http.StatusUnprocessableEntity, "invalid review status")
+		response.Error(writer, http.StatusUnprocessableEntity, "invalid review status")
 		return
 	}
 	item, err := handler.service.Review(request.Context(), documentID, reviewerID, status)
@@ -138,13 +138,13 @@ func (handler *Handler) Review(writer http.ResponseWriter, request *http.Request
 		writeServiceError(writer, err)
 		return
 	}
-	writeJSON(writer, http.StatusOK, item)
+	response.JSON(writer, http.StatusOK, item)
 }
 
 func (handler *Handler) AdminContent(writer http.ResponseWriter, request *http.Request) {
 	documentID, err := documentID(request)
 	if err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid document id")
+		response.Error(writer, http.StatusBadRequest, "invalid document id")
 		return
 	}
 	content, err := handler.service.AdminContent(request.Context(), documentID)
@@ -193,24 +193,16 @@ func documentFilename(document domain.Document) string {
 func writeServiceError(writer http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, domain.ErrInvalidDocumentType), errors.Is(err, domain.ErrInvalidDocument):
-		writeError(writer, http.StatusUnprocessableEntity, "The document request is invalid.")
+		response.Error(writer, http.StatusUnprocessableEntity, "The document request is invalid.")
 	case errors.Is(err, domain.ErrUnsupportedContentType):
-		writeError(writer, http.StatusUnsupportedMediaType, "Only PDF, JPEG, and PNG documents are supported.")
+		response.Error(writer, http.StatusUnsupportedMediaType, "Only PDF, JPEG, and PNG documents are supported.")
 	case errors.Is(err, domain.ErrDocumentNotFound):
-		writeError(writer, http.StatusNotFound, "document not found")
+		response.Error(writer, http.StatusNotFound, "document not found")
 	case errors.Is(err, domain.ErrDocumentFinalized):
-		writeError(writer, http.StatusConflict, "The document review is already finalized.")
+		response.Error(writer, http.StatusConflict, "The document review is already finalized.")
 	case errors.Is(err, domain.ErrDocumentCorrupt):
-		writeError(writer, http.StatusServiceUnavailable, "The document content is unavailable.")
+		response.Error(writer, http.StatusServiceUnavailable, "The document content is unavailable.")
 	default:
-		writeError(writer, http.StatusInternalServerError, "The document service is temporarily unavailable.")
+		response.Error(writer, http.StatusInternalServerError, "The document service is temporarily unavailable.")
 	}
-}
-
-func writeJSON(writer http.ResponseWriter, status int, value any) {
-	response.JSON(writer, status, value)
-}
-
-func writeError(writer http.ResponseWriter, status int, message string) {
-	response.Error(writer, status, message)
 }

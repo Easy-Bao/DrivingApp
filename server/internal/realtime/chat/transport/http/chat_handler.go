@@ -24,18 +24,18 @@ func NewHandler(service *usecase.ChatService, verifier *security.TokenManager) *
 func (handler *Handler) CreateRoom(writer http.ResponseWriter, request *http.Request) {
 	identity, ok := handler.identity(request)
 	if !ok {
-		writeError(writer, http.StatusUnauthorized, "unauthorized")
+		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	var input struct {
 		RideID string `json:"ride_id"`
 	}
 	if sharedrequest.DecodeJSON(writer, request, &input, 8<<10) != nil {
-		writeError(writer, http.StatusBadRequest, "invalid chat room")
+		response.Error(writer, http.StatusBadRequest, "invalid chat room")
 		return
 	}
 	if input.RideID == "" {
-		writeError(writer, http.StatusBadRequest, "ride id is required")
+		response.Error(writer, http.StatusBadRequest, "ride id is required")
 		return
 	}
 	if err := handler.service.OpenRideRoom(request.Context(), input.RideID, identity); err != nil {
@@ -51,16 +51,16 @@ func (handler *Handler) CreateRoom(writer http.ResponseWriter, request *http.Req
 		} else if err == domain.ErrRoomUnavailable {
 			status = http.StatusServiceUnavailable
 		}
-		writeError(writer, status, "could not create chat room")
+		response.Error(writer, status, "could not create chat room")
 		return
 	}
-	writeJSON(writer, http.StatusCreated, map[string]any{"room_id": input.RideID, "status": "open"})
+	response.JSON(writer, http.StatusCreated, map[string]any{"room_id": input.RideID, "status": "open"})
 }
 
 func (handler *Handler) Messages(writer http.ResponseWriter, request *http.Request) {
 	identity, ok := handler.identity(request)
 	if !ok {
-		writeError(writer, http.StatusUnauthorized, "unauthorized")
+		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	items, err := handler.service.MessagesForUser(request.Context(), chi.URLParam(request, "roomID"), identity)
@@ -69,20 +69,20 @@ func (handler *Handler) Messages(writer http.ResponseWriter, request *http.Reque
 		if err == domain.ErrForbidden {
 			status = http.StatusForbidden
 		}
-		writeError(writer, status, "could not load chat messages")
+		response.Error(writer, status, "could not load chat messages")
 		return
 	}
 	result := make([]map[string]string, 0, len(items))
 	for _, item := range items {
 		result = append(result, map[string]string{"text": item.Body, "message": item.Body, "sender_id": item.SenderID, "senderId": item.SenderID, "created_at": item.CreatedAt, "createdAt": item.CreatedAt})
 	}
-	writeJSON(writer, http.StatusOK, map[string]any{"messages": result})
+	response.JSON(writer, http.StatusOK, map[string]any{"messages": result})
 }
 
 func (handler *Handler) Resolve(writer http.ResponseWriter, request *http.Request) {
 	identity, ok := handler.identity(request)
 	if !ok {
-		writeError(writer, http.StatusUnauthorized, "unauthorized")
+		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 	roomID := chi.URLParam(request, "roomID")
@@ -91,20 +91,13 @@ func (handler *Handler) Resolve(writer http.ResponseWriter, request *http.Reques
 		if err == domain.ErrForbidden {
 			status = http.StatusForbidden
 		}
-		writeError(writer, status, "could not resolve chat room")
+		response.Error(writer, status, "could not resolve chat room")
 		return
 	}
-	writeJSON(writer, http.StatusOK, map[string]any{"room_id": roomID, "status": "resolved"})
+	response.JSON(writer, http.StatusOK, map[string]any{"room_id": roomID, "status": "resolved"})
 }
 
 func (handler *Handler) identity(request *http.Request) (string, bool) {
 	identity, ok := middleware.IdentityFromRequest(request, handler.verifier)
 	return identity.Subject, ok
-}
-
-func writeJSON(writer http.ResponseWriter, status int, value any) {
-	response.JSON(writer, status, value)
-}
-func writeError(writer http.ResponseWriter, status int, message string) {
-	response.Error(writer, status, message)
 }

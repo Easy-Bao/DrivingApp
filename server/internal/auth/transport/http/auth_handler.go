@@ -40,7 +40,7 @@ func (handler *Handler) GenericRegister(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if input.Role != string(domain.Driver) && input.Role != string(domain.Passenger) {
-		writeError(w, http.StatusBadRequest, "role must be passenger or driver")
+		response.Error(w, http.StatusBadRequest, "role must be passenger or driver")
 		return
 	}
 	handler.registerDecoded(w, r, input.RegistrationRequest, input.Role == string(domain.Driver))
@@ -49,7 +49,7 @@ func (handler *Handler) GenericRegister(w http.ResponseWriter, r *http.Request) 
 func (handler *Handler) registerDecoded(w http.ResponseWriter, r *http.Request, input dto.RegistrationRequest, driver bool) {
 	if !driver {
 		if handler.otp == nil {
-			writeError(w, http.StatusServiceUnavailable, "passenger verification is unavailable")
+			response.Error(w, http.StatusServiceUnavailable, "passenger verification is unavailable")
 			return
 		}
 		pending, err := handler.otp.RegisterPassenger(r.Context(), toRegisterInput(input))
@@ -61,10 +61,10 @@ func (handler *Handler) registerDecoded(w http.ResponseWriter, r *http.Request, 
 			if errors.Is(err, domain.ErrOTPUnavailable) {
 				status = http.StatusServiceUnavailable
 			}
-			writeError(w, status, safeAuthError(err))
+			response.Error(w, status, safeAuthError(err))
 			return
 		}
-		writeJSON(w, http.StatusAccepted, map[string]any{
+		response.JSON(w, http.StatusAccepted, map[string]any{
 			"success": true,
 			"data": map[string]any{
 				"email":             pending.Email,
@@ -84,15 +84,15 @@ func (handler *Handler) registerDecoded(w http.ResponseWriter, r *http.Request, 
 		if errors.Is(err, domain.ErrEmailTaken) || errors.Is(err, domain.ErrAccountConflict) {
 			status = http.StatusConflict
 		}
-		writeError(w, status, safeAuthError(err))
+		response.Error(w, status, safeAuthError(err))
 		return
 	}
 	refreshToken, err := handler.register.IssueRefreshToken(r.Context(), account)
 	if err != nil {
-		writeError(w, http.StatusServiceUnavailable, safeAuthError(err))
+		response.Error(w, http.StatusServiceUnavailable, safeAuthError(err))
 		return
 	}
-	writeJSON(w, http.StatusCreated, authSessionResponse(account, token, refreshToken, !account.IsVerified))
+	response.JSON(w, http.StatusCreated, authSessionResponse(account, token, refreshToken, !account.IsVerified))
 }
 func (handler *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	handler.login(w, r, "")
@@ -117,10 +117,10 @@ func (handler *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, domain.ErrInvalidRefreshToken) {
 			status = http.StatusUnauthorized
 		}
-		writeError(w, status, safeAuthError(err))
+		response.Error(w, status, safeAuthError(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{
+	response.JSON(w, http.StatusOK, map[string]any{
 		"success": true,
 		"data": map[string]any{
 			"token":        tokens.AccessToken,
@@ -139,7 +139,7 @@ func (handler *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, domain.ErrInvalidRefreshToken) {
 			status = http.StatusUnauthorized
 		}
-		writeError(w, status, safeAuthError(err))
+		response.Error(w, status, safeAuthError(err))
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -152,15 +152,15 @@ func (handler *Handler) login(w http.ResponseWriter, r *http.Request, role domai
 	}
 	account, tokens, err := handler.authenticate.ExecuteSessionAs(r.Context(), input.Email, input.Password, role)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, "email or password is incorrect")
+		response.Error(w, http.StatusUnauthorized, "email or password is incorrect")
 		return
 	}
-	writeJSON(w, http.StatusOK, authSessionResponse(account, tokens.AccessToken, tokens.RefreshToken, !account.IsVerified))
+	response.JSON(w, http.StatusOK, authSessionResponse(account, tokens.AccessToken, tokens.RefreshToken, !account.IsVerified))
 }
 
 func (handler *Handler) RequestOTP(w http.ResponseWriter, r *http.Request) {
 	if handler.otp == nil {
-		writeError(w, http.StatusServiceUnavailable, "otp delivery is unavailable")
+		response.Error(w, http.StatusServiceUnavailable, "otp delivery is unavailable")
 		return
 	}
 	var input dto.OTPRequest
@@ -168,15 +168,15 @@ func (handler *Handler) RequestOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := handler.otp.RequestVerification(r.Context(), input.Email); err != nil {
-		writeError(w, http.StatusBadRequest, safeAuthError(err))
+		response.Error(w, http.StatusBadRequest, safeAuthError(err))
 		return
 	}
-	writeJSON(w, http.StatusAccepted, map[string]any{"success": true, "data": map[string]bool{"sent": true}})
+	response.JSON(w, http.StatusAccepted, map[string]any{"success": true, "data": map[string]bool{"sent": true}})
 }
 
 func (handler *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	if handler.otp == nil {
-		writeError(w, http.StatusServiceUnavailable, "otp delivery is unavailable")
+		response.Error(w, http.StatusServiceUnavailable, "otp delivery is unavailable")
 		return
 	}
 	var input dto.OTPVerification
@@ -187,17 +187,17 @@ func (handler *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	account, token, err := handler.otp.VerifyPassenger(r.Context(), input.Email, input.Code)
 
 	if err != nil {
-		writeError(w, http.StatusBadRequest, safeAuthError(err))
+		response.Error(w, http.StatusBadRequest, safeAuthError(err))
 		return
 	}
 	refreshToken, err := handler.otp.IssueRefreshToken(r.Context(), account)
 	if err != nil {
-		writeError(w, http.StatusServiceUnavailable, safeAuthError(err))
+		response.Error(w, http.StatusServiceUnavailable, safeAuthError(err))
 		return
 	}
-	response := authSessionResponse(account, token, refreshToken, false)
-	response["data"].(map[string]any)["verified"] = true
-	writeJSON(w, http.StatusOK, response)
+	sessionResponse := authSessionResponse(account, token, refreshToken, false)
+	sessionResponse["data"].(map[string]any)["verified"] = true
+	response.JSON(w, http.StatusOK, sessionResponse)
 }
 
 func (handler *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
@@ -210,7 +210,7 @@ func (handler *Handler) DriverForgotPassword(w http.ResponseWriter, r *http.Requ
 
 func (handler *Handler) forgotPasswordForRole(w http.ResponseWriter, r *http.Request, role domain.Role) {
 	if handler.otp == nil {
-		writeError(w, http.StatusServiceUnavailable, "otp delivery is unavailable")
+		response.Error(w, http.StatusServiceUnavailable, "otp delivery is unavailable")
 		return
 	}
 	var input dto.OTPRequest
@@ -218,10 +218,10 @@ func (handler *Handler) forgotPasswordForRole(w http.ResponseWriter, r *http.Req
 		return
 	}
 	if err := handler.otp.RequestPasswordResetForRole(r.Context(), input.Email, role); err != nil {
-		writeError(w, http.StatusBadRequest, safeAuthError(err))
+		response.Error(w, http.StatusBadRequest, safeAuthError(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]bool{"success": true}})
+	response.JSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]bool{"success": true}})
 }
 
 func (handler *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
@@ -234,7 +234,7 @@ func (handler *Handler) DriverResetPassword(w http.ResponseWriter, r *http.Reque
 
 func (handler *Handler) resetPasswordForRole(w http.ResponseWriter, r *http.Request, role domain.Role) {
 	if handler.otp == nil {
-		writeError(w, http.StatusServiceUnavailable, "otp delivery is unavailable")
+		response.Error(w, http.StatusServiceUnavailable, "otp delivery is unavailable")
 		return
 	}
 	var input dto.PasswordReset
@@ -242,10 +242,10 @@ func (handler *Handler) resetPasswordForRole(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	if err := handler.otp.ResetPasswordForRole(r.Context(), input.Email, input.Code, input.NewPassword, role); err != nil {
-		writeError(w, http.StatusBadRequest, safeAuthError(err))
+		response.Error(w, http.StatusBadRequest, safeAuthError(err))
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"success": true, "message": "password reset successful"})
+	response.JSON(w, http.StatusOK, map[string]any{"success": true, "message": "password reset successful"})
 }
 
 func toRegisterInput(input dto.RegistrationRequest) usecase.RegisterInput {
@@ -254,18 +254,11 @@ func toRegisterInput(input dto.RegistrationRequest) usecase.RegisterInput {
 
 func decode(w http.ResponseWriter, r *http.Request, value any) bool {
 	if sharedrequest.DecodeJSON(w, r, value, 16<<10) != nil {
-		writeError(w, http.StatusBadRequest, "invalid JSON")
+		response.Error(w, http.StatusBadRequest, "invalid JSON")
 		return false
 	}
 	return true
 }
-func writeJSON(w http.ResponseWriter, status int, value any) {
-	response.JSON(w, status, value)
-}
-func writeError(w http.ResponseWriter, status int, message string) {
-	response.Error(w, status, message)
-}
-
 func safeAuthError(err error) string {
 	switch {
 	case errors.Is(err, domain.ErrEmailTaken):

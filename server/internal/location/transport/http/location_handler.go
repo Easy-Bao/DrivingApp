@@ -25,14 +25,14 @@ func NewHandler(service *usecase.LocationService) *Handler {
 func (handler *Handler) Nearby(writer http.ResponseWriter, request *http.Request) {
 	coordinates, err := coordinatesFromQuery(request)
 	if err != nil || !hasCoordinates(request) {
-		writeError(writer, http.StatusBadRequest, "invalid location coordinates")
+		response.Error(writer, http.StatusBadRequest, "invalid location coordinates")
 		return
 	}
 	page := 1
 	if rawPage := request.URL.Query().Get("page"); rawPage != "" {
 		page, err = strconv.Atoi(rawPage)
 		if err != nil || page < 1 || page > 100 {
-			writeError(writer, http.StatusBadRequest, "invalid page")
+			response.Error(writer, http.StatusBadRequest, "invalid page")
 			return
 		}
 	}
@@ -41,7 +41,7 @@ func (handler *Handler) Nearby(writer http.ResponseWriter, request *http.Request
 		writeServiceError(writer, err)
 		return
 	}
-	writeJSON(writer, http.StatusOK, map[string]any{"places": places, "page": page})
+	response.JSON(writer, http.StatusOK, map[string]any{"places": places, "page": page})
 }
 
 func (handler *Handler) Search(writer http.ResponseWriter, request *http.Request) {
@@ -52,7 +52,7 @@ func (handler *Handler) Search(writer http.ResponseWriter, request *http.Request
 	}
 	coordinatesErr := coordinatesError(request)
 	if coordinatesErr != nil {
-		writeError(writer, http.StatusBadRequest, "invalid location coordinates")
+		response.Error(writer, http.StatusBadRequest, "invalid location coordinates")
 		return
 	}
 	places, err := handler.service.Search(request.Context(), query, coordinates)
@@ -60,13 +60,13 @@ func (handler *Handler) Search(writer http.ResponseWriter, request *http.Request
 		writeServiceError(writer, err)
 		return
 	}
-	writeJSON(writer, http.StatusOK, map[string]any{"places": places})
+	response.JSON(writer, http.StatusOK, map[string]any{"places": places})
 }
 
 func (handler *Handler) Reverse(writer http.ResponseWriter, request *http.Request) {
 	coordinates, err := coordinatesFromQuery(request)
 	if err != nil || !hasCoordinates(request) {
-		writeError(writer, http.StatusBadRequest, "invalid location coordinates")
+		response.Error(writer, http.StatusBadRequest, "invalid location coordinates")
 		return
 	}
 	place, err := handler.service.ReverseGeocode(request.Context(), coordinates)
@@ -74,18 +74,18 @@ func (handler *Handler) Reverse(writer http.ResponseWriter, request *http.Reques
 		writeServiceError(writer, err)
 		return
 	}
-	writeJSON(writer, http.StatusOK, place)
+	response.JSON(writer, http.StatusOK, place)
 }
 
 func (handler *Handler) Route(writer http.ResponseWriter, request *http.Request) {
 	var payload dto.RouteRequest
 	if err := decodeRouteRequest(writer, request, &payload); err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid route payload")
+		response.Error(writer, http.StatusBadRequest, "invalid route payload")
 		return
 	}
 	options, err := payload.Options()
 	if err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid route options")
+		response.Error(writer, http.StatusBadRequest, "invalid route options")
 		return
 	}
 	route, err := handler.service.Route(request.Context(), payload.Origin, payload.Destination, options)
@@ -93,13 +93,13 @@ func (handler *Handler) Route(writer http.ResponseWriter, request *http.Request)
 		writeServiceError(writer, err)
 		return
 	}
-	writeJSON(writer, http.StatusOK, route)
+	response.JSON(writer, http.StatusOK, route)
 }
 
 func (handler *Handler) Matrix(writer http.ResponseWriter, request *http.Request) {
 	var payload dto.MatrixRequest
 	if sharedrequest.DecodeJSON(writer, request, &payload, maxRoutePayloadBytes) != nil {
-		writeError(writer, http.StatusBadRequest, "invalid matrix payload")
+		response.Error(writer, http.StatusBadRequest, "invalid matrix payload")
 		return
 	}
 	matrix, err := handler.service.Matrix(request.Context(), payload.Origin, payload.Destinations)
@@ -107,7 +107,7 @@ func (handler *Handler) Matrix(writer http.ResponseWriter, request *http.Request
 		writeServiceError(writer, err)
 		return
 	}
-	writeJSON(writer, http.StatusOK, matrix)
+	response.JSON(writer, http.StatusOK, matrix)
 }
 
 func decodeRouteRequest(writer http.ResponseWriter, request *http.Request, payload *dto.RouteRequest) error {
@@ -122,9 +122,9 @@ func writeServiceError(writer http.ResponseWriter, err error) {
 		errors.Is(err, usecase.ErrInvalidNearbyPage),
 		errors.Is(err, usecase.ErrInvalidRouteOptions),
 		errors.Is(err, usecase.ErrInvalidMatrix):
-		writeError(writer, http.StatusBadRequest, "The location request is invalid.")
+		response.Error(writer, http.StatusBadRequest, "The location request is invalid.")
 	default:
-		writeError(writer, http.StatusBadGateway, "Nearby locations are temporarily unavailable.")
+		response.Error(writer, http.StatusBadGateway, "Nearby locations are temporarily unavailable.")
 	}
 }
 
@@ -169,12 +169,4 @@ func coordinatesError(request *http.Request) error {
 		return errors.New("invalid coordinates")
 	}
 	return nil
-}
-
-func writeJSON(writer http.ResponseWriter, status int, value any) {
-	response.JSON(writer, status, value)
-}
-
-func writeError(writer http.ResponseWriter, status int, message string) {
-	response.Error(writer, status, message)
 }
