@@ -49,11 +49,14 @@ func (manager *TokenManager) Issue(subject string) (string, error) {
 }
 
 func (manager *TokenManager) IssueWithRole(subject, role string) (string, error) {
+	if manager == nil {
+		return "", fmt.Errorf("token secret is required")
+	}
 	return manager.issue(subject, role, accessTokenType, manager.lifetime)
 }
 
 func (manager *TokenManager) issue(subject, role, tokenType string, lifetime time.Duration) (string, error) {
-	if len(manager.secret) == 0 {
+	if manager == nil || len(manager.secret) == 0 {
 		return "", fmt.Errorf("token secret is required")
 	}
 	header := encode([]byte(`{"alg":"HS256","typ":"JWT"}`))
@@ -96,6 +99,9 @@ func (manager *TokenManager) VerifyIdentity(rawToken string) (Identity, error) {
 }
 
 func (manager *TokenManager) verify(rawToken string) (Identity, error) {
+	if manager == nil {
+		return Identity{}, ErrInvalidToken
+	}
 	if rawToken == "" {
 		return Identity{}, ErrMissingToken
 	}

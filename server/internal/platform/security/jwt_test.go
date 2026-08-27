@@ -1,6 +1,7 @@
 package security
 
 import (
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -64,5 +65,15 @@ func TestValidateTokenSecretRequiresProductionStrength(t *testing.T) {
 	}
 	if err := ValidateTokenSecret("01234567890123456789012345678901"); err != nil {
 		t.Fatalf("expected 32-byte token secret to pass: %v", err)
+	}
+}
+
+func TestNilTokenManagerFailsWithoutPanicking(t *testing.T) {
+	var manager *TokenManager
+	if _, err := manager.Issue("user-7"); err == nil {
+		t.Fatal("expected nil token manager issue to fail")
+	}
+	if _, err := manager.Verify("token"); !errors.Is(err, ErrInvalidToken) {
+		t.Fatalf("nil token manager verify error = %v, want invalid token", err)
 	}
 }
