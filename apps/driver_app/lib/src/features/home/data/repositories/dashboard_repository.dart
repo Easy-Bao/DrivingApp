@@ -39,88 +39,79 @@ class DashboardRepository implements IDashboardRepository {
        _preferences = preferences,
        _backgroundTelemetryService = backgroundTelemetryService;
 
-  Failure _mapExceptionToFailure(Object error) {
-    if (error is DioException) {
-      final statusCode = error.response?.statusCode;
-      if (statusCode == 401) {
-        return const AuthFailure(
-          'Session expired or unauthorized. Please sign in again.',
-        );
-      }
-      if (statusCode == 403) {
-        return const ServerFailure.withStatusCode(
-          'Driver availability access is restricted.',
-          403,
-        );
-      }
-      if (statusCode == null) {
-        if (error.type == DioExceptionType.connectionTimeout ||
-            error.type == DioExceptionType.sendTimeout ||
-            error.type == DioExceptionType.receiveTimeout) {
-          return const ServerFailure.withStatusCode(
-            'Driver availability request timed out.',
-            504,
-          );
-        }
-        return const NetworkFailure(
-          'Unable to reach driver availability services. Check your connection and try again.',
-        );
-      }
-      if (statusCode == 400 || statusCode == 422) {
-        return ValidationFailure(
-          _safeAvailabilityMessage(error.response?.data) ??
-              'The online status request was invalid. Please try again.',
-        );
-      }
-      if (statusCode == 404) {
-        return const ServerFailure.withStatusCode(
-          'Driver availability endpoint was not found. Check that the API services are running.',
-          404,
-        );
-      }
-      return ServerFailure.withStatusCode(
+  Failure _mapExceptionToFailure(Object error) => switch (error) {
+    final DioException exception => _mapDioFailure(exception),
+    final ServerException exception => _mapServerFailure(exception),
+    final DataParsingException exception => FailureMapper.fromException(
+      exception,
+      validationMessage:
+          'Driver availability data is invalid. Please try again.',
+    ),
+    final CacheException exception => FailureMapper.fromException(exception),
+    _ => const ServerFailure(
+      'Unable to update your driver availability. Please try again.',
+    ),
+  };
+
+  Failure _mapDioFailure(DioException error) {
+    final statusCode = error.response?.statusCode;
+    if (statusCode == null && _isTimeout(error.type)) {
+      return const ServerFailure.withStatusCode(
+        'Driver availability request timed out.',
+        504,
+      );
+    }
+
+    return switch (statusCode) {
+      401 => const AuthFailure(
+        'Session expired or unauthorized. Please sign in again.',
+      ),
+      403 => const ServerFailure.withStatusCode(
+        'Driver availability access is restricted.',
+        403,
+      ),
+      400 || 422 => ValidationFailure(
+        _safeAvailabilityMessage(error.response?.data) ??
+            'The online status request was invalid. Please try again.',
+      ),
+      404 => const ServerFailure.withStatusCode(
+        'Driver availability endpoint was not found. Check that the API services are running.',
+        404,
+      ),
+      null => const NetworkFailure(
+        'Unable to reach driver availability services. Check your connection and try again.',
+      ),
+      final statusCode => ServerFailure.withStatusCode(
         'Unable to update your driver availability. Please try again.',
         statusCode,
-      );
-    }
-    if (error is ServerException) {
-      if (error.statusCode == 401) {
-        return const AuthFailure(
+      ),
+    };
+  }
+
+  Failure _mapServerFailure(ServerException error) =>
+      switch (error.statusCode) {
+        401 => const AuthFailure(
           'Session expired or unauthorized. Please sign in again.',
-        );
-      }
-      if (error.statusCode == 403) {
-        return const ServerFailure.withStatusCode(
+        ),
+        403 => const ServerFailure.withStatusCode(
           'Driver availability access is restricted.',
           403,
-        );
-      }
-      if (error.statusCode == 400 || error.statusCode == 422) {
-        return const ValidationFailure('Invalid request data.');
-      }
-      if (error.statusCode == 0) {
-        return const NetworkFailure();
-      }
-      return FailureMapper.fromException(
-        error,
-        serverMessage:
-            'Unable to update your driver availability. Please try again.',
-      );
-    }
-    if (error is DataParsingException) {
-      return FailureMapper.fromException(
-        error,
-        validationMessage:
-            'Driver availability data is invalid. Please try again.',
-      );
-    }
-    if (error is CacheException) {
-      return FailureMapper.fromException(error);
-    }
-    return const ServerFailure(
-      'Unable to update your driver availability. Please try again.',
-    );
-  }
+        ),
+        400 || 422 => const ValidationFailure('Invalid request data.'),
+        0 => const NetworkFailure(),
+        _ => FailureMapper.fromException(
+          error,
+          serverMessage:
+              'Unable to update your driver availability. Please try again.',
+        ),
+      };
+
+  bool _isTimeout(DioExceptionType type) => switch (type) {
+    DioExceptionType.connectionTimeout ||
+    DioExceptionType.sendTimeout ||
+    DioExceptionType.receiveTimeout => true,
+    _ => false,
+  };
 
   String? _safeAvailabilityMessage(Object? responseData) {
     if (responseData is! Map) return null;
