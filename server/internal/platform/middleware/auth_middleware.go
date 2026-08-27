@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 )
 
 type contextKey string

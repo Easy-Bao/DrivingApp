@@ -11,10 +11,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/domain"
 	usershttp "github.com/Easy-Bao/DrivingApp/server/internal/users/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/usecase"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
 	"github.com/go-chi/chi/v5"
 )
 

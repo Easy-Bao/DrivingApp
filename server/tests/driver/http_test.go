@@ -11,7 +11,7 @@ import (
 
 	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/transport/http"
 	documentusecase "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/usecase"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )
 

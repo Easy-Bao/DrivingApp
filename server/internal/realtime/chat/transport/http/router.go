@@ -2,10 +2,10 @@ package http
 
 import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/transport/http/handler"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/usecase"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/api"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
 	"github.com/go-chi/chi/v5"
 )
 

@@ -12,7 +12,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
 	home "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home"
 	homehttp "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home/transport/http"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/api"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/go-chi/chi/v5"
 )
 

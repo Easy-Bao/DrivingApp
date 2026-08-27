@@ -9,7 +9,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/admin/domain"
 	adminhttp "github.com/Easy-Bao/DrivingApp/server/internal/admin/transport/http"
 	adminusecase "github.com/Easy-Bao/DrivingApp/server/internal/admin/usecase"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )
 

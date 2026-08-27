@@ -3,7 +3,7 @@ package http
 import (
 	locationhandler "github.com/Easy-Bao/DrivingApp/server/internal/location/transport/http/handler"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/usecase"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/api"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/go-chi/chi/v5"
 )
 

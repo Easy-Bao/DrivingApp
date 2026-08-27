@@ -10,11 +10,11 @@ import (
 	"testing"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
 	rideshttp "github.com/Easy-Bao/DrivingApp/server/internal/rides/transport/http"
 	ridesusecase "github.com/Easy-Bao/DrivingApp/server/internal/rides/usecase"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/api"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
 	"github.com/go-chi/chi/v5"
 )
 

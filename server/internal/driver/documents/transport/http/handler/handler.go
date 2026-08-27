@@ -10,9 +10,9 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/transport/http/dto"
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/usecase"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
-	sharedrequest "github.com/Easy-Bao/DrivingApp/server/shared-core/request"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
+	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
 	"github.com/go-chi/chi/v5"
 )
 

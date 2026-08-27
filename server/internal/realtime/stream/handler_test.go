@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/event"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
 	"github.com/gorilla/websocket"
 )
 

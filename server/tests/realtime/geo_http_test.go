@@ -8,11 +8,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/domain"
 	geoh "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/transport/http"
 	geousecase "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/usecase"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
 	"github.com/go-chi/chi/v5"
 )
 

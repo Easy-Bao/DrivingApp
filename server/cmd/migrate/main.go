@@ -7,8 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	platformmigration "github.com/Easy-Bao/DrivingApp/server/internal/platform/migration"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/database"
 )
 
 func main() {

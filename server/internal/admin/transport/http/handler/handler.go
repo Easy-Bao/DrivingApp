@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/admin/usecase"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
 )
 
 type Handler struct {

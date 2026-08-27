@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 )
 
 const refreshTokenBytes = 32

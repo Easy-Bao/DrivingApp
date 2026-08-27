@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/email"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/resilience"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/resilience"
 )
 
 func TestMailConfigUsesEnvironmentContract(t *testing.T) {

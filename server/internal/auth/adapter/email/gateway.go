@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/resilience"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/resilience"
 	mail "github.com/wneessen/go-mail"
 )
 

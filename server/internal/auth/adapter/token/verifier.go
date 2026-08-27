@@ -1,6 +1,6 @@
 package token
 
-import "github.com/Easy-Bao/DrivingApp/server/shared-core/security"
+import "github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 
 type Verifier = security.TokenManager
 

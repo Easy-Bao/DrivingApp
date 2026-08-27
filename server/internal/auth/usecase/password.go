@@ -3,7 +3,7 @@ package usecase
 import (
 	"strconv"
 
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 )
 
 func HashPassword(password string) string {

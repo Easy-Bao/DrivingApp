@@ -7,12 +7,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment"
 	chatadapter "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/adapter"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/domain"
 	chath "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/transport/http"
 	chatusecase "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/usecase"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
 	"github.com/go-chi/chi/v5"
 )
 

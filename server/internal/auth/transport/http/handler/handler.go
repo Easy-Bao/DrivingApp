@@ -7,8 +7,8 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/transport/http/dto"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/usecase"
-	sharedrequest "github.com/Easy-Bao/DrivingApp/server/shared-core/request"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
+	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
 )
 
 type Handler struct {

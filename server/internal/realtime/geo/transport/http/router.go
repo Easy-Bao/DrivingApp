@@ -1,11 +1,11 @@
 package http
 
 import (
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/transport/http/handler"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/usecase"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/api"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
 	"github.com/go-chi/chi/v5"
 )
 

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/gorilla/websocket"
 )
 

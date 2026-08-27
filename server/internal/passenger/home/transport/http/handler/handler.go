@@ -7,8 +7,8 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
 	home "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
 )
 
 type Handler struct {

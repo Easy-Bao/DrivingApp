@@ -5,13 +5,13 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
+	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/transport/http/dto"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/usecase"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
-	sharedrequest "github.com/Easy-Bao/DrivingApp/server/shared-core/request"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/security"
 	"github.com/go-chi/chi/v5"
 )
 

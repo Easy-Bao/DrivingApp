@@ -8,12 +8,12 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/ent"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
+	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/transport/http/dto"
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/usecase"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
-	sharedrequest "github.com/Easy-Bao/DrivingApp/server/shared-core/request"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
 	"github.com/go-chi/chi/v5"
 )
 

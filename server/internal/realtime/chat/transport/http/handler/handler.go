@@ -4,11 +4,11 @@ import (
 	"net/http"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
+	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/usecase"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/middleware"
-	sharedrequest "github.com/Easy-Bao/DrivingApp/server/shared-core/request"
-	"github.com/Easy-Bao/DrivingApp/server/shared-core/response"
 	"github.com/go-chi/chi/v5"
 )
 
