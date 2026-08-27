@@ -12,7 +12,7 @@ import (
 
 const rideContactWindow = 48 * time.Hour
 
-func (repository *Repository) Counterparty(ctx context.Context, rideID, actorID int) (domain.Counterparty, error) {
+func (repository *RideRepository) Counterparty(ctx context.Context, rideID, actorID int) (domain.Counterparty, error) {
 	ride, err := repository.client.Ride.Get(ctx, rideID)
 	if err != nil {
 		return domain.Counterparty{}, err

@@ -73,7 +73,7 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 	)
 	documentRouter := documenthttp.NewRouter(
 		documentusecase.NewDocumentService(
-			documentpostgres.NewRepository(databaseClient),
+			documentpostgres.NewDocumentRepository(databaseClient),
 			privateObjectStore,
 			config.Security.UploadBodyLimit,
 		),
@@ -81,7 +81,7 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 		adminAuthorizer,
 	)
 
-	mapboxProvider := mapbox.NewProvider(config.MapboxAccessToken)
+	mapboxProvider := mapbox.NewMapboxProvider(config.MapboxAccessToken)
 	routeCalculator := ridesusecase.RouteCalculatorFunc(func(ctx context.Context, originLat, originLng, destinationLat, destinationLng float64) (ridesusecase.RouteMetrics, error) {
 		route, err := mapboxProvider.Route(ctx, locationdomain.Coordinates{Latitude: originLat, Longitude: originLng}, locationdomain.Coordinates{Latitude: destinationLat, Longitude: destinationLng}, locationdomain.RouteOptions{})
 		if err != nil {
@@ -89,7 +89,7 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 		}
 		return ridesusecase.RouteMetrics{DistanceKm: route.DistanceKm, DurationMinutes: route.DurationMin}, nil
 	})
-	ridesRepository := ridespostgres.NewRepository(databaseClient, config.Pricing.PlatformCommissionBPS)
+	ridesRepository := ridespostgres.NewRideRepository(databaseClient, config.Pricing.PlatformCommissionBPS)
 	eventHub := stream.NewHub()
 	assignmentProjection := assignmentadapter.NewMemoryProjection()
 	realtimePublisher := eventadapter.NewMemoryPublisher(assignmentProjection, eventHub)
@@ -105,9 +105,9 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 	)
 
 	ridesRouter := rideshttp.NewRouter(ridesService, verifier)
-	adminRouter := adminhttp.NewRouter(adminusecase.NewDashboardStatsService(adminpostgres.NewRepository(databaseClient)), verifier, adminAuthorizer)
+	adminRouter := adminhttp.NewRouter(adminusecase.NewDashboardStatsService(adminpostgres.NewDashboardStatsRepository(databaseClient)), verifier, adminAuthorizer)
 	geoService := geousecase.NewLocationTrackingService(
-		geo.NewRedisRepository(redisClient),
+		geo.NewDriverLocationStore(redisClient),
 		geousecase.WithRideAssignments(rideAssignments),
 		geousecase.WithEventPublisher(realtimePublisher),
 	)
@@ -129,7 +129,7 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 	locationhttp.NewRouter(locationService).RegisterRoutes(router)
 	passengerridecontexthttp.NewRouter(passengerRideContextQuery, verifier).RegisterRoutes(router)
 
-	chatHistory := chatadapter.NewRedisRepository(redisClient)
+	chatHistory := chatadapter.NewChatHistoryStore(redisClient)
 	chatService := chatusecase.NewChatService(chatadapter.NewHub(), chatHistory).
 		WithEventPublisher(realtimePublisher).
 		WithRideAssignmentLookup(rideAssignments)

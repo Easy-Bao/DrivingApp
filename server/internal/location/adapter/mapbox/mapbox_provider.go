@@ -41,15 +41,15 @@ var defaultNearbyCategories = []string{
 	"park",
 }
 
-type Provider struct {
+type MapboxProvider struct {
 	token            string
 	client           *http.Client
 	breaker          *resilience.CircuitBreaker
 	nearbyCategories []string
 }
 
-func NewProvider(token string) *Provider {
-	return &Provider{
+func NewMapboxProvider(token string) *MapboxProvider {
+	return &MapboxProvider{
 		token:   token,
 		client:  &http.Client{Timeout: 5 * time.Second},
 		breaker: resilience.NewCircuitBreaker(5, 30*time.Second),
@@ -93,7 +93,7 @@ type categoryResult struct {
 	err    error
 }
 
-func (provider *Provider) Search(ctx context.Context, query string, origin domain.Coordinates) ([]domain.Place, error) {
+func (provider *MapboxProvider) Search(ctx context.Context, query string, origin domain.Coordinates) ([]domain.Place, error) {
 	if len(query) > maxSearchQueryBytes || !origin.Valid() {
 		return nil, fmt.Errorf("invalid location search")
 	}
@@ -117,7 +117,7 @@ func (provider *Provider) Search(ctx context.Context, query string, origin domai
 	return places, nil
 }
 
-func (provider *Provider) Nearby(ctx context.Context, origin domain.Coordinates, page int) ([]domain.Place, error) {
+func (provider *MapboxProvider) Nearby(ctx context.Context, origin domain.Coordinates, page int) ([]domain.Place, error) {
 	if page < 1 || page > maxNearbyPage || !origin.Valid() {
 		return nil, fmt.Errorf("invalid nearby page or coordinates")
 	}
@@ -170,7 +170,7 @@ func (provider *Provider) Nearby(ctx context.Context, origin domain.Coordinates,
 	return places[start:end], nil
 }
 
-func (provider *Provider) nearbyCategory(ctx context.Context, origin domain.Coordinates, category string) categoryResult {
+func (provider *MapboxProvider) nearbyCategory(ctx context.Context, origin domain.Coordinates, category string) categoryResult {
 	queryParams := url.Values{
 		"access_token": {provider.token},
 		"limit":        {"25"},
@@ -255,7 +255,7 @@ func uniqueNearbyPlaces(places []domain.Place) []domain.Place {
 	return unique
 }
 
-func (provider *Provider) ReverseGeocode(ctx context.Context, coordinates domain.Coordinates) (*domain.Place, error) {
+func (provider *MapboxProvider) ReverseGeocode(ctx context.Context, coordinates domain.Coordinates) (*domain.Place, error) {
 	queryParams := url.Values{
 		"longitude":    {coordinate(coordinates.Longitude)},
 		"latitude":     {coordinate(coordinates.Latitude)},
@@ -484,7 +484,7 @@ type mapboxRoute struct {
 	} `json:"geometry"`
 }
 
-func (provider *Provider) Route(ctx context.Context, origin, destination domain.Coordinates, options domain.RouteOptions) (*domain.Route, error) {
+func (provider *MapboxProvider) Route(ctx context.Context, origin, destination domain.Coordinates, options domain.RouteOptions) (*domain.Route, error) {
 	if !origin.Valid() || !destination.Valid() {
 		return nil, fmt.Errorf("invalid route coordinates")
 	}
@@ -529,7 +529,7 @@ func (provider *Provider) Route(ctx context.Context, origin, destination domain.
 	}, nil
 }
 
-func (provider *Provider) Matrix(ctx context.Context, origin domain.Coordinates, destinations []domain.Coordinates) (*domain.Matrix, error) {
+func (provider *MapboxProvider) Matrix(ctx context.Context, origin domain.Coordinates, destinations []domain.Coordinates) (*domain.Matrix, error) {
 	if !origin.Valid() || len(destinations) == 0 || len(destinations) > 10 {
 		return nil, fmt.Errorf("invalid travel matrix coordinates")
 	}
@@ -612,7 +612,7 @@ func selectRoute(routes []mapboxRoute, preference domain.RoutePreference) mapbox
 	return fastest
 }
 
-func (provider *Provider) getJSON(ctx context.Context, endpoint string, target any) error {
+func (provider *MapboxProvider) getJSON(ctx context.Context, endpoint string, target any) error {
 	if provider.breaker == nil {
 		provider.breaker = resilience.NewCircuitBreaker(5, 30*time.Second)
 	}
@@ -621,7 +621,7 @@ func (provider *Provider) getJSON(ctx context.Context, endpoint string, target a
 	})
 }
 
-func (provider *Provider) fetchJSON(ctx context.Context, endpoint string, target any) error {
+func (provider *MapboxProvider) fetchJSON(ctx context.Context, endpoint string, target any) error {
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return err

@@ -20,7 +20,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
 )
 
-type Repository struct {
+type RideRepository struct {
 	client                *ent.Client
 	platformCommissionBPS int64
 }
@@ -33,10 +33,10 @@ var activeRideStatuses = []string{
 	string(domain.RideInTransit),
 }
 
-func NewRepository(client *ent.Client, platformCommissionBPS int64) *Repository {
-	return &Repository{client: client, platformCommissionBPS: platformCommissionBPS}
+func NewRideRepository(client *ent.Client, platformCommissionBPS int64) *RideRepository {
+	return &RideRepository{client: client, platformCommissionBPS: platformCommissionBPS}
 }
-func (repository *Repository) CreateRide(ctx context.Context, value domain.Ride) (domain.Ride, error) {
+func (repository *RideRepository) CreateRide(ctx context.Context, value domain.Ride) (domain.Ride, error) {
 	if value.PassengerID <= 0 || value.FareCentavos <= 0 {
 		return domain.Ride{}, domain.ErrInvalidTrip
 	}
@@ -58,7 +58,7 @@ func (repository *Repository) CreateRide(ctx context.Context, value domain.Ride)
 	}
 	return fromRide(item), nil
 }
-func (repository *Repository) CreateBid(ctx context.Context, value domain.Bid) (domain.Bid, error) {
+func (repository *RideRepository) CreateBid(ctx context.Context, value domain.Bid) (domain.Bid, error) {
 	if value.RideID <= 0 || value.DriverID <= 0 || value.FareCentavos <= 0 {
 		return domain.Bid{}, domain.ErrInvalidFareOffer
 	}
@@ -98,7 +98,7 @@ func (repository *Repository) CreateBid(ctx context.Context, value domain.Bid) (
 	}
 	return fromBid(item), nil
 }
-func (repository *Repository) Get(ctx context.Context, id int) (domain.Ride, error) {
+func (repository *RideRepository) Get(ctx context.Context, id int) (domain.Ride, error) {
 	item, err := repository.client.Ride.Get(ctx, id)
 	if err != nil {
 		return domain.Ride{}, err
@@ -110,7 +110,7 @@ func (repository *Repository) Get(ctx context.Context, id int) (domain.Ride, err
 	return rides[0], nil
 }
 
-func (repository *Repository) ActiveRidesForDriver(ctx context.Context, driverID int) ([]domain.Ride, error) {
+func (repository *RideRepository) ActiveRidesForDriver(ctx context.Context, driverID int) ([]domain.Ride, error) {
 	items, err := repository.client.Ride.Query().Where(
 		ride.DriverIDEQ(driverID),
 		ride.StatusIn(activeRideStatuses...),
@@ -124,7 +124,7 @@ func (repository *Repository) ActiveRidesForDriver(ctx context.Context, driverID
 	}
 	return result, nil
 }
-func (repository *Repository) AcceptBid(ctx context.Context, bidID, driverID int) (domain.Bid, domain.Ride, error) {
+func (repository *RideRepository) AcceptBid(ctx context.Context, bidID, driverID int) (domain.Bid, domain.Ride, error) {
 	transaction, err := repository.client.Tx(ctx)
 	if err != nil {
 		return domain.Bid{}, domain.Ride{}, err
@@ -190,7 +190,7 @@ func (repository *Repository) AcceptBid(ctx context.Context, bidID, driverID int
 	return fromBid(updated), fromRide(trip), nil
 }
 
-func (repository *Repository) AcceptRide(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
+func (repository *RideRepository) AcceptRide(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
 	transaction, err := repository.client.Tx(ctx)
 	if err != nil {
 		return domain.Ride{}, err
@@ -240,7 +240,7 @@ func (repository *Repository) AcceptRide(ctx context.Context, rideID, driverID i
 	return fromRide(updated), nil
 }
 
-func (repository *Repository) SettleCash(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
+func (repository *RideRepository) SettleCash(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
 	transaction, err := repository.client.Tx(ctx)
 	if err != nil {
 		return domain.Ride{}, err
@@ -320,7 +320,7 @@ func (repository *Repository) SettleCash(ctx context.Context, rideID, driverID i
 	return fromRide(updatedRide), nil
 }
 
-func (repository *Repository) UpdateStatus(ctx context.Context, rideID, actorID int, currentStatus, status string) (domain.Ride, error) {
+func (repository *RideRepository) UpdateStatus(ctx context.Context, rideID, actorID int, currentStatus, status string) (domain.Ride, error) {
 	current, currentOK := domain.NormalizeRideStatus(currentStatus)
 	next, nextOK := domain.NormalizeRideStatus(status)
 	if !currentOK || !nextOK {
@@ -337,7 +337,7 @@ func (repository *Repository) UpdateStatus(ctx context.Context, rideID, actorID 
 	return fromRide(item), nil
 }
 
-func (repository *Repository) CreateSession(ctx context.Context, value domain.BidSession) (domain.BidSession, error) {
+func (repository *RideRepository) CreateSession(ctx context.Context, value domain.BidSession) (domain.BidSession, error) {
 	transaction, err := repository.client.Tx(ctx)
 	if err != nil {
 		return domain.BidSession{}, err
@@ -402,7 +402,7 @@ func (repository *Repository) CreateSession(ctx context.Context, value domain.Bi
 	return fromSession(item), nil
 }
 
-func (repository *Repository) ActiveSessions(ctx context.Context, driverID *int) ([]domain.BidSession, error) {
+func (repository *RideRepository) ActiveSessions(ctx context.Context, driverID *int) ([]domain.BidSession, error) {
 	now := time.Now()
 	query := repository.client.BidSession.Query().Where(bidsession.StatusEQ("open"), bidsession.ExpiresAtGT(now))
 	pendingSessionIDs := map[int]struct{}{}
@@ -444,7 +444,7 @@ func (repository *Repository) ActiveSessions(ctx context.Context, driverID *int)
 	return result, nil
 }
 
-func (repository *Repository) Offers(ctx context.Context, sessionID int) ([]domain.BidOffer, error) {
+func (repository *RideRepository) Offers(ctx context.Context, sessionID int) ([]domain.BidOffer, error) {
 	items, err := repository.client.BidOffer.Query().Where(bidoffer.SessionIDEQ(sessionID)).Order(bidoffer.ByCreatedAt()).All(ctx)
 	if err != nil {
 		return nil, err
@@ -456,7 +456,7 @@ func (repository *Repository) Offers(ctx context.Context, sessionID int) ([]doma
 	return result, nil
 }
 
-func (repository *Repository) PlaceOffer(ctx context.Context, value domain.BidOffer) (domain.BidOffer, error) {
+func (repository *RideRepository) PlaceOffer(ctx context.Context, value domain.BidOffer) (domain.BidOffer, error) {
 	transaction, err := repository.client.Tx(ctx)
 	if err != nil {
 		return domain.BidOffer{}, err
@@ -506,7 +506,7 @@ func (repository *Repository) PlaceOffer(ctx context.Context, value domain.BidOf
 	return fromOffer(item), nil
 }
 
-func (repository *Repository) AcceptOffer(ctx context.Context, sessionID, offerID, passengerID int) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
+func (repository *RideRepository) AcceptOffer(ctx context.Context, sessionID, offerID, passengerID int) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
 	transaction, err := repository.client.Tx(ctx)
 	if err != nil {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
@@ -629,7 +629,7 @@ func (repository *Repository) AcceptOffer(ctx context.Context, sessionID, offerI
 	return fromSession(updatedSession), fromOffer(updatedOffer), fromRide(rideItem), nil
 }
 
-func (repository *Repository) CancelSession(ctx context.Context, sessionID, passengerID int) (domain.BidSession, error) {
+func (repository *RideRepository) CancelSession(ctx context.Context, sessionID, passengerID int) (domain.BidSession, error) {
 	item, err := repository.client.BidSession.UpdateOneID(sessionID).Where(bidsession.PassengerIDEQ(passengerID), bidsession.StatusEQ("open")).SetStatus("cancelled").Save(ctx)
 	if err != nil {
 		return domain.BidSession{}, err
@@ -637,7 +637,7 @@ func (repository *Repository) CancelSession(ctx context.Context, sessionID, pass
 	return fromSession(item), nil
 }
 
-func (repository *Repository) CancelOffer(ctx context.Context, sessionID, driverID int) (domain.BidOffer, error) {
+func (repository *RideRepository) CancelOffer(ctx context.Context, sessionID, driverID int) (domain.BidOffer, error) {
 	pending, err := repository.client.BidOffer.Query().Where(bidoffer.SessionIDEQ(sessionID), bidoffer.DriverIDEQ(driverID), bidoffer.StatusEQ("pending")).Only(ctx)
 	if err != nil {
 		return domain.BidOffer{}, err
@@ -649,7 +649,7 @@ func (repository *Repository) CancelOffer(ctx context.Context, sessionID, driver
 	return fromOffer(item), nil
 }
 
-func (repository *Repository) Session(ctx context.Context, sessionID int) (domain.BidSession, error) {
+func (repository *RideRepository) Session(ctx context.Context, sessionID int) (domain.BidSession, error) {
 	item, err := repository.client.BidSession.Get(ctx, sessionID)
 	if err != nil {
 		return domain.BidSession{}, err
@@ -657,7 +657,7 @@ func (repository *Repository) Session(ctx context.Context, sessionID int) (domai
 	return fromSession(item), nil
 }
 
-func (repository *Repository) DriverStats(ctx context.Context, driverID int, dayStart, dayEnd time.Time) (domain.DriverStats, error) {
+func (repository *RideRepository) DriverStats(ctx context.Context, driverID int, dayStart, dayEnd time.Time) (domain.DriverStats, error) {
 	rideMetrics, err := aggregateDriverRideMetrics(
 		ctx,
 		repository.client.Ride.Query().Where(ride.DriverIDEQ(driverID)),
@@ -691,7 +691,7 @@ func (repository *Repository) DriverStats(ctx context.Context, driverID int, day
 	}, nil
 }
 
-func (repository *Repository) DriverEarnings(ctx context.Context, driverID int, monthStart, monthEnd time.Time) ([]domain.DriverEarning, error) {
+func (repository *RideRepository) DriverEarnings(ctx context.Context, driverID int, monthStart, monthEnd time.Time) ([]domain.DriverEarning, error) {
 	items, err := repository.client.Ride.Query().Where(
 		ride.DriverIDEQ(driverID),
 		ride.StatusEQ("completed"),
@@ -784,7 +784,7 @@ func completedDuring(selector *entsql.Selector, start, end string) string {
 	)
 }
 
-func (repository *Repository) DriverTrips(ctx context.Context, driverID int, history domain.TripHistoryQuery) ([]domain.Ride, error) {
+func (repository *RideRepository) DriverTrips(ctx context.Context, driverID int, history domain.TripHistoryQuery) ([]domain.Ride, error) {
 	query := repository.client.Ride.Query().Where(ride.DriverIDEQ(driverID))
 	if history.ActiveOnly {
 		query = query.Where(ride.StatusIn(activeRideStatuses[1:]...))
@@ -808,7 +808,7 @@ func (repository *Repository) DriverTrips(ctx context.Context, driverID int, his
 	return repository.hydratePassengerDetails(ctx, hydrated)
 }
 
-func (repository *Repository) PassengerRides(ctx context.Context, passengerID int, history domain.TripHistoryQuery) ([]domain.Ride, error) {
+func (repository *RideRepository) PassengerRides(ctx context.Context, passengerID int, history domain.TripHistoryQuery) ([]domain.Ride, error) {
 	items, err := repository.client.Ride.Query().
 		Where(ride.PassengerIDEQ(passengerID)).
 		Order(ride.ByCreatedAt(entsql.OrderDesc()), ride.ByID(entsql.OrderDesc())).
@@ -825,7 +825,7 @@ func (repository *Repository) PassengerRides(ctx context.Context, passengerID in
 	return repository.hydrateDriverDetails(ctx, result)
 }
 
-func (repository *Repository) PassengerActivitySummary(ctx context.Context, passengerID int, weekStart, weekEnd time.Time) (domain.PassengerActivitySummary, error) {
+func (repository *RideRepository) PassengerActivitySummary(ctx context.Context, passengerID int, weekStart, weekEnd time.Time) (domain.PassengerActivitySummary, error) {
 	startLiteral := weekStart.UTC().Format(time.RFC3339Nano)
 	endLiteral := weekEnd.UTC().Format(time.RFC3339Nano)
 	var rows []struct {
@@ -852,7 +852,7 @@ func (repository *Repository) PassengerActivitySummary(ctx context.Context, pass
 	}, nil
 }
 
-func (repository *Repository) PassengerRecentRides(ctx context.Context, passengerID, limit int) ([]domain.Ride, error) {
+func (repository *RideRepository) PassengerRecentRides(ctx context.Context, passengerID, limit int) ([]domain.Ride, error) {
 	items, err := repository.client.Ride.Query().
 		Where(ride.PassengerIDEQ(passengerID)).
 		Order(ride.ByID(entsql.OrderDesc())).
@@ -868,7 +868,7 @@ func (repository *Repository) PassengerRecentRides(ctx context.Context, passenge
 	return repository.hydrateDriverDetails(ctx, result)
 }
 
-func (repository *Repository) hydrateDriverDetails(ctx context.Context, rides []domain.Ride) ([]domain.Ride, error) {
+func (repository *RideRepository) hydrateDriverDetails(ctx context.Context, rides []domain.Ride) ([]domain.Ride, error) {
 	driverIDs := make([]int, 0)
 	seen := make(map[int]struct{})
 	for _, item := range rides {
@@ -918,7 +918,7 @@ func (repository *Repository) hydrateDriverDetails(ctx context.Context, rides []
 	return rides, nil
 }
 
-func (repository *Repository) hydratePassengerDetails(ctx context.Context, rides []domain.Ride) ([]domain.Ride, error) {
+func (repository *RideRepository) hydratePassengerDetails(ctx context.Context, rides []domain.Ride) ([]domain.Ride, error) {
 	passengerIDs := make([]int, 0)
 	rideIDs := make([]int, 0, len(rides))
 	seen := make(map[int]struct{})
@@ -993,7 +993,7 @@ func (repository *Repository) hydratePassengerDetails(ctx context.Context, rides
 	return rides, nil
 }
 
-func (repository *Repository) DriverReviews(ctx context.Context, driverID, limit, offset int) ([]domain.Review, error) {
+func (repository *RideRepository) DriverReviews(ctx context.Context, driverID, limit, offset int) ([]domain.Review, error) {
 	query := repository.client.Review.Query().Where(review.DriverIDEQ(driverID)).Order(review.ByID())
 	if limit > 0 {
 		query = query.Limit(limit)
@@ -1032,7 +1032,7 @@ func (repository *Repository) DriverReviews(ctx context.Context, driverID, limit
 	return result, nil
 }
 
-func (repository *Repository) passengerNames(ctx context.Context, passengerIDs []int) (map[int]string, error) {
+func (repository *RideRepository) passengerNames(ctx context.Context, passengerIDs []int) (map[int]string, error) {
 	names := make(map[int]string, len(passengerIDs))
 	if len(passengerIDs) == 0 {
 		return names, nil
@@ -1058,7 +1058,7 @@ func (repository *Repository) passengerNames(ctx context.Context, passengerIDs [
 	return names, nil
 }
 
-func (repository *Repository) CreateReview(ctx context.Context, value domain.Review) (domain.Review, error) {
+func (repository *RideRepository) CreateReview(ctx context.Context, value domain.Review) (domain.Review, error) {
 	trip, err := repository.client.Ride.Get(ctx, value.RideID)
 	if err != nil || trip.Status != "completed" || trip.PassengerID != value.PassengerID || trip.DriverID != value.DriverID {
 		return domain.Review{}, domain.ErrReviewNotAllowed
@@ -1081,7 +1081,7 @@ func (repository *Repository) CreateReview(ctx context.Context, value domain.Rev
 	return fromReview(item), nil
 }
 
-func (repository *Repository) CreatePassengerReview(ctx context.Context, value domain.PassengerReview) (domain.PassengerReview, error) {
+func (repository *RideRepository) CreatePassengerReview(ctx context.Context, value domain.PassengerReview) (domain.PassengerReview, error) {
 	trip, err := repository.client.Ride.Get(ctx, value.RideID)
 	if err != nil || trip.Status != "completed" || trip.PassengerID != value.PassengerID || trip.DriverID != value.DriverID {
 		return domain.PassengerReview{}, domain.ErrReviewNotAllowed
@@ -1101,7 +1101,7 @@ func (repository *Repository) CreatePassengerReview(ctx context.Context, value d
 	return fromPassengerReview(item), nil
 }
 
-func (repository *Repository) OnlineDrivers(ctx context.Context, driverIDs []int) ([]domain.OnlineDriver, error) {
+func (repository *RideRepository) OnlineDrivers(ctx context.Context, driverIDs []int) ([]domain.OnlineDriver, error) {
 	items, err := repository.client.DriverProfile.Query().
 		Where(driverprofile.IsOnlineEQ(true), driverprofile.UserIDIn(driverIDs...)).
 		Order(driverprofile.ByID()).
@@ -1158,7 +1158,7 @@ func (repository *Repository) OnlineDrivers(ctx context.Context, driverIDs []int
 	return result, nil
 }
 
-func (repository *Repository) PublicDriverSummaries(ctx context.Context, limit int) ([]domain.PublicDriverSummary, error) {
+func (repository *RideRepository) PublicDriverSummaries(ctx context.Context, limit int) ([]domain.PublicDriverSummary, error) {
 	profiles, err := repository.client.DriverProfile.Query().
 		Where(driverprofile.IsOnlineEQ(true)).
 		Order(driverprofile.ByID()).
@@ -1191,7 +1191,7 @@ func (repository *Repository) PublicDriverSummaries(ctx context.Context, limit i
 	return summaries, nil
 }
 
-func (repository *Repository) driverAverageRatings(ctx context.Context, driverIDs []int) (map[int]float64, error) {
+func (repository *RideRepository) driverAverageRatings(ctx context.Context, driverIDs []int) (map[int]float64, error) {
 	ratings := make(map[int]float64, len(driverIDs))
 	if len(driverIDs) == 0 {
 		return ratings, nil

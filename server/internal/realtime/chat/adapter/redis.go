@@ -15,13 +15,13 @@ const (
 	maxHistoryEntries = 100
 )
 
-type RedisRepository struct{ client *redis.Client }
+type ChatHistoryStore struct{ client *redis.Client }
 
-func NewRedisRepository(client *redis.Client) *RedisRepository {
-	return &RedisRepository{client: client}
+func NewChatHistoryStore(client *redis.Client) *ChatHistoryStore {
+	return &ChatHistoryStore{client: client}
 }
 
-func (repository *RedisRepository) CreateRoom(ctx context.Context, roomID, passengerID, driverID string) error {
+func (repository *ChatHistoryStore) CreateRoom(ctx context.Context, roomID, passengerID, driverID string) error {
 	// A room is a fixed 24-hour conversation window. Re-opening the same ride
 	// must not reset its lock state or extend its expiry.
 	exists, err := repository.client.Exists(ctx, roomKey(roomID)).Result()
@@ -45,7 +45,7 @@ func (repository *RedisRepository) CreateRoom(ctx context.Context, roomID, passe
 	return err
 }
 
-func (repository *RedisRepository) Append(ctx context.Context, message domain.Message) error {
+func (repository *ChatHistoryStore) Append(ctx context.Context, message domain.Message) error {
 	if message.CreatedAt == "" {
 		message.CreatedAt = time.Now().UTC().Format(time.RFC3339Nano)
 	}
@@ -74,7 +74,7 @@ func (repository *RedisRepository) Append(ctx context.Context, message domain.Me
 	return err
 }
 
-func (repository *RedisRepository) Messages(ctx context.Context, roomID string) ([]domain.Message, error) {
+func (repository *ChatHistoryStore) Messages(ctx context.Context, roomID string) ([]domain.Message, error) {
 	items, err := repository.client.LRange(ctx, messagesKey(roomID), -maxHistoryEntries, -1).Result()
 	if err != nil {
 		return nil, err
@@ -99,11 +99,11 @@ func (repository *RedisRepository) Messages(ctx context.Context, roomID string) 
 	return result, nil
 }
 
-func (repository *RedisRepository) Resolve(ctx context.Context, roomID string) error {
+func (repository *ChatHistoryStore) Resolve(ctx context.Context, roomID string) error {
 	return repository.client.HSet(ctx, roomKey(roomID), "locked", "1").Err()
 }
 
-func (repository *RedisRepository) IsMember(ctx context.Context, roomID, userID string) (bool, error) {
+func (repository *ChatHistoryStore) IsMember(ctx context.Context, roomID, userID string) (bool, error) {
 	fields, err := repository.client.HGetAll(ctx, roomKey(roomID)).Result()
 	if err != nil {
 		return false, err
@@ -111,7 +111,7 @@ func (repository *RedisRepository) IsMember(ctx context.Context, roomID, userID 
 	return fields["passenger_id"] == userID || fields["driver_id"] == userID, nil
 }
 
-func (repository *RedisRepository) IsLocked(ctx context.Context, roomID string) (bool, error) {
+func (repository *ChatHistoryStore) IsLocked(ctx context.Context, roomID string) (bool, error) {
 	value, err := repository.client.HGet(ctx, roomKey(roomID), "locked").Result()
 	if err == redis.Nil {
 		return false, nil
@@ -122,7 +122,7 @@ func (repository *RedisRepository) IsLocked(ctx context.Context, roomID string) 
 	return value == "1", nil
 }
 
-func (repository *RedisRepository) RoomParticipants(ctx context.Context, roomID string) (string, string, error) {
+func (repository *ChatHistoryStore) RoomParticipants(ctx context.Context, roomID string) (string, string, error) {
 	fields, err := repository.client.HGetAll(ctx, roomKey(roomID)).Result()
 	if err != nil {
 		return "", "", err

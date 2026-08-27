@@ -17,7 +17,7 @@ func TestNearbyUsesCategorySearchAndParsesMapboxCategories(t *testing.T) {
 		mu    sync.Mutex
 		paths []string
 	)
-	provider := NewProvider("test-token")
+	provider := NewMapboxProvider("test-token")
 	provider.nearbyCategories = []string{"hospital", "school"}
 	provider.client = &http.Client{
 		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
@@ -70,7 +70,7 @@ func TestNearbyUsesCategorySearchAndParsesMapboxCategories(t *testing.T) {
 }
 
 func TestNearbyPaginatesMergedResults(t *testing.T) {
-	provider := NewProvider("test-token")
+	provider := NewMapboxProvider("test-token")
 	provider.nearbyCategories = []string{"hospital"}
 	provider.client = &http.Client{
 		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
@@ -108,7 +108,7 @@ func TestPlaceFromFeatureRejectsOutOfRangeCoordinates(t *testing.T) {
 }
 
 func TestProviderRejectsTrailingResponseData(t *testing.T) {
-	provider := NewProvider("test-token")
+	provider := NewMapboxProvider("test-token")
 	provider.client = &http.Client{
 		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
 			return responseWithBody(request, `{"features":[]} {}`), nil
@@ -129,7 +129,7 @@ func TestHaversineRemainsFiniteForAntipodalCoordinates(t *testing.T) {
 }
 
 func TestReverseGeocodeChoosesMostSpecificFeature(t *testing.T) {
-	provider := NewProvider("test-token")
+	provider := NewMapboxProvider("test-token")
 	provider.client = &http.Client{
 		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
 			body := `{"features":[
@@ -161,7 +161,7 @@ func TestReverseGeocodeChoosesMostSpecificFeature(t *testing.T) {
 }
 
 func TestReverseGeocodeFallsBackToGeocodingWhenSearchBoxIsEmpty(t *testing.T) {
-	provider := NewProvider("test-token")
+	provider := NewMapboxProvider("test-token")
 	var paths []string
 	provider.client = &http.Client{
 		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
@@ -195,7 +195,7 @@ func TestReverseGeocodeFallsBackToGeocodingWhenSearchBoxIsEmpty(t *testing.T) {
 }
 
 func TestReverseGeocodeUsesProminenceWithinRadialStage(t *testing.T) {
-	provider := NewProvider("test-token")
+	provider := NewMapboxProvider("test-token")
 	provider.client = &http.Client{
 		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
 			body := `{"features":[
@@ -244,7 +244,7 @@ func TestRouteSelectsByRequestedPreference(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			provider := NewProvider("test-token")
+			provider := NewMapboxProvider("test-token")
 			provider.client = &http.Client{
 				Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
 					if request.URL.Path != "/directions/v5/mapbox/driving/123.400000,7.800000;123.500000,7.900000" {
@@ -305,7 +305,7 @@ func TestRouteShortestPreferenceKeepsPrimaryRouteForMarginalSavings(t *testing.T
 }
 
 func TestRouteSupportsTrafficProfileAndExcludedRoadPoints(t *testing.T) {
-	provider := NewProvider("test-token")
+	provider := NewMapboxProvider("test-token")
 	provider.client = &http.Client{
 		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
 			if request.URL.Path != "/directions/v5/mapbox/driving-traffic/123.400000,7.800000;123.500000,7.900000" {
@@ -346,7 +346,7 @@ func TestRouteSupportsTrafficProfileAndExcludedRoadPoints(t *testing.T) {
 }
 
 func TestMatrixUsesOneBoundedProviderRequestAndConvertsUnits(t *testing.T) {
-	provider := NewProvider("test-token")
+	provider := NewMapboxProvider("test-token")
 	requestCount := 0
 	provider.client = &http.Client{
 		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
@@ -387,7 +387,7 @@ func TestMatrixUsesOneBoundedProviderRequestAndConvertsUnits(t *testing.T) {
 }
 
 func TestMatrixUsesDirectionsForOneDestination(t *testing.T) {
-	provider := NewProvider("test-token")
+	provider := NewMapboxProvider("test-token")
 	provider.client = &http.Client{
 		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
 			if !strings.HasPrefix(request.URL.Path, "/directions/v5/mapbox/driving/") {
@@ -411,7 +411,7 @@ func TestMatrixUsesDirectionsForOneDestination(t *testing.T) {
 }
 
 func TestMatrixRejectsUnreachableDestinations(t *testing.T) {
-	provider := NewProvider("test-token")
+	provider := NewMapboxProvider("test-token")
 	provider.client = &http.Client{
 		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
 			return responseWithBody(request, `{"code":"Ok","distances":[[1250,null]],"durations":[[180,null]]}`), nil

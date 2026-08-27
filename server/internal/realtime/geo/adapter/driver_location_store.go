@@ -28,12 +28,12 @@ end
 return #expired
 `
 
-type RedisRepository struct{ client *redis.Client }
+type DriverLocationStore struct{ client *redis.Client }
 
-func NewRedisRepository(client *redis.Client) *RedisRepository {
-	return &RedisRepository{client: client}
+func NewDriverLocationStore(client *redis.Client) *DriverLocationStore {
+	return &DriverLocationStore{client: client}
 }
-func (repository *RedisRepository) Upsert(ctx context.Context, point domain.DriverPoint) error {
+func (repository *DriverLocationStore) Upsert(ctx context.Context, point domain.DriverPoint) error {
 	payload, err := json.Marshal(point)
 	if err != nil {
 		return err
@@ -57,7 +57,7 @@ func (repository *RedisRepository) Upsert(ctx context.Context, point domain.Driv
 	return err
 }
 
-func (repository *RedisRepository) Remove(ctx context.Context, driverID string) error {
+func (repository *DriverLocationStore) Remove(ctx context.Context, driverID string) error {
 	if driverID == "" {
 		return nil
 	}
@@ -69,7 +69,7 @@ func (repository *RedisRepository) Remove(ctx context.Context, driverID string) 
 	})
 	return err
 }
-func (repository *RedisRepository) Nearby(ctx context.Context, latitude, longitude, radiusKm float64) ([]domain.DriverPoint, error) {
+func (repository *DriverLocationStore) Nearby(ctx context.Context, latitude, longitude, radiusKm float64) ([]domain.DriverPoint, error) {
 	// GEO members do not support individual TTLs. Sweep the companion expiry
 	// index before searching so expired payloads cannot consume result slots.
 	_ = repository.cleanupExpiredDrivers(ctx)
@@ -136,7 +136,7 @@ func (repository *RedisRepository) Nearby(ctx context.Context, latitude, longitu
 	return result, nil
 }
 
-func (repository *RedisRepository) cleanupExpiredDrivers(ctx context.Context) error {
+func (repository *DriverLocationStore) cleanupExpiredDrivers(ctx context.Context) error {
 	return repository.client.Eval(
 		ctx,
 		cleanupExpiredDriversScript,
@@ -147,11 +147,11 @@ func (repository *RedisRepository) cleanupExpiredDrivers(ctx context.Context) er
 	).Err()
 }
 
-func (repository *RedisRepository) Get(ctx context.Context, driverID string) (domain.DriverPoint, error) {
+func (repository *DriverLocationStore) Get(ctx context.Context, driverID string) (domain.DriverPoint, error) {
 	return repository.get(ctx, driverLocationKey(driverID))
 }
 
-func (repository *RedisRepository) UpsertPassenger(ctx context.Context, rideID string, point domain.DriverPoint) error {
+func (repository *DriverLocationStore) UpsertPassenger(ctx context.Context, rideID string, point domain.DriverPoint) error {
 	payload, err := json.Marshal(point)
 	if err != nil {
 		return err
@@ -159,11 +159,11 @@ func (repository *RedisRepository) UpsertPassenger(ctx context.Context, rideID s
 	return repository.client.Set(ctx, "passenger:location:"+rideID, payload, passengerLocationTTL).Err()
 }
 
-func (repository *RedisRepository) GetPassenger(ctx context.Context, rideID string) (domain.DriverPoint, error) {
+func (repository *DriverLocationStore) GetPassenger(ctx context.Context, rideID string) (domain.DriverPoint, error) {
 	return repository.get(ctx, "passenger:location:"+rideID)
 }
 
-func (repository *RedisRepository) get(ctx context.Context, key string) (domain.DriverPoint, error) {
+func (repository *DriverLocationStore) get(ctx context.Context, key string) (domain.DriverPoint, error) {
 	payload, err := repository.client.Get(ctx, key).Bytes()
 	if err != nil {
 		return domain.DriverPoint{}, err

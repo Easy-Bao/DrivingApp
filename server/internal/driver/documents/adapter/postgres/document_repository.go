@@ -10,10 +10,12 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/domain"
 )
 
-type Repository struct{ client *ent.Client }
+type DocumentRepository struct{ client *ent.Client }
 
-func NewRepository(client *ent.Client) *Repository { return &Repository{client: client} }
-func (repository *Repository) Create(ctx context.Context, item domain.Document) (domain.Document, error) {
+func NewDocumentRepository(client *ent.Client) *DocumentRepository {
+	return &DocumentRepository{client: client}
+}
+func (repository *DocumentRepository) Create(ctx context.Context, item domain.Document) (domain.Document, error) {
 	created, err := repository.client.DriverDocument.Create().
 		SetDriverID(item.DriverID).
 		SetDocumentType(string(item.Type)).
@@ -29,7 +31,7 @@ func (repository *Repository) Create(ctx context.Context, item domain.Document) 
 	return fromEnt(created), nil
 }
 
-func (repository *Repository) Get(ctx context.Context, id int) (domain.Document, error) {
+func (repository *DocumentRepository) Get(ctx context.Context, id int) (domain.Document, error) {
 	item, err := repository.client.DriverDocument.Get(ctx, id)
 	if ent.IsNotFound(err) {
 		return domain.Document{}, domain.ErrDocumentNotFound
@@ -40,7 +42,7 @@ func (repository *Repository) Get(ctx context.Context, id int) (domain.Document,
 	return fromEnt(item), nil
 }
 
-func (repository *Repository) ListByDriver(ctx context.Context, driverID, limit int) ([]domain.Document, error) {
+func (repository *DocumentRepository) ListByDriver(ctx context.Context, driverID, limit int) ([]domain.Document, error) {
 	items, err := repository.client.DriverDocument.Query().
 		Where(driverdocument.DriverIDEQ(driverID)).
 		Order(driverdocument.ByCreatedAt(entsql.OrderDesc()), driverdocument.ByID(entsql.OrderDesc())).
@@ -52,7 +54,7 @@ func (repository *Repository) ListByDriver(ctx context.Context, driverID, limit 
 	return fromEntDocuments(items), nil
 }
 
-func (repository *Repository) ListForReview(ctx context.Context, status domain.Status, limit, offset int) ([]domain.Document, error) {
+func (repository *DocumentRepository) ListForReview(ctx context.Context, status domain.Status, limit, offset int) ([]domain.Document, error) {
 	items, err := repository.client.DriverDocument.Query().
 		Where(driverdocument.StatusEQ(string(status))).
 		Order(driverdocument.ByCreatedAt(entsql.OrderAsc()), driverdocument.ByID(entsql.OrderAsc())).
@@ -65,7 +67,7 @@ func (repository *Repository) ListForReview(ctx context.Context, status domain.S
 	return fromEntDocuments(items), nil
 }
 
-func (repository *Repository) Review(ctx context.Context, id, reviewerID int, status domain.Status) (domain.Document, error) {
+func (repository *DocumentRepository) Review(ctx context.Context, id, reviewerID int, status domain.Status) (domain.Document, error) {
 	updated, err := repository.client.DriverDocument.Update().
 		Where(driverdocument.IDEQ(id), driverdocument.StatusEQ(string(domain.Pending))).
 		SetStatus(string(status)).
