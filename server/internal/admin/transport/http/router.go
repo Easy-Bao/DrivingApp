@@ -3,7 +3,6 @@ package http
 import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/admin/transport/http/handler"
 	"github.com/Easy-Bao/DrivingApp/server/internal/admin/usecase"
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
@@ -12,11 +11,11 @@ import (
 
 type Router struct {
 	handler    *handler.Handler
-	verifier   *token.Verifier
+	verifier   *security.TokenManager
 	authorizer *security.AdminAuthorizer
 }
 
-func NewRouter(service *usecase.Service, verifier *token.Verifier, authorizer *security.AdminAuthorizer) *Router {
+func NewRouter(service *usecase.Service, verifier *security.TokenManager, authorizer *security.AdminAuthorizer) *Router {
 	return &Router{handler: handler.NewHandler(service), verifier: verifier, authorizer: authorizer}
 }
 

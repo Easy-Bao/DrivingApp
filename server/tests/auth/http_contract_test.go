@@ -7,10 +7,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/auth/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/usecase"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -87,7 +87,7 @@ func TestLoginAndRefreshIssueRotatingSessionTokens(t *testing.T) {
 			PasswordHash: usecase.HashPassword("secret"),
 		},
 	}}
-	manager := token.NewIssuer("refresh-http-test-secret")
+	manager := security.NewTokenManager("refresh-http-test-secret")
 	authenticate := usecase.NewAuthenticateService(repository, manager, newTestRefreshSessionStore())
 	mux := chi.NewRouter()
 	authhttp.NewRouter(nil, authenticate).RegisterRoutes(mux)

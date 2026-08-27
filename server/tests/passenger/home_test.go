@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
 	home "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home"
 	homehttp "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -114,7 +114,7 @@ func TestAuthenticatedHomeFiltersRecentDestinations(t *testing.T) {
 		{Status: "canceled", Title: "Canceled Place"},
 	}}
 	router := newRouter(destinations, addressResolver{})
-	verifier := token.NewVerifier("test-secret")
+	verifier := security.NewTokenManager("test-secret")
 	accessToken, err := verifier.IssueWithRole("42", "passenger")
 	if err != nil {
 		t.Fatalf("issue access token: %v", err)
@@ -218,7 +218,7 @@ func waitForSignal(t *testing.T, signal <-chan struct{}, dependency string) {
 
 func TestHomeRejectsInvalidOrNonPassengerAccess(t *testing.T) {
 	router := newRouter(&recentDestinationReader{}, addressResolver{})
-	verifier := token.NewVerifier("test-secret")
+	verifier := security.NewTokenManager("test-secret")
 	driverToken, err := verifier.IssueWithRole("7", "driver")
 	if err != nil {
 		t.Fatalf("issue driver token: %v", err)
@@ -282,7 +282,7 @@ func newRouter(
 	resolver home.AddressResolver,
 ) *chi.Mux {
 	router := chi.NewRouter()
-	verifier := token.NewVerifier("test-secret")
+	verifier := security.NewTokenManager("test-secret")
 	query := home.NewService(destinations, resolver)
 	homehttp.NewRouter(query, verifier).RegisterRoutes(router)
 	return router

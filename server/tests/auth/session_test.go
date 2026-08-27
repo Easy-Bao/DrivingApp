@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/usecase"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 )
 
 func TestRefreshSessionsAreOpaqueAndRotateOnce(t *testing.T) {
@@ -21,7 +21,7 @@ func TestRefreshSessionsAreOpaqueAndRotateOnce(t *testing.T) {
 		},
 	}}
 	sessions := newTestRefreshSessionStore()
-	service := usecase.NewAuthenticateService(repository, token.NewIssuer("session-test-secret"), sessions)
+	service := usecase.NewAuthenticateService(repository, security.NewTokenManager("session-test-secret"), sessions)
 
 	_, first, err := service.ExecuteSession(context.Background(), "passenger@example.test", "secret-8")
 	if err != nil {
@@ -59,7 +59,7 @@ func TestLogoutRevokesRefreshSession(t *testing.T) {
 		},
 	}}
 	sessions := newTestRefreshSessionStore()
-	service := usecase.NewAuthenticateService(repository, token.NewIssuer("logout-test-secret"), sessions)
+	service := usecase.NewAuthenticateService(repository, security.NewTokenManager("logout-test-secret"), sessions)
 
 	_, issued, err := service.ExecuteSession(context.Background(), "passenger@example.test", "secret-8")
 	if err != nil {

@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
@@ -114,7 +113,7 @@ func TestBookingMutationRoutesRejectTheWrongAccountRole(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	verifier := token.NewVerifier("role-route-test-secret")
+	verifier := security.NewTokenManager("role-route-test-secret")
 	driverToken, err := verifier.IssueWithRole("7", security.RoleDriver)
 	if err != nil {
 		t.Fatal(err)
@@ -154,7 +153,7 @@ func TestDriverAnalyticsAreLimitedToTheAuthenticatedDriver(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
-	verifier := token.NewVerifier("test-secret")
+	verifier := security.NewTokenManager("test-secret")
 	accessToken, err := verifier.IssueWithRole("8", security.RoleDriver)
 	if err != nil {
 		t.Fatalf("Issue() returned error: %v", err)
@@ -237,7 +236,7 @@ func TestPassengerActivitySummaryUsesAnAuthoritativeAggregate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	verifier := token.NewVerifier("passenger-activity-secret")
+	verifier := security.NewTokenManager("passenger-activity-secret")
 	accessToken, err := verifier.IssueWithRole("8", security.RolePassenger)
 	if err != nil {
 		t.Fatal(err)
@@ -314,7 +313,7 @@ func TestDriverAvailabilityHidesPersistenceErrors(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
-	verifier := token.NewVerifier("test-secret")
+	verifier := security.NewTokenManager("test-secret")
 	accessToken, err := verifier.IssueWithRole("42", security.RolePassenger)
 	if err != nil {
 		t.Fatalf("Issue() returned error: %v", err)
@@ -344,7 +343,7 @@ func TestOnlineDriverReceivesPassengerBookingThroughActiveSessions(t *testing.T)
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
 	repository := &activeSessionsRepository{}
-	verifier := token.NewVerifier("test-secret")
+	verifier := security.NewTokenManager("test-secret")
 	driverToken, err := verifier.IssueWithRole("42", security.RoleDriver)
 	if err != nil {
 		t.Fatalf("Issue() returned error: %v", err)
@@ -378,7 +377,7 @@ func TestSessionRoutesBindSessionAndOfferIdentifiers(t *testing.T) {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
 	repository := &activeSessionsRepository{}
-	verifier := token.NewVerifier("test-secret")
+	verifier := security.NewTokenManager("test-secret")
 	passengerToken, err := verifier.IssueWithRole("42", security.RolePassenger)
 	if err != nil {
 		t.Fatalf("Issue() returned error: %v", err)

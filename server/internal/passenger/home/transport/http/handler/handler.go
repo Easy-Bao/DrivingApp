@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/token"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	home "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
@@ -13,10 +13,10 @@ import (
 
 type Handler struct {
 	query    home.Query
-	verifier *token.Verifier
+	verifier *security.TokenManager
 }
 
-func NewHandler(query home.Query, verifier *token.Verifier) *Handler {
+func NewHandler(query home.Query, verifier *security.TokenManager) *Handler {
 	return &Handler{query: query, verifier: verifier}
 }
 
