@@ -45,13 +45,12 @@ func (handler *Handler) Nearby(writer http.ResponseWriter, request *http.Request
 }
 
 func (handler *Handler) Search(writer http.ResponseWriter, request *http.Request) {
-	coordinates, _ := coordinatesFromQuery(request)
+	coordinates, err := coordinatesFromQuery(request)
 	query := request.URL.Query().Get("q")
 	if query == "" {
 		query = request.URL.Query().Get("query")
 	}
-	coordinatesErr := coordinatesError(request)
-	if coordinatesErr != nil {
+	if err != nil || !hasCoordinates(request) || !coordinates.Valid() {
 		response.Error(writer, http.StatusBadRequest, "invalid location coordinates")
 		return
 	}
@@ -152,21 +151,4 @@ func coordinatesFromQuery(request *http.Request) (domain.Coordinates, error) {
 func hasCoordinates(request *http.Request) bool {
 	query := request.URL.Query()
 	return (query.Get("lat") != "" || query.Get("userLat") != "") && (query.Get("lng") != "" || query.Get("userLng") != "")
-}
-
-func coordinatesError(request *http.Request) error {
-	query := request.URL.Query()
-	hasLatitude := query.Get("lat") != "" || query.Get("userLat") != ""
-	hasLongitude := query.Get("lng") != "" || query.Get("userLng") != ""
-	if hasLatitude != hasLongitude {
-		return errors.New("incomplete coordinates")
-	}
-	if !hasLatitude {
-		return nil
-	}
-	coordinates, err := coordinatesFromQuery(request)
-	if err != nil || !coordinates.Valid() {
-		return errors.New("invalid coordinates")
-	}
-	return nil
 }
