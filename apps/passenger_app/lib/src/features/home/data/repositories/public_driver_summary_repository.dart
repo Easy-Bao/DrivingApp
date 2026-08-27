@@ -16,7 +16,6 @@ class PublicDriverSummaryRepository implements IPublicDriverSummaryRepository {
     try {
       final rawItems = await _remoteDataSource.fetchSummaries();
       final summaries = rawItems
-          .whereType<Map<String, dynamic>>()
           .map(_mapSummary)
           .where((summary) => summary.id.isNotEmpty)
           .toList(growable: false);

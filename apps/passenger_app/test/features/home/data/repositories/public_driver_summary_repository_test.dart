@@ -14,7 +14,7 @@ void main() {
     final dataSource = MockPublicDriverRemoteDataSource();
     when(() => dataSource.fetchSummaries()).thenAnswer(
       (_) async => [
-        {
+        <String, dynamic>{
           'id': 42,
           'name': 'Nearby Driver',
           'vehicle_type': 'Sedan',
