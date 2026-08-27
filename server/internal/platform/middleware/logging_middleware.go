@@ -10,6 +10,9 @@ import (
 )
 
 func Logging(logger *slog.Logger) func(http.Handler) http.Handler {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			startedAt := time.Now()
@@ -20,7 +23,7 @@ func Logging(logger *slog.Logger) func(http.Handler) http.Handler {
 			if requestID == "" {
 				requestID = response.Header().Get("X-Request-ID")
 			}
-			logger.Info(
+			logger.InfoContext(request.Context(),
 				"http request",
 				"request_id", requestID,
 				"method", request.Method,
@@ -32,7 +35,7 @@ func Logging(logger *slog.Logger) func(http.Handler) http.Handler {
 			)
 			if status == http.StatusUnauthorized || status == http.StatusForbidden ||
 				status == http.StatusTooManyRequests {
-				logger.Warn(
+				logger.WarnContext(request.Context(),
 					"security event",
 					"event", securityEvent(status),
 					"request_id", requestID,
