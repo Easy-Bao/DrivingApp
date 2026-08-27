@@ -2,20 +2,22 @@ package bootstrap
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/ent"
 	platformmigration "github.com/Easy-Bao/DrivingApp/server/internal/platform/migration"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
 	"github.com/go-chi/chi/v5"
 	redisclient "github.com/redis/go-redis/v9"
 )
 
 func registerHealthRoutes(router chi.Router, databaseClient *ent.Client, redisClient *redisclient.Client) {
 	router.Get("/health", func(writer http.ResponseWriter, _ *http.Request) {
-		writer.Header().Set("Content-Type", "application/json")
-		_, _ = writer.Write([]byte(`{"status":"ok","service":"api"}`))
+		response.JSON(writer, http.StatusOK, map[string]string{
+			"status":  "ok",
+			"service": serviceName,
+		})
 	})
 	router.Get("/readyz", func(writer http.ResponseWriter, request *http.Request) {
 		checkContext, cancel := context.WithTimeout(request.Context(), 2*time.Second)
@@ -37,9 +39,7 @@ func writeReadinessResponse(writer http.ResponseWriter, status int, ready bool) 
 	if ready {
 		readiness = "ready"
 	}
-	writer.Header().Set("Content-Type", "application/json")
-	writer.WriteHeader(status)
-	_ = json.NewEncoder(writer).Encode(map[string]string{
+	response.JSON(writer, status, map[string]string{
 		"status":  readiness,
 		"service": serviceName,
 	})
