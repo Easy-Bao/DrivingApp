@@ -64,6 +64,7 @@ app.*.map.json
 # AI Agent tooling and local states
 .agent
 .agents/
+.claude/
 .skills/
 .clinerules
 .cursorrules
