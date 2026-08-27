@@ -79,7 +79,7 @@ func TestAnalyticsUseCasesDelegateToTheRideAdapter(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
-	service := usecase.NewRideService(analyticsRepository{}, config)
+	service := usecase.NewRideService(analyticsRepository{}, config, nil)
 
 	stats, err := service.DriverStats(context.Background(), 7)
 	if err != nil || stats.TotalTrips != 3 {
@@ -103,7 +103,7 @@ func TestPassengerReviewUseCaseValidatesRatingAndDelegates(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
-	service := usecase.NewRideService(passengerReviewRepository{}, config)
+	service := usecase.NewRideService(passengerReviewRepository{}, config, nil)
 	review, err := service.CreatePassengerReview(context.Background(), domain.PassengerReview{RideID: 9, Rating: 5})
 	if err != nil || review.ID != 1 {
 		t.Fatalf("passenger review = %#v, %v", review, err)

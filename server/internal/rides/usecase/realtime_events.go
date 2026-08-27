@@ -17,13 +17,6 @@ const (
 	rideStatusChangedEvent = event.RideStatusChanged
 )
 
-func firstPublisher(publishers []domain.EventPublisher) domain.EventPublisher {
-	if len(publishers) == 0 {
-		return nil
-	}
-	return publishers[0]
-}
-
 func (service *RideService) publishRide(ctx context.Context, eventType event.Type, ride domain.Ride, payload map[string]any) {
 	scope := event.Scope{
 		RideID:      positiveIdentifier(ride.ID),

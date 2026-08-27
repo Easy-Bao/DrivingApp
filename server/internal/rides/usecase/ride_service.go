@@ -32,12 +32,32 @@ type RideService struct {
 	reportingLocation *time.Location
 }
 
-func NewRideService(repository domain.Repository, pricingConfig PricingConfig, publishers ...domain.EventPublisher) *RideService {
-	return &RideService{repository: repository, pricingConfig: pricingConfig, eventPublisher: firstPublisher(publishers), reportingLocation: defaultReportingLocation}
+func NewRideService(
+	repository domain.Repository,
+	pricingConfig PricingConfig,
+	publisher domain.EventPublisher,
+) *RideService {
+	return &RideService{
+		repository:        repository,
+		pricingConfig:     pricingConfig,
+		eventPublisher:    publisher,
+		reportingLocation: defaultReportingLocation,
+	}
 }
 
-func NewRideServiceWithRouteCalculator(repository domain.Repository, calculator RouteCalculator, pricingConfig PricingConfig, publishers ...domain.EventPublisher) *RideService {
-	return &RideService{repository: repository, routeCalculator: calculator, pricingConfig: pricingConfig, eventPublisher: firstPublisher(publishers), reportingLocation: defaultReportingLocation}
+func NewRideServiceWithRouteCalculator(
+	repository domain.Repository,
+	calculator RouteCalculator,
+	pricingConfig PricingConfig,
+	publisher domain.EventPublisher,
+) *RideService {
+	return &RideService{
+		repository:        repository,
+		routeCalculator:   calculator,
+		pricingConfig:     pricingConfig,
+		eventPublisher:    publisher,
+		reportingLocation: defaultReportingLocation,
+	}
 }
 
 func (service *RideService) PricingConfig() PricingConfig {
