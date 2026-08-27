@@ -5,22 +5,22 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
-	home "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home"
+	ridecontext "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ride_context"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 )
 
 type Handler struct {
-	query    home.Query
+	query    ridecontext.RideContextQuery
 	verifier *security.TokenManager
 }
 
-func NewHandler(query home.Query, verifier *security.TokenManager) *Handler {
+func NewHandler(query ridecontext.RideContextQuery, verifier *security.TokenManager) *Handler {
 	return &Handler{query: query, verifier: verifier}
 }
 
-func (handler *Handler) Get(writer http.ResponseWriter, request *http.Request) {
+func (handler *Handler) GetRideContext(writer http.ResponseWriter, request *http.Request) {
 	passengerID, status := handler.passengerID(request)
 	if status != 0 {
 		writeError(writer, status, statusMessage(status))
@@ -33,9 +33,9 @@ func (handler *Handler) Get(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	snapshot, err := handler.query.Get(request.Context(), passengerID, coordinates)
+	snapshot, err := handler.query.Load(request.Context(), passengerID, coordinates)
 	if err != nil {
-		writeError(writer, http.StatusBadGateway, "passenger home data unavailable")
+		writeError(writer, http.StatusBadGateway, "passenger ridecontext data unavailable")
 		return
 	}
 	response.JSON(writer, http.StatusOK, toResponse(snapshot))
@@ -59,7 +59,7 @@ func (handler *Handler) passengerID(request *http.Request) (*int, int) {
 	return &passengerID, 0
 }
 
-func coordinatesFromQuery(request *http.Request) (*home.Coordinates, error) {
+func coordinatesFromQuery(request *http.Request) (*ridecontext.Coordinates, error) {
 	query := request.URL.Query()
 	latitudeValue := strings.TrimSpace(query.Get("lat"))
 	longitudeValue := strings.TrimSpace(query.Get("lng"))
@@ -72,7 +72,7 @@ func coordinatesFromQuery(request *http.Request) (*home.Coordinates, error) {
 
 	latitude, latitudeErr := strconv.ParseFloat(latitudeValue, 64)
 	longitude, longitudeErr := strconv.ParseFloat(longitudeValue, 64)
-	coordinates := &home.Coordinates{
+	coordinates := &ridecontext.Coordinates{
 		Latitude:  latitude,
 		Longitude: longitude,
 	}
@@ -94,7 +94,7 @@ type recentLocationResponse struct {
 	Longitude float64 `json:"lng"`
 }
 
-func toResponse(snapshot home.Snapshot) snapshotResponse {
+func toResponse(snapshot ridecontext.RideContextSnapshot) snapshotResponse {
 	recentLocations := make([]recentLocationResponse, 0, len(snapshot.RecentLocations))
 	for _, location := range snapshot.RecentLocations {
 		recentLocations = append(recentLocations, recentLocationResponse{

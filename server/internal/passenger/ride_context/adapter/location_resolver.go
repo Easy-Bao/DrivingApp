@@ -7,7 +7,7 @@ import (
 
 	locationdomain "github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
 	locationusecase "github.com/Easy-Bao/DrivingApp/server/internal/location/usecase"
-	home "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home"
+	ridecontext "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ride_context"
 )
 
 type LocationResolver struct {
@@ -20,7 +20,7 @@ func NewLocationResolver(service *locationusecase.Service) *LocationResolver {
 
 func (resolver *LocationResolver) ResolveAddress(
 	ctx context.Context,
-	coordinates home.Coordinates,
+	coordinates ridecontext.Coordinates,
 ) (string, error) {
 	if resolver.service == nil {
 		return "", errors.New("location module is unavailable")

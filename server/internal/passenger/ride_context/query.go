@@ -1,4 +1,4 @@
-package home
+package ridecontext
 
 import (
 	"context"
@@ -11,37 +11,37 @@ const recentDestinationLimit = 25
 
 var (
 	ErrInvalidPassengerID = errors.New("passenger id is invalid")
-	ErrInvalidCoordinates = errors.New("passenger home coordinates are invalid")
-	ErrQueryUnavailable   = errors.New("passenger home query is unavailable")
+	ErrInvalidCoordinates = errors.New("passenger ridecontext coordinates are invalid")
+	ErrQueryUnavailable   = errors.New("passenger ridecontext query is unavailable")
 )
 
-type Service struct {
+type RideContextQueryService struct {
 	recentDestinations RecentDestinationReader
 	addressResolver    AddressResolver
 }
 
-func NewService(
+func NewRideContextQueryService(
 	recentDestinations RecentDestinationReader,
 	addressResolver AddressResolver,
-) *Service {
-	return &Service{
+) *RideContextQueryService {
+	return &RideContextQueryService{
 		recentDestinations: recentDestinations,
 		addressResolver:    addressResolver,
 	}
 }
 
-func (service *Service) Get(
+func (service *RideContextQueryService) Load(
 	ctx context.Context,
 	passengerID *int,
 	coordinates *Coordinates,
-) (Snapshot, error) {
-	snapshot := Snapshot{
+) (RideContextSnapshot, error) {
+	snapshot := RideContextSnapshot{
 		RecentLocations: make([]RecentLocation, 0, 5),
 	}
 
 	if coordinates != nil {
 		if !coordinates.Valid() {
-			return Snapshot{}, ErrInvalidCoordinates
+			return RideContextSnapshot{}, ErrInvalidCoordinates
 		}
 	}
 
@@ -55,10 +55,10 @@ func (service *Service) Get(
 		return snapshot, nil
 	}
 	if *passengerID <= 0 {
-		return Snapshot{}, ErrInvalidPassengerID
+		return RideContextSnapshot{}, ErrInvalidPassengerID
 	}
 	if service.recentDestinations == nil {
-		return Snapshot{}, ErrQueryUnavailable
+		return RideContextSnapshot{}, ErrQueryUnavailable
 	}
 
 	var (
@@ -79,7 +79,7 @@ func (service *Service) Get(
 	)
 	waitGroup.Wait()
 	if err != nil {
-		return Snapshot{}, err
+		return RideContextSnapshot{}, err
 	}
 	if addressError == nil {
 		snapshot.CurrentAddress = strings.TrimSpace(address)

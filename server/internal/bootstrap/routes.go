@@ -20,9 +20,9 @@ import (
 	locationdomain "github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
 	locationhttp "github.com/Easy-Bao/DrivingApp/server/internal/location/transport/http"
 	locationusecase "github.com/Easy-Bao/DrivingApp/server/internal/location/usecase"
-	passengerhome "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home"
-	passengerhomeadapter "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home/adapter"
-	passengerhomehttp "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home/transport/http"
+	passengerridecontext "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ride_context"
+	passengerridecontextadapter "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ride_context/adapter"
+	passengerridecontexthttp "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ride_context/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	storagepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage/postgres"
@@ -115,9 +115,9 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 		mapboxProvider,
 		locationredis.NewCache(redisClient),
 	)
-	passengerHomeQuery := passengerhome.NewService(
-		passengerhomeadapter.NewRidesReader(ridesService),
-		passengerhomeadapter.NewLocationResolver(locationService),
+	passengerRideContextQuery := passengerridecontext.NewRideContextQueryService(
+		passengerridecontextadapter.NewRidesReader(ridesService),
+		passengerridecontextadapter.NewLocationResolver(locationService),
 	)
 
 	router := chi.NewRouter()
@@ -127,7 +127,7 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 	ridesRouter.RegisterRoutes(router)
 	adminRouter.RegisterRoutes(router)
 	locationhttp.NewRouter(locationService).RegisterRoutes(router)
-	passengerhomehttp.NewRouter(passengerHomeQuery, verifier).RegisterRoutes(router)
+	passengerridecontexthttp.NewRouter(passengerRideContextQuery, verifier).RegisterRoutes(router)
 
 	chatHistory := chatadapter.NewRedisRepository(redisClient)
 	chatService := chatusecase.NewService(chatadapter.NewHub(), chatHistory).

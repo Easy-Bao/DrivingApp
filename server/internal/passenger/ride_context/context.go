@@ -1,4 +1,4 @@
-package home
+package ridecontext
 
 import (
 	"context"
@@ -34,7 +34,7 @@ type RecentLocation struct {
 	Longitude float64
 }
 
-type Snapshot struct {
+type RideContextSnapshot struct {
 	CurrentAddress  string
 	RecentLocations []RecentLocation
 }
@@ -47,6 +47,6 @@ type AddressResolver interface {
 	ResolveAddress(ctx context.Context, coordinates Coordinates) (string, error)
 }
 
-type Query interface {
-	Get(ctx context.Context, passengerID *int, coordinates *Coordinates) (Snapshot, error)
+type RideContextQuery interface {
+	Load(ctx context.Context, passengerID *int, coordinates *Coordinates) (RideContextSnapshot, error)
 }

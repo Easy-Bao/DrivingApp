@@ -1,4 +1,4 @@
-package home_test
+package ridecontext_test
 
 import (
 	"context"
@@ -9,15 +9,15 @@ import (
 	"testing"
 	"time"
 
-	home "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home"
-	homehttp "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home/transport/http"
+	ridecontext "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ride_context"
+	ridecontexthttp "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ride_context/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )
 
 type recentDestinationReader struct {
-	destinations []home.RecentDestination
+	destinations []ridecontext.RecentDestination
 	passengerID  int
 	limit        int
 }
@@ -25,7 +25,7 @@ type recentDestinationReader struct {
 func (reader *recentDestinationReader) ReadRecentDestinations(
 	_ context.Context,
 	passengerID, limit int,
-) ([]home.RecentDestination, error) {
+) ([]ridecontext.RecentDestination, error) {
 	reader.passengerID = passengerID
 	reader.limit = limit
 	return reader.destinations, nil
@@ -37,7 +37,7 @@ type addressResolver struct {
 
 func (resolver addressResolver) ResolveAddress(
 	context.Context,
-	home.Coordinates,
+	ridecontext.Coordinates,
 ) (string, error) {
 	return resolver.address, nil
 }
@@ -51,10 +51,10 @@ func (reader coordinatedRecentDestinationReader) ReadRecentDestinations(
 	context.Context,
 	int,
 	int,
-) ([]home.RecentDestination, error) {
+) ([]ridecontext.RecentDestination, error) {
 	close(reader.started)
 	<-reader.release
-	return []home.RecentDestination{{
+	return []ridecontext.RecentDestination{{
 		Status:   "completed",
 		Title:    "Aikido of Mountain View",
 		Subtitle: "Mountain View",
@@ -68,14 +68,14 @@ type coordinatedAddressResolver struct {
 
 func (resolver coordinatedAddressResolver) ResolveAddress(
 	context.Context,
-	home.Coordinates,
+	ridecontext.Coordinates,
 ) (string, error) {
 	close(resolver.started)
 	<-resolver.release
 	return "Mountain View", nil
 }
 
-func TestGuestHomeReturnsLocationWithoutPassengerHistory(t *testing.T) {
+func TestGuestDashboardReturnsLocationWithoutPassengerHistory(t *testing.T) {
 	destinations := &recentDestinationReader{}
 	router := newRouter(destinations, addressResolver{address: "Pagadian City"})
 
@@ -90,7 +90,7 @@ func TestGuestHomeReturnsLocationWithoutPassengerHistory(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Fatalf("status = %d, want %d", response.Code, http.StatusOK)
 	}
-	var snapshot passengerhomeResponse
+	var snapshot rideContextResponse
 	if err := json.NewDecoder(response.Body).Decode(&snapshot); err != nil {
 		t.Fatalf("decode snapshot: %v", err)
 	}
@@ -105,8 +105,8 @@ func TestGuestHomeReturnsLocationWithoutPassengerHistory(t *testing.T) {
 	}
 }
 
-func TestAuthenticatedHomeFiltersRecentDestinations(t *testing.T) {
-	destinations := &recentDestinationReader{destinations: []home.RecentDestination{
+func TestAuthenticatedDashboardFiltersRecentDestinations(t *testing.T) {
+	destinations := &recentDestinationReader{destinations: []ridecontext.RecentDestination{
 		{Status: "in_transit", Title: "Active Place"},
 		{Status: "completed", Title: "Mall, Pagadian City", Subtitle: "Home"},
 		{Status: "completed", Title: "mall, pagadian city", Subtitle: "Office"},
@@ -132,7 +132,7 @@ func TestAuthenticatedHomeFiltersRecentDestinations(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Fatalf("status = %d, want %d", response.Code, http.StatusOK)
 	}
-	var snapshot passengerhomeResponse
+	var snapshot rideContextResponse
 	if err := json.NewDecoder(response.Body).Decode(&snapshot); err != nil {
 		t.Fatalf("decode snapshot: %v", err)
 	}
@@ -147,7 +147,7 @@ func TestAuthenticatedHomeFiltersRecentDestinations(t *testing.T) {
 	}
 }
 
-func TestAuthenticatedHomeLoadsLocationAndHistoryConcurrently(t *testing.T) {
+func TestAuthenticatedDashboardLoadsLocationAndHistoryConcurrently(t *testing.T) {
 	addressStarted := make(chan struct{})
 	destinationsStarted := make(chan struct{})
 	release := make(chan struct{})
@@ -155,7 +155,7 @@ func TestAuthenticatedHomeLoadsLocationAndHistoryConcurrently(t *testing.T) {
 	releaseAll := func() {
 		releaseOnce.Do(func() { close(release) })
 	}
-	service := home.NewService(
+	service := ridecontext.NewRideContextQueryService(
 		coordinatedRecentDestinationReader{
 			started: destinationsStarted,
 			release: release,
@@ -167,17 +167,17 @@ func TestAuthenticatedHomeLoadsLocationAndHistoryConcurrently(t *testing.T) {
 	)
 
 	result := make(chan struct {
-		snapshot home.Snapshot
+		snapshot ridecontext.RideContextSnapshot
 		err      error
 	}, 1)
 	go func() {
-		snapshot, err := service.Get(
+		snapshot, err := service.Load(
 			context.Background(),
 			intPointer(42),
-			&home.Coordinates{Latitude: 7.8, Longitude: 123.4},
+			&ridecontext.Coordinates{Latitude: 7.8, Longitude: 123.4},
 		)
 		result <- struct {
-			snapshot home.Snapshot
+			snapshot ridecontext.RideContextSnapshot
 			err      error
 		}{snapshot: snapshot, err: err}
 	}()
@@ -190,7 +190,7 @@ func TestAuthenticatedHomeLoadsLocationAndHistoryConcurrently(t *testing.T) {
 	select {
 	case response := <-result:
 		if response.err != nil {
-			t.Fatalf("load home: %v", response.err)
+			t.Fatalf("load ride context: %v", response.err)
 		}
 		if response.snapshot.CurrentAddress != "Mountain View" {
 			t.Fatalf("current address = %q, want Mountain View", response.snapshot.CurrentAddress)
@@ -199,7 +199,7 @@ func TestAuthenticatedHomeLoadsLocationAndHistoryConcurrently(t *testing.T) {
 			t.Fatalf("recent locations = %#v, want one location", response.snapshot.RecentLocations)
 		}
 	case <-time.After(time.Second):
-		t.Fatal("home query did not finish after both dependencies were released")
+		t.Fatal("ride context query did not finish after both dependencies were released")
 	}
 }
 
@@ -216,7 +216,7 @@ func waitForSignal(t *testing.T, signal <-chan struct{}, dependency string) {
 	}
 }
 
-func TestHomeRejectsInvalidOrNonPassengerAccess(t *testing.T) {
+func TestDashboardRejectsInvalidOrNonPassengerAccess(t *testing.T) {
 	router := newRouter(&recentDestinationReader{}, addressResolver{})
 	verifier := security.NewTokenManager("test-secret")
 	driverToken, err := verifier.IssueWithRole("7", "driver")
@@ -268,7 +268,7 @@ func TestHomeRejectsInvalidOrNonPassengerAccess(t *testing.T) {
 	}
 }
 
-type passengerhomeResponse struct {
+type rideContextResponse struct {
 	CurrentAddress  string                   `json:"current_address"`
 	RecentLocations []recentLocationResponse `json:"recent_locations"`
 }
@@ -278,12 +278,12 @@ type recentLocationResponse struct {
 }
 
 func newRouter(
-	destinations home.RecentDestinationReader,
-	resolver home.AddressResolver,
+	destinations ridecontext.RecentDestinationReader,
+	resolver ridecontext.AddressResolver,
 ) *chi.Mux {
 	router := chi.NewRouter()
 	verifier := security.NewTokenManager("test-secret")
-	query := home.NewService(destinations, resolver)
-	homehttp.NewRouter(query, verifier).RegisterRoutes(router)
+	query := ridecontext.NewRideContextQueryService(destinations, resolver)
+	ridecontexthttp.NewRouter(query, verifier).RegisterRoutes(router)
 	return router
 }

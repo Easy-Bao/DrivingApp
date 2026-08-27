@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	home "github.com/Easy-Bao/DrivingApp/server/internal/passenger/home"
+	ridecontext "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ride_context"
 	ridesusecase "github.com/Easy-Bao/DrivingApp/server/internal/rides/usecase"
 )
 
@@ -19,7 +19,7 @@ func NewRidesReader(service *ridesusecase.Service) *RidesReader {
 func (reader *RidesReader) ReadRecentDestinations(
 	ctx context.Context,
 	passengerID, limit int,
-) ([]home.RecentDestination, error) {
+) ([]ridecontext.RecentDestination, error) {
 	if reader.service == nil {
 		return nil, errors.New("rides module is unavailable")
 	}
@@ -28,9 +28,9 @@ func (reader *RidesReader) ReadRecentDestinations(
 		return nil, err
 	}
 
-	destinations := make([]home.RecentDestination, 0, len(rides))
+	destinations := make([]ridecontext.RecentDestination, 0, len(rides))
 	for _, ride := range rides {
-		destinations = append(destinations, home.RecentDestination{
+		destinations = append(destinations, ridecontext.RecentDestination{
 			Status:    ride.Status,
 			Title:     ride.DropoffName,
 			Subtitle:  ride.PickupName,
