@@ -88,6 +88,12 @@ func TestEnrichChatEventCanonicalizesTypingIdentity(t *testing.T) {
 	}
 }
 
+func TestEnrichChatEventRejectsNonStringType(t *testing.T) {
+	if enriched := enrichChatEvent([]byte(`{"type":true}`), "303", "7"); enriched != nil {
+		t.Fatalf("enriched malformed event = %s, want nil", enriched)
+	}
+}
+
 func TestChatWebSocketDoesNotBroadcastRejectedMessages(t *testing.T) {
 	handler := NewHandlerWithSink(
 		NewHub(),

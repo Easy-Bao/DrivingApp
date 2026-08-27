@@ -258,7 +258,10 @@ func enrichChatEvent(message []byte, roomID, clientID string) []byte {
 	if json.Unmarshal(message, &event) != nil {
 		return nil
 	}
-	eventType, _ := event["type"].(string)
+	eventType, ok := event["type"].(string)
+	if !ok {
+		return nil
+	}
 	if eventType != "CHAT_MESSAGE" && eventType != "message" && eventType != "typing" {
 		return message
 	}
