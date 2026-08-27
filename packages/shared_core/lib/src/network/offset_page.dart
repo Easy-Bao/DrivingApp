@@ -39,3 +39,21 @@ class OffsetPage<T> {
     );
   }
 }
+
+Map<String, dynamic> decodeObjectMap(
+  Object? value, {
+  String message = 'Expected a JSON object.',
+}) {
+  if (value is! Map) {
+    throw FormatException(message);
+  }
+
+  final decoded = <String, dynamic>{};
+  for (final entry in value.entries) {
+    if (entry.key is! String) {
+      throw FormatException(message);
+    }
+    decoded[entry.key as String] = entry.value;
+  }
+  return decoded;
+}

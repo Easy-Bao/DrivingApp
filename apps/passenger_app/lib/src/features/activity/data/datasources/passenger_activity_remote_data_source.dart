@@ -29,7 +29,8 @@ class PassengerActivityRemoteDataSourceImpl
     );
     return OffsetPage<Map<String, dynamic>>.fromJson(
       response.data ?? const <String, dynamic>{},
-      (value) => Map<String, dynamic>.from(value! as Map),
+      (value) =>
+          decodeObjectMap(value, message: 'Passenger ride item is invalid.'),
     );
   }
 

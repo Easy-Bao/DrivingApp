@@ -66,4 +66,27 @@ void main() {
       ),
     ).called(1);
   });
+
+  test('rejects malformed ride history items', () async {
+    final dio = MockDio();
+    final dataSource = PassengerActivityRemoteDataSourceImpl(dio);
+    when(
+      () => dio.get<Map<String, dynamic>>(
+        any(),
+        queryParameters: any<Map<String, dynamic>>(named: 'queryParameters'),
+      ),
+    ).thenAnswer(
+      (_) async => Response<Map<String, dynamic>>(
+        requestOptions: RequestOptions(path: '/api/v1/passengers/42/rides'),
+        statusCode: 200,
+        data: const {
+          'items': ['malformed'],
+          'has_more': false,
+          'next_offset': null,
+        },
+      ),
+    );
+
+    expect(() => dataSource.fetchRideHistory('42'), throwsFormatException);
+  });
 }

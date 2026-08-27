@@ -32,4 +32,16 @@ void main() {
       throwsFormatException,
     );
   });
+
+  test('decodes only string-keyed JSON objects', () {
+    expect(decodeObjectMap(const {'id': 7}), {'id': 7});
+    expect(
+      () => decodeObjectMap(const ['not an object']),
+      throwsFormatException,
+    );
+    expect(
+      () => decodeObjectMap(const {7: 'not a JSON object key'}),
+      throwsFormatException,
+    );
+  });
 }

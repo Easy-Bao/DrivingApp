@@ -46,4 +46,27 @@ void main() {
       ),
     ).called(1);
   });
+
+  test('rejects malformed trip items', () async {
+    final dio = MockDio();
+    final dataSource = DriverActivityRemoteDataSourceImpl(dio);
+    when(
+      () => dio.get<Map<String, dynamic>>(
+        any(),
+        queryParameters: any<Map<String, dynamic>>(named: 'queryParameters'),
+      ),
+    ).thenAnswer(
+      (_) async => Response<Map<String, dynamic>>(
+        requestOptions: RequestOptions(path: '/api/v1/drivers/7/trips'),
+        statusCode: 200,
+        data: const {
+          'items': ['malformed'],
+          'has_more': false,
+          'next_offset': null,
+        },
+      ),
+    );
+
+    expect(() => dataSource.fetchTripHistory('7'), throwsFormatException);
+  });
 }
