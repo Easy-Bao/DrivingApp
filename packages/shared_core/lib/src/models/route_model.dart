@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import 'package:shared_core/src/utils/safe_parse.dart';
+
 enum RoutePreference { fastest, shortest }
 
 enum RouteProfile { driving, drivingTraffic }
@@ -36,37 +38,24 @@ class RouteModel extends Equatable {
   });
 
   factory RouteModel.fromJson(Map<String, dynamic> json) {
-    final rawPoints =
-        (json['polylinePoints'] as List<dynamic>?) ??
-        (json['polyline'] as List<dynamic>?) ??
-        (json['waypoints'] as List<dynamic>?) ??
-        <dynamic>[];
-    final points = rawPoints
-        .whereType<List<dynamic>>()
-        .where((point) => point.length >= 2)
-        .map(
-          (point) => [
-            (point[0] as num).toDouble(),
-            (point[1] as num).toDouble(),
-          ],
-        )
-        .toList();
+    final rawPoints = _readPointCollection(json);
+    final points = rawPoints.map(_readPoint).whereType<List<double>>().toList();
 
-    final durationSeconds =
-        json['durationSeconds'] as num? ?? json['duration_seconds'] as num?;
-    final durationMinutes =
-        json['durationMin'] as num? ?? json['duration_min'] as num?;
+    final durationSeconds = SafeParse.toNullableDouble(
+      json['durationSeconds'] ?? json['duration_seconds'],
+    );
+    final durationMinutes = SafeParse.toNullableDouble(
+      json['durationMin'] ?? json['duration_min'],
+    );
 
     return RouteModel(
       polylinePoints: points,
-      distanceKm:
-          (json['distanceKm'] as num? ?? json['distance_km'] as num? ?? 0.0)
-              .toDouble(),
+      distanceKm: SafeParse.toDouble(json['distanceKm'] ?? json['distance_km']),
       durationSeconds:
           durationSeconds?.toInt() ?? ((durationMinutes ?? 0) * 60).round(),
-      summary: json['summary'] as String? ?? '',
-      preference: json['preference'] as String? ?? 'fastest',
-      profile: json['profile'] as String? ?? 'driving',
+      summary: _readString(json['summary']),
+      preference: _readString(json['preference'], 'fastest'),
+      profile: _readString(json['profile'], 'driving'),
     );
   }
 
@@ -90,6 +79,26 @@ class RouteModel extends Equatable {
     preference,
     profile,
   ];
+}
+
+List<Object?> _readPointCollection(Map<String, dynamic> json) {
+  for (final key in ['polylinePoints', 'polyline', 'waypoints']) {
+    final value = json[key];
+    if (value is List) return List<Object?>.from(value);
+  }
+  return const [];
+}
+
+List<double>? _readPoint(Object? rawPoint) {
+  if (rawPoint is! List || rawPoint.length < 2) return null;
+  final longitude = SafeParse.toNullableDouble(rawPoint[0]);
+  final latitude = SafeParse.toNullableDouble(rawPoint[1]);
+  if (longitude == null || latitude == null) return null;
+  return [longitude, latitude];
+}
+
+String _readString(Object? value, [String fallback = '']) {
+  return value is String ? value : fallback;
 }
 
 extension RouteModelExtension on RouteModel {
