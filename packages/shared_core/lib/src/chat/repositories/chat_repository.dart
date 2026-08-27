@@ -133,24 +133,14 @@ class ChatRepository implements IChatRepository {
     String roomId,
   ) async {
     try {
-      final response = await clientDio.get(
+      final response = await clientDio.get<Object?>(
         '/api/v1/chat/rooms/${Uri.encodeComponent(roomId)}/messages',
       );
 
-      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
-        final Map<String, dynamic> dataMap =
-            response.data as Map<String, dynamic>;
-        final List<dynamic> list =
-            (dataMap['messages'] ?? dataMap['data'] ?? []) as List<dynamic>;
-
-        final messages = list.map((item) {
-          final model = ChatMessageModel.fromJson(item as Map<String, dynamic>);
-          return model.toEntity(currentUserId: currentUserId);
-        }).toList();
-
-        return Right(messages);
-      }
-      return const Right([]);
+      if (response.statusCode != 200) return const Right([]);
+      final dataMap = decodeObjectMap(response.data);
+      final rawMessages = dataMap['messages'] ?? dataMap['data'] ?? const [];
+      return Right(_decodeMessages(rawMessages));
     } catch (error) {
       return Left(_mapChatFailure(error, 'Unable to load chat history.'));
     }
@@ -181,55 +171,77 @@ class ChatRepository implements IChatRepository {
   Stream<Either<Failure, ChatEvent>> get chatEventsStream {
     return remoteDataSource.webSocketEventStream.map((rawString) {
       try {
-        final decoded = jsonDecode(rawString) as Map<String, dynamic>;
-        final type = decoded['type'] as String?;
-
-        if (type == 'history' && decoded['messages'] is List) {
-          final list = decoded['messages'] as List;
-          final messages = list.map((item) {
-            final model = ChatMessageModel.fromJson(
-              item as Map<String, dynamic>,
-            );
-            return model.toEntity(currentUserId: currentUserId);
-          }).toList();
-          return Right(ChatHistoryReceived(messages));
+        final decoded = decodeObjectMap(jsonDecode(rawString));
+        final type = decoded['type'];
+        if (type is! String) {
+          return const Left(ServerFailure('Unable to read chat event.'));
         }
 
-        if (type == 'message') {
-          final model = ChatMessageModel.fromJson(decoded);
-          return Right(
-            ChatMessageReceived(model.toEntity(currentUserId: currentUserId)),
-          );
-        }
-
-        if (type == 'typing') {
-          final senderId =
-              decoded['sender_id'] as String? ??
-              decoded['senderId'] as String? ??
-              '';
-          final isTyping =
-              decoded['is_typing'] as bool? ?? decoded['isTyping'] as bool?;
-          if (senderId.isEmpty || isTyping == null) {
-            return const Left(ServerFailure('Unable to read chat status.'));
-          }
-          return Right(
-            ChatTypingChanged(
-              isTyping: isTyping,
-              isFromPeer: senderId != currentUserId,
+        return switch (type) {
+          'history' when decoded['messages'] is List => Right(
+            ChatHistoryReceived(_decodeMessages(decoded['messages'])),
+          ),
+          'message' => Right(
+            ChatMessageReceived(
+              ChatMessageModel.fromJson(
+                decoded,
+              ).toEntity(currentUserId: currentUserId),
             ),
-          );
-        }
-
-        if (type == 'room_locked' || type == 'locked') {
-          final reason = decoded['reason'] as String? ?? 'Trip completed';
-          return Right(ChatRoomLocked(reason));
-        }
-
-        return const Left(ServerFailure('Unable to read chat event.'));
+          ),
+          'typing' => _decodeTypingEvent(decoded),
+          'room_locked' || 'locked' => Right(
+            ChatRoomLocked(_stringValueOr(decoded['reason'], 'Trip completed')),
+          ),
+          _ => const Left(ServerFailure('Unable to read chat event.')),
+        };
       } catch (error) {
         return const Left(ServerFailure('Unable to read chat message.'));
       }
     });
+  }
+
+  List<ChatMessage> _decodeMessages(Object? rawMessages) {
+    if (rawMessages is! List) {
+      throw const FormatException('Chat messages payload is invalid.');
+    }
+    return rawMessages
+        .map(
+          (item) => ChatMessageModel.fromJson(
+            decodeObjectMap(item, message: 'Chat message is invalid.'),
+          ).toEntity(currentUserId: currentUserId),
+        )
+        .toList(growable: false);
+  }
+
+  String _stringValueOr(Object? value, String fallback) => switch (value) {
+    final String text => text,
+    _ => fallback,
+  };
+
+  Either<Failure, ChatEvent> _decodeTypingEvent(Map<String, dynamic> decoded) {
+    final senderId = switch (decoded['sender_id']) {
+      final String value => value,
+      _ => switch (decoded['senderId']) {
+        final String value => value,
+        _ => '',
+      },
+    };
+    final isTyping = switch (decoded['is_typing']) {
+      final bool value => value,
+      _ => switch (decoded['isTyping']) {
+        final bool value => value,
+        _ => null,
+      },
+    };
+    if (senderId.isEmpty || isTyping == null) {
+      return const Left(ServerFailure('Unable to read chat status.'));
+    }
+    return Right(
+      ChatTypingChanged(
+        isTyping: isTyping,
+        isFromPeer: senderId != currentUserId,
+      ),
+    );
   }
 }
 

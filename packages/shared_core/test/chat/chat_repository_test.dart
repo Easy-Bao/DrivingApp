@@ -173,6 +173,28 @@ void main() {
     expect(typingEvent.isFromPeer, isTrue);
   });
 
+  test('maps malformed chat history to a safe failure', () async {
+    final remoteDataSource = FakeChatRemoteDataSource()
+      ..eventStream = Stream<String>.value(
+        jsonEncode({
+          'type': 'history',
+          'messages': ['malformed'],
+        }),
+      );
+    final repository = ChatRepository(
+      remoteDataSource: remoteDataSource,
+      currentUserId: '7',
+      clientDio: Dio(),
+    );
+
+    final event = await repository.chatEventsStream.first;
+
+    event.fold((failure) {
+      expect(failure.message, 'Unable to read chat message.');
+      expect(failure.message, isNot(contains('malformed')));
+    }, (_) => fail('Expected malformed history to be rejected.'));
+  });
+
   test('disposes the websocket data source with the repository', () async {
     final remoteDataSource = FakeChatRemoteDataSource();
     final repository = ChatRepository(
