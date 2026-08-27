@@ -101,14 +101,23 @@ jobs:
       - name: Download Go dependencies
         run: go mod download
 
+      - name: Verify Go modules
+        run: go mod verify
+
       - name: Generate Ent client
         run: go generate ./ent/generate.go
+
+      - name: Check Go module tidiness
+        run: go mod tidy -diff
 
       - name: Vet Go packages
         run: go vet ./...
 
       - name: Test Go packages
         run: go test ./...
+
+      - name: Test Go packages with race detector
+        run: go test -race ./...
 
   dependency-review:
     name: Dependency Security Review

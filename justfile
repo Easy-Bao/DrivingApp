@@ -27,9 +27,12 @@ ci-guards:
 
 ci-backend:
     cd server && go mod download
+    cd server && go mod verify
     cd server && go generate ./ent/generate.go
+    cd server && go mod tidy -diff
     cd server && go vet ./...
     cd server && go test ./...
+    cd server && go test -race ./...
 
 ci-flutter:
     flutter pub get
