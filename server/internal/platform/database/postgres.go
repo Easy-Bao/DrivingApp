@@ -82,7 +82,7 @@ func OpenPostgresConnectionWithConfig(databaseURL string, config PostgresPoolCon
 	databaseURL = NormalizePostgresURL(strings.TrimSpace(databaseURL))
 	driver, err := entsql.Open(dialect.Postgres, databaseURL)
 	if err != nil {
-		return nil, fmt.Errorf("open PostgreSQL connection: %w", err)
+		return nil, fmt.Errorf("open postgresql connection: %w", err)
 	}
 	pool := driver.DB()
 	pool.SetMaxOpenConns(config.MaxOpenConnections)
@@ -94,7 +94,7 @@ func OpenPostgresConnectionWithConfig(databaseURL string, config PostgresPoolCon
 	defer cancel()
 	if err := pool.PingContext(pingContext); err != nil {
 		_ = driver.Close()
-		return nil, fmt.Errorf("ping PostgreSQL: %w", err)
+		return nil, fmt.Errorf("ping postgresql: %w", err)
 	}
 
 	return &PostgresConnection{
@@ -105,16 +105,16 @@ func OpenPostgresConnectionWithConfig(databaseURL string, config PostgresPoolCon
 
 func (config PostgresPoolConfig) validate() error {
 	if config.MaxOpenConnections <= 0 {
-		return fmt.Errorf("PostgreSQL max open connections must be positive")
+		return fmt.Errorf("postgresql max open connections must be positive")
 	}
 	if config.MaxIdleConnections <= 0 {
-		return fmt.Errorf("PostgreSQL max idle connections must be positive")
+		return fmt.Errorf("postgresql max idle connections must be positive")
 	}
 	if config.MaxIdleConnections > config.MaxOpenConnections {
-		return fmt.Errorf("PostgreSQL max idle connections cannot exceed max open connections")
+		return fmt.Errorf("postgresql max idle connections cannot exceed max open connections")
 	}
 	if config.ConnectionMaxLifetime <= 0 || config.ConnectionMaxIdleTime <= 0 || config.PingTimeout <= 0 {
-		return fmt.Errorf("PostgreSQL connection durations must be positive")
+		return fmt.Errorf("postgresql connection durations must be positive")
 	}
 	return nil
 }

@@ -2,7 +2,8 @@ package main
 
 import (
 	"context"
-	"log"
+	"errors"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,19 +16,24 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	url := os.Getenv("DATABASE_URL")
-	if url == "" {
-		log.Fatal("DATABASE_URL is required")
+	if err := run(ctx); err != nil {
+		slog.Error("migration command failed", "error", err)
+		os.Exit(1)
 	}
-	connection, err := database.OpenPostgresConnection(url)
+}
+
+func run(ctx context.Context) error {
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		return errors.New("database url is required")
+	}
+	connection, err := database.OpenPostgresConnection(databaseURL)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer connection.Client.Close()
 	if err := platformmigration.NewRunner(connection.Driver).Run(ctx); err != nil {
-		log.Fatal(err)
+		return err
 	}
-	if err := platformmigration.ValidateEntSchema(ctx, connection.Client); err != nil {
-		log.Fatal(err)
-	}
+	return platformmigration.ValidateEntSchema(ctx, connection.Client)
 }

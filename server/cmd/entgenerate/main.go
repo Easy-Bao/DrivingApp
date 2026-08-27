@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,20 +17,27 @@ import (
 // add schemas there. Keeping it stable is required because Ent's generated
 // runtime references schema descriptors for field validators.
 func main() {
+	if err := run(); err != nil {
+		slog.Error("ent generation command failed", "error", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	workingDirectory, err := os.Getwd()
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("get working directory: %w", err)
 	}
 	root, err := filepath.Abs(filepath.Join(workingDirectory, ".."))
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("resolve project root: %w", err)
 	}
 	aggregate := filepath.Join(root, "internal", "platform", "ent", "schema")
 	if err := os.RemoveAll(aggregate); err != nil {
-		panic(err)
+		return fmt.Errorf("remove generated schema aggregate: %w", err)
 	}
 	if err := os.MkdirAll(aggregate, 0o755); err != nil {
-		panic(err)
+		return fmt.Errorf("create generated schema aggregate: %w", err)
 	}
 
 	type schemaModule struct {
@@ -60,7 +68,7 @@ func main() {
 			return os.WriteFile(filepath.Join(aggregate, module.outputPrefix+"_"+entry.Name()), contents, 0o644)
 		})
 		if err != nil {
-			panic(err)
+			return fmt.Errorf("copy %s schemas: %w", module.sourcePath, err)
 		}
 	}
 
@@ -69,6 +77,7 @@ func main() {
 		Package:  "github.com/Easy-Bao/DrivingApp/server/ent",
 		Features: []gen.Feature{gen.FeatureLock},
 	}); err != nil {
-		panic(fmt.Errorf("generate Ent graph: %w", err))
+		return fmt.Errorf("generate ent graph: %w", err)
 	}
+	return nil
 }

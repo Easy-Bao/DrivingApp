@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,15 +14,20 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	if err := run(ctx); err != nil {
+		slog.Error("api command failed", "error", err)
+		os.Exit(1)
+	}
+}
+
+func run(ctx context.Context) error {
 	config, err := bootstrap.LoadConfig()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	application, err := bootstrap.NewApplication(ctx, config)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-	if err := application.Run(ctx); err != nil {
-		log.Fatal(err)
-	}
+	return application.Run(ctx)
 }
