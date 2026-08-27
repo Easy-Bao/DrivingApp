@@ -10,9 +10,13 @@ type lookupStub struct {
 	byRide        Assignment
 	ridesByDriver []Assignment
 	err           error
+	forRideCalls  *int
 }
 
 func (stub lookupStub) ForRide(context.Context, string) (Assignment, bool, error) {
+	if stub.forRideCalls != nil {
+		*stub.forRideCalls++
+	}
 	return stub.byRide, stub.byRide.RideID != "", stub.err
 }
 
@@ -20,9 +24,13 @@ func (stub lookupStub) ForDriver(context.Context, string) ([]Assignment, error) 
 	return stub.ridesByDriver, stub.err
 }
 
-func TestResolverUsesAuthorityForRideAuthorization(t *testing.T) {
-	routing := lookupStub{byRide: Assignment{RideID: "303", DriverID: "wrong"}}
-	authority := lookupStub{byRide: Assignment{RideID: "303", DriverID: "42", PassengerID: "99"}}
+func TestResolverUsesRoutingProjectionForRideAuthorization(t *testing.T) {
+	authorityCalls := 0
+	routing := lookupStub{byRide: Assignment{RideID: "303", DriverID: "42", PassengerID: "99", Status: "assigned"}}
+	authority := lookupStub{
+		byRide:       Assignment{RideID: "303", DriverID: "wrong", PassengerID: "wrong", Status: "assigned"},
+		forRideCalls: &authorityCalls,
+	}
 
 	value, found, err := NewResolver(routing, authority).ForRide(context.Background(), "303")
 
@@ -31,6 +39,29 @@ func TestResolverUsesAuthorityForRideAuthorization(t *testing.T) {
 	}
 	if value.DriverID != "42" || value.PassengerID != "99" {
 		t.Fatalf("ForRide() = %#v", value)
+	}
+	if authorityCalls != 0 {
+		t.Fatalf("authority ForRide() calls = %d, want 0", authorityCalls)
+	}
+}
+
+func TestResolverFallsBackToAuthorityWhenRideProjectionMisses(t *testing.T) {
+	authorityCalls := 0
+	authority := lookupStub{
+		byRide:       Assignment{RideID: "303", DriverID: "42", PassengerID: "99", Status: "assigned"},
+		forRideCalls: &authorityCalls,
+	}
+
+	value, found, err := NewResolver(lookupStub{}, authority).ForRide(context.Background(), "303")
+
+	if err != nil || !found {
+		t.Fatalf("ForRide() found = %t, error = %v", found, err)
+	}
+	if value.DriverID != "42" || value.PassengerID != "99" {
+		t.Fatalf("ForRide() = %#v", value)
+	}
+	if authorityCalls != 1 {
+		t.Fatalf("authority ForRide() calls = %d, want 1", authorityCalls)
 	}
 }
 
