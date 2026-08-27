@@ -613,8 +613,11 @@ func selectRoute(routes []mapboxRoute, preference domain.RoutePreference) mapbox
 }
 
 func (provider *MapboxProvider) getJSON(ctx context.Context, endpoint string, target any) error {
+	if provider == nil || provider.client == nil {
+		return fmt.Errorf("location provider is not configured")
+	}
 	if provider.breaker == nil {
-		provider.breaker = resilience.NewCircuitBreaker(5, 30*time.Second)
+		return resilience.ErrCircuitNotConfigured
 	}
 	return provider.breaker.Do(ctx, func(ctx context.Context) error {
 		return provider.fetchJSON(ctx, endpoint, target)
