@@ -122,3 +122,13 @@ func TestChatWebSocketDoesNotBroadcastRejectedMessages(t *testing.T) {
 		t.Fatalf("reply = %#v", reply)
 	}
 }
+
+func TestQueueMessageStopsWhenWriterHasExited(t *testing.T) {
+	done := make(chan struct{})
+	close(done)
+	messages := make(chan []byte)
+
+	if queueMessage(messages, done, []byte(`{"error":"closed"}`)) {
+		t.Fatal("queued a message after the writer exited")
+	}
+}

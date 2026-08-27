@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
 	"github.com/gorilla/websocket"
 )
 
@@ -70,29 +71,33 @@ func (handler *Handler) originAllowed(request *http.Request) bool {
 }
 
 func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	if handler == nil || handler.hub == nil || handler.authenticate == nil {
+		response.Error(writer, http.StatusServiceUnavailable, "Chat is temporarily unavailable. Please try again shortly.")
+		return
+	}
 	token, ok := middleware.BearerToken(request.Header.Get("Authorization"))
 	if !ok {
-		http.Error(writer, "unauthorized", http.StatusUnauthorized)
+		response.Error(writer, http.StatusUnauthorized, "Authentication is required. Please sign in again to continue.")
 		return
 	}
 	clientID, err := handler.authenticate.Verify(token)
 	if err != nil || clientID == "" {
-		http.Error(writer, "unauthorized", http.StatusUnauthorized)
+		response.Error(writer, http.StatusUnauthorized, "Authentication is required. Please sign in again to continue.")
 		return
 	}
 	roomID := request.URL.Query().Get("roomId")
 	if roomID == "" {
-		http.Error(writer, "room id is required", http.StatusBadRequest)
+		response.Error(writer, http.StatusBadRequest, "Please select a valid chat room.")
 		return
 	}
 	if handler.rooms != nil {
 		allowed, accessErr := handler.rooms.CanAccessRoom(request.Context(), roomID, clientID)
 		if accessErr != nil {
-			http.Error(writer, "chat room unavailable", http.StatusServiceUnavailable)
+			response.Error(writer, http.StatusServiceUnavailable, "Chat is temporarily unavailable. Please try again shortly.")
 			return
 		}
 		if !allowed {
-			http.Error(writer, "chat room access denied", http.StatusForbidden)
+			response.Error(writer, http.StatusForbidden, "You do not have permission to access this chat.")
 			return
 		}
 	}
@@ -104,12 +109,13 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 
 	connection.SetReadLimit(16 << 10)
 	outbound := handler.hub.Add(clientID, roomID)
-	defer handler.hub.Remove(clientID, outbound)
-
-	go func() {
-		for message := range outbound {
-			_ = connection.WriteMessage(websocket.TextMessage, message)
-		}
+	serverMessages := make(chan []byte, 4)
+	writerDone := make(chan struct{})
+	go writePump(connection, outbound, serverMessages, writerDone)
+	defer func() {
+		handler.hub.Remove(clientID, outbound)
+		_ = connection.Close()
+		<-writerDone
 	}()
 
 	for {
@@ -118,23 +124,59 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 			return
 		}
 		if messageType != websocket.TextMessage || !validEvent(message) {
-			_ = connection.WriteJSON(map[string]string{"error": "invalid event"})
+			if !queueMessage(serverMessages, writerDone, []byte(`{"error":"invalid event"}`)) {
+				return
+			}
 			continue
 		}
 		eventMessage := message
 		if eventMessage = enrichChatEvent(eventMessage, request.URL.Query().Get("roomId"), clientID); eventMessage == nil {
-			_ = connection.WriteJSON(map[string]string{"error": "invalid chat event"})
+			if !queueMessage(serverMessages, writerDone, []byte(`{"error":"invalid chat event"}`)) {
+				return
+			}
 			continue
 		}
 		if handler.sink != nil {
 			if err := handler.sink.Handle(request.Context(), eventMessage); err != nil {
-				_ = connection.WriteJSON(map[string]string{"error": "event rejected"})
+				if !queueMessage(serverMessages, writerDone, []byte(`{"error":"event rejected"}`)) {
+					return
+				}
 				continue
 			}
 		}
 		if isChatEvent(eventMessage) {
 			handler.hub.Broadcast(roomID, eventMessage)
 		}
+	}
+}
+
+func writePump(connection *websocket.Conn, outbound <-chan []byte, serverMessages <-chan []byte, done chan<- struct{}) {
+	defer close(done)
+	defer connection.Close()
+
+	for {
+		select {
+		case message, ok := <-outbound:
+			if !ok {
+				return
+			}
+			if err := connection.WriteMessage(websocket.TextMessage, message); err != nil {
+				return
+			}
+		case message := <-serverMessages:
+			if err := connection.WriteMessage(websocket.TextMessage, message); err != nil {
+				return
+			}
+		}
+	}
+}
+
+func queueMessage(messages chan<- []byte, done <-chan struct{}, message []byte) bool {
+	select {
+	case messages <- message:
+		return true
+	case <-done:
+		return false
 	}
 }
 
