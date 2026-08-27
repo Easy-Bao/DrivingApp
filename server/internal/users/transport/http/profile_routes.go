@@ -4,18 +4,17 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
-	"github.com/Easy-Bao/DrivingApp/server/internal/users/transport/http/handler"
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/usecase"
 	"github.com/go-chi/chi/v5"
 )
 
 type Router struct {
-	handler  *handler.Handler
+	handler  *Handler
 	verifier *security.TokenManager
 }
 
 func NewRouter(service *usecase.ProfileService, verifier *security.TokenManager) *Router {
-	return &Router{handler: handler.NewHandler(service, verifier), verifier: verifier}
+	return &Router{handler: NewHandler(service, verifier), verifier: verifier}
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {

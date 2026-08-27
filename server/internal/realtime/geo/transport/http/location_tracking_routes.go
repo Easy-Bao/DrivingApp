@@ -4,13 +4,12 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
-	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/transport/http/handler"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/usecase"
 	"github.com/go-chi/chi/v5"
 )
 
 type Router struct {
-	handler *handler.Handler
+	handler *Handler
 	auth    *security.TokenManager
 }
 
@@ -19,7 +18,7 @@ func NewRouter(service *usecase.LocationTrackingService, auth ...*security.Token
 	if len(auth) > 0 {
 		tokenManager = auth[0]
 	}
-	return &Router{handler: handler.NewHandler(service, tokenManager), auth: tokenManager}
+	return &Router{handler: NewHandler(service, tokenManager), auth: tokenManager}
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {

@@ -1,7 +1,6 @@
 package http
 
 import (
-	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/transport/http/handler"
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
@@ -10,13 +9,13 @@ import (
 )
 
 type Router struct {
-	handler    *handler.Handler
+	handler    *Handler
 	verifier   *security.TokenManager
 	authorizer *security.AdminAuthorizer
 }
 
 func NewRouter(service *usecase.DocumentService, verifier *security.TokenManager, authorizer *security.AdminAuthorizer) *Router {
-	return &Router{handler: handler.NewHandler(service), verifier: verifier, authorizer: authorizer}
+	return &Router{handler: NewHandler(service), verifier: verifier, authorizer: authorizer}
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {

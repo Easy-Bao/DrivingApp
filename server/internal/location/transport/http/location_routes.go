@@ -1,16 +1,15 @@
 package http
 
 import (
-	locationhandler "github.com/Easy-Bao/DrivingApp/server/internal/location/transport/http/handler"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/go-chi/chi/v5"
 )
 
-type Router struct{ handler *locationhandler.Handler }
+type Router struct{ handler *Handler }
 
 func NewRouter(service *usecase.LocationService) *Router {
-	return &Router{handler: locationhandler.NewHandler(service)}
+	return &Router{handler: NewHandler(service)}
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {
