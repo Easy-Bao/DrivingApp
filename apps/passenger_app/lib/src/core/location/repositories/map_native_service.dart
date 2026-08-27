@@ -218,7 +218,11 @@ class MapNativeService {
     }
     return rawPlaces
         .whereType<Map>()
-        .map((item) => PlaceModel.fromJson(Map<String, dynamic>.from(item)))
-        .toList();
+        .map(
+          (item) => PlaceModel.fromJson(
+            decodeObjectMap(item, message: 'Place item is invalid.'),
+          ),
+        )
+        .toList(growable: false);
   }
 }

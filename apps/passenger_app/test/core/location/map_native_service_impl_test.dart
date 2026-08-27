@@ -103,6 +103,42 @@ void main() {
       });
     });
 
+    test('searchPlaces skips malformed non-object items safely', () async {
+      dio.httpClientAdapter = _MockHttpClientAdapter((options) {
+        if (options.uri.path == '/api/v1/location/search') {
+          return ResponseBody.fromString(
+            jsonEncode({
+              'places': [
+                'malformed',
+                {
+                  'id': 'search_2',
+                  'name': 'Valid place',
+                  'fullAddress': 'Valid place, Pagadian City',
+                  'latitude': 7.8282,
+                  'longitude': 123.4361,
+                },
+              ],
+            }),
+            200,
+            headers: {
+              Headers.contentTypeHeader: [Headers.jsonContentType],
+            },
+          );
+        }
+        return ResponseBody.fromString('Not Found', 404);
+      });
+
+      final result = await service.searchPlaces(query: 'Valid');
+
+      expect(result.isRight(), isTrue);
+      result.fold((failure) => fail('Expected valid place: $failure'), (
+        places,
+      ) {
+        expect(places, hasLength(1));
+        expect(places.single.name, 'Valid place');
+      });
+    });
+
     test('reverseGeocode handles 404 not found cleanly', () async {
       dio.httpClientAdapter = _MockHttpClientAdapter((options) {
         return ResponseBody.fromString(jsonEncode({'error': 'Not found'}), 404);

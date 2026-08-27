@@ -102,6 +102,31 @@ void main() {
       });
     });
 
+    test(
+      'searchPlaces returns a safe parse failure for malformed items',
+      () async {
+        dio.httpClientAdapter = _MockHttpClientAdapter((options) {
+          return ResponseBody.fromString(
+            jsonEncode({
+              'places': ['malformed'],
+            }),
+            200,
+            headers: {
+              Headers.contentTypeHeader: [Headers.jsonContentType],
+            },
+          );
+        });
+
+        final result = await service.searchPlaces(query: 'Central');
+
+        expect(result.isLeft(), isTrue);
+        result.fold(
+          (failure) => expect(failure, isA<PlaceParseError>()),
+          (_) => fail('Expected malformed place data to be rejected.'),
+        );
+      },
+    );
+
     test('reverseGeocode handles 404 not found cleanly', () async {
       dio.httpClientAdapter = _MockHttpClientAdapter((options) {
         return ResponseBody.fromString(jsonEncode({'error': 'Not found'}), 404);

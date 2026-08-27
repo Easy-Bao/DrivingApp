@@ -82,15 +82,7 @@ class MapNativeService {
         userLng: userLng ?? proximityLng,
       );
 
-      final List<dynamic> dataList =
-          (responseData['places'] ?? responseData['results'] ?? [])
-              as List<dynamic>;
-
-      final places = dataList
-          .map((item) => PlaceModel.fromJson(item as Map<String, dynamic>))
-          .toList();
-
-      return right(places);
+      return right(_parsePlaces(responseData));
     } on DioException catch (e) {
       dev.log(
         'searchPlaces network failure: ${e.type.name}',
@@ -206,15 +198,7 @@ class MapNativeService {
         page: page,
       );
 
-      final List<dynamic> dataList =
-          (responseData['places'] ?? responseData['results'] ?? [])
-              as List<dynamic>;
-
-      final places = dataList
-          .map((item) => PlaceModel.fromJson(item as Map<String, dynamic>))
-          .toList();
-
-      return right(places);
+      return right(_parsePlaces(responseData));
     } on DioException catch (e) {
       dev.log(
         'getNearbyPois network failure: ${e.type.name}',
@@ -225,5 +209,19 @@ class MapNativeService {
       dev.log('getNearbyPois parse error', name: 'MapNativeService');
       return left(const PlaceParseError());
     }
+  }
+
+  static List<PlaceModel> _parsePlaces(Map<String, dynamic> responseData) {
+    final rawPlaces = responseData['places'] ?? responseData['results'] ?? [];
+    if (rawPlaces is! List) {
+      throw const FormatException('Invalid places response.');
+    }
+    return rawPlaces
+        .map(
+          (item) => PlaceModel.fromJson(
+            decodeObjectMap(item, message: 'Place item is invalid.'),
+          ),
+        )
+        .toList(growable: false);
   }
 }
