@@ -35,6 +35,7 @@ func JSON(writer http.ResponseWriter, status int, value any) {
 		})
 		return
 	}
+	writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 	writeJSON(writer, status, payload)
 }
 

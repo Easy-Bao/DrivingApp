@@ -28,6 +28,26 @@ func TestErrorUsesProblemContractAndKeepsLegacyMessageFields(t *testing.T) {
 	}
 }
 
+func TestJSONWritesJSONContentTypeBeforeStatus(t *testing.T) {
+	writer := httptest.NewRecorder()
+
+	JSON(writer, http.StatusOK, map[string]string{"status": "ok"})
+
+	if writer.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", writer.Code, http.StatusOK)
+	}
+	if contentType := writer.Header().Get("Content-Type"); contentType != "application/json; charset=utf-8" {
+		t.Fatalf("content type = %q", contentType)
+	}
+	var payload map[string]string
+	if err := json.Unmarshal(writer.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("decode payload: %v", err)
+	}
+	if payload["status"] != "ok" {
+		t.Fatalf("payload = %#v", payload)
+	}
+}
+
 func TestJSONUsesSafeProblemWhenPayloadCannotBeEncoded(t *testing.T) {
 	writer := httptest.NewRecorder()
 	JSON(writer, http.StatusOK, struct{ Callback func() }{})
