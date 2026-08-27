@@ -3,8 +3,10 @@ import 'package:driver_app/src/features/auth/domain/entities/auth_credentials.da
 import 'package:driver_app/src/features/auth/bloc/sign_in/sign_in_failure_message.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_core/shared_core.dart';
 
-part 'sign_in_event.dart';
+export 'package:shared_core/shared_core.dart' show SignInEvent, SignInSubmitted;
+
 part 'sign_in_state.dart';
 
 class SignInBloc extends Bloc<SignInEvent, SignInState> {

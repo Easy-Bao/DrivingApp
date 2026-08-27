@@ -1,4 +1,4 @@
-part of 'sign_in_bloc.dart';
+import 'package:equatable/equatable.dart';
 
 sealed class SignInEvent extends Equatable {
   const SignInEvent();

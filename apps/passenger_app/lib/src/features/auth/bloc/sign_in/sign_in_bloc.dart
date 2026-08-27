@@ -4,8 +4,10 @@ import 'package:passenger_app/src/features/auth/domain/entities/auth_credentials
 import 'package:passenger_app/src/features/auth/domain/usecases/sign_in_use_case.dart';
 import 'package:passenger_app/src/features/auth/view/validation/auth_failure_message.dart';
 import 'package:passenger_app/src/features/auth/view/validation/auth_form_validator.dart';
+import 'package:shared_core/shared_core.dart';
 
-part 'sign_in_event.dart';
+export 'package:shared_core/shared_core.dart' show SignInEvent, SignInSubmitted;
+
 part 'sign_in_state.dart';
 
 class SignInBloc extends Bloc<SignInEvent, SignInState> {

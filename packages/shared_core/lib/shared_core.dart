@@ -1,3 +1,6 @@
+export 'src/auth/forgot_password_event.dart';
+export 'src/auth/forgot_password_state.dart';
+export 'src/auth/sign_in_event.dart';
 export 'src/chat/data_sources/chat_remote_data_source.dart';
 export 'src/chat/models/chat_event.dart';
 export 'src/chat/models/chat_message.dart';
