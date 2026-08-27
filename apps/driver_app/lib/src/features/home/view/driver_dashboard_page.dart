@@ -56,6 +56,12 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   String? _submittingBidId;
   String? _completingTripId;
   int _pollGeneration = 0;
+  int _locationAccessFailures = 0;
+  bool _isCheckingLocationAccess = false;
+  bool _isForcingOfflineForLocationLoss = false;
+
+  static const _locationAccessPollInterval = Duration(seconds: 5);
+  static const _locationAccessFailureThreshold = 2;
 
   @override
   void initState() {
@@ -129,7 +135,17 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   Future<void> _refreshLocationAfterResume() async {
     if (!mounted) return;
-    final accessState = await LocationService.getAccessState();
+    final LocationAccessState accessState;
+    try {
+      accessState = await LocationService.getAccessState();
+    } catch (error, stackTrace) {
+      dev.log(
+        'Unable to verify driver location access after resume.',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return;
+    }
     if (!mounted) return;
     final dashboardState = BlocProvider.of<DashboardCubit>(context).state;
     if (accessState != LocationAccessState.ready) {
@@ -147,46 +163,90 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   void _startLocationAccessMonitoring() {
-    _locationAccessPoller ??= Timer.periodic(const Duration(seconds: 2), (
-      timer,
-    ) async {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
+    _locationAccessPoller ??= Timer.periodic(
+      _locationAccessPollInterval,
+      (_) => unawaited(_checkLocationAccess()),
+    );
+    unawaited(_checkLocationAccess());
+  }
 
+  Future<void> _checkLocationAccess() async {
+    if (!mounted ||
+        _isCheckingLocationAccess ||
+        _isForcingOfflineForLocationLoss) {
+      return;
+    }
+
+    final cubit = BlocProvider.of<DashboardCubit>(context);
+    if (!cubit.state.isOnline && _locationAccessPoller != null) {
+      _stopLocationAccessMonitoring();
+      return;
+    }
+
+    _isCheckingLocationAccess = true;
+    try {
       final accessState = await LocationService.getAccessState();
       if (!mounted) return;
+
       if (accessState == LocationAccessState.ready) {
-        timer.cancel();
-        _locationAccessPoller = null;
+        _locationAccessFailures = 0;
+        if (!cubit.state.isOnline) _stopLocationAccessMonitoring();
         return;
       }
 
-      if (BlocProvider.of<DashboardCubit>(context).state.isOnline) {
-        timer.cancel();
-        _locationAccessPoller = null;
-        unawaited(_forceOfflineForLocationLoss());
+      _locationAccessFailures++;
+      if (!cubit.state.isOnline ||
+          _locationAccessFailures < _locationAccessFailureThreshold) {
+        return;
       }
-    });
+
+      _stopLocationAccessMonitoring();
+      await _forceOfflineForLocationLoss();
+    } catch (error, stackTrace) {
+      // A plugin/OS read failure is not proof that the driver revoked access.
+      // Keep the driver's intent and let the next bounded check reconcile it.
+      dev.log(
+        'Unable to verify driver location access.',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    } finally {
+      _isCheckingLocationAccess = false;
+    }
+  }
+
+  void _stopLocationAccessMonitoring() {
+    _locationAccessPoller?.cancel();
+    _locationAccessPoller = null;
+    _locationAccessFailures = 0;
   }
 
   Future<void> _forceOfflineForLocationLoss() async {
-    if (!mounted) return;
-    final position = LocationService.lastPosition;
-    await BlocProvider.of<DashboardCubit>(
-      context,
-    ).forceOffline(lat: position?.latitude ?? 0, lng: position?.longitude ?? 0);
-    if (mounted) context.goNamed(DriverLocationRoutes.gate);
+    if (!mounted || _isForcingOfflineForLocationLoss) return;
+    final cubit = BlocProvider.of<DashboardCubit>(context);
+    if (!cubit.state.isOnline) return;
+
+    _isForcingOfflineForLocationLoss = true;
+    try {
+      final position = LocationService.lastPosition;
+      await cubit.forceOffline(
+        lat: position?.latitude ?? 0,
+        lng: position?.longitude ?? 0,
+      );
+      if (mounted && !cubit.state.isOnline) {
+        context.goNamed(DriverLocationRoutes.gate);
+      }
+    } finally {
+      _isForcingOfflineForLocationLoss = false;
+    }
   }
 
   Future<void> _resumeOnlineTelemetry() async {
     if (_isResumingOnline) return;
     _isResumingOnline = true;
     try {
-      await LocationService.getCurrentPosition();
+      final position = await LocationService.getCurrentPosition();
       if (!mounted) return;
-      final position = LocationService.lastPosition;
       final cubit = BlocProvider.of<DashboardCubit>(context);
       if (!cubit.state.isOnline || position == null) return;
 
@@ -200,12 +260,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       // tick can reconcile the server without changing the driver's intent.
       _startPolling();
     } catch (error) {
-      dev.log('Unable to restore online driver telemetry: $error');
-      if (!mounted) return;
-      final position = LocationService.lastPosition;
-      await BlocProvider.of<DashboardCubit>(context).forceOffline(
-        lat: position?.latitude ?? 0,
-        lng: position?.longitude ?? 0,
+      dev.log(
+        'Unable to restore online driver telemetry; preserving online intent.',
+        error: error,
       );
     } finally {
       _isResumingOnline = false;
@@ -230,12 +287,22 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   void _startPolling() {
     final pollGeneration = ++_pollGeneration;
+    _startLocationAccessMonitoring();
     _locationSubscription?.cancel();
-    _locationSubscription = LocationService.getPositionStream().listen((pos) {
-      _liveMapBloc?.add(
-        DispatchTelemetryLocationEvent(lat: pos.latitude, lng: pos.longitude),
-      );
-    });
+    _locationSubscription = LocationService.getPositionStream().listen(
+      (pos) {
+        _liveMapBloc?.add(
+          DispatchTelemetryLocationEvent(lat: pos.latitude, lng: pos.longitude),
+        );
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        dev.log(
+          'Driver location stream failed.',
+          error: error,
+          stackTrace: stackTrace,
+        );
+      },
+    );
 
     _presenceHeartbeatTimer?.cancel();
     _presenceHeartbeatTimer = Timer.periodic(
@@ -339,6 +406,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _rideTriggerTimer = null;
     _presenceHeartbeatTimer?.cancel();
     _presenceHeartbeatTimer = null;
+    if (!BlocProvider.of<DashboardCubit>(context).state.isOnline) {
+      _stopLocationAccessMonitoring();
+    }
     final realtimeClient = _realtimeClient;
     if (realtimeClient != null) {
       unawaited(realtimeClient.stop());
@@ -359,8 +429,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     }
 
     try {
-      if (requestedOnline &&
-          await LocationService.getAccessState() != LocationAccessState.ready) {
+      if (requestedOnline && await _hasReadyLocationAccess(context) == false) {
         if (context.mounted) {
           context.goNamed(DriverLocationRoutes.gate);
         }
@@ -399,6 +468,27 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         }
         setState(() => _isTogglingOnline = false);
       }
+    }
+  }
+
+  Future<bool> _hasReadyLocationAccess(BuildContext context) async {
+    try {
+      return await LocationService.getAccessState() ==
+          LocationAccessState.ready;
+    } catch (error, stackTrace) {
+      dev.log(
+        'Unable to verify location access before changing availability.',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      if (context.mounted) {
+        CustomToast.show(
+          context,
+          ErrorHandler.getErrorMessage(error, stackTrace),
+          isError: true,
+        );
+      }
+      return false;
     }
   }
 
@@ -578,30 +668,38 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<DashboardCubit, DashboardState>(
-      listenWhen: (previous, current) =>
-          previous.isOnline != current.isOnline ||
-          previous.errorMessage != current.errorMessage,
-      listener: (context, state) {
-        final errorMessage = state.errorMessage;
-        if (errorMessage != null) {
-          CustomToast.show(context, errorMessage, isError: true);
-        }
-        if (state.isOnline) {
-          _availabilityCtrl.forward();
-          // A user-triggered transition already establishes telemetry and
-          // starts the background service in the repository. Re-running the
-          // full online handshake here creates a duplicate request and can
-          // race the first transition. Restored sessions still need the
-          // reconciliation performed by _resumeOnlineTelemetry().
-          if (!_isTogglingOnline) {
-            unawaited(_resumeOnlineTelemetry());
-          }
-        } else {
-          _availabilityCtrl.reverse();
-          _stopPolling();
-        }
-      },
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<DashboardCubit, DashboardState>(
+          listenWhen: (previous, current) =>
+              previous.errorMessage != current.errorMessage &&
+              current.errorMessage != null,
+          listener: (context, state) {
+            CustomToast.show(context, state.errorMessage!, isError: true);
+          },
+        ),
+        BlocListener<DashboardCubit, DashboardState>(
+          listenWhen: (previous, current) =>
+              previous.isOnline != current.isOnline,
+          listener: (context, state) {
+            if (state.isOnline) {
+              _availabilityCtrl.forward();
+              // A user-triggered transition already establishes telemetry and
+              // starts the background service in the repository. Re-running
+              // the full online handshake here creates a duplicate request
+              // and can race the first transition. Restored sessions still
+              // need the reconciliation performed by
+              // _resumeOnlineTelemetry().
+              if (!_isTogglingOnline) {
+                unawaited(_resumeOnlineTelemetry());
+              }
+            } else {
+              _availabilityCtrl.reverse();
+              _stopPolling();
+            }
+          },
+        ),
+      ],
       child: BlocBuilder<DashboardCubit, DashboardState>(
         builder: (context, state) {
           final activeTrips = state.activeTrips;

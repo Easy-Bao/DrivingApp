@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:geolocator/geolocator.dart';
 import 'package:driver_app/src/core/location/repositories/map_native_service.dart';
 
@@ -44,9 +46,9 @@ class LocationService {
   }
 
   static Future<Position?> getCurrentPosition() async {
-    if (await getAccessState() != LocationAccessState.ready) return null;
-
     try {
+      if (await getAccessState() != LocationAccessState.ready) return null;
+
       _lastPosition = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
@@ -54,7 +56,16 @@ class LocationService {
         ),
       );
       return _lastPosition;
-    } catch (_) {
+    } catch (error, stackTrace) {
+      // Location plugins can fail while the OS permission/service dialog is
+      // changing. A failed read is recoverable and must not be mistaken for
+      // an explicit request to take the driver offline.
+      developer.log(
+        'Unable to read the current device location.',
+        name: 'driver-location',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return null;
     }
   }
