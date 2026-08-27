@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -91,7 +92,9 @@ func (handler *Handler) DriverContent(writer http.ResponseWriter, request *http.
 		writeServiceError(writer, err)
 		return
 	}
-	writeDocumentContent(writer, content)
+	if err := writeDocumentContent(writer, content); err != nil {
+		slog.DebugContext(request.Context(), "write driver document response failed", "error", err)
+	}
 }
 
 func (handler *Handler) ReviewQueue(writer http.ResponseWriter, request *http.Request) {
@@ -152,7 +155,9 @@ func (handler *Handler) AdminContent(writer http.ResponseWriter, request *http.R
 		writeServiceError(writer, err)
 		return
 	}
-	writeDocumentContent(writer, content)
+	if err := writeDocumentContent(writer, content); err != nil {
+		slog.DebugContext(request.Context(), "write admin document response failed", "error", err)
+	}
 }
 
 func actorID(request *http.Request) (int, bool) {
@@ -168,13 +173,14 @@ func documentID(request *http.Request) (int, error) {
 	return id, nil
 }
 
-func writeDocumentContent(writer http.ResponseWriter, content domain.Content) {
+func writeDocumentContent(writer http.ResponseWriter, content domain.Content) error {
 	writer.Header().Set("Cache-Control", "private, no-store")
 	writer.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", documentFilename(content.Document)))
 	writer.Header().Set("Content-Length", strconv.Itoa(len(content.Bytes)))
 	writer.Header().Set("Content-Type", content.Document.ContentType)
 	writer.WriteHeader(http.StatusOK)
-	_, _ = writer.Write(content.Bytes)
+	_, err := writer.Write(content.Bytes)
+	return err
 }
 
 func documentFilename(document domain.Document) string {

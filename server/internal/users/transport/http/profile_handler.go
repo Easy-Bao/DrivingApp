@@ -3,6 +3,7 @@ package http
 import (
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -158,7 +159,9 @@ func (handler *Handler) Avatar(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", avatar.ContentType)
 	w.Header().Set("Content-Length", strconv.Itoa(len(avatar.Bytes)))
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(avatar.Bytes)
+	if _, err := w.Write(avatar.Bytes); err != nil {
+		slog.DebugContext(r.Context(), "write avatar response failed", "error", err)
+	}
 }
 
 func (handler *Handler) AvatarUpload(w http.ResponseWriter, r *http.Request) {
