@@ -684,9 +684,10 @@ func rideErrorStatus(err error) int {
 		return 503
 	case errors.Is(err, domain.ErrUnauthorizedRide), errors.Is(err, domain.ErrUnauthorizedSession):
 		return 403
-	case errors.Is(err, domain.ErrActiveBooking), errors.Is(err, domain.ErrDriverAtCapacity), errors.Is(err, domain.ErrDriverUnavailable):
-		return 409
-	case errors.Is(err, domain.ErrDuplicateBid):
+	case errors.Is(err, domain.ErrActiveBooking),
+		errors.Is(err, domain.ErrDriverAtCapacity),
+		errors.Is(err, domain.ErrDriverUnavailable),
+		errors.Is(err, domain.ErrDuplicateBid):
 		return 409
 	default:
 		return 500
