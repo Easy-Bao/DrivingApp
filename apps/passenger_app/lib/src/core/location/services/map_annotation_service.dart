@@ -30,7 +30,7 @@ class MapAnnotationService {
     Color? color,
     VoidCallback? onTap,
   }) async {
-    final mapCtrl = controller.native as mapbox.MapboxMap;
+    final mapCtrl = controller.native;
     final annotationManager = await mapCtrl.annotations
         .createPointAnnotationManager();
 
@@ -280,7 +280,7 @@ class MapAnnotationService {
       );
     }
 
-    final mapCtrl = controller.native as mapbox.MapboxMap;
+    final mapCtrl = controller.native;
     final annotationManager = await mapCtrl.annotations
         .createPolylineAnnotationManager();
 
@@ -347,76 +347,6 @@ class MapAnnotationService {
         point[1] <= 90 &&
         point[0] >= -180 &&
         point[0] <= 180;
-  }
-
-  static Future<mapbox.PolylineAnnotationManager> addAnimatedPolyline(
-    AppMapController controller,
-    List<List<double>> points, {
-    Color color = AppTheme.primaryColor,
-    double width = 5.0,
-    Duration step = const Duration(milliseconds: 45),
-  }) async {
-    final validPoints = points.where((point) => point.length >= 2).toList();
-    if (validPoints.length < 2) {
-      throw ArgumentError.value(
-        points,
-        'points',
-        'at least two points required',
-      );
-    }
-
-    final mapCtrl = controller.native as mapbox.MapboxMap;
-    final annotationManager = await mapCtrl.annotations
-        .createPolylineAnnotationManager();
-    final annotation = await annotationManager.create(
-      mapbox.PolylineAnnotationOptions(
-        geometry: mapbox.LineString(
-          coordinates: validPoints
-              .take(2)
-              .map((point) => mapbox.Position(point[0], point[1]))
-              .toList(),
-        ),
-        lineWidth: width,
-        lineColor: color.toARGB32(),
-        lineJoin: mapbox.LineJoin.ROUND,
-      ),
-    );
-
-    for (var end = 3; end <= validPoints.length; end++) {
-      await Future<void>.delayed(step);
-      annotation.geometry = mapbox.LineString(
-        coordinates: validPoints
-            .take(end)
-            .map((point) => mapbox.Position(point[0], point[1]))
-            .toList(),
-      );
-      await annotationManager.update(annotation);
-    }
-    return annotationManager;
-  }
-
-  static Future<mapbox.PolylineAnnotationManager> addAnimatedPolylineSegment(
-    AppMapController controller,
-    List<List<double>> points, {
-    Color color = AppTheme.primaryColor,
-    double width = 5.0,
-  }) async {
-    final mapCtrl = controller.native as mapbox.MapboxMap;
-    final annotationManager = await mapCtrl.annotations
-        .createPolylineAnnotationManager();
-
-    final coordinates = points.map((p) => mapbox.Position(p[0], p[1])).toList();
-
-    await annotationManager.create(
-      mapbox.PolylineAnnotationOptions(
-        geometry: mapbox.LineString(coordinates: coordinates),
-        lineWidth: width,
-        lineColor: color.toARGB32(),
-        lineJoin: mapbox.LineJoin.ROUND,
-      ),
-    );
-
-    return annotationManager;
   }
 
   static Future<void> clearAnnotations(

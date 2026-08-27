@@ -20,7 +20,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   mapbox.PointAnnotationManager? _riderMarkerManager;
   mapbox.PointAnnotationManager? _driverMarkerManager;
   mapbox.PolylineAnnotationManager? _routePolylineManager;
-  final List<dynamic> _markerManagers = [];
+  final List<mapbox.PointAnnotationManager> _markerManagers = [];
   final List<AddMapMarkerEvent> _pendingMarkers = [];
   DrawDriverToRiderRouteEvent? _pendingRoute;
   FitMapToCoordinatesEvent? _pendingCameraFit;

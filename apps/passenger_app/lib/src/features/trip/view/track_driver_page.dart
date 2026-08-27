@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
@@ -63,9 +64,9 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
   _MapUpdateRequest? _pendingMapUpdate;
   bool _hasHandledTerminalState = false;
   DateTime? _lastCameraFitAt;
-  dynamic _passengerMarkerManager;
-  dynamic _driverMarkerManager;
-  dynamic _routeLineManager;
+  mapbox.PointAnnotationManager? _passengerMarkerManager;
+  mapbox.PointAnnotationManager? _driverMarkerManager;
+  mapbox.PolylineAnnotationManager? _routeLineManager;
   StreamSubscription<Position>? _locationSubscription;
   LiveMapBloc? _liveMapBloc;
 
@@ -308,8 +309,8 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
         point[1] <= 90;
   }
 
-  Future<dynamic> _upsertMarker(
-    dynamic annotationManager,
+  Future<mapbox.PointAnnotationManager> _upsertMarker(
+    mapbox.PointAnnotationManager? annotationManager,
     AppMapController mapController,
     double lat,
     double lng, {
@@ -340,8 +341,8 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
     return annotationManager;
   }
 
-  Future<dynamic> _upsertRoute(
-    dynamic annotationManager,
+  Future<mapbox.PolylineAnnotationManager> _upsertRoute(
+    mapbox.PolylineAnnotationManager? annotationManager,
     AppMapController mapController,
     List<List<double>> routePoints,
   ) async {

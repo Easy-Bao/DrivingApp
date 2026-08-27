@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
@@ -423,7 +424,7 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
 
   Widget? _cachedMapView;
   AppMapController? _mapController;
-  dynamic _currentLocationMarker;
+  mapbox.PointAnnotationManager? _currentLocationMarker;
   int _locationMarkerRequestId = 0;
 
   Widget _getMapView(double lat, double lng) {
