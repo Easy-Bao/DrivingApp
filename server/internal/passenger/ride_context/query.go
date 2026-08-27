@@ -5,9 +5,13 @@ import (
 	"errors"
 	"strings"
 	"sync"
+	"time"
 )
 
-const recentDestinationLimit = 25
+const (
+	recentDestinationLimit = 25
+	currentAddressTimeout  = 750 * time.Millisecond
+)
 
 var (
 	ErrInvalidPassengerID = errors.New("passenger id is invalid")
@@ -47,7 +51,7 @@ func (service *RideContextQueryService) Load(
 
 	if passengerID == nil {
 		if coordinates != nil && service.addressResolver != nil {
-			address, err := service.addressResolver.ResolveAddress(ctx, *coordinates)
+			address, err := resolveAddress(ctx, service.addressResolver, *coordinates)
 			if err == nil {
 				snapshot.CurrentAddress = strings.TrimSpace(address)
 			}
@@ -68,7 +72,7 @@ func (service *RideContextQueryService) Load(
 	)
 	if coordinates != nil && service.addressResolver != nil {
 		waitGroup.Go(func() {
-			address, addressError = service.addressResolver.ResolveAddress(ctx, *coordinates)
+			address, addressError = resolveAddress(ctx, service.addressResolver, *coordinates)
 		})
 	}
 
@@ -86,6 +90,16 @@ func (service *RideContextQueryService) Load(
 	}
 	snapshot.RecentLocations = recentLocations(destinations)
 	return snapshot, nil
+}
+
+func resolveAddress(
+	ctx context.Context,
+	resolver AddressResolver,
+	coordinates Coordinates,
+) (string, error) {
+	addressContext, cancel := context.WithTimeout(ctx, currentAddressTimeout)
+	defer cancel()
+	return resolver.ResolveAddress(addressContext, coordinates)
 }
 
 func recentLocations(destinations []RecentDestination) []RecentLocation {

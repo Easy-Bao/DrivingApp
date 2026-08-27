@@ -75,6 +75,19 @@ func (resolver coordinatedAddressResolver) ResolveAddress(
 	return "Mountain View", nil
 }
 
+type contextBoundAddressResolver struct {
+	started chan<- struct{}
+}
+
+func (resolver contextBoundAddressResolver) ResolveAddress(
+	ctx context.Context,
+	_ ridecontext.Coordinates,
+) (string, error) {
+	close(resolver.started)
+	<-ctx.Done()
+	return "", ctx.Err()
+}
+
 func TestGuestDashboardReturnsLocationWithoutPassengerHistory(t *testing.T) {
 	destinations := &recentDestinationReader{}
 	router := newRouter(destinations, addressResolver{address: "Pagadian City"})
@@ -200,6 +213,49 @@ func TestAuthenticatedDashboardLoadsLocationAndHistoryConcurrently(t *testing.T)
 		}
 	case <-time.After(time.Second):
 		t.Fatal("ride context query did not finish after both dependencies were released")
+	}
+}
+
+func TestAuthenticatedDashboardDoesNotWaitForUnboundedAddressResolution(t *testing.T) {
+	addressStarted := make(chan struct{})
+	service := ridecontext.NewRideContextQueryService(
+		&recentDestinationReader{destinations: []ridecontext.RecentDestination{{
+			Status: "completed",
+			Title:  "Aikido of Mountain View",
+		}}},
+		contextBoundAddressResolver{started: addressStarted},
+	)
+
+	result := make(chan struct {
+		snapshot ridecontext.RideContextSnapshot
+		err      error
+	}, 1)
+	go func() {
+		snapshot, err := service.Load(
+			context.Background(),
+			intPointer(42),
+			&ridecontext.Coordinates{Latitude: 7.8, Longitude: 123.4},
+		)
+		result <- struct {
+			snapshot ridecontext.RideContextSnapshot
+			err      error
+		}{snapshot: snapshot, err: err}
+	}()
+
+	waitForSignal(t, addressStarted, "bounded address resolution")
+	select {
+	case response := <-result:
+		if response.err != nil {
+			t.Fatalf("load ride context: %v", response.err)
+		}
+		if response.snapshot.CurrentAddress != "" {
+			t.Fatalf("current address = %q, want empty after timeout", response.snapshot.CurrentAddress)
+		}
+		if len(response.snapshot.RecentLocations) != 1 {
+			t.Fatalf("recent locations = %#v, want one location", response.snapshot.RecentLocations)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("ride context query waited for an unbounded address resolver")
 	}
 }
 
