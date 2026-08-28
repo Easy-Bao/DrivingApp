@@ -5,13 +5,19 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 class CustomToast {
   CustomToast._();
 
+  static OverlayEntry? _activeEntry;
+  static Timer? _dismissTimer;
+
   static void show(
     BuildContext context,
     String message, {
     bool isError = false,
     Duration duration = const Duration(seconds: 3),
   }) {
-    final overlayState = Overlay.of(context);
+    final overlayState = Overlay.maybeOf(context);
+    if (overlayState == null) return;
+
+    dismiss();
     late OverlayEntry overlayEntry;
 
     overlayEntry = OverlayEntry(
@@ -19,12 +25,23 @@ class CustomToast {
     );
 
     overlayState.insert(overlayEntry);
+    _activeEntry = overlayEntry;
 
-    Timer(duration, () {
-      try {
-        overlayEntry.remove();
-      } catch (_) {}
+    _dismissTimer = Timer(duration, () {
+      if (identical(_activeEntry, overlayEntry)) {
+        dismiss();
+      }
     });
+  }
+
+  static void dismiss() {
+    _dismissTimer?.cancel();
+    _dismissTimer = null;
+    final entry = _activeEntry;
+    _activeEntry = null;
+    try {
+      entry?.remove();
+    } catch (_) {}
   }
 }
 
@@ -43,6 +60,7 @@ class _ToastWidgetState extends State<_ToastWidget>
   late AnimationController _controller;
   late Animation<double> _opacity;
   late Animation<Offset> _offset;
+  Timer? _reverseTimer;
 
   @override
   void initState() {
@@ -64,7 +82,7 @@ class _ToastWidgetState extends State<_ToastWidget>
 
     unawaited(_controller.forward());
 
-    Timer(const Duration(milliseconds: 2700), () {
+    _reverseTimer = Timer(const Duration(milliseconds: 2700), () {
       if (mounted) {
         unawaited(_controller.reverse());
       }
@@ -73,6 +91,7 @@ class _ToastWidgetState extends State<_ToastWidget>
 
   @override
   void dispose() {
+    _reverseTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
