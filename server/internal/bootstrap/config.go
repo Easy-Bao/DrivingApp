@@ -2,7 +2,9 @@ package bootstrap
 
 import (
 	"fmt"
+	"net"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,6 +20,7 @@ type Config struct {
 	DatabaseURL       string
 	RedisURL          string
 	MapboxAccessToken string
+	Host              string
 	Port              string
 	TrustedProxyCIDRs string
 	AdminUserIDs      string
@@ -41,6 +44,11 @@ func LoadConfig() (Config, error) {
 		return Config{}, err
 	}
 
+	port, err := requiredPortEnv("API_PORT")
+	if err != nil {
+		return Config{}, err
+	}
+
 	pricing, err := ridesusecase.LoadPricingConfig()
 	if err != nil {
 		return Config{}, err
@@ -55,7 +63,8 @@ func LoadConfig() (Config, error) {
 		DatabaseURL:       databaseURL,
 		RedisURL:          redisURL,
 		MapboxAccessToken: os.Getenv("MAPBOX_ACCESS_TOKEN"),
-		Port:              apiPort(),
+		Host:              apiHost(),
+		Port:              port,
 		TrustedProxyCIDRs: os.Getenv("TRUSTED_PROXY_CIDRS"),
 		AdminUserIDs:      os.Getenv("ADMIN_USER_IDS"),
 		Security:          middleware.SecurityConfigFromEnv(),
@@ -64,20 +73,33 @@ func LoadConfig() (Config, error) {
 	}, nil
 }
 
+func apiHost() string {
+	if value := strings.TrimSpace(os.Getenv("API_HOST")); value != "" {
+		return value
+	}
+	return "127.0.0.1"
+}
+
+func apiAddress(host, port string) string {
+	return net.JoinHostPort(host, port)
+}
+
+func requiredPortEnv(key string) (string, error) {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		return "", fmt.Errorf("%s is required", key)
+	}
+	port, err := strconv.Atoi(value)
+	if err != nil || port < 1 || port > 65535 {
+		return "", fmt.Errorf("%s must be between 1 and 65535", key)
+	}
+	return value, nil
+}
+
 func requiredEnv(key string) (string, error) {
 	value := strings.TrimSpace(os.Getenv(key))
 	if value == "" {
 		return "", fmt.Errorf("%s is required", key)
 	}
 	return value, nil
-}
-
-func apiPort() string {
-	if value := strings.TrimSpace(os.Getenv("API_PORT")); value != "" {
-		return value
-	}
-	if value := strings.TrimSpace(os.Getenv("GATEWAY_PORT")); value != "" {
-		return value
-	}
-	return "8000"
 }

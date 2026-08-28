@@ -65,8 +65,10 @@ dotenv_value() {
   local key="$1"
 
   awk -F= -v requested_key="$key" '
-    $1 == requested_key {
+    { key = $1; gsub(/^[[:space:]]+|[[:space:]]+$/, "", key) }
+    key == requested_key {
       value = substr($0, index($0, "=") + 1)
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)
       gsub(/^"|"$/, "", value)
       print value
       exit
@@ -83,21 +85,48 @@ require_environment() {
     POSTGRES_PASSWORD
     POSTGRES_DB
     JWT_SECRET
+    API_PORT
     GATEWAY_PORT
+    POSTGRES_PORT
+    POSTGRES_HOST_PORT
+    REDIS_PORT
+    REDIS_HOST_PORT
+    ADMIN_APP_PORT
+    ADMIN_APP_HOST_PORT
+    MAIL_PORT
   )
 
   for required_key in "${required_keys[@]}"; do
     if ! awk -F= -v requested_key="$required_key" '
-      $1 == requested_key && length($0) > length(requested_key) + 1 { found = 1 }
+      { key = $1; gsub(/^[[:space:]]+|[[:space:]]+$/, "", key) }
+      key == requested_key && length($0) > length(requested_key) + 1 { found = 1 }
       END { exit(found ? 0 : 1) }
     ' "$ENV_FILE"; then
       die "Missing or empty $required_key in $ENV_FILE"
     fi
   done
 
+  local configured_port
+  local port_key
+  local port_keys=(
+    API_PORT
+    GATEWAY_PORT
+    POSTGRES_PORT
+    POSTGRES_HOST_PORT
+    REDIS_PORT
+    REDIS_HOST_PORT
+    ADMIN_APP_PORT
+    ADMIN_APP_HOST_PORT
+    MAIL_PORT
+  )
+  for port_key in "${port_keys[@]}"; do
+    configured_port="$(dotenv_value "$port_key")"
+    [[ "$configured_port" =~ ^[1-9][0-9]*$ ]] || die "$port_key must be numeric in $ENV_FILE"
+    (( configured_port <= 65535 )) || die "$port_key must be between 1 and 65535 in $ENV_FILE"
+  done
+
   local configured_gateway_port
   configured_gateway_port="$(dotenv_value GATEWAY_PORT)"
-  [[ "$configured_gateway_port" =~ ^[0-9]+$ ]] || die "GATEWAY_PORT must be numeric in $ENV_FILE"
   gateway_port="$configured_gateway_port"
 }
 

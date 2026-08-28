@@ -3,8 +3,7 @@
 set dotenv-load
 set export
 
-api-base-url := env_var_or_default("API_BASE_URL", "http://127.0.0.1:8000")
-api-port := env_var_or_default("API_PORT", env_var_or_default("GATEWAY_PORT", "8000"))
+api-port := env_var("API_PORT")
 
 default:
     @just --list

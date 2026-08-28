@@ -39,7 +39,7 @@ func NewConfigFromEnv() Config {
 func configFromEnv(getenv func(string) string) Config {
 	return Config{
 		Host:     strings.TrimSpace(getenv("MAIL_HOST")),
-		Port:     integerEnv(getenv, "MAIL_PORT", 587),
+		Port:     integerEnv(getenv, "MAIL_PORT", 0),
 		Username: strings.TrimSpace(getenv("MAIL_USERNAME")),
 		Password: getenv("MAIL_PASSWORD"),
 		From:     strings.TrimSpace(getenv("MAIL_FROM")),

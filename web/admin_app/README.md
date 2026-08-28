@@ -10,7 +10,7 @@ deliberately outside this pull request.
 1. Create an untracked `.env` with `API_BASE_URL`, `ORIGIN`, `HOST`, and `PORT`.
 2. Start the Go API and Admin service.
 3. Run `bun install` and `bun run dev`.
-4. Open `http://localhost:5173`.
+4. Open the URL configured by `ORIGIN`.
 
 The SvelteKit server stores the eight-hour Admin JWT in an HttpOnly, SameSite
 cookie. Browser JavaScript never receives that token.

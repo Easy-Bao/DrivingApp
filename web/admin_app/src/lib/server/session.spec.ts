@@ -55,9 +55,9 @@ describe('admin session', () => {
   });
 
   it('requires Secure cookies outside local development', () => {
-    expect(adminSessionCookieIsSecure(new URL('http://localhost:5173'), true)).toBe(false);
-    expect(adminSessionCookieIsSecure(new URL('http://localhost:5173'), false)).toBe(false);
-    expect(adminSessionCookieIsSecure(new URL('https://localhost:5173'), true)).toBe(true);
+    expect(adminSessionCookieIsSecure(new URL('http://localhost'), true)).toBe(false);
+    expect(adminSessionCookieIsSecure(new URL('http://localhost'), false)).toBe(false);
+    expect(adminSessionCookieIsSecure(new URL('https://localhost'), true)).toBe(true);
     expect(adminSessionCookieIsSecure(new URL('http://admin.internal'), false)).toBe(true);
   });
 });

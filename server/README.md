@@ -31,7 +31,13 @@ cd server
 go run ./cmd/api
 ```
 
-The public client URL is `API_BASE_URL`, normally `http://127.0.0.1:8000`.
+The public client URL is configured by `API_BASE_URL`. Its host and listening
+port come from the environment (`API_HOST` and `API_PORT`); do not hard-code a
+deployment URL in the application.
+Native API binds to `API_HOST`, which defaults to `127.0.0.1`; set it to an
+explicit private interface only when a reverse proxy or container network
+requires it. Compose binds its host-published ports to loopback and sets the
+container API host to `0.0.0.0`.
 The API process owns REST, WebSocket, authentication, rides, location,
 realtime, chat, and admin routes.
 
@@ -167,7 +173,8 @@ Copy-Item .env.example .env
 notepad .env
 docker compose up --build -d postgres-db redis migrate api
 docker compose ps
-Invoke-RestMethod http://localhost:8000/health
+$gatewayPort = ((Get-Content .env | Where-Object { $_ -match '^\s*GATEWAY_PORT\s*=' } | Select-Object -First 1) -replace '^\s*GATEWAY_PORT\s*=\s*', '').Trim()
+Invoke-RestMethod "http://127.0.0.1:$gatewayPort/health"
 ```
 
 Before starting, set `POSTGRES_PASSWORD` and replace `JWT_SECRET` in `.env`
@@ -176,9 +183,9 @@ with private values; the JWT secret must be at least 32 characters. Add
 only needed when testing verification emails.
 
 The health command should return an object whose service is `api`.
-The readiness command is `http://localhost:8000/readyz` and returns `503`
+The readiness command is `http://127.0.0.1:<GATEWAY_PORT>/readyz` and returns `503`
 until PostgreSQL, Redis, and the generated Ent schema are available.
-API requests should use `http://localhost:8000/api/v1/...`.
+API requests should use `http://127.0.0.1:<GATEWAY_PORT>/api/v1/...`.
 
 ### Optional admin web app
 
@@ -188,7 +195,7 @@ Start the admin app after the API is running:
 docker compose up --build -d admin-app
 ```
 
-Then browse to `http://localhost:5173`.
+Then browse to the URL configured by `ADMIN_APP_ORIGIN`.
 
 ### Everyday commands
 
@@ -210,10 +217,10 @@ docker compose down --volumes
 
 | Service | Host port | Purpose |
 | --- | --- | --- |
-| API | `8000` | Public HTTP and WebSocket endpoint |
-| Admin app (optional) | `5173` | Admin web interface |
-| PostgreSQL | `55432` | Direct database access for local tooling |
-| Redis | `6379` | Cache, location state, and request protection |
+| API | `GATEWAY_PORT` | Public HTTP and WebSocket endpoint |
+| Admin app (optional) | `ADMIN_APP_HOST_PORT` | Admin web interface |
+| PostgreSQL | `POSTGRES_HOST_PORT` | Direct database access for local tooling |
+| Redis | `REDIS_HOST_PORT` | Cache, location state, and request protection |
 
 Change the corresponding values in `.env` if any of those ports are already
 in use. PostgreSQL data is stored in the Docker-managed `postgres-data` volume

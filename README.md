@@ -47,9 +47,10 @@ run:
 just server
 ```
 
-All clients use the Go API through one public `API_BASE_URL`, normally
-`http://127.0.0.1:8000`. Docker Compose remains available through the explicit
-`just services-up` or `just docker-up` recipes.
+All clients use the Go API through the one `API_BASE_URL` configured in each
+app's `.env`. The API bind host and service ports are configured in the root
+`.env`; Docker Compose remains available through the explicit `just
+services-up` or `just docker-up` recipes.
 
 ---
 

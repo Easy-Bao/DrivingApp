@@ -31,6 +31,7 @@ export 'src/models/ride_history_model.dart';
 export 'src/models/ride_snapshot.dart';
 export 'src/models/ride_update_model.dart';
 export 'src/models/route_model.dart';
+export 'src/network/api_base_uri.dart';
 export 'src/network/idempotency_interceptor.dart';
 export 'src/network/logging_interceptor.dart';
 export 'src/network/offset_page.dart';

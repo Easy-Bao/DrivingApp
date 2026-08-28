@@ -78,7 +78,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 
 	application := &Application{
 		server: &http.Server{
-			Addr:              ":" + config.Port,
+			Addr:              apiAddress(config.Host, config.Port),
 			Handler:           handler,
 			ReadHeaderTimeout: 5 * time.Second,
 			ReadTimeout:       10 * time.Second,

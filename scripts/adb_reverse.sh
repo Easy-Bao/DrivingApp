@@ -16,7 +16,21 @@ if (( ${#connected_device_ids[@]} == 0 )); then
   exit 1
 fi
 
-readonly gateway_port=8000
+readonly repository_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly env_file="$repository_root/.env"
+if [[ ! -f "$env_file" ]]; then
+  echo "Missing $env_file. Copy the team environment template first." >&2
+  exit 1
+fi
+
+gateway_port="$(awk -F= '
+  { key = $1; gsub(/^[[:space:]]+|[[:space:]]+$/, "", key) }
+  key == "GATEWAY_PORT" { value = $2; gsub(/^[[:space:]]+|[[:space:]]+$/, "", value); print value; exit }
+' "$env_file")"
+if [[ ! "$gateway_port" =~ ^[1-9][0-9]*$ || "$gateway_port" -gt 65535 ]]; then
+  echo "GATEWAY_PORT must be a valid TCP port in $env_file." >&2
+  exit 1
+fi
 failed_mapping_count=0
 
 echo "Reversing ports for all connected Android devices..."

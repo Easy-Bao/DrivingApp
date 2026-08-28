@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_core/shared_core.dart';
 
 enum AppEnvironment { development, staging, production }
 
@@ -49,7 +50,14 @@ class EnvConfig {
         'Security Configuration Error: API_BASE_URL is required.',
       );
     }
-    var uri = Uri.parse(rawUrl);
+    late Uri uri;
+    try {
+      uri = parseApiBaseUri(rawUrl);
+    } on FormatException {
+      throw StateError(
+        'Security Configuration Error: API_BASE_URL must be an HTTP(S) origin.',
+      );
+    }
     final physicalDevice =
         _value('PHYSICAL_DEVICE', _physicalDevice)?.toLowerCase() == 'true';
     if (!physicalDevice &&
@@ -65,7 +73,15 @@ class EnvConfig {
           'Security Configuration Error: ANDROID_EMULATOR_LOOPBACK_HOST is required for local Android URLs.',
         );
       }
-      uri = uri.replace(host: loopbackHost);
+      try {
+        uri = parseApiBaseUri(
+          uri.replace(host: loopbackHost.trim()).toString(),
+        );
+      } on FormatException {
+        throw StateError(
+          'Security Configuration Error: ANDROID_EMULATOR_LOOPBACK_HOST must be a valid host.',
+        );
+      }
     }
     return uri;
   }
