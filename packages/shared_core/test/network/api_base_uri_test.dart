@@ -27,4 +27,53 @@ void main() {
       );
     }
   });
+
+  test('requires HTTPS when insecure transport is disabled', () {
+    expect(
+      () =>
+          parseApiBaseUri('http://api.example.test', allowInsecureHttp: false),
+      throwsA(isA<FormatException>()),
+    );
+    expect(
+      parseApiBaseUri(
+        'https://api.example.test',
+        allowInsecureHttp: false,
+      ).toString(),
+      'https://api.example.test',
+    );
+  });
+
+  test('rewrites local Android origins only for emulator networking', () {
+    final emulatorUri = resolveMobileApiBaseUri(
+      rawUrl: 'http://127.0.0.1:8123',
+      allowInsecureHttp: true,
+      isAndroid: true,
+      isPhysicalDevice: false,
+      usesAdbReverse: false,
+      androidEmulatorLoopbackHost: '10.0.2.2',
+    );
+    final adbReverseUri = resolveMobileApiBaseUri(
+      rawUrl: 'http://127.0.0.1:8123',
+      allowInsecureHttp: true,
+      isAndroid: true,
+      isPhysicalDevice: false,
+      usesAdbReverse: true,
+    );
+
+    expect(emulatorUri.toString(), 'http://10.0.2.2:8123');
+    expect(adbReverseUri.toString(), 'http://127.0.0.1:8123');
+  });
+
+  test('requires an explicit Android emulator loopback host', () {
+    expect(
+      () => resolveMobileApiBaseUri(
+        rawUrl: 'http://localhost:8123',
+        allowInsecureHttp: true,
+        isAndroid: true,
+        isPhysicalDevice: false,
+        usesAdbReverse: false,
+      ),
+      throwsA(isA<FormatException>()),
+    );
+  });
 }

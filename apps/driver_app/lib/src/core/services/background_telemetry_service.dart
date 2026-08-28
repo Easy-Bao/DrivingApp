@@ -13,10 +13,6 @@ const _backgroundTelemetryInterval = Duration(seconds: 10);
 const _backgroundRideRequestInterval = Duration(seconds: 4);
 const _notificationChannelId = 'easyride_driver_location';
 const _notificationId = 4801;
-const _backgroundTelemetryEnabled = bool.fromEnvironment(
-  'ENABLE_DRIVER_BACKGROUND_TELEMETRY',
-  defaultValue: false,
-);
 
 class BackgroundTelemetryService {
   final Uri _apiBaseUri;
@@ -30,7 +26,7 @@ class BackgroundTelemetryService {
     bool? enabled,
   }) : _apiBaseUri = apiBaseUri,
        _service = service ?? FlutterBackgroundService(),
-       _isEnabled = enabled ?? _backgroundTelemetryEnabled;
+       _isEnabled = enabled ?? false;
 
   bool get isEnabled => _isEnabled;
 

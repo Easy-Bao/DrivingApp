@@ -22,7 +22,7 @@ void main() async {
     await dotenv.load(fileName: '.env', isOptional: true);
 
     final nativeService = MapNativeService(
-      placeServiceBaseUri: EnvConfig.placeServiceUri,
+      placeServiceBaseUri: EnvConfig.apiBaseUri,
     );
     LocationService.nativeService = nativeService;
     final mapboxToken = EnvConfig.mapboxPublicToken;

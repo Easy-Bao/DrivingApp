@@ -57,6 +57,8 @@ app.*.map.json
 
 # Keep the placeholder template tracked for CI and local setup.
 !/.env.example
+!/apps/passenger_app/.env.example
+!/apps/driver_app/.env.example
 
 #Metadata
 .metadata

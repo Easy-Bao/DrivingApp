@@ -28,18 +28,17 @@ void main() async {
     await dotenv.load(fileName: '.env', isOptional: true);
 
     final nativeService = MapNativeService(
-      placeServiceBaseUri: EnvConfig.placeServiceUri,
+      placeServiceBaseUri: EnvConfig.apiBaseUri,
     );
     LocationService.nativeService = nativeService;
     final mapboxToken = EnvConfig.mapboxPublicToken;
     if (mapboxToken == null) {
       debugPrint('Mapbox is disabled because MAPBOX_PUBLIC_TOKEN is missing.');
-    } else {
-      await MapProvider.initialize(
-        token: mapboxToken,
-        nativeService: nativeService,
-      );
     }
+    await MapProvider.initialize(
+      token: mapboxToken,
+      nativeService: nativeService,
+    );
 
     await Modular.configure(
       appModule: AppModule(prefs: prefs, sessionService: sessionService),

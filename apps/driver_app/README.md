@@ -1,17 +1,18 @@
-# driver_app
+# BaoRide Driver
 
-A new Flutter project.
+The driver client reads its public runtime configuration from the local `.env`
+asset. Copy `.env.example` to `.env`, set the API origin and Mapbox public
+token, then bootstrap the workspace from the repository root.
 
-## Getting Started
+`API_BASE_URL` must be a complete HTTP or HTTPS origin, including its configured
+gateway port. Release builds require HTTPS. Local Android emulators rewrite a
+loopback origin through `ANDROID_EMULATOR_LOOPBACK_HOST` unless adb reverse is
+enabled; physical devices must use an API host reachable from that device.
 
-This project is a starting point for a Flutter application.
+`ENABLE_DRIVER_BACKGROUND_TELEMETRY` is disabled by default and should be
+enabled only for builds that intentionally provide foreground location service
+behavior while a driver is online.
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Values in this file are bundled with the application and are not secrets.
+Server credentials, signing material, and private access tokens belong only in
+the root server environment or the platform secret store.

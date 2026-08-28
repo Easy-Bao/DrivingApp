@@ -34,7 +34,10 @@ class AppModule extends Module {
       ..addSingleton<SharedPreferences>((i) => _prefs)
       ..addLazySingleton<SecureSessionService>((i) => _sessionService)
       ..addLazySingleton<BackgroundTelemetryService>(
-        (i) => BackgroundTelemetryService(apiBaseUri: EnvConfig.apiBaseUri),
+        (i) => BackgroundTelemetryService(
+          apiBaseUri: EnvConfig.apiBaseUri,
+          enabled: EnvConfig.backgroundTelemetryEnabled,
+        ),
       )
       ..addLazySingleton<SecureStorage>(
         (i) => SecureStorage(i.get<SecureSessionService>()),

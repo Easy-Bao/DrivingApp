@@ -41,9 +41,6 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <meta-data
-            android:name="com.mapbox.token"
-            android:value="${MAPBOX_PUBLIC_TOKEN}" />
     </application>
     <queries>
         <intent>
