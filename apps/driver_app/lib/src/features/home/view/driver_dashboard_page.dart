@@ -59,6 +59,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   int _locationAccessFailures = 0;
   bool _isCheckingLocationAccess = false;
   bool _isForcingOfflineForLocationLoss = false;
+  bool _isForeground = true;
 
   static const _locationAccessPollInterval = Duration(seconds: 5);
   static const _locationAccessFailureThreshold = 2;
@@ -80,10 +81,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       vsync: this,
       duration: const Duration(milliseconds: 520),
     );
-    _requestCountdownTimer = Timer.periodic(
-      const Duration(seconds: 1),
-      (_) => _refreshRequestCountdowns(),
-    );
+    _startRequestCountdownTimer();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -120,10 +118,25 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && mounted) {
-      unawaited(_loadActiveTrips());
-      unawaited(_refreshLocationAfterResume());
+    final isForeground = state == AppLifecycleState.resumed;
+    if (!isForeground) {
+      if (_isForeground) {
+        _isForeground = false;
+        _suspendForegroundWork();
+      }
+      return;
     }
+
+    if (_isForeground || !mounted) return;
+    _isForeground = true;
+    _startRequestCountdownTimer();
+    unawaited(_resumeForegroundWork());
+  }
+
+  Future<void> _resumeForegroundWork() async {
+    await _loadActiveTrips();
+    if (!mounted || !_isForeground) return;
+    await _refreshLocationAfterResume();
   }
 
   Future<void> _loadActiveTrips() async {
@@ -163,6 +176,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   void _startLocationAccessMonitoring() {
+    if (!_isForeground) return;
     _locationAccessPoller ??= Timer.periodic(
       _locationAccessPollInterval,
       (_) => unawaited(_checkLocationAccess()),
@@ -172,6 +186,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   Future<void> _checkLocationAccess() async {
     if (!mounted ||
+        !_isForeground ||
         _isCheckingLocationAccess ||
         _isForcingOfflineForLocationLoss) {
       return;
@@ -242,7 +257,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   Future<void> _resumeOnlineTelemetry() async {
-    if (_isResumingOnline) return;
+    if (!_isForeground || _isResumingOnline) return;
     _isResumingOnline = true;
     try {
       final position = await LocationService.getCurrentPosition();
@@ -270,8 +285,16 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   void _refreshRequestCountdowns() {
-    if (!mounted) return;
+    if (!mounted || !_isForeground) return;
     BlocProvider.of<DashboardCubit>(context).removeExpiredRideOffers();
+  }
+
+  void _startRequestCountdownTimer() {
+    if (!_isForeground || _requestCountdownTimer != null) return;
+    _requestCountdownTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => _refreshRequestCountdowns(),
+    );
   }
 
   void _publishCurrentLocation() {
@@ -286,6 +309,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   void _startPolling() {
+    if (!_isForeground) return;
     final pollGeneration = ++_pollGeneration;
     _startLocationAccessMonitoring();
     _locationSubscription?.cancel();
@@ -325,6 +349,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   Future<void> _startRealtimeUpdates() async {
+    if (!_isForeground) return;
     final realtimeClient = _realtimeClient;
     if (realtimeClient == null) return;
     try {
@@ -335,7 +360,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   void _handleRealtimeEvent(RealtimeEvent event) {
-    if (!mounted) return;
+    if (!mounted || !_isForeground) return;
     if (!BlocProvider.of<DashboardCubit>(context).state.isOnline) return;
 
     // Direct requests already carry the target driver's topic. Refresh the
@@ -368,6 +393,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   Future<void> _pollRideData(int pollGeneration) async {
     if (!mounted ||
+        !_isForeground ||
         pollGeneration != _pollGeneration ||
         !BlocProvider.of<DashboardCubit>(context).state.isOnline) {
       return;
@@ -382,7 +408,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   Future<void> _refreshOnlinePresence() async {
-    if (!mounted || _isRefreshingPresence) return;
+    if (!mounted || !_isForeground || _isRefreshingPresence) return;
     final cubit = BlocProvider.of<DashboardCubit>(context);
     final position = LocationService.lastPosition;
     if (!cubit.state.isOnline || position == null) return;
@@ -398,7 +424,17 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     }
   }
 
+  void _suspendForegroundWork() {
+    _cancelOnlineForegroundWork(clearActiveBids: false);
+    _requestCountdownTimer?.cancel();
+    _requestCountdownTimer = null;
+  }
+
   void _stopPolling() {
+    _cancelOnlineForegroundWork(clearActiveBids: true);
+  }
+
+  void _cancelOnlineForegroundWork({required bool clearActiveBids}) {
     _pollGeneration++;
     _locationSubscription?.cancel();
     _locationSubscription = null;
@@ -406,14 +442,14 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _rideTriggerTimer = null;
     _presenceHeartbeatTimer?.cancel();
     _presenceHeartbeatTimer = null;
-    if (!BlocProvider.of<DashboardCubit>(context).state.isOnline) {
-      _stopLocationAccessMonitoring();
-    }
+    _stopLocationAccessMonitoring();
     final realtimeClient = _realtimeClient;
     if (realtimeClient != null) {
       unawaited(realtimeClient.stop());
     }
-    if (mounted) BlocProvider.of<DashboardCubit>(context).clearActiveBids();
+    if (mounted && clearActiveBids) {
+      BlocProvider.of<DashboardCubit>(context).clearActiveBids();
+    }
   }
 
   Future<void> _toggleOnline(BuildContext context, bool requestedOnline) async {

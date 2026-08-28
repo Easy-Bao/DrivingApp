@@ -61,14 +61,17 @@ class PassengerShellLayout extends StatefulWidget {
   State<PassengerShellLayout> createState() => _PassengerShellLayoutState();
 }
 
-class _PassengerShellLayoutState extends State<PassengerShellLayout> {
+class _PassengerShellLayoutState extends State<PassengerShellLayout>
+    with WidgetsBindingObserver {
   String? _loadedInboxPassengerId;
   String? _activePassengerId;
   StreamSubscription<RealtimeEvent>? _realtimeSubscription;
+  bool _isForeground = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     widget.navigationCoordinator.initialize(
       widget.navigationShell.currentIndex,
     );
@@ -85,9 +88,29 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     widget.navigationCoordinator.removeListener(_onNavigationChanged);
     unawaited(_realtimeSubscription?.cancel());
+    unawaited(widget.realtimeClient.stop());
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final isForeground = state == AppLifecycleState.resumed;
+    if (!isForeground) {
+      if (_isForeground) {
+        _isForeground = false;
+        unawaited(widget.realtimeClient.stop());
+      }
+      return;
+    }
+
+    if (_isForeground) return;
+    _isForeground = true;
+    if (_activePassengerId != null) {
+      unawaited(widget.realtimeClient.start());
+    }
   }
 
   void _onNavigationChanged() {
@@ -100,13 +123,16 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
       return;
     }
     _activePassengerId = sessionState.passengerId;
-    unawaited(widget.realtimeClient.start());
+    if (_isForeground) {
+      unawaited(widget.realtimeClient.start());
+    }
     if (sessionState.passengerId == _loadedInboxPassengerId) return;
     _loadedInboxPassengerId = sessionState.passengerId;
     await widget.inboxCubit.loadNotifications(sessionState.passengerId);
   }
 
   void _handleRealtimeEvent(RealtimeEvent event) {
+    if (!_isForeground) return;
     final passengerId = _activePassengerId;
     if (passengerId == null || event is! ChatMessageCreatedEvent) return;
     if (event.envelope.scope.passengerId != passengerId) return;

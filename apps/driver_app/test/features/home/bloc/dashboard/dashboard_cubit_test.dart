@@ -156,6 +156,26 @@ void main() {
   });
 
   group('DashboardCubit — dispatch feed', () {
+    test(
+      'cools down silent polling after the service becomes unreachable',
+      () async {
+        var now = DateTime.utc(2026, 8, 28, 8);
+        when(() => repo.getDispatchSnapshot(includeOffers: true)).thenAnswer(
+          (_) async => const Left(NetworkFailure('service unavailable')),
+        );
+        final cubit = DashboardCubit(repository: repo, now: () => now);
+
+        expect(await cubit.loadDispatchSnapshot(silent: true), isFalse);
+        expect(await cubit.loadDispatchSnapshot(silent: true), isFalse);
+        verify(() => repo.getDispatchSnapshot(includeOffers: true)).called(1);
+
+        now = now.add(const Duration(seconds: 16));
+        expect(await cubit.loadDispatchSnapshot(silent: true), isFalse);
+        verify(() => repo.getDispatchSnapshot(includeOffers: true)).called(1);
+        await cubit.close();
+      },
+    );
+
     blocTest<DashboardCubit, DashboardState>(
       'loads and sorts active trips while keeping offers in cubit state',
       build: () {

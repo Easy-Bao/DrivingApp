@@ -22,6 +22,59 @@ import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 void main() {
+  testWidgets('realtime follows the passenger app lifecycle', (tester) async {
+    final sessionBloc = SessionBloc(sessionRepository: _SessionRepositoryStub())
+      ..add(const SessionAuthenticatedRequested(passengerId: 'passenger-1'));
+    final inboxCubit = InboxCubit(inboxRepository: _InboxRepositoryStub());
+    final connector = _TrackingRealtimeSocketConnector();
+    final realtimeClient = RealtimeWebSocketClient(
+      uri: Uri.parse('ws://localhost/realtime'),
+      tokenProvider: () async => 'test-token',
+      connector: connector,
+      reconnectDelay: (_) => const Duration(minutes: 1),
+    );
+    final navigationCoordinator = PassengerTabNavigationCoordinator();
+    final router = _createRouter(
+      inboxCubit,
+      realtimeClient,
+      navigationCoordinator,
+    );
+    addTearDown(() async {
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      router.dispose();
+      await sessionBloc.close();
+      await inboxCubit.close();
+      await realtimeClient.dispose();
+      navigationCoordinator.dispose();
+    });
+
+    await tester.pumpWidget(
+      BlocProvider<SessionBloc>.value(
+        value: sessionBloc,
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(connector.connectionCount, 1);
+    expect(realtimeClient.isConnected, isTrue);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pumpAndSettle();
+
+    expect(realtimeClient.isConnected, isFalse);
+    await tester.runAsync(() async {
+      await Future<void>.delayed(Duration.zero);
+    });
+    expect(connector.closeCount, 1);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+
+    expect(connector.connectionCount, 2);
+    expect(realtimeClient.isConnected, isTrue);
+  });
+
   testWidgets('tab changes, named navigation, and swipes stay synchronized', (
     tester,
   ) async {
@@ -312,4 +365,37 @@ class _RealtimeSocketStub implements RealtimeSocket {
 
   @override
   Future<void> close() => _messages.close();
+}
+
+class _TrackingRealtimeSocketConnector implements RealtimeSocketConnector {
+  int connectionCount = 0;
+  int closeCount = 0;
+
+  @override
+  Future<RealtimeSocket> connect(
+    Uri uri, {
+    required Map<String, String> headers,
+  }) async {
+    connectionCount++;
+    return _TrackingRealtimeSocket(() => closeCount++);
+  }
+}
+
+class _TrackingRealtimeSocket implements RealtimeSocket {
+  _TrackingRealtimeSocket(this.onClose);
+
+  final void Function() onClose;
+  final _messages = StreamController<Object?>();
+  bool _closed = false;
+
+  @override
+  Stream<Object?> get messages => _messages.stream;
+
+  @override
+  Future<void> close() async {
+    if (_closed) return;
+    _closed = true;
+    onClose();
+    await _messages.close();
+  }
 }

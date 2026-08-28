@@ -7,13 +7,21 @@ import 'package:shared_core/shared_core.dart';
 
 class DashboardCubit extends Cubit<DashboardState> {
   final IDashboardRepository _repository;
+  final DateTime Function() _now;
+  final Duration _silentDispatchFailureCooldown;
   bool _isDispatchRequestInFlight = false;
   Future<void>? _initialization;
   Future<void>? _statsRequestInFlight;
+  DateTime? _silentDispatchRetryAfter;
 
-  DashboardCubit({required IDashboardRepository repository})
-    : _repository = repository,
-      super(const DashboardState());
+  DashboardCubit({
+    required IDashboardRepository repository,
+    DateTime Function()? now,
+    Duration silentDispatchFailureCooldown = const Duration(seconds: 15),
+  }) : _repository = repository,
+       _now = now ?? DateTime.now,
+       _silentDispatchFailureCooldown = silentDispatchFailureCooldown,
+       super(const DashboardState());
 
   Future<void> initialize() async {
     final existingInitialization = _initialization;
@@ -101,6 +109,7 @@ class DashboardCubit extends Cubit<DashboardState> {
     bool includeOffers = true,
     bool silent = false,
   }) async {
+    if (silent && _isSilentDispatchCoolingDown) return false;
     if (_isDispatchRequestInFlight) return false;
     _isDispatchRequestInFlight = true;
     if (!silent) {
@@ -113,6 +122,11 @@ class DashboardCubit extends Cubit<DashboardState> {
       );
       return result.fold(
         (failure) {
+          if (_pausesSilentDispatch(failure)) {
+            _silentDispatchRetryAfter = _now().add(
+              _silentDispatchFailureCooldown,
+            );
+          }
           if (!silent) {
             emit(
               state.copyWith(
@@ -124,6 +138,7 @@ class DashboardCubit extends Cubit<DashboardState> {
           return false;
         },
         (snapshot) {
+          _silentDispatchRetryAfter = null;
           emit(
             state.copyWith(
               isLoadingDispatch: false,
@@ -151,11 +166,27 @@ class DashboardCubit extends Cubit<DashboardState> {
           ),
         );
       }
+      _silentDispatchRetryAfter = _now().add(_silentDispatchFailureCooldown);
       return false;
     } finally {
       _isDispatchRequestInFlight = false;
     }
   }
+
+  bool get _isSilentDispatchCoolingDown {
+    final retryAfter = _silentDispatchRetryAfter;
+    if (retryAfter == null) return false;
+    if (!_now().isBefore(retryAfter)) {
+      _silentDispatchRetryAfter = null;
+      return false;
+    }
+    return true;
+  }
+
+  bool _pausesSilentDispatch(Failure failure) =>
+      failure is NetworkFailure ||
+      (failure is ServerFailure &&
+          (failure.statusCode == null || failure.statusCode! >= 500));
 
   void mergeActiveTrip(Map<String, dynamic> ride) {
     final rideId = _stringValue(ride['id']);

@@ -97,6 +97,7 @@ final class RealtimeWebSocketClient {
   StreamSubscription<Object?>? _socketSubscription;
   Timer? _reconnectTimer;
   Future<void>? _connecting;
+  Future<void>? _stopping;
   bool _wanted = false;
   bool _disposed = false;
   int _attempt = 0;
@@ -105,23 +106,38 @@ final class RealtimeWebSocketClient {
   Stream<RealtimeConnectionState> get states => _states.stream;
   bool get isConnected => _socket != null;
 
-  Future<void> start() {
+  Future<void> start() async {
     if (_disposed) {
       throw StateError('RealtimeWebSocketClient has been disposed.');
     }
     _wanted = true;
-    return _connect();
+    final stopping = _stopping;
+    if (stopping != null) await stopping;
+    if (!_wanted || _disposed) return;
+    await _connect();
   }
 
-  Future<void> stop() async {
+  Future<void> stop() {
     _wanted = false;
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
+    final activeStop = _stopping;
+    if (activeStop != null) return activeStop;
+
+    late final Future<void> stopping;
+    stopping = _stop().whenComplete(() {
+      if (identical(_stopping, stopping)) _stopping = null;
+    });
+    _stopping = stopping;
+    return stopping;
+  }
+
+  Future<void> _stop() async {
     final subscription = _socketSubscription;
     _socketSubscription = null;
-    await subscription?.cancel();
     final socket = _socket;
     _socket = null;
+    await subscription?.cancel();
     await socket?.close();
     _emitState(const RealtimeDisconnected());
   }
