@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_ui/src/theme/app_design_tokens.dart';
+import 'package:shared_ui/src/theme/easy_ride_theme_context.dart';
 import 'package:shared_ui/src/widgets/swipe_active_tab_indicator.dart';
 
 typedef AppTabIconBuilder =
@@ -76,6 +77,8 @@ class AppFloatingTabBar extends StatelessWidget {
     required int activeIndex,
     required double pagePosition,
   }) {
+    final colorScheme = context.colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final visualPagePosition = pagePosition
         .clamp(0.0, (destinations.length - 1).toDouble())
         .toDouble();
@@ -84,14 +87,12 @@ class AppFloatingTabBar extends StatelessWidget {
       height: height,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: AppDesignTokens.surface,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(AppDesignTokens.pillRadius),
-        border: Border.all(
-          color: AppDesignTokens.outline.withValues(alpha: 0.1),
-        ),
+        border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
-            color: AppDesignTokens.primary.withValues(alpha: 0.08),
+            color: colorScheme.shadow.withValues(alpha: isDark ? 0.32 : 0.08),
             blurRadius: 20,
             offset: const Offset(0, 6),
           ),
@@ -106,7 +107,9 @@ class AppFloatingTabBar extends StatelessWidget {
                 key: ValueKey<String>(indicatorKey),
                 pagePosition: visualPagePosition,
                 itemCount: destinations.length,
-                color: AppDesignTokens.neutral,
+                color: isDark
+                    ? colorScheme.primary.withValues(alpha: 0.16)
+                    : colorScheme.surfaceContainerHighest,
                 capsuleKeyPrefix: indicatorKey,
               ),
             ),
@@ -154,17 +157,18 @@ class _AppFloatingTabItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
     final selectionProgress = SwipeActiveTabIndicator.selectionProgress(
       pagePosition,
       index,
     );
     final targetColor =
         Color.lerp(
-          AppDesignTokens.tertiary,
-          AppDesignTokens.primary,
+          colorScheme.onSurfaceVariant,
+          colorScheme.primary,
           selectionProgress,
         ) ??
-        AppDesignTokens.tertiary;
+        colorScheme.onSurfaceVariant;
     final labelStyle = Theme.of(context).textTheme.labelSmall!;
 
     return Semantics(
@@ -179,7 +183,7 @@ class _AppFloatingTabItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppDesignTokens.pillRadius),
           splashFactory: NoSplash.splashFactory,
           overlayColor: WidgetStatePropertyAll(
-            AppDesignTokens.surface.withValues(alpha: 0),
+            colorScheme.surface.withValues(alpha: 0),
           ),
           onTap: () => onTap(index),
           child: Center(
