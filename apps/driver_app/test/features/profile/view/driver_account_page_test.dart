@@ -26,6 +26,7 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({
       'driver_name': 'Bao Driver',
+      'driver_phone': '+639170000001',
       'driver_email': 'bao@example.com',
       'vehicle_type': 'Motorcycle',
       'plate_number': 'XYZ-123',
@@ -36,6 +37,7 @@ void main() {
     when(() => repository.getCachedAccount()).thenReturn(
       const DriverAccountSnapshot(
         name: 'Bao Driver',
+        phone: '+639170000001',
         email: 'bao@example.com',
         vehicleType: 'Motorcycle',
         plateNumber: 'XYZ-123',
@@ -67,7 +69,9 @@ void main() {
     scope.tearDown();
   });
 
-  testWidgets('renders a compact driver account overview', (tester) async {
+  testWidgets('matches the passenger account layout with driver details', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(320, 640));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -83,12 +87,22 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Bao Driver'), findsOneWidget);
-    expect(find.text('bao@example.com'), findsOneWidget);
-    expect(find.text('Motorcycle'), findsOneWidget);
-    expect(find.text('XYZ-123'), findsOneWidget);
-    expect(find.text('4.8'), findsOneWidget);
+    expect(find.text('+639170000001'), findsOneWidget);
+    expect(find.byType(AppBar), findsNothing);
+    expect(find.text('Account'), findsOneWidget);
+    expect(find.text('Driver Details'), findsOneWidget);
+    expect(find.textContaining('Motorcycle'), findsOneWidget);
+    expect(find.textContaining('XYZ-123'), findsOneWidget);
+    expect(find.textContaining('4.8'), findsOneWidget);
     expect(find.text('Performance'), findsOneWidget);
-    expect(find.text('Account Settings'), findsOneWidget);
+    expect(find.text('Support'), findsOneWidget);
+    expect(find.text('Help Center'), findsOneWidget);
+    expect(find.text('About BaoRide'), findsOneWidget);
+    expect(find.text('Account Settings'), findsNothing);
+    expect(
+      tester.getSize(find.byKey(const ValueKey('driver-profile-avatar'))),
+      const Size(76, 76),
+    );
     expect(find.byTooltip('Refresh account'), findsNothing);
     expect(tester.takeException(), isNull);
   });
