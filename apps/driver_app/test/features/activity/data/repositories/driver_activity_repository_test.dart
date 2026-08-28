@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:driver_app/src/features/activity/data/datasources/driver_activity_remote_data_source.dart';
 import 'package:driver_app/src/features/activity/data/repositories/driver_activity_repository.dart';
 import 'package:driver_app/src/features/activity/domain/entities/driver_activity_stats.dart';
@@ -65,6 +66,23 @@ void main() {
     result.fold(
       (failure) => expect(failure, isA<ValidationFailure>()),
       (_) => fail('Expected an invalid statistics response.'),
+    );
+  });
+
+  test('maps an unreachable statistics API to a network failure', () async {
+    when(() => dataSource.fetchStats('42')).thenThrow(
+      DioException(
+        requestOptions: RequestOptions(path: '/api/v1/drivers/42/stats'),
+        type: DioExceptionType.connectionError,
+      ),
+    );
+
+    final result = await repository.fetchStats('42');
+
+    expect(result.isLeft(), isTrue);
+    result.fold(
+      (failure) => expect(failure, isA<NetworkFailure>()),
+      (_) => fail('Expected a network failure.'),
     );
   });
 }

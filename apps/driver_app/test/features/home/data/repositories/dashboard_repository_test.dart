@@ -110,6 +110,31 @@ void main() {
     },
   );
 
+  test(
+    'reports an incomplete local session as an authentication failure',
+    () async {
+      final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
+      final sessionService = MockSecureSessionService();
+
+      when(() => sessionService.readDriverId()).thenAnswer((_) async => null);
+
+      final repository = _buildRepository(
+        availabilityDataSource: availabilityDataSource,
+        sessionService: sessionService,
+      );
+
+      final result = await repository.getDashboardStats();
+
+      expect(
+        result,
+        const Left<Failure, DriverDashboardStats>(
+          AuthFailure('Driver session is unavailable. Please sign in again.'),
+        ),
+      );
+      verifyNever(() => _activityRepository.fetchStats(any()));
+    },
+  );
+
   test('publishes the initial driver location when going online', () async {
     final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
     final sessionService = MockSecureSessionService();

@@ -86,6 +86,33 @@ void main() {
         ),
       ],
     );
+
+    blocTest<DashboardCubit, DashboardState>(
+      'coalesces concurrent statistics loads',
+      build: () {
+        when(() => repo.getDashboardStats()).thenAnswer((_) async {
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+          return const Right(
+            DriverDashboardStats(earnings: 12.50, completedTrips: 1),
+          );
+        });
+        return _makeCubit(repo);
+      },
+      act: (cubit) async {
+        await Future.wait([cubit.loadStats(), cubit.loadStats()]);
+      },
+      expect: () => [
+        const DashboardState(isLoadingStats: true),
+        const DashboardState(
+          isLoadingStats: false,
+          earnings: 12.50,
+          completedTrips: 1,
+        ),
+      ],
+      verify: (_) {
+        verify(() => repo.getDashboardStats()).called(1);
+      },
+    );
   });
 
   group('DashboardCubit — initialize()', () {

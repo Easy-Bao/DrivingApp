@@ -9,6 +9,7 @@ class DashboardCubit extends Cubit<DashboardState> {
   final IDashboardRepository _repository;
   bool _isDispatchRequestInFlight = false;
   Future<void>? _initialization;
+  Future<void>? _statsRequestInFlight;
 
   DashboardCubit({required IDashboardRepository repository})
     : _repository = repository,
@@ -51,7 +52,21 @@ class DashboardCubit extends Cubit<DashboardState> {
     await loadStats();
   }
 
-  Future<void> loadStats() async {
+  Future<void> loadStats() {
+    final existingRequest = _statsRequestInFlight;
+    if (existingRequest != null) return existingRequest;
+
+    late final Future<void> request;
+    request = _loadStats().whenComplete(() {
+      if (identical(_statsRequestInFlight, request)) {
+        _statsRequestInFlight = null;
+      }
+    });
+    _statsRequestInFlight = request;
+    return request;
+  }
+
+  Future<void> _loadStats() async {
     emit(state.copyWith(isLoadingStats: true, statsErrorMessage: null));
     try {
       final result = await _repository.getDashboardStats();

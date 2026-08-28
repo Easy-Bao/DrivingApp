@@ -673,14 +673,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       listeners: [
         BlocListener<DashboardCubit, DashboardState>(
           listenWhen: (previous, current) =>
-              previous.errorMessage != current.errorMessage &&
-              current.errorMessage != null,
-          listener: (context, state) {
-            CustomToast.show(context, state.errorMessage!, isError: true);
-          },
-        ),
-        BlocListener<DashboardCubit, DashboardState>(
-          listenWhen: (previous, current) =>
               previous.isOnline != current.isOnline,
           listener: (context, state) {
             if (state.isOnline) {
@@ -761,6 +753,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                 children: [
                   const SizedBox(height: 8),
                   _buildOnlineCardBanner(context, state),
+                  if (state.errorMessage != null) ...[
+                    const SizedBox(height: 16),
+                    DriverDashboardErrorCard(message: state.errorMessage!),
+                  ],
                   const SizedBox(height: 16),
                   _buildStatsRow(state),
                   const SizedBox(height: 16),
@@ -971,7 +967,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       isLoadingStats: state.isLoadingStats,
       earnings: state.earnings,
       completedTrips: state.completedTrips,
-      errorMessage: state.statsErrorMessage,
+      errorMessage: state.errorMessage == null ? state.statsErrorMessage : null,
       onRetry: () =>
           unawaited(BlocProvider.of<DashboardCubit>(context).loadStats()),
     );

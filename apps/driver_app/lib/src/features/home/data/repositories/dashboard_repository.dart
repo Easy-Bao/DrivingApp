@@ -47,7 +47,9 @@ class DashboardRepository implements IDashboardRepository {
       validationMessage:
           'Driver availability data is invalid. Please try again.',
     ),
-    final CacheException exception => FailureMapper.fromException(exception),
+    CacheException() => const AuthFailure(
+      'Driver session is unavailable. Please sign in again.',
+    ),
     _ => const ServerFailure(
       'Unable to update your driver availability. Please try again.',
     ),
@@ -198,7 +200,9 @@ class DashboardRepository implements IDashboardRepository {
       return Left(_mapExceptionToFailure(error));
     }
     if (driverId.isEmpty) {
-      return const Left(CacheFailure('Driver ID is not registered.'));
+      return const Left(
+        AuthFailure('Driver session is unavailable. Please sign in again.'),
+      );
     }
 
     if (!isOnline) {
@@ -260,7 +264,9 @@ class DashboardRepository implements IDashboardRepository {
     try {
       final driverId = await _getDriverId();
       if (driverId.isEmpty) {
-        return const Left(CacheFailure('Driver ID is not registered.'));
+        return const Left(
+          AuthFailure('Driver session is unavailable. Please sign in again.'),
+        );
       }
       return (await _activityRepository.fetchStats(driverId)).map(
         (stats) => DriverDashboardStats(
@@ -281,7 +287,9 @@ class DashboardRepository implements IDashboardRepository {
     try {
       final driverId = await _getDriverId();
       if (driverId.isEmpty) {
-        return const Left(CacheFailure('Driver ID is not registered.'));
+        return const Left(
+          AuthFailure('Driver session is unavailable. Please sign in again.'),
+        );
       }
       final tripsFuture = _activityRepository.fetchTripHistory(
         driverId,
