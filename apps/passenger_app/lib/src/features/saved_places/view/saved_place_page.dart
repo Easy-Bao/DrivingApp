@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_state.dart';
@@ -108,7 +107,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
     unawaited(
       showModalBottomSheet<void>(
         context: context,
-        backgroundColor: AppTheme.surface,
+        backgroundColor: context.colorScheme.surface,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
@@ -122,17 +121,17 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
                   height: 4,
                   margin: const EdgeInsets.only(top: 12),
                   decoration: BoxDecoration(
-                    color: AppTheme.borderSide,
+                    color: context.colorScheme.outlineVariant,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
                 const SizedBox(height: 20),
                 Text(
                   place.label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: AppTheme.primaryColor,
+                    color: context.colorScheme.onSurface,
                   ),
                 ),
                 if ((place.savedAddress ?? '').isNotEmpty) ...[
@@ -146,29 +145,29 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 13,
-                        color: AppTheme.primaryColor.withValues(alpha: 0.55),
+                        color: context.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),
                 ],
                 const SizedBox(height: 16),
-                const Divider(height: 1, color: AppTheme.borderSide),
+                Divider(height: 1, color: context.colorScheme.outlineVariant),
                 ListTile(
                   leading: Icon(
                     place.isDefault
                         ? LucideIcons.circle_check
                         : LucideIcons.circle,
                     color: place.isDefault
-                        ? AppTheme.primaryColor
-                        : AppTheme.tertiaryColor,
+                        ? context.colorScheme.onSurface
+                        : context.colorScheme.onSurfaceVariant,
                   ),
                   title: Text(
                     place.isDefault
                         ? 'Default Home quick action'
                         : 'Set as Home quick action',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryColor,
+                      color: context.colorScheme.onSurface,
                     ),
                   ),
                   subtitle: Text(
@@ -177,7 +176,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
                         : 'Show this place as the only saved place on Home',
                     style: TextStyle(
                       fontSize: 12,
-                      color: AppTheme.primaryColor.withValues(alpha: 0.55),
+                      color: context.colorScheme.onSurfaceVariant,
                     ),
                   ),
                   onTap: place.isDefault
@@ -188,15 +187,15 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
                         },
                 ),
                 ListTile(
-                  leading: const Icon(
+                  leading: Icon(
                     LucideIcons.pencil,
-                    color: AppTheme.primaryColor,
+                    color: context.colorScheme.onSurface,
                   ),
-                  title: const Text(
+                  title: Text(
                     'Change location',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.primaryColor,
+                      color: context.colorScheme.onSurface,
                     ),
                   ),
                   onTap: () {
@@ -211,15 +210,15 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(
+                  leading: Icon(
                     LucideIcons.trash_2,
-                    color: AppTheme.cancel,
+                    color: context.colorScheme.error,
                   ),
-                  title: const Text(
+                  title: Text(
                     'Remove shortcut',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.cancel,
+                      color: context.colorScheme.error,
                     ),
                   ),
                   onTap: () async {
@@ -252,9 +251,9 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: context.colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: context.colorScheme.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: Center(
@@ -263,17 +262,17 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
             tooltip: MaterialLocalizations.of(context).backButtonTooltip,
             padding: EdgeInsets.zero,
             style: IconButton.styleFrom(shape: const CircleBorder()),
-            icon: const Icon(
+            icon: Icon(
               LucideIcons.arrow_left,
-              color: AppTheme.primaryColor,
+              color: context.colorScheme.onSurface,
               size: 20,
             ),
           ),
         ),
-        title: const Text(
+        title: Text(
           'Saved places',
           style: TextStyle(
-            color: AppTheme.primaryColor,
+            color: context.colorScheme.onSurface,
             fontWeight: FontWeight.w800,
             fontSize: 18,
           ),
@@ -293,7 +292,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
                 'Quick destinations ready from Home.',
                 style: TextStyle(
                   fontSize: 14,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.55),
+                  color: context.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -399,8 +398,8 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
             icon: const Icon(LucideIcons.plus, size: 18),
             label: const Text('Add a new place'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppTheme.primaryColor,
-              side: const BorderSide(color: AppTheme.borderSide),
+              foregroundColor: context.colorScheme.onSurface,
+              side: BorderSide(color: context.colorScheme.outlineVariant),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(28),
               ),
@@ -416,15 +415,17 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.cancel.withValues(alpha: 0.08),
+        color: context.colorScheme.error.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.cancel.withValues(alpha: 0.2)),
+        border: Border.all(
+          color: context.colorScheme.error.withValues(alpha: 0.2),
+        ),
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             LucideIcons.circle_alert,
-            color: AppTheme.cancel,
+            color: context.colorScheme.error,
             size: 18,
           ),
           const SizedBox(width: 10),
@@ -433,8 +434,8 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
               message,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: AppTheme.cancel,
+              style: TextStyle(
+                color: context.colorScheme.error,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
@@ -455,7 +456,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
     return Text(
       label,
       style: TextStyle(
-        color: AppTheme.primaryColor.withValues(alpha: 0.42),
+        color: context.colorScheme.onSurfaceVariant,
         fontSize: 12,
         fontWeight: FontWeight.w800,
         letterSpacing: 0.9,
@@ -478,13 +479,15 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: isConfigured
-              ? AppTheme.surface
-              : AppTheme.neutralColor.withValues(alpha: 0.55),
+              ? context.colorScheme.surface
+              : context.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.55,
+                ),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isConfigured
-                ? AppTheme.borderSide
-                : AppTheme.borderSide.withValues(alpha: 0.7),
+                ? context.colorScheme.outlineVariant
+                : context.colorScheme.outlineVariant.withValues(alpha: 0.7),
           ),
         ),
         child: Row(
@@ -494,11 +497,11 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
               height: 44,
               decoration: BoxDecoration(
                 color: isConfigured
-                    ? AppTheme.secondaryColor
-                    : AppTheme.surface,
+                    ? context.colorScheme.secondaryContainer
+                    : context.colorScheme.surface,
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(icon, color: AppTheme.primaryColor, size: 20),
+              child: Icon(icon, color: context.colorScheme.onSurface, size: 20),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -507,10 +510,10 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
                 children: [
                   Text(
                     label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      color: AppTheme.primaryColor,
+                      color: context.colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -524,8 +527,8 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
                           ? FontWeight.w500
                           : FontWeight.w600,
                       color: isConfigured
-                          ? AppTheme.primaryColor.withValues(alpha: 0.58)
-                          : AppTheme.primaryColor.withValues(alpha: 0.4),
+                          ? context.colorScheme.onSurfaceVariant
+                          : context.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -535,13 +538,13 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.secondaryColor,
+                  color: context.colorScheme.secondaryContainer,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Text(
+                child: Text(
                   'Default',
                   style: TextStyle(
-                    color: AppTheme.primaryColor,
+                    color: context.colorScheme.onSurface,
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                   ),
@@ -550,7 +553,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
             else
               Icon(
                 isConfigured ? LucideIcons.pencil : LucideIcons.plus,
-                color: AppTheme.tertiaryColor,
+                color: context.colorScheme.onSurfaceVariant,
                 size: isConfigured ? 16 : 18,
               ),
           ],

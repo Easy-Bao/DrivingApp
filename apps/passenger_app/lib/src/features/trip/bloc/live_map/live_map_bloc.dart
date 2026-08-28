@@ -5,7 +5,6 @@ import 'dart:ui' show Color;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:passenger_app/src/core/location/location.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:shared_core/shared_core.dart';
@@ -24,6 +23,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   final List<AddMapMarkerEvent> _pendingMarkers = [];
   DrawDriverToRiderRouteEvent? _pendingRoute;
   FitMapToCoordinatesEvent? _pendingCameraFit;
+  Color _routeColor = TripMapMarkerStyle.ownLocation;
 
   final PublishSubject<DispatchTelemetryLocationEvent> _locationSubject =
       PublishSubject<DispatchTelemetryLocationEvent>();
@@ -72,6 +72,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       await _clearAllMarkers();
     }
     _mapController = event.controller;
+    _routeColor = event.routeColor;
     emit(LiveMapReady(event.defaultLat, event.defaultLng));
     final pendingMarkers = List<AddMapMarkerEvent>.from(_pendingMarkers);
     _pendingMarkers.clear();
@@ -135,7 +136,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
         _routePolylineManager,
         _mapController!,
         route.validPolylinePoints,
-        color: AppTheme.primaryColor,
+        color: _routeColor,
         width: 5.0,
       );
     }

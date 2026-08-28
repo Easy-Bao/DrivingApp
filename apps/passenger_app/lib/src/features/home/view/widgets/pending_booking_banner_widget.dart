@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class PendingBookingBannerWidget extends StatelessWidget {
   final bool isAuthenticated;
@@ -24,22 +24,26 @@ class PendingBookingBannerWidget extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 14, 10, 14),
       decoration: BoxDecoration(
-        color: AppTheme.secondaryColor.withValues(alpha: 0.35),
+        color: context.colorScheme.secondaryContainer.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.secondaryColor),
+        border: Border.all(color: context.colorScheme.secondaryContainer),
       ),
       child: Row(
         children: [
-          const Icon(LucideIcons.route, size: 20, color: AppTheme.primaryColor),
+          Icon(
+            LucideIcons.route,
+            size: 20,
+            color: context.colorScheme.onSurface,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Continue your booking',
                   style: TextStyle(
-                    color: AppTheme.primaryColor,
+                    color: context.colorScheme.onSurface,
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
                   ),
@@ -49,7 +53,7 @@ class PendingBookingBannerWidget extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.7),
+                    color: context.colorScheme.onSurface.withValues(alpha: 0.7),
                     fontSize: 12,
                   ),
                 ),

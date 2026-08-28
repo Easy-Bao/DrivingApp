@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/location/bloc/location_access/location_access_cubit.dart';
 import 'package:passenger_app/src/features/location/bloc/location_access/location_access_state.dart';
@@ -12,6 +11,7 @@ import 'package:passenger_app/src/features/location/location_access_navigation.d
 import 'package:passenger_app/src/features/trip/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger_app/src/features/trip/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class AppWidget extends StatefulWidget {
   const AppWidget({super.key});
@@ -23,12 +23,14 @@ class AppWidget extends StatefulWidget {
 class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
   late final SessionBloc _sessionBloc;
   late final LocationAccessCubit _locationAccessCubit;
+  late final ThemeModeCubit _themeModeCubit;
 
   @override
   void initState() {
     super.initState();
     _sessionBloc = Modular.get<SessionBloc>()..add(const SessionStarted());
     _locationAccessCubit = Modular.get<LocationAccessCubit>();
+    _themeModeCubit = Modular.get<ThemeModeCubit>();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_locationAccessCubit.start());
@@ -54,6 +56,7 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
       providers: [
         BlocProvider<SessionBloc>.value(value: _sessionBloc),
         BlocProvider<LocationAccessCubit>.value(value: _locationAccessCubit),
+        BlocProvider<ThemeModeCubit>.value(value: _themeModeCubit),
         BlocProvider<BookingDraftCubit>.value(
           value: Modular.get<BookingDraftCubit>(),
         ),
@@ -66,23 +69,27 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
           },
         ),
       ],
-      child: ModularApp.router(
-        theme: AppTheme.themeData,
-        debugShowCheckedModeBanner: false,
-        title: 'EasyRide Passenger',
-        builder: (context, child) => MultiBlocListener(
-          listeners: [
-            BlocListener<SessionBloc, SessionState>(
-              listenWhen: (_, current) =>
-                  current is GuestSession || current is SessionFailure,
-              listener: (context, _) =>
-                  BlocProvider.of<BookingDraftCubit>(context).clear(),
-            ),
-            BlocListener<LocationAccessCubit, LocationAccessViewState>(
-              listener: _handleLocationAccess,
-            ),
-          ],
-          child: child ?? const SizedBox.shrink(),
+      child: BlocBuilder<ThemeModeCubit, ThemeMode>(
+        builder: (context, themeMode) => ModularApp.router(
+          theme: EasyRideTheme.light,
+          darkTheme: EasyRideTheme.dark,
+          themeMode: themeMode,
+          debugShowCheckedModeBanner: false,
+          title: 'EasyRide Passenger',
+          builder: (context, child) => MultiBlocListener(
+            listeners: [
+              BlocListener<SessionBloc, SessionState>(
+                listenWhen: (_, current) =>
+                    current is GuestSession || current is SessionFailure,
+                listener: (context, _) =>
+                    BlocProvider.of<BookingDraftCubit>(context).clear(),
+              ),
+              BlocListener<LocationAccessCubit, LocationAccessViewState>(
+                listener: _handleLocationAccess,
+              ),
+            ],
+            child: child ?? const SizedBox.shrink(),
+          ),
         ),
       ),
     );

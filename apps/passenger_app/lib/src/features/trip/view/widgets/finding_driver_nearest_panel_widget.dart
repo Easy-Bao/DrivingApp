@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking/booking_bloc.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class FindingDriverNearestPanelWidget extends StatelessWidget {
   final NearestDriverFound state;
@@ -30,11 +30,11 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: context.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withValues(alpha: 0.08),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.08),
             blurRadius: 24,
             offset: const Offset(0, -8),
           ),
@@ -48,7 +48,7 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
             height: 4,
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              color: AppTheme.borderSide,
+              color: context.colorScheme.outlineVariant,
               borderRadius: BorderRadius.circular(99),
             ),
           ),
@@ -57,13 +57,13 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
               Container(
                 width: 44,
                 height: 44,
-                decoration: const BoxDecoration(
-                  color: AppTheme.neutralColor,
+                decoration: BoxDecoration(
+                  color: context.colorScheme.surfaceContainerHighest,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   LucideIcons.user_round,
-                  color: AppTheme.primaryColor,
+                  color: context.colorScheme.onSurface,
                   size: 21,
                 ),
               ),
@@ -72,12 +72,12 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Nearest Driver',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: AppTheme.tertiaryColor,
+                        color: context.colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 1),
@@ -85,19 +85,19 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
                       driver.displayName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.w800,
+                        color: context.colorScheme.onSurface,
                       ),
                     ),
                     Text(
                       driver.vehicleSummary,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color: AppTheme.tertiaryColor,
+                        color: context.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -109,17 +109,17 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
                 children: [
                   Text(
                     formatPesoAmount(fare),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 17,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.primaryColor,
+                      fontWeight: FontWeight.w800,
+                      color: context.colorScheme.onSurface,
                     ),
                   ),
-                  const Text(
+                  Text(
                     'Estimated Fare',
                     style: TextStyle(
-                      fontSize: 9,
-                      color: AppTheme.tertiaryColor,
+                      fontSize: 11,
+                      color: context.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -130,25 +130,28 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
           Row(
             children: [
               _metric(
+                context,
                 icon: Icons.star_rounded,
                 label: '${driver.rating.toStringAsFixed(1)} Rating',
-                color: AppTheme.warning,
+                color: context.semanticColors.warning,
               ),
               const SizedBox(width: 8),
               _metric(
+                context,
                 icon: LucideIcons.navigation,
                 label:
                     '${DistanceFormatter.fromKilometers(driver.distanceKm)} Away',
               ),
               const SizedBox(width: 8),
               _metric(
+                context,
                 icon: driver.hasPassengerOnboard
                     ? LucideIcons.users
                     : LucideIcons.user_check,
                 label: driver.hasPassengerOnboard ? 'On Trip' : 'Available',
                 color: driver.hasPassengerOnboard
-                    ? AppTheme.warning
-                    : AppTheme.complete,
+                    ? context.semanticColors.warning
+                    : context.semanticColors.success,
               ),
             ],
           ),
@@ -191,17 +194,17 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
                 child: TextButton(
                   onPressed: isCanceling ? null : onCancelRidePressed,
                   child: isCanceling
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 17,
                           height: 17,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: AppTheme.cancel,
+                            color: context.colorScheme.error,
                           ),
                         )
-                      : const Text(
+                      : Text(
                           'Cancel Ride',
-                          style: TextStyle(color: AppTheme.cancel),
+                          style: TextStyle(color: context.colorScheme.error),
                         ),
                 ),
               ),
@@ -212,26 +215,28 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
     );
   }
 
-  Widget _metric({
+  Widget _metric(
+    BuildContext context, {
     required IconData icon,
     required String label,
-    Color color = AppTheme.primaryColor,
+    Color? color,
   }) {
+    final resolvedColor = color ?? context.colorScheme.onSurface;
     return Expanded(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 13, color: color),
+          Icon(icon, size: 13, color: resolvedColor),
           const SizedBox(width: 4),
           Flexible(
             child: Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 10,
+              style: TextStyle(
+                fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.primaryColor,
+                color: context.colorScheme.onSurface,
               ),
             ),
           ),

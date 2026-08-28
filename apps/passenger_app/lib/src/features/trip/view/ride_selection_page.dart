@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/location/location.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking/booking_bloc.dart';
@@ -391,11 +390,11 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
       );
       final action = await showModalBottomSheet<BookingAuthAction>(
         context: context,
-        backgroundColor: AppTheme.surface,
+        backgroundColor: context.colorScheme.surface,
         isScrollControlled: true,
         isDismissible: true,
         enableDrag: true,
-        barrierColor: AppTheme.primaryColor.withValues(alpha: 0.54),
+        barrierColor: context.colorScheme.onSurface.withValues(alpha: 0.54),
         useSafeArea: true,
         builder: (_) => const BookingAuthBottomSheetWidget(),
       );
@@ -443,6 +442,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
     final pickupLng = pickup.lng;
     final destLat = widget.destination.latitude;
     final destLng = widget.destination.longitude;
+    final routeColor = context.colorScheme.onSurface;
 
     try {
       final route = await _loadRoute();
@@ -465,7 +465,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
         await MapProvider.addPolyline(
           _mapController!,
           routePoints,
-          color: AppTheme.primaryColor,
+          color: routeColor,
           width: 5.0,
         );
         await MapProvider.fitBounds(
@@ -502,7 +502,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
     final pickup = _pickupCoordinate;
     if (pickup == null) {
       return Scaffold(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: context.colorScheme.surface,
         body: Center(
           child: _isResolvingPickup
               ? const Column(
@@ -525,12 +525,12 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
     };
 
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: context.colorScheme.surface,
       body: Stack(
         children: [
           Positioned.fill(
             child: Container(
-              color: AppTheme.neutralColor,
+              color: context.colorScheme.surfaceContainerHighest,
               child: SizedBox.expand(
                 child: _buildMapView(defaultLat, defaultLng),
               ),
@@ -546,20 +546,22 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
                   width: 46,
                   height: 46,
                   decoration: BoxDecoration(
-                    color: AppTheme.surface,
+                    color: context.colorScheme.surface,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                        color: context.colorScheme.onSurface.withValues(
+                          alpha: 0.08,
+                        ),
                         blurRadius: 15,
                         offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Icon(
                       LucideIcons.arrow_left,
-                      color: AppTheme.primaryColor,
+                      color: context.colorScheme.onSurface,
                       size: 20,
                     ),
                   ),

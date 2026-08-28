@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:passenger_app/src/core/location/location.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class MapSelectionMarkerWidget extends StatelessWidget {
   static const double width = 32;
@@ -14,17 +14,28 @@ class MapSelectionMarkerWidget extends StatelessWidget {
     return Semantics(
       image: true,
       label: 'Selected map location',
-      child: const SizedBox(
+      child: SizedBox(
         width: width,
         height: height,
-        child: CustomPaint(painter: _MapSelectionMarkerPainter()),
+        child: CustomPaint(
+          painter: _MapSelectionMarkerPainter(
+            shadowColor: context.colorScheme.onSurface.withValues(alpha: 0.26),
+            surfaceColor: context.colorScheme.surface,
+          ),
+        ),
       ),
     );
   }
 }
 
 class _MapSelectionMarkerPainter extends CustomPainter {
-  const _MapSelectionMarkerPainter();
+  final Color shadowColor;
+  final Color surfaceColor;
+
+  const _MapSelectionMarkerPainter({
+    required this.shadowColor,
+    required this.surfaceColor,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -48,24 +59,19 @@ class _MapSelectionMarkerPainter extends CustomPainter {
       ..addOval(Rect.fromCircle(center: center, radius: 23))
       ..addPath(outerTail, Offset.zero);
 
-    canvas.drawShadow(
-      shadowPath,
-      AppTheme.primaryColor.withValues(alpha: 0.26),
-      5,
-      true,
-    );
-    canvas.drawPath(outerTail, Paint()..color = AppTheme.surface);
+    canvas.drawShadow(shadowPath, shadowColor, 5, true);
+    canvas.drawPath(outerTail, Paint()..color = surfaceColor);
     canvas.drawPath(
       innerTail,
       Paint()..color = MapSelectionMarkerWidget.markerColor,
     );
-    canvas.drawCircle(center, 23, Paint()..color = AppTheme.surface);
+    canvas.drawCircle(center, 23, Paint()..color = surfaceColor);
     canvas.drawCircle(
       center,
       18,
       Paint()..color = MapSelectionMarkerWidget.markerColor,
     );
-    canvas.drawCircle(center, 9, Paint()..color = AppTheme.surface);
+    canvas.drawCircle(center, 9, Paint()..color = surfaceColor);
     canvas.drawCircle(
       center,
       4,
@@ -75,5 +81,8 @@ class _MapSelectionMarkerPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _MapSelectionMarkerPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _MapSelectionMarkerPainter oldDelegate) {
+    return oldDelegate.shadowColor != shadowColor ||
+        oldDelegate.surfaceColor != surfaceColor;
+  }
 }

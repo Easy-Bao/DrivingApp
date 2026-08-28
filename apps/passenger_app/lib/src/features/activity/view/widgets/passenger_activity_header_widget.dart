@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class PassengerActivityHeaderWidget extends StatelessWidget {
   final String subtitle;
@@ -16,7 +16,7 @@ class PassengerActivityHeaderWidget extends StatelessWidget {
         Text(
           'Activity',
           style: textTheme.headlineMedium?.copyWith(
-            color: AppTheme.primaryColor,
+            color: context.colorScheme.onSurface,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.8,
           ),
@@ -25,7 +25,7 @@ class PassengerActivityHeaderWidget extends StatelessWidget {
         Text(
           subtitle,
           style: textTheme.bodySmall?.copyWith(
-            color: AppTheme.tertiaryColor,
+            color: context.colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w500,
           ),
         ),

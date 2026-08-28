@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class ProfileAvatarWidget extends StatelessWidget {
   final String initials;
@@ -24,13 +24,13 @@ class ProfileAvatarWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imagePath = this.imagePath;
-    final fallbackImage = _buildImageData();
+    final fallbackImage = _buildImageData(context);
     final avatar = imagePath == null || imagePath.isEmpty
-        ? fallbackImage ?? _buildInitials()
+        ? fallbackImage ?? _buildInitials(context)
         : Image.file(
             File(imagePath),
             fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => fallbackImage ?? _buildInitials(),
+            errorBuilder: (_, _, _) => fallbackImage ?? _buildInitials(context),
           );
 
     return SizedBox(
@@ -45,7 +45,7 @@ class ProfileAvatarWidget extends StatelessWidget {
               right: -2,
               bottom: -2,
               child: Material(
-                color: AppTheme.primaryColor,
+                color: context.colorScheme.onSurface,
                 shape: const CircleBorder(),
                 child: InkWell(
                   key: const ValueKey<String>('passenger-profile-camera'),
@@ -57,7 +57,7 @@ class ProfileAvatarWidget extends StatelessWidget {
                     child: Icon(
                       LucideIcons.camera,
                       size: size * 0.16,
-                      color: AppTheme.surface,
+                      color: context.colorScheme.surface,
                     ),
                   ),
                 ),
@@ -68,7 +68,7 @@ class ProfileAvatarWidget extends StatelessWidget {
     );
   }
 
-  Widget? _buildImageData() {
+  Widget? _buildImageData(BuildContext context) {
     final value = imageData?.trim() ?? '';
     if (value.isEmpty) return null;
     try {
@@ -77,23 +77,23 @@ class ProfileAvatarWidget extends StatelessWidget {
       return Image.memory(
         bytes,
         fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => _buildInitials(),
+        errorBuilder: (_, _, _) => _buildInitials(context),
       );
     } on FormatException {
       return null;
     }
   }
 
-  Widget _buildInitials() {
+  Widget _buildInitials(BuildContext context) {
     return ColoredBox(
-      color: AppTheme.secondaryColor,
+      color: context.colorScheme.secondaryContainer,
       child: Center(
         child: Text(
           initials,
           style: TextStyle(
-            color: AppTheme.primaryColor,
+            color: context.colorScheme.onSurface,
             fontSize: size * 0.28,
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w800,
           ),
         ),
       ),

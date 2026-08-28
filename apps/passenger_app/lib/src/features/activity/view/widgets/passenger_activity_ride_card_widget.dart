@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/view/widgets/passenger_activity_history_presenter.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class PassengerActiveRideCardWidget extends StatelessWidget {
   final RideHistoryModel ride;
@@ -32,10 +32,10 @@ class PassengerActiveRideCardWidget extends StatelessWidget {
       button: true,
       label: '$statusLabel to $destination',
       child: Material(
-        color: AppTheme.surface,
+        color: context.colorScheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
-          side: const BorderSide(color: AppTheme.borderSide),
+          side: BorderSide(color: context.colorScheme.outlineVariant),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -52,13 +52,15 @@ class PassengerActiveRideCardWidget extends StatelessWidget {
                       width: 34,
                       height: 34,
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                        color: context.colorScheme.onSurface.withValues(
+                          alpha: 0.08,
+                        ),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         LucideIcons.navigation,
                         size: 16,
-                        color: AppTheme.primaryColor,
+                        color: context.colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -66,7 +68,7 @@ class PassengerActiveRideCardWidget extends StatelessWidget {
                       child: Text(
                         statusLabel,
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: AppTheme.primaryColor,
+                          color: context.colorScheme.onSurface,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -76,14 +78,14 @@ class PassengerActiveRideCardWidget extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: AppTheme.primaryColor,
+                        color: context.colorScheme.onSurface,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(
+                    Icon(
                       LucideIcons.chevron_right,
-                      color: AppTheme.tertiaryColor,
+                      color: context.colorScheme.onSurfaceVariant,
                       size: 16,
                     ),
                   ],
@@ -94,7 +96,7 @@ class PassengerActiveRideCardWidget extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppTheme.primaryColor,
+                    color: context.colorScheme.onSurface,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -105,7 +107,7 @@ class PassengerActiveRideCardWidget extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppTheme.tertiaryColor,
+                      color: context.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -135,7 +137,9 @@ class PassengerPastRideCardWidget extends StatelessWidget {
     final status = RideStatus.fromString(ride.status);
     final isCancelled = status == RideStatus.cancelled;
     final statusLabel = isCancelled ? 'Cancelled' : 'Completed';
-    final statusColor = isCancelled ? AppTheme.cancel : AppTheme.complete;
+    final statusColor = isCancelled
+        ? context.colorScheme.error
+        : context.semanticColors.success;
     final destination = presenter.destinationLabel(ride);
     final metadata = presenter.rideMetadata(ride);
 
@@ -143,10 +147,10 @@ class PassengerPastRideCardWidget extends StatelessWidget {
       button: true,
       label: '$statusLabel ride to $destination',
       child: Material(
-        color: AppTheme.surface,
+        color: context.colorScheme.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppTheme.borderSide),
+          side: BorderSide(color: context.colorScheme.outlineVariant),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -179,7 +183,7 @@ class PassengerPastRideCardWidget extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppTheme.primaryColor,
+                          color: context.colorScheme.onSurface,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -191,7 +195,7 @@ class PassengerPastRideCardWidget extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
-                                color: AppTheme.tertiaryColor,
+                                color: context.colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                         ),
@@ -208,15 +212,15 @@ class PassengerPastRideCardWidget extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.end,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppTheme.primaryColor,
+                      color: context.colorScheme.onSurface,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
                 const SizedBox(width: 3),
-                const Icon(
+                Icon(
                   LucideIcons.chevron_right,
-                  color: AppTheme.tertiaryColor,
+                  color: context.colorScheme.onSurfaceVariant,
                   size: 15,
                 ),
               ],

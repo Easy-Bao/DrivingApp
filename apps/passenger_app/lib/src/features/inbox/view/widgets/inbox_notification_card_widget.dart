@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class InboxNotificationCardWidget extends StatelessWidget {
   final InboxNotification notification;
@@ -64,16 +64,16 @@ class InboxNotificationCardWidget extends StatelessWidget {
     final IconData icon;
 
     if (isDriverChat) {
-      bgCircleColor = AppTheme.secondaryColor;
-      iconColor = AppTheme.warmAccent;
+      bgCircleColor = context.colorScheme.secondaryContainer;
+      iconColor = context.semanticColors.warmAccent;
       icon = LucideIcons.user;
     } else if (isReceipt) {
-      bgCircleColor = AppTheme.primaryColor;
-      iconColor = AppTheme.surface;
+      bgCircleColor = context.colorScheme.onSurface;
+      iconColor = context.colorScheme.surface;
       icon = LucideIcons.receipt;
     } else {
-      bgCircleColor = AppTheme.neutralColor;
-      iconColor = AppTheme.primaryColor;
+      bgCircleColor = context.colorScheme.surfaceContainerHighest;
+      iconColor = context.colorScheme.onSurface;
       icon = LucideIcons.bell;
     }
 
@@ -84,10 +84,12 @@ class InboxNotificationCardWidget extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppTheme.neutralColor.withValues(alpha: 0.25),
+            color: context.colorScheme.surfaceContainerHighest.withValues(
+              alpha: 0.25,
+            ),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: AppTheme.borderSide.withValues(alpha: 0.2),
+              color: context.colorScheme.outlineVariant.withValues(alpha: 0.2),
               width: 1.0,
             ),
           ),
@@ -112,10 +114,10 @@ class InboxNotificationCardWidget extends StatelessWidget {
                   children: [
                     Text(
                       notification.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
-                        color: AppTheme.primaryColor,
+                        color: context.colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -123,7 +125,9 @@ class InboxNotificationCardWidget extends StatelessWidget {
                       notification.message,
                       style: TextStyle(
                         fontSize: 13,
-                        color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                        color: context.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -139,7 +143,7 @@ class InboxNotificationCardWidget extends StatelessWidget {
                     _formatTimestamp(notification.timestamp),
                     style: TextStyle(
                       fontSize: 11,
-                      color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                      color: context.colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -148,8 +152,8 @@ class InboxNotificationCardWidget extends StatelessWidget {
                     Container(
                       width: 8,
                       height: 8,
-                      decoration: const BoxDecoration(
-                        color: AppTheme.cancel,
+                      decoration: BoxDecoration(
+                        color: context.colorScheme.error,
                         shape: BoxShape.circle,
                       ),
                     ),

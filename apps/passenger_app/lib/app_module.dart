@@ -18,6 +18,7 @@ import 'package:passenger_app/src/features/location/domain/repositories/i_locati
 import 'package:passenger_app/src/features/trip/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class AppModule extends Module {
   final SharedPreferences _prefs;
@@ -28,6 +29,17 @@ class AppModule extends Module {
   void binds(Injector i) {
     i
       ..addSingleton<SharedPreferences>((i) => _prefs)
+      ..addLazySingleton<ThemeModeCubit>(
+        (i) => ThemeModeCubit(
+          initialMode: ThemeModeCodec.decode(
+            i.get<SharedPreferences>().getString(appThemeModePreferenceKey),
+          ),
+          savePreference: (value) => i.get<SharedPreferences>().setString(
+            appThemeModePreferenceKey,
+            value,
+          ),
+        ),
+      )
       ..addLazySingleton<SecureSessionService>((i) => SecureSessionService())
       ..addLazySingleton<BackgroundTelemetryService>(
         (i) => BackgroundTelemetryService(apiBaseUri: EnvConfig.apiBaseUri),

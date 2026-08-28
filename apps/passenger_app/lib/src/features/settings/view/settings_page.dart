@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/settings/bloc/settings/settings_cubit.dart';
 import 'package:passenger_app/src/features/settings/bloc/settings/settings_state.dart';
 import 'package:passenger_app/src/features/settings/view/widgets/settings_item_tile_widget.dart';
@@ -16,6 +15,7 @@ class SettingsPage extends StatelessWidget {
 
   void _showThemeSelector(BuildContext context, String currentTheme) {
     final settingsCubit = BlocProvider.of<SettingsCubit>(context);
+    final themeModeCubit = BlocProvider.of<ThemeModeCubit>(context);
     unawaited(
       showModalBottomSheet(
         context: context,
@@ -26,6 +26,9 @@ class SettingsPage extends StatelessWidget {
           selectedThemeMode: currentTheme,
           onThemeSelected: (newMode) {
             unawaited(settingsCubit.updateThemeMode(newMode));
+            unawaited(
+              themeModeCubit.setThemeMode(ThemeModeCodec.decode(newMode)),
+            );
           },
         ),
       ),
@@ -47,23 +50,23 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: context.colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface.withValues(alpha: 0),
+        backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
           style: IconButton.styleFrom(shape: const CircleBorder()),
-          icon: const Icon(
+          icon: Icon(
             LucideIcons.arrow_left,
-            color: AppTheme.primaryColor,
+            color: context.colorScheme.onSurface,
           ),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
+        title: Text(
           'Settings',
           style: TextStyle(
-            color: AppTheme.primaryColor,
+            color: context.colorScheme.onSurface,
             fontWeight: FontWeight.w800,
             fontSize: 18,
           ),
@@ -73,8 +76,10 @@ class SettingsPage extends StatelessWidget {
       body: BlocBuilder<SettingsCubit, SettingsState>(
         builder: (context, state) {
           if (state is SettingsLoadingState || state is SettingsInitialState) {
-            return const Center(
-              child: CircularProgressIndicator(color: AppTheme.primaryColor),
+            return Center(
+              child: CircularProgressIndicator(
+                color: context.colorScheme.onSurface,
+              ),
             );
           }
 
@@ -95,12 +100,12 @@ class SettingsPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'App Preferences',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.primaryColor,
+                    color: context.colorScheme.onSurface,
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -109,15 +114,16 @@ class SettingsPage extends StatelessWidget {
                   'Manage your application experience',
                   style: TextStyle(
                     fontSize: 14,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                    color: context.colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 28),
 
-                _buildSectionHeader('Preferences'),
+                _buildSectionHeader(context, 'Preferences'),
                 const SizedBox(height: 12),
                 _buildSettingsRow(
+                  context,
                   icon: LucideIcons.palette,
                   title: 'Theme Mode',
                   subtitle: _formatThemeSubtitle(themeMode),
@@ -126,7 +132,7 @@ class SettingsPage extends StatelessWidget {
 
                 const SizedBox(height: 28),
 
-                _buildSectionHeader('NOTIFICATIONS & PRIVACY'),
+                _buildSectionHeader(context, 'NOTIFICATIONS & PRIVACY'),
                 const SizedBox(height: 12),
                 SettingsItemTileWidget(
                   icon: LucideIcons.bell,
@@ -153,10 +159,11 @@ class SettingsPage extends StatelessWidget {
 
                 const SizedBox(height: 28),
 
-                _buildSectionHeader('SUPPORT & LEGAL'),
+                _buildSectionHeader(context, 'SUPPORT & LEGAL'),
                 const SizedBox(height: 12),
-                _buildSettingsCard([
+                _buildSettingsCard(context, [
                   _buildSettingsRow(
+                    context,
                     icon: LucideIcons.shield_check,
                     title: 'Privacy Center',
                     subtitle: 'Manage your data and permissions',
@@ -164,8 +171,9 @@ class SettingsPage extends StatelessWidget {
                       CustomToast.show(context, 'Privacy controls active.');
                     },
                   ),
-                  _buildDivider(),
+                  _buildDivider(context),
                   _buildSettingsRow(
+                    context,
                     icon: LucideIcons.file_text,
                     title: 'Terms of Service',
                     subtitle: 'Read agreements and user rights',
@@ -183,28 +191,30 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4.0),
       child: Text(
         title,
         style: TextStyle(
           fontSize: 11,
-          fontWeight: FontWeight.w900,
-          color: AppTheme.primaryColor.withValues(alpha: 0.4),
+          fontWeight: FontWeight.w800,
+          color: context.colorScheme.onSurfaceVariant,
           letterSpacing: 1.0,
         ),
       ),
     );
   }
 
-  Widget _buildSettingsCard(List<Widget> children) {
+  Widget _buildSettingsCard(BuildContext context, List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.neutralColor.withValues(alpha: 0.15),
+        color: context.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.15,
+        ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppTheme.borderSide.withValues(alpha: 0.2),
+          color: context.colorScheme.outlineVariant.withValues(alpha: 0.2),
           width: 1.0,
         ),
       ),
@@ -212,7 +222,8 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSettingsRow({
+  Widget _buildSettingsRow(
+    BuildContext context, {
     required IconData icon,
     required String title,
     required String subtitle,
@@ -228,12 +239,16 @@ class SettingsPage extends StatelessWidget {
             Container(
               width: 40,
               height: 40,
-              decoration: const BoxDecoration(
-                color: AppTheme.secondaryColor,
+              decoration: BoxDecoration(
+                color: context.colorScheme.secondaryContainer,
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
-              child: Icon(icon, color: AppTheme.warmAccent, size: 18),
+              child: Icon(
+                icon,
+                color: context.semanticColors.warmAccent,
+                size: 18,
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -242,10 +257,10 @@ class SettingsPage extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
-                      color: AppTheme.primaryColor,
+                      color: context.colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -253,7 +268,7 @@ class SettingsPage extends StatelessWidget {
                     subtitle,
                     style: TextStyle(
                       fontSize: 12,
-                      color: AppTheme.primaryColor.withValues(alpha: 0.45),
+                      color: context.colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -262,7 +277,7 @@ class SettingsPage extends StatelessWidget {
             ),
             Icon(
               LucideIcons.chevron_right,
-              color: AppTheme.primaryColor.withValues(alpha: 0.2),
+              color: context.colorScheme.onSurfaceVariant,
               size: 16,
             ),
           ],
@@ -271,10 +286,10 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildDivider() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16.0),
-      child: Divider(height: 1, color: AppTheme.borderSide),
+  Widget _buildDivider(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Divider(height: 1, color: context.colorScheme.outlineVariant),
     );
   }
 }

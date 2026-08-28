@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/trip/domain/entities/booking_offer.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class FindingDriverBidsPanelWidget extends StatelessWidget {
   final List<BookingOffer> offers;
@@ -28,11 +28,11 @@ class FindingDriverBidsPanelWidget extends StatelessWidget {
       ),
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: context.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withValues(alpha: 0.08),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.08),
             blurRadius: 30,
             offset: const Offset(0, -10),
           ),
@@ -48,23 +48,26 @@ class FindingDriverBidsPanelWidget extends StatelessWidget {
               height: 4,
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: AppTheme.borderSide,
+                color: context.colorScheme.outlineVariant,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
-          const Text(
+          Text(
             'Select Driver Offer',
             style: TextStyle(
               fontSize: 18,
-              fontWeight: FontWeight.w900,
-              color: AppTheme.primaryColor,
+              fontWeight: FontWeight.w800,
+              color: context.colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Drivers nearby have placed these bids for your trip',
-            style: TextStyle(fontSize: 12, color: AppTheme.tertiaryColor),
+            style: TextStyle(
+              fontSize: 12,
+              color: context.colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 12),
           Expanded(
@@ -76,9 +79,11 @@ class FindingDriverBidsPanelWidget extends StatelessWidget {
                   margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppTheme.neutralColor,
+                    color: context.colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppTheme.borderSide),
+                    border: Border.all(
+                      color: context.colorScheme.outlineVariant,
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -86,12 +91,13 @@ class FindingDriverBidsPanelWidget extends StatelessWidget {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: AppTheme.secondaryColor.withValues(alpha: 0.3),
+                          color: context.colorScheme.secondaryContainer
+                              .withValues(alpha: 0.3),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           LucideIcons.user,
-                          color: AppTheme.primaryColor,
+                          color: context.colorScheme.onSurface,
                           size: 20,
                         ),
                       ),
@@ -102,10 +108,10 @@ class FindingDriverBidsPanelWidget extends StatelessWidget {
                           children: [
                             Text(
                               offer.displayDriverName,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 15,
-                                color: AppTheme.primaryColor,
+                                color: context.colorScheme.onSurface,
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -113,26 +119,24 @@ class FindingDriverBidsPanelWidget extends StatelessWidget {
                               offer.vehicleSummary,
                               style: TextStyle(
                                 fontSize: 12,
-                                color: AppTheme.primaryColor.withValues(
-                                  alpha: 0.5,
-                                ),
+                                color: context.colorScheme.onSurfaceVariant,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   LucideIcons.star,
-                                  color: AppTheme.warning,
+                                  color: context.semanticColors.warning,
                                   size: 12,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
                                   offer.ratingLabel,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
-                                    color: AppTheme.primaryColor,
+                                    color: context.colorScheme.onSurface,
                                   ),
                                 ),
                               ],
@@ -145,17 +149,17 @@ class FindingDriverBidsPanelWidget extends StatelessWidget {
                         children: [
                           Text(
                             formatPesoAmount(offer.proposedFare),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w900,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
                               fontSize: 16,
-                              color: AppTheme.primaryColor,
+                              color: context.colorScheme.onSurface,
                             ),
                           ),
                           const SizedBox(height: 8),
                           ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.primaryColor,
-                              foregroundColor: AppTheme.activeControlForeground,
+                              backgroundColor: context.colorScheme.onSurface,
+                              foregroundColor: context.colorScheme.onPrimary,
                               elevation: 0,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
@@ -169,12 +173,12 @@ class FindingDriverBidsPanelWidget extends StatelessWidget {
                                 ? null
                                 : () => onAcceptOfferPressed(offer),
                             child: acceptingOfferId == offer.offerId
-                                ? const SizedBox(
+                                ? SizedBox(
                                     width: 16,
                                     height: 16,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      color: AppTheme.surface,
+                                      color: context.colorScheme.surface,
                                     ),
                                   )
                                 : const Text(
@@ -203,22 +207,22 @@ class FindingDriverBidsPanelWidget extends StatelessWidget {
               alignment: Alignment.center,
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
-                color: AppTheme.cancel.withValues(alpha: 0.08),
+                color: context.colorScheme.error.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(32),
               ),
               child: isCanceling
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppTheme.cancel,
+                        color: context.colorScheme.error,
                       ),
                     )
-                  : const Text(
+                  : Text(
                       'Cancel Ride Request',
                       style: TextStyle(
-                        color: AppTheme.cancel,
+                        color: context.colorScheme.error,
                         fontWeight: FontWeight.w700,
                         fontSize: 15,
                       ),

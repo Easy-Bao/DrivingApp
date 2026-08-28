@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
+import 'package:shared_ui/shared_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class HomeLocationRowWidget extends StatelessWidget {
@@ -75,16 +75,20 @@ class _LocationRowLabel extends StatelessWidget {
       label,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w600,
-        color: AppTheme.primaryColor,
+        color: context.colorScheme.onSurface,
       ),
     );
 
     return Row(
       children: [
-        const Icon(LucideIcons.map_pin, size: 14, color: AppTheme.primaryColor),
+        Icon(
+          LucideIcons.map_pin,
+          size: 14,
+          color: context.colorScheme.onSurface,
+        ),
         const SizedBox(width: 6),
         if (expands) Expanded(child: labelWidget) else labelWidget,
       ],

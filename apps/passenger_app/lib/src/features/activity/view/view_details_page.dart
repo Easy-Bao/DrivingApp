@@ -5,7 +5,6 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/chat/chat_routes.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
 import 'package:shared_core/shared_core.dart';
@@ -122,6 +121,7 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
   Future<void> _onMapCreated(AppMapController controller) async {
     final ride = widget.ride;
     if (ride == null) return;
+    final routeColor = context.colorScheme.onSurface;
 
     try {
       await MapProvider.addMarker(
@@ -147,7 +147,7 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
         await MapProvider.addPolyline(
           controller,
           route.polylinePoints,
-          color: AppTheme.primaryColor,
+          color: routeColor,
           width: 4.0,
         );
       }
@@ -181,23 +181,23 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
     final String statusSubtitle;
 
     if (status == 'completed') {
-      statusColor = AppTheme.complete;
+      statusColor = context.semanticColors.success;
       statusLabel = 'Completed';
       statusSubtitle = 'Trip finished';
     } else if (status == 'canceled' || status == 'cancelled') {
-      statusColor = AppTheme.cancel;
+      statusColor = context.colorScheme.error;
       statusLabel = 'Canceled';
       statusSubtitle = 'Trip canceled';
     } else {
-      statusColor = AppTheme.complete;
+      statusColor = context.semanticColors.success;
       statusLabel = 'In Progress';
       statusSubtitle = 'Trip is in progress';
     }
 
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: context.colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface.withValues(alpha: 0),
+        backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: Center(
@@ -206,17 +206,17 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
             tooltip: MaterialLocalizations.of(context).backButtonTooltip,
             padding: EdgeInsets.zero,
             style: IconButton.styleFrom(shape: const CircleBorder()),
-            icon: const Icon(
+            icon: Icon(
               LucideIcons.arrow_left,
-              color: AppTheme.primaryColor,
+              color: context.colorScheme.onSurface,
               size: 20,
             ),
           ),
         ),
-        title: const Text(
+        title: Text(
           'Ride details',
           style: TextStyle(
-            color: AppTheme.primaryColor,
+            color: context.colorScheme.onSurface,
             fontWeight: FontWeight.w800,
             fontSize: 18,
           ),
@@ -232,10 +232,12 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
               height: 180,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: AppTheme.neutralColor,
+                color: context.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: AppTheme.borderSide.withValues(alpha: 0.2),
+                  color: context.colorScheme.outlineVariant.withValues(
+                    alpha: 0.2,
+                  ),
                   width: 1.0,
                 ),
               ),
@@ -261,13 +263,15 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
                           vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.8),
+                          color: context.colorScheme.onSurface.withValues(
+                            alpha: 0.8,
+                          ),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Map preview',
                           style: TextStyle(
-                            color: AppTheme.surface,
+                            color: context.colorScheme.surface,
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                           ),
@@ -283,10 +287,14 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppTheme.neutralColor.withValues(alpha: 0.15),
+                color: context.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.15,
+                ),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: AppTheme.borderSide.withValues(alpha: 0.2),
+                  color: context.colorScheme.outlineVariant.withValues(
+                    alpha: 0.2,
+                  ),
                   width: 1.0,
                 ),
               ),
@@ -295,14 +303,14 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
                   Container(
                     width: 50,
                     height: 50,
-                    decoration: const BoxDecoration(
-                      color: AppTheme.secondaryColor,
+                    decoration: BoxDecoration(
+                      color: context.colorScheme.secondaryContainer,
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
-                    child: const Icon(
+                    child: Icon(
                       LucideIcons.user,
-                      color: AppTheme.warmAccent,
+                      color: context.semanticColors.warmAccent,
                       size: 22,
                     ),
                   ),
@@ -313,10 +321,10 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
                       children: [
                         Text(
                           ride?.displayDriverName ?? 'Driver',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
-                            color: AppTheme.primaryColor,
+                            color: context.colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -325,7 +333,7 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
                               'Vehicle details unavailable',
                           style: TextStyle(
                             fontSize: 12,
-                            color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                            color: context.colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -339,17 +347,19 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: AppTheme.surface,
+                        color: context.colorScheme.surface,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: AppTheme.borderSide.withValues(alpha: 0.3),
+                          color: context.colorScheme.outlineVariant.withValues(
+                            alpha: 0.3,
+                          ),
                           width: 1.0,
                         ),
                       ),
                       alignment: Alignment.center,
-                      child: const Icon(
+                      child: Icon(
                         LucideIcons.phone,
-                        color: AppTheme.primaryColor,
+                        color: context.colorScheme.onSurface,
                         size: 16,
                       ),
                     ),
@@ -362,17 +372,18 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: AppTheme.surface,
+                          color: context.colorScheme.surface,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: AppTheme.borderSide.withValues(alpha: 0.3),
+                            color: context.colorScheme.outlineVariant
+                                .withValues(alpha: 0.3),
                             width: 1.0,
                           ),
                         ),
                         alignment: Alignment.center,
-                        child: const Icon(
+                        child: Icon(
                           LucideIcons.message_square,
-                          color: AppTheme.primaryColor,
+                          color: context.colorScheme.onSurface,
                           size: 16,
                         ),
                       ),
@@ -386,10 +397,14 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppTheme.neutralColor.withValues(alpha: 0.15),
+                color: context.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.15,
+                ),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: AppTheme.borderSide.withValues(alpha: 0.2),
+                  color: context.colorScheme.outlineVariant.withValues(
+                    alpha: 0.2,
+                  ),
                   width: 1.0,
                 ),
               ),
@@ -403,7 +418,7 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
                         statusLabel,
                         style: TextStyle(
                           fontSize: 12,
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.w800,
                           color: statusColor,
                           letterSpacing: 0.5,
                         ),
@@ -413,14 +428,17 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                          color: context.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
                   ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16.0),
-                    child: Divider(height: 1, color: AppTheme.borderSide),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    child: Divider(
+                      height: 1,
+                      color: context.colorScheme.outlineVariant,
+                    ),
                   ),
                   CompactRouteTimelineWidget(
                     pickup: ride?.pickup ?? 'Pickup Location',
@@ -437,10 +455,14 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppTheme.neutralColor.withValues(alpha: 0.15),
+                color: context.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.15,
+                ),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: AppTheme.borderSide.withValues(alpha: 0.2),
+                  color: context.colorScheme.outlineVariant.withValues(
+                    alpha: 0.2,
+                  ),
                   width: 1.0,
                 ),
               ),
@@ -458,7 +480,7 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                          color: context.colorScheme.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -466,7 +488,7 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
                         children: [
                           Icon(
                             LucideIcons.banknote,
-                            color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                            color: context.colorScheme.onSurfaceVariant,
                             size: 16,
                           ),
                           const SizedBox(width: 6),
@@ -475,9 +497,7 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: AppTheme.primaryColor.withValues(
-                                alpha: 0.4,
-                              ),
+                              color: context.colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -486,10 +506,10 @@ class _ActivityViewDetailsPageState extends State<ActivityViewDetailsPage> {
                   ),
                   Text(
                     fare == null ? '—' : formatPesoAmount(fare),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.primaryColor,
+                      fontWeight: FontWeight.w800,
+                      color: context.colorScheme.onSurface,
                     ),
                   ),
                 ],

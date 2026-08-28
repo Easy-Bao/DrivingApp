@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class HelpCenterPage extends StatefulWidget {
@@ -110,30 +109,32 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
   Widget build(BuildContext context) {
     final filtered = _filteredFaqs;
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: context.colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: context.colorScheme.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: Center(
           child: Tooltip(
             message: MaterialLocalizations.of(context).backButtonTooltip,
             child: Material(
-              color: AppTheme.surface,
+              color: context.colorScheme.surface,
               elevation: 2,
-              shadowColor: AppTheme.primaryColor.withValues(alpha: 0.08),
+              shadowColor: context.colorScheme.onSurface.withValues(
+                alpha: 0.08,
+              ),
               shape: const CircleBorder(),
               clipBehavior: Clip.antiAlias,
               child: InkWell(
                 onTap: () => Navigator.of(context).maybePop(),
                 customBorder: const CircleBorder(),
-                child: const SizedBox(
+                child: SizedBox(
                   width: 46,
                   height: 46,
                   child: Center(
                     child: Icon(
                       LucideIcons.arrow_left,
-                      color: AppTheme.primaryColor,
+                      color: context.colorScheme.onSurface,
                       size: 20,
                     ),
                   ),
@@ -142,10 +143,10 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
             ),
           ),
         ),
-        title: const Text(
+        title: Text(
           'Help Center',
           style: TextStyle(
-            color: AppTheme.primaryColor,
+            color: context.colorScheme.onSurface,
             fontWeight: FontWeight.w800,
             fontSize: 18,
           ),
@@ -159,21 +160,21 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: BoxDecoration(
-                color: AppTheme.neutralColor,
+                color: context.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppTheme.borderSide),
+                border: Border.all(color: context.colorScheme.outlineVariant),
               ),
               child: TextField(
                 controller: _searchController,
                 onChanged: (_) => setState(() {}),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
-                  color: AppTheme.primaryColor,
+                  color: context.colorScheme.onSurface,
                 ),
                 decoration: InputDecoration(
                   hintText: 'Search FAQs...',
                   hintStyle: TextStyle(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                    color: context.colorScheme.onSurfaceVariant,
                   ),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
@@ -184,7 +185,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
                   icon: Icon(
                     LucideIcons.search,
                     size: 18,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                    color: context.colorScheme.onSurfaceVariant,
                   ),
                   isDense: true,
                 ),
@@ -210,12 +211,14 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: sel ? AppTheme.primaryColor : AppTheme.surface,
+                      color: sel
+                          ? context.colorScheme.onSurface
+                          : context.colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: sel
-                            ? AppTheme.primaryColor
-                            : AppTheme.borderSide,
+                            ? context.colorScheme.onSurface
+                            : context.colorScheme.outlineVariant,
                       ),
                     ),
                     child: Text(
@@ -223,7 +226,9 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: sel ? AppTheme.surface : AppTheme.primaryColor,
+                        color: sel
+                            ? context.colorScheme.surface
+                            : context.colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -238,7 +243,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
                     child: Text(
                       'No results found',
                       style: TextStyle(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                        color: context.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   )
@@ -274,12 +279,14 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: expanded ? AppTheme.neutralColor : AppTheme.surface,
+          color: expanded
+              ? context.colorScheme.surfaceContainerHighest
+              : context.colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: expanded
-                ? AppTheme.primaryColor.withValues(alpha: 0.2)
-                : AppTheme.borderSide,
+                ? context.colorScheme.onSurface.withValues(alpha: 0.2)
+                : context.colorScheme.outlineVariant,
           ),
         ),
         child: Column(
@@ -290,10 +297,10 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
                 Expanded(
                   child: Text(
                     faq['q']!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.primaryColor,
+                      color: context.colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -304,7 +311,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
                   child: Icon(
                     LucideIcons.chevron_down,
                     size: 16,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                    color: context.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -319,7 +326,9 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
                         faq['a']!,
                         style: TextStyle(
                           fontSize: 13,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                          color: context.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
                           height: 1.5,
                           fontWeight: FontWeight.w400,
                         ),
@@ -338,18 +347,18 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
       margin: const EdgeInsets.only(top: 12, bottom: 32),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor,
+        color: context.colorScheme.onSurface,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Still need help?',
             style: TextStyle(
               fontSize: 18,
-              fontWeight: FontWeight.w900,
-              color: AppTheme.surface,
+              fontWeight: FontWeight.w800,
+              color: context.colorScheme.surface,
             ),
           ),
           const SizedBox(height: 4),
@@ -357,7 +366,7 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
             'Our support team is available 24/7',
             style: TextStyle(
               fontSize: 13,
-              color: AppTheme.surface.withValues(alpha: 0.7),
+              color: context.colorScheme.surface.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 18),
@@ -379,20 +388,20 @@ class _HelpCenterPageState extends State<HelpCenterPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: AppTheme.surface.withValues(alpha: 0.15),
+          color: context.colorScheme.surface.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 16, color: AppTheme.surface),
+            Icon(icon, size: 16, color: context.colorScheme.surface),
             const SizedBox(width: 8),
             Text(
               text,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.surface,
+                color: context.colorScheme.surface,
               ),
             ),
           ],

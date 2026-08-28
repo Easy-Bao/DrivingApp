@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class SettingsItemTileWidget extends StatelessWidget {
   final IconData icon;
@@ -23,19 +23,23 @@ class SettingsItemTileWidget extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppTheme.neutralColor.withValues(alpha: 0.25),
+        color: context.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.25,
+        ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.borderSide.withValues(alpha: 0.2)),
+        border: Border.all(
+          color: context.colorScheme.outlineVariant.withValues(alpha: 0.2),
+        ),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withValues(alpha: 0.08),
+              color: context.colorScheme.onSurface.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, size: 20, color: AppTheme.primaryColor),
+            child: Icon(icon, size: 20, color: context.colorScheme.onSurface),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -44,10 +48,10 @@ class SettingsItemTileWidget extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.primaryColor,
+                    color: context.colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -55,7 +59,7 @@ class SettingsItemTileWidget extends StatelessWidget {
                   subtitle,
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                    color: context.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -64,7 +68,7 @@ class SettingsItemTileWidget extends StatelessWidget {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeThumbColor: AppTheme.primaryColor,
+            activeThumbColor: context.colorScheme.onSurface,
           ),
         ],
       ),

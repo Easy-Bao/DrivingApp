@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/features/saved_places/domain/saved_place_defaults.dart';
 import 'package:passenger_app/src/features/saved_places/view/saved_place_icon.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class SavedPlaceQuickActionsWidget extends StatelessWidget {
   final List<SavedPlace> places;
@@ -67,12 +67,12 @@ class _SavedPlaceChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
       decoration: BoxDecoration(
         color: showActiveStyle
-            ? AppTheme.activeControlBackground
-            : AppTheme.interactiveSurface,
+            ? context.colorScheme.primary
+            : context.colorScheme.surface,
         border: Border.all(
           color: showActiveStyle
-              ? AppTheme.activeControlBackground
-              : AppTheme.borderSide,
+              ? context.colorScheme.primary
+              : context.colorScheme.outlineVariant,
           width: showActiveStyle ? 1.5 : 1.0,
         ),
         borderRadius: BorderRadius.circular(24),
@@ -84,8 +84,8 @@ class _SavedPlaceChip extends StatelessWidget {
             savedPlaceIconFromName(place.iconName),
             size: 16,
             color: showActiveStyle
-                ? AppTheme.activeControlForeground
-                : AppTheme.primaryColor,
+                ? context.colorScheme.onPrimary
+                : context.colorScheme.onSurface,
           ),
           const SizedBox(width: 8),
           Text(
@@ -94,8 +94,8 @@ class _SavedPlaceChip extends StatelessWidget {
               fontSize: 14,
               fontWeight: FontWeight.w700,
               color: showActiveStyle
-                  ? AppTheme.activeControlForeground
-                  : AppTheme.primaryColor,
+                  ? context.colorScheme.onPrimary
+                  : context.colorScheme.onSurface,
             ),
           ),
         ],
@@ -116,9 +116,9 @@ class _AddPlaceChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
         decoration: BoxDecoration(
-          color: AppTheme.surface.withValues(alpha: 0),
+          color: context.colorScheme.surface.withValues(alpha: 0),
           border: Border.all(
-            color: AppTheme.primaryColor.withValues(alpha: 0.25),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.25),
           ),
           borderRadius: BorderRadius.circular(24),
         ),
@@ -128,7 +128,7 @@ class _AddPlaceChip extends StatelessWidget {
             Icon(
               LucideIcons.plus,
               size: 16,
-              color: AppTheme.primaryColor.withValues(alpha: 0.7),
+              color: context.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
             const SizedBox(width: 6),
             Text(
@@ -136,7 +136,7 @@ class _AddPlaceChip extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppTheme.primaryColor.withValues(alpha: 0.7),
+                color: context.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           ],

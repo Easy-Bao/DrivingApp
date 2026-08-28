@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 void main() {
@@ -12,7 +11,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.themeData,
+        theme: EasyRideTheme.light,
         home: LocationPermissionPage(
           onEnable: () => enablePressed = true,
           onSkip: () => skipPressed = true,
@@ -37,7 +36,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.themeData,
+        theme: EasyRideTheme.light,
         home: const LocationPermissionPage(
           onEnable: _noop,
           onSkip: _noop,

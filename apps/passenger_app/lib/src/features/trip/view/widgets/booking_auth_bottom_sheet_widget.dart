@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 enum BookingAuthAction { signIn, signUp }
 
@@ -19,15 +19,15 @@ class BookingAuthBottomSheetWidget extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppTheme.borderSide,
+                color: context.colorScheme.outlineVariant,
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
             const SizedBox(height: 24),
-            const Icon(
+            Icon(
               LucideIcons.lock,
               size: 30,
-              color: AppTheme.primaryColor,
+              color: context.colorScheme.onSurface,
             ),
             const SizedBox(height: 14),
             Text(

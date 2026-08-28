@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/location/location.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -121,6 +120,7 @@ class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
     final controller = _mapController;
     final origin = _originCoordinate;
     if (controller == null || origin == null) return;
+    final routeColor = context.colorScheme.onSurface;
 
     try {
       await MapProvider.addMarker(
@@ -146,7 +146,7 @@ class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
       await MapProvider.addPolyline(
         controller,
         route.polylinePoints,
-        color: AppTheme.primaryColor,
+        color: routeColor,
         width: 5.0,
       );
     } catch (error) {
@@ -157,7 +157,7 @@ class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: context.colorScheme.surface,
       body: Stack(
         children: [
           Positioned.fill(
@@ -181,13 +181,15 @@ class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
             child: Container(
               padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
               decoration: BoxDecoration(
-                color: AppTheme.surface,
+                color: context.colorScheme.surface,
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(32),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                    color: context.colorScheme.onSurface.withValues(
+                      alpha: 0.08,
+                    ),
                     blurRadius: 30,
                     offset: const Offset(0, -10),
                   ),
@@ -203,7 +205,7 @@ class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
                       height: 4,
                       margin: const EdgeInsets.only(bottom: 20),
                       decoration: BoxDecoration(
-                        color: AppTheme.borderSide,
+                        color: context.colorScheme.outlineVariant,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -213,12 +215,12 @@ class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: AppTheme.neutralColor,
+                          color: context.colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           LucideIcons.map_pin,
-                          color: AppTheme.primaryColor,
+                          color: context.colorScheme.onSurface,
                           size: 22,
                         ),
                       ),
@@ -229,10 +231,10 @@ class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
                           children: [
                             Text(
                               widget.placeName,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 20,
-                                fontWeight: FontWeight.w900,
-                                color: AppTheme.primaryColor,
+                                fontWeight: FontWeight.w800,
+                                color: context.colorScheme.onSurface,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -240,9 +242,7 @@ class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
                               _isLoading ? 'Loading...' : _fullAddress,
                               style: TextStyle(
                                 fontSize: 13,
-                                color: AppTheme.primaryColor.withValues(
-                                  alpha: 0.5,
-                                ),
+                                color: context.colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                               maxLines: 2,
@@ -281,8 +281,8 @@ class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        foregroundColor: AppTheme.activeControlForeground,
+                        backgroundColor: context.colorScheme.onSurface,
+                        foregroundColor: context.colorScheme.onPrimary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(36),
                         ),
@@ -311,19 +311,22 @@ Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
   return Tooltip(
     message: MaterialLocalizations.of(context).backButtonTooltip,
     child: Material(
-      color: AppTheme.surface,
+      color: context.colorScheme.surface,
       elevation: 2,
-      shadowColor: AppTheme.primaryColor.withValues(alpha: 0.08),
+      shadowColor: context.colorScheme.onSurface.withValues(alpha: 0.08),
       shape: const CircleBorder(),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onPressed,
         customBorder: const CircleBorder(),
-        child: const SizedBox(
+        child: SizedBox(
           width: 46,
           height: 46,
           child: Center(
-            child: Icon(LucideIcons.arrow_left, color: AppTheme.primaryColor),
+            child: Icon(
+              LucideIcons.arrow_left,
+              color: context.colorScheme.onSurface,
+            ),
           ),
         ),
       ),

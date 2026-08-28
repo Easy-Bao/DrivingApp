@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/profile/bloc/profile/profile_cubit.dart';
 import 'package:passenger_app/src/features/profile/view/account_page.dart';
 import 'package:passenger_app/src/features/profile/view/widgets/profile_avatar_widget.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class MockProfileCubit extends MockCubit<ProfileState>
     implements ProfileCubit {}
@@ -31,7 +31,7 @@ void main() {
     var profileTapCount = 0;
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.themeData,
+        theme: EasyRideTheme.light,
         home: BlocProvider<ProfileCubit>.value(
           value: profileCubit,
           child: AccountPage(onProfileTap: () => profileTapCount++),
@@ -44,6 +44,33 @@ void main() {
 
     expect(profileTapCount, 2);
     expect(find.byIcon(Icons.edit), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('uses semantic surfaces and foregrounds in dark mode', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: EasyRideTheme.light,
+        darkTheme: EasyRideTheme.dark,
+        themeMode: ThemeMode.dark,
+        home: BlocProvider<ProfileCubit>.value(
+          value: profileCubit,
+          child: const AccountPage(),
+        ),
+      ),
+    );
+
+    final darkScheme = EasyRideTheme.dark.colorScheme;
+    final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+    final title = tester.widget<Text>(find.text('Account'));
+
+    expect(
+      scaffold.backgroundColor,
+      EasyRideTheme.dark.scaffoldBackgroundColor,
+    );
+    expect(title.style?.color, darkScheme.onSurface);
     expect(tester.takeException(), isNull);
   });
 }

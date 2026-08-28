@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class RecentRideHistoryPreviewWidget extends StatelessWidget {
   const RecentRideHistoryPreviewWidget({
@@ -20,7 +20,7 @@ class RecentRideHistoryPreviewWidget extends StatelessWidget {
       physics: const BouncingScrollPhysics(),
       itemCount: rides.length,
       separatorBuilder: (_, _) =>
-          const Divider(height: 1, color: AppTheme.borderSide),
+          Divider(height: 1, color: context.colorScheme.outlineVariant),
       itemBuilder: (context, index) {
         final ride = rides[index];
         final pickup = ride.pickup.trim();
@@ -37,12 +37,12 @@ class RecentRideHistoryPreviewWidget extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: AppTheme.neutralColor,
+                    color: context.colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     LucideIcons.map_pin,
-                    color: AppTheme.primaryColor,
+                    color: context.colorScheme.onSurface,
                     size: 20,
                   ),
                 ),
@@ -57,10 +57,10 @@ class RecentRideHistoryPreviewWidget extends StatelessWidget {
                             : ride.destination,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.primaryColor,
+                          color: context.colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -70,7 +70,7 @@ class RecentRideHistoryPreviewWidget extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 13,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                          color: context.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -80,7 +80,7 @@ class RecentRideHistoryPreviewWidget extends StatelessWidget {
                 Icon(
                   LucideIcons.chevron_right,
                   size: 16,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                  color: context.colorScheme.onSurfaceVariant,
                 ),
               ],
             ),

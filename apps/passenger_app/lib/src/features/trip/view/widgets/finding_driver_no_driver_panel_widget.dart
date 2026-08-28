@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class FindingDriverNoDriverPanelWidget extends StatelessWidget {
   final String rideType;
@@ -26,11 +26,11 @@ class FindingDriverNoDriverPanelWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: context.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withValues(alpha: 0.08),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.08),
             blurRadius: 30,
             offset: const Offset(0, -10),
           ),
@@ -44,18 +44,22 @@ class FindingDriverNoDriverPanelWidget extends StatelessWidget {
             height: 4,
             margin: const EdgeInsets.only(bottom: 20),
             decoration: BoxDecoration(
-              color: AppTheme.borderSide,
+              color: context.colorScheme.outlineVariant,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const Icon(LucideIcons.search, size: 34, color: AppTheme.accent),
+          Icon(
+            LucideIcons.search,
+            size: 34,
+            color: context.colorScheme.primary,
+          ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'No driver found',
             style: TextStyle(
               fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: AppTheme.primaryColor,
+              fontWeight: FontWeight.w800,
+              color: context.colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 8),
@@ -64,16 +68,16 @@ class FindingDriverNoDriverPanelWidget extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
-              color: AppTheme.primaryColor.withValues(alpha: 0.55),
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 18),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppTheme.neutralColor,
+              color: context.colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppTheme.borderSide),
+              border: Border.all(color: context.colorScheme.outlineVariant),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -81,20 +85,20 @@ class FindingDriverNoDriverPanelWidget extends StatelessWidget {
                 Flexible(
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         LucideIcons.map_pin,
                         size: 16,
-                        color: AppTheme.tertiaryColor,
+                        color: context.colorScheme.onSurfaceVariant,
                       ),
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
                           destination.name,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: AppTheme.primaryColor,
+                            color: context.colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -104,10 +108,10 @@ class FindingDriverNoDriverPanelWidget extends StatelessWidget {
                 const SizedBox(width: 12),
                 Text(
                   formatPesoAmount(fare),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 17,
-                    fontWeight: FontWeight.w900,
-                    color: AppTheme.primaryColor,
+                    fontWeight: FontWeight.w800,
+                    color: context.colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -121,8 +125,8 @@ class FindingDriverNoDriverPanelWidget extends StatelessWidget {
               icon: const Icon(LucideIcons.refresh_cw, size: 18),
               label: const Text('Try again'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: AppTheme.activeControlForeground,
+                backgroundColor: context.colorScheme.onSurface,
+                foregroundColor: context.colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(32),
@@ -133,10 +137,10 @@ class FindingDriverNoDriverPanelWidget extends StatelessWidget {
           const SizedBox(height: 10),
           TextButton(
             onPressed: isCanceling ? null : onCancelPressed,
-            child: const Text(
+            child: Text(
               'Cancel search',
               style: TextStyle(
-                color: AppTheme.cancel,
+                color: context.colorScheme.error,
                 fontWeight: FontWeight.w700,
               ),
             ),

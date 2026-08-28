@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class RideTipSelectorWidget extends StatelessWidget {
   static const tipOptions = [0, 10, 20, 30, 50, 100];
@@ -22,18 +22,21 @@ class RideTipSelectorWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Add a tip',
           style: TextStyle(
-            color: AppTheme.primaryColor,
+            color: context.colorScheme.onSurface,
             fontSize: 14,
             fontWeight: FontWeight.w800,
           ),
         ),
         const SizedBox(height: 2),
-        const Text(
+        Text(
           'Optional, for excellent service.',
-          style: TextStyle(color: AppTheme.tertiaryColor, fontSize: 12),
+          style: TextStyle(
+            color: context.colorScheme.onSurfaceVariant,
+            fontSize: 12,
+          ),
         ),
         const SizedBox(height: 8),
         SingleChildScrollView(
@@ -45,17 +48,17 @@ class RideTipSelectorWidget extends StatelessWidget {
                   label: Text(_labelFor(amount)),
                   selected: selectedTipAmount == amount,
                   onSelected: (_) => onTipSelected(amount),
-                  selectedColor: AppTheme.primaryColor,
-                  backgroundColor: AppTheme.surface,
+                  selectedColor: context.colorScheme.onSurface,
+                  backgroundColor: context.colorScheme.surface,
                   side: BorderSide(
                     color: selectedTipAmount == amount
-                        ? AppTheme.primaryColor
-                        : AppTheme.borderSide,
+                        ? context.colorScheme.onSurface
+                        : context.colorScheme.outlineVariant,
                   ),
                   labelStyle: TextStyle(
                     color: selectedTipAmount == amount
-                        ? AppTheme.surface
-                        : AppTheme.primaryColor,
+                        ? context.colorScheme.surface
+                        : context.colorScheme.onSurface,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                   ),

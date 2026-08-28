@@ -4,14 +4,15 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:passenger_app/src/core/location/services/map_camera_service.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 
 class TripMapMarkerStyle {
   TripMapMarkerStyle._();
 
   static const double pinIconSize = 1.22;
-  static const Color ownLocation = AppTheme.primaryColor;
-  static const Color tripLocation = AppTheme.complete;
+  static const Color ownLocation = Color(0xFF100E11);
+  static const Color tripLocation = Color(0xFF198754);
+  static const Color markerSurface = Color(0xFFFFFFFF);
+  static const Color labelForeground = Color(0xFF100E11);
 
   static Color colorFor({required bool isOrigin}) {
     return isOrigin ? ownLocation : tripLocation;
@@ -146,9 +147,9 @@ class MapAnnotationService {
     const height = 104.0;
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
-    final background = Paint()..color = AppTheme.surface;
+    final background = Paint()..color = TripMapMarkerStyle.markerSurface;
     final shadow = Paint()
-      ..color = AppTheme.primaryColor.withValues(alpha: 0.12);
+      ..color = TripMapMarkerStyle.labelForeground.withValues(alpha: 0.12);
     final cardRect = RRect.fromRectAndRadius(
       const Rect.fromLTWH(8, 8, width - 16, 78),
       const Radius.circular(22),
@@ -166,7 +167,7 @@ class MapAnnotationService {
     canvas.drawCircle(
       const Offset(48, 47),
       8,
-      Paint()..color = AppTheme.surface,
+      Paint()..color = TripMapMarkerStyle.markerSurface,
     );
 
     final lines = label.split('\n');
@@ -177,7 +178,7 @@ class MapAnnotationService {
       width: 250,
       fontSize: 23,
       fontWeight: FontWeight.w700,
-      color: AppTheme.primaryColor,
+      color: TripMapMarkerStyle.labelForeground,
     );
     if (lines.length > 1) {
       _drawLabelText(
@@ -187,7 +188,7 @@ class MapAnnotationService {
         width: 250,
         fontSize: 18,
         fontWeight: FontWeight.w500,
-        color: AppTheme.primaryColor.withValues(alpha: 0.6),
+        color: TripMapMarkerStyle.labelForeground.withValues(alpha: 0.6),
       );
     }
 
@@ -246,15 +247,26 @@ class MapAnnotationService {
 
     canvas.drawShadow(
       shadowPath,
-      AppTheme.primaryColor.withValues(alpha: 0.26),
+      TripMapMarkerStyle.labelForeground.withValues(alpha: 0.26),
       5,
       true,
     );
-    canvas.drawPath(outerTail, Paint()..color = AppTheme.surface);
+    canvas.drawPath(
+      outerTail,
+      Paint()..color = TripMapMarkerStyle.markerSurface,
+    );
     canvas.drawPath(innerTail, Paint()..color = color);
-    canvas.drawCircle(center, 23, Paint()..color = AppTheme.surface);
+    canvas.drawCircle(
+      center,
+      23,
+      Paint()..color = TripMapMarkerStyle.markerSurface,
+    );
     canvas.drawCircle(center, 18, Paint()..color = color);
-    canvas.drawCircle(center, 9, Paint()..color = AppTheme.surface);
+    canvas.drawCircle(
+      center,
+      9,
+      Paint()..color = TripMapMarkerStyle.markerSurface,
+    );
     canvas.drawCircle(center, 4, Paint()..color = color);
     final image = await recorder.endRecording().toImage(
       width.toInt(),
@@ -268,7 +280,7 @@ class MapAnnotationService {
   static Future<mapbox.PolylineAnnotationManager> addPolyline(
     AppMapController controller,
     List<List<double>> points, {
-    Color color = AppTheme.primaryColor,
+    Color color = TripMapMarkerStyle.ownLocation,
     double width = 4.0,
   }) async {
     final validPoints = points.where(_isValidPolylinePoint).toList();
@@ -302,7 +314,7 @@ class MapAnnotationService {
   static Future<void> replacePolyline(
     mapbox.PolylineAnnotationManager annotationManager,
     List<List<double>> points, {
-    Color color = AppTheme.primaryColor,
+    Color color = TripMapMarkerStyle.ownLocation,
     double width = 4.0,
   }) async {
     final validPoints = points.where(_isValidPolylinePoint).toList();

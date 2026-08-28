@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class PassengerPaymentPage extends StatelessWidget {
   final RideHistoryModel ride;
@@ -14,7 +14,7 @@ class PassengerPaymentPage extends StatelessWidget {
     final fare =
         double.tryParse(ride.price.replaceAll(RegExp(r'[^0-9.\-]'), '')) ?? 0;
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.canvasColor,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -28,31 +28,33 @@ class PassengerPaymentPage extends StatelessWidget {
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(
-                      color: AppTheme.complete.withValues(alpha: 0.12),
+                      color: context.semanticColors.success.withValues(
+                        alpha: 0.12,
+                      ),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.check_rounded,
-                      color: AppTheme.complete,
+                      color: context.semanticColors.success,
                       size: 34,
                     ),
                   ),
                   const SizedBox(height: 18),
-                  const Text(
+                  Text(
                     'Trip Completed',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 25,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.primaryColor,
+                      fontWeight: FontWeight.w800,
+                      color: context.colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     'Pay ${ride.displayDriverName} in cash before you leave the vehicle.',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: AppTheme.tertiaryColor,
+                    style: TextStyle(
+                      color: context.colorScheme.onSurfaceVariant,
                       fontSize: 14,
                       height: 1.4,
                     ),
@@ -64,28 +66,30 @@ class PassengerPaymentPage extends StatelessWidget {
                       vertical: 22,
                     ),
                     decoration: BoxDecoration(
-                      color: AppTheme.surface,
+                      color: context.colorScheme.surface,
                       borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: AppTheme.borderSide),
+                      border: Border.all(
+                        color: context.colorScheme.outlineVariant,
+                      ),
                     ),
                     child: Column(
                       children: [
-                        const Text(
+                        Text(
                           'Total Cash Fare',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: AppTheme.tertiaryColor,
+                            color: context.colorScheme.onSurfaceVariant,
                           ),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           formatPesoAmount(fare),
                           key: const ValueKey('payment-total-fare'),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 38,
-                            fontWeight: FontWeight.w900,
-                            color: AppTheme.primaryColor,
+                            fontWeight: FontWeight.w800,
+                            color: context.colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 14),
@@ -95,7 +99,7 @@ class PassengerPaymentPage extends StatelessWidget {
                             vertical: 9,
                           ),
                           decoration: BoxDecoration(
-                            color: AppTheme.neutralColor,
+                            color: context.colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(18),
                           ),
                           child: const Row(
@@ -114,20 +118,20 @@ class PassengerPaymentPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 18),
-                  const Row(
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Icon(
                         Icons.info_outline_rounded,
                         size: 18,
-                        color: AppTheme.tertiaryColor,
+                        color: context.colorScheme.onSurfaceVariant,
                       ),
-                      SizedBox(width: 10),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           'After paying, continue to share feedback about your driver.',
                           style: TextStyle(
-                            color: AppTheme.tertiaryColor,
+                            color: context.colorScheme.onSurfaceVariant,
                             fontSize: 13,
                             height: 1.35,
                           ),

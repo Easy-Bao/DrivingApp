@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/home/domain/entities/public_driver_summary.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class PublicDriverSummaryCardWidget extends StatelessWidget {
   final List<PublicDriverSummary> summaries;
@@ -15,26 +15,26 @@ class PublicDriverSummaryCardWidget extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: context.colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.borderSide),
+        border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 LucideIcons.shield_check,
                 size: 18,
-                color: AppTheme.primaryColor,
+                color: context.colorScheme.onSurface,
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Drivers Nearby (${summaries.length})',
-                  style: const TextStyle(
-                    color: AppTheme.primaryColor,
+                  style: TextStyle(
+                    color: context.colorScheme.onSurface,
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
                   ),
@@ -46,18 +46,20 @@ class PublicDriverSummaryCardWidget extends StatelessWidget {
           Text(
             'Available drivers can accept your request. Ratings help you choose after matching.',
             style: TextStyle(
-              color: AppTheme.primaryColor.withValues(alpha: 0.55),
+              color: context.colorScheme.onSurfaceVariant,
               fontSize: 12,
             ),
           ),
           const SizedBox(height: 8),
-          ...visibleSummaries.map(_buildSummaryRow),
+          ...visibleSummaries.map(
+            (summary) => _buildSummaryRow(context, summary),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryRow(PublicDriverSummary summary) {
+  Widget _buildSummaryRow(BuildContext context, PublicDriverSummary summary) {
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Row(
@@ -67,13 +69,15 @@ class PublicDriverSummaryCardWidget extends StatelessWidget {
             height: 32,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: AppTheme.secondaryColor.withValues(alpha: 0.35),
+              color: context.colorScheme.secondaryContainer.withValues(
+                alpha: 0.35,
+              ),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               LucideIcons.user_round,
               size: 16,
-              color: AppTheme.primaryColor,
+              color: context.colorScheme.onSurface,
             ),
           ),
           const SizedBox(width: 10),
@@ -85,8 +89,8 @@ class PublicDriverSummaryCardWidget extends StatelessWidget {
                   summary.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppTheme.primaryColor,
+                  style: TextStyle(
+                    color: context.colorScheme.onSurface,
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),
@@ -94,19 +98,23 @@ class PublicDriverSummaryCardWidget extends StatelessWidget {
                 Text(
                   summary.vehicleType,
                   style: TextStyle(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                    color: context.colorScheme.onSurfaceVariant,
                     fontSize: 12,
                   ),
                 ),
               ],
             ),
           ),
-          const Icon(LucideIcons.star, size: 15, color: AppTheme.rating),
+          Icon(
+            LucideIcons.star,
+            size: 15,
+            color: context.semanticColors.rating,
+          ),
           const SizedBox(width: 4),
           Text(
             summary.rating.toStringAsFixed(1),
-            style: const TextStyle(
-              color: AppTheme.primaryColor,
+            style: TextStyle(
+              color: context.colorScheme.onSurface,
               fontSize: 13,
               fontWeight: FontWeight.w800,
             ),

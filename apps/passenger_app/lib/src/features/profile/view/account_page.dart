@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/profile/bloc/profile/profile_cubit.dart';
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
 import 'package:passenger_app/src/features/profile/view/widgets/profile_avatar_widget.dart';
@@ -21,7 +20,7 @@ class AccountPage extends StatelessWidget {
     return BlocBuilder<ProfileCubit, ProfileState>(
       builder: (context, state) {
         return Scaffold(
-          backgroundColor: AppTheme.background,
+          backgroundColor: context.canvasColor,
           body: SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -39,22 +38,22 @@ class AccountPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Text(
+                      Text(
                         'Account',
                         style: TextStyle(
                           fontSize: 27,
                           height: 1.1,
-                          fontWeight: FontWeight.w900,
+                          fontWeight: FontWeight.w800,
                           letterSpacing: -0.8,
-                          color: AppTheme.primaryColor,
+                          color: context.colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 26),
                       _buildProfileSummary(context, state),
                       const SizedBox(height: 38),
-                      _buildSectionTitle('Places and Safety'),
+                      _buildSectionTitle(context, 'Places and Safety'),
                       const SizedBox(height: 12),
-                      _buildMenuGroup([
+                      _buildMenuGroup(context, [
                         _AccountMenuItem(
                           title: 'Saved Places',
                           subtitle: 'Home, work, and favorite destinations',
@@ -70,9 +69,9 @@ class AccountPage extends StatelessWidget {
                         ),
                       ]),
                       const SizedBox(height: 32),
-                      _buildSectionTitle('Support'),
+                      _buildSectionTitle(context, 'Support'),
                       const SizedBox(height: 12),
-                      _buildMenuGroup([
+                      _buildMenuGroup(context, [
                         _AccountMenuItem(
                           title: 'Help Center',
                           subtitle: 'Get help with rides and payments',
@@ -125,12 +124,12 @@ class AccountPage extends StatelessWidget {
                       displayName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
                         height: 1.15,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w800,
                         letterSpacing: -0.35,
-                        color: AppTheme.primaryColor,
+                        color: context.colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 7),
@@ -140,9 +139,9 @@ class AccountPage extends StatelessWidget {
                           : state.phone,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: AppTheme.tertiaryColor,
+                        color: context.colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -171,25 +170,25 @@ class AccountPage extends StatelessWidget {
     unawaited(_pushProfileInfo(context));
   }
 
-  Widget _buildMenuGroup(List<_AccountMenuItem> items) {
+  Widget _buildMenuGroup(BuildContext context, List<_AccountMenuItem> items) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         for (var index = 0; index < items.length; index++) ...[
-          _buildMenuTile(items[index]),
+          _buildMenuTile(context, items[index]),
           if (index != items.length - 1)
             Divider(
               height: 1,
               indent: 2,
               endIndent: 2,
-              color: AppTheme.borderSide.withValues(alpha: 0.65),
+              color: context.colorScheme.outlineVariant.withValues(alpha: 0.65),
             ),
         ],
       ],
     );
   }
 
-  Widget _buildMenuTile(_AccountMenuItem item) {
+  Widget _buildMenuTile(BuildContext context, _AccountMenuItem item) {
     return InkWell(
       key: ValueKey<String>('passenger-account-item-${item.title}'),
       onTap: item.onTap,
@@ -204,11 +203,11 @@ class AccountPage extends StatelessWidget {
                 children: [
                   Text(
                     item.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       height: 1.2,
                       fontWeight: FontWeight.w800,
-                      color: AppTheme.primaryColor,
+                      color: context.colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 5),
@@ -216,10 +215,10 @@ class AccountPage extends StatelessWidget {
                     item.subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       height: 1.2,
-                      color: AppTheme.tertiaryColor,
+                      color: context.colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -229,7 +228,7 @@ class AccountPage extends StatelessWidget {
             const SizedBox(width: 14),
             Icon(
               LucideIcons.chevron_right,
-              color: AppTheme.primaryColor.withValues(alpha: 0.32),
+              color: context.colorScheme.onSurfaceVariant,
               size: 23,
             ),
           ],
@@ -238,14 +237,14 @@ class AccountPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(BuildContext context, String title) {
     return Text(
       title,
       style: TextStyle(
         fontSize: 13,
         height: 1.2,
-        fontWeight: FontWeight.w900,
-        color: AppTheme.primaryColor.withValues(alpha: 0.42),
+        fontWeight: FontWeight.w800,
+        color: context.colorScheme.onSurfaceVariant,
         letterSpacing: 0.7,
       ),
     );

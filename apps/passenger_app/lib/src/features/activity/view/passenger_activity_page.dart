@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/activity/bloc/activity/activity_bloc.dart';
 import 'package:passenger_app/src/features/activity/view/widgets/passenger_activity_header_widget.dart';
@@ -12,6 +11,7 @@ import 'package:passenger_app/src/features/activity/view/widgets/passenger_activ
 import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class PassengerActivityPage extends StatefulWidget {
@@ -43,11 +43,11 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
     });
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.canvasColor,
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(
-          color: AppTheme.primaryColor,
+          color: context.colorScheme.onSurface,
           onRefresh: _loadActivity,
           child: isGuest
               ? const _ActivityMessageView(
@@ -182,14 +182,16 @@ class _ActivityMessageView extends StatelessWidget {
                 Icon(
                   icon,
                   size: 38,
-                  color: AppTheme.tertiaryColor.withValues(alpha: 0.45),
+                  color: context.colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.45,
+                  ),
                 ),
                 const SizedBox(height: 14),
                 Text(
                   title,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppTheme.primaryColor,
+                    color: context.colorScheme.onSurface,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -198,7 +200,7 @@ class _ActivityMessageView extends StatelessWidget {
                   message,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.tertiaryColor,
+                    color: context.colorScheme.onSurfaceVariant,
                   ),
                 ),
                 if (actionLabel != null && onAction != null) ...[
@@ -206,7 +208,7 @@ class _ActivityMessageView extends StatelessWidget {
                   TextButton.icon(
                     onPressed: onAction,
                     style: TextButton.styleFrom(
-                      foregroundColor: AppTheme.primaryColor,
+                      foregroundColor: context.colorScheme.onSurface,
                     ),
                     icon: const Icon(LucideIcons.refresh_cw, size: 16),
                     label: Text(actionLabel!),

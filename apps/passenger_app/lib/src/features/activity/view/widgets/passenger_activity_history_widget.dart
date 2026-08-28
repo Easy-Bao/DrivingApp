@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/view/widgets/passenger_activity_controls_widget.dart';
 import 'package:passenger_app/src/features/activity/view/widgets/passenger_activity_header_widget.dart';
 import 'package:passenger_app/src/features/activity/view/widgets/passenger_activity_history_presenter.dart';
 import 'package:passenger_app/src/features/activity/view/widgets/passenger_activity_ride_card_widget.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class PassengerActivityHistoryWidget extends StatefulWidget {
   final List<RideHistoryModel> activeRides;
@@ -111,12 +111,12 @@ class _PassengerActivityHistoryWidgetState
 
   Widget _buildLoadMore() {
     if (widget.isLoadingMore) {
-      return const Center(
+      return Center(
         child: SizedBox.square(
           dimension: 22,
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: AppTheme.primaryColor,
+            color: context.colorScheme.onSurface,
           ),
         ),
       );
@@ -127,8 +127,8 @@ class _PassengerActivityHistoryWidgetState
           Text(
             widget.loadMoreError!,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppTheme.cancel,
+            style: TextStyle(
+              color: context.colorScheme.error,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -137,7 +137,9 @@ class _PassengerActivityHistoryWidgetState
         ],
         TextButton.icon(
           onPressed: widget.onLoadMore,
-          style: TextButton.styleFrom(foregroundColor: AppTheme.primaryColor),
+          style: TextButton.styleFrom(
+            foregroundColor: context.colorScheme.onSurface,
+          ),
           icon: const Icon(LucideIcons.chevron_down, size: 16),
           label: Text(
             widget.loadMoreError == null ? 'Load more rides' : 'Retry',

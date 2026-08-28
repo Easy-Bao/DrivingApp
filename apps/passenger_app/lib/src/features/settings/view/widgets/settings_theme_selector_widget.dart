@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class SettingsThemeSelectorWidget extends StatelessWidget {
   final String selectedThemeMode;
@@ -16,9 +16,9 @@ class SettingsThemeSelectorWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: const BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: context.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -29,18 +29,18 @@ class SettingsThemeSelectorWidget extends StatelessWidget {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                color: context.colorScheme.onSurface.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'Choose Theme',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w800,
-              color: AppTheme.primaryColor,
+              color: context.colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 6),
@@ -48,7 +48,7 @@ class SettingsThemeSelectorWidget extends StatelessWidget {
             'Select how EasyRide appears on your device',
             style: TextStyle(
               fontSize: 13,
-              color: AppTheme.primaryColor.withValues(alpha: 0.5),
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 20),
@@ -97,13 +97,13 @@ class SettingsThemeSelectorWidget extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.activeControlBackground
-              : AppTheme.interactiveSurface,
+              ? context.colorScheme.primary
+              : context.colorScheme.surface,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isSelected
-                ? AppTheme.primaryColor
-                : AppTheme.borderSide.withValues(alpha: 0.2),
+                ? context.colorScheme.onSurface
+                : context.colorScheme.outlineVariant.withValues(alpha: 0.2),
             width: isSelected ? 1.5 : 1.0,
           ),
         ),
@@ -113,16 +113,16 @@ class SettingsThemeSelectorWidget extends StatelessWidget {
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? AppTheme.activeControlForeground
-                    : AppTheme.neutralColor,
+                    ? context.colorScheme.onPrimary
+                    : context.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 icon,
                 size: 18,
                 color: isSelected
-                    ? AppTheme.activeControlBackground
-                    : AppTheme.primaryColor,
+                    ? context.colorScheme.primary
+                    : context.colorScheme.onSurface,
               ),
             ),
             const SizedBox(width: 14),
@@ -136,8 +136,8 @@ class SettingsThemeSelectorWidget extends StatelessWidget {
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
                       color: isSelected
-                          ? AppTheme.activeControlForeground
-                          : AppTheme.primaryColor,
+                          ? context.colorScheme.onPrimary
+                          : context.colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -146,10 +146,10 @@ class SettingsThemeSelectorWidget extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       color: isSelected
-                          ? AppTheme.activeControlForeground.withValues(
+                          ? context.colorScheme.onPrimary.withValues(
                               alpha: 0.72,
                             )
-                          : AppTheme.primaryColor.withValues(alpha: 0.5),
+                          : context.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -158,14 +158,14 @@ class SettingsThemeSelectorWidget extends StatelessWidget {
             if (isSelected)
               Container(
                 padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: AppTheme.activeControlBackground,
+                decoration: BoxDecoration(
+                  color: context.colorScheme.primary,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   LucideIcons.check,
                   size: 14,
-                  color: AppTheme.activeControlForeground,
+                  color: context.colorScheme.onPrimary,
                 ),
               ),
           ],

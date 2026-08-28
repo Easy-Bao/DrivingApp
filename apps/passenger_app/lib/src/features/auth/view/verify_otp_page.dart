@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/auth/bloc/verify_otp/verify_otp_bloc.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class VerifyOtpPage extends StatelessWidget {
   final String email;
@@ -89,9 +89,9 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
     final text = _otpController.text;
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.canvasColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface.withValues(alpha: 0),
+        backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
         elevation: 0,
         leading: Center(
           child: IconButton(
@@ -99,9 +99,9 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
             tooltip: MaterialLocalizations.of(context).backButtonTooltip,
             padding: EdgeInsets.zero,
             style: IconButton.styleFrom(shape: const CircleBorder()),
-            icon: const Icon(
+            icon: Icon(
               LucideIcons.arrow_left,
-              color: AppTheme.primaryColor,
+              color: context.colorScheme.onSurface,
               size: 20,
             ),
           ),
@@ -156,10 +156,10 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
                     widget.isForgotPassword
                         ? 'Verify Identity'
                         : 'Verify Email',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
-                      color: AppTheme.primaryColor,
+                      color: context.colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -168,9 +168,9 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
                         ? 'We sent a 6-digit code to ${widget.email}. Enter it to continue resetting your password.'
                         : 'We sent a 6-digit OTP to ${widget.email}. Please enter it below to verify your account.',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
-                      color: AppTheme.tertiaryColor,
+                      color: context.colorScheme.onSurfaceVariant,
                       height: 1.5,
                     ),
                   ),
@@ -192,19 +192,19 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
                           width: 46,
                           height: 54,
                           decoration: BoxDecoration(
-                            color: AppTheme.surface,
+                            color: context.colorScheme.surface,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: isFocused
-                                  ? AppTheme.primaryColor
+                                  ? context.colorScheme.onSurface
                                   : (errorMessage != null
-                                        ? AppTheme.cancel
-                                        : AppTheme.borderSide),
+                                        ? context.colorScheme.error
+                                        : context.colorScheme.outlineVariant),
                               width: isFocused ? 2 : 1,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: AppTheme.primaryColor.withValues(
+                                color: context.colorScheme.onSurface.withValues(
                                   alpha: 0.03,
                                 ),
                                 blurRadius: 10,
@@ -215,10 +215,10 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
                           alignment: Alignment.center,
                           child: Text(
                             digit,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
-                              color: AppTheme.primaryColor,
+                              color: context.colorScheme.onSurface,
                             ),
                           ),
                         );
@@ -246,8 +246,8 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
                     Text(
                       errorMessage,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: AppTheme.cancel,
+                      style: TextStyle(
+                        color: context.colorScheme.error,
                         fontSize: 14,
                       ),
                     ),
@@ -265,11 +265,13 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
                               ? () => _triggerVerify(text)
                               : null,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryColor,
-                            foregroundColor: AppTheme.activeControlForeground,
-                            disabledBackgroundColor: AppTheme.primaryColor
+                            backgroundColor: context.colorScheme.onSurface,
+                            foregroundColor: context.colorScheme.onPrimary,
+                            disabledBackgroundColor: context
+                                .colorScheme
+                                .onSurface
                                 .withValues(alpha: 0.3),
-                            disabledForegroundColor: AppTheme.surface
+                            disabledForegroundColor: context.colorScheme.surface
                                 .withValues(alpha: 0.5),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(36),
@@ -277,11 +279,11 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
                             elevation: 0,
                           ),
                           child: isLoading
-                              ? const SizedBox(
+                              ? SizedBox(
                                   width: 24,
                                   height: 24,
                                   child: CircularProgressIndicator(
-                                    color: AppTheme.surface,
+                                    color: context.colorScheme.surface,
                                     strokeWidth: 2,
                                   ),
                                 )
@@ -301,10 +303,10 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
                     alignment: WrapAlignment.center,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      const Text(
+                      Text(
                         "Didn't get a code?",
                         style: TextStyle(
-                          color: AppTheme.tertiaryColor,
+                          color: context.colorScheme.onSurfaceVariant,
                           fontSize: 14,
                         ),
                       ),
@@ -327,8 +329,8 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
                               : 'Resend in ${secondsRemaining}s',
                           style: TextStyle(
                             color: isTimerExpired && !isResending
-                                ? AppTheme.primaryColor
-                                : AppTheme.tertiaryColor,
+                                ? context.colorScheme.onSurface
+                                : context.colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

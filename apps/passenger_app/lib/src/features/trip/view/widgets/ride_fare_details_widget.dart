@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class RideFareDetailsWidget extends StatelessWidget {
   final String passengerName;
@@ -28,9 +28,14 @@ class RideFareDetailsWidget extends StatelessWidget {
 
   String _currency(double amount) => formatPesoAmount(amount);
 
-  Widget _amountRow(String label, String value, {bool emphasize = false}) {
+  Widget _amountRow(
+    BuildContext context,
+    String label,
+    String value, {
+    bool emphasize = false,
+  }) {
     final valueStyle = TextStyle(
-      color: AppTheme.primaryColor,
+      color: context.colorScheme.onSurface,
       fontSize: emphasize ? 14 : 13,
       fontWeight: emphasize ? FontWeight.w800 : FontWeight.w600,
     );
@@ -43,7 +48,7 @@ class RideFareDetailsWidget extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                color: AppTheme.primaryColor.withValues(alpha: 0.58),
+                color: context.colorScheme.onSurfaceVariant,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -79,30 +84,30 @@ class RideFareDetailsWidget extends StatelessWidget {
                 onPressed: onBackPressed,
                 tooltip: 'Back to trip summary',
                 style: IconButton.styleFrom(shape: const CircleBorder()),
-                icon: const Icon(
+                icon: Icon(
                   LucideIcons.arrow_left,
-                  color: AppTheme.primaryColor,
+                  color: context.colorScheme.onSurface,
                   size: 20,
                 ),
               ),
               const SizedBox(width: 4),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Fare details',
                       style: TextStyle(
-                        color: AppTheme.primaryColor,
+                        color: context.colorScheme.onSurface,
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
                       'How your total is calculated',
                       style: TextStyle(
-                        color: AppTheme.tertiaryColor,
+                        color: context.colorScheme.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),
@@ -113,47 +118,50 @@ class RideFareDetailsWidget extends StatelessWidget {
           ),
           if (normalizedPassengerName.isNotEmpty) ...[
             const SizedBox(height: 12),
-            _amountRow('Passenger', normalizedPassengerName),
+            _amountRow(context, 'Passenger', normalizedPassengerName),
           ],
           const Divider(height: 28),
           Text(
             'Fare Calculation',
             style: TextStyle(
-              color: AppTheme.primaryColor.withValues(alpha: 0.5),
-              fontSize: 10,
+              color: context.colorScheme.onSurfaceVariant,
+              fontSize: 11,
               fontWeight: FontWeight.w800,
               letterSpacing: 1.1,
             ),
           ),
           const SizedBox(height: 4),
-          _amountRow('Base fare', _currency(fareResult.baseFare)),
-          _amountRow('Distance', _currency(fareResult.distanceCharge)),
-          _amountRow('Time', _currency(fareResult.timeCharge)),
+          _amountRow(context, 'Base fare', _currency(fareResult.baseFare)),
+          _amountRow(context, 'Distance', _currency(fareResult.distanceCharge)),
+          _amountRow(context, 'Time', _currency(fareResult.timeCharge)),
           if (fareResult.surgeCharge > 0)
-            _amountRow('Surge', _currency(fareResult.surgeCharge)),
+            _amountRow(context, 'Surge', _currency(fareResult.surgeCharge)),
           const Divider(height: 24),
           _amountRow(
+            context,
             'Calculated fare',
             _currency(fareResult.totalFare),
             emphasize: true,
           ),
           if (_customOfferAdjustment > 0)
             _amountRow(
+              context,
               'Custom offer adjustment',
               '+${_currency(_customOfferAdjustment)}',
             ),
           _amountRow(
+            context,
             'Tip',
             tipAmount == 0 ? 'No tip added' : _currency(tipAmount.toDouble()),
           ),
           const Divider(height: 28),
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Total fare',
                   style: TextStyle(
-                    color: AppTheme.primaryColor,
+                    color: context.colorScheme.onSurface,
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
                   ),
@@ -161,10 +169,10 @@ class RideFareDetailsWidget extends StatelessWidget {
               ),
               Text(
                 _currency(totalFare),
-                style: const TextStyle(
-                  color: AppTheme.primaryColor,
+                style: TextStyle(
+                  color: context.colorScheme.onSurface,
                   fontSize: 22,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ],

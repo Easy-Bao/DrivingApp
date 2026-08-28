@@ -5,13 +5,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/chat/chat_routes.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_state.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger_app/src/features/inbox/view/widgets/inbox_empty_state_widget.dart';
 import 'package:passenger_app/src/features/inbox/view/widgets/inbox_notification_card_widget.dart';
+import 'package:shared_ui/shared_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class InboxPage extends StatefulWidget {
@@ -79,9 +79,13 @@ class _InboxPageState extends State<InboxPage> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppTheme.neutralColor.withValues(alpha: 0.25),
+          color: context.colorScheme.surfaceContainerHighest.withValues(
+            alpha: 0.25,
+          ),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppTheme.borderSide.withValues(alpha: 0.2)),
+          border: Border.all(
+            color: context.colorScheme.outlineVariant.withValues(alpha: 0.2),
+          ),
         ),
         child: const Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -111,7 +115,7 @@ class _InboxPageState extends State<InboxPage> {
     return BlocProvider<InboxCubit>.value(
       value: _inboxCubit,
       child: Scaffold(
-        backgroundColor: AppTheme.background,
+        backgroundColor: context.canvasColor,
         body: SafeArea(
           child: BlocBuilder<InboxCubit, InboxState>(
             builder: (context, state) {
@@ -131,12 +135,12 @@ class _InboxPageState extends State<InboxPage> {
                     padding: const EdgeInsets.fromLTRB(24.0, 0.0, 24.0, 16.0),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
-                        const Text(
+                        Text(
                           'Inbox',
                           style: TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.w700,
-                            color: AppTheme.primaryColor,
+                            color: context.colorScheme.onSurface,
                             letterSpacing: -1.0,
                           ),
                         ),
@@ -146,7 +150,7 @@ class _InboxPageState extends State<InboxPage> {
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                            color: context.colorScheme.onSurfaceVariant,
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -174,12 +178,14 @@ class _InboxPageState extends State<InboxPage> {
                               padding: const EdgeInsets.only(right: 24),
                               margin: const EdgeInsets.only(bottom: 12),
                               decoration: BoxDecoration(
-                                color: AppTheme.cancel.withValues(alpha: 0.1),
+                                color: context.colorScheme.error.withValues(
+                                  alpha: 0.1,
+                                ),
                                 borderRadius: BorderRadius.circular(20),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 LucideIcons.trash_2,
-                                color: AppTheme.cancel,
+                                color: context.colorScheme.error,
                                 size: 20,
                               ),
                             ),
@@ -211,12 +217,12 @@ class _InboxPageState extends State<InboxPage> {
 
   Widget _buildFooter(InboxLoadedState state) {
     if (state.isLoadingMore) {
-      return const Center(
+      return Center(
         child: SizedBox.square(
           dimension: 22,
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: AppTheme.primaryColor,
+            color: context.colorScheme.onSurface,
           ),
         ),
       );
@@ -229,8 +235,8 @@ class _InboxPageState extends State<InboxPage> {
             Text(
               state.loadMoreError!,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppTheme.cancel,
+              style: TextStyle(
+                color: context.colorScheme.error,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
@@ -254,7 +260,7 @@ class _InboxPageState extends State<InboxPage> {
           Icon(
             LucideIcons.mail,
             size: 24,
-            color: AppTheme.primaryColor.withValues(alpha: 0.25),
+            color: context.colorScheme.onSurfaceVariant,
           ),
           const SizedBox(height: 8),
           Text(
@@ -262,7 +268,7 @@ class _InboxPageState extends State<InboxPage> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: AppTheme.primaryColor.withValues(alpha: 0.35),
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
         ],

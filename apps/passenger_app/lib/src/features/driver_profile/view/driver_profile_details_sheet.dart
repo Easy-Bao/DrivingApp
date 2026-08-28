@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/entities/driver_review.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
+import 'package:shared_ui/shared_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class DriverProfileDetailsSheet extends StatefulWidget {
@@ -139,13 +139,13 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
           height: MediaQuery.sizeOf(context).height * 0.78,
           child: Container(
             decoration: BoxDecoration(
-              color: AppTheme.surface,
+              color: context.colorScheme.surface,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(32),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.15),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.15),
                   blurRadius: 30,
                   offset: const Offset(0, -10),
                 ),
@@ -171,19 +171,19 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
                 key: const ValueKey('driver-profile-back'),
                 onPressed: widget.onBackPressed,
                 style: IconButton.styleFrom(shape: const CircleBorder()),
-                icon: const Icon(
+                icon: Icon(
                   LucideIcons.arrow_left,
-                  color: AppTheme.primaryColor,
+                  color: context.colorScheme.onSurface,
                 ),
                 tooltip: 'Back to driver summary',
               ),
               const SizedBox(width: 4),
-              const Text(
+              Text(
                 'Driver profile',
                 style: TextStyle(
                   fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.primaryColor,
+                  fontWeight: FontWeight.w800,
+                  color: context.colorScheme.onSurface,
                 ),
               ),
             ],
@@ -195,7 +195,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 24),
               decoration: BoxDecoration(
-                color: AppTheme.borderSide,
+                color: context.colorScheme.outlineVariant,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -206,12 +206,14 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: AppTheme.secondaryColor.withValues(alpha: 0.2),
+                color: context.colorScheme.secondaryContainer.withValues(
+                  alpha: 0.2,
+                ),
                 borderRadius: BorderRadius.circular(18),
               ),
-              child: const Icon(
+              child: Icon(
                 LucideIcons.user,
-                color: AppTheme.primaryColor,
+                color: context.colorScheme.onSurface,
                 size: 26,
               ),
             ),
@@ -222,10 +224,10 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
                 children: [
                   Text(
                     widget.driverName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 19,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.primaryColor,
+                      fontWeight: FontWeight.w800,
+                      color: context.colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -233,7 +235,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
                     '${widget.vehicleType} • ${widget.plateNumber}',
                     style: TextStyle(
                       fontSize: 14,
-                      color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                      color: context.colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -243,7 +245,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
           ],
         ),
         const SizedBox(height: 16),
-        const Divider(height: 1, color: AppTheme.borderSide),
+        Divider(height: 1, color: context.colorScheme.outlineVariant),
         const SizedBox(height: 14),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -252,35 +254,43 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
               icon: LucideIcons.star,
               value: widget.rating,
               label: 'Rating',
-              iconColor: AppTheme.warning,
+              iconColor: context.semanticColors.warning,
             ),
-            Container(width: 1, height: 40, color: AppTheme.borderSide),
+            Container(
+              width: 1,
+              height: 40,
+              color: context.colorScheme.outlineVariant,
+            ),
             _buildMetricCard(
               icon: LucideIcons.bike,
               value: _isLoadingStats
                   ? '...'
                   : _completedTripsCount?.toString() ?? '—',
               label: 'Completed',
-              iconColor: AppTheme.primaryColor,
+              iconColor: context.colorScheme.onSurface,
             ),
-            Container(width: 1, height: 40, color: AppTheme.borderSide),
+            Container(
+              width: 1,
+              height: 40,
+              color: context.colorScheme.outlineVariant,
+            ),
             _buildMetricCard(
               icon: LucideIcons.users,
               value: widget.onboardPassengerCount == null
                   ? '—'
                   : '${widget.onboardPassengerCount}/5',
               label: 'Onboard',
-              iconColor: AppTheme.primaryColor,
+              iconColor: context.colorScheme.onSurface,
             ),
           ],
         ),
         const SizedBox(height: 16),
-        const Text(
+        Text(
           'Passenger Reviews',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w800,
-            color: AppTheme.primaryColor,
+            color: context.colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 10),
@@ -299,9 +309,9 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
           itemBuilder: (_, _) => Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppTheme.neutralColor,
+              color: context.colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppTheme.borderSide),
+              border: Border.all(color: context.colorScheme.outlineVariant),
             ),
             child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -322,7 +332,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
         child: Text(
           'No passenger reviews yet.',
           style: TextStyle(
-            color: AppTheme.primaryColor.withValues(alpha: 0.5),
+            color: context.colorScheme.onSurfaceVariant,
             fontSize: 13,
           ),
         ),
@@ -337,14 +347,14 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
       itemCount: _driverReviewsList.length + (showsLoader ? 1 : 0),
       itemBuilder: (context, index) {
         if (index == _driverReviewsList.length) {
-          return const Center(
+          return Center(
             child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(vertical: 12),
               child: SizedBox(
                 width: 18,
                 height: 18,
                 child: CircularProgressIndicator(
-                  color: AppTheme.primaryColor,
+                  color: context.colorScheme.onSurface,
                   strokeWidth: 2,
                 ),
               ),
@@ -361,9 +371,9 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.neutralColor,
+        color: context.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.borderSide),
+        border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -373,17 +383,17 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
             children: [
               Text(
                 reviewItem.passengerName,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
-                  color: AppTheme.primaryColor,
+                  color: context.colorScheme.onSurface,
                 ),
               ),
               Text(
                 reviewItem.displayDate,
                 style: TextStyle(
                   fontSize: 11,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                  color: context.colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -394,21 +404,21 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
               ...List.generate(5, (starIndex) {
                 final ratingValue = reviewItem.rating;
                 if (ratingValue >= starIndex + 1) {
-                  return const Icon(
+                  return Icon(
                     Icons.star_rounded,
-                    color: AppTheme.warning,
+                    color: context.semanticColors.warning,
                     size: 13,
                   );
                 } else if (ratingValue >= starIndex + 0.5) {
-                  return const Icon(
+                  return Icon(
                     Icons.star_half_rounded,
-                    color: AppTheme.warning,
+                    color: context.semanticColors.warning,
                     size: 13,
                   );
                 }
                 return Icon(
                   Icons.star_rounded,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.12),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.12),
                   size: 13,
                 );
               }),
@@ -418,7 +428,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.7),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
             ],
@@ -429,7 +439,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
             style: TextStyle(
               fontSize: 13,
               height: 1.4,
-              color: AppTheme.primaryColor.withValues(alpha: 0.7),
+              color: context.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -449,10 +459,10 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
         const SizedBox(height: 8),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 20,
-            fontWeight: FontWeight.w900,
-            color: AppTheme.primaryColor,
+            fontWeight: FontWeight.w800,
+            color: context.colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 4),
@@ -460,7 +470,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
           label,
           style: TextStyle(
             fontSize: 12,
-            color: AppTheme.primaryColor.withValues(alpha: 0.5),
+            color: context.colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w600,
           ),
         ),

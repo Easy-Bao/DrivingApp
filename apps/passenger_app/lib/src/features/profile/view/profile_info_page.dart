@@ -7,7 +7,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/profile/bloc/profile/profile_cubit.dart';
@@ -219,25 +218,25 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
           if (!_isDirty && !_isSaving) _applyProfile(state);
         },
         child: Scaffold(
-          backgroundColor: AppTheme.surface,
+          backgroundColor: context.colorScheme.surface,
           appBar: AppBar(
-            backgroundColor: AppTheme.surface,
+            backgroundColor: context.colorScheme.surface,
             elevation: 0,
             scrolledUnderElevation: 0,
             leading: IconButton(
               onPressed: () => Navigator.of(context).maybePop(),
               tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-              icon: const Icon(
+              icon: Icon(
                 LucideIcons.arrow_left,
-                color: AppTheme.primaryColor,
+                color: context.colorScheme.onSurface,
                 size: 23,
               ),
             ),
-            title: const Text(
+            title: Text(
               'Profile Info',
               style: TextStyle(
-                color: AppTheme.primaryColor,
-                fontWeight: FontWeight.w900,
+                color: context.colorScheme.onSurface,
+                fontWeight: FontWeight.w800,
                 fontSize: 21,
                 letterSpacing: -0.3,
               ),
@@ -249,20 +248,20 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                   key: const ValueKey<String>('passenger-profile-save'),
                   onPressed: _isSaving ? null : _saveProfile,
                   child: _isSaving
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 22,
                           height: 22,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.4,
-                            color: AppTheme.primaryColor,
+                            color: context.colorScheme.onSurface,
                           ),
                         )
-                      : const Text(
+                      : Text(
                           'Save',
                           style: TextStyle(
-                            color: AppTheme.primaryColor,
+                            color: context.colorScheme.onSurface,
                             fontSize: 16,
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
                 )
@@ -294,11 +293,11 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                         ),
                       ),
                       const SizedBox(height: 18),
-                      const Center(
+                      Center(
                         child: Text(
                           'Add a profile photo',
                           style: TextStyle(
-                            color: AppTheme.tertiaryColor,
+                            color: context.colorScheme.onSurfaceVariant,
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
@@ -354,8 +353,8 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
           controller: controller,
           keyboardType: keyboardType,
           textInputAction: textInputAction,
-          style: const TextStyle(
-            color: AppTheme.primaryColor,
+          style: TextStyle(
+            color: context.colorScheme.onSurface,
             fontSize: 17,
             fontWeight: FontWeight.w700,
           ),
@@ -378,15 +377,15 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
               height: 62,
               width: 94,
               decoration: BoxDecoration(
-                color: AppTheme.background,
+                color: context.canvasColor,
                 borderRadius: BorderRadius.circular(17),
-                border: Border.all(color: AppTheme.borderSide),
+                border: Border.all(color: context.colorScheme.outlineVariant),
               ),
               alignment: Alignment.center,
-              child: const Text(
+              child: Text(
                 _phonePrefix,
                 style: TextStyle(
-                  color: AppTheme.primaryColor,
+                  color: context.colorScheme.onSurface,
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                 ),
@@ -400,8 +399,8 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                 keyboardType: TextInputType.phone,
                 textInputAction: TextInputAction.next,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                style: const TextStyle(
-                  color: AppTheme.primaryColor,
+                style: TextStyle(
+                  color: context.colorScheme.onSurface,
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
                 ),
@@ -427,13 +426,13 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
           key: const ValueKey<String>('passenger-profile-gender'),
           initialValue: _gender,
           isExpanded: true,
-          icon: const Icon(
+          icon: Icon(
             LucideIcons.chevron_down,
             size: 21,
-            color: AppTheme.primaryColor,
+            color: context.colorScheme.onSurface,
           ),
-          style: const TextStyle(
-            color: AppTheme.primaryColor,
+          style: TextStyle(
+            color: context.colorScheme.onSurface,
             fontSize: 17,
             fontWeight: FontWeight.w700,
           ),
@@ -457,24 +456,27 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   InputDecoration _fieldDecoration({String? hintText, String? errorText}) {
     final border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(17),
-      borderSide: const BorderSide(color: AppTheme.borderSide),
+      borderSide: BorderSide(color: context.colorScheme.outlineVariant),
     );
     return InputDecoration(
       hintText: hintText,
       errorText: errorText,
       filled: true,
-      fillColor: AppTheme.background,
+      fillColor: context.canvasColor,
       contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
       border: border,
       enabledBorder: border,
       focusedBorder: border.copyWith(
-        borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
+        borderSide: BorderSide(
+          color: context.colorScheme.onSurface,
+          width: 1.5,
+        ),
       ),
       errorBorder: border.copyWith(
-        borderSide: const BorderSide(color: AppTheme.cancel),
+        borderSide: BorderSide(color: context.colorScheme.error),
       ),
       focusedErrorBorder: border.copyWith(
-        borderSide: const BorderSide(color: AppTheme.cancel, width: 1.5),
+        borderSide: BorderSide(color: context.colorScheme.error, width: 1.5),
       ),
     );
   }
@@ -483,9 +485,9 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     return Text(
       label,
       style: TextStyle(
-        color: AppTheme.primaryColor.withValues(alpha: 0.48),
+        color: context.colorScheme.onSurfaceVariant,
         fontSize: 13,
-        fontWeight: FontWeight.w900,
+        fontWeight: FontWeight.w800,
         letterSpacing: 0.7,
       ),
     );
@@ -499,19 +501,21 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
         key: const ValueKey<String>('passenger-profile-logout'),
         onPressed: _isLoggingOut ? null : () => _handleLogout(context),
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppTheme.cancel,
-          side: BorderSide(color: AppTheme.cancel.withValues(alpha: 0.35)),
-          backgroundColor: AppTheme.cancel.withValues(alpha: 0.04),
+          foregroundColor: context.colorScheme.error,
+          side: BorderSide(
+            color: context.colorScheme.error.withValues(alpha: 0.35),
+          ),
+          backgroundColor: context.colorScheme.error.withValues(alpha: 0.04),
           shape: const StadiumBorder(),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
         ),
         child: _isLoggingOut
-            ? const SizedBox(
+            ? SizedBox(
                 width: 22,
                 height: 22,
                 child: CircularProgressIndicator(
                   strokeWidth: 2.4,
-                  color: AppTheme.cancel,
+                  color: context.colorScheme.error,
                 ),
               )
             : const Text('Log Out'),

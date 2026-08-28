@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/auth/bloc/forgot_password/forgot_password_bloc.dart';
 import 'package:passenger_app/src/features/auth/view/validation/auth_form_validator.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -61,9 +60,9 @@ class _ForgotPasswordPageContentState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.canvasColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface.withValues(alpha: 0),
+        backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
         elevation: 0,
         leading: Center(
           child: IconButton(
@@ -71,9 +70,9 @@ class _ForgotPasswordPageContentState
             tooltip: MaterialLocalizations.of(context).backButtonTooltip,
             padding: EdgeInsets.zero,
             style: IconButton.styleFrom(shape: const CircleBorder()),
-            icon: const Icon(
+            icon: Icon(
               LucideIcons.arrow_left,
-              color: AppTheme.primaryColor,
+              color: context.colorScheme.onSurface,
               size: 20,
             ),
           ),
@@ -108,32 +107,32 @@ class _ForgotPasswordPageContentState
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const SizedBox(height: 20),
-                        const Text(
+                        Text(
                           'Forgot Password?',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.w800,
-                            color: AppTheme.primaryColor,
+                            color: context.colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 12),
-                        const Text(
+                        Text(
                           "No worries, we'll send you reset instructions. Please enter the email address linked to your account.",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 15,
-                            color: AppTheme.tertiaryColor,
+                            color: context.colorScheme.onSurfaceVariant,
                             height: 1.5,
                           ),
                         ),
                         const SizedBox(height: 40),
-                        const Text(
+                        Text(
                           'Email Address',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w800,
-                            color: AppTheme.tertiaryColor,
+                            color: context.colorScheme.onSurfaceVariant,
                             letterSpacing: 1.1,
                           ),
                         ),
@@ -143,8 +142,8 @@ class _ForgotPasswordPageContentState
                           child: Material(
                             type: MaterialType.transparency,
                             child: TextField(
-                              style: const TextStyle(
-                                color: AppTheme.primaryColor,
+                              style: TextStyle(
+                                color: context.colorScheme.onSurface,
                                 fontSize: 15,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -164,45 +163,45 @@ class _ForgotPasswordPageContentState
                               decoration: InputDecoration(
                                 hintText: 'Email',
                                 errorText: effectiveEmailError,
-                                errorStyle: const TextStyle(
-                                  color: AppTheme.cancel,
+                                errorStyle: TextStyle(
+                                  color: context.colorScheme.error,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
                                 ),
-                                prefixIcon: const Padding(
-                                  padding: EdgeInsets.only(left: 10),
+                                prefixIcon: Padding(
+                                  padding: const EdgeInsets.only(left: 10),
                                   child: Icon(
                                     LucideIcons.mail,
                                     size: 20,
-                                    color: AppTheme.fieldLabel,
+                                    color: context.colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                                 filled: true,
-                                fillColor: AppTheme.surface,
+                                fillColor: context.colorScheme.surface,
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.borderSide,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.outlineVariant,
                                   ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.primaryColor,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.onSurface,
                                     width: 1.5,
                                   ),
                                 ),
                                 errorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.cancel,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.error,
                                     width: 1.0,
                                   ),
                                 ),
                                 focusedErrorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.cancel,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.error,
                                     width: 1.5,
                                   ),
                                 ),
@@ -222,8 +221,8 @@ class _ForgotPasswordPageContentState
                             ? null
                             : () => _submitResetLink(context),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryColor,
-                          foregroundColor: AppTheme.activeControlForeground,
+                          backgroundColor: context.colorScheme.onSurface,
+                          foregroundColor: context.colorScheme.onPrimary,
                           minimumSize: const Size.fromHeight(56),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(36),
@@ -231,11 +230,11 @@ class _ForgotPasswordPageContentState
                           elevation: 0,
                         ),
                         child: isLoading
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 24,
                                 height: 24,
                                 child: CircularProgressIndicator(
-                                  color: AppTheme.surface,
+                                  color: context.colorScheme.surface,
                                   strokeWidth: 2,
                                 ),
                               )

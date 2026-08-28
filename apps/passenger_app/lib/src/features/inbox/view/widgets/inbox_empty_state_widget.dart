@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class InboxEmptyStateWidget extends StatelessWidget {
   const InboxEmptyStateWidget({super.key});
@@ -12,12 +12,12 @@ class InboxEmptyStateWidget extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               'No notifications yet',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
-                color: AppTheme.primaryColor,
+                color: context.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 6),
@@ -26,7 +26,7 @@ class InboxEmptyStateWidget extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
-                color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                color: context.colorScheme.onSurfaceVariant,
               ),
             ),
           ],

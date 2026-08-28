@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/bloc/reset_password_confirm/reset_password_confirm_bloc.dart';
 import 'package:passenger_app/src/features/auth/view/validation/auth_form_validator.dart';
@@ -91,9 +90,9 @@ class _ResetPasswordConfirmPageContentState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.canvasColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface.withValues(alpha: 0),
+        backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
         elevation: 0,
         leading: Center(
           child: IconButton(
@@ -101,9 +100,9 @@ class _ResetPasswordConfirmPageContentState
             tooltip: MaterialLocalizations.of(context).backButtonTooltip,
             padding: EdgeInsets.zero,
             style: IconButton.styleFrom(shape: const CircleBorder()),
-            icon: const Icon(
+            icon: Icon(
               LucideIcons.arrow_left,
-              color: AppTheme.primaryColor,
+              color: context.colorScheme.onSurface,
               size: 20,
             ),
           ),
@@ -140,21 +139,21 @@ class _ResetPasswordConfirmPageContentState
                         child: Column(
                           children: [
                             const SizedBox(height: 20),
-                            const Text(
+                            Text(
                               'Set New Password',
                               style: TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.w800,
-                                color: AppTheme.primaryColor,
+                                color: context.colorScheme.onSurface,
                               ),
                             ),
                             const SizedBox(height: 12),
-                            const Text(
+                            Text(
                               'Your new password must be different from previous passwords.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 15,
-                                color: AppTheme.tertiaryColor,
+                                color: context.colorScheme.onSurfaceVariant,
                                 height: 1.5,
                               ),
                             ),
@@ -163,22 +162,22 @@ class _ResetPasswordConfirmPageContentState
                               Text(
                                 _submissionError!,
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: AppTheme.cancel,
+                                style: TextStyle(
+                                  color: context.colorScheme.error,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ],
                             const SizedBox(height: 40),
-                            const Align(
+                            Align(
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 'New Password',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w800,
-                                  color: AppTheme.tertiaryColor,
+                                  color: context.colorScheme.onSurfaceVariant,
                                   letterSpacing: 1.1,
                                 ),
                               ),
@@ -188,8 +187,8 @@ class _ResetPasswordConfirmPageContentState
                               controller: _newPasswordController,
                               obscureText: _obscureNewPassword,
                               textInputAction: TextInputAction.next,
-                              style: const TextStyle(
-                                color: AppTheme.primaryColor,
+                              style: TextStyle(
+                                color: context.colorScheme.onSurface,
                                 fontSize: 15,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -205,12 +204,12 @@ class _ResetPasswordConfirmPageContentState
                               decoration: InputDecoration(
                                 hintText: 'At least 8 characters',
                                 errorText: _newPasswordError,
-                                prefixIcon: const Padding(
-                                  padding: EdgeInsets.only(left: 10),
+                                prefixIcon: Padding(
+                                  padding: const EdgeInsets.only(left: 10),
                                   child: Icon(
                                     LucideIcons.lock,
                                     size: 20,
-                                    color: AppTheme.fieldLabel,
+                                    color: context.colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                                 suffixIcon: IconButton(
@@ -219,7 +218,7 @@ class _ResetPasswordConfirmPageContentState
                                         ? LucideIcons.eye_off
                                         : LucideIcons.eye,
                                     size: 20,
-                                    color: AppTheme.tertiaryColor,
+                                    color: context.colorScheme.onSurfaceVariant,
                                   ),
                                   onPressed: () => setState(
                                     () => _obscureNewPassword =
@@ -227,44 +226,44 @@ class _ResetPasswordConfirmPageContentState
                                   ),
                                 ),
                                 filled: true,
-                                fillColor: AppTheme.surface,
+                                fillColor: context.colorScheme.surface,
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.borderSide,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.outlineVariant,
                                   ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.primaryColor,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.onSurface,
                                     width: 1.5,
                                   ),
                                 ),
                                 errorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.cancel,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.error,
                                   ),
                                 ),
                                 focusedErrorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.cancel,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.error,
                                     width: 1.5,
                                   ),
                                 ),
                               ),
                             ),
                             const SizedBox(height: 20),
-                            const Align(
+                            Align(
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 'Confirm Password',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w800,
-                                  color: AppTheme.tertiaryColor,
+                                  color: context.colorScheme.onSurfaceVariant,
                                   letterSpacing: 1.1,
                                 ),
                               ),
@@ -275,8 +274,8 @@ class _ResetPasswordConfirmPageContentState
                               obscureText: _obscureConfirmPassword,
                               textInputAction: TextInputAction.done,
                               onSubmitted: (_) => _submitNewPassword(context),
-                              style: const TextStyle(
-                                color: AppTheme.primaryColor,
+                              style: TextStyle(
+                                color: context.colorScheme.onSurface,
                                 fontSize: 15,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -292,12 +291,12 @@ class _ResetPasswordConfirmPageContentState
                               decoration: InputDecoration(
                                 hintText: 'Re-enter your password',
                                 errorText: _confirmPasswordError,
-                                prefixIcon: const Padding(
-                                  padding: EdgeInsets.only(left: 10),
+                                prefixIcon: Padding(
+                                  padding: const EdgeInsets.only(left: 10),
                                   child: Icon(
                                     LucideIcons.lock,
                                     size: 20,
-                                    color: AppTheme.fieldLabel,
+                                    color: context.colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                                 suffixIcon: IconButton(
@@ -306,7 +305,7 @@ class _ResetPasswordConfirmPageContentState
                                         ? LucideIcons.eye_off
                                         : LucideIcons.eye,
                                     size: 20,
-                                    color: AppTheme.tertiaryColor,
+                                    color: context.colorScheme.onSurfaceVariant,
                                   ),
                                   onPressed: () => setState(
                                     () => _obscureConfirmPassword =
@@ -314,30 +313,30 @@ class _ResetPasswordConfirmPageContentState
                                   ),
                                 ),
                                 filled: true,
-                                fillColor: AppTheme.surface,
+                                fillColor: context.colorScheme.surface,
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.borderSide,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.outlineVariant,
                                   ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.primaryColor,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.onSurface,
                                     width: 1.5,
                                   ),
                                 ),
                                 errorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.cancel,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.error,
                                   ),
                                 ),
                                 focusedErrorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.cancel,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.error,
                                     width: 1.5,
                                   ),
                                 ),
@@ -352,8 +351,8 @@ class _ResetPasswordConfirmPageContentState
                             ? null
                             : () => _submitNewPassword(context),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryColor,
-                          foregroundColor: AppTheme.activeControlForeground,
+                          backgroundColor: context.colorScheme.onSurface,
+                          foregroundColor: context.colorScheme.onPrimary,
                           minimumSize: const Size.fromHeight(56),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(36),
@@ -361,11 +360,11 @@ class _ResetPasswordConfirmPageContentState
                           elevation: 0,
                         ),
                         child: isLoading
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 24,
                                 height: 24,
                                 child: CircularProgressIndicator(
-                                  color: AppTheme.surface,
+                                  color: context.colorScheme.surface,
                                   strokeWidth: 2,
                                 ),
                               )

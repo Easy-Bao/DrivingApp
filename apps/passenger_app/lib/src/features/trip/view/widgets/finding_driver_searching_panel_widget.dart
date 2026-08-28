@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class FindingDriverSearchingPanelWidget extends StatelessWidget {
   final String message;
@@ -30,11 +30,11 @@ class FindingDriverSearchingPanelWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: context.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withValues(alpha: 0.08),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.08),
             blurRadius: 30,
             offset: const Offset(0, -10),
           ),
@@ -49,7 +49,7 @@ class FindingDriverSearchingPanelWidget extends StatelessWidget {
               height: 4,
               margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                color: AppTheme.borderSide,
+                color: context.colorScheme.outlineVariant,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -60,10 +60,10 @@ class FindingDriverSearchingPanelWidget extends StatelessWidget {
               final dots = '.' * (1 + (dotAnimation.value * 3).floor());
               return Text(
                 '$message$dots',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.primaryColor,
+                  fontWeight: FontWeight.w800,
+                  color: context.colorScheme.onSurface,
                 ),
               );
             },
@@ -75,36 +75,36 @@ class FindingDriverSearchingPanelWidget extends StatelessWidget {
                 : 'Looking For $rideType Drivers Nearby...',
             style: TextStyle(
               fontSize: 14,
-              color: AppTheme.primaryColor.withValues(alpha: 0.5),
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 20),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppTheme.neutralColor,
+              color: context.colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppTheme.borderSide),
+              border: Border.all(color: context.colorScheme.outlineVariant),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       LucideIcons.map_pin,
                       size: 16,
-                      color: AppTheme.tertiaryColor,
+                      color: context.colorScheme.onSurfaceVariant,
                     ),
                     const SizedBox(width: 8),
                     SizedBox(
                       width: 160,
                       child: Text(
                         destination.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryColor,
+                          color: context.colorScheme.onSurface,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -113,10 +113,10 @@ class FindingDriverSearchingPanelWidget extends StatelessWidget {
                 ),
                 Text(
                   formatPesoAmount(fare),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 17,
-                    fontWeight: FontWeight.w900,
-                    color: AppTheme.primaryColor,
+                    fontWeight: FontWeight.w800,
+                    color: context.colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -130,22 +130,22 @@ class FindingDriverSearchingPanelWidget extends StatelessWidget {
               alignment: Alignment.center,
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
-                color: AppTheme.cancel.withValues(alpha: 0.08),
+                color: context.colorScheme.error.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(32),
               ),
               child: isCanceling
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppTheme.cancel,
+                        color: context.colorScheme.error,
                       ),
                     )
-                  : const Text(
+                  : Text(
                       'Cancel Search',
                       style: TextStyle(
-                        color: AppTheme.cancel,
+                        color: context.colorScheme.error,
                         fontWeight: FontWeight.w700,
                         fontSize: 15,
                       ),

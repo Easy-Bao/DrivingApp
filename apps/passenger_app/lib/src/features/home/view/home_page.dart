@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/activity/bloc/activity/activity_bloc.dart';
 import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
@@ -50,7 +49,7 @@ class _HomePageState extends State<HomePage> {
     return BlocListener<LocationAccessCubit, LocationAccessViewState>(
       listener: _handleLocationAccess,
       child: Scaffold(
-        backgroundColor: AppTheme.background,
+        backgroundColor: context.canvasColor,
         body: SafeArea(
           child: Center(
             child: ConstrainedBox(
@@ -229,7 +228,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildHeader() {
-    return const Row(
+    return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Column(
@@ -240,7 +239,7 @@ class _HomePageState extends State<HomePage> {
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.w700,
-                color: AppTheme.primaryColor,
+                color: context.colorScheme.onSurface,
                 letterSpacing: -1.5,
               ),
             ),
@@ -248,7 +247,7 @@ class _HomePageState extends State<HomePage> {
               'Ready to ride today?',
               style: TextStyle(
                 fontSize: 16,
-                color: AppTheme.primaryColor,
+                color: context.colorScheme.onSurface,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -293,21 +292,21 @@ class _HomePageState extends State<HomePage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text(
+        Text(
           'Recent Activity',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w800,
-            color: AppTheme.primaryColor,
+            color: context.colorScheme.onSurface,
           ),
         ),
         TextButton(
           onPressed: () => context.goNamed(ActivityRoutes.activity),
-          child: const Text(
+          child: Text(
             'View all',
             style: TextStyle(
               fontWeight: FontWeight.w700,
-              color: AppTheme.primaryColor,
+              color: context.colorScheme.onSurface,
             ),
           ),
         ),
@@ -376,7 +375,9 @@ class _HomePageState extends State<HomePage> {
         onPressed: _loadRecentActivity,
         icon: const Icon(LucideIcons.refresh_cw, size: 16),
         label: const Text('Retry activity'),
-        style: TextButton.styleFrom(foregroundColor: AppTheme.primaryColor),
+        style: TextButton.styleFrom(
+          foregroundColor: context.colorScheme.onSurface,
+        ),
       ),
     );
   }
@@ -430,19 +431,19 @@ class _HomePageState extends State<HomePage> {
       child: Hero(
         tag: 'search_bar_field',
         child: Material(
-          color: AppTheme.surface.withValues(alpha: 0),
+          color: context.colorScheme.surface.withValues(alpha: 0),
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppTheme.neutralColor,
+              color: context.colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(36),
-              border: Border.all(color: AppTheme.borderSide),
+              border: Border.all(color: context.colorScheme.outlineVariant),
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   LucideIcons.search,
-                  color: AppTheme.primaryColor,
+                  color: context.colorScheme.onSurface,
                   size: 20,
                 ),
                 const SizedBox(width: 12),
@@ -450,7 +451,7 @@ class _HomePageState extends State<HomePage> {
                   'Search destination',
                   style: TextStyle(
                     fontSize: 16,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                    color: context.colorScheme.onSurface.withValues(alpha: 0.6),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -512,13 +513,13 @@ class _HomePageState extends State<HomePage> {
   Future _showChipOptions(int index, String label) async {
     await showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.surface.withValues(alpha: 0),
+      backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
       builder: (_) => Container(
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         decoration: BoxDecoration(
-          color: AppTheme.surface,
+          color: context.colorScheme.surface,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppTheme.borderSide),
+          border: Border.all(color: context.colorScheme.outlineVariant),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -528,7 +529,7 @@ class _HomePageState extends State<HomePage> {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: AppTheme.borderSide,
+                color: context.colorScheme.outlineVariant,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -537,25 +538,25 @@ class _HomePageState extends State<HomePage> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
-                  color: AppTheme.primaryColor,
+                  color: context.colorScheme.onSurface,
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            const Divider(height: 1, color: AppTheme.borderSide),
+            Divider(height: 1, color: context.colorScheme.outlineVariant),
             ListTile(
-              leading: const Icon(
+              leading: Icon(
                 LucideIcons.trash_2,
-                color: AppTheme.cancel,
+                color: context.colorScheme.error,
                 size: 20,
               ),
-              title: const Text(
+              title: Text(
                 'Remove shortcut',
                 style: TextStyle(
-                  color: AppTheme.cancel,
+                  color: context.colorScheme.error,
                   fontWeight: FontWeight.w600,
                 ),
               ),

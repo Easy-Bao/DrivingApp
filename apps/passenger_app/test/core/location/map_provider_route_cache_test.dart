@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:shared_core/shared_core.dart';
@@ -16,6 +17,17 @@ void main() {
         placeServiceBaseUri: Uri(scheme: 'http', host: '127.0.0.1', port: 8089),
         apiClient: apiClient,
       ),
+    );
+  });
+
+  test('selects a map style that follows interface brightness', () {
+    expect(
+      MapProvider.styleUriFor(Brightness.light),
+      'mapbox://styles/mapbox/streets-v12',
+    );
+    expect(
+      MapProvider.styleUriFor(Brightness.dark),
+      'mapbox://styles/mapbox/dark-v11',
     );
   });
 

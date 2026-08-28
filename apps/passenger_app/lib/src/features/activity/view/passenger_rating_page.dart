@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class PassengerRatingPage extends StatefulWidget {
   final String driverId;
@@ -74,7 +74,7 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
         ? 'Your driver'
         : widget.driverName.trim();
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.canvasColor,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Center(
@@ -89,20 +89,22 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                       width: 56,
                       height: 56,
                       decoration: BoxDecoration(
-                        color: AppTheme.warning.withValues(alpha: 0.15),
+                        color: context.semanticColors.warning.withValues(
+                          alpha: 0.15,
+                        ),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.star_rounded,
-                        color: AppTheme.warning,
+                        color: context.semanticColors.warning,
                         size: 28,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       'Step 2 of 2',
                       style: TextStyle(
-                        color: AppTheme.tertiaryColor,
+                        color: context.colorScheme.onSurfaceVariant,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                       ),
@@ -112,19 +114,19 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                       'Rate $driverName',
                       key: const ValueKey('rating-driver-name'),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 23,
-                        fontWeight: FontWeight.w900,
-                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.w800,
+                        color: context.colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'How was your ride with $driverName?',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: AppTheme.tertiaryColor,
+                        color: context.colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 18),
@@ -135,23 +137,25 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: AppTheme.surface,
+                        color: context.colorScheme.surface,
                         borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: AppTheme.borderSide),
+                        border: Border.all(
+                          color: context.colorScheme.outlineVariant,
+                        ),
                       ),
                       child: Row(
                         children: [
                           Container(
                             width: 38,
                             height: 38,
-                            decoration: const BoxDecoration(
-                              color: AppTheme.secondaryColor,
+                            decoration: BoxDecoration(
+                              color: context.colorScheme.secondaryContainer,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               LucideIcons.user_round,
                               size: 18,
-                              color: AppTheme.primaryColor,
+                              color: context.colorScheme.onSurface,
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -163,18 +167,18 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                                   driverName,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,
-                                    color: AppTheme.primaryColor,
+                                    color: context.colorScheme.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 1),
-                                const Text(
+                                Text(
                                   'Driver for This Trip',
                                   style: TextStyle(
                                     fontSize: 11,
-                                    color: AppTheme.tertiaryColor,
+                                    color: context.colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -184,12 +188,12 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                       ),
                     ),
                     const SizedBox(height: 18),
-                    const Text(
+                    Text(
                       'Rate Your Experience',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
-                        color: AppTheme.primaryColor,
+                        color: context.colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -198,7 +202,9 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                       children: List.generate(5, (index) {
                         final isSelected = index < _selectedStars;
                         return Material(
-                          color: AppTheme.surface.withValues(alpha: 0),
+                          color: context.colorScheme.surface.withValues(
+                            alpha: 0,
+                          ),
                           shape: const CircleBorder(),
                           child: InkWell(
                             onTap: () => setState(() {
@@ -213,8 +219,8 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                                 isSelected ? Icons.star : Icons.star_border,
                                 size: 30,
                                 color: isSelected
-                                    ? AppTheme.primaryColor
-                                    : AppTheme.borderSide,
+                                    ? context.colorScheme.onSurface
+                                    : context.colorScheme.outlineVariant,
                               ),
                             ),
                           ),
@@ -227,17 +233,19 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                       height: 116,
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       decoration: BoxDecoration(
-                        color: AppTheme.surface,
+                        color: context.colorScheme.surface,
                         borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: AppTheme.borderSide),
+                        border: Border.all(
+                          color: context.colorScheme.outlineVariant,
+                        ),
                       ),
                       child: TextField(
                         controller: _feedbackController,
                         minLines: 1,
                         maxLines: 4,
                         textCapitalization: TextCapitalization.sentences,
-                        style: const TextStyle(
-                          color: AppTheme.primaryColor,
+                        style: TextStyle(
+                          color: context.colorScheme.onSurface,
                           fontSize: 14,
                         ),
                         decoration: const InputDecoration(
@@ -258,8 +266,8 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                       Text(
                         _error!,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: AppTheme.cancel,
+                        style: TextStyle(
+                          color: context.colorScheme.error,
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                         ),
@@ -286,12 +294,12 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                   onPressed: _isSubmitting ? null : _submitRating,
                   style: ElevatedButton.styleFrom(shape: const StadiumBorder()),
                   child: _isSubmitting
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: AppTheme.surface,
+                            color: context.colorScheme.surface,
                           ),
                         )
                       : const Text('Submit Rating'),

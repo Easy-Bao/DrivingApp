@@ -5,7 +5,6 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:passenger_app/src/core/location/location.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -118,7 +117,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
         _lat,
         _lng,
         isOrigin: false,
-        color: AppTheme.primaryColor,
+        color: context.colorScheme.onSurface,
       );
       return;
     }
@@ -128,7 +127,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
       _lat,
       _lng,
       isOrigin: false,
-      color: AppTheme.primaryColor,
+      color: context.colorScheme.onSurface,
     );
     if (!mounted || requestId != _pinRequestId) {
       await MapProvider.clearAnnotations(manager);
@@ -218,18 +217,18 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: context.colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: context.colorScheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(LucideIcons.x, color: AppTheme.primaryColor),
+          icon: Icon(LucideIcons.x, color: context.colorScheme.onSurface),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
+        title: Text(
           'Add place',
           style: TextStyle(
-            color: AppTheme.primaryColor,
+            color: context.colorScheme.onSurface,
             fontWeight: FontWeight.w800,
             fontSize: 18,
           ),
@@ -243,8 +242,8 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
               'Save',
               style: TextStyle(
                 color: _isLoadingLocation
-                    ? AppTheme.primaryColor.withValues(alpha: 0.4)
-                    : AppTheme.primaryColor,
+                    ? context.colorScheme.onSurfaceVariant
+                    : context.colorScheme.onSurface,
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
               ),
@@ -262,15 +261,15 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                 Container(
                   height: 350,
                   width: double.infinity,
-                  color: AppTheme.neutralColor,
+                  color: context.colorScheme.surfaceContainerHighest,
                   child: _isLoadingLocation
-                      ? const Center(
+                      ? Center(
                           child: SizedBox(
                             width: 24,
                             height: 24,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: AppTheme.primaryColor,
+                              color: context.colorScheme.onSurface,
                             ),
                           ),
                         )
@@ -288,7 +287,9 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                   Text(
                     'Location',
                     style: TextStyle(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                      color: context.colorScheme.onSurface.withValues(
+                        alpha: 0.6,
+                      ),
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -301,9 +302,11 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                       vertical: 14,
                     ),
                     decoration: BoxDecoration(
-                      color: AppTheme.neutralColor,
+                      color: context.colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppTheme.borderSide),
+                      border: Border.all(
+                        color: context.colorScheme.outlineVariant,
+                      ),
                     ),
                     child: Text(
                       widget.initialPlace?.fullAddress ??
@@ -312,8 +315,8 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                               : _isLocationPinned
                               ? 'Location pinned'
                               : 'Location unavailable'),
-                      style: const TextStyle(
-                        color: AppTheme.primaryColor,
+                      style: TextStyle(
+                        color: context.colorScheme.onSurface,
                         fontSize: 15,
                       ),
                     ),
@@ -322,7 +325,9 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                   Text(
                     'Name this place',
                     style: TextStyle(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.6),
+                      color: context.colorScheme.onSurface.withValues(
+                        alpha: 0.6,
+                      ),
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -330,40 +335,40 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                   const SizedBox(height: 8),
                   TextField(
                     controller: _controller,
-                    style: const TextStyle(
-                      color: AppTheme.primaryColor,
+                    style: TextStyle(
+                      color: context.colorScheme.onSurface,
                       fontSize: 15,
                     ),
                     decoration: InputDecoration(
                       hintText: "e.g. Ate's house",
                       hintStyle: TextStyle(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                        color: context.colorScheme.onSurfaceVariant,
                       ),
                       filled: true,
-                      fillColor: AppTheme.neutralColor,
+                      fillColor: context.colorScheme.surfaceContainerHighest,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 14,
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
-                          color: AppTheme.borderSide,
+                        borderSide: BorderSide(
+                          color: context.colorScheme.outlineVariant,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
-                          color: AppTheme.primaryColor,
+                        borderSide: BorderSide(
+                          color: context.colorScheme.onSurface,
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const Text(
+                  Text(
                     'Icon',
                     style: TextStyle(
-                      color: AppTheme.primaryColor,
+                      color: context.colorScheme.onSurface,
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                     ),
@@ -386,19 +391,21 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                             height: 64,
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? AppTheme.primaryColor.withValues(alpha: 0.1)
-                                  : AppTheme.neutralColor,
+                                  ? context.colorScheme.onSurface.withValues(
+                                      alpha: 0.1,
+                                    )
+                                  : context.colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: isSelected
-                                    ? AppTheme.primaryColor
-                                    : AppTheme.borderSide,
+                                    ? context.colorScheme.onSurface
+                                    : context.colorScheme.outlineVariant,
                                 width: isSelected ? 1.5 : 1,
                               ),
                             ),
                             child: Icon(
                               icon,
-                              color: AppTheme.primaryColor,
+                              color: context.colorScheme.onSurface,
                               size: 24,
                             ),
                           ),
@@ -416,20 +423,20 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
   }
 
   Widget _buildLocationUnavailableState() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             LucideIcons.map_pin_off,
-            color: AppTheme.tertiaryColor,
+            color: context.colorScheme.onSurfaceVariant,
             size: 28,
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           Text(
             'Location unavailable',
             style: TextStyle(
-              color: AppTheme.primaryColor,
+              color: context.colorScheme.onSurface,
               fontSize: 14,
               fontWeight: FontWeight.w700,
             ),

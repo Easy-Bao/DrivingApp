@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/location/location.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking/booking_bloc.dart';
@@ -19,6 +18,7 @@ import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_near
 import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_no_driver_panel_widget.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/finding_driver_searching_panel_widget.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class FindingDriverPage extends StatelessWidget {
   final String rideType;
@@ -206,6 +206,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
           controller: controller,
           defaultLat: lat,
           defaultLng: lng,
+          routeColor: context.colorScheme.primary,
         ),
       );
 
@@ -367,7 +368,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
         _returnHome();
       },
       child: Scaffold(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: context.colorScheme.surface,
         body: BlocListener<BookingBloc, BookingState>(
           listener: (context, state) {
             if (state is NearestDriverFound) {
@@ -474,7 +475,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                 children: [
                   Positioned.fill(
                     child: Container(
-                      color: AppTheme.neutralColor,
+                      color: context.colorScheme.surfaceContainerHighest,
                       child: MapProvider.buildMapView(
                         latitude: defaultLat,
                         longitude: defaultLng,
@@ -510,7 +511,7 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
                                         border: Border.all(
-                                          color: AppTheme.primaryColor
+                                          color: context.colorScheme.onSurface
                                               .withValues(
                                                 alpha:
                                                     0.15 * (1 - timerSeconds),
@@ -524,19 +525,19 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                                     width: 60,
                                     height: 60,
                                     decoration: BoxDecoration(
-                                      color: AppTheme.primaryColor,
+                                      color: context.colorScheme.onSurface,
                                       shape: BoxShape.circle,
                                       boxShadow: [
                                         BoxShadow(
-                                          color: AppTheme.primaryColor
+                                          color: context.colorScheme.onSurface
                                               .withValues(alpha: 0.3),
                                           blurRadius: 20,
                                         ),
                                       ],
                                     ),
-                                    child: const Icon(
+                                    child: Icon(
                                       LucideIcons.navigation,
-                                      color: AppTheme.surface,
+                                      color: context.colorScheme.surface,
                                       size: 24,
                                     ),
                                   ),
@@ -595,8 +596,10 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                                               LucideIcons.map_pin,
                                               size: 14.0,
                                               color: isSelected
-                                                  ? AppTheme.surface
-                                                  : AppTheme.primaryColor,
+                                                  ? context.colorScheme.surface
+                                                  : context
+                                                        .colorScheme
+                                                        .onSurface,
                                             ),
                                             label: Text(
                                               '${driver.displayName} (${DistanceFormatter.fromKilometers(driver.distanceKm)})',
@@ -606,14 +609,19 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
                                                     ? FontWeight.bold
                                                     : FontWeight.w500,
                                                 color: isSelected
-                                                    ? AppTheme.surface
-                                                    : AppTheme.primaryColor,
+                                                    ? context
+                                                          .colorScheme
+                                                          .surface
+                                                    : context
+                                                          .colorScheme
+                                                          .onSurface,
                                               ),
                                             ),
                                             selected: isSelected,
                                             selectedColor:
-                                                AppTheme.primaryColor,
-                                            backgroundColor: AppTheme.surface,
+                                                context.colorScheme.onSurface,
+                                            backgroundColor:
+                                                context.colorScheme.surface,
                                             elevation: 2,
                                             onSelected: (selected) {
                                               if (selected) {
@@ -787,19 +795,22 @@ Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
   return Tooltip(
     message: MaterialLocalizations.of(context).backButtonTooltip,
     child: Material(
-      color: AppTheme.surface,
+      color: context.colorScheme.surface,
       elevation: 2,
-      shadowColor: AppTheme.primaryColor.withValues(alpha: 0.08),
+      shadowColor: context.colorScheme.onSurface.withValues(alpha: 0.08),
       shape: const CircleBorder(),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onPressed,
         customBorder: const CircleBorder(),
-        child: const SizedBox(
+        child: SizedBox(
           width: 46,
           height: 46,
           child: Center(
-            child: Icon(LucideIcons.arrow_left, color: AppTheme.primaryColor),
+            child: Icon(
+              LucideIcons.arrow_left,
+              color: context.colorScheme.onSurface,
+            ),
           ),
         ),
       ),

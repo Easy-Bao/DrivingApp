@@ -8,11 +8,13 @@ class InitializeMapEvent extends LiveMapEvent {
   final AppMapController controller;
   final double defaultLat;
   final double defaultLng;
+  final Color routeColor;
 
   const InitializeMapEvent({
     required this.controller,
     required this.defaultLat,
     required this.defaultLng,
+    required this.routeColor,
   });
 }
 

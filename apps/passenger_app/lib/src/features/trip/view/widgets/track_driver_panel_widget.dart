@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -45,12 +44,12 @@ class TrackDriverPanelWidget extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: context.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        border: Border.all(color: AppTheme.borderSide),
+        border: Border.all(color: context.colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withValues(alpha: 0.12),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.12),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -66,7 +65,7 @@ class TrackDriverPanelWidget extends StatelessWidget {
               width: 32,
               height: 4,
               decoration: BoxDecoration(
-                color: AppTheme.borderSide,
+                color: context.colorScheme.outlineVariant,
                 borderRadius: BorderRadius.circular(99),
               ),
             ),
@@ -80,10 +79,10 @@ class TrackDriverPanelWidget extends StatelessWidget {
                   children: [
                     Text(
                       statusTitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.w800,
+                        color: context.colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -91,9 +90,9 @@ class TrackDriverPanelWidget extends StatelessWidget {
                       statusSubtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppTheme.tertiaryColor,
+                        color: context.colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -107,15 +106,15 @@ class TrackDriverPanelWidget extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: AppTheme.secondaryColor,
+                  color: context.colorScheme.secondaryContainer,
                   borderRadius: BorderRadius.circular(99),
                 ),
                 child: Text(
                   etaText,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
-                    color: AppTheme.primaryColor,
+                    color: context.colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -125,9 +124,9 @@ class TrackDriverPanelWidget extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              color: AppTheme.neutralColor,
+              color: context.colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppTheme.borderSide),
+              border: Border.all(color: context.colorScheme.outlineVariant),
             ),
             child: Row(
               children: [
@@ -142,12 +141,12 @@ class TrackDriverPanelWidget extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Your Driver',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.tertiaryColor,
+                          color: context.colorScheme.onSurfaceVariant,
                           letterSpacing: 0.7,
                         ),
                       ),
@@ -156,10 +155,10 @@ class TrackDriverPanelWidget extends StatelessWidget {
                         resolvedDriverName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
-                          color: AppTheme.primaryColor,
+                          color: context.colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 1),
@@ -167,9 +166,9 @@ class TrackDriverPanelWidget extends StatelessWidget {
                         resolvedVehicleSummary,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: AppTheme.tertiaryColor,
+                          color: context.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -197,12 +196,14 @@ class TrackDriverPanelWidget extends StatelessWidget {
                   child: Badge(
                     isLabelVisible: unreadChatMessagesCount > 0,
                     label: Text('$unreadChatMessagesCount'),
-                    backgroundColor: AppTheme.cancel,
+                    backgroundColor: context.colorScheme.error,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: AppTheme.interactiveSurface,
+                        color: context.colorScheme.surface,
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppTheme.borderSide),
+                        border: Border.all(
+                          color: context.colorScheme.outlineVariant,
+                        ),
                       ),
                       child: IconButton(
                         tooltip: 'Chat with driver',
@@ -221,16 +222,16 @@ class TrackDriverPanelWidget extends StatelessWidget {
               child: TextButton(
                 onPressed: isCancellingTrip ? null : onCancelTripPressed,
                 style: TextButton.styleFrom(
-                  foregroundColor: AppTheme.cancel,
+                  foregroundColor: context.colorScheme.error,
                   shape: const StadiumBorder(),
                 ),
                 child: isCancellingTrip
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 18,
                         height: 18,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: AppTheme.cancel,
+                          color: context.colorScheme.error,
                         ),
                       )
                     : const Text('Cancel Trip'),
@@ -258,10 +259,12 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final background = filled ? AppTheme.primaryColor : AppTheme.neutralColor;
+    final background = filled
+        ? context.colorScheme.onSurface
+        : context.colorScheme.surfaceContainerHighest;
     final foreground = filled
-        ? AppTheme.activeControlForeground
-        : AppTheme.primaryColor;
+        ? context.colorScheme.onPrimary
+        : context.colorScheme.onSurface;
     return Material(
       color: background,
       borderRadius: BorderRadius.circular(22),
@@ -272,7 +275,9 @@ class _ActionButton extends StatelessWidget {
           height: 44,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(22),
-            border: filled ? null : Border.all(color: AppTheme.borderSide),
+            border: filled
+                ? null
+                : Border.all(color: context.colorScheme.outlineVariant),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,

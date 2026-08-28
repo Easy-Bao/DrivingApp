@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/booking_auth_bottom_sheet_widget.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 void main() {
   testWidgets('returns the selected authentication action and is dismissible', (
@@ -10,7 +10,7 @@ void main() {
     late BuildContext pageContext;
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.themeData,
+        theme: EasyRideTheme.light,
         home: Builder(
           builder: (context) {
             pageContext = context;

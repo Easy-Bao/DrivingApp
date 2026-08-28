@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 enum PassengerActivityFilter { all, completed, cancelled }
 
@@ -23,7 +23,9 @@ class PassengerActivitySummaryWidget extends StatelessWidget {
           child: _SummaryCard(
             label: 'This week',
             value: formatPesoAmount(weeklyFare),
-            backgroundColor: AppTheme.secondaryColor.withValues(alpha: 0.55),
+            backgroundColor: context.colorScheme.secondaryContainer.withValues(
+              alpha: 0.55,
+            ),
             valueKey: const ValueKey<String>('activity-weekly-fare'),
           ),
         ),
@@ -32,7 +34,7 @@ class PassengerActivitySummaryWidget extends StatelessWidget {
           child: _SummaryCard(
             label: 'Rides taken',
             value: weeklyRideCount.toString(),
-            backgroundColor: AppTheme.neutralColor,
+            backgroundColor: context.colorScheme.surfaceContainerHighest,
             valueKey: const ValueKey<String>('activity-weekly-ride-count'),
           ),
         ),
@@ -78,7 +80,7 @@ class PassengerActivitySectionLabel extends StatelessWidget {
     return Text(
       label,
       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-        color: AppTheme.tertiaryColor,
+        color: context.colorScheme.onSurfaceVariant,
         fontWeight: FontWeight.w600,
       ),
     );
@@ -107,14 +109,14 @@ class PassengerActivityFilteredEmptyWidget extends StatelessWidget {
           Icon(
             LucideIcons.route,
             size: 34,
-            color: AppTheme.tertiaryColor.withValues(alpha: 0.45),
+            color: context.colorScheme.onSurfaceVariant,
           ),
           const SizedBox(height: 10),
           Text(
             message,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppTheme.tertiaryColor,
+              color: context.colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -157,7 +159,7 @@ class _SummaryCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: textTheme.labelSmall?.copyWith(
-              color: AppTheme.tertiaryColor,
+              color: context.colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -168,7 +170,7 @@ class _SummaryCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: textTheme.titleMedium?.copyWith(
-              color: AppTheme.primaryColor,
+              color: context.colorScheme.onSurface,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -213,16 +215,22 @@ class _ActivityFilterChip extends StatelessWidget {
             curve: Curves.easeOutCubic,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: isSelected ? AppTheme.primaryColor : AppTheme.surface,
+              color: isSelected
+                  ? context.colorScheme.onSurface
+                  : context.colorScheme.surface,
               borderRadius: radius,
               border: Border.all(
-                color: isSelected ? AppTheme.primaryColor : AppTheme.borderSide,
+                color: isSelected
+                    ? context.colorScheme.onSurface
+                    : context.colorScheme.outlineVariant,
               ),
             ),
             child: Text(
               _label,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: isSelected ? AppTheme.surface : AppTheme.tertiaryColor,
+                color: isSelected
+                    ? context.colorScheme.surface
+                    : context.colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w700,
               ),
             ),

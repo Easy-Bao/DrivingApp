@@ -5,10 +5,10 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:passenger_app/src/core/location/location.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:passenger_app/src/features/trip/view/search_destination_formatters.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class SearchDestinationPage extends StatefulWidget {
@@ -470,16 +470,18 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
   Widget build(BuildContext context) {
     if (_userLat == null || _userLng == null) {
       return Scaffold(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: context.colorScheme.surface,
         appBar: AppBar(
-          backgroundColor: AppTheme.surface.withValues(alpha: 0),
+          backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
           elevation: 0,
           leading: Center(
             child: _buildTripBackButton(context, () => context.pop()),
           ),
         ),
-        body: const Center(
-          child: CircularProgressIndicator(color: AppTheme.primaryColor),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: context.colorScheme.onSurface,
+          ),
         ),
       );
     }
@@ -494,7 +496,7 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: context.colorScheme.surface,
       resizeToAvoidBottomInset: false,
       body: SizedBox.expand(
         child: AnimatedBuilder(
@@ -541,10 +543,10 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(containerRadius),
                       child: Material(
-                        color: AppTheme.surface,
+                        color: context.colorScheme.surface,
                         elevation: 8 * t,
                         child: Container(
-                          color: AppTheme.surface,
+                          color: context.colorScheme.surface,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -564,9 +566,8 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w800,
-                                      color: AppTheme.primaryColor.withValues(
-                                        alpha: 0.4,
-                                      ),
+                                      color: context.colorScheme.onSurface
+                                          .withValues(alpha: 0.4),
                                       letterSpacing: 0.5,
                                     ),
                                   ),
@@ -576,9 +577,8 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                   child: FadeTransition(
                                     opacity: _resultsFadeAnimation,
                                     child: Material(
-                                      color: AppTheme.surface.withValues(
-                                        alpha: 0,
-                                      ),
+                                      color: context.colorScheme.surface
+                                          .withValues(alpha: 0),
                                       child:
                                           (_isSearching ||
                                               (_isLoadingNearby && !hasQuery))
@@ -597,10 +597,11 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                                     ),
                                                 itemCount: 8,
                                                 separatorBuilder: (_, _) =>
-                                                    const Divider(
+                                                    Divider(
                                                       height: 1,
-                                                      color:
-                                                          AppTheme.borderSide,
+                                                      color: context
+                                                          .colorScheme
+                                                          .outlineVariant,
                                                     ),
                                                 itemBuilder: (_, _) =>
                                                     const ListTile(
@@ -633,7 +634,9 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                                     ? 'No places found'
                                                     : 'No nearby places found',
                                                 style: TextStyle(
-                                                  color: AppTheme.primaryColor
+                                                  color: context
+                                                      .colorScheme
+                                                      .onSurface
                                                       .withValues(alpha: 0.4),
                                                   fontWeight: FontWeight.w600,
                                                 ),
@@ -659,16 +662,18 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                                       ? 1
                                                       : 0),
                                               separatorBuilder: (_, _) =>
-                                                  const Divider(
+                                                  Divider(
                                                     height: 1,
-                                                    color: AppTheme.borderSide,
+                                                    color: context
+                                                        .colorScheme
+                                                        .outlineVariant,
                                                   ),
                                               itemBuilder: (context, index) {
                                                 if (index ==
                                                     displayList.length) {
-                                                  return const Padding(
+                                                  return Padding(
                                                     padding:
-                                                        EdgeInsets.symmetric(
+                                                        const EdgeInsets.symmetric(
                                                           horizontal: 8,
                                                           vertical: 12,
                                                         ),
@@ -684,19 +689,23 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                                               child: CircularProgressIndicator(
                                                                 strokeWidth:
                                                                     2.0,
-                                                                color: AppTheme
-                                                                    .primaryColor,
+                                                                color: context
+                                                                    .colorScheme
+                                                                    .onSurface,
                                                               ),
                                                             ),
                                                           ),
                                                         ),
-                                                        SizedBox(width: 14),
+                                                        const SizedBox(
+                                                          width: 14,
+                                                        ),
                                                         Expanded(
                                                           child: Text(
                                                             'Loading more nearby places...',
                                                             style: TextStyle(
-                                                              color: AppTheme
-                                                                  .borderSide,
+                                                              color: context
+                                                                  .colorScheme
+                                                                  .outlineVariant,
                                                               fontSize: 13,
                                                               fontWeight:
                                                                   FontWeight
@@ -723,30 +732,31 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                                   leading: Container(
                                                     width: 44,
                                                     height: 44,
-                                                    decoration:
-                                                        const BoxDecoration(
-                                                          color: AppTheme
-                                                              .neutralColor,
-                                                          shape:
-                                                              BoxShape.circle,
-                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: context
+                                                          .colorScheme
+                                                          .surfaceContainerHighest,
+                                                      shape: BoxShape.circle,
+                                                    ),
                                                     child: Center(
                                                       child: Icon(
                                                         icon,
-                                                        color: AppTheme
-                                                            .primaryColor,
+                                                        color: context
+                                                            .colorScheme
+                                                            .onSurface,
                                                         size: 20,
                                                       ),
                                                     ),
                                                   ),
                                                   title: Text(
                                                     place.name,
-                                                    style: const TextStyle(
+                                                    style: TextStyle(
                                                       fontWeight:
                                                           FontWeight.w700,
                                                       fontSize: 15,
-                                                      color:
-                                                          AppTheme.primaryColor,
+                                                      color: context
+                                                          .colorScheme
+                                                          .onSurface,
                                                     ),
                                                   ),
                                                   subtitle: Text(
@@ -756,19 +766,21 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                                       _drivingDistanceRequests,
                                                     ),
                                                     style: TextStyle(
-                                                      color: AppTheme
-                                                          .primaryColor
+                                                      color: context
+                                                          .colorScheme
+                                                          .onSurface
                                                           .withValues(
                                                             alpha: 0.4,
                                                           ),
                                                       fontSize: 13,
                                                     ),
                                                   ),
-                                                  trailing: const Icon(
+                                                  trailing: Icon(
                                                     LucideIcons.map_pin,
                                                     size: 18,
-                                                    color:
-                                                        AppTheme.primaryColor,
+                                                    color: context
+                                                        .colorScheme
+                                                        .onSurface,
                                                   ),
                                                   onTap: () =>
                                                       _onPlaceSelected(place),
@@ -804,21 +816,24 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                               child: Hero(
                                 tag: 'search_bar_field',
                                 child: Material(
-                                  color: AppTheme.surface.withValues(alpha: 0),
+                                  color: context.colorScheme.surface.withValues(
+                                    alpha: 0,
+                                  ),
                                   child: Container(
                                     height: 52,
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 12,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: AppTheme.surface,
+                                      color: context.colorScheme.surface,
                                       borderRadius: BorderRadius.circular(36),
                                       border: Border.all(
-                                        color: AppTheme.borderSide,
+                                        color:
+                                            context.colorScheme.outlineVariant,
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: AppTheme.primaryColor
+                                          color: context.colorScheme.onSurface
                                               .withValues(
                                                 alpha: 0.08 * (1 - t),
                                               ),
@@ -858,7 +873,9 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                                     ? LucideIcons.arrow_left
                                                     : LucideIcons.search,
                                                 key: ValueKey(t > 0.4),
-                                                color: AppTheme.primaryColor,
+                                                color: context
+                                                    .colorScheme
+                                                    .onSurface,
                                                 size: 20,
                                               ),
                                             ),
@@ -870,16 +887,19 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                             controller: _searchController,
                                             focusNode: _focusNode,
                                             autofocus: false,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 15,
-                                              color: AppTheme.primaryColor,
+                                              color:
+                                                  context.colorScheme.onSurface,
                                               fontWeight: FontWeight.w600,
                                             ),
                                             decoration: InputDecoration(
                                               hintText: 'Search destination',
                                               hintStyle: TextStyle(
                                                 fontSize: 15,
-                                                color: AppTheme.primaryColor
+                                                color: context
+                                                    .colorScheme
+                                                    .onSurface
                                                     .withValues(alpha: 0.4),
                                                 fontWeight: FontWeight.w400,
                                               ),
@@ -904,7 +924,9 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                               child: Icon(
                                                 LucideIcons.x,
                                                 size: 18,
-                                                color: AppTheme.primaryColor
+                                                color: context
+                                                    .colorScheme
+                                                    .onSurface
                                                     .withValues(alpha: 0.5),
                                               ),
                                             ),
@@ -920,23 +942,25 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                               child: GestureDetector(
                                                 onTap: _openMapPin,
                                                 child: Material(
-                                                  color: AppTheme.surface
+                                                  color: context
+                                                      .colorScheme
+                                                      .surface
                                                       .withValues(alpha: 0),
                                                   child: Container(
                                                     width: 36,
                                                     height: 36,
-                                                    decoration:
-                                                        const BoxDecoration(
-                                                          color: AppTheme
-                                                              .neutralColor,
-                                                          shape:
-                                                              BoxShape.circle,
-                                                        ),
-                                                    child: const Center(
+                                                    decoration: BoxDecoration(
+                                                      color: context
+                                                          .colorScheme
+                                                          .surfaceContainerHighest,
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    child: Center(
                                                       child: Icon(
                                                         LucideIcons.map_pin,
-                                                        color: AppTheme
-                                                            .primaryColor,
+                                                        color: context
+                                                            .colorScheme
+                                                            .onSurface,
                                                         size: 18,
                                                       ),
                                                     ),
@@ -972,21 +996,21 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                       width: 46,
                                       height: 46,
                                       decoration: BoxDecoration(
-                                        color: AppTheme.surface,
+                                        color: context.colorScheme.surface,
                                         shape: BoxShape.circle,
                                         boxShadow: [
                                           BoxShadow(
-                                            color: AppTheme.primaryColor
+                                            color: context.colorScheme.onSurface
                                                 .withValues(alpha: 0.08),
                                             blurRadius: 15,
                                             offset: const Offset(0, 4),
                                           ),
                                         ],
                                       ),
-                                      child: const Center(
+                                      child: Center(
                                         child: Icon(
                                           LucideIcons.arrow_left,
-                                          color: AppTheme.primaryColor,
+                                          color: context.colorScheme.onSurface,
                                           size: 20,
                                         ),
                                       ),
@@ -1011,31 +1035,37 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
                                       tag: 'map_pin_button',
                                       child: FittedBox(
                                         child: Material(
-                                          color: AppTheme.surface.withValues(
-                                            alpha: 0,
-                                          ),
+                                          color: context.colorScheme.surface
+                                              .withValues(alpha: 0),
                                           child: Container(
                                             width: 46,
                                             height: 46,
                                             decoration: BoxDecoration(
-                                              color: AppTheme.surface,
+                                              color:
+                                                  context.colorScheme.surface,
                                               shape: BoxShape.circle,
                                               border: Border.all(
-                                                color: AppTheme.borderSide,
+                                                color: context
+                                                    .colorScheme
+                                                    .outlineVariant,
                                               ),
                                               boxShadow: [
                                                 BoxShadow(
-                                                  color: AppTheme.primaryColor
+                                                  color: context
+                                                      .colorScheme
+                                                      .onSurface
                                                       .withValues(alpha: 0.08),
                                                   blurRadius: 15,
                                                   offset: const Offset(0, 4),
                                                 ),
                                               ],
                                             ),
-                                            child: const Center(
+                                            child: Center(
                                               child: Icon(
                                                 LucideIcons.map_pin,
-                                                color: AppTheme.primaryColor,
+                                                color: context
+                                                    .colorScheme
+                                                    .onSurface,
                                                 size: 20,
                                               ),
                                             ),
@@ -1066,19 +1096,22 @@ Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
   return Tooltip(
     message: MaterialLocalizations.of(context).backButtonTooltip,
     child: Material(
-      color: AppTheme.surface,
+      color: context.colorScheme.surface,
       elevation: 2,
-      shadowColor: AppTheme.primaryColor.withValues(alpha: 0.08),
+      shadowColor: context.colorScheme.onSurface.withValues(alpha: 0.08),
       shape: const CircleBorder(),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onPressed,
         customBorder: const CircleBorder(),
-        child: const SizedBox(
+        child: SizedBox(
           width: 46,
           height: 46,
           child: Center(
-            child: Icon(LucideIcons.arrow_left, color: AppTheme.primaryColor),
+            child: Icon(
+              LucideIcons.arrow_left,
+              color: context.colorScheme.onSurface,
+            ),
           ),
         ),
       ),

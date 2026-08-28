@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/view/widgets/passenger_activity_history_widget.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 void main() {
   final referenceTime = DateTime(2026, 8, 22, 18);
@@ -155,7 +155,7 @@ Future<void> _pumpHistory(
 }) {
   return tester.pumpWidget(
     MaterialApp(
-      theme: AppTheme.themeData,
+      theme: EasyRideTheme.light,
       home: Scaffold(
         body: PassengerActivityHistoryWidget(
           activeRides: activeRides,

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/core/utils/phone_number_validator.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
@@ -96,9 +95,9 @@ class _SignupPageContentState extends State<_SignupPageContent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.canvasColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface.withValues(alpha: 0),
+        backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
         elevation: 0,
         leading: Center(
           child: IconButton(
@@ -106,9 +105,9 @@ class _SignupPageContentState extends State<_SignupPageContent> {
             tooltip: MaterialLocalizations.of(context).backButtonTooltip,
             padding: EdgeInsets.zero,
             style: IconButton.styleFrom(shape: const CircleBorder()),
-            icon: const Icon(
+            icon: Icon(
               LucideIcons.arrow_left,
-              color: AppTheme.primaryColor,
+              color: context.colorScheme.onSurface,
               size: 20,
             ),
           ),
@@ -164,7 +163,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const SizedBox(height: 8),
-                            const Center(
+                            Center(
                               child: Column(
                                 children: [
                                   Text(
@@ -172,15 +171,16 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                     style: TextStyle(
                                       fontSize: 26,
                                       fontWeight: FontWeight.bold,
-                                      color: AppTheme.primaryColor,
+                                      color: context.colorScheme.onSurface,
                                     ),
                                   ),
-                                  SizedBox(height: 8),
+                                  const SizedBox(height: 8),
                                   Text(
                                     'Enter your details to create your account',
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: AppTheme.tertiaryColor,
+                                      color:
+                                          context.colorScheme.onSurfaceVariant,
                                     ),
                                   ),
                                 ],
@@ -192,40 +192,42 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                 width: double.infinity,
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.cancel.withValues(alpha: 0.1),
+                                  color: context.colorScheme.error.withValues(
+                                    alpha: 0.1,
+                                  ),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: AppTheme.cancel.withValues(
+                                    color: context.colorScheme.error.withValues(
                                       alpha: 0.3,
                                     ),
                                   ),
                                 ),
                                 child: Text(
                                   errorMessage,
-                                  style: const TextStyle(
-                                    color: AppTheme.cancel,
+                                  style: TextStyle(
+                                    color: context.colorScheme.error,
                                     fontSize: 13,
                                   ),
                                 ),
                               ),
                               const SizedBox(height: 16),
                             ],
-                            const Align(
+                            Align(
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 'Full Name',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w800,
-                                  color: AppTheme.tertiaryColor,
+                                  color: context.colorScheme.onSurfaceVariant,
                                   letterSpacing: 1.1,
                                 ),
                               ),
                             ),
                             const SizedBox(height: 8),
                             TextField(
-                              style: const TextStyle(
-                                color: AppTheme.primaryColor,
+                              style: TextStyle(
+                                color: context.colorScheme.onSurface,
                                 fontSize: 15,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -240,61 +242,61 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                               decoration: InputDecoration(
                                 hintText: 'Full Name',
                                 errorText: _nameError,
-                                prefixIcon: const Padding(
-                                  padding: EdgeInsets.only(left: 10),
+                                prefixIcon: Padding(
+                                  padding: const EdgeInsets.only(left: 10),
                                   child: Icon(
                                     LucideIcons.user,
                                     size: 20,
-                                    color: AppTheme.fieldLabel,
+                                    color: context.colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                                 filled: true,
-                                fillColor: AppTheme.surface,
+                                fillColor: context.colorScheme.surface,
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.borderSide,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.outlineVariant,
                                   ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.primaryColor,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.onSurface,
                                     width: 1.5,
                                   ),
                                 ),
                                 errorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.cancel,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.error,
                                   ),
                                 ),
                                 focusedErrorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.cancel,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.error,
                                     width: 1.5,
                                   ),
                                 ),
                               ),
                             ),
                             const SizedBox(height: 16),
-                            const Align(
+                            Align(
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 'Phone Number',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w800,
-                                  color: AppTheme.tertiaryColor,
+                                  color: context.colorScheme.onSurfaceVariant,
                                   letterSpacing: 1.1,
                                 ),
                               ),
                             ),
                             const SizedBox(height: 8),
                             TextField(
-                              style: const TextStyle(
-                                color: AppTheme.primaryColor,
+                              style: TextStyle(
+                                color: context.colorScheme.onSurface,
                                 fontSize: 15,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -310,53 +312,53 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                               decoration: InputDecoration(
                                 hintText: '09171234567',
                                 errorText: _phoneError,
-                                prefixIcon: const Padding(
-                                  padding: EdgeInsets.only(left: 10),
+                                prefixIcon: Padding(
+                                  padding: const EdgeInsets.only(left: 10),
                                   child: Icon(
                                     LucideIcons.phone,
                                     size: 20,
-                                    color: AppTheme.fieldLabel,
+                                    color: context.colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                                 filled: true,
-                                fillColor: AppTheme.surface,
+                                fillColor: context.colorScheme.surface,
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.borderSide,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.outlineVariant,
                                   ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.primaryColor,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.onSurface,
                                     width: 1.5,
                                   ),
                                 ),
                                 errorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.cancel,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.error,
                                   ),
                                 ),
                                 focusedErrorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(36),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.cancel,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.error,
                                     width: 1.5,
                                   ),
                                 ),
                               ),
                             ),
                             const SizedBox(height: 16),
-                            const Align(
+                            Align(
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 'Email Address',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w800,
-                                  color: AppTheme.tertiaryColor,
+                                  color: context.colorScheme.onSurfaceVariant,
                                   letterSpacing: 1.1,
                                 ),
                               ),
@@ -367,8 +369,8 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                               child: Material(
                                 type: MaterialType.transparency,
                                 child: TextField(
-                                  style: const TextStyle(
-                                    color: AppTheme.primaryColor,
+                                  style: TextStyle(
+                                    color: context.colorScheme.onSurface,
                                     fontSize: 15,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -384,39 +386,42 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                   decoration: InputDecoration(
                                     hintText: 'Email',
                                     errorText: _emailError,
-                                    prefixIcon: const Padding(
-                                      padding: EdgeInsets.only(left: 10),
+                                    prefixIcon: Padding(
+                                      padding: const EdgeInsets.only(left: 10),
                                       child: Icon(
                                         LucideIcons.mail,
                                         size: 20,
-                                        color: AppTheme.fieldLabel,
+                                        color: context
+                                            .colorScheme
+                                            .onSurfaceVariant,
                                       ),
                                     ),
                                     filled: true,
-                                    fillColor: AppTheme.surface,
+                                    fillColor: context.colorScheme.surface,
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(36),
-                                      borderSide: const BorderSide(
-                                        color: AppTheme.borderSide,
+                                      borderSide: BorderSide(
+                                        color:
+                                            context.colorScheme.outlineVariant,
                                       ),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(36),
-                                      borderSide: const BorderSide(
-                                        color: AppTheme.primaryColor,
+                                      borderSide: BorderSide(
+                                        color: context.colorScheme.onSurface,
                                         width: 1.5,
                                       ),
                                     ),
                                     errorBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(36),
-                                      borderSide: const BorderSide(
-                                        color: AppTheme.cancel,
+                                      borderSide: BorderSide(
+                                        color: context.colorScheme.error,
                                       ),
                                     ),
                                     focusedErrorBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(36),
-                                      borderSide: const BorderSide(
-                                        color: AppTheme.cancel,
+                                      borderSide: BorderSide(
+                                        color: context.colorScheme.error,
                                         width: 1.5,
                                       ),
                                     ),
@@ -425,14 +430,14 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            const Align(
+                            Align(
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 'Password',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w800,
-                                  color: AppTheme.tertiaryColor,
+                                  color: context.colorScheme.onSurfaceVariant,
                                   letterSpacing: 1.1,
                                 ),
                               ),
@@ -443,8 +448,8 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                               child: Material(
                                 type: MaterialType.transparency,
                                 child: TextField(
-                                  style: const TextStyle(
-                                    color: AppTheme.primaryColor,
+                                  style: TextStyle(
+                                    color: context.colorScheme.onSurface,
                                     fontSize: 15,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -462,12 +467,14 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                   decoration: InputDecoration(
                                     hintText: 'Password',
                                     errorText: _passwordError,
-                                    prefixIcon: const Padding(
-                                      padding: EdgeInsets.only(left: 10),
+                                    prefixIcon: Padding(
+                                      padding: const EdgeInsets.only(left: 10),
                                       child: Icon(
                                         LucideIcons.lock,
                                         size: 20,
-                                        color: AppTheme.fieldLabel,
+                                        color: context
+                                            .colorScheme
+                                            .onSurfaceVariant,
                                       ),
                                     ),
                                     suffixIcon: IconButton(
@@ -476,7 +483,9 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                             ? LucideIcons.eye
                                             : LucideIcons.eye_off,
                                         size: 20,
-                                        color: AppTheme.tertiaryColor,
+                                        color: context
+                                            .colorScheme
+                                            .onSurfaceVariant,
                                       ),
                                       onPressed: () => setState(
                                         () => _isPasswordInputVisible =
@@ -484,30 +493,31 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                       ),
                                     ),
                                     filled: true,
-                                    fillColor: AppTheme.surface,
+                                    fillColor: context.colorScheme.surface,
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(36),
-                                      borderSide: const BorderSide(
-                                        color: AppTheme.borderSide,
+                                      borderSide: BorderSide(
+                                        color:
+                                            context.colorScheme.outlineVariant,
                                       ),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(36),
-                                      borderSide: const BorderSide(
-                                        color: AppTheme.primaryColor,
+                                      borderSide: BorderSide(
+                                        color: context.colorScheme.onSurface,
                                         width: 1.5,
                                       ),
                                     ),
                                     errorBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(36),
-                                      borderSide: const BorderSide(
-                                        color: AppTheme.cancel,
+                                      borderSide: BorderSide(
+                                        color: context.colorScheme.error,
                                       ),
                                     ),
                                     focusedErrorBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(36),
-                                      borderSide: const BorderSide(
-                                        color: AppTheme.cancel,
+                                      borderSide: BorderSide(
+                                        color: context.colorScheme.error,
                                         width: 1.5,
                                       ),
                                     ),
@@ -525,9 +535,10 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                       ? null
                                       : () => _submitRegistration(context),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppTheme.primaryColor,
+                                    backgroundColor:
+                                        context.colorScheme.onSurface,
                                     foregroundColor:
-                                        AppTheme.activeControlForeground,
+                                        context.colorScheme.onPrimary,
                                     minimumSize: const Size.fromHeight(56),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(36),
@@ -535,11 +546,11 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                     elevation: 0,
                                   ),
                                   child: isLoading
-                                      ? const SizedBox(
+                                      ? SizedBox(
                                           width: 24,
                                           height: 24,
                                           child: CircularProgressIndicator(
-                                            color: AppTheme.surface,
+                                            color: context.colorScheme.surface,
                                             strokeWidth: 2,
                                           ),
                                         )
@@ -568,10 +579,11 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'Already have an account?',
                                     style: TextStyle(
-                                      color: AppTheme.tertiaryColor,
+                                      color:
+                                          context.colorScheme.onSurfaceVariant,
                                     ),
                                   ),
                                   TextButton(
@@ -580,11 +592,11 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                         context.pushNamed(AuthRoutes.signin),
                                       );
                                     },
-                                    child: const Text(
+                                    child: Text(
                                       'Sign in',
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        color: AppTheme.primaryColor,
+                                        color: context.colorScheme.onSurface,
                                       ),
                                     ),
                                   ),

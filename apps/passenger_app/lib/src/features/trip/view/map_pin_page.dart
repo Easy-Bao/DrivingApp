@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/location/location.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/map_selection_marker_widget.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class MapPinPage extends StatefulWidget {
   const MapPinPage({super.key});
@@ -200,21 +200,23 @@ class _MapPinPageState extends State<MapPinPage>
   Widget build(BuildContext context) {
     if (_centerLat == null || _centerLng == null) {
       return Scaffold(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: context.colorScheme.surface,
         appBar: AppBar(
-          backgroundColor: AppTheme.surface.withValues(alpha: 0),
+          backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
           elevation: 0,
           leading: Center(
             child: _buildTripBackButton(context, () => context.pop()),
           ),
         ),
-        body: const Center(
-          child: CircularProgressIndicator(color: AppTheme.primaryColor),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: context.colorScheme.onSurface,
+          ),
         ),
       );
     }
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: context.colorScheme.surface,
       body: Stack(
         children: [
           _getMapView(),
@@ -257,13 +259,15 @@ class _MapPinPageState extends State<MapPinPage>
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
               decoration: BoxDecoration(
-                color: AppTheme.surface,
+                color: context.colorScheme.surface,
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(28),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.12),
+                    color: context.colorScheme.onSurface.withValues(
+                      alpha: 0.12,
+                    ),
                     blurRadius: 24,
                     offset: const Offset(0, -4),
                   ),
@@ -279,7 +283,9 @@ class _MapPinPageState extends State<MapPinPage>
                       height: 4,
                       margin: const EdgeInsets.only(bottom: 16),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.16),
+                        color: context.colorScheme.onSurface.withValues(
+                          alpha: 0.16,
+                        ),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -291,13 +297,13 @@ class _MapPinPageState extends State<MapPinPage>
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: AppTheme.secondaryColor,
+                          color: context.colorScheme.secondaryContainer,
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child: const Center(
+                        child: Center(
                           child: Icon(
                             LucideIcons.map_pin,
-                            color: AppTheme.primaryColor,
+                            color: context.colorScheme.onSurface,
                             size: 20,
                           ),
                         ),
@@ -309,10 +315,10 @@ class _MapPinPageState extends State<MapPinPage>
                           children: [
                             Text(
                               _address,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w800,
-                                color: AppTheme.primaryColor,
+                                color: context.colorScheme.onSurface,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -323,9 +329,8 @@ class _MapPinPageState extends State<MapPinPage>
                                 _subAddress,
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: AppTheme.primaryColor.withValues(
-                                    alpha: 0.6,
-                                  ),
+                                  color: context.colorScheme.onSurface
+                                      .withValues(alpha: 0.6),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -343,8 +348,8 @@ class _MapPinPageState extends State<MapPinPage>
                     child: ElevatedButton(
                       onPressed: _isGeocoding ? null : _confirmLocation,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        foregroundColor: AppTheme.activeControlForeground,
+                        backgroundColor: context.colorScheme.onSurface,
+                        foregroundColor: context.colorScheme.onPrimary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(26),
                         ),
@@ -373,19 +378,22 @@ Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
   return Tooltip(
     message: MaterialLocalizations.of(context).backButtonTooltip,
     child: Material(
-      color: AppTheme.surface,
+      color: context.colorScheme.surface,
       elevation: 2,
-      shadowColor: AppTheme.primaryColor.withValues(alpha: 0.08),
+      shadowColor: context.colorScheme.onSurface.withValues(alpha: 0.08),
       shape: const CircleBorder(),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onPressed,
         customBorder: const CircleBorder(),
-        child: const SizedBox(
+        child: SizedBox(
           width: 46,
           height: 46,
           child: Center(
-            child: Icon(LucideIcons.arrow_left, color: AppTheme.primaryColor),
+            child: Icon(
+              LucideIcons.arrow_left,
+              color: context.colorScheme.onSurface,
+            ),
           ),
         ),
       ),

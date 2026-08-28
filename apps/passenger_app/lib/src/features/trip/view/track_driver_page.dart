@@ -8,7 +8,6 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/chat/chat_routes.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
@@ -19,6 +18,7 @@ import 'package:passenger_app/src/features/trip/bloc/track_driver/track_driver_s
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/track_driver_panel_widget.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class _MapUpdateRequest {
@@ -350,14 +350,14 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
       return MapProvider.addPolyline(
         mapController,
         routePoints,
-        color: AppTheme.primaryColor,
+        color: context.colorScheme.onSurface,
         width: 4.0,
       );
     }
     await MapProvider.replacePolyline(
       annotationManager,
       routePoints,
-      color: AppTheme.primaryColor,
+      color: context.colorScheme.onSurface,
       width: 4.0,
     );
     return annotationManager;
@@ -368,29 +368,29 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
     final shouldCancel = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: context.colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text(
+        title: Text(
           'Cancel Trip?',
           style: TextStyle(
             fontWeight: FontWeight.w800,
-            color: AppTheme.primaryColor,
+            color: context.colorScheme.onSurface,
           ),
         ),
         content: Text(
           'Are you sure you want to cancel this trip? A cancellation fee may apply.',
           style: TextStyle(
-            color: AppTheme.primaryColor.withValues(alpha: 0.6),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.6),
             fontSize: 14,
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text(
+            child: Text(
               'Keep Ride',
               style: TextStyle(
-                color: AppTheme.primaryColor,
+                color: context.colorScheme.onSurface,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -399,10 +399,10 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
             onPressed: () {
               Navigator.pop(ctx, true);
             },
-            child: const Text(
+            child: Text(
               'Cancel Trip',
               style: TextStyle(
-                color: AppTheme.cancel,
+                color: context.colorScheme.error,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -458,12 +458,12 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
         }
       },
       child: Scaffold(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: context.colorScheme.surface,
         body: Stack(
           children: [
             Positioned.fill(
               child: Container(
-                color: AppTheme.neutralColor,
+                color: context.colorScheme.surfaceContainerHighest,
                 child: SizedBox.expand(
                   child: MapProvider.buildMapView(
                     latitude: passengerLat,
@@ -623,19 +623,22 @@ Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
   return Tooltip(
     message: MaterialLocalizations.of(context).backButtonTooltip,
     child: Material(
-      color: AppTheme.surface,
+      color: context.colorScheme.surface,
       elevation: 2,
-      shadowColor: AppTheme.primaryColor.withValues(alpha: 0.08),
+      shadowColor: context.colorScheme.onSurface.withValues(alpha: 0.08),
       shape: const CircleBorder(),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onPressed,
         customBorder: const CircleBorder(),
-        child: const SizedBox(
+        child: SizedBox(
           width: 46,
           height: 46,
           child: Center(
-            child: Icon(LucideIcons.arrow_left, color: AppTheme.primaryColor),
+            child: Icon(
+              LucideIcons.arrow_left,
+              color: context.colorScheme.onSurface,
+            ),
           ),
         ),
       ),

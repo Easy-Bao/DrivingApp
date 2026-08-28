@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/map_selection_marker_widget.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 void main() {
   testWidgets('renders the compact green trip-location marker', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.themeData,
+        theme: EasyRideTheme.light,
         home: const Scaffold(body: Center(child: MapSelectionMarkerWidget())),
       ),
     );
@@ -21,7 +21,10 @@ void main() {
         MapSelectionMarkerWidget.height,
       ),
     );
-    expect(MapSelectionMarkerWidget.markerColor, AppTheme.complete);
+    expect(
+      MapSelectionMarkerWidget.markerColor,
+      EasyRideSemanticColors.light.success,
+    );
     expect(
       find.descendant(of: marker, matching: find.byType(CustomPaint)),
       findsOneWidget,

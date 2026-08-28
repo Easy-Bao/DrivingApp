@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/home/view/widgets/saved_place_quick_actions_widget.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 void main() {
   testWidgets('renders every saved place with only the default active', (
@@ -12,6 +12,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        theme: EasyRideTheme.light,
         home: Scaffold(
           body: SavedPlaceQuickActionsWidget(
             places: const [
@@ -55,8 +56,8 @@ void main() {
     final secondDecoration =
         tester.widget<AnimatedContainer>(chips.at(1)).decoration
             as BoxDecoration;
-    expect(firstDecoration.color, AppTheme.activeControlBackground);
-    expect(secondDecoration.color, AppTheme.interactiveSurface);
+    expect(firstDecoration.color, EasyRideTheme.light.colorScheme.primary);
+    expect(secondDecoration.color, EasyRideTheme.light.colorScheme.surface);
 
     await tester.tap(find.text('Home'));
     expect(tappedPlace?.label, 'Home');
@@ -67,6 +68,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        theme: EasyRideTheme.light,
         home: Scaffold(
           body: SavedPlaceQuickActionsWidget(
             places: const [
@@ -108,7 +110,7 @@ void main() {
                 .widget<AnimatedContainer>(find.byType(AnimatedContainer).at(1))
                 .decoration
             as BoxDecoration;
-    expect(firstDecoration.color, AppTheme.activeControlBackground);
-    expect(secondDecoration.color, AppTheme.interactiveSurface);
+    expect(firstDecoration.color, EasyRideTheme.light.colorScheme.primary);
+    expect(secondDecoration.color, EasyRideTheme.light.colorScheme.surface);
   });
 }

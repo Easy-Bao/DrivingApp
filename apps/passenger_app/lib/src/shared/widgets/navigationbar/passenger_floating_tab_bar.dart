@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_state.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -88,16 +87,16 @@ class _InboxTabIcon extends StatelessWidget {
                     constraints: const BoxConstraints(minWidth: 16),
                     height: 16,
                     padding: const EdgeInsets.symmetric(horizontal: 4),
-                    decoration: const BoxDecoration(
-                      color: AppTheme.cancel,
+                    decoration: BoxDecoration(
+                      color: context.colorScheme.error,
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
                     child: Text(
                       unreadCount > 99 ? '99+' : '$unreadCount',
-                      style: const TextStyle(
-                        color: AppTheme.surface,
-                        fontSize: 9,
+                      style: TextStyle(
+                        color: context.colorScheme.surface,
+                        fontSize: 11,
                         fontWeight: FontWeight.w800,
                       ),
                     ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class RideTripSummaryWidget extends StatelessWidget {
   final String pickupLabel;
@@ -22,9 +22,9 @@ class RideTripSummaryWidget extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.neutralColor,
+        color: context.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.borderSide),
+        border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -32,8 +32,8 @@ class RideTripSummaryWidget extends StatelessWidget {
           Text(
             'Trip Details',
             style: TextStyle(
-              color: AppTheme.primaryColor.withValues(alpha: 0.5),
-              fontSize: 10,
+              color: context.colorScheme.onSurfaceVariant,
+              fontSize: 11,
               fontWeight: FontWeight.w800,
               letterSpacing: 1.1,
             ),
@@ -189,7 +189,7 @@ class _LocationIcon extends StatelessWidget {
     return SizedBox(
       width: 18,
       height: 18,
-      child: Icon(icon, size: 18, color: AppTheme.primaryColor),
+      child: Icon(icon, size: 18, color: context.colorScheme.onSurface),
     );
   }
 }
@@ -213,7 +213,7 @@ class _LocationDetails extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            color: AppTheme.primaryColor.withValues(alpha: 0.5),
+            color: context.colorScheme.onSurfaceVariant,
             fontSize: 11,
             fontWeight: FontWeight.w600,
           ),
@@ -223,8 +223,8 @@ class _LocationDetails extends StatelessWidget {
           value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: AppTheme.primaryColor,
+          style: TextStyle(
+            color: context.colorScheme.onSurface,
             fontSize: 14,
             fontWeight: FontWeight.w800,
           ),
@@ -236,7 +236,7 @@ class _LocationDetails extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color: AppTheme.primaryColor.withValues(alpha: 0.58),
+              color: context.colorScheme.onSurfaceVariant,
               fontSize: 12,
               height: 1.25,
             ),
@@ -254,7 +254,9 @@ class _DashedRouteConnector extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomPaint(
       key: const ValueKey('trip-route-dashes'),
-      painter: _DashedRoutePainter(),
+      painter: _DashedRoutePainter(
+        context.colorScheme.onSurfaceVariant.withValues(alpha: 0.68),
+      ),
     );
   }
 }
@@ -262,11 +264,13 @@ class _DashedRouteConnector extends StatelessWidget {
 class _DashedRoutePainter extends CustomPainter {
   static const _dashHeight = 4.0;
   static const _gapHeight = 5.0;
+  final Color color;
+
+  const _DashedRoutePainter(this.color);
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppTheme.tertiaryColor.withValues(alpha: 0.68);
+    final paint = Paint()..color = color;
 
     var top = 0.0;
     while (top < size.height) {
@@ -285,7 +289,9 @@ class _DashedRoutePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _DashedRoutePainter oldDelegate) => false;
+  bool shouldRepaint(covariant _DashedRoutePainter oldDelegate) {
+    return oldDelegate.color != color;
+  }
 }
 
 @Preview(
@@ -295,7 +301,7 @@ class _DashedRoutePainter extends CustomPainter {
 )
 Widget rideTripSummaryLongAddressPreview() {
   return MaterialApp(
-    theme: AppTheme.themeData,
+    theme: EasyRideTheme.light,
     home: const Scaffold(
       body: Padding(
         padding: EdgeInsets.all(16),

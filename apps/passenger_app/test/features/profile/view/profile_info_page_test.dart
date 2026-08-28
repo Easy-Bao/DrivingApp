@@ -4,10 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/profile/bloc/profile/profile_cubit.dart';
 import 'package:passenger_app/src/features/profile/view/profile_info_page.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class MockProfileCubit extends MockCubit<ProfileState>
     implements ProfileCubit {}
@@ -48,7 +48,7 @@ void main() {
 
   Widget buildSubject({Future<XFile?> Function()? pickPhoto}) {
     return MaterialApp(
-      theme: AppTheme.themeData,
+      theme: EasyRideTheme.light,
       home: MultiBlocProvider(
         providers: [
           BlocProvider<ProfileCubit>.value(value: profileCubit),

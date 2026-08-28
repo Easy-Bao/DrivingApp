@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:passenger_app/src/features/driver_profile/view/driver_profile_details_sheet.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class DriverMatchedPage extends StatefulWidget {
   final String rideType;
@@ -90,7 +90,7 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: context.colorScheme.surface,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -103,7 +103,9 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
-                    color: AppTheme.complete.withValues(alpha: 0.1),
+                    color: context.semanticColors.success.withValues(
+                      alpha: 0.1,
+                    ),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
@@ -111,18 +113,20 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                       width: 64,
                       height: 64,
                       decoration: BoxDecoration(
-                        color: AppTheme.complete,
+                        color: context.semanticColors.success,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.complete.withValues(alpha: 0.3),
+                            color: context.semanticColors.success.withValues(
+                              alpha: 0.3,
+                            ),
                             blurRadius: 20,
                           ),
                         ],
                       ),
-                      child: const Icon(
+                      child: Icon(
                         LucideIcons.check,
-                        color: AppTheme.surface,
+                        color: context.colorScheme.surface,
                         size: 32,
                       ),
                     ),
@@ -130,12 +134,12 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'Driver Found!',
                 style: TextStyle(
                   fontSize: 26,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.primaryColor,
+                  fontWeight: FontWeight.w800,
+                  color: context.colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 8),
@@ -143,7 +147,7 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                 'Your ${widget.rideType} driver is on the way',
                 style: TextStyle(
                   fontSize: 14,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                  color: context.colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 36),
@@ -154,7 +158,9 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                     showModalBottomSheet(
                       context: context,
                       isScrollControlled: true,
-                      backgroundColor: AppTheme.surface.withValues(alpha: 0),
+                      backgroundColor: context.colorScheme.surface.withValues(
+                        alpha: 0,
+                      ),
                       builder: (BuildContext sheetContext) =>
                           DriverProfileDetailsSheet(
                             driverId: widget.driverId ?? '',
@@ -170,9 +176,11 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppTheme.neutralColor,
+                    color: context.colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: AppTheme.borderSide),
+                    border: Border.all(
+                      color: context.colorScheme.outlineVariant,
+                    ),
                   ),
                   child: Column(
                     children: [
@@ -182,12 +190,12 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                             width: 56,
                             height: 56,
                             decoration: BoxDecoration(
-                              color: AppTheme.secondaryColor,
+                              color: context.colorScheme.secondaryContainer,
                               borderRadius: BorderRadius.circular(18),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               LucideIcons.user,
-                              color: AppTheme.primaryColor,
+                              color: context.colorScheme.onSurface,
                               size: 26,
                             ),
                           ),
@@ -198,36 +206,35 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                               children: [
                                 Text(
                                   widget.driverName ?? '—',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w800,
-                                    color: AppTheme.primaryColor,
+                                    color: context.colorScheme.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Row(
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.star_rounded,
                                       size: 16,
-                                      color: AppTheme.rating,
+                                      color: context.semanticColors.rating,
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
                                       widget.driverRating ?? '—',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w700,
-                                        color: AppTheme.primaryColor,
+                                        color: context.colorScheme.onSurface,
                                       ),
                                     ),
                                     Text(
                                       '  •  Server match',
                                       style: TextStyle(
                                         fontSize: 12,
-                                        color: AppTheme.primaryColor.withValues(
-                                          alpha: 0.5,
-                                        ),
+                                        color: context.colorScheme.onSurface
+                                            .withValues(alpha: 0.5),
                                       ),
                                     ),
                                   ],
@@ -238,7 +245,10 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                         ],
                       ),
                       const SizedBox(height: 16),
-                      const Divider(height: 1, color: AppTheme.borderSide),
+                      Divider(
+                        height: 1,
+                        color: context.colorScheme.outlineVariant,
+                      ),
                       const SizedBox(height: 16),
                       Wrap(
                         spacing: 8,
@@ -264,35 +274,35 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppTheme.neutralColor,
+                  color: context.colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppTheme.borderSide),
+                  border: Border.all(color: context.colorScheme.outlineVariant),
                 ),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.location_on,
                       size: 18,
-                      color: AppTheme.tertiaryColor,
+                      color: context.colorScheme.onSurfaceVariant,
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         widget.destination.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryColor,
+                          color: context.colorScheme.onSurface,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Text(
                       formatPesoAmount(widget.fare),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.w800,
+                        color: context.colorScheme.onSurface,
                       ),
                     ),
                   ],
@@ -306,8 +316,8 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                 child: ElevatedButton(
                   onPressed: _goToTracking,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: AppTheme.activeControlForeground,
+                    backgroundColor: context.colorScheme.onSurface,
+                    foregroundColor: context.colorScheme.onPrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(32),
                     ),
@@ -324,7 +334,7 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                 'Opening live tracking…',
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                  color: context.colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 24),
@@ -339,20 +349,20 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: context.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: AppTheme.tertiaryColor),
+          Icon(icon, size: 14, color: context.colorScheme.onSurfaceVariant),
           const SizedBox(width: 6),
           Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: AppTheme.primaryColor,
+              color: context.colorScheme.onSurface,
             ),
           ),
         ],

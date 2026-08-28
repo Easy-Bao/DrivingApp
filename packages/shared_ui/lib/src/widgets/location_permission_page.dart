@@ -21,80 +21,93 @@ class LocationPermissionPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-          child: Column(
-            children: [
-              const Spacer(),
-              _LocationIllustration(colors: colors),
-              const SizedBox(height: 28),
-              Text(
-                'Make every pickup easier',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  color: colors.onSurface,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.7,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'EasyRide uses your location to find nearby drivers and place your pickup accurately.',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(height: 1.45),
-              ),
-              if (statusMessage case final message?) ...[
-                const SizedBox(height: 12),
-                Text(
-                  message,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colors.primary,
-                    fontWeight: FontWeight.w600,
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                  child: Column(
+                    children: [
+                      const Spacer(),
+                      _LocationIllustration(colors: colors),
+                      const SizedBox(height: 28),
+                      Text(
+                        'Make every pickup easier',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          color: colors.onSurface,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.7,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'EasyRide uses your location to find nearby drivers and place your pickup accurately.',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          height: 1.45,
+                        ),
+                      ),
+                      if (statusMessage case final message?) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          message,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 28),
+                      _LocationBenefit(
+                        colors: colors,
+                        icon: LucideIcons.car_front,
+                        title: 'See nearby rides faster',
+                        message:
+                            'Get a clearer view of available drivers around you.',
+                      ),
+                      const SizedBox(height: 12),
+                      _LocationBenefit(
+                        colors: colors,
+                        icon: LucideIcons.navigation,
+                        title: 'Set the right pickup point',
+                        message:
+                            'Reduce missed pickups with a more accurate location.',
+                      ),
+                      const Spacer(),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: onEnable,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: colors.primary,
+                            foregroundColor: colors.onPrimary,
+                            minimumSize: const Size.fromHeight(52),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(26),
+                            ),
+                          ),
+                          child: const Text('Turn on location'),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: onSkip,
+                        style: TextButton.styleFrom(
+                          foregroundColor: colors.onSurfaceVariant,
+                          minimumSize: const Size.fromHeight(44),
+                        ),
+                        child: const Text('Not now'),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                   ),
                 ),
-              ],
-              const SizedBox(height: 28),
-              _LocationBenefit(
-                colors: colors,
-                icon: LucideIcons.car_front,
-                title: 'See nearby rides faster',
-                message: 'Get a clearer view of available drivers around you.',
               ),
-              const SizedBox(height: 12),
-              _LocationBenefit(
-                colors: colors,
-                icon: LucideIcons.navigation,
-                title: 'Set the right pickup point',
-                message: 'Reduce missed pickups with a more accurate location.',
-              ),
-              const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: onEnable,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    foregroundColor: colors.onPrimary,
-                    minimumSize: const Size.fromHeight(52),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(26),
-                    ),
-                  ),
-                  child: const Text('Turn on location'),
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: onSkip,
-                style: TextButton.styleFrom(
-                  foregroundColor: colors.onSurfaceVariant,
-                  minimumSize: const Size.fromHeight(44),
-                ),
-                child: const Text('Not now'),
-              ),
-              const SizedBox(height: 8),
-            ],
+            ),
           ),
         ),
       ),
@@ -127,11 +140,7 @@ class _LocationIllustration extends StatelessWidget {
           ),
           child: Padding(
             padding: const EdgeInsets.all(18),
-            child: Icon(
-              LucideIcons.map_pin,
-              color: colors.primary,
-              size: 34,
-            ),
+            child: Icon(LucideIcons.map_pin, color: colors.primary, size: 34),
           ),
         ),
       ),

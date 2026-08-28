@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
@@ -37,7 +36,7 @@ class PassengerTabBranchContainer extends StatelessWidget {
     onBranchChanged: (index) => navigationShell.goBranch(index),
     onNavigationSettled: onNavigationSettled,
     onPagePositionChanged: onPagePositionChanged,
-    backgroundColor: AppTheme.background,
+    backgroundColor: context.canvasColor,
     pageViewKey: 'passenger-tab-page-view',
     children: children,
   );

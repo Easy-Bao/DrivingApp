@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/core/theme/app_theme.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/ride_fare_details_widget.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/ride_tip_selector_widget.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/ride_trip_summary_widget.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class RideOptionsPanelWidget extends StatefulWidget {
@@ -121,9 +121,9 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.neutralColor,
+        color: context.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.borderSide),
+        border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -164,9 +164,9 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: context.colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.borderSide),
+        border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: const Row(
         children: [
@@ -251,9 +251,9 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.neutralColor,
+        color: context.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.borderSide),
+        border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: const Row(
         children: [
@@ -289,9 +289,11 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.cancel.withValues(alpha: 0.08),
+        color: context.colorScheme.error.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.cancel.withValues(alpha: 0.2)),
+        border: Border.all(
+          color: context.colorScheme.error.withValues(alpha: 0.2),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -299,13 +301,17 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.error_outline, color: AppTheme.cancel, size: 18),
+              Icon(
+                Icons.error_outline,
+                color: context.colorScheme.error,
+                size: 18,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   error,
-                  style: const TextStyle(
-                    color: AppTheme.cancel,
+                  style: TextStyle(
+                    color: context.colorScheme.error,
                     fontSize: 13,
                     height: 1.25,
                   ),
@@ -334,7 +340,7 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
     required VoidCallback onTap,
   }) {
     return Material(
-      color: AppTheme.surface.withValues(alpha: 0),
+      color: context.colorScheme.surface.withValues(alpha: 0),
       child: InkWell(
         key: key,
         onTap: onTap,
@@ -343,9 +349,9 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
           width: double.infinity,
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: AppTheme.surface,
+            color: context.colorScheme.surface,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppTheme.borderSide),
+            border: Border.all(color: context.colorScheme.outlineVariant),
           ),
           child: Row(
             children: [
@@ -353,10 +359,14 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: AppTheme.neutralColor,
+                  color: context.colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(13),
                 ),
-                child: Icon(icon, color: AppTheme.primaryColor, size: 19),
+                child: Icon(
+                  icon,
+                  color: context.colorScheme.onSurface,
+                  size: 19,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -365,8 +375,8 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
-                        color: AppTheme.primaryColor,
+                      style: TextStyle(
+                        color: context.colorScheme.onSurface,
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
                       ),
@@ -376,8 +386,8 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
                       details,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppTheme.tertiaryColor,
+                      style: TextStyle(
+                        color: context.colorScheme.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),
@@ -385,9 +395,9 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
                 ),
               ),
               const SizedBox(width: 8),
-              const Icon(
+              Icon(
                 LucideIcons.chevron_right,
-                color: AppTheme.tertiaryColor,
+                color: context.colorScheme.onSurfaceVariant,
                 size: 19,
               ),
             ],
@@ -399,7 +409,7 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
 
   Widget _buildTotalFareCard() {
     return Material(
-      color: AppTheme.surface.withValues(alpha: 0),
+      color: context.colorScheme.surface.withValues(alpha: 0),
       child: InkWell(
         key: const ValueKey('fare-summary'),
         onTap: _hasValidFare
@@ -410,29 +420,29 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppTheme.neutralColor,
+            color: context.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppTheme.borderSide),
+            border: Border.all(color: context.colorScheme.outlineVariant),
           ),
           child: Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Total fare',
                       style: TextStyle(
-                        color: AppTheme.primaryColor,
+                        color: context.colorScheme.onSurface,
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
                       'View fare calculation',
                       style: TextStyle(
-                        color: AppTheme.tertiaryColor,
+                        color: context.colorScheme.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),
@@ -441,10 +451,10 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
               ),
               Text(
                 _currency(widget.totalFare),
-                style: const TextStyle(
-                  color: AppTheme.primaryColor,
+                style: TextStyle(
+                  color: context.colorScheme.onSurface,
                   fontSize: 20,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
               const SizedBox(width: 4),
@@ -464,9 +474,9 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
           onPressed: () => _showView(_RideOptionsPanelView.summary),
           tooltip: 'Back to trip summary',
           style: IconButton.styleFrom(shape: const CircleBorder()),
-          icon: const Icon(
+          icon: Icon(
             LucideIcons.arrow_left,
-            color: AppTheme.primaryColor,
+            color: context.colorScheme.onSurface,
             size: 20,
           ),
         ),
@@ -477,8 +487,8 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  color: AppTheme.primaryColor,
+                style: TextStyle(
+                  color: context.colorScheme.onSurface,
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
                 ),
@@ -486,8 +496,8 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
               const SizedBox(height: 2),
               Text(
                 details,
-                style: const TextStyle(
-                  color: AppTheme.tertiaryColor,
+                style: TextStyle(
+                  color: context.colorScheme.onSurfaceVariant,
                   fontSize: 12,
                 ),
               ),
@@ -580,32 +590,35 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
           width: double.infinity,
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: AppTheme.neutralColor,
+            color: context.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppTheme.borderSide),
+            border: Border.all(color: context.colorScheme.outlineVariant),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Calculated minimum',
-                style: TextStyle(color: AppTheme.tertiaryColor, fontSize: 13),
+                style: TextStyle(
+                  color: context.colorScheme.onSurfaceVariant,
+                  fontSize: 13,
+                ),
               ),
               const SizedBox(height: 2),
               Text(
                 _currency(minimumFare),
-                style: const TextStyle(
-                  color: AppTheme.primaryColor,
+                style: TextStyle(
+                  color: context.colorScheme.onSurface,
                   fontSize: 25,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
               const Divider(height: 28),
-              const Text(
+              Text(
                 'Your offer',
-                key: ValueKey('custom-offer-label'),
+                key: const ValueKey('custom-offer-label'),
                 style: TextStyle(
-                  color: AppTheme.primaryColor,
+                  color: context.colorScheme.onSurface,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
@@ -631,7 +644,9 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
                   errorText: widget.customFareError,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: AppTheme.borderSide),
+                    borderSide: BorderSide(
+                      color: context.colorScheme.outlineVariant,
+                    ),
                   ),
                 ),
               ),
@@ -663,25 +678,28 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
           width: double.infinity,
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: AppTheme.neutralColor,
+            color: context.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppTheme.borderSide),
+            border: Border.all(color: context.colorScheme.outlineVariant),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Trip note (optional)',
                 style: TextStyle(
-                  color: AppTheme.primaryColor,
+                  color: context.colorScheme.onSurface,
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
                 ),
               ),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 'Share a concise pickup instruction when it helps.',
-                style: TextStyle(color: AppTheme.tertiaryColor, fontSize: 12),
+                style: TextStyle(
+                  color: context.colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                ),
               ),
               const SizedBox(height: 14),
               TextField(
@@ -699,22 +717,26 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
                 decoration: InputDecoration(
                   hintText: 'For example: Meet me at the side entrance.',
                   contentPadding: const EdgeInsets.all(16),
-                  counterStyle: const TextStyle(
-                    color: AppTheme.tertiaryColor,
+                  counterStyle: TextStyle(
+                    color: context.colorScheme.onSurfaceVariant,
                     fontSize: 11,
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: AppTheme.borderSide),
+                    borderSide: BorderSide(
+                      color: context.colorScheme.outlineVariant,
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: AppTheme.borderSide),
+                    borderSide: BorderSide(
+                      color: context.colorScheme.outlineVariant,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(
-                      color: AppTheme.primaryColor,
+                    borderSide: BorderSide(
+                      color: context.colorScheme.onSurface,
                       width: 1.2,
                     ),
                   ),
@@ -780,11 +802,11 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: context.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withValues(alpha: 0.12),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.12),
             blurRadius: 30,
             offset: const Offset(0, -10),
           ),
@@ -802,7 +824,7 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: AppTheme.borderSide,
+                  color: context.colorScheme.outlineVariant,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
