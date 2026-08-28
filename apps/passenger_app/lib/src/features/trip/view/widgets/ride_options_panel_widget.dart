@@ -6,6 +6,7 @@ import 'package:passenger_app/src/features/trip/view/widgets/ride_fare_details_w
 import 'package:passenger_app/src/features/trip/view/widgets/ride_tip_selector_widget.dart';
 import 'package:passenger_app/src/features/trip/view/widgets/ride_trip_summary_widget.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class RideOptionsPanelWidget extends StatefulWidget {
   final String passengerName;
@@ -87,25 +88,194 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
     }
   }
 
-  Widget _buildFareStatus() {
-    if (widget.isLoadingFare) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 28),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-            SizedBox(width: 10),
-            Text('Calculating your fare…'),
-          ],
-        ),
-      );
-    }
+  Widget _buildLoadingContent() {
+    return Skeletonizer.zone(
+      key: const ValueKey('ride-options-loading'),
+      child: Column(
+        key: const ValueKey('ride-options-loading-content'),
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildLoadingTripSummary(),
+          const SizedBox(height: 16),
+          _buildLoadingActionRow(),
+          const SizedBox(height: 16),
+          _buildLoadingTipSelector(),
+          const SizedBox(height: 16),
+          _buildLoadingActionRow(),
+          const SizedBox(height: 12),
+          _buildLoadingTotalFare(),
+          const SizedBox(height: 12),
+          const Bone.button(
+            width: double.infinity,
+            height: 50,
+            borderRadius: BorderRadius.all(Radius.circular(16)),
+          ),
+        ],
+      ),
+    );
+  }
 
+  Widget _buildLoadingTripSummary() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.neutralColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.borderSide),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            children: [
+              Bone.icon(size: 18),
+              SizedBox(height: 10),
+              Bone(width: 2, height: 38),
+              SizedBox(height: 10),
+              Bone.icon(size: 18),
+            ],
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Bone.text(width: 48, fontSize: 11),
+                SizedBox(height: 3),
+                Bone.text(width: 140, fontSize: 14),
+                SizedBox(height: 22),
+                Bone.text(width: 78, fontSize: 11),
+                SizedBox(height: 3),
+                Bone.text(width: 120, fontSize: 14),
+                SizedBox(height: 3),
+                Bone.multiText(lines: 2, width: 210, fontSize: 12),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingActionRow() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppTheme.borderSide),
+      ),
+      child: const Row(
+        children: [
+          Bone.square(
+            size: 40,
+            borderRadius: BorderRadius.all(Radius.circular(13)),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Bone.text(width: 100, fontSize: 14),
+                SizedBox(height: 4),
+                Bone.text(width: 190, fontSize: 12),
+              ],
+            ),
+          ),
+          SizedBox(width: 8),
+          Bone.icon(size: 19),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingTipSelector() {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Bone.text(width: 72, fontSize: 14),
+        SizedBox(height: 4),
+        Bone.text(width: 190, fontSize: 12),
+        SizedBox(height: 10),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              Bone.button(
+                width: 56,
+                height: 34,
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+              ),
+              SizedBox(width: 6),
+              Bone.button(
+                width: 50,
+                height: 34,
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+              ),
+              SizedBox(width: 6),
+              Bone.button(
+                width: 50,
+                height: 34,
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+              ),
+              SizedBox(width: 6),
+              Bone.button(
+                width: 50,
+                height: 34,
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+              ),
+              SizedBox(width: 6),
+              Bone.button(
+                width: 50,
+                height: 34,
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+              ),
+              SizedBox(width: 6),
+              Bone.button(
+                width: 56,
+                height: 34,
+                borderRadius: BorderRadius.all(Radius.circular(8)),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoadingTotalFare() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.neutralColor,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppTheme.borderSide),
+      ),
+      child: const Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Bone.text(width: 82, fontSize: 15),
+                SizedBox(height: 4),
+                Bone.text(width: 130, fontSize: 12),
+              ],
+            ),
+          ),
+          Bone.text(width: 56, fontSize: 20),
+          SizedBox(width: 8),
+          Bone.icon(size: 18),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFareStatus() {
     final error = widget.fareError;
     if (error == null) {
       return const Padding(
@@ -582,6 +752,8 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
   }
 
   Widget _buildContent() {
+    if (widget.isLoadingFare) return _buildLoadingContent();
+
     final fareResult = _fareResult;
     return switch (_currentView) {
       _RideOptionsPanelView.summary => _buildSummaryContent(),

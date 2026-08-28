@@ -54,14 +54,27 @@ void main() {
     );
   }
 
-  testWidgets('shows a calm fare loading state without an offer editor', (
+  testWidgets('shows a loading skeleton without an offer editor', (
     tester,
   ) async {
     await tester.pumpWidget(buildPanel(result: null, isLoadingFare: true));
 
-    expect(find.text('Calculating your fare…'), findsOneWidget);
+    expect(find.byKey(const ValueKey('ride-options-loading')), findsOneWidget);
+    expect(find.text('Trip Details'), findsNothing);
     expect(find.byType(TextField), findsNothing);
     expect(find.text('Solo Ride'), findsNothing);
+  });
+
+  testWidgets('renders the whole panel as a skeleton while loading', (
+    tester,
+  ) async {
+    await tester.pumpWidget(buildPanel(isLoadingFare: true));
+
+    expect(find.byKey(const ValueKey('ride-options-loading')), findsOneWidget);
+    expect(find.text('Trip Details'), findsNothing);
+    expect(find.text('Set your offer'), findsNothing);
+    expect(find.text('Add a tip'), findsNothing);
+    expect(find.text('Add a trip note'), findsNothing);
   });
 
   testWidgets('shows a recoverable fare error without exposing providers', (
