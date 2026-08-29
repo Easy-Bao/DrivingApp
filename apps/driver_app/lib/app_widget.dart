@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:driver_app/src/core/location/location.dart';
 import 'package:driver_app/src/core/services/background_telemetry_service.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/features/location/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver_app/src/features/trip/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_repository.dart';
 import 'package:flutter/material.dart';
@@ -19,13 +19,16 @@ class AppWidget extends StatefulWidget {
 
 class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
   late final ThemeModeCubit _themeModeCubit;
+  late final DriverLocationAccessCubit _locationAccessCubit;
 
   @override
   void initState() {
     super.initState();
     _themeModeCubit = Modular.get<ThemeModeCubit>();
+    _locationAccessCubit = Modular.get<DriverLocationAccessCubit>();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_locationAccessCubit.start());
       unawaited(_setBackgroundTelemetryVisibility(true));
     });
   }
@@ -43,7 +46,7 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
       _setBackgroundTelemetryVisibility(state == AppLifecycleState.resumed),
     );
     if (state == AppLifecycleState.resumed) {
-      unawaited(LocationService.refresh());
+      unawaited(_locationAccessCubit.refresh());
     }
   }
 
@@ -61,6 +64,9 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
     return MultiBlocProvider(
       providers: [
         BlocProvider<ThemeModeCubit>.value(value: _themeModeCubit),
+        BlocProvider<DriverLocationAccessCubit>.value(
+          value: _locationAccessCubit,
+        ),
         BlocProvider<RideFlowCubit>(
           create: (_) => RideFlowCubit(
             rideRepository: Modular.get<IDriverRideRepository>(),

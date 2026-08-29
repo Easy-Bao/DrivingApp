@@ -4,9 +4,11 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/features/activity/activity_module.dart';
 import 'package:driver_app/src/features/chat/chat_module.dart';
 import 'package:driver_app/src/features/home/home_module.dart';
+import 'package:driver_app/src/features/help_center/help_center_module.dart';
 import 'package:driver_app/src/shared/widgets/navigationbar/driver_navigation_shell.dart';
 import 'package:driver_app/src/features/profile/profile_module.dart';
 import 'package:driver_app/src/features/location/location_module.dart';
+import 'package:driver_app/src/features/settings/settings_module.dart';
 import 'package:driver_app/src/features/trip/trip_module.dart';
 
 class DriverModule extends Module {
@@ -30,6 +32,8 @@ class DriverModule extends Module {
     ...ActivityModule.routes,
     ...ProfileModule.routes,
     ...DriverLocationModule.routes,
+    ...DriverSettingsModule.routes,
+    ...DriverHelpCenterModule.routes,
 
     StatefulShellModularRoute(
       builder: (context, GoRouterState state, navigationShell) =>

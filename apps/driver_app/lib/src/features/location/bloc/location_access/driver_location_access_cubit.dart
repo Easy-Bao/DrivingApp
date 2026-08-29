@@ -1,0 +1,146 @@
+import 'dart:async';
+
+import 'package:driver_app/src/core/location/location.dart';
+import 'package:driver_app/src/features/location/bloc/location_access/driver_location_access_state.dart';
+import 'package:driver_app/src/features/location/domain/repositories/i_driver_location_access_repository.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+class DriverLocationAccessCubit extends Cubit<DriverLocationAccessViewState> {
+  DriverLocationAccessCubit({
+    required IDriverLocationAccessRepository repository,
+  }) : _repository = repository,
+       super(const DriverLocationAccessChecking());
+
+  final IDriverLocationAccessRepository _repository;
+
+  StreamSubscription<LocationAccessState>? _accessStateSubscription;
+  bool _isStarted = false;
+  bool _isPromptSuppressed = false;
+
+  Future<void> start() async {
+    if (_isStarted) {
+      await refresh();
+      return;
+    }
+
+    _isStarted = true;
+    _accessStateSubscription = _repository.accessStateChanges.listen(
+      _applyAccessState,
+      onError: (_, _) => _emitTemporaryFailure(),
+    );
+
+    try {
+      _applyAccessState(await _repository.startMonitoring());
+    } catch (_) {
+      _emitTemporaryFailure();
+    }
+  }
+
+  Future<void> refresh() async {
+    try {
+      _applyAccessState(await _repository.refresh());
+    } catch (_) {
+      _emitTemporaryFailure();
+    }
+  }
+
+  Future<void> enable() async {
+    final previousState = state;
+    emit(const DriverLocationAccessChecking());
+
+    try {
+      final accessState = await _repository.refresh();
+      final refreshedState = switch (accessState) {
+        LocationAccessState.denied => await _repository.requestPermission(),
+        LocationAccessState.serviceDisabled => await _openLocationSettings(),
+        LocationAccessState.deniedForever => await _openAppSettings(),
+        LocationAccessState.ready => accessState,
+      };
+      _applyAccessState(refreshedState);
+    } catch (_) {
+      if (previousState
+          case final DriverLocationAccessUnavailable unavailable) {
+        emit(
+          unavailable.copyWith(
+            isPromptSuppressed: false,
+            message: 'Location is temporarily unavailable. Try again.',
+          ),
+        );
+      } else {
+        _emitTemporaryFailure();
+      }
+    }
+  }
+
+  Future<LocationAccessState> _openLocationSettings() async {
+    await _repository.openLocationSettings();
+    return LocationAccessState.serviceDisabled;
+  }
+
+  Future<LocationAccessState> _openAppSettings() async {
+    await _repository.openAppSettings();
+    return LocationAccessState.deniedForever;
+  }
+
+  void suppressPrompt() {
+    final currentState = state;
+    if (currentState is! DriverLocationAccessUnavailable) return;
+
+    _isPromptSuppressed = true;
+    emit(currentState.copyWith(isPromptSuppressed: true));
+  }
+
+  void showPrompt() {
+    final currentState = state;
+    if (currentState is! DriverLocationAccessUnavailable) return;
+
+    _isPromptSuppressed = false;
+    emit(currentState.copyWith(isPromptSuppressed: false));
+  }
+
+  void _applyAccessState(LocationAccessState accessState) {
+    if (accessState == LocationAccessState.ready) {
+      _isPromptSuppressed = false;
+      emit(const DriverLocationAccessReady());
+      return;
+    }
+
+    final wasReady = state is DriverLocationAccessReady;
+    if (wasReady) _isPromptSuppressed = false;
+
+    emit(
+      DriverLocationAccessUnavailable(
+        accessState: accessState,
+        isPromptSuppressed: _isPromptSuppressed,
+        message: _settingsMessage(accessState),
+      ),
+    );
+  }
+
+  String? _settingsMessage(LocationAccessState accessState) {
+    return switch (accessState) {
+      LocationAccessState.serviceDisabled =>
+        'Turn on device location in Settings, then return to BaoRide.',
+      LocationAccessState.deniedForever =>
+        'Allow location in app Settings, then return to BaoRide.',
+      LocationAccessState.denied || LocationAccessState.ready => null,
+    };
+  }
+
+  void _emitTemporaryFailure() {
+    emit(
+      DriverLocationAccessUnavailable(
+        accessState: LocationAccessState.serviceDisabled,
+        isPromptSuppressed: _isPromptSuppressed,
+        message: 'Location is temporarily unavailable. Try again.',
+      ),
+    );
+  }
+
+  @override
+  Future<void> close() async {
+    await _accessStateSubscription?.cancel();
+    await _repository.dispose();
+    return super.close();
+  }
+}

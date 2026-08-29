@@ -11,6 +11,7 @@ export 'package:shared_ui/src/widgets/app_about_page.dart';
 export 'package:shared_ui/src/widgets/app_appearance_page.dart';
 export 'package:shared_ui/src/widgets/app_chat_animations.dart';
 export 'package:shared_ui/src/widgets/app_floating_tab_bar.dart';
+export 'package:shared_ui/src/widgets/app_help_center_page.dart';
 export 'package:shared_ui/src/widgets/app_location_access_status_page.dart';
 export 'package:shared_ui/src/widgets/app_network_image_widget.dart';
 export 'package:shared_ui/src/widgets/app_settings_navigation.dart';

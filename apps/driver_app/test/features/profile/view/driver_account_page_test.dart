@@ -96,6 +96,8 @@ void main() {
     expect(find.textContaining('4.8'), findsOneWidget);
     expect(find.text('Performance'), findsOneWidget);
     expect(find.text('Support'), findsOneWidget);
+    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('Appearance and app behavior'), findsOneWidget);
     expect(find.text('Help Center'), findsOneWidget);
     expect(find.text('About BaoRide'), findsOneWidget);
     expect(find.text('Account Settings'), findsNothing);

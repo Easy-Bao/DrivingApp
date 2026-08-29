@@ -31,6 +31,11 @@ class LocationService {
 
   static Future<LocationAccessState> refresh() => getAccessState();
 
+  static Stream<LocationAccessState> get accessStateChanges =>
+      Geolocator.getServiceStatusStream()
+          .asyncMap((_) => getAccessState())
+          .distinct();
+
   static Future<bool> requestPermission() async {
     if (!await isServiceEnabled()) return false;
     final state = _stateForPermission(await Geolocator.requestPermission());

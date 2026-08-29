@@ -9,6 +9,9 @@ import 'package:driver_app/src/core/storage/secure_storage.dart';
 import 'package:driver_app/src/features/auth/auth_module.dart';
 import 'package:driver_app/src/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:driver_app/src/features/auth/data/repositories/auth_repository.dart';
+import 'package:driver_app/src/features/location/bloc/location_access/driver_location_access_cubit.dart';
+import 'package:driver_app/src/features/location/data/repositories/driver_location_access_repository.dart';
+import 'package:driver_app/src/features/location/domain/repositories/i_driver_location_access_repository.dart';
 import 'package:driver_app/src/features/trip/data/datasources/ride_counterparty_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/data/datasources/ride_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/data/datasources/telemetry_remote_data_source.dart';
@@ -42,6 +45,14 @@ class AppModule extends Module {
             appThemeModePreferenceKey,
             value,
           ),
+        ),
+      )
+      ..addLazySingleton<IDriverLocationAccessRepository>(
+        (_) => DriverLocationAccessRepository(),
+      )
+      ..addLazySingleton<DriverLocationAccessCubit>(
+        (i) => DriverLocationAccessCubit(
+          repository: i.get<IDriverLocationAccessRepository>(),
         ),
       )
       ..addLazySingleton<SecureSessionService>((i) => _sessionService)

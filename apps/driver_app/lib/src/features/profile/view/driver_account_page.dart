@@ -9,6 +9,7 @@ import 'package:driver_app/src/features/profile/bloc/account/account_cubit.dart'
 import 'package:driver_app/src/features/profile/bloc/account/account_state.dart';
 import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
 import 'package:driver_app/src/features/profile/profile_routes.dart';
+import 'package:driver_app/src/features/settings/settings_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -111,6 +112,12 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                     _buildSectionTitle('Support'),
                     const SizedBox(height: 12),
                     _buildMenuGroup([
+                      _DriverAccountMenuItem(
+                        title: 'Settings',
+                        subtitle: 'Appearance and app behavior',
+                        onTap: () =>
+                            context.pushNamed(DriverSettingsRoutes.settings),
+                      ),
                       _DriverAccountMenuItem(
                         title: 'Help Center',
                         subtitle: 'Support and frequently asked questions',
