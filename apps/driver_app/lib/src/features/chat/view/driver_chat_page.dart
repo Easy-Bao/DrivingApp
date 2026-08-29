@@ -1,5 +1,3 @@
-import 'package:driver_app/src/core/theme/app_theme.dart';
-
 import 'dart:async';
 
 import 'package:driver_app/src/core/constants/api_endpoints.dart';
@@ -203,14 +201,14 @@ class _DriverChatPageState extends State<DriverChatPage> {
               ? 'Connected'
               : 'Offline';
           final statusColor = state.isRoomLocked || state.isConnected
-              ? AppTheme.complete
-              : AppTheme.cancel;
+              ? context.semanticColors.success
+              : context.colorScheme.error;
           final canSendMessage = state.isConnected && !state.isRoomLocked;
 
           return Scaffold(
-            backgroundColor: AppTheme.surface,
+            backgroundColor: context.colorScheme.surface,
             appBar: AppBar(
-              backgroundColor: AppTheme.surface,
+              backgroundColor: context.colorScheme.surface,
               elevation: 0,
               scrolledUnderElevation: 0,
               actions: [
@@ -220,7 +218,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
                     child: Text(
                       'Resolve',
                       style: TextStyle(
-                        color: AppTheme.cancel,
+                        color: context.colorScheme.error,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -228,9 +226,9 @@ class _DriverChatPageState extends State<DriverChatPage> {
               ],
               leading: IconButton(
                 style: IconButton.styleFrom(shape: const CircleBorder()),
-                icon: const Icon(
+                icon: Icon(
                   LucideIcons.arrow_left,
-                  color: AppTheme.primaryColor,
+                  color: context.colorScheme.onSurface,
                 ),
                 onPressed: () => context.pop(),
               ),
@@ -240,12 +238,12 @@ class _DriverChatPageState extends State<DriverChatPage> {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: AppTheme.secondaryColor,
+                      color: context.colorScheme.secondaryContainer,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       LucideIcons.user,
-                      color: AppTheme.primaryColor,
+                      color: context.colorScheme.onSurface,
                       size: 18,
                     ),
                   ),
@@ -255,8 +253,8 @@ class _DriverChatPageState extends State<DriverChatPage> {
                     children: [
                       Text(
                         widget.peerName ?? 'Passenger',
-                        style: const TextStyle(
-                          color: AppTheme.primaryColor,
+                        style: TextStyle(
+                          color: context.colorScheme.onSurface,
                           fontWeight: FontWeight.w800,
                           fontSize: 16,
                         ),
@@ -268,7 +266,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
                             height: 6,
                             decoration: BoxDecoration(
                               color: state.isConnected
-                                  ? AppTheme.complete
+                                  ? context.semanticColors.success
                                   : statusColor,
                               shape: BoxShape.circle,
                             ),
@@ -291,7 +289,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
             ),
             body: Column(
               children: [
-                const Divider(height: 1, color: AppTheme.borderSide),
+                Divider(height: 1, color: context.colorScheme.outlineVariant),
                 if (state.isRoomLocked || state.errorMessage != null)
                   _buildChatStatusBanner(state),
                 Expanded(
@@ -334,16 +332,18 @@ class _DriverChatPageState extends State<DriverChatPage> {
                             vertical: 10,
                           ),
                           decoration: BoxDecoration(
-                            color: AppTheme.neutralColor,
+                            color: context.colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: AppTheme.borderSide),
+                            border: Border.all(
+                              color: context.colorScheme.outlineVariant,
+                            ),
                           ),
                           child: Text(
                             _quickReplies[itemIndex],
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: AppTheme.primaryColor,
+                              color: context.colorScheme.onSurface,
                             ),
                           ),
                         ),
@@ -355,10 +355,12 @@ class _DriverChatPageState extends State<DriverChatPage> {
                   child: Container(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                     decoration: BoxDecoration(
-                      color: AppTheme.surface,
+                      color: context.colorScheme.surface,
                       border: Border(
                         top: BorderSide(
-                          color: AppTheme.borderSide.withValues(alpha: 0.5),
+                          color: context.colorScheme.outlineVariant.withValues(
+                            alpha: 0.5,
+                          ),
                         ),
                       ),
                     ),
@@ -369,33 +371,33 @@ class _DriverChatPageState extends State<DriverChatPage> {
                             height: 48,
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             decoration: BoxDecoration(
-                              color: AppTheme.neutralColor,
+                              color:
+                                  context.colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(24),
-                              border: Border.all(color: AppTheme.borderSide),
+                              border: Border.all(
+                                color: context.colorScheme.outlineVariant,
+                              ),
                             ),
                             child: TextField(
                               controller: _msgCtrl,
                               readOnly: !canSendMessage,
                               textInputAction: TextInputAction.send,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                color: AppTheme.primaryColor,
+                                color: context.colorScheme.onSurface,
                               ),
                               decoration: InputDecoration(
                                 isDense: true,
                                 filled: false,
-                                fillColor: AppTheme.surface.withValues(
-                                  alpha: 0,
-                                ),
+                                fillColor: context.colorScheme.surface
+                                    .withValues(alpha: 0),
                                 hintText: state.isRoomLocked
                                     ? state.lockReasonMessage
                                     : canSendMessage
                                     ? 'Type a message...'
                                     : 'Chat Is Unavailable Right Now.',
                                 hintStyle: TextStyle(
-                                  color: AppTheme.primaryColor.withValues(
-                                    alpha: 0.4,
-                                  ),
+                                  color: context.colorScheme.onSurfaceVariant,
                                   fontSize: 14,
                                 ),
                                 border: InputBorder.none,
@@ -418,8 +420,8 @@ class _DriverChatPageState extends State<DriverChatPage> {
                         Container(
                           decoration: BoxDecoration(
                             color: !canSendMessage
-                                ? AppTheme.neutralColor
-                                : AppTheme.primaryColor,
+                                ? context.colorScheme.surfaceContainerHighest
+                                : context.colorScheme.onSurface,
                             shape: BoxShape.circle,
                           ),
                           child: IconButton(
@@ -428,8 +430,8 @@ class _DriverChatPageState extends State<DriverChatPage> {
                               size: 20,
                             ),
                             color: !canSendMessage
-                                ? AppTheme.tertiaryColor
-                                : AppTheme.activeControlForeground,
+                                ? context.colorScheme.onSurfaceVariant
+                                : context.colorScheme.onPrimary,
                             onPressed: !canSendMessage
                                 ? null
                                 : () => unawaited(_send(_msgCtrl.text)),
@@ -449,7 +451,9 @@ class _DriverChatPageState extends State<DriverChatPage> {
 
   Widget _buildChatStatusBanner(ChatState state) {
     final isResolved = state.isRoomLocked;
-    final color = isResolved ? AppTheme.complete : AppTheme.cancel;
+    final color = isResolved
+        ? context.semanticColors.success
+        : context.colorScheme.error;
     final message = isResolved
         ? state.lockReasonMessage
         : state.errorMessage ?? 'Chat Is Unavailable Right Now.';
@@ -509,7 +513,9 @@ class _DriverChatPageState extends State<DriverChatPage> {
                 maxWidth: MediaQuery.sizeOf(context).width * 0.75,
               ),
               decoration: BoxDecoration(
-                color: isMe ? AppTheme.primaryColor : AppTheme.neutralColor,
+                color: isMe
+                    ? context.colorScheme.primary
+                    : context.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(20),
                   topRight: const Radius.circular(20),
@@ -519,7 +525,9 @@ class _DriverChatPageState extends State<DriverChatPage> {
                 boxShadow: [
                   if (isMe)
                     BoxShadow(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.15),
+                      color: context.colorScheme.onSurface.withValues(
+                        alpha: 0.15,
+                      ),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -528,7 +536,9 @@ class _DriverChatPageState extends State<DriverChatPage> {
               child: Text(
                 msg.text,
                 style: TextStyle(
-                  color: isMe ? AppTheme.surface : AppTheme.primaryColor,
+                  color: isMe
+                      ? context.colorScheme.onPrimary
+                      : context.colorScheme.onSurface,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   height: 1.3,
@@ -543,8 +553,8 @@ class _DriverChatPageState extends State<DriverChatPage> {
                   Text(
                     timeStr,
                     style: TextStyle(
-                      fontSize: 10,
-                      color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                      fontSize: 11,
+                      color: context.colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -560,7 +570,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
                       isFailed:
                           msg.deliveryStatus ==
                           ChatMessageDeliveryStatus.failed,
-                      color: AppTheme.complete,
+                      color: context.semanticColors.success,
                     ),
                   ],
                 ],
@@ -575,8 +585,8 @@ class _DriverChatPageState extends State<DriverChatPage> {
 
   Widget _buildTyping() {
     return AppChatTypingIndicator(
-      bubbleColor: AppTheme.neutralColor,
-      dotColor: AppTheme.tertiaryColor,
+      bubbleColor: context.colorScheme.surfaceContainerHighest,
+      dotColor: context.colorScheme.onSurfaceVariant,
       semanticLabel: '${widget.peerName ?? 'Passenger'} is typing',
     );
   }

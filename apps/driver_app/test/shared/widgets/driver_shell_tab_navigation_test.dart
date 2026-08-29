@@ -1,4 +1,3 @@
-import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/shared/widgets/navigationbar/driver_floating_tab_bar.dart';
 import 'package:driver_app/src/shared/widgets/navigationbar/driver_navigation_shell.dart';
 import 'package:flutter/material.dart';
@@ -31,7 +30,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.themeData,
+        theme: EasyRideTheme.light,
         home: Scaffold(
           body: Center(
             child: SizedBox(
@@ -74,11 +73,11 @@ void main() {
       expect(inkWell.splashFactory, NoSplash.splashFactory);
       expect(
         inkWell.overlayColor?.resolve({WidgetState.pressed}),
-        AppTheme.surface.withValues(alpha: 0),
+        EasyRideTheme.light.colorScheme.surface.withValues(alpha: 0),
       );
       expect(
         inkWell.overlayColor?.resolve({WidgetState.hovered}),
-        AppTheme.surface.withValues(alpha: 0),
+        EasyRideTheme.light.colorScheme.surface.withValues(alpha: 0),
       );
     }
 

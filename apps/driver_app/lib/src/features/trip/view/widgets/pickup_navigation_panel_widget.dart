@@ -1,4 +1,3 @@
-import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:shared_core/shared_core.dart';
@@ -38,11 +37,11 @@ class PickupNavigationPanelWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: context.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withValues(alpha: 0.14),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.14),
             blurRadius: 24,
             offset: const Offset(0, -6),
           ),
@@ -56,21 +55,21 @@ class PickupNavigationPanelWidget extends StatelessWidget {
             width: 32,
             height: 4,
             decoration: BoxDecoration(
-              color: AppTheme.borderSide,
+              color: context.colorScheme.outlineVariant,
               borderRadius: BorderRadius.circular(99),
             ),
           ),
           const SizedBox(height: 10),
           Row(
             children: [
-              _statusPill(),
+              _statusPill(context),
               const Spacer(),
               Text(
                 formatPesoAmount(fare),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 19,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.primaryColor,
+                  fontWeight: FontWeight.w800,
+                  color: context.colorScheme.onSurface,
                 ),
               ),
             ],
@@ -78,12 +77,13 @@ class PickupNavigationPanelWidget extends StatelessWidget {
           const SizedBox(height: 10),
           CompactRouteTimelineWidget(pickup: pickup, dropoff: dropoff),
           const SizedBox(height: 10),
-          _passengerRow(),
+          _passengerRow(context),
           const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
                 child: _actionButton(
+                  context,
                   icon: LucideIcons.phone,
                   label: 'Call Passenger',
                   filled: true,
@@ -97,12 +97,14 @@ class PickupNavigationPanelWidget extends StatelessWidget {
                 child: Badge(
                   isLabelVisible: unreadChatMessagesCount > 0,
                   label: Text('$unreadChatMessagesCount'),
-                  backgroundColor: AppTheme.cancel,
+                  backgroundColor: context.colorScheme.error,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: AppTheme.interactiveSurface,
+                      color: context.colorScheme.surface,
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppTheme.borderSide),
+                      border: Border.all(
+                        color: context.colorScheme.outlineVariant,
+                      ),
                     ),
                     child: IconButton(
                       tooltip: 'Chat with passenger',
@@ -121,24 +123,28 @@ class PickupNavigationPanelWidget extends StatelessWidget {
     );
   }
 
-  Widget _statusPill() {
+  Widget _statusPill(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppTheme.complete.withValues(alpha: 0.12),
+        color: context.semanticColors.success.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(99),
       ),
-      child: const Row(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(LucideIcons.navigation, size: 13, color: AppTheme.complete),
+          Icon(
+            LucideIcons.navigation,
+            size: 13,
+            color: context.semanticColors.success,
+          ),
           SizedBox(width: 6),
           Text(
             'Heading To Passenger',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w800,
-              color: AppTheme.complete,
+              color: context.semanticColors.success,
             ),
           ),
         ],
@@ -146,13 +152,13 @@ class PickupNavigationPanelWidget extends StatelessWidget {
     );
   }
 
-  Widget _passengerRow() {
+  Widget _passengerRow(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: context.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.borderSide),
+        border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Row(
         children: [
@@ -160,13 +166,13 @@ class PickupNavigationPanelWidget extends StatelessWidget {
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: AppTheme.secondarySurface,
+              color: context.colorScheme.primaryContainer,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               LucideIcons.user_round,
               size: 17,
-              color: AppTheme.primaryColor,
+              color: context.colorScheme.onSurface,
             ),
           ),
           const SizedBox(width: 10),
@@ -175,19 +181,19 @@ class PickupNavigationPanelWidget extends StatelessWidget {
               passengerName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
-                color: AppTheme.primaryColor,
+                color: context.colorScheme.onSurface,
               ),
             ),
           ),
           Text(
             DistanceFormatter.fromKilometers(distance),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: AppTheme.tertiaryColor,
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -195,16 +201,19 @@ class PickupNavigationPanelWidget extends StatelessWidget {
     );
   }
 
-  Widget _actionButton({
+  Widget _actionButton(
+    BuildContext context, {
     required IconData icon,
     required String label,
     required VoidCallback onPressed,
     bool filled = false,
   }) {
-    final background = filled ? AppTheme.primaryColor : AppTheme.neutralColor;
+    final background = filled
+        ? context.colorScheme.onSurface
+        : context.colorScheme.surfaceContainerHighest;
     final foreground = filled
-        ? AppTheme.activeControlForeground
-        : AppTheme.primaryColor;
+        ? context.colorScheme.onPrimary
+        : context.colorScheme.onSurface;
     return Material(
       color: background,
       borderRadius: BorderRadius.circular(22),
@@ -215,7 +224,9 @@ class PickupNavigationPanelWidget extends StatelessWidget {
           height: 44,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(22),
-            border: filled ? null : Border.all(color: AppTheme.borderSide),
+            border: filled
+                ? null
+                : Border.all(color: context.colorScheme.outlineVariant),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -247,7 +258,7 @@ class PickupNavigationPanelWidget extends StatelessWidget {
         return Container(
           height: 52,
           decoration: BoxDecoration(
-            color: AppTheme.complete.withValues(alpha: 0.12),
+            color: context.semanticColors.success.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(26),
           ),
           child: Stack(
@@ -259,10 +270,10 @@ class PickupNavigationPanelWidget extends StatelessWidget {
                       : sliderValue > 0.8
                       ? 'Release to confirm'
                       : 'Slide when you arrive',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
-                    color: AppTheme.complete,
+                    color: context.semanticColors.success,
                   ),
                 ),
               ),
@@ -289,23 +300,23 @@ class PickupNavigationPanelWidget extends StatelessWidget {
                   child: Container(
                     width: thumbSize,
                     height: thumbSize,
-                    decoration: const BoxDecoration(
-                      color: AppTheme.complete,
+                    decoration: BoxDecoration(
+                      color: context.semanticColors.success,
                       shape: BoxShape.circle,
                     ),
                     child: Center(
                       child: isConfirmingArrival
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: AppTheme.surface,
+                                color: context.semanticColors.onSuccess,
                               ),
                             )
-                          : const Icon(
+                          : Icon(
                               LucideIcons.chevron_right,
-                              color: AppTheme.surface,
+                              color: context.semanticColors.onSuccess,
                               size: 22,
                             ),
                     ),

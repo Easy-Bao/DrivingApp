@@ -1,6 +1,5 @@
-import 'package:driver_app/src/core/theme/app_theme.dart';
-
 import 'package:flutter/material.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class InTransitCompleteButtonWidget extends StatelessWidget {
   final VoidCallback onCompleteTripPressed;
@@ -20,25 +19,25 @@ class InTransitCompleteButtonWidget extends StatelessWidget {
         width: double.infinity,
         height: 52,
         decoration: BoxDecoration(
-          color: AppTheme.complete,
+          color: context.semanticColors.success,
           borderRadius: BorderRadius.circular(26),
         ),
         child: Center(
           child: isCompletingTrip
-              ? const SizedBox(
+              ? SizedBox(
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: AppTheme.surface,
+                    color: context.semanticColors.onSuccess,
                   ),
                 )
-              : const Text(
+              : Text(
                   'Complete Trip',
                   style: TextStyle(
                     fontSize: 15,
-                    fontWeight: FontWeight.w900,
-                    color: AppTheme.surface,
+                    fontWeight: FontWeight.w800,
+                    color: context.semanticColors.onSuccess,
                   ),
                 ),
         ),

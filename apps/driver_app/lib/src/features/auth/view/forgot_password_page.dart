@@ -1,5 +1,3 @@
-import 'package:driver_app/src/core/theme/app_theme.dart';
-
 import 'package:driver_app/src/features/auth/bloc/forgot_password/forgot_password_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -53,15 +51,15 @@ class _ForgotPasswordPageContentState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: context.colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface.withValues(alpha: 0),
+        backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
         elevation: 0,
         leading: IconButton(
           style: IconButton.styleFrom(shape: const CircleBorder()),
-          icon: const Icon(
+          icon: Icon(
             LucideIcons.arrow_left,
-            color: AppTheme.primaryColor,
+            color: context.colorScheme.onSurface,
           ),
           onPressed: () => context.pop(),
         ),
@@ -101,21 +99,21 @@ class _ForgotPasswordPageContentState
                       Expanded(
                         child: Column(
                           children: [
-                            const Text(
+                            Text(
                               'Forgot Password?',
                               style: TextStyle(
                                 fontSize: 26,
                                 fontWeight: FontWeight.bold,
-                                color: AppTheme.primaryColor,
+                                color: context.colorScheme.onSurface,
                               ),
                             ),
                             const SizedBox(height: 12),
-                            const Text(
+                            Text(
                               "No worries, we'll send you reset instructions. Please enter the email address linked to your account.",
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 15,
-                                color: AppTheme.tertiaryColor,
+                                color: context.colorScheme.onSurfaceVariant,
                                 height: 1.5,
                               ),
                             ),
@@ -125,13 +123,15 @@ class _ForgotPasswordPageContentState
                                 width: double.infinity,
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.cancel.withValues(alpha: 0.1),
+                                  color: context.colorScheme.error.withValues(
+                                    alpha: 0.1,
+                                  ),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
                                   errorMessage,
-                                  style: const TextStyle(
-                                    color: AppTheme.cancel,
+                                  style: TextStyle(
+                                    color: context.colorScheme.error,
                                     fontSize: 13,
                                   ),
                                 ),
@@ -145,7 +145,7 @@ class _ForgotPasswordPageContentState
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: AppTheme.tertiaryColor,
+                                  color: context.colorScheme.onSurfaceVariant,
                                   letterSpacing: 1.1,
                                 ),
                               ),
@@ -170,15 +170,14 @@ class _ForgotPasswordPageContentState
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(32),
                                       borderSide: BorderSide(
-                                        color: AppTheme.primaryColor.withValues(
-                                          alpha: 0.2,
-                                        ),
+                                        color: context.colorScheme.onSurface
+                                            .withValues(alpha: 0.2),
                                       ),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(32),
-                                      borderSide: const BorderSide(
-                                        color: AppTheme.primaryColor,
+                                      borderSide: BorderSide(
+                                        color: context.colorScheme.onSurface,
                                         width: 1.5,
                                       ),
                                     ),
@@ -201,8 +200,9 @@ class _ForgotPasswordPageContentState
                                     ? null
                                     : () => _submitResetLink(context),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.primaryColor,
-                                  foregroundColor: AppTheme.neutralColor,
+                                  backgroundColor: context.colorScheme.primary,
+                                  foregroundColor:
+                                      context.colorScheme.onPrimary,
                                   minimumSize: const Size.fromHeight(60),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(32),
@@ -210,11 +210,11 @@ class _ForgotPasswordPageContentState
                                   elevation: 0,
                                 ),
                                 child: isLoading
-                                    ? const SizedBox(
+                                    ? SizedBox(
                                         width: 24,
                                         height: 24,
                                         child: CircularProgressIndicator(
-                                          color: AppTheme.surface,
+                                          color: context.colorScheme.onPrimary,
                                           strokeWidth: 2,
                                         ),
                                       )
@@ -237,10 +237,10 @@ class _ForgotPasswordPageContentState
                           const SizedBox(height: 10),
                           TextButton(
                             onPressed: () => context.pop(),
-                            child: const Text(
+                            child: Text(
                               'Back to Login',
                               style: TextStyle(
-                                color: AppTheme.primaryColor,
+                                color: context.colorScheme.onSurface,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
                               ),

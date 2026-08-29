@@ -1,6 +1,5 @@
-import 'package:driver_app/src/core/theme/app_theme.dart';
-
 import 'package:flutter/material.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class SocialLoginWidget extends StatelessWidget {
   final VoidCallback onGoogleTap;
@@ -22,7 +21,7 @@ class SocialLoginWidget extends StatelessWidget {
           children: [
             Expanded(
               child: Divider(
-                color: AppTheme.primaryColor.withValues(alpha: 0.15),
+                color: context.colorScheme.onSurface.withValues(alpha: 0.15),
                 thickness: 1,
               ),
             ),
@@ -33,13 +32,13 @@ class SocialLoginWidget extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                  color: context.colorScheme.onSurfaceVariant,
                 ),
               ),
             ),
             Expanded(
               child: Divider(
-                color: AppTheme.primaryColor.withValues(alpha: 0.15),
+                color: context.colorScheme.onSurface.withValues(alpha: 0.15),
                 thickness: 1,
               ),
             ),
@@ -53,10 +52,10 @@ class SocialLoginWidget extends StatelessWidget {
             child: OutlinedButton(
               onPressed: onGoogleTap,
               style: OutlinedButton.styleFrom(
-                backgroundColor: AppTheme.surface,
+                backgroundColor: context.colorScheme.surface,
                 minimumSize: const Size.fromHeight(56),
                 side: BorderSide(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.2),
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(36),
@@ -71,19 +70,19 @@ class SocialLoginWidget extends StatelessWidget {
                     package: 'shared_ui',
                     width: 22,
                     height: 22,
-                    errorBuilder: (context, error, stackTrace) => const Icon(
+                    errorBuilder: (context, error, stackTrace) => Icon(
                       Icons.g_mobiledata,
                       size: 24,
-                      color: AppTheme.primaryColor,
+                      color: context.colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(width: 12),
                   Text(
                     label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.primaryColor,
+                      color: context.colorScheme.onSurface,
                     ),
                   ),
                 ],

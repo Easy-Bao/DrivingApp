@@ -1,10 +1,10 @@
-import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/features/activity/bloc/earnings/earnings_cubit.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 enum _EarningsPeriod { daily, weekly, monthly }
 
@@ -173,10 +173,10 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     final summary = summaries[_selectedPeriod];
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.canvasColor,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: AppTheme.background,
+        backgroundColor: context.canvasColor,
         title: const Text('Earnings'),
       ),
       body: SafeArea(
@@ -184,9 +184,9 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
         child: summary == null
             ? state.errorMessage != null
                   ? _buildErrorState(context)
-                  : const Center(
+                  : Center(
                       child: CircularProgressIndicator(
-                        color: AppTheme.primaryColor,
+                        color: context.colorScheme.onSurface,
                       ),
                     )
             : LayoutBuilder(
@@ -240,15 +240,15 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
             Icon(
               Icons.cloud_off_rounded,
               size: 48,
-              color: AppTheme.primaryColor.withValues(alpha: 0.35),
+              color: context.colorScheme.onSurface.withValues(alpha: 0.35),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Earnings are unavailable',
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w800,
-                color: AppTheme.primaryColor,
+                color: context.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
@@ -257,7 +257,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
-                color: AppTheme.primaryColor.withValues(alpha: 0.58),
+                color: context.colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 20),
@@ -275,15 +275,15 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
   Widget _buildSummaryCard(_EarningsSummary summary) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppTheme.primaryDark, AppTheme.primaryColor],
+          colors: [context.colorScheme.primary, context.colorScheme.primary],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withValues(alpha: 0.16),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.16),
             blurRadius: 18,
             offset: Offset(0, 8),
           ),
@@ -299,9 +299,9 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: FontWeight.w800,
-                color: AppTheme.surface.withValues(alpha: 0.62),
+                color: context.colorScheme.onPrimary,
                 letterSpacing: 1.4,
               ),
             ),
@@ -310,10 +310,10 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
               formatPesoAmount(summary.total),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 36,
-                fontWeight: FontWeight.w900,
-                color: AppTheme.surface,
+                fontWeight: FontWeight.w800,
+                color: context.colorScheme.onPrimary,
                 letterSpacing: -1.2,
               ),
             ),
@@ -322,7 +322,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
-                color: AppTheme.surface.withValues(alpha: 0.56),
+                color: context.colorScheme.onPrimary,
               ),
             ),
             const SizedBox(height: 12),
@@ -350,7 +350,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     return Container(
       width: 1,
       height: 28,
-      color: AppTheme.surface.withValues(alpha: 0.24),
+      color: context.colorScheme.onPrimary.withValues(alpha: 0.24),
       margin: const EdgeInsets.symmetric(horizontal: 12),
     );
   }
@@ -363,10 +363,10 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
           value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w800,
-            color: AppTheme.surface,
+            color: context.colorScheme.onPrimary,
           ),
         ),
         Text(
@@ -374,9 +374,9 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: 10,
+            fontSize: 11,
             fontWeight: FontWeight.w500,
-            color: AppTheme.surface.withValues(alpha: 0.5),
+            color: context.colorScheme.onPrimary,
           ),
         ),
       ],
@@ -389,19 +389,22 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
       child: TabBar(
         controller: _tabCtrl,
         onTap: _selectPeriod,
-        indicator: const UnderlineTabIndicator(
-          borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
+        indicator: UnderlineTabIndicator(
+          borderSide: BorderSide(
+            color: context.colorScheme.onSurface,
+            width: 2,
+          ),
         ),
         indicatorPadding: const EdgeInsets.symmetric(horizontal: 18),
-        labelColor: AppTheme.primaryColor,
-        unselectedLabelColor: AppTheme.primaryColor.withValues(alpha: 0.45),
+        labelColor: context.colorScheme.onSurface,
+        unselectedLabelColor: context.colorScheme.onSurfaceVariant,
         labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
         unselectedLabelStyle: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
         ),
         indicatorSize: TabBarIndicatorSize.tab,
-        dividerColor: AppTheme.surface.withValues(alpha: 0),
+        dividerColor: context.colorScheme.surface.withValues(alpha: 0),
         tabs: const [
           Tab(text: 'Daily'),
           Tab(text: 'Weekly'),
@@ -423,10 +426,10 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
               children: [
                 Text(
                   _breakdownTitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
-                    color: AppTheme.primaryColor,
+                    color: context.colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -434,7 +437,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                   _breakdownDescription,
                   style: TextStyle(
                     fontSize: 11,
-                    color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                    color: context.colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -478,14 +481,14 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
       maxY: maxY,
       alignment: BarChartAlignment.spaceEvenly,
       groupsSpace: 8,
-      backgroundColor: AppTheme.surface.withValues(alpha: 0),
+      backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
       borderData: FlBorderData(show: false),
       gridData: FlGridData(
         show: true,
         drawVerticalLine: false,
         horizontalInterval: maxY / 4,
         getDrawingHorizontalLine: (value) => FlLine(
-          color: AppTheme.borderSide.withValues(alpha: 0.72),
+          color: context.colorScheme.outlineVariant.withValues(alpha: 0.72),
           strokeWidth: 1,
         ),
       ),
@@ -516,8 +519,8 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: day.isCurrent
-                        ? AppTheme.primaryColor
-                        : AppTheme.primaryColor.withValues(alpha: 0.42),
+                        ? context.colorScheme.onSurface
+                        : context.colorScheme.onSurfaceVariant,
                   ),
                 ),
               );
@@ -555,17 +558,17 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
           toY: barValue,
           width: barWidth,
           color: day.isCurrent
-              ? AppTheme.primaryColor
-              : AppTheme.primaryColor.withValues(alpha: 0.16),
+              ? context.colorScheme.onSurface
+              : context.colorScheme.onSurface.withValues(alpha: 0.16),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
           label: BarChartRodLabel(
             show: true,
             text: '₱${day.amount.toInt()}',
             style: TextStyle(
-              color: AppTheme.primaryColor.withValues(
-                alpha: day.isCurrent ? 0.82 : 0.48,
-              ),
-              fontSize: 8,
+              color: day.isCurrent
+                  ? context.colorScheme.onSurface
+                  : context.colorScheme.onSurfaceVariant,
+              fontSize: 11,
               fontWeight: FontWeight.w700,
             ),
             offset: const Offset(0, 6),
@@ -573,7 +576,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
           backDrawRodData: BackgroundBarChartRodData(
             show: false,
             toY: maxAmount,
-            color: AppTheme.primaryColor.withValues(alpha: 0.05),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.05),
           ),
         ),
       ],

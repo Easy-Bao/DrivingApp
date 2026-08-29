@@ -1,4 +1,3 @@
-import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/features/profile/bloc/account/account_cubit.dart';
 import 'package:driver_app/src/features/profile/bloc/account/account_state.dart';
 import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
@@ -9,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class _FakeDriverProfileRepository implements IDriverProfileRepository {
   DriverAccountSnapshot updatedAccount = const DriverAccountSnapshot();
@@ -60,7 +60,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.themeData,
+        theme: EasyRideTheme.light,
         home: BlocProvider<DriverAccountCubit>.value(
           value: cubit,
           child: const DriverProfileInfoPage(),

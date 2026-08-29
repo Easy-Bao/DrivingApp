@@ -2,14 +2,13 @@ import 'dart:async';
 
 import 'package:driver_app/src/core/location/location.dart';
 import 'package:driver_app/src/core/services/background_telemetry_service.dart';
-import 'package:driver_app/src/core/theme/app_theme.dart';
-
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/trip/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class AppWidget extends StatefulWidget {
   const AppWidget({super.key});
@@ -19,9 +18,12 @@ class AppWidget extends StatefulWidget {
 }
 
 class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
+  late final ThemeModeCubit _themeModeCubit;
+
   @override
   void initState() {
     super.initState();
+    _themeModeCubit = Modular.get<ThemeModeCubit>();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_setBackgroundTelemetryVisibility(true));
@@ -56,19 +58,24 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<RideFlowCubit>(
-      create: (_) {
-        return RideFlowCubit(
-          rideRepository: Modular.get<IDriverRideRepository>(),
-          sessionService: Modular.get<SecureSessionService>(),
-        );
-      },
-      child: ModularApp.router(
-        theme: AppTheme.themeData,
-        darkTheme: AppTheme.themeData,
-        themeMode: ThemeMode.light,
-        debugShowCheckedModeBanner: false,
-        title: 'BaoRide Driver',
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<ThemeModeCubit>.value(value: _themeModeCubit),
+        BlocProvider<RideFlowCubit>(
+          create: (_) => RideFlowCubit(
+            rideRepository: Modular.get<IDriverRideRepository>(),
+            sessionService: Modular.get<SecureSessionService>(),
+          ),
+        ),
+      ],
+      child: BlocBuilder<ThemeModeCubit, ThemeMode>(
+        builder: (context, themeMode) => ModularApp.router(
+          theme: EasyRideTheme.light,
+          darkTheme: EasyRideTheme.dark,
+          themeMode: themeMode,
+          debugShowCheckedModeBanner: false,
+          title: 'BaoRide Driver',
+        ),
       ),
     );
   }

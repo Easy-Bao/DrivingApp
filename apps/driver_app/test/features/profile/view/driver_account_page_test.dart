@@ -1,5 +1,4 @@
 import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/features/profile/bloc/account/account_cubit.dart';
 import 'package:driver_app/src/features/profile/view/driver_account_page.dart';
 import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
@@ -13,6 +12,7 @@ import 'package:go_router_modular/testing.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class _MockSecureStorage extends Mock implements FlutterSecureStorage {}
 
@@ -77,7 +77,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.themeData,
+        theme: EasyRideTheme.light,
         home: BlocProvider(
           create: (_) => DriverAccountCubit(repository: repository)..load(),
           child: const DriverAccountPage(),
@@ -104,6 +104,31 @@ void main() {
       const Size(76, 76),
     );
     expect(find.byTooltip('Refresh account'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('uses semantic account surfaces in dark mode', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: EasyRideTheme.light,
+        darkTheme: EasyRideTheme.dark,
+        themeMode: ThemeMode.dark,
+        home: BlocProvider(
+          create: (_) => DriverAccountCubit(repository: repository)..load(),
+          child: const DriverAccountPage(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+    final title = tester.widget<Text>(find.text('Account'));
+
+    expect(
+      scaffold.backgroundColor,
+      EasyRideTheme.dark.scaffoldBackgroundColor,
+    );
+    expect(title.style?.color, EasyRideTheme.dark.colorScheme.onSurface);
     expect(tester.takeException(), isNull);
   });
 }

@@ -1,5 +1,4 @@
 import 'package:driver_app/src/core/location/location.dart';
-import 'package:driver_app/src/core/theme/app_theme.dart';
 
 import 'dart:async';
 
@@ -222,6 +221,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
         controller: controller,
         defaultLat: defaultLat,
         defaultLng: defaultLng,
+        routeColor: context.colorScheme.primary,
       ),
     );
 
@@ -309,7 +309,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
           }
 
           return Scaffold(
-            backgroundColor: AppTheme.surface,
+            backgroundColor: context.colorScheme.surface,
             body: Stack(
               children: [
                 Positioned.fill(
@@ -447,19 +447,22 @@ Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
   return Tooltip(
     message: MaterialLocalizations.of(context).backButtonTooltip,
     child: Material(
-      color: AppTheme.surface,
+      color: context.colorScheme.surface,
       elevation: 2,
-      shadowColor: AppTheme.primaryColor.withValues(alpha: 0.08),
+      shadowColor: context.colorScheme.onSurface.withValues(alpha: 0.08),
       shape: const CircleBorder(),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onPressed,
         customBorder: const CircleBorder(),
-        child: const SizedBox(
+        child: SizedBox(
           width: 46,
           height: 46,
           child: Center(
-            child: Icon(LucideIcons.arrow_left, color: AppTheme.primaryColor),
+            child: Icon(
+              LucideIcons.arrow_left,
+              color: context.colorScheme.onSurface,
+            ),
           ),
         ),
       ),

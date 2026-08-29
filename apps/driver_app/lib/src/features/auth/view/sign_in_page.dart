@@ -1,5 +1,3 @@
-import 'package:driver_app/src/core/theme/app_theme.dart';
-
 import 'package:driver_app/src/features/auth/view/widgets/social_login_widget.dart';
 import 'dart:async';
 
@@ -95,9 +93,9 @@ class _SigninPageContentState extends State<_SigninPageContent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.surface,
+      backgroundColor: context.colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: AppTheme.surface.withValues(alpha: 0),
+        backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
         elevation: 0,
         centerTitle: true,
         title: Image.asset(
@@ -133,21 +131,21 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         const SizedBox(height: 12),
-                        const Text(
+                        Text(
                           'Driver Portal',
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.w800,
-                            color: AppTheme.primaryColor,
+                            color: context.colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
+                        Text(
                           'Sign in to manage your rides and earnings',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 14,
-                            color: AppTheme.tertiaryColor,
+                            color: context.colorScheme.onSurfaceVariant,
                           ),
                         ),
                         const SizedBox(height: 36),
@@ -175,29 +173,28 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(32),
                                   borderSide: BorderSide(
-                                    color: AppTheme.primaryColor.withValues(
-                                      alpha: 0.2,
-                                    ),
+                                    color: context.colorScheme.onSurface
+                                        .withValues(alpha: 0.2),
                                   ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(32),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.primaryColor,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.onSurface,
                                     width: 1.5,
                                   ),
                                 ),
                                 errorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(32),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.cancel,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.error,
                                     width: 1.0,
                                   ),
                                 ),
                                 focusedErrorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(32),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.cancel,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.error,
                                     width: 1.5,
                                   ),
                                 ),
@@ -243,29 +240,28 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(32),
                                   borderSide: BorderSide(
-                                    color: AppTheme.primaryColor.withValues(
-                                      alpha: 0.2,
-                                    ),
+                                    color: context.colorScheme.onSurface
+                                        .withValues(alpha: 0.2),
                                   ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(32),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.primaryColor,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.onSurface,
                                     width: 1.5,
                                   ),
                                 ),
                                 errorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(32),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.cancel,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.error,
                                     width: 1.0,
                                   ),
                                 ),
                                 focusedErrorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(32),
-                                  borderSide: const BorderSide(
-                                    color: AppTheme.cancel,
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.error,
                                     width: 1.5,
                                   ),
                                 ),
@@ -281,7 +277,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                               children: [
                                 Checkbox(
                                   value: _rememberMeChecked,
-                                  activeColor: AppTheme.primaryColor,
+                                  activeColor: context.colorScheme.onSurface,
                                   onChanged: (bool? val) {
                                     setState(() {
                                       _rememberMeChecked = val ?? false;
@@ -300,11 +296,11 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                   context.pushNamed(AuthRoutes.forgotPassword),
                                 );
                               },
-                              child: const Text(
+                              child: Text(
                                 'Forgot Password?',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: AppTheme.primaryColor,
+                                  color: context.colorScheme.onSurface,
                                 ),
                               ),
                             ),
@@ -320,8 +316,8 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                   ? null
                                   : () => _submitSignIn(context),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primaryColor,
-                                foregroundColor: AppTheme.neutralColor,
+                                backgroundColor: context.colorScheme.primary,
+                                foregroundColor: context.colorScheme.onPrimary,
                                 minimumSize: const Size.fromHeight(60),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(32),
@@ -329,11 +325,11 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                 elevation: 0,
                               ),
                               child: isLoading
-                                  ? const SizedBox(
+                                  ? SizedBox(
                                       width: 24,
                                       height: 24,
                                       child: CircularProgressIndicator(
-                                        color: AppTheme.surface,
+                                        color: context.colorScheme.onPrimary,
                                         strokeWidth: 2,
                                       ),
                                     )

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:driver_app/src/core/location/location.dart';
-import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart';
@@ -737,13 +736,13 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
               activeTrips.isNotEmpty ||
               (state.isOnline && activeBids.isNotEmpty);
           return Scaffold(
-            backgroundColor: AppTheme.background,
+            backgroundColor: context.canvasColor,
             appBar: AppBar(
               automaticallyImplyLeading: false,
-              backgroundColor: AppTheme.background,
+              backgroundColor: context.canvasColor,
               titleSpacing: 20,
               toolbarHeight: 76,
-              title: const Column(
+              title: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -751,8 +750,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                     'BaoRide',
                     style: TextStyle(
                       fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.primaryColor,
+                      fontWeight: FontWeight.w800,
+                      color: context.colorScheme.onSurface,
                       letterSpacing: -0.5,
                     ),
                   ),
@@ -762,7 +761,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: AppTheme.tertiaryColor,
+                      color: context.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -775,7 +774,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                     onPressed: () => context.pushNamed(ProfileRoutes.account),
                     icon: const Icon(LucideIcons.user_round),
                     style: IconButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor.withValues(
+                      backgroundColor: context.colorScheme.onSurface.withValues(
                         alpha: 0.1,
                       ),
                     ),
@@ -874,10 +873,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
               borderRadius: BorderRadius.circular(20),
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppTheme.neutralColor,
+                  color: context.colorScheme.surfaceContainerHighest,
                   border: isOnline
                       ? null
-                      : Border.all(color: AppTheme.borderSide),
+                      : Border.all(color: context.colorScheme.outlineVariant),
                 ),
                 child: Stack(
                   children: [
@@ -887,7 +886,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                       left: isOnline ? 0 : null,
                       right: isOnline ? null : 0,
                       width: fillWidth,
-                      child: const ColoredBox(color: AppTheme.primaryColor),
+                      child: ColoredBox(color: context.colorScheme.primary),
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(
@@ -907,8 +906,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                                   fontSize: 18,
                                   fontWeight: FontWeight.w800,
                                   color: isOnline
-                                      ? AppTheme.surface
-                                      : AppTheme.primaryColor,
+                                      ? context.colorScheme.onPrimary
+                                      : context.colorScheme.onSurface,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -920,10 +919,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
                                   color: isOnline
-                                      ? AppTheme.surface.withValues(alpha: 0.8)
-                                      : AppTheme.primaryColor.withValues(
-                                          alpha: 0.6,
-                                        ),
+                                      ? context.colorScheme.onPrimary
+                                      : context.colorScheme.onSurfaceVariant,
                                 ),
                               ),
                             ],
@@ -953,18 +950,18 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   ) {
     final trackColor = isOnline
         ? Color.lerp(
-            AppTheme.primaryColor.withValues(alpha: 0.16),
-            AppTheme.surface.withValues(alpha: 0.28),
+            context.colorScheme.primary.withValues(alpha: 0.16),
+            context.colorScheme.onPrimary.withValues(alpha: 0.28),
             animationProgress,
           )!
-        : AppTheme.borderSide;
+        : context.colorScheme.outlineVariant;
     final thumbColor = isOnline
         ? Color.lerp(
-            AppTheme.primaryColor,
-            AppTheme.surface,
+            context.colorScheme.primary,
+            context.colorScheme.onPrimary,
             animationProgress,
           )!
-        : AppTheme.primaryColor.withValues(alpha: 0.4);
+        : context.colorScheme.onSurfaceVariant;
 
     return SizedBox(
       width: 56,
@@ -981,7 +978,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                   height: 18,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: isOnline ? AppTheme.surface : AppTheme.primaryColor,
+                    color: isOnline
+                        ? context.colorScheme.onPrimary
+                        : context.colorScheme.onSurface,
                   ),
                 ),
               )
@@ -989,9 +988,13 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                 value: isOnline,
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 activeThumbColor: thumbColor,
-                activeTrackColor: AppTheme.surface.withValues(alpha: 0),
+                activeTrackColor: context.colorScheme.onPrimary.withValues(
+                  alpha: 0,
+                ),
                 inactiveThumbColor: thumbColor,
-                inactiveTrackColor: AppTheme.surface.withValues(alpha: 0),
+                inactiveTrackColor: context.colorScheme.onPrimary.withValues(
+                  alpha: 0,
+                ),
                 onChanged: (value) => _toggleOnline(context, value),
               ),
       ),
@@ -1016,8 +1019,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
           animation: _pulseCtrl,
           builder: (_, _) {
             final pulseOpacity = 0.4 + _pulseCtrl.value * 0.6;
-            final accentColor = AppTheme.accent.withValues(
-              alpha: AppTheme.accent.a * pulseOpacity,
+            final accentColor = context.colorScheme.primary.withValues(
+              alpha: context.colorScheme.primary.a * pulseOpacity,
             );
             return Column(
               children: [
@@ -1025,7 +1028,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                   width: 72,
                   height: 72,
                   decoration: BoxDecoration(
-                    color: AppTheme.secondaryColor.withValues(
+                    color: context.colorScheme.secondaryContainer.withValues(
                       alpha: 0.22 * pulseOpacity,
                     ),
                     shape: BoxShape.circle,
@@ -1060,24 +1063,24 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
           width: 72,
           height: 72,
           decoration: BoxDecoration(
-            color: AppTheme.primaryColor.withValues(alpha: 0.08),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.08),
             shape: BoxShape.circle,
           ),
           child: Center(
             child: Icon(
               LucideIcons.moon,
               size: 32,
-              color: AppTheme.primaryColor.withValues(alpha: 0.7),
+              color: context.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
         ),
         const SizedBox(height: 16),
-        const Text(
+        Text(
           "You're offline",
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w800,
-            color: AppTheme.primaryColor,
+            color: context.colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 6),
@@ -1085,7 +1088,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
           'Go online to start receiving rides.',
           style: TextStyle(
             fontSize: 14,
-            color: AppTheme.primaryColor.withValues(alpha: 0.6),
+            color: context.colorScheme.onSurfaceVariant,
           ),
         ),
       ],

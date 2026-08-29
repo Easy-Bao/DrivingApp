@@ -1,11 +1,11 @@
 import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/features/chat/chat_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class DriverTripDetailPage extends StatefulWidget {
   final Map<String, dynamic> trip;
@@ -116,7 +116,9 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
         .toLowerCase();
     final isCompleted = status == 'completed';
     final isCanceled = status == 'canceled' || status == 'cancelled';
-    final statusColor = isCompleted ? AppTheme.complete : AppTheme.cancel;
+    final statusColor = isCompleted
+        ? context.semanticColors.success
+        : context.colorScheme.error;
     final statusLabel = isCompleted
         ? 'Completed'
         : isCanceled
@@ -134,16 +136,16 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
         '';
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.canvasColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.background,
+        backgroundColor: context.canvasColor,
         automaticallyImplyLeading: false,
         leading: IconButton(
           tooltip: 'Back',
           style: IconButton.styleFrom(shape: const CircleBorder()),
-          icon: const Icon(
+          icon: Icon(
             LucideIcons.arrow_left,
-            color: AppTheme.primaryColor,
+            color: context.colorScheme.onSurface,
           ),
           onPressed: () => context.pop(),
         ),
@@ -177,12 +179,12 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'Past trip',
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,
-                                    color: AppTheme.tertiaryColor,
+                                    color: context.colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                                 const SizedBox(height: 3),
@@ -192,9 +194,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: 11,
-                                    color: AppTheme.primaryColor.withValues(
-                                      alpha: 0.42,
-                                    ),
+                                    color: context.colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -212,12 +212,12 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                         fare: fare,
                       ),
                       const SizedBox(height: 20),
-                      const Text(
+                      Text(
                         'Passenger profile',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
-                          color: AppTheme.tertiaryColor,
+                          color: context.colorScheme.onSurfaceVariant,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -233,11 +233,11 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                             ? null
                             : _contactPassenger,
                         icon: _isContactingPassenger
-                            ? const SizedBox.square(
+                            ? SizedBox.square(
                                 dimension: 18,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: AppTheme.surface,
+                                  color: context.colorScheme.onPrimary,
                                 ),
                               )
                             : const Icon(LucideIcons.message_square, size: 18),
@@ -269,7 +269,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
   }
 
   Widget _buildChatFeedback() {
-    const color = AppTheme.cancel;
+    final color = context.colorScheme.error;
     return Container(
       key: const ValueKey('driver-trip-chat-feedback'),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -330,13 +330,13 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Trip route',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      color: AppTheme.primaryColor,
+                      color: context.colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -347,18 +347,18 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                     Text(
                       'Total fare',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: AppTheme.primaryColor.withValues(alpha: 0.42),
+                        color: context.colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       fare == null ? '—' : formatPesoAmount(fare),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.w800,
+                        color: context.colorScheme.onSurface,
                       ),
                     ),
                   ],
@@ -393,16 +393,28 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
           padding: const EdgeInsets.only(top: 3),
           child: Column(
             children: [
-              const Icon(Icons.circle, size: 9, color: AppTheme.complete),
+              Icon(
+                Icons.circle,
+                size: 9,
+                color: context.semanticColors.success,
+              ),
               SizedBox(
                 width: 2,
                 height: 24,
                 child: CustomPaint(
                   key: const ValueKey('driver-trip-route-dashes'),
-                  painter: _DashedRoutePainter(),
+                  painter: _DashedRoutePainter(
+                    color: context.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.68,
+                    ),
+                  ),
                 ),
               ),
-              const Icon(Icons.location_on, size: 15, color: AppTheme.accent),
+              Icon(
+                Icons.location_on,
+                size: 15,
+                color: context.colorScheme.primary,
+              ),
             ],
           ),
         ),
@@ -428,9 +440,9 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
         Text(
           label,
           style: TextStyle(
-            fontSize: 10,
+            fontSize: 11,
             fontWeight: FontWeight.w700,
-            color: AppTheme.primaryColor.withValues(alpha: 0.42),
+            color: context.colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 2),
@@ -438,10 +450,10 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
           value,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w700,
-            color: AppTheme.primaryColor,
+            color: context.colorScheme.onSurface,
           ),
         ),
       ],
@@ -460,9 +472,9 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: AppTheme.primaryColor.withValues(alpha: 0.42),
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
         ),
@@ -474,10 +486,10 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w800,
-              color: AppTheme.primaryColor,
+              color: context.colorScheme.onSurface,
             ),
           ),
         ),
@@ -500,16 +512,16 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: AppTheme.secondaryColor,
+                    color: context.colorScheme.secondaryContainer,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   alignment: Alignment.center,
                   child: Text(
                     initial,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.primaryColor,
+                      fontWeight: FontWeight.w800,
+                      color: context.colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -522,10 +534,10 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                         _passengerName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
-                          color: AppTheme.primaryColor,
+                          color: context.colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 3),
@@ -536,7 +548,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                          color: context.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -549,15 +561,17 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: AppTheme.complete.withValues(alpha: 0.1),
+                      color: context.semanticColors.success.withValues(
+                        alpha: 0.1,
+                      ),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       '${rating.toStringAsFixed(1)} rating',
-                      style: const TextStyle(
-                        fontSize: 10,
+                      style: TextStyle(
+                        fontSize: 11,
                         fontWeight: FontWeight.w800,
-                        color: AppTheme.complete,
+                        color: context.semanticColors.success,
                       ),
                     ),
                   ),
@@ -574,7 +588,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                 fontSize: 12,
                 height: 1.35,
                 fontWeight: FontWeight.w500,
-                color: AppTheme.primaryColor.withValues(alpha: 0.62),
+                color: context.colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -585,13 +599,16 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
 }
 
 class _DashedRoutePainter extends CustomPainter {
+  final Color color;
+
   static const _dashHeight = 4.0;
   static const _gapHeight = 5.0;
 
+  const _DashedRoutePainter({required this.color});
+
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppTheme.tertiaryColor.withValues(alpha: 0.68);
+    final paint = Paint()..color = color;
 
     var top = 0.0;
     while (top < size.height) {
@@ -610,5 +627,6 @@ class _DashedRoutePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _DashedRoutePainter oldDelegate) => false;
+  bool shouldRepaint(covariant _DashedRoutePainter oldDelegate) =>
+      oldDelegate.color != color;
 }

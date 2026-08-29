@@ -4,7 +4,6 @@ import 'dart:developer' as dev;
 
 import 'package:flutter/material.dart' show Color;
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:rxdart/rxdart.dart';
 
@@ -27,6 +26,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   DateTime? _lastRouteUpdateAt;
   DateTime? _lastCameraFitAt;
   bool _hasFittedCamera = false;
+  Color _routeColor = TripMapMarkerStyle.ownLocation;
 
   final PublishSubject<DispatchTelemetryLocationEvent> _locationSubject =
       PublishSubject<DispatchTelemetryLocationEvent>();
@@ -87,6 +87,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       _hasFittedCamera = false;
     }
     _mapController = event.controller;
+    _routeColor = event.routeColor;
     emit(LiveMapReady(event.defaultLat, event.defaultLng));
     final pendingRouteUpdate = _pendingRouteUpdate;
     _pendingRouteUpdate = null;
@@ -262,14 +263,14 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
       return MapProvider.addPolyline(
         mapController,
         routePoints,
-        color: AppTheme.primaryColor,
+        color: _routeColor,
         width: 4.0,
       );
     }
     await MapProvider.replacePolyline(
       annotationManager,
       routePoints,
-      color: AppTheme.primaryColor,
+      color: _routeColor,
       width: 4.0,
     );
     return annotationManager;

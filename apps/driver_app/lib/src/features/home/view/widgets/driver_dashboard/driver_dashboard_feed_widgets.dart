@@ -1,5 +1,4 @@
 import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
-import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:shared_core/shared_core.dart';
@@ -32,13 +31,13 @@ class DriverActiveTripCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final status = trip['status'] as String? ?? 'accepted';
     String statusLabel = 'Heading To Passenger';
-    Color statusColor = AppTheme.inProgress;
+    Color statusColor = context.colorScheme.primary;
     if (status == 'arrived') {
       statusLabel = 'Waiting For Passenger';
-      statusColor = AppTheme.secondaryColor;
+      statusColor = context.colorScheme.secondaryContainer;
     } else if (status == 'in_transit') {
       statusLabel = 'Driving Passenger';
-      statusColor = AppTheme.complete;
+      statusColor = context.semanticColors.success;
     }
     final hasCurrentTransitRide = this.hasCurrentTransitRide;
     final isQueued = hasCurrentTransitRide && status != 'in_transit';
@@ -49,14 +48,14 @@ class DriverActiveTripCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: context.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppTheme.primaryColor.withValues(alpha: 0.12),
+          color: context.colorScheme.onSurface.withValues(alpha: 0.12),
         ),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withValues(alpha: 0.05),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -80,8 +79,8 @@ class DriverActiveTripCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
-                    color: statusColor == AppTheme.secondaryColor
-                        ? AppTheme.primaryColor
+                    color: statusColor == context.colorScheme.secondaryContainer
+                        ? context.colorScheme.onSurface
                         : statusColor,
                   ),
                 ),
@@ -91,10 +90,10 @@ class DriverActiveTripCard extends StatelessWidget {
                 driverFareInPesos(trip) == null
                     ? '—'
                     : formatPesoAmount(driverFareInPesos(trip)!),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 17,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.primaryColor,
+                  fontWeight: FontWeight.w800,
+                  color: context.colorScheme.onSurface,
                 ),
               ),
             ],
@@ -107,7 +106,7 @@ class DriverActiveTripCard extends StatelessWidget {
                 'Queued passenger ${queueIndex + 1} • Start after the current trip',
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.55),
+                  color: context.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -116,18 +115,18 @@ class DriverActiveTripCard extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              const Icon(
+              Icon(
                 LucideIcons.user,
                 size: 14,
-                color: AppTheme.primaryColor,
+                color: context.colorScheme.onSurface,
               ),
               const SizedBox(width: 8),
               Text(
                 driverValueAsString(trip['passenger_name']) ?? '—',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryColor,
+                  color: context.colorScheme.onSurface,
                 ),
               ),
             ],
@@ -147,8 +146,8 @@ class DriverActiveTripCard extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: onResume,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        foregroundColor: AppTheme.activeControlForeground,
+                        backgroundColor: context.colorScheme.primary,
+                        foregroundColor: context.colorScheme.onPrimary,
                         shape: const StadiumBorder(),
                         elevation: 0,
                       ),
@@ -169,18 +168,18 @@ class DriverActiveTripCard extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: isCompleting ? null : onComplete,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.complete,
-                        foregroundColor: AppTheme.activeControlForeground,
+                        backgroundColor: context.semanticColors.success,
+                        foregroundColor: context.semanticColors.onSuccess,
                         shape: const StadiumBorder(),
                         elevation: 0,
                       ),
                       child: isCompleting
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: AppTheme.surface,
+                                color: context.semanticColors.onSuccess,
                               ),
                             )
                           : const Text(
@@ -202,8 +201,8 @@ class DriverActiveTripCard extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: isQueued ? null : onResume,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: AppTheme.activeControlForeground,
+                  backgroundColor: context.colorScheme.primary,
+                  foregroundColor: context.colorScheme.onPrimary,
                   shape: const StadiumBorder(),
                   elevation: 0,
                 ),
@@ -262,12 +261,12 @@ class DriverPoolBidCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: context.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.borderSide),
+        border: Border.all(color: context.colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withValues(alpha: 0.04),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -278,12 +277,12 @@ class DriverPoolBidCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Text(
+              Text(
                 'Ride Request',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
-                  color: AppTheme.primaryColor,
+                  color: context.colorScheme.onSurface,
                 ),
               ),
               const Spacer(),
@@ -293,7 +292,7 @@ class DriverPoolBidCard extends StatelessWidget {
                   vertical: 5,
                 ),
                 decoration: BoxDecoration(
-                  color: AppTheme.neutralColor,
+                  color: context.colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
@@ -306,10 +305,10 @@ class DriverPoolBidCard extends StatelessWidget {
                           ? '—'
                           : formatCountdown(remainingSeconds),
                       key: ValueKey('request-countdown-$bidId'),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
-                        color: AppTheme.primaryColor,
+                        color: context.colorScheme.onSurface,
                       ),
                     ),
                   ],
@@ -325,7 +324,7 @@ class DriverPoolBidCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
               decoration: BoxDecoration(
-                color: AppTheme.neutralColor,
+                color: context.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Row(
@@ -346,7 +345,7 @@ class DriverPoolBidCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 12),
-          const Divider(height: 1, color: AppTheme.borderSide),
+          Divider(height: 1, color: context.colorScheme.outlineVariant),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -358,15 +357,15 @@ class DriverPoolBidCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                  color: context.colorScheme.onSurfaceVariant,
                 ),
               ),
               Text(
                 fare == null ? '—' : formatPesoAmount(fare),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.primaryColor,
+                  fontWeight: FontWeight.w800,
+                  color: context.colorScheme.onSurface,
                 ),
               ),
             ],
@@ -379,15 +378,15 @@ class DriverPoolBidCard extends StatelessWidget {
                   onPressed: submittingBidId != null ? null : onDecline,
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    side: const BorderSide(color: AppTheme.borderSide),
+                    side: BorderSide(color: context.colorScheme.outlineVariant),
                     shape: const StadiumBorder(),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Decline',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.primaryColor,
+                      color: context.colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -399,26 +398,27 @@ class DriverPoolBidCard extends StatelessWidget {
                       ? null
                       : onAccept,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
+                    backgroundColor: context.colorScheme.primary,
+                    foregroundColor: context.colorScheme.onPrimary,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: const StadiumBorder(),
                   ),
                   child: isSubmitting
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 18,
                           height: 18,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: AppTheme.surface,
+                            color: context.colorScheme.onPrimary,
                           ),
                         )
-                      : const Text(
+                      : Text(
                           'Accept',
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
-                            color: AppTheme.surface,
+                            color: context.colorScheme.onPrimary,
                           ),
                         ),
                 ),
@@ -452,7 +452,7 @@ class DriverDashboardSectionLabel extends StatelessWidget {
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w800,
-          color: AppTheme.primaryColor.withValues(alpha: 0.6),
+          color: context.colorScheme.onSurfaceVariant,
           letterSpacing: 1.2,
         ),
       ),

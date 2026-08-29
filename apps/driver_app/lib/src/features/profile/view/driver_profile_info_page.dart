@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/features/profile/bloc/account/account_cubit.dart';
 import 'package:driver_app/src/features/profile/bloc/account/account_state.dart';
 import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
@@ -184,17 +183,17 @@ class _DriverProfileInfoPageState extends State<DriverProfileInfoPage> {
         if (!_isDirty && !state.isSaving) _applyAccount(state.account);
       },
       child: Scaffold(
-        backgroundColor: AppTheme.background,
+        backgroundColor: context.canvasColor,
         appBar: AppBar(
-          backgroundColor: AppTheme.background,
+          backgroundColor: context.canvasColor,
           elevation: 0,
           scrolledUnderElevation: 0,
           leading: IconButton(
             onPressed: () => Navigator.of(context).maybePop(),
             tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-            icon: const Icon(
+            icon: Icon(
               LucideIcons.arrow_left,
-              color: AppTheme.primaryColor,
+              color: context.colorScheme.onSurface,
               size: 23,
             ),
           ),
@@ -288,25 +287,25 @@ class _DriverProfileInfoPageState extends State<DriverProfileInfoPage> {
         Container(
           width: 116,
           height: 116,
-          decoration: const BoxDecoration(
-            color: AppTheme.secondaryColor,
+          decoration: BoxDecoration(
+            color: context.colorScheme.secondaryContainer,
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
           child: Text(
             initials,
-            style: const TextStyle(
-              color: AppTheme.primaryColor,
+            style: TextStyle(
+              color: context.colorScheme.onSurface,
               fontSize: 34,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ),
         const SizedBox(height: 14),
-        const Text(
+        Text(
           'Driver profile',
           style: TextStyle(
-            color: AppTheme.tertiaryColor,
+            color: context.colorScheme.onSurfaceVariant,
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
@@ -335,8 +334,8 @@ class _DriverProfileInfoPageState extends State<DriverProfileInfoPage> {
           textCapitalization: label == 'Plate Number'
               ? TextCapitalization.characters
               : TextCapitalization.words,
-          style: const TextStyle(
-            color: AppTheme.primaryColor,
+          style: TextStyle(
+            color: context.colorScheme.onSurface,
             fontSize: 17,
             fontWeight: FontWeight.w700,
           ),
@@ -359,15 +358,15 @@ class _DriverProfileInfoPageState extends State<DriverProfileInfoPage> {
               height: 62,
               width: 94,
               decoration: BoxDecoration(
-                color: AppTheme.background,
+                color: context.canvasColor,
                 borderRadius: BorderRadius.circular(17),
-                border: Border.all(color: AppTheme.borderSide),
+                border: Border.all(color: context.colorScheme.outlineVariant),
               ),
               alignment: Alignment.center,
-              child: const Text(
+              child: Text(
                 _phonePrefix,
                 style: TextStyle(
-                  color: AppTheme.primaryColor,
+                  color: context.colorScheme.onSurface,
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                 ),
@@ -381,8 +380,8 @@ class _DriverProfileInfoPageState extends State<DriverProfileInfoPage> {
                 keyboardType: TextInputType.phone,
                 textInputAction: TextInputAction.next,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                style: const TextStyle(
-                  color: AppTheme.primaryColor,
+                style: TextStyle(
+                  color: context.colorScheme.onSurface,
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
                 ),
@@ -401,24 +400,27 @@ class _DriverProfileInfoPageState extends State<DriverProfileInfoPage> {
   InputDecoration _fieldDecoration({String? hintText, String? errorText}) {
     final border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(17),
-      borderSide: const BorderSide(color: AppTheme.borderSide),
+      borderSide: BorderSide(color: context.colorScheme.outlineVariant),
     );
     return InputDecoration(
       hintText: hintText,
       errorText: errorText,
       filled: true,
-      fillColor: AppTheme.surface,
+      fillColor: context.colorScheme.surface,
       contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
       border: border,
       enabledBorder: border,
       focusedBorder: border.copyWith(
-        borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
+        borderSide: BorderSide(
+          color: context.colorScheme.onSurface,
+          width: 1.5,
+        ),
       ),
       errorBorder: border.copyWith(
-        borderSide: const BorderSide(color: AppTheme.cancel),
+        borderSide: BorderSide(color: context.colorScheme.error),
       ),
       focusedErrorBorder: border.copyWith(
-        borderSide: const BorderSide(color: AppTheme.cancel, width: 1.5),
+        borderSide: BorderSide(color: context.colorScheme.error, width: 1.5),
       ),
     );
   }
@@ -427,9 +429,9 @@ class _DriverProfileInfoPageState extends State<DriverProfileInfoPage> {
     return Text(
       label,
       style: TextStyle(
-        color: AppTheme.primaryColor.withValues(alpha: 0.48),
+        color: context.colorScheme.onSurfaceVariant,
         fontSize: 13,
-        fontWeight: FontWeight.w900,
+        fontWeight: FontWeight.w800,
         letterSpacing: 0.7,
       ),
     );

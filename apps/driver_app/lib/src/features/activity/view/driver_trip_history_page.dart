@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
 import 'package:driver_app/src/features/activity/activity_routes.dart';
 import 'package:driver_app/src/features/activity/bloc/trip_history/trip_history_cubit.dart';
@@ -118,24 +117,27 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
         state.hasMore || state.isLoadingMore || state.loadMoreError != null;
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.canvasColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.background,
+        backgroundColor: context.canvasColor,
         elevation: 0,
         scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
-        title: const Text(
+        title: Text(
           'Trip History',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w800,
-            color: AppTheme.primaryColor,
+            color: context.colorScheme.onSurface,
           ),
         ),
         centerTitle: false,
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.funnel, color: AppTheme.primaryColor),
+            icon: Icon(
+              LucideIcons.funnel,
+              color: context.colorScheme.onSurface,
+            ),
             onPressed: () => unawaited(
               _displayDriverTripHistoryFilterModalBottomSheet(context),
             ),
@@ -144,8 +146,10 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
         ],
       ),
       body: state.isLoading && state.trips.isEmpty
-          ? const Center(
-              child: CircularProgressIndicator(color: AppTheme.primaryColor),
+          ? Center(
+              child: CircularProgressIndicator(
+                color: context.colorScheme.onSurface,
+              ),
             )
           : state.errorMessage != null && !hasTrips
           ? _buildMessageState(
@@ -169,7 +173,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
                   : null,
             )
           : RefreshIndicator(
-              color: AppTheme.primaryColor,
+              color: context.colorScheme.onSurface,
               onRefresh: () =>
                   BlocProvider.of<DriverTripHistoryCubit>(context).load(),
               child: Skeletonizer(
@@ -204,9 +208,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
-                              color: AppTheme.primaryColor.withValues(
-                                alpha: 0.4,
-                              ),
+                              color: context.colorScheme.onSurfaceVariant,
                               letterSpacing: 0.5,
                             ),
                           ),
@@ -229,7 +231,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
     VoidCallback? onAction,
   }) {
     return RefreshIndicator(
-      color: AppTheme.primaryColor,
+      color: context.colorScheme.onSurface,
       onRefresh: () => BlocProvider.of<DriverTripHistoryCubit>(context).load(),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(
@@ -240,7 +242,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
           Icon(
             icon,
             size: 56,
-            color: AppTheme.primaryColor.withValues(alpha: 0.2),
+            color: context.colorScheme.onSurface.withValues(alpha: 0.2),
           ),
           const SizedBox(height: 18),
           Text(
@@ -249,7 +251,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w800,
-              color: AppTheme.primaryColor.withValues(alpha: 0.72),
+              color: context.colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 8),
@@ -259,7 +261,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
             style: TextStyle(
               fontSize: 14,
               height: 1.35,
-              color: AppTheme.primaryColor.withValues(alpha: 0.55),
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
           if (actionLabel != null && onAction != null) ...[
@@ -267,7 +269,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
             TextButton.icon(
               onPressed: onAction,
               style: TextButton.styleFrom(
-                foregroundColor: AppTheme.primaryColor,
+                foregroundColor: context.colorScheme.onSurface,
               ),
               icon: const Icon(LucideIcons.refresh_cw, size: 16),
               label: Text(actionLabel),
@@ -284,21 +286,27 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
       child: Container(
         padding: const EdgeInsets.fromLTRB(14, 12, 10, 10),
         decoration: BoxDecoration(
-          color: AppTheme.cancel.withValues(alpha: 0.06),
+          color: context.colorScheme.error.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.cancel.withValues(alpha: 0.2)),
+          border: Border.all(
+            color: context.colorScheme.error.withValues(alpha: 0.2),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(LucideIcons.wifi_off, size: 17, color: AppTheme.cancel),
+                Icon(
+                  LucideIcons.wifi_off,
+                  size: 17,
+                  color: context.colorScheme.error,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'Couldn’t refresh trips',
                   style: TextStyle(
-                    color: AppTheme.cancel,
+                    color: context.colorScheme.error,
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
                   ),
@@ -309,7 +317,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
             Text(
               message,
               style: TextStyle(
-                color: AppTheme.primaryColor.withValues(alpha: 0.62),
+                color: context.colorScheme.onSurfaceVariant,
                 fontSize: 12,
                 height: 1.3,
               ),
@@ -320,7 +328,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
                 onPressed: () =>
                     BlocProvider.of<DriverTripHistoryCubit>(context).load(),
                 style: TextButton.styleFrom(
-                  foregroundColor: AppTheme.primaryColor,
+                  foregroundColor: context.colorScheme.onSurface,
                   visualDensity: VisualDensity.compact,
                 ),
                 icon: const Icon(LucideIcons.refresh_cw, size: 15),
@@ -335,14 +343,14 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
 
   Widget _buildLoadMore(DriverTripHistoryState state) {
     if (state.isLoadingMore) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.symmetric(vertical: 18),
         child: Center(
           child: SizedBox.square(
             dimension: 22,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: AppTheme.primaryColor,
+              color: context.colorScheme.onSurface,
             ),
           ),
         ),
@@ -356,8 +364,8 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
             Text(
               state.loadMoreError!,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppTheme.cancel,
+              style: TextStyle(
+                color: context.colorScheme.error,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
@@ -381,7 +389,9 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
     final status = (driverValueAsString(trip['status']) ?? 'completed')
         .toLowerCase();
     final isCompleted = status == 'completed';
-    final statusColor = isCompleted ? AppTheme.complete : AppTheme.cancel;
+    final statusColor = isCompleted
+        ? context.semanticColors.success
+        : context.colorScheme.error;
     final statusLabel = isCompleted
         ? 'Completed'
         : driverSentenceCase(status, 'Canceled');
@@ -399,7 +409,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
-        color: AppTheme.surface,
+        color: context.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
@@ -409,7 +419,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppTheme.borderSide),
+              border: Border.all(color: context.colorScheme.outlineVariant),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -422,7 +432,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                        color: context.colorScheme.onSurfaceVariant,
                       ),
                     ),
                     Container(
@@ -453,9 +463,17 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
                 Row(
                   children: [
                     Expanded(child: _tripMeta('Ride type', rideType)),
-                    Container(width: 1, height: 28, color: AppTheme.borderSide),
+                    Container(
+                      width: 1,
+                      height: 28,
+                      color: context.colorScheme.outlineVariant,
+                    ),
                     Expanded(child: _tripMeta('Distance', distance)),
-                    Container(width: 1, height: 28, color: AppTheme.borderSide),
+                    Container(
+                      width: 1,
+                      height: 28,
+                      color: context.colorScheme.outlineVariant,
+                    ),
                     Expanded(
                       child: _tripMeta(
                         'Fare',
@@ -502,9 +520,9 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: AppTheme.primaryColor.withValues(alpha: 0.42),
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 3),
@@ -512,10 +530,10 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w800,
-              color: AppTheme.primaryColor,
+              color: context.colorScheme.onSurface,
             ),
           ),
         ],

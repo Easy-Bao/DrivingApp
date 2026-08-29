@@ -7,7 +7,6 @@ import 'package:driver_app/src/core/location/repositories/map_native_service.dar
 import 'package:driver_app/src/core/location/services/map_annotation_service.dart';
 import 'package:driver_app/src/core/location/services/map_camera_service.dart';
 import 'package:driver_app/src/core/location/services/device_location_service.dart';
-import 'package:driver_app/src/core/theme/app_theme.dart';
 
 export 'package:driver_app/src/core/location/services/map_annotation_service.dart';
 export 'package:driver_app/src/core/location/services/map_camera_service.dart';
@@ -22,6 +21,12 @@ class MapProvider {
   static MapNativeService? _nativeService;
   static final AsyncTtlCache<RouteRequestKey, RouteModel?> _routeCache =
       AsyncTtlCache(ttl: _routeCacheTtl, maxEntries: 24);
+
+  static String styleUriFor(Brightness brightness) {
+    return brightness == Brightness.dark
+        ? mapbox.MapboxStyles.DARK
+        : mapbox.MapboxStyles.MAPBOX_STREETS;
+  }
 
   static Future<void> initialize({
     String? token,
@@ -247,69 +252,79 @@ class MapProvider {
     bool showUserLocation = false,
     EdgeInsets? padding,
   }) {
-    AppMapController? mapController;
+    return Builder(
+      builder: (context) {
+        AppMapController? mapController;
+        final styleUri = styleUriFor(Theme.of(context).brightness);
 
-    return mapbox.MapWidget(
-      styleUri: mapbox.MapboxStyles.MAPBOX_STREETS,
-      viewport: mapbox.CameraViewportState(
-        center: mapbox.Point(coordinates: mapbox.Position(longitude, latitude)),
-        zoom: zoom,
-      ),
-      onCameraChangeListener: (cameraChangedEventData) {
-        final currentController = mapController;
-        if (currentController != null) {
-          onCameraChanged?.call(currentController);
-        }
-      },
-      onMapIdleListener: (mapIdleEventData) {
-        final currentController = mapController;
-        if (currentController != null) {
-          onMapIdle?.call(currentController);
-        }
-      },
-      onMapCreated: (controller) {
-        unawaited(
-          controller.logo.updateSettings(mapbox.LogoSettings(enabled: false)),
-        );
-        unawaited(
-          controller.attribution.updateSettings(
-            mapbox.AttributionSettings(enabled: false),
-          ),
-        );
-        unawaited(
-          controller.scaleBar.updateSettings(
-            mapbox.ScaleBarSettings(enabled: false),
-          ),
-        );
-
-        if (!interactive) {
-          unawaited(
-            controller.gestures.updateSettings(
-              mapbox.GesturesSettings(
-                scrollEnabled: false,
-                rotateEnabled: false,
-                pitchEnabled: false,
-                doubleTapToZoomInEnabled: false,
-                quickZoomEnabled: false,
-              ),
+        return mapbox.MapWidget(
+          key: ValueKey<String>(styleUri),
+          styleUri: styleUri,
+          viewport: mapbox.CameraViewportState(
+            center: mapbox.Point(
+              coordinates: mapbox.Position(longitude, latitude),
             ),
-          );
-        }
-
-        final currentController = AppMapController(controller);
-        mapController = currentController;
-        if (showUserLocation) {
-          unawaited(
-            controller.location.updateSettings(
-              mapbox.LocationComponentSettings(
-                enabled: true,
-                pulsingEnabled: false,
-                showAccuracyRing: false,
+            zoom: zoom,
+          ),
+          onCameraChangeListener: (cameraChangedEventData) {
+            final currentController = mapController;
+            if (currentController != null) {
+              onCameraChanged?.call(currentController);
+            }
+          },
+          onMapIdleListener: (mapIdleEventData) {
+            final currentController = mapController;
+            if (currentController != null) {
+              onMapIdle?.call(currentController);
+            }
+          },
+          onMapCreated: (controller) {
+            unawaited(
+              controller.logo.updateSettings(
+                mapbox.LogoSettings(enabled: false),
               ),
-            ),
-          );
-        }
-        onMapCreated?.call(currentController);
+            );
+            unawaited(
+              controller.attribution.updateSettings(
+                mapbox.AttributionSettings(enabled: false),
+              ),
+            );
+            unawaited(
+              controller.scaleBar.updateSettings(
+                mapbox.ScaleBarSettings(enabled: false),
+              ),
+            );
+
+            if (!interactive) {
+              unawaited(
+                controller.gestures.updateSettings(
+                  mapbox.GesturesSettings(
+                    scrollEnabled: false,
+                    rotateEnabled: false,
+                    pitchEnabled: false,
+                    doubleTapToZoomInEnabled: false,
+                    quickZoomEnabled: false,
+                  ),
+                ),
+              );
+            }
+
+            final currentController = AppMapController(controller);
+            mapController = currentController;
+            if (showUserLocation) {
+              unawaited(
+                controller.location.updateSettings(
+                  mapbox.LocationComponentSettings(
+                    enabled: true,
+                    pulsingEnabled: false,
+                    showAccuracyRing: false,
+                  ),
+                ),
+              );
+            }
+            onMapCreated?.call(currentController);
+          },
+        );
       },
     );
   }
@@ -388,7 +403,7 @@ class MapProvider {
   static Future<mapbox.PolylineAnnotationManager> addPolyline(
     AppMapController controller,
     List<List<double>> points, {
-    Color color = AppTheme.primaryColor,
+    Color color = TripMapMarkerStyle.ownLocation,
     double width = 4.0,
   }) => MapAnnotationService.addPolyline(
     controller,
@@ -400,7 +415,7 @@ class MapProvider {
   static Future<void> replacePolyline(
     mapbox.PolylineAnnotationManager annotationManager,
     List<List<double>> points, {
-    Color color = AppTheme.primaryColor,
+    Color color = TripMapMarkerStyle.ownLocation,
     double width = 4.0,
   }) => MapAnnotationService.replacePolyline(
     annotationManager,

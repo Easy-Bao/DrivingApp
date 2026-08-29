@@ -15,8 +15,9 @@ import 'package:driver_app/src/features/trip/data/datasources/telemetry_remote_d
 import 'package:driver_app/src/features/trip/data/repositories/driver_ride_repository.dart';
 import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_repository.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class AppModule extends Module {
   final SharedPreferences _prefs;
@@ -32,6 +33,17 @@ class AppModule extends Module {
   void binds(Injector i) {
     i
       ..addSingleton<SharedPreferences>((i) => _prefs)
+      ..addLazySingleton<ThemeModeCubit>(
+        (i) => ThemeModeCubit(
+          initialMode: ThemeModeCodec.decode(
+            i.get<SharedPreferences>().getString(appThemeModePreferenceKey),
+          ),
+          savePreference: (value) => i.get<SharedPreferences>().setString(
+            appThemeModePreferenceKey,
+            value,
+          ),
+        ),
+      )
       ..addLazySingleton<SecureSessionService>((i) => _sessionService)
       ..addLazySingleton<BackgroundTelemetryService>(
         (i) => BackgroundTelemetryService(

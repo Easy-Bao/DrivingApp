@@ -1,5 +1,4 @@
 import 'package:driver_app/src/core/location/location.dart';
-import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/home/home_routes.dart';
 import 'package:driver_app/src/features/trip/bloc/ride_flow/ride_flow_cubit.dart';
@@ -8,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class FareSummaryPage extends StatefulWidget {
   final String pickup;
@@ -81,7 +81,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.canvasColor,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -114,12 +114,12 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
                     child: ElevatedButton.icon(
                       onPressed: _isSubmitting ? null : _confirmCashPayment,
                       icon: _isSubmitting
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: AppTheme.surface,
+                                color: context.semanticColors.onSuccess,
                               ),
                             )
                           : const Icon(LucideIcons.check, size: 18),
@@ -129,8 +129,8 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
                             : 'Confirm cash collected',
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.complete,
-                        foregroundColor: AppTheme.activeControlForeground,
+                        backgroundColor: context.semanticColors.success,
+                        foregroundColor: context.semanticColors.onSuccess,
                         shape: const StadiumBorder(),
                       ),
                     ),
@@ -152,14 +152,14 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
           tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           padding: EdgeInsets.zero,
           style: IconButton.styleFrom(shape: const CircleBorder()),
-          icon: const Icon(
+          icon: Icon(
             LucideIcons.arrow_left,
             size: 21,
-            color: AppTheme.primaryColor,
+            color: context.colorScheme.onSurface,
           ),
         ),
         const SizedBox(width: 12),
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -167,14 +167,17 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
                 'Cash collection',
                 style: TextStyle(
                   fontSize: 19,
-                  fontWeight: FontWeight.w900,
-                  color: AppTheme.primaryColor,
+                  fontWeight: FontWeight.w800,
+                  color: context.colorScheme.onSurface,
                 ),
               ),
               SizedBox(height: 1),
               Text(
                 'Confirm after receiving payment',
-                style: TextStyle(fontSize: 12, color: AppTheme.tertiaryColor),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -188,7 +191,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor,
+        color: context.colorScheme.primary,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -197,12 +200,12 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: AppTheme.surface.withValues(alpha: 0.14),
+              color: context.colorScheme.onPrimary.withValues(alpha: 0.14),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               LucideIcons.banknote,
-              color: AppTheme.surface,
+              color: context.colorScheme.onPrimary,
               size: 20,
             ),
           ),
@@ -216,16 +219,16 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.surface.withValues(alpha: 0.72),
+                    color: context.colorScheme.onPrimary,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   formatPesoAmount(widget.fare),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 30,
-                    fontWeight: FontWeight.w900,
-                    color: AppTheme.surface,
+                    fontWeight: FontWeight.w800,
+                    color: context.colorScheme.onPrimary,
                   ),
                 ),
               ],
@@ -234,15 +237,15 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
             decoration: BoxDecoration(
-              color: AppTheme.surface.withValues(alpha: 0.14),
+              color: context.colorScheme.onPrimary.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(99),
             ),
-            child: const Text(
+            child: Text(
               'Cash',
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w800,
-                color: AppTheme.surface,
+                color: context.colorScheme.onPrimary,
               ),
             ),
           ),
@@ -256,19 +259,19 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: context.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.borderSide),
+        border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Trip details',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w800,
-              color: AppTheme.primaryColor,
+              color: context.colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 12),
@@ -276,21 +279,21 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
             icon: LucideIcons.circle_dot,
             label: 'Pickup',
             address: widget.pickup,
-            color: AppTheme.complete,
+            color: context.semanticColors.success,
           ),
-          const Padding(
+          Padding(
             padding: EdgeInsets.only(left: 6, top: 5, bottom: 5),
             child: SizedBox(
               height: 12,
               width: 1,
-              child: ColoredBox(color: AppTheme.borderSide),
+              child: ColoredBox(color: context.colorScheme.outlineVariant),
             ),
           ),
           _buildPlace(
             icon: LucideIcons.map_pin,
             label: 'Drop Off',
             address: widget.dropoff,
-            color: AppTheme.accent,
+            color: context.colorScheme.primary,
           ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
@@ -328,10 +331,10 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
             children: [
               Text(
                 label.toUpperCase(),
-                style: const TextStyle(
-                  fontSize: 9,
+                style: TextStyle(
+                  fontSize: 11,
                   fontWeight: FontWeight.w800,
-                  color: AppTheme.tertiaryColor,
+                  color: context.colorScheme.onSurfaceVariant,
                   letterSpacing: 0.7,
                 ),
               ),
@@ -340,10 +343,10 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
                 address,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryColor,
+                  color: context.colorScheme.onSurface,
                 ),
               ),
             ],
@@ -358,22 +361,22 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
       child: Container(
         height: 42,
         decoration: BoxDecoration(
-          color: AppTheme.neutralColor,
+          color: context.colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(13),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 14, color: AppTheme.tertiaryColor),
+            Icon(icon, size: 14, color: context.colorScheme.onSurfaceVariant),
             const SizedBox(width: 6),
             Flexible(
               child: Text(
                 value,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
-                  color: AppTheme.primaryColor,
+                  color: context.colorScheme.onSurface,
                 ),
               ),
             ),
@@ -388,14 +391,14 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: AppTheme.cancel.withValues(alpha: 0.08),
+        color: context.colorScheme.error.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Text(
         _error!,
         textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: AppTheme.cancel,
+        style: TextStyle(
+          color: context.colorScheme.error,
           fontSize: 12,
           fontWeight: FontWeight.w700,
         ),

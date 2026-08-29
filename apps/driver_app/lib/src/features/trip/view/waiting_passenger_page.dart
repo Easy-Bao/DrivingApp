@@ -1,5 +1,3 @@
-import 'package:driver_app/src/core/theme/app_theme.dart';
-
 import 'dart:async';
 import 'dart:developer' as dev;
 
@@ -15,6 +13,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class WaitingPassengerPage extends StatefulWidget {
@@ -192,7 +191,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
         : '00:00';
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: context.canvasColor,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (ctx, constraints) {
@@ -332,14 +331,14 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.cancel.withValues(alpha: 0.08),
+        color: context.colorScheme.error.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
         _errorMessage!,
         textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: AppTheme.cancel,
+        style: TextStyle(
+          color: context.colorScheme.error,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -351,7 +350,7 @@ Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
   return IconButton(
     tooltip: MaterialLocalizations.of(context).backButtonTooltip,
     onPressed: onPressed,
-    color: AppTheme.primaryColor,
+    color: context.colorScheme.onSurface,
     icon: const Icon(LucideIcons.arrow_left),
   );
 }

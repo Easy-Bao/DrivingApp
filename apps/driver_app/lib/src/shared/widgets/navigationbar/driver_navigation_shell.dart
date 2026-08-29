@@ -1,4 +1,3 @@
-import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/shared/widgets/navigationbar/driver_floating_tab_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -27,7 +26,7 @@ class DriverTabBranchContainer extends StatelessWidget {
     onBranchChanged: (index) => navigationShell.goBranch(index),
     onNavigationSettled: onNavigationSettled,
     onPagePositionChanged: onPagePositionChanged,
-    backgroundColor: AppTheme.background,
+    backgroundColor: context.canvasColor,
     pageViewKey: 'driver-tab-page-view',
     children: children,
   );

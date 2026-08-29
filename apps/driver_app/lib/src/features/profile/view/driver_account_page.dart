@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:driver_app/src/core/location/location.dart';
 import 'package:driver_app/src/core/services/background_telemetry_service.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:driver_app/src/features/auth/auth_routes.dart';
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/profile/bloc/account/account_cubit.dart';
@@ -15,6 +14,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class DriverAccountPage extends StatefulWidget {
   const DriverAccountPage({super.key});
@@ -62,7 +62,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
         if (mounted) setState(() => _applyAccount(state.account));
       },
       child: Scaffold(
-        backgroundColor: AppTheme.background,
+        backgroundColor: context.canvasColor,
         body: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -80,14 +80,14 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text(
+                    Text(
                       'Account',
                       style: TextStyle(
                         fontSize: 27,
                         height: 1.1,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w800,
                         letterSpacing: -0.8,
-                        color: AppTheme.primaryColor,
+                        color: context.colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 26),
@@ -123,9 +123,9 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                           context: context,
                           applicationName: 'BaoRide Driver',
                           applicationVersion: '1.0.0',
-                          applicationIcon: const Icon(
+                          applicationIcon: Icon(
                             LucideIcons.car_front,
-                            color: AppTheme.primaryColor,
+                            color: context.colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -159,17 +159,17 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                 key: const ValueKey<String>('driver-profile-avatar'),
                 width: 76,
                 height: 76,
-                decoration: const BoxDecoration(
-                  color: AppTheme.secondaryColor,
+                decoration: BoxDecoration(
+                  color: context.colorScheme.secondaryContainer,
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
                 child: Text(
                   _getInitials(displayName),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 21,
-                    fontWeight: FontWeight.w900,
-                    color: AppTheme.primaryColor,
+                    fontWeight: FontWeight.w800,
+                    color: context.colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -182,12 +182,12 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                       displayName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
                         height: 1.15,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w800,
                         letterSpacing: -0.35,
-                        color: AppTheme.primaryColor,
+                        color: context.colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 7),
@@ -195,9 +195,9 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                       _phone.isEmpty ? 'Add your mobile number' : _phone,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: AppTheme.tertiaryColor,
+                        color: context.colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -247,7 +247,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
               height: 1,
               indent: 2,
               endIndent: 2,
-              color: AppTheme.borderSide.withValues(alpha: 0.65),
+              color: context.colorScheme.outlineVariant.withValues(alpha: 0.65),
             ),
         ],
       ],
@@ -289,7 +289,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
           flex: 2,
           child: Text(
             label,
-            style: const TextStyle(color: AppTheme.tertiaryColor),
+            style: TextStyle(color: context.colorScheme.onSurfaceVariant),
           ),
         ),
         const SizedBox(width: 12),
@@ -301,9 +301,9 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
             maxLines: 3,
             softWrap: true,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w700,
-              color: AppTheme.primaryColor,
+              color: context.colorScheme.onSurface,
             ),
           ),
         ),
@@ -368,8 +368,8 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
       style: TextStyle(
         fontSize: 13,
         height: 1.2,
-        fontWeight: FontWeight.w900,
-        color: AppTheme.primaryColor.withValues(alpha: 0.42),
+        fontWeight: FontWeight.w800,
+        color: context.colorScheme.onSurfaceVariant,
         letterSpacing: 0.7,
       ),
     );
@@ -390,11 +390,11 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                 children: [
                   Text(
                     item.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       height: 1.2,
                       fontWeight: FontWeight.w800,
-                      color: AppTheme.primaryColor,
+                      color: context.colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 5),
@@ -402,10 +402,10 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                     item.subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       height: 1.2,
-                      color: AppTheme.tertiaryColor,
+                      color: context.colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -415,7 +415,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
             const SizedBox(width: 14),
             Icon(
               LucideIcons.chevron_right,
-              color: AppTheme.primaryColor.withValues(alpha: 0.32),
+              color: context.colorScheme.onSurfaceVariant,
               size: 23,
             ),
           ],
@@ -432,19 +432,21 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
       child: OutlinedButton(
         onPressed: _isLoggingOut ? null : () => _handleLogout(context),
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppTheme.cancel,
-          side: BorderSide(color: AppTheme.cancel.withValues(alpha: 0.35)),
-          backgroundColor: AppTheme.cancel.withValues(alpha: 0.04),
+          foregroundColor: context.colorScheme.error,
+          side: BorderSide(
+            color: context.colorScheme.error.withValues(alpha: 0.35),
+          ),
+          backgroundColor: context.colorScheme.error.withValues(alpha: 0.04),
           shape: const StadiumBorder(),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
         ),
         child: _isLoggingOut
-            ? const SizedBox(
+            ? SizedBox(
                 width: 22,
                 height: 22,
                 child: CircularProgressIndicator(
                   strokeWidth: 2.4,
-                  color: AppTheme.cancel,
+                  color: context.colorScheme.error,
                 ),
               )
             : const Text('Log Out'),

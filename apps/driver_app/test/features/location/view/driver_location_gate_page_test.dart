@@ -1,4 +1,3 @@
-import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -9,7 +8,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.themeData,
+        theme: EasyRideTheme.light,
         home: LocationPermissionPage(onEnable: _noop, onSkip: _noop),
       ),
     );

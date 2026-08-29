@@ -1,10 +1,9 @@
-import 'package:driver_app/src/core/theme/app_theme.dart';
-
 import 'package:driver_app/src/features/trip/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/trip/bloc/ride_flow/ride_flow_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class InTransitPassengerCardWidget extends StatelessWidget {
   const InTransitPassengerCardWidget({super.key});
@@ -19,9 +18,9 @@ class InTransitPassengerCardWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: AppTheme.neutralColor,
+        color: context.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.borderSide),
+        border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Row(
         children: [
@@ -29,12 +28,12 @@ class InTransitPassengerCardWidget extends StatelessWidget {
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: AppTheme.secondarySurface,
+              color: context.colorScheme.primaryContainer,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               LucideIcons.user,
-              color: AppTheme.primaryColor,
+              color: context.colorScheme.onSurface,
               size: 16,
             ),
           ),
@@ -45,23 +44,26 @@ class InTransitPassengerCardWidget extends StatelessWidget {
               children: [
                 Text(
                   passengerName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
-                    color: AppTheme.primaryColor,
+                    color: context.colorScheme.onSurface,
                   ),
                 ),
-                const Text(
+                Text(
                   'Passenger Onboard',
-                  style: TextStyle(fontSize: 11, color: AppTheme.tertiaryColor),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
           ),
-          const Icon(
+          Icon(
             LucideIcons.user_round,
             size: 16,
-            color: AppTheme.tertiaryColor,
+            color: context.colorScheme.onSurfaceVariant,
           ),
         ],
       ),

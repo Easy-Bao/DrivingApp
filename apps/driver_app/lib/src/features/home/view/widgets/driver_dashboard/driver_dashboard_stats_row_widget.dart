@@ -1,8 +1,8 @@
-import 'package:driver_app/src/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:shared_ui/shared_ui.dart';
 
 class DriverDashboardStatsRowWidget extends StatelessWidget {
   final bool isLoadingStats;
@@ -35,6 +35,7 @@ class DriverDashboardStatsRowWidget extends StatelessWidget {
           children: [
             Expanded(
               child: _buildStatCard(
+                context,
                 label: "Today's Net Earnings",
                 value: formatPesoAmount(earnings),
                 skeletonWidth: 84,
@@ -43,6 +44,7 @@ class DriverDashboardStatsRowWidget extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _buildStatCard(
+                context,
                 label: 'Trips Today',
                 value: '$completedTrips',
                 skeletonWidth: 32,
@@ -54,7 +56,8 @@ class DriverDashboardStatsRowWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard({
+  Widget _buildStatCard(
+    BuildContext context, {
     required String label,
     required String value,
     required double skeletonWidth,
@@ -62,9 +65,9 @@ class DriverDashboardStatsRowWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppTheme.neutralColor,
+        color: context.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.borderSide),
+        border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,7 +77,7 @@ class DriverDashboardStatsRowWidget extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppTheme.primaryColor.withValues(alpha: 0.6),
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 6),
@@ -83,10 +86,10 @@ class DriverDashboardStatsRowWidget extends StatelessWidget {
           else
             Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
-                color: AppTheme.primaryColor,
+                color: context.colorScheme.onSurface,
               ),
             ),
         ],
@@ -112,26 +115,28 @@ class DriverDashboardErrorCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFF4F4),
+          color: context.colorScheme.error.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFFFC5C5)),
+          border: Border.all(
+            color: context.colorScheme.error.withValues(alpha: 0.24),
+          ),
         ),
         child: Row(
           children: [
-            const Icon(
+            Icon(
               LucideIcons.circle_alert,
               size: 20,
-              color: Color(0xFFD92D3A),
+              color: context.colorScheme.error,
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 message,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   height: 1.35,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF8F1D29),
+                  color: context.colorScheme.error,
                 ),
               ),
             ),

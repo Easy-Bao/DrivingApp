@@ -1,5 +1,4 @@
 import 'package:driver_app/src/core/location/location.dart';
-import 'package:driver_app/src/core/theme/app_theme.dart';
 
 import 'dart:async';
 
@@ -191,6 +190,7 @@ class _InTransitPageState extends State<InTransitPage> {
         controller: controller,
         defaultLat: defaultLat,
         defaultLng: defaultLng,
+        routeColor: context.colorScheme.primary,
       ),
     );
 
@@ -254,7 +254,7 @@ class _InTransitPageState extends State<InTransitPage> {
           }
 
           return Scaffold(
-            backgroundColor: AppTheme.surface,
+            backgroundColor: context.colorScheme.surface,
             body: Stack(
               children: [
                 Positioned.fill(
@@ -279,13 +279,13 @@ class _InTransitPageState extends State<InTransitPage> {
                     top: false,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: AppTheme.surface,
+                        color: context.colorScheme.surface,
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(24),
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.primaryColor.withValues(
+                            color: context.colorScheme.onSurface.withValues(
                               alpha: 0.12,
                             ),
                             blurRadius: 22,
@@ -301,7 +301,7 @@ class _InTransitPageState extends State<InTransitPage> {
                             width: 32,
                             height: 4,
                             decoration: BoxDecoration(
-                              color: AppTheme.borderSide,
+                              color: context.colorScheme.outlineVariant,
                               borderRadius: BorderRadius.circular(99),
                             ),
                           ),
@@ -337,19 +337,22 @@ Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
   return Tooltip(
     message: MaterialLocalizations.of(context).backButtonTooltip,
     child: Material(
-      color: AppTheme.surface,
+      color: context.colorScheme.surface,
       elevation: 2,
-      shadowColor: AppTheme.primaryColor.withValues(alpha: 0.08),
+      shadowColor: context.colorScheme.onSurface.withValues(alpha: 0.08),
       shape: const CircleBorder(),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onPressed,
         customBorder: const CircleBorder(),
-        child: const SizedBox(
+        child: SizedBox(
           width: 46,
           height: 46,
           child: Center(
-            child: Icon(LucideIcons.arrow_left, color: AppTheme.primaryColor),
+            child: Icon(
+              LucideIcons.arrow_left,
+              color: context.colorScheme.onSurface,
+            ),
           ),
         ),
       ),
