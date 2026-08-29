@@ -44,6 +44,8 @@ void main() {
 
     expect(profileTapCount, 2);
     expect(find.byIcon(Icons.edit), findsNothing);
+    expect(find.text('Safety Center'), findsNothing);
+    expect(find.text('Appearance and app behavior'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

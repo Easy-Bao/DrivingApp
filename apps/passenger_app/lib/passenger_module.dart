@@ -28,7 +28,6 @@ class PassengerModule extends Module {
     HomeModule.binds(i);
     InboxModule.binds(i);
     ProfileModule.binds(i);
-    SettingsModule.binds(i);
     TripModule.binds(i);
 
     i

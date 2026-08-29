@@ -16,4 +16,5 @@ export 'package:shared_ui/src/widgets/custom_toast.dart';
 export 'package:shared_ui/src/widgets/location_permission_page.dart';
 export 'package:shared_ui/src/widgets/safe_client_error_widget.dart';
 export 'package:shared_ui/src/widgets/swipe_active_tab_indicator.dart';
+export 'package:shared_ui/src/widgets/theme_mode_card.dart';
 export 'package:shared_ui/src/widgets/trip_history_filter_sheet.dart';

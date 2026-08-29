@@ -51,21 +51,13 @@ class AccountPage extends StatelessWidget {
                       const SizedBox(height: 26),
                       _buildProfileSummary(context, state),
                       const SizedBox(height: 38),
-                      _buildSectionTitle(context, 'Places and Safety'),
+                      _buildSectionTitle(context, 'Places'),
                       const SizedBox(height: 12),
                       _buildMenuGroup(context, [
                         _AccountMenuItem(
                           title: 'Saved Places',
                           subtitle: 'Home, work, and favorite destinations',
                           onTap: () => context.pushNamed(ProfileRoutes.help),
-                        ),
-                        _AccountMenuItem(
-                          title: 'Safety Center',
-                          subtitle: 'Ride safety tools and guidance',
-                          onTap: () => CustomToast.show(
-                            context,
-                            'Safety Center is coming soon.',
-                          ),
                         ),
                       ]),
                       const SizedBox(height: 32),
@@ -80,7 +72,7 @@ class AccountPage extends StatelessWidget {
                         ),
                         _AccountMenuItem(
                           title: 'Settings',
-                          subtitle: 'Notifications and app preferences',
+                          subtitle: 'Appearance and app behavior',
                           onTap: () =>
                               context.pushNamed(SettingsRoutes.settings),
                         ),

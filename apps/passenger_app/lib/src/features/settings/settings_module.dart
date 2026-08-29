@@ -1,39 +1,58 @@
-import 'dart:async';
-
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/features/settings/bloc/settings/settings_cubit.dart';
-import 'package:passenger_app/src/features/settings/data/repositories/settings_repository.dart';
-import 'package:passenger_app/src/features/settings/domain/repositories/i_settings_repository.dart';
 import 'package:passenger_app/src/features/settings/settings_routes.dart';
+import 'package:passenger_app/src/features/settings/view/about_bao_ride_page.dart';
+import 'package:passenger_app/src/features/settings/view/appearance_page.dart';
+import 'package:passenger_app/src/features/settings/view/location_access_status_page.dart';
 import 'package:passenger_app/src/features/settings/view/settings_page.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:passenger_app/src/features/settings/view/terms_of_service_page.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class SettingsModule {
   SettingsModule._();
 
-  static void binds(Injector i) {
-    i
-      ..addLazySingleton<ISettingsRepository>(
-        (i) => SettingsRepository(preferences: i.get<SharedPreferences>()),
-      )
-      ..addFactory<SettingsCubit>(
-        (i) => SettingsCubit(settingsRepository: i.get<ISettingsRepository>()),
-      );
-  }
-
   static List<ModularRoute> routes = [
     ChildRoute(
       name: SettingsRoutes.settings,
       SettingsRoutes.settingsPath,
-      child: (context, GoRouterState state) => BlocProvider(
-        create: (_) {
-          final cubit = Modular.get<SettingsCubit>();
-          unawaited(cubit.loadSettings());
-          return cubit;
-        },
-        child: const SettingsPage(),
+      child: (context, GoRouterState state) => const SettingsPage(),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
+    ),
+    ChildRoute(
+      name: SettingsRoutes.appearance,
+      SettingsRoutes.appearancePath,
+      child: (context, GoRouterState state) => const AppearancePage(),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
+    ),
+    ChildRoute(
+      name: SettingsRoutes.locationAccess,
+      SettingsRoutes.locationAccessPath,
+      child: (context, GoRouterState state) => const LocationAccessStatusPage(),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
+    ),
+    ChildRoute(
+      name: SettingsRoutes.terms,
+      SettingsRoutes.termsPath,
+      child: (context, GoRouterState state) => const TermsOfServicePage(),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
+    ),
+    ChildRoute(
+      name: SettingsRoutes.about,
+      SettingsRoutes.aboutPath,
+      child: (context, GoRouterState state) => const AboutBaoRidePage(),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
+    ),
+    ChildRoute(
+      name: SettingsRoutes.licenses,
+      SettingsRoutes.licensesPath,
+      child: (context, GoRouterState state) => const LicensePage(
+        applicationName: 'BaoRide Passenger',
+        applicationVersion: '1.0.0',
       ),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
