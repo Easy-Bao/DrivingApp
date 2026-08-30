@@ -7,6 +7,7 @@ class CustomPageTransition extends GoTransition {
     super.child,
   }) : super(
           builder: (route, context, animation, secondaryAnimation, child) {
+            final colors = Theme.of(context).colorScheme;
             final primarySlide = Tween<Offset>(
               begin: const Offset(1.0, 0.0),
               end: Offset.zero,
@@ -35,7 +36,7 @@ class CustomPageTransition extends GoTransition {
                   decoration: BoxDecoration(
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
+                        color: colors.shadow.withValues(alpha: 0.08),
                         blurRadius: 16,
                         spreadRadius: -4,
                         offset: const Offset(-8, 0),

@@ -29,4 +29,37 @@ void main() {
     CustomToast.dismiss();
     await tester.pump();
   });
+
+  testWidgets('uses semantic error colors in dark mode', (tester) async {
+    late BuildContext toastContext;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: EasyRideTheme.dark,
+        home: Builder(
+          builder: (context) {
+            toastContext = context;
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+
+    CustomToast.show(toastContext, 'dark error', isError: true);
+    await tester.pump();
+
+    final toastContainer = tester.widget<Container>(
+      find
+          .descendant(
+            of: find.byType(MaterialApp),
+            matching: find.byType(Container),
+          )
+          .last,
+    );
+    final decoration = toastContainer.decoration! as BoxDecoration;
+    expect(decoration.color, EasyRideTheme.dark.colorScheme.errorContainer);
+
+    CustomToast.dismiss();
+    await tester.pump();
+  });
 }

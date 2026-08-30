@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:shared_ui/src/theme/easy_ride_theme.dart';
 
 /// Installs a non-diagnostic framework error surface for both client apps.
 ///
@@ -37,6 +38,9 @@ class SafeClientErrorApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: EasyRideTheme.light,
+      darkTheme: EasyRideTheme.dark,
+      themeMode: ThemeMode.system,
       home: Scaffold(body: SafeClientErrorWidget(message: message)),
     );
   }
@@ -52,12 +56,17 @@ class SafeClientErrorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Material(
-      color: Colors.white,
+      color: colorScheme.surface,
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Text(message, textAlign: TextAlign.center),
+          child: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: colorScheme.onSurface),
+          ),
         ),
       ),
     );
