@@ -27,6 +27,7 @@ class PickupNavigationPage extends StatefulWidget {
   final IDriverRideRepository rideRepository;
   final IChatRepositoryFactory chatRepositoryFactory;
   final SecureSessionService sessionService;
+  final AppLifecycleCoordinator lifecycleCoordinator;
 
   const PickupNavigationPage({
     super.key,
@@ -38,6 +39,7 @@ class PickupNavigationPage extends StatefulWidget {
     required this.rideRepository,
     required this.chatRepositoryFactory,
     required this.sessionService,
+    required this.lifecycleCoordinator,
   });
 
   @override
@@ -50,7 +52,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
   bool _isConfirmingArrival = false;
   double? _pickupLat;
   double? _pickupLng;
-  Timer? _trackingTimer;
+  late final AppLifecyclePeriodicTask _routeTrackingTask;
   late final LiveMapBloc _liveMapBloc;
   bool _isRefreshingRoute = false;
 
@@ -63,6 +65,13 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
   void initState() {
     super.initState();
     _liveMapBloc = Modular.get<LiveMapBloc>();
+    final cubit = BlocProvider.of<RideFlowCubit>(context);
+    _routeTrackingTask = AppLifecyclePeriodicTask(
+      lifecycleCoordinator: widget.lifecycleCoordinator,
+      interval: const Duration(seconds: 4),
+      onTick: () => _refreshRoute(cubit),
+      runImmediatelyOnResume: true,
+    );
     unawaited(_initializeChatRepository());
     unawaited(_loadRoute());
   }
@@ -79,56 +88,57 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
 
   @override
   void dispose() {
-    _trackingTimer?.cancel();
+    unawaited(_routeTrackingTask.dispose());
     unawaited(_chatRepository?.dispose());
     unawaited(_liveMapBloc.close());
     super.dispose();
   }
 
   void _startRouteTracking() {
-    final cubit = BlocProvider.of<RideFlowCubit>(context);
-    _trackingTimer?.cancel();
-    _trackingTimer = Timer.periodic(const Duration(seconds: 4), (timer) async {
-      if (!mounted || _isRefreshingRoute) return;
-      _isRefreshingRoute = true;
+    _routeTrackingTask.start();
+  }
+
+  Future<void> _refreshRoute(RideFlowCubit cubit) async {
+    if (!mounted || _isRefreshingRoute) return;
+    _isRefreshingRoute = true;
+
+    try {
+      await _updateUnreadMessagesCount(cubit);
+      final rideId = cubit.activeRideId;
+      if (rideId == null || rideId.isEmpty) return;
 
       try {
-        await _updateUnreadMessagesCount(cubit);
-        final rideId = cubit.activeRideId;
-        if (rideId == null || rideId.isEmpty) return;
-
-        try {
-          final pos =
-              LocationService.lastPosition ??
-              await LocationService.getCurrentPosition();
-          if (pos != null) {
-            if (mounted) {
-              _liveMapBloc.add(
-                DispatchTelemetryLocationEvent(
-                  lat: pos.latitude,
-                  lng: pos.longitude,
-                ),
-              );
-            }
-            if (mounted && _pickupLat != null && _pickupLng != null) {
-              _liveMapBloc.add(
-                UpdateLocationsAndDrawRouteEvent(
-                  driverLat: pos.latitude,
-                  driverLng: pos.longitude,
-                  passengerLat: _pickupLat!,
-                  passengerLng: _pickupLng!,
-                ),
-              );
-            }
+        final pos =
+            LocationService.lastPosition ??
+            await LocationService.getCurrentPosition();
+        if (pos != null) {
+          if (mounted) {
+            _liveMapBloc.add(
+              DispatchTelemetryLocationEvent(
+                lat: pos.latitude,
+                lng: pos.longitude,
+              ),
+            );
           }
-        } catch (_) {}
-      } finally {
-        _isRefreshingRoute = false;
-      }
-    });
+          if (mounted && _pickupLat != null && _pickupLng != null) {
+            _liveMapBloc.add(
+              UpdateLocationsAndDrawRouteEvent(
+                driverLat: pos.latitude,
+                driverLng: pos.longitude,
+                passengerLat: _pickupLat!,
+                passengerLng: _pickupLng!,
+              ),
+            );
+          }
+        }
+      } catch (_) {}
+    } finally {
+      _isRefreshingRoute = false;
+    }
   }
 
   Future<void> _updateUnreadMessagesCount(RideFlowCubit cubit) async {
+    if (!widget.lifecycleCoordinator.isForeground) return;
     try {
       final rideId = cubit.activeRideId;
       if (rideId == null || rideId.isEmpty) return;

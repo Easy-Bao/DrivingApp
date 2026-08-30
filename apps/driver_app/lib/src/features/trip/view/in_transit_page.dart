@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class InTransitPage extends StatefulWidget {
@@ -22,6 +23,7 @@ class InTransitPage extends StatefulWidget {
   final double distance;
   final double fare;
   final IDriverRideRepository rideRepository;
+  final AppLifecycleCoordinator lifecycleCoordinator;
 
   const InTransitPage({
     super.key,
@@ -31,6 +33,7 @@ class InTransitPage extends StatefulWidget {
     required this.fare,
     required this.duration,
     required this.rideRepository,
+    required this.lifecycleCoordinator,
   });
 
   @override
@@ -44,7 +47,7 @@ class _InTransitPageState extends State<InTransitPage> {
   double? _destLng;
   double? _passengerLat;
   double? _passengerLng;
-  Timer? _trackingTimer;
+  late final AppLifecyclePeriodicTask _trackingTask;
   late final LiveMapBloc _liveMapBloc;
   bool _isTracking = false;
 
@@ -52,59 +55,66 @@ class _InTransitPageState extends State<InTransitPage> {
   void initState() {
     super.initState();
     _liveMapBloc = Modular.get<LiveMapBloc>();
+    _trackingTask = AppLifecyclePeriodicTask(
+      lifecycleCoordinator: widget.lifecycleCoordinator,
+      interval: const Duration(seconds: 4),
+      onTick: _refreshTracking,
+      runImmediatelyOnResume: true,
+    );
     unawaited(_loadRoute());
   }
 
   @override
   void dispose() {
-    _trackingTimer?.cancel();
+    unawaited(_trackingTask.dispose());
     unawaited(_liveMapBloc.close());
     super.dispose();
   }
 
   void _startTracking() {
-    _trackingTimer?.cancel();
-    _trackingTimer = Timer.periodic(const Duration(seconds: 4), (timer) async {
-      if (!mounted || _isTracking) return;
-      _isTracking = true;
+    _trackingTask.start();
+  }
 
-      try {
-        final rideId = BlocProvider.of<RideFlowCubit>(context).activeRideId;
-        if (rideId != null && rideId.isNotEmpty) {
-          await _refreshPassengerLocation(rideId);
-        }
-        final pos =
-            LocationService.lastPosition ??
-            await LocationService.getCurrentPosition();
-        if (pos != null) {
-          if (mounted) {
-            _liveMapBloc.add(
-              DispatchTelemetryLocationEvent(
-                lat: pos.latitude,
-                lng: pos.longitude,
-              ),
-            );
-          }
-          if (mounted) {
-            _liveMapBloc.add(
-              UpdateLocationsAndDrawRouteEvent(
-                driverLat: pos.latitude,
-                driverLng: pos.longitude,
-                passengerLat: _passengerLat,
-                passengerLng: _passengerLng,
-                routeTargetLat: _destLat,
-                routeTargetLng: _destLng,
-              ),
-            );
-          }
-        }
-      } catch (_) {
-        // The next bounded refresh can recover from a transient location or
-        // telemetry failure without breaking the active trip screen.
-      } finally {
-        _isTracking = false;
+  Future<void> _refreshTracking() async {
+    if (!mounted || _isTracking) return;
+    _isTracking = true;
+
+    try {
+      final rideId = BlocProvider.of<RideFlowCubit>(context).activeRideId;
+      if (rideId != null && rideId.isNotEmpty) {
+        await _refreshPassengerLocation(rideId);
       }
-    });
+      final pos =
+          LocationService.lastPosition ??
+          await LocationService.getCurrentPosition();
+      if (pos != null) {
+        if (mounted) {
+          _liveMapBloc.add(
+            DispatchTelemetryLocationEvent(
+              lat: pos.latitude,
+              lng: pos.longitude,
+            ),
+          );
+        }
+        if (mounted) {
+          _liveMapBloc.add(
+            UpdateLocationsAndDrawRouteEvent(
+              driverLat: pos.latitude,
+              driverLng: pos.longitude,
+              passengerLat: _passengerLat,
+              passengerLng: _passengerLng,
+              routeTargetLat: _destLat,
+              routeTargetLng: _destLng,
+            ),
+          );
+        }
+      }
+    } catch (_) {
+      // The next bounded refresh can recover from a transient location or
+      // telemetry failure without breaking the active trip screen.
+    } finally {
+      _isTracking = false;
+    }
   }
 
   Future<void> _loadRoute() async {

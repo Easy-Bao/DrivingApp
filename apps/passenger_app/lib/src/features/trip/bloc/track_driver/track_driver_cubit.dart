@@ -12,16 +12,19 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
   final ITrackRepository _repository;
   final SecureSessionService _sessionService;
   final BackgroundTelemetryService? _backgroundTelemetryService;
-  Timer? _ticker;
+  final AppLifecycleCoordinator _lifecycleCoordinator;
+  AppLifecyclePeriodicTask? _trackingTask;
   bool _isSyncing = false;
 
   TrackDriverCubit({
     required ITrackRepository repository,
     required SecureSessionService sessionService,
+    required AppLifecycleCoordinator lifecycleCoordinator,
     BackgroundTelemetryService? backgroundTelemetryService,
   }) : _repository = repository,
        _sessionService = sessionService,
        _backgroundTelemetryService = backgroundTelemetryService,
+       _lifecycleCoordinator = lifecycleCoordinator,
        super(const TrackDriverInitial());
 
   Future<void> startTracking({
@@ -37,7 +40,8 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     double destinationLat = 0,
     double destinationLng = 0,
   }) async {
-    _ticker?.cancel();
+    unawaited(_trackingTask?.dispose());
+    _trackingTask = null;
 
     final session = _sessionService;
     if (rideId.isNotEmpty) {
@@ -55,7 +59,11 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     var trackingCompleted = false;
 
     Future<void> syncTracking() async {
-      if (isClosed || _isSyncing || trackingCompleted || activeRideId.isEmpty) {
+      if (isClosed ||
+          !_lifecycleCoordinator.isForeground ||
+          _isSyncing ||
+          trackingCompleted ||
+          activeRideId.isEmpty) {
         return;
       }
 
@@ -70,6 +78,8 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
             if (isClosed) return;
             if (rideUpdate.status == RideStatus.completed) {
               trackingCompleted = true;
+              unawaited(_trackingTask?.dispose());
+              _trackingTask = null;
               emit(
                 TrackDriverCompleted(
                   driverId: rideUpdate.driverId ?? driverId,
@@ -154,7 +164,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
 
             final eta = _getEtaLabel(rideUpdate.status);
 
-            if (!isClosed) {
+            if (!isClosed && _lifecycleCoordinator.isForeground) {
               emit(
                 TrackDriverInProgress(
                   driverLat: driverLat!,
@@ -182,12 +192,16 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
       }
     }
 
-    await syncTracking();
+    if (_lifecycleCoordinator.isForeground) await syncTracking();
     if (!trackingCompleted && !isClosed) {
-      _ticker = Timer.periodic(
-        const Duration(seconds: 2),
-        (_) => unawaited(syncTracking()),
+      final task = AppLifecyclePeriodicTask(
+        lifecycleCoordinator: _lifecycleCoordinator,
+        interval: const Duration(seconds: 2),
+        onTick: syncTracking,
+        runImmediatelyOnResume: true,
       );
+      _trackingTask = task;
+      task.start();
     }
   }
 
@@ -211,7 +225,8 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
   }
 
   Future<void> cancelTrip() async {
-    _ticker?.cancel();
+    unawaited(_trackingTask?.dispose());
+    _trackingTask = null;
     try {
       final rideId = await _sessionService.readActiveRideId() ?? '';
       if (rideId.isNotEmpty) {
@@ -240,7 +255,8 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
 
   @override
   Future<void> close() {
-    _ticker?.cancel();
+    unawaited(_trackingTask?.dispose());
+    _trackingTask = null;
     unawaited(_stopBackgroundTelemetry());
     return super.close();
   }

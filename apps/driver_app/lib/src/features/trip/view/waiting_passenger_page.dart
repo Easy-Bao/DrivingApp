@@ -25,6 +25,7 @@ class WaitingPassengerPage extends StatefulWidget {
   final IDriverRideRepository rideRepository;
   final IChatRepositoryFactory chatRepositoryFactory;
   final SecureSessionService sessionService;
+  final AppLifecycleCoordinator lifecycleCoordinator;
 
   const WaitingPassengerPage({
     super.key,
@@ -36,6 +37,7 @@ class WaitingPassengerPage extends StatefulWidget {
     required this.rideRepository,
     required this.chatRepositoryFactory,
     required this.sessionService,
+    required this.lifecycleCoordinator,
   });
 
   @override
@@ -48,7 +50,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
   bool _isInitialChatMessagesCountFetched = false;
   bool _isStartingTrip = false;
   bool _isPollingChat = false;
-  Timer? _chatPollTimer;
+  late final AppLifecyclePeriodicTask _chatPollingTask;
   IChatRepository? _chatRepository;
   String? _errorMessage;
 
@@ -56,12 +58,14 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
   void initState() {
     super.initState();
     final cubit = BlocProvider.of<RideFlowCubit>(context);
-    unawaited(_initializeChatRepository(cubit));
-    _chatPollTimer = Timer.periodic(
-      const Duration(seconds: 4),
-      (_) => unawaited(_updateUnreadMessagesCount(cubit)),
+    _chatPollingTask = AppLifecyclePeriodicTask(
+      lifecycleCoordinator: widget.lifecycleCoordinator,
+      interval: const Duration(seconds: 4),
+      onTick: () => _updateUnreadMessagesCount(cubit),
+      runImmediately: true,
     );
-    unawaited(_updateUnreadMessagesCount(cubit));
+    unawaited(_initializeChatRepository(cubit));
+    _chatPollingTask.start();
   }
 
   Future<void> _initializeChatRepository(RideFlowCubit cubit) async {
@@ -75,12 +79,13 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
 
   @override
   void dispose() {
-    _chatPollTimer?.cancel();
+    unawaited(_chatPollingTask.dispose());
     unawaited(_chatRepository?.dispose());
     super.dispose();
   }
 
   Future<void> _updateUnreadMessagesCount(RideFlowCubit cubit) async {
+    if (!widget.lifecycleCoordinator.isForeground) return;
     if (_isPollingChat) return;
     _isPollingChat = true;
     try {

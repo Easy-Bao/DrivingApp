@@ -81,6 +81,7 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
             return TrackDriverCubit(
               repository: Modular.get<ITrackRepository>(),
               sessionService: Modular.get<SecureSessionService>(),
+              lifecycleCoordinator: _lifecycleCoordinator,
             );
           },
         ),

@@ -27,13 +27,14 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final BackgroundTelemetryService? _backgroundTelemetryService;
   final InboxCubit? _inboxCubit;
   final RealtimeWebSocketClient? _realtimeClient;
+  final AppLifecycleCoordinator _lifecycleCoordinator;
   final int _nearestDriverMaxAttempts;
   final Duration _nearestDriverRetryDelay;
   final Duration _offerRefreshInterval;
 
   StreamSubscription<RealtimeEvent>? _realtimeEventsSubscription;
   StreamSubscription<RealtimeConnectionState>? _realtimeStateSubscription;
-  Timer? _offerRefreshTimer;
+  AppLifecyclePeriodicTask? _offerRefreshTask;
 
   int? _totalTrips;
   List<Map<String, dynamic>> _reviews = [];
@@ -60,6 +61,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     InboxCubit? inboxCubit,
     BackgroundTelemetryService? backgroundTelemetryService,
     RealtimeWebSocketClient? realtimeClient,
+    required AppLifecycleCoordinator lifecycleCoordinator,
     int nearestDriverMaxAttempts = 5,
     Duration nearestDriverRetryDelay = const Duration(seconds: 2),
     Duration offerRefreshInterval = const Duration(seconds: 3),
@@ -72,6 +74,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
        _inboxCubit = inboxCubit,
        _backgroundTelemetryService = backgroundTelemetryService,
        _realtimeClient = realtimeClient,
+       _lifecycleCoordinator = lifecycleCoordinator,
        _nearestDriverMaxAttempts = nearestDriverMaxAttempts,
        _nearestDriverRetryDelay = nearestDriverRetryDelay,
        _offerRefreshInterval = offerRefreshInterval,
@@ -432,7 +435,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
   Future<void> _connectRealtime() async {
     final realtimeClient = _realtimeClient;
-    if (realtimeClient == null) return;
+    if (realtimeClient == null || !_lifecycleCoordinator.isForeground) return;
     try {
       await realtimeClient.start();
     } catch (error) {
@@ -441,16 +444,22 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   void _startOfferRefresh(String sessionId) {
-    _offerRefreshTimer?.cancel();
-    unawaited(_loadOfferSnapshot(sessionId));
-    _offerRefreshTimer = Timer.periodic(
-      _offerRefreshInterval,
-      (_) => unawaited(_loadOfferSnapshot(sessionId)),
+    unawaited(_offerRefreshTask?.dispose());
+    final task = AppLifecyclePeriodicTask(
+      lifecycleCoordinator: _lifecycleCoordinator,
+      interval: _offerRefreshInterval,
+      onTick: () => _loadOfferSnapshot(sessionId),
+      runImmediately: true,
     );
+    _offerRefreshTask = task;
+    task.start();
   }
 
   Future<void> _loadOfferSnapshot(String sessionId) async {
-    if (isClosed || _activeBidSessionId != sessionId || _isRefreshingOffers) {
+    if (isClosed ||
+        !_lifecycleCoordinator.isForeground ||
+        _activeBidSessionId != sessionId ||
+        _isRefreshingOffers) {
       return;
     }
     _isRefreshingOffers = true;
@@ -459,7 +468,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         (failure) =>
             dev.log('Failed to refresh booking offers: ${failure.message}'),
         (offers) {
-          if (!isClosed && _activeBidSessionId == sessionId) {
+          if (!isClosed &&
+              _lifecycleCoordinator.isForeground &&
+              _activeBidSessionId == sessionId) {
             add(UpdateOffersEvent(offers));
           }
         },
@@ -675,8 +686,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   void _cleanupSubscriptions() {
-    _offerRefreshTimer?.cancel();
-    _offerRefreshTimer = null;
+    unawaited(_offerRefreshTask?.dispose());
+    _offerRefreshTask = null;
     _isRefreshingOffers = false;
     _cleanupRealtimeSubscriptions();
   }

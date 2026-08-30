@@ -72,6 +72,7 @@ class TripModule {
           inboxCubit: i.get<InboxCubit>(),
           backgroundTelemetryService: i.get<BackgroundTelemetryService>(),
           realtimeClient: i.get<RealtimeWebSocketClient>(),
+          lifecycleCoordinator: i.get<AppLifecycleCoordinator>(),
         ),
       )
       ..addFactory<LiveMapBloc>(
@@ -81,6 +82,7 @@ class TripModule {
         (i) => TrackDriverCubit(
           repository: i.get<ITrackRepository>(),
           sessionService: i.get<SecureSessionService>(),
+          lifecycleCoordinator: i.get<AppLifecycleCoordinator>(),
           backgroundTelemetryService: i.get<BackgroundTelemetryService>(),
         ),
       );

@@ -45,6 +45,7 @@ BookingBloc _makeBookingBloc({
   driverProfileRepository: driverProfileRepository,
   secureSessionService: secureSessionService,
   inboxCubit: inboxCubit,
+  lifecycleCoordinator: AppLifecycleCoordinator(),
   nearestDriverMaxAttempts: nearestDriverMaxAttempts,
   nearestDriverRetryDelay: nearestDriverRetryDelay,
   offerRefreshInterval: offerRefreshInterval,

@@ -42,6 +42,7 @@ class ActivityTrackDriverPage extends StatefulWidget {
   final ITrackRepository trackRepository;
   final IChatRepositoryFactory chatRepositoryFactory;
   final SecureSessionService sessionService;
+  final AppLifecycleCoordinator lifecycleCoordinator;
 
   const ActivityTrackDriverPage({
     super.key,
@@ -49,6 +50,7 @@ class ActivityTrackDriverPage extends StatefulWidget {
     required this.trackRepository,
     required this.chatRepositoryFactory,
     required this.sessionService,
+    required this.lifecycleCoordinator,
   });
 
   @override
@@ -73,7 +75,7 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
   int _unreadChatMessagesCount = 0;
   int _viewedDriverMessagesCount = 0;
   bool _isInitialChatMessagesCountFetched = false;
-  Timer? _chatMessagesPollTimer;
+  late final AppLifecyclePeriodicTask _chatMessagesPollingTask;
   IChatRepository? _chatRepository;
   String _passengerIdentifier = '';
   bool _isCancellingTrip = false;
@@ -83,8 +85,14 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
   void initState() {
     super.initState();
     _liveMapBloc = Modular.get<LiveMapBloc>();
+    _chatMessagesPollingTask = AppLifecyclePeriodicTask(
+      lifecycleCoordinator: widget.lifecycleCoordinator,
+      interval: const Duration(seconds: 4),
+      onTick: _updateUnreadMessagesCount,
+      runImmediately: true,
+    );
     unawaited(_initializeChatRepository());
-    _startChatMessagesPolling();
+    _chatMessagesPollingTask.start();
   }
 
   Future<void> _initializeChatRepository() async {
@@ -101,7 +109,7 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
   @override
   void dispose() {
     unawaited(_locationSubscription?.cancel());
-    _chatMessagesPollTimer?.cancel();
+    unawaited(_chatMessagesPollingTask.dispose());
     unawaited(_chatRepository?.dispose());
     unawaited(_liveMapBloc?.close());
     for (final manager in [
@@ -112,15 +120,6 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
       unawaited(MapProvider.clearAnnotations(manager));
     }
     super.dispose();
-  }
-
-  void _startChatMessagesPolling() {
-    _chatMessagesPollTimer = Timer.periodic(const Duration(seconds: 4), (
-      timer,
-    ) async {
-      await _updateUnreadMessagesCount();
-    });
-    unawaited(_updateUnreadMessagesCount());
   }
 
   Future<void> _updateUnreadMessagesCount() async {

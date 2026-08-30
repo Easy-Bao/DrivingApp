@@ -39,6 +39,7 @@ class TripModule {
           rideRepository: Modular.get<IDriverRideRepository>(),
           chatRepositoryFactory: Modular.get<IChatRepositoryFactory>(),
           sessionService: Modular.get<SecureSessionService>(),
+          lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
         );
       },
       transition: AppTransitions.push.toLeft,
@@ -61,6 +62,7 @@ class TripModule {
           rideRepository: Modular.get<IDriverRideRepository>(),
           chatRepositoryFactory: Modular.get<IChatRepositoryFactory>(),
           sessionService: Modular.get<SecureSessionService>(),
+          lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
         );
       },
       transition: AppTransitions.push.toLeft,
@@ -81,6 +83,7 @@ class TripModule {
           fare: data.fare,
           duration: data.duration,
           rideRepository: Modular.get<IDriverRideRepository>(),
+          lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
         );
       },
       transition: AppTransitions.push.toLeft,

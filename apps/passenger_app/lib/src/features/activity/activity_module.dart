@@ -70,6 +70,7 @@ class ActivityModule {
           trackRepository: Modular.get<ITrackRepository>(),
           chatRepositoryFactory: Modular.get<IChatRepositoryFactory>(),
           sessionService: Modular.get<SecureSessionService>(),
+          lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
         );
       },
       transition: AppTransitions.push.toLeft,

@@ -15,7 +15,11 @@ class MockSecureSessionService extends Mock implements SecureSessionService {}
 TrackDriverCubit _makeCubit(
   ITrackRepository repo,
   SecureSessionService session,
-) => TrackDriverCubit(repository: repo, sessionService: session);
+) => TrackDriverCubit(
+  repository: repo,
+  sessionService: session,
+  lifecycleCoordinator: AppLifecycleCoordinator(),
+);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
