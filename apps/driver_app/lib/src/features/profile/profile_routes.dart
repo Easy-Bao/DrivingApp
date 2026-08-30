@@ -9,6 +9,10 @@ abstract final class ProfileRoutes {
   static const String accountPath = 'account';
   static const String fullAccountPath =
       '${AppRoutes.driverModulePath}$accountPath';
-  static const String profileInfo = 'ProfileInfo';
-  static const String profileInfoPath = 'account/profile-info';
+  static const String personalDetails = 'DriverPersonalDetails';
+  static const String personalDetailsPath = 'account/personal-details';
+  static const String vehicleInformation = 'DriverVehicleInformation';
+  static const String vehicleInformationPath = 'account/vehicle-information';
+  static const String performance = 'DriverPerformance';
+  static const String performancePath = 'account/performance';
 }

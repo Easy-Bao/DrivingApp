@@ -11,7 +11,9 @@ import 'package:driver_app/src/features/profile/data/repositories/driver_profile
 import 'package:driver_app/src/features/profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:driver_app/src/features/profile/profile_routes.dart';
 import 'package:driver_app/src/features/profile/view/driver_account_page.dart';
-import 'package:driver_app/src/features/profile/view/driver_profile_info_page.dart';
+import 'package:driver_app/src/features/profile/view/driver_performance_page.dart';
+import 'package:driver_app/src/features/profile/view/driver_personal_details_page.dart';
+import 'package:driver_app/src/features/profile/view/driver_vehicle_information_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -41,15 +43,43 @@ class ProfileModule {
 
   static List<ModularRoute> routes = [
     ChildRoute(
-      name: ProfileRoutes.profileInfo,
-      ProfileRoutes.profileInfoPath,
+      name: ProfileRoutes.personalDetails,
+      ProfileRoutes.personalDetailsPath,
       child: (context, GoRouterState state) => BlocProvider(
         create: (_) {
           final cubit = Modular.get<DriverAccountCubit>();
           unawaited(cubit.load());
           return cubit;
         },
-        child: const DriverProfileInfoPage(),
+        child: const DriverPersonalDetailsPage(),
+      ),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
+    ),
+    ChildRoute(
+      name: ProfileRoutes.vehicleInformation,
+      ProfileRoutes.vehicleInformationPath,
+      child: (context, GoRouterState state) => BlocProvider(
+        create: (_) {
+          final cubit = Modular.get<DriverAccountCubit>();
+          unawaited(cubit.load());
+          return cubit;
+        },
+        child: const DriverVehicleInformationPage(),
+      ),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
+    ),
+    ChildRoute(
+      name: ProfileRoutes.performance,
+      ProfileRoutes.performancePath,
+      child: (context, GoRouterState state) => BlocProvider(
+        create: (_) {
+          final cubit = Modular.get<DriverAccountCubit>();
+          unawaited(cubit.load());
+          return cubit;
+        },
+        child: const DriverPerformancePage(),
       ),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,

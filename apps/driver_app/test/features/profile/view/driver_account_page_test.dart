@@ -90,6 +90,7 @@ void main() {
     expect(find.text('+639170000001'), findsOneWidget);
     expect(find.byType(AppBar), findsNothing);
     expect(find.text('Account'), findsOneWidget);
+    expect(find.text('Personal Details'), findsOneWidget);
     expect(find.text('Driver Details'), findsOneWidget);
     expect(find.textContaining('Motorcycle'), findsOneWidget);
     expect(find.textContaining('XYZ-123'), findsOneWidget);

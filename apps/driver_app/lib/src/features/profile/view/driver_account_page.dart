@@ -4,6 +4,7 @@ import 'package:driver_app/src/core/location/location.dart';
 import 'package:driver_app/src/core/services/background_telemetry_service.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/auth/auth_routes.dart';
+import 'package:driver_app/src/features/help_center/help_center_routes.dart';
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/profile/bloc/account/account_cubit.dart';
 import 'package:driver_app/src/features/profile/bloc/account/account_state.dart';
@@ -25,139 +26,129 @@ class DriverAccountPage extends StatefulWidget {
 }
 
 class _DriverAccountPageState extends State<DriverAccountPage> {
-  String _name = '';
-  String _phone = '';
-  String _vehicleType = '';
-  String _plateNumber = '';
-  String _rating = '—';
-
-  int _totalTrips = 0;
-  int _completedTrips = 0;
-  double _lifetimeEarnings = 0;
-  double _averageRating = 0;
   bool _isLoggingOut = false;
 
   @override
-  void initState() {
-    super.initState();
-    _applyAccount(BlocProvider.of<DriverAccountCubit>(context).state.account);
-  }
-
-  void _applyAccount(DriverAccountSnapshot account) {
-    _name = account.name;
-    _phone = account.phone;
-    _vehicleType = account.vehicleType;
-    _plateNumber = account.plateNumber;
-    _rating = account.ratingLabel;
-    _totalTrips = account.totalTrips;
-    _completedTrips = account.completedTrips;
-    _lifetimeEarnings = account.lifetimeEarnings;
-    _averageRating = account.averageRating;
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return BlocListener<DriverAccountCubit, DriverAccountState>(
-      listenWhen: (previous, current) => previous.account != current.account,
-      listener: (_, state) {
-        if (mounted) setState(() => _applyAccount(state.account));
-      },
-      child: Scaffold(
+    return BlocBuilder<DriverAccountCubit, DriverAccountState>(
+      builder: (context, state) => Scaffold(
         backgroundColor: context.canvasColor,
         body: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final horizontalPadding = constraints.maxWidth < 360
-                  ? 20.0
-                  : 24.0;
-              return SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(
-                  horizontalPadding,
-                  20,
-                  horizontalPadding,
-                  MediaQuery.paddingOf(context).bottom + 98,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'Account',
-                      style: TextStyle(
-                        fontSize: 27,
-                        height: 1.1,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.8,
-                        color: context.colorScheme.onSurface,
-                      ),
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final horizontalPadding = constraints.maxWidth < 360
+                      ? 20.0
+                      : 24.0;
+                  return SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.fromLTRB(
+                      horizontalPadding,
+                      20,
+                      horizontalPadding,
+                      MediaQuery.paddingOf(context).bottom + 98,
                     ),
-                    const SizedBox(height: 26),
-                    _buildProfileSummary(context),
-                    const SizedBox(height: 38),
-                    _buildSectionTitle('Driver Details'),
-                    const SizedBox(height: 12),
-                    _buildMenuGroup([
-                      _DriverAccountMenuItem(
-                        title: 'Vehicle Information',
-                        subtitle: _vehicleSummary,
-                        onTap: () => _showVehicleDetails(context),
-                      ),
-                      _DriverAccountMenuItem(
-                        title: 'Performance',
-                        subtitle: _performanceSummary,
-                        onTap: () => _showPerformanceDetails(context),
-                      ),
-                    ]),
-                    const SizedBox(height: 32),
-                    _buildSectionTitle('Support'),
-                    const SizedBox(height: 12),
-                    _buildMenuGroup([
-                      _DriverAccountMenuItem(
-                        title: 'Settings',
-                        subtitle: 'Appearance and app behavior',
-                        onTap: () =>
-                            context.pushNamed(DriverSettingsRoutes.settings),
-                      ),
-                      _DriverAccountMenuItem(
-                        title: 'Help Center',
-                        subtitle: 'Support and frequently asked questions',
-                        onTap: () => _showHelpCenter(context),
-                      ),
-                      _DriverAccountMenuItem(
-                        title: 'About BaoRide',
-                        subtitle: 'Driver app version 1.0.0',
-                        onTap: () => showAboutDialog(
-                          context: context,
-                          applicationName: 'BaoRide Driver',
-                          applicationVersion: '1.0.0',
-                          applicationIcon: Icon(
-                            LucideIcons.car_front,
-                            color: context.colorScheme.onSurface,
-                          ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Account',
+                          style: Theme.of(context).textTheme.headlineMedium,
                         ),
-                      ),
-                    ]),
-                    const SizedBox(height: 32),
-                    _buildLogoutButton(context),
-                  ],
-                ),
-              );
-            },
+                        const SizedBox(height: 26),
+                        _buildProfileSummary(context, state.account),
+                        if (state.isLoading) ...[
+                          const SizedBox(height: 20),
+                          const LinearProgressIndicator(),
+                        ],
+                        if (state.errorMessage != null) ...[
+                          const SizedBox(height: 20),
+                          _AccountRefreshNotice(
+                            message: state.errorMessage!,
+                            onRetry: () => unawaited(
+                              BlocProvider.of<DriverAccountCubit>(
+                                context,
+                              ).load(),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 38),
+                        _buildSectionTitle(context, 'Driver Details'),
+                        const SizedBox(height: 12),
+                        _buildMenuGroup(context, [
+                          _DriverAccountMenuItem(
+                            title: 'Vehicle Information',
+                            subtitle: _vehicleSummary(state.account),
+                            onTap: () => unawaited(
+                              _openEditableDestination(
+                                context,
+                                ProfileRoutes.vehicleInformation,
+                              ),
+                            ),
+                          ),
+                          _DriverAccountMenuItem(
+                            title: 'Performance',
+                            subtitle: _performanceSummary(state.account),
+                            onTap: () =>
+                                context.pushNamed(ProfileRoutes.performance),
+                          ),
+                        ]),
+                        const SizedBox(height: 32),
+                        _buildSectionTitle(context, 'Support'),
+                        const SizedBox(height: 12),
+                        _buildMenuGroup(context, [
+                          _DriverAccountMenuItem(
+                            title: 'Settings',
+                            subtitle: 'Appearance and app behavior',
+                            onTap: () => context.pushNamed(
+                              DriverSettingsRoutes.settings,
+                            ),
+                          ),
+                          _DriverAccountMenuItem(
+                            title: 'Help Center',
+                            subtitle: 'Support and frequently asked questions',
+                            onTap: () => context.pushNamed(
+                              DriverHelpCenterRoutes.helpCenter,
+                            ),
+                          ),
+                          _DriverAccountMenuItem(
+                            title: 'About BaoRide',
+                            subtitle: 'Driver app version and licenses',
+                            onTap: () =>
+                                context.pushNamed(DriverSettingsRoutes.about),
+                          ),
+                        ]),
+                        const SizedBox(height: 32),
+                        _buildLogoutButton(context),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildProfileSummary(BuildContext context) {
-    final displayName = _name.isEmpty ? 'Driver' : _name;
+  Widget _buildProfileSummary(
+    BuildContext context,
+    DriverAccountSnapshot account,
+  ) {
+    final displayName = account.name.isEmpty ? 'Driver' : account.name;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         key: const ValueKey<String>('driver-profile-summary'),
         borderRadius: BorderRadius.circular(24),
-        onTap: () => unawaited(_openProfileInfo(context)),
+        onTap: () => unawaited(
+          _openEditableDestination(context, ProfileRoutes.personalDetails),
+        ),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 4),
           child: Row(
@@ -173,10 +164,8 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                 alignment: Alignment.center,
                 child: Text(
                   _getInitials(displayName),
-                  style: TextStyle(
-                    fontSize: 21,
-                    fontWeight: FontWeight.w800,
-                    color: context.colorScheme.onSurface,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: context.colorScheme.onSecondaryContainer,
                   ),
                 ),
               ),
@@ -189,27 +178,33 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                       displayName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 20,
-                        height: 1.15,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.35,
-                        color: context.colorScheme.onSurface,
-                      ),
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 7),
                     Text(
-                      _phone.isEmpty ? 'Add your mobile number' : _phone,
+                      account.phone.isEmpty
+                          ? 'Add your mobile number'
+                          : account.phone,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 14,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: context.colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Personal Details',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: context.colorScheme.primary,
                       ),
                     ),
                   ],
                 ),
+              ),
+              Icon(
+                LucideIcons.chevron_right,
+                size: 21,
+                color: context.colorScheme.onSurfaceVariant,
               ),
             ],
           ),
@@ -218,16 +213,18 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
     );
   }
 
-  Future<void> _openProfileInfo(BuildContext context) async {
+  Future<void> _openEditableDestination(
+    BuildContext context,
+    String routeName,
+  ) async {
     final accountCubit = BlocProvider.of<DriverAccountCubit>(context);
-    await context.pushNamed(ProfileRoutes.profileInfo);
-    if (!context.mounted) return;
-    unawaited(accountCubit.load());
+    await context.pushNamed(routeName);
+    if (context.mounted) unawaited(accountCubit.load());
   }
 
-  String get _vehicleSummary {
-    final vehicle = _vehicleType.trim();
-    final plate = _plateNumber.trim();
+  String _vehicleSummary(DriverAccountSnapshot account) {
+    final vehicle = account.vehicleType.trim();
+    final plate = account.plateNumber.trim();
     if (vehicle.isEmpty && plate.isEmpty) {
       return 'No registered vehicle information';
     }
@@ -236,19 +233,22 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
     return '$vehicle · Plate $plate';
   }
 
-  String get _performanceSummary {
-    final rating = _averageRating > 0
-        ? _averageRating.toStringAsFixed(1)
-        : _rating;
-    return '$_completedTrips of $_totalTrips trips · $rating rating · ${formatPesoAmount(_lifetimeEarnings)} lifetime';
+  String _performanceSummary(DriverAccountSnapshot account) {
+    final rating = account.averageRating > 0
+        ? account.averageRating.toStringAsFixed(1)
+        : account.ratingLabel;
+    return '${account.completedTrips} of ${account.totalTrips} trips · $rating rating · ${formatPesoAmount(account.lifetimeEarnings)} lifetime';
   }
 
-  Widget _buildMenuGroup(List<_DriverAccountMenuItem> items) {
+  Widget _buildMenuGroup(
+    BuildContext context,
+    List<_DriverAccountMenuItem> items,
+  ) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         for (var index = 0; index < items.length; index++) ...[
-          _buildMenuTile(items[index]),
+          _buildMenuTile(context, items[index]),
           if (index != items.length - 1)
             Divider(
               height: 1,
@@ -261,171 +261,55 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
     );
   }
 
-  void _showVehicleDetails(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-        title: const Text('Vehicle Information'),
-        content: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 340),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _detailRow('Vehicle Type', _vehicleType),
-              const SizedBox(height: 12),
-              _detailRow('Plate Number', _plateNumber),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Done'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _detailRow(String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          flex: 2,
-          child: Text(
-            label,
-            style: TextStyle(color: context.colorScheme.onSurfaceVariant),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          flex: 3,
-          child: Text(
-            value.isEmpty ? 'Unavailable' : value,
-            textAlign: TextAlign.end,
-            maxLines: 3,
-            softWrap: true,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: context.colorScheme.onSurface,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showHelpCenter(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Help Center'),
-        content: const Text(
-          'For ride, payment, or account support, contact the BaoRide operations team from your driver support channel.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Done'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showPerformanceDetails(BuildContext context) {
-    final rating = _averageRating > 0
-        ? _averageRating.toStringAsFixed(1)
-        : _rating;
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Performance'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _detailRow('Rating', rating),
-            const SizedBox(height: 12),
-            _detailRow('Completed Trips', '$_completedTrips'),
-            const SizedBox(height: 12),
-            _detailRow('Total Trips', '$_totalTrips'),
-            const SizedBox(height: 12),
-            _detailRow(
-              'Lifetime Earnings',
-              formatPesoAmount(_lifetimeEarnings),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Done'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(BuildContext context, String title) {
     return Text(
       title,
-      style: TextStyle(
-        fontSize: 13,
-        height: 1.2,
-        fontWeight: FontWeight.w800,
+      style: Theme.of(context).textTheme.titleSmall?.copyWith(
         color: context.colorScheme.onSurfaceVariant,
-        letterSpacing: 0.7,
       ),
     );
   }
 
-  Widget _buildMenuTile(_DriverAccountMenuItem item) {
+  Widget _buildMenuTile(BuildContext context, _DriverAccountMenuItem item) {
     return InkWell(
       key: ValueKey<String>('driver-account-item-${item.title}'),
       borderRadius: BorderRadius.circular(16),
       onTap: item.onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 17),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      height: 1.2,
-                      fontWeight: FontWeight.w800,
-                      color: context.colorScheme.onSurface,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 76),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 14),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      item.title,
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    item.subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
-                      height: 1.2,
-                      color: context.colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
+                    const SizedBox(height: 5),
+                    Text(
+                      item.subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 14),
-            Icon(
-              LucideIcons.chevron_right,
-              color: context.colorScheme.onSurfaceVariant,
-              size: 23,
-            ),
-          ],
+              const SizedBox(width: 14),
+              Icon(
+                LucideIcons.chevron_right,
+                color: context.colorScheme.onSurfaceVariant,
+                size: 21,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -445,7 +329,6 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
           ),
           backgroundColor: context.colorScheme.error.withValues(alpha: 0.04),
           shape: const StadiumBorder(),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
         ),
         child: _isLoggingOut
             ? SizedBox(
@@ -500,14 +383,51 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
   }
 }
 
-class _DriverAccountMenuItem {
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
+class _AccountRefreshNotice extends StatelessWidget {
+  const _AccountRefreshNotice({required this.message, required this.onRetry});
 
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: context.colorScheme.errorContainer,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            LucideIcons.circle_alert,
+            size: 20,
+            color: context.colorScheme.onErrorContainer,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: context.colorScheme.onErrorContainer,
+              ),
+            ),
+          ),
+          TextButton(onPressed: onRetry, child: const Text('Retry')),
+        ],
+      ),
+    );
+  }
+}
+
+class _DriverAccountMenuItem {
   const _DriverAccountMenuItem({
     required this.title,
     required this.subtitle,
     required this.onTap,
   });
+
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
 }
