@@ -2,8 +2,11 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/activity/bloc/earnings/earnings_cubit.dart';
 import 'package:driver_app/src/features/activity/bloc/earnings/earnings_state.dart';
+import 'package:driver_app/src/features/activity/bloc/performance/driver_performance_cubit.dart';
+import 'package:driver_app/src/features/activity/bloc/performance/driver_performance_state.dart';
 import 'package:driver_app/src/features/activity/bloc/trip_history/trip_history_cubit.dart';
 import 'package:driver_app/src/features/activity/bloc/trip_history/trip_history_state.dart';
+import 'package:driver_app/src/features/activity/domain/entities/driver_activity_stats.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
@@ -44,6 +47,35 @@ void main() {
       isA<DriverEarningsState>()
           .having((state) => state.isLoading, 'isLoading', isFalse)
           .having((state) => state.data, 'data', {'this_week': {}}),
+    ],
+  );
+
+  blocTest<DriverPerformanceCubit, DriverPerformanceState>(
+    'loads performance statistics independently from profile data',
+    build: () {
+      when(() => repository.fetchStats('driver-1')).thenAnswer(
+        (_) async => const Right(
+          DriverActivityStats(
+            todayEarningsCentavos: 2817,
+            todayCompletedTrips: 1,
+            totalTrips: 6,
+            completedTrips: 5,
+            totalEarningsCentavos: 14085,
+            averageRating: 4.8,
+          ),
+        ),
+      );
+      return DriverPerformanceCubit(
+        repository: repository,
+        sessionService: sessionService,
+      );
+    },
+    act: (cubit) => cubit.load(),
+    expect: () => [
+      const DriverPerformanceState(isLoading: true),
+      isA<DriverPerformanceState>()
+          .having((state) => state.isLoading, 'isLoading', isFalse)
+          .having((state) => state.stats?.completedTrips, 'completed trips', 5),
     ],
   );
 

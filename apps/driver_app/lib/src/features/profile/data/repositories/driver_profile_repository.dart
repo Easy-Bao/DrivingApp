@@ -1,5 +1,4 @@
 import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
 import 'package:driver_app/src/features/profile/data/datasources/driver_profile_remote_data_source.dart';
 import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
 import 'package:driver_app/src/features/profile/domain/repositories/i_driver_profile_repository.dart';
@@ -10,16 +9,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 class DriverProfileRepository implements IDriverProfileRepository {
   DriverProfileRepository({
     required DriverProfileRemoteDataSource profileDataSource,
-    required IDriverActivityRepository activityRepository,
     required SecureSessionService sessionService,
     required SharedPreferences preferences,
   }) : _profileDataSource = profileDataSource,
-       _activityRepository = activityRepository,
        _sessionService = sessionService,
        _preferences = preferences;
 
   final DriverProfileRemoteDataSource _profileDataSource;
-  final IDriverActivityRepository _activityRepository;
   final SecureSessionService _sessionService;
   final SharedPreferences _preferences;
 
@@ -42,19 +38,9 @@ class DriverProfileRepository implements IDriverProfileRepository {
       if (driverId.isEmpty) {
         return const Left(CacheFailure('Driver ID is not registered.'));
       }
-      final profileFuture = _profileDataSource.fetchProfile(driverId);
-      final statsFuture = _activityRepository.fetchStats(driverId);
-      final profileValues = await profileFuture;
-      final statsResult = await statsFuture;
-      final statsFailure = statsResult.fold((failure) => failure, (_) => null);
-      if (statsFailure != null) return Left(statsFailure);
+      final profileValues = await _profileDataSource.fetchProfile(driverId);
       final cached = getCachedAccount();
       final profile = ProfileModel.fromJson(profileValues);
-      final stats = statsResult.getOrElse(
-        (_) => throw DataParsingException(
-          message: 'Driver statistics response is incomplete.',
-        ),
-      );
       final ratingValue = profile.rating;
       final snapshot = DriverAccountSnapshot(
         name: profile.name.isEmpty ? cached.name : profile.name,
@@ -69,12 +55,10 @@ class DriverProfileRepository implements IDriverProfileRepository {
         ratingLabel: ratingValue != null && ratingValue > 0
             ? ratingValue.toStringAsFixed(1)
             : cached.ratingLabel,
-        totalTrips: stats.totalTrips,
-        completedTrips: stats.completedTrips,
-        lifetimeEarnings: stats.totalEarningsCentavos / 100,
-        averageRating: stats.averageRating > 0
-            ? stats.averageRating
-            : ratingValue ?? 0,
+        totalTrips: cached.totalTrips,
+        completedTrips: cached.completedTrips,
+        lifetimeEarnings: cached.lifetimeEarnings,
+        averageRating: cached.averageRating,
       );
       await _cacheAccount(snapshot);
       return Right(snapshot);

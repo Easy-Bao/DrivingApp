@@ -1,13 +1,19 @@
-import 'package:driver_app/src/features/profile/bloc/account/account_cubit.dart';
-import 'package:driver_app/src/features/profile/bloc/account/account_state.dart';
-import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
+import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/features/activity/bloc/performance/driver_performance_cubit.dart';
+import 'package:driver_app/src/features/activity/domain/entities/driver_activity_stats.dart';
+import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
 import 'package:driver_app/src/features/profile/view/driver_performance_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-import '../helpers/fake_driver_profile_repository.dart';
+class _MockActivityRepository extends Mock
+    implements IDriverActivityRepository {}
+
+class _MockSessionService extends Mock implements SecureSessionService {}
 
 void main() {
   testWidgets('shows balanced driver performance metrics at compact width', (
@@ -16,28 +22,37 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(320, 640));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    final repository = FakeDriverProfileRepository(
-      const DriverAccountSnapshot(
-        ratingLabel: '4.8',
-        totalTrips: 20,
-        completedTrips: 18,
-        lifetimeEarnings: 12450.50,
-        averageRating: 4.8,
+    final repository = _MockActivityRepository();
+    final sessionService = _MockSessionService();
+    when(
+      () => sessionService.readDriverId(),
+    ).thenAnswer((_) async => 'driver-1');
+    when(() => repository.fetchStats('driver-1')).thenAnswer(
+      (_) async => const Right(
+        DriverActivityStats(
+          todayEarningsCentavos: 1245050,
+          todayCompletedTrips: 18,
+          totalTrips: 20,
+          completedTrips: 18,
+          totalEarningsCentavos: 1245050,
+          averageRating: 4.8,
+        ),
       ),
     );
-    final cubit = DriverAccountCubit(repository: repository)
-      ..emit(DriverAccountState(account: repository.account));
-    addTearDown(cubit.close);
 
     await tester.pumpWidget(
       MaterialApp(
         theme: EasyRideTheme.light,
-        home: BlocProvider<DriverAccountCubit>.value(
-          value: cubit,
+        home: BlocProvider<DriverPerformanceCubit>(
+          create: (_) => DriverPerformanceCubit(
+            repository: repository,
+            sessionService: sessionService,
+          )..load(),
           child: DriverPerformancePage(onBack: () {}, onRefresh: () async {}),
         ),
       ),
     );
+    await tester.pumpAndSettle();
 
     expect(find.text('Performance'), findsOneWidget);
     expect(find.text('4.8'), findsOneWidget);

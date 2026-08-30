@@ -52,7 +52,7 @@ class DriverModule extends Module {
       branches: [
         ModularBranch(routes: HomeModule.shellRoutes),
         ModularBranch(routes: ActivityModule.shellRoutes),
-        ModularBranch(routes: ProfileModule.earningsShellRoutes),
+        ModularBranch(routes: ActivityModule.earningsShellRoutes),
         ModularBranch(routes: ProfileModule.accountShellRoutes),
       ],
     ),

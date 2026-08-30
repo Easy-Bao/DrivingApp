@@ -1,6 +1,10 @@
 import 'package:driver_app/src/core/routing/app_routes.dart';
 
 abstract final class ActivityRoutes {
+  static const String earnings = 'Earnings';
+  static const String earningsPath = 'earnings';
+  static const String fullEarningsPath =
+      '${AppRoutes.driverModulePath}$earningsPath';
   static const String tripHistory = 'TripHistory';
   static const String tripHistoryPath = 'trips';
   static const String fullTripHistoryPath =

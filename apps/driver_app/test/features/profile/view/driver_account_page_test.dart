@@ -94,7 +94,7 @@ void main() {
     expect(find.text('Driver Details'), findsOneWidget);
     expect(find.textContaining('Motorcycle'), findsOneWidget);
     expect(find.textContaining('XYZ-123'), findsOneWidget);
-    expect(find.textContaining('4.8'), findsOneWidget);
+    expect(find.text('Ratings, trips, and earnings'), findsOneWidget);
     expect(find.text('Performance'), findsOneWidget);
     expect(find.text('Support'), findsOneWidget);
     expect(find.text('Settings'), findsOneWidget);

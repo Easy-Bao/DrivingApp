@@ -15,7 +15,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class DriverAccountPage extends StatefulWidget {
@@ -91,7 +90,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                           ),
                           _DriverAccountMenuItem(
                             title: 'Performance',
-                            subtitle: _performanceSummary(state.account),
+                            subtitle: 'Ratings, trips, and earnings',
                             onTap: () =>
                                 context.pushNamed(ProfileRoutes.performance),
                           ),
@@ -231,13 +230,6 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
     if (vehicle.isEmpty) return 'Plate number $plate';
     if (plate.isEmpty) return vehicle;
     return '$vehicle · Plate $plate';
-  }
-
-  String _performanceSummary(DriverAccountSnapshot account) {
-    final rating = account.averageRating > 0
-        ? account.averageRating.toStringAsFixed(1)
-        : account.ratingLabel;
-    return '${account.completedTrips} of ${account.totalTrips} trips · $rating rating · ${formatPesoAmount(account.lifetimeEarnings)} lifetime';
   }
 
   Widget _buildMenuGroup(

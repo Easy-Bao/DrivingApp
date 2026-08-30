@@ -2,9 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:driver_app/src/features/activity/bloc/earnings/earnings_cubit.dart';
-import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
-import 'package:driver_app/src/features/activity/view/earnings_page.dart';
+import 'package:driver_app/src/features/activity/bloc/performance/driver_performance_cubit.dart';
 import 'package:driver_app/src/features/profile/bloc/account/account_cubit.dart';
 import 'package:driver_app/src/features/profile/data/datasources/driver_profile_remote_data_source.dart';
 import 'package:driver_app/src/features/profile/data/repositories/driver_profile_repository.dart';
@@ -30,7 +28,6 @@ class ProfileModule {
       ..addLazySingleton<IDriverProfileRepository>(
         (i) => DriverProfileRepository(
           profileDataSource: i.get<DriverProfileRemoteDataSource>(),
-          activityRepository: i.get<IDriverActivityRepository>(),
           sessionService: i.get<SecureSessionService>(),
           preferences: i.get<SharedPreferences>(),
         ),
@@ -75,7 +72,7 @@ class ProfileModule {
       ProfileRoutes.performancePath,
       child: (context, GoRouterState state) => BlocProvider(
         create: (_) {
-          final cubit = Modular.get<DriverAccountCubit>();
+          final cubit = Modular.get<DriverPerformanceCubit>();
           unawaited(cubit.load());
           return cubit;
         },
@@ -83,23 +80,6 @@ class ProfileModule {
       ),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
-    ),
-  ];
-
-  static List<ModularRoute> earningsShellRoutes = [
-    ChildRoute(
-      name: ProfileRoutes.earnings,
-      ProfileRoutes.earningsPath,
-      child: (context, GoRouterState state) => BlocProvider(
-        create: (_) {
-          final cubit = Modular.get<DriverEarningsCubit>();
-          cubit.load();
-          return cubit;
-        },
-        child: const DriverEarningsPage(),
-      ),
-      transition: AppTransitions.none,
-      transitionDuration: Duration.zero,
     ),
   ];
 

@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:driver_app/src/features/profile/bloc/account/account_cubit.dart';
-import 'package:driver_app/src/features/profile/bloc/account/account_state.dart';
-import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
+import 'package:driver_app/src/features/activity/bloc/performance/driver_performance_cubit.dart';
+import 'package:driver_app/src/features/activity/bloc/performance/driver_performance_state.dart';
+import 'package:driver_app/src/features/activity/domain/entities/driver_activity_stats.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -29,11 +29,11 @@ class DriverPerformancePage extends StatelessWidget {
         title: const Text('Performance'),
         centerTitle: true,
       ),
-      body: BlocBuilder<DriverAccountCubit, DriverAccountState>(
+      body: BlocBuilder<DriverPerformanceCubit, DriverPerformanceState>(
         builder: (context, state) => RefreshIndicator(
           onRefresh:
               onRefresh ??
-              () => BlocProvider.of<DriverAccountCubit>(context).load(),
+              () => BlocProvider.of<DriverPerformanceCubit>(context).load(),
           child: Align(
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
@@ -44,15 +44,15 @@ class DriverPerformancePage extends StatelessWidget {
                 children: [
                   if (state.isLoading) const LinearProgressIndicator(),
                   if (state.isLoading) const SizedBox(height: 18),
-                  _PerformanceSummary(account: state.account),
+                  _PerformanceSummary(stats: state.stats),
                   const SizedBox(height: 20),
-                  _PerformanceMetrics(account: state.account),
+                  _PerformanceMetrics(stats: state.stats),
                   if (state.errorMessage != null) ...[
                     const SizedBox(height: 20),
                     _PerformanceLoadNotice(
                       message: state.errorMessage!,
                       onRetry: () => unawaited(
-                        BlocProvider.of<DriverAccountCubit>(context).load(),
+                        BlocProvider.of<DriverPerformanceCubit>(context).load(),
                       ),
                     ),
                   ],
@@ -67,18 +67,20 @@ class DriverPerformancePage extends StatelessWidget {
 }
 
 class _PerformanceSummary extends StatelessWidget {
-  const _PerformanceSummary({required this.account});
+  const _PerformanceSummary({required this.stats});
 
-  final DriverAccountSnapshot account;
+  final DriverActivityStats? stats;
 
   @override
   Widget build(BuildContext context) {
-    final rating = account.averageRating > 0
-        ? account.averageRating.toStringAsFixed(1)
-        : account.ratingLabel;
-    final completionRate = account.totalTrips == 0
+    final rating = stats?.averageRating != null && stats!.averageRating > 0
+        ? stats!.averageRating.toStringAsFixed(1)
+        : '—';
+    final totalTrips = stats?.totalTrips ?? 0;
+    final completedTrips = stats?.completedTrips ?? 0;
+    final completionRate = totalTrips == 0
         ? 0
-        : (account.completedTrips / account.totalTrips * 100).round();
+        : (completedTrips / totalTrips * 100).round();
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -128,9 +130,9 @@ class _PerformanceSummary extends StatelessWidget {
 }
 
 class _PerformanceMetrics extends StatelessWidget {
-  const _PerformanceMetrics({required this.account});
+  const _PerformanceMetrics({required this.stats});
 
-  final DriverAccountSnapshot account;
+  final DriverActivityStats? stats;
 
   @override
   Widget build(BuildContext context) {
@@ -148,19 +150,21 @@ class _PerformanceMetrics extends StatelessWidget {
               width: cardWidth,
               icon: LucideIcons.circle_check,
               label: 'Completed trips',
-              value: '${account.completedTrips}',
+              value: '${stats?.completedTrips ?? 0}',
             ),
             _PerformanceMetricCard(
               width: cardWidth,
               icon: LucideIcons.route,
               label: 'Total trips',
-              value: '${account.totalTrips}',
+              value: '${stats?.totalTrips ?? 0}',
             ),
             _PerformanceMetricCard(
               width: constraints.maxWidth,
               icon: LucideIcons.wallet_cards,
               label: 'Lifetime earnings',
-              value: formatPesoAmount(account.lifetimeEarnings),
+              value: formatPesoAmount(
+                (stats?.totalEarningsCentavos ?? 0) / 100,
+              ),
             ),
           ],
         );
