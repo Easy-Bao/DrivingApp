@@ -10,14 +10,11 @@ import 'package:passenger_app/src/features/home/home_module.dart';
 import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/inbox_module.dart';
 import 'package:passenger_app/src/features/profile/profile_module.dart';
-import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_cubit.dart';
-import 'package:passenger_app/src/features/saved_places/data/repositories/saved_places_repository.dart';
-import 'package:passenger_app/src/features/saved_places/domain/repositories/i_saved_places_repository.dart';
+import 'package:passenger_app/src/features/saved_places/saved_places_module.dart';
 import 'package:passenger_app/src/features/settings/settings_module.dart';
 import 'package:passenger_app/src/features/trip/trip_module.dart';
 import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_navigation_shell.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class PassengerModule extends Module {
   @override
@@ -27,15 +24,10 @@ class PassengerModule extends Module {
     HomeModule.binds(i);
     InboxModule.binds(i);
     ProfileModule.binds(i);
+    SavedPlacesModule.binds(i);
     TripModule.binds(i);
 
     i
-      ..addLazySingleton<ISavedPlacesRepository>(
-        (i) => SavedPlacesRepository(preferences: i.get<SharedPreferences>()),
-      )
-      ..addLazySingleton<SavedPlacesCubit>(
-        (i) => SavedPlacesCubit(repository: i.get<ISavedPlacesRepository>()),
-      )
       ..addLazySingleton<PassengerTabNavigationCoordinator>(
         (_) => PassengerTabNavigationCoordinator(),
       )
@@ -52,6 +44,7 @@ class PassengerModule extends Module {
     ...ActivityModule.routes,
     ...HomeModule.routes,
     ...TripModule.routes,
+    ...SavedPlacesModule.routes,
     ...ChatModule.routes,
     ...ProfileModule.routes,
     ...SettingsModule.routes,

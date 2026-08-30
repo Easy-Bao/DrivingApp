@@ -7,6 +7,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/profile/bloc/profile/profile_cubit.dart';
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
 import 'package:passenger_app/src/features/profile/view/widgets/profile_avatar_widget.dart';
+import 'package:passenger_app/src/features/saved_places/saved_places_routes.dart';
 import 'package:passenger_app/src/features/settings/settings_routes.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -57,7 +58,8 @@ class AccountPage extends StatelessWidget {
                         _AccountMenuItem(
                           title: 'Saved Places',
                           subtitle: 'Home, work, and favorite destinations',
-                          onTap: () => context.pushNamed(ProfileRoutes.help),
+                          onTap: () =>
+                              context.pushNamed(SavedPlacesRoutes.places),
                         ),
                       ]),
                       const SizedBox(height: 32),
