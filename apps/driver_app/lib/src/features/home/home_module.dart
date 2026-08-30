@@ -12,6 +12,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/features/home/home_routes.dart';
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/home/view/driver_dashboard_page.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -50,7 +51,9 @@ class HomeModule {
       HomeRoutes.dashboardPath,
       child: (context, GoRouterState state) => BlocProvider.value(
         value: Modular.get<DashboardCubit>()..initialize(),
-        child: const DriverDashboardPage(),
+        child: DriverDashboardPage(
+          lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
+        ),
       ),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,

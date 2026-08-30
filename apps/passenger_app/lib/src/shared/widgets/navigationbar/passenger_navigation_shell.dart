@@ -46,6 +46,7 @@ class PassengerShellLayout extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
   final InboxCubit inboxCubit;
   final RealtimeWebSocketClient realtimeClient;
+  final AppLifecycleCoordinator lifecycleCoordinator;
   final PassengerTabNavigationCoordinator navigationCoordinator;
 
   const PassengerShellLayout({
@@ -53,6 +54,7 @@ class PassengerShellLayout extends StatefulWidget {
     required this.navigationShell,
     required this.inboxCubit,
     required this.realtimeClient,
+    required this.lifecycleCoordinator,
     required this.navigationCoordinator,
   });
 
@@ -60,17 +62,20 @@ class PassengerShellLayout extends StatefulWidget {
   State<PassengerShellLayout> createState() => _PassengerShellLayoutState();
 }
 
-class _PassengerShellLayoutState extends State<PassengerShellLayout>
-    with WidgetsBindingObserver {
+class _PassengerShellLayoutState extends State<PassengerShellLayout> {
   String? _loadedInboxPassengerId;
   String? _activePassengerId;
   StreamSubscription<RealtimeEvent>? _realtimeSubscription;
+  late final StreamSubscription<AppLifecycleStatus> _lifecycleSubscription;
   bool _isForeground = true;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
+    _isForeground = widget.lifecycleCoordinator.isForeground;
+    _lifecycleSubscription = widget.lifecycleCoordinator.changes.listen(
+      _onLifecycleChanged,
+    );
     widget.navigationCoordinator.initialize(
       widget.navigationShell.currentIndex,
     );
@@ -87,16 +92,15 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout>
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     widget.navigationCoordinator.removeListener(_onNavigationChanged);
+    unawaited(_lifecycleSubscription.cancel());
     unawaited(_realtimeSubscription?.cancel());
     unawaited(widget.realtimeClient.stop());
     super.dispose();
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    final isForeground = state == AppLifecycleState.resumed;
+  void _onLifecycleChanged(AppLifecycleStatus status) {
+    final isForeground = status == AppLifecycleStatus.foreground;
     if (!isForeground) {
       if (_isForeground) {
         _isForeground = false;

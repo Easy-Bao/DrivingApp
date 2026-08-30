@@ -12,6 +12,7 @@ import 'package:passenger_app/src/features/location/bloc/location_access/locatio
 import 'package:passenger_app/src/features/trip/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger_app/src/features/trip/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class AppWidget extends StatefulWidget {
@@ -25,6 +26,7 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
   late final SessionBloc _sessionBloc;
   late final LocationAccessCubit _locationAccessCubit;
   late final ThemeModeCubit _themeModeCubit;
+  late final AppLifecycleCoordinator _lifecycleCoordinator;
 
   @override
   void initState() {
@@ -32,7 +34,14 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
     _sessionBloc = Modular.get<SessionBloc>()..add(const SessionStarted());
     _locationAccessCubit = Modular.get<LocationAccessCubit>();
     _themeModeCubit = Modular.get<ThemeModeCubit>();
+    _lifecycleCoordinator = Modular.get<AppLifecycleCoordinator>();
     WidgetsBinding.instance.addObserver(this);
+    final lifecycleState = WidgetsBinding.instance.lifecycleState;
+    if (lifecycleState != null) {
+      _lifecycleCoordinator.update(
+        isForeground: lifecycleState == AppLifecycleState.resumed,
+      );
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_locationAccessCubit.start());
     });
@@ -46,6 +55,9 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    _lifecycleCoordinator.update(
+      isForeground: state == AppLifecycleState.resumed,
+    );
     if (state == .resumed) {
       unawaited(_locationAccessCubit.refresh());
     }

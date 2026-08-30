@@ -11,6 +11,7 @@ import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_r
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class AppWidget extends StatefulWidget {
@@ -23,6 +24,7 @@ class AppWidget extends StatefulWidget {
 class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
   late final ThemeModeCubit _themeModeCubit;
   late final DriverLocationAccessCubit _locationAccessCubit;
+  late final AppLifecycleCoordinator _lifecycleCoordinator;
   bool _locationMonitoringRequested = false;
 
   @override
@@ -30,8 +32,15 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
     super.initState();
     _themeModeCubit = Modular.get<ThemeModeCubit>();
     _locationAccessCubit = Modular.get<DriverLocationAccessCubit>();
+    _lifecycleCoordinator = Modular.get<AppLifecycleCoordinator>();
     WidgetsBinding.instance.addObserver(this);
     Modular.routerConfig.routerDelegate.addListener(_onRouteChanged);
+    final lifecycleState = WidgetsBinding.instance.lifecycleState;
+    if (lifecycleState != null) {
+      _lifecycleCoordinator.update(
+        isForeground: lifecycleState == AppLifecycleState.resumed,
+      );
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _ensureLocationMonitoring();
       unawaited(_setBackgroundTelemetryVisibility(true));
@@ -48,6 +57,9 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    _lifecycleCoordinator.update(
+      isForeground: state == AppLifecycleState.resumed,
+    );
     unawaited(
       _setBackgroundTelemetryVisibility(state == AppLifecycleState.resumed),
     );

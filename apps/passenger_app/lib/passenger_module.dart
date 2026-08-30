@@ -54,6 +54,7 @@ class PassengerModule extends Module {
           PassengerShellLayout(
             inboxCubit: Modular.get<InboxCubit>(),
             realtimeClient: Modular.get<RealtimeWebSocketClient>(),
+            lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
             navigationCoordinator:
                 Modular.get<PassengerTabNavigationCoordinator>(),
             navigationShell: navigationShell,

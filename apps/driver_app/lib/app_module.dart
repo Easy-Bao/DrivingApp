@@ -36,6 +36,9 @@ class AppModule extends Module {
   void binds(Injector i) {
     i
       ..addSingleton<SharedPreferences>((i) => _prefs)
+      ..addLazySingleton<AppLifecycleCoordinator>(
+        (_) => AppLifecycleCoordinator(),
+      )
       ..addLazySingleton<ThemeModeCubit>(
         (i) => ThemeModeCubit(
           initialMode: ThemeModeCodec.decode(

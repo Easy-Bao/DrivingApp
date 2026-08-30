@@ -16,6 +16,7 @@ export 'src/errors/failure_mapper.dart';
 export 'src/errors/failures.dart';
 export 'src/fare/config/rating_pricing_config.dart';
 export 'src/fare/models/fare_service_model.dart';
+export 'src/lifecycle/app_lifecycle_coordinator.dart';
 export 'src/location/access_state_monitor.dart';
 export 'src/location/api/clients/i_location_api_client.dart';
 export 'src/location/api/clients/location_api_client.dart';

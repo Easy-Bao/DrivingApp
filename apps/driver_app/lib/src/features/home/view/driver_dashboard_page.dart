@@ -31,14 +31,16 @@ bool _isActiveDriverTripStatus(Object? value) {
 }
 
 class DriverDashboardPage extends StatefulWidget {
-  const DriverDashboardPage({super.key});
+  final AppLifecycleCoordinator lifecycleCoordinator;
+
+  const DriverDashboardPage({super.key, required this.lifecycleCoordinator});
 
   @override
   State<DriverDashboardPage> createState() => _DriverDashboardPageState();
 }
 
 class _DriverDashboardPageState extends State<DriverDashboardPage>
-    with TickerProviderStateMixin, WidgetsBindingObserver {
+    with TickerProviderStateMixin {
   late final AnimationController _pulseCtrl;
   late final AnimationController _availabilityCtrl;
   Timer? _rideTriggerTimer;
@@ -47,6 +49,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   Timer? _requestCountdownTimer;
   StreamSubscription<Position>? _locationSubscription;
   StreamSubscription<RealtimeEvent>? _realtimeEventsSubscription;
+  late final StreamSubscription<AppLifecycleStatus> _lifecycleSubscription;
   RealtimeWebSocketClient? _realtimeClient;
   LiveMapBloc? _liveMapBloc;
   bool _isTogglingOnline = false;
@@ -67,7 +70,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
+    _isForeground = widget.lifecycleCoordinator.isForeground;
+    _lifecycleSubscription = widget.lifecycleCoordinator.changes.listen(
+      _onLifecycleChanged,
+    );
     _liveMapBloc = Modular.get<LiveMapBloc>();
     _realtimeClient = Modular.get<RealtimeWebSocketClient>();
     _realtimeEventsSubscription = _realtimeClient!.events.listen(
@@ -98,7 +104,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+    unawaited(_lifecycleSubscription.cancel());
     _pulseCtrl.dispose();
     _availabilityCtrl.dispose();
     _rideTriggerTimer?.cancel();
@@ -116,9 +122,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     super.dispose();
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    final isForeground = state == AppLifecycleState.resumed;
+  void _onLifecycleChanged(AppLifecycleStatus status) {
+    final isForeground = status == AppLifecycleStatus.foreground;
     if (!isForeground) {
       if (_isForeground) {
         _isForeground = false;
@@ -140,7 +145,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   Future<void> _loadActiveTrips() async {
-    if (!mounted) return;
+    if (!mounted || !_isForeground) return;
     await BlocProvider.of<DashboardCubit>(
       context,
     ).loadDispatchSnapshot(includeOffers: false, silent: true);

@@ -33,18 +33,20 @@ void main() {
       reconnectDelay: (_) => const Duration(minutes: 1),
     );
     final navigationCoordinator = PassengerTabNavigationCoordinator();
+    final lifecycleCoordinator = AppLifecycleCoordinator();
     final router = _createRouter(
       inboxCubit,
       realtimeClient,
       navigationCoordinator,
+      lifecycleCoordinator,
     );
     addTearDown(() async {
-      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       router.dispose();
       await sessionBloc.close();
       await inboxCubit.close();
       await realtimeClient.dispose();
       navigationCoordinator.dispose();
+      await lifecycleCoordinator.dispose();
     });
 
     await tester.pumpWidget(
@@ -61,7 +63,7 @@ void main() {
     expect(connector.connectionCount, 1);
     expect(realtimeClient.isConnected, isTrue);
 
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    lifecycleCoordinator.update(isForeground: false);
     await tester.pumpAndSettle();
 
     expect(realtimeClient.isConnected, isFalse);
@@ -70,7 +72,7 @@ void main() {
     });
     expect(connector.closeCount, 1);
 
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    lifecycleCoordinator.update(isForeground: true);
     await tester.pumpAndSettle();
 
     expect(connector.connectionCount, 2);
@@ -89,10 +91,12 @@ void main() {
       connector: _RealtimeSocketConnectorStub(),
     );
     final navigationCoordinator = PassengerTabNavigationCoordinator();
+    final lifecycleCoordinator = AppLifecycleCoordinator();
     final router = _createRouter(
       inboxCubit,
       realtimeClient,
       navigationCoordinator,
+      lifecycleCoordinator,
     );
     addTearDown(() async {
       router.dispose();
@@ -100,6 +104,7 @@ void main() {
       await inboxCubit.close();
       await realtimeClient.dispose();
       navigationCoordinator.dispose();
+      await lifecycleCoordinator.dispose();
     });
 
     await tester.pumpWidget(
@@ -250,6 +255,7 @@ GoRouter _createRouter(
   InboxCubit inboxCubit,
   RealtimeWebSocketClient realtimeClient,
   PassengerTabNavigationCoordinator navigationCoordinator,
+  AppLifecycleCoordinator lifecycleCoordinator,
 ) {
   return GoRouter(
     initialLocation: HomeRoutes.fullHomePath,
@@ -258,6 +264,7 @@ GoRouter _createRouter(
         builder: (context, state, navigationShell) => PassengerShellLayout(
           inboxCubit: inboxCubit,
           realtimeClient: realtimeClient,
+          lifecycleCoordinator: lifecycleCoordinator,
           navigationCoordinator: navigationCoordinator,
           navigationShell: navigationShell,
         ),
