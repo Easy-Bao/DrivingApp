@@ -48,7 +48,10 @@ class AppModule extends Module {
       )
       ..addLazySingleton<SecureSessionService>((i) => SecureSessionService())
       ..addLazySingleton<BackgroundTelemetryService>(
-        (i) => BackgroundTelemetryService(apiBaseUri: EnvConfig.apiBaseUri),
+        (i) => BackgroundTelemetryService(
+          apiBaseUri: EnvConfig.apiBaseUri,
+          lifecycleCoordinator: i.get<AppLifecycleCoordinator>(),
+        ),
       )
       ..addLazySingleton<SecureStorage>(
         (i) => SecureStorage(i.get<SecureSessionService>()),

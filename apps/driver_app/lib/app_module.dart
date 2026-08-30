@@ -65,6 +65,7 @@ class AppModule extends Module {
       ..addLazySingleton<BackgroundTelemetryService>(
         (i) => BackgroundTelemetryService(
           apiBaseUri: EnvConfig.apiBaseUri,
+          lifecycleCoordinator: i.get<AppLifecycleCoordinator>(),
           enabled: EnvConfig.backgroundTelemetryEnabled,
         ),
       )

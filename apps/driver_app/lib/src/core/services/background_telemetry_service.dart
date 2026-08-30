@@ -3,11 +3,11 @@ import 'dart:developer' as dev;
 import 'dart:ui';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:driver_app/src/core/constants/storage_keys.dart';
+import 'package:shared_core/shared_core.dart';
 
 const _backgroundTelemetryInterval = Duration(seconds: 10);
 const _backgroundRideRequestInterval = Duration(seconds: 4);
@@ -18,14 +18,17 @@ class BackgroundTelemetryService {
   final Uri _apiBaseUri;
   final FlutterBackgroundService _service;
   final bool _isEnabled;
+  final AppLifecycleCoordinator _lifecycleCoordinator;
   bool _configured = false;
 
   BackgroundTelemetryService({
     required Uri apiBaseUri,
+    required AppLifecycleCoordinator lifecycleCoordinator,
     FlutterBackgroundService? service,
     bool? enabled,
   }) : _apiBaseUri = apiBaseUri,
        _service = service ?? FlutterBackgroundService(),
+       _lifecycleCoordinator = lifecycleCoordinator,
        _isEnabled = enabled ?? false;
 
   bool get isEnabled => _isEnabled;
@@ -85,8 +88,7 @@ class BackgroundTelemetryService {
   Future<void> _configureService({required bool serviceWasStarted}) async {
     final configuration = <String, dynamic>{
       'baseUrl': _apiBaseUri.toString(),
-      'appVisible':
-          WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed,
+      'appVisible': _lifecycleCoordinator.isForeground,
     };
     _service.invoke('configure', configuration);
     if (!serviceWasStarted) return;
@@ -125,23 +127,21 @@ class BackgroundTelemetryService {
   }
 
   Future<void> _waitForResumedActivity() async {
-    final binding = WidgetsBinding.instance;
-    if (binding.lifecycleState == AppLifecycleState.resumed) return;
+    if (_lifecycleCoordinator.isForeground) return;
 
     final resumed = Completer<void>();
-    late final WidgetsBindingObserver observer;
-    observer = _ResumedActivityObserver(() {
+    late final StreamSubscription<AppLifecycleStatus> subscription;
+    subscription = _lifecycleCoordinator.changes.listen((status) {
+      if (status != AppLifecycleStatus.foreground) return;
       if (!resumed.isCompleted) resumed.complete();
     });
-    binding.addObserver(observer);
-    if (binding.lifecycleState == AppLifecycleState.resumed &&
-        !resumed.isCompleted) {
+    if (_lifecycleCoordinator.isForeground && !resumed.isCompleted) {
       resumed.complete();
     }
     try {
       await resumed.future.timeout(const Duration(seconds: 15));
     } finally {
-      binding.removeObserver(observer);
+      await subscription.cancel();
     }
   }
 
@@ -340,17 +340,6 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
 
 bool _isValidTelemetryBaseUri(Uri uri) {
   return (uri.scheme == 'http' || uri.scheme == 'https') && uri.host.isNotEmpty;
-}
-
-class _ResumedActivityObserver with WidgetsBindingObserver {
-  final VoidCallback onResumed;
-
-  _ResumedActivityObserver(this.onResumed);
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) onResumed();
-  }
 }
 
 @pragma('vm:entry-point')
