@@ -21,6 +21,7 @@ class EasyRideTheme {
     tertiary: Color(0xFF198754),
     onTertiary: Color(0xFFFFFFFF),
     surface: Color(0xFFFFFFFF),
+    surfaceContainerHighest: AppDesignTokens.neutral,
     onSurface: Color(0xFF100E11),
     onSurfaceVariant: Color(0xFF5F6670),
     outline: Color(0xFFCED3D8),

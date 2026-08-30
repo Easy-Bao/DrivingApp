@@ -77,6 +77,47 @@ void main() {
     expect(unselectedIcon.color, scheme.onSurfaceVariant);
     expect(tester.widget<Text>(find.text('Home')).style?.color, scheme.primary);
   });
+
+  testWidgets('light floating tab bar keeps a visible active capsule', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: EasyRideTheme.light,
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.bottomCenter,
+            child: AppFloatingTabBar(
+              destinations: const [
+                AppTabDestination(icon: Icons.home, label: 'Home'),
+                AppTabDestination(icon: Icons.person, label: 'Account'),
+              ],
+              selectedIndex: 0,
+              onDestinationSelected: (_) {},
+              itemKeyPrefix: 'tab',
+              indicatorKey: 'indicator',
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final scheme = EasyRideTheme.light.colorScheme;
+    final tabBar = find.byType(AppFloatingTabBar);
+    final tabContainer = tester.widget<Container>(
+      find.descendant(of: tabBar, matching: find.byType(Container)),
+    );
+    final tabColor = (tabContainer.decoration! as BoxDecoration).color;
+    final indicator = tester.widget<SwipeActiveTabIndicator>(
+      find.byType(SwipeActiveTabIndicator),
+    );
+
+    expect(tabColor, scheme.surface);
+    expect(indicator.color, scheme.surfaceContainerHighest);
+    expect(indicator.color, AppDesignTokens.neutral);
+    expect(indicator.color, isNot(tabColor));
+  });
 }
 
 double _contrast(Color foreground, Color background) {
