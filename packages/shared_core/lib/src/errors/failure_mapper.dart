@@ -50,6 +50,7 @@ class FailureMapper {
       LocationFailure() => const LocationFailure(),
       AuthFailure() => const AuthFailure(),
       NetworkFailure() || SocketException() => NetworkFailure(networkMessage),
+      NetworkCircuitOpenException() => NetworkFailure(networkMessage),
       CacheFailure() || CacheException() => CacheFailure(cacheMessage),
       ValidationFailure() => ValidationFailure(validationMessage),
       final ServerFailure failure => mapStatus(failure.statusCode),

@@ -39,6 +39,9 @@ class AppModule extends Module {
       ..addLazySingleton<AppLifecycleCoordinator>(
         (_) => AppLifecycleCoordinator(),
       )
+      ..addLazySingleton<NetworkAvailabilityCoordinator>(
+        (_) => NetworkAvailabilityCoordinator(),
+      )
       ..addLazySingleton<ThemeModeCubit>(
         (i) => ThemeModeCubit(
           initialMode: ThemeModeCodec.decode(
@@ -78,6 +81,7 @@ class AppModule extends Module {
         (i) => DioClient.create(
           baseUrl: EnvConfig.apiBaseUri,
           sessionService: i.get<SecureSessionService>(),
+          networkAvailability: i.get<NetworkAvailabilityCoordinator>(),
         ),
       )
       ..addLazySingleton<IChatRepositoryFactory>(

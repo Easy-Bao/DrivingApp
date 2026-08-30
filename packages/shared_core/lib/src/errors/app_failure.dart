@@ -300,6 +300,7 @@ class AppFailure {
     if (error is ServerFailure && error.statusCode == 0) return true;
     return error is DioException &&
         (error.error is SocketException ||
+            error.error is NetworkCircuitOpenException ||
             error.type == DioExceptionType.connectionError &&
                 error.error == null);
   }

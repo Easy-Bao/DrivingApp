@@ -36,6 +36,7 @@ export 'src/models/route_model.dart';
 export 'src/network/api_base_uri.dart';
 export 'src/network/idempotency_interceptor.dart';
 export 'src/network/logging_interceptor.dart';
+export 'src/network/network_availability_coordinator.dart';
 export 'src/network/offset_page.dart';
 export 'src/network/request_metrics.dart';
 export 'src/network/retry_interceptor.dart';

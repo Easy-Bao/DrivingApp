@@ -10,6 +10,7 @@ class DioClient {
   static Dio create({
     required Uri baseUrl,
     required SecureSessionService sessionService,
+    NetworkAvailabilityCoordinator? networkAvailability,
   }) {
     final dio = Dio(
       BaseOptions(
@@ -44,6 +45,9 @@ class DioClient {
       dio.interceptors.add(LoggingInterceptor());
     }
     dio.interceptors.add(IdempotencyInterceptor());
+    if (networkAvailability != null) {
+      dio.interceptors.add(NetworkAvailabilityInterceptor(networkAvailability));
+    }
     dio.interceptors.add(RetryInterceptor(dio));
 
     return dio;

@@ -15,6 +15,7 @@ export 'package:shared_ui/src/widgets/app_floating_tab_bar.dart';
 export 'package:shared_ui/src/widgets/app_help_center_page.dart';
 export 'package:shared_ui/src/widgets/app_location_access_status_page.dart';
 export 'package:shared_ui/src/widgets/app_network_image_widget.dart';
+export 'package:shared_ui/src/widgets/app_network_status_banner.dart';
 export 'package:shared_ui/src/widgets/app_settings_navigation.dart';
 export 'package:shared_ui/src/widgets/app_tab_branch_container.dart';
 export 'package:shared_ui/src/widgets/app_terms_of_service_page.dart';

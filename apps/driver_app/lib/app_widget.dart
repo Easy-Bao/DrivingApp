@@ -25,6 +25,7 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
   late final ThemeModeCubit _themeModeCubit;
   late final DriverLocationAccessCubit _locationAccessCubit;
   late final AppLifecycleCoordinator _lifecycleCoordinator;
+  late final NetworkAvailabilityCoordinator _networkAvailabilityCoordinator;
   bool _locationMonitoringRequested = false;
 
   @override
@@ -33,6 +34,8 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
     _themeModeCubit = Modular.get<ThemeModeCubit>();
     _locationAccessCubit = Modular.get<DriverLocationAccessCubit>();
     _lifecycleCoordinator = Modular.get<AppLifecycleCoordinator>();
+    _networkAvailabilityCoordinator =
+        Modular.get<NetworkAvailabilityCoordinator>();
     WidgetsBinding.instance.addObserver(this);
     Modular.routerConfig.routerDelegate.addListener(_onRouteChanged);
     final lifecycleState = WidgetsBinding.instance.lifecycleState;
@@ -109,11 +112,26 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
                 themeMode: themeMode,
                 debugShowCheckedModeBanner: false,
                 title: 'BaoRide Driver',
-                builder: (context, child) => _buildRouteWithLocationOverlay(
-                  context,
-                  child,
-                  locationState,
-                ),
+                builder: (context, child) =>
+                    StreamBuilder<NetworkAvailabilityStatus>(
+                      stream: _networkAvailabilityCoordinator.changes,
+                      initialData: _networkAvailabilityCoordinator.status,
+                      builder: (context, snapshot) => Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          _buildRouteWithLocationOverlay(
+                            context,
+                            child,
+                            locationState,
+                          ),
+                          AppNetworkStatusBanner(
+                            isVisible:
+                                snapshot.data ==
+                                NetworkAvailabilityStatus.unavailable,
+                          ),
+                        ],
+                      ),
+                    ),
               ),
             ),
       ),

@@ -25,3 +25,10 @@ class DataParsingException implements Exception {
   @override
   String toString() => 'DataParsingException: $message';
 }
+
+class NetworkCircuitOpenException implements Exception {
+  const NetworkCircuitOpenException();
+
+  @override
+  String toString() => 'NetworkCircuitOpenException: API circuit is open';
+}
