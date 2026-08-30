@@ -10,6 +10,7 @@ import 'package:passenger_app/src/features/profile/data/repositories/passenger_p
 import 'package:passenger_app/src/features/profile/domain/repositories/i_passenger_profile_repository.dart';
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
 import 'package:passenger_app/src/features/profile/view/account_page.dart';
+import 'package:passenger_app/src/features/profile/view/help_center_page.dart';
 import 'package:passenger_app/src/features/profile/view/profile_info_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -46,6 +47,13 @@ class ProfileModule {
         },
         child: const ProfileInfoPage(),
       ),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
+    ),
+    ChildRoute(
+      name: ProfileRoutes.helpCenter,
+      ProfileRoutes.helpCenterPath,
+      child: (context, GoRouterState state) => const HelpCenterPage(),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
