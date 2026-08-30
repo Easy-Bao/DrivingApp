@@ -11,5 +11,4 @@ abstract final class TripRoutes {
   static const String findingDriverPath = 'home/finding-driver';
   static const String driverMatched = 'DriverMatched';
   static const String driverMatchedPath = 'home/driver-matched';
-  static const String help = 'Help';
 }

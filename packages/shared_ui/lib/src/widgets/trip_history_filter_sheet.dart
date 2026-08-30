@@ -50,10 +50,7 @@ Future<TripHistoryFilter?> showTripHistoryFilterSheet({
 class TripHistoryFilterSheet extends StatelessWidget {
   final TripHistoryFilter selectedFilter;
 
-  const TripHistoryFilterSheet({
-    super.key,
-    required this.selectedFilter,
-  });
+  const TripHistoryFilterSheet({super.key, required this.selectedFilter});
 
   @override
   Widget build(BuildContext context) {
@@ -111,7 +108,7 @@ class TripHistoryFilterSheet extends StatelessWidget {
                       Text(
                         'Choose which trips appear in your history.',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: colors.onSurface.withValues(alpha: 0.55),
+                          color: colors.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -169,7 +166,7 @@ class _FilterMenuHeader extends StatelessWidget {
         Text(
           'Choose which trips appear in your history.',
           style: theme.textTheme.bodySmall?.copyWith(
-            color: colors.onSurface.withValues(alpha: 0.55),
+            color: colors.onSurfaceVariant,
           ),
         ),
       ],
@@ -181,10 +178,7 @@ class _FilterMenuOption extends StatelessWidget {
   final TripHistoryFilter filter;
   final TripHistoryFilter selectedFilter;
 
-  const _FilterMenuOption({
-    required this.filter,
-    required this.selectedFilter,
-  });
+  const _FilterMenuOption({required this.filter, required this.selectedFilter});
 
   @override
   Widget build(BuildContext context) {
@@ -236,9 +230,10 @@ class _FilterMenuOption extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 9,
-                      color:
-                          foreground.withValues(alpha: selected ? 0.72 : 0.55),
+                      fontSize: 12,
+                      color: selected
+                          ? colors.onPrimary.withValues(alpha: 0.84)
+                          : colors.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -247,7 +242,7 @@ class _FilterMenuOption extends StatelessWidget {
             Icon(
               selected ? LucideIcons.check : LucideIcons.chevron_right,
               size: 16,
-              color: foreground.withValues(alpha: selected ? 1 : 0.35),
+              color: selected ? colors.onPrimary : colors.onSurfaceVariant,
             ),
           ],
         ),
@@ -306,8 +301,10 @@ class _FilterOption extends StatelessWidget {
                     Text(
                       description,
                       style: TextStyle(
-                        fontSize: 10,
-                        color: foreground.withValues(alpha: 0.62),
+                        fontSize: 12,
+                        color: isSelected
+                            ? colors.onPrimary.withValues(alpha: 0.84)
+                            : colors.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -316,7 +313,7 @@ class _FilterOption extends StatelessWidget {
               Icon(
                 isSelected ? LucideIcons.check : LucideIcons.chevron_right,
                 size: 17,
-                color: foreground.withValues(alpha: isSelected ? 1 : 0.38),
+                color: isSelected ? colors.onPrimary : colors.onSurfaceVariant,
               ),
             ],
           ),
