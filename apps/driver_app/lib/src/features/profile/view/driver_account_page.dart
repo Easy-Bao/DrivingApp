@@ -1,11 +1,8 @@
 import 'dart:async';
 
-import 'package:driver_app/src/core/location/location.dart';
-import 'package:driver_app/src/core/services/background_telemetry_service.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/features/activity/activity_routes.dart';
 import 'package:driver_app/src/features/auth/auth_routes.dart';
 import 'package:driver_app/src/features/help_center/help_center_routes.dart';
-import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/profile/bloc/account/account_cubit.dart';
 import 'package:driver_app/src/features/profile/bloc/account/account_state.dart';
 import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
@@ -18,7 +15,9 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class DriverAccountPage extends StatefulWidget {
-  const DriverAccountPage({super.key});
+  const DriverAccountPage({super.key, required this.onLogout});
+
+  final Future<void> Function() onLogout;
 
   @override
   State<DriverAccountPage> createState() => _DriverAccountPageState();
@@ -65,7 +64,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                         ],
                         if (state.errorMessage != null) ...[
                           const SizedBox(height: 20),
-                          _AccountRefreshNotice(
+                          AppErrorBanner(
                             message: state.errorMessage!,
                             onRetry: () => unawaited(
                               BlocProvider.of<DriverAccountCubit>(
@@ -92,7 +91,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                             title: 'Performance',
                             subtitle: 'Ratings, trips, and earnings',
                             onTap: () =>
-                                context.pushNamed(ProfileRoutes.performance),
+                                context.pushNamed(ActivityRoutes.performance),
                           ),
                         ]),
                         const SizedBox(height: 32),
@@ -351,64 +350,13 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
     setState(() => _isLoggingOut = true);
 
     try {
-      final position = LocationService.lastPosition;
-      try {
-        await Modular.get<DashboardCubit>().forceOffline(
-          lat: position?.latitude ?? 0,
-          lng: position?.longitude ?? 0,
-        );
-      } catch (error) {
-        debugPrint('Unable to clear driver availability during logout: $error');
-      }
-      try {
-        await Modular.get<BackgroundTelemetryService>().stop();
-      } catch (error) {
-        debugPrint('Unable to stop driver telemetry during logout: $error');
-      }
-      await Modular.get<SecureSessionService>().clearSession();
+      await widget.onLogout();
       if (context.mounted) context.goNamed(AuthRoutes.signin);
     } catch (error) {
       debugPrint('Unable to log out driver: $error');
       if (!mounted) return;
       setState(() => _isLoggingOut = false);
     }
-  }
-}
-
-class _AccountRefreshNotice extends StatelessWidget {
-  const _AccountRefreshNotice({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: context.colorScheme.errorContainer,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            LucideIcons.circle_alert,
-            size: 20,
-            color: context.colorScheme.onErrorContainer,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              message,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: context.colorScheme.onErrorContainer,
-              ),
-            ),
-          ),
-          TextButton(onPressed: onRetry, child: const Text('Retry')),
-        ],
-      ),
-    );
   }
 }
 

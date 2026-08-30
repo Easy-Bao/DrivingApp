@@ -9,6 +9,4 @@ abstract final class ProfileRoutes {
   static const String personalDetailsPath = 'account/personal-details';
   static const String vehicleInformation = 'DriverVehicleInformation';
   static const String vehicleInformationPath = 'account/vehicle-information';
-  static const String performance = 'DriverPerformance';
-  static const String performancePath = 'account/performance';
 }

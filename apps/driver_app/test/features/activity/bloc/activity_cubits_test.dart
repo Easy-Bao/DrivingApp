@@ -72,10 +72,10 @@ void main() {
     },
     act: (cubit) => cubit.load(),
     expect: () => [
-      const DriverPerformanceState(isLoading: true),
-      isA<DriverPerformanceState>()
+      isA<DriverPerformanceLoading>(),
+      isA<DriverPerformanceLoaded>()
           .having((state) => state.isLoading, 'isLoading', isFalse)
-          .having((state) => state.stats?.completedTrips, 'completed trips', 5),
+          .having((state) => state.stats.completedTrips, 'completed trips', 5),
     ],
   );
 

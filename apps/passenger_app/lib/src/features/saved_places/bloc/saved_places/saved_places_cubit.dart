@@ -35,6 +35,9 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
           places: places,
           isLoading: false,
           errorMessage: repairErrorMessage,
+          errorSource: repairErrorMessage == null
+              ? null
+              : SavedPlacesErrorSource.load,
         ),
       );
     } catch (error) {
@@ -43,6 +46,7 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
           places: state.places,
           isLoading: false,
           errorMessage: ErrorHandler.getErrorMessage(error),
+          errorSource: SavedPlacesErrorSource.load,
         ),
       );
     }
@@ -87,6 +91,7 @@ class SavedPlacesCubit extends Cubit<SavedPlacesState> {
       emit(
         previous.copyWith(
           errorMessage: ErrorHandler.getErrorMessage(error, stackTrace),
+          errorSource: SavedPlacesErrorSource.persistence,
         ),
       );
     }

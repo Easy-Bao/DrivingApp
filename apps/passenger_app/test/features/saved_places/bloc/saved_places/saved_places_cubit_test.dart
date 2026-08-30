@@ -116,6 +116,7 @@ void main() {
           places: [],
           isLoading: false,
           errorMessage: 'Unable to complete your request. Please try again.',
+          errorSource: SavedPlacesErrorSource.load,
         ),
       ],
     );

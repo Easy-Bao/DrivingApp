@@ -49,7 +49,7 @@ class DriverPerformancePage extends StatelessWidget {
                   _PerformanceMetrics(stats: state.stats),
                   if (state.errorMessage != null) ...[
                     const SizedBox(height: 20),
-                    _PerformanceLoadNotice(
+                    AppErrorBanner(
                       message: state.errorMessage!,
                       onRetry: () => unawaited(
                         BlocProvider.of<DriverPerformanceCubit>(context).load(),
@@ -210,42 +210,6 @@ class _PerformanceMetricCard extends StatelessWidget {
               color: context.colorScheme.onSurfaceVariant,
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PerformanceLoadNotice extends StatelessWidget {
-  const _PerformanceLoadNotice({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: context.colorScheme.errorContainer,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            LucideIcons.circle_alert,
-            color: context.colorScheme.onErrorContainer,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              message,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: context.colorScheme.onErrorContainer,
-              ),
-            ),
-          ),
-          TextButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),
     );

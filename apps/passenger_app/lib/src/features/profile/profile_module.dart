@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/profile/bloc/profile/profile_cubit.dart';
 import 'package:passenger_app/src/features/profile/data/datasources/passenger_profile_remote_data_source.dart';
 import 'package:passenger_app/src/features/profile/data/repositories/passenger_profile_repository.dart';
@@ -69,7 +70,11 @@ class ProfileModule {
           unawaited(cubit.loadProfile());
           return cubit;
         },
-        child: const AccountPage(),
+        child: AccountPage(
+          onLogout: () => BlocProvider.of<SessionBloc>(
+            context,
+          ).add(const SessionLogoutRequested()),
+        ),
       ),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,

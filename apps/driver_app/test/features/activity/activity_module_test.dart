@@ -16,4 +16,16 @@ void main() {
     expect(activityRouteNames, contains(ActivityRoutes.earnings));
     expect(profileRouteNames, isNot(contains(ActivityRoutes.earnings)));
   });
+
+  test('owns the performance route in the activity feature', () {
+    final activityRouteNames = ActivityModule.routes
+        .whereType<ChildRoute>()
+        .map((route) => route.name);
+    final profileRouteNames = ProfileModule.routes.whereType<ChildRoute>().map(
+      (route) => route.name,
+    );
+
+    expect(activityRouteNames, contains(ActivityRoutes.performance));
+    expect(profileRouteNames, isNot(contains(ActivityRoutes.performance)));
+  });
 }

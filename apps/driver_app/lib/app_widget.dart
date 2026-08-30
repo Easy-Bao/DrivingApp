@@ -31,6 +31,7 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
     _themeModeCubit = Modular.get<ThemeModeCubit>();
     _locationAccessCubit = Modular.get<DriverLocationAccessCubit>();
     WidgetsBinding.instance.addObserver(this);
+    Modular.routerConfig.routerDelegate.addListener(_onRouteChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _ensureLocationMonitoring();
       unawaited(_setBackgroundTelemetryVisibility(true));
@@ -40,6 +41,7 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
   @override
   void dispose() {
     unawaited(_setBackgroundTelemetryVisibility(false));
+    Modular.routerConfig.routerDelegate.removeListener(_onRouteChanged);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -53,6 +55,10 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
       _ensureLocationMonitoring();
       unawaited(_locationAccessCubit.refresh());
     }
+  }
+
+  void _onRouteChanged() {
+    if (mounted) _ensureLocationMonitoring();
   }
 
   Future<void> _setBackgroundTelemetryVisibility(bool isVisible) async {
@@ -122,7 +128,6 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
         Modular.routerConfig.routerDelegate.currentConfiguration.uri.path;
     if (!currentPath.startsWith(AppRoutes.driverModulePath)) return null;
 
-    _ensureLocationMonitoring();
     final cubit = BlocProvider.of<DriverLocationAccessCubit>(context);
     return switch (locationState) {
       DriverLocationAccessChecking() => const LocationAccessOverlay(
@@ -170,7 +175,17 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
 
     _locationMonitoringRequested = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) unawaited(_locationAccessCubit.start());
+      if (mounted && _isDriverRoute) {
+        unawaited(_locationAccessCubit.start());
+      }
     });
   }
+
+  bool get _isDriverRoute => Modular
+      .routerConfig
+      .routerDelegate
+      .currentConfiguration
+      .uri
+      .path
+      .startsWith(AppRoutes.driverModulePath);
 }

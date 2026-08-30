@@ -1,57 +1,23 @@
-import 'dart:async';
-
 import 'package:driver_app/src/core/location/location.dart';
 import 'package:driver_app/src/features/location/domain/repositories/i_driver_location_access_repository.dart';
+import 'package:shared_core/shared_core.dart';
 
 class DriverLocationAccessRepository
     implements IDriverLocationAccessRepository {
-  final StreamController<LocationAccessState> _accessStateController =
-      StreamController<LocationAccessState>.broadcast();
-
-  StreamSubscription<LocationAccessState>? _serviceStatusSubscription;
-  LocationAccessState? _lastAccessState;
-  Future<LocationAccessState>? _refreshInFlight;
+  final _monitor = AccessStateMonitor<LocationAccessState>(
+    stateChanges: () => LocationService.accessStateChanges,
+    readState: LocationService.getAccessState,
+  );
 
   @override
   Stream<LocationAccessState> get accessStateChanges =>
-      _accessStateController.stream;
+      _monitor.changes;
 
   @override
-  Future<LocationAccessState> startMonitoring() async {
-    _serviceStatusSubscription ??= LocationService.accessStateChanges.listen(
-      _publish,
-      onError: (_) => unawaited(refresh()),
-    );
-    return refresh();
-  }
+  Future<LocationAccessState> startMonitoring() => _monitor.start();
 
   @override
-  Future<LocationAccessState> refresh() {
-    final inFlight = _refreshInFlight;
-    if (inFlight != null) return inFlight;
-
-    final refresh = _readAndPublish();
-    _refreshInFlight = refresh;
-    return refresh.whenComplete(() {
-      if (identical(_refreshInFlight, refresh)) {
-        _refreshInFlight = null;
-      }
-    });
-  }
-
-  Future<LocationAccessState> _readAndPublish() async {
-    final accessState = await LocationService.getAccessState();
-    _publish(accessState);
-    return accessState;
-  }
-
-  void _publish(LocationAccessState accessState) {
-    if (_lastAccessState == accessState || _accessStateController.isClosed) {
-      return;
-    }
-    _lastAccessState = accessState;
-    _accessStateController.add(accessState);
-  }
+  Future<LocationAccessState> refresh() => _monitor.refresh();
 
   @override
   Future<LocationAccessState> requestPermission() async {
@@ -67,7 +33,6 @@ class DriverLocationAccessRepository
 
   @override
   Future<void> dispose() async {
-    await _serviceStatusSubscription?.cancel();
-    await _accessStateController.close();
+    await _monitor.dispose();
   }
 }

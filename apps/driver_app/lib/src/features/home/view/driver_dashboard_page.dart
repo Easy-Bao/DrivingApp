@@ -732,6 +732,15 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
             }
           },
         ),
+        BlocListener<DriverLocationAccessCubit, DriverLocationAccessViewState>(
+          listenWhen: (_, current) =>
+              current is DriverLocationAccessUnavailable,
+          listener: (context, _) {
+            if (BlocProvider.of<DashboardCubit>(context).state.isOnline) {
+              unawaited(_forceOfflineForLocationLoss());
+            }
+          },
+        ),
       ],
       child: BlocBuilder<DashboardCubit, DashboardState>(
         builder: (context, state) {
@@ -1005,11 +1014,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                 inactiveTrackColor: context.colorScheme.onPrimary.withValues(
                   alpha: 0,
                 ),
-                onChanged: (value) {
-                  if (!value || locationReady) {
-                    unawaited(_toggleOnline(context, value));
-                  }
-                },
+                onChanged: (locationReady || isOnline)
+                    ? (value) => unawaited(_toggleOnline(context, value))
+                    : null,
               ),
       ),
     );

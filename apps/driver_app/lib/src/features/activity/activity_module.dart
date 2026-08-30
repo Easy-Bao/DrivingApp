@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -11,6 +13,7 @@ import 'package:driver_app/src/features/activity/data/repositories/driver_activi
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
 import 'package:driver_app/src/features/activity/view/driver_trip_history_page.dart';
 import 'package:driver_app/src/features/activity/view/driver_trip_detail_page.dart';
+import 'package:driver_app/src/features/activity/view/driver_performance_page.dart';
 import 'package:driver_app/src/features/activity/view/earnings_page.dart';
 import 'package:shared_ui/shared_ui.dart';
 
@@ -53,6 +56,20 @@ class ActivityModule {
       ActivityRoutes.tripDetailPath,
       child: (context, GoRouterState state) =>
           DriverTripDetailPage(trip: SafeRouteExtra.asMap(state.extra)),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
+    ),
+    ChildRoute(
+      name: ActivityRoutes.performance,
+      ActivityRoutes.performancePath,
+      child: (context, GoRouterState state) => BlocProvider(
+        create: (_) {
+          final cubit = Modular.get<DriverPerformanceCubit>();
+          unawaited(cubit.load());
+          return cubit;
+        },
+        child: const DriverPerformancePage(),
+      ),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),

@@ -75,4 +75,29 @@ void main() {
     expect(title.style?.color, darkScheme.onSurface);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('exposes real account, legal, and logout destinations', (
+    tester,
+  ) async {
+    var logoutCount = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: EasyRideTheme.light,
+        home: BlocProvider<ProfileCubit>.value(
+          value: profileCubit,
+          child: AccountPage(onLogout: () => logoutCount++),
+        ),
+      ),
+    );
+
+    expect(find.text('Personal Details'), findsOneWidget);
+    expect(find.text('Terms of Service'), findsOneWidget);
+    expect(find.text('About BaoRide'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('passenger-account-logout')),
+      300,
+    );
+    await tester.tap(find.byKey(const ValueKey('passenger-account-logout')));
+    expect(logoutCount, 1);
+  });
 }

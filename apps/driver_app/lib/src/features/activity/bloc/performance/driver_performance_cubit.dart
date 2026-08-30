@@ -10,14 +10,14 @@ class DriverPerformanceCubit extends Cubit<DriverPerformanceState> {
     required SecureSessionService sessionService,
   }) : _repository = repository,
        _sessionService = sessionService,
-       super(const DriverPerformanceState());
+       super(const DriverPerformanceInitial());
 
   final IDriverActivityRepository _repository;
   final SecureSessionService _sessionService;
 
   Future<void> load() async {
     if (isClosed) return;
-    emit(state.copyWith(isLoading: true, clearError: true));
+    emit(DriverPerformanceLoading(stats: state.stats));
 
     try {
       final driverId = await _sessionService.readDriverId() ?? '';
@@ -30,9 +30,7 @@ class DriverPerformanceCubit extends Cubit<DriverPerformanceState> {
       if (isClosed) return;
       result.fold(
         (failure) => _emitFailure(ErrorHandler.getErrorMessage(failure)),
-        (stats) => emit(
-          state.copyWith(isLoading: false, stats: stats, clearError: true),
-        ),
+        (stats) => emit(DriverPerformanceLoaded(stats)),
       );
     } catch (error) {
       _emitFailure(ErrorHandler.getErrorMessage(error));
@@ -41,6 +39,6 @@ class DriverPerformanceCubit extends Cubit<DriverPerformanceState> {
 
   void _emitFailure(String message) {
     if (isClosed) return;
-    emit(state.copyWith(isLoading: false, errorMessage: message));
+    emit(DriverPerformanceFailure(stats: state.stats, message: message));
   }
 }

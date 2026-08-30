@@ -70,8 +70,10 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
         await cubit.replacePlace(existingIndex, configuredPlace);
       }
       final error = cubit.state.errorMessage;
-      if (mounted && error != null) {
-        CustomToast.show(context, error, isError: true);
+      if (mounted &&
+          error != null &&
+          cubit.state.errorSource == SavedPlacesErrorSource.persistence) {
+        _showFailureSnackBar(error);
       }
     } finally {
       _isPlaceFlowOpen = false;
@@ -94,8 +96,10 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
       if (newPlace != null && mounted) {
         await cubit.addPlace(newPlace);
         final error = cubit.state.errorMessage;
-        if (mounted && error != null) {
-          CustomToast.show(context, error, isError: true);
+        if (mounted &&
+            error != null &&
+            cubit.state.errorSource == SavedPlacesErrorSource.persistence) {
+          _showFailureSnackBar(error);
         }
       }
     } finally {
@@ -243,9 +247,16 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
     if (!mounted) return;
 
     final error = cubit.state.errorMessage;
-    if (error != null) {
-      CustomToast.show(context, error, isError: true);
+    if (error != null &&
+        cubit.state.errorSource == SavedPlacesErrorSource.persistence) {
+      _showFailureSnackBar(error);
     }
+  }
+
+  void _showFailureSnackBar(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -338,8 +349,14 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.only(bottom: 32),
       children: [
-        if (state.errorMessage != null) ...[
-          _buildLoadIssue(state.errorMessage!),
+        if (state.errorMessage != null &&
+            state.errorSource == SavedPlacesErrorSource.load) ...[
+          AppErrorBanner(
+            message: state.errorMessage!,
+            onRetry: () => unawaited(
+              BlocProvider.of<SavedPlacesCubit>(context).loadPlaces(),
+            ),
+          ),
           const SizedBox(height: 16),
         ],
         _buildSectionLabel('Essentials'),
@@ -408,47 +425,6 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildLoadIssue(String message) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: context.colorScheme.error.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: context.colorScheme.error.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            LucideIcons.circle_alert,
-            color: context.colorScheme.error,
-            size: 18,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              message,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: context.colorScheme.error,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () => unawaited(
-              BlocProvider.of<SavedPlacesCubit>(context).loadPlaces(),
-            ),
-            child: const Text('Retry'),
-          ),
-        ],
-      ),
     );
   }
 

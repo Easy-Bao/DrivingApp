@@ -13,8 +13,9 @@ import 'package:shared_ui/shared_ui.dart';
 
 class AccountPage extends StatelessWidget {
   final VoidCallback? onProfileTap;
+  final VoidCallback? onLogout;
 
-  const AccountPage({super.key, this.onProfileTap});
+  const AccountPage({super.key, this.onProfileTap, this.onLogout});
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +53,16 @@ class AccountPage extends StatelessWidget {
                       const SizedBox(height: 26),
                       _buildProfileSummary(context, state),
                       const SizedBox(height: 38),
+                      _buildSectionTitle(context, 'Personal information'),
+                      const SizedBox(height: 12),
+                      _buildMenuGroup(context, [
+                        _AccountMenuItem(
+                          title: 'Personal Details',
+                          subtitle: 'Name, phone, email, and profile photo',
+                          onTap: () => _openProfileInfo(context),
+                        ),
+                      ]),
+                      const SizedBox(height: 32),
                       _buildSectionTitle(context, 'Places'),
                       const SizedBox(height: 12),
                       _buildMenuGroup(context, [
@@ -79,6 +90,25 @@ class AccountPage extends StatelessWidget {
                               context.pushNamed(SettingsRoutes.settings),
                         ),
                       ]),
+                      const SizedBox(height: 32),
+                      _buildSectionTitle(context, 'Legal and app information'),
+                      const SizedBox(height: 12),
+                      _buildMenuGroup(context, [
+                        _AccountMenuItem(
+                          title: 'Terms of Service',
+                          subtitle: 'Read the rules for using BaoRide',
+                          onTap: () => context.pushNamed(SettingsRoutes.terms),
+                        ),
+                        _AccountMenuItem(
+                          title: 'About BaoRide',
+                          subtitle: 'Version and open-source licenses',
+                          onTap: () => context.pushNamed(SettingsRoutes.about),
+                        ),
+                      ]),
+                      if (onLogout != null) ...[
+                        const SizedBox(height: 32),
+                        _buildLogoutButton(context),
+                      ],
                     ],
                   ),
                 );
@@ -240,6 +270,26 @@ class AccountPage extends StatelessWidget {
         fontWeight: FontWeight.w800,
         color: context.colorScheme.onSurfaceVariant,
         letterSpacing: 0.7,
+      ),
+    );
+  }
+
+  Widget _buildLogoutButton(BuildContext context) {
+    return SizedBox(
+      key: const ValueKey<String>('passenger-account-logout'),
+      height: 58,
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: onLogout,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: context.colorScheme.error,
+          side: BorderSide(
+            color: context.colorScheme.error.withValues(alpha: 0.35),
+          ),
+          backgroundColor: context.colorScheme.error.withValues(alpha: 0.04),
+          shape: const StadiumBorder(),
+        ),
+        child: const Text('Log Out'),
       ),
     );
   }

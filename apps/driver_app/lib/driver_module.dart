@@ -1,9 +1,14 @@
 import 'dart:async';
 
+import 'package:driver_app/src/core/location/location.dart';
+import 'package:driver_app/src/core/services/background_telemetry_service.dart';
+import 'package:driver_app/src/core/services/driver_logout_coordinator.dart';
+import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/features/activity/activity_module.dart';
 import 'package:driver_app/src/features/chat/chat_module.dart';
 import 'package:driver_app/src/features/home/home_module.dart';
+import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/help_center/help_center_module.dart';
 import 'package:driver_app/src/shared/widgets/navigationbar/driver_navigation_shell.dart';
 import 'package:driver_app/src/features/profile/profile_module.dart';
@@ -18,9 +23,23 @@ class DriverModule extends Module {
     HomeModule.binds(i);
     ProfileModule.binds(i);
 
-    i.addLazySingleton<DriverTabNavigationCoordinator>(
-      (_) => DriverTabNavigationCoordinator(),
-    );
+    i
+      ..addLazySingleton<DriverLogoutCoordinator>(
+        (i) => DriverLogoutCoordinator(
+          forceOffline: () async {
+            final position = LocationService.lastPosition;
+            await i.get<DashboardCubit>().forceOffline(
+              lat: position?.latitude ?? 0,
+              lng: position?.longitude ?? 0,
+            );
+          },
+          stopTelemetry: () => i.get<BackgroundTelemetryService>().stop(),
+          clearSession: () => i.get<SecureSessionService>().clearSession(),
+        ),
+      )
+      ..addLazySingleton<DriverTabNavigationCoordinator>(
+        (_) => DriverTabNavigationCoordinator(),
+      );
   }
 
   @override

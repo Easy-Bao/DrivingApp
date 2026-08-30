@@ -140,20 +140,12 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
     final label = _controller.text.trim();
 
     if (label.isEmpty) {
-      CustomToast.show(
-        context,
-        'Please enter a name for your shortcut.',
-        isError: true,
-      );
+      _showFailureSnackBar('Please enter a name for your shortcut.');
       return;
     }
 
     if (!_isLocationPinned) {
-      CustomToast.show(
-        context,
-        'Please pin a location on the map before saving.',
-        isError: true,
-      );
+      _showFailureSnackBar('Please pin a location on the map before saving.');
       return;
     }
 
@@ -167,6 +159,12 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
     );
 
     context.pop(newPlace);
+  }
+
+  void _showFailureSnackBar(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   String _iconNameFromData(IconData icon) {

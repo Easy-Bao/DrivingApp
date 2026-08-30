@@ -19,6 +19,8 @@ class _MockSecureStorage extends Mock implements FlutterSecureStorage {}
 class _MockDriverProfileRepository extends Mock
     implements IDriverProfileRepository {}
 
+Future<void> _noopLogout() async {}
+
 void main() {
   late ModularTestScope scope;
   late _MockDriverProfileRepository repository;
@@ -80,7 +82,7 @@ void main() {
         theme: EasyRideTheme.light,
         home: BlocProvider(
           create: (_) => DriverAccountCubit(repository: repository)..load(),
-          child: const DriverAccountPage(),
+          child: const DriverAccountPage(onLogout: _noopLogout),
         ),
       ),
     );
@@ -118,7 +120,7 @@ void main() {
         themeMode: ThemeMode.dark,
         home: BlocProvider(
           create: (_) => DriverAccountCubit(repository: repository)..load(),
-          child: const DriverAccountPage(),
+          child: const DriverAccountPage(onLogout: _noopLogout),
         ),
       ),
     );

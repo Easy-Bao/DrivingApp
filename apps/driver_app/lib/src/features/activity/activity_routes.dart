@@ -11,4 +11,6 @@ abstract final class ActivityRoutes {
       '${AppRoutes.driverModulePath}$tripHistoryPath';
   static const String tripDetail = 'TripDetail';
   static const String tripDetailPath = 'earnings/trip-detail';
+  static const String performance = 'DriverPerformance';
+  static const String performancePath = 'account/performance';
 }
