@@ -14,7 +14,7 @@ class LocationAccessCubit extends Cubit<LocationAccessViewState> {
 
   StreamSubscription<LocationAccessState>? _accessStateSubscription;
   bool _isStarted = false;
-  bool _isPromptSuppressed = false;
+  bool _hasRequestedPermission = false;
 
   Future<void> start() async {
     if (_isStarted) {
@@ -29,7 +29,13 @@ class LocationAccessCubit extends Cubit<LocationAccessViewState> {
     );
 
     try {
-      _applyAccessState(await _repository.startMonitoring());
+      final accessState = await _repository.startMonitoring();
+      if (accessState == .denied && !_hasRequestedPermission) {
+        _hasRequestedPermission = true;
+        _applyAccessState(await _repository.requestPermission());
+      } else {
+        _applyAccessState(accessState);
+      }
     } catch (_) {
       _emitTemporaryFailure();
     }
@@ -59,8 +65,8 @@ class LocationAccessCubit extends Cubit<LocationAccessViewState> {
     } catch (_) {
       if (previousState case final LocationAccessUnavailable unavailable) {
         emit(
-          unavailable.copyWith(
-            isPromptSuppressed: false,
+          LocationAccessUnavailable(
+            accessState: unavailable.accessState,
             message: 'Location is temporarily unavailable. Try again.',
           ),
         );
@@ -80,36 +86,15 @@ class LocationAccessCubit extends Cubit<LocationAccessViewState> {
     return .deniedForever;
   }
 
-  void suppressPrompt() {
-    final currentState = state;
-    if (currentState is! LocationAccessUnavailable) return;
-
-    _isPromptSuppressed = true;
-    emit(currentState.copyWith(isPromptSuppressed: true));
-  }
-
-  void showPrompt() {
-    final currentState = state;
-    if (currentState is! LocationAccessUnavailable) return;
-
-    _isPromptSuppressed = false;
-    emit(currentState.copyWith(isPromptSuppressed: false));
-  }
-
   void _applyAccessState(LocationAccessState accessState) {
     if (accessState == .ready) {
-      _isPromptSuppressed = false;
       emit(const LocationAccessReady());
       return;
     }
 
-    final wasReady = state is LocationAccessReady;
-    if (wasReady) _isPromptSuppressed = false;
-
     emit(
       LocationAccessUnavailable(
         accessState: accessState,
-        isPromptSuppressed: _isPromptSuppressed,
         message: _settingsMessage(accessState),
       ),
     );
@@ -127,9 +112,8 @@ class LocationAccessCubit extends Cubit<LocationAccessViewState> {
 
   void _emitTemporaryFailure() {
     emit(
-      LocationAccessUnavailable(
+      const LocationAccessUnavailable(
         accessState: .serviceDisabled,
-        isPromptSuppressed: _isPromptSuppressed,
         message: 'Location is temporarily unavailable. Try again.',
       ),
     );

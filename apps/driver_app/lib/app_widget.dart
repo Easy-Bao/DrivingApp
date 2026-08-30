@@ -2,7 +2,10 @@ import 'dart:async';
 
 import 'package:driver_app/src/core/services/background_telemetry_service.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/core/location/location.dart';
+import 'package:driver_app/src/core/routing/app_routes.dart';
 import 'package:driver_app/src/features/location/bloc/location_access/driver_location_access_cubit.dart';
+import 'package:driver_app/src/features/location/bloc/location_access/driver_location_access_state.dart';
 import 'package:driver_app/src/features/trip/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_repository.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +23,7 @@ class AppWidget extends StatefulWidget {
 class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
   late final ThemeModeCubit _themeModeCubit;
   late final DriverLocationAccessCubit _locationAccessCubit;
+  bool _locationMonitoringRequested = false;
 
   @override
   void initState() {
@@ -28,7 +32,7 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
     _locationAccessCubit = Modular.get<DriverLocationAccessCubit>();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(_locationAccessCubit.start());
+      _ensureLocationMonitoring();
       unawaited(_setBackgroundTelemetryVisibility(true));
     });
   }
@@ -46,6 +50,7 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
       _setBackgroundTelemetryVisibility(state == AppLifecycleState.resumed),
     );
     if (state == AppLifecycleState.resumed) {
+      _ensureLocationMonitoring();
       unawaited(_locationAccessCubit.refresh());
     }
   }
@@ -75,14 +80,97 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
         ),
       ],
       child: BlocBuilder<ThemeModeCubit, ThemeMode>(
-        builder: (context, themeMode) => ModularApp.router(
-          theme: EasyRideTheme.light,
-          darkTheme: EasyRideTheme.dark,
-          themeMode: themeMode,
-          debugShowCheckedModeBanner: false,
-          title: 'BaoRide Driver',
-        ),
+        builder: (context, themeMode) =>
+            BlocBuilder<
+              DriverLocationAccessCubit,
+              DriverLocationAccessViewState
+            >(
+              builder: (context, locationState) => ModularApp.router(
+                theme: EasyRideTheme.light,
+                darkTheme: EasyRideTheme.dark,
+                themeMode: themeMode,
+                debugShowCheckedModeBanner: false,
+                title: 'BaoRide Driver',
+                builder: (context, child) => _buildRouteWithLocationOverlay(
+                  context,
+                  child,
+                  locationState,
+                ),
+              ),
+            ),
       ),
     );
+  }
+
+  Widget _buildRouteWithLocationOverlay(
+    BuildContext context,
+    Widget? child,
+    DriverLocationAccessViewState locationState,
+  ) {
+    final overlay = _buildLocationOverlay(context, locationState);
+    return Stack(
+      fit: StackFit.expand,
+      children: [child ?? const SizedBox.shrink(), ?overlay],
+    );
+  }
+
+  Widget? _buildLocationOverlay(
+    BuildContext context,
+    DriverLocationAccessViewState locationState,
+  ) {
+    final currentPath =
+        Modular.routerConfig.routerDelegate.currentConfiguration.uri.path;
+    if (!currentPath.startsWith(AppRoutes.driverModulePath)) return null;
+
+    _ensureLocationMonitoring();
+    final cubit = BlocProvider.of<DriverLocationAccessCubit>(context);
+    return switch (locationState) {
+      DriverLocationAccessChecking() => const LocationAccessOverlay(
+        state: LocationAccessOverlayState.checking,
+        appName: 'BaoRide',
+      ),
+      DriverLocationAccessReady() => null,
+      DriverLocationAccessUnavailable(
+        accessState: final accessState,
+        message: final message,
+      ) =>
+        switch (accessState) {
+          LocationAccessState.ready => null,
+          LocationAccessState.denied => LocationAccessOverlay(
+            state: LocationAccessOverlayState.permissionDenied,
+            appName: 'BaoRide',
+            message: message,
+            onTryAgain: () => unawaited(cubit.enable()),
+          ),
+          LocationAccessState.serviceDisabled => LocationAccessOverlay(
+            state: LocationAccessOverlayState.serviceDisabled,
+            appName: 'BaoRide',
+            message: message,
+            onOpenLocationSettings: () => unawaited(cubit.enable()),
+            onTryAgain: () => unawaited(cubit.refresh()),
+          ),
+          LocationAccessState.deniedForever => LocationAccessOverlay(
+            state: LocationAccessOverlayState.permissionDeniedForever,
+            appName: 'BaoRide',
+            message: message,
+            onOpenAppSettings: () => unawaited(cubit.enable()),
+            onTryAgain: () => unawaited(cubit.refresh()),
+          ),
+        },
+    };
+  }
+
+  void _ensureLocationMonitoring() {
+    final currentPath =
+        Modular.routerConfig.routerDelegate.currentConfiguration.uri.path;
+    if (_locationMonitoringRequested ||
+        !currentPath.startsWith(AppRoutes.driverModulePath)) {
+      return;
+    }
+
+    _locationMonitoringRequested = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_locationAccessCubit.start());
+    });
   }
 }

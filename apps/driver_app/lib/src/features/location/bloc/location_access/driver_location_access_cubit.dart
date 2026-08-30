@@ -15,7 +15,7 @@ class DriverLocationAccessCubit extends Cubit<DriverLocationAccessViewState> {
 
   StreamSubscription<LocationAccessState>? _accessStateSubscription;
   bool _isStarted = false;
-  bool _isPromptSuppressed = false;
+  bool _hasRequestedPermission = false;
 
   Future<void> start() async {
     if (_isStarted) {
@@ -30,7 +30,14 @@ class DriverLocationAccessCubit extends Cubit<DriverLocationAccessViewState> {
     );
 
     try {
-      _applyAccessState(await _repository.startMonitoring());
+      final accessState = await _repository.startMonitoring();
+      if (accessState == LocationAccessState.denied &&
+          !_hasRequestedPermission) {
+        _hasRequestedPermission = true;
+        _applyAccessState(await _repository.requestPermission());
+      } else {
+        _applyAccessState(accessState);
+      }
     } catch (_) {
       _emitTemporaryFailure();
     }
@@ -61,8 +68,8 @@ class DriverLocationAccessCubit extends Cubit<DriverLocationAccessViewState> {
       if (previousState
           case final DriverLocationAccessUnavailable unavailable) {
         emit(
-          unavailable.copyWith(
-            isPromptSuppressed: false,
+          DriverLocationAccessUnavailable(
+            accessState: unavailable.accessState,
             message: 'Location is temporarily unavailable. Try again.',
           ),
         );
@@ -82,36 +89,15 @@ class DriverLocationAccessCubit extends Cubit<DriverLocationAccessViewState> {
     return LocationAccessState.deniedForever;
   }
 
-  void suppressPrompt() {
-    final currentState = state;
-    if (currentState is! DriverLocationAccessUnavailable) return;
-
-    _isPromptSuppressed = true;
-    emit(currentState.copyWith(isPromptSuppressed: true));
-  }
-
-  void showPrompt() {
-    final currentState = state;
-    if (currentState is! DriverLocationAccessUnavailable) return;
-
-    _isPromptSuppressed = false;
-    emit(currentState.copyWith(isPromptSuppressed: false));
-  }
-
   void _applyAccessState(LocationAccessState accessState) {
     if (accessState == LocationAccessState.ready) {
-      _isPromptSuppressed = false;
       emit(const DriverLocationAccessReady());
       return;
     }
 
-    final wasReady = state is DriverLocationAccessReady;
-    if (wasReady) _isPromptSuppressed = false;
-
     emit(
       DriverLocationAccessUnavailable(
         accessState: accessState,
-        isPromptSuppressed: _isPromptSuppressed,
         message: _settingsMessage(accessState),
       ),
     );
@@ -131,7 +117,6 @@ class DriverLocationAccessCubit extends Cubit<DriverLocationAccessViewState> {
     emit(
       DriverLocationAccessUnavailable(
         accessState: LocationAccessState.serviceDisabled,
-        isPromptSuppressed: _isPromptSuppressed,
         message: 'Location is temporarily unavailable. Try again.',
       ),
     );

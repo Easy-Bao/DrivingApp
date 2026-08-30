@@ -1,4 +1,4 @@
-import 'package:passenger_app/src/features/location/location_routes.dart';
+import 'package:passenger_app/src/features/home/home_routes.dart';
 
 abstract final class AuthRoutes {
   static const String root = 'AuthRoot';
@@ -16,5 +16,5 @@ abstract final class AuthRoutes {
 }
 
 String? authRootRedirect(Uri uri) {
-  return uri.path == AuthRoutes.rootPath ? LocationRoutes.fullGatePath : null;
+  return uri.path == AuthRoutes.rootPath ? HomeRoutes.fullHomePath : null;
 }

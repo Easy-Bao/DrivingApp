@@ -19,7 +19,7 @@ export 'package:shared_ui/src/widgets/app_tab_branch_container.dart';
 export 'package:shared_ui/src/widgets/app_terms_of_service_page.dart';
 export 'package:shared_ui/src/widgets/compact_route_timeline_widget.dart';
 export 'package:shared_ui/src/widgets/custom_toast.dart';
-export 'package:shared_ui/src/widgets/location_permission_page.dart';
+export 'package:shared_ui/src/widgets/location_access_overlay.dart';
 export 'package:shared_ui/src/widgets/safe_client_error_widget.dart';
 export 'package:shared_ui/src/widgets/swipe_active_tab_indicator.dart';
 export 'package:shared_ui/src/widgets/theme_mode_card.dart';

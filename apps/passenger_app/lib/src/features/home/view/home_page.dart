@@ -20,7 +20,6 @@ import 'package:passenger_app/src/features/home/view/widgets/recent_ride_history
 import 'package:passenger_app/src/features/home/view/widgets/saved_place_quick_actions_widget.dart';
 import 'package:passenger_app/src/features/location/bloc/location_access/location_access_cubit.dart';
 import 'package:passenger_app/src/features/location/bloc/location_access/location_access_state.dart';
-import 'package:passenger_app/src/features/location/location_routes.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/bloc/saved_places/saved_places_state.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
@@ -284,8 +283,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _showLocationPrompt() {
-    BlocProvider.of<LocationAccessCubit>(context).showPrompt();
-    context.goNamed(LocationRoutes.gate);
+    unawaited(BlocProvider.of<LocationAccessCubit>(context).enable());
   }
 
   Widget _buildRecentActivityHeader() {

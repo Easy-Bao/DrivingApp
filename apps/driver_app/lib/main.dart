@@ -5,7 +5,7 @@ import 'package:driver_app/src/core/constants/env_config.dart';
 import 'package:driver_app/src/core/services/background_telemetry_service.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/auth/auth_routes.dart';
-import 'package:driver_app/src/features/location/location_routes.dart';
+import 'package:driver_app/src/features/home/home_routes.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -43,7 +43,7 @@ void main() async {
     await Modular.configure(
       appModule: AppModule(prefs: prefs, sessionService: sessionService),
       initialRoute: hasDriverSession
-          ? DriverLocationRoutes.fullGatePath
+          ? HomeRoutes.fullDashboardPath
           : AuthRoutes.signinPath,
       debugLogDiagnostics: true,
       debugLogDiagnosticsGoRouter: true,

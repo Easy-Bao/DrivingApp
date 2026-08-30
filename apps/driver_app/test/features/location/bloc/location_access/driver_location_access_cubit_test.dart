@@ -30,24 +30,15 @@ void main() {
     );
 
     blocTest<DriverLocationAccessCubit, DriverLocationAccessViewState>(
-      'requests permission and becomes ready from denied access',
+      'requests permission once when startup access is denied',
       build: () {
         repository = _FakeDriverLocationAccessRepository(
           LocationAccessState.denied,
         )..permissionResult = LocationAccessState.ready;
         return DriverLocationAccessCubit(repository: repository);
       },
-      act: (cubit) async {
-        await cubit.start();
-        await cubit.enable();
-      },
-      expect: () => const [
-        DriverLocationAccessUnavailable(
-          accessState: LocationAccessState.denied,
-        ),
-        DriverLocationAccessChecking(),
-        DriverLocationAccessReady(),
-      ],
+      act: (cubit) => cubit.start(),
+      expect: () => const [DriverLocationAccessReady()],
       verify: (_) => expect(repository.permissionRequests, 1),
     );
 

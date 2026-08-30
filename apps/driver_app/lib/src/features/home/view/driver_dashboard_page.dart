@@ -8,7 +8,8 @@ import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart
 import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_state.dart';
 import 'package:driver_app/src/features/home/view/widgets/driver_dashboard/driver_dashboard_stats_row_widget.dart';
 import 'package:driver_app/src/features/home/view/widgets/driver_dashboard/driver_dashboard_feed_widgets.dart';
-import 'package:driver_app/src/features/location/location_routes.dart';
+import 'package:driver_app/src/features/location/bloc/location_access/driver_location_access_cubit.dart';
+import 'package:driver_app/src/features/location/bloc/location_access/driver_location_access_state.dart';
 import 'package:driver_app/src/features/profile/profile_routes.dart';
 import 'package:driver_app/src/features/trip/bloc/live_map/live_map_bloc.dart';
 import 'package:driver_app/src/features/trip/bloc/ride_flow/ride_flow_cubit.dart';
@@ -163,8 +164,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     if (accessState != LocationAccessState.ready) {
       if (dashboardState.isOnline) {
         await _forceOfflineForLocationLoss();
-        if (!mounted) return;
-        context.goNamed(DriverLocationRoutes.gate);
       }
       return;
     }
@@ -247,8 +246,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         lat: position?.latitude ?? 0,
         lng: position?.longitude ?? 0,
       );
-      if (mounted && !cubit.state.isOnline) {
-        context.goNamed(DriverLocationRoutes.gate);
+      if (mounted) {
+        await BlocProvider.of<DriverLocationAccessCubit>(context).refresh();
       }
     } finally {
       _isForcingOfflineForLocationLoss = false;
@@ -466,7 +465,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     try {
       if (requestedOnline && await _hasReadyLocationAccess(context) == false) {
         if (context.mounted) {
-          context.goNamed(DriverLocationRoutes.gate);
+          unawaited(
+            BlocProvider.of<DriverLocationAccessCubit>(context).enable(),
+          );
         }
         return;
       }
@@ -479,7 +480,11 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       if (!context.mounted) return;
 
       if (requestedOnline && position == null) {
-        context.goNamed(DriverLocationRoutes.gate);
+        CustomToast.show(
+          context,
+          'Your location is not ready yet. Try again in a moment.',
+          isError: true,
+        );
         return;
       }
 
@@ -862,6 +867,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   Widget _buildOnlineCardBanner(BuildContext context, DashboardState state) {
     final isOnline = _pendingOnline ?? state.isOnline;
+    final locationReady = context.select<DriverLocationAccessCubit, bool>(
+      (cubit) => cubit.state is DriverLocationAccessReady,
+    );
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: LayoutBuilder(
@@ -929,6 +937,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                             context,
                             isOnline,
                             _availabilityCtrl.value,
+                            locationReady,
                           ),
                         ],
                       ),
@@ -947,6 +956,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     BuildContext context,
     bool isOnline,
     double animationProgress,
+    bool locationReady,
   ) {
     final trackColor = isOnline
         ? Color.lerp(
@@ -995,7 +1005,11 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                 inactiveTrackColor: context.colorScheme.onPrimary.withValues(
                   alpha: 0,
                 ),
-                onChanged: (value) => _toggleOnline(context, value),
+                onChanged: (value) {
+                  if (!value || locationReady) {
+                    unawaited(_toggleOnline(context, value));
+                  }
+                },
               ),
       ),
     );

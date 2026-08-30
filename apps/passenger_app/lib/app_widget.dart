@@ -3,11 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger_app/src/core/location/location.dart';
+import 'package:passenger_app/src/core/routing/app_routes.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/auth/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/location/bloc/location_access/location_access_cubit.dart';
 import 'package:passenger_app/src/features/location/bloc/location_access/location_access_state.dart';
-import 'package:passenger_app/src/features/location/location_access_navigation.dart';
 import 'package:passenger_app/src/features/trip/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger_app/src/features/trip/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
@@ -70,40 +71,89 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
         ),
       ],
       child: BlocBuilder<ThemeModeCubit, ThemeMode>(
-        builder: (context, themeMode) => ModularApp.router(
-          theme: EasyRideTheme.light,
-          darkTheme: EasyRideTheme.dark,
-          themeMode: themeMode,
-          debugShowCheckedModeBanner: false,
-          title: 'EasyRide Passenger',
-          builder: (context, child) => MultiBlocListener(
-            listeners: [
-              BlocListener<SessionBloc, SessionState>(
-                listenWhen: (_, current) =>
-                    current is GuestSession || current is SessionFailure,
-                listener: (context, _) =>
-                    BlocProvider.of<BookingDraftCubit>(context).clear(),
+        builder: (context, themeMode) =>
+            BlocBuilder<LocationAccessCubit, LocationAccessViewState>(
+              builder: (context, locationState) => ModularApp.router(
+                theme: EasyRideTheme.light,
+                darkTheme: EasyRideTheme.dark,
+                themeMode: themeMode,
+                debugShowCheckedModeBanner: false,
+                title: 'EasyRide Passenger',
+                builder: (context, child) => MultiBlocListener(
+                  listeners: [
+                    BlocListener<SessionBloc, SessionState>(
+                      listenWhen: (_, current) =>
+                          current is GuestSession || current is SessionFailure,
+                      listener: (context, _) =>
+                          BlocProvider.of<BookingDraftCubit>(context).clear(),
+                    ),
+                  ],
+                  child: _buildRouteWithLocationOverlay(
+                    context,
+                    child,
+                    locationState,
+                  ),
+                ),
               ),
-              BlocListener<LocationAccessCubit, LocationAccessViewState>(
-                listener: _handleLocationAccess,
-              ),
-            ],
-            child: child ?? const SizedBox.shrink(),
-          ),
-        ),
+            ),
       ),
     );
   }
 
-  void _handleLocationAccess(BuildContext _, LocationAccessViewState state) {
+  Widget _buildRouteWithLocationOverlay(
+    BuildContext context,
+    Widget? child,
+    LocationAccessViewState locationState,
+  ) {
+    final overlay = _buildLocationOverlay(context, locationState);
+    return Stack(
+      fit: StackFit.expand,
+      children: [child ?? const SizedBox.shrink(), ?overlay],
+    );
+  }
+
+  Widget? _buildLocationOverlay(
+    BuildContext context,
+    LocationAccessViewState locationState,
+  ) {
     final currentPath =
         Modular.routerConfig.routerDelegate.currentConfiguration.uri.path;
-    final destinationName = locationAccessDestinationName(
-      currentPath: currentPath,
-      accessState: state,
-    );
-    if (destinationName != null) {
-      Modular.routerConfig.goNamed(destinationName);
-    }
+    if (!currentPath.startsWith(AppRoutes.passengerModulePath)) return null;
+
+    final cubit = BlocProvider.of<LocationAccessCubit>(context);
+    return switch (locationState) {
+      LocationAccessChecking() => const LocationAccessOverlay(
+        state: LocationAccessOverlayState.checking,
+        appName: 'EasyRide',
+      ),
+      LocationAccessReady() => null,
+      LocationAccessUnavailable(
+        accessState: final accessState,
+        message: final message,
+      ) =>
+        switch (accessState) {
+          LocationAccessState.ready => null,
+          LocationAccessState.denied => LocationAccessOverlay(
+            state: LocationAccessOverlayState.permissionDenied,
+            appName: 'EasyRide',
+            message: message,
+            onTryAgain: () => unawaited(cubit.enable()),
+          ),
+          LocationAccessState.serviceDisabled => LocationAccessOverlay(
+            state: LocationAccessOverlayState.serviceDisabled,
+            appName: 'EasyRide',
+            message: message,
+            onOpenLocationSettings: () => unawaited(cubit.enable()),
+            onTryAgain: () => unawaited(cubit.refresh()),
+          ),
+          LocationAccessState.deniedForever => LocationAccessOverlay(
+            state: LocationAccessOverlayState.permissionDeniedForever,
+            appName: 'EasyRide',
+            message: message,
+            onOpenAppSettings: () => unawaited(cubit.enable()),
+            onTryAgain: () => unawaited(cubit.refresh()),
+          ),
+        },
+    };
   }
 }

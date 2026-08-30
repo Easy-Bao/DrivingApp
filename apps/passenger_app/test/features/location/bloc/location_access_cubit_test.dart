@@ -43,51 +43,30 @@ void main() {
     );
 
     blocTest<LocationAccessCubit, LocationAccessViewState>(
-      'requests permission and becomes ready from the denied state',
+      'requests permission once when startup access is denied',
       build: () {
         repository = _FakeLocationAccessRepository(.denied)
           ..permissionResult = .ready;
         return LocationAccessCubit(repository: repository);
       },
-      act: (cubit) async {
-        await cubit.start();
-        await cubit.enable();
-      },
-      expect: () => const [
-        LocationAccessUnavailable(accessState: .denied),
-        LocationAccessChecking(),
-        LocationAccessReady(),
-      ],
+      act: (cubit) => cubit.start(),
+      expect: () => const [LocationAccessReady()],
       verify: (_) => expect(repository.permissionRequests, 1),
     );
 
     blocTest<LocationAccessCubit, LocationAccessViewState>(
-      'does not keep a skipped prompt suppressed after access was restored',
+      'does not request permission again on repeated startup checks',
       build: () {
-        repository = _FakeLocationAccessRepository(.denied);
+        repository = _FakeLocationAccessRepository(.denied)
+          ..permissionResult = .denied;
         return LocationAccessCubit(repository: repository);
       },
       act: (cubit) async {
         await cubit.start();
-        cubit.suppressPrompt();
-        repository
-          ..emit(.ready)
-          ..emit(.serviceDisabled);
-        await Future<void>.delayed(Duration.zero);
+        await cubit.start();
       },
-      expect: () => const [
-        LocationAccessUnavailable(accessState: .denied),
-        LocationAccessUnavailable(
-          accessState: .denied,
-          isPromptSuppressed: true,
-        ),
-        LocationAccessReady(),
-        LocationAccessUnavailable(
-          accessState: .serviceDisabled,
-          message:
-              'Turn on device location in Settings, then return to EasyRide.',
-        ),
-      ],
+      expect: () => const [LocationAccessUnavailable(accessState: .denied)],
+      verify: (_) => expect(repository.permissionRequests, 1),
     );
   });
 }

@@ -17,27 +17,11 @@ final class LocationAccessReady extends LocationAccessViewState {
 }
 
 final class LocationAccessUnavailable extends LocationAccessViewState {
-  const LocationAccessUnavailable({
-    required this.accessState,
-    this.isPromptSuppressed = false,
-    this.message,
-  });
+  const LocationAccessUnavailable({required this.accessState, this.message});
 
   final LocationAccessState accessState;
-  final bool isPromptSuppressed;
   final String? message;
 
-  LocationAccessUnavailable copyWith({
-    bool? isPromptSuppressed,
-    String? message,
-  }) {
-    return LocationAccessUnavailable(
-      accessState: accessState,
-      isPromptSuppressed: isPromptSuppressed ?? this.isPromptSuppressed,
-      message: message ?? this.message,
-    );
-  }
-
   @override
-  List<Object?> get props => [accessState, isPromptSuppressed, message];
+  List<Object?> get props => [accessState, message];
 }
