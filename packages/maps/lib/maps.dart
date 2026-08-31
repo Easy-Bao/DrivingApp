@@ -5,6 +5,7 @@ export 'src/device/device_location_service.dart';
 export 'src/domain/entities/coordinate.dart';
 export 'src/domain/entities/place.dart';
 export 'src/domain/entities/route.dart';
+export 'src/domain/failures/location_failure.dart';
 export 'src/domain/failures/place_failure.dart';
 export 'src/domain/repositories/location_repository.dart';
 export 'src/map/map_annotation_service.dart';

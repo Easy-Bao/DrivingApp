@@ -1,0 +1,15 @@
+import 'package:ride/src/domain/entities/fare_estimate.dart';
+
+final class FareEstimateDto {
+  const FareEstimateDto(this.value);
+
+  factory FareEstimateDto.fromJson(Map<String, dynamic> json) {
+    return FareEstimateDto(FareEstimate.fromJson(json));
+  }
+
+  final FareEstimate value;
+
+  FareEstimate toDomain() => value;
+
+  Map<String, dynamic> toJson() => value.toJson();
+}

@@ -1,3 +1,4 @@
+import 'package:ride/ride.dart';
 import 'package:dio/dio.dart';
 import 'package:maps/maps.dart';
 import 'package:flutter/material.dart';
@@ -238,7 +239,7 @@ class TripModule {
           vehicleType: data.string('vehicleType'),
           plateNumber: data.string('plateNumber'),
           pickupAddress: data.string('pickupAddress'),
-          createdRide: data.object<RideHistoryModel>('createdRide'),
+          createdRide: data.object<RideHistory>('createdRide'),
           profileRepository: Modular.get<IDriverProfileRepository>(),
         );
       },

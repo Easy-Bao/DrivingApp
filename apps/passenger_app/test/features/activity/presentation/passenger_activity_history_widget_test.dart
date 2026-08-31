@@ -1,7 +1,7 @@
+import 'package:ride/ride.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:passenger_app/src/features/activity/presentation/widgets/passenger_activity_history_widget.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 void main() {
@@ -148,10 +148,10 @@ void main() {
 
 Future<void> _pumpHistory(
   WidgetTester tester, {
-  required List<RideHistoryModel> rides,
+  required List<RideHistory> rides,
   required DateTime referenceTime,
-  List<RideHistoryModel> activeRides = const [],
-  ValueChanged<RideHistoryModel>? onRideTap,
+  List<RideHistory> activeRides = const [],
+  ValueChanged<RideHistory>? onRideTap,
 }) {
   return tester.pumpWidget(
     MaterialApp(
@@ -168,14 +168,14 @@ Future<void> _pumpHistory(
   );
 }
 
-RideHistoryModel _ride({
+RideHistory _ride({
   required String id,
   required String destination,
   required String date,
   required String price,
   required String status,
 }) {
-  return RideHistoryModel(
+  return RideHistory(
     id: id,
     pickup: 'Mountain View',
     destination: destination,

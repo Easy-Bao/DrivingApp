@@ -80,7 +80,7 @@ class DriverMatchResult {
 class BookingDriverMatched extends BookingState {
   final DriverMatchResult matchResult;
 
-  final RideHistoryModel? createdRide;
+  final RideHistory? createdRide;
 
   const BookingDriverMatched({required this.matchResult, this.createdRide});
 }

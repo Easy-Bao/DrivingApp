@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
-import 'package:foundation/src/utils/safe_parse.dart';
+import 'package:foundation/foundation.dart';
 
-class RideHistoryModel extends Equatable {
+class RideHistory extends Equatable {
   final String id;
   final String pickup;
   final String destination;
@@ -18,7 +18,7 @@ class RideHistoryModel extends Equatable {
   final String vehicleType;
   final double? driverRating;
 
-  const RideHistoryModel({
+  const RideHistory({
     required this.id,
     required this.pickup,
     required this.destination,
@@ -51,8 +51,8 @@ class RideHistoryModel extends Equatable {
         : details.join(' • ');
   }
 
-  factory RideHistoryModel.fromJson(Map<String, dynamic> json) {
-    return RideHistoryModel(
+  factory RideHistory.fromJson(Map<String, dynamic> json) {
+    return RideHistory(
       id: SafeParse.toStringValue(json['id']),
       pickup: SafeParse.toStringValue(json['pickup'] ?? json['pickup_name']),
       destination: SafeParse.toStringValue(
@@ -107,7 +107,7 @@ class RideHistoryModel extends Equatable {
     };
   }
 
-  RideHistoryModel copyWith({
+  RideHistory copyWith({
     String? id,
     String? pickup,
     String? destination,
@@ -124,7 +124,7 @@ class RideHistoryModel extends Equatable {
     String? vehicleType,
     double? driverRating,
   }) {
-    return RideHistoryModel(
+    return RideHistory(
       id: id ?? this.id,
       pickup: pickup ?? this.pickup,
       destination: destination ?? this.destination,

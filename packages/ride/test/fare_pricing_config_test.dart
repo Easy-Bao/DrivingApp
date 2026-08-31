@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:ride/ride.dart';
 
 void main() {
   test('parses the complete server pricing configuration', () {
-    final model = FareServiceModel.fromJson(const {
+    final model = FareService.fromJson(const {
       'id': 'solo',
       'serviceName': 'Solo Ride',
       'baseFare': 25.0,
@@ -27,6 +27,6 @@ void main() {
   });
 
   test('rejects incomplete fare result responses', () {
-    expect(() => FareResult.fromJson(const {}), throwsFormatException);
+    expect(() => FareEstimate.fromJson(const {}), throwsFormatException);
   });
 }

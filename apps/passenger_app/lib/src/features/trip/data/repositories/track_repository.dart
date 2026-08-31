@@ -1,3 +1,4 @@
+import 'package:ride/ride.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger_app/src/features/trip/data/data_sources/ride_remote_data_source.dart';
@@ -38,7 +39,7 @@ class TrackRepository implements ITrackRepository {
     try {
       final data = await _remoteDataSource.fetchRide(rideId);
       if (data != null) {
-        return Right(RideUpdate.fromJson(data));
+        return Right(RideUpdateDto.fromJson(data).toDomain());
       }
       return const Left(ServerFailure('No status data returned from server.'));
     } on ServerException catch (e) {
@@ -65,7 +66,7 @@ class TrackRepository implements ITrackRepository {
       if (data == null) {
         return const Left(ServerFailure('No ride data returned from server.'));
       }
-      final ride = RideSnapshot.fromJson(data, fallbackId: rideId);
+      final ride = RideDto.fromJson(data, fallbackId: rideId).toDomain();
       if (ride.id.isEmpty || ride.status.isEmpty) {
         return const Left(
           ValidationFailure('The ride response is incomplete.'),

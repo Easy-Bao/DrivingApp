@@ -1,3 +1,4 @@
+import 'package:ride/ride.dart';
 import 'dart:async';
 import 'package:maps/maps.dart';
 
@@ -22,7 +23,7 @@ class DriverMatchedPage extends StatefulWidget {
   final String? vehicleType;
   final String? plateNumber;
   final String? pickupAddress;
-  final RideHistoryModel? createdRide;
+  final RideHistory? createdRide;
   final IDriverProfileRepository profileRepository;
 
   const DriverMatchedPage({
@@ -51,7 +52,7 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
   late AnimationController _scaleCtrl;
   late Animation<double> _scaleAnim;
   Timer? _autoNav;
-  RideHistoryModel? _createdRide;
+  RideHistory? _createdRide;
 
   @override
   void initState() {

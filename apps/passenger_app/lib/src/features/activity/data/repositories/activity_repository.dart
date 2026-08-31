@@ -1,3 +1,4 @@
+import 'package:ride/ride.dart';
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/activity/data/data_sources/passenger_activity_remote_data_source.dart';
@@ -115,7 +116,7 @@ class ActivityRepository implements IActivityRepository {
   }
 
   @override
-  Future<Either<Failure, OffsetPage<RideHistoryModel>>> fetchRideHistory(
+  Future<Either<Failure, OffsetPage<RideHistory>>> fetchRideHistory(
     String passengerId, {
     int limit = 25,
     int offset = 0,
@@ -132,18 +133,16 @@ class ActivityRepository implements IActivityRepository {
     }
   }
 
-  OffsetPage<RideHistoryModel> _mapPage(
-    OffsetPage<Map<String, dynamic>> rawPage,
-  ) {
-    return OffsetPage<RideHistoryModel>(
+  OffsetPage<RideHistory> _mapPage(OffsetPage<Map<String, dynamic>> rawPage) {
+    return OffsetPage<RideHistory>(
       items: rawPage.items.map(_mapToModel).toList(growable: false),
       hasMore: rawPage.hasMore,
       nextOffset: rawPage.nextOffset,
     );
   }
 
-  RideHistoryModel _mapToModel(Map<String, dynamic> raw) {
-    return RideHistoryModel(
+  RideHistory _mapToModel(Map<String, dynamic> raw) {
+    return RideHistory(
       id: SafeParse.toStringValue(raw['id']),
       pickup: _shortenAddress(SafeParse.toStringValue(raw['pickup_name'])),
       destination: _shortenAddress(

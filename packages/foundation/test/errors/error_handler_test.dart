@@ -89,7 +89,7 @@ void main() {
     expect(failure.userMessage, isNot(contains('database')));
   });
 
-  test('maps connection, timeout, location, and workflow failures safely', () {
+  test('maps connection and timeout failures safely', () {
     expect(
       ErrorHandler.getErrorMessage(const SocketException('connection refused')),
       'You are currently offline. Please check your Wi-Fi or mobile data.',
@@ -97,22 +97,6 @@ void main() {
     expect(
       ErrorHandler.getErrorMessage(TimeoutException('internal timeout')),
       'The server took too long to respond. Please check your connection and retry.',
-    );
-    expect(
-      ErrorHandler.getErrorMessage(const LocationFailure('gps internals')),
-      'Unable to get an accurate location. Please move to an open area or enable high-accuracy GPS.',
-    );
-    expect(
-      ErrorHandler.getErrorMessage(const NoDriversAvailableFailure()),
-      'All nearby drivers are currently busy. Please adjust your pickup point or try again shortly.',
-    );
-    expect(
-      ErrorHandler.getErrorMessage(const RouteCalculationFailure()),
-      'Unable to calculate route and fare right now. Please re-select your destination.',
-    );
-    expect(
-      ErrorHandler.getErrorMessage(const PaymentDeclinedFailure()),
-      'We could not process your payment. Your account was not charged. Please try another payment method.',
     );
   });
 }

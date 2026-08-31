@@ -1,3 +1,4 @@
+import 'package:ride/ride.dart';
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/trip/data/data_sources/fare_remote_data_source.dart';
@@ -11,7 +12,7 @@ class FareRepository implements IFareRepository {
   final FareRemoteDataSource _remoteDataSource;
 
   @override
-  Future<Either<Failure, FareResult>> estimateFare({
+  Future<Either<Failure, FareEstimate>> estimateFare({
     required double distanceKm,
     required double durationMinutes,
     required double originLatitude,

@@ -1,7 +1,8 @@
+import 'package:ride/ride.dart';
 import 'package:shared_core/shared_core.dart';
 
 class ActivityOverview {
-  final OffsetPage<RideHistoryModel> rides;
+  final OffsetPage<RideHistory> rides;
   final int weeklyFareCentavos;
   final int weeklyRideCount;
 

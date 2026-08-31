@@ -1,3 +1,4 @@
+import 'package:ride/ride.dart';
 import 'dart:async';
 
 import 'package:driver_app/src/core/constants/api_endpoints.dart';

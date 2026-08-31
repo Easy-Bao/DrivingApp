@@ -1,3 +1,4 @@
+import 'package:ride/ride.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:shared_core/shared_core.dart';
 

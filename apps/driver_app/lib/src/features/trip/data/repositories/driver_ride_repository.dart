@@ -1,3 +1,4 @@
+import 'package:ride/ride.dart';
 import 'package:dio/dio.dart';
 import 'package:driver_app/src/features/trip/data/data_sources/ride_counterparty_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/data/data_sources/ride_remote_data_source.dart';
@@ -59,7 +60,7 @@ class DriverRideRepository implements IDriverRideRepository {
   Future<Either<Failure, RideSnapshot>> fetchRide(String rideId) async {
     try {
       final data = await _rideDataSource.getRideStatus(rideId);
-      final ride = RideSnapshot.fromJson(data, fallbackId: rideId);
+      final ride = RideDto.fromJson(data, fallbackId: rideId).toDomain();
       if (ride.id.isEmpty || ride.status.isEmpty) {
         return const Left(
           ValidationFailure('The ride response is incomplete.'),

@@ -1,3 +1,4 @@
+import 'package:ride/ride.dart';
 import 'dart:async';
 import 'dart:developer' as dev;
 
@@ -618,7 +619,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
             proposedFare: event.proposedFare,
             driverRating: event.driverRating,
           ),
-          createdRide: RideHistoryModel(
+          createdRide: RideHistory(
             id: rideId,
             pickup: _pickupName ?? '',
             destination: _dropoffName ?? '',

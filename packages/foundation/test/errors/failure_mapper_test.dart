@@ -44,16 +44,16 @@ void main() {
     );
   });
 
-  test('keeps domain workflow failures typed', () {
+  test('keeps feature failures typed without importing feature packages', () {
     expect(
-      FailureMapper.fromException(const NoDriversAvailableFailure()),
-      isA<NoDriversAvailableFailure>(),
-    );
-    expect(
-      FailureMapper.fromException(const PaymentDeclinedFailure()),
-      isA<PaymentDeclinedFailure>(),
+      FailureMapper.fromException(const _FeatureFailure()),
+      isA<_FeatureFailure>(),
     );
   });
+}
+
+class _FeatureFailure extends Failure {
+  const _FeatureFailure() : super('Feature request failed.');
 }
 
 DioException _dioExceptionWithStatus(int statusCode, String message) {

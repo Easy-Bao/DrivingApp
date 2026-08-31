@@ -1,10 +1,10 @@
+import 'package:ride/ride.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class TrackDriverPanelWidget extends StatelessWidget {
-  final RideHistoryModel ride;
+  final RideHistory ride;
   final String statusTitle;
   final String statusSubtitle;
   final String etaText;

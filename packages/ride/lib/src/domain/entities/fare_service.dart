@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
-import 'package:shared_core/src/fare/config/rating_pricing_config.dart';
+import 'package:ride/src/domain/fare/rating_pricing_config.dart';
 
-class FareServiceModel extends Equatable {
+class FareService extends Equatable {
   final String id;
   final String serviceName;
   final double baseFare;
@@ -9,7 +9,7 @@ class FareServiceModel extends Equatable {
   final double perMinuteRate;
   final RatingPricingConfig ratingConfig;
 
-  const FareServiceModel({
+  const FareService({
     required this.id,
     required this.serviceName,
     required this.baseFare,
@@ -18,8 +18,8 @@ class FareServiceModel extends Equatable {
     required this.ratingConfig,
   });
 
-  factory FareServiceModel.fromJson(Map<String, dynamic> json) {
-    return FareServiceModel(
+  factory FareService.fromJson(Map<String, dynamic> json) {
+    return FareService(
       id: _requiredText(json, 'id'),
       serviceName: _requiredText(json, 'serviceName'),
       baseFare: _requiredNumber(json, 'baseFare'),

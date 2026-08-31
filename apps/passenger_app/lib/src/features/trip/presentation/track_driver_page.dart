@@ -1,3 +1,4 @@
+import 'package:ride/ride.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -38,7 +39,7 @@ class _MapUpdateRequest {
 }
 
 class ActivityTrackDriverPage extends StatefulWidget {
-  final RideHistoryModel ride;
+  final RideHistory ride;
   final ITrackRepository trackRepository;
   final IChatRepositoryFactory chatRepositoryFactory;
   final SecureSessionService sessionService;

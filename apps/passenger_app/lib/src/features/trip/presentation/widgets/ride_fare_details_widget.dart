@@ -1,3 +1,4 @@
+import 'package:ride/ride.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:shared_core/shared_core.dart';
@@ -5,7 +6,7 @@ import 'package:shared_ui/shared_ui.dart';
 
 class RideFareDetailsWidget extends StatelessWidget {
   final String passengerName;
-  final FareResult fareResult;
+  final FareEstimate fareResult;
   final double offeredFare;
   final int tipAmount;
   final double totalFare;

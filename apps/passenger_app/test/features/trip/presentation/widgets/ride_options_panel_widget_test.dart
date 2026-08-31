@@ -1,12 +1,12 @@
+import 'package:ride/ride.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:passenger_app/src/features/trip/presentation/widgets/ride_options_panel_widget.dart';
 import 'package:passenger_app/src/features/trip/presentation/widgets/ride_trip_summary_widget.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 void main() {
-  const fareResult = FareResult(
+  const fareResult = FareEstimate(
     baseFare: 20,
     distanceCharge: 5,
     timeCharge: 3.17,
@@ -15,7 +15,7 @@ void main() {
   );
 
   Widget buildPanel({
-    FareResult? result = fareResult,
+    FareEstimate? result = fareResult,
     bool isLoadingFare = false,
     String? fareError,
     VoidCallback? onRetryFare,

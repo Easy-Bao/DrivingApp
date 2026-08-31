@@ -1,3 +1,4 @@
+import 'package:ride/ride.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
@@ -26,7 +27,7 @@ void main() {
   });
 
   group('ActivityBloc — LoadActivityEvent', () {
-    const completedRide = RideHistoryModel(
+    const completedRide = RideHistory(
       id: 'ride-1',
       pickup: 'SM Pagadian',
       destination: 'Tuburan',
@@ -43,7 +44,7 @@ void main() {
       vehicleType: 'Sedan',
     );
 
-    const requestedRide = RideHistoryModel(
+    const requestedRide = RideHistory(
       id: 'ride-2',
       pickup: 'Plaza Luz',
       destination: 'Dao District',

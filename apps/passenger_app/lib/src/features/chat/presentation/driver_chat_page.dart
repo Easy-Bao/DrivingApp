@@ -1,3 +1,4 @@
+import 'package:ride/ride.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';

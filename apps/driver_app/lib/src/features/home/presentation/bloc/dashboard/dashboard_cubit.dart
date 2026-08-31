@@ -1,3 +1,4 @@
+import 'package:ride/ride.dart';
 import 'dart:developer' as dev;
 
 import 'package:driver_app/src/features/home/presentation/bloc/dashboard/dashboard_state.dart';

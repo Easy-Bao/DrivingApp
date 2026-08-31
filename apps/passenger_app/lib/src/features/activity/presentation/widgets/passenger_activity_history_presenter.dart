@@ -1,3 +1,4 @@
+import 'package:ride/ride.dart';
 import 'package:shared_core/shared_core.dart';
 
 class PassengerActivityHistoryPresenter {
@@ -6,8 +7,8 @@ class PassengerActivityHistoryPresenter {
   PassengerActivityHistoryPresenter(DateTime referenceTime)
     : referenceTime = referenceTime.toLocal();
 
-  List<RideHistoryModel> sortPastRides(List<RideHistoryModel> rides) {
-    final sorted = List<RideHistoryModel>.of(rides);
+  List<RideHistory> sortPastRides(List<RideHistory> rides) {
+    final sorted = List<RideHistory>.of(rides);
     sorted.sort((left, right) {
       final leftDate = _parseMoment(left.date).dateTime;
       final rightDate = _parseMoment(right.date).dateTime;
@@ -19,15 +20,15 @@ class PassengerActivityHistoryPresenter {
     return sorted;
   }
 
-  Map<String, List<RideHistoryModel>> groupRides(List<RideHistoryModel> rides) {
-    final grouped = <String, List<RideHistoryModel>>{};
+  Map<String, List<RideHistory>> groupRides(List<RideHistory> rides) {
+    final grouped = <String, List<RideHistory>>{};
     for (final ride in rides) {
       grouped.putIfAbsent(dateGroupLabel(ride.date), () => []).add(ride);
     }
     return grouped;
   }
 
-  List<RideHistoryModel> completedRidesThisWeek(List<RideHistoryModel> rides) {
+  List<RideHistory> completedRidesThisWeek(List<RideHistory> rides) {
     final day = DateTime(
       referenceTime.year,
       referenceTime.month,
@@ -66,7 +67,7 @@ class PassengerActivityHistoryPresenter {
     return '${_weekdayNames[date.weekday - 1]} · $shortDate';
   }
 
-  String rideMetadata(RideHistoryModel ride) {
+  String rideMetadata(RideHistory ride) {
     final moment = _parseMoment(ride.date);
     final values = <String>[
       if (moment.hasTime && moment.dateTime != null)
@@ -126,18 +127,18 @@ class PassengerActivityHistoryPresenter {
     return double.tryParse(normalized) ?? 0;
   }
 
-  String rideTypeLabel(RideHistoryModel ride) {
+  String rideTypeLabel(RideHistory ride) {
     final vehicleType = ride.vehicleType.trim().toLowerCase();
     if (vehicleType.isEmpty) return '';
     return vehicleType.contains('share') ? 'Shared ride' : 'Solo ride';
   }
 
-  String destinationLabel(RideHistoryModel ride) {
+  String destinationLabel(RideHistory ride) {
     final destination = ride.destination.trim();
     return destination.isEmpty ? 'Destination unavailable' : destination;
   }
 
-  String fareLabel(RideHistoryModel ride) {
+  String fareLabel(RideHistory ride) {
     final fare = ride.price.trim();
     if (fare.isEmpty) return '—';
     final normalized = fare.replaceAll(RegExp(r'[^0-9.\-]'), '');

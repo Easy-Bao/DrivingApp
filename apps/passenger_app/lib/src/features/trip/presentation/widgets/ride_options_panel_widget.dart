@@ -1,3 +1,4 @@
+import 'package:ride/ride.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -13,7 +14,7 @@ class RideOptionsPanelWidget extends StatefulWidget {
   final String pickupLabel;
   final String destinationName;
   final String destinationAddress;
-  final FareResult? fareResult;
+  final FareEstimate? fareResult;
   final VoidCallback onBookPressed;
   final TextEditingController customFareController;
   final String? customFareError;
@@ -59,7 +60,7 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
 
   _RideOptionsPanelView _currentView = _RideOptionsPanelView.summary;
 
-  FareResult? get _fareResult => widget.fareResult;
+  FareEstimate? get _fareResult => widget.fareResult;
 
   double? get _minimumFare => _fareResult?.totalFare;
 
@@ -755,7 +756,7 @@ class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
     );
   }
 
-  Widget _buildFareDetailsContent(FareResult fareResult) {
+  Widget _buildFareDetailsContent(FareEstimate fareResult) {
     return Column(
       key: const ValueKey('fare-details-content'),
       mainAxisSize: MainAxisSize.min,

@@ -1,3 +1,4 @@
+import 'package:ride/ride.dart';
 import 'dart:async';
 import 'dart:developer' as dev;
 
@@ -606,7 +607,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       context,
     ).fetchAuthoritativeRide(rideId);
     if (ride != null) return ride;
-    return RideSnapshot.fromJson(trip, fallbackId: rideId);
+    return RideDto.fromJson(trip, fallbackId: rideId).toDomain();
   }
 
   Future<void> _resumeTrip(Map<String, dynamic> trip) async {

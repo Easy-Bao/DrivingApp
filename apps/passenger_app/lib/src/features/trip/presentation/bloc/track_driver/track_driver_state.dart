@@ -1,5 +1,5 @@
+import 'package:ride/ride.dart';
 import 'package:equatable/equatable.dart';
-import 'package:shared_core/shared_core.dart';
 
 sealed class TrackDriverState extends Equatable {
   const TrackDriverState();

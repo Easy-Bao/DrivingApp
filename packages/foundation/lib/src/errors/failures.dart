@@ -37,12 +37,6 @@ class CacheFailure extends Failure {
   const CacheFailure([super.message = 'Failed to load local storage cache.']);
 }
 
-class LocationFailure extends Failure {
-  const LocationFailure([
-    super.message = 'The current device location is unavailable.',
-  ]);
-}
-
 class ServerFailure extends Failure {
   final int? statusCode;
 
@@ -56,19 +50,4 @@ class ChatRoomLockedFailure extends Failure {
   const ChatRoomLockedFailure([
     super.message = 'This chat has already been resolved.',
   ]);
-}
-
-class NoDriversAvailableFailure extends Failure {
-  const NoDriversAvailableFailure()
-    : super('All nearby drivers are currently busy.');
-}
-
-class RouteCalculationFailure extends Failure {
-  const RouteCalculationFailure()
-    : super('The route and fare could not be calculated.');
-}
-
-class PaymentDeclinedFailure extends Failure {
-  const PaymentDeclinedFailure()
-    : super('The payment provider declined the transaction.');
 }

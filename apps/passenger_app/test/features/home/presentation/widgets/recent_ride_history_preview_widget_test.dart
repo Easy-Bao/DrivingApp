@@ -1,11 +1,11 @@
+import 'package:ride/ride.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:passenger_app/src/features/home/presentation/widgets/recent_ride_history_preview_widget.dart';
-import 'package:shared_core/shared_core.dart';
 
 void main() {
   const rides = [
-    RideHistoryModel(
+    RideHistory(
       id: 'ride-1',
       pickup: 'Mountain View',
       destination: '2025 Garcia Avenue',
@@ -21,7 +21,7 @@ void main() {
       vehiclePlate: '',
       vehicleType: '',
     ),
-    RideHistoryModel(
+    RideHistory(
       id: 'ride-2',
       pickup: 'Mountain View',
       destination: 'Aikido of Mountain View',
@@ -37,7 +37,7 @@ void main() {
       vehiclePlate: '',
       vehicleType: '',
     ),
-    RideHistoryModel(
+    RideHistory(
       id: 'ride-3',
       pickup: 'Mountain View',
       destination: 'Shoreline Park',
@@ -53,7 +53,7 @@ void main() {
       vehiclePlate: '',
       vehicleType: '',
     ),
-    RideHistoryModel(
+    RideHistory(
       id: 'ride-4',
       pickup: 'Mountain View',
       destination: 'Googleplex',
@@ -69,7 +69,7 @@ void main() {
       vehiclePlate: '',
       vehicleType: '',
     ),
-    RideHistoryModel(
+    RideHistory(
       id: 'ride-5',
       pickup: 'Mountain View',
       destination: 'Charleston Road',

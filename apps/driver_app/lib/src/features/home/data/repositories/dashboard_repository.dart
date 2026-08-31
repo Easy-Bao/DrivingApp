@@ -1,3 +1,4 @@
+import 'package:ride/ride.dart';
 import 'dart:developer' as dev;
 
 import 'package:dio/dio.dart';

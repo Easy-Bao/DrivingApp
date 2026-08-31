@@ -1,3 +1,4 @@
+import 'package:ride/ride.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -12,7 +13,7 @@ import 'package:shared_ui/shared_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ActivityViewDetailsPage extends StatefulWidget {
-  final RideHistoryModel? ride;
+  final RideHistory? ride;
   final ITrackRepository trackRepository;
   final SecureSessionService sessionService;
 

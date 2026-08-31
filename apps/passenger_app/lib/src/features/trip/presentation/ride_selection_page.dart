@@ -1,3 +1,4 @@
+import 'package:ride/ride.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart' hide Route;
@@ -54,7 +55,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
   late int _selectedTipAmount;
   final TextEditingController _customFareController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
-  FareResult? _fareResult;
+  FareEstimate? _fareResult;
   String? _fareError;
   String? _customFareError;
   bool _isLoadingFare = true;
@@ -272,7 +273,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
       if (pickup == null) {
         throw StateError('Pickup location is unavailable.');
       }
-      FareResult? fareResult;
+      FareEstimate? fareResult;
       (await widget.fareRepository.estimateFare(
         distanceKm: distanceKm,
         durationMinutes: durationMinutes,

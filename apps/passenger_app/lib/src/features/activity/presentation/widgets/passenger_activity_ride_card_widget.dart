@@ -1,11 +1,11 @@
+import 'package:ride/ride.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/features/activity/presentation/widgets/passenger_activity_history_presenter.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class PassengerActiveRideCardWidget extends StatelessWidget {
-  final RideHistoryModel ride;
+  final RideHistory ride;
   final PassengerActivityHistoryPresenter presenter;
   final VoidCallback onTap;
 
@@ -121,7 +121,7 @@ class PassengerActiveRideCardWidget extends StatelessWidget {
 }
 
 class PassengerPastRideCardWidget extends StatelessWidget {
-  final RideHistoryModel ride;
+  final RideHistory ride;
   final PassengerActivityHistoryPresenter presenter;
   final VoidCallback onTap;
 

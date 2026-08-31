@@ -1,4 +1,4 @@
-import 'package:shared_core/shared_core.dart';
+import 'package:maps/maps.dart';
 
 final class CurrentLocationFailure extends LocationFailure {
   const CurrentLocationFailure([

@@ -1,8 +1,8 @@
+import 'package:ride/ride.dart';
 import 'package:dio/dio.dart';
-import 'package:shared_core/shared_core.dart';
 
 abstract class FareRemoteDataSource {
-  Future<FareResult> fetchEstimate({
+  Future<FareEstimate> fetchEstimate({
     required double distanceKm,
     required double durationMinutes,
     required double originLatitude,
@@ -18,7 +18,7 @@ class FareRemoteDataSourceImpl implements FareRemoteDataSource {
   FareRemoteDataSourceImpl(this._dio);
 
   @override
-  Future<FareResult> fetchEstimate({
+  Future<FareEstimate> fetchEstimate({
     required double distanceKm,
     required double durationMinutes,
     required double originLatitude,
@@ -37,6 +37,8 @@ class FareRemoteDataSourceImpl implements FareRemoteDataSource {
         'destination_longitude': destinationLongitude,
       },
     );
-    return FareResult.fromJson(response.data ?? const <String, dynamic>{});
+    return FareEstimateDto.fromJson(
+      response.data ?? const <String, dynamic>{},
+    ).toDomain();
   }
 }

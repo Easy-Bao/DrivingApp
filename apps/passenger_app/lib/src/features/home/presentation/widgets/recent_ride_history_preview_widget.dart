@@ -1,6 +1,6 @@
+import 'package:ride/ride.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class RecentRideHistoryPreviewWidget extends StatelessWidget {
@@ -10,8 +10,8 @@ class RecentRideHistoryPreviewWidget extends StatelessWidget {
     super.key,
   });
 
-  final List<RideHistoryModel> rides;
-  final ValueChanged<RideHistoryModel> onRideTap;
+  final List<RideHistory> rides;
+  final ValueChanged<RideHistory> onRideTap;
 
   @override
   Widget build(BuildContext context) {

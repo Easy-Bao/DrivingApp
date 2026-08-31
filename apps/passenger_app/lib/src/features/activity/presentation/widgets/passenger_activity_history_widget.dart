@@ -1,17 +1,17 @@
+import 'package:ride/ride.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/features/activity/presentation/widgets/passenger_activity_controls_widget.dart';
 import 'package:passenger_app/src/features/activity/presentation/widgets/passenger_activity_header_widget.dart';
 import 'package:passenger_app/src/features/activity/presentation/widgets/passenger_activity_history_presenter.dart';
 import 'package:passenger_app/src/features/activity/presentation/widgets/passenger_activity_ride_card_widget.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class PassengerActivityHistoryWidget extends StatefulWidget {
-  final List<RideHistoryModel> activeRides;
-  final List<RideHistoryModel> pastRides;
+  final List<RideHistory> activeRides;
+  final List<RideHistory> pastRides;
   final DateTime referenceTime;
-  final ValueChanged<RideHistoryModel> onRideTap;
+  final ValueChanged<RideHistory> onRideTap;
   final bool hasMore;
   final bool isLoadingMore;
   final String? loadMoreError;
@@ -154,7 +154,7 @@ class _PassengerActivityHistoryWidgetState
     setState(() => _selectedFilter = filter);
   }
 
-  List<RideHistoryModel> _filterRides(List<RideHistoryModel> rides) {
+  List<RideHistory> _filterRides(List<RideHistory> rides) {
     return switch (_selectedFilter) {
       PassengerActivityFilter.all => rides,
       PassengerActivityFilter.completed =>
@@ -204,7 +204,7 @@ class _PassengerActivityHistoryWidgetState
   }
 
   List<Widget> _historySlivers(
-    Map<String, List<RideHistoryModel>> groupedRides,
+    Map<String, List<RideHistory>> groupedRides,
     PassengerActivityHistoryPresenter presenter,
   ) {
     final slivers = <Widget>[];

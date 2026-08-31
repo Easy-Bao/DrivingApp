@@ -38,6 +38,8 @@ dependencies:
 
   maps:
     path: ../../packages/maps
+  ride:
+    path: ../../packages/ride
 
   shared_ui:
     path: ../../packages/shared_ui

@@ -54,16 +54,6 @@ class AppFailure {
       return _fromStatusCode(statusCode, createFailure);
     }
 
-    if (_isLocationFailure(error)) {
-      return createFailure(
-        title: 'Location Signal Weak',
-        userMessage:
-            'Unable to get an accurate location. Please move to an open area or enable high-accuracy GPS.',
-        actionText: 'Enable GPS',
-        type: ErrorType.location,
-      );
-    }
-
     if (_isRequestTimeout(error)) {
       return createFailure(
         title: 'Request Timed Out',
@@ -90,36 +80,6 @@ class AppFailure {
         userMessage:
             'Connection lost while communicating with the server. Reconnecting automatically...',
         type: ErrorType.network,
-      );
-    }
-
-    if (error is NoDriversAvailableFailure) {
-      return createFailure(
-        title: 'No Drivers Found',
-        userMessage:
-            'All nearby drivers are currently busy. Please adjust your pickup point or try again shortly.',
-        actionText: 'Search Again',
-        type: ErrorType.unknown,
-      );
-    }
-
-    if (error is RouteCalculationFailure) {
-      return createFailure(
-        title: 'Route Calculation Error',
-        userMessage:
-            'Unable to calculate route and fare right now. Please re-select your destination.',
-        actionText: 'Re-select Destination',
-        type: ErrorType.unknown,
-      );
-    }
-
-    if (error is PaymentDeclinedFailure) {
-      return createFailure(
-        title: 'Payment Unsuccessful',
-        userMessage:
-            'We could not process your payment. Your account was not charged. Please try another payment method.',
-        actionText: 'Change Payment Method',
-        type: ErrorType.unknown,
       );
     }
 
@@ -197,6 +157,10 @@ class AppFailure {
         actionText: 'Try Again',
         type: ErrorType.server,
       );
+    }
+
+    if (error is Failure) {
+      return createFailure(userMessage: error.message, type: ErrorType.unknown);
     }
 
     return createFailure(
@@ -280,8 +244,6 @@ class AppFailure {
     if (error is ServerFailure) return error.statusCode;
     return null;
   }
-
-  static bool _isLocationFailure(Object error) => error is LocationFailure;
 
   static bool _isRequestTimeout(Object error) {
     if (error is TimeoutException) return true;

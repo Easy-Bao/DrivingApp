@@ -1,3 +1,4 @@
+import 'package:ride/ride.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/activity/domain/repositories/i_activity_repository.dart';
@@ -97,7 +98,7 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
         ),
       ),
       (page) {
-        final ridesById = <String, RideHistoryModel>{
+        final ridesById = <String, RideHistory>{
           for (final ride in current.rides) ride.id: ride,
           for (final ride in page.items) ride.id: ride,
         };
@@ -114,8 +115,8 @@ class ActivityBloc extends Bloc<ActivityEvent, ActivityState> {
   }
 
   ActivityLoaded _loadedState(
-    OffsetPage<RideHistoryModel> page, {
-    List<RideHistoryModel>? rides,
+    OffsetPage<RideHistory> page, {
+    List<RideHistory>? rides,
     required int weeklyFareCentavos,
     required int weeklyRideCount,
   }) {

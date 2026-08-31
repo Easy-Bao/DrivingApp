@@ -23,8 +23,8 @@ final class ActivityLoading extends ActivityState {
 }
 
 final class ActivityLoaded extends ActivityState {
-  final List<RideHistoryModel> past;
-  final List<RideHistoryModel> upcoming;
+  final List<RideHistory> past;
+  final List<RideHistory> upcoming;
   final bool hasMore;
   final int? nextOffset;
   final bool isLoadingMore;
@@ -43,11 +43,11 @@ final class ActivityLoaded extends ActivityState {
     this.weeklyRideCount = 0,
   });
 
-  List<RideHistoryModel> get rides => [...upcoming, ...past];
+  List<RideHistory> get rides => [...upcoming, ...past];
 
   ActivityLoaded copyWith({
-    List<RideHistoryModel>? past,
-    List<RideHistoryModel>? upcoming,
+    List<RideHistory>? past,
+    List<RideHistory>? upcoming,
     bool? hasMore,
     int? nextOffset,
     bool? isLoadingMore,

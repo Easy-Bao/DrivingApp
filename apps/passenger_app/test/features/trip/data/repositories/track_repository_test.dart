@@ -1,8 +1,8 @@
+import 'package:ride/ride.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/trip/data/data_sources/ride_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/data/repositories/track_repository.dart';
-import 'package:shared_core/shared_core.dart';
 
 class MockRideRemoteDataSource extends Mock implements RideRemoteDataSource {}
 

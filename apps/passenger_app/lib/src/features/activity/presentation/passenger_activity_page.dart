@@ -1,3 +1,4 @@
+import 'package:ride/ride.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -10,7 +11,6 @@ import 'package:passenger_app/src/features/activity/presentation/widgets/passeng
 import 'package:passenger_app/src/features/activity/presentation/widgets/passenger_activity_history_widget.dart';
 import 'package:passenger_app/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -128,7 +128,7 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
     }
   }
 
-  void _openRide(RideHistoryModel ride) {
+  void _openRide(RideHistory ride) {
     switch (RideStatus.fromString(ride.status)) {
       case RideStatus.accepted || RideStatus.arrived || RideStatus.inTransit:
         unawaited(

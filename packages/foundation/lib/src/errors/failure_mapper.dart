@@ -44,10 +44,6 @@ class FailureMapper {
       InvalidCredentialsFailure() => const InvalidCredentialsFailure(),
       EmailAlreadyRegisteredFailure() => const EmailAlreadyRegisteredFailure(),
       ChatRoomLockedFailure() => const ChatRoomLockedFailure(),
-      NoDriversAvailableFailure() => const NoDriversAvailableFailure(),
-      RouteCalculationFailure() => const RouteCalculationFailure(),
-      PaymentDeclinedFailure() => const PaymentDeclinedFailure(),
-      LocationFailure() => const LocationFailure(),
       AuthFailure() => const AuthFailure(),
       NetworkFailure() || SocketException() => NetworkFailure(networkMessage),
       NetworkCircuitOpenException() => NetworkFailure(networkMessage),
@@ -65,6 +61,7 @@ class FailureMapper {
       TimeoutException() => ServerFailure.withStatusCode(timeoutMessage, 504),
       DataParsingException() ||
       FormatException() => ServerFailure(serverMessage),
+      final Failure failure => failure,
       _ => ServerFailure(serverMessage),
     };
   }

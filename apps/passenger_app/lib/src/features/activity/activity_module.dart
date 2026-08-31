@@ -1,3 +1,4 @@
+import 'package:ride/ride.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -41,8 +42,8 @@ class ActivityModule {
       name: ActivityRoutes.activityViewDetails,
       ActivityRoutes.activityViewDetailsPath,
       child: (context, GoRouterState state) {
-        final ride = state.extra is RideHistoryModel
-            ? state.extra as RideHistoryModel
+        final ride = state.extra is RideHistory
+            ? state.extra as RideHistory
             : null;
         return ActivityViewDetailsPage(
           ride: ride,
@@ -57,8 +58,8 @@ class ActivityModule {
       name: ActivityRoutes.activityTrackDriver,
       ActivityRoutes.activityTrackDriverPath,
       child: (context, GoRouterState state) {
-        final ride = state.extra is RideHistoryModel
-            ? state.extra as RideHistoryModel
+        final ride = state.extra is RideHistory
+            ? state.extra as RideHistory
             : null;
         if (ride == null) {
           return const Scaffold(
@@ -97,8 +98,8 @@ class ActivityModule {
       name: ActivityRoutes.passengerPayment,
       ActivityRoutes.passengerPaymentPath,
       child: (context, GoRouterState state) {
-        final ride = state.extra is RideHistoryModel
-            ? state.extra as RideHistoryModel
+        final ride = state.extra is RideHistory
+            ? state.extra as RideHistory
             : null;
         return ride == null
             ? const Scaffold(
