@@ -6,7 +6,7 @@ import 'package:driver_app/src/infrastructure/session/driver_session_store.dart'
 import 'package:driver_app/src/features/chat/chat_routes.dart';
 import 'package:driver_app/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
-import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
+import 'package:driver_app/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:driver_app/src/features/active_ride/presentation/widgets/waiting_passenger_panel_widget.dart';
 import 'package:driver_app/src/features/active_ride/active_ride_routes.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +24,7 @@ class WaitingPassengerPage extends StatefulWidget {
   final String duration;
   final double distance;
   final double fare;
-  final IDriverRideRepository rideRepository;
+  final DriverRideRepository rideRepository;
   final ChatRepositoryFactory chatRepositoryFactory;
   final DriverSessionStore sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;

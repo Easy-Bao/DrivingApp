@@ -43,7 +43,9 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
     _isPlaceFlowOpen = true;
     try {
       final cubit = BlocProvider.of<SavedPlacesCubit>(context);
-      final selectedPlace = await context.pushNamed<Place>(BookingRoutes.mapPin);
+      final selectedPlace = await context.pushNamed<Place>(
+        BookingRoutes.mapPin,
+      );
       if (selectedPlace == null || !mounted) return;
 
       final configuredPlace = await context.pushNamed<SavedPlace>(
@@ -83,7 +85,9 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
     _isPlaceFlowOpen = true;
     try {
       final cubit = BlocProvider.of<SavedPlacesCubit>(context);
-      final selectedPlace = await context.pushNamed<Place>(BookingRoutes.mapPin);
+      final selectedPlace = await context.pushNamed<Place>(
+        BookingRoutes.mapPin,
+      );
       if (selectedPlace == null || !mounted) return;
       final newPlace = await context.pushNamed<SavedPlace>(
         HomeRoutes.addCategory,

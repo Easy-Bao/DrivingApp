@@ -6,36 +6,36 @@ import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/entities/driver_profile_stats.dart';
-import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
+import 'package:passenger_app/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox/inbox_state.dart';
-import 'package:passenger_app/src/features/inbox/domain/repositories/i_inbox_repository.dart';
+import 'package:passenger_app/src/features/inbox/domain/repositories/inbox_repository.dart';
 import 'package:passenger_app/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger_app/src/features/active_ride/domain/entities/accepted_booking.dart';
 import 'package:passenger_app/src/features/booking/domain/entities/bid_session_trip.dart';
 import 'package:passenger_app/src/features/booking/domain/entities/booking_offer.dart';
 import 'package:passenger_app/src/features/booking/domain/entities/booking_session_request.dart';
-import 'package:passenger_app/src/features/booking/domain/repositories/i_booking_repository.dart';
-import 'package:passenger_app/src/features/booking/domain/repositories/i_driver_repository.dart';
+import 'package:passenger_app/src/features/booking/domain/repositories/booking_repository.dart';
+import 'package:passenger_app/src/features/booking/domain/repositories/driver_repository.dart';
 import 'package:foundation/foundation.dart';
 
-class MockDriverRepo extends Mock implements IDriverRepository {}
+class MockDriverRepo extends Mock implements DriverRepository {}
 
-class MockBookingRepository extends Mock implements IBookingRepository {}
+class MockBookingRepository extends Mock implements BookingRepository {}
 
 class MockDriverProfileRepository extends Mock
-    implements IDriverProfileRepository {}
+    implements DriverProfileRepository {}
 
 class FakeBookingSessionRequest extends Fake implements BookingSessionRequest {}
 
 class MockSecureSessionService extends Mock implements PassengerSessionStore {}
 
-class MockInboxRepository extends Mock implements IInboxRepository {}
+class MockInboxRepository extends Mock implements InboxRepository {}
 
 BookingBloc _makeBookingBloc({
-  required IDriverRepository driverRepo,
-  required IBookingRepository bookingRepository,
-  required IDriverProfileRepository driverProfileRepository,
+  required DriverRepository driverRepo,
+  required BookingRepository bookingRepository,
+  required DriverProfileRepository driverProfileRepository,
   required PassengerSessionStore secureSessionService,
   InboxCubit? inboxCubit,
   int nearestDriverMaxAttempts = 5,

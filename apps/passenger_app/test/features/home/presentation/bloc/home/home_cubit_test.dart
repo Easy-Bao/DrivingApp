@@ -10,18 +10,18 @@ import 'package:passenger_app/src/features/home/domain/entities/current_location
 import 'package:passenger_app/src/features/home/domain/entities/home_data.dart';
 import 'package:passenger_app/src/features/home/domain/entities/recent_location.dart';
 import 'package:passenger_app/src/features/home/domain/failures/current_location_failure.dart';
-import 'package:passenger_app/src/features/home/domain/repositories/i_current_location_repository.dart';
-import 'package:passenger_app/src/features/home/domain/repositories/i_home_repository.dart';
+import 'package:passenger_app/src/features/home/domain/repositories/current_location_repository.dart';
+import 'package:passenger_app/src/features/home/domain/repositories/home_repository.dart';
 import 'package:foundation/foundation.dart';
 
-class MockHomeRepo extends Mock implements IHomeRepository {}
+class MockHomeRepo extends Mock implements HomeRepository {}
 
 class MockCurrentLocationRepo extends Mock
-    implements ICurrentLocationRepository {}
+    implements CurrentLocationRepository {}
 
 HomeCubit _makeCubit(
-  IHomeRepository repo,
-  ICurrentLocationRepository currentLocationRepo,
+  HomeRepository repo,
+  CurrentLocationRepository currentLocationRepo,
 ) =>
     HomeCubit(repository: repo, currentLocationRepository: currentLocationRepo);
 

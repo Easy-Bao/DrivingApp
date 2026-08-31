@@ -3,15 +3,15 @@ import 'dart:developer' as dev;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/profile/presentation/bloc/profile/profile_state.dart';
-import 'package:passenger_app/src/features/profile/domain/repositories/i_passenger_profile_repository.dart';
+import 'package:passenger_app/src/features/profile/domain/repositories/passenger_profile_repository.dart';
 import 'package:foundation/foundation.dart';
 
 export 'package:passenger_app/src/features/profile/presentation/bloc/profile/profile_state.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
-  final IPassengerProfileRepository _repository;
+  final PassengerProfileRepository _repository;
 
-  ProfileCubit({required IPassengerProfileRepository repository})
+  ProfileCubit({required PassengerProfileRepository repository})
     : _repository = repository,
       super(const ProfileState());
 

@@ -4,7 +4,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:maps/maps.dart';
 import 'package:driver_app/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver_app/src/features/location/presentation/bloc/location_access/driver_location_access_state.dart';
-import 'package:driver_app/src/features/location/domain/repositories/i_driver_location_access_repository.dart';
+import 'package:driver_app/src/features/location/domain/repositories/driver_location_access_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -68,7 +68,7 @@ void main() {
 }
 
 class _FakeDriverLocationAccessRepository
-    implements IDriverLocationAccessRepository {
+    implements DriverLocationAccessRepository {
   _FakeDriverLocationAccessRepository(this.currentAccessState);
 
   final StreamController<LocationAccessState> _changes =

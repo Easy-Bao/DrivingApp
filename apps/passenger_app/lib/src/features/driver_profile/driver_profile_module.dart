@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/driver_profile/data/data_sources/driver_profile_remote_data_source.dart';
-import 'package:passenger_app/src/features/driver_profile/data/repositories/driver_profile_repository.dart';
-import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
+import 'package:passenger_app/src/features/driver_profile/data/repositories/driver_profile_repository_impl.dart';
+import 'package:passenger_app/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 
 class DriverProfileModule {
   DriverProfileModule._();
@@ -12,8 +12,8 @@ class DriverProfileModule {
       ..addLazySingleton<DriverProfileRemoteDataSource>(
         (i) => DriverProfileRemoteDataSourceImpl(i.get<Dio>()),
       )
-      ..addLazySingleton<IDriverProfileRepository>(
-        (i) => DriverProfileRepository(
+      ..addLazySingleton<DriverProfileRepository>(
+        (i) => DriverProfileRepositoryImpl(
           dataSource: i.get<DriverProfileRemoteDataSource>(),
         ),
       );

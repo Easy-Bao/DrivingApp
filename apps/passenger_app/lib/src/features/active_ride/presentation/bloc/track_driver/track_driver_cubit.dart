@@ -6,11 +6,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/infrastructure/telemetry/passenger_background_telemetry.dart';
 import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger_app/src/features/active_ride/presentation/bloc/track_driver/track_driver_state.dart';
-import 'package:passenger_app/src/features/active_ride/domain/repositories/i_track_repository.dart';
+import 'package:passenger_app/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:foundation/foundation.dart';
 
 class TrackDriverCubit extends Cubit<TrackDriverState> {
-  final ITrackRepository _repository;
+  final TrackRepository _repository;
   final PassengerSessionStore _sessionService;
   final PassengerBackgroundTelemetry? _backgroundTelemetryService;
   final AppLifecycleCoordinator _lifecycleCoordinator;
@@ -18,7 +18,7 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
   bool _isSyncing = false;
 
   TrackDriverCubit({
-    required ITrackRepository repository,
+    required TrackRepository repository,
     required PassengerSessionStore sessionService,
     required AppLifecycleCoordinator lifecycleCoordinator,
     PassengerBackgroundTelemetry? backgroundTelemetryService,

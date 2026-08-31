@@ -5,13 +5,13 @@ import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:driver_app/src/features/dashboard/domain/entities/driver_dashboard_stats.dart';
 import 'package:driver_app/src/features/dashboard/domain/entities/driver_dispatch_snapshot.dart';
-import 'package:driver_app/src/features/dashboard/domain/repositories/i_dashboard_repository.dart';
+import 'package:driver_app/src/features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'package:driver_app/src/features/dashboard/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/dashboard/presentation/bloc/dashboard/dashboard_state.dart';
 
-class MockDashboardRepo extends Mock implements IDashboardRepository {}
+class MockDashboardRepo extends Mock implements DashboardRepository {}
 
-DashboardCubit _makeCubit(IDashboardRepository repo) =>
+DashboardCubit _makeCubit(DashboardRepository repo) =>
     DashboardCubit(repository: repo);
 
 void main() {

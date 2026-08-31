@@ -6,13 +6,13 @@ import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox/inbox_state.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
-import 'package:passenger_app/src/features/inbox/domain/repositories/i_inbox_repository.dart';
+import 'package:passenger_app/src/features/inbox/domain/repositories/inbox_repository.dart';
 import 'package:foundation/foundation.dart';
 
-class MockInboxRepository extends Mock implements IInboxRepository {}
+class MockInboxRepository extends Mock implements InboxRepository {}
 
 class MockPaginatedInboxRepository extends Mock
-    implements IInboxRepository, IPaginatedInboxRepository {}
+    implements InboxRepository, PaginatedInboxRepository {}
 
 void main() {
   final notification = InboxNotification(

@@ -3,7 +3,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:driver_app/src/features/auth/data/driver_auth_endpoints.dart';
 import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/auth/data/data_sources/driver_auth_remote_data_source.dart';
-import 'package:driver_app/src/features/auth/data/repositories/driver_auth_repository.dart';
+import 'package:driver_app/src/features/auth/data/repositories/driver_auth_repository_impl.dart';
 import 'package:driver_app/src/features/auth/domain/entities/auth_credentials.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

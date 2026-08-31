@@ -65,10 +65,7 @@ void main() {
     final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
     final title = tester.widget<Text>(find.text('Account'));
 
-    expect(
-      scaffold.backgroundColor,
-      AppTheme.data.scaffoldBackgroundColor,
-    );
+    expect(scaffold.backgroundColor, AppTheme.data.scaffoldBackgroundColor);
     expect(title.style?.color, AppTheme.data.colorScheme.onSurface);
     expect(tester.takeException(), isNull);
   });

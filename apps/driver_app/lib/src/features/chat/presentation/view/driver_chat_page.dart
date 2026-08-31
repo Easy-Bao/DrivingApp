@@ -4,7 +4,7 @@ import 'dart:async';
 
 import 'package:driver_app/src/infrastructure/config/driver_env_config.dart';
 import 'package:driver_app/src/features/chat/presentation/bloc/chat/chat_cubit.dart';
-import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
+import 'package:driver_app/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -17,7 +17,7 @@ class DriverChatPage extends StatefulWidget {
   final String? userId;
   final String? peerId;
   final String? peerName;
-  final IDriverRideRepository rideRepository;
+  final DriverRideRepository rideRepository;
   final ChatRepositoryFactory chatRepositoryFactory;
 
   const DriverChatPage({

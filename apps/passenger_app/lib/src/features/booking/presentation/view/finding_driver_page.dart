@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
-import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
+import 'package:passenger_app/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger_app/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
@@ -31,7 +31,7 @@ class FindingDriverPage extends StatelessWidget {
   final double? pickupLatitude;
   final double? pickupLongitude;
   final String passengerNote;
-  final IDriverProfileRepository profileRepository;
+  final DriverProfileRepository profileRepository;
 
   const FindingDriverPage({
     super.key,
@@ -80,7 +80,7 @@ class FindingDriverPageContent extends StatefulWidget {
   final double? pickupLatitude;
   final double? pickupLongitude;
   final String passengerNote;
-  final IDriverProfileRepository profileRepository;
+  final DriverProfileRepository profileRepository;
 
   const FindingDriverPageContent({
     super.key,

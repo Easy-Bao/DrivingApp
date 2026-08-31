@@ -12,7 +12,7 @@ import 'package:passenger_app/src/features/location/presentation/bloc/location_a
 import 'package:passenger_app/src/features/location/presentation/bloc/location_access/location_access_state.dart';
 import 'package:passenger_app/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger_app/src/features/active_ride/presentation/bloc/track_driver/track_driver_cubit.dart';
-import 'package:passenger_app/src/features/active_ride/domain/repositories/i_track_repository.dart';
+import 'package:passenger_app/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
@@ -78,7 +78,7 @@ class _PassengerAppState extends State<PassengerApp>
         BlocProvider<TrackDriverCubit>(
           create: (_) {
             return TrackDriverCubit(
-              repository: Modular.get<ITrackRepository>(),
+              repository: Modular.get<TrackRepository>(),
               sessionService: Modular.get<PassengerSessionStore>(),
               lifecycleCoordinator: _lifecycleCoordinator,
             );

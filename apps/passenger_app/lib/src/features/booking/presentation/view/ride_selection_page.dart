@@ -11,7 +11,7 @@ import 'package:passenger_app/src/features/auth/presentation/bloc/session/sessio
 import 'package:passenger_app/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger_app/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger_app/src/features/booking/domain/entities/booking_draft.dart';
-import 'package:passenger_app/src/features/booking/domain/repositories/i_fare_repository.dart';
+import 'package:passenger_app/src/features/booking/domain/repositories/fare_repository.dart';
 import 'package:passenger_app/src/features/booking/booking_routes.dart';
 import 'package:passenger_app/src/features/booking/presentation/widgets/booking_auth_bottom_sheet_widget.dart';
 import 'package:passenger_app/src/features/booking/presentation/widgets/ride_options_panel_widget.dart';
@@ -30,7 +30,7 @@ class RideSelectionPage extends StatefulWidget {
   final double? pickupLongitude;
   final int initialTipAmount;
   final String initialNotes;
-  final IFareRepository fareRepository;
+  final FareRepository fareRepository;
 
   const RideSelectionPage({
     super.key,

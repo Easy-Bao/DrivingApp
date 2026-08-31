@@ -18,7 +18,7 @@ import 'package:passenger_app/src/features/booking/presentation/bloc/booking/boo
 import 'package:passenger_app/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:passenger_app/src/features/active_ride/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/active_ride/presentation/bloc/track_driver/track_driver_state.dart';
-import 'package:passenger_app/src/features/active_ride/domain/repositories/i_track_repository.dart';
+import 'package:passenger_app/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger_app/src/features/active_ride/presentation/widgets/track_driver_panel_widget.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
@@ -42,7 +42,7 @@ class _MapUpdateRequest {
 
 class ActivityTrackDriverPage extends StatefulWidget {
   final RideHistory ride;
-  final ITrackRepository trackRepository;
+  final TrackRepository trackRepository;
   final ChatRepositoryFactory chatRepositoryFactory;
   final PassengerSessionStore sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;

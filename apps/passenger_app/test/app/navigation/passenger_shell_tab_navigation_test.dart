@@ -13,7 +13,7 @@ import 'package:passenger_app/src/features/auth/domain/repositories/session_repo
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
-import 'package:passenger_app/src/features/inbox/domain/repositories/i_inbox_repository.dart';
+import 'package:passenger_app/src/features/inbox/domain/repositories/inbox_repository.dart';
 import 'package:passenger_app/src/features/inbox/inbox_routes.dart';
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
 import 'package:passenger_app/src/app/navigation/passenger_floating_tab_bar.dart';
@@ -53,10 +53,7 @@ void main() {
     await tester.pumpWidget(
       BlocProvider<SessionBloc>.value(
         value: sessionBloc,
-        child: MaterialApp.router(
-          theme: AppTheme.data,
-          routerConfig: router,
-        ),
+        child: MaterialApp.router(theme: AppTheme.data, routerConfig: router),
       ),
     );
     await tester.pumpAndSettle();
@@ -111,10 +108,7 @@ void main() {
     await tester.pumpWidget(
       BlocProvider<SessionBloc>.value(
         value: sessionBloc,
-        child: MaterialApp.router(
-          theme: AppTheme.data,
-          routerConfig: router,
-        ),
+        child: MaterialApp.router(theme: AppTheme.data, routerConfig: router),
       ),
     );
     await tester.pumpAndSettle();
@@ -353,7 +347,7 @@ class _SessionRepositoryStub implements SessionRepository {
   }
 }
 
-class _InboxRepositoryStub implements IInboxRepository {
+class _InboxRepositoryStub implements InboxRepository {
   @override
   Future<Either<Failure, List<InboxNotification>>> fetchPassengerNotifications(
     String passengerId,

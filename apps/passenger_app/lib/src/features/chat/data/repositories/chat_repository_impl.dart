@@ -11,7 +11,7 @@ import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 
-class ChatRepositoryImpl implements ChatRepository {
+final class ChatRepositoryImpl implements ChatRepository {
   static const _maxMessageBytes = 4096;
   final ChatRemoteDataSource remoteDataSource;
   final String currentUserId;

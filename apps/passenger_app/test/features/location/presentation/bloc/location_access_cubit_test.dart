@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger_app/src/features/location/presentation/bloc/location_access/location_access_cubit.dart';
 import 'package:passenger_app/src/features/location/presentation/bloc/location_access/location_access_state.dart';
-import 'package:passenger_app/src/features/location/domain/repositories/i_location_access_repository.dart';
+import 'package:passenger_app/src/features/location/domain/repositories/location_access_repository.dart';
 
 void main() {
   group(LocationAccessCubit, () {
@@ -71,7 +71,7 @@ void main() {
   });
 }
 
-class _FakeLocationAccessRepository implements ILocationAccessRepository {
+class _FakeLocationAccessRepository implements LocationAccessRepository {
   _FakeLocationAccessRepository(this.currentAccessState);
 
   final StreamController<LocationAccessState> _changes =

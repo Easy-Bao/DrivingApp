@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/auth/auth_routes.dart';
 import 'package:driver_app/src/features/auth/data/data_sources/driver_auth_remote_data_source.dart';
-import 'package:driver_app/src/features/auth/data/repositories/driver_auth_repository.dart';
+import 'package:driver_app/src/features/auth/data/repositories/driver_auth_repository_impl.dart';
 import 'package:driver_app/src/features/auth/domain/repositories/driver_auth_repository.dart';
 import 'package:driver_app/src/features/auth/domain/use_cases/reset_password_use_case.dart';
 import 'package:driver_app/src/features/auth/domain/use_cases/sign_in_use_case.dart';

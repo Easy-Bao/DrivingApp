@@ -8,7 +8,7 @@ import 'package:passenger_app/src/features/auth/presentation/bloc/reset_password
 import 'package:passenger_app/src/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
 import 'package:passenger_app/src/features/auth/presentation/bloc/sign_up/sign_up_bloc.dart';
 import 'package:passenger_app/src/features/auth/presentation/bloc/verify_otp/verify_otp_bloc.dart';
-import 'package:passenger_app/src/features/auth/data/repositories/passenger_auth_repository.dart';
+import 'package:passenger_app/src/features/auth/data/repositories/passenger_auth_repository_impl.dart';
 import 'package:passenger_app/src/features/auth/domain/repositories/passenger_auth_repository.dart';
 import 'package:passenger_app/src/features/auth/domain/use_cases/confirm_reset_password_use_case.dart';
 import 'package:passenger_app/src/features/auth/domain/use_cases/register_use_case.dart';

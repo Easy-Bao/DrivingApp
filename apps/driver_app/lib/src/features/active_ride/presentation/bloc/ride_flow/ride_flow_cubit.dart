@@ -6,11 +6,11 @@ import 'dart:developer' as dev;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
-import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
+import 'package:driver_app/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:foundation/foundation.dart';
 
 class RideFlowCubit extends Cubit<RideFlowState> {
-  final IDriverRideRepository _rideRepository;
+  final DriverRideRepository _rideRepository;
   final DriverSessionStore _sessionService;
 
   String? _activeRideId;
@@ -20,7 +20,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
   int _elapsedWaitTime = 0;
 
   RideFlowCubit({
-    required IDriverRideRepository rideRepository,
+    required DriverRideRepository rideRepository,
     required DriverSessionStore sessionService,
   }) : _rideRepository = rideRepository,
        _sessionService = sessionService,

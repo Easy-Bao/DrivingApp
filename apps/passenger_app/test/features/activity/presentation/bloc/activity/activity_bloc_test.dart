@@ -5,12 +5,12 @@ import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/activity/presentation/bloc/activity/activity_bloc.dart';
 import 'package:passenger_app/src/features/activity/domain/entities/activity_overview.dart';
-import 'package:passenger_app/src/features/activity/domain/repositories/i_activity_repository.dart';
+import 'package:passenger_app/src/features/activity/domain/repositories/activity_repository.dart';
 import 'package:foundation/foundation.dart';
 
-class MockActivityRepo extends Mock implements IActivityRepository {}
+class MockActivityRepo extends Mock implements ActivityRepository {}
 
-ActivityBloc _makeCubit(IActivityRepository repo) =>
+ActivityBloc _makeCubit(ActivityRepository repo) =>
     ActivityBloc(repository: repo);
 
 void main() {

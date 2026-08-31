@@ -2,14 +2,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places/saved_places_state.dart';
 import 'package:passenger_app/src/features/saved_places/data/models/saved_place_model.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
-import 'package:passenger_app/src/features/saved_places/domain/repositories/i_saved_places_repository.dart';
+import 'package:passenger_app/src/features/saved_places/domain/repositories/saved_places_repository.dart';
 import 'package:passenger_app/src/features/saved_places/domain/saved_place_defaults.dart';
 import 'package:foundation/foundation.dart';
 
 class SavedPlacesCubit extends Cubit<SavedPlacesState> {
-  final ISavedPlacesRepository _repository;
+  final SavedPlacesRepository _repository;
 
-  SavedPlacesCubit({required ISavedPlacesRepository repository})
+  SavedPlacesCubit({required SavedPlacesRepository repository})
     : _repository = repository,
       super(const SavedPlacesState());
 

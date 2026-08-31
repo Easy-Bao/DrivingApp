@@ -1,6 +1,6 @@
 import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/profile/data/data_sources/driver_profile_remote_data_source.dart';
-import 'package:driver_app/src/features/profile/data/repositories/driver_profile_repository.dart';
+import 'package:driver_app/src/features/profile/data/repositories/driver_profile_repository_impl.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,7 +35,7 @@ void main() {
         },
       );
 
-      final repository = DriverProfileRepository(
+      final repository = DriverProfileRepositoryImpl(
         profileDataSource: profileDataSource,
         sessionService: sessionService,
         preferences: preferences,

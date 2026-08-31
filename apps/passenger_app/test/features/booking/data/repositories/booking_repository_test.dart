@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/booking_remote_data_source.dart';
-import 'package:passenger_app/src/features/booking/data/repositories/booking_repository.dart';
+import 'package:passenger_app/src/features/booking/data/repositories/booking_repository_impl.dart';
 import 'package:passenger_app/src/features/booking/domain/entities/booking_session_request.dart';
 import 'package:foundation/foundation.dart';
 
@@ -11,13 +11,13 @@ class MockBookingRemoteDataSource extends Mock
 
 void main() {
   late MockBookingRemoteDataSource dataSource;
-  late BookingRepository repository;
+  late BookingRepositoryImpl repository;
 
   setUpAll(() => registerFallbackValue(<String, dynamic>{}));
 
   setUp(() {
     dataSource = MockBookingRemoteDataSource();
-    repository = BookingRepository(dataSource: dataSource);
+    repository = BookingRepositoryImpl(dataSource: dataSource);
   });
 
   test('serializes IDs and money using the server booking contract', () async {

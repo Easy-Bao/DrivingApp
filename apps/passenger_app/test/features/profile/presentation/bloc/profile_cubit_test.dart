@@ -2,10 +2,10 @@ import 'package:passenger_app/src/features/profile/domain/entities/profile_model
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/profile/presentation/bloc/profile/profile_cubit.dart';
-import 'package:passenger_app/src/features/profile/domain/repositories/i_passenger_profile_repository.dart';
+import 'package:passenger_app/src/features/profile/domain/repositories/passenger_profile_repository.dart';
 import 'package:foundation/foundation.dart';
 
-class _FakeProfileRepository implements IPassengerProfileRepository {
+class _FakeProfileRepository implements PassengerProfileRepository {
   ProfileModel cached = const ProfileModel(
     name: 'Cached Passenger',
     phone: '+63 900 000 0000',

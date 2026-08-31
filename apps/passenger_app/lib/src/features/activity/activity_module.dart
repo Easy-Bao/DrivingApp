@@ -7,14 +7,14 @@ import 'package:passenger_app/src/infrastructure/session/passenger_session_store
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/activity/presentation/bloc/activity/activity_bloc.dart';
 import 'package:passenger_app/src/features/activity/data/data_sources/passenger_activity_remote_data_source.dart';
-import 'package:passenger_app/src/features/activity/data/repositories/activity_repository.dart';
-import 'package:passenger_app/src/features/activity/domain/repositories/i_activity_repository.dart';
+import 'package:passenger_app/src/features/activity/data/repositories/activity_repository_impl.dart';
+import 'package:passenger_app/src/features/activity/domain/repositories/activity_repository.dart';
 import 'package:passenger_app/src/features/activity/presentation/view/passenger_activity_page.dart';
 import 'package:passenger_app/src/features/activity/presentation/view/passenger_payment_page.dart';
 import 'package:passenger_app/src/features/activity/presentation/view/passenger_rating_page.dart';
 import 'package:passenger_app/src/features/activity/presentation/view/view_details_page.dart';
-import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
-import 'package:passenger_app/src/features/active_ride/domain/repositories/i_track_repository.dart';
+import 'package:passenger_app/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
+import 'package:passenger_app/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:design_system/design_system.dart';
 
 class ActivityModule {
@@ -25,13 +25,13 @@ class ActivityModule {
       ..addLazySingleton<PassengerActivityRemoteDataSource>(
         (i) => PassengerActivityRemoteDataSourceImpl(i.get<Dio>()),
       )
-      ..addLazySingleton<IActivityRepository>(
-        (i) => ActivityRepository(
+      ..addLazySingleton<ActivityRepository>(
+        (i) => ActivityRepositoryImpl(
           remoteDataSource: i.get<PassengerActivityRemoteDataSource>(),
         ),
       )
       ..addFactory<ActivityBloc>(
-        (i) => ActivityBloc(repository: i.get<IActivityRepository>()),
+        (i) => ActivityBloc(repository: i.get<ActivityRepository>()),
       );
   }
 
@@ -45,7 +45,7 @@ class ActivityModule {
             : null;
         return ActivityViewDetailsPage(
           ride: ride,
-          trackRepository: Modular.get<ITrackRepository>(),
+          trackRepository: Modular.get<TrackRepository>(),
           sessionService: Modular.get<PassengerSessionStore>(),
         );
       },
@@ -63,7 +63,7 @@ class ActivityModule {
           driverId: driverId,
           driverName: driverName,
           rideId: rideId,
-          profileRepository: Modular.get<IDriverProfileRepository>(),
+          profileRepository: Modular.get<DriverProfileRepository>(),
         );
       },
       transition: AppTransitions.modal.toTop,

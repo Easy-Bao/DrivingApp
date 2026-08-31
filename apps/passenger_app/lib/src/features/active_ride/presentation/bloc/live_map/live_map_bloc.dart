@@ -5,14 +5,14 @@ import 'dart:ui' show Color;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:maps/maps.dart';
-import 'package:passenger_app/src/features/active_ride/domain/repositories/i_track_repository.dart';
+import 'package:passenger_app/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:rxdart/rxdart.dart';
 
 part 'live_map_event.dart';
 part 'live_map_state.dart';
 
 class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
-  final ITrackRepository _trackRepository;
+  final TrackRepository _trackRepository;
 
   AppMapController? _mapController;
   mapbox.PointAnnotationManager? _riderMarkerManager;
@@ -29,7 +29,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   late final StreamSubscription<DispatchTelemetryLocationEvent>
   _locationSubscription;
 
-  LiveMapBloc({required ITrackRepository trackRepository})
+  LiveMapBloc({required TrackRepository trackRepository})
     : _trackRepository = trackRepository,
       super(LiveMapInitial()) {
     on<InitializeMapEvent>(_onInitializeMap);

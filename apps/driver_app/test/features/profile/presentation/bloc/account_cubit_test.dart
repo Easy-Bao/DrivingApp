@@ -1,11 +1,11 @@
 import 'package:driver_app/src/features/profile/presentation/bloc/account/account_cubit.dart';
 import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
-import 'package:driver_app/src/features/profile/domain/repositories/i_driver_profile_repository.dart';
+import 'package:driver_app/src/features/profile/domain/repositories/driver_profile_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:foundation/foundation.dart';
 
-class _FakeDriverProfileRepository implements IDriverProfileRepository {
+class _FakeDriverProfileRepository implements DriverProfileRepository {
   const _FakeDriverProfileRepository();
 
   @override

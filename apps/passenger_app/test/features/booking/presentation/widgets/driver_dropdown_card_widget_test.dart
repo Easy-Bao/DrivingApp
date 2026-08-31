@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart' hide State;
 import 'package:passenger_app/src/features/driver_profile/domain/entities/driver_profile_stats.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/entities/driver_review.dart';
-import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
+import 'package:passenger_app/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger_app/src/features/booking/presentation/widgets/driver_dropdown_card_widget.dart';
 import 'package:foundation/foundation.dart';
 
@@ -21,7 +21,7 @@ const driver = DriverModel(
   score: 0.9,
 );
 
-class _DriverProfileRepositoryStub implements IDriverProfileRepository {
+class _DriverProfileRepositoryStub implements DriverProfileRepository {
   @override
   Future<Either<Failure, DriverProfileStats>> fetchStats(
     String driverId,

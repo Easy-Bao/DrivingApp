@@ -6,15 +6,15 @@ import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger_app/src/features/active_ride/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/active_ride/presentation/bloc/track_driver/track_driver_state.dart';
-import 'package:passenger_app/src/features/active_ride/domain/repositories/i_track_repository.dart';
+import 'package:passenger_app/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:foundation/foundation.dart';
 
-class MockTrackRepo extends Mock implements ITrackRepository {}
+class MockTrackRepo extends Mock implements TrackRepository {}
 
 class MockSecureSessionService extends Mock implements PassengerSessionStore {}
 
 TrackDriverCubit _makeCubit(
-  ITrackRepository repo,
+  TrackRepository repo,
   PassengerSessionStore session,
 ) => TrackDriverCubit(
   repository: repo,

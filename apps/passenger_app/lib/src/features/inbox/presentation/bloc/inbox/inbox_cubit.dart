@@ -2,13 +2,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox/inbox_state.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
-import 'package:passenger_app/src/features/inbox/domain/repositories/i_inbox_repository.dart';
+import 'package:passenger_app/src/features/inbox/domain/repositories/inbox_repository.dart';
 import 'package:foundation/foundation.dart';
 
 class InboxCubit extends Cubit<InboxState> {
   static const _pageSize = 50;
 
-  final IInboxRepository inboxRepository;
+  final InboxRepository inboxRepository;
   final List<InboxNotification> _localNotifications = [];
   String? _activePassengerId;
   int _sessionRevision = 0;
@@ -77,8 +77,8 @@ class InboxCubit extends Cubit<InboxState> {
     required int offset,
   }) async {
     final repository = inboxRepository;
-    if (repository is IPaginatedInboxRepository) {
-      final paginatedRepository = repository as IPaginatedInboxRepository;
+    if (repository is PaginatedInboxRepository) {
+      final paginatedRepository = repository as PaginatedInboxRepository;
       return paginatedRepository.fetchPassengerNotificationsPage(
         passengerId,
         limit: _pageSize,

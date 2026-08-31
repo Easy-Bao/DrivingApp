@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/home/data/data_sources/home_remote_data_source.dart';
-import 'package:passenger_app/src/features/home/data/repositories/home_repository.dart';
+import 'package:passenger_app/src/features/home/data/repositories/home_repository_impl.dart';
 import 'package:passenger_app/src/features/home/domain/entities/home_data.dart';
 import 'package:passenger_app/src/features/home/domain/entities/recent_location.dart';
 
@@ -31,7 +31,9 @@ void main() {
         },
       );
 
-      final repository = HomeRepository(homeRemoteDataSource: remoteDataSource);
+      final repository = HomeRepositoryImpl(
+        homeRemoteDataSource: remoteDataSource,
+      );
 
       final result = await repository.loadHomeData(lat: 7.8, lng: 123.4);
 

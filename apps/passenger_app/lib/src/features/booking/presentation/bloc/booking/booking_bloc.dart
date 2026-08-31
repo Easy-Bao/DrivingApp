@@ -8,15 +8,15 @@ import 'dart:developer' as dev;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/infrastructure/telemetry/passenger_background_telemetry.dart';
 import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
-import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
+import 'package:passenger_app/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger_app/src/features/active_ride/domain/entities/accepted_booking.dart';
 import 'package:passenger_app/src/features/booking/domain/entities/bid_session_trip.dart';
 import 'package:passenger_app/src/features/booking/domain/entities/booking_offer.dart';
 import 'package:passenger_app/src/features/booking/domain/entities/booking_session_request.dart';
-import 'package:passenger_app/src/features/booking/domain/repositories/i_booking_repository.dart';
-import 'package:passenger_app/src/features/booking/domain/repositories/i_driver_repository.dart';
+import 'package:passenger_app/src/features/booking/domain/repositories/booking_repository.dart';
+import 'package:passenger_app/src/features/booking/domain/repositories/driver_repository.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:foundation/foundation.dart';
 
@@ -24,9 +24,9 @@ part 'booking_event.dart';
 part 'booking_state.dart';
 
 class BookingBloc extends Bloc<BookingEvent, BookingState> {
-  final IDriverRepository _driverRepository;
-  final IBookingRepository _bookingRepository;
-  final IDriverProfileRepository _driverProfileRepository;
+  final DriverRepository _driverRepository;
+  final BookingRepository _bookingRepository;
+  final DriverProfileRepository _driverProfileRepository;
   final PassengerSessionStore _secureSessionService;
   final PassengerBackgroundTelemetry? _backgroundTelemetryService;
   final InboxCubit? _inboxCubit;
@@ -58,9 +58,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   String? _dropoffName;
 
   BookingBloc({
-    required IDriverRepository driverRepository,
-    required IBookingRepository bookingRepository,
-    required IDriverProfileRepository driverProfileRepository,
+    required DriverRepository driverRepository,
+    required BookingRepository bookingRepository,
+    required DriverProfileRepository driverProfileRepository,
     required PassengerSessionStore secureSessionService,
     InboxCubit? inboxCubit,
     PassengerBackgroundTelemetry? backgroundTelemetryService,

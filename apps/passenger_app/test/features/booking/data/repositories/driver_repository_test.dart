@@ -4,7 +4,7 @@ import 'package:maps/maps.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/driver_discovery_remote_data_source.dart';
-import 'package:passenger_app/src/features/booking/data/repositories/driver_repository.dart';
+import 'package:passenger_app/src/features/booking/data/repositories/driver_repository_impl.dart';
 
 class MockDriverDiscoveryRemoteDataSource extends Mock
     implements DriverDiscoveryRemoteDataSource {}
@@ -50,7 +50,7 @@ void main() {
         },
       );
 
-      final result = await DriverRepository(
+      final result = await DriverRepositoryImpl(
         discoveryDataSource: dataSource,
         locationRepository: locationRepository,
       ).getNearbyDrivers(lat: latitude, lng: longitude);
@@ -100,7 +100,7 @@ void main() {
         },
       );
 
-      final repository = DriverRepository(
+      final repository = DriverRepositoryImpl(
         discoveryDataSource: dataSource,
         locationRepository: locationRepository,
       );

@@ -4,11 +4,11 @@ import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_cubit.dart';
 import 'package:passenger_app/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_state.dart';
 import 'package:passenger_app/src/features/home/domain/entities/public_driver_summary.dart';
-import 'package:passenger_app/src/features/home/domain/repositories/i_public_driver_summary_repository.dart';
+import 'package:passenger_app/src/features/home/domain/repositories/public_driver_summary_repository.dart';
 import 'package:foundation/foundation.dart';
 
 class MockPublicDriverSummaryRepository extends Mock
-    implements IPublicDriverSummaryRepository {}
+    implements PublicDriverSummaryRepository {}
 
 void main() {
   const summary = PublicDriverSummary(

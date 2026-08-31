@@ -7,13 +7,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:rxdart/rxdart.dart';
 
-import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
+import 'package:driver_app/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 
 part 'live_map_event.dart';
 part 'live_map_state.dart';
 
 class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
-  final IDriverRideRepository _rideRepository;
+  final DriverRideRepository _rideRepository;
 
   AppMapController? _mapController;
   mapbox.PointAnnotationManager? _driverMarkerManager;
@@ -32,7 +32,7 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   late final StreamSubscription<DispatchTelemetryLocationEvent>
   _locationSubscription;
 
-  LiveMapBloc({required IDriverRideRepository rideRepository})
+  LiveMapBloc({required DriverRideRepository rideRepository})
     : _rideRepository = rideRepository,
       super(LiveMapInitial()) {
     on<InitializeMapEvent>(_onInitializeMap);

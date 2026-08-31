@@ -2,16 +2,16 @@ import 'dart:async';
 
 import 'package:maps/maps.dart';
 import 'package:driver_app/src/features/location/presentation/bloc/location_access/driver_location_access_state.dart';
-import 'package:driver_app/src/features/location/domain/repositories/i_driver_location_access_repository.dart';
+import 'package:driver_app/src/features/location/domain/repositories/driver_location_access_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class DriverLocationAccessCubit extends Cubit<DriverLocationAccessViewState> {
   DriverLocationAccessCubit({
-    required IDriverLocationAccessRepository repository,
+    required DriverLocationAccessRepository repository,
   }) : _repository = repository,
        super(const DriverLocationAccessChecking());
 
-  final IDriverLocationAccessRepository _repository;
+  final DriverLocationAccessRepository _repository;
 
   StreamSubscription<LocationAccessState>? _accessStateSubscription;
   bool _isStarted = false;

@@ -3,7 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/activity/data/data_sources/passenger_activity_remote_data_source.dart';
-import 'package:passenger_app/src/features/activity/data/repositories/activity_repository.dart';
+import 'package:passenger_app/src/features/activity/data/repositories/activity_repository_impl.dart';
+import 'package:passenger_app/src/features/activity/domain/repositories/activity_repository.dart';
 import 'package:foundation/foundation.dart';
 
 class MockPassengerActivityRemoteDataSource extends Mock
@@ -15,7 +16,7 @@ void main() {
 
   setUp(() {
     remoteDataSource = MockPassengerActivityRemoteDataSource();
-    repository = ActivityRepository(remoteDataSource: remoteDataSource);
+    repository = ActivityRepositoryImpl(remoteDataSource: remoteDataSource);
   });
 
   test(

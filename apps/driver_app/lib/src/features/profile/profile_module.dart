@@ -5,8 +5,8 @@ import 'package:driver_app/src/features/auth/domain/services/driver_logout_coord
 import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/profile/presentation/bloc/account/account_cubit.dart';
 import 'package:driver_app/src/features/profile/data/data_sources/driver_profile_remote_data_source.dart';
-import 'package:driver_app/src/features/profile/data/repositories/driver_profile_repository.dart';
-import 'package:driver_app/src/features/profile/domain/repositories/i_driver_profile_repository.dart';
+import 'package:driver_app/src/features/profile/data/repositories/driver_profile_repository_impl.dart';
+import 'package:driver_app/src/features/profile/domain/repositories/driver_profile_repository.dart';
 import 'package:driver_app/src/features/profile/profile_routes.dart';
 import 'package:driver_app/src/features/profile/presentation/view/driver_account_page.dart';
 import 'package:driver_app/src/features/profile/presentation/view/driver_personal_details_page.dart';
@@ -24,16 +24,15 @@ class ProfileModule {
       ..addLazySingleton<DriverProfileRemoteDataSource>(
         (i) => DriverProfileRemoteDataSourceImpl(i.get<Dio>()),
       )
-      ..addLazySingleton<IDriverProfileRepository>(
-        (i) => DriverProfileRepository(
+      ..addLazySingleton<DriverProfileRepository>(
+        (i) => DriverProfileRepositoryImpl(
           profileDataSource: i.get<DriverProfileRemoteDataSource>(),
           sessionService: i.get<DriverSessionStore>(),
           preferences: i.get<SharedPreferences>(),
         ),
       )
       ..addFactory<DriverAccountCubit>(
-        (i) =>
-            DriverAccountCubit(repository: i.get<IDriverProfileRepository>()),
+        (i) => DriverAccountCubit(repository: i.get<DriverProfileRepository>()),
       );
   }
 

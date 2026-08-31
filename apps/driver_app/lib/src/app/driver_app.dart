@@ -8,7 +8,7 @@ import 'package:driver_app/src/app/theme/app_theme.dart';
 import 'package:driver_app/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver_app/src/features/location/presentation/bloc/location_access/driver_location_access_state.dart';
 import 'package:driver_app/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
-import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
+import 'package:driver_app/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -93,7 +93,7 @@ class _DriverAppState extends State<DriverApp> with WidgetsBindingObserver {
         ),
         BlocProvider<RideFlowCubit>(
           create: (_) => RideFlowCubit(
-            rideRepository: Modular.get<IDriverRideRepository>(),
+            rideRepository: Modular.get<DriverRideRepository>(),
             sessionService: Modular.get<DriverSessionStore>(),
           ),
         ),

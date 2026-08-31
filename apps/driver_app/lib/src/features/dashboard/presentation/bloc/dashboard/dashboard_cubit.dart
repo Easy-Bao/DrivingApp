@@ -2,12 +2,12 @@ import 'package:driver_app/src/features/active_ride/active_ride.dart';
 import 'dart:developer' as dev;
 
 import 'package:driver_app/src/features/dashboard/presentation/bloc/dashboard/dashboard_state.dart';
-import 'package:driver_app/src/features/dashboard/domain/repositories/i_dashboard_repository.dart';
+import 'package:driver_app/src/features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 
 class DashboardCubit extends Cubit<DashboardState> {
-  final IDashboardRepository _repository;
+  final DashboardRepository _repository;
   final DateTime Function() _now;
   final Duration _silentDispatchFailureCooldown;
   bool _isDispatchRequestInFlight = false;
@@ -16,7 +16,7 @@ class DashboardCubit extends Cubit<DashboardState> {
   DateTime? _silentDispatchRetryAfter;
 
   DashboardCubit({
-    required IDashboardRepository repository,
+    required DashboardRepository repository,
     DateTime Function()? now,
     Duration silentDispatchFailureCooldown = const Duration(seconds: 15),
   }) : _repository = repository,

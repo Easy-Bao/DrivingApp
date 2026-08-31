@@ -5,18 +5,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/infrastructure/telemetry/passenger_background_telemetry.dart';
 import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
-import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
+import 'package:passenger_app/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/booking_remote_data_source.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/driver_discovery_remote_data_source.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/fare_remote_data_source.dart';
-import 'package:passenger_app/src/features/booking/data/repositories/booking_repository.dart';
-import 'package:passenger_app/src/features/booking/data/repositories/driver_repository.dart';
-import 'package:passenger_app/src/features/booking/data/repositories/fare_repository.dart';
-import 'package:passenger_app/src/features/booking/domain/repositories/i_booking_repository.dart';
-import 'package:passenger_app/src/features/booking/domain/repositories/i_driver_repository.dart';
-import 'package:passenger_app/src/features/booking/domain/repositories/i_fare_repository.dart';
+import 'package:passenger_app/src/features/booking/data/repositories/booking_repository_impl.dart';
+import 'package:passenger_app/src/features/booking/data/repositories/driver_repository_impl.dart';
+import 'package:passenger_app/src/features/booking/data/repositories/fare_repository_impl.dart';
+import 'package:passenger_app/src/features/booking/domain/repositories/booking_repository.dart';
+import 'package:passenger_app/src/features/booking/domain/repositories/driver_repository.dart';
+import 'package:passenger_app/src/features/booking/domain/repositories/fare_repository.dart';
 import 'package:passenger_app/src/features/booking/booking_routes.dart';
 import 'package:passenger_app/src/features/booking/presentation/view/activity_detail_map_page.dart';
 import 'package:passenger_app/src/features/booking/presentation/view/finding_driver_page.dart';
@@ -40,23 +40,25 @@ class BookingModule {
       ..addLazySingleton<FareRemoteDataSource>(
         (i) => FareRemoteDataSourceImpl(i.get<Dio>()),
       )
-      ..addLazySingleton<IDriverRepository>(
-        (i) => DriverRepository(
+      ..addLazySingleton<DriverRepository>(
+        (i) => DriverRepositoryImpl(
           discoveryDataSource: i.get<DriverDiscoveryRemoteDataSource>(),
           locationRepository: i.get<LocationRepository>(),
         ),
       )
-      ..addLazySingleton<IBookingRepository>(
-        (i) => BookingRepository(dataSource: i.get<BookingRemoteDataSource>()),
+      ..addLazySingleton<BookingRepository>(
+        (i) =>
+            BookingRepositoryImpl(dataSource: i.get<BookingRemoteDataSource>()),
       )
-      ..addLazySingleton<IFareRepository>(
-        (i) => FareRepository(remoteDataSource: i.get<FareRemoteDataSource>()),
+      ..addLazySingleton<FareRepository>(
+        (i) =>
+            FareRepositoryImpl(remoteDataSource: i.get<FareRemoteDataSource>()),
       )
       ..addLazySingleton<BookingBloc>(
         (i) => BookingBloc(
-          driverRepository: i.get<IDriverRepository>(),
-          bookingRepository: i.get<IBookingRepository>(),
-          driverProfileRepository: i.get<IDriverProfileRepository>(),
+          driverRepository: i.get<DriverRepository>(),
+          bookingRepository: i.get<BookingRepository>(),
+          driverProfileRepository: i.get<DriverProfileRepository>(),
           secureSessionService: i.get<PassengerSessionStore>(),
           inboxCubit: i.get<InboxCubit>(),
           backgroundTelemetryService: i.get<PassengerBackgroundTelemetry>(),
@@ -142,7 +144,7 @@ class BookingModule {
             pickupLatitude: data.doubleValue('pickupLat'),
             pickupLongitude: data.doubleValue('pickupLng'),
             pickupAddress: data.string('pickupAddress'),
-            fareRepository: Modular.get<IFareRepository>(),
+            fareRepository: Modular.get<FareRepository>(),
           ),
         );
       },
@@ -178,7 +180,7 @@ class BookingModule {
           pickupLongitude: data.doubleValue('pickupLng'),
           pickupAddress: data.string('pickupAddress'),
           passengerNote: data.string('passengerNote') ?? '',
-          profileRepository: Modular.get<IDriverProfileRepository>(),
+          profileRepository: Modular.get<DriverProfileRepository>(),
         );
       },
       transition: AppTransitions.modal.toTop,

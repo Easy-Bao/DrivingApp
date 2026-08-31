@@ -6,14 +6,14 @@ import 'package:mocktail/mocktail.dart';
 import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
-import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
+import 'package:driver_app/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 
-class MockDriverRideRepository extends Mock implements IDriverRideRepository {}
+class MockDriverRideRepository extends Mock implements DriverRideRepository {}
 
 class MockSecureSessionService extends Mock implements DriverSessionStore {}
 
 RideFlowCubit _makeCubit(
-  IDriverRideRepository rideRepository,
+  DriverRideRepository rideRepository,
   DriverSessionStore sessionService,
 ) => RideFlowCubit(
   rideRepository: rideRepository,

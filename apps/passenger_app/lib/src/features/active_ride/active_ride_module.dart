@@ -8,13 +8,13 @@ import 'package:passenger_app/src/infrastructure/telemetry/passenger_background_
 import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger_app/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger_app/src/features/active_ride/data/data_sources/ride_remote_data_source.dart';
-import 'package:passenger_app/src/features/active_ride/data/repositories/track_repository.dart';
-import 'package:passenger_app/src/features/active_ride/domain/repositories/i_track_repository.dart';
+import 'package:passenger_app/src/features/active_ride/data/repositories/track_repository_impl.dart';
+import 'package:passenger_app/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger_app/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:passenger_app/src/features/active_ride/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/active_ride/presentation/view/driver_matched_page.dart';
 import 'package:passenger_app/src/features/active_ride/presentation/view/track_driver_page.dart';
-import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
+import 'package:passenger_app/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
@@ -26,15 +26,17 @@ class ActiveRideModule {
       ..addLazySingleton<RideRemoteDataSource>(
         (i) => RideRemoteDataSourceImpl(i.get<Dio>()),
       )
-      ..addLazySingleton<ITrackRepository>(
-        (i) => TrackRepository(remoteDataSource: i.get<RideRemoteDataSource>()),
+      ..addLazySingleton<TrackRepository>(
+        (i) => TrackRepositoryImpl(
+          remoteDataSource: i.get<RideRemoteDataSource>(),
+        ),
       )
       ..addFactory<LiveMapBloc>(
-        (i) => LiveMapBloc(trackRepository: i.get<ITrackRepository>()),
+        (i) => LiveMapBloc(trackRepository: i.get<TrackRepository>()),
       )
       ..addFactory<TrackDriverCubit>(
         (i) => TrackDriverCubit(
-          repository: i.get<ITrackRepository>(),
+          repository: i.get<TrackRepository>(),
           sessionService: i.get<PassengerSessionStore>(),
           lifecycleCoordinator: i.get<AppLifecycleCoordinator>(),
           backgroundTelemetryService: i.get<PassengerBackgroundTelemetry>(),
@@ -75,7 +77,7 @@ class ActiveRideModule {
           plateNumber: data.string('plateNumber'),
           pickupAddress: data.string('pickupAddress'),
           createdRide: data.object<RideHistory>('createdRide'),
-          profileRepository: Modular.get<IDriverProfileRepository>(),
+          profileRepository: Modular.get<DriverProfileRepository>(),
         );
       },
       transition: AppTransitions.modal.toTop,
@@ -95,7 +97,7 @@ class ActiveRideModule {
         }
         return ActivityTrackDriverPage(
           ride: ride,
-          trackRepository: Modular.get<ITrackRepository>(),
+          trackRepository: Modular.get<TrackRepository>(),
           chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
           sessionService: Modular.get<PassengerSessionStore>(),
           lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),

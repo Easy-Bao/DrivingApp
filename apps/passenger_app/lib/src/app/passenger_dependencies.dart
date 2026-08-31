@@ -12,8 +12,8 @@ import 'package:passenger_app/src/features/auth/presentation/bloc/session/sessio
 import 'package:passenger_app/src/features/auth/data/repositories/session_repository_impl.dart';
 import 'package:passenger_app/src/features/auth/domain/repositories/session_repository.dart';
 import 'package:passenger_app/src/features/location/presentation/bloc/location_access/location_access_cubit.dart';
-import 'package:passenger_app/src/features/location/data/repositories/location_access_repository.dart';
-import 'package:passenger_app/src/features/location/domain/repositories/i_location_access_repository.dart';
+import 'package:passenger_app/src/features/location/data/repositories/location_access_repository_impl.dart';
+import 'package:passenger_app/src/features/location/domain/repositories/location_access_repository.dart';
 import 'package:passenger_app/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -49,12 +49,12 @@ class PassengerDependencies extends Module {
       ..addLazySingleton<SessionBloc>(
         (i) => SessionBloc(sessionRepository: i.get<SessionRepository>()),
       )
-      ..addLazySingleton<ILocationAccessRepository>(
-        (_) => LocationAccessRepository(),
+      ..addLazySingleton<LocationAccessRepository>(
+        (_) => LocationAccessRepositoryImpl(),
       )
       ..addLazySingleton<LocationAccessCubit>(
         (i) =>
-            LocationAccessCubit(repository: i.get<ILocationAccessRepository>()),
+            LocationAccessCubit(repository: i.get<LocationAccessRepository>()),
       )
       ..addLazySingleton<Dio>(
         (i) => PassengerApiClient.create(

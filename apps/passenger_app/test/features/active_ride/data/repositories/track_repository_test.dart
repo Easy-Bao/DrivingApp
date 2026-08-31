@@ -2,7 +2,8 @@ import 'package:passenger_app/src/features/active_ride/active_ride.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/active_ride/data/data_sources/ride_remote_data_source.dart';
-import 'package:passenger_app/src/features/active_ride/data/repositories/track_repository.dart';
+import 'package:passenger_app/src/features/active_ride/data/repositories/track_repository_impl.dart';
+import 'package:passenger_app/src/features/active_ride/domain/repositories/track_repository.dart';
 
 class MockRideRemoteDataSource extends Mock implements RideRemoteDataSource {}
 
@@ -12,7 +13,7 @@ void main() {
 
   setUp(() {
     dataSource = MockRideRemoteDataSource();
-    repository = TrackRepository(remoteDataSource: dataSource);
+    repository = TrackRepositoryImpl(remoteDataSource: dataSource);
   });
 
   test(

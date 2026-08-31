@@ -6,10 +6,9 @@ import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places/saved_places_state.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
-import 'package:passenger_app/src/features/saved_places/domain/repositories/i_saved_places_repository.dart';
+import 'package:passenger_app/src/features/saved_places/domain/repositories/saved_places_repository.dart';
 
-class MockSavedPlacesRepository extends Mock
-    implements ISavedPlacesRepository {}
+class MockSavedPlacesRepository extends Mock implements SavedPlacesRepository {}
 
 void main() {
   late MockSavedPlacesRepository mockRepository;

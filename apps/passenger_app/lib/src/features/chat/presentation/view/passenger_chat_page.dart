@@ -8,7 +8,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/infrastructure/config/passenger_env_config.dart';
 import 'package:passenger_app/src/features/chat/presentation/bloc/chat/chat_cubit.dart';
-import 'package:passenger_app/src/features/active_ride/domain/repositories/i_track_repository.dart';
+import 'package:passenger_app/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:design_system/design_system.dart';
 
 class PassengerChatPage extends StatefulWidget {
@@ -16,7 +16,7 @@ class PassengerChatPage extends StatefulWidget {
   final String? userId;
   final String? peerId;
   final String? peerName;
-  final ITrackRepository trackRepository;
+  final TrackRepository trackRepository;
   final ChatRepositoryFactory chatRepositoryFactory;
   final String? token;
 

@@ -4,7 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/entities/driver_review.dart';
-import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
+import 'package:passenger_app/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger_app/src/features/driver_profile/presentation/driver_profile_details_sheet.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
@@ -18,7 +18,7 @@ class DriverDropdownCardWidget extends StatefulWidget {
   final VoidCallback onProfileBackPressed;
   final VoidCallback onSelectDriverPressed;
   final VoidCallback onCloseDropdownPressed;
-  final IDriverProfileRepository profileRepository;
+  final DriverProfileRepository profileRepository;
 
   const DriverDropdownCardWidget({
     super.key,

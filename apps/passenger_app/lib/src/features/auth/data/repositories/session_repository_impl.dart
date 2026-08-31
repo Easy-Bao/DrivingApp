@@ -5,7 +5,7 @@ import 'package:passenger_app/src/features/auth/domain/repositories/session_repo
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class SessionRepositoryImpl implements SessionRepository {
+final class SessionRepositoryImpl implements SessionRepository {
   final PassengerSessionStore _secureSessionService;
   final SharedPreferences _preferences;
 

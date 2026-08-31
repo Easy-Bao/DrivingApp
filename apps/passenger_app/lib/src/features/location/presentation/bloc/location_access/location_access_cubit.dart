@@ -3,14 +3,14 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger_app/src/features/location/presentation/bloc/location_access/location_access_state.dart';
-import 'package:passenger_app/src/features/location/domain/repositories/i_location_access_repository.dart';
+import 'package:passenger_app/src/features/location/domain/repositories/location_access_repository.dart';
 
 class LocationAccessCubit extends Cubit<LocationAccessViewState> {
-  LocationAccessCubit({required ILocationAccessRepository repository})
+  LocationAccessCubit({required LocationAccessRepository repository})
     : _repository = repository,
       super(const LocationAccessChecking());
 
-  final ILocationAccessRepository _repository;
+  final LocationAccessRepository _repository;
 
   StreamSubscription<LocationAccessState>? _accessStateSubscription;
   bool _isStarted = false;

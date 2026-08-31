@@ -5,7 +5,7 @@ import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/location/presentation/bloc/location_access/location_access_cubit.dart';
-import 'package:passenger_app/src/features/location/domain/repositories/i_location_access_repository.dart';
+import 'package:passenger_app/src/features/location/domain/repositories/location_access_repository.dart';
 import 'package:passenger_app/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -26,7 +26,7 @@ void main() {
 
     expect(Modular.isRegistered<BookingDraftCubit>(), isTrue);
     expect(Modular.isRegistered<SessionBloc>(), isTrue);
-    expect(Modular.isRegistered<ILocationAccessRepository>(), isTrue);
+    expect(Modular.isRegistered<LocationAccessRepository>(), isTrue);
     expect(Modular.isRegistered<LocationAccessCubit>(), isTrue);
     expect(Modular.get<BookingDraftCubit>(), isA<BookingDraftCubit>());
 

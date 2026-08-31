@@ -6,7 +6,7 @@ import 'package:driver_app/src/features/active_ride/active_ride_routes.dart';
 import 'package:driver_app/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver_app/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
-import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
+import 'package:driver_app/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:driver_app/src/features/active_ride/presentation/widgets/in_transit/in_transit_complete_button_widget.dart';
 import 'package:driver_app/src/features/active_ride/presentation/widgets/in_transit/in_transit_passenger_card_widget.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +22,7 @@ class InTransitPage extends StatefulWidget {
   final String duration;
   final double distance;
   final double fare;
-  final IDriverRideRepository rideRepository;
+  final DriverRideRepository rideRepository;
   final AppLifecycleCoordinator lifecycleCoordinator;
 
   const InTransitPage({

@@ -6,9 +6,9 @@ import 'package:driver_app/src/features/performance/domain/entities/driver_perfo
 import 'package:driver_app/src/features/performance/domain/repositories/driver_performance_repository.dart';
 import 'package:driver_app/src/features/dashboard/data/data_sources/driver_availability_remote_data_source.dart';
 import 'package:driver_app/src/features/dashboard/data/data_sources/ride_offer_remote_data_source.dart';
-import 'package:driver_app/src/features/dashboard/data/repositories/dashboard_repository.dart';
+import 'package:driver_app/src/features/dashboard/data/repositories/dashboard_repository_impl.dart';
 import 'package:driver_app/src/features/dashboard/domain/entities/driver_dashboard_stats.dart';
-import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
+import 'package:driver_app/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:driver_app/src/features/ride_history/domain/repositories/driver_ride_history_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
@@ -33,7 +33,7 @@ class MockBackgroundTelemetryService extends Mock
 class MockRideOfferRemoteDataSource extends Mock
     implements RideOfferRemoteDataSource {}
 
-class MockDriverRideRepository extends Mock implements IDriverRideRepository {}
+class MockDriverRideRepository extends Mock implements DriverRideRepository {}
 
 late SharedPreferences _preferences;
 late MockDriverPerformanceRepository _performanceRepository;
@@ -41,12 +41,12 @@ late MockDriverRideHistoryRepository _rideHistoryRepository;
 late MockRideOfferRemoteDataSource _rideOfferDataSource;
 late MockDriverRideRepository _rideRepository;
 
-DashboardRepository _buildRepository({
+DashboardRepositoryImpl _buildRepository({
   required DriverAvailabilityRemoteDataSource availabilityDataSource,
   required DriverSessionStore sessionService,
   DriverBackgroundTelemetry? backgroundTelemetryService,
 }) {
-  return DashboardRepository(
+  return DashboardRepositoryImpl(
     performanceRepository: _performanceRepository,
     rideHistoryRepository: _rideHistoryRepository,
     availabilityDataSource: availabilityDataSource,

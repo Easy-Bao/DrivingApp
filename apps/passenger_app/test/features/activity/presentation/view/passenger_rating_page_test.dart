@@ -4,10 +4,10 @@ import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/activity/presentation/view/passenger_rating_page.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/entities/driver_profile_stats.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/entities/driver_review.dart';
-import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
+import 'package:passenger_app/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:foundation/foundation.dart';
 
-class _DriverProfileRepositoryStub implements IDriverProfileRepository {
+class _DriverProfileRepositoryStub implements DriverProfileRepository {
   @override
   Future<Either<Failure, DriverProfileStats>> fetchStats(
     String driverId,

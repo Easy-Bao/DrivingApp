@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger_app/src/features/profile/data/data_sources/passenger_profile_remote_data_source.dart';
-import 'package:passenger_app/src/features/profile/data/repositories/passenger_profile_repository.dart';
+import 'package:passenger_app/src/features/profile/data/repositories/passenger_profile_repository_impl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MockPassengerProfileRemoteDataSource extends Mock
@@ -52,7 +52,7 @@ void main() {
       },
     );
 
-    final repository = PassengerProfileRepository(
+    final repository = PassengerProfileRepositoryImpl(
       remoteDataSource: remoteDataSource,
       sessionService: sessionService,
       preferences: preferences,

@@ -3,7 +3,7 @@ import 'package:driver_app/src/infrastructure/session/driver_session_store.dart'
 import 'package:driver_app/src/features/profile/presentation/bloc/account/account_cubit.dart';
 import 'package:driver_app/src/features/profile/presentation/view/driver_account_page.dart';
 import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
-import 'package:driver_app/src/features/profile/domain/repositories/i_driver_profile_repository.dart';
+import 'package:driver_app/src/features/profile/domain/repositories/driver_profile_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -17,7 +17,7 @@ import 'package:foundation/foundation.dart';
 class _MockSecureStorage extends Mock implements FlutterSecureStorage {}
 
 class _MockDriverProfileRepository extends Mock
-    implements IDriverProfileRepository {}
+    implements DriverProfileRepository {}
 
 Future<void> _noopLogout() async {}
 
@@ -61,9 +61,7 @@ void main() {
 
     scope = ModularTestScope.fresh()
         .withInstance<SharedPreferences>(preferences)
-        .withInstance<DriverSessionStore>(
-          DriverSessionStore(storage: storage),
-        );
+        .withInstance<DriverSessionStore>(DriverSessionStore(storage: storage));
     scope.setUp();
   });
 
@@ -112,7 +110,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('uses the fixed default account surface contract', (tester) async {
+  testWidgets('uses the fixed default account surface contract', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.data,

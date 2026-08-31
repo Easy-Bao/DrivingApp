@@ -3,9 +3,9 @@ import 'package:driver_app/src/infrastructure/telemetry/driver_background_teleme
 import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/dashboard/data/data_sources/driver_availability_remote_data_source.dart';
 import 'package:driver_app/src/features/dashboard/data/data_sources/ride_offer_remote_data_source.dart';
-import 'package:driver_app/src/features/dashboard/data/repositories/dashboard_repository.dart';
-import 'package:driver_app/src/features/dashboard/domain/repositories/i_dashboard_repository.dart';
-import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
+import 'package:driver_app/src/features/dashboard/data/repositories/dashboard_repository_impl.dart';
+import 'package:driver_app/src/features/dashboard/domain/repositories/dashboard_repository.dart';
+import 'package:driver_app/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:driver_app/src/features/performance/domain/repositories/driver_performance_repository.dart';
 import 'package:driver_app/src/features/ride_history/domain/repositories/driver_ride_history_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -28,20 +28,20 @@ class DashboardModule {
       ..addLazySingleton<RideOfferRemoteDataSource>(
         (i) => RideOfferRemoteDataSourceImpl(i.get<Dio>()),
       )
-      ..addLazySingleton<IDashboardRepository>(
-        (i) => DashboardRepository(
+      ..addLazySingleton<DashboardRepository>(
+        (i) => DashboardRepositoryImpl(
           performanceRepository: i.get<DriverPerformanceRepository>(),
           rideHistoryRepository: i.get<DriverRideHistoryRepository>(),
           availabilityDataSource: i.get<DriverAvailabilityRemoteDataSource>(),
           rideOfferDataSource: i.get<RideOfferRemoteDataSource>(),
-          rideRepository: i.get<IDriverRideRepository>(),
+          rideRepository: i.get<DriverRideRepository>(),
           sessionService: i.get<DriverSessionStore>(),
           preferences: i.get<SharedPreferences>(),
           backgroundTelemetryService: i.get<DriverBackgroundTelemetry>(),
         ),
       )
       ..addLazySingleton<DashboardCubit>(
-        (i) => DashboardCubit(repository: i.get<IDashboardRepository>()),
+        (i) => DashboardCubit(repository: i.get<DashboardRepository>()),
       );
   }
 

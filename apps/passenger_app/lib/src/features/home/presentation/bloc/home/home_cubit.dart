@@ -5,16 +5,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/home/presentation/bloc/home/home_state.dart';
 import 'package:passenger_app/src/features/home/domain/entities/current_location.dart';
-import 'package:passenger_app/src/features/home/domain/repositories/i_current_location_repository.dart';
-import 'package:passenger_app/src/features/home/domain/repositories/i_home_repository.dart';
+import 'package:passenger_app/src/features/home/domain/repositories/current_location_repository.dart';
+import 'package:passenger_app/src/features/home/domain/repositories/home_repository.dart';
 import 'package:foundation/foundation.dart';
 
 const _pickupLocationUnavailableMessage =
     'Unable to find your pickup location. Tap to retry.';
 
 class HomeCubit extends Cubit<HomeState> {
-  final IHomeRepository _repository;
-  final ICurrentLocationRepository _currentLocationRepository;
+  final HomeRepository _repository;
+  final CurrentLocationRepository _currentLocationRepository;
 
   StreamSubscription<Either<Failure, CurrentLocation>>? _locationSubscription;
   CurrentLocation? _pendingTrackedLocation;
@@ -27,8 +27,8 @@ class HomeCubit extends Cubit<HomeState> {
   bool _isTrackingLocation = false;
 
   HomeCubit({
-    required IHomeRepository repository,
-    required ICurrentLocationRepository currentLocationRepository,
+    required HomeRepository repository,
+    required CurrentLocationRepository currentLocationRepository,
   }) : _repository = repository,
        _currentLocationRepository = currentLocationRepository,
        super(const HomeState());

@@ -7,13 +7,13 @@ import 'package:driver_app/src/infrastructure/telemetry/driver_background_teleme
 import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/auth/auth_module.dart';
 import 'package:driver_app/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
-import 'package:driver_app/src/features/location/data/repositories/driver_location_access_repository.dart';
-import 'package:driver_app/src/features/location/domain/repositories/i_driver_location_access_repository.dart';
+import 'package:driver_app/src/features/location/data/repositories/driver_location_access_repository_impl.dart';
+import 'package:driver_app/src/features/location/domain/repositories/driver_location_access_repository.dart';
 import 'package:driver_app/src/features/active_ride/data/data_sources/ride_counterparty_remote_data_source.dart';
 import 'package:driver_app/src/features/active_ride/data/data_sources/ride_remote_data_source.dart';
 import 'package:driver_app/src/features/active_ride/data/data_sources/telemetry_remote_data_source.dart';
-import 'package:driver_app/src/features/active_ride/data/repositories/driver_ride_repository.dart';
-import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
+import 'package:driver_app/src/features/active_ride/data/repositories/driver_ride_repository_impl.dart';
+import 'package:driver_app/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -38,12 +38,12 @@ class DriverDependencies extends Module {
       ..addLazySingleton<NetworkAvailabilityCoordinator>(
         (_) => NetworkAvailabilityCoordinator(),
       )
-      ..addLazySingleton<IDriverLocationAccessRepository>(
-        (_) => DriverLocationAccessRepository(),
+      ..addLazySingleton<DriverLocationAccessRepository>(
+        (_) => DriverLocationAccessRepositoryImpl(),
       )
       ..addLazySingleton<DriverLocationAccessCubit>(
         (i) => DriverLocationAccessCubit(
-          repository: i.get<IDriverLocationAccessRepository>(),
+          repository: i.get<DriverLocationAccessRepository>(),
         ),
       )
       ..addLazySingleton<DriverSessionStore>((i) => _sessionService)
@@ -80,8 +80,8 @@ class DriverDependencies extends Module {
       ..addLazySingleton<TelemetryRemoteDataSource>(
         (i) => TelemetryRemoteDataSourceImpl(i.get<Dio>()),
       )
-      ..addLazySingleton<IDriverRideRepository>(
-        (i) => DriverRideRepository(
+      ..addLazySingleton<DriverRideRepository>(
+        (i) => DriverRideRepositoryImpl(
           rideDataSource: i.get<RideRemoteDataSource>(),
           counterpartyDataSource: i.get<RideCounterpartyRemoteDataSource>(),
           telemetryDataSource: i.get<TelemetryRemoteDataSource>(),
