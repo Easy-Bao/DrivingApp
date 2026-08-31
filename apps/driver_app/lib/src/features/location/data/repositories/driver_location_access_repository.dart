@@ -1,6 +1,5 @@
-import 'package:driver_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 import 'package:driver_app/src/features/location/domain/repositories/i_driver_location_access_repository.dart';
-import 'package:shared_core/shared_core.dart';
 
 class DriverLocationAccessRepository
     implements IDriverLocationAccessRepository {
@@ -10,8 +9,7 @@ class DriverLocationAccessRepository
   );
 
   @override
-  Stream<LocationAccessState> get accessStateChanges =>
-      _monitor.changes;
+  Stream<LocationAccessState> get accessStateChanges => _monitor.changes;
 
   @override
   Future<LocationAccessState> startMonitoring() => _monitor.start();

@@ -1,10 +1,10 @@
 import 'package:equatable/equatable.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:maps/maps.dart';
 
 class BidSessionTrip extends Equatable {
   final String rideType;
   final double fare;
-  final PlaceModel destination;
+  final Place destination;
   final String distance;
   final String duration;
   final String? pickupAddress;

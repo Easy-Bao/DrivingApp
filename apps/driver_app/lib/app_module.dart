@@ -20,7 +20,6 @@ import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_r
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shared_ui/shared_ui.dart';
 
 class AppModule extends Module {
   final SharedPreferences _prefs;

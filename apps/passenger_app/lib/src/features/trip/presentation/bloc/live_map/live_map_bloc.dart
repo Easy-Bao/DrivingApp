@@ -4,10 +4,9 @@ import 'dart:ui' show Color;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
-import 'package:passenger_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:shared_core/shared_core.dart';
 
 part 'live_map_event.dart';
 part 'live_map_state.dart';

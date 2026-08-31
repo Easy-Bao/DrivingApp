@@ -4,10 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
-import 'package:passenger_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
 import 'package:passenger_app/src/features/trip/presentation/search_destination_formatters.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -39,8 +38,8 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
   late final Animation<double> _collapsedControlsFadeAnimation;
 
   Timer? _debounce;
-  List<PlaceModel> _results = [];
-  List<PlaceModel> _allNearbyPlaces = [];
+  List<Place> _results = [];
+  List<Place> _allNearbyPlaces = [];
   int _displayedCount = 10;
   int _currentNearbyPage = 1;
   bool _isLoadingMoreNearby = false;
@@ -289,7 +288,7 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
       lng: _userLng,
     );
 
-    final mergedResults = <PlaceModel>[...localMatches];
+    final mergedResults = <Place>[...localMatches];
     for (final res in apiResults.where(
       (place) =>
           (place.distanceKm == null || place.distanceKm! <= 10.0) &&
@@ -316,10 +315,7 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
     }
   }
 
-  Future<void> _loadDrivingDistances(
-    List<PlaceModel> places,
-    int requestId,
-  ) async {
+  Future<void> _loadDrivingDistances(List<Place> places, int requestId) async {
     if (_userLat == null || _userLng == null) return;
 
     for (final place in places) {
@@ -354,7 +350,7 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
     }
   }
 
-  void _onPlaceSelected(PlaceModel place) {
+  void _onPlaceSelected(Place place) {
     final queryParams = <String, String>{};
     if (widget.preselectedRideType != null) {
       queryParams['rideType'] = widget.preselectedRideType!;
@@ -373,7 +369,7 @@ class _SearchDestinationPageState extends State<SearchDestinationPage>
 
   Future<void> _openMapPin() async {
     final result = await context.pushNamed(TripRoutes.mapPin);
-    if (result != null && result is PlaceModel) {
+    if (result != null && result is Place) {
       _onPlaceSelected(result);
     }
   }

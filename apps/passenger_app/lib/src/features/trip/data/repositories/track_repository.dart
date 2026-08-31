@@ -1,5 +1,5 @@
 import 'package:fpdart/fpdart.dart';
-import 'package:passenger_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 import 'package:passenger_app/src/features/trip/data/data_sources/ride_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
 import 'package:shared_core/shared_core.dart';

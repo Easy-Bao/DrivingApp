@@ -1,8 +1,8 @@
 import 'package:equatable/equatable.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:maps/maps.dart';
 
 class BookingDraft extends Equatable {
-  final PlaceModel destination;
+  final Place destination;
   final String? pickupAddress;
   final int tipAmount;
   final String notes;

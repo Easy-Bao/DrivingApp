@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking/booking_bloc.dart';
@@ -23,7 +23,7 @@ import 'package:shared_ui/shared_ui.dart';
 class FindingDriverPage extends StatelessWidget {
   final String rideType;
   final double fare;
-  final PlaceModel destination;
+  final Place destination;
   final String distance;
   final String duration;
   final String? pickupAddress;
@@ -72,7 +72,7 @@ class FindingDriverPage extends StatelessWidget {
 class FindingDriverPageContent extends StatefulWidget {
   final String rideType;
   final double fare;
-  final PlaceModel destination;
+  final Place destination;
   final String distance;
   final String duration;
   final String? pickupAddress;

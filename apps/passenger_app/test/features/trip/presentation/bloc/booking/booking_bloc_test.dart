@@ -1,4 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:maps/maps.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
@@ -95,7 +96,7 @@ void main() {
   const testTrip = BidSessionTrip(
     rideType: 'Solo Ride',
     fare: 100,
-    destination: PlaceModel(
+    destination: Place(
       id: 'destination-1',
       name: 'Destination',
       fullAddress: 'Destination address',
@@ -312,7 +313,7 @@ void main() {
     const pickupTrip = BidSessionTrip(
       rideType: 'Solo Ride',
       fare: 100,
-      destination: PlaceModel(
+      destination: Place(
         id: 'destination-1',
         name: 'Destination',
         fullAddress: 'Destination address',

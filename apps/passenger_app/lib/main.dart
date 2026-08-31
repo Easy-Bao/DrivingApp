@@ -4,7 +4,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/app_module.dart';
 import 'package:passenger_app/app_widget.dart';
 import 'package:passenger_app/src/core/constants/env_config.dart';
-import 'package:passenger_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 import 'package:passenger_app/src/core/services/background_telemetry_service.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:shared_core/shared_core.dart';

@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:passenger_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 import 'package:passenger_app/src/features/location/presentation/bloc/location_access/location_access_cubit.dart';
 import 'package:passenger_app/src/features/location/presentation/bloc/location_access/location_access_state.dart';
 import 'package:passenger_app/src/features/location/domain/repositories/i_location_access_repository.dart';

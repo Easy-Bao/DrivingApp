@@ -1,4 +1,4 @@
-import 'package:passenger_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 
 abstract interface class ILocationAccessRepository {
   Stream<LocationAccessState> get accessStateChanges;

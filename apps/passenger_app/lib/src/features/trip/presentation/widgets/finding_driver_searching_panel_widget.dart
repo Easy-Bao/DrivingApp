@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:maps/maps.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -7,7 +8,7 @@ class FindingDriverSearchingPanelWidget extends StatelessWidget {
   final String message;
   final String rideType;
   final double fare;
-  final PlaceModel destination;
+  final Place destination;
   final String? pickupAddress;
   final Animation<double> dotAnimation;
   final VoidCallback onCancelPressed;

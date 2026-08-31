@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:maps/maps.dart';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -19,7 +20,6 @@ import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/home/presentation/home_page.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/add_category_page.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class HomeModule {
@@ -69,7 +69,7 @@ class HomeModule {
       HomeRoutes.addCategoryPath,
       child: (context, GoRouterState state) {
         final extra = SafeRouteExtra.asMap(state.extra);
-        final place = extra['place'] as PlaceModel?;
+        final place = extra['place'] as Place?;
         final initialLabel = extra['initialLabel'] as String?;
         final initialIconName = extra['initialIconName'] as String?;
         return AddCategoryPage(

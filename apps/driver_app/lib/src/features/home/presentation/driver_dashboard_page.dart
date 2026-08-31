@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:developer' as dev;
 
-import 'package:driver_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:driver_app/src/features/home/presentation/bloc/dashboard/dashboard_cubit.dart';

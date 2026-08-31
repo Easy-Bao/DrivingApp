@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Route;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking/booking_bloc.dart';
@@ -19,7 +19,7 @@ import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class RideSelectionPage extends StatefulWidget {
-  final PlaceModel destination;
+  final Place destination;
   final String? distance;
   final String? duration;
   final double? distanceKm;
@@ -60,8 +60,8 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
   bool _isLoadingFare = true;
   AppMapController? _mapController;
   Widget? _cachedMapView;
-  RouteModel? _route;
-  Future<RouteModel?>? _routeRequest;
+  Route? _route;
+  Future<Route?>? _routeRequest;
   Future<void>? _fareQuoteRequest;
   bool _isResolvingPickup = true;
   ({double lat, double lng})? _resolvedPickup;
@@ -199,7 +199,7 @@ class _RideSelectionPageState extends State<RideSelectionPage> {
     }
   }
 
-  Future<RouteModel?> _loadRoute() async {
+  Future<Route?> _loadRoute() async {
     final cachedRoute = _route;
     if (cachedRoute != null) return cachedRoute;
 

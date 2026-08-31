@@ -1,6 +1,5 @@
-import 'package:passenger_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 import 'package:passenger_app/src/features/location/domain/repositories/i_location_access_repository.dart';
-import 'package:shared_core/shared_core.dart';
 
 class LocationAccessRepository implements ILocationAccessRepository {
   final _monitor = AccessStateMonitor<LocationAccessState>(
@@ -9,8 +8,7 @@ class LocationAccessRepository implements ILocationAccessRepository {
   );
 
   @override
-  Stream<LocationAccessState> get accessStateChanges =>
-      _monitor.changes;
+  Stream<LocationAccessState> get accessStateChanges => _monitor.changes;
 
   @override
   Future<LocationAccessState> startMonitoring() => _monitor.start();

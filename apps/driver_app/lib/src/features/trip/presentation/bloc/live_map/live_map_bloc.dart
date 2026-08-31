@@ -1,4 +1,4 @@
-import 'package:driver_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 import 'dart:async';
 import 'dart:developer' as dev;
 
@@ -8,7 +8,6 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:rxdart/rxdart.dart';
 
 import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_repository.dart';
-import 'package:shared_core/shared_core.dart';
 
 part 'live_map_event.dart';
 part 'live_map_state.dart';

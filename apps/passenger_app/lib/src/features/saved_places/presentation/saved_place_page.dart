@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:maps/maps.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,7 +11,6 @@ import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/saved_place_icon.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -43,9 +43,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
     _isPlaceFlowOpen = true;
     try {
       final cubit = BlocProvider.of<SavedPlacesCubit>(context);
-      final selectedPlace = await context.pushNamed<PlaceModel>(
-        TripRoutes.mapPin,
-      );
+      final selectedPlace = await context.pushNamed<Place>(TripRoutes.mapPin);
       if (selectedPlace == null || !mounted) return;
 
       final configuredPlace = await context.pushNamed<SavedPlace>(
@@ -85,9 +83,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
     _isPlaceFlowOpen = true;
     try {
       final cubit = BlocProvider.of<SavedPlacesCubit>(context);
-      final selectedPlace = await context.pushNamed<PlaceModel>(
-        TripRoutes.mapPin,
-      );
+      final selectedPlace = await context.pushNamed<Place>(TripRoutes.mapPin);
       if (selectedPlace == null || !mounted) return;
       final newPlace = await context.pushNamed<SavedPlace>(
         HomeRoutes.addCategory,

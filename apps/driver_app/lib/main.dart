@@ -1,4 +1,4 @@
-import 'package:driver_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 import 'package:driver_app/app_module.dart';
 import 'package:driver_app/app_widget.dart';
 import 'package:driver_app/src/core/constants/env_config.dart';

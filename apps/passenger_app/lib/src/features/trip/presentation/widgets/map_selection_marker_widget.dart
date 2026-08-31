@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:passenger_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class MapSelectionMarkerWidget extends StatelessWidget {

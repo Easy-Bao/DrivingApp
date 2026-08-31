@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:maps/maps.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/passenger_module.dart';
 import 'package:passenger_app/src/core/constants/env_config.dart';
@@ -18,7 +19,6 @@ import 'package:passenger_app/src/features/location/domain/repositories/i_locati
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shared_ui/shared_ui.dart';
 
 class AppModule extends Module {
   final SharedPreferences _prefs;
@@ -76,8 +76,8 @@ class AppModule extends Module {
           tokenProvider: i.get<SecureSessionService>().readToken,
         ),
       )
-      ..addLazySingleton<ILocationApiClient>(
-        (i) => LocationApiClient(i.get<Dio>()),
+      ..addLazySingleton<LocationRepository>(
+        (i) => LocationRemoteDataSource(i.get<Dio>()),
       )
       ..addLazySingleton<AuthRemoteDataSource>(
         (i) => AuthRemoteDataSourceImpl(i.get<Dio>()),

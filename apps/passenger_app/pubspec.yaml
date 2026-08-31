@@ -36,6 +36,9 @@ dependencies:
   shared_core:
     path: ../../packages/shared_core
 
+  maps:
+    path: ../../packages/maps
+
   shared_ui:
     path: ../../packages/shared_ui
 

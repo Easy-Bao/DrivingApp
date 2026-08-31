@@ -1,22 +1,22 @@
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:passenger_app/src/core/location/repositories/map_native_service.dart';
+import 'package:maps/maps.dart';
 import 'package:passenger_app/src/features/trip/data/data_sources/driver_discovery_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_driver_repository.dart';
 import 'package:shared_core/shared_core.dart';
 
 class DriverRepository implements IDriverRepository {
   final DriverDiscoveryRemoteDataSource _discoveryDataSource;
-  final ILocationApiClient _locationApiClient;
+  final LocationRepository _locationRepository;
 
   Future<Either<Failure, List<DriverModel>>>? _activeNearbyLookup;
   ({double lat, double lng})? _activeNearbyCoordinates;
 
   DriverRepository({
     required DriverDiscoveryRemoteDataSource discoveryDataSource,
-    required ILocationApiClient locationApiClient,
+    required LocationRepository locationRepository,
   }) : _discoveryDataSource = discoveryDataSource,
-       _locationApiClient = locationApiClient;
+       _locationRepository = locationRepository;
 
   Failure _mapExceptionToFailure(Object error) {
     if (error is DioException) {
@@ -178,7 +178,7 @@ class DriverRepository implements IDriverRepository {
     List<Map<String, dynamic>> points,
   ) async {
     try {
-      final response = await _locationApiClient.getTravelMatrix(
+      final response = await _locationRepository.getTravelMatrix(
         body: {
           'origin': {'lat': originLat, 'lng': originLng},
           'destinations': [

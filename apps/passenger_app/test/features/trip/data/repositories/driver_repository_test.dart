@@ -1,15 +1,15 @@
 import 'dart:async';
+import 'package:maps/maps.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/trip/data/data_sources/driver_discovery_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/data/repositories/driver_repository.dart';
-import 'package:shared_core/shared_core.dart';
 
 class MockDriverDiscoveryRemoteDataSource extends Mock
     implements DriverDiscoveryRemoteDataSource {}
 
-class MockLocationApiClient extends Mock implements ILocationApiClient {}
+class MockLocationRepository extends Mock implements LocationRepository {}
 
 void main() {
   test(
@@ -18,7 +18,7 @@ void main() {
       const latitude = 7.828;
       const longitude = 123.434;
       final dataSource = MockDriverDiscoveryRemoteDataSource();
-      final locationApiClient = MockLocationApiClient();
+      final locationRepository = MockLocationRepository();
 
       when(() => dataSource.fetchOnlineDrivers(any())).thenAnswer(
         (_) async => [
@@ -42,7 +42,7 @@ void main() {
         ],
       );
       when(
-        () => locationApiClient.getTravelMatrix(body: any(named: 'body')),
+        () => locationRepository.getTravelMatrix(body: any(named: 'body')),
       ).thenAnswer(
         (_) async => {
           'distances_km': [0.0],
@@ -52,7 +52,7 @@ void main() {
 
       final result = await DriverRepository(
         discoveryDataSource: dataSource,
-        locationApiClient: locationApiClient,
+        locationRepository: locationRepository,
       ).getNearbyDrivers(lat: latitude, lng: longitude);
 
       expect(result.isRight(), isTrue);
@@ -78,7 +78,7 @@ void main() {
       const latitude = 7.828;
       const longitude = 123.434;
       final dataSource = MockDriverDiscoveryRemoteDataSource();
-      final locationApiClient = MockLocationApiClient();
+      final locationRepository = MockLocationRepository();
       final onlineDrivers = Completer<List<Map<String, dynamic>>>();
       final nearbyDrivers = Completer<List<Map<String, dynamic>>>();
 
@@ -92,7 +92,7 @@ void main() {
         ),
       ).thenAnswer((_) => nearbyDrivers.future);
       when(
-        () => locationApiClient.getTravelMatrix(body: any(named: 'body')),
+        () => locationRepository.getTravelMatrix(body: any(named: 'body')),
       ).thenAnswer(
         (_) async => {
           'distances_km': [0.0],
@@ -102,7 +102,7 @@ void main() {
 
       final repository = DriverRepository(
         discoveryDataSource: dataSource,
-        locationApiClient: locationApiClient,
+        locationRepository: locationRepository,
       );
       final firstLookup = repository.getNearbyDrivers(
         lat: latitude,

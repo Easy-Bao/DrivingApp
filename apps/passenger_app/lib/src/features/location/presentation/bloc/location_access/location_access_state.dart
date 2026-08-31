@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:passenger_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 
 sealed class LocationAccessViewState extends Equatable {
   const LocationAccessViewState();

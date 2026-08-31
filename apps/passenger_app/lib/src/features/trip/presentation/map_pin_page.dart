@@ -3,9 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 import 'package:passenger_app/src/features/trip/presentation/widgets/map_selection_marker_widget.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class MapPinPage extends StatefulWidget {
@@ -168,7 +167,7 @@ class _MapPinPageState extends State<MapPinPage>
 
   void _confirmLocation() {
     if (_centerLat == null || _centerLng == null) return;
-    final result = PlaceModel(
+    final result = Place(
       id: 'pin_${DateTime.now().millisecondsSinceEpoch}',
       name: _address,
       fullAddress: [

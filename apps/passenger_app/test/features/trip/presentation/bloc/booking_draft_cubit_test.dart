@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:maps/maps.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger_app/src/features/trip/domain/entities/booking_draft.dart';
-import 'package:shared_core/shared_core.dart';
 
 void main() {
-  const destination = PlaceModel(
+  const destination = Place(
     id: 'destination-1',
     name: 'J.H. Cerilles State College',
     fullAddress: 'Mahayag Road, Pagadian City',

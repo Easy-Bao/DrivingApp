@@ -1,4 +1,4 @@
-import 'package:driver_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 
 abstract interface class IDriverLocationAccessRepository {
   Stream<LocationAccessState> get accessStateChanges;

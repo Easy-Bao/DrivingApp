@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:geolocator/geolocator.dart';
-import 'package:passenger_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 
 const _freshFixWait = Duration(milliseconds: 300);
 const _initialFixWait = Duration(seconds: 5);

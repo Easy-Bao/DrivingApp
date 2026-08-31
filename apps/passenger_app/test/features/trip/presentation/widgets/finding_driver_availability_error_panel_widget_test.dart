@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:maps/maps.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:passenger_app/src/features/trip/presentation/widgets/finding_driver_availability_error_panel_widget.dart';
-import 'package:shared_core/shared_core.dart';
 
 void main() {
-  const destination = PlaceModel(
+  const destination = Place(
     id: 'destination-1',
     name: 'Destination',
     fullAddress: 'Destination address',

@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
-import 'package:driver_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 import 'package:driver_app/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver_app/src/features/location/presentation/bloc/location_access/driver_location_access_state.dart';
 import 'package:driver_app/src/features/location/domain/repositories/i_driver_location_access_repository.dart';

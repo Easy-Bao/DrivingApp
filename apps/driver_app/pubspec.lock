@@ -814,6 +814,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.28.0"
+  maps:
+    dependency: "direct main"
+    description:
+      path: "../../packages/maps"
+      relative: true
+    source: path
+    version: "1.0.0"
   matcher:
     dependency: transitive
     description:

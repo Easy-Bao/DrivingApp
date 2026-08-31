@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:maps/maps.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -12,7 +13,7 @@ import 'package:shared_ui/shared_ui.dart';
 class DriverMatchedPage extends StatefulWidget {
   final String rideType;
   final double fare;
-  final PlaceModel destination;
+  final Place destination;
   final String distance;
   final String duration;
   final String? driverId;

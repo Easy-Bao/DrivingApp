@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:maps/maps.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -51,7 +52,7 @@ class TripModule {
       ..addLazySingleton<IDriverRepository>(
         (i) => DriverRepository(
           discoveryDataSource: i.get<DriverDiscoveryRemoteDataSource>(),
-          locationApiClient: i.get<ILocationApiClient>(),
+          locationRepository: i.get<LocationRepository>(),
         ),
       )
       ..addLazySingleton<IBookingRepository>(
@@ -140,10 +141,9 @@ class TripModule {
           extra: extra,
           queryParameters: state.uri.queryParameters,
         );
-        final destination = extra is PlaceModel
+        final destination = extra is Place
             ? extra
-            : data.object<PlaceModel>('destination') ??
-                  _destinationFromQuery(data);
+            : data.object<Place>('destination') ?? _destinationFromQuery(data);
         final distanceKm = data.doubleValue('distanceKm');
         final distance = data.string('distance');
         final duration = data.string('duration');
@@ -177,7 +177,7 @@ class TripModule {
       TripRoutes.findingDriverPath,
       child: (context, GoRouterState state) {
         final data = RoutePayload.from(extra: state.extra);
-        final destination = data.object<PlaceModel>('destination');
+        final destination = data.object<Place>('destination');
         if (destination == null) {
           return const Scaffold(
             body: Center(child: Text('Destination data is unavailable.')),
@@ -212,7 +212,7 @@ class TripModule {
       TripRoutes.driverMatchedPath,
       child: (context, GoRouterState state) {
         final data = RoutePayload.from(extra: state.extra);
-        final destination = data.object<PlaceModel>('destination');
+        final destination = data.object<Place>('destination');
         if (destination == null) {
           return const Scaffold(
             body: Center(child: Text('Destination data is unavailable.')),
@@ -249,7 +249,7 @@ class TripModule {
 
   static List<ModularRoute> shellRoutes = [];
 
-  static PlaceModel? _destinationFromQuery(RoutePayload data) {
+  static Place? _destinationFromQuery(RoutePayload data) {
     final name = data.string('destinationName');
     final latitude = data.doubleValue('destinationLat');
     final longitude = data.doubleValue('destinationLng');
@@ -261,7 +261,7 @@ class TripModule {
       return null;
     }
 
-    return PlaceModel(
+    return Place(
       id: data.string('destinationId') ?? name,
       name: name,
       fullAddress: data.string('destinationAddress') ?? name,

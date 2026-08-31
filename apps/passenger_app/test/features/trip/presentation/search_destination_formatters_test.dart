@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:maps/maps.dart';
 import 'package:passenger_app/src/features/trip/presentation/search_destination_formatters.dart';
-import 'package:shared_core/shared_core.dart';
 
 void main() {
-  const mountainView = PlaceModel(
+  const mountainView = Place(
     id: 'mountain-view',
     name: 'Mountain View',
     fullAddress: 'Mountain View, California',
@@ -11,7 +11,7 @@ void main() {
     longitude: -122.0839,
     distanceKm: 2.4,
   );
-  const vistaSlope = PlaceModel(
+  const vistaSlope = Place(
     id: 'vista-slope',
     name: 'Vista Slope',
     fullAddress: 'Vista Slope, California',

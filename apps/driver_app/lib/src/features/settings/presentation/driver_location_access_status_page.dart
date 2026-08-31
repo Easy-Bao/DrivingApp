@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:driver_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 import 'package:driver_app/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver_app/src/features/location/presentation/bloc/location_access/driver_location_access_state.dart';
 import 'package:flutter/material.dart';

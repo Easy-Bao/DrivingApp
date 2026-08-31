@@ -1,4 +1,4 @@
-import 'package:driver_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 import 'package:driver_app/src/features/home/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/home/home_routes.dart';
 import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_cubit.dart';

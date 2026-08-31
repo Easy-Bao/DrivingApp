@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:maps/maps.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -26,7 +27,6 @@ import 'package:passenger_app/src/features/saved_places/domain/entities/saved_pl
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger_app/src/features/trip/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -385,9 +385,7 @@ class _HomePageState extends State<HomePage> {
     _isSavedPlaceFlowOpen = true;
     try {
       final cubit = BlocProvider.of<SavedPlacesCubit>(context);
-      final selectedPlace = await context.pushNamed<PlaceModel>(
-        TripRoutes.mapPin,
-      );
+      final selectedPlace = await context.pushNamed<Place>(TripRoutes.mapPin);
       if (selectedPlace == null || !mounted) return;
       final newPlace = await context.pushNamed<SavedPlace>(
         HomeRoutes.addCategory,
@@ -464,7 +462,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _handleSavedPlaceTap(SavedPlace place) async {
     if (!mounted) return;
     if (place.hasLocation) {
-      final syntheticPlace = PlaceModel(
+      final syntheticPlace = Place(
         id: 'saved_${place.label.toLowerCase().replaceAll(' ', '_')}',
         name: place.label,
         fullAddress: place.savedAddress ?? place.label,
@@ -482,7 +480,7 @@ class _HomePageState extends State<HomePage> {
     } else {
       final cubit = BlocProvider.of<SavedPlacesCubit>(context);
       final selectedPlace = await context.pushNamed(TripRoutes.mapPin);
-      if (selectedPlace == null || selectedPlace is! PlaceModel) return;
+      if (selectedPlace == null || selectedPlace is! Place) return;
       if (!mounted) return;
       final updatedPlace = await context.pushNamed<SavedPlace>(
         HomeRoutes.addCategory,

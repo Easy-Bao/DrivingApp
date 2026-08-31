@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 import 'package:passenger_app/src/features/location/presentation/bloc/location_access/location_access_state.dart';
 import 'package:passenger_app/src/features/location/domain/repositories/i_location_access_repository.dart';
 

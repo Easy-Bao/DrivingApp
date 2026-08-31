@@ -1,10 +1,11 @@
 import 'package:shared_core/shared_core.dart';
+import 'package:maps/maps.dart';
 
-String destinationPlaceKey(PlaceModel place) {
+String destinationPlaceKey(Place place) {
   return '${place.id}:${place.latitude.toStringAsFixed(5)}:${place.longitude.toStringAsFixed(5)}';
 }
 
-bool destinationMatchesSearchQuery(PlaceModel place, String query) {
+bool destinationMatchesSearchQuery(Place place, String query) {
   final normalizedQuery = _normalizeSearchText(query);
   if (normalizedQuery.isEmpty) return false;
 
@@ -29,8 +30,8 @@ bool destinationMatchesSearchQuery(PlaceModel place, String query) {
   );
 }
 
-List<PlaceModel> sortDestinationsByDistance(
-  List<PlaceModel> places,
+List<Place> sortDestinationsByDistance(
+  List<Place> places,
   Map<String, double> drivingDistances,
 ) {
   final sorted = [...places];
@@ -51,7 +52,7 @@ String formatDestinationDistance(double distanceKm) {
 }
 
 String formatDestinationPlaceDistance(
-  PlaceModel place,
+  Place place,
   Map<String, double> drivingDistances,
   Set<String> drivingDistanceRequests,
 ) {
@@ -76,10 +77,7 @@ String _compactSearchText(String value) {
   return _normalizeSearchText(value).replaceAll(' ', '');
 }
 
-double _distanceForSorting(
-  PlaceModel place,
-  Map<String, double> drivingDistances,
-) {
+double _distanceForSorting(Place place, Map<String, double> drivingDistances) {
   return drivingDistances[destinationPlaceKey(place)] ??
       place.distanceKm ??
       double.maxFinite;

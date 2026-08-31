@@ -4,13 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
-import 'package:passenger_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class AddCategoryPage extends StatefulWidget {
-  final PlaceModel? initialPlace;
+  final Place? initialPlace;
   final String? initialLabel;
   final String? initialIconName;
 

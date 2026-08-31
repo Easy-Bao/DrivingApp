@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:maps/maps.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
@@ -6,7 +7,7 @@ import 'package:shared_ui/shared_ui.dart';
 class FindingDriverAvailabilityErrorPanelWidget extends StatelessWidget {
   final String message;
   final double fare;
-  final PlaceModel destination;
+  final Place destination;
   final VoidCallback onRetryPressed;
   final VoidCallback onCancelPressed;
   final bool isCanceling;

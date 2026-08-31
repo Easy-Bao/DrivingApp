@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:driver_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 import 'package:driver_app/src/core/services/background_telemetry_service.dart';
 import 'package:driver_app/src/core/services/driver_logout_coordinator.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';

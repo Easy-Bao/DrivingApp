@@ -1,11 +1,10 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Route;
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/location/location.dart';
+import 'package:maps/maps.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class ActivityDetailMapPage extends StatefulWidget {
@@ -34,7 +33,7 @@ class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
   Future<void>? _routeDataRequest;
   Future<void>? _routeRenderRequest;
   ({double lat, double lng})? _originCoordinate;
-  RouteModel? _route;
+  Route? _route;
 
   @override
   void initState() {
@@ -266,7 +265,7 @@ class _ActivityDetailMapPageState extends State<ActivityDetailMapPage> {
                     height: 56,
                     child: ElevatedButton(
                       onPressed: () {
-                        final place = PlaceModel(
+                        final place = Place(
                           id: 'activity_place_${widget.placeName.replaceAll(' ', '_')}',
                           name: widget.placeName,
                           fullAddress: widget.placeSubtitle,
