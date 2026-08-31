@@ -1,12 +1,12 @@
 import 'dart:async';
 
-import 'package:driver_app/src/features/activity/activity_routes.dart';
 import 'package:driver_app/src/features/auth/auth_routes.dart';
 import 'package:driver_app/src/features/help_center/help_center_routes.dart';
 import 'package:driver_app/src/features/profile/presentation/bloc/account/account_cubit.dart';
 import 'package:driver_app/src/features/profile/presentation/bloc/account/account_state.dart';
 import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
 import 'package:driver_app/src/features/profile/profile_routes.dart';
+import 'package:driver_app/src/features/performance/performance_routes.dart';
 import 'package:driver_app/src/features/settings/settings_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -90,8 +90,9 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                           _DriverAccountMenuItem(
                             title: 'Performance',
                             subtitle: 'Ratings, trips, and earnings',
-                            onTap: () =>
-                                context.pushNamed(ActivityRoutes.performance),
+                            onTap: () => context.pushNamed(
+                              PerformanceRoutes.performance,
+                            ),
                           ),
                         ]),
                         const SizedBox(height: 32),

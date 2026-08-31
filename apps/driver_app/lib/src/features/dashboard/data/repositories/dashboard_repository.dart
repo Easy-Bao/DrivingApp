@@ -5,19 +5,21 @@ import 'dart:developer' as dev;
 import 'package:dio/dio.dart';
 import 'package:driver_app/src/infrastructure/telemetry/driver_background_telemetry.dart';
 import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
-import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
 import 'package:driver_app/src/features/dashboard/data/data_sources/driver_availability_remote_data_source.dart';
 import 'package:driver_app/src/features/dashboard/data/data_sources/ride_offer_remote_data_source.dart';
 import 'package:driver_app/src/features/dashboard/domain/entities/driver_dashboard_stats.dart';
 import 'package:driver_app/src/features/dashboard/domain/entities/driver_dispatch_snapshot.dart';
 import 'package:driver_app/src/features/dashboard/domain/repositories/i_dashboard_repository.dart';
 import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
+import 'package:driver_app/src/features/performance/domain/repositories/driver_performance_repository.dart';
+import 'package:driver_app/src/features/ride_history/domain/repositories/driver_ride_history_repository.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DashboardRepository implements IDashboardRepository {
-  final IDriverActivityRepository _activityRepository;
+  final DriverPerformanceRepository _performanceRepository;
+  final DriverRideHistoryRepository _rideHistoryRepository;
   final DriverAvailabilityRemoteDataSource _availabilityDataSource;
   final RideOfferRemoteDataSource _rideOfferDataSource;
   final IDriverRideRepository _rideRepository;
@@ -26,14 +28,16 @@ class DashboardRepository implements IDashboardRepository {
   final DriverBackgroundTelemetry? _backgroundTelemetryService;
 
   DashboardRepository({
-    required IDriverActivityRepository activityRepository,
+    required DriverPerformanceRepository performanceRepository,
+    required DriverRideHistoryRepository rideHistoryRepository,
     required DriverAvailabilityRemoteDataSource availabilityDataSource,
     required RideOfferRemoteDataSource rideOfferDataSource,
     required IDriverRideRepository rideRepository,
     required DriverSessionStore sessionService,
     required SharedPreferences preferences,
     DriverBackgroundTelemetry? backgroundTelemetryService,
-  }) : _activityRepository = activityRepository,
+  }) : _performanceRepository = performanceRepository,
+       _rideHistoryRepository = rideHistoryRepository,
        _availabilityDataSource = availabilityDataSource,
        _rideOfferDataSource = rideOfferDataSource,
        _rideRepository = rideRepository,
@@ -270,7 +274,7 @@ class DashboardRepository implements IDashboardRepository {
           AuthFailure('Driver session is unavailable. Please sign in again.'),
         );
       }
-      return (await _activityRepository.fetchStats(driverId)).map(
+      return (await _performanceRepository.fetchStats(driverId)).map(
         (stats) => DriverDashboardStats(
           earnings: stats.todayEarningsCentavos / 100,
           completedTrips: stats.todayCompletedTrips,
@@ -293,7 +297,7 @@ class DashboardRepository implements IDashboardRepository {
           AuthFailure('Driver session is unavailable. Please sign in again.'),
         );
       }
-      final tripsFuture = _activityRepository.fetchTripHistory(
+      final tripsFuture = _rideHistoryRepository.fetchTripHistory(
         driverId,
         limit: limit,
         activeOnly: true,

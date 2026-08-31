@@ -2,13 +2,14 @@ import 'package:driver_app/src/features/auth/domain/failures/auth_failures.dart'
 import 'package:dio/dio.dart';
 import 'package:driver_app/src/infrastructure/telemetry/driver_background_telemetry.dart';
 import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
-import 'package:driver_app/src/features/activity/domain/entities/driver_activity_stats.dart';
-import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
+import 'package:driver_app/src/features/performance/domain/entities/driver_performance_stats.dart';
+import 'package:driver_app/src/features/performance/domain/repositories/driver_performance_repository.dart';
 import 'package:driver_app/src/features/dashboard/data/data_sources/driver_availability_remote_data_source.dart';
 import 'package:driver_app/src/features/dashboard/data/data_sources/ride_offer_remote_data_source.dart';
 import 'package:driver_app/src/features/dashboard/data/repositories/dashboard_repository.dart';
 import 'package:driver_app/src/features/dashboard/domain/entities/driver_dashboard_stats.dart';
 import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
+import 'package:driver_app/src/features/ride_history/domain/repositories/driver_ride_history_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
@@ -18,8 +19,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 class MockDriverAvailabilityRemoteDataSource extends Mock
     implements DriverAvailabilityRemoteDataSource {}
 
-class MockDriverActivityRepository extends Mock
-    implements IDriverActivityRepository {}
+class MockDriverPerformanceRepository extends Mock
+    implements DriverPerformanceRepository {}
+
+class MockDriverRideHistoryRepository extends Mock
+    implements DriverRideHistoryRepository {}
 
 class MockSecureSessionService extends Mock implements DriverSessionStore {}
 
@@ -32,7 +36,8 @@ class MockRideOfferRemoteDataSource extends Mock
 class MockDriverRideRepository extends Mock implements IDriverRideRepository {}
 
 late SharedPreferences _preferences;
-late MockDriverActivityRepository _activityRepository;
+late MockDriverPerformanceRepository _performanceRepository;
+late MockDriverRideHistoryRepository _rideHistoryRepository;
 late MockRideOfferRemoteDataSource _rideOfferDataSource;
 late MockDriverRideRepository _rideRepository;
 
@@ -42,7 +47,8 @@ DashboardRepository _buildRepository({
   DriverBackgroundTelemetry? backgroundTelemetryService,
 }) {
   return DashboardRepository(
-    activityRepository: _activityRepository,
+    performanceRepository: _performanceRepository,
+    rideHistoryRepository: _rideHistoryRepository,
     availabilityDataSource: availabilityDataSource,
     rideOfferDataSource: _rideOfferDataSource,
     rideRepository: _rideRepository,
@@ -67,7 +73,8 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     _preferences = await SharedPreferences.getInstance();
-    _activityRepository = MockDriverActivityRepository();
+    _performanceRepository = MockDriverPerformanceRepository();
+    _rideHistoryRepository = MockDriverRideHistoryRepository();
     _rideOfferDataSource = MockRideOfferRemoteDataSource();
     _rideRepository = MockDriverRideRepository();
   });
@@ -81,9 +88,9 @@ void main() {
       when(
         () => sessionService.readDriverId(),
       ).thenAnswer((_) async => 'driver-42');
-      when(() => _activityRepository.fetchStats('driver-42')).thenAnswer(
+      when(() => _performanceRepository.fetchStats('driver-42')).thenAnswer(
         (_) async => const Right(
-          DriverActivityStats(
+          DriverPerformanceStats(
             todayEarningsCentavos: 2817,
             todayCompletedTrips: 1,
             totalTrips: 6,
@@ -107,7 +114,7 @@ void main() {
           DriverDashboardStats(earnings: 28.17, completedTrips: 1),
         ),
       );
-      verify(() => _activityRepository.fetchStats('driver-42')).called(1);
+      verify(() => _performanceRepository.fetchStats('driver-42')).called(1);
     },
   );
 
@@ -132,7 +139,7 @@ void main() {
           AuthFailure('Driver session is unavailable. Please sign in again.'),
         ),
       );
-      verifyNever(() => _activityRepository.fetchStats(any()));
+      verifyNever(() => _performanceRepository.fetchStats(any()));
     },
   );
 

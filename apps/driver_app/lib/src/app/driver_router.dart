@@ -5,7 +5,6 @@ import 'package:driver_app/src/infrastructure/telemetry/driver_background_teleme
 import 'package:driver_app/src/features/auth/domain/services/driver_logout_coordinator.dart';
 import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:driver_app/src/features/activity/activity_module.dart';
 import 'package:driver_app/src/features/chat/chat_module.dart';
 import 'package:driver_app/src/features/dashboard/dashboard_module.dart';
 import 'package:driver_app/src/features/dashboard/presentation/bloc/dashboard/dashboard_cubit.dart';
@@ -14,13 +13,18 @@ import 'package:driver_app/src/app/navigation/driver_navigation_shell.dart';
 import 'package:driver_app/src/features/profile/profile_module.dart';
 import 'package:driver_app/src/features/settings/settings_module.dart';
 import 'package:driver_app/src/features/active_ride/active_ride_module.dart';
+import 'package:driver_app/src/features/earnings/earnings_module.dart';
+import 'package:driver_app/src/features/performance/performance_module.dart';
+import 'package:driver_app/src/features/ride_history/ride_history_module.dart';
 
 class DriverRouter extends Module {
   @override
   FutureOr<void> binds(Injector i) {
-    ActivityModule.binds(i);
     ActiveRideModule.binds(i);
     ChatModule.binds(i);
+    EarningsModule.binds(i);
+    PerformanceModule.binds(i);
+    RideHistoryModule.binds(i);
     DashboardModule.binds(i);
     ProfileModule.binds(i);
 
@@ -48,7 +52,8 @@ class DriverRouter extends Module {
     ...DashboardModule.routes,
     ...ActiveRideModule.routes,
     ...ChatModule.routes,
-    ...ActivityModule.routes,
+    ...PerformanceModule.routes,
+    ...RideHistoryModule.routes,
     ...ProfileModule.routes,
     ...DriverSettingsModule.routes,
     ...DriverHelpCenterModule.routes,
@@ -71,8 +76,8 @@ class DriverRouter extends Module {
           ),
       branches: [
         ModularBranch(routes: DashboardModule.shellRoutes),
-        ModularBranch(routes: ActivityModule.shellRoutes),
-        ModularBranch(routes: ActivityModule.earningsShellRoutes),
+        ModularBranch(routes: RideHistoryModule.shellRoutes),
+        ModularBranch(routes: EarningsModule.shellRoutes),
         ModularBranch(routes: ProfileModule.accountShellRoutes),
       ],
     ),
