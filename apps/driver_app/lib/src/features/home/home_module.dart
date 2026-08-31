@@ -13,7 +13,7 @@ import 'package:driver_app/src/features/home/home_routes.dart';
 import 'package:driver_app/src/features/home/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/home/presentation/driver_dashboard_page.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeModule {

@@ -264,6 +264,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.14"
+  design_system:
+    dependency: "direct main"
+    description:
+      path: "../../packages/design_system"
+      relative: true
+    source: path
+    version: "0.1.0"
   diff_match_patch:
     dependency: transitive
     description:
@@ -1194,13 +1201,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.4.1"
-  shared_ui:
-    dependency: "direct main"
-    description:
-      path: "../../packages/shared_ui"
-      relative: true
-    source: path
-    version: "0.1.0"
   shelf:
     dependency: transitive
     description:

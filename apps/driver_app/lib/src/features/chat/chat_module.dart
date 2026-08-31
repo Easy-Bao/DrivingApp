@@ -4,7 +4,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/features/chat/chat_routes.dart';
 import 'package:driver_app/src/features/chat/presentation/driver_chat_page.dart';
 import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_repository.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class ChatModule {
   ChatModule._();

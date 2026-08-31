@@ -18,7 +18,7 @@ import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
 import 'package:passenger_app/src/features/trip/presentation/track_driver_page.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class ActivityModule {
   ActivityModule._();

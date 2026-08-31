@@ -11,7 +11,7 @@ import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/profile/presentation/bloc/profile/profile_cubit.dart';
 import 'package:passenger_app/src/features/profile/presentation/widgets/profile_avatar_widget.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class ProfileInfoPage extends StatefulWidget {
   final Future<XFile?> Function()? pickPhoto;

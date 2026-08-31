@@ -15,7 +15,7 @@ import 'package:driver_app/src/features/activity/presentation/driver_trip_histor
 import 'package:driver_app/src/features/activity/presentation/driver_trip_detail_page.dart';
 import 'package:driver_app/src/features/activity/presentation/driver_performance_page.dart';
 import 'package:driver_app/src/features/activity/presentation/earnings_page.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class ActivityModule {
   ActivityModule._();

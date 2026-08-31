@@ -5,7 +5,7 @@ import 'package:driver_app/src/features/settings/presentation/driver_settings_pa
 import 'package:driver_app/src/features/settings/presentation/driver_terms_of_service_page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class DriverSettingsModule {
   DriverSettingsModule._();

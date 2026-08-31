@@ -13,7 +13,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

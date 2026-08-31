@@ -5,7 +5,7 @@ import 'package:driver_app/src/features/profile/presentation/driver_vehicle_info
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 import '../helpers/fake_driver_profile_repository.dart';
 

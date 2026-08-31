@@ -31,7 +31,7 @@ import 'package:passenger_app/src/features/trip/presentation/map_pin_page.dart';
 import 'package:passenger_app/src/features/trip/presentation/ride_selection_page.dart';
 import 'package:passenger_app/src/features/trip/presentation/search_destination_page.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class TripModule {
   TripModule._();

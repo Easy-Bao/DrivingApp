@@ -14,7 +14,7 @@ import 'package:passenger_app/src/features/profile/presentation/account_page.dar
 import 'package:passenger_app/src/features/profile/presentation/help_center_page.dart';
 import 'package:passenger_app/src/features/profile/presentation/profile_info_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class ProfileModule {
   ProfileModule._();

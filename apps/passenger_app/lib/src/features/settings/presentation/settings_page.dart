@@ -7,7 +7,7 @@ import 'package:passenger_app/src/features/location/presentation/bloc/location_a
 import 'package:passenger_app/src/features/location/presentation/bloc/location_access/location_access_state.dart';
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
 import 'package:passenger_app/src/features/settings/settings_routes.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({

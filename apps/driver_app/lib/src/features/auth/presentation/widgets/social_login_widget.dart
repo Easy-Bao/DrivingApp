@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class SocialLoginWidget extends StatelessWidget {
   final VoidCallback onGoogleTap;
@@ -67,7 +67,7 @@ class SocialLoginWidget extends StatelessWidget {
                 children: [
                   Image.asset(
                     'assets/icons/google.png',
-                    package: 'shared_ui',
+                    package: 'design_system',
                     width: 22,
                     height: 22,
                     errorBuilder: (context, error, stackTrace) => Icon(

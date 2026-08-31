@@ -7,7 +7,7 @@ import 'package:driver_app/src/features/auth/presentation/forgot_password_page.d
 import 'package:driver_app/src/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
 import 'package:driver_app/src/features/auth/presentation/sign_in_page.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class AuthModule extends Module {
   @override

@@ -9,7 +9,7 @@ import 'package:passenger_app/src/features/profile/profile_routes.dart';
 import 'package:passenger_app/src/features/profile/presentation/widgets/profile_avatar_widget.dart';
 import 'package:passenger_app/src/features/saved_places/saved_places_routes.dart';
 import 'package:passenger_app/src/features/settings/settings_routes.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class AccountPage extends StatelessWidget {
   final VoidCallback? onProfileTap;

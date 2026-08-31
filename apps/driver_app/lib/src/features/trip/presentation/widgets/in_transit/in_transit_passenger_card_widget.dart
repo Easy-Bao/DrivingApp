@@ -3,7 +3,7 @@ import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_fl
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class InTransitPassengerCardWidget extends StatelessWidget {
   const InTransitPassengerCardWidget({super.key});

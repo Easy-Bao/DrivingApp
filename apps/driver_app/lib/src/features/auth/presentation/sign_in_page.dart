@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class SigninPage extends StatelessWidget {
   const SigninPage({super.key});
@@ -100,7 +100,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
         centerTitle: true,
         title: Image.asset(
           'assets/logo/applogo.png',
-          package: 'shared_ui',
+          package: 'design_system',
           height: 150,
           fit: BoxFit.cover,
         ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class TermsOfServicePage extends StatelessWidget {
   const TermsOfServicePage({super.key, this.onBack});

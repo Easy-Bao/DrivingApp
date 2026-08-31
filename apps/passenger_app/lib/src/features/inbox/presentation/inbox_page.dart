@@ -11,7 +11,7 @@ import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox/inbox_s
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger_app/src/features/inbox/presentation/widgets/inbox_empty_state_widget.dart';
 import 'package:passenger_app/src/features/inbox/presentation/widgets/inbox_notification_card_widget.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class InboxPage extends StatefulWidget {

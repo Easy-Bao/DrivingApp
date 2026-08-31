@@ -15,7 +15,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class WaitingPassengerPage extends StatefulWidget {

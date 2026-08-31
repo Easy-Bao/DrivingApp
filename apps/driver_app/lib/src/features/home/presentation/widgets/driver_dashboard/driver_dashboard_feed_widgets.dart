@@ -2,7 +2,7 @@ import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 double? _distanceInKm(Map<String, dynamic> value) {
   final distance = value['distance_km'] ?? value['distance'];

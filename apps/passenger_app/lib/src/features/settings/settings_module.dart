@@ -5,7 +5,7 @@ import 'package:passenger_app/src/features/settings/presentation/about_bao_ride_
 import 'package:passenger_app/src/features/settings/presentation/location_access_status_page.dart';
 import 'package:passenger_app/src/features/settings/presentation/settings_page.dart';
 import 'package:passenger_app/src/features/settings/presentation/terms_of_service_page.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class SettingsModule {
   SettingsModule._();

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class RecentActivityEmptyStateWidget extends StatelessWidget {
   const RecentActivityEmptyStateWidget({required this.isGuest, super.key});

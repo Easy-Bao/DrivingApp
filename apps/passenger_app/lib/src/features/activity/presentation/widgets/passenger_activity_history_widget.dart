@@ -5,7 +5,7 @@ import 'package:passenger_app/src/features/activity/presentation/widgets/passeng
 import 'package:passenger_app/src/features/activity/presentation/widgets/passenger_activity_header_widget.dart';
 import 'package:passenger_app/src/features/activity/presentation/widgets/passenger_activity_history_presenter.dart';
 import 'package:passenger_app/src/features/activity/presentation/widgets/passenger_activity_ride_card_widget.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class PassengerActivityHistoryWidget extends StatefulWidget {
   final List<RideHistory> activeRides;

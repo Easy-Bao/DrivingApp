@@ -9,7 +9,7 @@ import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:passenger_app/src/features/driver_profile/presentation/driver_profile_details_sheet.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class DriverMatchedPage extends StatefulWidget {
   final String rideType;

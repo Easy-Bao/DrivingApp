@@ -11,7 +11,7 @@ import 'package:passenger_app/src/features/activity/presentation/widgets/passeng
 import 'package:passenger_app/src/features/activity/presentation/widgets/passenger_activity_history_widget.dart';
 import 'package:passenger_app/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/trip/trip_routes.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class PassengerActivityPage extends StatefulWidget {

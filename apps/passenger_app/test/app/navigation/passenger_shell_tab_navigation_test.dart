@@ -18,7 +18,7 @@ import 'package:passenger_app/src/features/profile/profile_routes.dart';
 import 'package:passenger_app/src/app/navigation/passenger_floating_tab_bar.dart';
 import 'package:passenger_app/src/app/navigation/passenger_navigation_shell.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 void main() {
   testWidgets('realtime follows the passenger app lifecycle', (tester) async {

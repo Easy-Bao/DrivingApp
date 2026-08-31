@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:maps/maps.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class MapSelectionMarkerWidget extends StatelessWidget {
   static const double width = 32;

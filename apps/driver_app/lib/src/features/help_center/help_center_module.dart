@@ -1,7 +1,7 @@
 import 'package:driver_app/src/features/help_center/help_center_routes.dart';
 import 'package:driver_app/src/features/help_center/presentation/driver_help_center_page.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class DriverHelpCenterModule {
   DriverHelpCenterModule._();

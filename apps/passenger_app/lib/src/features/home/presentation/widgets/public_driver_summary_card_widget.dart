@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/features/home/domain/entities/public_driver_summary.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class PublicDriverSummaryCardWidget extends StatelessWidget {
   final List<PublicDriverSummary> summaries;

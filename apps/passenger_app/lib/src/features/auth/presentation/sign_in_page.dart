@@ -10,7 +10,7 @@ import 'package:passenger_app/src/features/auth/presentation/bloc/sign_in/sign_i
 import 'package:passenger_app/src/features/auth/presentation/validation/auth_form_validator.dart';
 import 'package:passenger_app/src/features/auth/presentation/widgets/social_login_widget.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class SigninPage extends StatelessWidget {
   const SigninPage({super.key});
@@ -65,7 +65,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
         centerTitle: true,
         title: Image.asset(
           'assets/logo/applogo.png',
-          package: 'shared_ui',
+          package: 'design_system',
           height: 150,
           fit: BoxFit.cover,
         ),

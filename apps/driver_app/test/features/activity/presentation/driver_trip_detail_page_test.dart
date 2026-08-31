@@ -1,7 +1,7 @@
 import 'package:driver_app/src/features/activity/presentation/driver_trip_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 void main() {
   testWidgets('renders the hydrated passenger trip detail card', (

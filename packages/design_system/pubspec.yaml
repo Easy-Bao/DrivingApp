@@ -1,0 +1,46 @@
+name: design_system
+description: Shared UI primitives, components, and transitions used by both apps.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: '>=3.11.3 <4.0.0'
+  flutter: '>=3.27.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_lucide: ^1.8.2
+  cached_network_image: ^3.4.1
+  go_transitions: ^0.8.3
+  animations: ^2.0.11
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/logo/
+
+
+  fonts:
+    - family: ProductSans
+      fonts:
+        - asset: assets/fonts/Product_Sans_Bold_Italic.ttf
+          weight: 700
+          style: italic
+        - asset: assets/fonts/Product_Sans_Italic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/Product_Sans_Bold.ttf
+          weight: 700
+          style: normal
+        - asset: assets/fonts/Product_Sans_Regular.ttf
+          weight: 400
+          style: normal

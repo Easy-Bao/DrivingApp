@@ -6,7 +6,7 @@ import 'package:passenger_app/src/features/inbox/data/repositories/inbox_reposit
 import 'package:passenger_app/src/features/inbox/domain/repositories/i_inbox_repository.dart';
 import 'package:passenger_app/src/features/inbox/inbox_routes.dart';
 import 'package:passenger_app/src/features/inbox/presentation/inbox_page.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class InboxModule {
   InboxModule._();

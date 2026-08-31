@@ -18,7 +18,7 @@ import 'package:passenger_app/src/features/trip/presentation/widgets/finding_dri
 import 'package:passenger_app/src/features/trip/presentation/widgets/finding_driver_no_driver_panel_widget.dart';
 import 'package:passenger_app/src/features/trip/presentation/widgets/finding_driver_searching_panel_widget.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class FindingDriverPage extends StatelessWidget {
   final String rideType;

@@ -1,7 +1,7 @@
 import 'package:driver_app/src/features/help_center/presentation/driver_help_center_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 void main() {
   testWidgets('filters typed driver help topics without placeholder contacts', (

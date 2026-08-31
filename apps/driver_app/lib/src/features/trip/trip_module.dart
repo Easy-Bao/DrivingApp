@@ -11,7 +11,7 @@ import 'package:driver_app/src/features/trip/presentation/fare_summary_page.dart
 import 'package:driver_app/src/features/trip/presentation/in_transit_page.dart';
 import 'package:driver_app/src/features/trip/presentation/waiting_passenger_page.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class TripModule {
   TripModule._();

@@ -14,7 +14,7 @@ import 'package:driver_app/src/features/profile/presentation/driver_vehicle_info
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class ProfileModule {
   ProfileModule._();

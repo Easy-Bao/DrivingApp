@@ -2,7 +2,7 @@ import 'package:driver_app/src/app/navigation/driver_floating_tab_bar.dart';
 import 'package:driver_app/src/app/navigation/driver_navigation_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 void main() {
   test('driver tab coordinator tracks navigation and back history', () {

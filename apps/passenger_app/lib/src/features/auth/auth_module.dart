@@ -22,7 +22,7 @@ import 'package:passenger_app/src/features/auth/presentation/sign_in_page.dart';
 import 'package:passenger_app/src/features/auth/presentation/sign_up_page.dart';
 import 'package:passenger_app/src/features/auth/presentation/verify_otp_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class AuthModule extends Module {
   @override

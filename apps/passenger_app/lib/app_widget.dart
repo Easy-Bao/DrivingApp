@@ -13,7 +13,7 @@ import 'package:passenger_app/src/features/trip/presentation/bloc/booking_draft/
 import 'package:passenger_app/src/features/trip/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
 import 'package:shared_core/shared_core.dart';
-import 'package:shared_ui/shared_ui.dart';
+import 'package:design_system/design_system.dart';
 
 class AppWidget extends StatefulWidget {
   const AppWidget({super.key});
