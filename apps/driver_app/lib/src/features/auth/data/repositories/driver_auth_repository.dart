@@ -1,18 +1,19 @@
-import 'package:auth/auth.dart';
 import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:driver_app/src/core/constants/api_endpoints.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/features/auth/data/data_sources/driver_auth_remote_data_source.dart';
 import 'package:driver_app/src/features/auth/domain/entities/auth_credentials.dart';
+import 'package:driver_app/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:driver_app/src/features/auth/domain/repositories/driver_auth_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DriverAuthRepositoryImpl implements DriverAuthRepository {
-  final AuthRemoteDataSource _remoteDataSource;
+  final DriverAuthRemoteDataSource _remoteDataSource;
   final SecureSessionService _secureSessionService;
 
   DriverAuthRepositoryImpl({
-    required AuthRemoteDataSource remoteDataSource,
+    required DriverAuthRemoteDataSource remoteDataSource,
     required SecureSessionService secureSessionService,
   }) : _remoteDataSource = remoteDataSource,
        _secureSessionService = secureSessionService;

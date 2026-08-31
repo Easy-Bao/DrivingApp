@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 
-abstract interface class AuthRemoteDataSource {
+abstract interface class DriverAuthRemoteDataSource {
   Future<Map<String, dynamic>> postJson(
     String path, {
     required Map<String, dynamic> requestBody,
@@ -13,8 +13,9 @@ abstract interface class AuthRemoteDataSource {
   });
 }
 
-final class DioAuthRemoteDataSource implements AuthRemoteDataSource {
-  DioAuthRemoteDataSource(this._dio);
+final class DriverAuthRemoteDataSourceImpl
+    implements DriverAuthRemoteDataSource {
+  DriverAuthRemoteDataSourceImpl(this._dio);
 
   final Dio _dio;
 

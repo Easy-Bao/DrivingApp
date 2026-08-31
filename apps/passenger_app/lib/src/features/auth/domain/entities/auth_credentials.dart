@@ -1,14 +1,11 @@
-import 'package:auth/auth.dart';
 import 'package:equatable/equatable.dart';
 
-class PassengerAuthCredentials extends Equatable implements AuthCredentials {
+class PassengerAuthCredentials extends Equatable {
   final String passengerId;
   final String passengerName;
   final String passengerEmail;
   final String passengerPhone;
-  @override
   final String token;
-  @override
   final String refreshToken;
   final bool needsVerification;
 
@@ -38,7 +35,6 @@ class PassengerAuthCredentials extends Equatable implements AuthCredentials {
     );
   }
 
-  @override
   String get accountId => passengerId;
 
   Map<String, dynamic> toJson() {

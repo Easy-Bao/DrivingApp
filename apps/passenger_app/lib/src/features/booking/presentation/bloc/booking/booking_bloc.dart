@@ -1,4 +1,4 @@
-import 'package:auth/auth.dart';
+import 'package:passenger_app/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:ride/ride.dart';
 import 'dart:async';
 import 'dart:developer' as dev;

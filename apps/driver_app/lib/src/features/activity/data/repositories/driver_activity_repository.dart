@@ -1,4 +1,4 @@
-import 'package:auth/auth.dart';
+import 'package:driver_app/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:dio/dio.dart';
 import 'package:driver_app/src/features/activity/data/data_sources/driver_activity_remote_data_source.dart';
 import 'package:driver_app/src/features/activity/domain/entities/driver_activity_stats.dart';

@@ -1,4 +1,4 @@
-import 'package:auth/auth.dart';
+import 'package:driver_app/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:dio/dio.dart';
 import 'package:driver_app/src/core/services/background_telemetry_service.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';

@@ -1,18 +1,12 @@
-import 'package:auth/auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/auth/domain/use_cases/reset_password_use_case.dart';
+import 'package:passenger_app/src/features/auth/presentation/bloc/forgot_password/forgot_password_event.dart';
+import 'package:passenger_app/src/features/auth/presentation/bloc/forgot_password/forgot_password_state.dart';
 import 'package:passenger_app/src/features/auth/presentation/validation/auth_failure_message.dart';
 import 'package:passenger_app/src/features/auth/presentation/validation/auth_form_validator.dart';
 
-export 'package:auth/auth.dart'
-    show
-        ForgotPasswordEvent,
-        ForgotPasswordFailure,
-        ForgotPasswordInitial,
-        ForgotPasswordLoading,
-        ForgotPasswordState,
-        ForgotPasswordSubmitted,
-        ForgotPasswordSuccess;
+export 'forgot_password_event.dart';
+export 'forgot_password_state.dart';
 
 class ForgotPasswordBloc
     extends Bloc<ForgotPasswordEvent, ForgotPasswordState> {

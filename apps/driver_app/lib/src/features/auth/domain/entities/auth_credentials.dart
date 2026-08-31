@@ -1,17 +1,14 @@
-import 'package:auth/auth.dart';
 import 'package:equatable/equatable.dart';
 import 'package:foundation/foundation.dart';
 
-class DriverAuthCredentials extends Equatable implements AuthCredentials {
+class DriverAuthCredentials extends Equatable {
   final String driverId;
   final String driverName;
   final String driverEmail;
   final String vehicleType;
   final String plateNumber;
   final double rating;
-  @override
   final String token;
-  @override
   final String refreshToken;
 
   const DriverAuthCredentials({
@@ -46,7 +43,6 @@ class DriverAuthCredentials extends Equatable implements AuthCredentials {
     );
   }
 
-  @override
   String get accountId => driverId;
 
   Map<String, dynamic> toJson() {

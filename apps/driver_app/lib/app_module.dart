@@ -1,4 +1,3 @@
-import 'package:auth/auth.dart';
 import 'package:chat/chat.dart';
 import 'package:dio/dio.dart';
 import 'package:driver_app/driver_module.dart';
@@ -9,8 +8,6 @@ import 'package:driver_app/src/core/services/background_telemetry_service.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/core/storage/secure_storage.dart';
 import 'package:driver_app/src/features/auth/auth_module.dart';
-import 'package:driver_app/src/features/auth/data/repositories/driver_auth_repository.dart';
-import 'package:driver_app/src/features/auth/domain/repositories/driver_auth_repository.dart';
 import 'package:driver_app/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver_app/src/features/location/data/repositories/driver_location_access_repository.dart';
 import 'package:driver_app/src/features/location/domain/repositories/i_driver_location_access_repository.dart';
@@ -81,9 +78,6 @@ class AppModule extends Module {
           tokenProvider: i.get<SecureSessionService>().readToken,
         ),
       )
-      ..addLazySingleton<AuthRemoteDataSource>(
-        (i) => DioAuthRemoteDataSource(i.get<Dio>()),
-      )
       // Active ride state spans dashboard and active-ride routes, so its transport
       // remains at application scope while page-specific sources do not.
       ..addLazySingleton<RideRemoteDataSource>(
@@ -100,12 +94,6 @@ class AppModule extends Module {
           rideDataSource: i.get<RideRemoteDataSource>(),
           counterpartyDataSource: i.get<RideCounterpartyRemoteDataSource>(),
           telemetryDataSource: i.get<TelemetryRemoteDataSource>(),
-        ),
-      )
-      ..addLazySingleton<DriverAuthRepository>(
-        (i) => DriverAuthRepositoryImpl(
-          remoteDataSource: i.get<AuthRemoteDataSource>(),
-          secureSessionService: i.get<SecureSessionService>(),
         ),
       );
   }

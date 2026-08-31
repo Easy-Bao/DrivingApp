@@ -1,4 +1,4 @@
-import 'package:auth/auth.dart';
+import 'package:passenger_app/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/booking_remote_data_source.dart';

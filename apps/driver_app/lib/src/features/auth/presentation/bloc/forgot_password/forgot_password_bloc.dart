@@ -1,17 +1,11 @@
-import 'package:auth/auth.dart';
 import 'package:driver_app/src/features/auth/domain/use_cases/reset_password_use_case.dart';
+import 'package:driver_app/src/features/auth/presentation/bloc/forgot_password/forgot_password_event.dart';
+import 'package:driver_app/src/features/auth/presentation/bloc/forgot_password/forgot_password_state.dart';
 import 'package:foundation/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-export 'package:auth/auth.dart'
-    show
-        ForgotPasswordEvent,
-        ForgotPasswordFailure,
-        ForgotPasswordInitial,
-        ForgotPasswordLoading,
-        ForgotPasswordState,
-        ForgotPasswordSubmitted,
-        ForgotPasswordSuccess;
+export 'forgot_password_event.dart';
+export 'forgot_password_state.dart';
 
 class ForgotPasswordBloc
     extends Bloc<ForgotPasswordEvent, ForgotPasswordState> {

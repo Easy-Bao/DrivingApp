@@ -1,19 +1,20 @@
-import 'package:auth/auth.dart';
 import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/core/constants/api_endpoints.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/features/auth/data/data_sources/passenger_auth_remote_data_source.dart';
 import 'package:passenger_app/src/features/auth/domain/entities/auth_credentials.dart';
+import 'package:passenger_app/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger_app/src/features/auth/domain/repositories/passenger_auth_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PassengerAuthRepositoryImpl implements PassengerAuthRepository {
-  final AuthRemoteDataSource _remoteDataSource;
+  final PassengerAuthRemoteDataSource _remoteDataSource;
   final SecureSessionService _secureSessionService;
   final SharedPreferences _preferences;
 
   PassengerAuthRepositoryImpl({
-    required AuthRemoteDataSource remoteDataSource,
+    required PassengerAuthRemoteDataSource remoteDataSource,
     required SecureSessionService secureSessionService,
     required SharedPreferences preferences,
   }) : _remoteDataSource = remoteDataSource,

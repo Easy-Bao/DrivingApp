@@ -1,13 +1,14 @@
-import 'package:auth/auth.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:driver_app/src/core/constants/api_endpoints.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/features/auth/data/data_sources/driver_auth_remote_data_source.dart';
 import 'package:driver_app/src/features/auth/data/repositories/driver_auth_repository.dart';
 import 'package:driver_app/src/features/auth/domain/entities/auth_credentials.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class MockAuthRemoteDataSource extends Mock implements AuthRemoteDataSource {}
+class MockAuthRemoteDataSource extends Mock
+    implements DriverAuthRemoteDataSource {}
 
 class MockSecureSessionService extends Mock implements SecureSessionService {}
 

@@ -1,4 +1,3 @@
-import 'package:auth/auth.dart';
 import 'package:chat/chat.dart';
 import 'package:dio/dio.dart';
 import 'package:maps/maps.dart';
@@ -79,9 +78,6 @@ class AppModule extends Module {
       )
       ..addLazySingleton<LocationRepository>(
         (i) => LocationRemoteDataSource(i.get<Dio>()),
-      )
-      ..addLazySingleton<AuthRemoteDataSource>(
-        (i) => DioAuthRemoteDataSource(i.get<Dio>()),
       )
       // AppWidget provides this state before the passenger route module is active.
       ..addLazySingleton<BookingDraftCubit>((_) => BookingDraftCubit());
