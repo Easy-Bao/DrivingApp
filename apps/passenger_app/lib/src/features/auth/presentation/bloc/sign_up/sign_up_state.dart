@@ -25,7 +25,7 @@ class SignUpNeedsVerification extends SignUpState {
 }
 
 class SignUpSuccess extends SignUpState {
-  final AuthCredentials credentials;
+  final PassengerAuthCredentials credentials;
 
   const SignUpSuccess(this.credentials);
 

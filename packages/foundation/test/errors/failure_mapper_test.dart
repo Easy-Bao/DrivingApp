@@ -30,12 +30,11 @@ void main() {
       FailureMapper.fromException(TimeoutException('internal timeout')),
       isA<ServerFailure>(),
     );
-    expect(
-      FailureMapper.fromException(
-        _dioExceptionWithStatus(401, 'token invalid'),
-      ),
-      isA<AuthFailure>(),
+    final unauthorized = FailureMapper.fromException(
+      _dioExceptionWithStatus(401, 'token invalid'),
     );
+    expect(unauthorized, isA<ServerFailure>());
+    expect((unauthorized as ServerFailure).statusCode, 401);
     expect(
       FailureMapper.fromException(
         _dioExceptionWithStatus(422, 'internal field key'),

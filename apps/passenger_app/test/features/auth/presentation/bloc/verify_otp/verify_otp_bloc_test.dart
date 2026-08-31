@@ -5,7 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/auth/presentation/bloc/verify_otp/verify_otp_bloc.dart';
 import 'package:passenger_app/src/features/auth/domain/use_cases/resend_otp_use_case.dart';
 import 'package:passenger_app/src/features/auth/domain/use_cases/verify_otp_use_case.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class MockVerifyOtpUseCase extends Mock implements VerifyOtpUseCase {}
 

@@ -1,3 +1,4 @@
+import 'package:auth/auth.dart';
 import 'package:ride/ride.dart';
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';

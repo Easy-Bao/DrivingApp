@@ -2,7 +2,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/auth/domain/entities/passenger_session.dart';
 import 'package:passenger_app/src/features/auth/domain/repositories/session_repository.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SessionRepositoryImpl implements SessionRepository {

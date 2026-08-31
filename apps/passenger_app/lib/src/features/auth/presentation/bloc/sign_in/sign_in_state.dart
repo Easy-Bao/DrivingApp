@@ -16,7 +16,7 @@ final class SignInLoading extends SignInState {
 }
 
 final class SignInSuccess extends SignInState {
-  final AuthCredentials credentials;
+  final PassengerAuthCredentials credentials;
 
   const SignInSuccess(this.credentials);
 

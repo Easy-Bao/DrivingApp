@@ -41,9 +41,6 @@ class FailureMapper {
     );
 
     return switch (error) {
-      InvalidCredentialsFailure() => const InvalidCredentialsFailure(),
-      EmailAlreadyRegisteredFailure() => const EmailAlreadyRegisteredFailure(),
-      AuthFailure() => const AuthFailure(),
       NetworkFailure() || SocketException() => NetworkFailure(networkMessage),
       NetworkCircuitOpenException() => NetworkFailure(networkMessage),
       CacheFailure() || CacheException() => CacheFailure(cacheMessage),
@@ -93,7 +90,10 @@ class FailureMapper {
     }
 
     return switch (statusCode) {
-      401 => const AuthFailure(),
+      401 => const ServerFailure.withStatusCode(
+        'Your session has expired. Please sign in again to continue.',
+        401,
+      ),
       403 => const ServerFailure.withStatusCode(
         'You do not have permission to view or edit this resource.',
         403,

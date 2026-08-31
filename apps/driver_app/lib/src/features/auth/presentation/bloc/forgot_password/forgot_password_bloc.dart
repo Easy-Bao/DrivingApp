@@ -1,8 +1,9 @@
+import 'package:auth/auth.dart';
 import 'package:driver_app/src/features/auth/domain/use_cases/reset_password_use_case.dart';
+import 'package:foundation/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shared_core/shared_core.dart';
 
-export 'package:shared_core/shared_core.dart'
+export 'package:auth/auth.dart'
     show
         ForgotPasswordEvent,
         ForgotPasswordFailure,

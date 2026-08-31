@@ -13,24 +13,8 @@ class NetworkFailure extends Failure {
   ]);
 }
 
-class AuthFailure extends Failure {
-  const AuthFailure([
-    super.message = 'Authentication failed. Please sign in again.',
-  ]);
-}
-
-class InvalidCredentialsFailure extends Failure {
-  const InvalidCredentialsFailure()
-    : super('The submitted sign-in credentials are invalid.');
-}
-
 class ValidationFailure extends Failure {
   const ValidationFailure([super.message = 'Invalid input parameters.']);
-}
-
-class EmailAlreadyRegisteredFailure extends Failure {
-  const EmailAlreadyRegisteredFailure()
-    : super('This email is already registered.');
 }
 
 class CacheFailure extends Failure {

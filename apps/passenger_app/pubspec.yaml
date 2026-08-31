@@ -36,6 +36,8 @@ dependencies:
   shared_core:
     path: ../../packages/shared_core
 
+  auth:
+    path: ../../packages/auth
   maps:
     path: ../../packages/maps
   ride:

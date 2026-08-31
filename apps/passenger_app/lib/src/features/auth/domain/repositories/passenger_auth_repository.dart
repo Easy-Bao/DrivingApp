@@ -1,13 +1,10 @@
+import 'package:auth/auth.dart';
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/auth/domain/entities/auth_credentials.dart';
-import 'package:shared_core/shared_core.dart';
 
-abstract class IAuthRepository {
-  Future<Either<Failure, AuthCredentials>> authenticatePassenger({
-    required String email,
-    required String password,
-  });
-
+abstract interface class PassengerAuthRepository
+    implements AuthRepository<PassengerAuthCredentials> {
   Future<Either<Failure, Map<String, dynamic>>> registerPassenger({
     required String name,
     required String email,
@@ -15,7 +12,7 @@ abstract class IAuthRepository {
     required String password,
   });
 
-  Future<Either<Failure, AuthCredentials>> verifyOtp({
+  Future<Either<Failure, PassengerAuthCredentials>> verifyOtp({
     required String email,
     required String code,
   });
@@ -24,6 +21,7 @@ abstract class IAuthRepository {
     required String email,
   });
 
+  @override
   Future<Either<Failure, void>> resetPassword({required String email});
 
   Future<Either<Failure, void>> confirmResetPassword({

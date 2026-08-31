@@ -1,9 +1,9 @@
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:passenger_app/src/features/auth/domain/repositories/i_auth_repository.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:passenger_app/src/features/auth/domain/repositories/passenger_auth_repository.dart';
 
 class RegisterUseCase {
-  final IAuthRepository _authRepository;
+  final PassengerAuthRepository _authRepository;
 
   RegisterUseCase(this._authRepository);
 

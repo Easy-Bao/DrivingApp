@@ -1,25 +1,32 @@
+import 'package:auth/auth.dart';
 import 'package:equatable/equatable.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
-class AuthCredentials extends Equatable {
+class DriverAuthCredentials extends Equatable implements AuthCredentials {
   final String driverId;
   final String driverName;
   final String driverEmail;
   final String vehicleType;
   final String plateNumber;
   final double rating;
+  @override
+  final String token;
+  @override
+  final String refreshToken;
 
-  const AuthCredentials({
+  const DriverAuthCredentials({
     required this.driverId,
     required this.driverName,
     required this.driverEmail,
     required this.vehicleType,
     required this.plateNumber,
     required this.rating,
+    this.token = '',
+    this.refreshToken = '',
   });
 
-  factory AuthCredentials.fromJson(Map<String, dynamic> json) {
-    return AuthCredentials(
+  factory DriverAuthCredentials.fromJson(Map<String, dynamic> json) {
+    return DriverAuthCredentials(
       driverId: SafeParse.toStringValue(json['driverId'] ?? json['id']),
       driverName: SafeParse.toStringValue(json['driverName'] ?? json['name']),
       driverEmail: SafeParse.toStringValue(
@@ -34,8 +41,13 @@ class AuthCredentials extends Equatable {
         'Vehicle plate unavailable',
       ),
       rating: SafeParse.toDouble(json['rating']),
+      token: SafeParse.toStringValue(json['token']),
+      refreshToken: SafeParse.toStringValue(json['refreshToken']),
     );
   }
+
+  @override
+  String get accountId => driverId;
 
   Map<String, dynamic> toJson() {
     return {
@@ -45,6 +57,8 @@ class AuthCredentials extends Equatable {
       'vehicleType': vehicleType,
       'plateNumber': plateNumber,
       'rating': rating,
+      'token': token,
+      'refreshToken': refreshToken,
     };
   }
 
@@ -56,5 +70,7 @@ class AuthCredentials extends Equatable {
     vehicleType,
     plateNumber,
     rating,
+    token,
+    refreshToken,
   ];
 }

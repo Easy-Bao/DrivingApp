@@ -1,8 +1,9 @@
+import 'package:auth/auth.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:passenger_app/src/core/constants/api_endpoints.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
-import 'package:passenger_app/src/features/auth/data/data_sources/auth_remote_data_source.dart';
-import 'package:passenger_app/src/features/auth/data/repositories/auth_repository.dart';
+import 'package:passenger_app/src/features/auth/data/repositories/passenger_auth_repository.dart';
 import 'package:passenger_app/src/features/auth/domain/entities/auth_credentials.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -16,14 +17,14 @@ void main() {
   late MockAuthRemoteDataSource remoteDataSource;
   late MockSecureSessionService secureSessionService;
   late SharedPreferences preferences;
-  late AuthRepository repository;
+  late PassengerAuthRepositoryImpl repository;
 
   setUp(() async {
     remoteDataSource = MockAuthRemoteDataSource();
     secureSessionService = MockSecureSessionService();
     SharedPreferences.setMockInitialValues(<String, Object>{});
     preferences = await SharedPreferences.getInstance();
-    repository = AuthRepository(
+    repository = PassengerAuthRepositoryImpl(
       remoteDataSource: remoteDataSource,
       secureSessionService: secureSessionService,
       preferences: preferences,
@@ -38,14 +39,17 @@ void main() {
     ).thenAnswer((_) async {});
   });
 
-  group('AuthRepository.authenticatePassenger', () {
+  group('AuthRepository.authenticate', () {
     test(
       'maps the server session and persists sensitive identity securely',
       () async {
         when(
-          () => remoteDataSource.loginPassenger(
-            email: 'passenger@example.com',
-            password: 'secret-password',
+          () => remoteDataSource.postData(
+            ApiEndpoints.passengerLogin,
+            requestBody: {
+              'email': 'passenger@example.com',
+              'password': 'secret-password',
+            },
           ),
         ).thenAnswer(
           (_) async => <String, dynamic>{
@@ -61,19 +65,19 @@ void main() {
           },
         );
 
-        final result = await repository.authenticatePassenger(
+        final result = await repository.authenticate(
           email: 'passenger@example.com',
           password: 'secret-password',
         );
 
-        late AuthCredentials credentials;
+        late PassengerAuthCredentials credentials;
         result.fold(
           (failure) => fail('Expected credentials, got ${failure.message}'),
           (value) => credentials = value,
         );
         expect(
           credentials,
-          const AuthCredentials(
+          const PassengerAuthCredentials(
             passengerId: '42',
             passengerName: 'Test Passenger',
             passengerEmail: 'passenger@example.com',
@@ -98,9 +102,9 @@ void main() {
       'returns a failure instead of empty credentials for malformed data',
       () async {
         when(
-          () => remoteDataSource.loginPassenger(
-            email: any(named: 'email'),
-            password: any(named: 'password'),
+          () => remoteDataSource.postData(
+            ApiEndpoints.passengerLogin,
+            requestBody: any(named: 'requestBody'),
           ),
         ).thenAnswer(
           (_) async => <String, dynamic>{
@@ -110,7 +114,7 @@ void main() {
           },
         );
 
-        final result = await repository.authenticatePassenger(
+        final result = await repository.authenticate(
           email: 'passenger@example.com',
           password: 'secret-password',
         );
@@ -123,13 +127,13 @@ void main() {
 
     test('returns a failure when the remote data source throws', () async {
       when(
-        () => remoteDataSource.loginPassenger(
-          email: any(named: 'email'),
-          password: any(named: 'password'),
+        () => remoteDataSource.postData(
+          ApiEndpoints.passengerLogin,
+          requestBody: any(named: 'requestBody'),
         ),
       ).thenThrow(Exception('gateway unavailable'));
 
-      final result = await repository.authenticatePassenger(
+      final result = await repository.authenticate(
         email: 'passenger@example.com',
         password: 'secret-password',
       );
@@ -144,9 +148,9 @@ void main() {
     'verifyOtp persists the session returned by the verification endpoint',
     () async {
       when(
-        () => remoteDataSource.verifyOtp(
-          email: 'passenger@example.com',
-          code: '123456',
+        () => remoteDataSource.postData(
+          ApiEndpoints.verifyOtp,
+          requestBody: {'email': 'passenger@example.com', 'code': '123456'},
         ),
       ).thenAnswer(
         (_) async => <String, dynamic>{
@@ -165,7 +169,7 @@ void main() {
         code: '123456',
       );
 
-      late AuthCredentials credentials;
+      late PassengerAuthCredentials credentials;
       result.fold(
         (failure) => fail('Expected credentials, got ${failure.message}'),
         (value) => credentials = value,
@@ -176,9 +180,9 @@ void main() {
       verify(() => secureSessionService.saveRefreshToken('')).called(1);
       verify(() => secureSessionService.savePassengerId('42')).called(1);
       verifyNever(
-        () => remoteDataSource.loginPassenger(
-          email: any(named: 'email'),
-          password: any(named: 'password'),
+        () => remoteDataSource.postData(
+          ApiEndpoints.passengerLogin,
+          requestBody: any(named: 'requestBody'),
         ),
       );
     },
@@ -186,11 +190,14 @@ void main() {
 
   test('registerPassenger persists an immediately usable session', () async {
     when(
-      () => remoteDataSource.registerPassenger(
-        name: 'Test Passenger',
-        email: 'passenger@example.com',
-        phone: '+639170000001',
-        password: 'secret-password',
+      () => remoteDataSource.postData(
+        ApiEndpoints.passengerRegister,
+        requestBody: {
+          'name': 'Test Passenger',
+          'email': 'passenger@example.com',
+          'phone': '+639170000001',
+          'password': 'secret-password',
+        },
       ),
     ).thenAnswer(
       (_) async => <String, dynamic>{

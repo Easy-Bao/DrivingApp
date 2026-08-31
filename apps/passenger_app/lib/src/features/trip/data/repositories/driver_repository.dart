@@ -1,3 +1,4 @@
+import 'package:auth/auth.dart';
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:maps/maps.dart';

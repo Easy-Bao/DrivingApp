@@ -1,42 +1,25 @@
 import 'package:dio/dio.dart';
-import 'package:driver_app/src/core/constants/api_endpoints.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
-abstract class AuthRemoteDataSource {
-  Future<Map<String, dynamic>> authenticateDriver({
-    required String email,
-    required String password,
+abstract interface class AuthRemoteDataSource {
+  Future<Map<String, dynamic>> postJson(
+    String path, {
+    required Map<String, dynamic> requestBody,
   });
 
-  Future<void> resetPassword({required String email});
+  Future<Map<String, dynamic>> postData(
+    String path, {
+    required Map<String, dynamic> requestBody,
+  });
 }
 
-class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
+final class DioAuthRemoteDataSource implements AuthRemoteDataSource {
+  DioAuthRemoteDataSource(this._dio);
+
   final Dio _dio;
 
-  AuthRemoteDataSourceImpl(this._dio);
-
   @override
-  Future<Map<String, dynamic>> authenticateDriver({
-    required String email,
-    required String password,
-  }) async {
-    final responseBody = await _postJson(
-      ApiEndpoints.driverLogin,
-      requestBody: {'email': email, 'password': password},
-    );
-    return _extractDataPayload(responseBody);
-  }
-
-  @override
-  Future<void> resetPassword({required String email}) async {
-    await _dio.post<void>(
-      ApiEndpoints.driverForgotPassword,
-      data: {'email': email},
-    );
-  }
-
-  Future<Map<String, dynamic>> _postJson(
+  Future<Map<String, dynamic>> postJson(
     String path, {
     required Map<String, dynamic> requestBody,
   }) async {
@@ -57,7 +40,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
   }
 
-  Map<String, dynamic> _extractDataPayload(Map<String, dynamic> responseBody) {
+  @override
+  Future<Map<String, dynamic>> postData(
+    String path, {
+    required Map<String, dynamic> requestBody,
+  }) async {
+    final responseBody = await postJson(path, requestBody: requestBody);
     final responseData = responseBody['data'];
     if (responseBody['success'] != true || responseData is! Map) {
       throw DataParsingException(
@@ -80,6 +68,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       422 => 'The request could not be completed. Please check your details.',
       401 || 403 => 'Invalid email or password.',
       404 => 'The requested authentication action is unavailable.',
+      409 => 'This email is already registered.',
       _ => 'Authentication request failed. Please try again.',
     };
   }

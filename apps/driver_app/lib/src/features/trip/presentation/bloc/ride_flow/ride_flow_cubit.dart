@@ -1,3 +1,4 @@
+import 'package:auth/auth.dart';
 import 'package:ride/ride.dart';
 import 'dart:async';
 import 'dart:developer' as dev;

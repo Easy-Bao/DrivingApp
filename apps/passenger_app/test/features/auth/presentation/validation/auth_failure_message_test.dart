@@ -1,6 +1,7 @@
+import 'package:auth/auth.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:passenger_app/src/features/auth/presentation/validation/auth_failure_message.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 void main() {
   test('maps infrastructure failures to safe client-owned copy', () {

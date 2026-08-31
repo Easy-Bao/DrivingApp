@@ -1,3 +1,4 @@
+import 'package:auth/auth.dart';
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/home/data/data_sources/home_remote_data_source.dart';

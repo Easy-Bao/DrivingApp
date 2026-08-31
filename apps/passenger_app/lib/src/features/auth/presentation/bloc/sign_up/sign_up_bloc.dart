@@ -4,7 +4,7 @@ import 'package:passenger_app/src/features/auth/domain/entities/auth_credentials
 import 'package:passenger_app/src/features/auth/domain/use_cases/register_use_case.dart';
 import 'package:passenger_app/src/features/auth/presentation/validation/auth_failure_message.dart';
 import 'package:passenger_app/src/features/auth/presentation/validation/auth_form_validator.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 part 'sign_up_event.dart';
 part 'sign_up_state.dart';
@@ -55,7 +55,7 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
           final user = userData is Map
               ? Map<String, dynamic>.from(userData)
               : const <String, dynamic>{};
-          final credentials = AuthCredentials(
+          final credentials = PassengerAuthCredentials(
             passengerId:
                 response['passengerId']?.toString() ??
                 user['id']?.toString() ??

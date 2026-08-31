@@ -1,3 +1,4 @@
+import 'package:auth/auth.dart';
 import 'package:chat/chat.dart';
 import 'package:dio/dio.dart';
 import 'package:maps/maps.dart';
@@ -11,7 +12,6 @@ import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/core/storage/secure_storage.dart';
 import 'package:passenger_app/src/features/auth/auth_module.dart';
 import 'package:passenger_app/src/features/auth/presentation/bloc/session/session_bloc.dart';
-import 'package:passenger_app/src/features/auth/data/data_sources/auth_remote_data_source.dart';
 import 'package:passenger_app/src/features/auth/data/repositories/session_repository_impl.dart';
 import 'package:passenger_app/src/features/auth/domain/repositories/session_repository.dart';
 import 'package:passenger_app/src/features/location/presentation/bloc/location_access/location_access_cubit.dart';
@@ -81,7 +81,7 @@ class AppModule extends Module {
         (i) => LocationRemoteDataSource(i.get<Dio>()),
       )
       ..addLazySingleton<AuthRemoteDataSource>(
-        (i) => AuthRemoteDataSourceImpl(i.get<Dio>()),
+        (i) => DioAuthRemoteDataSource(i.get<Dio>()),
       )
       // AppWidget provides this state before the passenger route module is active.
       ..addLazySingleton<BookingDraftCubit>((_) => BookingDraftCubit());

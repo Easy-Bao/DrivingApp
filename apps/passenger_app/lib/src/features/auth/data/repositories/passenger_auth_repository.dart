@@ -1,17 +1,18 @@
+import 'package:auth/auth.dart';
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:passenger_app/src/core/constants/api_endpoints.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
-import 'package:passenger_app/src/features/auth/data/data_sources/auth_remote_data_source.dart';
 import 'package:passenger_app/src/features/auth/domain/entities/auth_credentials.dart';
-import 'package:passenger_app/src/features/auth/domain/repositories/i_auth_repository.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:passenger_app/src/features/auth/domain/repositories/passenger_auth_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class AuthRepository implements IAuthRepository {
+class PassengerAuthRepositoryImpl implements PassengerAuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
   final SecureSessionService _secureSessionService;
   final SharedPreferences _preferences;
 
-  AuthRepository({
+  PassengerAuthRepositoryImpl({
     required AuthRemoteDataSource remoteDataSource,
     required SecureSessionService secureSessionService,
     required SharedPreferences preferences,
@@ -20,14 +21,14 @@ class AuthRepository implements IAuthRepository {
        _preferences = preferences;
 
   @override
-  Future<Either<Failure, AuthCredentials>> authenticatePassenger({
+  Future<Either<Failure, PassengerAuthCredentials>> authenticate({
     required String email,
     required String password,
   }) async {
     try {
-      final responseData = await _remoteDataSource.loginPassenger(
-        email: email,
-        password: password,
+      final responseData = await _remoteDataSource.postData(
+        ApiEndpoints.passengerLogin,
+        requestBody: {'email': email, 'password': password},
       );
       final credentials = _credentialsFromResponse(
         responseData,
@@ -70,11 +71,14 @@ class AuthRepository implements IAuthRepository {
     required String password,
   }) async {
     try {
-      final responseData = await _remoteDataSource.registerPassenger(
-        name: name,
-        email: email,
-        phone: phone,
-        password: password,
+      final responseData = await _remoteDataSource.postData(
+        ApiEndpoints.passengerRegister,
+        requestBody: {
+          'name': name,
+          'email': email,
+          'phone': phone,
+          'password': password,
+        },
       );
       if (responseData['needsVerification'] != true) {
         final credentials = _credentialsFromResponse(
@@ -106,14 +110,14 @@ class AuthRepository implements IAuthRepository {
   }
 
   @override
-  Future<Either<Failure, AuthCredentials>> verifyOtp({
+  Future<Either<Failure, PassengerAuthCredentials>> verifyOtp({
     required String email,
     required String code,
   }) async {
     try {
-      final responseData = await _remoteDataSource.verifyOtp(
-        email: email,
-        code: code,
+      final responseData = await _remoteDataSource.postData(
+        ApiEndpoints.verifyOtp,
+        requestBody: {'email': email, 'code': code},
       );
       final credentials = _credentialsFromResponse(
         responseData,
@@ -136,7 +140,7 @@ class AuthRepository implements IAuthRepository {
     }
   }
 
-  AuthCredentials _credentialsFromResponse(
+  PassengerAuthCredentials _credentialsFromResponse(
     Map<String, dynamic> responseData, {
     required String fallbackEmail,
   }) {
@@ -157,7 +161,7 @@ class AuthRepository implements IAuthRepository {
     }
 
     final passengerEmail = _stringValue(passenger['email']);
-    return AuthCredentials(
+    return PassengerAuthCredentials(
       passengerId: passengerId,
       passengerName: _stringValue(passenger['name']),
       passengerEmail: passengerEmail.isEmpty ? fallbackEmail : passengerEmail,
@@ -168,7 +172,7 @@ class AuthRepository implements IAuthRepository {
     );
   }
 
-  Future<void> _persistSession(AuthCredentials credentials) async {
+  Future<void> _persistSession(PassengerAuthCredentials credentials) async {
     await _secureSessionService.saveToken(credentials.token);
     await _secureSessionService.saveRefreshToken(credentials.refreshToken);
     await _secureSessionService.savePassengerId(credentials.passengerId);
@@ -184,9 +188,11 @@ class AuthRepository implements IAuthRepository {
     required String email,
   }) async {
     try {
-      final success = await _remoteDataSource.requestVerificationCode(
-        email: email,
+      final responseBody = await _remoteDataSource.postJson(
+        ApiEndpoints.passengerOtp,
+        requestBody: {'email': email},
       );
+      final success = responseBody['success'] == true;
       if (!success) {
         return const Left(
           ServerFailure('Failed to send a new verification code.'),
@@ -211,7 +217,11 @@ class AuthRepository implements IAuthRepository {
   @override
   Future<Either<Failure, void>> resetPassword({required String email}) async {
     try {
-      final success = await _remoteDataSource.resetPassword(email: email);
+      final responseBody = await _remoteDataSource.postJson(
+        ApiEndpoints.forgotPassword,
+        requestBody: {'email': email},
+      );
+      final success = responseBody['success'] == true;
       if (!success) {
         return const Left(
           ServerFailure('Failed to send reset link. Please check email.'),
@@ -232,11 +242,11 @@ class AuthRepository implements IAuthRepository {
     required String newPassword,
   }) async {
     try {
-      final success = await _remoteDataSource.confirmResetPassword(
-        email: email,
-        code: code,
-        newPassword: newPassword,
+      final responseBody = await _remoteDataSource.postJson(
+        ApiEndpoints.resetPassword,
+        requestBody: {'email': email, 'code': code, 'newPassword': newPassword},
       );
+      final success = responseBody['success'] == true;
       if (!success) {
         return const Left(
           ServerFailure('Password reset failed. Please try again.'),

@@ -83,34 +83,6 @@ class AppFailure {
       );
     }
 
-    if (error is EmailAlreadyRegisteredFailure) {
-      return createFailure(
-        title: 'Email Already Registered',
-        userMessage: 'This email is already registered.',
-        actionText: 'Sign In',
-        type: ErrorType.validation,
-      );
-    }
-
-    if (error is InvalidCredentialsFailure) {
-      return createFailure(
-        title: 'Sign In Unsuccessful',
-        userMessage: 'The email or password is incorrect.',
-        actionText: 'Try Again',
-        type: ErrorType.unauthorized,
-      );
-    }
-
-    if (error is AuthFailure) {
-      return createFailure(
-        title: 'Session Expired',
-        userMessage:
-            'Your session has expired. Please sign in again to continue.',
-        actionText: 'Sign In',
-        type: ErrorType.unauthorized,
-      );
-    }
-
     if (error is ValidationFailure) {
       return createFailure(
         userMessage:

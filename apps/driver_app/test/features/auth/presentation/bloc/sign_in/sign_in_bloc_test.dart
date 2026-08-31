@@ -1,10 +1,10 @@
+import 'package:auth/auth.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:driver_app/src/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
 import 'package:driver_app/src/features/auth/domain/use_cases/sign_in_use_case.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:shared_core/shared_core.dart';
 
 class _MockSignInUseCase extends Mock implements SignInUseCase {}
 

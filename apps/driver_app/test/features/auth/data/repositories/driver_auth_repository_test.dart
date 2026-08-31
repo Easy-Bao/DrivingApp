@@ -1,8 +1,9 @@
+import 'package:auth/auth.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:driver_app/src/core/constants/api_endpoints.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:driver_app/src/features/auth/data/data_sources/auth_remote_data_source.dart';
-import 'package:driver_app/src/features/auth/data/repositories/auth_repository.dart';
+import 'package:driver_app/src/features/auth/data/repositories/driver_auth_repository.dart';
 import 'package:driver_app/src/features/auth/domain/entities/auth_credentials.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -15,13 +16,13 @@ void main() {
 
   late MockAuthRemoteDataSource remoteDataSource;
   late MockSecureSessionService secureSessionService;
-  late AuthRepository repository;
+  late DriverAuthRepositoryImpl repository;
 
   setUp(() async {
     remoteDataSource = MockAuthRemoteDataSource();
     secureSessionService = MockSecureSessionService();
     SharedPreferences.setMockInitialValues(<String, Object>{});
-    repository = AuthRepository(
+    repository = DriverAuthRepositoryImpl(
       remoteDataSource: remoteDataSource,
       secureSessionService: secureSessionService,
     );
@@ -37,9 +38,12 @@ void main() {
 
   test('normalizes numeric driver IDs before persisting the session', () async {
     when(
-      () => remoteDataSource.authenticateDriver(
-        email: 'driver@example.com',
-        password: 'secret-password',
+      () => remoteDataSource.postData(
+        ApiEndpoints.driverLogin,
+        requestBody: {
+          'email': 'driver@example.com',
+          'password': 'secret-password',
+        },
       ),
     ).thenAnswer(
       (_) async => <String, dynamic>{
@@ -56,12 +60,12 @@ void main() {
       },
     );
 
-    final result = await repository.authenticateDriver(
+    final result = await repository.authenticate(
       email: 'driver@example.com',
       password: 'secret-password',
     );
 
-    late AuthCredentials credentials;
+    late DriverAuthCredentials credentials;
     result.fold(
       (failure) => fail('Expected credentials, got ${failure.message}'),
       (value) => credentials = value,
@@ -80,9 +84,12 @@ void main() {
     'uses the authenticated user ID from a profile-shaped response',
     () async {
       when(
-        () => remoteDataSource.authenticateDriver(
-          email: 'driver@example.com',
-          password: 'secret-password',
+        () => remoteDataSource.postData(
+          ApiEndpoints.driverLogin,
+          requestBody: {
+            'email': 'driver@example.com',
+            'password': 'secret-password',
+          },
         ),
       ).thenAnswer(
         (_) async => <String, dynamic>{
@@ -96,7 +103,7 @@ void main() {
         },
       );
 
-      final result = await repository.authenticateDriver(
+      final result = await repository.authenticate(
         email: 'driver@example.com',
         password: 'secret-password',
       );
@@ -108,9 +115,9 @@ void main() {
 
   test('returns a server failure for malformed session data', () async {
     when(
-      () => remoteDataSource.authenticateDriver(
-        email: any(named: 'email'),
-        password: any(named: 'password'),
+      () => remoteDataSource.postData(
+        ApiEndpoints.driverLogin,
+        requestBody: any(named: 'requestBody'),
       ),
     ).thenAnswer(
       (_) async => <String, dynamic>{
@@ -119,7 +126,7 @@ void main() {
       },
     );
 
-    final result = await repository.authenticateDriver(
+    final result = await repository.authenticate(
       email: 'driver@example.com',
       password: 'secret-password',
     );

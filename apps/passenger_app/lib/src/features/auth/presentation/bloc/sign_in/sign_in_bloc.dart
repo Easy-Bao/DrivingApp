@@ -1,12 +1,12 @@
+import 'package:auth/auth.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/auth/domain/entities/auth_credentials.dart';
 import 'package:passenger_app/src/features/auth/domain/use_cases/sign_in_use_case.dart';
 import 'package:passenger_app/src/features/auth/presentation/validation/auth_failure_message.dart';
 import 'package:passenger_app/src/features/auth/presentation/validation/auth_form_validator.dart';
-import 'package:shared_core/shared_core.dart';
 
-export 'package:shared_core/shared_core.dart' show SignInEvent, SignInSubmitted;
+export 'package:auth/auth.dart' show SignInEvent, SignInSubmitted;
 
 part 'sign_in_state.dart';
 

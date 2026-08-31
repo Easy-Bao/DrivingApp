@@ -1,31 +1,31 @@
-import 'package:shared_core/shared_core.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:driver_app/src/features/auth/data/data_sources/auth_remote_data_source.dart';
-import 'package:driver_app/src/features/auth/domain/entities/auth_credentials.dart';
-import 'package:driver_app/src/features/auth/domain/repositories/i_auth_repository.dart';
+import 'package:auth/auth.dart';
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
-
+import 'package:driver_app/src/core/constants/api_endpoints.dart';
+import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/features/auth/domain/entities/auth_credentials.dart';
+import 'package:driver_app/src/features/auth/domain/repositories/driver_auth_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class AuthRepository implements IAuthRepository {
+class DriverAuthRepositoryImpl implements DriverAuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
   final SecureSessionService _secureSessionService;
 
-  AuthRepository({
+  DriverAuthRepositoryImpl({
     required AuthRemoteDataSource remoteDataSource,
     required SecureSessionService secureSessionService,
   }) : _remoteDataSource = remoteDataSource,
        _secureSessionService = secureSessionService;
 
   @override
-  Future<Either<Failure, AuthCredentials>> authenticateDriver({
+  Future<Either<Failure, DriverAuthCredentials>> authenticate({
     required String email,
     required String password,
   }) async {
     try {
-      final responseData = await _remoteDataSource.authenticateDriver(
-        email: email,
-        password: password,
+      final responseData = await _remoteDataSource.postData(
+        ApiEndpoints.driverLogin,
+        requestBody: {'email': email, 'password': password},
       );
 
       final authenticationData =
@@ -67,9 +67,8 @@ class AuthRepository implements IAuthRepository {
       }
 
       await _secureSessionService.saveToken(token);
-      await _secureSessionService.saveRefreshToken(
-        _stringValue(authenticationData['refreshToken']),
-      );
+      final refreshToken = _stringValue(authenticationData['refreshToken']);
+      await _secureSessionService.saveRefreshToken(refreshToken);
       await _secureSessionService.saveDriverId(driverId);
 
       final prefs = await SharedPreferences.getInstance();
@@ -81,13 +80,15 @@ class AuthRepository implements IAuthRepository {
       await prefs.setString('plate_number', plateNumber);
       await prefs.setString('rating', rating.toString());
 
-      final credentials = AuthCredentials(
+      final credentials = DriverAuthCredentials(
         driverId: driverId,
         driverName: driverName,
         driverEmail: driverEmail,
         vehicleType: vehicleType,
         plateNumber: plateNumber,
         rating: rating,
+        token: token,
+        refreshToken: refreshToken,
       );
 
       return Right(credentials);
@@ -131,7 +132,10 @@ class AuthRepository implements IAuthRepository {
   @override
   Future<Either<Failure, void>> resetPassword({required String email}) async {
     try {
-      await _remoteDataSource.resetPassword(email: email);
+      await _remoteDataSource.postJson(
+        ApiEndpoints.driverForgotPassword,
+        requestBody: {'email': email},
+      );
       return const Right(null);
     } catch (error) {
       return const Left(

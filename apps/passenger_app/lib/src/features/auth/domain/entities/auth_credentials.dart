@@ -1,15 +1,18 @@
+import 'package:auth/auth.dart';
 import 'package:equatable/equatable.dart';
 
-class AuthCredentials extends Equatable {
+class PassengerAuthCredentials extends Equatable implements AuthCredentials {
   final String passengerId;
   final String passengerName;
   final String passengerEmail;
   final String passengerPhone;
+  @override
   final String token;
+  @override
   final String refreshToken;
   final bool needsVerification;
 
-  const AuthCredentials({
+  const PassengerAuthCredentials({
     required this.passengerId,
     required this.passengerName,
     required this.passengerEmail,
@@ -19,8 +22,8 @@ class AuthCredentials extends Equatable {
     this.needsVerification = false,
   });
 
-  factory AuthCredentials.fromJson(Map<String, dynamic> json) {
-    return AuthCredentials(
+  factory PassengerAuthCredentials.fromJson(Map<String, dynamic> json) {
+    return PassengerAuthCredentials(
       passengerId:
           json['passengerId']?.toString() ?? json['id']?.toString() ?? '',
       passengerName:
@@ -34,6 +37,9 @@ class AuthCredentials extends Equatable {
       needsVerification: json['needsVerification'] as bool? ?? false,
     );
   }
+
+  @override
+  String get accountId => passengerId;
 
   Map<String, dynamic> toJson() {
     return {
