@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
-import 'package:driver_app/src/features/trip/data/datasources/ride_counterparty_remote_data_source.dart';
-import 'package:driver_app/src/features/trip/data/datasources/ride_remote_data_source.dart';
-import 'package:driver_app/src/features/trip/data/datasources/telemetry_remote_data_source.dart';
+import 'package:driver_app/src/features/trip/data/data_sources/ride_counterparty_remote_data_source.dart';
+import 'package:driver_app/src/features/trip/data/data_sources/ride_remote_data_source.dart';
+import 'package:driver_app/src/features/trip/data/data_sources/telemetry_remote_data_source.dart';
 import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_repository.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:shared_core/shared_core.dart';

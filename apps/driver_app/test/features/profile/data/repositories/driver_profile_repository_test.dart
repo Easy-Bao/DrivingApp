@@ -1,5 +1,5 @@
 import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:driver_app/src/features/profile/data/datasources/driver_profile_remote_data_source.dart';
+import 'package:driver_app/src/features/profile/data/data_sources/driver_profile_remote_data_source.dart';
 import 'package:driver_app/src/features/profile/data/repositories/driver_profile_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';

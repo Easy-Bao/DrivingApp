@@ -1,6 +1,6 @@
 import 'package:driver_app/app_module.dart';
 import 'package:driver_app/src/features/auth/auth_routes.dart';
-import 'package:driver_app/src/features/location/bloc/location_access/driver_location_access_cubit.dart';
+import 'package:driver_app/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver_app/src/features/location/domain/repositories/i_driver_location_access_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
-import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_state.dart';
+import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
+import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox/inbox_state.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class PassengerFloatingTabBar extends StatelessWidget {

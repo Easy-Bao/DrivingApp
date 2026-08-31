@@ -7,7 +7,7 @@ import 'package:passenger_app/src/features/activity/activity_module.dart';
 import 'package:passenger_app/src/features/chat/chat_module.dart';
 import 'package:passenger_app/src/features/driver_profile/driver_profile_module.dart';
 import 'package:passenger_app/src/features/home/home_module.dart';
-import 'package:passenger_app/src/features/inbox/bloc/inbox/inbox_cubit.dart';
+import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/inbox_module.dart';
 import 'package:passenger_app/src/features/profile/profile_module.dart';
 import 'package:passenger_app/src/features/saved_places/saved_places_module.dart';

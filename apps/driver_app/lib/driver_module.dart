@@ -8,7 +8,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/features/activity/activity_module.dart';
 import 'package:driver_app/src/features/chat/chat_module.dart';
 import 'package:driver_app/src/features/home/home_module.dart';
-import 'package:driver_app/src/features/home/bloc/dashboard/dashboard_cubit.dart';
+import 'package:driver_app/src/features/home/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/help_center/help_center_module.dart';
 import 'package:driver_app/src/shared/widgets/navigationbar/driver_navigation_shell.dart';
 import 'package:driver_app/src/features/profile/profile_module.dart';

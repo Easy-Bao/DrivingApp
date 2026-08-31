@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/driver_discovery_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/data/data_sources/driver_discovery_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/data/repositories/driver_repository.dart';
 import 'package:shared_core/shared_core.dart';
 

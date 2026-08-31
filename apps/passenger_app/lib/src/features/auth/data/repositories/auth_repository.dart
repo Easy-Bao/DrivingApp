@@ -1,6 +1,6 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
-import 'package:passenger_app/src/features/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:passenger_app/src/features/auth/data/data_sources/auth_remote_data_source.dart';
 import 'package:passenger_app/src/features/auth/domain/entities/auth_credentials.dart';
 import 'package:passenger_app/src/features/auth/domain/repositories/i_auth_repository.dart';
 import 'package:shared_core/shared_core.dart';

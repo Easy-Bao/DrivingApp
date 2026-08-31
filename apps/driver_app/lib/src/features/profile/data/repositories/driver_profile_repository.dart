@@ -1,5 +1,5 @@
 import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:driver_app/src/features/profile/data/datasources/driver_profile_remote_data_source.dart';
+import 'package:driver_app/src/features/profile/data/data_sources/driver_profile_remote_data_source.dart';
 import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
 import 'package:driver_app/src/features/profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:fpdart/fpdart.dart';

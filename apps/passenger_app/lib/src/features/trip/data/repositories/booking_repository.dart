@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/booking_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/data/data_sources/booking_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/domain/entities/accepted_booking.dart';
 import 'package:passenger_app/src/features/trip/domain/entities/booking_offer.dart';
 import 'package:passenger_app/src/features/trip/domain/entities/booking_session_request.dart';

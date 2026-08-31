@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
 import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:driver_app/src/features/trip/bloc/live_map/live_map_bloc.dart';
+import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_repository.dart';
 import 'package:driver_app/src/features/trip/trip_routes.dart';
-import 'package:driver_app/src/features/trip/view/pickup_navigation_page.dart';
-import 'package:driver_app/src/features/trip/view/fare_summary_page.dart';
-import 'package:driver_app/src/features/trip/view/in_transit_page.dart';
-import 'package:driver_app/src/features/trip/view/waiting_passenger_page.dart';
+import 'package:driver_app/src/features/trip/presentation/pickup_navigation_page.dart';
+import 'package:driver_app/src/features/trip/presentation/fare_summary_page.dart';
+import 'package:driver_app/src/features/trip/presentation/in_transit_page.dart';
+import 'package:driver_app/src/features/trip/presentation/waiting_passenger_page.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 

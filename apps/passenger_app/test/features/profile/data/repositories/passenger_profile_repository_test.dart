@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
-import 'package:passenger_app/src/features/profile/data/datasources/passenger_profile_remote_data_source.dart';
+import 'package:passenger_app/src/features/profile/data/data_sources/passenger_profile_remote_data_source.dart';
 import 'package:passenger_app/src/features/profile/data/repositories/passenger_profile_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

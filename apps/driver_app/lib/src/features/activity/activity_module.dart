@@ -5,16 +5,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/activity/activity_routes.dart';
-import 'package:driver_app/src/features/activity/bloc/earnings/earnings_cubit.dart';
-import 'package:driver_app/src/features/activity/bloc/performance/driver_performance_cubit.dart';
-import 'package:driver_app/src/features/activity/bloc/trip_history/trip_history_cubit.dart';
-import 'package:driver_app/src/features/activity/data/datasources/driver_activity_remote_data_source.dart';
+import 'package:driver_app/src/features/activity/presentation/bloc/earnings/earnings_cubit.dart';
+import 'package:driver_app/src/features/activity/presentation/bloc/performance/driver_performance_cubit.dart';
+import 'package:driver_app/src/features/activity/presentation/bloc/trip_history/trip_history_cubit.dart';
+import 'package:driver_app/src/features/activity/data/data_sources/driver_activity_remote_data_source.dart';
 import 'package:driver_app/src/features/activity/data/repositories/driver_activity_repository.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
-import 'package:driver_app/src/features/activity/view/driver_trip_history_page.dart';
-import 'package:driver_app/src/features/activity/view/driver_trip_detail_page.dart';
-import 'package:driver_app/src/features/activity/view/driver_performance_page.dart';
-import 'package:driver_app/src/features/activity/view/earnings_page.dart';
+import 'package:driver_app/src/features/activity/presentation/driver_trip_history_page.dart';
+import 'package:driver_app/src/features/activity/presentation/driver_trip_detail_page.dart';
+import 'package:driver_app/src/features/activity/presentation/driver_performance_page.dart';
+import 'package:driver_app/src/features/activity/presentation/earnings_page.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class ActivityModule {

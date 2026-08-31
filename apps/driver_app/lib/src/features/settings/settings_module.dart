@@ -1,8 +1,8 @@
 import 'package:driver_app/src/features/settings/settings_routes.dart';
-import 'package:driver_app/src/features/settings/view/driver_about_bao_ride_page.dart';
-import 'package:driver_app/src/features/settings/view/driver_location_access_status_page.dart';
-import 'package:driver_app/src/features/settings/view/driver_settings_page.dart';
-import 'package:driver_app/src/features/settings/view/driver_terms_of_service_page.dart';
+import 'package:driver_app/src/features/settings/presentation/driver_about_bao_ride_page.dart';
+import 'package:driver_app/src/features/settings/presentation/driver_location_access_status_page.dart';
+import 'package:driver_app/src/features/settings/presentation/driver_settings_page.dart';
+import 'package:driver_app/src/features/settings/presentation/driver_terms_of_service_page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_ui/shared_ui.dart';

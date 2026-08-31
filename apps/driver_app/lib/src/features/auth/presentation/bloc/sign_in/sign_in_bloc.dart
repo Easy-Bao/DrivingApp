@@ -1,0 +1,51 @@
+import 'package:driver_app/src/features/auth/domain/use_cases/sign_in_use_case.dart';
+import 'package:driver_app/src/features/auth/domain/entities/auth_credentials.dart';
+import 'package:driver_app/src/features/auth/presentation/bloc/sign_in/sign_in_failure_message.dart';
+import 'package:equatable/equatable.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_core/shared_core.dart';
+
+export 'package:shared_core/shared_core.dart' show SignInEvent, SignInSubmitted;
+
+part 'sign_in_state.dart';
+
+class SignInBloc extends Bloc<SignInEvent, SignInState> {
+  final SignInUseCase _signInUseCase;
+
+  SignInBloc(this._signInUseCase) : super(const SignInInitial()) {
+    on<SignInSubmitted>(_onSignInSubmitted);
+  }
+
+  Future<void> _onSignInSubmitted(
+    SignInSubmitted event,
+    Emitter<SignInState> emit,
+  ) async {
+    final normalizedEmail = event.email.trim().toLowerCase();
+    final password = event.password;
+
+    if (normalizedEmail.isEmpty) {
+      emit(const SignInFailure('Please enter email'));
+      return;
+    }
+    if (!normalizedEmail.contains('@')) {
+      emit(const SignInFailure('Please enter a valid email'));
+      return;
+    }
+    if (password.isEmpty) {
+      emit(const SignInFailure('Please enter password'));
+      return;
+    }
+
+    emit(const SignInLoading());
+
+    final result = await _signInUseCase.execute(
+      email: normalizedEmail,
+      password: password,
+    );
+
+    result.fold(
+      (failure) => emit(SignInFailure(signInFailureMessage(failure))),
+      (credentials) => emit(SignInSuccess(credentials)),
+    );
+  }
+}

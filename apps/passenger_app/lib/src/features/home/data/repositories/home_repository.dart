@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:passenger_app/src/features/home/data/datasources/home_remote_data_source.dart';
+import 'package:passenger_app/src/features/home/data/data_sources/home_remote_data_source.dart';
 import 'package:passenger_app/src/features/home/domain/entities/home_data.dart';
 import 'package:passenger_app/src/features/home/domain/entities/recent_location.dart';
 import 'package:passenger_app/src/features/home/domain/repositories/i_home_repository.dart';

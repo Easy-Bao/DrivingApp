@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/chat/chat_routes.dart';
-import 'package:passenger_app/src/features/chat/view/driver_chat_page.dart';
+import 'package:passenger_app/src/features/chat/presentation/driver_chat_page.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';

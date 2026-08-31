@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger_app/src/features/home/data/datasources/home_remote_data_source.dart';
+import 'package:passenger_app/src/features/home/data/data_sources/home_remote_data_source.dart';
 import 'package:passenger_app/src/features/home/data/repositories/home_repository.dart';
 import 'package:passenger_app/src/features/home/domain/entities/home_data.dart';
 import 'package:passenger_app/src/features/home/domain/entities/recent_location.dart';

@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/fare_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/data/data_sources/fare_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_fare_repository.dart';
 import 'package:shared_core/shared_core.dart';
 

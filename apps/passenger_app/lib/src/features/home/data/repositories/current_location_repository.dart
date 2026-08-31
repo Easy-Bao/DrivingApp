@@ -1,5 +1,5 @@
 import 'package:fpdart/fpdart.dart';
-import 'package:passenger_app/src/features/home/data/datasources/current_location_data_source.dart';
+import 'package:passenger_app/src/features/home/data/data_sources/current_location_data_source.dart';
 import 'package:passenger_app/src/features/home/domain/entities/current_location.dart';
 import 'package:passenger_app/src/features/home/domain/failures/current_location_failure.dart';
 import 'package:passenger_app/src/features/home/domain/repositories/i_current_location_repository.dart';

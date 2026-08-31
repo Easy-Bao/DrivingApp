@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/booking_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/data/data_sources/booking_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/data/repositories/booking_repository.dart';
 import 'package:passenger_app/src/features/trip/domain/entities/booking_session_request.dart';
 import 'package:shared_core/shared_core.dart';

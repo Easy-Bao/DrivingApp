@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/core/location/repositories/map_native_service.dart';
-import 'package:passenger_app/src/features/trip/data/datasources/driver_discovery_remote_data_source.dart';
+import 'package:passenger_app/src/features/trip/data/data_sources/driver_discovery_remote_data_source.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_driver_repository.dart';
 import 'package:shared_core/shared_core.dart';
 
