@@ -1,3 +1,5 @@
+//go:build integration
+
 package ridecontext_test
 
 import (

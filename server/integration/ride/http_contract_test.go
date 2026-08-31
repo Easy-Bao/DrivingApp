@@ -1,3 +1,5 @@
+//go:build integration
+
 package ride_test
 
 import (
