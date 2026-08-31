@@ -1,4 +1,4 @@
-import 'package:ride/ride.dart';
+import 'package:passenger_app/src/features/activity/activity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:passenger_app/src/features/activity/presentation/widgets/passenger_activity_history_widget.dart';

@@ -1,4 +1,5 @@
-import 'package:ride/ride.dart';
+import 'package:passenger_app/src/features/active_ride/active_ride.dart';
+import 'package:passenger_app/src/features/activity/activity.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/activity/domain/repositories/i_activity_repository.dart';

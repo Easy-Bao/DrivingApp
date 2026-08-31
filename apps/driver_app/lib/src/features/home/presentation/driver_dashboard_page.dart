@@ -1,4 +1,4 @@
-import 'package:ride/ride.dart';
+import 'package:driver_app/src/features/active_ride/active_ride.dart';
 import 'dart:async';
 import 'dart:developer' as dev;
 

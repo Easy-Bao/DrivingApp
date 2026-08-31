@@ -1,4 +1,5 @@
-import 'package:ride/ride.dart';
+import 'package:passenger_app/src/features/active_ride/active_ride.dart';
+import 'package:passenger_app/src/features/activity/activity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/features/activity/presentation/widgets/passenger_activity_history_presenter.dart';

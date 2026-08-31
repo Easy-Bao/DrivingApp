@@ -1,4 +1,4 @@
-import 'package:ride/src/domain/entities/ride_update.dart';
+import 'package:passenger_app/src/features/active_ride/domain/entities/ride_update.dart';
 
 final class RideUpdateDto {
   const RideUpdateDto(this.value);

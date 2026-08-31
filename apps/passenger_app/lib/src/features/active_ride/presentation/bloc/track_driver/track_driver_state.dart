@@ -1,4 +1,4 @@
-import 'package:ride/ride.dart';
+import 'package:passenger_app/src/features/active_ride/active_ride.dart';
 import 'package:equatable/equatable.dart';
 
 sealed class TrackDriverState extends Equatable {

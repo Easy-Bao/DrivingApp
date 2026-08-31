@@ -1,4 +1,4 @@
-import 'package:ride/ride.dart';
+import 'package:passenger_app/src/features/active_ride/active_ride.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/active_ride/data/data_sources/ride_remote_data_source.dart';

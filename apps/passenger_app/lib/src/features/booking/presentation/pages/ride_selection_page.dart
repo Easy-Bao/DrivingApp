@@ -1,4 +1,4 @@
-import 'package:ride/ride.dart';
+import 'package:passenger_app/src/features/booking/booking.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart' hide Route;

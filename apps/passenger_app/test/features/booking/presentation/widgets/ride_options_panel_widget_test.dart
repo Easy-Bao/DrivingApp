@@ -1,4 +1,4 @@
-import 'package:ride/ride.dart';
+import 'package:passenger_app/src/features/booking/booking.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:passenger_app/src/features/booking/presentation/widgets/ride_options_panel_widget.dart';

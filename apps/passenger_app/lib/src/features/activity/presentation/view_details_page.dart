@@ -1,4 +1,5 @@
-import 'package:ride/ride.dart';
+import 'package:passenger_app/src/features/active_ride/active_ride.dart';
+import 'package:passenger_app/src/features/activity/activity.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';

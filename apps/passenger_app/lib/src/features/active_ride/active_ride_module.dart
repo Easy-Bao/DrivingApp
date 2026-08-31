@@ -1,3 +1,4 @@
+import 'package:passenger_app/src/features/activity/activity.dart';
 import 'package:passenger_app/src/features/chat/chat.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -14,7 +15,6 @@ import 'package:passenger_app/src/features/active_ride/presentation/bloc/track_d
 import 'package:passenger_app/src/features/active_ride/presentation/pages/driver_matched_page.dart';
 import 'package:passenger_app/src/features/active_ride/presentation/pages/track_driver_page.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
-import 'package:ride/ride.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:design_system/design_system.dart';
 

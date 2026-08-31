@@ -1,4 +1,4 @@
-import 'package:ride/src/domain/entities/fare_estimate.dart';
+import 'package:passenger_app/src/features/booking/domain/entities/fare_estimate.dart';
 
 final class FareEstimateDto {
   const FareEstimateDto(this.value);

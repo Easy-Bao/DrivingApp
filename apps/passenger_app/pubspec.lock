@@ -1212,13 +1212,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.6.0"
-  ride:
-    dependency: "direct main"
-    description:
-      path: "../../packages/ride"
-      relative: true
-    source: path
-    version: "1.0.0"
   rxdart:
     dependency: "direct main"
     description:

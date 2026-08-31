@@ -1,4 +1,4 @@
-import 'package:ride/ride.dart';
+import 'package:passenger_app/src/features/activity/activity.dart';
 import 'package:shared_core/shared_core.dart';
 
 class ActivityOverview {

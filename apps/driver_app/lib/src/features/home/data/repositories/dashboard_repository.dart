@@ -1,5 +1,5 @@
+import 'package:driver_app/src/features/active_ride/active_ride.dart';
 import 'package:driver_app/src/features/auth/domain/failures/auth_failures.dart';
-import 'package:ride/ride.dart';
 import 'dart:developer' as dev;
 
 import 'package:dio/dio.dart';

@@ -1,4 +1,4 @@
-import 'package:ride/src/domain/entities/ride_snapshot.dart';
+import 'package:driver_app/src/features/active_ride/domain/entities/ride_snapshot.dart';
 
 final class RideDto {
   const RideDto(this.value);

@@ -38,8 +38,6 @@ dependencies:
 
   maps:
     path: ../../packages/maps
-  ride:
-    path: ../../packages/ride
   foundation:
     path: ../../packages/foundation
 

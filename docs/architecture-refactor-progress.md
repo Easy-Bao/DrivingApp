@@ -13,18 +13,18 @@ This log records ownership decisions and validation for the production architect
 | driver active ride | Driver `trip` contained the accepted-ride lifecycle | Dispatch acceptance, pickup, passenger wait, transit, telemetry, and fare summary | `active_ride` feature boundary | Match the business concept used by the server and passenger app | Driver app tests: 90 passed; analysis clean | Dashboard rename and activity split remain |
 | auth | Shared package provided transport contracts, failures, and presentation events while apps owned role-specific repositories | Authentication transport, failures, credentials, repositories, and presentation state | Passenger and Driver auth features own their complete workflows; `packages/auth` removed | Keep authentication changes role-specific and remove product behavior from shared packages | Passenger auth: 22 passed; Driver auth: 7 passed | Shared session and infrastructure ownership still needs the broader `core` migration |
 | chat | Shared package owned chat entities, repository, failure, and transport | Chat room lifecycle, message protocol, websocket reconnect, and presentation state | Passenger and Driver `chat` features own their data, domain, repository, factory, and tests; `packages/chat` removed | Keep chat as a product workflow while leaving only generic transport candidates for shared infrastructure | Passenger chat: 12 passed; Driver chat: 12 passed; Passenger analysis has no errors; Driver analysis clean | Review websocket transport duplication during the later infrastructure pass |
+| ride | Shared package owned ride entities, DTOs, fare structures, and workflow failures | Passenger booking/fare/history contracts and Driver active-ride lifecycle contracts | Passenger booking, activity, and active-ride features plus Driver active-ride own the required contracts; `packages/ride` removed | Keep client workflows local while the server remains authoritative for fare and ride rules | Passenger affected features: 95 passed; Driver affected features: 42 passed; both analyses have no errors | Continue removing remaining `shared_core` product models and review cross-feature model dependencies |
 
 ## In progress
 
 | Module | Before | Actual responsibility | After | Reason | Tests | Remaining risk |
 | --- | --- | --- | --- | --- | --- | --- |
-| ride | Shared package owns ride entities, DTOs, fare structures, and failures | Passenger and Driver use different ride workflows | Move ride domain/data contracts into the owning app features; retain only generic infrastructure | Server remains authoritative for ride and fare rules | Targeted validation pending | Avoid changing API payloads or status transitions |
 
 ## Pending
 
 - localize theme definitions while retaining shared brand tokens and generic components
 - rename driver `home` to `dashboard`
 - split driver activity into the smallest useful earnings, performance, and history owners
-- remove `shared_core` and `packages/ride` after reference and export audits
+- remove `shared_core` after reference and export audits
 - classify and simplify server integration/realtime structure without editing generated persistence output
 - run final monorepo analysis, client tests, and server tests; record pre-existing failures separately
