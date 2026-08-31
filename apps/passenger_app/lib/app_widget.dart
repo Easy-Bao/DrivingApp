@@ -9,9 +9,9 @@ import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/location/presentation/bloc/location_access/location_access_cubit.dart';
 import 'package:passenger_app/src/features/location/presentation/bloc/location_access/location_access_state.dart';
-import 'package:passenger_app/src/features/trip/presentation/bloc/booking_draft/booking_draft_cubit.dart';
-import 'package:passenger_app/src/features/trip/presentation/bloc/track_driver/track_driver_cubit.dart';
-import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
+import 'package:passenger_app/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
+import 'package:passenger_app/src/features/active_ride/presentation/bloc/track_driver/track_driver_cubit.dart';
+import 'package:passenger_app/src/features/active_ride/domain/repositories/i_track_repository.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:design_system/design_system.dart';
 

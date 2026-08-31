@@ -17,7 +17,7 @@ import 'package:passenger_app/src/features/auth/domain/repositories/session_repo
 import 'package:passenger_app/src/features/location/presentation/bloc/location_access/location_access_cubit.dart';
 import 'package:passenger_app/src/features/location/data/repositories/location_access_repository.dart';
 import 'package:passenger_app/src/features/location/domain/repositories/i_location_access_repository.dart';
-import 'package:passenger_app/src/features/trip/presentation/bloc/booking_draft/booking_draft_cubit.dart';
+import 'package:passenger_app/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

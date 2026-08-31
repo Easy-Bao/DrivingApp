@@ -24,9 +24,9 @@ import 'package:passenger_app/src/features/location/presentation/bloc/location_a
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places/saved_places_cubit.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places/saved_places_state.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
-import 'package:passenger_app/src/features/trip/presentation/bloc/booking/booking_bloc.dart';
-import 'package:passenger_app/src/features/trip/presentation/bloc/booking_draft/booking_draft_cubit.dart';
-import 'package:passenger_app/src/features/trip/trip_routes.dart';
+import 'package:passenger_app/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
+import 'package:passenger_app/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
+import 'package:passenger_app/src/features/booking/booking_routes.dart';
 import 'package:design_system/design_system.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -188,7 +188,7 @@ class _HomePageState extends State<HomePage> {
               BlocProvider.of<BookingDraftCubit>(context).clear();
               unawaited(
                 context.pushNamed(
-                  TripRoutes.rideSelection,
+                  BookingRoutes.rideSelection,
                   extra: {
                     'destination': draft.destination,
                     'tipAmount': draft.tipAmount,
@@ -385,7 +385,7 @@ class _HomePageState extends State<HomePage> {
     _isSavedPlaceFlowOpen = true;
     try {
       final cubit = BlocProvider.of<SavedPlacesCubit>(context);
-      final selectedPlace = await context.pushNamed<Place>(TripRoutes.mapPin);
+      final selectedPlace = await context.pushNamed<Place>(BookingRoutes.mapPin);
       if (selectedPlace == null || !mounted) return;
       final newPlace = await context.pushNamed<SavedPlace>(
         HomeRoutes.addCategory,
@@ -419,7 +419,7 @@ class _HomePageState extends State<HomePage> {
         ).state.currentAddress;
         unawaited(
           context.pushNamed(
-            TripRoutes.searchDestination,
+            BookingRoutes.searchDestination,
             queryParameters: {'pickupAddress': address},
           ),
         );
@@ -472,14 +472,14 @@ class _HomePageState extends State<HomePage> {
       final address = BlocProvider.of<HomeCubit>(context).state.currentAddress;
       unawaited(
         context.pushNamed(
-          TripRoutes.rideSelection,
+          BookingRoutes.rideSelection,
           extra: syntheticPlace,
           queryParameters: {'pickupAddress': address},
         ),
       );
     } else {
       final cubit = BlocProvider.of<SavedPlacesCubit>(context);
-      final selectedPlace = await context.pushNamed(TripRoutes.mapPin);
+      final selectedPlace = await context.pushNamed(BookingRoutes.mapPin);
       if (selectedPlace == null || selectedPlace is! Place) return;
       if (!mounted) return;
       final updatedPlace = await context.pushNamed<SavedPlace>(

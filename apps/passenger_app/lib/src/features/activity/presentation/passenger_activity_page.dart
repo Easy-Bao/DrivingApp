@@ -10,7 +10,8 @@ import 'package:passenger_app/src/features/activity/presentation/bloc/activity/a
 import 'package:passenger_app/src/features/activity/presentation/widgets/passenger_activity_header_widget.dart';
 import 'package:passenger_app/src/features/activity/presentation/widgets/passenger_activity_history_widget.dart';
 import 'package:passenger_app/src/features/auth/presentation/bloc/session/session_bloc.dart';
-import 'package:passenger_app/src/features/trip/trip_routes.dart';
+import 'package:passenger_app/src/features/active_ride/active_ride_routes.dart';
+import 'package:passenger_app/src/features/booking/booking_routes.dart';
 import 'package:design_system/design_system.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -132,14 +133,14 @@ class _PassengerActivityPageState extends State<PassengerActivityPage> {
     switch (RideStatus.fromString(ride.status)) {
       case RideStatus.accepted || RideStatus.arrived || RideStatus.inTransit:
         unawaited(
-          context.pushNamed(ActivityRoutes.activityTrackDriver, extra: ride),
+          context.pushNamed(ActiveRideRoutes.trackDriver, extra: ride),
         );
       case RideStatus.completed || RideStatus.cancelled:
         unawaited(
           context.pushNamed(ActivityRoutes.activityViewDetails, extra: ride),
         );
       case RideStatus.requested || RideStatus.unknown:
-        unawaited(context.pushNamed(TripRoutes.searchDestination));
+        unawaited(context.pushNamed(BookingRoutes.searchDestination));
     }
   }
 }

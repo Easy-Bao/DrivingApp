@@ -6,7 +6,7 @@ import 'package:passenger_app/src/features/auth/presentation/bloc/session/sessio
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/location/presentation/bloc/location_access/location_access_cubit.dart';
 import 'package:passenger_app/src/features/location/domain/repositories/i_location_access_repository.dart';
-import 'package:passenger_app/src/features/trip/presentation/bloc/booking_draft/booking_draft_cubit.dart';
+import 'package:passenger_app/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

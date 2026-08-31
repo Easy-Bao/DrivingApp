@@ -12,7 +12,8 @@ import 'package:passenger_app/src/features/inbox/inbox_module.dart';
 import 'package:passenger_app/src/features/profile/profile_module.dart';
 import 'package:passenger_app/src/features/saved_places/saved_places_module.dart';
 import 'package:passenger_app/src/features/settings/settings_module.dart';
-import 'package:passenger_app/src/features/trip/trip_module.dart';
+import 'package:passenger_app/src/features/active_ride/active_ride_module.dart';
+import 'package:passenger_app/src/features/booking/booking_module.dart';
 import 'package:passenger_app/src/app/navigation/passenger_navigation_shell.dart';
 import 'package:shared_core/shared_core.dart';
 
@@ -25,7 +26,8 @@ class PassengerModule extends Module {
     InboxModule.binds(i);
     ProfileModule.binds(i);
     SavedPlacesModule.binds(i);
-    TripModule.binds(i);
+    ActiveRideModule.binds(i);
+    BookingModule.binds(i);
 
     i
       ..addLazySingleton<PassengerTabNavigationCoordinator>(
@@ -43,7 +45,8 @@ class PassengerModule extends Module {
   List<ModularRoute> get routes => <ModularRoute>[
     ...ActivityModule.routes,
     ...HomeModule.routes,
-    ...TripModule.routes,
+    ...ActiveRideModule.routes,
+    ...BookingModule.routes,
     ...SavedPlacesModule.routes,
     ...ChatModule.routes,
     ...ProfileModule.routes,

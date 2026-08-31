@@ -1,4 +1,3 @@
-import 'package:chat/chat.dart';
 import 'package:ride/ride.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -15,9 +14,7 @@ import 'package:passenger_app/src/features/activity/presentation/passenger_payme
 import 'package:passenger_app/src/features/activity/presentation/passenger_rating_page.dart';
 import 'package:passenger_app/src/features/activity/presentation/view_details_page.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
-import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
-import 'package:passenger_app/src/features/trip/presentation/track_driver_page.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:passenger_app/src/features/active_ride/domain/repositories/i_track_repository.dart';
 import 'package:design_system/design_system.dart';
 
 class ActivityModule {
@@ -50,29 +47,6 @@ class ActivityModule {
           ride: ride,
           trackRepository: Modular.get<ITrackRepository>(),
           sessionService: Modular.get<SecureSessionService>(),
-        );
-      },
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
-    ChildRoute(
-      name: ActivityRoutes.activityTrackDriver,
-      ActivityRoutes.activityTrackDriverPath,
-      child: (context, GoRouterState state) {
-        final ride = state.extra is RideHistory
-            ? state.extra as RideHistory
-            : null;
-        if (ride == null) {
-          return const Scaffold(
-            body: Center(child: Text('Trip tracking data not available.')),
-          );
-        }
-        return ActivityTrackDriverPage(
-          ride: ride,
-          trackRepository: Modular.get<ITrackRepository>(),
-          chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
-          sessionService: Modular.get<SecureSessionService>(),
-          lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
         );
       },
       transition: AppTransitions.push.toLeft,
