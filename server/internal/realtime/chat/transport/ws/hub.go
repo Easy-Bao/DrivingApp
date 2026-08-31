@@ -2,7 +2,7 @@ package ws
 
 import "sync"
 
-type Hub struct {
+type RoomHub struct {
 	mu      sync.RWMutex
 	clients map[string]client
 }
@@ -12,11 +12,11 @@ type client struct {
 	channel chan []byte
 }
 
-func NewHub() *Hub {
-	return &Hub{clients: make(map[string]client)}
+func NewRoomHub() *RoomHub {
+	return &RoomHub{clients: make(map[string]client)}
 }
 
-func (hub *Hub) Add(id, roomID string) chan []byte {
+func (hub *RoomHub) Add(id, roomID string) chan []byte {
 	hub.mu.Lock()
 	defer hub.mu.Unlock()
 	channel := make(chan []byte, 16)
@@ -27,7 +27,7 @@ func (hub *Hub) Add(id, roomID string) chan []byte {
 	return channel
 }
 
-func (hub *Hub) Remove(id string, channels ...chan []byte) {
+func (hub *RoomHub) Remove(id string, channels ...chan []byte) {
 	hub.mu.Lock()
 	defer hub.mu.Unlock()
 	if existing, ok := hub.clients[id]; ok {
@@ -39,7 +39,7 @@ func (hub *Hub) Remove(id string, channels ...chan []byte) {
 	}
 }
 
-func (hub *Hub) Broadcast(roomID string, message []byte) {
+func (hub *RoomHub) Broadcast(roomID string, message []byte) {
 	hub.mu.RLock()
 	defer hub.mu.RUnlock()
 	for _, existing := range hub.clients {

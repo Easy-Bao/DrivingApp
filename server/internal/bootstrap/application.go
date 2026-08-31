@@ -13,14 +13,14 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/logger"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	platformmigration "github.com/Easy-Bao/DrivingApp/server/internal/platform/migration"
-	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/stream"
+	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/hub"
 )
 
 type Application struct {
 	server         *http.Server
 	databaseClient *ent.Client
 	redisClient    redisClient
-	eventHub       *stream.Hub
+	eventHub       *hub.Hub
 	logger         *slog.Logger
 }
 

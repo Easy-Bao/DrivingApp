@@ -19,7 +19,7 @@ const (
 )
 
 type Handler struct {
-	hub            *Hub
+	hub            *RoomHub
 	authenticate   Authenticator
 	sink           EventSink
 	rooms          RoomAuthorizer
@@ -39,7 +39,7 @@ type RoomAuthorizer interface {
 	CanAccessRoom(ctx context.Context, roomID, userID string) (bool, error)
 }
 
-func NewHandler(hub *Hub, authenticate Authenticator) *Handler {
+func NewHandler(hub *RoomHub, authenticate Authenticator) *Handler {
 	handler := &Handler{
 		hub:            hub,
 		authenticate:   authenticate,
@@ -49,7 +49,7 @@ func NewHandler(hub *Hub, authenticate Authenticator) *Handler {
 	return handler
 }
 
-func NewHandlerWithSink(hub *Hub, authenticate Authenticator, sink EventSink, rooms ...RoomAuthorizer) *Handler {
+func NewHandlerWithSink(hub *RoomHub, authenticate Authenticator, sink EventSink, rooms ...RoomAuthorizer) *Handler {
 	handler := NewHandler(hub, authenticate)
 	handler.sink = sink
 	if len(rooms) > 0 {

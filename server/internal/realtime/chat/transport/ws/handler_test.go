@@ -29,7 +29,7 @@ func (rejectingSinkStub) Handle(context.Context, []byte) error {
 }
 
 func TestChatWebSocketOriginPolicy(t *testing.T) {
-	handler := NewHandler(NewHub(), nil).WithAllowedOrigins([]string{"https://app.example"})
+	handler := NewHandler(NewRoomHub(), nil).WithAllowedOrigins([]string{"https://app.example"})
 
 	nativeRequest := httptest.NewRequest("GET", "/api/v1/chat/ws", nil)
 	if !handler.originAllowed(nativeRequest) {
@@ -96,7 +96,7 @@ func TestEnrichChatEventRejectsNonStringType(t *testing.T) {
 
 func TestChatWebSocketDoesNotBroadcastRejectedMessages(t *testing.T) {
 	handler := NewHandlerWithSink(
-		NewHub(),
+		NewRoomHub(),
 		authenticatorStub{},
 		rejectingSinkStub{},
 		roomAuthorizerStub{},

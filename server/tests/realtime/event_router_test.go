@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/ws"
+	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/transport/ws"
 )
 
 type eventSink struct{ called bool }

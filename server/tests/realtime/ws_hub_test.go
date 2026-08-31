@@ -3,11 +3,11 @@ package realtime_test
 import (
 	"testing"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/ws"
+	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/transport/ws"
 )
 
 func TestHubBroadcastsOnlyWithinTheSubscribedRoom(t *testing.T) {
-	hub := ws.NewHub()
+	hub := ws.NewRoomHub()
 	roomOne := hub.Add("user-1", "room-1")
 	roomTwo := hub.Add("user-2", "room-2")
 	hub.Broadcast("room-1", []byte("private message"))

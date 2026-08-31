@@ -37,8 +37,7 @@ import (
 	geo "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/adapter"
 	geoapplication "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/application"
 	geoh "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/transport/http"
-	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/stream"
-	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/ws"
+	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/hub"
 	ridepostgres "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/postgres"
 	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
 	ridehttp "github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/http"
@@ -49,7 +48,7 @@ import (
 	redisclient "github.com/redis/go-redis/v9"
 )
 
-func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclient.Client, applicationLogger *slog.Logger) (*chi.Mux, *stream.Hub) {
+func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclient.Client, applicationLogger *slog.Logger) (*chi.Mux, *hub.Hub) {
 	verifier := security.NewTokenManager(config.JWTSecret)
 	adminAuthorizer := security.NewAdminAuthorizer(config.AdminUserIDs)
 	privateObjectStore := storagepostgres.NewObjectStore(databaseClient)
@@ -90,7 +89,7 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 		return rideapplication.RouteMetrics{DistanceKm: route.DistanceKm, DurationMinutes: route.DurationMin}, nil
 	})
 	ridesRepository := ridepostgres.NewRideRepository(databaseClient, config.Pricing.PlatformCommissionBPS)
-	eventHub := stream.NewHub()
+	eventHub := hub.NewHub()
 	assignmentProjection := assignmentadapter.NewMemoryProjection()
 	realtimePublisher := eventadapter.NewMemoryPublisher(assignmentProjection, eventHub)
 	ridesService := rideapplication.NewRideServiceWithRouteCalculator(
@@ -135,17 +134,17 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 		WithEventPublisher(realtimePublisher).
 		WithRideAssignmentLookup(rideAssignments).
 		WithLogger(applicationLogger)
-	events := ws.NewEventRouter()
+	events := chatws.NewEventRouter()
 	chatEventHandler := chatws.NewEventHandler(chatService)
 	events.Register("CHAT_MESSAGE", chatEventHandler)
 	events.Register("message", chatEventHandler)
 	events.Register("typing", chatEventHandler)
 	router.Handle(
 		api.V1Prefix+"/chat/ws",
-		ws.NewHandlerWithSink(ws.NewHub(), verifier, events, chatService).
+		chatws.NewHandlerWithSink(chatws.NewRoomHub(), verifier, events, chatService).
 			WithAllowedOrigins(config.Security.AllowedOrigins),
 	)
-	router.Handle(api.V1Prefix+"/realtime/ws", stream.NewHandler(eventHub, verifier, config.Security.AllowedOrigins))
+	router.Handle(api.V1Prefix+"/realtime/ws", hub.NewHandler(eventHub, verifier, config.Security.AllowedOrigins))
 	geoh.NewRouter(geoService, verifier).RegisterRoutes(router)
 	chath.NewRouter(chatService, verifier).RegisterRoutes(router)
 	registerHealthRoutes(router, databaseClient, redisClient)
