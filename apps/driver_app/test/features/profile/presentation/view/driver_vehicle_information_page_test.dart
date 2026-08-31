@@ -3,17 +3,56 @@ import 'package:driver_app/src/features/profile/presentation/bloc/account/accoun
 import 'package:driver_app/src/features/profile/presentation/bloc/account/account_state.dart';
 import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
 import 'package:driver_app/src/features/profile/presentation/view/driver_vehicle_information_page.dart';
+import 'package:driver_app/src/features/profile/domain/repositories/i_driver_profile_repository.dart';
+import 'package:foundation/foundation.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../../helpers/fake_driver_profile_repository.dart';
+class _FakeDriverProfileRepository implements IDriverProfileRepository {
+  _FakeDriverProfileRepository(this.account);
+
+  DriverAccountSnapshot account;
+
+  @override
+  DriverAccountSnapshot getCachedAccount() => account;
+
+  @override
+  Future<Either<Failure, DriverAccountSnapshot>> refreshAccount() async {
+    return Right(account);
+  }
+
+  @override
+  Future<Either<Failure, DriverAccountSnapshot>> updateAccount({
+    required DriverAccountSnapshot currentAccount,
+    required String name,
+    required String phone,
+    required String email,
+    required String vehicleType,
+    required String plateNumber,
+  }) async {
+    account = DriverAccountSnapshot(
+      name: name,
+      phone: phone,
+      email: email,
+      vehicleType: vehicleType,
+      plateNumber: plateNumber,
+      ratingLabel: currentAccount.ratingLabel,
+      totalTrips: currentAccount.totalTrips,
+      completedTrips: currentAccount.completedTrips,
+      lifetimeEarnings: currentAccount.lifetimeEarnings,
+      averageRating: currentAccount.averageRating,
+    );
+    return Right(account);
+  }
+}
 
 void main() {
   testWidgets('updates vehicle information without exposing personal fields', (
     tester,
   ) async {
-    final repository = FakeDriverProfileRepository(
+    final repository = _FakeDriverProfileRepository(
       const DriverAccountSnapshot(
         name: 'Bao Driver',
         phone: '+639170000001',
