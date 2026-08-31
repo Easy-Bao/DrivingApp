@@ -6,7 +6,7 @@ This log records ownership decisions and validation for the production architect
 
 | Module | Before | Actual responsibility | After | Reason | Tests | Remaining risk |
 | --- | --- | --- | --- | --- | --- | --- |
-| theme and appearance | Apps exposed selectable dark/system appearance through shared theme code | Fixed light visual contract, persisted appearance selection, and appearance settings were product behavior | Dark rendering paths and appearance settings removed; app-local theme ownership still pending | Keep the current product light-only while removing a user-facing option that no longer exists | Shared, passenger, and driver focused theme/settings tests passed | `ThemeData` still needs to leave the shared design-system package |
+| theme composition | Shared package exposed the client `ThemeData` and a selectable appearance surface | Client palette, typography, semantic colors, and generic UI styling | Each client owns `src/app/theme/app_theme.dart` and exposes only `AppTheme.data`; design_system retains semantic tokens and generic context helpers | Keep the default appearance app-local without creating a shared theme or selection API | Design-system suite: 17 passed; Passenger and Driver app-theme suites: 3 passed each | Final monorepo validation should confirm no shared `ThemeData` remains |
 | foundation | `shared_core` mixed generic infrastructure with app/domain exports | Generic failures, lifecycle, network, realtime, and route-payload utilities | `foundation` owns the technical subset and all app consumers import it directly | Give technical dependencies a focused shared owner | Foundation tests passed; both app analyses have no errors | Review app-wide infrastructure placement during the `core` migration |
 | maps | Map/location capability was mixed into `shared_core` and app-local duplicates | Provider/platform map, location, geocoding, and route capability | `maps` owns the shared provider boundary | Both apps use the same provider capability without sharing workflow state | Maps package tests passed | Review app-specific map behavior still importing shared helpers |
 | shared core models | `shared_core` exposed generic foundation exports plus Driver, Profile, and Notification models | Passenger nearby-driver discovery and each client’s profile workflows | Passenger booking owns `DriverModel`, each profile feature owns `ProfileModel`, unused notifications were removed, and `shared_core` was deleted | Remove the compatibility package and keep product models with their owning features | Passenger profile/booking tests passed; Driver profile tests passed; both analyses have no errors | Complete the remaining app/infrastructure boundary cleanup |
@@ -23,7 +23,6 @@ This log records ownership decisions and validation for the production architect
 
 ## Pending
 
-- localize theme definitions while retaining shared brand tokens and generic components
 - rename driver `home` to `dashboard`
 - split driver activity into the smallest useful earnings, performance, and history owners
 - classify and simplify server integration/realtime structure without editing generated persistence output

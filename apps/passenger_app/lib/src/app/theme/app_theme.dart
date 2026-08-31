@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:design_system/src/theme/app_design_tokens.dart';
-import 'package:design_system/src/theme/easy_ride_semantic_colors.dart';
+import 'package:design_system/design_system.dart';
 
-/// The semantic Material themes shared by passenger and driver clients.
-class EasyRideTheme {
-  EasyRideTheme._();
+/// The default Material theme composed for the Passenger client.
+class AppTheme {
+  AppTheme._();
 
-  static const _lightCanvas = Color(0xFFF8F9FA);
+  static const _defaultCanvas = Color(0xFFF8F9FA);
 
-  static const _lightScheme = ColorScheme.light(
+  static const _defaultScheme = ColorScheme.light(
     primary: Color(0xFF100E11),
     onPrimary: Color(0xFFFFFFFF),
     primaryContainer: Color(0xFFF5F5EF),
@@ -34,14 +33,11 @@ class EasyRideTheme {
     scrim: Color(0xFF000000),
   );
 
-  static ThemeData get light => _build(
-    colorScheme: _lightScheme,
-    canvas: _lightCanvas,
-    semanticColors: EasyRideSemanticColors.light,
+  static ThemeData get data => _build(
+    colorScheme: _defaultScheme,
+    canvas: _defaultCanvas,
+    semanticColors: EasyRideSemanticColors.defaults,
   );
-
-  /// Temporary light-theme alias for consumers migrating to [light].
-  static ThemeData get data => light;
 
   static ThemeData _build({
     required ColorScheme colorScheme,

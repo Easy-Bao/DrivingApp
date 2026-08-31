@@ -1,9 +1,9 @@
+import 'package:passenger_app/src/app/theme/app_theme.dart';
 import 'package:passenger_app/src/features/booking/booking.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:passenger_app/src/features/booking/presentation/widgets/ride_options_panel_widget.dart';
 import 'package:passenger_app/src/features/booking/presentation/widgets/ride_trip_summary_widget.dart';
-import 'package:design_system/design_system.dart';
 
 void main() {
   const fareResult = FareEstimate(
@@ -29,7 +29,7 @@ void main() {
     );
     final notesController = TextEditingController();
     return MaterialApp(
-      theme: EasyRideTheme.light,
+      theme: AppTheme.data,
       home: Scaffold(
         body: RideOptionsPanelWidget(
           passengerName: passengerName,
@@ -213,7 +213,7 @@ void main() {
         '1390 Pear Avenue, Mountain View, California 94043, United States of America';
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: AppTheme.data,
         home: const Scaffold(
           body: SizedBox(
             width: 320,

@@ -1,7 +1,7 @@
+import 'package:passenger_app/src/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:passenger_app/src/features/profile/presentation/help_center_page.dart';
-import 'package:design_system/design_system.dart';
 
 void main() {
   testWidgets('uses the passenger topics without placeholder actions', (
@@ -10,7 +10,7 @@ void main() {
     var backCount = 0;
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: AppTheme.data,
         home: HelpCenterPage(onBack: () => backCount++),
       ),
     );

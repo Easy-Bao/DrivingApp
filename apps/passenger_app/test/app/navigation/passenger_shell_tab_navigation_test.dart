@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:go_router/go_router.dart';
+import 'package:passenger_app/src/app/theme/app_theme.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/auth/domain/entities/passenger_session.dart';
@@ -53,7 +54,7 @@ void main() {
       BlocProvider<SessionBloc>.value(
         value: sessionBloc,
         child: MaterialApp.router(
-          theme: EasyRideTheme.light,
+          theme: AppTheme.data,
           routerConfig: router,
         ),
       ),
@@ -111,7 +112,7 @@ void main() {
       BlocProvider<SessionBloc>.value(
         value: sessionBloc,
         child: MaterialApp.router(
-          theme: EasyRideTheme.light,
+          theme: AppTheme.data,
           routerConfig: router,
         ),
       ),
@@ -142,11 +143,11 @@ void main() {
       expect(inkWell.splashFactory, NoSplash.splashFactory);
       expect(
         inkWell.overlayColor?.resolve({WidgetState.pressed}),
-        EasyRideTheme.light.colorScheme.surface.withValues(alpha: 0),
+        AppTheme.data.colorScheme.surface.withValues(alpha: 0),
       );
       expect(
         inkWell.overlayColor?.resolve({WidgetState.hovered}),
-        EasyRideTheme.light.colorScheme.surface.withValues(alpha: 0),
+        AppTheme.data.colorScheme.surface.withValues(alpha: 0),
       );
     }
 

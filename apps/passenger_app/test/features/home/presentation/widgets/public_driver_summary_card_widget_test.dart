@@ -1,8 +1,8 @@
+import 'package:passenger_app/src/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:passenger_app/src/features/home/domain/entities/public_driver_summary.dart';
 import 'package:passenger_app/src/features/home/presentation/widgets/public_driver_summary_card_widget.dart';
-import 'package:design_system/design_system.dart';
 
 void main() {
   testWidgets('shows ratings while explaining location privacy', (
@@ -10,7 +10,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: AppTheme.data,
         home: const Scaffold(
           body: PublicDriverSummaryCardWidget(
             summaries: [

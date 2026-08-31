@@ -1,3 +1,4 @@
+import 'package:driver_app/src/app/theme/app_theme.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/activity/presentation/bloc/performance/driver_performance_cubit.dart';
 import 'package:driver_app/src/features/activity/domain/entities/driver_activity_stats.dart';
@@ -8,7 +9,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:design_system/design_system.dart';
 
 class _MockActivityRepository extends Mock
     implements IDriverActivityRepository {}
@@ -42,7 +42,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: AppTheme.data,
         home: BlocProvider<DriverPerformanceCubit>(
           create: (_) => DriverPerformanceCubit(
             repository: repository,

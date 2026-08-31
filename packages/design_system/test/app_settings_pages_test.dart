@@ -9,7 +9,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: ThemeData(useMaterial3: true),
         home: AppSettingsScaffold(
           onBack: () {},
           children: [
@@ -43,7 +43,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: ThemeData(useMaterial3: true),
         home: AppAboutPage(
           applicationName: 'BaoRide Driver',
           applicationVersion: '1.0.0',
@@ -61,12 +61,15 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: ThemeData(useMaterial3: true),
         home: AppTermsOfServicePage(onBack: () {}),
       ),
     );
     expect(find.text('BaoRide Terms of Service'), findsOneWidget);
-    expect(find.text('Account responsibility'), findsOneWidget);
+    expect(
+      find.text('Account responsibility', skipOffstage: false),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 }

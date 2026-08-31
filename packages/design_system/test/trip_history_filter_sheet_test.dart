@@ -8,7 +8,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: ThemeData(useMaterial3: true),
         home: const Scaffold(
           body: TripHistoryFilterSheet(
             selectedFilter: TripHistoryFilter.completed,
@@ -23,7 +23,7 @@ void main() {
     expect(description.style?.fontSize, greaterThanOrEqualTo(12));
     expect(
       description.style?.color,
-      EasyRideTheme.light.colorScheme.onSurfaceVariant,
+      ThemeData(useMaterial3: true).colorScheme.onSurfaceVariant,
     );
     expect(tester.takeException(), isNull);
   });

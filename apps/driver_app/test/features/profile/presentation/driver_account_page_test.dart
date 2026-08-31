@@ -1,3 +1,4 @@
+import 'package:driver_app/src/app/theme/app_theme.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/profile/presentation/bloc/account/account_cubit.dart';
 import 'package:driver_app/src/features/profile/presentation/driver_account_page.dart';
@@ -12,7 +13,6 @@ import 'package:go_router_modular/testing.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:foundation/foundation.dart';
-import 'package:design_system/design_system.dart';
 
 class _MockSecureStorage extends Mock implements FlutterSecureStorage {}
 
@@ -79,7 +79,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: AppTheme.data,
         home: BlocProvider(
           create: (_) => DriverAccountCubit(repository: repository)..load(),
           child: const DriverAccountPage(onLogout: _noopLogout),
@@ -112,10 +112,10 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('uses the fixed light account surface contract', (tester) async {
+  testWidgets('uses the fixed default account surface contract', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: AppTheme.data,
         home: BlocProvider(
           create: (_) => DriverAccountCubit(repository: repository)..load(),
           child: const DriverAccountPage(onLogout: _noopLogout),
@@ -127,11 +127,8 @@ void main() {
     final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
     final title = tester.widget<Text>(find.text('Account'));
 
-    expect(
-      scaffold.backgroundColor,
-      EasyRideTheme.light.scaffoldBackgroundColor,
-    );
-    expect(title.style?.color, EasyRideTheme.light.colorScheme.onSurface);
+    expect(scaffold.backgroundColor, AppTheme.data.scaffoldBackgroundColor);
+    expect(title.style?.color, AppTheme.data.colorScheme.onSurface);
     expect(tester.takeException(), isNull);
   });
 }

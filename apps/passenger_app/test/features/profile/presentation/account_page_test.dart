@@ -1,3 +1,4 @@
+import 'package:passenger_app/src/app/theme/app_theme.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,7 +7,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/profile/presentation/bloc/profile/profile_cubit.dart';
 import 'package:passenger_app/src/features/profile/presentation/account_page.dart';
 import 'package:passenger_app/src/features/profile/presentation/widgets/profile_avatar_widget.dart';
-import 'package:design_system/design_system.dart';
 
 class MockProfileCubit extends MockCubit<ProfileState>
     implements ProfileCubit {}
@@ -31,7 +31,7 @@ void main() {
     var profileTapCount = 0;
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: AppTheme.data,
         home: BlocProvider<ProfileCubit>.value(
           value: profileCubit,
           child: AccountPage(onProfileTap: () => profileTapCount++),
@@ -49,12 +49,12 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('uses the fixed light surface and foreground contract', (
+  testWidgets('uses the fixed default surface and foreground contract', (
     tester,
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: AppTheme.data,
         home: BlocProvider<ProfileCubit>.value(
           value: profileCubit,
           child: const AccountPage(),
@@ -67,9 +67,9 @@ void main() {
 
     expect(
       scaffold.backgroundColor,
-      EasyRideTheme.light.scaffoldBackgroundColor,
+      AppTheme.data.scaffoldBackgroundColor,
     );
-    expect(title.style?.color, EasyRideTheme.light.colorScheme.onSurface);
+    expect(title.style?.color, AppTheme.data.colorScheme.onSurface);
     expect(tester.takeException(), isNull);
   });
 
@@ -79,7 +79,7 @@ void main() {
     var logoutCount = 0;
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: AppTheme.data,
         home: BlocProvider<ProfileCubit>.value(
           value: profileCubit,
           child: AccountPage(onLogout: () => logoutCount++),

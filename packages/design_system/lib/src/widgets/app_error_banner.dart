@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:design_system/src/theme/easy_ride_theme_context.dart';
+import 'package:design_system/src/theme/design_system_context.dart';
 
 /// Presents one recoverable page or load failure with its retry action.
 class AppErrorBanner extends StatelessWidget {

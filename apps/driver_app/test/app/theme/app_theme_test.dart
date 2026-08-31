@@ -1,10 +1,11 @@
+import 'package:design_system/design_system.dart';
+import 'package:driver_app/src/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:design_system/design_system.dart';
 
 void main() {
-  test('light theme exposes the approved semantic palette', () {
-    final theme = EasyRideTheme.light;
+  test('exposes the approved default semantic palette', () {
+    final theme = AppTheme.data;
     final scheme = theme.colorScheme;
     final semantic = theme.extension<EasyRideSemanticColors>();
 
@@ -16,7 +17,7 @@ void main() {
     expect(scheme.secondary, const Color(0xFF8A4F35));
     expect(scheme.onSurfaceVariant, const Color(0xFF5F6670));
     expect(scheme.error, const Color(0xFFB3261E));
-    expect(semantic, EasyRideSemanticColors.light);
+    expect(semantic, EasyRideSemanticColors.defaults);
     expect(_contrast(scheme.onSurface, scheme.surface), greaterThan(4.5));
     expect(
       _contrast(scheme.onSurfaceVariant, scheme.surface),
@@ -24,8 +25,8 @@ void main() {
     );
   });
 
-  test('light theme exposes the balanced type scale', () {
-    final theme = EasyRideTheme.light;
+  test('exposes the balanced type scale', () {
+    final theme = AppTheme.data;
     expect(theme.textTheme.headlineLarge?.fontSize, 28);
     expect(theme.textTheme.headlineLarge?.fontWeight, FontWeight.w800);
     expect(theme.textTheme.titleLarge?.fontSize, 20);
@@ -36,12 +37,12 @@ void main() {
     expect(theme.textTheme.labelLarge?.fontSize, 14);
   });
 
-  testWidgets('light floating tab bar keeps a visible active capsule', (
+  testWidgets('keeps the active tab capsule visible in default mode', (
     tester,
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: AppTheme.data,
         home: Scaffold(
           body: Align(
             alignment: Alignment.bottomCenter,
@@ -61,7 +62,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final scheme = EasyRideTheme.light.colorScheme;
+    final scheme = AppTheme.data.colorScheme;
     final tabBar = find.byType(AppFloatingTabBar);
     final tabContainer = tester.widget<Container>(
       find.descendant(of: tabBar, matching: find.byType(Container)),

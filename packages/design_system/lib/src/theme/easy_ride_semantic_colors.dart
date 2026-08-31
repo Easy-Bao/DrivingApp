@@ -19,7 +19,7 @@ class EasyRideSemanticColors extends ThemeExtension<EasyRideSemanticColors> {
     required this.warmAccent,
   });
 
-  static const light = EasyRideSemanticColors(
+  static const defaults = EasyRideSemanticColors(
     success: Color(0xFF198754),
     onSuccess: Color(0xFFFFFFFF),
     warning: Color(0xFFB26A00),

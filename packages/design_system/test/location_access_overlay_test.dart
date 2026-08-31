@@ -14,7 +14,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: ThemeData(useMaterial3: true),
         home: Stack(
           children: [
             const ColoredBox(
@@ -58,7 +58,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: ThemeData(useMaterial3: true),
         home: LocationAccessOverlay(
           state: LocationAccessOverlayState.permissionDenied,
           appName: 'EasyRide',
@@ -80,7 +80,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: ThemeData(useMaterial3: true),
         home: const LocationAccessOverlay(
           state: LocationAccessOverlayState.permissionDeniedForever,
           appName: 'BaoRide',

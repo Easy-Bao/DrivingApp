@@ -1,7 +1,7 @@
+import 'package:driver_app/src/app/theme/app_theme.dart';
 import 'package:driver_app/src/features/activity/presentation/driver_trip_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:design_system/design_system.dart';
 
 void main() {
   testWidgets('renders the hydrated passenger trip detail card', (
@@ -12,7 +12,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: AppTheme.data,
         home: const DriverTripDetailPage(
           trip: {
             'id': 42,

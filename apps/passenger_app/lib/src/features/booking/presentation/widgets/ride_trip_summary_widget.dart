@@ -1,3 +1,4 @@
+import 'package:passenger_app/src/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widget_previews.dart';
@@ -301,7 +302,7 @@ class _DashedRoutePainter extends CustomPainter {
 )
 Widget rideTripSummaryLongAddressPreview() {
   return MaterialApp(
-    theme: EasyRideTheme.light,
+    theme: AppTheme.data,
     home: const Scaffold(
       body: Padding(
         padding: EdgeInsets.all(16),

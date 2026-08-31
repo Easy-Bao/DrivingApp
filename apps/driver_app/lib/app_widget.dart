@@ -4,6 +4,7 @@ import 'package:driver_app/src/core/services/background_telemetry_service.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:maps/maps.dart';
 import 'package:driver_app/src/app/navigation/app_routes.dart';
+import 'package:driver_app/src/app/theme/app_theme.dart';
 import 'package:driver_app/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver_app/src/features/location/presentation/bloc/location_access/driver_location_access_state.dart';
 import 'package:driver_app/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
@@ -100,7 +101,7 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
       child:
           BlocBuilder<DriverLocationAccessCubit, DriverLocationAccessViewState>(
             builder: (context, locationState) => ModularApp.router(
-              theme: EasyRideTheme.light,
+              theme: AppTheme.data,
               debugShowCheckedModeBanner: false,
               title: 'BaoRide Driver',
               builder: (context, child) =>

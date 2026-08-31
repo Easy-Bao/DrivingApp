@@ -9,7 +9,7 @@ void main() {
     var emailTaps = 0;
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: ThemeData(useMaterial3: true),
         home: AppHelpCenterPage(
           onBack: () {},
           onEmailSupport: () => emailTaps++,

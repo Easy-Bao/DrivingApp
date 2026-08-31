@@ -1,6 +1,7 @@
 import 'package:maps/maps.dart';
 import 'package:driver_app/app_module.dart';
 import 'package:driver_app/app_widget.dart';
+import 'package:driver_app/src/app/theme/app_theme.dart';
 import 'package:driver_app/src/core/constants/env_config.dart';
 import 'package:driver_app/src/core/services/background_telemetry_service.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
@@ -54,6 +55,7 @@ void main() async {
   } catch (error, stackTrace) {
     runApp(
       SafeClientErrorApp(
+        theme: AppTheme.data,
         message: ErrorHandler.getErrorMessage(error, stackTrace),
       ),
     );

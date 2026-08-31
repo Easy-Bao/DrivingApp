@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:design_system/src/theme/app_design_tokens.dart';
-import 'package:design_system/src/theme/easy_ride_theme_context.dart';
+import 'package:design_system/src/theme/design_system_context.dart';
 import 'package:design_system/src/widgets/swipe_active_tab_indicator.dart';
 
 typedef AppTabIconBuilder =

@@ -1,3 +1,4 @@
+import 'package:driver_app/src/app/theme/app_theme.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/activity/presentation/bloc/earnings/earnings_cubit.dart';
 import 'package:driver_app/src/features/activity/domain/entities/driver_activity_stats.dart';
@@ -11,7 +12,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:foundation/foundation.dart';
-import 'package:design_system/design_system.dart';
 
 class _MockSecureStorage extends Mock implements FlutterSecureStorage {}
 
@@ -93,7 +93,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: AppTheme.data,
         home: BlocProvider(
           create: (_) => DriverEarningsCubit(
             repository: _FakeActivityRepository(),

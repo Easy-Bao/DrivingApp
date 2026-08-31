@@ -7,7 +7,7 @@ void main() {
     var retryCount = 0;
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: ThemeData(useMaterial3: true),
         home: AppErrorBanner(
           message: 'The account could not be loaded.',
           onRetry: () => retryCount++,

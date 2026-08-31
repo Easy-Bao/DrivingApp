@@ -35,7 +35,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: ThemeData(useMaterial3: true),
         home: Builder(
           builder: (context) {
             toastContext = context;
@@ -57,7 +57,10 @@ void main() {
           .last,
     );
     final decoration = toastContainer.decoration! as BoxDecoration;
-    expect(decoration.color, EasyRideTheme.light.colorScheme.errorContainer);
+    expect(
+      decoration.color,
+      ThemeData(useMaterial3: true).colorScheme.errorContainer,
+    );
 
     CustomToast.dismiss();
     await tester.pump();

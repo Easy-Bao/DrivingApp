@@ -1,3 +1,4 @@
+import 'package:driver_app/src/app/theme/app_theme.dart';
 import 'package:driver_app/src/features/profile/presentation/bloc/account/account_cubit.dart';
 import 'package:driver_app/src/features/profile/presentation/bloc/account/account_state.dart';
 import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
@@ -5,7 +6,6 @@ import 'package:driver_app/src/features/profile/presentation/driver_personal_det
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:design_system/design_system.dart';
 
 import '../helpers/fake_driver_profile_repository.dart';
 
@@ -28,7 +28,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: AppTheme.data,
         home: BlocProvider<DriverAccountCubit>.value(
           value: cubit,
           child: DriverPersonalDetailsPage(onBack: () {}),

@@ -1,7 +1,7 @@
+import 'package:driver_app/src/app/theme/app_theme.dart';
 import 'package:driver_app/src/features/help_center/presentation/driver_help_center_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:design_system/design_system.dart';
 
 void main() {
   testWidgets('filters typed driver help topics without placeholder contacts', (
@@ -9,7 +9,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: AppTheme.data,
         home: DriverHelpCenterPage(onBack: () {}),
       ),
     );

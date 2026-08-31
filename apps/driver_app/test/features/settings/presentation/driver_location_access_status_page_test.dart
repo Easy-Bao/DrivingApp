@@ -1,3 +1,4 @@
+import 'package:driver_app/src/app/theme/app_theme.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:maps/maps.dart';
 import 'package:driver_app/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
@@ -7,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:design_system/design_system.dart';
 
 class _MockDriverLocationAccessCubit
     extends MockCubit<DriverLocationAccessViewState>
@@ -28,7 +28,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.light,
+        theme: AppTheme.data,
         home: BlocProvider<DriverLocationAccessCubit>.value(
           value: cubit,
           child: DriverLocationAccessStatusPage(onBack: () {}),

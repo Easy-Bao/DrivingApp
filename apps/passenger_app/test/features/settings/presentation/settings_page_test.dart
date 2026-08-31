@@ -1,3 +1,4 @@
+import 'package:passenger_app/src/app/theme/app_theme.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,7 +7,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/location/presentation/bloc/location_access/location_access_cubit.dart';
 import 'package:passenger_app/src/features/location/presentation/bloc/location_access/location_access_state.dart';
 import 'package:passenger_app/src/features/settings/presentation/settings_page.dart';
-import 'package:design_system/design_system.dart';
 
 class _MockLocationAccessCubit extends MockCubit<LocationAccessViewState>
     implements LocationAccessCubit {}
@@ -26,7 +26,7 @@ void main() {
           BlocProvider<LocationAccessCubit>.value(value: locationCubit),
         ],
         child: MaterialApp(
-          theme: EasyRideTheme.light,
+          theme: AppTheme.data,
           home: SettingsPage(
             onLocationTap: () => locationTaps++,
             onHelpCenterTap: () => helpTaps++,
