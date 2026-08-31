@@ -2,7 +2,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/active_ride/domain/entities/accepted_booking.dart';
 import 'package:passenger_app/src/features/booking/domain/entities/booking_offer.dart';
 import 'package:passenger_app/src/features/booking/domain/entities/booking_session_request.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 abstract class IBookingRepository {
   Future<Either<Failure, String>> createSession(BookingSessionRequest request);

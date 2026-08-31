@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/fare_remote_data_source.dart';
 import 'package:passenger_app/src/features/booking/domain/repositories/i_fare_repository.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class FareRepository implements IFareRepository {
   FareRepository({required FareRemoteDataSource remoteDataSource})

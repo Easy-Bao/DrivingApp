@@ -4,7 +4,7 @@ import 'package:passenger_app/src/features/saved_places/data/models/saved_place_
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger_app/src/features/saved_places/domain/repositories/i_saved_places_repository.dart';
 import 'package:passenger_app/src/features/saved_places/domain/saved_place_defaults.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class SavedPlacesCubit extends Cubit<SavedPlacesState> {
   final ISavedPlacesRepository _repository;

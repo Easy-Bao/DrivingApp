@@ -1,5 +1,5 @@
 import 'package:passenger_app/src/features/activity/activity.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class ActivityOverview {
   final OffsetPage<RideHistory> rides;

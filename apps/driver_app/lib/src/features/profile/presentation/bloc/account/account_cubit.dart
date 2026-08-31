@@ -1,7 +1,7 @@
 import 'package:driver_app/src/features/profile/presentation/bloc/account/account_state.dart';
 import 'package:driver_app/src/features/profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class DriverAccountCubit extends Cubit<DriverAccountState> {
   final IDriverProfileRepository _repository;

@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/activity/data/data_sources/passenger_activity_remote_data_source.dart';
 import 'package:passenger_app/src/features/activity/data/repositories/activity_repository.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class MockPassengerActivityRemoteDataSource extends Mock
     implements PassengerActivityRemoteDataSource {}

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/features/booking/domain/entities/booking_offer.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
 class FindingDriverBidsPanelWidget extends StatelessWidget {

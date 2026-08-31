@@ -1,6 +1,6 @@
 import 'package:driver_app/src/features/active_ride/active_ride.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 abstract class IDriverRideRepository {
   Future<Either<Failure, void>> acceptRide({

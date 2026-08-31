@@ -1,5 +1,6 @@
+import 'package:passenger_app/src/features/profile/domain/entities/profile_model.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 abstract class IPassengerProfileRepository {
   ProfileModel getCachedProfile();

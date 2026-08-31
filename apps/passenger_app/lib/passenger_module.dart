@@ -15,7 +15,7 @@ import 'package:passenger_app/src/features/settings/settings_module.dart';
 import 'package:passenger_app/src/features/active_ride/active_ride_module.dart';
 import 'package:passenger_app/src/features/booking/booking_module.dart';
 import 'package:passenger_app/src/app/navigation/passenger_navigation_shell.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class PassengerModule extends Module {
   @override

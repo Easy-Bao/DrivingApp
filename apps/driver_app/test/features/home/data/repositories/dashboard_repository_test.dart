@@ -12,7 +12,7 @@ import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MockDriverAvailabilityRemoteDataSource extends Mock

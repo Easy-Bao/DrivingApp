@@ -11,7 +11,7 @@ import 'package:driver_app/src/features/activity/domain/repositories/i_driver_ac
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class _MockActivityRepository extends Mock
     implements IDriverActivityRepository {}

@@ -1,3 +1,4 @@
+import 'package:passenger_app/src/features/booking/booking.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -5,7 +6,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/entities/driver_review.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:passenger_app/src/features/driver_profile/presentation/driver_profile_details_sheet.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 

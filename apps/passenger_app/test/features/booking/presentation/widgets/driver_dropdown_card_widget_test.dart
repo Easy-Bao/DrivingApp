@@ -1,3 +1,4 @@
+import 'package:passenger_app/src/features/booking/booking.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart' hide State;
@@ -5,7 +6,7 @@ import 'package:passenger_app/src/features/driver_profile/domain/entities/driver
 import 'package:passenger_app/src/features/driver_profile/domain/entities/driver_review.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:passenger_app/src/features/booking/presentation/widgets/driver_dropdown_card_widget.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 const driver = DriverModel(
   id: 'driver-1',

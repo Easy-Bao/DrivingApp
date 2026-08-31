@@ -6,7 +6,7 @@ import 'package:passenger_app/src/features/active_ride/domain/entities/accepted_
 import 'package:passenger_app/src/features/booking/domain/entities/booking_offer.dart';
 import 'package:passenger_app/src/features/booking/domain/entities/booking_session_request.dart';
 import 'package:passenger_app/src/features/booking/domain/repositories/i_booking_repository.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class BookingRepository implements IBookingRepository {
   BookingRepository({required BookingRemoteDataSource dataSource})

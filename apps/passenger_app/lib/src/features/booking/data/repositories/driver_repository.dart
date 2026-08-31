@@ -1,10 +1,11 @@
+import 'package:passenger_app/src/features/booking/booking.dart';
 import 'package:passenger_app/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/driver_discovery_remote_data_source.dart';
 import 'package:passenger_app/src/features/booking/domain/repositories/i_driver_repository.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class DriverRepository implements IDriverRepository {
   final DriverDiscoveryRemoteDataSource _discoveryDataSource;

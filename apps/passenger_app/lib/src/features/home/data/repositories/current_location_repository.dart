@@ -3,7 +3,7 @@ import 'package:passenger_app/src/features/home/data/data_sources/current_locati
 import 'package:passenger_app/src/features/home/domain/entities/current_location.dart';
 import 'package:passenger_app/src/features/home/domain/failures/current_location_failure.dart';
 import 'package:passenger_app/src/features/home/domain/repositories/i_current_location_repository.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class CurrentLocationRepository implements ICurrentLocationRepository {
   const CurrentLocationRepository({

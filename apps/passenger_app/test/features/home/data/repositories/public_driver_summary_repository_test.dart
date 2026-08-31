@@ -4,7 +4,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/home/data/data_sources/public_driver_remote_data_source.dart';
 import 'package:passenger_app/src/features/home/data/repositories/public_driver_summary_repository.dart';
 import 'package:passenger_app/src/features/home/domain/entities/public_driver_summary.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class MockPublicDriverRemoteDataSource extends Mock
     implements PublicDriverRemoteDataSource {}

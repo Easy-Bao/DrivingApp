@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:driver_app/src/core/network/interceptors/auth_interceptor.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class DioClient {
   DioClient._();

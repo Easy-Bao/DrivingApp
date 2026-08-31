@@ -4,7 +4,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/booking/data/data_sources/booking_remote_data_source.dart';
 import 'package:passenger_app/src/features/booking/data/repositories/booking_repository.dart';
 import 'package:passenger_app/src/features/booking/domain/entities/booking_session_request.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class MockBookingRemoteDataSource extends Mock
     implements BookingRemoteDataSource {}

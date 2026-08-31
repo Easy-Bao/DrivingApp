@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class InboxNotification extends Equatable {
   final String id;

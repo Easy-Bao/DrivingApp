@@ -7,7 +7,7 @@ import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:driver_app/src/core/constants/storage_keys.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 const _backgroundTelemetryInterval = Duration(seconds: 10);
 const _backgroundRideRequestInterval = Duration(seconds: 4);

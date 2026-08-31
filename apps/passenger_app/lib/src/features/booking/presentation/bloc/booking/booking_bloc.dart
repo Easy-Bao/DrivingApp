@@ -18,7 +18,7 @@ import 'package:passenger_app/src/features/booking/domain/entities/booking_sessi
 import 'package:passenger_app/src/features/booking/domain/repositories/i_booking_repository.dart';
 import 'package:passenger_app/src/features/booking/domain/repositories/i_driver_repository.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 part 'booking_event.dart';
 part 'booking_state.dart';

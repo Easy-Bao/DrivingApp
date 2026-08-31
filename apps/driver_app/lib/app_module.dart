@@ -16,7 +16,7 @@ import 'package:driver_app/src/features/active_ride/data/data_sources/telemetry_
 import 'package:driver_app/src/features/active_ride/data/repositories/driver_ride_repository.dart';
 import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppModule extends Module {

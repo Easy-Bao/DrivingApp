@@ -7,7 +7,7 @@ import 'package:passenger_app/src/core/services/background_telemetry_service.dar
 import 'package:passenger_app/src/core/services/secure_session_service.dart';
 import 'package:passenger_app/src/features/active_ride/presentation/bloc/track_driver/track_driver_state.dart';
 import 'package:passenger_app/src/features/active_ride/domain/repositories/i_track_repository.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class TrackDriverCubit extends Cubit<TrackDriverState> {
   final ITrackRepository _repository;

@@ -7,7 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class RideFlowCubit extends Cubit<RideFlowState> {
   final IDriverRideRepository _rideRepository;

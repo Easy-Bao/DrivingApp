@@ -2,7 +2,7 @@ import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/activity/presentation/bloc/performance/driver_performance_state.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class DriverPerformanceCubit extends Cubit<DriverPerformanceState> {
   DriverPerformanceCubit({

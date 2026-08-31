@@ -6,7 +6,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/activity/presentation/bloc/activity/activity_bloc.dart';
 import 'package:passenger_app/src/features/activity/domain/entities/activity_overview.dart';
 import 'package:passenger_app/src/features/activity/domain/repositories/i_activity_repository.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class MockActivityRepo extends Mock implements IActivityRepository {}
 

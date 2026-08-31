@@ -4,7 +4,7 @@ import 'package:driver_app/src/features/chat/chat_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
 class DriverTripDetailPage extends StatefulWidget {

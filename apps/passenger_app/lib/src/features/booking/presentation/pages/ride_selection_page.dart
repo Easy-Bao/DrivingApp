@@ -16,7 +16,7 @@ import 'package:passenger_app/src/features/booking/booking_routes.dart';
 import 'package:passenger_app/src/features/booking/presentation/widgets/booking_auth_bottom_sheet_widget.dart';
 import 'package:passenger_app/src/features/booking/presentation/widgets/ride_options_panel_widget.dart';
 import 'package:passenger_app/src/features/booking/presentation/widgets/ride_tip_selector_widget.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
 class RideSelectionPage extends StatefulWidget {

@@ -4,7 +4,7 @@ import 'dart:developer' as dev;
 
 import 'package:maps/maps.dart';
 import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 import 'package:driver_app/src/features/home/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/home/presentation/bloc/dashboard/dashboard_state.dart';
 import 'package:driver_app/src/features/home/presentation/widgets/driver_dashboard/driver_dashboard_stats_row_widget.dart';

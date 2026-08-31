@@ -3,7 +3,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger_app/src/features/active_ride/data/data_sources/ride_remote_data_source.dart';
 import 'package:passenger_app/src/features/active_ride/domain/repositories/i_track_repository.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class TrackRepository implements ITrackRepository {
   final RideRemoteDataSource _remoteDataSource;

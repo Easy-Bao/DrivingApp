@@ -1,6 +1,6 @@
 import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 abstract class IDriverProfileRepository {
   DriverAccountSnapshot getCachedAccount();

@@ -7,7 +7,7 @@ import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox/inbox_c
 import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox/inbox_state.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger_app/src/features/inbox/domain/repositories/i_inbox_repository.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class MockInboxRepository extends Mock implements IInboxRepository {}
 

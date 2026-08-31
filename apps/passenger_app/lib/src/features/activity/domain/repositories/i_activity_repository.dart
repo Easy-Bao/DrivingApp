@@ -1,7 +1,7 @@
 import 'package:passenger_app/src/features/activity/activity.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/activity/domain/entities/activity_overview.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 abstract class IActivityRepository {
   Future<Either<Failure, ActivityOverview>> fetchActivityOverview(

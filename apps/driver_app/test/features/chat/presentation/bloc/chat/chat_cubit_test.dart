@@ -5,7 +5,7 @@ import 'package:driver_app/src/features/chat/presentation/bloc/chat/chat_cubit.d
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class MockChatRepository extends Mock implements ChatRepository {}
 

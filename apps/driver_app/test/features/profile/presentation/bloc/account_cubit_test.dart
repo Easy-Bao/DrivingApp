@@ -3,7 +3,7 @@ import 'package:driver_app/src/features/profile/domain/entities/driver_account_s
 import 'package:driver_app/src/features/profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class _FakeDriverProfileRepository implements IDriverProfileRepository {
   const _FakeDriverProfileRepository();

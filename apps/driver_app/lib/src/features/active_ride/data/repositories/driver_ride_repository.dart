@@ -6,7 +6,7 @@ import 'package:driver_app/src/features/active_ride/data/data_sources/ride_remot
 import 'package:driver_app/src/features/active_ride/data/data_sources/telemetry_remote_data_source.dart';
 import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class DriverRideRepository implements IDriverRideRepository {
   DriverRideRepository({

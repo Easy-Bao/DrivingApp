@@ -5,7 +5,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/activity/data/data_sources/passenger_activity_remote_data_source.dart';
 import 'package:passenger_app/src/features/activity/domain/entities/activity_overview.dart';
 import 'package:passenger_app/src/features/activity/domain/repositories/i_activity_repository.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 const List<String> _monthAbbreviations = <String>[
   'Jan',

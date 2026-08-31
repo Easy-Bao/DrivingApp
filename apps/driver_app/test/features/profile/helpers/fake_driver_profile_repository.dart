@@ -1,7 +1,7 @@
 import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
 import 'package:driver_app/src/features/profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class FakeDriverProfileRepository implements IDriverProfileRepository {
   FakeDriverProfileRepository(this.account);

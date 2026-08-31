@@ -7,7 +7,7 @@ import 'package:passenger_app/src/core/constants/env_config.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger_app/src/core/services/background_telemetry_service.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:design_system/design_system.dart';
 

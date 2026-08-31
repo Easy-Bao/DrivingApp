@@ -1,6 +1,6 @@
 import 'package:passenger_app/src/features/active_ride/active_ride.dart';
 import 'package:passenger_app/src/features/activity/activity.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class PassengerActivityHistoryPresenter {
   final DateTime referenceTime;

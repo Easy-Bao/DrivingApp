@@ -13,7 +13,7 @@ import 'package:driver_app/src/features/home/domain/entities/driver_dispatch_sna
 import 'package:driver_app/src/features/home/domain/repositories/i_dashboard_repository.dart';
 import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DashboardRepository implements IDashboardRepository {

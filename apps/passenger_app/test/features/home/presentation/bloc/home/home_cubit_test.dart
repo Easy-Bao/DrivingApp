@@ -12,7 +12,7 @@ import 'package:passenger_app/src/features/home/domain/entities/recent_location.
 import 'package:passenger_app/src/features/home/domain/failures/current_location_failure.dart';
 import 'package:passenger_app/src/features/home/domain/repositories/i_current_location_repository.dart';
 import 'package:passenger_app/src/features/home/domain/repositories/i_home_repository.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class MockHomeRepo extends Mock implements IHomeRepository {}
 

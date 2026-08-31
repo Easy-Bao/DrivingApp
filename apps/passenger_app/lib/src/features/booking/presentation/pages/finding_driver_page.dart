@@ -1,3 +1,4 @@
+import 'package:passenger_app/src/features/booking/booking.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -17,7 +18,7 @@ import 'package:passenger_app/src/features/booking/presentation/widgets/finding_
 import 'package:passenger_app/src/features/booking/presentation/widgets/finding_driver_nearest_panel_widget.dart';
 import 'package:passenger_app/src/features/booking/presentation/widgets/finding_driver_no_driver_panel_widget.dart';
 import 'package:passenger_app/src/features/booking/presentation/widgets/finding_driver_searching_panel_widget.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
 class FindingDriverPage extends StatelessWidget {

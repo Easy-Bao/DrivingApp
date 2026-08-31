@@ -4,7 +4,7 @@ import 'package:driver_app/src/features/activity/data/data_sources/driver_activi
 import 'package:driver_app/src/features/activity/domain/entities/driver_activity_stats.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class DriverActivityRepository implements IDriverActivityRepository {
   final DriverActivityRemoteDataSource _remoteDataSource;

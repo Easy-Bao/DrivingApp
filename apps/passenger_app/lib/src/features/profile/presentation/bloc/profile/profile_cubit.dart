@@ -1,9 +1,10 @@
+import 'package:passenger_app/src/features/profile/domain/entities/profile_model.dart';
 import 'dart:developer' as dev;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/profile/presentation/bloc/profile/profile_state.dart';
 import 'package:passenger_app/src/features/profile/domain/repositories/i_passenger_profile_repository.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 export 'package:passenger_app/src/features/profile/presentation/bloc/profile/profile_state.dart';
 

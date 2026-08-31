@@ -1,7 +1,7 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/entities/driver_profile_stats.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/entities/driver_review.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 abstract class IDriverProfileRepository {
   Future<Either<Failure, DriverProfileStats>> fetchStats(String driverId);

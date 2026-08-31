@@ -1,6 +1,6 @@
 import 'package:driver_app/src/features/activity/domain/entities/driver_activity_stats.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 abstract class IDriverActivityRepository {
   Future<Either<Failure, DriverActivityStats>> fetchStats(String driverId);

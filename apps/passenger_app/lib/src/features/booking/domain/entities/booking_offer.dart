@@ -1,4 +1,4 @@
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class BookingOffer {
   const BookingOffer({

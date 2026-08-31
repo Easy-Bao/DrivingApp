@@ -12,7 +12,7 @@ import 'package:passenger_app/src/features/location/presentation/bloc/location_a
 import 'package:passenger_app/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger_app/src/features/active_ride/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/active_ride/domain/repositories/i_track_repository.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
 class AppWidget extends StatefulWidget {

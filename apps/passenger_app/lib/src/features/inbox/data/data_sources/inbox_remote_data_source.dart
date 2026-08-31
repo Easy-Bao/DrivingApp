@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 abstract class InboxRemoteDataSource {
   Future<OffsetPage<Map<String, dynamic>>> fetchNotifications(

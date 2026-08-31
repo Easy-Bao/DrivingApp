@@ -1,6 +1,6 @@
 import 'package:passenger_app/src/features/booking/booking.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 abstract class IFareRepository {
   Future<Either<Failure, FareEstimate>> estimateFare({

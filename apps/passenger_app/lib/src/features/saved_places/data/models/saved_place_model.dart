@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class SavedPlaceModel extends SavedPlace {
   const SavedPlaceModel({

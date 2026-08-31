@@ -5,7 +5,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/features/booking/presentation/widgets/ride_fare_details_widget.dart';
 import 'package:passenger_app/src/features/booking/presentation/widgets/ride_tip_selector_widget.dart';
 import 'package:passenger_app/src/features/booking/presentation/widgets/ride_trip_summary_widget.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 

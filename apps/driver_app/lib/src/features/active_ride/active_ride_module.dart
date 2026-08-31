@@ -10,7 +10,7 @@ import 'package:driver_app/src/features/active_ride/presentation/pickup_navigati
 import 'package:driver_app/src/features/active_ride/presentation/fare_summary_page.dart';
 import 'package:driver_app/src/features/active_ride/presentation/in_transit_page.dart';
 import 'package:driver_app/src/features/active_ride/presentation/waiting_passenger_page.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
 class ActiveRideModule {

@@ -5,7 +5,7 @@ import 'package:driver_app/src/features/activity/domain/entities/driver_activity
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class MockDriverActivityRemoteDataSource extends Mock
     implements DriverActivityRemoteDataSource {}

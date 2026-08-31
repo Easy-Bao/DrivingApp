@@ -23,7 +23,7 @@ import 'package:passenger_app/src/features/booking/presentation/pages/finding_dr
 import 'package:passenger_app/src/features/booking/presentation/pages/map_pin_page.dart';
 import 'package:passenger_app/src/features/booking/presentation/pages/ride_selection_page.dart';
 import 'package:passenger_app/src/features/booking/presentation/pages/search_destination_page.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
 class BookingModule {

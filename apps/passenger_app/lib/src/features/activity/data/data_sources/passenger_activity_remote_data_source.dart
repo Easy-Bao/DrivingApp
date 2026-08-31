@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 abstract class PassengerActivityRemoteDataSource {
   Future<OffsetPage<Map<String, dynamic>>> fetchRideHistory(

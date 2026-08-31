@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_state.dart';
 import 'package:passenger_app/src/features/home/domain/repositories/i_public_driver_summary_repository.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 
 class PublicDriverSummaryCubit extends Cubit<PublicDriverSummaryState> {
   final IPublicDriverSummaryRepository _repository;

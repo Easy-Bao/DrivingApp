@@ -20,7 +20,7 @@ import 'package:passenger_app/src/features/active_ride/presentation/bloc/track_d
 import 'package:passenger_app/src/features/active_ride/presentation/bloc/track_driver/track_driver_state.dart';
 import 'package:passenger_app/src/features/active_ride/domain/repositories/i_track_repository.dart';
 import 'package:passenger_app/src/features/active_ride/presentation/widgets/track_driver_panel_widget.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 import 'package:url_launcher/url_launcher.dart';
 
