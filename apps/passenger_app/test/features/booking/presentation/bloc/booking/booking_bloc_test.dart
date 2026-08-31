@@ -4,7 +4,7 @@ import 'package:maps/maps.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/entities/driver_profile_stats.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
@@ -28,7 +28,7 @@ class MockDriverProfileRepository extends Mock
 
 class FakeBookingSessionRequest extends Fake implements BookingSessionRequest {}
 
-class MockSecureSessionService extends Mock implements SecureSessionService {}
+class MockSecureSessionService extends Mock implements PassengerSessionStore {}
 
 class MockInboxRepository extends Mock implements IInboxRepository {}
 
@@ -36,7 +36,7 @@ BookingBloc _makeBookingBloc({
   required IDriverRepository driverRepo,
   required IBookingRepository bookingRepository,
   required IDriverProfileRepository driverProfileRepository,
-  required SecureSessionService secureSessionService,
+  required PassengerSessionStore secureSessionService,
   InboxCubit? inboxCubit,
   int nearestDriverMaxAttempts = 5,
   Duration nearestDriverRetryDelay = const Duration(seconds: 2),

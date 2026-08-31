@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/auth/data/data_sources/passenger_auth_remote_data_source.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/presentation/bloc/forgot_password/forgot_password_bloc.dart';
 import 'package:passenger_app/src/features/auth/presentation/bloc/reset_password_confirm/reset_password_confirm_bloc.dart';
@@ -34,7 +34,7 @@ class AuthModule extends Module {
       ..addLazySingleton<PassengerAuthRepository>(
         (i) => PassengerAuthRepositoryImpl(
           remoteDataSource: i.get<PassengerAuthRemoteDataSource>(),
-          secureSessionService: i.get<SecureSessionService>(),
+          secureSessionService: i.get<PassengerSessionStore>(),
           preferences: i.get<SharedPreferences>(),
         ),
       );

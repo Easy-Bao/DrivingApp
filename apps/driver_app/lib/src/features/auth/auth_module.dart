@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/auth/auth_routes.dart';
 import 'package:driver_app/src/features/auth/data/data_sources/driver_auth_remote_data_source.dart';
 import 'package:driver_app/src/features/auth/data/repositories/driver_auth_repository.dart';
@@ -23,7 +23,7 @@ class AuthModule extends Module {
       ..addLazySingleton<DriverAuthRepository>(
         (i) => DriverAuthRepositoryImpl(
           remoteDataSource: i.get<DriverAuthRemoteDataSource>(),
-          secureSessionService: i.get<SecureSessionService>(),
+          secureSessionService: i.get<DriverSessionStore>(),
         ),
       )
       ..addLazySingleton<SignInUseCase>(

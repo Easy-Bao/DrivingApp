@@ -2,9 +2,9 @@ import 'package:maps/maps.dart';
 import 'package:driver_app/app_module.dart';
 import 'package:driver_app/app_widget.dart';
 import 'package:driver_app/src/app/theme/app_theme.dart';
-import 'package:driver_app/src/core/constants/env_config.dart';
-import 'package:driver_app/src/core/services/background_telemetry_service.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/infrastructure/config/driver_env_config.dart';
+import 'package:driver_app/src/infrastructure/telemetry/driver_background_telemetry.dart';
+import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/auth/auth_routes.dart';
 import 'package:driver_app/src/features/home/home_routes.dart';
 
@@ -21,18 +21,18 @@ void main() async {
   configureClientErrorBoundary(appName: 'driver-app');
 
   try {
-    await BackgroundTelemetryService.stopExistingServiceForStartup();
+    await DriverBackgroundTelemetry.stopExistingServiceForStartup();
     final prefs = await SharedPreferences.getInstance();
-    final sessionService = SecureSessionService();
+    final sessionService = DriverSessionStore();
     final hasDriverSession = await _hasDriverSession(sessionService);
 
     await dotenv.load(fileName: '.env', isOptional: true);
 
     final nativeService = MapNativeService(
-      placeServiceBaseUri: EnvConfig.apiBaseUri,
+      placeServiceBaseUri: DriverEnvConfig.apiBaseUri,
     );
     LocationService.nativeService = nativeService;
-    final mapboxToken = EnvConfig.mapboxPublicToken;
+    final mapboxToken = DriverEnvConfig.mapboxPublicToken;
     if (mapboxToken == null) {
       debugPrint('Mapbox is disabled because MAPBOX_PUBLIC_TOKEN is missing.');
     }
@@ -62,7 +62,7 @@ void main() async {
   }
 }
 
-Future<bool> _hasDriverSession(SecureSessionService sessionService) async {
+Future<bool> _hasDriverSession(DriverSessionStore sessionService) async {
   try {
     return await sessionService.hasValidDriverSession();
   } catch (_) {

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger_app/src/features/chat/chat_routes.dart';
 import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox/inbox_state.dart';
@@ -34,7 +34,7 @@ class _InboxPageState extends State<InboxPage> {
   Future<void> _initializeInbox() async {
     if (_inboxCubit.state is! InboxLoadedState) {
       final passengerId =
-          await Modular.get<SecureSessionService>().readPassengerId() ?? '';
+          await Modular.get<PassengerSessionStore>().readPassengerId() ?? '';
       if (passengerId.isNotEmpty) {
         unawaited(_inboxCubit.loadNotifications(passengerId));
       }

@@ -1,5 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/activity/presentation/bloc/earnings/earnings_cubit.dart';
 import 'package:driver_app/src/features/activity/presentation/bloc/earnings/earnings_state.dart';
 import 'package:driver_app/src/features/activity/presentation/bloc/performance/driver_performance_cubit.dart';
@@ -16,7 +16,7 @@ import 'package:foundation/foundation.dart';
 class _MockActivityRepository extends Mock
     implements IDriverActivityRepository {}
 
-class _MockSessionService extends Mock implements SecureSessionService {}
+class _MockSessionService extends Mock implements DriverSessionStore {}
 
 void main() {
   late _MockActivityRepository repository;

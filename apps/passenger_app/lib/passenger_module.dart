@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/constants/env_config.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/infrastructure/config/passenger_env_config.dart';
+import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger_app/src/features/activity/activity_module.dart';
 import 'package:passenger_app/src/features/chat/chat_module.dart';
 import 'package:passenger_app/src/features/driver_profile/driver_profile_module.dart';
@@ -36,8 +36,8 @@ class PassengerModule extends Module {
       )
       ..addLazySingleton<RealtimeWebSocketClient>(
         (i) => RealtimeWebSocketClient(
-          uri: EnvConfig.webSocketBaseUri.replace(path: '/api/v1/realtime/ws'),
-          tokenProvider: i.get<SecureSessionService>().readToken,
+          uri: PassengerEnvConfig.webSocketBaseUri.replace(path: '/api/v1/realtime/ws'),
+          tokenProvider: i.get<PassengerSessionStore>().readToken,
         ),
       );
   }

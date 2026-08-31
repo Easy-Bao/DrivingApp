@@ -4,8 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
-import 'package:passenger_app/src/core/services/background_telemetry_service.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/infrastructure/telemetry/passenger_background_telemetry.dart';
+import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger_app/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger_app/src/features/active_ride/data/data_sources/ride_remote_data_source.dart';
 import 'package:passenger_app/src/features/active_ride/data/repositories/track_repository.dart';
@@ -35,9 +35,9 @@ class ActiveRideModule {
       ..addFactory<TrackDriverCubit>(
         (i) => TrackDriverCubit(
           repository: i.get<ITrackRepository>(),
-          sessionService: i.get<SecureSessionService>(),
+          sessionService: i.get<PassengerSessionStore>(),
           lifecycleCoordinator: i.get<AppLifecycleCoordinator>(),
-          backgroundTelemetryService: i.get<BackgroundTelemetryService>(),
+          backgroundTelemetryService: i.get<PassengerBackgroundTelemetry>(),
         ),
       );
   }
@@ -97,7 +97,7 @@ class ActiveRideModule {
           ride: ride,
           trackRepository: Modular.get<ITrackRepository>(),
           chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
-          sessionService: Modular.get<SecureSessionService>(),
+          sessionService: Modular.get<PassengerSessionStore>(),
           lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
         );
       },

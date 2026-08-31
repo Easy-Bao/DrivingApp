@@ -3,18 +3,18 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
 
 class MockDriverRideRepository extends Mock implements IDriverRideRepository {}
 
-class MockSecureSessionService extends Mock implements SecureSessionService {}
+class MockSecureSessionService extends Mock implements DriverSessionStore {}
 
 RideFlowCubit _makeCubit(
   IDriverRideRepository rideRepository,
-  SecureSessionService sessionService,
+  DriverSessionStore sessionService,
 ) => RideFlowCubit(
   rideRepository: rideRepository,
   sessionService: sessionService,

@@ -2,7 +2,7 @@ import 'package:driver_app/src/features/chat/chat.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
-import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
 import 'package:driver_app/src/features/active_ride/active_ride_routes.dart';
@@ -39,7 +39,7 @@ class ActiveRideModule {
           duration: data.duration,
           rideRepository: Modular.get<IDriverRideRepository>(),
           chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
-          sessionService: Modular.get<SecureSessionService>(),
+          sessionService: Modular.get<DriverSessionStore>(),
           lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
         );
       },
@@ -62,7 +62,7 @@ class ActiveRideModule {
           duration: data.duration,
           rideRepository: Modular.get<IDriverRideRepository>(),
           chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
-          sessionService: Modular.get<SecureSessionService>(),
+          sessionService: Modular.get<DriverSessionStore>(),
           lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
         );
       },

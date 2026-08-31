@@ -10,7 +10,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:maps/maps.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/chat/chat_routes.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
@@ -44,7 +44,7 @@ class ActivityTrackDriverPage extends StatefulWidget {
   final RideHistory ride;
   final ITrackRepository trackRepository;
   final ChatRepositoryFactory chatRepositoryFactory;
-  final SecureSessionService sessionService;
+  final PassengerSessionStore sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;
 
   const ActivityTrackDriverPage({

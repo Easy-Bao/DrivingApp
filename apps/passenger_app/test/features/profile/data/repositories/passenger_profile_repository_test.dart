@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger_app/src/features/profile/data/data_sources/passenger_profile_remote_data_source.dart';
 import 'package:passenger_app/src/features/profile/data/repositories/passenger_profile_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,7 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class MockPassengerProfileRemoteDataSource extends Mock
     implements PassengerProfileRemoteDataSource {}
 
-class MockSecureSessionService extends Mock implements SecureSessionService {}
+class MockSecureSessionService extends Mock implements PassengerSessionStore {}
 
 void main() {
   test('uploads a newly selected avatar as part of profile save', () async {

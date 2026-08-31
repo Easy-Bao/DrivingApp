@@ -1,5 +1,5 @@
-import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/features/activity/presentation/formatters/driver_value_formatters.dart';
+import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/chat/chat_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -52,7 +52,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
     });
 
     final driverId =
-        await Modular.get<SecureSessionService>().readDriverId() ?? '';
+        await Modular.get<DriverSessionStore>().readDriverId() ?? '';
     if (driverId.isEmpty) {
       if (mounted) {
         setState(() {

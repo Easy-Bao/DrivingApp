@@ -3,25 +3,25 @@ import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger_app/src/core/services/background_telemetry_service.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/infrastructure/telemetry/passenger_background_telemetry.dart';
+import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger_app/src/features/active_ride/presentation/bloc/track_driver/track_driver_state.dart';
 import 'package:passenger_app/src/features/active_ride/domain/repositories/i_track_repository.dart';
 import 'package:foundation/foundation.dart';
 
 class TrackDriverCubit extends Cubit<TrackDriverState> {
   final ITrackRepository _repository;
-  final SecureSessionService _sessionService;
-  final BackgroundTelemetryService? _backgroundTelemetryService;
+  final PassengerSessionStore _sessionService;
+  final PassengerBackgroundTelemetry? _backgroundTelemetryService;
   final AppLifecycleCoordinator _lifecycleCoordinator;
   AppLifecyclePeriodicTask? _trackingTask;
   bool _isSyncing = false;
 
   TrackDriverCubit({
     required ITrackRepository repository,
-    required SecureSessionService sessionService,
+    required PassengerSessionStore sessionService,
     required AppLifecycleCoordinator lifecycleCoordinator,
-    BackgroundTelemetryService? backgroundTelemetryService,
+    PassengerBackgroundTelemetry? backgroundTelemetryService,
   }) : _repository = repository,
        _sessionService = sessionService,
        _backgroundTelemetryService = backgroundTelemetryService,

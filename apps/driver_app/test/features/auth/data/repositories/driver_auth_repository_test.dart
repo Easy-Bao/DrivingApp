@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:driver_app/src/core/constants/api_endpoints.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/features/auth/data/driver_auth_endpoints.dart';
+import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/auth/data/data_sources/driver_auth_remote_data_source.dart';
 import 'package:driver_app/src/features/auth/data/repositories/driver_auth_repository.dart';
 import 'package:driver_app/src/features/auth/domain/entities/auth_credentials.dart';
@@ -10,7 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class MockAuthRemoteDataSource extends Mock
     implements DriverAuthRemoteDataSource {}
 
-class MockSecureSessionService extends Mock implements SecureSessionService {}
+class MockSecureSessionService extends Mock implements DriverSessionStore {}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -40,7 +40,7 @@ void main() {
   test('normalizes numeric driver IDs before persisting the session', () async {
     when(
       () => remoteDataSource.postData(
-        ApiEndpoints.driverLogin,
+        DriverAuthEndpoints.login,
         requestBody: {
           'email': 'driver@example.com',
           'password': 'secret-password',
@@ -86,7 +86,7 @@ void main() {
     () async {
       when(
         () => remoteDataSource.postData(
-          ApiEndpoints.driverLogin,
+          DriverAuthEndpoints.login,
           requestBody: {
             'email': 'driver@example.com',
             'password': 'secret-password',
@@ -117,7 +117,7 @@ void main() {
   test('returns a server failure for malformed session data', () async {
     when(
       () => remoteDataSource.postData(
-        ApiEndpoints.driverLogin,
+        DriverAuthEndpoints.login,
         requestBody: any(named: 'requestBody'),
       ),
     ).thenAnswer(

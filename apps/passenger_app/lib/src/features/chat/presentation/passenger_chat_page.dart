@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/constants/api_endpoints.dart';
+import 'package:passenger_app/src/infrastructure/config/passenger_env_config.dart';
 import 'package:passenger_app/src/features/chat/presentation/bloc/chat/chat_cubit.dart';
 import 'package:passenger_app/src/features/active_ride/domain/repositories/i_track_repository.dart';
 import 'package:design_system/design_system.dart';
@@ -114,7 +114,10 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
   Future<void> _connectChat(String roomId, String userId) async {
     final initialized = await _chatCubit.initializeChatRoom(roomId: roomId);
     if (!initialized || !mounted) return;
-    final wsUri = ApiEndpoints.buildChatWebSocketUri(roomId: roomId);
+    final wsUri = PassengerEnvConfig.webSocketBaseUri.replace(
+      path: '/api/v1/chat/ws',
+      queryParameters: {'roomId': roomId},
+    );
     await _chatCubit.connectToChatRoom(
       roomId: roomId,
       wsUri: wsUri,

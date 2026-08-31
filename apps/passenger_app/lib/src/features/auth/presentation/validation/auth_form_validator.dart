@@ -1,4 +1,4 @@
-import 'package:passenger_app/src/core/utils/phone_number_validator.dart';
+import 'package:passenger_app/src/features/auth/domain/validators/phone_number_validator.dart';
 
 final class AuthFormValidator {
   const AuthFormValidator();

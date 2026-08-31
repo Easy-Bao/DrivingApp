@@ -5,7 +5,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger_app/src/features/profile/data/data_sources/passenger_profile_remote_data_source.dart';
 import 'package:passenger_app/src/features/profile/domain/repositories/i_passenger_profile_repository.dart';
 import 'package:foundation/foundation.dart';
@@ -14,14 +14,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 class PassengerProfileRepository implements IPassengerProfileRepository {
   PassengerProfileRepository({
     required PassengerProfileRemoteDataSource remoteDataSource,
-    required SecureSessionService sessionService,
+    required PassengerSessionStore sessionService,
     required SharedPreferences preferences,
   }) : _remoteDataSource = remoteDataSource,
        _sessionService = sessionService,
        _preferences = preferences;
 
   final PassengerProfileRemoteDataSource _remoteDataSource;
-  final SecureSessionService _sessionService;
+  final PassengerSessionStore _sessionService;
   final SharedPreferences _preferences;
   String _avatarData = '';
 

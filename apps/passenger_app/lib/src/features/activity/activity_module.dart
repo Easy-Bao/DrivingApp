@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger_app/src/features/activity/activity_routes.dart';
 import 'package:passenger_app/src/features/activity/presentation/bloc/activity/activity_bloc.dart';
 import 'package:passenger_app/src/features/activity/data/data_sources/passenger_activity_remote_data_source.dart';
@@ -46,7 +46,7 @@ class ActivityModule {
         return ActivityViewDetailsPage(
           ride: ride,
           trackRepository: Modular.get<ITrackRepository>(),
-          sessionService: Modular.get<SecureSessionService>(),
+          sessionService: Modular.get<PassengerSessionStore>(),
         );
       },
       transition: AppTransitions.push.toLeft,

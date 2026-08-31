@@ -1,5 +1,5 @@
 import 'package:driver_app/src/features/profile/domain/entities/profile_model.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/profile/data/data_sources/driver_profile_remote_data_source.dart';
 import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
 import 'package:driver_app/src/features/profile/domain/repositories/i_driver_profile_repository.dart';
@@ -10,14 +10,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 class DriverProfileRepository implements IDriverProfileRepository {
   DriverProfileRepository({
     required DriverProfileRemoteDataSource profileDataSource,
-    required SecureSessionService sessionService,
+    required DriverSessionStore sessionService,
     required SharedPreferences preferences,
   }) : _profileDataSource = profileDataSource,
        _sessionService = sessionService,
        _preferences = preferences;
 
   final DriverProfileRemoteDataSource _profileDataSource;
-  final SecureSessionService _sessionService;
+  final DriverSessionStore _sessionService;
   final SharedPreferences _preferences;
 
   @override

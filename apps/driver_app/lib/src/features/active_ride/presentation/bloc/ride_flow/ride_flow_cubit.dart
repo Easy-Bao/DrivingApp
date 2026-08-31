@@ -4,14 +4,14 @@ import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
 import 'package:foundation/foundation.dart';
 
 class RideFlowCubit extends Cubit<RideFlowState> {
   final IDriverRideRepository _rideRepository;
-  final SecureSessionService _sessionService;
+  final DriverSessionStore _sessionService;
 
   String? _activeRideId;
   String? _activePassengerId;
@@ -21,7 +21,7 @@ class RideFlowCubit extends Cubit<RideFlowState> {
 
   RideFlowCubit({
     required IDriverRideRepository rideRepository,
-    required SecureSessionService sessionService,
+    required DriverSessionStore sessionService,
   }) : _rideRepository = rideRepository,
        _sessionService = sessionService,
        super(const RideFlowInitial());

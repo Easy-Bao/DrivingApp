@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger_app/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/profile/presentation/bloc/profile/profile_cubit.dart';
 import 'package:passenger_app/src/features/profile/data/data_sources/passenger_profile_remote_data_source.dart';
@@ -27,7 +27,7 @@ class ProfileModule {
       ..addLazySingleton<IPassengerProfileRepository>(
         (i) => PassengerProfileRepository(
           remoteDataSource: i.get<PassengerProfileRemoteDataSource>(),
-          sessionService: i.get<SecureSessionService>(),
+          sessionService: i.get<PassengerSessionStore>(),
           preferences: i.get<SharedPreferences>(),
         ),
       )

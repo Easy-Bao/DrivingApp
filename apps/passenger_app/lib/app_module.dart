@@ -2,12 +2,11 @@ import 'package:dio/dio.dart';
 import 'package:maps/maps.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/passenger_module.dart';
-import 'package:passenger_app/src/core/constants/env_config.dart';
-import 'package:passenger_app/src/core/network/dio_client.dart';
+import 'package:passenger_app/src/infrastructure/config/passenger_env_config.dart';
+import 'package:passenger_app/src/infrastructure/network/passenger_api_client.dart';
 import 'package:passenger_app/src/app/navigation/app_routes.dart';
-import 'package:passenger_app/src/core/services/background_telemetry_service.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
-import 'package:passenger_app/src/core/storage/secure_storage.dart';
+import 'package:passenger_app/src/infrastructure/telemetry/passenger_background_telemetry.dart';
+import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger_app/src/features/auth/auth_module.dart';
 import 'package:passenger_app/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/auth/data/repositories/session_repository_impl.dart';
@@ -34,19 +33,16 @@ class AppModule extends Module {
       ..addLazySingleton<NetworkAvailabilityCoordinator>(
         (_) => NetworkAvailabilityCoordinator(),
       )
-      ..addLazySingleton<SecureSessionService>((i) => SecureSessionService())
-      ..addLazySingleton<BackgroundTelemetryService>(
-        (i) => BackgroundTelemetryService(
-          apiBaseUri: EnvConfig.apiBaseUri,
+      ..addLazySingleton<PassengerSessionStore>((i) => PassengerSessionStore())
+      ..addLazySingleton<PassengerBackgroundTelemetry>(
+        (i) => PassengerBackgroundTelemetry(
+          apiBaseUri: PassengerEnvConfig.apiBaseUri,
           lifecycleCoordinator: i.get<AppLifecycleCoordinator>(),
         ),
       )
-      ..addLazySingleton<SecureStorage>(
-        (i) => SecureStorage(i.get<SecureSessionService>()),
-      )
       ..addLazySingleton<SessionRepository>(
         (i) => SessionRepositoryImpl(
-          secureSessionService: i.get<SecureSessionService>(),
+          secureSessionService: i.get<PassengerSessionStore>(),
           preferences: i.get<SharedPreferences>(),
         ),
       )
@@ -61,9 +57,9 @@ class AppModule extends Module {
             LocationAccessCubit(repository: i.get<ILocationAccessRepository>()),
       )
       ..addLazySingleton<Dio>(
-        (i) => DioClient.create(
-          baseUrl: EnvConfig.apiBaseUri,
-          sessionService: i.get<SecureSessionService>(),
+        (i) => PassengerApiClient.create(
+          baseUrl: PassengerEnvConfig.apiBaseUri,
+          sessionService: i.get<PassengerSessionStore>(),
           networkAvailability: i.get<NetworkAvailabilityCoordinator>(),
           onSessionExpired: () =>
               i.get<SessionBloc>().add(const SessionGuestRequested()),

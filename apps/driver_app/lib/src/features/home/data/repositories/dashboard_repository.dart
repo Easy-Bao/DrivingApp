@@ -3,8 +3,8 @@ import 'package:driver_app/src/features/auth/domain/failures/auth_failures.dart'
 import 'dart:developer' as dev;
 
 import 'package:dio/dio.dart';
-import 'package:driver_app/src/core/services/background_telemetry_service.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/infrastructure/telemetry/driver_background_telemetry.dart';
+import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
 import 'package:driver_app/src/features/home/data/data_sources/driver_availability_remote_data_source.dart';
 import 'package:driver_app/src/features/home/data/data_sources/ride_offer_remote_data_source.dart';
@@ -21,18 +21,18 @@ class DashboardRepository implements IDashboardRepository {
   final DriverAvailabilityRemoteDataSource _availabilityDataSource;
   final RideOfferRemoteDataSource _rideOfferDataSource;
   final IDriverRideRepository _rideRepository;
-  final SecureSessionService _sessionService;
+  final DriverSessionStore _sessionService;
   final SharedPreferences _preferences;
-  final BackgroundTelemetryService? _backgroundTelemetryService;
+  final DriverBackgroundTelemetry? _backgroundTelemetryService;
 
   DashboardRepository({
     required IDriverActivityRepository activityRepository,
     required DriverAvailabilityRemoteDataSource availabilityDataSource,
     required RideOfferRemoteDataSource rideOfferDataSource,
     required IDriverRideRepository rideRepository,
-    required SecureSessionService sessionService,
+    required DriverSessionStore sessionService,
     required SharedPreferences preferences,
-    BackgroundTelemetryService? backgroundTelemetryService,
+    DriverBackgroundTelemetry? backgroundTelemetryService,
   }) : _activityRepository = activityRepository,
        _availabilityDataSource = availabilityDataSource,
        _rideOfferDataSource = rideOfferDataSource,

@@ -6,8 +6,8 @@ import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger_app/src/core/services/background_telemetry_service.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/infrastructure/telemetry/passenger_background_telemetry.dart';
+import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
@@ -27,8 +27,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final IDriverRepository _driverRepository;
   final IBookingRepository _bookingRepository;
   final IDriverProfileRepository _driverProfileRepository;
-  final SecureSessionService _secureSessionService;
-  final BackgroundTelemetryService? _backgroundTelemetryService;
+  final PassengerSessionStore _secureSessionService;
+  final PassengerBackgroundTelemetry? _backgroundTelemetryService;
   final InboxCubit? _inboxCubit;
   final RealtimeWebSocketClient? _realtimeClient;
   final AppLifecycleCoordinator _lifecycleCoordinator;
@@ -61,9 +61,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     required IDriverRepository driverRepository,
     required IBookingRepository bookingRepository,
     required IDriverProfileRepository driverProfileRepository,
-    required SecureSessionService secureSessionService,
+    required PassengerSessionStore secureSessionService,
     InboxCubit? inboxCubit,
-    BackgroundTelemetryService? backgroundTelemetryService,
+    PassengerBackgroundTelemetry? backgroundTelemetryService,
     RealtimeWebSocketClient? realtimeClient,
     required AppLifecycleCoordinator lifecycleCoordinator,
     int nearestDriverMaxAttempts = 5,

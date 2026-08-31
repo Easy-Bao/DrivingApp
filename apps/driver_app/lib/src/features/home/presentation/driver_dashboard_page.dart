@@ -3,7 +3,7 @@ import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:maps/maps.dart';
-import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
+import 'package:driver_app/src/features/home/presentation/formatters/driver_dashboard_value_formatters.dart';
 import 'package:foundation/foundation.dart';
 import 'package:driver_app/src/features/home/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/home/presentation/bloc/dashboard/dashboard_state.dart';
@@ -28,7 +28,7 @@ bool _isActiveDriverTripStatus(Object? value) {
     'accepted',
     'arrived',
     'in_transit',
-  }.contains(driverValueAsString(value));
+  }.contains(dashboardValueAsString(value));
 }
 
 class DriverDashboardPage extends StatefulWidget {
@@ -384,10 +384,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
     final ride = Map<String, dynamic>.from(rawRide);
     final rideId =
-        driverValueAsString(ride['id']) ?? event.envelope.scope.rideId;
+        dashboardValueAsString(ride['id']) ?? event.envelope.scope.rideId;
     if (rideId == null) return;
 
-    final status = driverValueAsString(ride['status']) ?? 'accepted';
+    final status = dashboardValueAsString(ride['status']) ?? 'accepted';
     if (!_isActiveDriverTripStatus(status)) return;
     ride['id'] = rideId;
     ride['status'] = status;
@@ -569,8 +569,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       return;
     }
 
-    final sessionId = driverValueAsString(bid['id']);
-    final fare = driverFareInPesos(bid);
+    final sessionId = dashboardValueAsString(bid['id']);
+    final fare = dashboardFareInPesos(bid);
     if (sessionId == null || fare == null) return;
 
     if (mounted) setState(() => _submittingBidId = sessionId);
@@ -611,7 +611,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   Future<void> _resumeTrip(Map<String, dynamic> trip) async {
-    final rideId = driverValueAsString(trip['id']);
+    final rideId = dashboardValueAsString(trip['id']);
     if (rideId == null) return;
 
     final resolvedTrip = await _authoritativeTrip(trip, rideId);
@@ -661,7 +661,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   Future<void> _completeTripFromDashboard(Map<String, dynamic> trip) async {
     if (_completingTripId != null) return;
-    final rideId = driverValueAsString(trip['id']);
+    final rideId = dashboardValueAsString(trip['id']);
     if (rideId == null) return;
     final resolvedTrip = await _authoritativeTrip(trip, rideId);
     if (!mounted) return;
@@ -836,7 +836,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                                 ),
                                 isCompletingTrip:
                                     _completingTripId ==
-                                    driverValueAsString(entry.value['id']),
+                                    dashboardValueAsString(entry.value['id']),
                                 onResume: () => _resumeTrip(entry.value),
                                 onComplete: () =>
                                     _completeTripFromDashboard(entry.value),
@@ -857,7 +857,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                                     BlocProvider.of<DashboardCubit>(
                                       context,
                                     ).removeActiveBid(
-                                      driverValueAsString(bid['id']),
+                                      dashboardValueAsString(bid['id']),
                                     ),
                                 onAccept: () => _acceptBid(bid),
                               ),

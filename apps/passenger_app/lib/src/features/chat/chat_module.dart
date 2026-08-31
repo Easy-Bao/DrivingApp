@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger_app/src/features/chat/chat.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -15,7 +15,7 @@ class ChatModule {
     i.addLazySingleton<ChatRepositoryFactory>(
       (i) => DefaultChatRepositoryFactory(
         clientDio: i.get<Dio>(),
-        tokenProvider: i.get<SecureSessionService>().readToken,
+        tokenProvider: i.get<PassengerSessionStore>().readToken,
       ),
     );
   }

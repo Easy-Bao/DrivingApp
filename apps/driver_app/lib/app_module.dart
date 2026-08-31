@@ -1,11 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:driver_app/driver_module.dart';
 import 'package:driver_app/src/app/navigation/app_routes.dart';
-import 'package:driver_app/src/core/constants/env_config.dart';
-import 'package:driver_app/src/core/network/dio_client.dart';
-import 'package:driver_app/src/core/services/background_telemetry_service.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:driver_app/src/core/storage/secure_storage.dart';
+import 'package:driver_app/src/infrastructure/config/driver_env_config.dart';
+import 'package:driver_app/src/infrastructure/network/driver_api_client.dart';
+import 'package:driver_app/src/infrastructure/telemetry/driver_background_telemetry.dart';
+import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/auth/auth_module.dart';
 import 'package:driver_app/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver_app/src/features/location/data/repositories/driver_location_access_repository.dart';
@@ -21,13 +20,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AppModule extends Module {
   final SharedPreferences _prefs;
-  final SecureSessionService _sessionService;
+  final DriverSessionStore _sessionService;
 
   AppModule({
     required SharedPreferences prefs,
-    SecureSessionService? sessionService,
+    DriverSessionStore? sessionService,
   }) : _prefs = prefs,
-       _sessionService = sessionService ?? SecureSessionService();
+       _sessionService = sessionService ?? DriverSessionStore();
 
   @override
   void binds(Injector i) {
@@ -47,27 +46,24 @@ class AppModule extends Module {
           repository: i.get<IDriverLocationAccessRepository>(),
         ),
       )
-      ..addLazySingleton<SecureSessionService>((i) => _sessionService)
-      ..addLazySingleton<BackgroundTelemetryService>(
-        (i) => BackgroundTelemetryService(
-          apiBaseUri: EnvConfig.apiBaseUri,
+      ..addLazySingleton<DriverSessionStore>((i) => _sessionService)
+      ..addLazySingleton<DriverBackgroundTelemetry>(
+        (i) => DriverBackgroundTelemetry(
+          apiBaseUri: DriverEnvConfig.apiBaseUri,
           lifecycleCoordinator: i.get<AppLifecycleCoordinator>(),
-          enabled: EnvConfig.backgroundTelemetryEnabled,
+          enabled: DriverEnvConfig.backgroundTelemetryEnabled,
         ),
-      )
-      ..addLazySingleton<SecureStorage>(
-        (i) => SecureStorage(i.get<SecureSessionService>()),
       )
       ..addLazySingleton<RealtimeWebSocketClient>(
         (i) => RealtimeWebSocketClient(
-          uri: EnvConfig.webSocketBaseUri.replace(path: '/api/v1/realtime/ws'),
-          tokenProvider: i.get<SecureSessionService>().readToken,
+          uri: DriverEnvConfig.webSocketBaseUri.replace(path: '/api/v1/realtime/ws'),
+          tokenProvider: i.get<DriverSessionStore>().readToken,
         ),
       )
       ..addLazySingleton<Dio>(
-        (i) => DioClient.create(
-          baseUrl: EnvConfig.apiBaseUri,
-          sessionService: i.get<SecureSessionService>(),
+        (i) => DriverApiClient.create(
+          baseUrl: DriverEnvConfig.apiBaseUri,
+          sessionService: i.get<DriverSessionStore>(),
           networkAvailability: i.get<NetworkAvailabilityCoordinator>(),
         ),
       )

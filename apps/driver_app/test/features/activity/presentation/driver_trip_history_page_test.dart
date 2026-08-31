@@ -1,5 +1,5 @@
 import 'package:driver_app/src/app/theme/app_theme.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/activity/presentation/bloc/trip_history/trip_history_cubit.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
 import 'package:driver_app/src/features/activity/presentation/driver_trip_history_page.dart';
@@ -13,7 +13,7 @@ import 'package:foundation/foundation.dart';
 class _MockActivityRepository extends Mock
     implements IDriverActivityRepository {}
 
-class _MockSessionService extends Mock implements SecureSessionService {}
+class _MockSessionService extends Mock implements DriverSessionStore {}
 
 void main() {
   testWidgets('shows a retryable error instead of an empty history state', (

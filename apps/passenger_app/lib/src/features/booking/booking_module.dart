@@ -3,8 +3,8 @@ import 'package:maps/maps.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/core/services/background_telemetry_service.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/infrastructure/telemetry/passenger_background_telemetry.dart';
+import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
@@ -57,9 +57,9 @@ class BookingModule {
           driverRepository: i.get<IDriverRepository>(),
           bookingRepository: i.get<IBookingRepository>(),
           driverProfileRepository: i.get<IDriverProfileRepository>(),
-          secureSessionService: i.get<SecureSessionService>(),
+          secureSessionService: i.get<PassengerSessionStore>(),
           inboxCubit: i.get<InboxCubit>(),
-          backgroundTelemetryService: i.get<BackgroundTelemetryService>(),
+          backgroundTelemetryService: i.get<PassengerBackgroundTelemetry>(),
           realtimeClient: i.get<RealtimeWebSocketClient>(),
           lifecycleCoordinator: i.get<AppLifecycleCoordinator>(),
         ),

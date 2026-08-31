@@ -2,7 +2,7 @@ import 'package:driver_app/src/features/active_ride/active_ride.dart';
 import 'package:driver_app/src/features/chat/chat.dart';
 import 'dart:async';
 
-import 'package:driver_app/src/core/constants/api_endpoints.dart';
+import 'package:driver_app/src/infrastructure/config/driver_env_config.dart';
 import 'package:driver_app/src/features/chat/presentation/bloc/chat/chat_cubit.dart';
 import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
 
@@ -104,7 +104,10 @@ class _DriverChatPageState extends State<DriverChatPage> {
   Future<void> _connectChat(String roomId, String userId) async {
     final initialized = await _chatCubit.initializeChatRoom(roomId: roomId);
     if (!initialized || !mounted) return;
-    final wsUri = ApiEndpoints.buildChatWebSocketUri(roomId: roomId);
+    final wsUri = DriverEnvConfig.webSocketBaseUri.replace(
+      path: '/api/v1/chat/ws',
+      queryParameters: {'roomId': roomId},
+    );
     await _chatCubit.connectToChatRoom(roomId: roomId, wsUri: wsUri);
   }
 

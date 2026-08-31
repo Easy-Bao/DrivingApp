@@ -4,9 +4,9 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/app_module.dart';
 import 'package:passenger_app/app_widget.dart';
 import 'package:passenger_app/src/app/theme/app_theme.dart';
-import 'package:passenger_app/src/core/constants/env_config.dart';
+import 'package:passenger_app/src/infrastructure/config/passenger_env_config.dart';
 import 'package:maps/maps.dart';
-import 'package:passenger_app/src/core/services/background_telemetry_service.dart';
+import 'package:passenger_app/src/infrastructure/telemetry/passenger_background_telemetry.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,16 +17,16 @@ void main() async {
   configureClientErrorBoundary(appName: 'passenger-app');
 
   try {
-    await BackgroundTelemetryService.stopExistingServiceForStartup();
+    await PassengerBackgroundTelemetry.stopExistingServiceForStartup();
     final prefs = await SharedPreferences.getInstance();
 
     await dotenv.load(fileName: '.env', isOptional: true);
 
     final nativeService = MapNativeService(
-      placeServiceBaseUri: EnvConfig.apiBaseUri,
+      placeServiceBaseUri: PassengerEnvConfig.apiBaseUri,
     );
     LocationService.nativeService = nativeService;
-    final mapboxToken = EnvConfig.mapboxPublicToken;
+    final mapboxToken = PassengerEnvConfig.mapboxPublicToken;
     if (mapboxToken == null) {
       debugPrint('Mapbox is disabled because MAPBOX_PUBLIC_TOKEN is missing.');
     }

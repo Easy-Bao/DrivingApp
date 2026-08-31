@@ -1,5 +1,5 @@
 import 'package:driver_app/src/app/theme/app_theme.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/profile/presentation/bloc/account/account_cubit.dart';
 import 'package:driver_app/src/features/profile/presentation/driver_account_page.dart';
 import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
@@ -61,8 +61,8 @@ void main() {
 
     scope = ModularTestScope.fresh()
         .withInstance<SharedPreferences>(preferences)
-        .withInstance<SecureSessionService>(
-          SecureSessionService(storage: storage),
+        .withInstance<DriverSessionStore>(
+          DriverSessionStore(storage: storage),
         );
     scope.setUp();
   });

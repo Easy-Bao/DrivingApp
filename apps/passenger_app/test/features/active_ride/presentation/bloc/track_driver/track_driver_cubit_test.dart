@@ -3,7 +3,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger_app/src/features/active_ride/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger_app/src/features/active_ride/presentation/bloc/track_driver/track_driver_state.dart';
 import 'package:passenger_app/src/features/active_ride/domain/repositories/i_track_repository.dart';
@@ -11,11 +11,11 @@ import 'package:foundation/foundation.dart';
 
 class MockTrackRepo extends Mock implements ITrackRepository {}
 
-class MockSecureSessionService extends Mock implements SecureSessionService {}
+class MockSecureSessionService extends Mock implements PassengerSessionStore {}
 
 TrackDriverCubit _makeCubit(
   ITrackRepository repo,
-  SecureSessionService session,
+  PassengerSessionStore session,
 ) => TrackDriverCubit(
   repository: repo,
   sessionService: session,

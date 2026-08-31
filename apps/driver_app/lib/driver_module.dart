@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:maps/maps.dart';
-import 'package:driver_app/src/core/services/background_telemetry_service.dart';
-import 'package:driver_app/src/core/services/driver_logout_coordinator.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/infrastructure/telemetry/driver_background_telemetry.dart';
+import 'package:driver_app/src/features/auth/domain/services/driver_logout_coordinator.dart';
+import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/features/activity/activity_module.dart';
 import 'package:driver_app/src/features/chat/chat_module.dart';
@@ -34,8 +34,8 @@ class DriverModule extends Module {
               lng: position?.longitude ?? 0,
             );
           },
-          stopTelemetry: () => i.get<BackgroundTelemetryService>().stop(),
-          clearSession: () => i.get<SecureSessionService>().clearSession(),
+          stopTelemetry: () => i.get<DriverBackgroundTelemetry>().stop(),
+          clearSession: () => i.get<DriverSessionStore>().clearSession(),
         ),
       )
       ..addLazySingleton<DriverTabNavigationCoordinator>(

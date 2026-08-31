@@ -1,7 +1,7 @@
 import 'package:driver_app/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:dio/dio.dart';
-import 'package:driver_app/src/core/services/background_telemetry_service.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/infrastructure/telemetry/driver_background_telemetry.dart';
+import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/activity/domain/entities/driver_activity_stats.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
 import 'package:driver_app/src/features/home/data/data_sources/driver_availability_remote_data_source.dart';
@@ -21,10 +21,10 @@ class MockDriverAvailabilityRemoteDataSource extends Mock
 class MockDriverActivityRepository extends Mock
     implements IDriverActivityRepository {}
 
-class MockSecureSessionService extends Mock implements SecureSessionService {}
+class MockSecureSessionService extends Mock implements DriverSessionStore {}
 
 class MockBackgroundTelemetryService extends Mock
-    implements BackgroundTelemetryService {}
+    implements DriverBackgroundTelemetry {}
 
 class MockRideOfferRemoteDataSource extends Mock
     implements RideOfferRemoteDataSource {}
@@ -38,8 +38,8 @@ late MockDriverRideRepository _rideRepository;
 
 DashboardRepository _buildRepository({
   required DriverAvailabilityRemoteDataSource availabilityDataSource,
-  required SecureSessionService sessionService,
-  BackgroundTelemetryService? backgroundTelemetryService,
+  required DriverSessionStore sessionService,
+  DriverBackgroundTelemetry? backgroundTelemetryService,
 }) {
   return DashboardRepository(
     activityRepository: _activityRepository,

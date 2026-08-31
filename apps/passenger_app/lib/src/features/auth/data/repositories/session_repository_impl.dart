@@ -1,16 +1,16 @@
 import 'package:fpdart/fpdart.dart';
-import 'package:passenger_app/src/core/services/secure_session_service.dart';
+import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger_app/src/features/auth/domain/entities/passenger_session.dart';
 import 'package:passenger_app/src/features/auth/domain/repositories/session_repository.dart';
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SessionRepositoryImpl implements SessionRepository {
-  final SecureSessionService _secureSessionService;
+  final PassengerSessionStore _secureSessionService;
   final SharedPreferences _preferences;
 
   SessionRepositoryImpl({
-    required SecureSessionService secureSessionService,
+    required PassengerSessionStore secureSessionService,
     required SharedPreferences preferences,
   }) : _secureSessionService = secureSessionService,
        _preferences = preferences;

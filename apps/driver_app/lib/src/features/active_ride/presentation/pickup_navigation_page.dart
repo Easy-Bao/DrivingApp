@@ -3,7 +3,7 @@ import 'package:maps/maps.dart';
 
 import 'dart:async';
 
-import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/chat/chat_routes.dart';
 import 'package:driver_app/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver_app/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
@@ -27,7 +27,7 @@ class PickupNavigationPage extends StatefulWidget {
   final String duration;
   final IDriverRideRepository rideRepository;
   final ChatRepositoryFactory chatRepositoryFactory;
-  final SecureSessionService sessionService;
+  final DriverSessionStore sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;
 
   const PickupNavigationPage({

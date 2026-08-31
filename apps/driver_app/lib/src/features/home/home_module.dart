@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:driver_app/src/core/services/background_telemetry_service.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/infrastructure/telemetry/driver_background_telemetry.dart';
+import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
 import 'package:driver_app/src/features/home/data/data_sources/driver_availability_remote_data_source.dart';
 import 'package:driver_app/src/features/home/data/data_sources/ride_offer_remote_data_source.dart';
@@ -33,9 +33,9 @@ class HomeModule {
           availabilityDataSource: i.get<DriverAvailabilityRemoteDataSource>(),
           rideOfferDataSource: i.get<RideOfferRemoteDataSource>(),
           rideRepository: i.get<IDriverRideRepository>(),
-          sessionService: i.get<SecureSessionService>(),
+          sessionService: i.get<DriverSessionStore>(),
           preferences: i.get<SharedPreferences>(),
-          backgroundTelemetryService: i.get<BackgroundTelemetryService>(),
+          backgroundTelemetryService: i.get<DriverBackgroundTelemetry>(),
         ),
       )
       ..addLazySingleton<DashboardCubit>(

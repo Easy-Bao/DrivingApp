@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:driver_app/src/core/services/background_telemetry_service.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/infrastructure/telemetry/driver_background_telemetry.dart';
+import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:maps/maps.dart';
 import 'package:driver_app/src/app/navigation/app_routes.dart';
 import 'package:driver_app/src/app/theme/app_theme.dart';
@@ -77,7 +77,7 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
 
   Future<void> _setBackgroundTelemetryVisibility(bool isVisible) async {
     try {
-      await Modular.get<BackgroundTelemetryService>().setAppVisible(isVisible);
+      await Modular.get<DriverBackgroundTelemetry>().setAppVisible(isVisible);
     } catch (_) {
       // The application can reach its first frame before service bindings are
       // ready. A later lifecycle event or service configuration will sync it.
@@ -94,7 +94,7 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
         BlocProvider<RideFlowCubit>(
           create: (_) => RideFlowCubit(
             rideRepository: Modular.get<IDriverRideRepository>(),
-            sessionService: Modular.get<SecureSessionService>(),
+            sessionService: Modular.get<DriverSessionStore>(),
           ),
         ),
       ],

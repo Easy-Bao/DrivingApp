@@ -1,4 +1,4 @@
-import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
+import 'package:driver_app/src/features/home/presentation/formatters/driver_dashboard_value_formatters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
@@ -41,7 +41,7 @@ class DriverActiveTripCard extends StatelessWidget {
     }
     final hasCurrentTransitRide = this.hasCurrentTransitRide;
     final isQueued = hasCurrentTransitRide && status != 'in_transit';
-    final tripId = driverValueAsString(trip['id']);
+    final tripId = dashboardValueAsString(trip['id']);
     final isCompleting = tripId != null && isCompletingTrip;
 
     return Container(
@@ -87,9 +87,9 @@ class DriverActiveTripCard extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                driverFareInPesos(trip) == null
+                dashboardFareInPesos(trip) == null
                     ? '—'
-                    : formatPesoAmount(driverFareInPesos(trip)!),
+                    : formatPesoAmount(dashboardFareInPesos(trip)!),
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
@@ -122,7 +122,7 @@ class DriverActiveTripCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                driverValueAsString(trip['passenger_name']) ?? '—',
+                dashboardValueAsString(trip['passenger_name']) ?? '—',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -133,8 +133,8 @@ class DriverActiveTripCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           CompactRouteTimelineWidget(
-            pickup: driverValueAsString(trip['pickup_name']) ?? '—',
-            dropoff: driverValueAsString(trip['dropoff_name']) ?? '—',
+            pickup: dashboardValueAsString(trip['pickup_name']) ?? '—',
+            dropoff: dashboardValueAsString(trip['dropoff_name']) ?? '—',
           ),
           const SizedBox(height: 14),
           if (status == 'in_transit')
@@ -219,7 +219,7 @@ class DriverActiveTripCard extends StatelessWidget {
 }
 
 int? remainingBidSeconds(Map<String, dynamic> bid) {
-  final rawExpiry = driverValueAsString(bid['expires_at']);
+  final rawExpiry = dashboardValueAsString(bid['expires_at']);
   final expiresAt = rawExpiry == null ? null : DateTime.tryParse(rawExpiry);
   if (expiresAt == null) return null;
   final seconds = expiresAt.difference(DateTime.now()).inSeconds;
@@ -250,12 +250,12 @@ class DriverPoolBidCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final pickup = bid['pickup_name']?.toString() ?? '—';
     final dropoff = bid['dropoff_name']?.toString() ?? '—';
-    final fare = driverFareInPesos(bid);
+    final fare = dashboardFareInPesos(bid);
     final distance = _distanceInKm(bid);
-    final bidId = driverValueAsString(bid['id']);
+    final bidId = dashboardValueAsString(bid['id']);
     final isSubmitting = bidId != null && submittingBidId == bidId;
     final remainingSeconds = remainingBidSeconds(bid);
-    final passengerNote = driverValueAsString(bid['passenger_note']);
+    final passengerNote = dashboardValueAsString(bid['passenger_note']);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),

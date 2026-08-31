@@ -2,7 +2,7 @@ import 'package:driver_app/src/features/chat/chat.dart';
 import 'dart:async';
 import 'dart:developer' as dev;
 
-import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/chat/chat_routes.dart';
 import 'package:driver_app/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver_app/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
@@ -26,7 +26,7 @@ class WaitingPassengerPage extends StatefulWidget {
   final double fare;
   final IDriverRideRepository rideRepository;
   final ChatRepositoryFactory chatRepositoryFactory;
-  final SecureSessionService sessionService;
+  final DriverSessionStore sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;
 
   const WaitingPassengerPage({

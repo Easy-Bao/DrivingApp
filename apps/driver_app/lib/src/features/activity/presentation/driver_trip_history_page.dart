@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:driver_app/src/core/formatters/driver_value_formatters.dart';
+import 'package:driver_app/src/features/activity/presentation/formatters/driver_value_formatters.dart';
 import 'package:driver_app/src/features/activity/activity_routes.dart';
 import 'package:driver_app/src/features/activity/presentation/bloc/trip_history/trip_history_cubit.dart';
 import 'package:driver_app/src/features/activity/presentation/bloc/trip_history/trip_history_state.dart';

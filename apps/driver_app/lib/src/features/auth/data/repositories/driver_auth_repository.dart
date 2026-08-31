@@ -1,7 +1,7 @@
 import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:driver_app/src/core/constants/api_endpoints.dart';
-import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/features/auth/data/driver_auth_endpoints.dart';
+import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/auth/data/data_sources/driver_auth_remote_data_source.dart';
 import 'package:driver_app/src/features/auth/domain/entities/auth_credentials.dart';
 import 'package:driver_app/src/features/auth/domain/failures/auth_failures.dart';
@@ -10,11 +10,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class DriverAuthRepositoryImpl implements DriverAuthRepository {
   final DriverAuthRemoteDataSource _remoteDataSource;
-  final SecureSessionService _secureSessionService;
+  final DriverSessionStore _secureSessionService;
 
   DriverAuthRepositoryImpl({
     required DriverAuthRemoteDataSource remoteDataSource,
-    required SecureSessionService secureSessionService,
+    required DriverSessionStore secureSessionService,
   }) : _remoteDataSource = remoteDataSource,
        _secureSessionService = secureSessionService;
 
@@ -25,7 +25,7 @@ class DriverAuthRepositoryImpl implements DriverAuthRepository {
   }) async {
     try {
       final responseData = await _remoteDataSource.postData(
-        ApiEndpoints.driverLogin,
+        DriverAuthEndpoints.login,
         requestBody: {'email': email, 'password': password},
       );
 
@@ -134,7 +134,7 @@ class DriverAuthRepositoryImpl implements DriverAuthRepository {
   Future<Either<Failure, void>> resetPassword({required String email}) async {
     try {
       await _remoteDataSource.postJson(
-        ApiEndpoints.driverForgotPassword,
+        DriverAuthEndpoints.forgotPassword,
         requestBody: {'email': email},
       );
       return const Right(null);
