@@ -13,13 +13,13 @@ import 'package:driver_app/src/features/help_center/help_center_module.dart';
 import 'package:driver_app/src/app/navigation/driver_navigation_shell.dart';
 import 'package:driver_app/src/features/profile/profile_module.dart';
 import 'package:driver_app/src/features/settings/settings_module.dart';
-import 'package:driver_app/src/features/trip/trip_module.dart';
+import 'package:driver_app/src/features/active_ride/active_ride_module.dart';
 
 class DriverModule extends Module {
   @override
   FutureOr<void> binds(Injector i) {
     ActivityModule.binds(i);
-    TripModule.binds(i);
+    ActiveRideModule.binds(i);
     HomeModule.binds(i);
     ProfileModule.binds(i);
 
@@ -45,7 +45,7 @@ class DriverModule extends Module {
   @override
   List<ModularRoute> get routes => <ModularRoute>[
     ...HomeModule.routes,
-    ...TripModule.routes,
+    ...ActiveRideModule.routes,
     ...ChatModule.routes,
     ...ActivityModule.routes,
     ...ProfileModule.routes,

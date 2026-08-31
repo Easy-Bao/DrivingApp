@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:driver_app/src/features/trip/data/data_sources/telemetry_remote_data_source.dart';
+import 'package:driver_app/src/features/active_ride/data/data_sources/telemetry_remote_data_source.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 

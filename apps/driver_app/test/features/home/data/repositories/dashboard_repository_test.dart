@@ -8,7 +8,7 @@ import 'package:driver_app/src/features/home/data/data_sources/driver_availabili
 import 'package:driver_app/src/features/home/data/data_sources/ride_offer_remote_data_source.dart';
 import 'package:driver_app/src/features/home/data/repositories/dashboard_repository.dart';
 import 'package:driver_app/src/features/home/domain/entities/driver_dashboard_stats.dart';
-import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_repository.dart';
+import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';

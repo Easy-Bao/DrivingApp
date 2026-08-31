@@ -12,14 +12,14 @@ import 'package:driver_app/src/features/home/presentation/widgets/driver_dashboa
 import 'package:driver_app/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver_app/src/features/location/presentation/bloc/location_access/driver_location_access_state.dart';
 import 'package:driver_app/src/features/profile/profile_routes.dart';
-import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_bloc.dart';
-import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_cubit.dart';
+import 'package:driver_app/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
+import 'package:driver_app/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:driver_app/src/features/trip/trip_routes.dart';
+import 'package:driver_app/src/features/active_ride/active_ride_routes.dart';
 import 'package:design_system/design_system.dart';
 
 bool _isActiveDriverTripStatus(Object? value) {
@@ -628,11 +628,11 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       return;
     }
     final status = resolvedTrip.status;
-    String routeName = TripRoutes.pickupNavigation;
+    String routeName = ActiveRideRoutes.pickupNavigation;
     if (status == 'arrived') {
-      routeName = TripRoutes.waitingPassenger;
+      routeName = ActiveRideRoutes.waitingPassenger;
     } else if (status == 'in_transit') {
-      routeName = TripRoutes.inTransit;
+      routeName = ActiveRideRoutes.inTransit;
     }
 
     BlocProvider.of<RideFlowCubit>(context).resumeRide(
@@ -699,7 +699,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       if (!mounted) return;
 
       context.pushReplacementNamed(
-        TripRoutes.fareSummary,
+        ActiveRideRoutes.fareSummary,
         extra: {
           'pickup': resolvedTrip.pickupName,
           'dropoff': resolvedTrip.dropoffName,

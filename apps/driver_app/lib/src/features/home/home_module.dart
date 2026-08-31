@@ -6,7 +6,7 @@ import 'package:driver_app/src/features/home/data/data_sources/driver_availabili
 import 'package:driver_app/src/features/home/data/data_sources/ride_offer_remote_data_source.dart';
 import 'package:driver_app/src/features/home/data/repositories/dashboard_repository.dart';
 import 'package:driver_app/src/features/home/domain/repositories/i_dashboard_repository.dart';
-import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_repository.dart';
+import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/features/home/home_routes.dart';

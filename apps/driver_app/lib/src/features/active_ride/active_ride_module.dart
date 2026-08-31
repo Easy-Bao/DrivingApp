@@ -3,18 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
 import 'package:driver_app/src/core/services/secure_session_service.dart';
-import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_bloc.dart';
-import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_repository.dart';
-import 'package:driver_app/src/features/trip/trip_routes.dart';
-import 'package:driver_app/src/features/trip/presentation/pickup_navigation_page.dart';
-import 'package:driver_app/src/features/trip/presentation/fare_summary_page.dart';
-import 'package:driver_app/src/features/trip/presentation/in_transit_page.dart';
-import 'package:driver_app/src/features/trip/presentation/waiting_passenger_page.dart';
+import 'package:driver_app/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
+import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
+import 'package:driver_app/src/features/active_ride/active_ride_routes.dart';
+import 'package:driver_app/src/features/active_ride/presentation/pickup_navigation_page.dart';
+import 'package:driver_app/src/features/active_ride/presentation/fare_summary_page.dart';
+import 'package:driver_app/src/features/active_ride/presentation/in_transit_page.dart';
+import 'package:driver_app/src/features/active_ride/presentation/waiting_passenger_page.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:design_system/design_system.dart';
 
-class TripModule {
-  TripModule._();
+class ActiveRideModule {
+  ActiveRideModule._();
 
   static void binds(Injector i) {
     i.addFactory<LiveMapBloc>(
@@ -24,8 +24,8 @@ class TripModule {
 
   static List<ModularRoute> routes = [
     ChildRoute(
-      name: TripRoutes.pickupNavigation,
-      TripRoutes.pickupNavigationPath,
+      name: ActiveRideRoutes.pickupNavigation,
+      ActiveRideRoutes.pickupNavigationPath,
       child: (context, GoRouterState state) {
         final data = _DriverTripRouteData.tryParse(
           RoutePayload.from(extra: state.extra),
@@ -47,8 +47,8 @@ class TripModule {
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
-      name: TripRoutes.waitingPassenger,
-      TripRoutes.waitingPassengerPath,
+      name: ActiveRideRoutes.waitingPassenger,
+      ActiveRideRoutes.waitingPassengerPath,
       child: (context, GoRouterState state) {
         final data = _DriverTripRouteData.tryParse(
           RoutePayload.from(extra: state.extra),
@@ -70,8 +70,8 @@ class TripModule {
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
-      name: TripRoutes.inTransit,
-      TripRoutes.inTransitPath,
+      name: ActiveRideRoutes.inTransit,
+      ActiveRideRoutes.inTransitPath,
       child: (context, GoRouterState state) {
         final data = _DriverTripRouteData.tryParse(
           RoutePayload.from(extra: state.extra),
@@ -91,8 +91,8 @@ class TripModule {
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
-      name: TripRoutes.fareSummary,
-      TripRoutes.fareSummaryPath,
+      name: ActiveRideRoutes.fareSummary,
+      ActiveRideRoutes.fareSummaryPath,
       child: (context, GoRouterState state) {
         final data = _DriverTripRouteData.tryParse(
           RoutePayload.from(extra: state.extra),

@@ -2,13 +2,13 @@ import 'package:maps/maps.dart';
 
 import 'dart:async';
 
-import 'package:driver_app/src/features/trip/trip_routes.dart';
-import 'package:driver_app/src/features/trip/presentation/bloc/live_map/live_map_bloc.dart';
-import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_cubit.dart';
-import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_state.dart';
-import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_repository.dart';
-import 'package:driver_app/src/features/trip/presentation/widgets/in_transit/in_transit_complete_button_widget.dart';
-import 'package:driver_app/src/features/trip/presentation/widgets/in_transit/in_transit_passenger_card_widget.dart';
+import 'package:driver_app/src/features/active_ride/active_ride_routes.dart';
+import 'package:driver_app/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
+import 'package:driver_app/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
+import 'package:driver_app/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
+import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
+import 'package:driver_app/src/features/active_ride/presentation/widgets/in_transit/in_transit_complete_button_widget.dart';
+import 'package:driver_app/src/features/active_ride/presentation/widgets/in_transit/in_transit_passenger_card_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -228,7 +228,7 @@ class _InTransitPageState extends State<InTransitPage> {
       }
       if (!mounted) return;
       this.context.pushReplacementNamed(
-        TripRoutes.fareSummary,
+        ActiveRideRoutes.fareSummary,
         extra: {
           'pickup': widget.pickup,
           'dropoff': widget.dropoff,

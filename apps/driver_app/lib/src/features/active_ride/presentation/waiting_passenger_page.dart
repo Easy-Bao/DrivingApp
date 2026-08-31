@@ -4,11 +4,11 @@ import 'dart:developer' as dev;
 
 import 'package:driver_app/src/core/services/secure_session_service.dart';
 import 'package:driver_app/src/features/chat/chat_routes.dart';
-import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_cubit.dart';
-import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_state.dart';
-import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_repository.dart';
-import 'package:driver_app/src/features/trip/presentation/widgets/waiting_passenger_panel_widget.dart';
-import 'package:driver_app/src/features/trip/trip_routes.dart';
+import 'package:driver_app/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
+import 'package:driver_app/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
+import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
+import 'package:driver_app/src/features/active_ride/presentation/widgets/waiting_passenger_panel_widget.dart';
+import 'package:driver_app/src/features/active_ride/active_ride_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -164,7 +164,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
       }
       if (mounted && started) {
         context.pushReplacementNamed(
-          TripRoutes.inTransit,
+          ActiveRideRoutes.inTransit,
           extra: {
             'pickup': widget.pickup,
             'dropoff': widget.dropoff,

@@ -1,4 +1,4 @@
-import 'package:driver_app/src/features/trip/presentation/fare_summary_page.dart';
+import 'package:driver_app/src/features/active_ride/presentation/fare_summary_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

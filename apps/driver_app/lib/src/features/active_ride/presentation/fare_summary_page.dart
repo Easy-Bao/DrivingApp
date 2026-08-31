@@ -1,7 +1,7 @@
 import 'package:maps/maps.dart';
 import 'package:driver_app/src/features/home/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/home/home_routes.dart';
-import 'package:driver_app/src/features/trip/presentation/bloc/ride_flow/ride_flow_cubit.dart';
+import 'package:driver_app/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';

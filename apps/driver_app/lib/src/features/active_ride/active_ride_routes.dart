@@ -1,4 +1,4 @@
-abstract final class TripRoutes {
+abstract final class ActiveRideRoutes {
   static const String pickupNavigation = 'PickupNavigation';
   static const String pickupNavigationPath = 'ride/pickup-navigation';
   static const String waitingPassenger = 'WaitingPassenger';

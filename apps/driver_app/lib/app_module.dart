@@ -14,11 +14,11 @@ import 'package:driver_app/src/features/auth/domain/repositories/driver_auth_rep
 import 'package:driver_app/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver_app/src/features/location/data/repositories/driver_location_access_repository.dart';
 import 'package:driver_app/src/features/location/domain/repositories/i_driver_location_access_repository.dart';
-import 'package:driver_app/src/features/trip/data/data_sources/ride_counterparty_remote_data_source.dart';
-import 'package:driver_app/src/features/trip/data/data_sources/ride_remote_data_source.dart';
-import 'package:driver_app/src/features/trip/data/data_sources/telemetry_remote_data_source.dart';
-import 'package:driver_app/src/features/trip/data/repositories/driver_ride_repository.dart';
-import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_repository.dart';
+import 'package:driver_app/src/features/active_ride/data/data_sources/ride_counterparty_remote_data_source.dart';
+import 'package:driver_app/src/features/active_ride/data/data_sources/ride_remote_data_source.dart';
+import 'package:driver_app/src/features/active_ride/data/data_sources/telemetry_remote_data_source.dart';
+import 'package:driver_app/src/features/active_ride/data/repositories/driver_ride_repository.dart';
+import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -84,7 +84,7 @@ class AppModule extends Module {
       ..addLazySingleton<AuthRemoteDataSource>(
         (i) => DioAuthRemoteDataSource(i.get<Dio>()),
       )
-      // Active ride state spans dashboard and trip routes, so its transport
+      // Active ride state spans dashboard and active-ride routes, so its transport
       // remains at application scope while page-specific sources do not.
       ..addLazySingleton<RideRemoteDataSource>(
         (i) => RideRemoteDataSourceImpl(i.get<Dio>()),

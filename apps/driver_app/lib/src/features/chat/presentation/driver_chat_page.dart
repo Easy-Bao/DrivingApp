@@ -4,7 +4,7 @@ import 'dart:async';
 
 import 'package:driver_app/src/core/constants/api_endpoints.dart';
 import 'package:driver_app/src/features/chat/presentation/bloc/chat/chat_cubit.dart';
-import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_repository.dart';
+import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

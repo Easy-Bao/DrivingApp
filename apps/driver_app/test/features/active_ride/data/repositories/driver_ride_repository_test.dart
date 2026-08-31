@@ -1,8 +1,8 @@
 import 'package:ride/ride.dart';
-import 'package:driver_app/src/features/trip/data/data_sources/ride_counterparty_remote_data_source.dart';
-import 'package:driver_app/src/features/trip/data/data_sources/ride_remote_data_source.dart';
-import 'package:driver_app/src/features/trip/data/data_sources/telemetry_remote_data_source.dart';
-import 'package:driver_app/src/features/trip/data/repositories/driver_ride_repository.dart';
+import 'package:driver_app/src/features/active_ride/data/data_sources/ride_counterparty_remote_data_source.dart';
+import 'package:driver_app/src/features/active_ride/data/data_sources/ride_remote_data_source.dart';
+import 'package:driver_app/src/features/active_ride/data/data_sources/telemetry_remote_data_source.dart';
+import 'package:driver_app/src/features/active_ride/data/repositories/driver_ride_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
