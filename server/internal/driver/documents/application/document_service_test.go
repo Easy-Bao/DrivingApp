@@ -1,4 +1,4 @@
-package driver_test
+package application_test
 
 import (
 	"context"

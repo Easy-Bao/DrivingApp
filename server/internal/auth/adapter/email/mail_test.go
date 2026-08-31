@@ -1,4 +1,4 @@
-package auth_test
+package email_test
 
 import (
 	"context"

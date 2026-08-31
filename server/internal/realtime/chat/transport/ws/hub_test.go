@@ -1,4 +1,4 @@
-package realtime_test
+package ws_test
 
 import (
 	"testing"

@@ -1,4 +1,4 @@
-package realtime_test
+package application_test
 
 import (
 	"context"
