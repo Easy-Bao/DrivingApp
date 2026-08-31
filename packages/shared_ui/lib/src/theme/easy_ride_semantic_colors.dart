@@ -28,15 +28,6 @@ class EasyRideSemanticColors extends ThemeExtension<EasyRideSemanticColors> {
     warmAccent: Color(0xFF8A4F35),
   );
 
-  static const dark = EasyRideSemanticColors(
-    success: Color(0xFF75D59B),
-    onSuccess: Color(0xFF062113),
-    warning: Color(0xFFF6C453),
-    onWarning: Color(0xFF261A00),
-    rating: Color(0xFFF6C453),
-    warmAccent: Color(0xFFCDB7AA),
-  );
-
   @override
   EasyRideSemanticColors copyWith({
     Color? success,

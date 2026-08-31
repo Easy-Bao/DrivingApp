@@ -100,7 +100,7 @@ void main() {
     expect(find.text('Performance'), findsOneWidget);
     expect(find.text('Support'), findsOneWidget);
     expect(find.text('Settings'), findsOneWidget);
-    expect(find.text('Appearance and app behavior'), findsOneWidget);
+    expect(find.text('Location access and app support'), findsOneWidget);
     expect(find.text('Help Center'), findsOneWidget);
     expect(find.text('About BaoRide'), findsOneWidget);
     expect(find.text('Account Settings'), findsNothing);
@@ -112,12 +112,10 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('uses semantic account surfaces in dark mode', (tester) async {
+  testWidgets('uses the fixed light account surface contract', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: EasyRideTheme.light,
-        darkTheme: EasyRideTheme.dark,
-        themeMode: ThemeMode.dark,
         home: BlocProvider(
           create: (_) => DriverAccountCubit(repository: repository)..load(),
           child: const DriverAccountPage(onLogout: _noopLogout),
@@ -131,9 +129,9 @@ void main() {
 
     expect(
       scaffold.backgroundColor,
-      EasyRideTheme.dark.scaffoldBackgroundColor,
+      EasyRideTheme.light.scaffoldBackgroundColor,
     );
-    expect(title.style?.color, EasyRideTheme.dark.colorScheme.onSurface);
+    expect(title.style?.color, EasyRideTheme.light.colorScheme.onSurface);
     expect(tester.takeException(), isNull);
   });
 }

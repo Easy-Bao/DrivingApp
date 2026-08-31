@@ -85,7 +85,7 @@ class AccountPage extends StatelessWidget {
                         ),
                         _AccountMenuItem(
                           title: 'Settings',
-                          subtitle: 'Appearance and app behavior',
+                          subtitle: 'Location access and app support',
                           onTap: () =>
                               context.pushNamed(SettingsRoutes.settings),
                         ),

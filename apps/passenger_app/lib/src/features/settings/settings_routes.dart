@@ -1,8 +1,6 @@
 abstract final class SettingsRoutes {
   static const String settings = 'Settings';
   static const String settingsPath = 'settings';
-  static const String appearance = 'Appearance';
-  static const String appearancePath = 'settings/appearance';
   static const String locationAccess = 'SettingsLocationAccess';
   static const String locationAccessPath = 'settings/location-access';
   static const String terms = 'TermsOfService';

@@ -44,12 +44,6 @@ class HelpCenterPage extends StatelessWidget {
       answer:
           'Open Account → Settings → Location access. Turn on the phone location service or grant the app permission, then return to BaoRide and try again.',
     ),
-    AppHelpTopic(
-      category: 'Account',
-      question: 'How do I change the app appearance?',
-      answer:
-          'Open Account → Settings → Appearance and choose System, Light, or Dark. The choice applies immediately on this phone.',
-    ),
   ];
 
   @override

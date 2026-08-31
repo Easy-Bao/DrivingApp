@@ -25,14 +25,6 @@ void main() {
     expect(find.text('coming soon'), findsNothing);
     expect(find.byType(ChoiceChip), findsNWidgets(5));
 
-    await tester.enterText(
-      find.byKey(const ValueKey<String>('help-center-search')),
-      'appearance',
-    );
-    await tester.pump();
-    expect(find.text('How do I change the app appearance?'), findsOneWidget);
-    expect(find.text('How do I book a ride?'), findsNothing);
-
     await tester.tap(find.byTooltip('Back'));
     expect(backCount, 1);
   });

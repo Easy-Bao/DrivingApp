@@ -42,17 +42,6 @@ class AppModule extends Module {
       ..addLazySingleton<NetworkAvailabilityCoordinator>(
         (_) => NetworkAvailabilityCoordinator(),
       )
-      ..addLazySingleton<ThemeModeCubit>(
-        (i) => ThemeModeCubit(
-          initialMode: ThemeModeCodec.decode(
-            i.get<SharedPreferences>().getString(appThemeModePreferenceKey),
-          ),
-          savePreference: (value) => i.get<SharedPreferences>().setString(
-            appThemeModePreferenceKey,
-            value,
-          ),
-        ),
-      )
       ..addLazySingleton<IDriverLocationAccessRepository>(
         (_) => DriverLocationAccessRepository(),
       )

@@ -7,7 +7,6 @@ class EasyRideTheme {
   EasyRideTheme._();
 
   static const _lightCanvas = Color(0xFFF8F9FA);
-  static const _darkCanvas = Color(0xFF090D12);
 
   static const _lightScheme = ColorScheme.light(
     primary: Color(0xFF100E11),
@@ -35,65 +34,25 @@ class EasyRideTheme {
     scrim: Color(0xFF000000),
   );
 
-  static const _darkScheme = ColorScheme.dark(
-    primary: Color(0xFFF4EEE9),
-    onPrimary: Color(0xFF17120F),
-    primaryContainer: Color(0xFF332C29),
-    onPrimaryContainer: Color(0xFFF4EEE9),
-    secondary: Color(0xFFCDB7AA),
-    onSecondary: Color(0xFF251A15),
-    secondaryContainer: Color(0xFF3A302C),
-    onSecondaryContainer: Color(0xFFF7EAE3),
-    tertiary: Color(0xFF75D59B),
-    onTertiary: Color(0xFF062113),
-    surface: Color(0xFF121820),
-    onSurface: Color(0xFFF4EEE9),
-    onSurfaceVariant: Color(0xFFA9AFB6),
-    outline: Color(0xFF7A8189),
-    outlineVariant: Color(0x1FFFFFFF),
-    error: Color(0xFFFFB4AB),
-    onError: Color(0xFF690005),
-    inverseSurface: Color(0xFFF4EEE9),
-    onInverseSurface: Color(0xFF282124),
-    inversePrimary: Color(0xFF574B46),
-    shadow: Color(0xFF000000),
-    scrim: Color(0xFF000000),
-    surfaceContainerLowest: Color(0xFF090D12),
-    surfaceContainerLow: Color(0xFF0E141A),
-    surfaceContainer: Color(0xFF121820),
-    surfaceContainerHigh: Color(0xFF161E26),
-    surfaceContainerHighest: Color(0xFF1A222B),
-  );
-
   static ThemeData get light => _build(
-    brightness: Brightness.light,
     colorScheme: _lightScheme,
     canvas: _lightCanvas,
     semanticColors: EasyRideSemanticColors.light,
-  );
-
-  static ThemeData get dark => _build(
-    brightness: Brightness.dark,
-    colorScheme: _darkScheme,
-    canvas: _darkCanvas,
-    semanticColors: EasyRideSemanticColors.dark,
   );
 
   /// Temporary light-theme alias for consumers migrating to [light].
   static ThemeData get data => light;
 
   static ThemeData _build({
-    required Brightness brightness,
     required ColorScheme colorScheme,
     required Color canvas,
     required EasyRideSemanticColors semanticColors,
   }) {
-    final isDark = brightness == Brightness.dark;
     final textTheme = _textTheme(colorScheme);
 
     return ThemeData(
       useMaterial3: true,
-      brightness: brightness,
+      brightness: Brightness.light,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: canvas,
       canvasColor: canvas,
@@ -152,9 +111,7 @@ class EasyRideTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: colorScheme.surface,
-        indicatorColor: colorScheme.primary.withValues(
-          alpha: isDark ? 0.16 : 0.08,
-        ),
+        indicatorColor: colorScheme.primary.withValues(alpha: 0.08),
         height: 70,
         labelTextStyle: WidgetStatePropertyAll(
           textTheme.labelSmall?.copyWith(

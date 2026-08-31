@@ -30,12 +30,12 @@ void main() {
     await tester.pump();
   });
 
-  testWidgets('uses semantic error colors in dark mode', (tester) async {
+  testWidgets('uses semantic error colors', (tester) async {
     late BuildContext toastContext;
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.dark,
+        theme: EasyRideTheme.light,
         home: Builder(
           builder: (context) {
             toastContext = context;
@@ -45,7 +45,7 @@ void main() {
       ),
     );
 
-    CustomToast.show(toastContext, 'dark error', isError: true);
+    CustomToast.show(toastContext, 'error', isError: true);
     await tester.pump();
 
     final toastContainer = tester.widget<Container>(
@@ -57,7 +57,7 @@ void main() {
           .last,
     );
     final decoration = toastContainer.decoration! as BoxDecoration;
-    expect(decoration.color, EasyRideTheme.dark.colorScheme.errorContainer);
+    expect(decoration.color, EasyRideTheme.light.colorScheme.errorContainer);
 
     CustomToast.dismiss();
     await tester.pump();

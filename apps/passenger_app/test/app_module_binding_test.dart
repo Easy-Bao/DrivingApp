@@ -14,9 +14,7 @@ import 'package:shared_ui/shared_ui.dart';
 void main() {
   test('registers booking draft state at the application scope', () async {
     TestWidgetsFlutterBinding.ensureInitialized();
-    SharedPreferences.setMockInitialValues(<String, Object>{
-      appThemeModePreferenceKey: 'dark',
-    });
+    SharedPreferences.setMockInitialValues(<String, Object>{});
     final preferences = await SharedPreferences.getInstance();
 
     await Modular.configure(
@@ -32,9 +30,7 @@ void main() {
     expect(Modular.isRegistered<SessionBloc>(), isTrue);
     expect(Modular.isRegistered<ILocationAccessRepository>(), isTrue);
     expect(Modular.isRegistered<LocationAccessCubit>(), isTrue);
-    expect(Modular.isRegistered<ThemeModeCubit>(), isTrue);
     expect(Modular.get<BookingDraftCubit>(), isA<BookingDraftCubit>());
-    expect(Modular.get<ThemeModeCubit>().state, ThemeMode.dark);
 
     expect(
       Modular.routerConfig.namedLocation(AuthRoutes.signin),

@@ -10,12 +10,10 @@ import 'package:shared_ui/shared_ui.dart';
 
 void main() {
   test(
-    'registers the persisted appearance mode at application scope',
+    'registers driver application dependencies at application scope',
     () async {
       TestWidgetsFlutterBinding.ensureInitialized();
-      SharedPreferences.setMockInitialValues(<String, Object>{
-        appThemeModePreferenceKey: 'dark',
-      });
+      SharedPreferences.setMockInitialValues(<String, Object>{});
       final preferences = await SharedPreferences.getInstance();
 
       await Modular.configure(
@@ -27,8 +25,6 @@ void main() {
       );
       await Future<void>.delayed(Duration.zero);
 
-      expect(Modular.isRegistered<ThemeModeCubit>(), isTrue);
-      expect(Modular.get<ThemeModeCubit>().state, ThemeMode.dark);
       expect(Modular.isRegistered<IDriverLocationAccessRepository>(), isTrue);
       expect(Modular.isRegistered<DriverLocationAccessCubit>(), isTrue);
     },

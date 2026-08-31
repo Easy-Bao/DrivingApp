@@ -45,18 +45,16 @@ void main() {
     expect(profileTapCount, 2);
     expect(find.byIcon(Icons.edit), findsNothing);
     expect(find.text('Safety Center'), findsNothing);
-    expect(find.text('Appearance and app behavior'), findsOneWidget);
+    expect(find.text('Location access and app support'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('uses semantic surfaces and foregrounds in dark mode', (
+  testWidgets('uses the fixed light surface and foreground contract', (
     tester,
   ) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: EasyRideTheme.light,
-        darkTheme: EasyRideTheme.dark,
-        themeMode: ThemeMode.dark,
         home: BlocProvider<ProfileCubit>.value(
           value: profileCubit,
           child: const AccountPage(),
@@ -64,15 +62,14 @@ void main() {
       ),
     );
 
-    final darkScheme = EasyRideTheme.dark.colorScheme;
     final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
     final title = tester.widget<Text>(find.text('Account'));
 
     expect(
       scaffold.backgroundColor,
-      EasyRideTheme.dark.scaffoldBackgroundColor,
+      EasyRideTheme.light.scaffoldBackgroundColor,
     );
-    expect(title.style?.color, darkScheme.onSurface);
+    expect(title.style?.color, EasyRideTheme.light.colorScheme.onSurface);
     expect(tester.takeException(), isNull);
   });
 

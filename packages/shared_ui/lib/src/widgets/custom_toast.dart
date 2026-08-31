@@ -107,9 +107,7 @@ class _ToastWidgetState extends State<_ToastWidget>
         : successColor;
     final backgroundColor = widget.isError
         ? colorScheme.errorContainer
-        : successColor.withValues(
-            alpha: colorScheme.brightness == Brightness.dark ? 0.18 : 0.12,
-          );
+        : successColor.withValues(alpha: 0.12);
     final borderColor = widget.isError
         ? colorScheme.error.withValues(alpha: 0.42)
         : successColor.withValues(alpha: 0.42);

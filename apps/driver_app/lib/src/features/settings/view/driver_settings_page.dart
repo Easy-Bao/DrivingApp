@@ -13,7 +13,6 @@ class DriverSettingsPage extends StatelessWidget {
   const DriverSettingsPage({
     super.key,
     this.onBack,
-    this.onAppearanceTap,
     this.onLocationTap,
     this.onHelpCenterTap,
     this.onTermsTap,
@@ -21,7 +20,6 @@ class DriverSettingsPage extends StatelessWidget {
   });
 
   final VoidCallback? onBack;
-  final VoidCallback? onAppearanceTap;
   final VoidCallback? onLocationTap;
   final VoidCallback? onHelpCenterTap;
   final VoidCallback? onTermsTap;
@@ -33,16 +31,8 @@ class DriverSettingsPage extends StatelessWidget {
       onBack: onBack ?? () => context.pop(),
       children: [
         AppSettingsSection(
-          label: 'Appearance and device',
+          label: 'Device',
           children: [
-            AppSettingsNavigationTile(
-              icon: LucideIcons.palette,
-              title: 'Appearance',
-              subtitle: _themeModeLabel(context.watch<ThemeModeCubit>().state),
-              onTap:
-                  onAppearanceTap ??
-                  () => context.pushNamed(DriverSettingsRoutes.appearance),
-            ),
             BlocBuilder<
               DriverLocationAccessCubit,
               DriverLocationAccessViewState
@@ -97,14 +87,6 @@ class DriverSettingsPage extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  static String _themeModeLabel(ThemeMode mode) {
-    return switch (mode) {
-      ThemeMode.system => 'System default',
-      ThemeMode.light => 'Light',
-      ThemeMode.dark => 'Dark',
-    };
   }
 
   static String _locationStatusLabel(DriverLocationAccessViewState state) {

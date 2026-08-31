@@ -22,11 +22,7 @@ class MapProvider {
   static final AsyncTtlCache<RouteRequestKey, RouteModel?> _routeCache =
       AsyncTtlCache(ttl: _routeCacheTtl, maxEntries: 24);
 
-  static String styleUriFor(Brightness brightness) {
-    return brightness == Brightness.dark
-        ? mapbox.MapboxStyles.DARK
-        : mapbox.MapboxStyles.MAPBOX_STREETS;
-  }
+  static String styleUriFor() => mapbox.MapboxStyles.MAPBOX_STREETS;
 
   static Future<void> initialize({
     String? token,
@@ -255,7 +251,7 @@ class MapProvider {
     return Builder(
       builder: (context) {
         AppMapController? mapController;
-        final styleUri = styleUriFor(Theme.of(context).brightness);
+        final styleUri = styleUriFor();
 
         return mapbox.MapWidget(
           key: ValueKey<String>(styleUri),

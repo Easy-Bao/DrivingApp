@@ -12,14 +12,12 @@ import 'package:shared_ui/shared_ui.dart';
 class SettingsPage extends StatelessWidget {
   const SettingsPage({
     super.key,
-    this.onAppearanceTap,
     this.onLocationTap,
     this.onHelpCenterTap,
     this.onTermsTap,
     this.onAboutTap,
   });
 
-  final VoidCallback? onAppearanceTap;
   final VoidCallback? onLocationTap;
   final VoidCallback? onHelpCenterTap;
   final VoidCallback? onTermsTap;
@@ -31,16 +29,8 @@ class SettingsPage extends StatelessWidget {
       onBack: () => context.pop(),
       children: [
         AppSettingsSection(
-          label: 'Appearance and device',
+          label: 'Device',
           children: [
-            AppSettingsNavigationTile(
-              icon: LucideIcons.palette,
-              title: 'Appearance',
-              subtitle: _themeModeLabel(context.watch<ThemeModeCubit>().state),
-              onTap:
-                  onAppearanceTap ??
-                  () => context.pushNamed(SettingsRoutes.appearance),
-            ),
             BlocBuilder<LocationAccessCubit, LocationAccessViewState>(
               builder: (context, state) => AppSettingsNavigationTile(
                 icon: LucideIcons.map_pin,
@@ -89,14 +79,6 @@ class SettingsPage extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  static String _themeModeLabel(ThemeMode mode) {
-    return switch (mode) {
-      ThemeMode.system => 'System default',
-      ThemeMode.light => 'Light',
-      ThemeMode.dark => 'Dark',
-    };
   }
 
   static String _locationStatusLabel(LocationAccessViewState state) {

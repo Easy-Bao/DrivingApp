@@ -10,8 +10,6 @@ extension EasyRideThemeContext on BuildContext {
 
   EasyRideSemanticColors get semanticColors {
     return Theme.of(this).extension<EasyRideSemanticColors>() ??
-        (Theme.of(this).brightness == Brightness.dark
-            ? EasyRideSemanticColors.dark
-            : EasyRideSemanticColors.light);
+        EasyRideSemanticColors.light;
   }
 }

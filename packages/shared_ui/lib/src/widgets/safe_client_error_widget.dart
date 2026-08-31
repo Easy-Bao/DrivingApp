@@ -39,8 +39,6 @@ class SafeClientErrorApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: EasyRideTheme.light,
-      darkTheme: EasyRideTheme.dark,
-      themeMode: ThemeMode.system,
       home: Scaffold(body: SafeClientErrorWidget(message: message)),
     );
   }

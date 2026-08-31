@@ -1,6 +1,5 @@
 import 'package:driver_app/src/features/settings/settings_routes.dart';
 import 'package:driver_app/src/features/settings/view/driver_about_bao_ride_page.dart';
-import 'package:driver_app/src/features/settings/view/driver_appearance_page.dart';
 import 'package:driver_app/src/features/settings/view/driver_location_access_status_page.dart';
 import 'package:driver_app/src/features/settings/view/driver_settings_page.dart';
 import 'package:driver_app/src/features/settings/view/driver_terms_of_service_page.dart';
@@ -16,13 +15,6 @@ class DriverSettingsModule {
       name: DriverSettingsRoutes.settings,
       DriverSettingsRoutes.settingsPath,
       child: (context, GoRouterState state) => const DriverSettingsPage(),
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
-    ChildRoute(
-      name: DriverSettingsRoutes.appearance,
-      DriverSettingsRoutes.appearancePath,
-      child: (context, GoRouterState state) => const DriverAppearancePage(),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:passenger_app/src/core/location/location.dart';
 import 'package:shared_core/shared_core.dart';
@@ -20,15 +19,8 @@ void main() {
     );
   });
 
-  test('selects a map style that follows interface brightness', () {
-    expect(
-      MapProvider.styleUriFor(Brightness.light),
-      'mapbox://styles/mapbox/streets-v12',
-    );
-    expect(
-      MapProvider.styleUriFor(Brightness.dark),
-      'mapbox://styles/mapbox/dark-v11',
-    );
+  test('uses the fixed light map style', () {
+    expect(MapProvider.styleUriFor(), 'mapbox://styles/mapbox/streets-v12');
   });
 
   test(

@@ -100,7 +100,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                         _buildMenuGroup(context, [
                           _DriverAccountMenuItem(
                             title: 'Settings',
-                            subtitle: 'Appearance and app behavior',
+                            subtitle: 'Location access and app support',
                             onTap: () => context.pushNamed(
                               DriverSettingsRoutes.settings,
                             ),

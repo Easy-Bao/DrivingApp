@@ -32,9 +32,9 @@ void main() {
     verify(() => secureSessionService.deleteToken()).called(1);
   });
 
-  test('rejects keys that are not session-critical', () {
+  test('rejects unsupported keys that are not session-critical', () {
     expect(
-      () => secureStorage.write(StorageKeys.userTheme, 'dark'),
+      () => secureStorage.write('unsupported_key', 'value'),
       throwsArgumentError,
     );
   });

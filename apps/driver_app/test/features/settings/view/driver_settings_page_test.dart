@@ -20,26 +20,18 @@ void main() {
     when(
       () => locationCubit.state,
     ).thenReturn(const DriverLocationAccessReady());
-    final themeCubit = ThemeModeCubit(
-      initialMode: ThemeMode.system,
-      savePreference: (_) async => true,
-    );
-    addTearDown(themeCubit.close);
-
     var backTaps = 0;
     final destinationTaps = <String>[];
 
     await tester.pumpWidget(
       MultiBlocProvider(
         providers: [
-          BlocProvider<ThemeModeCubit>.value(value: themeCubit),
           BlocProvider<DriverLocationAccessCubit>.value(value: locationCubit),
         ],
         child: MaterialApp(
           theme: EasyRideTheme.light,
           home: DriverSettingsPage(
             onBack: () => backTaps++,
-            onAppearanceTap: () => destinationTaps.add('appearance'),
             onLocationTap: () => destinationTaps.add('location'),
             onHelpCenterTap: () => destinationTaps.add('help'),
             onTermsTap: () => destinationTaps.add('terms'),
@@ -49,7 +41,8 @@ void main() {
       ),
     );
 
-    expect(find.text('System default'), findsOneWidget);
+    expect(find.text('Appearance'), findsNothing);
+    expect(find.text('System default'), findsNothing);
     expect(find.text('Ready to go online'), findsOneWidget);
     expect(find.text('Help Center'), findsOneWidget);
     expect(find.text('Terms of Service'), findsOneWidget);
@@ -58,7 +51,6 @@ void main() {
     expect(find.text('Privacy Center'), findsNothing);
 
     for (final label in [
-      'Appearance',
       'Location access',
       'Help Center',
       'Terms of Service',
@@ -70,13 +62,7 @@ void main() {
     }
     await tester.tap(find.byTooltip('Back'));
 
-    expect(destinationTaps, [
-      'appearance',
-      'location',
-      'help',
-      'terms',
-      'about',
-    ]);
+    expect(destinationTaps, ['location', 'help', 'terms', 'about']);
     expect(backTaps, 1);
     expect(tester.takeException(), isNull);
   });

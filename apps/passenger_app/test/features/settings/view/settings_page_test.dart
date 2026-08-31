@@ -15,13 +15,6 @@ void main() {
   testWidgets('shows only completed settings destinations', (tester) async {
     final locationCubit = _MockLocationAccessCubit();
     when(() => locationCubit.state).thenReturn(const LocationAccessReady());
-    final themeCubit = ThemeModeCubit(
-      initialMode: ThemeMode.system,
-      savePreference: (_) async => true,
-    );
-    addTearDown(themeCubit.close);
-
-    var appearanceTaps = 0;
     var locationTaps = 0;
     var helpTaps = 0;
     var termsTaps = 0;
@@ -30,13 +23,11 @@ void main() {
     await tester.pumpWidget(
       MultiBlocProvider(
         providers: [
-          BlocProvider<ThemeModeCubit>.value(value: themeCubit),
           BlocProvider<LocationAccessCubit>.value(value: locationCubit),
         ],
         child: MaterialApp(
           theme: EasyRideTheme.light,
           home: SettingsPage(
-            onAppearanceTap: () => appearanceTaps++,
             onLocationTap: () => locationTaps++,
             onHelpCenterTap: () => helpTaps++,
             onTermsTap: () => termsTaps++,
@@ -46,8 +37,8 @@ void main() {
       ),
     );
 
-    expect(find.text('Appearance'), findsOneWidget);
-    expect(find.text('System default'), findsOneWidget);
+    expect(find.text('Appearance'), findsNothing);
+    expect(find.text('System default'), findsNothing);
     expect(find.text('Location access'), findsOneWidget);
     expect(find.text('Ready for pickups'), findsOneWidget);
     expect(find.text('Help Center'), findsOneWidget);
@@ -58,7 +49,6 @@ void main() {
     expect(find.text('Privacy Center'), findsNothing);
 
     for (final label in [
-      'Appearance',
       'Location access',
       'Help Center',
       'Terms of Service',
@@ -69,7 +59,6 @@ void main() {
       await tester.pump();
     }
 
-    expect(appearanceTaps, 1);
     expect(locationTaps, 1);
     expect(helpTaps, 1);
     expect(termsTaps, 1);

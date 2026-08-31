@@ -1,8 +1,6 @@
 abstract final class DriverSettingsRoutes {
   static const String settings = 'DriverSettings';
   static const String settingsPath = 'account/settings';
-  static const String appearance = 'DriverAppearance';
-  static const String appearancePath = 'account/settings/appearance';
   static const String locationAccess = 'DriverSettingsLocationAccess';
   static const String locationAccessPath = 'account/settings/location-access';
   static const String terms = 'DriverTermsOfService';

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/settings/settings_routes.dart';
 import 'package:passenger_app/src/features/settings/view/about_bao_ride_page.dart';
-import 'package:passenger_app/src/features/settings/view/appearance_page.dart';
 import 'package:passenger_app/src/features/settings/view/location_access_status_page.dart';
 import 'package:passenger_app/src/features/settings/view/settings_page.dart';
 import 'package:passenger_app/src/features/settings/view/terms_of_service_page.dart';
@@ -16,13 +15,6 @@ class SettingsModule {
       name: SettingsRoutes.settings,
       SettingsRoutes.settingsPath,
       child: (context, GoRouterState state) => const SettingsPage(),
-      transition: AppTransitions.push.toLeft,
-      transitionDuration: AppTransitions.pushDuration,
-    ),
-    ChildRoute(
-      name: SettingsRoutes.appearance,
-      SettingsRoutes.appearancePath,
-      child: (context, GoRouterState state) => const AppearancePage(),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),

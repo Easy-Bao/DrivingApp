@@ -17,9 +17,9 @@ void main() {
               label: 'Device',
               children: [
                 AppSettingsNavigationTile(
-                  icon: LucideIcons.palette,
-                  title: 'Appearance',
-                  subtitle: 'System default',
+                  icon: LucideIcons.map_pin,
+                  title: 'Location access',
+                  subtitle: 'Ready for pickups',
                   onTap: () => tapped = true,
                 ),
               ],
@@ -30,7 +30,7 @@ void main() {
     );
 
     final destination = find.byKey(
-      const ValueKey<String>('settings-destination-Appearance'),
+      const ValueKey<String>('settings-destination-Location access'),
     );
     expect(tester.getSize(destination).height, greaterThanOrEqualTo(76));
 

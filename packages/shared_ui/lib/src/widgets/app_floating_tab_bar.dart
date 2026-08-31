@@ -78,7 +78,6 @@ class AppFloatingTabBar extends StatelessWidget {
     required double pagePosition,
   }) {
     final colorScheme = context.colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final visualPagePosition = pagePosition
         .clamp(0.0, (destinations.length - 1).toDouble())
         .toDouble();
@@ -92,7 +91,7 @@ class AppFloatingTabBar extends StatelessWidget {
         border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: isDark ? 0.32 : 0.08),
+            color: colorScheme.shadow.withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, 6),
           ),
@@ -107,9 +106,7 @@ class AppFloatingTabBar extends StatelessWidget {
                 key: ValueKey<String>(indicatorKey),
                 pagePosition: visualPagePosition,
                 itemCount: destinations.length,
-                color: isDark
-                    ? colorScheme.primary.withValues(alpha: 0.16)
-                    : colorScheme.surfaceContainerHighest,
+                color: colorScheme.surfaceContainerHighest,
                 capsuleKeyPrefix: indicatorKey,
               ),
             ),

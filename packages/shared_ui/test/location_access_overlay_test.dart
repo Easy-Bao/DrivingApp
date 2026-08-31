@@ -58,7 +58,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.dark,
+        theme: EasyRideTheme.light,
         home: LocationAccessOverlay(
           state: LocationAccessOverlayState.permissionDenied,
           appName: 'EasyRide',

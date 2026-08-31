@@ -10,7 +10,7 @@ class AppSettingsScaffold extends StatelessWidget {
     required this.children,
     this.title = 'Settings',
     this.heading = 'App preferences',
-    this.description = 'Control how BaoRide looks and behaves on this phone.',
+    this.description = 'Manage access and support for this app.',
   });
 
   final VoidCallback onBack;

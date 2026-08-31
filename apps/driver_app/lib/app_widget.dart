@@ -22,7 +22,6 @@ class AppWidget extends StatefulWidget {
 }
 
 class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
-  late final ThemeModeCubit _themeModeCubit;
   late final DriverLocationAccessCubit _locationAccessCubit;
   late final AppLifecycleCoordinator _lifecycleCoordinator;
   late final NetworkAvailabilityCoordinator _networkAvailabilityCoordinator;
@@ -31,7 +30,6 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    _themeModeCubit = Modular.get<ThemeModeCubit>();
     _locationAccessCubit = Modular.get<DriverLocationAccessCubit>();
     _lifecycleCoordinator = Modular.get<AppLifecycleCoordinator>();
     _networkAvailabilityCoordinator =
@@ -89,7 +87,6 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<ThemeModeCubit>.value(value: _themeModeCubit),
         BlocProvider<DriverLocationAccessCubit>.value(
           value: _locationAccessCubit,
         ),
@@ -100,41 +97,34 @@ class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
           ),
         ),
       ],
-      child: BlocBuilder<ThemeModeCubit, ThemeMode>(
-        builder: (context, themeMode) =>
-            BlocBuilder<
-              DriverLocationAccessCubit,
-              DriverLocationAccessViewState
-            >(
-              builder: (context, locationState) => ModularApp.router(
-                theme: EasyRideTheme.light,
-                darkTheme: EasyRideTheme.dark,
-                themeMode: themeMode,
-                debugShowCheckedModeBanner: false,
-                title: 'BaoRide Driver',
-                builder: (context, child) =>
-                    StreamBuilder<NetworkAvailabilityStatus>(
-                      stream: _networkAvailabilityCoordinator.changes,
-                      initialData: _networkAvailabilityCoordinator.status,
-                      builder: (context, snapshot) => Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          _buildRouteWithLocationOverlay(
-                            context,
-                            child,
-                            locationState,
-                          ),
-                          AppNetworkStatusBanner(
-                            isVisible:
-                                snapshot.data ==
-                                NetworkAvailabilityStatus.unavailable,
-                          ),
-                        ],
-                      ),
+      child:
+          BlocBuilder<DriverLocationAccessCubit, DriverLocationAccessViewState>(
+            builder: (context, locationState) => ModularApp.router(
+              theme: EasyRideTheme.light,
+              debugShowCheckedModeBanner: false,
+              title: 'BaoRide Driver',
+              builder: (context, child) =>
+                  StreamBuilder<NetworkAvailabilityStatus>(
+                    stream: _networkAvailabilityCoordinator.changes,
+                    initialData: _networkAvailabilityCoordinator.status,
+                    builder: (context, snapshot) => Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        _buildRouteWithLocationOverlay(
+                          context,
+                          child,
+                          locationState,
+                        ),
+                        AppNetworkStatusBanner(
+                          isVisible:
+                              snapshot.data ==
+                              NetworkAvailabilityStatus.unavailable,
+                        ),
+                      ],
                     ),
-              ),
+                  ),
             ),
-      ),
+          ),
     );
   }
 
