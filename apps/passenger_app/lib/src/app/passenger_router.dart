@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/infrastructure/config/passenger_env_config.dart';
 import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
-import 'package:passenger_app/src/features/activity/activity_module.dart';
+import 'package:passenger_app/src/features/ride_history/ride_history_module.dart';
 import 'package:passenger_app/src/features/chat/chat_module.dart';
 import 'package:passenger_app/src/features/driver_profile/driver_profile_module.dart';
 import 'package:passenger_app/src/features/home/home_module.dart';
@@ -20,7 +20,7 @@ import 'package:foundation/foundation.dart';
 class PassengerRouter extends Module {
   @override
   FutureOr<void> binds(Injector i) {
-    ActivityModule.binds(i);
+    RideHistoryModule.binds(i);
     ChatModule.binds(i);
     DriverProfileModule.binds(i);
     HomeModule.binds(i);
@@ -46,7 +46,7 @@ class PassengerRouter extends Module {
 
   @override
   List<ModularRoute> get routes => <ModularRoute>[
-    ...ActivityModule.routes,
+    ...RideHistoryModule.routes,
     ...HomeModule.routes,
     ...ActiveRideModule.routes,
     ...BookingModule.routes,
@@ -77,7 +77,7 @@ class PassengerRouter extends Module {
           ),
       branches: [
         ModularBranch(routes: HomeModule.shellRoutes),
-        ModularBranch(routes: ActivityModule.shellRoutes),
+        ModularBranch(routes: RideHistoryModule.shellRoutes),
         ModularBranch(routes: InboxModule.shellRoutes),
         ModularBranch(routes: ProfileModule.shellRoutes),
       ],

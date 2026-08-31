@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:go_router/go_router.dart';
 import 'package:passenger_app/src/app/theme/app_theme.dart';
-import 'package:passenger_app/src/features/activity/activity_routes.dart';
+import 'package:passenger_app/src/features/ride_history/ride_history_routes.dart';
 import 'package:passenger_app/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/auth/domain/entities/passenger_session.dart';
 import 'package:passenger_app/src/features/auth/domain/repositories/session_repository.dart';
@@ -197,7 +197,7 @@ void main() {
 
     await tester.tap(find.text('Activity'));
     await tester.pump();
-    expect(router.state.uri.path, ActivityRoutes.fullActivityPath);
+    expect(router.state.uri.path, RideHistoryRoutes.fullRideHistoryPath);
     expect(find.byType(PageView), findsOneWidget);
     final initialActivityCapsuleScale = capsuleScale(1);
     await tester.pump(const Duration(milliseconds: 160));
@@ -222,7 +222,7 @@ void main() {
     expect(find.byKey(const ValueKey<String>('activity-page')), findsOneWidget);
     await cancelGesture.up();
     await tester.pumpAndSettle();
-    expect(router.state.uri.path, ActivityRoutes.fullActivityPath);
+    expect(router.state.uri.path, RideHistoryRoutes.fullRideHistoryPath);
 
     final commitGesture = await tester.startGesture(
       tester.getCenter(find.byKey(const ValueKey<String>('activity-page'))),
@@ -239,7 +239,7 @@ void main() {
       find.byKey(const ValueKey<String>('home-view-all-activity')),
     );
     await tester.pumpAndSettle();
-    expect(router.state.uri.path, ActivityRoutes.fullActivityPath);
+    expect(router.state.uri.path, RideHistoryRoutes.fullRideHistoryPath);
     expect(navigationCoordinator.selectedIndex, 1);
     expect(find.byKey(const ValueKey<String>('activity-page')), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -283,7 +283,8 @@ GoRouter _createRouter(
                     alignment: Alignment.topRight,
                     child: TextButton(
                       key: const ValueKey<String>('home-view-all-activity'),
-                      onPressed: () => context.goNamed(ActivityRoutes.activity),
+                      onPressed: () =>
+                          context.goNamed(RideHistoryRoutes.rideHistory),
                       child: const Text('View all'),
                     ),
                   ),
@@ -294,8 +295,8 @@ GoRouter _createRouter(
           StatefulShellBranch(
             routes: [
               GoRoute(
-                name: ActivityRoutes.activity,
-                path: ActivityRoutes.fullActivityPath,
+                name: RideHistoryRoutes.rideHistory,
+                path: RideHistoryRoutes.fullRideHistoryPath,
                 builder: (_, _) => const ColoredBox(
                   key: ValueKey<String>('activity-page'),
                   color: Colors.white,

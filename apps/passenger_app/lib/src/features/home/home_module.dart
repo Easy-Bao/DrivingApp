@@ -4,7 +4,7 @@ import 'package:maps/maps.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/features/activity/presentation/bloc/activity/activity_bloc.dart';
+import 'package:passenger_app/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
 import 'package:passenger_app/src/features/home/presentation/bloc/home/home_cubit.dart';
 import 'package:passenger_app/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_cubit.dart';
 import 'package:passenger_app/src/features/home/data/data_sources/current_location_data_source.dart';
@@ -91,7 +91,7 @@ class HomeModule {
       child: (context, GoRouterState state) => MultiBlocProvider(
         providers: [
           BlocProvider(create: (_) => Modular.get<HomeCubit>()),
-          BlocProvider(create: (_) => Modular.get<ActivityBloc>()),
+          BlocProvider(create: (_) => Modular.get<RideHistoryBloc>()),
           BlocProvider(
             create: (_) {
               final cubit = Modular.get<PublicDriverSummaryCubit>();

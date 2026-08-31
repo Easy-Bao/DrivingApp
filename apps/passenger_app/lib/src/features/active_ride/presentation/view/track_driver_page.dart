@@ -1,5 +1,5 @@
 import 'package:passenger_app/src/features/active_ride/active_ride.dart';
-import 'package:passenger_app/src/features/activity/activity.dart';
+import 'package:passenger_app/src/features/ride_history/ride_history.dart';
 import 'package:passenger_app/src/features/chat/chat.dart';
 import 'dart:async';
 
@@ -11,7 +11,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:maps/maps.dart';
 import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
-import 'package:passenger_app/src/features/activity/activity_routes.dart';
+import 'package:passenger_app/src/features/ride_history/ride_history_routes.dart';
 import 'package:passenger_app/src/features/chat/chat_routes.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
@@ -40,14 +40,14 @@ class _MapUpdateRequest {
   });
 }
 
-class ActivityTrackDriverPage extends StatefulWidget {
+class TrackDriverPage extends StatefulWidget {
   final RideHistory ride;
   final TrackRepository trackRepository;
   final ChatRepositoryFactory chatRepositoryFactory;
   final PassengerSessionStore sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;
 
-  const ActivityTrackDriverPage({
+  const TrackDriverPage({
     super.key,
     required this.ride,
     required this.trackRepository,
@@ -57,11 +57,10 @@ class ActivityTrackDriverPage extends StatefulWidget {
   });
 
   @override
-  State<ActivityTrackDriverPage> createState() =>
-      _ActivityTrackDriverPageState();
+  State<TrackDriverPage> createState() => _TrackDriverPageState();
 }
 
-class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
+class _TrackDriverPageState extends State<TrackDriverPage> {
   AppMapController? _mapController;
   bool _initialized = false;
   bool _hasFittedInitialMap = false;
@@ -444,7 +443,7 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
           _hasHandledTerminalState = true;
           Modular.get<BookingBloc>().add(const ResetBookingEvent());
           context.pushReplacementNamed(
-            ActivityRoutes.passengerPayment,
+            RideHistoryRoutes.passengerPayment,
             extra: widget.ride.copyWith(
               driverId: state.driverId,
               driverName: state.driverName,

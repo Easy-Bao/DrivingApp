@@ -1,4 +1,4 @@
-import 'package:passenger_app/src/features/activity/activity.dart';
+import 'package:passenger_app/src/features/ride_history/ride_history.dart';
 import 'package:passenger_app/src/features/chat/chat.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -95,7 +95,7 @@ class ActiveRideModule {
             body: Center(child: Text('Trip tracking data not available.')),
           );
         }
-        return ActivityTrackDriverPage(
+        return TrackDriverPage(
           ride: ride,
           trackRepository: Modular.get<TrackRepository>(),
           chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),

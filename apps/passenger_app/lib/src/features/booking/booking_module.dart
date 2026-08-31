@@ -18,7 +18,7 @@ import 'package:passenger_app/src/features/booking/domain/repositories/booking_r
 import 'package:passenger_app/src/features/booking/domain/repositories/driver_repository.dart';
 import 'package:passenger_app/src/features/booking/domain/repositories/fare_repository.dart';
 import 'package:passenger_app/src/features/booking/booking_routes.dart';
-import 'package:passenger_app/src/features/booking/presentation/view/activity_detail_map_page.dart';
+import 'package:passenger_app/src/features/booking/presentation/view/destination_map_page.dart';
 import 'package:passenger_app/src/features/booking/presentation/view/finding_driver_page.dart';
 import 'package:passenger_app/src/features/booking/presentation/view/map_pin_page.dart';
 import 'package:passenger_app/src/features/booking/presentation/view/ride_selection_page.dart';
@@ -80,8 +80,8 @@ class BookingModule {
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
-      name: BookingRoutes.activityDetailMap,
-      BookingRoutes.activityDetailMapPath,
+      name: BookingRoutes.destinationMap,
+      BookingRoutes.destinationMapPath,
       child: (context, GoRouterState state) {
         final data = RoutePayload.from(
           extra: state.extra,
@@ -94,7 +94,7 @@ class BookingModule {
             body: Center(child: Text('Location data is unavailable.')),
           );
         }
-        return ActivityDetailMapPage(
+        return DestinationMapPage(
           placeName: data.string('title') ?? 'Location',
           placeSubtitle: data.string('subtitle') ?? '',
           destinationLat: latitude,

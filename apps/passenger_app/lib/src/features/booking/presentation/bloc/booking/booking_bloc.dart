@@ -1,5 +1,5 @@
 import 'package:passenger_app/src/features/active_ride/active_ride.dart';
-import 'package:passenger_app/src/features/activity/activity.dart';
+import 'package:passenger_app/src/features/ride_history/ride_history.dart';
 import 'package:passenger_app/src/features/booking/booking.dart';
 import 'package:passenger_app/src/features/auth/domain/failures/auth_failures.dart';
 import 'dart:async';

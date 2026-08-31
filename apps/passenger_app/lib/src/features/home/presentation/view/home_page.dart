@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/src/features/activity/activity_routes.dart';
-import 'package:passenger_app/src/features/activity/presentation/bloc/activity/activity_bloc.dart';
+import 'package:passenger_app/src/features/ride_history/ride_history_routes.dart';
+import 'package:passenger_app/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
 import 'package:passenger_app/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/home/presentation/bloc/home/home_cubit.dart';
 import 'package:passenger_app/src/features/home/presentation/bloc/home/home_state.dart';
@@ -16,7 +16,7 @@ import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:passenger_app/src/features/home/presentation/widgets/home_location_row_widget.dart';
 import 'package:passenger_app/src/features/home/presentation/widgets/pending_booking_banner_widget.dart';
 import 'package:passenger_app/src/features/home/presentation/widgets/public_driver_summary_card_widget.dart';
-import 'package:passenger_app/src/features/home/presentation/widgets/recent_activity_empty_state_widget.dart';
+import 'package:passenger_app/src/features/home/presentation/widgets/recent_ride_history_empty_state_widget.dart';
 import 'package:passenger_app/src/features/home/presentation/widgets/recent_ride_history_preview_widget.dart';
 import 'package:passenger_app/src/features/home/presentation/widgets/saved_place_quick_actions_widget.dart';
 import 'package:passenger_app/src/features/location/presentation/bloc/location_access/location_access_cubit.dart';
@@ -38,7 +38,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  static const int _recentActivityPreviewLimit = 5;
+  static const int _recentRideHistoryPreviewLimit = 5;
 
   late final BookingBloc _bookingBloc;
   bool _isSavedPlaceFlowOpen = false;
@@ -70,8 +70,8 @@ class _HomePageState extends State<HomePage> {
                         const SizedBox(height: 16),
                         _buildChipRow(),
                         const SizedBox(height: 24),
-                        _buildRecentActivityHeader(),
-                        Expanded(child: _buildRecentActivityList()),
+                        _buildRecentRideHistoryHeader(),
+                        Expanded(child: _buildRecentRideHistoryList()),
                       ],
                     ),
                   ),
@@ -92,7 +92,7 @@ class _HomePageState extends State<HomePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(_loadSavedPlaces());
-      _loadRecentActivity();
+      _loadRecentRideHistory();
       if (!mounted) return;
       if (BlocProvider.of<LocationAccessCubit>(context).state
           is LocationAccessReady) {
@@ -101,13 +101,13 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void _loadRecentActivity() {
+  void _loadRecentRideHistory() {
     final sessionState = BlocProvider.of<SessionBloc>(context).state;
     if (sessionState case AuthenticatedSession(:final passengerId)) {
       if (passengerId.trim().isEmpty) return;
-      BlocProvider.of<ActivityBloc>(
+      BlocProvider.of<RideHistoryBloc>(
         context,
-      ).add(LoadActivityEvent(passengerId: passengerId));
+      ).add(LoadRideHistoryEvent(passengerId: passengerId));
     }
   }
 
@@ -286,7 +286,7 @@ class _HomePageState extends State<HomePage> {
     unawaited(BlocProvider.of<LocationAccessCubit>(context).enable());
   }
 
-  Widget _buildRecentActivityHeader() {
+  Widget _buildRecentRideHistoryHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -299,7 +299,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         TextButton(
-          onPressed: () => context.goNamed(ActivityRoutes.activity),
+          onPressed: () => context.goNamed(RideHistoryRoutes.rideHistory),
           child: Text(
             'View all',
             style: TextStyle(
@@ -312,17 +312,17 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildRecentActivityList() {
+  Widget _buildRecentRideHistoryList() {
     final isGuest = context.select<SessionBloc, bool>((bloc) {
       final sessionState = bloc.state;
       return sessionState is GuestSession || sessionState is SessionFailure;
     });
 
-    return BlocBuilder<ActivityBloc, ActivityState>(
+    return BlocBuilder<RideHistoryBloc, RideHistoryState>(
       builder: (context, state) {
-        if (state is ActivityLoading && state.hasExistingRides) {
+        if (state is RideHistoryLoading && state.hasExistingRides) {
           final itemCount = state.existingRideCount
-              .clamp(1, _recentActivityPreviewLimit)
+              .clamp(1, _recentRideHistoryPreviewLimit)
               .toInt();
           return Skeletonizer.zone(
             child: ListView.builder(
@@ -345,32 +345,32 @@ class _HomePageState extends State<HomePage> {
             ),
           );
         }
-        if (state is ActivityError) {
-          return _buildRecentActivityError();
+        if (state is RideHistoryError) {
+          return _buildRecentRideHistoryError();
         }
-        if (state is! ActivityLoaded) {
-          return RecentActivityEmptyStateWidget(isGuest: isGuest);
+        if (state is! RideHistoryLoaded) {
+          return RecentRideHistoryEmptyStateWidget(isGuest: isGuest);
         }
         final recentRides = state.past
-            .take(_recentActivityPreviewLimit)
+            .take(_recentRideHistoryPreviewLimit)
             .toList(growable: false);
         if (recentRides.isEmpty) {
-          return RecentActivityEmptyStateWidget(isGuest: isGuest);
+          return RecentRideHistoryEmptyStateWidget(isGuest: isGuest);
         }
         return RecentRideHistoryPreviewWidget(
           rides: recentRides,
           onRideTap: (ride) => unawaited(
-            context.pushNamed(ActivityRoutes.activityViewDetails, extra: ride),
+            context.pushNamed(RideHistoryRoutes.rideDetails, extra: ride),
           ),
         );
       },
     );
   }
 
-  Widget _buildRecentActivityError() {
+  Widget _buildRecentRideHistoryError() {
     return Center(
       child: TextButton.icon(
-        onPressed: _loadRecentActivity,
+        onPressed: _loadRecentRideHistory,
         icon: const Icon(LucideIcons.refresh_cw, size: 16),
         label: const Text('Retry activity'),
         style: TextButton.styleFrom(
@@ -385,7 +385,9 @@ class _HomePageState extends State<HomePage> {
     _isSavedPlaceFlowOpen = true;
     try {
       final cubit = BlocProvider.of<SavedPlacesCubit>(context);
-      final selectedPlace = await context.pushNamed<Place>(BookingRoutes.mapPin);
+      final selectedPlace = await context.pushNamed<Place>(
+        BookingRoutes.mapPin,
+      );
       if (selectedPlace == null || !mounted) return;
       final newPlace = await context.pushNamed<SavedPlace>(
         HomeRoutes.addCategory,
