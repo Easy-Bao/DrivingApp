@@ -10,7 +10,7 @@ import 'package:driver_app/src/features/chat/chat_module.dart';
 import 'package:driver_app/src/features/home/home_module.dart';
 import 'package:driver_app/src/features/home/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver_app/src/features/help_center/help_center_module.dart';
-import 'package:driver_app/src/shared/widgets/navigationbar/driver_navigation_shell.dart';
+import 'package:driver_app/src/app/navigation/driver_navigation_shell.dart';
 import 'package:driver_app/src/features/profile/profile_module.dart';
 import 'package:driver_app/src/features/settings/settings_module.dart';
 import 'package:driver_app/src/features/trip/trip_module.dart';

@@ -1,4 +1,4 @@
-import 'package:driver_app/src/core/routing/app_routes.dart';
+import 'package:driver_app/src/app/navigation/app_routes.dart';
 
 abstract final class ActivityRoutes {
   static const String earnings = 'Earnings';

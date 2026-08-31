@@ -1,4 +1,4 @@
-import 'package:passenger_app/src/core/routing/app_routes.dart';
+import 'package:passenger_app/src/app/navigation/app_routes.dart';
 
 abstract final class SavedPlacesRoutes {
   static const String places = 'SavedPlaces';

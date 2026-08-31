@@ -8,8 +8,8 @@ import 'package:passenger_app/src/features/auth/presentation/bloc/session/sessio
 import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
-import 'package:passenger_app/src/shared/widgets/navigationbar/guest_action_bar_widget.dart';
-import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_floating_tab_bar.dart';
+import 'package:passenger_app/src/app/navigation/guest_action_bar.dart';
+import 'package:passenger_app/src/app/navigation/passenger_floating_tab_bar.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 

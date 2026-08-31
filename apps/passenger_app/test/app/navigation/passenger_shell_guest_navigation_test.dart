@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:passenger_app/src/shared/widgets/navigationbar/guest_action_bar_widget.dart';
+import 'package:passenger_app/src/app/navigation/guest_action_bar.dart';
 
 void main() {
   testWidgets('guest auth actions open the auth routes', (tester) async {

@@ -13,7 +13,7 @@ import 'package:passenger_app/src/features/profile/profile_module.dart';
 import 'package:passenger_app/src/features/saved_places/saved_places_module.dart';
 import 'package:passenger_app/src/features/settings/settings_module.dart';
 import 'package:passenger_app/src/features/trip/trip_module.dart';
-import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_navigation_shell.dart';
+import 'package:passenger_app/src/app/navigation/passenger_navigation_shell.dart';
 import 'package:shared_core/shared_core.dart';
 
 class PassengerModule extends Module {

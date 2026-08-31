@@ -15,8 +15,8 @@ import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notificat
 import 'package:passenger_app/src/features/inbox/domain/repositories/i_inbox_repository.dart';
 import 'package:passenger_app/src/features/inbox/inbox_routes.dart';
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
-import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_floating_tab_bar.dart';
-import 'package:passenger_app/src/shared/widgets/navigationbar/passenger_navigation_shell.dart';
+import 'package:passenger_app/src/app/navigation/passenger_floating_tab_bar.dart';
+import 'package:passenger_app/src/app/navigation/passenger_navigation_shell.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 

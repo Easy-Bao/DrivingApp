@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:driver_app/driver_module.dart';
-import 'package:driver_app/src/core/routing/app_routes.dart';
+import 'package:driver_app/src/app/navigation/app_routes.dart';
 import 'package:driver_app/src/core/constants/env_config.dart';
 import 'package:driver_app/src/core/network/dio_client.dart';
 import 'package:driver_app/src/core/services/background_telemetry_service.dart';
