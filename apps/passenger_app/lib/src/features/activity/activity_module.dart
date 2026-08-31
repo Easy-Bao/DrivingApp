@@ -1,3 +1,4 @@
+import 'package:chat/chat.dart';
 import 'package:ride/ride.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -69,7 +70,7 @@ class ActivityModule {
         return ActivityTrackDriverPage(
           ride: ride,
           trackRepository: Modular.get<ITrackRepository>(),
-          chatRepositoryFactory: Modular.get<IChatRepositoryFactory>(),
+          chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
           sessionService: Modular.get<SecureSessionService>(),
           lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
         );

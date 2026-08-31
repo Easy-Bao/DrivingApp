@@ -1,3 +1,4 @@
+import 'package:chat/chat.dart';
 import 'package:ride/ride.dart';
 import 'dart:async';
 
@@ -8,19 +9,18 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/core/constants/api_endpoints.dart';
 import 'package:passenger_app/src/features/chat/presentation/bloc/chat/chat_cubit.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
-class DriverChatPage extends StatefulWidget {
+class PassengerChatPage extends StatefulWidget {
   final String? roomId;
   final String? userId;
   final String? peerId;
   final String? peerName;
   final ITrackRepository trackRepository;
-  final IChatRepositoryFactory chatRepositoryFactory;
+  final ChatRepositoryFactory chatRepositoryFactory;
   final String? token;
 
-  const DriverChatPage({
+  const PassengerChatPage({
     super.key,
     this.roomId,
     this.userId,
@@ -32,10 +32,10 @@ class DriverChatPage extends StatefulWidget {
   });
 
   @override
-  State<DriverChatPage> createState() => _DriverChatPageState();
+  State<PassengerChatPage> createState() => _PassengerChatPageState();
 }
 
-class _DriverChatPageState extends State<DriverChatPage> {
+class _PassengerChatPageState extends State<PassengerChatPage> {
   final TextEditingController _msgCtrl = TextEditingController();
   final ScrollController _scrollCtrl = ScrollController();
   Timer? _typingStopTimer;

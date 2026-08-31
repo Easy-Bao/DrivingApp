@@ -1,3 +1,4 @@
+import 'package:chat/chat.dart';
 import 'package:ride/ride.dart';
 import 'dart:async';
 
@@ -41,7 +42,7 @@ class _MapUpdateRequest {
 class ActivityTrackDriverPage extends StatefulWidget {
   final RideHistory ride;
   final ITrackRepository trackRepository;
-  final IChatRepositoryFactory chatRepositoryFactory;
+  final ChatRepositoryFactory chatRepositoryFactory;
   final SecureSessionService sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;
 
@@ -77,7 +78,7 @@ class _ActivityTrackDriverPageState extends State<ActivityTrackDriverPage> {
   int _viewedDriverMessagesCount = 0;
   bool _isInitialChatMessagesCountFetched = false;
   late final AppLifecyclePeriodicTask _chatMessagesPollingTask;
-  IChatRepository? _chatRepository;
+  ChatRepository? _chatRepository;
   String _passengerIdentifier = '';
   bool _isCancellingTrip = false;
   bool _isPollingChat = false;

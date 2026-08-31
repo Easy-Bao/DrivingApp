@@ -1,9 +1,9 @@
+import 'package:chat/chat.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/chat/chat_routes.dart';
-import 'package:passenger_app/src/features/chat/presentation/driver_chat_page.dart';
+import 'package:passenger_app/src/features/chat/presentation/passenger_chat_page.dart';
 import 'package:passenger_app/src/features/trip/domain/repositories/i_track_repository.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class ChatModule {
@@ -20,14 +20,14 @@ class ChatModule {
         if (roomId == null || userId == null) {
           return const _ChatUnavailablePage();
         }
-        return DriverChatPage(
+        return PassengerChatPage(
           roomId: roomId,
           userId: userId,
           peerId: _asNonEmptyString(extra['peerId']),
           token: _asNonEmptyString(extra['token']),
           peerName: _asNonEmptyString(extra['peerName']),
           trackRepository: Modular.get<ITrackRepository>(),
-          chatRepositoryFactory: Modular.get<IChatRepositoryFactory>(),
+          chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
         );
       },
       transition: AppTransitions.push.toLeft,

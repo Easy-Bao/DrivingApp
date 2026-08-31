@@ -1,3 +1,4 @@
+import 'package:chat/chat.dart';
 import 'dart:async';
 import 'dart:developer' as dev;
 
@@ -24,7 +25,7 @@ class WaitingPassengerPage extends StatefulWidget {
   final double distance;
   final double fare;
   final IDriverRideRepository rideRepository;
-  final IChatRepositoryFactory chatRepositoryFactory;
+  final ChatRepositoryFactory chatRepositoryFactory;
   final SecureSessionService sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;
 
@@ -52,7 +53,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
   bool _isStartingTrip = false;
   bool _isPollingChat = false;
   late final AppLifecyclePeriodicTask _chatPollingTask;
-  IChatRepository? _chatRepository;
+  ChatRepository? _chatRepository;
   String? _errorMessage;
 
   @override

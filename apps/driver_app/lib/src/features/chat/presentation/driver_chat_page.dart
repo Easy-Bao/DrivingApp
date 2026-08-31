@@ -1,3 +1,4 @@
+import 'package:chat/chat.dart';
 import 'package:ride/ride.dart';
 import 'dart:async';
 
@@ -9,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class DriverChatPage extends StatefulWidget {
@@ -18,7 +18,7 @@ class DriverChatPage extends StatefulWidget {
   final String? peerId;
   final String? peerName;
   final IDriverRideRepository rideRepository;
-  final IChatRepositoryFactory chatRepositoryFactory;
+  final ChatRepositoryFactory chatRepositoryFactory;
 
   const DriverChatPage({
     super.key,

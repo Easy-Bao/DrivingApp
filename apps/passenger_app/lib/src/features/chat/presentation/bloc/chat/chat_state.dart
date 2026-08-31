@@ -1,5 +1,5 @@
+import 'package:chat/chat.dart';
 import 'package:equatable/equatable.dart';
-import 'package:shared_core/shared_core.dart';
 
 class ChatState extends Equatable {
   static const Object _unset = Object();

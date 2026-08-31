@@ -1,3 +1,4 @@
+import 'package:chat/chat.dart';
 import 'package:dio/dio.dart';
 import 'package:maps/maps.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -70,8 +71,8 @@ class AppModule extends Module {
               i.get<SessionBloc>().add(const SessionGuestRequested()),
         ),
       )
-      ..addLazySingleton<IChatRepositoryFactory>(
-        (i) => ChatRepositoryFactory(
+      ..addLazySingleton<ChatRepositoryFactory>(
+        (i) => DefaultChatRepositoryFactory(
           clientDio: i.get<Dio>(),
           tokenProvider: i.get<SecureSessionService>().readToken,
         ),

@@ -1,3 +1,4 @@
+import 'package:chat/chat.dart';
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -6,7 +7,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/chat/presentation/bloc/chat/chat_cubit.dart';
 import 'package:shared_core/shared_core.dart';
 
-class MockChatRepository extends Mock implements IChatRepository {}
+class MockChatRepository extends Mock implements ChatRepository {}
 
 void main() {
   test('shows a resolved state when the room is already locked', () async {

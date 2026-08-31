@@ -1,3 +1,4 @@
+import 'package:chat/chat.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
@@ -37,7 +38,7 @@ class TripModule {
           fare: data.fare,
           duration: data.duration,
           rideRepository: Modular.get<IDriverRideRepository>(),
-          chatRepositoryFactory: Modular.get<IChatRepositoryFactory>(),
+          chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
           sessionService: Modular.get<SecureSessionService>(),
           lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
         );
@@ -60,7 +61,7 @@ class TripModule {
           fare: data.fare,
           duration: data.duration,
           rideRepository: Modular.get<IDriverRideRepository>(),
-          chatRepositoryFactory: Modular.get<IChatRepositoryFactory>(),
+          chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
           sessionService: Modular.get<SecureSessionService>(),
           lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
         );

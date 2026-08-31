@@ -40,6 +40,10 @@ dependencies:
     path: ../../packages/maps
   ride:
     path: ../../packages/ride
+  chat:
+    path: ../../packages/chat
+  foundation:
+    path: ../../packages/foundation
 
   shared_ui:
     path: ../../packages/shared_ui

@@ -1,18 +1,24 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:chat/src/data/data_sources/chat_remote_data_source.dart';
+import 'package:chat/src/data/dto/chat_message_dto.dart';
+import 'package:chat/src/domain/entities/chat_event.dart';
+import 'package:chat/src/domain/entities/chat_message.dart';
+import 'package:chat/src/domain/failures/chat_failure.dart';
+import 'package:chat/src/domain/repositories/chat_repository.dart';
 import 'package:dio/dio.dart';
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:shared_core/shared_core.dart';
 
-class ChatRepository implements IChatRepository {
+class ChatRepositoryImpl implements ChatRepository {
   static const _maxMessageBytes = 4096;
   final ChatRemoteDataSource remoteDataSource;
   final String currentUserId;
   final Dio clientDio;
   final Future<String?> Function()? tokenProvider;
 
-  ChatRepository({
+  ChatRepositoryImpl({
     required this.remoteDataSource,
     required this.currentUserId,
     required this.clientDio,
@@ -183,7 +189,7 @@ class ChatRepository implements IChatRepository {
           ),
           'message' => Right(
             ChatMessageReceived(
-              ChatMessageModel.fromJson(
+              ChatMessageDto.fromJson(
                 decoded,
               ).toEntity(currentUserId: currentUserId),
             ),
@@ -206,7 +212,7 @@ class ChatRepository implements IChatRepository {
     }
     return rawMessages
         .map(
-          (item) => ChatMessageModel.fromJson(
+          (item) => ChatMessageDto.fromJson(
             decodeObjectMap(item, message: 'Chat message is invalid.'),
           ).toEntity(currentUserId: currentUserId),
         )

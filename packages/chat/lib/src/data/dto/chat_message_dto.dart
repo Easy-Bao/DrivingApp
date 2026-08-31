@@ -1,14 +1,14 @@
+import 'package:chat/src/domain/entities/chat_message.dart';
 import 'package:equatable/equatable.dart';
-import 'package:shared_core/src/chat/models/chat_message.dart';
 
-class ChatMessageModel extends Equatable {
+class ChatMessageDto extends Equatable {
   final String id;
   final String text;
   final String senderId;
   final DateTime createdAt;
   final ChatMessageDeliveryStatus deliveryStatus;
 
-  const ChatMessageModel({
+  const ChatMessageDto({
     this.id = '',
     required this.text,
     required this.senderId,
@@ -16,7 +16,7 @@ class ChatMessageModel extends Equatable {
     this.deliveryStatus = ChatMessageDeliveryStatus.delivered,
   });
 
-  factory ChatMessageModel.fromJson(Map<String, dynamic> json) {
+  factory ChatMessageDto.fromJson(Map<String, dynamic> json) {
     final text = json['text'] as String? ?? json['message'] as String? ?? '';
     final senderId =
         json['senderId'] as String? ?? json['sender_id'] as String? ?? '';
@@ -30,7 +30,7 @@ class ChatMessageModel extends Equatable {
         ? suppliedId.trim()
         : 'legacy:$senderId:${createdAt.toUtc().toIso8601String()}:$text';
 
-    return ChatMessageModel(
+    return ChatMessageDto(
       id: id,
       text: text,
       senderId: senderId,

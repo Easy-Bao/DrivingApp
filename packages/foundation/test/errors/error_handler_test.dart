@@ -39,13 +39,6 @@ void main() {
     );
   });
 
-  test('preserves the resolved-chat state message', () {
-    expect(
-      ErrorHandler.getErrorMessage(const ChatRoomLockedFailure()),
-      'This chat has already been resolved.',
-    );
-  });
-
   test('maps HTTP statuses to the official safe message dictionary', () {
     final expectedMessages = <int, String>{
       401: 'Your session has expired. Please sign in again to continue.',

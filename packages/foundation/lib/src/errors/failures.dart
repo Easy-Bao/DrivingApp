@@ -45,9 +45,3 @@ class ServerFailure extends Failure {
 
   const ServerFailure.withStatusCode(super.message, this.statusCode);
 }
-
-class ChatRoomLockedFailure extends Failure {
-  const ChatRoomLockedFailure([
-    super.message = 'This chat has already been resolved.',
-  ]);
-}

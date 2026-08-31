@@ -1,3 +1,4 @@
+import 'package:chat/chat.dart';
 import 'package:dio/dio.dart';
 import 'package:driver_app/driver_module.dart';
 import 'package:driver_app/src/app/navigation/app_routes.dart';
@@ -73,8 +74,8 @@ class AppModule extends Module {
           networkAvailability: i.get<NetworkAvailabilityCoordinator>(),
         ),
       )
-      ..addLazySingleton<IChatRepositoryFactory>(
-        (i) => ChatRepositoryFactory(
+      ..addLazySingleton<ChatRepositoryFactory>(
+        (i) => DefaultChatRepositoryFactory(
           clientDio: i.get<Dio>(),
           tokenProvider: i.get<SecureSessionService>().readToken,
         ),

@@ -1,14 +1,15 @@
+import 'package:chat/chat.dart';
 import 'dart:async';
+import 'package:foundation/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/chat/presentation/bloc/chat/chat_state.dart';
-import 'package:shared_core/shared_core.dart';
 
 export 'package:passenger_app/src/features/chat/presentation/bloc/chat/chat_state.dart';
 
 class ChatCubit extends Cubit<ChatState> {
   static const _peerTypingTimeout = Duration(seconds: 3);
 
-  final IChatRepository _chatRepository;
+  final ChatRepository _chatRepository;
   StreamSubscription? _chatSubscription;
   StreamSubscription<ChatConnectionState>? _connectionStateSubscription;
   Timer? _peerTypingTimer;
@@ -16,7 +17,7 @@ class ChatCubit extends Cubit<ChatState> {
   bool _everConnected = false;
   bool _historyRequested = false;
 
-  ChatCubit({required IChatRepository chatRepository})
+  ChatCubit({required ChatRepository chatRepository})
     : _chatRepository = chatRepository,
       super(const ChatState());
 

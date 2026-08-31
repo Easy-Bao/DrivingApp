@@ -1,7 +1,10 @@
+import 'package:chat/src/data/data_sources/chat_remote_data_source.dart';
+import 'package:chat/src/domain/entities/chat_event.dart';
+import 'package:chat/src/domain/entities/chat_message.dart';
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:shared_core/shared_core.dart';
 
-abstract class IChatRepository {
+abstract interface class ChatRepository {
   Future<Either<Failure, void>> establishChatConnection({
     required String roomId,
     required Uri chatUri,

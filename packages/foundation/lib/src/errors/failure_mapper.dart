@@ -43,7 +43,6 @@ class FailureMapper {
     return switch (error) {
       InvalidCredentialsFailure() => const InvalidCredentialsFailure(),
       EmailAlreadyRegisteredFailure() => const EmailAlreadyRegisteredFailure(),
-      ChatRoomLockedFailure() => const ChatRoomLockedFailure(),
       AuthFailure() => const AuthFailure(),
       NetworkFailure() || SocketException() => NetworkFailure(networkMessage),
       NetworkCircuitOpenException() => NetworkFailure(networkMessage),

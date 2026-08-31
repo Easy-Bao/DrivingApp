@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:chat/chat.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:shared_core/shared_core.dart';
 
 class FakeChatRemoteDataSource implements ChatRemoteDataSource {
   bool sent = false;
@@ -66,7 +67,7 @@ void main() {
           },
         );
       });
-    final repository = ChatRepository(
+    final repository = ChatRepositoryImpl(
       remoteDataSource: FakeChatRemoteDataSource(),
       currentUserId: '7',
       clientDio: dio,
@@ -81,7 +82,7 @@ void main() {
 
   test('obtains the websocket token from its composition root', () async {
     final remoteDataSource = FakeChatRemoteDataSource();
-    final repository = ChatRepository(
+    final repository = ChatRepositoryImpl(
       remoteDataSource: remoteDataSource,
       currentUserId: '7',
       clientDio: Dio(),
@@ -99,7 +100,7 @@ void main() {
 
   test('rejects empty and oversized chat messages before transport', () async {
     final remoteDataSource = FakeChatRemoteDataSource();
-    final repository = ChatRepository(
+    final repository = ChatRepositoryImpl(
       remoteDataSource: remoteDataSource,
       currentUserId: '7',
       clientDio: Dio(),
@@ -115,7 +116,7 @@ void main() {
 
   test('sends message content without client identity or timestamps', () async {
     final remoteDataSource = FakeChatRemoteDataSource();
-    final repository = ChatRepository(
+    final repository = ChatRepositoryImpl(
       remoteDataSource: remoteDataSource,
       currentUserId: '7',
       clientDio: Dio(),
@@ -132,7 +133,7 @@ void main() {
 
   test('sends typing status as an ephemeral chat event', () async {
     final remoteDataSource = FakeChatRemoteDataSource();
-    final repository = ChatRepository(
+    final repository = ChatRepositoryImpl(
       remoteDataSource: remoteDataSource,
       currentUserId: '7',
       clientDio: Dio(),
@@ -157,7 +158,7 @@ void main() {
           'is_typing': true,
         }),
       );
-    final repository = ChatRepository(
+    final repository = ChatRepositoryImpl(
       remoteDataSource: remoteDataSource,
       currentUserId: '7',
       clientDio: Dio(),
@@ -181,7 +182,7 @@ void main() {
           'messages': ['malformed'],
         }),
       );
-    final repository = ChatRepository(
+    final repository = ChatRepositoryImpl(
       remoteDataSource: remoteDataSource,
       currentUserId: '7',
       clientDio: Dio(),
@@ -197,7 +198,7 @@ void main() {
 
   test('disposes the websocket data source with the repository', () async {
     final remoteDataSource = FakeChatRemoteDataSource();
-    final repository = ChatRepository(
+    final repository = ChatRepositoryImpl(
       remoteDataSource: remoteDataSource,
       currentUserId: '7',
       clientDio: Dio(),

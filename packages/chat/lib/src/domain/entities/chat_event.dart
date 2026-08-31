@@ -1,4 +1,4 @@
-import 'package:shared_core/src/chat/models/chat_message.dart';
+import 'package:chat/src/domain/entities/chat_message.dart';
 
 sealed class ChatEvent {
   const ChatEvent();

@@ -1,9 +1,9 @@
+import 'package:chat/chat.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/features/chat/chat_routes.dart';
 import 'package:driver_app/src/features/chat/presentation/driver_chat_page.dart';
 import 'package:driver_app/src/features/trip/domain/repositories/i_driver_ride_repository.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:shared_ui/shared_ui.dart';
 
 class ChatModule {
@@ -26,7 +26,7 @@ class ChatModule {
           peerId: _asNonEmptyString(extra['peerId']),
           peerName: _asNonEmptyString(extra['peerName']),
           rideRepository: Modular.get<IDriverRideRepository>(),
-          chatRepositoryFactory: Modular.get<IChatRepositoryFactory>(),
+          chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
         );
       },
       transition: AppTransitions.push.toLeft,

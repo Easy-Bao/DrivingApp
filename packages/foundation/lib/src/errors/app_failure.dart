@@ -92,15 +92,6 @@ class AppFailure {
       );
     }
 
-    if (error is ChatRoomLockedFailure) {
-      return createFailure(
-        title: 'Chat Unavailable',
-        userMessage: 'This chat has already been resolved.',
-        actionText: 'Go Back',
-        type: ErrorType.unknown,
-      );
-    }
-
     if (error is InvalidCredentialsFailure) {
       return createFailure(
         title: 'Sign In Unsuccessful',

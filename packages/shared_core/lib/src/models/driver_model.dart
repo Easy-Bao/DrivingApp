@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:foundation/src/utils/safe_parse.dart';
+import 'package:foundation/foundation.dart';
 
 class DriverModel extends Equatable {
   final String id;

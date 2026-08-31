@@ -1,3 +1,4 @@
+import 'package:chat/chat.dart';
 import 'package:maps/maps.dart';
 
 import 'dart:async';
@@ -25,7 +26,7 @@ class PickupNavigationPage extends StatefulWidget {
   final double fare;
   final String duration;
   final IDriverRideRepository rideRepository;
-  final IChatRepositoryFactory chatRepositoryFactory;
+  final ChatRepositoryFactory chatRepositoryFactory;
   final SecureSessionService sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;
 
@@ -59,7 +60,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
   int _unreadChatMessagesCount = 0;
   int _viewedPassengerMessagesCount = 0;
   bool _isInitialChatMessagesCountFetched = false;
-  IChatRepository? _chatRepository;
+  ChatRepository? _chatRepository;
 
   @override
   void initState() {
