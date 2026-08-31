@@ -1,0 +1,16 @@
+name: foundation
+description: Generic runtime infrastructure shared by the client applications.
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ^3.11.3
+
+dependencies:
+  dio: ^5.10.0
+  equatable: ^2.0.7
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

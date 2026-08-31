@@ -1,4 +1,4 @@
-import 'package:shared_core/src/utils/safe_parse.dart';
+import 'package:foundation/src/utils/safe_parse.dart';
 
 class ProfileModel {
   const ProfileModel({

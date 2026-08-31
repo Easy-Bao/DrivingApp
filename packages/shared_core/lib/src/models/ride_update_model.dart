@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:shared_core/src/enums/ride_status.dart';
-import 'package:shared_core/src/utils/safe_parse.dart';
+import 'package:foundation/src/utils/safe_parse.dart';
 
 class RideUpdate extends Equatable {
   final RideStatus status;
