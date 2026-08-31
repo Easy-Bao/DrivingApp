@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:maps/maps.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/passenger_module.dart';
+import 'package:passenger_app/src/app/passenger_router.dart';
 import 'package:passenger_app/src/infrastructure/config/passenger_env_config.dart';
 import 'package:passenger_app/src/infrastructure/network/passenger_api_client.dart';
 import 'package:passenger_app/src/app/navigation/app_routes.dart';
@@ -18,10 +18,10 @@ import 'package:passenger_app/src/features/booking/presentation/bloc/booking_dra
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class AppModule extends Module {
+class PassengerDependencies extends Module {
   final SharedPreferences _prefs;
 
-  AppModule({required SharedPreferences prefs}) : _prefs = prefs;
+  PassengerDependencies({required SharedPreferences prefs}) : _prefs = prefs;
 
   @override
   void binds(Injector i) {
@@ -68,13 +68,13 @@ class AppModule extends Module {
       ..addLazySingleton<LocationRepository>(
         (i) => LocationRemoteDataSource(i.get<Dio>()),
       )
-      // AppWidget provides this state before the passenger route module is active.
+      // PassengerApp provides this state before the passenger route module is active.
       ..addLazySingleton<BookingDraftCubit>((_) => BookingDraftCubit());
   }
 
   @override
   List<ModularRoute> get routes => [
     ModuleRoute(AppRoutes.authModulePath, module: AuthModule()),
-    ModuleRoute(AppRoutes.passengerModulePath, module: PassengerModule()),
+    ModuleRoute(AppRoutes.passengerModulePath, module: PassengerRouter()),
   ];
 }

@@ -15,14 +15,14 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class AppWidget extends StatefulWidget {
-  const AppWidget({super.key});
+class DriverApp extends StatefulWidget {
+  const DriverApp({super.key});
 
   @override
-  State<AppWidget> createState() => _AppWidgetState();
+  State<DriverApp> createState() => _DriverAppState();
 }
 
-class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
+class _DriverAppState extends State<DriverApp> with WidgetsBindingObserver {
   late final DriverLocationAccessCubit _locationAccessCubit;
   late final AppLifecycleCoordinator _lifecycleCoordinator;
   late final NetworkAvailabilityCoordinator _networkAvailabilityCoordinator;

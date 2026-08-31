@@ -16,14 +16,15 @@ import 'package:passenger_app/src/features/active_ride/domain/repositories/i_tra
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class AppWidget extends StatefulWidget {
-  const AppWidget({super.key});
+class PassengerApp extends StatefulWidget {
+  const PassengerApp({super.key});
 
   @override
-  State<AppWidget> createState() => _AppWidgetState();
+  State<PassengerApp> createState() => _PassengerAppState();
 }
 
-class _AppWidgetState extends State<AppWidget> with WidgetsBindingObserver {
+class _PassengerAppState extends State<PassengerApp>
+    with WidgetsBindingObserver {
   late final SessionBloc _sessionBloc;
   late final LocationAccessCubit _locationAccessCubit;
   late final AppLifecycleCoordinator _lifecycleCoordinator;

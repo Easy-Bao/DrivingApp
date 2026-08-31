@@ -17,7 +17,7 @@ import 'package:passenger_app/src/features/booking/booking_module.dart';
 import 'package:passenger_app/src/app/navigation/passenger_navigation_shell.dart';
 import 'package:foundation/foundation.dart';
 
-class PassengerModule extends Module {
+class PassengerRouter extends Module {
   @override
   FutureOr<void> binds(Injector i) {
     ActivityModule.binds(i);
@@ -36,7 +36,9 @@ class PassengerModule extends Module {
       )
       ..addLazySingleton<RealtimeWebSocketClient>(
         (i) => RealtimeWebSocketClient(
-          uri: PassengerEnvConfig.webSocketBaseUri.replace(path: '/api/v1/realtime/ws'),
+          uri: PassengerEnvConfig.webSocketBaseUri.replace(
+            path: '/api/v1/realtime/ws',
+          ),
           tokenProvider: i.get<PassengerSessionStore>().readToken,
         ),
       );

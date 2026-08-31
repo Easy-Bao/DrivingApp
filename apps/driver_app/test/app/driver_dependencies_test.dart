@@ -1,4 +1,4 @@
-import 'package:driver_app/app_module.dart';
+import 'package:driver_app/src/app/driver_dependencies.dart';
 import 'package:driver_app/src/features/auth/auth_routes.dart';
 import 'package:driver_app/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver_app/src/features/location/domain/repositories/i_driver_location_access_repository.dart';
@@ -15,7 +15,7 @@ void main() {
       final preferences = await SharedPreferences.getInstance();
 
       await Modular.configure(
-        appModule: AppModule(prefs: preferences),
+        appModule: DriverDependencies(prefs: preferences),
         initialRoute: AuthRoutes.signinPath,
         debugLogDiagnostics: false,
         debugLogDiagnosticsGoRouter: false,

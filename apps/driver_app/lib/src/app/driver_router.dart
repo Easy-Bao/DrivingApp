@@ -15,7 +15,7 @@ import 'package:driver_app/src/features/profile/profile_module.dart';
 import 'package:driver_app/src/features/settings/settings_module.dart';
 import 'package:driver_app/src/features/active_ride/active_ride_module.dart';
 
-class DriverModule extends Module {
+class DriverRouter extends Module {
   @override
   FutureOr<void> binds(Injector i) {
     ActivityModule.binds(i);

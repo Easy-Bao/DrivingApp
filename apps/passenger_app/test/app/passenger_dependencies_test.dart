@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger_app/app_module.dart';
+import 'package:passenger_app/src/app/passenger_dependencies.dart';
 import 'package:passenger_app/src/features/auth/auth_routes.dart';
 import 'package:passenger_app/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
@@ -16,7 +16,7 @@ void main() {
     final preferences = await SharedPreferences.getInstance();
 
     await Modular.configure(
-      appModule: AppModule(prefs: preferences),
+      appModule: PassengerDependencies(prefs: preferences),
       initialRoute: HomeRoutes.fullHomePath,
       debugLogDiagnostics: false,
       debugLogDiagnosticsGoRouter: false,

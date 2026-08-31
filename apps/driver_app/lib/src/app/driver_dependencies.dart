@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:driver_app/driver_module.dart';
+import 'package:driver_app/src/app/driver_router.dart';
 import 'package:driver_app/src/app/navigation/app_routes.dart';
 import 'package:driver_app/src/infrastructure/config/driver_env_config.dart';
 import 'package:driver_app/src/infrastructure/network/driver_api_client.dart';
@@ -18,11 +18,11 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class AppModule extends Module {
+class DriverDependencies extends Module {
   final SharedPreferences _prefs;
   final DriverSessionStore _sessionService;
 
-  AppModule({
+  DriverDependencies({
     required SharedPreferences prefs,
     DriverSessionStore? sessionService,
   }) : _prefs = prefs,
@@ -56,7 +56,9 @@ class AppModule extends Module {
       )
       ..addLazySingleton<RealtimeWebSocketClient>(
         (i) => RealtimeWebSocketClient(
-          uri: DriverEnvConfig.webSocketBaseUri.replace(path: '/api/v1/realtime/ws'),
+          uri: DriverEnvConfig.webSocketBaseUri.replace(
+            path: '/api/v1/realtime/ws',
+          ),
           tokenProvider: i.get<DriverSessionStore>().readToken,
         ),
       )
@@ -90,6 +92,6 @@ class AppModule extends Module {
   @override
   List<ModularRoute> get routes => [
     ModuleRoute(AppRoutes.authModulePath, module: AuthModule()),
-    ModuleRoute(AppRoutes.driverModulePath, module: DriverModule()),
+    ModuleRoute(AppRoutes.driverModulePath, module: DriverRouter()),
   ];
 }
