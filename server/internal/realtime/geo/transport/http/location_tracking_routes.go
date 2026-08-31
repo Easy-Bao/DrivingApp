@@ -4,7 +4,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
-	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/usecase"
+	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/application"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -14,7 +14,7 @@ type Router struct {
 }
 
 func NewRouter(
-	service *usecase.LocationTrackingService,
+	service *application.LocationTrackingService,
 	auth *security.TokenManager,
 ) *Router {
 	return &Router{handler: NewHandler(service, auth), auth: auth}

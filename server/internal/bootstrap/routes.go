@@ -6,21 +6,21 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/ent"
 	adminpostgres "github.com/Easy-Bao/DrivingApp/server/internal/admin/adapter/postgres"
+	adminapplication "github.com/Easy-Bao/DrivingApp/server/internal/admin/application"
 	adminhttp "github.com/Easy-Bao/DrivingApp/server/internal/admin/transport/http"
-	adminusecase "github.com/Easy-Bao/DrivingApp/server/internal/admin/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/email"
 	authpostgres "github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/postgres"
 	authredis "github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/redis"
+	authapplication "github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
 	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/auth/transport/http"
-	authusecase "github.com/Easy-Bao/DrivingApp/server/internal/auth/usecase"
 	documentpostgres "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/adapter/postgres"
+	documentapplication "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/application"
 	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/transport/http"
-	documentusecase "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/mapbox"
 	locationredis "github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/redis"
+	locationapplication "github.com/Easy-Bao/DrivingApp/server/internal/location/application"
 	locationdomain "github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
 	locationhttp "github.com/Easy-Bao/DrivingApp/server/internal/location/transport/http"
-	locationusecase "github.com/Easy-Bao/DrivingApp/server/internal/location/usecase"
 	passengerridecontext "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ride_context"
 	passengerridecontextadapter "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ride_context/adapter"
 	passengerridecontexthttp "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ride_context/transport/http"
@@ -30,21 +30,21 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment"
 	assignmentadapter "github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment/adapter"
 	chatadapter "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/adapter"
+	chatapplication "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/application"
 	chath "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/transport/http"
 	chatws "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/transport/ws"
-	chatusecase "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/usecase"
 	eventadapter "github.com/Easy-Bao/DrivingApp/server/internal/realtime/event/adapter"
 	geo "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/adapter"
+	geoapplication "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/application"
 	geoh "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/transport/http"
-	geousecase "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/stream"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/ws"
 	ridespostgres "github.com/Easy-Bao/DrivingApp/server/internal/rides/adapter/postgres"
+	ridesapplication "github.com/Easy-Bao/DrivingApp/server/internal/rides/application"
 	rideshttp "github.com/Easy-Bao/DrivingApp/server/internal/rides/transport/http"
-	ridesusecase "github.com/Easy-Bao/DrivingApp/server/internal/rides/usecase"
 	userspostgres "github.com/Easy-Bao/DrivingApp/server/internal/users/adapter/postgres"
+	usersapplication "github.com/Easy-Bao/DrivingApp/server/internal/users/application"
 	usershttp "github.com/Easy-Bao/DrivingApp/server/internal/users/transport/http"
-	usersusecase "github.com/Easy-Bao/DrivingApp/server/internal/users/usecase"
 	"github.com/go-chi/chi/v5"
 	redisclient "github.com/redis/go-redis/v9"
 )
@@ -56,9 +56,9 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 
 	authRepository := authpostgres.NewUserRepository(databaseClient)
 	refreshSessionRepository := authpostgres.NewRefreshSessionRepository(databaseClient)
-	registerService := authusecase.NewRegisterService(authRepository, verifier, refreshSessionRepository)
-	authenticateService := authusecase.NewAuthenticateService(authRepository, verifier, refreshSessionRepository).WithLogger(applicationLogger)
-	otpService := authusecase.NewOTPServiceWithPending(
+	registerService := authapplication.NewRegisterService(authRepository, verifier, refreshSessionRepository)
+	authenticateService := authapplication.NewAuthenticateService(authRepository, verifier, refreshSessionRepository).WithLogger(applicationLogger)
+	otpService := authapplication.NewOTPServiceWithPending(
 		authRepository,
 		authredis.NewOTPStore(redisClient),
 		email.NewGoMailGatewayFromEnv(),
@@ -70,9 +70,9 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 	authRouter := authhttp.NewRouter(registerService, authenticateService, otpService)
 
 	profileRepository := userspostgres.NewProfileRepository(databaseClient, privateObjectStore).WithLogger(applicationLogger)
-	usersRouter := usershttp.NewRouter(usersusecase.NewProfileService(profileRepository), verifier)
+	usersRouter := usershttp.NewRouter(usersapplication.NewProfileService(profileRepository), verifier)
 	documentRouter := documenthttp.NewRouter(
-		documentusecase.NewDocumentService(
+		documentapplication.NewDocumentService(
 			documentpostgres.NewDocumentRepository(databaseClient),
 			privateObjectStore,
 			config.Security.UploadBodyLimit,
@@ -82,18 +82,18 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 	)
 
 	mapboxProvider := mapbox.NewMapboxProvider(config.MapboxAccessToken)
-	routeCalculator := ridesusecase.RouteCalculatorFunc(func(ctx context.Context, originLat, originLng, destinationLat, destinationLng float64) (ridesusecase.RouteMetrics, error) {
+	routeCalculator := ridesapplication.RouteCalculatorFunc(func(ctx context.Context, originLat, originLng, destinationLat, destinationLng float64) (ridesapplication.RouteMetrics, error) {
 		route, err := mapboxProvider.Route(ctx, locationdomain.Coordinates{Latitude: originLat, Longitude: originLng}, locationdomain.Coordinates{Latitude: destinationLat, Longitude: destinationLng}, locationdomain.RouteOptions{})
 		if err != nil {
-			return ridesusecase.RouteMetrics{}, err
+			return ridesapplication.RouteMetrics{}, err
 		}
-		return ridesusecase.RouteMetrics{DistanceKm: route.DistanceKm, DurationMinutes: route.DurationMin}, nil
+		return ridesapplication.RouteMetrics{DistanceKm: route.DistanceKm, DurationMinutes: route.DurationMin}, nil
 	})
 	ridesRepository := ridespostgres.NewRideRepository(databaseClient, config.Pricing.PlatformCommissionBPS)
 	eventHub := stream.NewHub()
 	assignmentProjection := assignmentadapter.NewMemoryProjection()
 	realtimePublisher := eventadapter.NewMemoryPublisher(assignmentProjection, eventHub)
-	ridesService := ridesusecase.NewRideServiceWithRouteCalculator(
+	ridesService := ridesapplication.NewRideServiceWithRouteCalculator(
 		ridesRepository,
 		routeCalculator,
 		config.Pricing,
@@ -105,14 +105,14 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 	)
 
 	ridesRouter := rideshttp.NewRouter(ridesService, verifier)
-	adminRouter := adminhttp.NewRouter(adminusecase.NewDashboardStatsService(adminpostgres.NewDashboardStatsRepository(databaseClient)), verifier, adminAuthorizer)
-	geoService := geousecase.NewLocationTrackingService(
+	adminRouter := adminhttp.NewRouter(adminapplication.NewDashboardStatsService(adminpostgres.NewDashboardStatsRepository(databaseClient)), verifier, adminAuthorizer)
+	geoService := geoapplication.NewLocationTrackingService(
 		geo.NewDriverLocationStore(redisClient).WithLogger(applicationLogger),
-		geousecase.WithRideAssignments(rideAssignments),
-		geousecase.WithEventPublisher(realtimePublisher),
-		geousecase.WithLogger(applicationLogger),
+		geoapplication.WithRideAssignments(rideAssignments),
+		geoapplication.WithEventPublisher(realtimePublisher),
+		geoapplication.WithLogger(applicationLogger),
 	)
-	locationService := locationusecase.NewLocationServiceWithCache(
+	locationService := locationapplication.NewLocationServiceWithCache(
 		mapboxProvider,
 		locationredis.NewCache(redisClient),
 	).WithLogger(applicationLogger)
@@ -131,7 +131,7 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 	passengerridecontexthttp.NewRouter(passengerRideContextQuery, verifier).RegisterRoutes(router)
 
 	chatHistory := chatadapter.NewChatHistoryStore(redisClient)
-	chatService := chatusecase.NewChatService(chatHistory).
+	chatService := chatapplication.NewChatService(chatHistory).
 		WithEventPublisher(realtimePublisher).
 		WithRideAssignmentLookup(rideAssignments).
 		WithLogger(applicationLogger)

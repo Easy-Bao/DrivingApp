@@ -11,9 +11,9 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
+	ridesapplication "github.com/Easy-Bao/DrivingApp/server/internal/rides/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
 	rideshttp "github.com/Easy-Bao/DrivingApp/server/internal/rides/transport/http"
-	ridesusecase "github.com/Easy-Bao/DrivingApp/server/internal/rides/usecase"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -75,11 +75,11 @@ func (repository *activeSessionsRepository) Session(_ context.Context, sessionID
 }
 
 func TestFareRoutesExposeEstimateAndFinalCalculation(t *testing.T) {
-	config, err := ridesusecase.LoadPricingConfig()
+	config, err := ridesapplication.LoadPricingConfig()
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
-	router := rideshttp.NewRouter(ridesusecase.NewRideService(nil, config, nil), nil)
+	router := rideshttp.NewRouter(ridesapplication.NewRideService(nil, config, nil), nil)
 	mux := chi.NewRouter()
 	router.RegisterRoutes(mux)
 
@@ -109,7 +109,7 @@ func TestFareRoutesExposeEstimateAndFinalCalculation(t *testing.T) {
 }
 
 func TestBookingMutationRoutesRejectTheWrongAccountRole(t *testing.T) {
-	config, err := ridesusecase.LoadPricingConfig()
+	config, err := ridesapplication.LoadPricingConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,7 +123,7 @@ func TestBookingMutationRoutesRejectTheWrongAccountRole(t *testing.T) {
 		t.Fatal(err)
 	}
 	mux := chi.NewRouter()
-	rideshttp.NewRouter(ridesusecase.NewRideService(nil, config, nil), verifier).RegisterRoutes(mux)
+	rideshttp.NewRouter(ridesapplication.NewRideService(nil, config, nil), verifier).RegisterRoutes(mux)
 
 	for _, test := range []struct {
 		name   string
@@ -149,7 +149,7 @@ func TestBookingMutationRoutesRejectTheWrongAccountRole(t *testing.T) {
 }
 
 func TestDriverAnalyticsAreLimitedToTheAuthenticatedDriver(t *testing.T) {
-	config, err := ridesusecase.LoadPricingConfig()
+	config, err := ridesapplication.LoadPricingConfig()
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
@@ -160,7 +160,7 @@ func TestDriverAnalyticsAreLimitedToTheAuthenticatedDriver(t *testing.T) {
 	}
 
 	mux := chi.NewRouter()
-	rideshttp.NewRouter(ridesusecase.NewRideService(analyticsRepository{}, config, nil), verifier).RegisterRoutes(mux)
+	rideshttp.NewRouter(ridesapplication.NewRideService(analyticsRepository{}, config, nil), verifier).RegisterRoutes(mux)
 
 	request := httptest.NewRequest(http.MethodGet, api.V1Prefix+"/drivers/8/stats", nil)
 	request.Header.Set("Authorization", "Bearer "+accessToken)
@@ -232,7 +232,7 @@ func TestDriverAnalyticsAreLimitedToTheAuthenticatedDriver(t *testing.T) {
 }
 
 func TestPassengerActivitySummaryUsesAnAuthoritativeAggregate(t *testing.T) {
-	config, err := ridesusecase.LoadPricingConfig()
+	config, err := ridesapplication.LoadPricingConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -242,7 +242,7 @@ func TestPassengerActivitySummaryUsesAnAuthoritativeAggregate(t *testing.T) {
 		t.Fatal(err)
 	}
 	mux := chi.NewRouter()
-	rideshttp.NewRouter(ridesusecase.NewRideService(analyticsRepository{}, config, nil), verifier).RegisterRoutes(mux)
+	rideshttp.NewRouter(ridesapplication.NewRideService(analyticsRepository{}, config, nil), verifier).RegisterRoutes(mux)
 	request := httptest.NewRequest(
 		http.MethodGet,
 		api.V1Prefix+"/passengers/8/activity-summary",
@@ -266,12 +266,12 @@ func TestPassengerActivitySummaryUsesAnAuthoritativeAggregate(t *testing.T) {
 }
 
 func TestPublicDriverSummariesExposeRatingsWithoutSensitiveDriverData(t *testing.T) {
-	config, err := ridesusecase.LoadPricingConfig()
+	config, err := ridesapplication.LoadPricingConfig()
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
 	mux := chi.NewRouter()
-	rideshttp.NewRouter(ridesusecase.NewRideService(analyticsRepository{}, config, nil), nil).RegisterRoutes(mux)
+	rideshttp.NewRouter(ridesapplication.NewRideService(analyticsRepository{}, config, nil), nil).RegisterRoutes(mux)
 
 	request := httptest.NewRequest(
 		http.MethodGet,
@@ -309,7 +309,7 @@ func TestPublicDriverSummariesExposeRatingsWithoutSensitiveDriverData(t *testing
 }
 
 func TestDriverAvailabilityHidesPersistenceErrors(t *testing.T) {
-	config, err := ridesusecase.LoadPricingConfig()
+	config, err := ridesapplication.LoadPricingConfig()
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
@@ -321,7 +321,7 @@ func TestDriverAvailabilityHidesPersistenceErrors(t *testing.T) {
 
 	mux := chi.NewRouter()
 	rideshttp.NewRouter(
-		ridesusecase.NewRideService(failingOnlineDriversRepository{}, config, nil),
+		ridesapplication.NewRideService(failingOnlineDriversRepository{}, config, nil),
 		verifier,
 	).RegisterRoutes(mux)
 	request := httptest.NewRequest(http.MethodGet, api.V1Prefix+"/drivers/online?ids=7", nil)
@@ -338,7 +338,7 @@ func TestDriverAvailabilityHidesPersistenceErrors(t *testing.T) {
 }
 
 func TestOnlineDriverReceivesPassengerBookingThroughActiveSessions(t *testing.T) {
-	config, err := ridesusecase.LoadPricingConfig()
+	config, err := ridesapplication.LoadPricingConfig()
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
@@ -350,7 +350,7 @@ func TestOnlineDriverReceivesPassengerBookingThroughActiveSessions(t *testing.T)
 	}
 
 	mux := chi.NewRouter()
-	rideshttp.NewRouter(ridesusecase.NewRideService(repository, config, nil), verifier).RegisterRoutes(mux)
+	rideshttp.NewRouter(ridesapplication.NewRideService(repository, config, nil), verifier).RegisterRoutes(mux)
 	request := httptest.NewRequest(http.MethodGet, api.V1Prefix+"/bids/active", nil)
 	request.Header.Set("Authorization", "Bearer "+driverToken)
 	response := httptest.NewRecorder()
@@ -372,7 +372,7 @@ func TestOnlineDriverReceivesPassengerBookingThroughActiveSessions(t *testing.T)
 }
 
 func TestSessionRoutesBindSessionAndOfferIdentifiers(t *testing.T) {
-	config, err := ridesusecase.LoadPricingConfig()
+	config, err := ridesapplication.LoadPricingConfig()
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
@@ -387,7 +387,7 @@ func TestSessionRoutesBindSessionAndOfferIdentifiers(t *testing.T) {
 		t.Fatalf("Issue() returned error: %v", err)
 	}
 	mux := chi.NewRouter()
-	rideshttp.NewRouter(ridesusecase.NewRideService(repository, config, nil), verifier).RegisterRoutes(mux)
+	rideshttp.NewRouter(ridesapplication.NewRideService(repository, config, nil), verifier).RegisterRoutes(mux)
 
 	tests := []struct {
 		name            string

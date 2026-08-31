@@ -5,20 +5,20 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/location/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/transport/http/dto"
-	"github.com/Easy-Bao/DrivingApp/server/internal/location/usecase"
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
 )
 
 type Handler struct {
-	service *usecase.LocationService
+	service *application.LocationService
 }
 
 const maxRoutePayloadBytes = 16 << 10
 
-func NewHandler(service *usecase.LocationService) *Handler {
+func NewHandler(service *application.LocationService) *Handler {
 	return &Handler{service: service}
 }
 
@@ -115,12 +115,12 @@ func decodeRouteRequest(writer http.ResponseWriter, request *http.Request, paylo
 
 func writeServiceError(writer http.ResponseWriter, err error) {
 	switch {
-	case errors.Is(err, usecase.ErrEmptySearch),
-		errors.Is(err, usecase.ErrSearchTooLong),
-		errors.Is(err, usecase.ErrInvalidCoordinates),
-		errors.Is(err, usecase.ErrInvalidNearbyPage),
-		errors.Is(err, usecase.ErrInvalidRouteOptions),
-		errors.Is(err, usecase.ErrInvalidMatrix):
+	case errors.Is(err, application.ErrEmptySearch),
+		errors.Is(err, application.ErrSearchTooLong),
+		errors.Is(err, application.ErrInvalidCoordinates),
+		errors.Is(err, application.ErrInvalidNearbyPage),
+		errors.Is(err, application.ErrInvalidRouteOptions),
+		errors.Is(err, application.ErrInvalidMatrix):
 		response.Error(writer, http.StatusBadRequest, "The location request is invalid.")
 	default:
 		response.Error(writer, http.StatusBadGateway, "Nearby locations are temporarily unavailable.")

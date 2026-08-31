@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/usecase"
 )
 
-type EventHandler struct{ service *usecase.ChatService }
+type EventHandler struct{ service *application.ChatService }
 
-func NewEventHandler(service *usecase.ChatService) *EventHandler {
+func NewEventHandler(service *application.ChatService) *EventHandler {
 	return &EventHandler{service: service}
 }
 

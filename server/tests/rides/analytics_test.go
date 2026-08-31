@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/rides/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/rides/usecase"
 )
 
 type analyticsRepository struct{}
@@ -75,11 +75,11 @@ func (passengerReviewRepository) CreatePassengerReview(_ context.Context, review
 }
 
 func TestAnalyticsUseCasesDelegateToTheRideAdapter(t *testing.T) {
-	config, err := usecase.LoadPricingConfig()
+	config, err := application.LoadPricingConfig()
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
-	service := usecase.NewRideService(analyticsRepository{}, config, nil)
+	service := application.NewRideService(analyticsRepository{}, config, nil)
 
 	stats, err := service.DriverStats(context.Background(), 7)
 	if err != nil || stats.TotalTrips != 3 {
@@ -99,11 +99,11 @@ func TestAnalyticsUseCasesDelegateToTheRideAdapter(t *testing.T) {
 }
 
 func TestPassengerReviewUseCaseValidatesRatingAndDelegates(t *testing.T) {
-	config, err := usecase.LoadPricingConfig()
+	config, err := application.LoadPricingConfig()
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
-	service := usecase.NewRideService(passengerReviewRepository{}, config, nil)
+	service := application.NewRideService(passengerReviewRepository{}, config, nil)
 	review, err := service.CreatePassengerReview(context.Background(), domain.PassengerReview{RideID: 9, Rating: 5})
 	if err != nil || review.ID != 1 {
 		t.Fatalf("passenger review = %#v, %v", review, err)

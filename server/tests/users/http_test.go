@@ -12,9 +12,9 @@ import (
 	"testing"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
+	"github.com/Easy-Bao/DrivingApp/server/internal/users/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/domain"
 	usershttp "github.com/Easy-Bao/DrivingApp/server/internal/users/transport/http"
-	"github.com/Easy-Bao/DrivingApp/server/internal/users/usecase"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -74,7 +74,7 @@ func TestOnlineUpdatesTheExistingDriverProfileForTheAuthenticatedUser(t *testing
 	}
 
 	router := chi.NewRouter()
-	usershttp.NewRouter(usecase.NewProfileService(repository), tokenManager).RegisterRoutes(router)
+	usershttp.NewRouter(application.NewProfileService(repository), tokenManager).RegisterRoutes(router)
 	for _, targetID := range []string{"42", "7"} {
 		request := httptest.NewRequest(
 			http.MethodPost,
@@ -106,7 +106,7 @@ func TestOnlineDoesNotMaskProfileRepositoryErrorsAsMissingDriverProfiles(t *test
 	}
 
 	router := chi.NewRouter()
-	usershttp.NewRouter(usecase.NewProfileService(repository), tokenManager).RegisterRoutes(router)
+	usershttp.NewRouter(application.NewProfileService(repository), tokenManager).RegisterRoutes(router)
 	request := httptest.NewRequest(
 		http.MethodPost,
 		"/api/v1/drivers/42/online",
@@ -139,7 +139,7 @@ func TestProfileReturnsAccountContactFieldsForPassengerInfo(t *testing.T) {
 	}
 
 	router := chi.NewRouter()
-	usershttp.NewRouter(usecase.NewProfileService(repository), tokenManager).RegisterRoutes(router)
+	usershttp.NewRouter(application.NewProfileService(repository), tokenManager).RegisterRoutes(router)
 	request := httptest.NewRequest(http.MethodGet, "/api/v1/passengers/42", nil)
 	request.Header.Set("Authorization", "Bearer "+token)
 	response := httptest.NewRecorder()
@@ -170,7 +170,7 @@ func TestProfileUpdateUsesAuthenticatedIdentityAndPersistsAddress(t *testing.T) 
 	}
 
 	router := chi.NewRouter()
-	usershttp.NewRouter(usecase.NewProfileService(repository), tokenManager).RegisterRoutes(router)
+	usershttp.NewRouter(application.NewProfileService(repository), tokenManager).RegisterRoutes(router)
 	request := httptest.NewRequest(
 		http.MethodPatch,
 		"/api/v1/users/me",
@@ -223,7 +223,7 @@ func TestDriverProfileUpdatePersistsAccountAndVehicleFields(t *testing.T) {
 	}
 
 	router := chi.NewRouter()
-	usershttp.NewRouter(usecase.NewProfileService(repository), tokenManager).RegisterRoutes(router)
+	usershttp.NewRouter(application.NewProfileService(repository), tokenManager).RegisterRoutes(router)
 	request := httptest.NewRequest(
 		http.MethodPatch,
 		"/api/v1/users/me",
@@ -259,7 +259,7 @@ func TestProfileRejectsUnknownGenderWithoutCallingRepository(t *testing.T) {
 	}
 
 	router := chi.NewRouter()
-	usershttp.NewRouter(usecase.NewProfileService(repository), tokenManager).RegisterRoutes(router)
+	usershttp.NewRouter(application.NewProfileService(repository), tokenManager).RegisterRoutes(router)
 	request := httptest.NewRequest(
 		http.MethodPatch,
 		"/api/v1/users/me",
@@ -291,7 +291,7 @@ func TestProfileAvatarUploadAndReadUseAuthenticatedRoutes(t *testing.T) {
 	}
 
 	router := chi.NewRouter()
-	usershttp.NewRouter(usecase.NewProfileService(repository), tokenManager).RegisterRoutes(router)
+	usershttp.NewRouter(application.NewProfileService(repository), tokenManager).RegisterRoutes(router)
 	avatarBytes := []byte{0x89, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a, 0x00}
 	var requestBody bytes.Buffer
 	form := multipart.NewWriter(&requestBody)

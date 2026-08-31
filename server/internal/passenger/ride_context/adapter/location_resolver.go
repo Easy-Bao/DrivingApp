@@ -5,16 +5,16 @@ import (
 	"errors"
 	"strings"
 
+	locationapplication "github.com/Easy-Bao/DrivingApp/server/internal/location/application"
 	locationdomain "github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
-	locationusecase "github.com/Easy-Bao/DrivingApp/server/internal/location/usecase"
 	ridecontext "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ride_context"
 )
 
 type LocationResolver struct {
-	service *locationusecase.LocationService
+	service *locationapplication.LocationService
 }
 
-func NewLocationResolver(service *locationusecase.LocationService) *LocationResolver {
+func NewLocationResolver(service *locationapplication.LocationService) *LocationResolver {
 	return &LocationResolver{service: service}
 }
 

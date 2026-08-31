@@ -1,7 +1,7 @@
 package http
 
 import (
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/usecase"
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/go-chi/chi/v5"
 )
@@ -9,9 +9,9 @@ import (
 type Router struct{ handler *Handler }
 
 func NewRouter(
-	register *usecase.RegisterService,
-	authenticate *usecase.AuthenticateService,
-	otp *usecase.OTPService,
+	register *application.RegisterService,
+	authenticate *application.AuthenticateService,
+	otp *application.OTPService,
 ) *Router {
 	return &Router{handler: NewHandler(register, authenticate, otp)}
 }

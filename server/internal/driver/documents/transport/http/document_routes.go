@@ -1,7 +1,7 @@
 package http
 
 import (
-	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/usecase"
+	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
@@ -14,7 +14,7 @@ type Router struct {
 	authorizer *security.AdminAuthorizer
 }
 
-func NewRouter(service *usecase.DocumentService, verifier *security.TokenManager, authorizer *security.AdminAuthorizer) *Router {
+func NewRouter(service *application.DocumentService, verifier *security.TokenManager, authorizer *security.AdminAuthorizer) *Router {
 	return &Router{handler: NewHandler(service), verifier: verifier, authorizer: authorizer}
 }
 

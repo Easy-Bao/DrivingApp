@@ -9,19 +9,19 @@ import (
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
+	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/transport/http/dto"
-	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/usecase"
 	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
-	service *usecase.LocationTrackingService
+	service *application.LocationTrackingService
 	auth    *security.TokenManager
 }
 
 func NewHandler(
-	service *usecase.LocationTrackingService,
+	service *application.LocationTrackingService,
 	auth *security.TokenManager,
 ) *Handler {
 	return &Handler{service: service, auth: auth}

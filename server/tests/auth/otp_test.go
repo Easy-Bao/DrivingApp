@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/usecase"
 )
 
 type otpRepository struct {
@@ -61,7 +61,7 @@ func TestPassengerOTPVerifiesAndConsumesCode(t *testing.T) {
 	repository := &otpRepository{account: domain.User{ID: 7, Email: "passenger@example.test", Role: domain.Passenger}}
 	store := &otpMemoryStore{values: map[string]string{}}
 	gateway := &otpGateway{}
-	service := usecase.NewOTPService(repository, store, gateway, otpIssuer{}, newTestRefreshSessionStore())
+	service := application.NewOTPService(repository, store, gateway, otpIssuer{}, newTestRefreshSessionStore())
 
 	if err := service.RequestVerification(context.Background(), repository.account.Email); err != nil {
 		t.Fatalf("request verification: %v", err)
@@ -77,7 +77,7 @@ func TestPassengerOTPVerifiesAndConsumesCode(t *testing.T) {
 
 func TestDriverCannotUsePassengerVerificationOTP(t *testing.T) {
 	repository := &otpRepository{account: domain.User{ID: 8, Email: "driver@example.test", Role: domain.Driver}}
-	service := usecase.NewOTPService(repository, &otpMemoryStore{values: map[string]string{}}, &otpGateway{}, otpIssuer{}, newTestRefreshSessionStore())
+	service := application.NewOTPService(repository, &otpMemoryStore{values: map[string]string{}}, &otpGateway{}, otpIssuer{}, newTestRefreshSessionStore())
 	if _, _, err := service.VerifyPassenger(context.Background(), repository.account.Email, "123456"); err != domain.ErrInvalidOTP {
 		t.Fatalf("expected passenger-only verification to reject driver, got %v", err)
 	}
@@ -86,7 +86,7 @@ func TestDriverCannotUsePassengerVerificationOTP(t *testing.T) {
 func TestPasswordResetIsScopedToTheAccountRole(t *testing.T) {
 	repository := &otpRepository{account: domain.User{ID: 8, Email: "driver@example.test", Role: domain.Driver}}
 	store := &otpMemoryStore{values: map[string]string{}}
-	service := usecase.NewOTPService(repository, store, &otpGateway{}, otpIssuer{}, newTestRefreshSessionStore())
+	service := application.NewOTPService(repository, store, &otpGateway{}, otpIssuer{}, newTestRefreshSessionStore())
 
 	if err := service.RequestPasswordReset(context.Background(), repository.account.Email); err != domain.ErrInvalidCredentials {
 		t.Fatalf("expected passenger reset route to reject driver account, got %v", err)

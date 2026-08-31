@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/location/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/location/usecase"
 )
 
 type providerStub struct{}
@@ -67,15 +67,15 @@ func (provider *routeProviderSpy) Route(_ context.Context, _, _ domain.Coordinat
 }
 
 func TestServiceRejectsEmptySearch(t *testing.T) {
-	service := usecase.NewLocationService(providerStub{})
+	service := application.NewLocationService(providerStub{})
 	_, err := service.Search(context.Background(), "  ", domain.Coordinates{})
-	if err != usecase.ErrEmptySearch {
+	if err != application.ErrEmptySearch {
 		t.Fatalf("expected ErrEmptySearch, got %v", err)
 	}
 }
 
 func TestServiceDelegatesSearch(t *testing.T) {
-	service := usecase.NewLocationService(providerStub{})
+	service := application.NewLocationService(providerStub{})
 	places, err := service.Search(context.Background(), "Pagadian", domain.Coordinates{})
 	if err != nil {
 		t.Fatalf("search failed: %v", err)
@@ -87,7 +87,7 @@ func TestServiceDelegatesSearch(t *testing.T) {
 
 func TestServiceSupportsNearbyPlacesAndCaching(t *testing.T) {
 	cache := &cacheStub{values: map[string]any{}}
-	service := usecase.NewLocationServiceWithCache(providerStub{}, cache)
+	service := application.NewLocationServiceWithCache(providerStub{}, cache)
 	places, err := service.Nearby(context.Background(), domain.Coordinates{Latitude: 7.8, Longitude: 123.4}, 1)
 	if err != nil || len(places) != 1 || places[0].Name != "Nearby Place" {
 		t.Fatalf("nearby places = %#v, %v", places, err)
@@ -99,23 +99,23 @@ func TestServiceSupportsNearbyPlacesAndCaching(t *testing.T) {
 }
 
 func TestServiceRejectsUnboundedSearchAndInvalidRouteCoordinates(t *testing.T) {
-	service := usecase.NewLocationService(providerStub{})
-	if _, err := service.Search(context.Background(), strings.Repeat("x", 257), domain.Coordinates{}); err != usecase.ErrSearchTooLong {
-		t.Fatalf("long search error = %v, want %v", err, usecase.ErrSearchTooLong)
+	service := application.NewLocationService(providerStub{})
+	if _, err := service.Search(context.Background(), strings.Repeat("x", 257), domain.Coordinates{}); err != application.ErrSearchTooLong {
+		t.Fatalf("long search error = %v, want %v", err, application.ErrSearchTooLong)
 	}
 	if _, err := service.Route(
 		context.Background(),
 		domain.Coordinates{Latitude: 91, Longitude: 123},
 		domain.Coordinates{Latitude: 7, Longitude: 123},
 		domain.RouteOptions{},
-	); err != usecase.ErrInvalidCoordinates {
-		t.Fatalf("invalid route error = %v, want %v", err, usecase.ErrInvalidCoordinates)
+	); err != application.ErrInvalidCoordinates {
+		t.Fatalf("invalid route error = %v, want %v", err, application.ErrInvalidCoordinates)
 	}
 }
 
 func TestServiceOwnsRouteOptionValidationAndNormalization(t *testing.T) {
 	provider := &routeProviderSpy{}
-	service := usecase.NewLocationService(provider)
+	service := application.NewLocationService(provider)
 	origin := domain.Coordinates{Latitude: 7.8, Longitude: 123.4}
 	destination := domain.Coordinates{Latitude: 7.9, Longitude: 123.5}
 
@@ -127,8 +127,8 @@ func TestServiceOwnsRouteOptionValidationAndNormalization(t *testing.T) {
 	}
 
 	_, err := service.Route(context.Background(), origin, destination, domain.RouteOptions{Profile: "walking"})
-	if !errors.Is(err, usecase.ErrInvalidRouteOptions) {
-		t.Fatalf("invalid options error = %v, want %v", err, usecase.ErrInvalidRouteOptions)
+	if !errors.Is(err, application.ErrInvalidRouteOptions) {
+		t.Fatalf("invalid options error = %v, want %v", err, application.ErrInvalidRouteOptions)
 	}
 	if provider.calls != 1 {
 		t.Fatalf("provider calls = %d, want 1", provider.calls)

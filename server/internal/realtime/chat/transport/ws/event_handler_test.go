@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/usecase"
 )
 
 type roomRepositoryStub struct {
@@ -32,7 +32,7 @@ func (*roomRepositoryStub) IsLocked(context.Context, string) (bool, error) { ret
 
 func TestEventHandlerKeepsServerIdentityAndTimestamp(t *testing.T) {
 	history := &roomRepositoryStub{}
-	handler := NewEventHandler(usecase.NewChatService(history))
+	handler := NewEventHandler(application.NewChatService(history))
 	before := time.Now().UTC()
 
 	err := handler.Handle(context.Background(), []byte(`{

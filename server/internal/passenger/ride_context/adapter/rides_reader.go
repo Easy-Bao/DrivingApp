@@ -5,14 +5,14 @@ import (
 	"errors"
 
 	ridecontext "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ride_context"
-	ridesusecase "github.com/Easy-Bao/DrivingApp/server/internal/rides/usecase"
+	ridesapplication "github.com/Easy-Bao/DrivingApp/server/internal/rides/application"
 )
 
 type RidesReader struct {
-	service *ridesusecase.RideService
+	service *ridesapplication.RideService
 }
 
-func NewRidesReader(service *ridesusecase.RideService) *RidesReader {
+func NewRidesReader(service *ridesapplication.RideService) *RidesReader {
 	return &RidesReader{service: service}
 }
 

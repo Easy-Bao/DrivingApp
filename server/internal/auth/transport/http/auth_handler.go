@@ -4,20 +4,20 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/transport/http/dto"
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/usecase"
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
 )
 
 type Handler struct {
-	register     *usecase.RegisterService
-	authenticate *usecase.AuthenticateService
-	otp          *usecase.OTPService
+	register     *application.RegisterService
+	authenticate *application.AuthenticateService
+	otp          *application.OTPService
 }
 
-func NewHandler(register *usecase.RegisterService, authenticate *usecase.AuthenticateService, otp *usecase.OTPService) *Handler {
+func NewHandler(register *application.RegisterService, authenticate *application.AuthenticateService, otp *application.OTPService) *Handler {
 	return &Handler{register: register, authenticate: authenticate, otp: otp}
 }
 func (handler *Handler) PassengerRegister(w http.ResponseWriter, r *http.Request) {
@@ -247,8 +247,8 @@ func (handler *Handler) resetPasswordForRole(w http.ResponseWriter, r *http.Requ
 	response.JSON(w, http.StatusOK, map[string]any{"success": true, "message": "password reset successful"})
 }
 
-func toRegisterInput(input dto.RegistrationRequest) usecase.RegisterInput {
-	return usecase.RegisterInput{Email: input.Email, Phone: input.Phone, Name: input.Name, Password: input.Password, VehicleType: input.VehicleType, PlateNumber: input.PlateNumber}
+func toRegisterInput(input dto.RegistrationRequest) application.RegisterInput {
+	return application.RegisterInput{Email: input.Email, Phone: input.Phone, Name: input.Name, Password: input.Password, VehicleType: input.VehicleType, PlateNumber: input.PlateNumber}
 }
 
 func decode(w http.ResponseWriter, r *http.Request, value any) bool {

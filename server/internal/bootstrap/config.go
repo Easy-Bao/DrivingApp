@@ -10,7 +10,7 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
-	ridesusecase "github.com/Easy-Bao/DrivingApp/server/internal/rides/usecase"
+	ridesapplication "github.com/Easy-Bao/DrivingApp/server/internal/rides/application"
 )
 
 const serviceName = "api"
@@ -25,7 +25,7 @@ type Config struct {
 	TrustedProxyCIDRs string
 	AdminUserIDs      string
 	Security          middleware.SecurityConfig
-	Pricing           ridesusecase.PricingConfig
+	Pricing           ridesapplication.PricingConfig
 	ReportingLocation *time.Location
 }
 
@@ -49,11 +49,11 @@ func LoadConfig() (Config, error) {
 		return Config{}, err
 	}
 
-	pricing, err := ridesusecase.LoadPricingConfig()
+	pricing, err := ridesapplication.LoadPricingConfig()
 	if err != nil {
 		return Config{}, err
 	}
-	reportingLocation, err := ridesusecase.LoadReportingLocation(os.Getenv("REPORTING_TIMEZONE"))
+	reportingLocation, err := ridesapplication.LoadReportingLocation(os.Getenv("REPORTING_TIMEZONE"))
 	if err != nil {
 		return Config{}, err
 	}

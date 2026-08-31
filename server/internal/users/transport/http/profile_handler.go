@@ -12,18 +12,18 @@ import (
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
+	"github.com/Easy-Bao/DrivingApp/server/internal/users/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/users/transport/http/dto"
-	"github.com/Easy-Bao/DrivingApp/server/internal/users/usecase"
 	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
-	service  *usecase.ProfileService
+	service  *application.ProfileService
 	verifier *security.TokenManager
 }
 
-func NewHandler(service *usecase.ProfileService, verifier *security.TokenManager) *Handler {
+func NewHandler(service *application.ProfileService, verifier *security.TokenManager) *Handler {
 	return &Handler{service: service, verifier: verifier}
 }
 func (handler *Handler) identity(r *http.Request) (int, bool) {

@@ -6,9 +6,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	adminapplication "github.com/Easy-Bao/DrivingApp/server/internal/admin/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/admin/domain"
 	adminhttp "github.com/Easy-Bao/DrivingApp/server/internal/admin/transport/http"
-	adminusecase "github.com/Easy-Bao/DrivingApp/server/internal/admin/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )
@@ -33,7 +33,7 @@ func TestStatsRequiresConfiguredAdministrator(t *testing.T) {
 
 	router := chi.NewRouter()
 	adminhttp.NewRouter(
-		adminusecase.NewDashboardStatsService(httpRepository{}),
+		adminapplication.NewDashboardStatsService(httpRepository{}),
 		tokenManager,
 		security.NewAdminAuthorizer("42"),
 	).RegisterRoutes(router)

@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/transport/http/dto"
-	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/usecase"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
@@ -20,10 +20,10 @@ import (
 const maxReviewPayloadBytes int64 = 1 << 10
 
 type Handler struct {
-	service *usecase.DocumentService
+	service *application.DocumentService
 }
 
-func NewHandler(service *usecase.DocumentService) *Handler {
+func NewHandler(service *application.DocumentService) *Handler {
 	return &Handler{service: service}
 }
 

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/location/application"
 	locationhttp "github.com/Easy-Bao/DrivingApp/server/internal/location/transport/http"
-	"github.com/Easy-Bao/DrivingApp/server/internal/location/usecase"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -81,6 +81,6 @@ func TestLocationHTTPExposesSnakeCaseMatrixContract(t *testing.T) {
 
 func newLocationRouter() *chi.Mux {
 	router := chi.NewRouter()
-	locationhttp.NewRouter(usecase.NewLocationService(providerStub{})).RegisterRoutes(router)
+	locationhttp.NewRouter(application.NewLocationService(providerStub{})).RegisterRoutes(router)
 	return router
 }

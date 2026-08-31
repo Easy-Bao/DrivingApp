@@ -1,14 +1,14 @@
 package http
 
 import (
-	"github.com/Easy-Bao/DrivingApp/server/internal/location/usecase"
+	"github.com/Easy-Bao/DrivingApp/server/internal/location/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/go-chi/chi/v5"
 )
 
 type Router struct{ handler *Handler }
 
-func NewRouter(service *usecase.LocationService) *Router {
+func NewRouter(service *application.LocationService) *Router {
 	return &Router{handler: NewHandler(service)}
 }
 
