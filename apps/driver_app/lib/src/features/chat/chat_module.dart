@@ -1,4 +1,6 @@
-import 'package:chat/chat.dart';
+import 'package:dio/dio.dart';
+import 'package:driver_app/src/core/services/secure_session_service.dart';
+import 'package:driver_app/src/features/chat/chat.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/features/chat/chat_routes.dart';
@@ -8,6 +10,15 @@ import 'package:design_system/design_system.dart';
 
 class ChatModule {
   ChatModule._();
+
+  static void binds(Injector i) {
+    i.addLazySingleton<ChatRepositoryFactory>(
+      (i) => DefaultChatRepositoryFactory(
+        clientDio: i.get<Dio>(),
+        tokenProvider: i.get<SecureSessionService>().readToken,
+      ),
+    );
+  }
 
   static List<ModularRoute> routes = [
     ChildRoute(

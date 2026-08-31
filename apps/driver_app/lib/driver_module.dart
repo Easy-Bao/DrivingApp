@@ -20,6 +20,7 @@ class DriverModule extends Module {
   FutureOr<void> binds(Injector i) {
     ActivityModule.binds(i);
     ActiveRideModule.binds(i);
+    ChatModule.binds(i);
     HomeModule.binds(i);
     ProfileModule.binds(i);
 

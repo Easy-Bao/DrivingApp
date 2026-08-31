@@ -1,4 +1,3 @@
-import 'package:chat/chat.dart';
 import 'package:dio/dio.dart';
 import 'package:maps/maps.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -68,12 +67,6 @@ class AppModule extends Module {
           networkAvailability: i.get<NetworkAvailabilityCoordinator>(),
           onSessionExpired: () =>
               i.get<SessionBloc>().add(const SessionGuestRequested()),
-        ),
-      )
-      ..addLazySingleton<ChatRepositoryFactory>(
-        (i) => DefaultChatRepositoryFactory(
-          clientDio: i.get<Dio>(),
-          tokenProvider: i.get<SecureSessionService>().readToken,
         ),
       )
       ..addLazySingleton<LocationRepository>(

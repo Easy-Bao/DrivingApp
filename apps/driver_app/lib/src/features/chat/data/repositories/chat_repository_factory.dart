@@ -1,6 +1,6 @@
-import 'package:chat/src/data/data_sources/chat_remote_data_source.dart';
-import 'package:chat/src/data/repositories/chat_repository_impl.dart';
-import 'package:chat/src/domain/repositories/chat_repository.dart';
+import 'package:driver_app/src/features/chat/data/data_sources/chat_remote_data_source.dart';
+import 'package:driver_app/src/features/chat/data/repositories/chat_repository_impl.dart';
+import 'package:driver_app/src/features/chat/domain/repositories/chat_repository.dart';
 import 'package:dio/dio.dart';
 
 abstract interface class ChatRepositoryFactory {

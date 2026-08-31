@@ -1,4 +1,4 @@
-import 'package:chat/chat.dart';
+import 'package:driver_app/src/features/chat/chat.dart';
 import 'package:equatable/equatable.dart';
 
 class ChatState extends Equatable {

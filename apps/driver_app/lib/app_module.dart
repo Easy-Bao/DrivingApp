@@ -1,4 +1,3 @@
-import 'package:chat/chat.dart';
 import 'package:dio/dio.dart';
 import 'package:driver_app/driver_module.dart';
 import 'package:driver_app/src/app/navigation/app_routes.dart';
@@ -70,12 +69,6 @@ class AppModule extends Module {
           baseUrl: EnvConfig.apiBaseUri,
           sessionService: i.get<SecureSessionService>(),
           networkAvailability: i.get<NetworkAvailabilityCoordinator>(),
-        ),
-      )
-      ..addLazySingleton<ChatRepositoryFactory>(
-        (i) => DefaultChatRepositoryFactory(
-          clientDio: i.get<Dio>(),
-          tokenProvider: i.get<SecureSessionService>().readToken,
         ),
       )
       // Active ride state spans dashboard and active-ride routes, so its transport

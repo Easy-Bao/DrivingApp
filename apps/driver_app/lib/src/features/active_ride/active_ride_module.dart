@@ -1,4 +1,4 @@
-import 'package:chat/chat.dart';
+import 'package:driver_app/src/features/chat/chat.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 

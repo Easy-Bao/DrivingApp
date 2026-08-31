@@ -1,6 +1,6 @@
-import 'package:chat/src/data/data_sources/chat_remote_data_source.dart';
-import 'package:chat/src/domain/entities/chat_event.dart';
-import 'package:chat/src/domain/entities/chat_message.dart';
+import 'package:passenger_app/src/features/chat/data/data_sources/chat_remote_data_source.dart';
+import 'package:passenger_app/src/features/chat/domain/entities/chat_event.dart';
+import 'package:passenger_app/src/features/chat/domain/entities/chat_message.dart';
 import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 

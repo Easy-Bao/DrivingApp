@@ -1,4 +1,4 @@
-import 'package:chat/chat.dart';
+import 'package:passenger_app/src/features/chat/chat.dart';
 import 'package:ride/ride.dart';
 import 'dart:async';
 

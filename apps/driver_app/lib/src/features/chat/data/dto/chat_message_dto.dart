@@ -1,4 +1,4 @@
-import 'package:chat/src/domain/entities/chat_message.dart';
+import 'package:driver_app/src/features/chat/domain/entities/chat_message.dart';
 import 'package:equatable/equatable.dart';
 
 class ChatMessageDto extends Equatable {

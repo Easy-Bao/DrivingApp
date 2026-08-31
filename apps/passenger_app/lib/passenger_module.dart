@@ -21,6 +21,7 @@ class PassengerModule extends Module {
   @override
   FutureOr<void> binds(Injector i) {
     ActivityModule.binds(i);
+    ChatModule.binds(i);
     DriverProfileModule.binds(i);
     HomeModule.binds(i);
     InboxModule.binds(i);

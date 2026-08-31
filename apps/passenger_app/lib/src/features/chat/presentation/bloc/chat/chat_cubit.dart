@@ -1,4 +1,4 @@
-import 'package:chat/chat.dart';
+import 'package:passenger_app/src/features/chat/chat.dart';
 import 'dart:async';
 import 'package:foundation/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

@@ -38,8 +38,6 @@ dependencies:
     path: ../../packages/maps
   ride:
     path: ../../packages/ride
-  chat:
-    path: ../../packages/chat
   foundation:
     path: ../../packages/foundation
 

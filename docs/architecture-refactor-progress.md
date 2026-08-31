@@ -12,12 +12,12 @@ This log records ownership decisions and validation for the production architect
 | passenger booking and active ride | Passenger `trip` mixed booking and accepted-ride tracking | Booking, driver discovery, fare display, offers, and draft state versus live tracking and driver match | `booking` and `active_ride` feature boundaries | Make the passenger lifecycle explicit and independently navigable | Passenger app tests: 165 passed | Activity/history split remains |
 | driver active ride | Driver `trip` contained the accepted-ride lifecycle | Dispatch acceptance, pickup, passenger wait, transit, telemetry, and fare summary | `active_ride` feature boundary | Match the business concept used by the server and passenger app | Driver app tests: 90 passed; analysis clean | Dashboard rename and activity split remain |
 | auth | Shared package provided transport contracts, failures, and presentation events while apps owned role-specific repositories | Authentication transport, failures, credentials, repositories, and presentation state | Passenger and Driver auth features own their complete workflows; `packages/auth` removed | Keep authentication changes role-specific and remove product behavior from shared packages | Passenger auth: 22 passed; Driver auth: 7 passed | Shared session and infrastructure ownership still needs the broader `core` migration |
+| chat | Shared package owned chat entities, repository, failure, and transport | Chat room lifecycle, message protocol, websocket reconnect, and presentation state | Passenger and Driver `chat` features own their data, domain, repository, factory, and tests; `packages/chat` removed | Keep chat as a product workflow while leaving only generic transport candidates for shared infrastructure | Passenger chat: 12 passed; Driver chat: 12 passed; Passenger analysis has no errors; Driver analysis clean | Review websocket transport duplication during the later infrastructure pass |
 
 ## In progress
 
 | Module | Before | Actual responsibility | After | Reason | Tests | Remaining risk |
 | --- | --- | --- | --- | --- | --- | --- |
-| chat | Shared package owns chat entities, repository, failure, and transport | Chat is product workflow in both apps, not generic infrastructure | Keep app-local chat state/repositories/pages; share only generic realtime transport | Avoid cross-client feature coupling | Targeted validation pending | Compare both implementations before removing the shared package |
 | ride | Shared package owns ride entities, DTOs, fare structures, and failures | Passenger and Driver use different ride workflows | Move ride domain/data contracts into the owning app features; retain only generic infrastructure | Server remains authoritative for ride and fare rules | Targeted validation pending | Avoid changing API payloads or status transitions |
 
 ## Pending
@@ -25,6 +25,6 @@ This log records ownership decisions and validation for the production architect
 - localize theme definitions while retaining shared brand tokens and generic components
 - rename driver `home` to `dashboard`
 - split driver activity into the smallest useful earnings, performance, and history owners
-- remove `shared_core`, `packages/chat`, and `packages/ride` after reference and export audits
+- remove `shared_core` and `packages/ride` after reference and export audits
 - classify and simplify server integration/realtime structure without editing generated persistence output
 - run final monorepo analysis, client tests, and server tests; record pre-existing failures separately

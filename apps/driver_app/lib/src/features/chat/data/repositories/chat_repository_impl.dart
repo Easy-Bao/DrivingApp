@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:chat/src/data/data_sources/chat_remote_data_source.dart';
-import 'package:chat/src/data/dto/chat_message_dto.dart';
-import 'package:chat/src/domain/entities/chat_event.dart';
-import 'package:chat/src/domain/entities/chat_message.dart';
-import 'package:chat/src/domain/failures/chat_failure.dart';
-import 'package:chat/src/domain/repositories/chat_repository.dart';
+import 'package:driver_app/src/features/chat/data/data_sources/chat_remote_data_source.dart';
+import 'package:driver_app/src/features/chat/data/dto/chat_message_dto.dart';
+import 'package:driver_app/src/features/chat/domain/entities/chat_event.dart';
+import 'package:driver_app/src/features/chat/domain/entities/chat_message.dart';
+import 'package:driver_app/src/features/chat/domain/failures/chat_failure.dart';
+import 'package:driver_app/src/features/chat/domain/repositories/chat_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
