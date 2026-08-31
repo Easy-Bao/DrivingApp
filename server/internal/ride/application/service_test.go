@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 )
 
 type ridesRepositoryStub struct {

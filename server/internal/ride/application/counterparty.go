@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 )
 
 func (service *RideService) Counterparty(ctx context.Context, rideID, actorID int) (domain.Counterparty, error) {

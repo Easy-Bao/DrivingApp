@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/event"
-	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 )
 
 const (

@@ -6,7 +6,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent"
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverwalletaccount"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ridesettlement"
-	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 )
 
 func createRideSettlement(

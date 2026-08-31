@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 )
 
 func TestSummarizeDriverEarningsUsesReportingTimezoneAndDriverPayout(t *testing.T) {

@@ -13,7 +13,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverprofile"
 	"github.com/Easy-Bao/DrivingApp/server/ent/notification"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerprofile"
-	"github.com/Easy-Bao/DrivingApp/server/internal/users/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/user/domain"
 )
 
 type ProfileRepository struct {

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/users/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/user/domain"
 )
 
 type ProfileService struct{ repository domain.Repository }

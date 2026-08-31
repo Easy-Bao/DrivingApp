@@ -10,9 +10,9 @@ import (
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
-	"github.com/Easy-Bao/DrivingApp/server/internal/rides/application"
-	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/rides/transport/http/dto"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/http/dto"
 	"github.com/go-chi/chi/v5"
 )
 

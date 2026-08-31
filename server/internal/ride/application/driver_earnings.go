@@ -3,7 +3,7 @@ package application
 import (
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 )
 
 func summarizeDriverEarnings(entries []domain.DriverEarning, now time.Time, location *time.Location) domain.DriverEarningsSummary {

@@ -1,9 +1,9 @@
-package users_test
+package user_test
 
 import (
 	"context"
-	"github.com/Easy-Bao/DrivingApp/server/internal/users/application"
-	"github.com/Easy-Bao/DrivingApp/server/internal/users/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/user/application"
+	"github.com/Easy-Bao/DrivingApp/server/internal/user/domain"
 	"testing"
 )
 

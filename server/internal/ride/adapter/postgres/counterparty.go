@@ -7,7 +7,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent"
 	"github.com/Easy-Bao/DrivingApp/server/ent/driverprofile"
 	"github.com/Easy-Bao/DrivingApp/server/ent/passengerprofile"
-	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 )
 
 const rideContactWindow = 48 * time.Hour

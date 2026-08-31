@@ -39,12 +39,12 @@ import (
 	geoh "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/stream"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/ws"
-	ridespostgres "github.com/Easy-Bao/DrivingApp/server/internal/rides/adapter/postgres"
-	ridesapplication "github.com/Easy-Bao/DrivingApp/server/internal/rides/application"
-	rideshttp "github.com/Easy-Bao/DrivingApp/server/internal/rides/transport/http"
-	userspostgres "github.com/Easy-Bao/DrivingApp/server/internal/users/adapter/postgres"
-	usersapplication "github.com/Easy-Bao/DrivingApp/server/internal/users/application"
-	usershttp "github.com/Easy-Bao/DrivingApp/server/internal/users/transport/http"
+	ridepostgres "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/postgres"
+	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
+	ridehttp "github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/http"
+	userpostgres "github.com/Easy-Bao/DrivingApp/server/internal/user/adapter/postgres"
+	userapplication "github.com/Easy-Bao/DrivingApp/server/internal/user/application"
+	userhttp "github.com/Easy-Bao/DrivingApp/server/internal/user/transport/http"
 	"github.com/go-chi/chi/v5"
 	redisclient "github.com/redis/go-redis/v9"
 )
@@ -69,8 +69,8 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 	).WithLogger(applicationLogger)
 	authRouter := authhttp.NewRouter(registerService, authenticateService, otpService)
 
-	profileRepository := userspostgres.NewProfileRepository(databaseClient, privateObjectStore).WithLogger(applicationLogger)
-	usersRouter := usershttp.NewRouter(usersapplication.NewProfileService(profileRepository), verifier)
+	profileRepository := userpostgres.NewProfileRepository(databaseClient, privateObjectStore).WithLogger(applicationLogger)
+	usersRouter := userhttp.NewRouter(userapplication.NewProfileService(profileRepository), verifier)
 	documentRouter := documenthttp.NewRouter(
 		documentapplication.NewDocumentService(
 			documentpostgres.NewDocumentRepository(databaseClient),
@@ -82,18 +82,18 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 	)
 
 	mapboxProvider := mapbox.NewMapboxProvider(config.MapboxAccessToken)
-	routeCalculator := ridesapplication.RouteCalculatorFunc(func(ctx context.Context, originLat, originLng, destinationLat, destinationLng float64) (ridesapplication.RouteMetrics, error) {
+	routeCalculator := rideapplication.RouteCalculatorFunc(func(ctx context.Context, originLat, originLng, destinationLat, destinationLng float64) (rideapplication.RouteMetrics, error) {
 		route, err := mapboxProvider.Route(ctx, locationdomain.Coordinates{Latitude: originLat, Longitude: originLng}, locationdomain.Coordinates{Latitude: destinationLat, Longitude: destinationLng}, locationdomain.RouteOptions{})
 		if err != nil {
-			return ridesapplication.RouteMetrics{}, err
+			return rideapplication.RouteMetrics{}, err
 		}
-		return ridesapplication.RouteMetrics{DistanceKm: route.DistanceKm, DurationMinutes: route.DurationMin}, nil
+		return rideapplication.RouteMetrics{DistanceKm: route.DistanceKm, DurationMinutes: route.DurationMin}, nil
 	})
-	ridesRepository := ridespostgres.NewRideRepository(databaseClient, config.Pricing.PlatformCommissionBPS)
+	ridesRepository := ridepostgres.NewRideRepository(databaseClient, config.Pricing.PlatformCommissionBPS)
 	eventHub := stream.NewHub()
 	assignmentProjection := assignmentadapter.NewMemoryProjection()
 	realtimePublisher := eventadapter.NewMemoryPublisher(assignmentProjection, eventHub)
-	ridesService := ridesapplication.NewRideServiceWithRouteCalculator(
+	ridesService := rideapplication.NewRideServiceWithRouteCalculator(
 		ridesRepository,
 		routeCalculator,
 		config.Pricing,
@@ -104,7 +104,7 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 		assignmentadapter.NewRideRepositoryLookup(ridesRepository),
 	)
 
-	ridesRouter := rideshttp.NewRouter(ridesService, verifier)
+	ridesRouter := ridehttp.NewRouter(ridesService, verifier)
 	adminRouter := adminhttp.NewRouter(adminapplication.NewDashboardStatsService(adminpostgres.NewDashboardStatsRepository(databaseClient)), verifier, adminAuthorizer)
 	geoService := geoapplication.NewLocationTrackingService(
 		geo.NewDriverLocationStore(redisClient).WithLogger(applicationLogger),

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 )
 
 var ErrBiddingPersistenceUnavailable = errors.New("bidding persistence is unavailable")

@@ -9,12 +9,12 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/ent"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment"
-	ridesdomain "github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
+	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 )
 
 type RideRepository interface {
-	Get(ctx context.Context, id int) (ridesdomain.Ride, error)
-	ActiveRidesForDriver(ctx context.Context, driverID int) ([]ridesdomain.Ride, error)
+	Get(ctx context.Context, id int) (ridedomain.Ride, error)
+	ActiveRidesForDriver(ctx context.Context, driverID int) ([]ridedomain.Ride, error)
 }
 
 type RideRepositoryLookup struct {
@@ -65,7 +65,7 @@ func (lookup *RideRepositoryLookup) ForDriver(ctx context.Context, driverID stri
 	return result, nil
 }
 
-func fromRide(ride ridesdomain.Ride) (assignment.Assignment, bool) {
+func fromRide(ride ridedomain.Ride) (assignment.Assignment, bool) {
 	if ride.ID <= 0 || ride.PassengerID <= 0 || ride.DriverID == nil || *ride.DriverID <= 0 {
 		return assignment.Assignment{}, false
 	}

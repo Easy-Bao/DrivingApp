@@ -4,7 +4,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
-	"github.com/Easy-Bao/DrivingApp/server/internal/rides/application"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
 	"github.com/go-chi/chi/v5"
 )
 

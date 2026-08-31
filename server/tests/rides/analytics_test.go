@@ -1,12 +1,12 @@
-package rides_test
+package ride_test
 
 import (
 	"context"
 	"testing"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/rides/application"
-	"github.com/Easy-Bao/DrivingApp/server/internal/rides/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 )
 
 type analyticsRepository struct{}
