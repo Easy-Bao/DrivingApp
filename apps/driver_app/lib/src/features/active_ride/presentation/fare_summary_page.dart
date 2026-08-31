@@ -1,6 +1,6 @@
 import 'package:maps/maps.dart';
-import 'package:driver_app/src/features/home/presentation/bloc/dashboard/dashboard_cubit.dart';
-import 'package:driver_app/src/features/home/home_routes.dart';
+import 'package:driver_app/src/features/dashboard/presentation/bloc/dashboard/dashboard_cubit.dart';
+import 'package:driver_app/src/features/dashboard/dashboard_routes.dart';
 import 'package:driver_app/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -68,7 +68,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
       }
       await dashboardCubit.loadStats();
       if (!mounted) return;
-      context.goNamed(HomeRoutes.dashboard);
+      context.goNamed(DashboardRoutes.dashboard);
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -148,7 +148,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
     return Row(
       children: [
         IconButton(
-          onPressed: () => context.goNamed(HomeRoutes.dashboard),
+          onPressed: () => context.goNamed(DashboardRoutes.dashboard),
           tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           padding: EdgeInsets.zero,
           style: IconButton.styleFrom(shape: const CircleBorder()),

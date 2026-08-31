@@ -1,7 +1,7 @@
 import 'package:driver_app/src/features/active_ride/active_ride.dart';
 import 'package:foundation/foundation.dart';
-import 'package:driver_app/src/features/home/domain/entities/driver_dashboard_stats.dart';
-import 'package:driver_app/src/features/home/domain/entities/driver_dispatch_snapshot.dart';
+import 'package:driver_app/src/features/dashboard/domain/entities/driver_dashboard_stats.dart';
+import 'package:driver_app/src/features/dashboard/domain/entities/driver_dispatch_snapshot.dart';
 import 'package:fpdart/fpdart.dart';
 
 abstract class IDashboardRepository {

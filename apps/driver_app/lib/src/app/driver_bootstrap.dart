@@ -8,7 +8,7 @@ import 'package:driver_app/src/app/driver_app.dart';
 import 'package:driver_app/src/app/driver_dependencies.dart';
 import 'package:driver_app/src/app/theme/app_theme.dart';
 import 'package:driver_app/src/features/auth/auth_routes.dart';
-import 'package:driver_app/src/features/home/home_routes.dart';
+import 'package:driver_app/src/features/dashboard/dashboard_routes.dart';
 import 'package:driver_app/src/infrastructure/config/driver_env_config.dart';
 import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/infrastructure/telemetry/driver_background_telemetry.dart';
@@ -45,7 +45,7 @@ Future<void> bootstrapDriverApp() async {
         sessionService: sessionService,
       ),
       initialRoute: hasDriverSession
-          ? HomeRoutes.fullDashboardPath
+          ? DashboardRoutes.fullDashboardPath
           : AuthRoutes.signinPath,
       debugLogDiagnostics: true,
       debugLogDiagnosticsGoRouter: true,

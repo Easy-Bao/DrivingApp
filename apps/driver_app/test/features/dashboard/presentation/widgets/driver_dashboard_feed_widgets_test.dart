@@ -1,4 +1,4 @@
-import 'package:driver_app/src/features/home/presentation/widgets/driver_dashboard/driver_dashboard_feed_widgets.dart';
+import 'package:driver_app/src/features/dashboard/presentation/widgets/driver_dashboard/driver_dashboard_feed_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

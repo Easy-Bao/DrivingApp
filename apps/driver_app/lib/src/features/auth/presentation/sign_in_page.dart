@@ -3,7 +3,7 @@ import 'dart:async';
 
 import 'package:driver_app/src/features/auth/auth_routes.dart';
 import 'package:driver_app/src/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
-import 'package:driver_app/src/features/home/home_routes.dart';
+import 'package:driver_app/src/features/dashboard/dashboard_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -109,7 +109,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
         child: BlocConsumer<SignInBloc, SignInState>(
           listener: (context, state) {
             if (state is SignInSuccess) {
-              context.goNamed(HomeRoutes.dashboard);
+              context.goNamed(DashboardRoutes.dashboard);
             }
           },
           builder: (context, state) {

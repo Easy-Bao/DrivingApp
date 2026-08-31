@@ -4,10 +4,10 @@ import 'package:driver_app/src/infrastructure/telemetry/driver_background_teleme
 import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/activity/domain/entities/driver_activity_stats.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
-import 'package:driver_app/src/features/home/data/data_sources/driver_availability_remote_data_source.dart';
-import 'package:driver_app/src/features/home/data/data_sources/ride_offer_remote_data_source.dart';
-import 'package:driver_app/src/features/home/data/repositories/dashboard_repository.dart';
-import 'package:driver_app/src/features/home/domain/entities/driver_dashboard_stats.dart';
+import 'package:driver_app/src/features/dashboard/data/data_sources/driver_availability_remote_data_source.dart';
+import 'package:driver_app/src/features/dashboard/data/data_sources/ride_offer_remote_data_source.dart';
+import 'package:driver_app/src/features/dashboard/data/repositories/dashboard_repository.dart';
+import 'package:driver_app/src/features/dashboard/domain/entities/driver_dashboard_stats.dart';
 import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';

@@ -1,4 +1,4 @@
-import 'package:driver_app/src/features/home/presentation/formatters/driver_dashboard_value_formatters.dart';
+import 'package:driver_app/src/features/dashboard/presentation/formatters/driver_dashboard_value_formatters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';

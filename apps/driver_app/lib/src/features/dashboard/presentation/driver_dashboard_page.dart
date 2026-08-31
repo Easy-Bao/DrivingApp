@@ -3,12 +3,12 @@ import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:maps/maps.dart';
-import 'package:driver_app/src/features/home/presentation/formatters/driver_dashboard_value_formatters.dart';
+import 'package:driver_app/src/features/dashboard/presentation/formatters/driver_dashboard_value_formatters.dart';
 import 'package:foundation/foundation.dart';
-import 'package:driver_app/src/features/home/presentation/bloc/dashboard/dashboard_cubit.dart';
-import 'package:driver_app/src/features/home/presentation/bloc/dashboard/dashboard_state.dart';
-import 'package:driver_app/src/features/home/presentation/widgets/driver_dashboard/driver_dashboard_stats_row_widget.dart';
-import 'package:driver_app/src/features/home/presentation/widgets/driver_dashboard/driver_dashboard_feed_widgets.dart';
+import 'package:driver_app/src/features/dashboard/presentation/bloc/dashboard/dashboard_cubit.dart';
+import 'package:driver_app/src/features/dashboard/presentation/bloc/dashboard/dashboard_state.dart';
+import 'package:driver_app/src/features/dashboard/presentation/widgets/driver_dashboard/driver_dashboard_stats_row_widget.dart';
+import 'package:driver_app/src/features/dashboard/presentation/widgets/driver_dashboard/driver_dashboard_feed_widgets.dart';
 import 'package:driver_app/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver_app/src/features/location/presentation/bloc/location_access/driver_location_access_state.dart';
 import 'package:driver_app/src/features/profile/profile_routes.dart';
