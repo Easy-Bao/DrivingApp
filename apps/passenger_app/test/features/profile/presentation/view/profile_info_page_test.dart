@@ -7,7 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger_app/src/features/profile/presentation/bloc/profile/profile_cubit.dart';
-import 'package:passenger_app/src/features/profile/presentation/profile_info_page.dart';
+import 'package:passenger_app/src/features/profile/presentation/view/profile_info_page.dart';
 
 class MockProfileCubit extends MockCubit<ProfileState>
     implements ProfileCubit {}

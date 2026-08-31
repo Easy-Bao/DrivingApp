@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:passenger_app/src/features/activity/presentation/passenger_rating_page.dart';
+import 'package:passenger_app/src/features/activity/presentation/view/passenger_rating_page.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/entities/driver_profile_stats.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/entities/driver_review.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';

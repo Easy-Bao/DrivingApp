@@ -18,11 +18,11 @@ import 'package:passenger_app/src/features/booking/domain/repositories/i_booking
 import 'package:passenger_app/src/features/booking/domain/repositories/i_driver_repository.dart';
 import 'package:passenger_app/src/features/booking/domain/repositories/i_fare_repository.dart';
 import 'package:passenger_app/src/features/booking/booking_routes.dart';
-import 'package:passenger_app/src/features/booking/presentation/pages/activity_detail_map_page.dart';
-import 'package:passenger_app/src/features/booking/presentation/pages/finding_driver_page.dart';
-import 'package:passenger_app/src/features/booking/presentation/pages/map_pin_page.dart';
-import 'package:passenger_app/src/features/booking/presentation/pages/ride_selection_page.dart';
-import 'package:passenger_app/src/features/booking/presentation/pages/search_destination_page.dart';
+import 'package:passenger_app/src/features/booking/presentation/view/activity_detail_map_page.dart';
+import 'package:passenger_app/src/features/booking/presentation/view/finding_driver_page.dart';
+import 'package:passenger_app/src/features/booking/presentation/view/map_pin_page.dart';
+import 'package:passenger_app/src/features/booking/presentation/view/ride_selection_page.dart';
+import 'package:passenger_app/src/features/booking/presentation/view/search_destination_page.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 

@@ -16,11 +16,11 @@ import 'package:passenger_app/src/features/auth/domain/use_cases/resend_otp_use_
 import 'package:passenger_app/src/features/auth/domain/use_cases/reset_password_use_case.dart';
 import 'package:passenger_app/src/features/auth/domain/use_cases/sign_in_use_case.dart';
 import 'package:passenger_app/src/features/auth/domain/use_cases/verify_otp_use_case.dart';
-import 'package:passenger_app/src/features/auth/presentation/forgot_password_page.dart';
-import 'package:passenger_app/src/features/auth/presentation/reset_password_confirm_page.dart';
-import 'package:passenger_app/src/features/auth/presentation/sign_in_page.dart';
-import 'package:passenger_app/src/features/auth/presentation/sign_up_page.dart';
-import 'package:passenger_app/src/features/auth/presentation/verify_otp_page.dart';
+import 'package:passenger_app/src/features/auth/presentation/view/forgot_password_page.dart';
+import 'package:passenger_app/src/features/auth/presentation/view/reset_password_confirm_page.dart';
+import 'package:passenger_app/src/features/auth/presentation/view/sign_in_page.dart';
+import 'package:passenger_app/src/features/auth/presentation/view/sign_up_page.dart';
+import 'package:passenger_app/src/features/auth/presentation/view/verify_otp_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:design_system/design_system.dart';
 

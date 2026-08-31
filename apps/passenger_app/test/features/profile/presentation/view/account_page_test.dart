@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/profile/presentation/bloc/profile/profile_cubit.dart';
-import 'package:passenger_app/src/features/profile/presentation/account_page.dart';
+import 'package:passenger_app/src/features/profile/presentation/view/account_page.dart';
 import 'package:passenger_app/src/features/profile/presentation/widgets/profile_avatar_widget.dart';
 
 class MockProfileCubit extends MockCubit<ProfileState>

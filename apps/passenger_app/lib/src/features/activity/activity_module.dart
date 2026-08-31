@@ -9,10 +9,10 @@ import 'package:passenger_app/src/features/activity/presentation/bloc/activity/a
 import 'package:passenger_app/src/features/activity/data/data_sources/passenger_activity_remote_data_source.dart';
 import 'package:passenger_app/src/features/activity/data/repositories/activity_repository.dart';
 import 'package:passenger_app/src/features/activity/domain/repositories/i_activity_repository.dart';
-import 'package:passenger_app/src/features/activity/presentation/passenger_activity_page.dart';
-import 'package:passenger_app/src/features/activity/presentation/passenger_payment_page.dart';
-import 'package:passenger_app/src/features/activity/presentation/passenger_rating_page.dart';
-import 'package:passenger_app/src/features/activity/presentation/view_details_page.dart';
+import 'package:passenger_app/src/features/activity/presentation/view/passenger_activity_page.dart';
+import 'package:passenger_app/src/features/activity/presentation/view/passenger_payment_page.dart';
+import 'package:passenger_app/src/features/activity/presentation/view/passenger_rating_page.dart';
+import 'package:passenger_app/src/features/activity/presentation/view/view_details_page.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:passenger_app/src/features/active_ride/domain/repositories/i_track_repository.dart';
 import 'package:design_system/design_system.dart';

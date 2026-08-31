@@ -4,7 +4,7 @@ import 'package:driver_app/src/features/chat/chat.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver_app/src/features/chat/chat_routes.dart';
-import 'package:driver_app/src/features/chat/presentation/driver_chat_page.dart';
+import 'package:driver_app/src/features/chat/presentation/view/driver_chat_page.dart';
 import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
 import 'package:design_system/design_system.dart';
 

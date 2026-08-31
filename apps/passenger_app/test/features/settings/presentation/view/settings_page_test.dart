@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger_app/src/features/location/presentation/bloc/location_access/location_access_cubit.dart';
 import 'package:passenger_app/src/features/location/presentation/bloc/location_access/location_access_state.dart';
-import 'package:passenger_app/src/features/settings/presentation/settings_page.dart';
+import 'package:passenger_app/src/features/settings/presentation/view/settings_page.dart';
 
 class _MockLocationAccessCubit extends MockCubit<LocationAccessViewState>
     implements LocationAccessCubit {}

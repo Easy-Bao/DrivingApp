@@ -4,7 +4,7 @@ import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_
 import 'package:passenger_app/src/features/saved_places/data/repositories/saved_places_repository.dart';
 import 'package:passenger_app/src/features/saved_places/domain/repositories/i_saved_places_repository.dart';
 import 'package:passenger_app/src/features/saved_places/saved_places_routes.dart';
-import 'package:passenger_app/src/features/saved_places/presentation/saved_place_page.dart';
+import 'package:passenger_app/src/features/saved_places/presentation/view/saved_place_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:design_system/design_system.dart';
 

@@ -3,7 +3,7 @@ import 'package:driver_app/src/infrastructure/session/driver_session_store.dart'
 import 'package:driver_app/src/features/activity/presentation/bloc/performance/driver_performance_cubit.dart';
 import 'package:driver_app/src/features/activity/domain/entities/driver_activity_stats.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
-import 'package:driver_app/src/features/activity/presentation/driver_performance_page.dart';
+import 'package:driver_app/src/features/activity/presentation/view/driver_performance_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';

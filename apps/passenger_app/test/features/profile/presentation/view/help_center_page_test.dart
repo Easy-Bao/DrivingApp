@@ -1,7 +1,7 @@
 import 'package:passenger_app/src/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:passenger_app/src/features/profile/presentation/help_center_page.dart';
+import 'package:passenger_app/src/features/profile/presentation/view/help_center_page.dart';
 
 void main() {
   testWidgets('uses the passenger topics without placeholder actions', (

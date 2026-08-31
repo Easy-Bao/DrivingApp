@@ -11,10 +11,10 @@ import 'package:driver_app/src/features/activity/presentation/bloc/trip_history/
 import 'package:driver_app/src/features/activity/data/data_sources/driver_activity_remote_data_source.dart';
 import 'package:driver_app/src/features/activity/data/repositories/driver_activity_repository.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
-import 'package:driver_app/src/features/activity/presentation/driver_trip_history_page.dart';
-import 'package:driver_app/src/features/activity/presentation/driver_trip_detail_page.dart';
-import 'package:driver_app/src/features/activity/presentation/driver_performance_page.dart';
-import 'package:driver_app/src/features/activity/presentation/earnings_page.dart';
+import 'package:driver_app/src/features/activity/presentation/view/driver_trip_history_page.dart';
+import 'package:driver_app/src/features/activity/presentation/view/driver_trip_detail_page.dart';
+import 'package:driver_app/src/features/activity/presentation/view/driver_performance_page.dart';
+import 'package:driver_app/src/features/activity/presentation/view/earnings_page.dart';
 import 'package:design_system/design_system.dart';
 
 class ActivityModule {

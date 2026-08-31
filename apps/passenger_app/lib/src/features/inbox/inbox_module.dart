@@ -5,7 +5,7 @@ import 'package:passenger_app/src/features/inbox/data/data_sources/inbox_remote_
 import 'package:passenger_app/src/features/inbox/data/repositories/inbox_repository.dart';
 import 'package:passenger_app/src/features/inbox/domain/repositories/i_inbox_repository.dart';
 import 'package:passenger_app/src/features/inbox/inbox_routes.dart';
-import 'package:passenger_app/src/features/inbox/presentation/inbox_page.dart';
+import 'package:passenger_app/src/features/inbox/presentation/view/inbox_page.dart';
 import 'package:design_system/design_system.dart';
 
 class InboxModule {

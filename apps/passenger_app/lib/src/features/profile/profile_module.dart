@@ -10,9 +10,9 @@ import 'package:passenger_app/src/features/profile/data/data_sources/passenger_p
 import 'package:passenger_app/src/features/profile/data/repositories/passenger_profile_repository.dart';
 import 'package:passenger_app/src/features/profile/domain/repositories/i_passenger_profile_repository.dart';
 import 'package:passenger_app/src/features/profile/profile_routes.dart';
-import 'package:passenger_app/src/features/profile/presentation/account_page.dart';
-import 'package:passenger_app/src/features/profile/presentation/help_center_page.dart';
-import 'package:passenger_app/src/features/profile/presentation/profile_info_page.dart';
+import 'package:passenger_app/src/features/profile/presentation/view/account_page.dart';
+import 'package:passenger_app/src/features/profile/presentation/view/help_center_page.dart';
+import 'package:passenger_app/src/features/profile/presentation/view/profile_info_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:design_system/design_system.dart';
 

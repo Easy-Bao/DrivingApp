@@ -2,12 +2,12 @@ import 'package:driver_app/src/app/theme/app_theme.dart';
 import 'package:driver_app/src/features/profile/presentation/bloc/account/account_cubit.dart';
 import 'package:driver_app/src/features/profile/presentation/bloc/account/account_state.dart';
 import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
-import 'package:driver_app/src/features/profile/presentation/driver_personal_details_page.dart';
+import 'package:driver_app/src/features/profile/presentation/view/driver_personal_details_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../helpers/fake_driver_profile_repository.dart';
+import '../../helpers/fake_driver_profile_repository.dart';
 
 void main() {
   testWidgets('updates personal details without exposing vehicle fields', (

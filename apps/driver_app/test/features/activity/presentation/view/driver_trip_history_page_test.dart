@@ -2,7 +2,7 @@ import 'package:driver_app/src/app/theme/app_theme.dart';
 import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/activity/presentation/bloc/trip_history/trip_history_cubit.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
-import 'package:driver_app/src/features/activity/presentation/driver_trip_history_page.dart';
+import 'package:driver_app/src/features/activity/presentation/view/driver_trip_history_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';

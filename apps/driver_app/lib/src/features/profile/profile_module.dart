@@ -8,9 +8,9 @@ import 'package:driver_app/src/features/profile/data/data_sources/driver_profile
 import 'package:driver_app/src/features/profile/data/repositories/driver_profile_repository.dart';
 import 'package:driver_app/src/features/profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:driver_app/src/features/profile/profile_routes.dart';
-import 'package:driver_app/src/features/profile/presentation/driver_account_page.dart';
-import 'package:driver_app/src/features/profile/presentation/driver_personal_details_page.dart';
-import 'package:driver_app/src/features/profile/presentation/driver_vehicle_information_page.dart';
+import 'package:driver_app/src/features/profile/presentation/view/driver_account_page.dart';
+import 'package:driver_app/src/features/profile/presentation/view/driver_personal_details_page.dart';
+import 'package:driver_app/src/features/profile/presentation/view/driver_vehicle_information_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_preferences/shared_preferences.dart';

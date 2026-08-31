@@ -12,8 +12,8 @@ import 'package:passenger_app/src/features/active_ride/data/repositories/track_r
 import 'package:passenger_app/src/features/active_ride/domain/repositories/i_track_repository.dart';
 import 'package:passenger_app/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:passenger_app/src/features/active_ride/presentation/bloc/track_driver/track_driver_cubit.dart';
-import 'package:passenger_app/src/features/active_ride/presentation/pages/driver_matched_page.dart';
-import 'package:passenger_app/src/features/active_ride/presentation/pages/track_driver_page.dart';
+import 'package:passenger_app/src/features/active_ride/presentation/view/driver_matched_page.dart';
+import 'package:passenger_app/src/features/active_ride/presentation/view/track_driver_page.dart';
 import 'package:passenger_app/src/features/driver_profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';

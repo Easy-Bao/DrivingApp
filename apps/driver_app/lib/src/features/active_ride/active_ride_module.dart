@@ -6,10 +6,10 @@ import 'package:driver_app/src/infrastructure/session/driver_session_store.dart'
 import 'package:driver_app/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver_app/src/features/active_ride/domain/repositories/i_driver_ride_repository.dart';
 import 'package:driver_app/src/features/active_ride/active_ride_routes.dart';
-import 'package:driver_app/src/features/active_ride/presentation/pickup_navigation_page.dart';
-import 'package:driver_app/src/features/active_ride/presentation/fare_summary_page.dart';
-import 'package:driver_app/src/features/active_ride/presentation/in_transit_page.dart';
-import 'package:driver_app/src/features/active_ride/presentation/waiting_passenger_page.dart';
+import 'package:driver_app/src/features/active_ride/presentation/view/pickup_navigation_page.dart';
+import 'package:driver_app/src/features/active_ride/presentation/view/fare_summary_page.dart';
+import 'package:driver_app/src/features/active_ride/presentation/view/in_transit_page.dart';
+import 'package:driver_app/src/features/active_ride/presentation/view/waiting_passenger_page.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 

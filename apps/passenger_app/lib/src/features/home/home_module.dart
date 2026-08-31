@@ -17,9 +17,9 @@ import 'package:passenger_app/src/features/home/domain/repositories/i_current_lo
 import 'package:passenger_app/src/features/home/domain/repositories/i_home_repository.dart';
 import 'package:passenger_app/src/features/home/domain/repositories/i_public_driver_summary_repository.dart';
 import 'package:passenger_app/src/features/home/home_routes.dart';
-import 'package:passenger_app/src/features/home/presentation/home_page.dart';
+import 'package:passenger_app/src/features/home/presentation/view/home_page.dart';
 import 'package:passenger_app/src/features/saved_places/presentation/bloc/saved_places/saved_places_cubit.dart';
-import 'package:passenger_app/src/features/saved_places/presentation/add_category_page.dart';
+import 'package:passenger_app/src/features/saved_places/presentation/view/add_category_page.dart';
 import 'package:design_system/design_system.dart';
 
 class HomeModule {

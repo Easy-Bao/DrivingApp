@@ -1,5 +1,5 @@
 import 'package:driver_app/src/app/theme/app_theme.dart';
-import 'package:driver_app/src/features/activity/presentation/driver_trip_detail_page.dart';
+import 'package:driver_app/src/features/activity/presentation/view/driver_trip_detail_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

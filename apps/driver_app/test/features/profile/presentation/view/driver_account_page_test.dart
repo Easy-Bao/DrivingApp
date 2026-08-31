@@ -1,7 +1,7 @@
 import 'package:driver_app/src/app/theme/app_theme.dart';
 import 'package:driver_app/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver_app/src/features/profile/presentation/bloc/account/account_cubit.dart';
-import 'package:driver_app/src/features/profile/presentation/driver_account_page.dart';
+import 'package:driver_app/src/features/profile/presentation/view/driver_account_page.dart';
 import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
 import 'package:driver_app/src/features/profile/domain/repositories/i_driver_profile_repository.dart';
 import 'package:flutter/material.dart';

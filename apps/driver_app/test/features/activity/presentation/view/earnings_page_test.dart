@@ -3,7 +3,7 @@ import 'package:driver_app/src/infrastructure/session/driver_session_store.dart'
 import 'package:driver_app/src/features/activity/presentation/bloc/earnings/earnings_cubit.dart';
 import 'package:driver_app/src/features/activity/domain/entities/driver_activity_stats.dart';
 import 'package:driver_app/src/features/activity/domain/repositories/i_driver_activity_repository.dart';
-import 'package:driver_app/src/features/activity/presentation/earnings_page.dart';
+import 'package:driver_app/src/features/activity/presentation/view/earnings_page.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
