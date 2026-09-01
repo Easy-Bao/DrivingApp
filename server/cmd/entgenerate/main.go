@@ -10,10 +10,10 @@ import (
 	"entgo.io/ent/entc/gen"
 )
 
-// The Ent graph is generated from the canonical platform schema directory.
-// Keeping schema ownership in one place prevents feature packages from
-// drifting apart while Ent's generated runtime references those descriptors
-// for field validators.
+// The Ent graph is generated from the handwritten schemas in ent/schema.
+// The rest of server/ent is generated output; keeping the source schemas next
+// to that output follows Ent's conventional project layout without mixing
+// persistence definitions into the application packages.
 func main() {
 	if err := run(); err != nil {
 		slog.Error("ent generation command failed", "error", err)
@@ -30,12 +30,12 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("resolve project root: %w", err)
 	}
-	aggregate := filepath.Join(root, "internal", "platform", "ent", "schema")
-	if _, err := os.Stat(aggregate); err != nil {
+	schemaPath := filepath.Join(root, "ent", "schema")
+	if _, err := os.Stat(schemaPath); err != nil {
 		return fmt.Errorf("resolve canonical Ent schema directory: %w", err)
 	}
 
-	if err := entc.Generate(aggregate, &gen.Config{
+	if err := entc.Generate(schemaPath, &gen.Config{
 		Target:   filepath.Join(root, "ent"),
 		Package:  "github.com/Easy-Bao/DrivingApp/server/ent",
 		Features: []gen.Feature{gen.FeatureLock},

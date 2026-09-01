@@ -1,0 +1,3 @@
+server/ent/** linguist-generated=true
+server/ent/schema/** linguist-generated=false
+server/ent/generate.go linguist-generated=false

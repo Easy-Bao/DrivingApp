@@ -10,6 +10,13 @@ The other commands are one-shot developer tools:
 - `cmd/migrate` applies the ordered, advisory-locked migration plan.
 - `cmd/entgenerate` regenerates the Ent client.
 
+Ent ownership is intentionally explicit: `ent/schema/` contains the
+handwritten Ent schema definitions, while the remaining files under `ent/`
+are generated client and migration code. Application packages under
+`internal/` may use the generated client through their persistence adapters,
+but should not define additional Ent schemas there. Regenerate it with
+`just generate-ent` (or `cd server && go generate ./ent/generate.go`).
+
 ## Native local development (default)
 
 The native workflow expects PostgreSQL and Redis to be installed and started

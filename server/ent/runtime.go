@@ -20,9 +20,9 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent/review"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ride"
 	"github.com/Easy-Bao/DrivingApp/server/ent/ridesettlement"
+	"github.com/Easy-Bao/DrivingApp/server/ent/schema"
 	"github.com/Easy-Bao/DrivingApp/server/ent/user"
 	"github.com/Easy-Bao/DrivingApp/server/ent/walletledger"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/ent/schema"
 )
 
 // The init function reads all schema descriptors with runtime code
