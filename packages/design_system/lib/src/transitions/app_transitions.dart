@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_transitions/go_transitions.dart';
 import 'package:design_system/src/transitions/custom_page_transition.dart';
 
-class AppTransitions {
-  AppTransitions._();
-
+class AppTransitions._() {
   static const push = _CustomPushTransitions();
   static const fade = GoTransitions.fade;
   static const modal = GoTransitions.slide;

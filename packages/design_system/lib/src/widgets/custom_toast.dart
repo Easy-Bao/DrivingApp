@@ -4,9 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:design_system/src/theme/design_system_context.dart';
 
-class CustomToast {
-  CustomToast._();
-
+class CustomToast._() {
   static OverlayEntry? _activeEntry;
   static Timer? _dismissTimer;
 

@@ -5,9 +5,7 @@ import 'package:flutter/material.dart';
 /// Keeping these values in one package prevents passenger and driver screens
 /// from slowly developing different spacing, control sizing, and semantic
 /// colors for the same product surface.
-class AppDesignTokens {
-  AppDesignTokens._();
-
+class AppDesignTokens._() {
   static const Color primary = Color(0xFF100E11);
   static const Color secondary = Color(0xFFE3E2C3);
   static const Color tertiary = Color(0xFF6C757D);

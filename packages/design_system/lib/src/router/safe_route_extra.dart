@@ -1,6 +1,4 @@
-abstract class SafeRouteExtra {
-  const SafeRouteExtra._();
-
+abstract class const SafeRouteExtra._() {
   static Map<String, dynamic> asMap(dynamic extra) {
     if (extra is Map<String, dynamic>) {
       return extra;
