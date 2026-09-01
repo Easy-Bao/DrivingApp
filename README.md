@@ -25,13 +25,23 @@ This is the Melos-based monorepo for the BaoRide booking application. It houses 
 
 ## Getting Started
 
-### 1. Install Melos
+### 1. Use the pinned Flutter toolchain
+
+This workspace targets Flutter 3.47.2 stable, which bundles Dart 3.13.2.
+Verify the active SDK before bootstrapping:
+
+```bash
+flutter --version
+dart --version
+```
+
+### 2. Install Melos
 Melos is used to manage packages in this workspace. Install it globally:
 ```bash
 dart pub global activate melos
 ```
 
-### 2. Bootstrap the Workspace
+### 3. Bootstrap the Workspace
 Bootstrapping links all local packages together and installs their external dependencies:
 ```bash
 melos bootstrap

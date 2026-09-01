@@ -121,7 +121,7 @@ class DashboardCubit extends Cubit<DashboardState> {
       final result = await _repository.getDispatchSnapshot(
         includeOffers: includeOffers,
       );
-      return result.fold(
+      return await result.fold(
         (failure) {
           if (_pausesSilentDispatch(failure)) {
             _silentDispatchRetryAfter = _now().add(
@@ -248,7 +248,7 @@ class DashboardCubit extends Cubit<DashboardState> {
         sessionId: sessionId,
         farePesos: farePesos,
       );
-      return result.fold(
+      return await result.fold(
         (failure) {
           emit(
             state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)),
@@ -274,7 +274,7 @@ class DashboardCubit extends Cubit<DashboardState> {
   Future<RideSnapshot?> fetchAuthoritativeRide(String rideId) async {
     try {
       final result = await _repository.fetchRide(rideId);
-      return result.fold((failure) {
+      return await result.fold((failure) {
         dev.log('Unable to refresh driver trip $rideId: ${failure.message}');
         return null;
       }, (ride) => ride);

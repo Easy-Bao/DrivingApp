@@ -307,7 +307,7 @@ final class DashboardRepositoryImpl implements DashboardRepository {
           : Future.value(const <Map<String, dynamic>>[]);
       final tripResult = await tripsFuture;
       final offers = await offersFuture;
-      return tripResult.fold(
+      return await tripResult.fold(
         Left.new,
         (page) => Right(
           DriverDispatchSnapshot(activeTrips: page.items, rideOffers: offers),
