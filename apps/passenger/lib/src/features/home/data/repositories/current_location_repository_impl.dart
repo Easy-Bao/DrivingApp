@@ -7,8 +7,6 @@ import 'package:passenger/src/features/home/domain/repositories/current_location
 
 final class const CurrentLocationRepositoryImpl({required this._dataSource})
     implements CurrentLocationRepository {
-  this;
-
   final CurrentLocationDataSource _dataSource;
 
   @override

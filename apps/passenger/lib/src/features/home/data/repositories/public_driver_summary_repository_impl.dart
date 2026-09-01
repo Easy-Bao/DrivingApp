@@ -8,8 +8,6 @@ final class PublicDriverSummaryRepositoryImpl({required this._remoteDataSource})
     implements PublicDriverSummaryRepository {
   final PublicDriverRemoteDataSource _remoteDataSource;
 
-  this;
-
   @override
   Future<Either<Failure, List<PublicDriverSummary>>> fetchSummaries() async {
     try {

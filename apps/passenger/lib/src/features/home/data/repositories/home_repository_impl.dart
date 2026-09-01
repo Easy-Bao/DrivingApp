@@ -11,8 +11,6 @@ final class HomeRepositoryImpl({required this._homeRemoteDataSource})
     implements HomeRepository {
   final HomeRemoteDataSource _homeRemoteDataSource;
 
-  this;
-
   @override
   Future<Either<Failure, HomeData>> loadHomeData({
     required double lat,

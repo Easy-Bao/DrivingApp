@@ -16,8 +16,6 @@ final class PassengerProfileRepositoryImpl({
   required this._sessionService,
   required this._preferences,
 }) implements PassengerProfileRepository {
-  this;
-
   final PassengerProfileRemoteDataSource _remoteDataSource;
   final PassengerSessionStore _sessionService;
   final SharedPreferences _preferences;

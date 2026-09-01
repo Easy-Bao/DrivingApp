@@ -17,8 +17,6 @@ final class PassengerAuthRepositoryImpl({
   final PassengerSessionStore _secureSessionService;
   final SharedPreferences _preferences;
 
-  this;
-
   @override
   Future<Either<Failure, PassengerAuthCredentials>> authenticate({
     required String email,

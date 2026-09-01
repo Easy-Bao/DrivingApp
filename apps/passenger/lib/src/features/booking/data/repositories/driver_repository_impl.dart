@@ -17,8 +17,6 @@ final class DriverRepositoryImpl({
   Future<Either<Failure, List<DriverModel>>>? _activeNearbyLookup;
   ({double lat, double lng})? _activeNearbyCoordinates;
 
-  this;
-
   Failure _mapExceptionToFailure(Object error) {
     if (error is DioException) {
       final statusCode = error.response?.statusCode;

@@ -9,8 +9,6 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
     implements TrackRepository {
   final RideRemoteDataSource _remoteDataSource;
 
-  this;
-
   @override
   Future<List<List<double>>?> getRoutePolyline({
     required double startLat,

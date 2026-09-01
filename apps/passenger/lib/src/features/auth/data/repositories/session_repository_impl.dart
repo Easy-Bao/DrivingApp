@@ -12,8 +12,6 @@ final class SessionRepositoryImpl({
   final PassengerSessionStore _secureSessionService;
   final SharedPreferences _preferences;
 
-  this;
-
   @override
   Future<Either<Failure, PassengerSession>> restoreSession() async {
     try {

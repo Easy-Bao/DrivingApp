@@ -12,8 +12,6 @@ final class SavedPlacesRepositoryImpl({required this._preferences})
 
   final SharedPreferences _preferences;
 
-  this;
-
   @override
   Future<List<Map<String, dynamic>>> loadPlaces() async {
     try {

@@ -9,8 +9,6 @@ import 'package:passenger/src/features/driver_profile/domain/repositories/driver
 
 final class DriverProfileRepositoryImpl({required this._dataSource})
     implements DriverProfileRepository {
-  this;
-
   final DriverProfileRemoteDataSource _dataSource;
 
   @override

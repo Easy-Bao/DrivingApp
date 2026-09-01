@@ -7,8 +7,6 @@ import 'package:passenger/src/features/booking/domain/repositories/fare_reposito
 
 final class FareRepositoryImpl({required this._remoteDataSource})
     implements FareRepository {
-  this;
-
   final FareRemoteDataSource _remoteDataSource;
 
   @override

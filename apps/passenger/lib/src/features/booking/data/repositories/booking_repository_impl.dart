@@ -10,8 +10,6 @@ import 'package:passenger/src/features/booking/domain/repositories/booking_repos
 
 final class BookingRepositoryImpl({required this._dataSource})
     implements BookingRepository {
-  this;
-
   final BookingRemoteDataSource _dataSource;
 
   @override

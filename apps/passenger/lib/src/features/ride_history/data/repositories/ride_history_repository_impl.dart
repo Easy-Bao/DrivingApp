@@ -34,8 +34,6 @@ final class RideHistoryRepositoryImpl({required this._remoteDataSource})
     implements RideHistoryRepository {
   final PassengerRideHistoryRemoteDataSource _remoteDataSource;
 
-  this;
-
   Failure _mapExceptionToFailure(Object error) {
     if (error is DioException) {
       final statusCode = error.response?.statusCode;

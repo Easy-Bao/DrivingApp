@@ -24,8 +24,6 @@ class PassengerAuthInterceptor(
   Future<String?>? _refreshInFlight;
   bool _sessionExpiryNotified = false;
 
-  this;
-
   @override
   Future<void> onRequest(
     RequestOptions options,

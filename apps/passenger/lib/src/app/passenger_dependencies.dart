@@ -21,8 +21,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 class PassengerDependencies({required this._prefs}) extends Module {
   final SharedPreferences _prefs;
 
-  this;
-
   @override
   void binds(Injector i) {
     i
