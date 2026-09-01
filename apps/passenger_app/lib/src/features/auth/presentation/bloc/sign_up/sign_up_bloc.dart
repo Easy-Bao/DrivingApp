@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/auth/domain/entities/auth_credentials.dart';
-import 'package:passenger_app/src/features/auth/domain/use_cases/register_use_case.dart';
+import 'package:passenger_app/src/features/auth/domain/repositories/passenger_auth_repository.dart';
 import 'package:passenger_app/src/features/auth/presentation/validation/auth_failure_message.dart';
 import 'package:passenger_app/src/features/auth/presentation/validation/auth_form_validator.dart';
 import 'package:foundation/foundation.dart';
@@ -10,9 +10,9 @@ part 'sign_up_event.dart';
 part 'sign_up_state.dart';
 
 class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
-  final RegisterUseCase _registerUseCase;
+  final PassengerAuthRepository _authRepository;
 
-  SignUpBloc(this._registerUseCase) : super(const SignUpInitial()) {
+  SignUpBloc(this._authRepository) : super(const SignUpInitial()) {
     on<SignUpSubmitted>(_onSignUpSubmitted);
   }
 
@@ -37,7 +37,7 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
 
     emit(const SignUpLoading());
 
-    final result = await _registerUseCase.execute(
+    final result = await _authRepository.registerPassenger(
       name: normalizedName,
       email: normalizedEmail,
       phone: normalizedPhone,

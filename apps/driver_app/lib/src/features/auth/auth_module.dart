@@ -4,8 +4,6 @@ import 'package:driver_app/src/features/auth/auth_routes.dart';
 import 'package:driver_app/src/features/auth/data/data_sources/driver_auth_remote_data_source.dart';
 import 'package:driver_app/src/features/auth/data/repositories/driver_auth_repository_impl.dart';
 import 'package:driver_app/src/features/auth/domain/repositories/driver_auth_repository.dart';
-import 'package:driver_app/src/features/auth/domain/use_cases/reset_password_use_case.dart';
-import 'package:driver_app/src/features/auth/domain/use_cases/sign_in_use_case.dart';
 import 'package:driver_app/src/features/auth/presentation/bloc/forgot_password/forgot_password_bloc.dart';
 import 'package:driver_app/src/features/auth/presentation/view/forgot_password_page.dart';
 import 'package:driver_app/src/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
@@ -25,16 +23,10 @@ class AuthModule extends Module {
           remoteDataSource: i.get<DriverAuthRemoteDataSource>(),
           secureSessionService: i.get<DriverSessionStore>(),
         ),
-      )
-      ..addLazySingleton<SignInUseCase>(
-        (i) => SignInUseCase(i.get<DriverAuthRepository>()),
-      )
-      ..addLazySingleton<ResetPasswordUseCase>(
-        (i) => ResetPasswordUseCase(i.get<DriverAuthRepository>()),
       );
-    i.add<SignInBloc>((i) => SignInBloc(i.get<SignInUseCase>()));
+    i.add<SignInBloc>((i) => SignInBloc(i.get<DriverAuthRepository>()));
     i.add<ForgotPasswordBloc>(
-      (i) => ForgotPasswordBloc(i.get<ResetPasswordUseCase>()),
+      (i) => ForgotPasswordBloc(i.get<DriverAuthRepository>()),
     );
   }
 

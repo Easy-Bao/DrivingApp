@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger_app/src/features/auth/domain/use_cases/reset_password_use_case.dart';
+import 'package:passenger_app/src/features/auth/domain/repositories/passenger_auth_repository.dart';
 import 'package:passenger_app/src/features/auth/presentation/bloc/forgot_password/forgot_password_event.dart';
 import 'package:passenger_app/src/features/auth/presentation/bloc/forgot_password/forgot_password_state.dart';
 import 'package:passenger_app/src/features/auth/presentation/validation/auth_failure_message.dart';
@@ -10,9 +10,9 @@ export 'forgot_password_state.dart';
 
 class ForgotPasswordBloc
     extends Bloc<ForgotPasswordEvent, ForgotPasswordState> {
-  final ResetPasswordUseCase _resetPasswordUseCase;
+  final PassengerAuthRepository _authRepository;
 
-  ForgotPasswordBloc(this._resetPasswordUseCase)
+  ForgotPasswordBloc(this._authRepository)
     : super(const ForgotPasswordInitial()) {
     on<ForgotPasswordSubmitted>(_onForgotPasswordSubmitted);
   }
@@ -30,7 +30,7 @@ class ForgotPasswordBloc
 
     emit(const ForgotPasswordLoading());
 
-    final result = await _resetPasswordUseCase.execute(email: normalizedEmail);
+    final result = await _authRepository.resetPassword(email: normalizedEmail);
 
     result.fold(
       (failure) => emit(ForgotPasswordFailure(safeAuthFailureMessage(failure))),

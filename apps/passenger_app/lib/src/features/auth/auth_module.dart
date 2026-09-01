@@ -10,12 +10,6 @@ import 'package:passenger_app/src/features/auth/presentation/bloc/sign_up/sign_u
 import 'package:passenger_app/src/features/auth/presentation/bloc/verify_otp/verify_otp_bloc.dart';
 import 'package:passenger_app/src/features/auth/data/repositories/passenger_auth_repository_impl.dart';
 import 'package:passenger_app/src/features/auth/domain/repositories/passenger_auth_repository.dart';
-import 'package:passenger_app/src/features/auth/domain/use_cases/confirm_reset_password_use_case.dart';
-import 'package:passenger_app/src/features/auth/domain/use_cases/register_use_case.dart';
-import 'package:passenger_app/src/features/auth/domain/use_cases/resend_otp_use_case.dart';
-import 'package:passenger_app/src/features/auth/domain/use_cases/reset_password_use_case.dart';
-import 'package:passenger_app/src/features/auth/domain/use_cases/sign_in_use_case.dart';
-import 'package:passenger_app/src/features/auth/domain/use_cases/verify_otp_use_case.dart';
 import 'package:passenger_app/src/features/auth/presentation/view/forgot_password_page.dart';
 import 'package:passenger_app/src/features/auth/presentation/view/reset_password_confirm_page.dart';
 import 'package:passenger_app/src/features/auth/presentation/view/sign_in_page.dart';
@@ -38,35 +32,16 @@ class AuthModule extends Module {
           preferences: i.get<SharedPreferences>(),
         ),
       );
-    i.addLazySingleton<SignInUseCase>(
-      (i) => SignInUseCase(i.get<PassengerAuthRepository>()),
-    );
-    i.addLazySingleton<RegisterUseCase>(
-      (i) => RegisterUseCase(i.get<PassengerAuthRepository>()),
-    );
-    i.addLazySingleton<VerifyOtpUseCase>(
-      (i) => VerifyOtpUseCase(i.get<PassengerAuthRepository>()),
-    );
-    i.addLazySingleton<ResendOtpUseCase>(
-      (i) => ResendOtpUseCase(i.get<PassengerAuthRepository>()),
-    );
-    i.addLazySingleton<ResetPasswordUseCase>(
-      (i) => ResetPasswordUseCase(i.get<PassengerAuthRepository>()),
-    );
-    i.addLazySingleton<ConfirmResetPasswordUseCase>(
-      (i) => ConfirmResetPasswordUseCase(i.get<PassengerAuthRepository>()),
-    );
-    i.add<SignInBloc>((i) => SignInBloc(i.get<SignInUseCase>()));
-    i.add<SignUpBloc>((i) => SignUpBloc(i.get<RegisterUseCase>()));
+    i.add<SignInBloc>((i) => SignInBloc(i.get<PassengerAuthRepository>()));
+    i.add<SignUpBloc>((i) => SignUpBloc(i.get<PassengerAuthRepository>()));
     i.add<VerifyOtpBloc>(
-      (i) =>
-          VerifyOtpBloc(i.get<VerifyOtpUseCase>(), i.get<ResendOtpUseCase>()),
+      (i) => VerifyOtpBloc(i.get<PassengerAuthRepository>()),
     );
     i.add<ForgotPasswordBloc>(
-      (i) => ForgotPasswordBloc(i.get<ResetPasswordUseCase>()),
+      (i) => ForgotPasswordBloc(i.get<PassengerAuthRepository>()),
     );
     i.add<ResetPasswordConfirmBloc>(
-      (i) => ResetPasswordConfirmBloc(i.get<ConfirmResetPasswordUseCase>()),
+      (i) => ResetPasswordConfirmBloc(i.get<PassengerAuthRepository>()),
     );
   }
 

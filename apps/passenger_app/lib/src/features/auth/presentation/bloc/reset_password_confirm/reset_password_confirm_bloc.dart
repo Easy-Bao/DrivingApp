@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger_app/src/features/auth/domain/use_cases/confirm_reset_password_use_case.dart';
+import 'package:passenger_app/src/features/auth/domain/repositories/passenger_auth_repository.dart';
 import 'package:passenger_app/src/features/auth/presentation/validation/auth_failure_message.dart';
 import 'package:passenger_app/src/features/auth/presentation/validation/auth_form_validator.dart';
 
@@ -9,9 +9,9 @@ part 'reset_password_confirm_state.dart';
 
 class ResetPasswordConfirmBloc
     extends Bloc<ResetPasswordConfirmEvent, ResetPasswordConfirmState> {
-  final ConfirmResetPasswordUseCase _confirmResetPasswordUseCase;
+  final PassengerAuthRepository _authRepository;
 
-  ResetPasswordConfirmBloc(this._confirmResetPasswordUseCase)
+  ResetPasswordConfirmBloc(this._authRepository)
     : super(const ResetPasswordConfirmInitial()) {
     on<ResetPasswordConfirmSubmitted>(_onResetPasswordConfirmSubmitted);
   }
@@ -30,7 +30,7 @@ class ResetPasswordConfirmBloc
 
     emit(const ResetPasswordConfirmLoading());
 
-    final result = await _confirmResetPasswordUseCase.execute(
+    final result = await _authRepository.confirmResetPassword(
       email: normalizedEmail,
       code: event.code,
       newPassword: trimmedPassword,

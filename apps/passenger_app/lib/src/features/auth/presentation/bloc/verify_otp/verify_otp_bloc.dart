@@ -2,20 +2,17 @@ import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger_app/src/features/auth/domain/use_cases/resend_otp_use_case.dart';
-import 'package:passenger_app/src/features/auth/domain/use_cases/verify_otp_use_case.dart';
+import 'package:passenger_app/src/features/auth/domain/repositories/passenger_auth_repository.dart';
 
 part 'verify_otp_event.dart';
 part 'verify_otp_state.dart';
 
 class VerifyOtpBloc extends Bloc<VerifyOtpEvent, VerifyOtpState> {
-  final VerifyOtpUseCase _verifyOtpUseCase;
-  final ResendOtpUseCase _resendOtpUseCase;
+  final PassengerAuthRepository _authRepository;
   Timer? _timer;
   int _seconds = 60;
 
-  VerifyOtpBloc(this._verifyOtpUseCase, this._resendOtpUseCase)
-    : super(const VerifyOtpInitial()) {
+  VerifyOtpBloc(this._authRepository) : super(const VerifyOtpInitial()) {
     on<VerifyOtpTimerStarted>(_onVerifyOtpTimerStarted);
     on<VerifyOtpTimerTicked>(_onVerifyOtpTimerTicked);
     on<VerifyOtpSubmitted>(_onVerifyOtpSubmitted);
@@ -64,7 +61,7 @@ class VerifyOtpBloc extends Bloc<VerifyOtpEvent, VerifyOtpState> {
 
     emit(const VerifyOtpLoading());
 
-    final result = await _verifyOtpUseCase.execute(
+    final result = await _authRepository.verifyOtp(
       email: normalizedEmail,
       code: normalizedCode,
     );
@@ -85,7 +82,7 @@ class VerifyOtpBloc extends Bloc<VerifyOtpEvent, VerifyOtpState> {
   ) async {
     emit(const VerifyOtpResending());
 
-    final result = await _resendOtpUseCase.execute(
+    final result = await _authRepository.requestVerificationCode(
       email: event.email.trim().toLowerCase(),
     );
 

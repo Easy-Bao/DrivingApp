@@ -1,31 +1,31 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:driver_app/src/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
 import 'package:driver_app/src/features/auth/domain/failures/auth_failures.dart';
-import 'package:driver_app/src/features/auth/domain/use_cases/sign_in_use_case.dart';
+import 'package:driver_app/src/features/auth/domain/repositories/driver_auth_repository.dart';
+import 'package:driver_app/src/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-class _MockSignInUseCase extends Mock implements SignInUseCase {}
+class _MockDriverAuthRepository extends Mock implements DriverAuthRepository {}
 
 void main() {
-  late _MockSignInUseCase signInUseCase;
+  late _MockDriverAuthRepository authRepository;
 
   setUp(() {
-    signInUseCase = _MockSignInUseCase();
+    authRepository = _MockDriverAuthRepository();
   });
 
   blocTest<SignInBloc, SignInState>(
     'shows a credential error instead of a session-expired message',
     setUp: () {
       when(
-        () => signInUseCase.execute(
+        () => authRepository.authenticate(
           email: any(named: 'email'),
           password: any(named: 'password'),
         ),
       ).thenAnswer((_) async => const Left(InvalidCredentialsFailure()));
     },
-    build: () => SignInBloc(signInUseCase),
+    build: () => SignInBloc(authRepository),
     act: (bloc) => bloc.add(
       const SignInSubmitted(
         email: ' Passenger@Example.com ',
@@ -38,7 +38,7 @@ void main() {
     ],
     verify: (_) {
       verify(
-        () => signInUseCase.execute(
+        () => authRepository.authenticate(
           email: 'passenger@example.com',
           password: ' password-with-spaces ',
         ),
