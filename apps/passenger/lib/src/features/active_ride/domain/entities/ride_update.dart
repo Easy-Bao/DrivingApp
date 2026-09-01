@@ -14,7 +14,7 @@ final class const RideUpdate({
   final double? destinationLat,
   final double? destinationLng,
 }) extends Equatable {
-  factory RideUpdate.fromJson(Map<String, dynamic> json) {
+  factory fromJson(Map<String, dynamic> json) {
     return RideUpdate(
       status: RideStatus.fromString(
         SafeParse.toStringValue(json['status'], 'requested'),

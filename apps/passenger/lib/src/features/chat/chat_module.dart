@@ -8,9 +8,7 @@ import 'package:passenger/src/features/chat/chat_routes.dart';
 import 'package:passenger/src/features/chat/presentation/view/passenger_chat_page.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 
-class ChatModule {
-  ChatModule._();
-
+class ChatModule._() {
   static void binds(Injector i) {
     i.addLazySingleton<ChatRepositoryFactory>(
       (i) => DefaultChatRepositoryFactory(

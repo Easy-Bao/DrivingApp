@@ -4,9 +4,7 @@ import 'package:passenger/src/features/driver_profile/data/data_sources/driver_p
 import 'package:passenger/src/features/driver_profile/data/repositories/driver_profile_repository_impl.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 
-class DriverProfileModule {
-  DriverProfileModule._();
-
+class DriverProfileModule._() {
   static void binds(Injector i) {
     i
       ..addLazySingleton<DriverProfileRemoteDataSource>(

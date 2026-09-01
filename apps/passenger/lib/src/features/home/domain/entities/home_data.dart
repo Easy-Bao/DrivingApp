@@ -5,7 +5,7 @@ class const HomeData({
   required this.currentAddress,
   required this.recentLocations,
 }) extends Equatable {
-  HomeData.fromList({
+  new fromList({
     required String currentAddress,
     required List<RecentLocation> recentLocations,
   }) : this(

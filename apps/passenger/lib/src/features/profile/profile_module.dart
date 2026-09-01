@@ -16,9 +16,7 @@ import 'package:passenger/src/features/profile/profile_routes.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class ProfileModule {
-  ProfileModule._();
-
+class ProfileModule._() {
   static void binds(Injector i) {
     i
       ..addLazySingleton<PassengerProfileRemoteDataSource>(

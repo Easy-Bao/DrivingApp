@@ -20,7 +20,7 @@ class const SavedPlaceModel({
     'isDefault': isDefault,
   };
 
-  factory SavedPlaceModel.fromJson(Map<String, dynamic> json) {
+  factory fromJson(Map<String, dynamic> json) {
     final label = SafeParse.toStringValue(json['label']).trim();
     final iconName = SafeParse.toStringValue(json['iconName']).trim();
     final savedAddress = SafeParse.toStringValue(json['savedAddress']).trim();

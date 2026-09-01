@@ -4,9 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:foundation/foundation.dart';
 
-class PassengerEnvConfig {
-  PassengerEnvConfig._();
-
+class PassengerEnvConfig._() {
   static const _apiBaseUrl = String.fromEnvironment('API_BASE_URL');
   static const _mapboxPublicToken = String.fromEnvironment(
     'MAPBOX_PUBLIC_TOKEN',

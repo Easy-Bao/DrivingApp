@@ -1,7 +1,5 @@
 /// HTTP paths owned by the passenger authentication workflow.
-final class PassengerAuthEndpoints {
-  PassengerAuthEndpoints._();
-
+final class PassengerAuthEndpoints._() {
   static const String login = '/api/v1/auth/passenger/login';
   static const String register = '/api/v1/auth/passenger/register';
   static const String requestOtp = '/api/v1/auth/passenger/otp';

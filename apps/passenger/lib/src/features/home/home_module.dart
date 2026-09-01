@@ -22,9 +22,7 @@ import 'package:passenger/src/features/ride_history/presentation/bloc/ride_histo
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places/saved_places_cubit.dart';
 import 'package:passenger/src/features/saved_places/presentation/view/add_category_page.dart';
 
-class HomeModule {
-  HomeModule._();
-
+class HomeModule._() {
   static void binds(Injector i) {
     i
       ..addLazySingleton<HomeRemoteDataSource>(

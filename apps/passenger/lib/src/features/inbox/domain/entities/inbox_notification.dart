@@ -57,7 +57,7 @@ class const InboxNotification({
     );
   }
 
-  factory InboxNotification.fromJson(Map<String, dynamic> json) {
+  factory fromJson(Map<String, dynamic> json) {
     return InboxNotification(
       id: SafeParse.toStringValue(json['id']),
       title: SafeParse.toStringValue(json['title']),

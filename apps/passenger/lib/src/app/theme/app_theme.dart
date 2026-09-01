@@ -2,9 +2,7 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 
 /// The default Material theme composed for the Passenger client.
-class AppTheme {
-  AppTheme._();
-
+class AppTheme._() {
   static const _defaultCanvas = Color(0xFFF8F9FA);
 
   static const _defaultScheme = ColorScheme.light(

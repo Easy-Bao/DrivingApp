@@ -47,7 +47,7 @@ class const DriverModel({
         : details.join(' • ');
   }
 
-  factory DriverModel.fromJson(Map<String, dynamic> json) {
+  factory fromJson(Map<String, dynamic> json) {
     return DriverModel(
       id: SafeParse.toStringValue(json['id'] ?? json['user_id']),
       name: SafeParse.toStringValue(

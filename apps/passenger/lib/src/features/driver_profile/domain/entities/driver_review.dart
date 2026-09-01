@@ -6,7 +6,7 @@ class const DriverReview({
   required this.rating,
   this.createdAt,
 }) {
-  factory DriverReview.fromJson(Map<String, dynamic> json) {
+  factory fromJson(Map<String, dynamic> json) {
     return DriverReview(
       passengerName: SafeParse.toStringValue(
         json['passenger_name'] ?? json['passengerName'],

@@ -18,9 +18,7 @@ import 'package:passenger/src/features/ride_history/ride_history.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger/src/infrastructure/telemetry/passenger_background_telemetry.dart';
 
-class ActiveRideModule {
-  ActiveRideModule._();
-
+class ActiveRideModule._() {
   static void binds(Injector i) {
     i
       ..addLazySingleton<RideRemoteDataSource>(

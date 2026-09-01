@@ -17,9 +17,7 @@ import 'package:passenger/src/features/ride_history/ride_history.dart';
 import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 
-class RideHistoryModule {
-  RideHistoryModule._();
-
+class RideHistoryModule._() {
   static void binds(Injector i) {
     i
       ..addLazySingleton<PassengerRideHistoryRemoteDataSource>(

@@ -7,9 +7,7 @@ import 'package:passenger/src/features/settings/presentation/view/settings_page.
 import 'package:passenger/src/features/settings/presentation/view/terms_of_service_page.dart';
 import 'package:passenger/src/features/settings/settings_routes.dart';
 
-class SettingsModule {
-  SettingsModule._();
-
+class SettingsModule._() {
   static List<ModularRoute> routes = [
     ChildRoute(
       name: SettingsRoutes.settings,

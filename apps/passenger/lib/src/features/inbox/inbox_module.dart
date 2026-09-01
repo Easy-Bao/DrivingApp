@@ -8,9 +8,7 @@ import 'package:passenger/src/features/inbox/inbox_routes.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger/src/features/inbox/presentation/view/inbox_page.dart';
 
-class InboxModule {
-  InboxModule._();
-
+class InboxModule._() {
   static void binds(Injector i) {
     i
       ..addLazySingleton<InboxRemoteDataSource>(

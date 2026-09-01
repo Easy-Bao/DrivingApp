@@ -13,7 +13,7 @@ class const FareEstimate({
   final double surgeCharge;
   final double totalFare;
 
-  factory FareEstimate.fromJson(Map<String, dynamic> json) {
+  factory fromJson(Map<String, dynamic> json) {
     return FareEstimate(
       baseFare: _requiredNumber(json, 'base_fare'),
       distanceCharge: _requiredNumber(json, 'distance_charge'),

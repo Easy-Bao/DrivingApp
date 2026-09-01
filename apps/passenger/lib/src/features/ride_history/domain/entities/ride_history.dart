@@ -49,7 +49,7 @@ class const RideHistory({
         : details.join(' • ');
   }
 
-  factory RideHistory.fromJson(Map<String, dynamic> json) {
+  factory fromJson(Map<String, dynamic> json) {
     return RideHistory(
       id: SafeParse.toStringValue(json['id']),
       pickup: SafeParse.toStringValue(json['pickup'] ?? json['pickup_name']),

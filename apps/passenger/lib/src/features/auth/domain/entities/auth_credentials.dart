@@ -9,7 +9,7 @@ final class const PassengerAuthCredentials({
   final String refreshToken = '',
   final bool needsVerification = false,
 }) extends Equatable {
-  factory PassengerAuthCredentials.fromJson(Map<String, dynamic> json) {
+  factory fromJson(Map<String, dynamic> json) {
     return PassengerAuthCredentials(
       passengerId:
           json['passengerId']?.toString() ?? json['id']?.toString() ?? '',

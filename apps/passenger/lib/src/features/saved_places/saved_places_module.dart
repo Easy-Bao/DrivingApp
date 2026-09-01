@@ -8,9 +8,7 @@ import 'package:passenger/src/features/saved_places/presentation/view/saved_plac
 import 'package:passenger/src/features/saved_places/saved_places_routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class SavedPlacesModule {
-  SavedPlacesModule._();
-
+class SavedPlacesModule._() {
   static void binds(Injector i) {
     i
       ..addLazySingleton<SavedPlacesRepository>(
