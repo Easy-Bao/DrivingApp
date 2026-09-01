@@ -11,29 +11,30 @@ import 'package:maps/src/domain/entities/route.dart';
 import 'package:maps/src/domain/failures/place_failure.dart';
 import 'package:maps/src/domain/repositories/location_repository.dart';
 
-class MapNativeService {
+class MapNativeService({
+  required Uri placeServiceBaseUri,
+  Dio? dio,
+  LocationRepository? apiClient,
+}) {
   final LocationRepository _apiClient;
 
   static const _requestTimeout = Duration(seconds: 6);
   static const _maxSearchQueryLength = 256;
 
-  MapNativeService({
-    required Uri placeServiceBaseUri,
-    Dio? dio,
-    LocationRepository? apiClient,
-  }) : _apiClient =
-           apiClient ??
-           LocationRemoteDataSource(
-             dio ??
-                 Dio(
-                   BaseOptions(
-                     baseUrl: placeServiceBaseUri.toString(),
-                     connectTimeout: _requestTimeout,
-                     sendTimeout: _requestTimeout,
-                     receiveTimeout: _requestTimeout,
-                   ),
-                 ),
-           );
+  this
+    : _apiClient =
+          apiClient ??
+          LocationRemoteDataSource(
+            dio ??
+                Dio(
+                  BaseOptions(
+                    baseUrl: placeServiceBaseUri.toString(),
+                    connectTimeout: _requestTimeout,
+                    sendTimeout: _requestTimeout,
+                    receiveTimeout: _requestTimeout,
+                  ),
+                ),
+          );
 
   static double _toRadians(double degree) => degree * math.pi / 180.0;
 

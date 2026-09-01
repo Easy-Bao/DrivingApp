@@ -13,22 +13,20 @@ enum ErrorType { network, server, unauthorized, validation, location, unknown }
 /// [technicalLog] and [stackTrace] are intentionally kept separate from the
 /// user copy. They are available to an internal logger and must never be
 /// rendered by a widget.
-class AppFailure {
+class const AppFailure({
+  required this.userMessage,
+  required this.type,
+  this.title,
+  this.actionText,
+  this.technicalLog,
+  this.stackTrace,
+}) {
   final String? title;
   final String userMessage;
   final String? actionText;
   final ErrorType type;
   final Object? technicalLog;
   final StackTrace? stackTrace;
-
-  const AppFailure({
-    required this.userMessage,
-    required this.type,
-    this.title,
-    this.actionText,
-    this.technicalLog,
-    this.stackTrace,
-  });
 
   factory AppFailure.fromException(Object error, [StackTrace? stackTrace]) {
     _logTechnicalError(error, stackTrace);

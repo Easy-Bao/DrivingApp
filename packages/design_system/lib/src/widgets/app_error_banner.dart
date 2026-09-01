@@ -3,13 +3,11 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:design_system/src/theme/design_system_context.dart';
 
 /// Presents one recoverable page or load failure with its retry action.
-class AppErrorBanner extends StatelessWidget {
-  const AppErrorBanner({
-    super.key,
-    required this.message,
-    required this.onRetry,
-  });
-
+class const AppErrorBanner({
+  super.key,
+  required this.message,
+  required this.onRetry,
+}) extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
 

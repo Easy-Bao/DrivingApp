@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
-class CompactRouteTimelineWidget extends StatelessWidget {
+class const CompactRouteTimelineWidget({
+  super.key,
+  required this.pickup,
+  required this.dropoff,
+  this.pickupLabel = 'Pickup',
+  this.dropoffLabel = 'Drop Off',
+}) extends StatelessWidget {
   final String pickup;
   final String dropoff;
   final String pickupLabel;
   final String dropoffLabel;
-
-  const CompactRouteTimelineWidget({
-    super.key,
-    required this.pickup,
-    required this.dropoff,
-    this.pickupLabel = 'Pickup',
-    this.dropoffLabel = 'Drop Off',
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -70,11 +68,10 @@ class CompactRouteTimelineWidget extends StatelessWidget {
   }
 }
 
-class _StopIcon extends StatelessWidget {
+class const _StopIcon({required this.icon, required this.color})
+    extends StatelessWidget {
   final IconData icon;
   final Color color;
-
-  const _StopIcon({required this.icon, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -89,11 +86,10 @@ class _StopIcon extends StatelessWidget {
   }
 }
 
-class _RouteStopText extends StatelessWidget {
+class const _RouteStopText({required this.label, required this.value})
+    extends StatelessWidget {
   final String label;
   final String value;
-
-  const _RouteStopText({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -126,10 +122,8 @@ class _RouteStopText extends StatelessWidget {
   }
 }
 
-class _DashedLinePainter extends CustomPainter {
+class const _DashedLinePainter({required this.color}) extends CustomPainter {
   final Color color;
-
-  const _DashedLinePainter({required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {

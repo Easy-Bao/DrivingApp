@@ -3,17 +3,15 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:design_system/src/theme/design_system_context.dart';
 
 /// A role-configured BaoRide about page with a real licenses destination.
-class AppAboutPage extends StatelessWidget {
-  const AppAboutPage({
-    super.key,
-    required this.applicationName,
-    required this.applicationVersion,
-    required this.description,
-    required this.icon,
-    required this.onBack,
-    required this.onLicensesTap,
-  });
-
+class const AppAboutPage({
+  super.key,
+  required this.applicationName,
+  required this.applicationVersion,
+  required this.description,
+  required this.icon,
+  required this.onBack,
+  required this.onLicensesTap,
+}) extends StatelessWidget {
   final String applicationName;
   final String applicationVersion;
   final String description;

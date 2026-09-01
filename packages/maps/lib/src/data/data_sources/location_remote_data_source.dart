@@ -6,10 +6,8 @@ import 'package:maps/src/domain/entities/place.dart';
 import 'package:maps/src/domain/entities/route.dart';
 import 'package:maps/src/domain/repositories/location_repository.dart';
 
-class LocationRemoteDataSource implements LocationRepository {
+class LocationRemoteDataSource(this._dio) implements LocationRepository {
   final Dio _dio;
-
-  LocationRemoteDataSource(this._dio);
 
   @override
   Future<Map<String, dynamic>> searchPlaces({

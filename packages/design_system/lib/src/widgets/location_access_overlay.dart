@@ -11,17 +11,15 @@ enum LocationAccessOverlayState {
 }
 
 /// Keeps location recovery visible without replacing the route underneath it.
-class LocationAccessOverlay extends StatelessWidget {
-  const LocationAccessOverlay({
-    super.key,
-    required this.state,
-    required this.appName,
-    this.message,
-    this.onOpenLocationSettings,
-    this.onOpenAppSettings,
-    this.onTryAgain,
-  });
-
+class const LocationAccessOverlay({
+  super.key,
+  required this.state,
+  required this.appName,
+  this.message,
+  this.onOpenLocationSettings,
+  this.onOpenAppSettings,
+  this.onTryAgain,
+}) extends StatelessWidget {
   final LocationAccessOverlayState state;
   final String appName;
   final String? message;
@@ -76,16 +74,14 @@ class LocationAccessOverlay extends StatelessWidget {
   }
 }
 
-class _LocationAccessSheet extends StatelessWidget {
-  const _LocationAccessSheet({
-    required this.state,
-    required this.appName,
-    this.message,
-    this.onOpenLocationSettings,
-    this.onOpenAppSettings,
-    this.onTryAgain,
-  });
-
+class const _LocationAccessSheet({
+  required this.state,
+  required this.appName,
+  this.message,
+  this.onOpenLocationSettings,
+  this.onOpenAppSettings,
+  this.onTryAgain,
+}) extends StatelessWidget {
   final LocationAccessOverlayState state;
   final String appName;
   final String? message;
@@ -275,14 +271,12 @@ class _LocationAccessSheet extends StatelessWidget {
 
 enum _LocationAccessTone { neutral, primary, warning, error }
 
-class _LocationAccessPresentation {
-  const _LocationAccessPresentation({
-    required this.icon,
-    required this.title,
-    required this.message,
-    required this.tone,
-  });
-
+class const _LocationAccessPresentation({
+  required this.icon,
+  required this.title,
+  required this.message,
+  required this.tone,
+}) {
   final IconData icon;
   final String title;
   final String message;
@@ -298,9 +292,10 @@ class _LocationAccessPresentation {
   }
 }
 
-class _LocationAccessAction {
-  const _LocationAccessAction({required this.label, required this.callback});
-
+class const _LocationAccessAction({
+  required this.label,
+  required this.callback,
+}) {
   final String label;
   final VoidCallback callback;
 }

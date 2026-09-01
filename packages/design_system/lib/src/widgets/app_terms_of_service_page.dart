@@ -3,9 +3,8 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:design_system/src/theme/design_system_context.dart';
 
 /// Shared service terms used by the passenger and driver clients.
-class AppTermsOfServicePage extends StatelessWidget {
-  const AppTermsOfServicePage({super.key, required this.onBack});
-
+class const AppTermsOfServicePage({super.key, required this.onBack})
+    extends StatelessWidget {
   final VoidCallback onBack;
 
   @override
@@ -67,9 +66,8 @@ class AppTermsOfServicePage extends StatelessWidget {
   }
 }
 
-class _TermsSection extends StatelessWidget {
-  const _TermsSection({required this.title, required this.body});
-
+class const _TermsSection({required this.title, required this.body})
+    extends StatelessWidget {
   final String title;
   final String body;
 

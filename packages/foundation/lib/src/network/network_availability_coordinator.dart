@@ -14,16 +14,17 @@ typedef NetworkNow = DateTime Function();
 /// Only the Dio boundary calls [tryAcquireRequest], [recordSuccess], and
 /// [recordFailure]. UI consumers subscribe to [changes] for one deduplicated
 /// status stream instead of deriving connectivity from individual pages.
-final class NetworkAvailabilityCoordinator {
-  NetworkAvailabilityCoordinator({
-    int failureThreshold = 2,
-    Duration cooldown = const Duration(seconds: 5),
-    NetworkNow? now,
-  }) : assert(failureThreshold > 0),
-       assert(cooldown > Duration.zero),
-       _failureThreshold = failureThreshold,
-       _cooldown = cooldown,
-       _now = now ?? DateTime.now;
+final class NetworkAvailabilityCoordinator({
+  int failureThreshold = 2,
+  Duration cooldown = const Duration(seconds: 5),
+  NetworkNow? now,
+}) {
+  this
+    : assert(failureThreshold > 0),
+      assert(cooldown > Duration.zero),
+      _failureThreshold = failureThreshold,
+      _cooldown = cooldown,
+      _now = now ?? DateTime.now;
 
   final int _failureThreshold;
   final Duration _cooldown;
@@ -96,9 +97,8 @@ final class NetworkAvailabilityCoordinator {
 }
 
 /// Applies the process-wide availability circuit to a Dio client.
-final class NetworkAvailabilityInterceptor extends Interceptor {
-  const NetworkAvailabilityInterceptor(this.coordinator);
-
+final class const NetworkAvailabilityInterceptor(this.coordinator)
+    extends Interceptor {
   final NetworkAvailabilityCoordinator coordinator;
 
   @override

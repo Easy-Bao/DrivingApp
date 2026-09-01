@@ -3,16 +3,14 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:design_system/src/theme/design_system_context.dart';
 
 /// A centered settings page shell shared by both BaoRide clients.
-class AppSettingsScaffold extends StatelessWidget {
-  const AppSettingsScaffold({
-    super.key,
-    required this.onBack,
-    required this.children,
-    this.title = 'Settings',
-    this.heading = 'App preferences',
-    this.description = 'Manage access and support for this app.',
-  });
-
+class const AppSettingsScaffold({
+  super.key,
+  required this.onBack,
+  required this.children,
+  this.title = 'Settings',
+  this.heading = 'App preferences',
+  this.description = 'Manage access and support for this app.',
+}) extends StatelessWidget {
   final VoidCallback onBack;
   final List<Widget> children;
   final String title;
@@ -57,13 +55,11 @@ class AppSettingsScaffold extends StatelessWidget {
 }
 
 /// A labelled settings group with consistent section rhythm.
-class AppSettingsSection extends StatelessWidget {
-  const AppSettingsSection({
-    super.key,
-    required this.label,
-    required this.children,
-  });
-
+class const AppSettingsSection({
+  super.key,
+  required this.label,
+  required this.children,
+}) extends StatelessWidget {
   final String label;
   final List<Widget> children;
 
@@ -100,15 +96,13 @@ class AppSettingsSection extends StatelessWidget {
 }
 
 /// A minimum-height navigation row for a completed settings destination.
-class AppSettingsNavigationTile extends StatelessWidget {
-  const AppSettingsNavigationTile({
-    super.key,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
+class const AppSettingsNavigationTile({
+  super.key,
+  required this.icon,
+  required this.title,
+  required this.subtitle,
+  required this.onTap,
+}) extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;

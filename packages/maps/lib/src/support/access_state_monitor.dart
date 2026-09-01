@@ -8,12 +8,11 @@ typedef AccessStateReader<T> = Future<T> Function();
 /// The monitor contains no platform dependency; each client supplies its
 /// location adapter, so passenger and driver share lifecycle behavior without
 /// sharing app-specific state enums.
-final class AccessStateMonitor<T> {
-  AccessStateMonitor({
-    required AccessStateStream<T> stateChanges,
-    required AccessStateReader<T> readState,
-  }) : _stateChanges = stateChanges,
-       _readState = readState;
+final class AccessStateMonitor<T>({
+  required AccessStateStream<T> stateChanges,
+  required AccessStateReader<T> readState,
+}) {
+  this : _stateChanges = stateChanges, _readState = readState;
 
   final AccessStateStream<T> _stateChanges;
   final AccessStateReader<T> _readState;

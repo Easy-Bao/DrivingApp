@@ -9,12 +9,11 @@ const requestRetryPolicyExtraKey = 'requestRetryPolicy';
 
 typedef RetryDelay = Duration Function(int retryAttempt);
 
-class RetryInterceptor extends Interceptor {
+class RetryInterceptor(this.dio, {RetryDelay? retryDelay}) extends Interceptor {
   final Dio dio;
   final RetryDelay _retryDelay;
 
-  RetryInterceptor(this.dio, {RetryDelay? retryDelay})
-    : _retryDelay = retryDelay ?? _defaultRetryDelay;
+  this : _retryDelay = retryDelay ?? _defaultRetryDelay;
 
   @override
   Future<void> onError(

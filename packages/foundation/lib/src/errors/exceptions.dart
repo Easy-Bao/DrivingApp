@@ -1,34 +1,27 @@
-class ServerException implements Exception {
+class ServerException({required this.statusCode, required this.message})
+    implements Exception {
   final int statusCode;
   final String message;
-
-  ServerException({required this.statusCode, required this.message});
 
   @override
   String toString() => 'ServerException ($statusCode): $message';
 }
 
-class CacheException implements Exception {
+class CacheException({required this.message}) implements Exception {
   final String message;
-
-  CacheException({required this.message});
 
   @override
   String toString() => 'CacheException: $message';
 }
 
-class DataParsingException implements Exception {
+class DataParsingException({required this.message}) implements Exception {
   final String message;
-
-  DataParsingException({required this.message});
 
   @override
   String toString() => 'DataParsingException: $message';
 }
 
-class NetworkCircuitOpenException implements Exception {
-  const NetworkCircuitOpenException();
-
+class const NetworkCircuitOpenException() implements Exception {
   @override
   String toString() => 'NetworkCircuitOpenException: API circuit is open';
 }

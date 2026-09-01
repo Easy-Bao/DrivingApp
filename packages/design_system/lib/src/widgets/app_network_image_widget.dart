@@ -2,23 +2,21 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
-class AppNetworkImageWidget extends StatelessWidget {
+class const AppNetworkImageWidget({
+  super.key,
+  required this.imageUrl,
+  this.width = 56,
+  this.height = 56,
+  this.fit = BoxFit.cover,
+  this.borderRadius,
+  this.fallbackIcon = LucideIcons.user,
+}) extends StatelessWidget {
   final String? imageUrl;
   final double width;
   final double height;
   final BoxFit fit;
   final BorderRadius? borderRadius;
   final IconData fallbackIcon;
-
-  const AppNetworkImageWidget({
-    super.key,
-    required this.imageUrl,
-    this.width = 56,
-    this.height = 56,
-    this.fit = BoxFit.cover,
-    this.borderRadius,
-    this.fallbackIcon = LucideIcons.user,
-  });
 
   @override
   Widget build(BuildContext context) {

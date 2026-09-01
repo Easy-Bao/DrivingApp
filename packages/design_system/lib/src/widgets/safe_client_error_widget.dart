@@ -28,15 +28,13 @@ void configureClientErrorBoundary({required String appName}) {
   ErrorWidget.builder = (_) => const SafeClientErrorWidget();
 }
 
-class SafeClientErrorApp extends StatelessWidget {
+class const SafeClientErrorApp({
+  required this.message,
+  required this.theme,
+  super.key,
+}) extends StatelessWidget {
   final String message;
   final ThemeData theme;
-
-  const SafeClientErrorApp({
-    required this.message,
-    required this.theme,
-    super.key,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -48,13 +46,11 @@ class SafeClientErrorApp extends StatelessWidget {
   }
 }
 
-class SafeClientErrorWidget extends StatelessWidget {
+class const SafeClientErrorWidget({
+  this.message = 'Something went wrong. Please try again.',
+  super.key,
+}) extends StatelessWidget {
   final String message;
-
-  const SafeClientErrorWidget({
-    this.message = 'Something went wrong. Please try again.',
-    super.key,
-  });
 
   @override
   Widget build(BuildContext context) {

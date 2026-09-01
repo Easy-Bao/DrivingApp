@@ -1,13 +1,11 @@
-class OffsetPage<T> {
+class const OffsetPage<T>({
+  required this.items,
+  required this.hasMore,
+  required this.nextOffset,
+}) {
   final List<T> items;
   final bool hasMore;
   final int? nextOffset;
-
-  const OffsetPage({
-    required this.items,
-    required this.hasMore,
-    required this.nextOffset,
-  });
 
   factory OffsetPage.fromJson(
     Map<String, dynamic> json,

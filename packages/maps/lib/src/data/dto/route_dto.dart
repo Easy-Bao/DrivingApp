@@ -1,9 +1,7 @@
 import 'package:maps/src/domain/entities/route.dart';
 
-class RouteDto {
+class const RouteDto(this.route) {
   final Route route;
-
-  const RouteDto(this.route);
 
   factory RouteDto.fromJson(Map<String, dynamic> json) {
     return RouteDto(Route.fromJson(json));

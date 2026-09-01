@@ -8,7 +8,16 @@ import 'package:flutter/material.dart';
 /// allocation, and scales from its center. This keeps the indicator in the
 /// same coordinate space as the page being dragged without resizing the
 /// navigation slots.
-class SwipeActiveTabIndicator extends StatelessWidget {
+class const SwipeActiveTabIndicator({
+  super.key,
+  required this.pagePosition,
+  required this.itemCount,
+  required this.color,
+  this.borderRadius = const BorderRadius.all(Radius.circular(27)),
+  this.horizontalInset = defaultHorizontalInset,
+  this.verticalInset = defaultVerticalInset,
+  this.capsuleKeyPrefix,
+}) extends StatelessWidget {
   static const defaultHorizontalInset = 3.0;
   static const defaultVerticalInset = 3.0;
   static const minimumScale = 0.35;
@@ -21,16 +30,7 @@ class SwipeActiveTabIndicator extends StatelessWidget {
   final double verticalInset;
   final String? capsuleKeyPrefix;
 
-  const SwipeActiveTabIndicator({
-    super.key,
-    required this.pagePosition,
-    required this.itemCount,
-    required this.color,
-    this.borderRadius = const BorderRadius.all(Radius.circular(27)),
-    this.horizontalInset = defaultHorizontalInset,
-    this.verticalInset = defaultVerticalInset,
-    this.capsuleKeyPrefix,
-  }) : assert(itemCount > 0);
+  this : assert(itemCount > 0);
 
   /// Returns how much a tab participates in the active page allocation.
   ///

@@ -88,9 +88,7 @@ void main() {
   );
 }
 
-class _FailingHttpClientAdapter implements HttpClientAdapter {
-  _FailingHttpClientAdapter(this.onAttempt);
-
+class _FailingHttpClientAdapter(this.onAttempt) implements HttpClientAdapter {
   final void Function() onAttempt;
 
   @override

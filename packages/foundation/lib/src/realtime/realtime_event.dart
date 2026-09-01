@@ -25,15 +25,13 @@ enum RealtimeEventType {
   }
 }
 
-final class RealtimeScope extends Equatable {
-  const RealtimeScope({
-    this.rideId,
-    this.roomId,
-    this.driverId,
-    this.passengerId,
-    this.driverPool = false,
-  });
-
+final class const RealtimeScope({
+  this.rideId,
+  this.roomId,
+  this.driverId,
+  this.passengerId,
+  this.driverPool = false,
+}) extends Equatable {
   final String? rideId;
   final String? roomId;
   final String? driverId;
@@ -79,15 +77,15 @@ final class RealtimeScope extends Equatable {
   ];
 }
 
-final class RealtimeEnvelope extends Equatable {
-  RealtimeEnvelope({
-    required this.id,
-    required this.type,
-    required this.occurredAt,
-    required this.scope,
-    required Map<String, dynamic> payload,
-    this.version = realtimeEventVersion,
-  }) : payload = Map.unmodifiable(payload) {
+final class RealtimeEnvelope({
+  required this.id,
+  required this.type,
+  required this.occurredAt,
+  required this.scope,
+  required Map<String, dynamic> payload,
+  this.version = realtimeEventVersion,
+}) extends Equatable {
+  this : payload = Map.unmodifiable(payload) {
     _validate();
   }
 
@@ -151,9 +149,7 @@ final class RealtimeEnvelope extends Equatable {
   List<Object?> get props => [id, version, type, occurredAt, scope, payload];
 }
 
-sealed class RealtimeEvent extends Equatable {
-  const RealtimeEvent(this.envelope);
-
+sealed class const RealtimeEvent(this.envelope) extends Equatable {
   final RealtimeEnvelope envelope;
 
   factory RealtimeEvent.fromEnvelope(RealtimeEnvelope envelope) =>
@@ -177,37 +173,25 @@ sealed class RealtimeEvent extends Equatable {
   List<Object?> get props => [envelope];
 }
 
-final class RideOfferCreatedEvent extends RealtimeEvent {
-  const RideOfferCreatedEvent(super.envelope);
-}
+final class const RideOfferCreatedEvent(super.envelope) extends RealtimeEvent {}
 
-final class RideOfferUpdatedEvent extends RealtimeEvent {
-  const RideOfferUpdatedEvent(super.envelope);
-}
+final class const RideOfferUpdatedEvent(super.envelope) extends RealtimeEvent {}
 
-final class RideMatchedEvent extends RealtimeEvent {
-  const RideMatchedEvent(super.envelope);
-}
+final class const RideMatchedEvent(super.envelope) extends RealtimeEvent {}
 
-final class RideStatusChangedEvent extends RealtimeEvent {
-  const RideStatusChangedEvent(super.envelope);
-}
+final class const RideStatusChangedEvent(super.envelope)
+    extends RealtimeEvent {}
 
-final class DriverLocationUpdatedEvent extends RealtimeEvent {
-  const DriverLocationUpdatedEvent(super.envelope);
-}
+final class const DriverLocationUpdatedEvent(super.envelope)
+    extends RealtimeEvent {}
 
-final class PassengerLocationUpdatedEvent extends RealtimeEvent {
-  const PassengerLocationUpdatedEvent(super.envelope);
-}
+final class const PassengerLocationUpdatedEvent(super.envelope)
+    extends RealtimeEvent {}
 
-final class ChatMessageCreatedEvent extends RealtimeEvent {
-  const ChatMessageCreatedEvent(super.envelope);
-}
+final class const ChatMessageCreatedEvent(super.envelope)
+    extends RealtimeEvent {}
 
-final class PresenceUpdatedEvent extends RealtimeEvent {
-  const PresenceUpdatedEvent(super.envelope);
-}
+final class const PresenceUpdatedEvent(super.envelope) extends RealtimeEvent {}
 
 String _requiredIdentifier(Object? value, String field) {
   final identifier = _optionalIdentifier(value, field);

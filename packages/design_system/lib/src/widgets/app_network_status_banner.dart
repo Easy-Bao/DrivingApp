@@ -5,9 +5,8 @@ import 'package:flutter/material.dart';
 /// This is intentionally a status surface without a retry action. Page loads
 /// own their retry controls, while background work can report one shared state
 /// without adding a second failure toast or page banner.
-class AppNetworkStatusBanner extends StatelessWidget {
-  const AppNetworkStatusBanner({super.key, required this.isVisible});
-
+class const AppNetworkStatusBanner({super.key, required this.isVisible})
+    extends StatelessWidget {
   final bool isVisible;
 
   @override

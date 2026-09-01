@@ -1,6 +1,18 @@
 import 'package:equatable/equatable.dart';
 
-class Place extends Equatable {
+class const Place({
+  required this.id,
+  required this.name,
+  required this.fullAddress,
+  required this.latitude,
+  required this.longitude,
+  this.category,
+  this.distanceKm,
+  this.matchType,
+  this.distanceMeters,
+  this.confidence,
+  this.context = const {},
+}) extends Equatable {
   final String id;
   final String name;
   final String fullAddress;
@@ -12,20 +24,6 @@ class Place extends Equatable {
   final double? distanceMeters;
   final double? confidence;
   final Map<String, String> context;
-
-  const Place({
-    required this.id,
-    required this.name,
-    required this.fullAddress,
-    required this.latitude,
-    required this.longitude,
-    this.category,
-    this.distanceKm,
-    this.matchType,
-    this.distanceMeters,
-    this.confidence,
-    this.context = const {},
-  });
 
   String get displayName {
     final value = name.trim().isNotEmpty ? name.trim() : fullAddress.trim();

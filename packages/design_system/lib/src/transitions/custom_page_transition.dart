@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_transitions/go_transitions.dart';
 
-class CustomPageTransition extends GoTransition {
-  CustomPageTransition({super.settings, super.child})
+class CustomPageTransition({super.settings, super.child}) extends GoTransition {
+  this
     : super(
         builder: (route, context, animation, secondaryAnimation, child) {
           final colors = Theme.of(context).colorScheme;

@@ -27,8 +27,10 @@ class AppTransitions {
   }
 }
 
-class _SharedAxisPageTransition extends GoTransition {
-  _SharedAxisPageTransition({required SharedAxisTransitionType transitionType})
+class _SharedAxisPageTransition({
+  required SharedAxisTransitionType transitionType,
+}) extends GoTransition {
+  this
     : super(
         builder: (route, context, animation, secondaryAnimation, child) {
           return SharedAxisTransition(
@@ -42,8 +44,8 @@ class _SharedAxisPageTransition extends GoTransition {
       );
 }
 
-class _FadeThroughPageTransition extends GoTransition {
-  _FadeThroughPageTransition()
+class _FadeThroughPageTransition() extends GoTransition {
+  this
     : super(
         builder: (route, context, animation, secondaryAnimation, child) {
           return FadeThroughTransition(
@@ -56,9 +58,7 @@ class _FadeThroughPageTransition extends GoTransition {
       );
 }
 
-class _CustomPushTransitions {
-  const _CustomPushTransitions();
-
+class const _CustomPushTransitions() {
   GoTransition get toLeft => CustomPageTransition();
   GoTransition get toRight => CustomPageTransition();
   GoTransition get toTop => GoTransitions.slide;

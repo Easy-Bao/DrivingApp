@@ -47,11 +47,10 @@ class CustomToast {
   }
 }
 
-class _ToastWidget extends StatefulWidget {
+class const _ToastWidget({required this.message, required this.isError})
+    extends StatefulWidget {
   final String message;
   final bool isError;
-
-  const _ToastWidget({required this.message, required this.isError});
 
   @override
   State<_ToastWidget> createState() => _ToastWidgetState();

@@ -51,8 +51,8 @@ void main() {
   });
 }
 
-class _FeatureFailure extends Failure {
-  const _FeatureFailure() : super('Feature request failed.');
+class const _FeatureFailure() extends Failure {
+  this : super('Feature request failed.');
 }
 
 DioException _dioExceptionWithStatus(int statusCode, String message) {

@@ -21,9 +21,8 @@ abstract interface class RealtimeSocketConnector {
   });
 }
 
-final class IoRealtimeSocketConnector implements RealtimeSocketConnector {
-  const IoRealtimeSocketConnector();
-
+final class const IoRealtimeSocketConnector()
+    implements RealtimeSocketConnector {
   @override
   Future<RealtimeSocket> connect(
     Uri uri, {
@@ -33,9 +32,7 @@ final class IoRealtimeSocketConnector implements RealtimeSocketConnector {
   );
 }
 
-final class _IoRealtimeSocket implements RealtimeSocket {
-  const _IoRealtimeSocket(this._socket);
-
+final class const _IoRealtimeSocket(this._socket) implements RealtimeSocket {
   final WebSocket _socket;
 
   @override
@@ -45,40 +42,35 @@ final class _IoRealtimeSocket implements RealtimeSocket {
   Future<void> close() => _socket.close();
 }
 
-sealed class RealtimeConnectionState {
-  const RealtimeConnectionState();
-}
+sealed class const RealtimeConnectionState() {}
 
-final class RealtimeDisconnected extends RealtimeConnectionState {
-  const RealtimeDisconnected({this.reconnectIn});
-
+final class const RealtimeDisconnected({this.reconnectIn})
+    extends RealtimeConnectionState {
   final Duration? reconnectIn;
 }
 
-final class RealtimeConnecting extends RealtimeConnectionState {
-  const RealtimeConnecting(this.attempt);
-
+final class const RealtimeConnecting(this.attempt)
+    extends RealtimeConnectionState {
   final int attempt;
 }
 
-final class RealtimeConnected extends RealtimeConnectionState {
-  const RealtimeConnected();
-}
+final class const RealtimeConnected() extends RealtimeConnectionState {}
 
 /// Maintains one authenticated event stream for a signed-in app session.
 /// Snapshot refresh remains the caller's responsibility after a reconnect.
-final class RealtimeWebSocketClient {
-  RealtimeWebSocketClient({
-    required Uri uri,
-    required RealtimeTokenProvider tokenProvider,
-    RealtimeSocketConnector connector = const IoRealtimeSocketConnector(),
-    ReconnectDelay? reconnectDelay,
-    Random? random,
-  }) : _uri = uri,
-       _tokenProvider = tokenProvider,
-       _connector = connector,
-       _reconnectDelay = reconnectDelay ?? _defaultReconnectDelay,
-       _random = random ?? Random();
+final class RealtimeWebSocketClient({
+  required Uri uri,
+  required RealtimeTokenProvider tokenProvider,
+  RealtimeSocketConnector connector = const IoRealtimeSocketConnector(),
+  ReconnectDelay? reconnectDelay,
+  Random? random,
+}) {
+  this
+    : _uri = uri,
+      _tokenProvider = tokenProvider,
+      _connector = connector,
+      _reconnectDelay = reconnectDelay ?? _defaultReconnectDelay,
+      _random = random ?? Random();
 
   static const _maximumDuplicateIds = 256;
 

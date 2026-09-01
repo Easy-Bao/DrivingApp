@@ -5,7 +5,11 @@ typedef CacheClock = DateTime Function();
 /// Errors are never retained. Callers can also opt out of caching a resolved
 /// value, which is useful for nullable results where `null` means a transient
 /// failure.
-class AsyncTtlCache<K, V> {
+class AsyncTtlCache<K, V>({
+  required this.ttl,
+  required this.maxEntries,
+  CacheClock? clock,
+}) {
   final Duration ttl;
   final int maxEntries;
   final CacheClock _clock;
@@ -13,13 +17,10 @@ class AsyncTtlCache<K, V> {
   final Map<K, _AsyncTtlCacheRequest<V>> _inFlight = {};
   int _generation = 0;
 
-  AsyncTtlCache({
-    required this.ttl,
-    required this.maxEntries,
-    CacheClock? clock,
-  }) : assert(ttl > Duration.zero),
-       assert(maxEntries > 0),
-       _clock = clock ?? DateTime.now;
+  this
+    : assert(ttl > Duration.zero),
+      assert(maxEntries > 0),
+      _clock = clock ?? DateTime.now;
 
   Future<V> getOrLoad(
     K key,
@@ -89,15 +90,14 @@ class AsyncTtlCache<K, V> {
   }
 }
 
-class _AsyncTtlCacheEntry<V> {
+class const _AsyncTtlCacheEntry<V>({
+  required this.value,
+  required this.createdAt,
+}) {
   final V value;
   final DateTime createdAt;
-
-  const _AsyncTtlCacheEntry({required this.value, required this.createdAt});
 }
 
-class _AsyncTtlCacheRequest<V> {
+class const _AsyncTtlCacheRequest<V>(this.future) {
   final Future<V> future;
-
-  const _AsyncTtlCacheRequest(this.future);
 }

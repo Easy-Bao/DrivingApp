@@ -4,14 +4,12 @@ import 'package:design_system/src/theme/design_system_context.dart';
 
 enum AppLocationAccessTone { neutral, success, warning, error }
 
-class AppLocationAccessPresentation {
-  const AppLocationAccessPresentation({
-    required this.icon,
-    required this.title,
-    required this.message,
-    required this.tone,
-  });
-
+class const AppLocationAccessPresentation({
+  required this.icon,
+  required this.title,
+  required this.message,
+  required this.tone,
+}) {
   final IconData icon;
   final String title;
   final String message;
@@ -19,17 +17,15 @@ class AppLocationAccessPresentation {
 }
 
 /// A state-agnostic location access page shared by both app roots.
-class AppLocationAccessStatusPage extends StatelessWidget {
-  const AppLocationAccessStatusPage({
-    super.key,
-    required this.presentation,
-    required this.onBack,
-    this.primaryActionLabel,
-    this.onPrimaryAction,
-    this.onRetry,
-    this.audience = 'pickups and active trip tracking',
-  });
-
+class const AppLocationAccessStatusPage({
+  super.key,
+  required this.presentation,
+  required this.onBack,
+  this.primaryActionLabel,
+  this.onPrimaryAction,
+  this.onRetry,
+  this.audience = 'pickups and active trip tracking',
+}) extends StatelessWidget {
   final AppLocationAccessPresentation presentation;
   final VoidCallback onBack;
   final String? primaryActionLabel;
@@ -142,13 +138,11 @@ class AppLocationAccessStatusPage extends StatelessWidget {
   }
 }
 
-class _LocationReason extends StatelessWidget {
-  const _LocationReason({
-    required this.icon,
-    required this.title,
-    required this.message,
-  });
-
+class const _LocationReason({
+  required this.icon,
+  required this.title,
+  required this.message,
+}) extends StatelessWidget {
   final IconData icon;
   final String title;
   final String message;

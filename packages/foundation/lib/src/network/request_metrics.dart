@@ -1,13 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
 
-final class HttpRequestMetric extends Equatable {
-  const HttpRequestMetric({
-    required this.method,
-    required this.path,
-    required this.count,
-  });
-
+final class const HttpRequestMetric({
+  required this.method,
+  required this.path,
+  required this.count,
+}) extends Equatable {
   final String method;
   final String path;
   final int count;
@@ -18,9 +16,7 @@ final class HttpRequestMetric extends Equatable {
 
 /// Captures development-time request volume without retaining query values or
 /// path identifiers that could expose account, ride, or location data.
-final class HttpRequestMetrics {
-  HttpRequestMetrics();
-
+final class HttpRequestMetrics() {
   static final HttpRequestMetrics instance = HttpRequestMetrics();
 
   final Map<({String method, String path}), int> _counts =
@@ -59,9 +55,7 @@ final class HttpRequestMetrics {
   void clear() => _counts.clear();
 }
 
-final class RequestMetricsInterceptor extends Interceptor {
-  RequestMetricsInterceptor(this._metrics);
-
+final class RequestMetricsInterceptor(this._metrics) extends Interceptor {
   final HttpRequestMetrics _metrics;
 
   @override

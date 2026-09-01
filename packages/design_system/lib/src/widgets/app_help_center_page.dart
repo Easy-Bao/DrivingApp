@@ -2,29 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:design_system/src/theme/design_system_context.dart';
 
-class AppHelpTopic {
-  const AppHelpTopic({
-    required this.category,
-    required this.question,
-    required this.answer,
-  });
-
+class const AppHelpTopic({
+  required this.category,
+  required this.question,
+  required this.answer,
+}) {
   final String category;
   final String question;
   final String answer;
 }
 
 /// A searchable, role-configured help center without placeholder actions.
-class AppHelpCenterPage extends StatefulWidget {
-  const AppHelpCenterPage({
-    super.key,
-    required this.topics,
-    required this.onBack,
-    this.description = 'Find answers for common BaoRide questions.',
-    this.onEmailSupport,
-    this.onCallSupport,
-  });
-
+class const AppHelpCenterPage({
+  super.key,
+  required this.topics,
+  required this.onBack,
+  this.description = 'Find answers for common BaoRide questions.',
+  this.onEmailSupport,
+  this.onCallSupport,
+}) extends StatefulWidget {
   final List<AppHelpTopic> topics;
   final VoidCallback onBack;
   final String description;
@@ -181,13 +177,11 @@ class _AppHelpCenterPageState extends State<AppHelpCenterPage> {
   }
 }
 
-class _CategoryChip extends StatelessWidget {
-  const _CategoryChip({
-    required this.label,
-    required this.isSelected,
-    required this.onSelected,
-  });
-
+class const _CategoryChip({
+  required this.label,
+  required this.isSelected,
+  required this.onSelected,
+}) extends StatelessWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onSelected;
@@ -205,9 +199,7 @@ class _CategoryChip extends StatelessWidget {
   }
 }
 
-class _HelpTopicRow extends StatelessWidget {
-  const _HelpTopicRow({required this.topic});
-
+class const _HelpTopicRow({required this.topic}) extends StatelessWidget {
   final AppHelpTopic topic;
 
   @override
@@ -239,9 +231,7 @@ class _HelpTopicRow extends StatelessWidget {
   }
 }
 
-class _EmptyHelpSearch extends StatelessWidget {
-  const _EmptyHelpSearch();
-
+class const _EmptyHelpSearch() extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(

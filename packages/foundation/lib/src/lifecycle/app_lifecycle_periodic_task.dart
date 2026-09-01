@@ -7,7 +7,13 @@ typedef AppLifecycleTaskCallback = FutureOr<void> Function();
 
 /// Runs one periodic foreground task without creating another platform
 /// lifecycle observer in the feature that owns the work.
-final class AppLifecyclePeriodicTask {
+final class AppLifecyclePeriodicTask({
+  required AppLifecycleCoordinator lifecycleCoordinator,
+  required Duration interval,
+  required AppLifecycleTaskCallback onTick,
+  bool runImmediately = false,
+  bool runImmediatelyOnResume = true,
+}) {
   final AppLifecycleCoordinator _lifecycleCoordinator;
   final Duration _interval;
   final AppLifecycleTaskCallback _onTick;
@@ -19,18 +25,13 @@ final class AppLifecyclePeriodicTask {
   bool _started = false;
   bool _isRunning = false;
 
-  AppLifecyclePeriodicTask({
-    required AppLifecycleCoordinator lifecycleCoordinator,
-    required Duration interval,
-    required AppLifecycleTaskCallback onTick,
-    bool runImmediately = false,
-    bool runImmediatelyOnResume = true,
-  }) : assert(interval > Duration.zero),
-       _lifecycleCoordinator = lifecycleCoordinator,
-       _interval = interval,
-       _onTick = onTick,
-       _runImmediately = runImmediately,
-       _runImmediatelyOnResume = runImmediatelyOnResume;
+  this
+    : assert(interval > Duration.zero),
+      _lifecycleCoordinator = lifecycleCoordinator,
+      _interval = interval,
+      _onTick = onTick,
+      _runImmediately = runImmediately,
+      _runImmediatelyOnResume = runImmediatelyOnResume;
 
   void start() {
     if (_started) return;

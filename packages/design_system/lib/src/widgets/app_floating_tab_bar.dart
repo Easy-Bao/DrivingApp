@@ -11,11 +11,9 @@ typedef AppTabIconBuilder = Widget Function(
   Color color,
 );
 
-class AppTabDestination {
+class const AppTabDestination({required this.icon, required this.label}) {
   final IconData icon;
   final String label;
-
-  const AppTabDestination({required this.icon, required this.label});
 }
 
 /// Shared floating navigation surface used by both authenticated clients.
@@ -23,7 +21,16 @@ class AppTabDestination {
 /// The tab bar owns the visual contract—slot sizing, active indicator
 /// geometry, selected color interpolation, and touch semantics—while an app
 /// may provide an icon builder for a destination-specific badge.
-class AppFloatingTabBar extends StatelessWidget {
+class const AppFloatingTabBar({
+  super.key,
+  required this.destinations,
+  required this.selectedIndex,
+  required this.onDestinationSelected,
+  required this.itemKeyPrefix,
+  required this.indicatorKey,
+  this.pagePosition,
+  this.iconBuilder,
+}) extends StatelessWidget {
   static const animationDuration = Duration(milliseconds: 280);
   static const height = AppDesignTokens.navigationBarHeight;
 
@@ -35,16 +42,7 @@ class AppFloatingTabBar extends StatelessWidget {
   final String itemKeyPrefix;
   final String indicatorKey;
 
-  const AppFloatingTabBar({
-    super.key,
-    required this.destinations,
-    required this.selectedIndex,
-    required this.onDestinationSelected,
-    required this.itemKeyPrefix,
-    required this.indicatorKey,
-    this.pagePosition,
-    this.iconBuilder,
-  }) : assert(destinations.length > 0);
+  this : assert(destinations.length > 0);
 
   @override
   Widget build(BuildContext context) {
@@ -132,7 +130,15 @@ class AppFloatingTabBar extends StatelessWidget {
   }
 }
 
-class _AppFloatingTabItem extends StatelessWidget {
+class const _AppFloatingTabItem({
+  required this.destination,
+  required this.index,
+  required this.isSelected,
+  required this.pagePosition,
+  required this.itemKeyPrefix,
+  required this.iconBuilder,
+  required this.onTap,
+}) extends StatelessWidget {
   final AppTabDestination destination;
   final int index;
   final bool isSelected;
@@ -140,16 +146,6 @@ class _AppFloatingTabItem extends StatelessWidget {
   final String itemKeyPrefix;
   final AppTabIconBuilder? iconBuilder;
   final ValueChanged<int> onTap;
-
-  const _AppFloatingTabItem({
-    required this.destination,
-    required this.index,
-    required this.isSelected,
-    required this.pagePosition,
-    required this.itemKeyPrefix,
-    required this.iconBuilder,
-    required this.onTap,
-  });
 
   @override
   Widget build(BuildContext context) {

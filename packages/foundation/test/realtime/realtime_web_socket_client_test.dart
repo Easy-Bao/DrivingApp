@@ -60,9 +60,7 @@ String _eventJson(String id) =>
   "payload":{"status":"accepted"}
 }''';
 
-final class _Connector implements RealtimeSocketConnector {
-  _Connector(this.socket);
-
+final class _Connector(this.socket) implements RealtimeSocketConnector {
   final RealtimeSocket socket;
   Map<String, String>? headers;
 

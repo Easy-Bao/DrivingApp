@@ -2,22 +2,20 @@ import 'package:flutter/material.dart';
 
 /// Product-specific status colors that are not represented by [ColorScheme].
 @immutable
-class EasyRideSemanticColors extends ThemeExtension<EasyRideSemanticColors> {
+class const EasyRideSemanticColors({
+  required this.success,
+  required this.onSuccess,
+  required this.warning,
+  required this.onWarning,
+  required this.rating,
+  required this.warmAccent,
+}) extends ThemeExtension<EasyRideSemanticColors> {
   final Color success;
   final Color onSuccess;
   final Color warning;
   final Color onWarning;
   final Color rating;
   final Color warmAccent;
-
-  const EasyRideSemanticColors({
-    required this.success,
-    required this.onSuccess,
-    required this.warning,
-    required this.onWarning,
-    required this.rating,
-    required this.warmAccent,
-  });
 
   static const defaults = EasyRideSemanticColors(
     success: Color(0xFF198754),

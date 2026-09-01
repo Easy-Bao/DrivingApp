@@ -20,22 +20,20 @@ extension RouteProfileApi on RouteProfile {
   };
 }
 
-class Route extends Equatable {
+class const Route({
+  required this.polylinePoints,
+  required this.distanceKm,
+  required this.durationSeconds,
+  this.summary = '',
+  this.preference = 'fastest',
+  this.profile = 'driving',
+}) extends Equatable {
   final List<List<double>> polylinePoints;
   final double distanceKm;
   final int durationSeconds;
   final String summary;
   final String preference;
   final String profile;
-
-  const Route({
-    required this.polylinePoints,
-    required this.distanceKm,
-    required this.durationSeconds,
-    this.summary = '',
-    this.preference = 'fastest',
-    this.profile = 'driving',
-  });
 
   factory Route.fromJson(Map<String, dynamic> json) {
     final rawPoints = _readPointCollection(json);

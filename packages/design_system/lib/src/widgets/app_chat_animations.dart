@@ -2,21 +2,19 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-class AppChatMessageTransition extends StatefulWidget {
+class const AppChatMessageTransition({
+  super.key,
+  required this.child,
+  required this.animate,
+  required this.isOutgoing,
+  this.duration = defaultDuration,
+}) extends StatefulWidget {
   static const defaultDuration = Duration(milliseconds: 240);
 
   final Widget child;
   final bool animate;
   final bool isOutgoing;
   final Duration duration;
-
-  const AppChatMessageTransition({
-    super.key,
-    required this.child,
-    required this.animate,
-    required this.isOutgoing,
-    this.duration = defaultDuration,
-  });
 
   @override
   State<AppChatMessageTransition> createState() =>
@@ -74,7 +72,13 @@ class _AppChatMessageTransitionState extends State<AppChatMessageTransition>
   }
 }
 
-class AppChatTypingIndicator extends StatefulWidget {
+class const AppChatTypingIndicator({
+  super.key,
+  required this.bubbleColor,
+  required this.dotColor,
+  required this.semanticLabel,
+  this.borderRadius = _defaultBubbleRadius,
+}) extends StatefulWidget {
   static const _defaultBubbleRadius = BorderRadius.only(
     topLeft: Radius.circular(20),
     topRight: Radius.circular(20),
@@ -86,14 +90,6 @@ class AppChatTypingIndicator extends StatefulWidget {
   final Color dotColor;
   final String semanticLabel;
   final BorderRadius borderRadius;
-
-  const AppChatTypingIndicator({
-    super.key,
-    required this.bubbleColor,
-    required this.dotColor,
-    required this.semanticLabel,
-    this.borderRadius = _defaultBubbleRadius,
-  });
 
   @override
   State<AppChatTypingIndicator> createState() => _AppChatTypingIndicatorState();
@@ -187,21 +183,19 @@ class _AppChatTypingIndicatorState extends State<AppChatTypingIndicator>
 /// Animates the small delivery acknowledgement without changing the bubble's
 /// layout. The message entrance and this status transition can therefore run
 /// together when the server echoes an accepted message.
-class AppChatDeliveryIndicator extends StatelessWidget {
+class const AppChatDeliveryIndicator({
+  super.key,
+  required this.isSending,
+  required this.isDelivered,
+  required this.isFailed,
+  required this.color,
+  this.size = 13,
+}) extends StatelessWidget {
   final bool isSending;
   final bool isDelivered;
   final bool isFailed;
   final Color color;
   final double size;
-
-  const AppChatDeliveryIndicator({
-    super.key,
-    required this.isSending,
-    required this.isDelivered,
-    required this.isFailed,
-    required this.color,
-    this.size = 13,
-  });
 
   @override
   Widget build(BuildContext context) {

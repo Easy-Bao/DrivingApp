@@ -3,17 +3,13 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
-class LatLng {
+class const LatLng(this.latitude, this.longitude) {
   final double latitude;
   final double longitude;
-
-  const LatLng(this.latitude, this.longitude);
 }
 
-class AppMapController {
+class const AppMapController(this.native) {
   final mapbox.MapboxMap native;
-
-  const AppMapController(this.native);
 }
 
 class MapCameraService {

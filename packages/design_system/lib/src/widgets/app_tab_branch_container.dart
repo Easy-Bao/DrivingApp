@@ -9,7 +9,16 @@ import 'package:flutter/material.dart';
 /// route index and a branch callback, while this implementation owns the
 /// gesture lifecycle and continuously reports the page position used by the
 /// active-tab indicator.
-class AppTabBranchContainer extends StatefulWidget {
+class const AppTabBranchContainer({
+  super.key,
+  required this.currentIndex,
+  required this.children,
+  required this.onBranchChanged,
+  required this.onNavigationSettled,
+  required this.onPagePositionChanged,
+  required this.backgroundColor,
+  required this.pageViewKey,
+}) extends StatefulWidget {
   static const pageAnimationDuration = Duration(milliseconds: 280);
 
   final int currentIndex;
@@ -20,16 +29,7 @@ class AppTabBranchContainer extends StatefulWidget {
   final Color backgroundColor;
   final String pageViewKey;
 
-  const AppTabBranchContainer({
-    super.key,
-    required this.currentIndex,
-    required this.children,
-    required this.onBranchChanged,
-    required this.onNavigationSettled,
-    required this.onPagePositionChanged,
-    required this.backgroundColor,
-    required this.pageViewKey,
-  }) : assert(children.length > 0);
+  this : assert(children.length > 0);
 
   @override
   State<AppTabBranchContainer> createState() => _AppTabBranchContainerState();

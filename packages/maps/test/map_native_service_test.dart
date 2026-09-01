@@ -286,10 +286,8 @@ void main() {
   });
 }
 
-class _MockHttpClientAdapter implements HttpClientAdapter {
+class _MockHttpClientAdapter(this._handler) implements HttpClientAdapter {
   final ResponseBody Function(RequestOptions options) _handler;
-
-  _MockHttpClientAdapter(this._handler);
 
   @override
   Future<ResponseBody> fetch(

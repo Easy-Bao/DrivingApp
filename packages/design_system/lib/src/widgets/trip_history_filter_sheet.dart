@@ -47,10 +47,9 @@ Future<TripHistoryFilter?> showTripHistoryFilterSheet({
   );
 }
 
-class TripHistoryFilterSheet extends StatelessWidget {
+class const TripHistoryFilterSheet({super.key, required this.selectedFilter})
+    extends StatelessWidget {
   final TripHistoryFilter selectedFilter;
-
-  const TripHistoryFilterSheet({super.key, required this.selectedFilter});
 
   @override
   Widget build(BuildContext context) {
@@ -174,11 +173,12 @@ class _FilterMenuHeader extends StatelessWidget {
   }
 }
 
-class _FilterMenuOption extends StatelessWidget {
+class const _FilterMenuOption({
+  required this.filter,
+  required this.selectedFilter,
+}) extends StatelessWidget {
   final TripHistoryFilter filter;
   final TripHistoryFilter selectedFilter;
-
-  const _FilterMenuOption({required this.filter, required this.selectedFilter});
 
   @override
   Widget build(BuildContext context) {
@@ -251,20 +251,18 @@ class _FilterMenuOption extends StatelessWidget {
   }
 }
 
-class _FilterOption extends StatelessWidget {
+class const _FilterOption({
+  required this.filter,
+  required this.selectedFilter,
+  required this.icon,
+  required this.title,
+  required this.description,
+}) extends StatelessWidget {
   final TripHistoryFilter filter;
   final TripHistoryFilter selectedFilter;
   final IconData icon;
   final String title;
   final String description;
-
-  const _FilterOption({
-    required this.filter,
-    required this.selectedFilter,
-    required this.icon,
-    required this.title,
-    required this.description,
-  });
 
   @override
   Widget build(BuildContext context) {
