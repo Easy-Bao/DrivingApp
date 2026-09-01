@@ -45,7 +45,7 @@ final class const RealtimeScope({
       _isBlank(passengerId) &&
       !driverPool;
 
-  factory RealtimeScope.fromJson(Map<String, dynamic> json) {
+  factory fromJson(Map<String, dynamic> json) {
     final scope = RealtimeScope(
       rideId: _optionalIdentifier(json['ride_id'], 'ride_id'),
       roomId: _optionalIdentifier(json['room_id'], 'room_id'),
@@ -96,7 +96,7 @@ final class RealtimeEnvelope({
   final RealtimeScope scope;
   final Map<String, dynamic> payload;
 
-  factory RealtimeEnvelope.fromJson(Map<String, dynamic> json) {
+  factory fromJson(Map<String, dynamic> json) {
     final rawPayload = json['payload'];
     final rawScope = json['scope'];
     if (rawPayload is! Map || rawScope is! Map) {
@@ -152,22 +152,20 @@ final class RealtimeEnvelope({
 sealed class const RealtimeEvent(this.envelope) extends Equatable {
   final RealtimeEnvelope envelope;
 
-  factory RealtimeEvent.fromEnvelope(RealtimeEnvelope envelope) =>
-      switch (envelope.type) {
-        RealtimeEventType.rideOfferCreated => RideOfferCreatedEvent(envelope),
-        RealtimeEventType.rideOfferUpdated => RideOfferUpdatedEvent(envelope),
-        RealtimeEventType.rideMatched => RideMatchedEvent(envelope),
-        RealtimeEventType.rideStatusChanged => RideStatusChangedEvent(envelope),
-        RealtimeEventType.driverLocationUpdated => DriverLocationUpdatedEvent(
-          envelope,
-        ),
-        RealtimeEventType.passengerLocationUpdated =>
-          PassengerLocationUpdatedEvent(envelope),
-        RealtimeEventType.chatMessageCreated => ChatMessageCreatedEvent(
-          envelope,
-        ),
-        RealtimeEventType.presenceUpdated => PresenceUpdatedEvent(envelope),
-      };
+  factory fromEnvelope(RealtimeEnvelope envelope) => switch (envelope.type) {
+    RealtimeEventType.rideOfferCreated => RideOfferCreatedEvent(envelope),
+    RealtimeEventType.rideOfferUpdated => RideOfferUpdatedEvent(envelope),
+    RealtimeEventType.rideMatched => RideMatchedEvent(envelope),
+    RealtimeEventType.rideStatusChanged => RideStatusChangedEvent(envelope),
+    RealtimeEventType.driverLocationUpdated => DriverLocationUpdatedEvent(
+      envelope,
+    ),
+    RealtimeEventType.passengerLocationUpdated => PassengerLocationUpdatedEvent(
+      envelope,
+    ),
+    RealtimeEventType.chatMessageCreated => ChatMessageCreatedEvent(envelope),
+    RealtimeEventType.presenceUpdated => PresenceUpdatedEvent(envelope),
+  };
 
   @override
   List<Object?> get props => [envelope];

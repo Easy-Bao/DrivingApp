@@ -28,7 +28,7 @@ class const AppFailure({
   final Object? technicalLog;
   final StackTrace? stackTrace;
 
-  factory AppFailure.fromException(Object error, [StackTrace? stackTrace]) {
+  factory fromException(Object error, [StackTrace? stackTrace]) {
     _logTechnicalError(error, stackTrace);
 
     AppFailure createFailure({

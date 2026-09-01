@@ -7,7 +7,7 @@ class const OffsetPage<T>({
   final bool hasMore;
   final int? nextOffset;
 
-  factory OffsetPage.fromJson(
+  factory fromJson(
     Map<String, dynamic> json,
     T Function(Object? value) decodeItem,
   ) {

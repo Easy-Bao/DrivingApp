@@ -21,9 +21,7 @@ const _defaultCacheMessage =
 /// Data sources may contain backend-provided details, but those details must
 /// stay in technical logs. Repositories use this mapper before a failure can
 /// cross into a BLoC or view.
-class FailureMapper {
-  FailureMapper._();
-
+class FailureMapper._() {
   static Failure fromException(
     Object error, {
     String serverMessage = _defaultServerMessage,

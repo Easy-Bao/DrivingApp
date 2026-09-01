@@ -19,9 +19,7 @@ String parseString(Object? value, [String defaultValue = '']) {
   return value.toString();
 }
 
-abstract class SafeParse {
-  SafeParse._();
-
+abstract class SafeParse._() {
   String get componentName => 'safe-parse';
 
   static double toDouble(Object? value, [double defaultValue = 0.0]) =>

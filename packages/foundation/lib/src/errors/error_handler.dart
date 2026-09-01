@@ -1,8 +1,6 @@
 import 'package:foundation/src/errors/app_failure.dart';
 
-class ErrorHandler {
-  ErrorHandler._();
-
+class ErrorHandler._() {
   static AppFailure getAppFailure(Object error, [StackTrace? stackTrace]) {
     return AppFailure.fromException(error, stackTrace);
   }

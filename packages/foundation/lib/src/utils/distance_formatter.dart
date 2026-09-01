@@ -1,6 +1,4 @@
-class DistanceFormatter {
-  DistanceFormatter._();
-
+class DistanceFormatter._() {
   static String fromKilometers(
     num? distanceInKilometers, {
     String unavailableLabel = '—',

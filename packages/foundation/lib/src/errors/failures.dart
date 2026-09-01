@@ -20,6 +20,5 @@ class const ServerFailure([
   super.message = 'An unexpected server error occurred.',
   final int? statusCode,
 ]) extends Failure {
-  const factory ServerFailure.withStatusCode(String message, int statusCode) =
-      ServerFailure;
+  const factory withStatusCode(String message, int statusCode) = ServerFailure;
 }

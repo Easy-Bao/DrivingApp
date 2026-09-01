@@ -1,7 +1,5 @@
-class RoutePayload {
-  RoutePayload._(this._values, this._queryParameters);
-
-  factory RoutePayload.from({
+class RoutePayload._(this._values, this._queryParameters) {
+  factory from({
     Object? extra,
     Map<String, String> queryParameters = const {},
   }) {
