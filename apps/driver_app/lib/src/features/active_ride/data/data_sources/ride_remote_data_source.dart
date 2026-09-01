@@ -13,10 +13,8 @@ abstract class RideRemoteDataSource {
   Future<Map<String, dynamic>> settleCash(String rideId);
 }
 
-class RideRemoteDataSourceImpl implements RideRemoteDataSource {
+class RideRemoteDataSourceImpl(this._dio) implements RideRemoteDataSource {
   final Dio _dio;
-
-  RideRemoteDataSourceImpl(this._dio);
 
   @override
   Future<bool> acceptRide({

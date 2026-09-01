@@ -9,16 +9,14 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:design_system/design_system.dart';
 
-class DriverSettingsPage extends StatelessWidget {
-  const DriverSettingsPage({
-    super.key,
-    this.onBack,
-    this.onLocationTap,
-    this.onHelpCenterTap,
-    this.onTermsTap,
-    this.onAboutTap,
-  });
-
+class const DriverSettingsPage({
+  super.key,
+  this.onBack,
+  this.onLocationTap,
+  this.onHelpCenterTap,
+  this.onTermsTap,
+  this.onAboutTap,
+}) extends StatelessWidget {
   final VoidCallback? onBack;
   final VoidCallback? onLocationTap;
   final VoidCallback? onHelpCenterTap;

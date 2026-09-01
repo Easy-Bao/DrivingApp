@@ -16,7 +16,16 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class InTransitPage extends StatefulWidget {
+class const InTransitPage({
+  super.key,
+  required this.pickup,
+  required this.dropoff,
+  required this.distance,
+  required this.fare,
+  required this.duration,
+  required this.rideRepository,
+  required this.lifecycleCoordinator,
+}) extends StatefulWidget {
   final String pickup;
   final String dropoff;
   final String duration;
@@ -24,17 +33,6 @@ class InTransitPage extends StatefulWidget {
   final double fare;
   final DriverRideRepository rideRepository;
   final AppLifecycleCoordinator lifecycleCoordinator;
-
-  const InTransitPage({
-    super.key,
-    required this.pickup,
-    required this.dropoff,
-    required this.distance,
-    required this.fare,
-    required this.duration,
-    required this.rideRepository,
-    required this.lifecycleCoordinator,
-  });
 
   @override
   State<InTransitPage> createState() => _InTransitPageState();

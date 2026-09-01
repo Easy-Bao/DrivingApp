@@ -1,11 +1,10 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:driver_app/src/infrastructure/session/driver_storage_keys.dart';
 
-class DriverSessionStore {
+class DriverSessionStore({FlutterSecureStorage? storage}) {
   final FlutterSecureStorage _storage;
 
-  DriverSessionStore({FlutterSecureStorage? storage})
-    : _storage = storage ?? const FlutterSecureStorage();
+  this : _storage = storage ?? const FlutterSecureStorage();
 
   Future<void> saveToken(String token) async {
     await _storage.write(key: DriverStorageKeys.jwtToken, value: token);

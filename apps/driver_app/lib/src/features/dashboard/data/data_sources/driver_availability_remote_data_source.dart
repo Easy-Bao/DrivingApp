@@ -7,11 +7,9 @@ abstract class DriverAvailabilityRemoteDataSource {
   });
 }
 
-class DriverAvailabilityRemoteDataSourceImpl
+class DriverAvailabilityRemoteDataSourceImpl(this._dio)
     implements DriverAvailabilityRemoteDataSource {
   final Dio _dio;
-
-  DriverAvailabilityRemoteDataSourceImpl(this._dio);
 
   @override
   Future<void> updateOnlineStatus({

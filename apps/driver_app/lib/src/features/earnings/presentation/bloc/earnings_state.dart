@@ -1,15 +1,13 @@
 import 'package:equatable/equatable.dart';
 
-class DriverEarningsState extends Equatable {
+class const DriverEarningsState({
+  this.isLoading = false,
+  this.data,
+  this.errorMessage,
+}) extends Equatable {
   final bool isLoading;
   final Map<String, dynamic>? data;
   final String? errorMessage;
-
-  const DriverEarningsState({
-    this.isLoading = false,
-    this.data,
-    this.errorMessage,
-  });
 
   DriverEarningsState copyWith({
     bool? isLoading,

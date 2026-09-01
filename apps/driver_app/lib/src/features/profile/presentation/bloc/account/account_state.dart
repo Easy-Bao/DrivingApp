@@ -1,18 +1,16 @@
 import 'package:driver_app/src/features/profile/domain/entities/driver_account_snapshot.dart';
 import 'package:equatable/equatable.dart';
 
-class DriverAccountState extends Equatable {
+class const DriverAccountState({
+  this.account = const DriverAccountSnapshot(),
+  this.isLoading = false,
+  this.isSaving = false,
+  this.errorMessage,
+}) extends Equatable {
   final DriverAccountSnapshot account;
   final bool isLoading;
   final bool isSaving;
   final String? errorMessage;
-
-  const DriverAccountState({
-    this.account = const DriverAccountSnapshot(),
-    this.isLoading = false,
-    this.isSaving = false,
-    this.errorMessage,
-  });
 
   DriverAccountState copyWith({
     DriverAccountSnapshot? account,

@@ -10,9 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-class _FakeDriverProfileRepository implements DriverProfileRepository {
-  _FakeDriverProfileRepository(this.account);
-
+class _FakeDriverProfileRepository(this.account)
+    implements DriverProfileRepository {
   DriverAccountSnapshot account;
 
   @override

@@ -67,10 +67,8 @@ void main() {
   });
 }
 
-class _FakeDriverLocationAccessRepository
+class _FakeDriverLocationAccessRepository(this.currentAccessState)
     implements DriverLocationAccessRepository {
-  _FakeDriverLocationAccessRepository(this.currentAccessState);
-
   final StreamController<LocationAccessState> _changes =
       StreamController<LocationAccessState>.broadcast();
 

@@ -13,10 +13,8 @@ abstract interface class DriverAuthRemoteDataSource {
   });
 }
 
-final class DriverAuthRemoteDataSourceImpl
+final class DriverAuthRemoteDataSourceImpl(this._dio)
     implements DriverAuthRemoteDataSource {
-  DriverAuthRemoteDataSourceImpl(this._dio);
-
   final Dio _dio;
 
   @override

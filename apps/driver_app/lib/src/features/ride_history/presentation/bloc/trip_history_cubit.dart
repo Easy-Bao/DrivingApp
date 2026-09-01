@@ -4,18 +4,19 @@ import 'package:driver_app/src/features/ride_history/presentation/bloc/trip_hist
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 
-class DriverTripHistoryCubit extends Cubit<DriverTripHistoryState> {
+class DriverTripHistoryCubit({
+  required DriverRideHistoryRepository repository,
+  required DriverSessionStore sessionService,
+}) extends Cubit<DriverTripHistoryState> {
   static const int pageSize = 25;
 
   final DriverRideHistoryRepository _repository;
   final DriverSessionStore _sessionService;
 
-  DriverTripHistoryCubit({
-    required DriverRideHistoryRepository repository,
-    required DriverSessionStore sessionService,
-  }) : _repository = repository,
-       _sessionService = sessionService,
-       super(const DriverTripHistoryState());
+  this
+    : _repository = repository,
+      _sessionService = sessionService,
+      super(const DriverTripHistoryState());
 
   Future<void> load() => _loadTrips();
 

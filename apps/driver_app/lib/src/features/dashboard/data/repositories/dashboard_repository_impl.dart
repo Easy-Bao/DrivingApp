@@ -18,7 +18,16 @@ import 'package:fpdart/fpdart.dart';
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final class DashboardRepositoryImpl implements DashboardRepository {
+final class DashboardRepositoryImpl({
+  required DriverPerformanceRepository performanceRepository,
+  required DriverRideHistoryRepository rideHistoryRepository,
+  required DriverAvailabilityRemoteDataSource availabilityDataSource,
+  required RideOfferRemoteDataSource rideOfferDataSource,
+  required DriverRideRepository rideRepository,
+  required DriverSessionStore sessionService,
+  required SharedPreferences preferences,
+  DriverBackgroundTelemetry? backgroundTelemetryService,
+}) implements DashboardRepository {
   final DriverPerformanceRepository _performanceRepository;
   final DriverRideHistoryRepository _rideHistoryRepository;
   final DriverAvailabilityRemoteDataSource _availabilityDataSource;
@@ -28,23 +37,15 @@ final class DashboardRepositoryImpl implements DashboardRepository {
   final SharedPreferences _preferences;
   final DriverBackgroundTelemetry? _backgroundTelemetryService;
 
-  DashboardRepositoryImpl({
-    required DriverPerformanceRepository performanceRepository,
-    required DriverRideHistoryRepository rideHistoryRepository,
-    required DriverAvailabilityRemoteDataSource availabilityDataSource,
-    required RideOfferRemoteDataSource rideOfferDataSource,
-    required DriverRideRepository rideRepository,
-    required DriverSessionStore sessionService,
-    required SharedPreferences preferences,
-    DriverBackgroundTelemetry? backgroundTelemetryService,
-  }) : _performanceRepository = performanceRepository,
-       _rideHistoryRepository = rideHistoryRepository,
-       _availabilityDataSource = availabilityDataSource,
-       _rideOfferDataSource = rideOfferDataSource,
-       _rideRepository = rideRepository,
-       _sessionService = sessionService,
-       _preferences = preferences,
-       _backgroundTelemetryService = backgroundTelemetryService;
+  this
+    : _performanceRepository = performanceRepository,
+      _rideHistoryRepository = rideHistoryRepository,
+      _availabilityDataSource = availabilityDataSource,
+      _rideOfferDataSource = rideOfferDataSource,
+      _rideRepository = rideRepository,
+      _sessionService = sessionService,
+      _preferences = preferences,
+      _backgroundTelemetryService = backgroundTelemetryService;
 
   Failure _mapExceptionToFailure(Object error) => switch (error) {
     final DioException exception => _mapDioFailure(exception),

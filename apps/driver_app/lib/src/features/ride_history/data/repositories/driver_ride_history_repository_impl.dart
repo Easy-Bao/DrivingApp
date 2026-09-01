@@ -5,11 +5,10 @@ import 'package:driver_app/src/features/ride_history/domain/repositories/driver_
 import 'package:fpdart/fpdart.dart';
 import 'package:foundation/foundation.dart';
 
-final class DriverRideHistoryRepositoryImpl
-    implements DriverRideHistoryRepository {
-  DriverRideHistoryRepositoryImpl({
-    required DriverRideHistoryRemoteDataSource dataSource,
-  }) : _dataSource = dataSource;
+final class DriverRideHistoryRepositoryImpl({
+  required DriverRideHistoryRemoteDataSource dataSource,
+}) implements DriverRideHistoryRepository {
+  this : _dataSource = dataSource;
 
   final DriverRideHistoryRemoteDataSource _dataSource;
 

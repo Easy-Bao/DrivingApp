@@ -4,10 +4,8 @@ abstract class DriverEarningsRemoteDataSource {
   Future<Map<String, dynamic>> fetchEarningsSummary(String driverId);
 }
 
-class DriverEarningsRemoteDataSourceImpl
+class DriverEarningsRemoteDataSourceImpl(this._dio)
     implements DriverEarningsRemoteDataSource {
-  DriverEarningsRemoteDataSourceImpl(this._dio);
-
   final Dio _dio;
 
   @override

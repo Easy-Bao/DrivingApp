@@ -3,7 +3,20 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class WaitingPassengerPanelWidget extends StatelessWidget {
+class const WaitingPassengerPanelWidget({
+  super.key,
+  required this.pickup,
+  required this.dropoff,
+  required this.passengerName,
+  required this.waitFormatted,
+  required this.fare,
+  this.isStartingTrip = false,
+  this.includeStartTripButton = true,
+  required this.unreadChatMessagesCount,
+  required this.onStartTripPressed,
+  required this.onCallPressed,
+  required this.onChatPressed,
+}) extends StatelessWidget {
   final String pickup;
   final String dropoff;
   final String passengerName;
@@ -15,21 +28,6 @@ class WaitingPassengerPanelWidget extends StatelessWidget {
   final VoidCallback onStartTripPressed;
   final VoidCallback onCallPressed;
   final VoidCallback onChatPressed;
-
-  const WaitingPassengerPanelWidget({
-    super.key,
-    required this.pickup,
-    required this.dropoff,
-    required this.passengerName,
-    required this.waitFormatted,
-    required this.fare,
-    this.isStartingTrip = false,
-    this.includeStartTripButton = true,
-    required this.unreadChatMessagesCount,
-    required this.onStartTripPressed,
-    required this.onCallPressed,
-    required this.onChatPressed,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -229,15 +227,13 @@ class WaitingPassengerPanelWidget extends StatelessWidget {
   }
 }
 
-class WaitingPassengerStartTripButton extends StatelessWidget {
+class const WaitingPassengerStartTripButton({
+  super.key,
+  required this.isStartingTrip,
+  required this.onPressed,
+}) extends StatelessWidget {
   final bool isStartingTrip;
   final VoidCallback onPressed;
-
-  const WaitingPassengerStartTripButton({
-    super.key,
-    required this.isStartingTrip,
-    required this.onPressed,
-  });
 
   @override
   Widget build(BuildContext context) {

@@ -7,12 +7,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 export 'forgot_password_event.dart';
 export 'forgot_password_state.dart';
 
-class ForgotPasswordBloc
+class ForgotPasswordBloc(this._authRepository)
     extends Bloc<ForgotPasswordEvent, ForgotPasswordState> {
   final DriverAuthRepository _authRepository;
 
-  ForgotPasswordBloc(this._authRepository)
-    : super(const ForgotPasswordInitial()) {
+  this : super(const ForgotPasswordInitial()) {
     on<ForgotPasswordSubmitted>(_onForgotPasswordSubmitted);
   }
 

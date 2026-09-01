@@ -9,21 +9,19 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class FareSummaryPage extends StatefulWidget {
+class const FareSummaryPage({
+  super.key,
+  required this.pickup,
+  required this.dropoff,
+  required this.distance,
+  required this.fare,
+  required this.duration,
+}) extends StatefulWidget {
   final String pickup;
   final String dropoff;
   final String duration;
   final double distance;
   final double fare;
-
-  const FareSummaryPage({
-    super.key,
-    required this.pickup,
-    required this.dropoff,
-    required this.distance,
-    required this.fare,
-    required this.duration,
-  });
 
   @override
   State<FareSummaryPage> createState() => _FareSummaryPageState();

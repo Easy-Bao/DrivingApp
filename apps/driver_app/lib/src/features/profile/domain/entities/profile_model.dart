@@ -1,25 +1,23 @@
 import 'package:foundation/foundation.dart';
 
-class ProfileModel {
-  const ProfileModel({
-    this.id,
-    this.userId,
-    this.role,
-    this.name = '',
-    this.phone = '',
-    this.email = '',
-    this.address = '',
-    this.gender = '',
-    this.avatarPath = '',
-    this.avatarUrl = '',
-    this.avatarData = '',
-    this.preferredRideType = '',
-    this.vehicleType = '',
-    this.plateNumber = '',
-    this.rating,
-    this.isOnline,
-  });
-
+class const ProfileModel({
+  this.id,
+  this.userId,
+  this.role,
+  this.name = '',
+  this.phone = '',
+  this.email = '',
+  this.address = '',
+  this.gender = '',
+  this.avatarPath = '',
+  this.avatarUrl = '',
+  this.avatarData = '',
+  this.preferredRideType = '',
+  this.vehicleType = '',
+  this.plateNumber = '',
+  this.rating,
+  this.isOnline,
+}) {
   final String? id;
   final String? userId;
   final String? role;

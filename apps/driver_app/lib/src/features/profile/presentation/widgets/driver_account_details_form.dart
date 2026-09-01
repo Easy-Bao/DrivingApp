@@ -10,13 +10,11 @@ import 'package:design_system/design_system.dart';
 
 enum DriverAccountDetailsSection { personal, vehicle }
 
-class DriverAccountDetailsForm extends StatefulWidget {
-  const DriverAccountDetailsForm({
-    super.key,
-    required this.section,
-    this.onBack,
-  });
-
+class const DriverAccountDetailsForm({
+  super.key,
+  required this.section,
+  this.onBack,
+}) extends StatefulWidget {
   final DriverAccountDetailsSection section;
   final VoidCallback? onBack;
 
@@ -401,16 +399,14 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
   }
 }
 
-class _DriverProfileTextField extends StatelessWidget {
-  const _DriverProfileTextField({
-    required this.label,
-    required this.controller,
-    this.errorText,
-    this.keyboardType,
-    this.textInputAction,
-    this.textCapitalization = TextCapitalization.words,
-  });
-
+class const _DriverProfileTextField({
+  required this.label,
+  required this.controller,
+  this.errorText,
+  this.keyboardType,
+  this.textInputAction,
+  this.textCapitalization = TextCapitalization.words,
+}) extends StatelessWidget {
   final String label;
   final TextEditingController controller;
   final String? errorText;
@@ -438,9 +434,7 @@ class _DriverProfileTextField extends StatelessWidget {
   }
 }
 
-class _DriverProfileFieldLabel extends StatelessWidget {
-  const _DriverProfileFieldLabel(this.label);
-
+class const _DriverProfileFieldLabel(this.label) extends StatelessWidget {
   final String label;
 
   @override

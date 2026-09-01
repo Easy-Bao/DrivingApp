@@ -13,23 +13,21 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:design_system/design_system.dart';
 
-class DriverChatPage extends StatefulWidget {
+class const DriverChatPage({
+  super.key,
+  this.roomId,
+  this.userId,
+  this.peerId,
+  this.peerName,
+  required this.rideRepository,
+  required this.chatRepositoryFactory,
+}) extends StatefulWidget {
   final String? roomId;
   final String? userId;
   final String? peerId;
   final String? peerName;
   final DriverRideRepository rideRepository;
   final ChatRepositoryFactory chatRepositoryFactory;
-
-  const DriverChatPage({
-    super.key,
-    this.roomId,
-    this.userId,
-    this.peerId,
-    this.peerName,
-    required this.rideRepository,
-    required this.chatRepositoryFactory,
-  });
 
   @override
   State<DriverChatPage> createState() => _DriverChatPageState();

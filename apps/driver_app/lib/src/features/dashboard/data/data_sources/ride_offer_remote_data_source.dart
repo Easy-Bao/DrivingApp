@@ -12,10 +12,9 @@ abstract class RideOfferRemoteDataSource {
   });
 }
 
-class RideOfferRemoteDataSourceImpl implements RideOfferRemoteDataSource {
+class RideOfferRemoteDataSourceImpl(this._dio)
+    implements RideOfferRemoteDataSource {
   final Dio _dio;
-
-  RideOfferRemoteDataSourceImpl(this._dio);
 
   @override
   Future<List<Map<String, dynamic>>> fetchActiveBids() async {

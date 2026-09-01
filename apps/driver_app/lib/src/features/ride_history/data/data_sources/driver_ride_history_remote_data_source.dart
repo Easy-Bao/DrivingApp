@@ -10,10 +10,8 @@ abstract class DriverRideHistoryRemoteDataSource {
   });
 }
 
-class DriverRideHistoryRemoteDataSourceImpl
+class DriverRideHistoryRemoteDataSourceImpl(this._dio)
     implements DriverRideHistoryRemoteDataSource {
-  DriverRideHistoryRemoteDataSourceImpl(this._dio);
-
   final Dio _dio;
 
   @override

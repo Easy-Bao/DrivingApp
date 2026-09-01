@@ -7,14 +7,15 @@ import 'package:fpdart/fpdart.dart';
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final class DriverProfileRepositoryImpl implements DriverProfileRepository {
-  DriverProfileRepositoryImpl({
-    required DriverProfileRemoteDataSource profileDataSource,
-    required DriverSessionStore sessionService,
-    required SharedPreferences preferences,
-  }) : _profileDataSource = profileDataSource,
-       _sessionService = sessionService,
-       _preferences = preferences;
+final class DriverProfileRepositoryImpl({
+  required DriverProfileRemoteDataSource profileDataSource,
+  required DriverSessionStore sessionService,
+  required SharedPreferences preferences,
+}) implements DriverProfileRepository {
+  this
+    : _profileDataSource = profileDataSource,
+      _sessionService = sessionService,
+      _preferences = preferences;
 
   final DriverProfileRemoteDataSource _profileDataSource;
   final DriverSessionStore _sessionService;

@@ -4,21 +4,19 @@ import 'package:skeletonizer/skeletonizer.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class DriverDashboardStatsRowWidget extends StatelessWidget {
+class const DriverDashboardStatsRowWidget({
+  super.key,
+  required this.isLoadingStats,
+  required this.earnings,
+  required this.completedTrips,
+  this.errorMessage,
+  this.onRetry,
+}) extends StatelessWidget {
   final bool isLoadingStats;
   final double earnings;
   final int completedTrips;
   final String? errorMessage;
   final VoidCallback? onRetry;
-
-  const DriverDashboardStatsRowWidget({
-    super.key,
-    required this.isLoadingStats,
-    required this.earnings,
-    required this.completedTrips,
-    this.errorMessage,
-    this.onRetry,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -98,15 +96,13 @@ class DriverDashboardStatsRowWidget extends StatelessWidget {
   }
 }
 
-class DriverDashboardErrorCard extends StatelessWidget {
+class const DriverDashboardErrorCard({
+  super.key,
+  required this.message,
+  this.onRetry,
+}) extends StatelessWidget {
   final String message;
   final VoidCallback? onRetry;
-
-  const DriverDashboardErrorCard({
-    super.key,
-    required this.message,
-    this.onRetry,
-  });
 
   @override
   Widget build(BuildContext context) {

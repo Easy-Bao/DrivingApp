@@ -32,10 +32,9 @@ bool _isActiveDriverTripStatus(Object? value) {
   }.contains(dashboardValueAsString(value));
 }
 
-class DriverDashboardPage extends StatefulWidget {
+class const DriverDashboardPage({super.key, required this.lifecycleCoordinator})
+    extends StatefulWidget {
   final AppLifecycleCoordinator lifecycleCoordinator;
-
-  const DriverDashboardPage({super.key, required this.lifecycleCoordinator});
 
   @override
   State<DriverDashboardPage> createState() => _DriverDashboardPageState();
@@ -844,7 +843,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                           ],
                           if (activeBids.isNotEmpty) ...[
                             const DriverDashboardSectionLabel(
-                              'Incoming Requests',
+                              label: 'Incoming Requests',
                             ),
                             const SizedBox(height: 10),
                             ...activeBids.map(

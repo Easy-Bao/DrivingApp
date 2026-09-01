@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:design_system/design_system.dart';
 
-class SocialLoginWidget extends StatelessWidget {
+class const SocialLoginWidget({
+  super.key,
+  required this.onGoogleTap,
+  this.label = 'Continue with Google',
+  this.heroTag = 'auth_google_button',
+}) extends StatelessWidget {
   final VoidCallback onGoogleTap;
   final String label;
   final String heroTag;
-
-  const SocialLoginWidget({
-    super.key,
-    required this.onGoogleTap,
-    this.label = 'Continue with Google',
-    this.heroTag = 'auth_google_button',
-  });
 
   @override
   Widget build(BuildContext context) {

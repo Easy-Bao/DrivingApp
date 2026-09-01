@@ -9,9 +9,8 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:design_system/design_system.dart';
 
-class DriverLocationAccessStatusPage extends StatelessWidget {
-  const DriverLocationAccessStatusPage({super.key, this.onBack});
-
+class const DriverLocationAccessStatusPage({super.key, this.onBack})
+    extends StatelessWidget {
   final VoidCallback? onBack;
 
   @override

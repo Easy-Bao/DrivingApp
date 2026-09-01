@@ -1,6 +1,16 @@
 import 'package:equatable/equatable.dart';
 
-class DashboardState extends Equatable {
+class const DashboardState({
+  this.isOnline = false,
+  this.isLoadingStats = false,
+  this.earnings = 0.0,
+  this.completedTrips = 0,
+  this.errorMessage,
+  this.statsErrorMessage,
+  this.activeTrips = const <Map<String, dynamic>>[],
+  this.activeBids = const <Map<String, dynamic>>[],
+  this.isLoadingDispatch = false,
+}) extends Equatable {
   static const _unset = Object();
 
   final bool isOnline;
@@ -12,18 +22,6 @@ class DashboardState extends Equatable {
   final List<Map<String, dynamic>> activeTrips;
   final List<Map<String, dynamic>> activeBids;
   final bool isLoadingDispatch;
-
-  const DashboardState({
-    this.isOnline = false,
-    this.isLoadingStats = false,
-    this.earnings = 0.0,
-    this.completedTrips = 0,
-    this.errorMessage,
-    this.statsErrorMessage,
-    this.activeTrips = const <Map<String, dynamic>>[],
-    this.activeBids = const <Map<String, dynamic>>[],
-    this.isLoadingDispatch = false,
-  });
 
   DashboardState copyWith({
     bool? isOnline,

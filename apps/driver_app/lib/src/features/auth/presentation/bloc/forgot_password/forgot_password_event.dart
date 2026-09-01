@@ -1,16 +1,13 @@
 import 'package:equatable/equatable.dart';
 
-sealed class ForgotPasswordEvent extends Equatable {
-  const ForgotPasswordEvent();
-
+sealed class const ForgotPasswordEvent() extends Equatable {
   @override
   List<Object?> get props => [];
 }
 
-class ForgotPasswordSubmitted extends ForgotPasswordEvent {
+class const ForgotPasswordSubmitted({required this.email})
+    extends ForgotPasswordEvent {
   final String email;
-
-  const ForgotPasswordSubmitted({required this.email});
 
   @override
   List<Object?> get props => [email];

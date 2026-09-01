@@ -18,15 +18,15 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class DriverDependencies extends Module {
+class DriverDependencies({
+  required SharedPreferences prefs,
+  DriverSessionStore? sessionService,
+}) extends Module {
   final SharedPreferences _prefs;
   final DriverSessionStore _sessionService;
 
-  DriverDependencies({
-    required SharedPreferences prefs,
-    DriverSessionStore? sessionService,
-  }) : _prefs = prefs,
-       _sessionService = sessionService ?? DriverSessionStore();
+  this
+    : _prefs = prefs, _sessionService = sessionService ?? DriverSessionStore();
 
   @override
   void binds(Injector i) {

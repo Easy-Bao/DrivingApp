@@ -8,9 +8,7 @@ import 'package:design_system/design_system.dart';
 
 enum _EarningsPeriod { daily, weekly, monthly }
 
-class DriverEarningsPage extends StatefulWidget {
-  const DriverEarningsPage({super.key});
-
+class const DriverEarningsPage({super.key}) extends StatefulWidget {
   @override
   State<DriverEarningsPage> createState() => _DriverEarningsPageState();
 }
@@ -584,24 +582,20 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
   }
 }
 
-class _EarningsSummary {
+class const _EarningsSummary({
+  required this.total,
+  required this.tripsCount,
+  required this.days,
+}) {
   final double total;
   final int tripsCount;
   final List<_EarnDay> days;
-
-  const _EarningsSummary({
-    required this.total,
-    required this.tripsCount,
-    required this.days,
-  });
 }
 
-class _EarnDay {
+class const _EarnDay(this.day, this.amount, {this.isCurrent = false}) {
   final String day;
   final double amount;
   final bool isCurrent;
-
-  const _EarnDay(this.day, this.amount, {this.isCurrent = false});
 }
 
 bool _sameDay(DateTime left, DateTime right) =>

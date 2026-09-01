@@ -1,8 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-sealed class RideFlowState extends Equatable {
-  const RideFlowState();
-
+sealed class const RideFlowState() extends Equatable {
   @override
   List<Object?> get props => [];
 }

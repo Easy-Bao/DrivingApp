@@ -7,7 +7,11 @@ import 'package:driver_app/src/features/dashboard/domain/repositories/dashboard_
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 
-class DashboardCubit extends Cubit<DashboardState> {
+class DashboardCubit({
+  required DashboardRepository repository,
+  DateTime Function()? now,
+  Duration silentDispatchFailureCooldown = const Duration(seconds: 15),
+}) extends Cubit<DashboardState> {
   final DashboardRepository _repository;
   final DateTime Function() _now;
   final Duration _silentDispatchFailureCooldown;
@@ -16,14 +20,11 @@ class DashboardCubit extends Cubit<DashboardState> {
   Future<void>? _statsRequestInFlight;
   DateTime? _silentDispatchRetryAfter;
 
-  DashboardCubit({
-    required DashboardRepository repository,
-    DateTime Function()? now,
-    Duration silentDispatchFailureCooldown = const Duration(seconds: 15),
-  }) : _repository = repository,
-       _now = now ?? DateTime.now,
-       _silentDispatchFailureCooldown = silentDispatchFailureCooldown,
-       super(const DashboardState());
+  this
+    : _repository = repository,
+      _now = now ?? DateTime.now,
+      _silentDispatchFailureCooldown = silentDispatchFailureCooldown,
+      super(const DashboardState());
 
   Future<void> initialize() async {
     final existingInitialization = _initialization;

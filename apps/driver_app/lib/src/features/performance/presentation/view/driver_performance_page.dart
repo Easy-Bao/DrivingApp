@@ -10,9 +10,8 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class DriverPerformancePage extends StatelessWidget {
-  const DriverPerformancePage({super.key, this.onBack, this.onRefresh});
-
+class const DriverPerformancePage({super.key, this.onBack, this.onRefresh})
+    extends StatelessWidget {
   final VoidCallback? onBack;
   final Future<void> Function()? onRefresh;
 
@@ -66,9 +65,7 @@ class DriverPerformancePage extends StatelessWidget {
   }
 }
 
-class _PerformanceSummary extends StatelessWidget {
-  const _PerformanceSummary({required this.stats});
-
+class const _PerformanceSummary({required this.stats}) extends StatelessWidget {
   final DriverPerformanceStats? stats;
 
   @override
@@ -127,9 +124,7 @@ class _PerformanceSummary extends StatelessWidget {
   }
 }
 
-class _PerformanceMetrics extends StatelessWidget {
-  const _PerformanceMetrics({required this.stats});
-
+class const _PerformanceMetrics({required this.stats}) extends StatelessWidget {
   final DriverPerformanceStats? stats;
 
   @override
@@ -171,14 +166,12 @@ class _PerformanceMetrics extends StatelessWidget {
   }
 }
 
-class _PerformanceMetricCard extends StatelessWidget {
-  const _PerformanceMetricCard({
-    required this.width,
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
+class const _PerformanceMetricCard({
+  required this.width,
+  required this.icon,
+  required this.label,
+  required this.value,
+}) extends StatelessWidget {
   final double width;
   final IconData icon;
   final String label;

@@ -7,14 +7,15 @@ typedef DriverLogoutStep = Future<void> Function();
 /// Best-effort availability and telemetry cleanup must not prevent the session
 /// from being cleared. Session cleanup remains the final required step and its
 /// error is allowed to reach the caller.
-final class DriverLogoutCoordinator {
-  const DriverLogoutCoordinator({
-    required DriverLogoutStep forceOffline,
-    required DriverLogoutStep stopTelemetry,
-    required DriverLogoutStep clearSession,
-  }) : _forceOffline = forceOffline,
-       _stopTelemetry = stopTelemetry,
-       _clearSession = clearSession;
+final class const DriverLogoutCoordinator({
+  required DriverLogoutStep forceOffline,
+  required DriverLogoutStep stopTelemetry,
+  required DriverLogoutStep clearSession,
+}) {
+  this
+    : _forceOffline = forceOffline,
+      _stopTelemetry = stopTelemetry,
+      _clearSession = clearSession;
 
   final DriverLogoutStep _forceOffline;
   final DriverLogoutStep _stopTelemetry;

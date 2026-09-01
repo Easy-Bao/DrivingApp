@@ -7,10 +7,9 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class DriverTripDetailPage extends StatefulWidget {
+class const DriverTripDetailPage({super.key, required this.trip})
+    extends StatefulWidget {
   final Map<String, dynamic> trip;
-
-  const DriverTripDetailPage({super.key, required this.trip});
 
   @override
   State<DriverTripDetailPage> createState() => _DriverTripDetailPageState();
@@ -598,13 +597,11 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
   }
 }
 
-class _DashedRoutePainter extends CustomPainter {
+class const _DashedRoutePainter({required this.color}) extends CustomPainter {
   final Color color;
 
   static const _dashHeight = 4.0;
   static const _gapHeight = 5.0;
-
-  const _DashedRoutePainter({required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {

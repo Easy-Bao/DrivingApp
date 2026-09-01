@@ -5,9 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:foundation/foundation.dart';
 
-class _FakeDriverProfileRepository implements DriverProfileRepository {
-  const _FakeDriverProfileRepository();
-
+class const _FakeDriverProfileRepository() implements DriverProfileRepository {
   @override
   DriverAccountSnapshot getCachedAccount() => const DriverAccountSnapshot(
     name: 'Cached Driver',

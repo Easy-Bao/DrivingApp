@@ -14,22 +14,23 @@ const _backgroundRideRequestInterval = Duration(seconds: 4);
 const _notificationChannelId = 'easyride_driver_location';
 const _notificationId = 4801;
 
-class DriverBackgroundTelemetry {
+class DriverBackgroundTelemetry({
+  required Uri apiBaseUri,
+  required AppLifecycleCoordinator lifecycleCoordinator,
+  FlutterBackgroundService? service,
+  bool? enabled,
+}) {
   final Uri _apiBaseUri;
   final FlutterBackgroundService _service;
   final bool _isEnabled;
   final AppLifecycleCoordinator _lifecycleCoordinator;
   bool _configured = false;
 
-  DriverBackgroundTelemetry({
-    required Uri apiBaseUri,
-    required AppLifecycleCoordinator lifecycleCoordinator,
-    FlutterBackgroundService? service,
-    bool? enabled,
-  }) : _apiBaseUri = apiBaseUri,
-       _service = service ?? FlutterBackgroundService(),
-       _lifecycleCoordinator = lifecycleCoordinator,
-       _isEnabled = enabled ?? false;
+  this
+    : _apiBaseUri = apiBaseUri,
+      _service = service ?? FlutterBackgroundService(),
+      _lifecycleCoordinator = lifecycleCoordinator,
+      _isEnabled = enabled ?? false;
 
   bool get isEnabled => _isEnabled;
 

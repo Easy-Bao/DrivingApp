@@ -13,7 +13,8 @@ import 'package:driver_app/src/features/active_ride/domain/repositories/driver_r
 part 'live_map_event.dart';
 part 'live_map_state.dart';
 
-class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
+class LiveMapBloc({required DriverRideRepository rideRepository})
+    extends Bloc<LiveMapEvent, LiveMapState> {
   final DriverRideRepository _rideRepository;
 
   AppMapController? _mapController;
@@ -33,22 +34,16 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   late final StreamSubscription<DispatchTelemetryLocationEvent>
   _locationSubscription;
 
-  LiveMapBloc({required DriverRideRepository rideRepository})
-    : _rideRepository = rideRepository,
-      super(LiveMapInitial()) {
+  this : _rideRepository = rideRepository, super(LiveMapInitial()) {
     on<InitializeMapEvent>(_onInitializeMap);
     on<UpdateLocationsAndDrawRouteEvent>(
       _onUpdateLocationsAndDrawRoute,
-      // Keep location snapshots ordered so a slow route request cannot let a
-      // newer driver position disappear behind an exhausted stream.
       transformer: (events, mapper) => events.asyncExpand(mapper),
     );
     on<ClearMapEvent>(_onClearMap);
-
     _locationSubscription = _locationSubject
         .throttleTime(const Duration(seconds: 5))
         .listen((event) => unawaited(_publishLocation(event)));
-
     on<DispatchTelemetryLocationEvent>((event, emit) {
       _locationSubject.add(event);
     });

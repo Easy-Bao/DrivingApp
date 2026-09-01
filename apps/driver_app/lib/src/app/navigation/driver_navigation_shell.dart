@@ -5,19 +5,17 @@ import 'package:design_system/design_system.dart';
 
 typedef DriverTabNavigationCoordinator = TabNavigationCoordinator;
 
-class DriverTabBranchContainer extends StatelessWidget {
+class const DriverTabBranchContainer({
+  super.key,
+  required this.navigationShell,
+  required this.children,
+  required this.onNavigationSettled,
+  required this.onPagePositionChanged,
+}) extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
   final List<Widget> children;
   final ValueChanged<int> onNavigationSettled;
   final ValueChanged<double> onPagePositionChanged;
-
-  const DriverTabBranchContainer({
-    super.key,
-    required this.navigationShell,
-    required this.children,
-    required this.onNavigationSettled,
-    required this.onPagePositionChanged,
-  });
 
   @override
   Widget build(BuildContext context) => AppTabBranchContainer(
@@ -32,15 +30,13 @@ class DriverTabBranchContainer extends StatelessWidget {
   );
 }
 
-class DriverShellLayout extends StatefulWidget {
+class const DriverShellLayout({
+  super.key,
+  required this.navigationShell,
+  required this.navigationCoordinator,
+}) extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
   final DriverTabNavigationCoordinator navigationCoordinator;
-
-  const DriverShellLayout({
-    super.key,
-    required this.navigationShell,
-    required this.navigationCoordinator,
-  });
 
   @override
   State<DriverShellLayout> createState() => _DriverShellLayoutState();

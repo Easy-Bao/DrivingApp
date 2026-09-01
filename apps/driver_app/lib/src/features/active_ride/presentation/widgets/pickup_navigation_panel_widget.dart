@@ -3,7 +3,21 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class PickupNavigationPanelWidget extends StatelessWidget {
+class const PickupNavigationPanelWidget({
+  super.key,
+  required this.pickup,
+  required this.dropoff,
+  required this.passengerName,
+  required this.distance,
+  required this.fare,
+  required this.sliderValue,
+  this.isConfirmingArrival = false,
+  required this.unreadChatMessagesCount,
+  required this.onSliderChanged,
+  required this.onSliderCompleted,
+  required this.onCallPressed,
+  required this.onChatPressed,
+}) extends StatelessWidget {
   final String pickup;
   final String dropoff;
   final String passengerName;
@@ -16,22 +30,6 @@ class PickupNavigationPanelWidget extends StatelessWidget {
   final VoidCallback onSliderCompleted;
   final VoidCallback onCallPressed;
   final VoidCallback onChatPressed;
-
-  const PickupNavigationPanelWidget({
-    super.key,
-    required this.pickup,
-    required this.dropoff,
-    required this.passengerName,
-    required this.distance,
-    required this.fare,
-    required this.sliderValue,
-    this.isConfirmingArrival = false,
-    required this.unreadChatMessagesCount,
-    required this.onSliderChanged,
-    required this.onSliderCompleted,
-    required this.onCallPressed,
-    required this.onChatPressed,
-  });
 
   @override
   Widget build(BuildContext context) {

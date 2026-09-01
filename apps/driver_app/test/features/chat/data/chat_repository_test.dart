@@ -210,10 +210,8 @@ void main() {
   });
 }
 
-class _StubHttpClientAdapter implements HttpClientAdapter {
+class _StubHttpClientAdapter(this._handler) implements HttpClientAdapter {
   final ResponseBody Function(RequestOptions options) _handler;
-
-  _StubHttpClientAdapter(this._handler);
 
   @override
   Future<ResponseBody> fetch(

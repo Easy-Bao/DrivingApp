@@ -8,15 +8,16 @@ import 'package:driver_app/src/features/auth/domain/failures/auth_failures.dart'
 import 'package:driver_app/src/features/auth/domain/repositories/driver_auth_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final class DriverAuthRepositoryImpl implements DriverAuthRepository {
+final class DriverAuthRepositoryImpl({
+  required DriverAuthRemoteDataSource remoteDataSource,
+  required DriverSessionStore secureSessionService,
+}) implements DriverAuthRepository {
   final DriverAuthRemoteDataSource _remoteDataSource;
   final DriverSessionStore _secureSessionService;
 
-  DriverAuthRepositoryImpl({
-    required DriverAuthRemoteDataSource remoteDataSource,
-    required DriverSessionStore secureSessionService,
-  }) : _remoteDataSource = remoteDataSource,
-       _secureSessionService = secureSessionService;
+  this
+    : _remoteDataSource = remoteDataSource,
+      _secureSessionService = secureSessionService;
 
   @override
   Future<Either<Failure, DriverAuthCredentials>> authenticate({

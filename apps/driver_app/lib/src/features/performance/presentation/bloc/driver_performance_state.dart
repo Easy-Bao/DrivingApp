@@ -1,9 +1,7 @@
 import 'package:driver_app/src/features/performance/domain/entities/driver_performance_stats.dart';
 import 'package:equatable/equatable.dart';
 
-sealed class DriverPerformanceState extends Equatable {
-  const DriverPerformanceState();
-
+sealed class const DriverPerformanceState() extends Equatable {
   bool get isLoading => this is DriverPerformanceLoading;
 
   DriverPerformanceStats? get stats => switch (this) {
@@ -21,9 +19,8 @@ sealed class DriverPerformanceState extends Equatable {
   };
 }
 
-final class DriverPerformanceInitial extends DriverPerformanceState {
-  const DriverPerformanceInitial({this.stats});
-
+final class const DriverPerformanceInitial({this.stats})
+    extends DriverPerformanceState {
   @override
   final DriverPerformanceStats? stats;
 
@@ -31,9 +28,8 @@ final class DriverPerformanceInitial extends DriverPerformanceState {
   List<Object?> get props => [stats];
 }
 
-final class DriverPerformanceLoading extends DriverPerformanceState {
-  const DriverPerformanceLoading({this.stats});
-
+final class const DriverPerformanceLoading({this.stats})
+    extends DriverPerformanceState {
   @override
   final DriverPerformanceStats? stats;
 
@@ -41,9 +37,8 @@ final class DriverPerformanceLoading extends DriverPerformanceState {
   List<Object?> get props => [stats];
 }
 
-final class DriverPerformanceLoaded extends DriverPerformanceState {
-  const DriverPerformanceLoaded(this.stats);
-
+final class const DriverPerformanceLoaded(this.stats)
+    extends DriverPerformanceState {
   @override
   final DriverPerformanceStats stats;
 
@@ -51,9 +46,8 @@ final class DriverPerformanceLoaded extends DriverPerformanceState {
   List<Object?> get props => [stats];
 }
 
-final class DriverPerformanceFailure extends DriverPerformanceState {
-  const DriverPerformanceFailure({this.stats, required this.message});
-
+final class const DriverPerformanceFailure({this.stats, required this.message})
+    extends DriverPerformanceState {
   @override
   final DriverPerformanceStats? stats;
   final String message;

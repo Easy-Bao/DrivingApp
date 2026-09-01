@@ -1,7 +1,16 @@
 import 'package:driver_app/src/features/chat/chat.dart';
 import 'package:equatable/equatable.dart';
 
-class ChatState extends Equatable {
+class const ChatState({
+  this.messages = const [],
+  this.isConnecting = false,
+  this.isConnected = false,
+  this.isRoomLocked = false,
+  this.isPeerTyping = false,
+  this.lockReasonMessage = 'This chat room has been resolved.',
+  this.errorMessage,
+  this.lastDeliveredMessage,
+}) extends Equatable {
   static const Object _unset = Object();
 
   final List<ChatMessage> messages;
@@ -12,17 +21,6 @@ class ChatState extends Equatable {
   final String lockReasonMessage;
   final String? errorMessage;
   final ChatMessage? lastDeliveredMessage;
-
-  const ChatState({
-    this.messages = const [],
-    this.isConnecting = false,
-    this.isConnected = false,
-    this.isRoomLocked = false,
-    this.isPeerTyping = false,
-    this.lockReasonMessage = 'This chat room has been resolved.',
-    this.errorMessage,
-    this.lastDeliveredMessage,
-  });
 
   ChatState copyWith({
     List<ChatMessage>? messages,

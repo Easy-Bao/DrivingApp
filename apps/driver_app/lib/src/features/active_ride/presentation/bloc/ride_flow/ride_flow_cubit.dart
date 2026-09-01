@@ -10,7 +10,10 @@ import 'package:driver_app/src/features/active_ride/presentation/bloc/ride_flow/
 import 'package:driver_app/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:foundation/foundation.dart';
 
-class RideFlowCubit extends Cubit<RideFlowState> {
+class RideFlowCubit({
+  required DriverRideRepository rideRepository,
+  required DriverSessionStore sessionService,
+}) extends Cubit<RideFlowState> {
   final DriverRideRepository _rideRepository;
   final DriverSessionStore _sessionService;
 
@@ -20,12 +23,10 @@ class RideFlowCubit extends Cubit<RideFlowState> {
   Timer? _waitTimer;
   int _elapsedWaitTime = 0;
 
-  RideFlowCubit({
-    required DriverRideRepository rideRepository,
-    required DriverSessionStore sessionService,
-  }) : _rideRepository = rideRepository,
-       _sessionService = sessionService,
-       super(const RideFlowInitial());
+  this
+    : _rideRepository = rideRepository,
+      _sessionService = sessionService,
+      super(const RideFlowInitial());
 
   String? get activeRideId => _activeRideId;
   String? get activePassengerId => _activePassengerId;

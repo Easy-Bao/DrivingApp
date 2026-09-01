@@ -114,15 +114,13 @@ class ActiveRideModule {
   static List<ModularRoute> shellRoutes = [];
 }
 
-class _DriverTripRouteData {
-  const _DriverTripRouteData({
-    required this.pickup,
-    required this.dropoff,
-    required this.distance,
-    required this.fare,
-    required this.duration,
-  });
-
+class const _DriverTripRouteData({
+  required this.pickup,
+  required this.dropoff,
+  required this.distance,
+  required this.fare,
+  required this.duration,
+}) {
   final String pickup;
   final String dropoff;
   final double distance;

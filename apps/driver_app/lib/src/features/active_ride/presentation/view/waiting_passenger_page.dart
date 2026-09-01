@@ -19,7 +19,18 @@ import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class WaitingPassengerPage extends StatefulWidget {
+class const WaitingPassengerPage({
+  super.key,
+  required this.pickup,
+  required this.dropoff,
+  required this.distance,
+  required this.fare,
+  required this.duration,
+  required this.rideRepository,
+  required this.chatRepositoryFactory,
+  required this.sessionService,
+  required this.lifecycleCoordinator,
+}) extends StatefulWidget {
   final String pickup;
   final String dropoff;
   final String duration;
@@ -29,19 +40,6 @@ class WaitingPassengerPage extends StatefulWidget {
   final ChatRepositoryFactory chatRepositoryFactory;
   final DriverSessionStore sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;
-
-  const WaitingPassengerPage({
-    super.key,
-    required this.pickup,
-    required this.dropoff,
-    required this.distance,
-    required this.fare,
-    required this.duration,
-    required this.rideRepository,
-    required this.chatRepositoryFactory,
-    required this.sessionService,
-    required this.lifecycleCoordinator,
-  });
 
   @override
   State<WaitingPassengerPage> createState() => _WaitingPassengerPageState();

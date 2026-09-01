@@ -8,7 +8,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 export 'package:driver_app/src/features/chat/presentation/bloc/chat/chat_state.dart';
 
-class ChatCubit extends Cubit<ChatState> {
+class ChatCubit({required ChatRepository chatRepository})
+    extends Cubit<ChatState> {
   static const _peerTypingTimeout = Duration(seconds: 3);
 
   final ChatRepository _chatRepository;
@@ -19,9 +20,7 @@ class ChatCubit extends Cubit<ChatState> {
   bool _everConnected = false;
   bool _historyRequested = false;
 
-  ChatCubit({required ChatRepository chatRepository})
-    : _chatRepository = chatRepository,
-      super(const ChatState());
+  this : _chatRepository = chatRepository, super(const ChatState());
 
   Future<bool> initializeChatRoom({required String roomId}) async {
     final result = await _chatRepository.initializeChatRoom(roomId: roomId);

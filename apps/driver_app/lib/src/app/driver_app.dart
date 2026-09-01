@@ -15,9 +15,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class DriverApp extends StatefulWidget {
-  const DriverApp({super.key});
-
+class const DriverApp({super.key}) extends StatefulWidget {
   @override
   State<DriverApp> createState() => _DriverAppState();
 }

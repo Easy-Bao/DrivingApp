@@ -8,14 +8,15 @@ import 'package:driver_app/src/features/active_ride/domain/repositories/driver_r
 import 'package:fpdart/fpdart.dart';
 import 'package:foundation/foundation.dart';
 
-final class DriverRideRepositoryImpl implements DriverRideRepository {
-  DriverRideRepositoryImpl({
-    required RideRemoteDataSource rideDataSource,
-    required RideCounterpartyRemoteDataSource counterpartyDataSource,
-    required TelemetryRemoteDataSource telemetryDataSource,
-  }) : _rideDataSource = rideDataSource,
-       _counterpartyDataSource = counterpartyDataSource,
-       _telemetryDataSource = telemetryDataSource;
+final class DriverRideRepositoryImpl({
+  required RideRemoteDataSource rideDataSource,
+  required RideCounterpartyRemoteDataSource counterpartyDataSource,
+  required TelemetryRemoteDataSource telemetryDataSource,
+}) implements DriverRideRepository {
+  this
+    : _rideDataSource = rideDataSource,
+      _counterpartyDataSource = counterpartyDataSource,
+      _telemetryDataSource = telemetryDataSource;
 
   final RideRemoteDataSource _rideDataSource;
   final RideCounterpartyRemoteDataSource _counterpartyDataSource;

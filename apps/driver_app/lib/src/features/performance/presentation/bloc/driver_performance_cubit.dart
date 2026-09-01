@@ -4,13 +4,14 @@ import 'package:driver_app/src/features/performance/presentation/bloc/driver_per
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 
-class DriverPerformanceCubit extends Cubit<DriverPerformanceState> {
-  DriverPerformanceCubit({
-    required DriverPerformanceRepository repository,
-    required DriverSessionStore sessionService,
-  }) : _repository = repository,
-       _sessionService = sessionService,
-       super(const DriverPerformanceInitial());
+class DriverPerformanceCubit({
+  required DriverPerformanceRepository repository,
+  required DriverSessionStore sessionService,
+}) extends Cubit<DriverPerformanceState> {
+  this
+    : _repository = repository,
+      _sessionService = sessionService,
+      super(const DriverPerformanceInitial());
 
   final DriverPerformanceRepository _repository;
   final DriverSessionStore _sessionService;

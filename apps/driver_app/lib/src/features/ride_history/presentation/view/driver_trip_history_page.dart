@@ -12,9 +12,7 @@ import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-class DriverTripHistoryPage extends StatefulWidget {
-  const DriverTripHistoryPage({super.key});
-
+class const DriverTripHistoryPage({super.key}) extends StatefulWidget {
   @override
   State<DriverTripHistoryPage> createState() => _DriverTripHistoryPageState();
 }

@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:design_system/design_system.dart';
 
-class InTransitCompleteButtonWidget extends StatelessWidget {
+class const InTransitCompleteButtonWidget({
+  super.key,
+  required this.onCompleteTripPressed,
+  this.isCompletingTrip = false,
+}) extends StatelessWidget {
   final VoidCallback onCompleteTripPressed;
   final bool isCompletingTrip;
-
-  const InTransitCompleteButtonWidget({
-    super.key,
-    required this.onCompleteTripPressed,
-    this.isCompletingTrip = false,
-  });
 
   @override
   Widget build(BuildContext context) {

@@ -5,9 +5,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:design_system/design_system.dart';
 
-class ForgotPasswordPage extends StatelessWidget {
-  const ForgotPasswordPage({super.key});
-
+class const ForgotPasswordPage({super.key}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider<ForgotPasswordBloc>(
@@ -17,9 +15,7 @@ class ForgotPasswordPage extends StatelessWidget {
   }
 }
 
-class _ForgotPasswordPageContent extends StatefulWidget {
-  const _ForgotPasswordPageContent();
-
+class const _ForgotPasswordPageContent() extends StatefulWidget {
   @override
   State<_ForgotPasswordPageContent> createState() =>
       _ForgotPasswordPageContentState();

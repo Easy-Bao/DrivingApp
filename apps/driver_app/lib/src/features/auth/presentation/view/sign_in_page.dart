@@ -11,9 +11,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:design_system/design_system.dart';
 
-class SigninPage extends StatelessWidget {
-  const SigninPage({super.key});
-
+class const SigninPage({super.key}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider<SignInBloc>(
@@ -23,9 +21,7 @@ class SigninPage extends StatelessWidget {
   }
 }
 
-class _SigninPageContent extends StatefulWidget {
-  const _SigninPageContent();
-
+class const _SigninPageContent() extends StatefulWidget {
   @override
   State<_SigninPageContent> createState() => _SigninPageContentState();
 }

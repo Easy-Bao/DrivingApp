@@ -9,17 +9,15 @@ double? _distanceInKm(Map<String, dynamic> value) {
   return distance is num && distance >= 0 ? distance.toDouble() : null;
 }
 
-class DriverActiveTripCard extends StatelessWidget {
-  const DriverActiveTripCard({
-    super.key,
-    required this.trip,
-    required this.queueIndex,
-    required this.hasCurrentTransitRide,
-    required this.isCompletingTrip,
-    required this.onResume,
-    required this.onComplete,
-  });
-
+class const DriverActiveTripCard({
+  super.key,
+  required this.trip,
+  required this.queueIndex,
+  required this.hasCurrentTransitRide,
+  required this.isCompletingTrip,
+  required this.onResume,
+  required this.onComplete,
+}) extends StatelessWidget {
   final Map<String, dynamic> trip;
   final int queueIndex;
   final bool hasCurrentTransitRide;
@@ -232,15 +230,13 @@ String formatCountdown(int seconds) {
   return '$minutes:${remainder.toString().padLeft(2, '0')}';
 }
 
-class DriverPoolBidCard extends StatelessWidget {
-  const DriverPoolBidCard({
-    super.key,
-    required this.bid,
-    required this.submittingBidId,
-    required this.onDecline,
-    required this.onAccept,
-  });
-
+class const DriverPoolBidCard({
+  super.key,
+  required this.bid,
+  required this.submittingBidId,
+  required this.onDecline,
+  required this.onAccept,
+}) extends StatelessWidget {
   final Map<String, dynamic> bid;
   final String? submittingBidId;
   final VoidCallback onDecline;
@@ -431,24 +427,25 @@ class DriverPoolBidCard extends StatelessWidget {
   }
 }
 
-class DriverDashboardSectionLabel extends StatelessWidget {
-  const DriverDashboardSectionLabel(this.label, {super.key});
-
-  const DriverDashboardSectionLabel.activeRides({
+class const DriverDashboardSectionLabel({
+  final String? label,
+  final int? activeRideCount,
+  super.key,
+}) extends StatelessWidget {
+  const factory DriverDashboardSectionLabel.activeRides({
     required int activeRideCount,
-    super.key,
-  }) : label = 'Your active rides ($activeRideCount/$maximumActiveRides)';
+    Key? key,
+  }) = DriverDashboardSectionLabel;
 
   static const maximumActiveRides = 5;
-
-  final String label;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(top: 10, bottom: 8),
       child: Text(
-        label,
+        label ??
+            'Your active rides (${activeRideCount ?? 0}/$maximumActiveRides)',
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w800,

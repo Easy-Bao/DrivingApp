@@ -11,10 +11,9 @@ abstract class TelemetryRemoteDataSource {
   Future<Map<String, dynamic>> fetchPassengerLocation(String tripId);
 }
 
-class TelemetryRemoteDataSourceImpl implements TelemetryRemoteDataSource {
+class TelemetryRemoteDataSourceImpl(this._dio)
+    implements TelemetryRemoteDataSource {
   final Dio _dio;
-
-  TelemetryRemoteDataSourceImpl(this._dio);
 
   @override
   Future<bool> sendLocationUpdate({

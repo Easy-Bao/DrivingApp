@@ -1,9 +1,8 @@
 import 'package:driver_app/src/features/profile/presentation/widgets/driver_account_details_form.dart';
 import 'package:flutter/material.dart';
 
-class DriverVehicleInformationPage extends StatelessWidget {
-  const DriverVehicleInformationPage({super.key, this.onBack});
-
+class const DriverVehicleInformationPage({super.key, this.onBack})
+    extends StatelessWidget {
   final VoidCallback? onBack;
 
   @override

@@ -14,9 +14,8 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:design_system/design_system.dart';
 
-class DriverAccountPage extends StatefulWidget {
-  const DriverAccountPage({super.key, required this.onLogout});
-
+class const DriverAccountPage({super.key, required this.onLogout})
+    extends StatefulWidget {
   final Future<void> Function() onLogout;
 
   @override
@@ -358,13 +357,11 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
   }
 }
 
-class _DriverAccountMenuItem {
-  const _DriverAccountMenuItem({
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
+class const _DriverAccountMenuItem({
+  required this.title,
+  required this.subtitle,
+  required this.onTap,
+}) {
   final String title;
   final String subtitle;
   final VoidCallback onTap;

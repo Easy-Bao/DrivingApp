@@ -1,15 +1,13 @@
 import 'package:equatable/equatable.dart';
 
-class DriverPerformanceStats extends Equatable {
-  const DriverPerformanceStats({
-    required this.todayEarningsCentavos,
-    required this.todayCompletedTrips,
-    required this.totalTrips,
-    required this.completedTrips,
-    required this.totalEarningsCentavos,
-    required this.averageRating,
-  });
-
+class const DriverPerformanceStats({
+  required this.todayEarningsCentavos,
+  required this.todayCompletedTrips,
+  required this.totalTrips,
+  required this.completedTrips,
+  required this.totalEarningsCentavos,
+  required this.averageRating,
+}) extends Equatable {
   final int todayEarningsCentavos;
   final int todayCompletedTrips;
   final int totalTrips;

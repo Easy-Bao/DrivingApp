@@ -3,7 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:design_system/design_system.dart';
 
-class DriverFloatingTabBar extends StatelessWidget {
+class const DriverFloatingTabBar({
+  super.key,
+  required this.selectedIndex,
+  required this.onDestinationSelected,
+  this.pagePosition,
+}) extends StatelessWidget {
   static const animationDuration = AppFloatingTabBar.animationDuration;
   static const height = AppFloatingTabBar.height;
 
@@ -17,13 +22,6 @@ class DriverFloatingTabBar extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
   final ValueListenable<double>? pagePosition;
-
-  const DriverFloatingTabBar({
-    super.key,
-    required this.selectedIndex,
-    required this.onDestinationSelected,
-    this.pagePosition,
-  });
 
   @override
   Widget build(BuildContext context) {

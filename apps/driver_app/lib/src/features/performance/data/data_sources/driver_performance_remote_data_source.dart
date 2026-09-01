@@ -4,10 +4,8 @@ abstract class DriverPerformanceRemoteDataSource {
   Future<Map<String, dynamic>> fetchStats(String driverId);
 }
 
-class DriverPerformanceRemoteDataSourceImpl
+class DriverPerformanceRemoteDataSourceImpl(this._dio)
     implements DriverPerformanceRemoteDataSource {
-  DriverPerformanceRemoteDataSourceImpl(this._dio);
-
   final Dio _dio;
 
   @override

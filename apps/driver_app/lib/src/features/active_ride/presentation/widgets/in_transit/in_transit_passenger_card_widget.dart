@@ -5,9 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:design_system/design_system.dart';
 
-class InTransitPassengerCardWidget extends StatelessWidget {
-  const InTransitPassengerCardWidget({super.key});
-
+class const InTransitPassengerCardWidget({super.key}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = BlocProvider.of<RideFlowCubit>(context).state;

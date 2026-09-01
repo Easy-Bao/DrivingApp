@@ -1,7 +1,7 @@
 import 'package:foundation/foundation.dart';
 
-class RouteCalculationFailure extends Failure {
-  const RouteCalculationFailure()
+class const RouteCalculationFailure() extends Failure {
+  this
     : super(
         'Unable to calculate route and fare right now. Please re-select your destination.',
       );
