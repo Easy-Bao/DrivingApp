@@ -1,4 +1,4 @@
-import 'package:driver/src/features/chat/data/data_sources/chat_remote_data_source.dart';
+import 'package:driver/src/features/chat/domain/entities/chat_connection_state.dart';
 import 'package:driver/src/features/chat/domain/entities/chat_event.dart';
 import 'package:driver/src/features/chat/domain/entities/chat_message.dart';
 import 'package:foundation/foundation.dart';
