@@ -7,8 +7,6 @@ import 'package:foundation/foundation.dart';
 
 final class DriverRideHistoryRepositoryImpl({required this._dataSource})
     implements DriverRideHistoryRepository {
-  this;
-
   final DriverRideHistoryRemoteDataSource _dataSource;
 
   @override

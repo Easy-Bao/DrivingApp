@@ -21,8 +21,6 @@ class DriverAuthInterceptor(
 
   Future<String?>? _refreshInFlight;
 
-  this;
-
   @override
   Future<void> onRequest(
     RequestOptions options,

@@ -37,8 +37,6 @@ final class DashboardRepositoryImpl({
   final SharedPreferences _preferences;
   final DriverBackgroundTelemetry? _backgroundTelemetryService;
 
-  this;
-
   Failure _mapExceptionToFailure(Object error) => switch (error) {
     final DioException exception => _mapDioFailure(exception),
     final ServerException exception => _mapServerFailure(exception),

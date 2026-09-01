@@ -12,8 +12,6 @@ final class DriverProfileRepositoryImpl({
   required this._sessionService,
   required this._preferences,
 }) implements DriverProfileRepository {
-  this;
-
   final DriverProfileRemoteDataSource _profileDataSource;
   final DriverSessionStore _sessionService;
   final SharedPreferences _preferences;

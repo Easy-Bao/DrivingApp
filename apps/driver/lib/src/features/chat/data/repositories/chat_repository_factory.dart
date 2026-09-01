@@ -11,8 +11,6 @@ final class DefaultChatRepositoryFactory({
   required this._clientDio,
   required this._tokenProvider,
 }) implements ChatRepositoryFactory {
-  this;
-
   final Dio _clientDio;
   final Future<String?> Function() _tokenProvider;
 

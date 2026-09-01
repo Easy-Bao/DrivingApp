@@ -15,8 +15,6 @@ final class DriverAuthRepositoryImpl({
   final DriverAuthRemoteDataSource _remoteDataSource;
   final DriverSessionStore _secureSessionService;
 
-  this;
-
   @override
   Future<Either<Failure, DriverAuthCredentials>> authenticate({
     required String email,

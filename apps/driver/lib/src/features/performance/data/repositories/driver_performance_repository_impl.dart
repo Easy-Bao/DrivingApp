@@ -8,8 +8,6 @@ import 'package:foundation/foundation.dart';
 
 final class DriverPerformanceRepositoryImpl({required this._dataSource})
     implements DriverPerformanceRepository {
-  this;
-
   final DriverPerformanceRemoteDataSource _dataSource;
 
   @override

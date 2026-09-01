@@ -12,8 +12,6 @@ final class const DriverLogoutCoordinator({
   required this._stopTelemetry,
   required this._clearSession,
 }) {
-  this;
-
   final DriverLogoutStep _forceOffline;
   final DriverLogoutStep _stopTelemetry;
   final DriverLogoutStep _clearSession;

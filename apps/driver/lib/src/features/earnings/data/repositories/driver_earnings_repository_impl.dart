@@ -7,8 +7,6 @@ import 'package:foundation/foundation.dart';
 
 final class DriverEarningsRepositoryImpl({required this._dataSource})
     implements DriverEarningsRepository {
-  this;
-
   final DriverEarningsRemoteDataSource _dataSource;
 
   @override

@@ -13,8 +13,6 @@ final class DriverRideRepositoryImpl({
   required this._counterpartyDataSource,
   required this._telemetryDataSource,
 }) implements DriverRideRepository {
-  this;
-
   final RideRemoteDataSource _rideDataSource;
   final RideCounterpartyRemoteDataSource _counterpartyDataSource;
   final TelemetryRemoteDataSource _telemetryDataSource;
