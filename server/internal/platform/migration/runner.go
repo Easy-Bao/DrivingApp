@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
+	"slices"
 	"time"
 
 	"entgo.io/ent/dialect"
@@ -235,7 +235,7 @@ func validateMigrationPlan(items []migration) error {
 		seen[item.version] = struct{}{}
 		versions = append(versions, item.version)
 	}
-	if !sort.SliceIsSorted(versions, func(i, j int) bool { return versions[i] < versions[j] }) {
+	if !slices.IsSorted(versions) {
 		return fmt.Errorf("migrations must be ordered by version")
 	}
 	return nil
