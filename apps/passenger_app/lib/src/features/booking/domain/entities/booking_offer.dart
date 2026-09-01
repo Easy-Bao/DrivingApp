@@ -14,9 +14,8 @@ class BookingOffer {
   });
 
   static BookingOffer? tryParse(Map<String, dynamic> json) {
-    final offerId = SafeParse.toStringValue(
-      json['id'] ?? json['offer_id'],
-    ).trim();
+    final offerId = SafeParse.toStringValue(json['id'] ?? json['offer_id'])
+        .trim();
     final sessionId = SafeParse.toStringValue(json['session_id']).trim();
     final driverId = SafeParse.toStringValue(json['driver_id']).trim();
     final driverName = SafeParse.toStringValue(json['driver_name']).trim();

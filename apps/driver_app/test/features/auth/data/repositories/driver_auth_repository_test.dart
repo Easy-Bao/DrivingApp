@@ -29,12 +29,10 @@ void main() {
     );
 
     when(() => secureSessionService.saveToken(any())).thenAnswer((_) async {});
-    when(
-      () => secureSessionService.saveRefreshToken(any()),
-    ).thenAnswer((_) async {});
-    when(
-      () => secureSessionService.saveDriverId(any()),
-    ).thenAnswer((_) async {});
+    when(() => secureSessionService.saveRefreshToken(any()))
+        .thenAnswer((_) async {});
+    when(() => secureSessionService.saveDriverId(any()))
+        .thenAnswer((_) async {});
   });
 
   test('normalizes numeric driver IDs before persisting the session', () async {
@@ -75,9 +73,8 @@ void main() {
     expect(credentials.driverName, 'Test Driver');
     expect(credentials.rating, 4.75);
     verify(() => secureSessionService.saveToken('jwt-token')).called(1);
-    verify(
-      () => secureSessionService.saveRefreshToken('refresh-jwt-token'),
-    ).called(1);
+    verify(() => secureSessionService.saveRefreshToken('refresh-jwt-token'))
+        .called(1);
     verify(() => secureSessionService.saveDriverId('42')).called(1);
   });
 

@@ -1,5 +1,6 @@
 import 'package:driver_app/src/features/active_ride/active_ride.dart';
 import 'package:driver_app/src/features/auth/domain/failures/auth_failures.dart';
+
 import 'dart:async';
 import 'dart:developer' as dev;
 
@@ -242,9 +243,8 @@ class RideFlowCubit extends Cubit<RideFlowState> {
 
     try {
       RideSnapshot? ride;
-      (await _rideRepository.fetchRide(
-        rideId,
-      )).fold((_) {}, (value) => ride = value);
+      (await _rideRepository.fetchRide(rideId))
+          .fold((_) {}, (value) => ride = value);
       final latitude = ride?.dropoffLatitude;
       final longitude = ride?.dropoffLongitude;
       if (_isValidCoordinatePair(latitude, longitude)) {
@@ -283,9 +283,8 @@ class RideFlowCubit extends Cubit<RideFlowState> {
     try {
       RideSnapshot? ride;
       Failure? loadFailure;
-      (await _rideRepository.fetchRide(
-        rideId,
-      )).fold((failure) => loadFailure = failure, (value) => ride = value);
+      (await _rideRepository.fetchRide(rideId))
+          .fold((failure) => loadFailure = failure, (value) => ride = value);
       if (ride == null) {
         final failure = loadFailure;
         emit(

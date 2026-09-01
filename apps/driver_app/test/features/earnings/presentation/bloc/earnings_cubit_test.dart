@@ -19,17 +19,15 @@ void main() {
   setUp(() {
     repository = _MockEarningsRepository();
     sessionService = _MockSessionService();
-    when(
-      () => sessionService.readDriverId(),
-    ).thenAnswer((_) async => 'driver-1');
+    when(() => sessionService.readDriverId())
+        .thenAnswer((_) async => 'driver-1');
   });
 
   blocTest<DriverEarningsCubit, DriverEarningsState>(
     'loads earnings through the repository boundary',
     build: () {
-      when(
-        () => repository.fetchEarningsSummary('driver-1'),
-      ).thenAnswer((_) async => const Right({'this_week': {}}));
+      when(() => repository.fetchEarningsSummary('driver-1'))
+          .thenAnswer((_) async => const Right({'this_week': {}}));
       return DriverEarningsCubit(
         repository: repository,
         sessionService: sessionService,

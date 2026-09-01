@@ -1,5 +1,6 @@
 import 'package:passenger_app/src/features/profile/domain/entities/profile_model.dart';
 import 'package:passenger_app/src/features/auth/domain/failures/auth_failures.dart';
+
 import 'dart:convert';
 import 'dart:io';
 

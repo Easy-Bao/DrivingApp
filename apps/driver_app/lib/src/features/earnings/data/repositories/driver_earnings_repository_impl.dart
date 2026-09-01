@@ -42,8 +42,7 @@ final class DriverEarningsRepositoryImpl implements DriverEarningsRepository {
         serverMessage:
             'Driver earnings are temporarily unavailable. Please try again.',
         validationMessage: 'Invalid driver earnings request.',
-        networkMessage:
-            'Unable to reach driver earnings services. Check your connection and try again.',
+        networkMessage: 'Unable to reach driver earnings services. Check your connection and try again.',
       );
     }
     if (error is ServerException) {

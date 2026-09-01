@@ -35,35 +35,29 @@ class AppTermsOfServicePage extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 'Effective for this app release',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
+                style: Theme.of(context).textTheme.bodySmall
+                    ?.copyWith(color: context.colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: 24),
               const _TermsSection(
                 title: 'Using BaoRide',
-                body:
-                    'Use accurate account and trip information, follow applicable laws, and treat everyone involved in a ride respectfully.',
+                body: 'Use accurate account and trip information, follow applicable laws, and treat everyone involved in a ride respectfully.',
               ),
               const _TermsSection(
                 title: 'Ride requests and payments',
-                body:
-                    'Review trip, fare, and payment details before confirming. Charges and adjustments shown in the app apply to the completed ride.',
+                body: 'Review trip, fare, and payment details before confirming. Charges and adjustments shown in the app apply to the completed ride.',
               ),
               const _TermsSection(
                 title: 'Safety and availability',
-                body:
-                    'Do not use BaoRide for emergencies. Service availability can vary by location, network access, driver supply, and operational conditions.',
+                body: 'Do not use BaoRide for emergencies. Service availability can vary by location, network access, driver supply, and operational conditions.',
               ),
               const _TermsSection(
                 title: 'Account responsibility',
-                body:
-                    'Keep your sign-in details secure and contact support if you believe your account or ride information has been misused.',
+                body: 'Keep your sign-in details secure and contact support if you believe your account or ride information has been misused.',
               ),
               const _TermsSection(
                 title: 'Changes to the service',
-                body:
-                    'Features may change as BaoRide improves. Material terms should be presented in the app before they take effect.',
+                body: 'Features may change as BaoRide improves. Material terms should be presented in the app before they take effect.',
               ),
             ],
           ),

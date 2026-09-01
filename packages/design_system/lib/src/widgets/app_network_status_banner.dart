@@ -47,9 +47,8 @@ class AppNetworkStatusBanner extends StatelessWidget {
                       child: Text(
                         'Connection unavailable. Retrying automatically.',
                         textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
+                        style: Theme.of(context).textTheme.bodySmall
+                            ?.copyWith(color: scheme.onSurfaceVariant),
                       ),
                     ),
                   ],

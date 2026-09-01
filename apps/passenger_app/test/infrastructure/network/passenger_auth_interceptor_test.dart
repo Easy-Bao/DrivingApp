@@ -48,13 +48,11 @@ void main() {
     final requestOptions = RequestOptions(
       path: '/api/v1/passengers/passenger-42',
     );
-    when(
-      () => secureSessionService.readToken(),
-    ).thenAnswer((_) async => 'jwt-token');
+    when(() => secureSessionService.readToken())
+        .thenAnswer((_) async => 'jwt-token');
 
-    await PassengerAuthInterceptor(
-      secureSessionService,
-    ).onRequest(requestOptions, handler);
+    await PassengerAuthInterceptor(secureSessionService)
+        .onRequest(requestOptions, handler);
 
     expect(requestOptions.headers['Authorization'], 'Bearer jwt-token');
     verify(() => handler.next(requestOptions)).called(1);
@@ -67,9 +65,8 @@ void main() {
       baseUrl: 'https://attacker.example',
       path: '/collect',
     );
-    when(
-      () => secureSessionService.readToken(),
-    ).thenAnswer((_) async => 'jwt-token');
+    when(() => secureSessionService.readToken())
+        .thenAnswer((_) async => 'jwt-token');
 
     await PassengerAuthInterceptor(
       secureSessionService,
@@ -99,15 +96,12 @@ void main() {
         ),
       );
 
-      when(
-        () => secureSessionService.readRefreshToken(),
-      ).thenAnswer((_) async => 'refresh-token');
-      when(
-        () => secureSessionService.saveToken(any()),
-      ).thenAnswer((_) async {});
-      when(
-        () => secureSessionService.saveRefreshToken(any()),
-      ).thenAnswer((_) async {});
+      when(() => secureSessionService.readRefreshToken())
+          .thenAnswer((_) async => 'refresh-token');
+      when(() => secureSessionService.saveToken(any()))
+          .thenAnswer((_) async {});
+      when(() => secureSessionService.saveRefreshToken(any()))
+          .thenAnswer((_) async {});
       when(
         () => refreshClient.post<Object?>(
           any(),
@@ -149,9 +143,8 @@ void main() {
           options: any(named: 'options'),
         ),
       ).called(1);
-      verify(
-        () => secureSessionService.saveToken('new-access-token'),
-      ).called(1);
+      verify(() => secureSessionService.saveToken('new-access-token'))
+          .called(1);
       verify(
         () => secureSessionService.saveRefreshToken('rotated-refresh-token'),
       ).called(1);

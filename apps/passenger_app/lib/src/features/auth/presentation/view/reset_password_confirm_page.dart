@@ -109,280 +109,294 @@ class _ResetPasswordConfirmPageContentState
         ),
       ),
       body: SafeArea(
-        child: BlocConsumer<ResetPasswordConfirmBloc, ResetPasswordConfirmState>(
-          listener: (context, state) {
-            if (state is ResetPasswordConfirmSuccess) {
-              CustomToast.show(context, 'Password updated successfully!');
-              context.goNamed(AuthRoutes.signin);
-            } else if (state is ResetPasswordConfirmFailure) {
-              setState(() => _submissionError = state.errorMessage);
-            }
-          },
-          builder: (context, state) {
-            final isLoading = state is ResetPasswordConfirmLoading;
+        child:
+            BlocConsumer<ResetPasswordConfirmBloc, ResetPasswordConfirmState>(
+              listener: (context, state) {
+                if (state is ResetPasswordConfirmSuccess) {
+                  CustomToast.show(context, 'Password updated successfully!');
+                  context.goNamed(AuthRoutes.signin);
+                } else if (state is ResetPasswordConfirmFailure) {
+                  setState(() => _submissionError = state.errorMessage);
+                }
+              },
+              builder: (context, state) {
+                final isLoading = state is ResetPasswordConfirmLoading;
 
-            return SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight:
-                      MediaQuery.of(context).size.height -
-                      kToolbarHeight -
-                      MediaQuery.of(context).padding.top,
-                ),
-                child: IntrinsicHeight(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 20),
-                            Text(
-                              'Set New Password',
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.w800,
-                                color: context.colorScheme.onSurface,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Your new password must be different from previous passwords.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: context.colorScheme.onSurfaceVariant,
-                                height: 1.5,
-                              ),
-                            ),
-                            if (_submissionError != null) ...[
-                              const SizedBox(height: 16),
-                              Text(
-                                _submissionError!,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: context.colorScheme.error,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                            const SizedBox(height: 40),
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                'New Password',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  color: context.colorScheme.onSurfaceVariant,
-                                  letterSpacing: 1.1,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            TextField(
-                              controller: _newPasswordController,
-                              obscureText: _obscureNewPassword,
-                              textInputAction: TextInputAction.next,
-                              style: TextStyle(
-                                color: context.colorScheme.onSurface,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              onChanged: (_) {
-                                if (_newPasswordError != null ||
-                                    _submissionError != null) {
-                                  setState(() {
-                                    _newPasswordError = null;
-                                    _submissionError = null;
-                                  });
-                                }
-                              },
-                              decoration: InputDecoration(
-                                hintText: 'At least 8 characters',
-                                errorText: _newPasswordError,
-                                prefixIcon: Padding(
-                                  padding: const EdgeInsets.only(left: 10),
-                                  child: Icon(
-                                    LucideIcons.lock,
-                                    size: 20,
-                                    color: context.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscureNewPassword
-                                        ? LucideIcons.eye_off
-                                        : LucideIcons.eye,
-                                    size: 20,
-                                    color: context.colorScheme.onSurfaceVariant,
-                                  ),
-                                  onPressed: () => setState(
-                                    () => _obscureNewPassword =
-                                        !_obscureNewPassword,
-                                  ),
-                                ),
-                                filled: true,
-                                fillColor: context.colorScheme.surface,
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(36),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.outlineVariant,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(36),
-                                  borderSide: BorderSide(
+                return SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight:
+                          MediaQuery.of(context).size.height -
+                          kToolbarHeight -
+                          MediaQuery.of(context).padding.top,
+                    ),
+                    child: IntrinsicHeight(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              children: [
+                                const SizedBox(height: 20),
+                                Text(
+                                  'Set New Password',
+                                  style: TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w800,
                                     color: context.colorScheme.onSurface,
-                                    width: 1.5,
                                   ),
                                 ),
-                                errorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(36),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.error,
-                                  ),
-                                ),
-                                focusedErrorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(36),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.error,
-                                    width: 1.5,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                'Confirm Password',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  color: context.colorScheme.onSurfaceVariant,
-                                  letterSpacing: 1.1,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            TextField(
-                              controller: _confirmPasswordController,
-                              obscureText: _obscureConfirmPassword,
-                              textInputAction: TextInputAction.done,
-                              onSubmitted: (_) => _submitNewPassword(context),
-                              style: TextStyle(
-                                color: context.colorScheme.onSurface,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              onChanged: (_) {
-                                if (_confirmPasswordError != null ||
-                                    _submissionError != null) {
-                                  setState(() {
-                                    _confirmPasswordError = null;
-                                    _submissionError = null;
-                                  });
-                                }
-                              },
-                              decoration: InputDecoration(
-                                hintText: 'Re-enter your password',
-                                errorText: _confirmPasswordError,
-                                prefixIcon: Padding(
-                                  padding: const EdgeInsets.only(left: 10),
-                                  child: Icon(
-                                    LucideIcons.lock,
-                                    size: 20,
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Your new password must be different from previous passwords.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 15,
                                     color: context.colorScheme.onSurfaceVariant,
+                                    height: 1.5,
                                   ),
                                 ),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _obscureConfirmPassword
-                                        ? LucideIcons.eye_off
-                                        : LucideIcons.eye,
-                                    size: 20,
-                                    color: context.colorScheme.onSurfaceVariant,
+                                if (_submissionError != null) ...[
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    _submissionError!,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: context.colorScheme.error,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
-                                  onPressed: () => setState(
-                                    () => _obscureConfirmPassword =
-                                        !_obscureConfirmPassword,
+                                ],
+                                const SizedBox(height: 40),
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    'New Password',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                      color:
+                                          context.colorScheme.onSurfaceVariant,
+                                      letterSpacing: 1.1,
+                                    ),
                                   ),
                                 ),
-                                filled: true,
-                                fillColor: context.colorScheme.surface,
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(36),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.outlineVariant,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(36),
-                                  borderSide: BorderSide(
+                                const SizedBox(height: 8),
+                                TextField(
+                                  controller: _newPasswordController,
+                                  obscureText: _obscureNewPassword,
+                                  textInputAction: TextInputAction.next,
+                                  style: TextStyle(
                                     color: context.colorScheme.onSurface,
-                                    width: 1.5,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  onChanged: (_) {
+                                    if (_newPasswordError != null ||
+                                        _submissionError != null) {
+                                      setState(() {
+                                        _newPasswordError = null;
+                                        _submissionError = null;
+                                      });
+                                    }
+                                  },
+                                  decoration: InputDecoration(
+                                    hintText: 'At least 8 characters',
+                                    errorText: _newPasswordError,
+                                    prefixIcon: Padding(
+                                      padding: const EdgeInsets.only(left: 10),
+                                      child: Icon(
+                                        LucideIcons.lock,
+                                        size: 20,
+                                        color: context
+                                            .colorScheme
+                                            .onSurfaceVariant,
+                                      ),
+                                    ),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _obscureNewPassword
+                                            ? LucideIcons.eye_off
+                                            : LucideIcons.eye,
+                                        size: 20,
+                                        color: context
+                                            .colorScheme
+                                            .onSurfaceVariant,
+                                      ),
+                                      onPressed: () => setState(
+                                        () => _obscureNewPassword =
+                                            !_obscureNewPassword,
+                                      ),
+                                    ),
+                                    filled: true,
+                                    fillColor: context.colorScheme.surface,
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(36),
+                                      borderSide: BorderSide(
+                                        color:
+                                            context.colorScheme.outlineVariant,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(36),
+                                      borderSide: BorderSide(
+                                        color: context.colorScheme.onSurface,
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    errorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(36),
+                                      borderSide: BorderSide(
+                                        color: context.colorScheme.error,
+                                      ),
+                                    ),
+                                    focusedErrorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(36),
+                                      borderSide: BorderSide(
+                                        color: context.colorScheme.error,
+                                        width: 1.5,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                                errorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(36),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.error,
+                                const SizedBox(height: 20),
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    'Confirm Password',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                      color:
+                                          context.colorScheme.onSurfaceVariant,
+                                      letterSpacing: 1.1,
+                                    ),
                                   ),
                                 ),
-                                focusedErrorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(36),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.error,
-                                    width: 1.5,
+                                const SizedBox(height: 8),
+                                TextField(
+                                  controller: _confirmPasswordController,
+                                  obscureText: _obscureConfirmPassword,
+                                  textInputAction: TextInputAction.done,
+                                  onSubmitted: (_) =>
+                                      _submitNewPassword(context),
+                                  style: TextStyle(
+                                    color: context.colorScheme.onSurface,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  onChanged: (_) {
+                                    if (_confirmPasswordError != null ||
+                                        _submissionError != null) {
+                                      setState(() {
+                                        _confirmPasswordError = null;
+                                        _submissionError = null;
+                                      });
+                                    }
+                                  },
+                                  decoration: InputDecoration(
+                                    hintText: 'Re-enter your password',
+                                    errorText: _confirmPasswordError,
+                                    prefixIcon: Padding(
+                                      padding: const EdgeInsets.only(left: 10),
+                                      child: Icon(
+                                        LucideIcons.lock,
+                                        size: 20,
+                                        color: context
+                                            .colorScheme
+                                            .onSurfaceVariant,
+                                      ),
+                                    ),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _obscureConfirmPassword
+                                            ? LucideIcons.eye_off
+                                            : LucideIcons.eye,
+                                        size: 20,
+                                        color: context
+                                            .colorScheme
+                                            .onSurfaceVariant,
+                                      ),
+                                      onPressed: () => setState(
+                                        () => _obscureConfirmPassword =
+                                            !_obscureConfirmPassword,
+                                      ),
+                                    ),
+                                    filled: true,
+                                    fillColor: context.colorScheme.surface,
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(36),
+                                      borderSide: BorderSide(
+                                        color:
+                                            context.colorScheme.outlineVariant,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(36),
+                                      borderSide: BorderSide(
+                                        color: context.colorScheme.onSurface,
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    errorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(36),
+                                      borderSide: BorderSide(
+                                        color: context.colorScheme.error,
+                                      ),
+                                    ),
+                                    focusedErrorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(36),
+                                      borderSide: BorderSide(
+                                        color: context.colorScheme.error,
+                                        width: 1.5,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      ElevatedButton(
-                        onPressed: isLoading
-                            ? null
-                            : () => _submitNewPassword(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: context.colorScheme.onSurface,
-                          foregroundColor: context.colorScheme.onPrimary,
-                          minimumSize: const Size.fromHeight(56),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(36),
                           ),
-                          elevation: 0,
-                        ),
-                        child: isLoading
-                            ? SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  color: context.colorScheme.surface,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text(
-                                'Save New Password',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                          const SizedBox(height: 20),
+                          ElevatedButton(
+                            onPressed: isLoading
+                                ? null
+                                : () => _submitNewPassword(context),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: context.colorScheme.onSurface,
+                              foregroundColor: context.colorScheme.onPrimary,
+                              minimumSize: const Size.fromHeight(56),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(36),
                               ),
+                              elevation: 0,
+                            ),
+                            child: isLoading
+                                ? SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      color: context.colorScheme.surface,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Save New Password',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-            );
-          },
-        ),
+                );
+              },
+            ),
       ),
     );
   }

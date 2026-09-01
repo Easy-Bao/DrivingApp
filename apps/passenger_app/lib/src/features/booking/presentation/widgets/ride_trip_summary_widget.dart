@@ -309,8 +309,7 @@ Widget rideTripSummaryLongAddressPreview() {
         child: RideTripSummaryWidget(
           pickupLabel: 'Mountain View',
           destinationName: 'Silicon Valley Corporate Catering',
-          destinationAddress:
-              '1390 Pear Avenue, Mountain View, California 94043, United States',
+          destinationAddress: '1390 Pear Avenue, Mountain View, California 94043, United States',
         ),
       ),
     ),

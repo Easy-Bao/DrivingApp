@@ -78,9 +78,8 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
         ),
       );
     } else {
-      BlocProvider.of<VerifyOtpBloc>(
-        context,
-      ).add(VerifyOtpSubmitted(email: widget.email, code: code));
+      BlocProvider.of<VerifyOtpBloc>(context)
+          .add(VerifyOtpSubmitted(email: widget.email, code: code));
     }
   }
 
@@ -119,9 +118,8 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
                   ),
                 );
               } else {
-                BlocProvider.of<SessionBloc>(
-                  context,
-                ).add(const SessionStarted());
+                BlocProvider.of<SessionBloc>(context)
+                    .add(const SessionStarted());
                 context.goNamed(HomeRoutes.home);
               }
             } else if (state is VerifyOtpResent) {

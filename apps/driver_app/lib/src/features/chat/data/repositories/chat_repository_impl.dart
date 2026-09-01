@@ -189,9 +189,8 @@ final class ChatRepositoryImpl implements ChatRepository {
           ),
           'message' => Right(
             ChatMessageReceived(
-              ChatMessageDto.fromJson(
-                decoded,
-              ).toEntity(currentUserId: currentUserId),
+              ChatMessageDto.fromJson(decoded)
+                  .toEntity(currentUserId: currentUserId),
             ),
           ),
           'typing' => _decodeTypingEvent(decoded),

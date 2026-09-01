@@ -70,15 +70,12 @@ void main() {
     driverProfileRepository = MockDriverProfileRepository();
     secureSessionService = MockSecureSessionService();
     inboxRepository = MockInboxRepository();
-    when(
-      () => secureSessionService.readPassengerId(),
-    ).thenAnswer((_) async => 'pass-001');
-    when(
-      () => bookingRepository.cancelSession(any()),
-    ).thenAnswer((_) async => const Right(null));
-    when(
-      () => bookingRepository.fetchOffers(any()),
-    ).thenAnswer((_) async => const Right([]));
+    when(() => secureSessionService.readPassengerId())
+        .thenAnswer((_) async => 'pass-001');
+    when(() => bookingRepository.cancelSession(any()))
+        .thenAnswer((_) async => const Right(null));
+    when(() => bookingRepository.fetchOffers(any()))
+        .thenAnswer((_) async => const Right([]));
   });
 
   const testDriver = DriverModel(
@@ -162,9 +159,8 @@ void main() {
         when(() => driverProfileRepository.fetchStats(any())).thenAnswer(
           (_) async => const Right(DriverProfileStats(completedTrips: 42)),
         );
-        when(
-          () => driverProfileRepository.fetchReviews(any()),
-        ).thenAnswer((_) async => const Right([]));
+        when(() => driverProfileRepository.fetchReviews(any()))
+            .thenAnswer((_) async => const Right([]));
         return _makeBookingBloc(
           driverRepo: driverRepo,
           bookingRepository: bookingRepository,
@@ -233,9 +229,8 @@ void main() {
             ),
       ],
       verify: (_) {
-        verify(
-          () => driverRepo.getNearbyDrivers(lat: 7.828, lng: 123.434),
-        ).called(1);
+        verify(() => driverRepo.getNearbyDrivers(lat: 7.828, lng: 123.434))
+            .called(1);
       },
     );
 
@@ -251,9 +246,8 @@ void main() {
         when(() => driverProfileRepository.fetchStats(any())).thenAnswer(
           (_) async => const Right(DriverProfileStats(completedTrips: 42)),
         );
-        when(
-          () => driverProfileRepository.fetchReviews(any()),
-        ).thenAnswer((_) async => const Right([]));
+        when(() => driverProfileRepository.fetchReviews(any()))
+            .thenAnswer((_) async => const Right([]));
         return _makeBookingBloc(
           driverRepo: driverRepo,
           bookingRepository: bookingRepository,
@@ -279,9 +273,8 @@ void main() {
         isA<NearestDriverFound>(),
       ],
       verify: (_) {
-        verify(
-          () => driverRepo.getNearbyDrivers(lat: 7.828, lng: 123.434),
-        ).called(1);
+        verify(() => driverRepo.getNearbyDrivers(lat: 7.828, lng: 123.434))
+            .called(1);
       },
     );
   });
@@ -338,12 +331,10 @@ void main() {
         when(() => driverProfileRepository.fetchStats(any())).thenAnswer(
           (_) async => const Right(DriverProfileStats(completedTrips: 1)),
         );
-        when(
-          () => driverProfileRepository.fetchReviews(any()),
-        ).thenAnswer((_) async => const Right([]));
-        when(
-          () => bookingRepository.createSession(any()),
-        ).thenAnswer((_) async => const Right('101'));
+        when(() => driverProfileRepository.fetchReviews(any()))
+            .thenAnswer((_) async => const Right([]));
+        when(() => bookingRepository.createSession(any()))
+            .thenAnswer((_) async => const Right('101'));
         return _makeBookingBloc(
           driverRepo: driverRepo,
           bookingRepository: bookingRepository,
@@ -389,9 +380,9 @@ void main() {
       ],
       verify: (_) {
         final request =
-            verify(
-                  () => bookingRepository.createSession(captureAny()),
-                ).captured.single
+            verify(() => bookingRepository.createSession(captureAny()))
+                    .captured
+                    .single
                 as BookingSessionRequest;
         expect(request.targetDriverId, 77);
       },
@@ -400,9 +391,8 @@ void main() {
     blocTest<BookingBloc, BookingState>(
       'accepts a numeric session ID returned by the server',
       build: () {
-        when(
-          () => bookingRepository.createSession(any()),
-        ).thenAnswer((_) async => const Right('202'));
+        when(() => bookingRepository.createSession(any()))
+            .thenAnswer((_) async => const Right('202'));
         return _makeBookingBloc(
           driverRepo: driverRepo,
           bookingRepository: bookingRepository,
@@ -435,9 +425,8 @@ void main() {
       'matches a direct booking from snapshot polling when realtime is absent',
       () async {
         var fetchCount = 0;
-        when(
-          () => bookingRepository.createSession(any()),
-        ).thenAnswer((_) async => const Right('26'));
+        when(() => bookingRepository.createSession(any()))
+            .thenAnswer((_) async => const Right('26'));
         when(() => bookingRepository.fetchOffers('26')).thenAnswer((_) async {
           fetchCount++;
           if (fetchCount == 1) return const Right([]);
@@ -460,9 +449,8 @@ void main() {
           (_) async =>
               const Right(AcceptedBooking(rideId: '24', fareCentavos: 2970)),
         );
-        when(
-          () => secureSessionService.saveActiveRideId('24'),
-        ).thenAnswer((_) async {});
+        when(() => secureSessionService.saveActiveRideId('24'))
+            .thenAnswer((_) async {});
 
         final bloc = _makeBookingBloc(
           driverRepo: driverRepo,
@@ -497,9 +485,9 @@ void main() {
           ),
         );
 
-        final state =
-            await matched.timeout(const Duration(milliseconds: 500))
-                as BookingDriverMatched;
+        final state = await matched.timeout(
+          const Duration(milliseconds: 500),
+        ) as BookingDriverMatched;
         expect(state.matchResult.driverName, 'Target Driver');
         expect(state.matchResult.vehicleType, 'Sedan');
         expect(state.matchResult.plateNumber, 'ABC 1234');
@@ -580,9 +568,8 @@ void main() {
     blocTest<BookingBloc, BookingState>(
       'emits BookingCanceled when the remote cancellation fails',
       build: () {
-        when(
-          () => bookingRepository.cancelSession(any()),
-        ).thenThrow(Exception('gateway unavailable'));
+        when(() => bookingRepository.cancelSession(any()))
+            .thenThrow(Exception('gateway unavailable'));
         return _makeBookingBloc(
           driverRepo: driverRepo,
           bookingRepository: bookingRepository,

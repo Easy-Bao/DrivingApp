@@ -45,14 +45,10 @@ void main() {
       403: 'You do not have permission to view or edit this resource.',
       400: 'Please verify your input and correct the highlighted fields.',
       422: 'Please verify your input and correct the highlighted fields.',
-      429:
-          'You are making requests too quickly. Please wait a moment before trying again.',
-      503:
-          'We are currently improving our services. We will be back online shortly.',
-      504:
-          'The server took too long to respond. Please check your connection and retry.',
-      500:
-          'We encountered an unexpected issue while processing your request. Please try again in a few moments.',
+      429: 'You are making requests too quickly. Please wait a moment before trying again.',
+      503: 'We are currently improving our services. We will be back online shortly.',
+      504: 'The server took too long to respond. Please check your connection and retry.',
+      500: 'We encountered an unexpected issue while processing your request. Please try again in a few moments.',
     };
 
     for (final entry in expectedMessages.entries) {

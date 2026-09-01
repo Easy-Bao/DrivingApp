@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:maps/maps.dart';
 
 import 'package:flutter/material.dart';
@@ -105,9 +106,8 @@ class _HomePageState extends State<HomePage> {
     final sessionState = BlocProvider.of<SessionBloc>(context).state;
     if (sessionState case AuthenticatedSession(:final passengerId)) {
       if (passengerId.trim().isEmpty) return;
-      BlocProvider.of<RideHistoryBloc>(
-        context,
-      ).add(LoadRideHistoryEvent(passengerId: passengerId));
+      BlocProvider.of<RideHistoryBloc>(context)
+          .add(LoadRideHistoryEvent(passengerId: passengerId));
     }
   }
 
@@ -416,9 +416,9 @@ class _HomePageState extends State<HomePage> {
           );
           return;
         }
-        final address = BlocProvider.of<HomeCubit>(
-          context,
-        ).state.currentAddress;
+        final address = BlocProvider.of<HomeCubit>(context)
+            .state
+            .currentAddress;
         unawaited(
           context.pushNamed(
             BookingRoutes.searchDestination,
@@ -560,9 +560,8 @@ class _HomePageState extends State<HomePage> {
               ),
               onTap: () async {
                 Navigator.pop(context);
-                await BlocProvider.of<SavedPlacesCubit>(
-                  context,
-                ).removePlace(index);
+                await BlocProvider.of<SavedPlacesCubit>(context)
+                    .removePlace(index);
               },
             ),
             const SizedBox(height: 8),

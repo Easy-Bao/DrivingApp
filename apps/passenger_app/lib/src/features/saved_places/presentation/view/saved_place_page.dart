@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:maps/maps.dart';
 
 import 'package:flutter/material.dart';
@@ -227,9 +228,8 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
                   ),
                   onTap: () async {
                     Navigator.of(sheetContext).pop();
-                    await BlocProvider.of<SavedPlacesCubit>(
-                      context,
-                    ).removePlace(index);
+                    await BlocProvider.of<SavedPlacesCubit>(context)
+                        .removePlace(index);
                   },
                 ),
                 const SizedBox(height: 8),

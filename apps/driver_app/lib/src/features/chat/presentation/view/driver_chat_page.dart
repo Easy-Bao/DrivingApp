@@ -1,5 +1,6 @@
 import 'package:driver_app/src/features/active_ride/active_ride.dart';
 import 'package:driver_app/src/features/chat/chat.dart';
+
 import 'dart:async';
 
 import 'package:driver_app/src/infrastructure/config/driver_env_config.dart';
@@ -48,9 +49,8 @@ class _DriverChatPageState extends State<DriverChatPage> {
     if (rId.isEmpty) return;
     try {
       RideSnapshot? ride;
-      (await widget.rideRepository.fetchRide(
-        rId,
-      )).fold((_) {}, (value) => ride = value);
+      (await widget.rideRepository.fetchRide(rId))
+          .fold((_) {}, (value) => ride = value);
       if (ride?.isTerminal == true && mounted) {
         setState(() => _isTripFinished = true);
       }

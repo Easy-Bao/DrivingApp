@@ -81,23 +81,26 @@ void main() {
     expect(loadCount, 2);
   });
 
-  test('clears stale values without allowing an old request to repopulate', () async {
-    final cache = AsyncTtlCache<String, int>(
-      ttl: const Duration(minutes: 1),
-      maxEntries: 2,
-    );
-    final response = Completer<int>();
-    var loadCount = 0;
+  test(
+    'clears stale values without allowing an old request to repopulate',
+    () async {
+      final cache = AsyncTtlCache<String, int>(
+        ttl: const Duration(minutes: 1),
+        maxEntries: 2,
+      );
+      final response = Completer<int>();
+      var loadCount = 0;
 
-    final pending = cache.getOrLoad('route', () {
-      loadCount++;
-      return response.future;
-    });
-    cache.clear();
-    response.complete(1);
-    expect(await pending, 1);
+      final pending = cache.getOrLoad('route', () {
+        loadCount++;
+        return response.future;
+      });
+      cache.clear();
+      response.complete(1);
+      expect(await pending, 1);
 
-    expect(await cache.getOrLoad('route', () async => ++loadCount), 2);
-    expect(loadCount, 2);
-  });
+      expect(await cache.getOrLoad('route', () async => ++loadCount), 2);
+      expect(loadCount, 2);
+    },
+  );
 }

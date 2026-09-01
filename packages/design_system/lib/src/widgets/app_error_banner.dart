@@ -38,9 +38,8 @@ class AppErrorBanner extends StatelessWidget {
             Expanded(
               child: Text(
                 message,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: scheme.onErrorContainer),
+                style: Theme.of(context).textTheme.bodySmall
+                    ?.copyWith(color: scheme.onErrorContainer),
               ),
             ),
             const SizedBox(width: 8),

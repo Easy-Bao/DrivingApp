@@ -67,9 +67,8 @@ class AppAboutPage extends StatelessWidget {
               Text(
                 'Version $applicationVersion',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
+                style: Theme.of(context).textTheme.bodySmall
+                    ?.copyWith(color: context.colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: 24),
               Text(

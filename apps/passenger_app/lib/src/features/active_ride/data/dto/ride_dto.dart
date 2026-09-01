@@ -3,10 +3,7 @@ import 'package:passenger_app/src/features/active_ride/domain/entities/ride_snap
 final class RideDto {
   const RideDto(this.value);
 
-  factory RideDto.fromJson(
-    Map<String, dynamic> json, {
-    String? fallbackId,
-  }) {
+  factory RideDto.fromJson(Map<String, dynamic> json, {String? fallbackId}) {
     return RideDto(RideSnapshot.fromJson(json, fallbackId: fallbackId));
   }
 

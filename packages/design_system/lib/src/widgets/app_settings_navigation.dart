@@ -43,9 +43,8 @@ class AppSettingsScaffold extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 description,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
+                style: Theme.of(context).textTheme.bodyMedium
+                    ?.copyWith(color: context.colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: 28),
               ...children,
@@ -75,9 +74,8 @@ class AppSettingsSection extends StatelessWidget {
       children: [
         Text(
           label,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            color: context.colorScheme.onSurfaceVariant,
-          ),
+          style: Theme.of(context).textTheme.titleSmall
+              ?.copyWith(color: context.colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 10),
         Material(

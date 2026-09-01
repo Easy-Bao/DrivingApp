@@ -46,9 +46,9 @@ class _AppHelpCenterPageState extends State<AppHelpCenterPage> {
     super.dispose();
   }
 
-  List<String> get _categories => {
-    for (final topic in widget.topics) topic.category,
-  }.toList(growable: false);
+  List<String> get _categories =>
+      {for (final topic in widget.topics) topic.category}
+          .toList(growable: false);
 
   List<AppHelpTopic> get _visibleTopics {
     final normalizedQuery = _query.trim().toLowerCase();
@@ -93,9 +93,8 @@ class _AppHelpCenterPageState extends State<AppHelpCenterPage> {
               const SizedBox(height: 6),
               Text(
                 widget.description,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
+                style: Theme.of(context).textTheme.bodyMedium
+                    ?.copyWith(color: context.colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: 20),
               TextField(
@@ -262,9 +261,8 @@ class _EmptyHelpSearch extends StatelessWidget {
           const SizedBox(height: 5),
           Text(
             'Try a different search or category.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: context.colorScheme.onSurfaceVariant,
-            ),
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(color: context.colorScheme.onSurfaceVariant),
           ),
         ],
       ),

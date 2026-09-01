@@ -54,9 +54,8 @@ void main() {
           ],
         ),
       );
-      verify(
-        () => remoteDataSource.fetchHomeData(lat: 7.8, lng: 123.4),
-      ).called(1);
+      verify(() => remoteDataSource.fetchHomeData(lat: 7.8, lng: 123.4))
+          .called(1);
     },
   );
 }

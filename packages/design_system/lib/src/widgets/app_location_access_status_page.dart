@@ -177,9 +177,8 @@ class _LocationReason extends StatelessWidget {
               const SizedBox(height: 3),
               Text(
                 message,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
+                style: Theme.of(context).textTheme.bodySmall
+                    ?.copyWith(color: context.colorScheme.onSurfaceVariant),
               ),
             ],
           ),

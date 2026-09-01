@@ -1,5 +1,6 @@
 import 'package:passenger_app/src/features/active_ride/active_ride.dart';
 import 'package:passenger_app/src/features/ride_history/ride_history.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -81,8 +82,7 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                       const _RideHistoryMessageView(
                         subtitle: 'Tap a ride to see details',
                         title: 'No rides yet',
-                        message:
-                            'Your completed and cancelled rides will appear here.',
+                        message: 'Your completed and cancelled rides will appear here.',
                       ),
                     RideHistoryLoaded(
                       :final past,
@@ -115,18 +115,16 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
   Future<void> _loadRideHistory() async {
     final sessionState = BlocProvider.of<SessionBloc>(context).state;
     if (sessionState case AuthenticatedSession(:final passengerId)) {
-      BlocProvider.of<RideHistoryBloc>(
-        context,
-      ).add(LoadRideHistoryEvent(passengerId: passengerId));
+      BlocProvider.of<RideHistoryBloc>(context)
+          .add(LoadRideHistoryEvent(passengerId: passengerId));
     }
   }
 
   void _loadMoreRideHistory() {
     final sessionState = BlocProvider.of<SessionBloc>(context).state;
     if (sessionState case AuthenticatedSession(:final passengerId)) {
-      BlocProvider.of<RideHistoryBloc>(
-        context,
-      ).add(LoadMoreRideHistoryEvent(passengerId: passengerId));
+      BlocProvider.of<RideHistoryBloc>(context)
+          .add(LoadMoreRideHistoryEvent(passengerId: passengerId));
     }
   }
 
@@ -199,9 +197,8 @@ class _RideHistoryMessageView extends StatelessWidget {
                 Text(
                   message,
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: context.colorScheme.onSurfaceVariant,
-                  ),
+                  style: Theme.of(context).textTheme.bodyMedium
+                      ?.copyWith(color: context.colorScheme.onSurfaceVariant),
                 ),
                 if (actionLabel != null && onAction != null) ...[
                   const SizedBox(height: 16),

@@ -1,4 +1,5 @@
 import 'package:passenger_app/src/features/booking/booking.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -211,9 +212,8 @@ class _FindingDriverPageContentState extends State<FindingDriverPageContent>
         ),
       );
 
-      BlocProvider.of<LiveMapBloc>(
-        context,
-      ).add(AddMapMarkerEvent(lat: lat, lng: lng, isOrigin: true));
+      BlocProvider.of<LiveMapBloc>(context)
+          .add(AddMapMarkerEvent(lat: lat, lng: lng, isOrigin: true));
     }
   }
 

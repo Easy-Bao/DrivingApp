@@ -396,9 +396,8 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
                             },
                             onChatPressed: () async {
                               final rideId =
-                                  BlocProvider.of<RideFlowCubit>(
-                                    context,
-                                  ).activeRideId ??
+                                  BlocProvider.of<RideFlowCubit>(context)
+                                      .activeRideId ??
                                   '';
                               final state = BlocProvider.of<RideFlowCubit>(
                                 context,

@@ -15,8 +15,7 @@ class DriverAboutBaoRidePage extends StatelessWidget {
     return AppAboutPage(
       applicationName: 'BaoRide Driver',
       applicationVersion: '1.0.0',
-      description:
-          'BaoRide gives drivers one place to manage availability, trips, earnings, vehicle details, and rider pickups.',
+      description: 'BaoRide gives drivers one place to manage availability, trips, earnings, vehicle details, and rider pickups.',
       icon: LucideIcons.car_front,
       onBack: onBack ?? () => context.pop(),
       onLicensesTap:

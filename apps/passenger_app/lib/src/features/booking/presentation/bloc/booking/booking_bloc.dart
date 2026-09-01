@@ -2,6 +2,7 @@ import 'package:passenger_app/src/features/active_ride/active_ride.dart';
 import 'package:passenger_app/src/features/ride_history/ride_history.dart';
 import 'package:passenger_app/src/features/booking/booking.dart';
 import 'package:passenger_app/src/features/auth/domain/failures/auth_failures.dart';
+
 import 'dart:async';
 import 'dart:developer' as dev;
 
@@ -265,8 +266,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       InboxNotification(
         id: 'no-driver-${DateTime.now().millisecondsSinceEpoch}',
         title: 'No driver found',
-        message:
-            'We could not find a driver for your ride. You can try searching again.',
+        message: 'We could not find a driver for your ride. You can try searching again.',
         timestamp: DateTime.now(),
         type: 'driver',
         isRead: false,

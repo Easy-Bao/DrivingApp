@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:maps/maps.dart';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -41,14 +42,13 @@ void main() {
           {'driver_id': '42', 'latitude': latitude, 'longitude': longitude},
         ],
       );
-      when(
-        () => locationRepository.getTravelMatrix(body: any(named: 'body')),
-      ).thenAnswer(
-        (_) async => {
-          'distances_km': [0.0],
-          'durations_min': [1.0],
-        },
-      );
+      when(() => locationRepository.getTravelMatrix(body: any(named: 'body')))
+          .thenAnswer(
+            (_) async => {
+              'distances_km': [0.0],
+              'durations_min': [1.0],
+            },
+          );
 
       final result = await DriverRepositoryImpl(
         discoveryDataSource: dataSource,
@@ -82,23 +82,21 @@ void main() {
       final onlineDrivers = Completer<List<Map<String, dynamic>>>();
       final nearbyDrivers = Completer<List<Map<String, dynamic>>>();
 
-      when(
-        () => dataSource.fetchOnlineDrivers(any()),
-      ).thenAnswer((_) => onlineDrivers.future);
+      when(() => dataSource.fetchOnlineDrivers(any()))
+          .thenAnswer((_) => onlineDrivers.future);
       when(
         () => dataSource.fetchNearbyDrivers(
           latitude: latitude,
           longitude: longitude,
         ),
       ).thenAnswer((_) => nearbyDrivers.future);
-      when(
-        () => locationRepository.getTravelMatrix(body: any(named: 'body')),
-      ).thenAnswer(
-        (_) async => {
-          'distances_km': [0.0],
-          'durations_min': [1.0],
-        },
-      );
+      when(() => locationRepository.getTravelMatrix(body: any(named: 'body')))
+          .thenAnswer(
+            (_) async => {
+              'distances_km': [0.0],
+              'durations_min': [1.0],
+            },
+          );
 
       final repository = DriverRepositoryImpl(
         discoveryDataSource: dataSource,

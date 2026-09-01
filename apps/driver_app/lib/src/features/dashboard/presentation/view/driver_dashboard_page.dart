@@ -1,4 +1,5 @@
 import 'package:driver_app/src/features/active_ride/active_ride.dart';
+
 import 'dart:async';
 import 'dart:developer' as dev;
 
@@ -147,9 +148,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   Future<void> _loadActiveTrips() async {
     if (!mounted || !_isForeground) return;
-    await BlocProvider.of<DashboardCubit>(
-      context,
-    ).loadDispatchSnapshot(includeOffers: false, silent: true);
+    await BlocProvider.of<DashboardCubit>(context)
+        .loadDispatchSnapshot(includeOffers: false, silent: true);
   }
 
   Future<void> _refreshLocationAfterResume() async {
@@ -403,9 +403,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       return;
     }
 
-    await BlocProvider.of<DashboardCubit>(
-      context,
-    ).loadDispatchSnapshot(silent: true);
+    await BlocProvider.of<DashboardCubit>(context)
+        .loadDispatchSnapshot(silent: true);
     if (mounted && pollGeneration != _pollGeneration) {
       unawaited(_pollRideData(_pollGeneration));
     }
@@ -501,9 +500,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       );
     } finally {
       if (mounted && context.mounted) {
-        final resolvedOnline = BlocProvider.of<DashboardCubit>(
-          context,
-        ).state.isOnline;
+        final resolvedOnline = BlocProvider.of<DashboardCubit>(context)
+            .state
+            .isOnline;
         _pendingOnline = null;
         if (resolvedOnline) {
           _availabilityCtrl.forward();
@@ -603,9 +602,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     Map<String, dynamic> trip,
     String rideId,
   ) async {
-    final ride = await BlocProvider.of<DashboardCubit>(
-      context,
-    ).fetchAuthoritativeRide(rideId);
+    final ride = await BlocProvider.of<DashboardCubit>(context)
+        .fetchAuthoritativeRide(rideId);
     if (ride != null) return ride;
     return RideDto.fromJson(trip, fallbackId: rideId).toDomain();
   }
@@ -854,11 +852,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                                 bid: bid,
                                 submittingBidId: _submittingBidId,
                                 onDecline: () =>
-                                    BlocProvider.of<DashboardCubit>(
-                                      context,
-                                    ).removeActiveBid(
-                                      dashboardValueAsString(bid['id']),
-                                    ),
+                                    BlocProvider.of<DashboardCubit>(context)
+                                        .removeActiveBid(
+                                          dashboardValueAsString(bid['id']),
+                                        ),
                                 onAccept: () => _acceptBid(bid),
                               ),
                             ),

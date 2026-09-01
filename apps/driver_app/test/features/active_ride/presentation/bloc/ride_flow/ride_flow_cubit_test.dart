@@ -30,9 +30,8 @@ void main() {
     mockRideRepository = MockDriverRideRepository();
     mockSessionService = MockSecureSessionService();
 
-    when(
-      () => mockSessionService.readDriverId(),
-    ).thenAnswer((_) async => 'test-driver-id');
+    when(() => mockSessionService.readDriverId())
+        .thenAnswer((_) async => 'test-driver-id');
 
     when(
       () => mockRideRepository.acceptRide(

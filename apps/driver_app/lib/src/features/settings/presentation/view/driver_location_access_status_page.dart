@@ -81,8 +81,7 @@ class DriverLocationAccessStatusPage extends StatelessWidget {
           LocationAccessState.denied => const AppLocationAccessPresentation(
             icon: LucideIcons.shield_alert,
             title: 'Location permission is needed',
-            message:
-                'Allow location when prompted so BaoRide can send nearby rides.',
+            message: 'Allow location when prompted so BaoRide can send nearby rides.',
             tone: AppLocationAccessTone.warning,
           ),
           LocationAccessState.deniedForever =>

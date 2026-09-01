@@ -15,8 +15,7 @@ class AboutBaoRidePage extends StatelessWidget {
     return AppAboutPage(
       applicationName: 'BaoRide Passenger',
       applicationVersion: '1.0.0',
-      description:
-          'BaoRide connects passengers with nearby drivers and keeps pickup, trip, and payment details in one focused experience.',
+      description: 'BaoRide connects passengers with nearby drivers and keeps pickup, trip, and payment details in one focused experience.',
       icon: LucideIcons.car_front,
       onBack: onBack ?? () => context.pop(),
       onLicensesTap:

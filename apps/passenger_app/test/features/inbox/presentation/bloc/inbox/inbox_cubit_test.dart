@@ -41,9 +41,8 @@ void main() {
     () async {
       final repository = MockInboxRepository();
       final response = Completer<Either<Failure, List<InboxNotification>>>();
-      when(
-        () => repository.fetchPassengerNotifications('passenger-1'),
-      ).thenAnswer((_) => response.future);
+      when(() => repository.fetchPassengerNotifications('passenger-1'))
+          .thenAnswer((_) => response.future);
       final cubit = InboxCubit(inboxRepository: repository);
 
       final pendingLoad = cubit.loadNotifications('passenger-1');

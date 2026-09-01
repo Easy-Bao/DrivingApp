@@ -34,8 +34,9 @@ void main() {
     expect(firstCenter.dx, closeTo(firstDecoration.center.dx, 0.001));
   });
 
-  testWidgets('only the active tab renders a full-size capsule',
-      (tester) async {
+  testWidgets('only the active tab renders a full-size capsule', (
+    tester,
+  ) async {
     await tester.pumpWidget(_indicatorAt(1));
 
     final active = find.byKey(const ValueKey<String>('indicator-1'));

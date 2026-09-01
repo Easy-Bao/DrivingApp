@@ -71,9 +71,9 @@ class ProfileModule {
           return cubit;
         },
         child: AccountPage(
-          onLogout: () => BlocProvider.of<SessionBloc>(
-            context,
-          ).add(const SessionLogoutRequested()),
+          onLogout: () =>
+              BlocProvider.of<SessionBloc>(context)
+                  .add(const SessionLogoutRequested()),
         ),
       ),
       transition: AppTransitions.none,

@@ -1,4 +1,5 @@
 import 'package:driver_app/src/features/chat/chat.dart';
+
 import 'dart:async';
 import 'dart:developer' as dev;
 
@@ -242,9 +243,8 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                                 onCallPressed: () async {
                                   try {
                                     final rideId =
-                                        BlocProvider.of<RideFlowCubit>(
-                                          context,
-                                        ).activeRideId ??
+                                        BlocProvider.of<RideFlowCubit>(context)
+                                            .activeRideId ??
                                         '';
                                     if (rideId.isNotEmpty) {
                                       String? phone;
@@ -275,9 +275,8 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                                 },
                                 onChatPressed: () async {
                                   final rideId =
-                                      BlocProvider.of<RideFlowCubit>(
-                                        context,
-                                      ).activeRideId ??
+                                      BlocProvider.of<RideFlowCubit>(context)
+                                          .activeRideId ??
                                       '';
                                   final rState = BlocProvider.of<RideFlowCubit>(
                                     context,

@@ -72,8 +72,7 @@ class LocationAccessStatusPage extends StatelessWidget {
             const AppLocationAccessPresentation(
               icon: LucideIcons.map_pin_off,
               title: 'Location services are off',
-              message:
-                  'Turn on your phone location service, then return to BaoRide.',
+              message: 'Turn on your phone location service, then return to BaoRide.',
               tone: AppLocationAccessTone.warning,
             ),
           LocationAccessState.denied => const AppLocationAccessPresentation(

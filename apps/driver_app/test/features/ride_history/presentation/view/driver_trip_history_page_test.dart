@@ -21,9 +21,8 @@ void main() {
   ) async {
     final repository = _MockRideHistoryRepository();
     final sessionService = _MockSessionService();
-    when(
-      () => sessionService.readDriverId(),
-    ).thenAnswer((_) async => 'driver-1');
+    when(() => sessionService.readDriverId())
+        .thenAnswer((_) async => 'driver-1');
     when(
       () => repository.fetchTripHistory('driver-1', limit: 25, offset: 0),
     ).thenAnswer(

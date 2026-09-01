@@ -85,9 +85,8 @@ void main() {
       final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
       final sessionService = MockSecureSessionService();
 
-      when(
-        () => sessionService.readDriverId(),
-      ).thenAnswer((_) async => 'driver-42');
+      when(() => sessionService.readDriverId())
+          .thenAnswer((_) async => 'driver-42');
       when(() => _performanceRepository.fetchStats('driver-42')).thenAnswer(
         (_) async => const Right(
           DriverPerformanceStats(
@@ -147,9 +146,8 @@ void main() {
     final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
     final sessionService = MockSecureSessionService();
 
-    when(
-      () => sessionService.readDriverId(),
-    ).thenAnswer((_) async => 'driver-42');
+    when(() => sessionService.readDriverId())
+        .thenAnswer((_) async => 'driver-42');
     when(
       () => availabilityDataSource.updateOnlineStatus(
         driverId: 'driver-42',
@@ -162,9 +160,8 @@ void main() {
         longitude: 123.434,
       ),
     ).thenAnswer((_) async => const Right(null));
-    when(
-      () => sessionService.saveDriverOnlineStatus(true),
-    ).thenAnswer((_) async {});
+    when(() => sessionService.saveDriverOnlineStatus(true))
+        .thenAnswer((_) async {});
 
     final repository = _buildRepository(
       availabilityDataSource: availabilityDataSource,
@@ -192,9 +189,8 @@ void main() {
       final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
       final sessionService = MockSecureSessionService();
 
-      when(
-        () => sessionService.readDriverId(),
-      ).thenAnswer((_) async => 'driver-42');
+      when(() => sessionService.readDriverId())
+          .thenAnswer((_) async => 'driver-42');
       when(
         () => _rideRepository.publishDriverLocation(
           latitude: 7.828,
@@ -213,12 +209,10 @@ void main() {
           isOnline: false,
         ),
       ).thenAnswer((_) async {});
-      when(
-        () => _rideRepository.clearDriverLocation(),
-      ).thenAnswer((_) async => const Right(null));
-      when(
-        () => sessionService.saveDriverOnlineStatus(false),
-      ).thenAnswer((_) async {});
+      when(() => _rideRepository.clearDriverLocation())
+          .thenAnswer((_) async => const Right(null));
+      when(() => sessionService.saveDriverOnlineStatus(false))
+          .thenAnswer((_) async {});
 
       final repository = _buildRepository(
         availabilityDataSource: availabilityDataSource,
@@ -263,9 +257,8 @@ void main() {
       final sessionService = MockSecureSessionService();
       final backgroundService = MockBackgroundTelemetryService();
 
-      when(
-        () => sessionService.readDriverId(),
-      ).thenAnswer((_) async => 'driver-42');
+      when(() => sessionService.readDriverId())
+          .thenAnswer((_) async => 'driver-42');
       when(
         () => _rideRepository.publishDriverLocation(
           latitude: 7.828,
@@ -278,12 +271,10 @@ void main() {
           isOnline: true,
         ),
       ).thenAnswer((_) async {});
-      when(
-        () => sessionService.saveDriverOnlineStatus(true),
-      ).thenAnswer((_) async {});
-      when(
-        () => backgroundService.start(),
-      ).thenThrow(StateError('not configured'));
+      when(() => sessionService.saveDriverOnlineStatus(true))
+          .thenAnswer((_) async {});
+      when(() => backgroundService.start())
+          .thenThrow(StateError('not configured'));
 
       final repository = _buildRepository(
         availabilityDataSource: availabilityDataSource,
@@ -314,21 +305,18 @@ void main() {
     final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
     final sessionService = MockSecureSessionService();
 
-    when(
-      () => sessionService.readDriverId(),
-    ).thenAnswer((_) async => 'driver-42');
+    when(() => sessionService.readDriverId())
+        .thenAnswer((_) async => 'driver-42');
     when(
       () => availabilityDataSource.updateOnlineStatus(
         driverId: 'driver-42',
         isOnline: false,
       ),
     ).thenAnswer((_) async {});
-    when(
-      () => _rideRepository.clearDriverLocation(),
-    ).thenAnswer((_) async => const Right(null));
-    when(
-      () => sessionService.saveDriverOnlineStatus(false),
-    ).thenAnswer((_) async {});
+    when(() => _rideRepository.clearDriverLocation())
+        .thenAnswer((_) async => const Right(null));
+    when(() => sessionService.saveDriverOnlineStatus(false))
+        .thenAnswer((_) async {});
 
     final repository = _buildRepository(
       availabilityDataSource: availabilityDataSource,
@@ -351,9 +339,8 @@ void main() {
       final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
       final sessionService = MockSecureSessionService();
 
-      when(
-        () => sessionService.readDriverId(),
-      ).thenAnswer((_) async => 'driver-42');
+      when(() => sessionService.readDriverId())
+          .thenAnswer((_) async => 'driver-42');
       when(
         () => _rideRepository.publishDriverLocation(
           latitude: 7.828,
@@ -377,12 +364,10 @@ void main() {
           isOnline: false,
         ),
       ).thenAnswer((_) async {});
-      when(
-        () => _rideRepository.clearDriverLocation(),
-      ).thenAnswer((_) async => const Right(null));
-      when(
-        () => sessionService.saveDriverOnlineStatus(false),
-      ).thenAnswer((_) async {});
+      when(() => _rideRepository.clearDriverLocation())
+          .thenAnswer((_) async => const Right(null));
+      when(() => sessionService.saveDriverOnlineStatus(false))
+          .thenAnswer((_) async {});
 
       final repository = _buildRepository(
         availabilityDataSource: availabilityDataSource,

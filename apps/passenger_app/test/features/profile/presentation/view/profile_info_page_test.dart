@@ -31,9 +31,8 @@ void main() {
         gender: 'Female',
       ),
     );
-    when(
-      () => sessionBloc.state,
-    ).thenReturn(const AuthenticatedSession(passengerId: 'passenger-1'));
+    when(() => sessionBloc.state)
+        .thenReturn(const AuthenticatedSession(passengerId: 'passenger-1'));
     when(
       () => profileCubit.updateProfile(
         name: any(named: 'name'),

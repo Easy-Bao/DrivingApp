@@ -1,4 +1,5 @@
 import 'package:driver_app/src/features/chat/chat.dart';
+
 import 'dart:async';
 
 import 'package:driver_app/src/features/chat/presentation/bloc/chat/chat_cubit.dart';
@@ -14,16 +15,13 @@ void main() {
     'shows a resolved state when room initialization returns resolved',
     () async {
       final repository = MockChatRepository();
-      when(
-        () => repository.connectionStateStream,
-      ).thenAnswer((_) => const Stream<ChatConnectionState>.empty());
-      when(
-        () => repository.terminateChatConnection(),
-      ).thenAnswer((_) async => const Right(null));
+      when(() => repository.connectionStateStream)
+          .thenAnswer((_) => const Stream<ChatConnectionState>.empty());
+      when(() => repository.terminateChatConnection())
+          .thenAnswer((_) async => const Right(null));
       when(() => repository.dispose()).thenAnswer((_) async {});
-      when(
-        () => repository.initializeChatRoom(roomId: 'ride-1'),
-      ).thenAnswer((_) async => const Left(ChatRoomLockedFailure()));
+      when(() => repository.initializeChatRoom(roomId: 'ride-1'))
+          .thenAnswer((_) async => const Left(ChatRoomLockedFailure()));
 
       final cubit = ChatCubit(chatRepository: repository);
 
@@ -46,9 +44,8 @@ void main() {
     'redacts a realtime lock reason before it reaches presentation state',
     () async {
       final repository = MockChatRepository();
-      when(
-        () => repository.connectionStateStream,
-      ).thenAnswer((_) => const Stream<ChatConnectionState>.empty());
+      when(() => repository.connectionStateStream)
+          .thenAnswer((_) => const Stream<ChatConnectionState>.empty());
       when(
         () => repository.establishChatConnection(
           roomId: 'ride-1',
@@ -63,12 +60,10 @@ void main() {
           ),
         ),
       );
-      when(
-        () => repository.fetchRoomMessages('ride-1'),
-      ).thenAnswer((_) async => const Right(<ChatMessage>[]));
-      when(
-        () => repository.terminateChatConnection(),
-      ).thenAnswer((_) async => const Right(null));
+      when(() => repository.fetchRoomMessages('ride-1'))
+          .thenAnswer((_) async => const Right(<ChatMessage>[]));
+      when(() => repository.terminateChatConnection())
+          .thenAnswer((_) async => const Right(null));
       when(() => repository.dispose()).thenAnswer((_) async {});
 
       final cubit = ChatCubit(chatRepository: repository);
@@ -94,9 +89,8 @@ void main() {
     final repository = MockChatRepository();
     final events = StreamController<Either<Failure, ChatEvent>>();
     final connectionStates = StreamController<ChatConnectionState>.broadcast();
-    when(
-      () => repository.connectionStateStream,
-    ).thenAnswer((_) => connectionStates.stream);
+    when(() => repository.connectionStateStream)
+        .thenAnswer((_) => connectionStates.stream);
     when(
       () => repository.establishChatConnection(
         roomId: 'ride-1',
@@ -105,12 +99,10 @@ void main() {
       ),
     ).thenAnswer((_) async => const Right(null));
     when(() => repository.chatEventsStream).thenAnswer((_) => events.stream);
-    when(
-      () => repository.fetchRoomMessages('ride-1'),
-    ).thenAnswer((_) async => const Right(<ChatMessage>[]));
-    when(
-      () => repository.terminateChatConnection(),
-    ).thenAnswer((_) async => const Right(null));
+    when(() => repository.fetchRoomMessages('ride-1'))
+        .thenAnswer((_) async => const Right(<ChatMessage>[]));
+    when(() => repository.terminateChatConnection())
+        .thenAnswer((_) async => const Right(null));
     when(() => repository.dispose()).thenAnswer((_) async {});
 
     final cubit = ChatCubit(chatRepository: repository);

@@ -17,9 +17,8 @@ void main() {
     tester,
   ) async {
     final locationCubit = _MockDriverLocationAccessCubit();
-    when(
-      () => locationCubit.state,
-    ).thenReturn(const DriverLocationAccessReady());
+    when(() => locationCubit.state)
+        .thenReturn(const DriverLocationAccessReady());
     var backTaps = 0;
     final destinationTaps = <String>[];
 

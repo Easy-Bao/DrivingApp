@@ -43,9 +43,8 @@ class _ForgotPasswordPageContentState
       return;
     }
 
-    BlocProvider.of<ForgotPasswordBloc>(
-      context,
-    ).add(ForgotPasswordSubmitted(email: email));
+    BlocProvider.of<ForgotPasswordBloc>(context)
+        .add(ForgotPasswordSubmitted(email: email));
   }
 
   @override

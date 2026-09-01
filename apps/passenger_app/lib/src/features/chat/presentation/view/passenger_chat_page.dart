@@ -1,5 +1,6 @@
 import 'package:passenger_app/src/features/active_ride/active_ride.dart';
 import 'package:passenger_app/src/features/chat/chat.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -50,9 +51,8 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
     if (rId.isEmpty) return;
     try {
       RideSnapshot? ride;
-      (await widget.trackRepository.fetchRide(
-        rId,
-      )).fold((_) {}, (value) => ride = value);
+      (await widget.trackRepository.fetchRide(rId))
+          .fold((_) {}, (value) => ride = value);
       if (ride?.isTerminal == true && mounted) {
         setState(() => _isTripFinished = true);
       }

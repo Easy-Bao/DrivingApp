@@ -24,32 +24,27 @@ void main() {
   test(
     'recognizes a persisted token and driver ID as an active session',
     () async {
-      when(
-        () => storage.read(key: DriverStorageKeys.jwtToken),
-      ).thenAnswer((_) async => 'jwt-token');
-      when(
-        () => storage.read(key: DriverStorageKeys.driverId),
-      ).thenAnswer((_) async => 'driver-1');
+      when(() => storage.read(key: DriverStorageKeys.jwtToken))
+          .thenAnswer((_) async => 'jwt-token');
+      when(() => storage.read(key: DriverStorageKeys.driverId))
+          .thenAnswer((_) async => 'driver-1');
 
       expect(await sessionService.hasValidDriverSession(), isTrue);
     },
   );
 
   test('rejects an incomplete persisted session', () async {
-    when(
-      () => storage.read(key: DriverStorageKeys.jwtToken),
-    ).thenAnswer((_) async => 'jwt-token');
-    when(
-      () => storage.read(key: DriverStorageKeys.driverId),
-    ).thenAnswer((_) async => '');
+    when(() => storage.read(key: DriverStorageKeys.jwtToken))
+        .thenAnswer((_) async => 'jwt-token');
+    when(() => storage.read(key: DriverStorageKeys.driverId))
+        .thenAnswer((_) async => '');
 
     expect(await sessionService.hasValidDriverSession(), isFalse);
   });
 
   test('persists and reads the refresh token', () async {
-    when(
-      () => storage.read(key: DriverStorageKeys.refreshToken),
-    ).thenAnswer((_) async => 'refresh-jwt-token');
+    when(() => storage.read(key: DriverStorageKeys.refreshToken))
+        .thenAnswer((_) async => 'refresh-jwt-token');
 
     await sessionService.saveRefreshToken('refresh-jwt-token');
 

@@ -1,5 +1,6 @@
 import 'package:passenger_app/src/features/active_ride/active_ride.dart';
 import 'package:passenger_app/src/features/ride_history/ride_history.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -105,9 +106,8 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
     try {
       RideCounterparty? driverProfile = _counterpartyData;
       if (driverProfile == null) {
-        (await widget.trackRepository.fetchCounterparty(
-          ride.id,
-        )).fold((_) {}, (value) => driverProfile = value);
+        (await widget.trackRepository.fetchCounterparty(ride.id))
+            .fold((_) {}, (value) => driverProfile = value);
       }
       final phone = driverProfile?.phone ?? '';
       if (phone.isNotEmpty) {

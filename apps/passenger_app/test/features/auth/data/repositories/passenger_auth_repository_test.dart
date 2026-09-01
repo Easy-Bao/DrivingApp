@@ -32,12 +32,10 @@ void main() {
     );
 
     when(() => secureSessionService.saveToken(any())).thenAnswer((_) async {});
-    when(
-      () => secureSessionService.saveRefreshToken(any()),
-    ).thenAnswer((_) async {});
-    when(
-      () => secureSessionService.savePassengerId(any()),
-    ).thenAnswer((_) async {});
+    when(() => secureSessionService.saveRefreshToken(any()))
+        .thenAnswer((_) async {});
+    when(() => secureSessionService.savePassengerId(any()))
+        .thenAnswer((_) async {});
   });
 
   group('AuthRepository.authenticate', () {
@@ -89,9 +87,8 @@ void main() {
           ),
         );
         verify(() => secureSessionService.saveToken('jwt-token')).called(1);
-        verify(
-          () => secureSessionService.saveRefreshToken('refresh-jwt-token'),
-        ).called(1);
+        verify(() => secureSessionService.saveRefreshToken('refresh-jwt-token'))
+            .called(1);
         verify(() => secureSessionService.savePassengerId('42')).called(1);
 
         expect(preferences.containsKey('jwt_token'), isFalse);

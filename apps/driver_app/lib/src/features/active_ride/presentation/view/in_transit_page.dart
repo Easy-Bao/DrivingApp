@@ -164,13 +164,12 @@ class _InTransitPageState extends State<InTransitPage> {
   }
 
   Future<void> _refreshPassengerLocation(String rideId) async {
-    (await widget.rideRepository.fetchPassengerLocation(rideId)).fold((_) {}, (
-      location,
-    ) {
-      if (location == null) return;
-      _passengerLat = location.$1;
-      _passengerLng = location.$2;
-    });
+    (await widget.rideRepository.fetchPassengerLocation(rideId))
+        .fold((_) {}, (location) {
+          if (location == null) return;
+          _passengerLat = location.$1;
+          _passengerLng = location.$2;
+        });
   }
 
   void _triggerDrawRoute(double dLat, double dLng) {
@@ -213,9 +212,8 @@ class _InTransitPageState extends State<InTransitPage> {
     if (_isCompletingTrip) return;
     setState(() => _isCompletingTrip = true);
     try {
-      final finalFare = await BlocProvider.of<RideFlowCubit>(
-        context,
-      ).completeRide();
+      final finalFare = await BlocProvider.of<RideFlowCubit>(context)
+          .completeRide();
       if (finalFare == null) {
         if (mounted) {
           CustomToast.show(

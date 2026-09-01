@@ -57,8 +57,7 @@ class AppFailure {
     if (_isRequestTimeout(error)) {
       return createFailure(
         title: 'Request Timed Out',
-        userMessage:
-            'The server took too long to respond. Please check your connection and retry.',
+        userMessage: 'The server took too long to respond. Please check your connection and retry.',
         actionText: 'Retry',
         type: ErrorType.server,
       );
@@ -67,8 +66,7 @@ class AppFailure {
     if (_isOffline(error)) {
       return createFailure(
         title: 'No Connection',
-        userMessage:
-            'You are currently offline. Please check your Wi-Fi or mobile data.',
+        userMessage: 'You are currently offline. Please check your Wi-Fi or mobile data.',
         actionText: 'Reconnect',
         type: ErrorType.network,
       );
@@ -77,8 +75,7 @@ class AppFailure {
     if (_isSocketDisconnected(error)) {
       return createFailure(
         title: 'Connection Interrupted',
-        userMessage:
-            'Connection lost while communicating with the server. Reconnecting automatically...',
+        userMessage: 'Connection lost while communicating with the server. Reconnecting automatically...',
         type: ErrorType.network,
       );
     }
@@ -95,8 +92,7 @@ class AppFailure {
     if (error is NetworkFailure) {
       return createFailure(
         title: 'No Connection',
-        userMessage:
-            'You are currently offline. Please check your Wi-Fi or mobile data.',
+        userMessage: 'You are currently offline. Please check your Wi-Fi or mobile data.',
         actionText: 'Reconnect',
         type: ErrorType.network,
       );
@@ -115,8 +111,7 @@ class AppFailure {
     if (error is ServerFailure || error is DataParsingException) {
       return createFailure(
         title: 'Something went wrong on our end',
-        userMessage:
-            'We encountered an unexpected issue while processing your request. Please try again in a few moments.',
+        userMessage: 'We encountered an unexpected issue while processing your request. Please try again in a few moments.',
         actionText: 'Try Again',
         type: ErrorType.server,
       );
@@ -166,28 +161,24 @@ class AppFailure {
       ),
       429 => createFailure(
         title: 'Too Many Requests',
-        userMessage:
-            'You are making requests too quickly. Please wait a moment before trying again.',
+        userMessage: 'You are making requests too quickly. Please wait a moment before trying again.',
         type: ErrorType.server,
       ),
       503 => createFailure(
         title: 'Under Maintenance',
-        userMessage:
-            'We are currently improving our services. We will be back online shortly.',
+        userMessage: 'We are currently improving our services. We will be back online shortly.',
         actionText: 'Refresh',
         type: ErrorType.server,
       ),
       504 => createFailure(
         title: 'Request Timed Out',
-        userMessage:
-            'The server took too long to respond. Please check your connection and retry.',
+        userMessage: 'The server took too long to respond. Please check your connection and retry.',
         actionText: 'Retry',
         type: ErrorType.server,
       ),
       >= 500 => createFailure(
         title: 'Something went wrong on our end',
-        userMessage:
-            'We encountered an unexpected issue while processing your request. Please try again in a few moments.',
+        userMessage: 'We encountered an unexpected issue while processing your request. Please try again in a few moments.',
         actionText: 'Try Again',
         type: ErrorType.server,
       ),

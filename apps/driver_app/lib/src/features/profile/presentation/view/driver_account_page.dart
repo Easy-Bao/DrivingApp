@@ -67,9 +67,8 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                           AppErrorBanner(
                             message: state.errorMessage!,
                             onRetry: () => unawaited(
-                              BlocProvider.of<DriverAccountCubit>(
-                                context,
-                              ).load(),
+                              BlocProvider.of<DriverAccountCubit>(context)
+                                  .load(),
                             ),
                           ),
                         ],
@@ -193,9 +192,8 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                     const SizedBox(height: 3),
                     Text(
                       'Personal Details',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: context.colorScheme.primary,
-                      ),
+                      style: Theme.of(context).textTheme.bodySmall
+                          ?.copyWith(color: context.colorScheme.primary),
                     ),
                   ],
                 ),
@@ -256,9 +254,8 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
   Widget _buildSectionTitle(BuildContext context, String title) {
     return Text(
       title,
-      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-        color: context.colorScheme.onSurfaceVariant,
-      ),
+      style: Theme.of(context).textTheme.titleSmall
+          ?.copyWith(color: context.colorScheme.onSurfaceVariant),
     );
   }
 

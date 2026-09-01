@@ -302,9 +302,8 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
           isPersonal
               ? 'Your contact details'
               : 'Your registered service vehicle',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: context.colorScheme.onSurfaceVariant,
-          ),
+          style: Theme.of(context).textTheme.bodyMedium
+              ?.copyWith(color: context.colorScheme.onSurfaceVariant),
         ),
       ],
     );
@@ -448,9 +447,8 @@ class _DriverProfileFieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-        color: context.colorScheme.onSurfaceVariant,
-      ),
+      style: Theme.of(context).textTheme.titleSmall
+          ?.copyWith(color: context.colorScheme.onSurfaceVariant),
     );
   }
 }

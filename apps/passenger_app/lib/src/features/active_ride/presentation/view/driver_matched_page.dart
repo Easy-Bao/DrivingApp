@@ -1,5 +1,7 @@
 import 'package:passenger_app/src/features/ride_history/ride_history.dart';
+
 import 'dart:async';
+
 import 'package:maps/maps.dart';
 
 import 'package:flutter/material.dart';

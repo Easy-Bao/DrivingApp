@@ -472,8 +472,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
       return;
     }
 
-    BlocProvider.of<SignInBloc>(
-      context,
-    ).add(SignInSubmitted(email: email, password: password));
+    BlocProvider.of<SignInBloc>(context)
+        .add(SignInSubmitted(email: email, password: password));
   }
 }

@@ -79,9 +79,8 @@ final class BookingRepositoryImpl implements BookingRepository {
       final ride = nested is Map
           ? Map<String, dynamic>.from(nested)
           : const <String, dynamic>{};
-      final rideId = SafeParse.toStringValue(
-        response['ride_id'] ?? ride['id'],
-      ).trim();
+      final rideId = SafeParse.toStringValue(response['ride_id'] ?? ride['id'])
+          .trim();
       if (rideId.isEmpty) {
         return const Left(
           ValidationFailure('The accepted offer has no ride ID.'),

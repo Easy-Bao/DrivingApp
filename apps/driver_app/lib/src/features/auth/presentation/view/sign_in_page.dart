@@ -1,4 +1,5 @@
 import 'package:driver_app/src/features/auth/presentation/widgets/social_login_widget.dart';
+
 import 'dart:async';
 
 import 'package:driver_app/src/features/auth/auth_routes.dart';
@@ -85,9 +86,8 @@ class _SigninPageContentState extends State<_SigninPageContent> {
       return;
     }
 
-    BlocProvider.of<SignInBloc>(
-      context,
-    ).add(SignInSubmitted(email: email, password: password));
+    BlocProvider.of<SignInBloc>(context)
+        .add(SignInSubmitted(email: email, password: password));
   }
 
   @override

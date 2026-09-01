@@ -16,18 +16,17 @@ void main() {
   });
 
   test('unwraps a successful authentication response', () async {
-    when(
-      () => dio.post<Object?>(any(), data: any<dynamic>(named: 'data')),
-    ).thenAnswer(
-      (_) async => Response<Object?>(
-        requestOptions: RequestOptions(path: '/auth/login'),
-        statusCode: 200,
-        data: <String, dynamic>{
-          'success': true,
-          'data': <String, dynamic>{'token': 'jwt-token'},
-        },
-      ),
-    );
+    when(() => dio.post<Object?>(any(), data: any<dynamic>(named: 'data')))
+        .thenAnswer(
+          (_) async => Response<Object?>(
+            requestOptions: RequestOptions(path: '/auth/login'),
+            statusCode: 200,
+            data: <String, dynamic>{
+              'success': true,
+              'data': <String, dynamic>{'token': 'jwt-token'},
+            },
+          ),
+        );
 
     final result = await dataSource.postData(
       '/auth/login',
@@ -41,15 +40,14 @@ void main() {
   });
 
   test('rejects a successful response with an invalid data envelope', () async {
-    when(
-      () => dio.post<Object?>(any(), data: any<dynamic>(named: 'data')),
-    ).thenAnswer(
-      (_) async => Response<Object?>(
-        requestOptions: RequestOptions(path: '/auth/login'),
-        statusCode: 200,
-        data: <String, dynamic>{'success': true, 'data': 'invalid'},
-      ),
-    );
+    when(() => dio.post<Object?>(any(), data: any<dynamic>(named: 'data')))
+        .thenAnswer(
+          (_) async => Response<Object?>(
+            requestOptions: RequestOptions(path: '/auth/login'),
+            statusCode: 200,
+            data: <String, dynamic>{'success': true, 'data': 'invalid'},
+          ),
+        );
 
     expect(
       () => dataSource.postData(
@@ -61,20 +59,19 @@ void main() {
   });
 
   test('maps transport failures to safe server exceptions', () async {
-    when(
-      () => dio.post<Object?>(any(), data: any<dynamic>(named: 'data')),
-    ).thenThrow(
-      DioException(
-        requestOptions: RequestOptions(path: '/auth/login'),
-        response: Response<Object?>(
-          requestOptions: RequestOptions(path: '/auth/login'),
-          statusCode: 500,
-          data: <String, dynamic>{
-            'message': 'Failed query: select * from passengers',
-          },
-        ),
-      ),
-    );
+    when(() => dio.post<Object?>(any(), data: any<dynamic>(named: 'data')))
+        .thenThrow(
+          DioException(
+            requestOptions: RequestOptions(path: '/auth/login'),
+            response: Response<Object?>(
+              requestOptions: RequestOptions(path: '/auth/login'),
+              statusCode: 500,
+              data: <String, dynamic>{
+                'message': 'Failed query: select * from passengers',
+              },
+            ),
+          ),
+        );
 
     expect(
       () => dataSource.postJson(

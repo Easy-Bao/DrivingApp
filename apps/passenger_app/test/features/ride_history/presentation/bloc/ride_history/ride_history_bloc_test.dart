@@ -233,9 +233,8 @@ void main() {
             .having((state) => state.hasMore, 'has more', isFalse),
       ],
       verify: (_) {
-        verify(
-          () => repo.fetchRideHistory('pass-1', limit: 25, offset: 25),
-        ).called(1);
+        verify(() => repo.fetchRideHistory('pass-1', limit: 25, offset: 25))
+            .called(1);
       },
     );
   });

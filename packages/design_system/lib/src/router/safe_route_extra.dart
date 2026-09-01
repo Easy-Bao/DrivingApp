@@ -34,11 +34,7 @@ abstract class SafeRouteExtra {
     return fallback;
   }
 
-  static int getInt(
-    Map<String, dynamic>? map,
-    String key, [
-    int fallback = 0,
-  ]) {
+  static int getInt(Map<String, dynamic>? map, String key, [int fallback = 0]) {
     if (map == null) return fallback;
     final value = map[key];
     if (value is int) return value;

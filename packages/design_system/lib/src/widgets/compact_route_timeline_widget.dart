@@ -33,9 +33,7 @@ class CompactRouteTimelineWidget extends StatelessWidget {
                   bottom: 20,
                   child: CustomPaint(
                     size: const Size(1, 42),
-                    painter: _DashedLinePainter(
-                      color: colors.outlineVariant,
-                    ),
+                    painter: _DashedLinePainter(color: colors.outlineVariant),
                   ),
                 ),
                 Align(

@@ -98,9 +98,8 @@ class _PerformanceSummary extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             rating,
-            style: Theme.of(context).textTheme.displaySmall?.copyWith(
-              color: context.colorScheme.onPrimary,
-            ),
+            style: Theme.of(context).textTheme.displaySmall
+                ?.copyWith(color: context.colorScheme.onPrimary),
           ),
           const SizedBox(height: 4),
           Text(
@@ -118,9 +117,8 @@ class _PerformanceSummary extends StatelessWidget {
             ),
             child: Text(
               '$completionRate% trip completion',
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: context.colorScheme.onPrimary,
-              ),
+              style: Theme.of(context).textTheme.labelLarge
+                  ?.copyWith(color: context.colorScheme.onPrimary),
             ),
           ),
         ],
@@ -206,9 +204,8 @@ class _PerformanceMetricCard extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: context.colorScheme.onSurfaceVariant,
-            ),
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(color: context.colorScheme.onSurfaceVariant),
           ),
         ],
       ),

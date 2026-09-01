@@ -22,9 +22,8 @@ void main() {
       final preferences = await SharedPreferences.getInstance();
       final profileDataSource = _MockProfileDataSource();
       final sessionService = _MockSessionService();
-      when(
-        () => sessionService.readDriverId(),
-      ).thenAnswer((_) async => 'driver-42');
+      when(() => sessionService.readDriverId())
+          .thenAnswer((_) async => 'driver-42');
       when(() => profileDataSource.fetchProfile('driver-42')).thenAnswer(
         (_) async => const {
           'name': 'Remote Driver',

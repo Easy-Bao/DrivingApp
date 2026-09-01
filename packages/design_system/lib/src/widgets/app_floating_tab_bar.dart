@@ -4,13 +4,12 @@ import 'package:design_system/src/theme/app_design_tokens.dart';
 import 'package:design_system/src/theme/design_system_context.dart';
 import 'package:design_system/src/widgets/swipe_active_tab_indicator.dart';
 
-typedef AppTabIconBuilder =
-    Widget Function(
-      BuildContext context,
-      int index,
-      AppTabDestination destination,
-      Color color,
-    );
+typedef AppTabIconBuilder = Widget Function(
+  BuildContext context,
+  int index,
+  AppTabDestination destination,
+  Color color,
+);
 
 class AppTabDestination {
   final IconData icon;

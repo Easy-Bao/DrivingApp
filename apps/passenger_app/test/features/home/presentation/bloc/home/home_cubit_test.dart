@@ -100,8 +100,7 @@ void main() {
         const HomeState(isLoading: true),
         const HomeState(
           isLoading: false,
-          locationErrorMessage:
-              'We encountered an unexpected issue while processing your request. Please try again in a few moments.',
+          locationErrorMessage: 'We encountered an unexpected issue while processing your request. Please try again in a few moments.',
         ),
       ],
     );
@@ -183,9 +182,8 @@ void main() {
     blocTest<HomeCubit, HomeState>(
       'uses the position stream when the immediate GPS fix is unavailable',
       setUp: () {
-        when(
-          () => currentLocationRepo.getCurrentLocation(),
-        ).thenAnswer((_) async => const Left(CurrentLocationFailure()));
+        when(() => currentLocationRepo.getCurrentLocation())
+            .thenAnswer((_) async => const Left(CurrentLocationFailure()));
         when(() => currentLocationRepo.watchCurrentLocation()).thenAnswer(
           (_) => Stream.value(
             const Right(
@@ -223,12 +221,10 @@ void main() {
       'ignores an in-flight GPS fix after location access is lost',
       () async {
         final locationCompleter = Completer<Either<Failure, CurrentLocation>>();
-        when(
-          () => currentLocationRepo.watchCurrentLocation(),
-        ).thenAnswer((_) => const Stream.empty());
-        when(
-          () => currentLocationRepo.getCurrentLocation(),
-        ).thenAnswer((_) => locationCompleter.future);
+        when(() => currentLocationRepo.watchCurrentLocation())
+            .thenAnswer((_) => const Stream.empty());
+        when(() => currentLocationRepo.getCurrentLocation())
+            .thenAnswer((_) => locationCompleter.future);
 
         final cubit = _makeCubit(repo, currentLocationRepo)
           ..updateAddress('SM City Pagadian');
@@ -262,12 +258,10 @@ void main() {
       final requestedLatitudes = <double>[];
       var requestCount = 0;
 
-      when(
-        () => currentLocationRepo.watchCurrentLocation(),
-      ).thenAnswer((_) => locationStream.stream);
-      when(
-        () => currentLocationRepo.getCurrentLocation(),
-      ).thenAnswer((_) async => const Left(CurrentLocationFailure()));
+      when(() => currentLocationRepo.watchCurrentLocation())
+          .thenAnswer((_) => locationStream.stream);
+      when(() => currentLocationRepo.getCurrentLocation())
+          .thenAnswer((_) async => const Left(CurrentLocationFailure()));
       when(
         () => repo.loadHomeData(
           lat: any(named: 'lat'),

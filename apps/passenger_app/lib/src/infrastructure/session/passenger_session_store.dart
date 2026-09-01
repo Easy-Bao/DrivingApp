@@ -32,7 +32,10 @@ class PassengerSessionStore {
   }
 
   Future<void> savePassengerId(String passengerId) async {
-    await _storage.write(key: PassengerStorageKeys.passengerId, value: passengerId);
+    await _storage.write(
+      key: PassengerStorageKeys.passengerId,
+      value: passengerId,
+    );
   }
 
   Future<String?> readPassengerId() async {

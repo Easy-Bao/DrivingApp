@@ -48,9 +48,9 @@ void main() {
       ],
       verify: (_) {
         final savedPlaces =
-            verify(
-                  () => mockRepository.savePlaces(captureAny()),
-                ).captured.single
+            verify(() => mockRepository.savePlaces(captureAny()))
+                    .captured
+                    .single
                 as List<SavedPlace>;
         expect(savedPlaces.where((place) => place.isDefault), hasLength(1));
         expect(savedPlaces.first.isDefault, isTrue);
@@ -91,9 +91,9 @@ void main() {
       ],
       verify: (_) {
         final savedPlaces =
-            verify(
-                  () => mockRepository.savePlaces(captureAny()),
-                ).captured.single
+            verify(() => mockRepository.savePlaces(captureAny()))
+                    .captured
+                    .single
                 as List<SavedPlace>;
         expect(savedPlaces.where((place) => place.isDefault), hasLength(1));
         expect(savedPlaces.first.label, 'Home');
@@ -103,9 +103,8 @@ void main() {
     blocTest<SavedPlacesCubit, SavedPlacesState>(
       'loadPlaces handles error and emits isLoading false (or preserves state)',
       build: () {
-        when(
-          () => mockRepository.loadPlaces(),
-        ).thenThrow(Exception('Storage error'));
+        when(() => mockRepository.loadPlaces())
+            .thenThrow(Exception('Storage error'));
         return SavedPlacesCubit(repository: mockRepository);
       },
       act: (cubit) => cubit.loadPlaces(),
@@ -123,9 +122,8 @@ void main() {
     blocTest<SavedPlacesCubit, SavedPlacesState>(
       'keeps existing shortcuts visible when a refresh fails',
       build: () {
-        when(
-          () => mockRepository.loadPlaces(),
-        ).thenThrow(Exception('Storage error'));
+        when(() => mockRepository.loadPlaces())
+            .thenThrow(Exception('Storage error'));
         return SavedPlacesCubit(repository: mockRepository);
       },
       seed: () => const SavedPlacesState(
@@ -238,9 +236,9 @@ void main() {
       ],
       verify: (_) {
         final savedPlaces =
-            verify(
-                  () => mockRepository.savePlaces(captureAny()),
-                ).captured.single
+            verify(() => mockRepository.savePlaces(captureAny()))
+                    .captured
+                    .single
                 as List<SavedPlace>;
         expect(savedPlaces.where((place) => place.isDefault), hasLength(1));
         expect(savedPlaces.last.isDefault, isTrue);

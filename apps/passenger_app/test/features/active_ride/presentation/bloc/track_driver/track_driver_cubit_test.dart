@@ -55,20 +55,17 @@ void main() {
     blocTest<TrackDriverCubit, TrackDriverState>(
       'cancels active ride via repo when a stored rideId exists',
       build: () {
-        when(
-          () => session.readActiveRideId(),
-        ).thenAnswer((_) async => 'ride-42');
-        when(
-          () => repo.updateRideStatus(any(), any()),
-        ).thenAnswer((_) async => const Right(null));
+        when(() => session.readActiveRideId())
+            .thenAnswer((_) async => 'ride-42');
+        when(() => repo.updateRideStatus(any(), any()))
+            .thenAnswer((_) async => const Right(null));
         return _makeCubit(repo, session);
       },
       act: (cubit) => cubit.cancelTrip(),
       expect: () => [isA<TrackDriverCanceled>()],
       verify: (_) {
-        verify(
-          () => repo.updateRideStatus('ride-42', RideStatus.cancelled),
-        ).called(1);
+        verify(() => repo.updateRideStatus('ride-42', RideStatus.cancelled))
+            .called(1);
       },
     );
   });
@@ -102,12 +99,10 @@ void main() {
             ),
           ),
         );
-        when(
-          () => repo.fetchDriverLocation('ride-1'),
-        ).thenAnswer((_) async => const Right((7.828, 123.434)));
-        when(
-          () => session.readActiveRideId(),
-        ).thenAnswer((_) async => 'ride-1');
+        when(() => repo.fetchDriverLocation('ride-1'))
+            .thenAnswer((_) async => const Right((7.828, 123.434)));
+        when(() => session.readActiveRideId())
+            .thenAnswer((_) async => 'ride-1');
         return _makeCubit(repo, session);
       },
       act: (cubit) async {
@@ -150,12 +145,10 @@ void main() {
             ),
           ),
         );
-        when(
-          () => repo.fetchDriverLocation('ride-1'),
-        ).thenAnswer((_) async => const Right((7.828, 123.434)));
-        when(
-          () => session.readActiveRideId(),
-        ).thenAnswer((_) async => 'ride-1');
+        when(() => repo.fetchDriverLocation('ride-1'))
+            .thenAnswer((_) async => const Right((7.828, 123.434)));
+        when(() => session.readActiveRideId())
+            .thenAnswer((_) async => 'ride-1');
         return _makeCubit(repo, session);
       },
       act: (cubit) async {
@@ -190,12 +183,10 @@ void main() {
             ),
           ),
         );
-        when(
-          () => repo.fetchDriverLocation('ride-1'),
-        ).thenAnswer((_) async => const Left(NetworkFailure('offline')));
-        when(
-          () => session.readActiveRideId(),
-        ).thenAnswer((_) async => 'ride-1');
+        when(() => repo.fetchDriverLocation('ride-1'))
+            .thenAnswer((_) async => const Left(NetworkFailure('offline')));
+        when(() => session.readActiveRideId())
+            .thenAnswer((_) async => 'ride-1');
         return _makeCubit(repo, session);
       },
       act: (cubit) async {
@@ -231,9 +222,8 @@ void main() {
             endLng: any(named: 'endLng'),
           ),
         ).thenAnswer((_) async => []);
-        when(
-          () => session.readActiveRideId(),
-        ).thenAnswer((_) async => 'ride-1');
+        when(() => session.readActiveRideId())
+            .thenAnswer((_) async => 'ride-1');
         when(() => repo.getRideStatusUpdate('ride-1')).thenAnswer(
           (_) async => const Right(
             RideUpdate(

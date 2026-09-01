@@ -1,4 +1,5 @@
 import 'package:passenger_app/src/features/profile/domain/entities/profile_model.dart';
+
 import 'dart:developer' as dev;
 
 import 'package:flutter_bloc/flutter_bloc.dart';

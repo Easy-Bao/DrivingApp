@@ -24,9 +24,8 @@ void main() {
 
     final repository = _MockPerformanceRepository();
     final sessionService = _MockSessionService();
-    when(
-      () => sessionService.readDriverId(),
-    ).thenAnswer((_) async => 'driver-1');
+    when(() => sessionService.readDriverId())
+        .thenAnswer((_) async => 'driver-1');
     when(() => repository.fetchStats('driver-1')).thenAnswer(
       (_) async => const Right(
         DriverPerformanceStats(

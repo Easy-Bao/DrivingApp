@@ -20,41 +20,38 @@ void main() {
   setUp(() {
     repository = _MockRideHistoryRepository();
     sessionService = _MockSessionService();
-    when(
-      () => sessionService.readDriverId(),
-    ).thenAnswer((_) async => 'driver-1');
+    when(() => sessionService.readDriverId())
+        .thenAnswer((_) async => 'driver-1');
   });
 
   blocTest<DriverTripHistoryCubit, DriverTripHistoryState>(
     'merges paginated history without duplicating a trip',
     build: () {
-      when(
-        () => repository.fetchTripHistory('driver-1', limit: 25, offset: 0),
-      ).thenAnswer(
-        (_) async => const Right(
-          OffsetPage(
-            items: [
-              {'id': 1, 'status': 'completed'},
-            ],
-            hasMore: true,
-            nextOffset: 25,
-          ),
-        ),
-      );
-      when(
-        () => repository.fetchTripHistory('driver-1', limit: 25, offset: 25),
-      ).thenAnswer(
-        (_) async => const Right(
-          OffsetPage(
-            items: [
-              {'id': 1, 'status': 'completed'},
-              {'id': 2, 'status': 'completed'},
-            ],
-            hasMore: false,
-            nextOffset: null,
-          ),
-        ),
-      );
+      when(() => repository.fetchTripHistory('driver-1', limit: 25, offset: 0))
+          .thenAnswer(
+            (_) async => const Right(
+              OffsetPage(
+                items: [
+                  {'id': 1, 'status': 'completed'},
+                ],
+                hasMore: true,
+                nextOffset: 25,
+              ),
+            ),
+          );
+      when(() => repository.fetchTripHistory('driver-1', limit: 25, offset: 25))
+          .thenAnswer(
+            (_) async => const Right(
+              OffsetPage(
+                items: [
+                  {'id': 1, 'status': 'completed'},
+                  {'id': 2, 'status': 'completed'},
+                ],
+                hasMore: false,
+                nextOffset: null,
+              ),
+            ),
+          );
       return DriverTripHistoryCubit(
         repository: repository,
         sessionService: sessionService,
@@ -111,23 +108,22 @@ void main() {
     'preserves loaded trips when a refresh fails',
     build: () {
       var requestCount = 0;
-      when(
-        () => repository.fetchTripHistory('driver-1', limit: 25, offset: 0),
-      ).thenAnswer((_) async {
-        requestCount++;
-        if (requestCount == 1) {
-          return const Right(
-            OffsetPage(
-              items: [
-                {'id': 1, 'status': 'completed'},
-              ],
-              hasMore: true,
-              nextOffset: 25,
-            ),
-          );
-        }
-        return const Left(ServerFailure('database connection refused'));
-      });
+      when(() => repository.fetchTripHistory('driver-1', limit: 25, offset: 0))
+          .thenAnswer((_) async {
+            requestCount++;
+            if (requestCount == 1) {
+              return const Right(
+                OffsetPage(
+                  items: [
+                    {'id': 1, 'status': 'completed'},
+                  ],
+                  hasMore: true,
+                  nextOffset: 25,
+                ),
+              );
+            }
+            return const Left(ServerFailure('database connection refused'));
+          });
       return DriverTripHistoryCubit(
         repository: repository,
         sessionService: sessionService,

@@ -107,9 +107,8 @@ class PassengerActiveRideCardWidget extends StatelessWidget {
                     'From ${ride.pickup.trim()}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: context.colorScheme.onSurfaceVariant,
-                    ),
+                    style: Theme.of(context).textTheme.bodySmall
+                        ?.copyWith(color: context.colorScheme.onSurfaceVariant),
                   ),
                 ],
               ],

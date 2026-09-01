@@ -23,9 +23,8 @@ void main() {
   blocTest<VerifyOtpBloc, VerifyOtpState>(
     'requests a new code and restarts the cooldown after a successful resend',
     build: () {
-      when(
-        () => resendOtpUseCase.execute(email: 'passenger@example.com'),
-      ).thenAnswer((_) async => const Right(null));
+      when(() => resendOtpUseCase.execute(email: 'passenger@example.com'))
+          .thenAnswer((_) async => const Right(null));
       return VerifyOtpBloc(verifyOtpUseCase, resendOtpUseCase);
     },
     act: (bloc) => bloc.add(
@@ -41,20 +40,18 @@ void main() {
       ),
     ],
     verify: (_) {
-      verify(
-        () => resendOtpUseCase.execute(email: 'passenger@example.com'),
-      ).called(1);
+      verify(() => resendOtpUseCase.execute(email: 'passenger@example.com'))
+          .called(1);
     },
   );
 
   blocTest<VerifyOtpBloc, VerifyOtpState>(
     'keeps resend available when the delivery request fails',
     build: () {
-      when(
-        () => resendOtpUseCase.execute(email: any(named: 'email')),
-      ).thenAnswer(
-        (_) async => const Left(ServerFailure('Mail service unavailable.')),
-      );
+      when(() => resendOtpUseCase.execute(email: any(named: 'email')))
+          .thenAnswer(
+            (_) async => const Left(ServerFailure('Mail service unavailable.')),
+          );
       return VerifyOtpBloc(verifyOtpUseCase, resendOtpUseCase);
     },
     act: (bloc) => bloc.add(

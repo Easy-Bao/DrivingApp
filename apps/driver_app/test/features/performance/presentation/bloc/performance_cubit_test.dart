@@ -20,9 +20,8 @@ void main() {
   setUp(() {
     repository = _MockPerformanceRepository();
     sessionService = _MockSessionService();
-    when(
-      () => sessionService.readDriverId(),
-    ).thenAnswer((_) async => 'driver-1');
+    when(() => sessionService.readDriverId())
+        .thenAnswer((_) async => 'driver-1');
   });
 
   blocTest<DriverPerformanceCubit, DriverPerformanceState>(

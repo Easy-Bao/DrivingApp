@@ -37,8 +37,7 @@ class FareRemoteDataSourceImpl implements FareRemoteDataSource {
         'destination_longitude': destinationLongitude,
       },
     );
-    return FareEstimateDto.fromJson(
-      response.data ?? const <String, dynamic>{},
-    ).toDomain();
+    return FareEstimateDto.fromJson(response.data ?? const <String, dynamic>{})
+        .toDomain();
   }
 }

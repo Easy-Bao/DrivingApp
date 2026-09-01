@@ -46,7 +46,9 @@ class DriverSessionStore {
   }
 
   Future<bool?> readDriverOnlineStatus() async {
-    final value = await _storage.read(key: DriverStorageKeys.driverOnlineStatus);
+    final value = await _storage.read(
+      key: DriverStorageKeys.driverOnlineStatus,
+    );
     return switch (value?.toLowerCase()) {
       'true' => true,
       'false' => false,
@@ -55,7 +57,10 @@ class DriverSessionStore {
   }
 
   Future<void> savePassengerId(String passengerId) async {
-    await _storage.write(key: DriverStorageKeys.passengerId, value: passengerId);
+    await _storage.write(
+      key: DriverStorageKeys.passengerId,
+      value: passengerId,
+    );
   }
 
   Future<String?> readPassengerId() async {

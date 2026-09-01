@@ -28,33 +28,32 @@ class AppTransitions {
 }
 
 class _SharedAxisPageTransition extends GoTransition {
-  _SharedAxisPageTransition({
-    required SharedAxisTransitionType transitionType,
-  }) : super(
-          builder: (route, context, animation, secondaryAnimation, child) {
-            return SharedAxisTransition(
-              animation: animation,
-              secondaryAnimation: secondaryAnimation,
-              transitionType: transitionType,
-              fillColor: Theme.of(context).scaffoldBackgroundColor,
-              child: child,
-            );
-          },
-        );
+  _SharedAxisPageTransition({required SharedAxisTransitionType transitionType})
+    : super(
+        builder: (route, context, animation, secondaryAnimation, child) {
+          return SharedAxisTransition(
+            animation: animation,
+            secondaryAnimation: secondaryAnimation,
+            transitionType: transitionType,
+            fillColor: Theme.of(context).scaffoldBackgroundColor,
+            child: child,
+          );
+        },
+      );
 }
 
 class _FadeThroughPageTransition extends GoTransition {
   _FadeThroughPageTransition()
-      : super(
-          builder: (route, context, animation, secondaryAnimation, child) {
-            return FadeThroughTransition(
-              animation: animation,
-              secondaryAnimation: secondaryAnimation,
-              fillColor: Theme.of(context).scaffoldBackgroundColor,
-              child: child,
-            );
-          },
-        );
+    : super(
+        builder: (route, context, animation, secondaryAnimation, child) {
+          return FadeThroughTransition(
+            animation: animation,
+            secondaryAnimation: secondaryAnimation,
+            fillColor: Theme.of(context).scaffoldBackgroundColor,
+            child: child,
+          );
+        },
+      );
 }
 
 class _CustomPushTransitions {
