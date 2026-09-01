@@ -4,25 +4,14 @@ sealed class LiveMapState {
   const LiveMapState();
 }
 
-class LiveMapInitial extends LiveMapState {}
+final class LiveMapInitial() extends LiveMapState;
 
-class LiveMapReady extends LiveMapState {
-  final double currentLat;
-  final double currentLng;
+final class const LiveMapReady(final double currentLat, final double currentLng)
+    extends LiveMapState;
 
-  const LiveMapReady(this.currentLat, this.currentLng);
-}
-
-class LiveMapRouteDrawn extends LiveMapState {
-  final double riderLat;
-  final double riderLng;
-  final double driverLat;
-  final double driverLng;
-
-  const LiveMapRouteDrawn({
-    required this.riderLat,
-    required this.riderLng,
-    required this.driverLat,
-    required this.driverLng,
-  });
-}
+final class const LiveMapRouteDrawn({
+  required final double riderLat,
+  required final double riderLng,
+  required final double driverLat,
+  required final double driverLng,
+}) extends LiveMapState;

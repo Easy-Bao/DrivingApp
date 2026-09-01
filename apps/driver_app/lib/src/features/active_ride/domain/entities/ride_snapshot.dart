@@ -1,27 +1,25 @@
 import 'package:equatable/equatable.dart';
 import 'package:foundation/foundation.dart';
 
-class RideSnapshot extends Equatable {
-  const RideSnapshot({
-    required this.id,
-    required this.status,
-    required this.pickupName,
-    required this.dropoffName,
-    this.passengerId,
-    this.passengerName,
-    this.driverId,
-    this.driverName,
-    this.vehicleType,
-    this.plateNumber,
-    this.pickupLatitude,
-    this.pickupLongitude,
-    this.dropoffLatitude,
-    this.dropoffLongitude,
-    this.distanceKm,
-    this.durationMinutes,
-    this.fareCentavos,
-  });
-
+final class const RideSnapshot({
+  required final String id,
+  required final String status,
+  required final String pickupName,
+  required final String dropoffName,
+  final String? passengerId,
+  final String? passengerName,
+  final String? driverId,
+  final String? driverName,
+  final String? vehicleType,
+  final String? plateNumber,
+  final double? pickupLatitude,
+  final double? pickupLongitude,
+  final double? dropoffLatitude,
+  final double? dropoffLongitude,
+  final double? distanceKm,
+  final double? durationMinutes,
+  final int? fareCentavos,
+}) extends Equatable {
   factory RideSnapshot.fromJson(
     Map<String, dynamic> json, {
     String? fallbackId,
@@ -70,24 +68,6 @@ class RideSnapshot extends Equatable {
       fareCentavos: _fareCentavos(json),
     );
   }
-
-  final String id;
-  final String status;
-  final String pickupName;
-  final String dropoffName;
-  final String? passengerId;
-  final String? passengerName;
-  final String? driverId;
-  final String? driverName;
-  final String? vehicleType;
-  final String? plateNumber;
-  final double? pickupLatitude;
-  final double? pickupLongitude;
-  final double? dropoffLatitude;
-  final double? dropoffLongitude;
-  final double? distanceKm;
-  final double? durationMinutes;
-  final int? fareCentavos;
 
   double? get farePesos => fareCentavos == null ? null : fareCentavos! / 100;
 

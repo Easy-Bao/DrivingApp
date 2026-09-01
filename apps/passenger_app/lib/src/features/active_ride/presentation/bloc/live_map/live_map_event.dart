@@ -4,69 +4,37 @@ abstract class LiveMapEvent {
   const LiveMapEvent();
 }
 
-class InitializeMapEvent extends LiveMapEvent {
-  final AppMapController controller;
-  final double defaultLat;
-  final double defaultLng;
-  final Color routeColor;
+final class const InitializeMapEvent({
+  required final AppMapController controller,
+  required final double defaultLat,
+  required final double defaultLng,
+  required final Color routeColor,
+}) extends LiveMapEvent;
 
-  const InitializeMapEvent({
-    required this.controller,
-    required this.defaultLat,
-    required this.defaultLng,
-    required this.routeColor,
-  });
-}
+final class const DrawDriverToRiderRouteEvent({
+  required final double riderLat,
+  required final double riderLng,
+  required final double driverLat,
+  required final double driverLng,
+}) extends LiveMapEvent;
 
-class DrawDriverToRiderRouteEvent extends LiveMapEvent {
-  final double riderLat;
-  final double riderLng;
-  final double driverLat;
-  final double driverLng;
+final class const AddMapMarkerEvent({
+  required final double lat,
+  required final double lng,
+  final String? label,
+  final bool isOrigin = false,
+  final void Function()? onTap,
+}) extends LiveMapEvent;
 
-  const DrawDriverToRiderRouteEvent({
-    required this.riderLat,
-    required this.riderLng,
-    required this.driverLat,
-    required this.driverLng,
-  });
-}
+final class const ClearMapAnnotationsEvent() extends LiveMapEvent;
 
-class AddMapMarkerEvent extends LiveMapEvent {
-  final double lat;
-  final double lng;
-  final String? label;
-  final bool isOrigin;
-  final void Function()? onTap;
+final class const FitMapToCoordinatesEvent({
+  required final List<LatLng> coordinates,
+  final double? maxZoom,
+}) extends LiveMapEvent;
 
-  const AddMapMarkerEvent({
-    required this.lat,
-    required this.lng,
-    this.label,
-    this.isOrigin = false,
-    this.onTap,
-  });
-}
-
-class ClearMapAnnotationsEvent extends LiveMapEvent {
-  const ClearMapAnnotationsEvent();
-}
-
-class FitMapToCoordinatesEvent extends LiveMapEvent {
-  final List<LatLng> coordinates;
-  final double? maxZoom;
-
-  const FitMapToCoordinatesEvent({required this.coordinates, this.maxZoom});
-}
-
-class DispatchTelemetryLocationEvent extends LiveMapEvent {
-  final double lat;
-  final double lng;
-  final String rideId;
-
-  const DispatchTelemetryLocationEvent({
-    required this.lat,
-    required this.lng,
-    required this.rideId,
-  });
-}
+final class const DispatchTelemetryLocationEvent({
+  required final double lat,
+  required final double lng,
+  required final String rideId,
+}) extends LiveMapEvent;

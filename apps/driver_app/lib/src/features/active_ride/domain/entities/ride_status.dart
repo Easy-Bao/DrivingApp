@@ -1,4 +1,4 @@
-enum RideStatus {
+enum RideStatus(final String value) {
   requested('requested'),
   accepted('accepted'),
   arrived('arrived'),
@@ -6,10 +6,6 @@ enum RideStatus {
   completed('completed'),
   cancelled('cancelled'),
   unknown('unknown');
-
-  final String value;
-
-  const RideStatus(this.value);
 
   static RideStatus fromString(String statusStr) {
     final normalized = statusStr.toLowerCase().trim();

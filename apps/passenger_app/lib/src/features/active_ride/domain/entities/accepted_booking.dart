@@ -1,6 +1,4 @@
-class AcceptedBooking {
-  const AcceptedBooking({required this.rideId, this.fareCentavos});
-
-  final String rideId;
-  final int? fareCentavos;
-}
+final class const AcceptedBooking({
+  required final String rideId,
+  final int? fareCentavos,
+});

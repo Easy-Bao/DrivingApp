@@ -1,13 +1,9 @@
 import 'package:passenger_app/src/features/active_ride/domain/entities/ride_update.dart';
 
-final class RideUpdateDto {
-  const RideUpdateDto(this.value);
-
+final class const RideUpdateDto(final RideUpdate value) {
   factory RideUpdateDto.fromJson(Map<String, dynamic> json) {
     return RideUpdateDto(RideUpdate.fromJson(json));
   }
-
-  final RideUpdate value;
 
   RideUpdate toDomain() => value;
 }

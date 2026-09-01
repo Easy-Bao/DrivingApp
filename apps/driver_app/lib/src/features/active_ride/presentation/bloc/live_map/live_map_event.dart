@@ -4,45 +4,25 @@ abstract class LiveMapEvent {
   const LiveMapEvent();
 }
 
-class InitializeMapEvent extends LiveMapEvent {
-  final AppMapController controller;
-  final double defaultLat;
-  final double defaultLng;
-  final Color routeColor;
+final class const InitializeMapEvent({
+  required final AppMapController controller,
+  required final double defaultLat,
+  required final double defaultLng,
+  required final Color routeColor,
+}) extends LiveMapEvent;
 
-  const InitializeMapEvent({
-    required this.controller,
-    required this.defaultLat,
-    required this.defaultLng,
-    required this.routeColor,
-  });
-}
+final class const UpdateLocationsAndDrawRouteEvent({
+  required final double driverLat,
+  required final double driverLng,
+  required final double? passengerLat,
+  required final double? passengerLng,
+  final double? routeTargetLat,
+  final double? routeTargetLng,
+}) extends LiveMapEvent;
 
-class UpdateLocationsAndDrawRouteEvent extends LiveMapEvent {
-  final double driverLat;
-  final double driverLng;
-  final double? passengerLat;
-  final double? passengerLng;
-  final double? routeTargetLat;
-  final double? routeTargetLng;
+final class const ClearMapEvent() extends LiveMapEvent;
 
-  const UpdateLocationsAndDrawRouteEvent({
-    required this.driverLat,
-    required this.driverLng,
-    required this.passengerLat,
-    required this.passengerLng,
-    this.routeTargetLat,
-    this.routeTargetLng,
-  });
-}
-
-class ClearMapEvent extends LiveMapEvent {
-  const ClearMapEvent();
-}
-
-class DispatchTelemetryLocationEvent extends LiveMapEvent {
-  final double lat;
-  final double lng;
-
-  const DispatchTelemetryLocationEvent({required this.lat, required this.lng});
-}
+final class const DispatchTelemetryLocationEvent({
+  required final double lat,
+  required final double lng,
+}) extends LiveMapEvent;

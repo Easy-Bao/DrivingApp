@@ -1,14 +1,12 @@
 import 'package:equatable/equatable.dart';
 import 'package:foundation/foundation.dart';
 
-class RideCounterparty extends Equatable {
-  const RideCounterparty({
-    required this.userId,
-    required this.name,
-    required this.phone,
-    required this.contactAllowed,
-  });
-
+final class const RideCounterparty({
+  required final String userId,
+  required final String name,
+  required final String phone,
+  required final bool contactAllowed,
+}) extends Equatable {
   factory RideCounterparty.fromJson(Map<String, dynamic> json) {
     return RideCounterparty(
       userId: SafeParse.toStringValue(json['user_id'] ?? json['userId']).trim(),
@@ -17,11 +15,6 @@ class RideCounterparty extends Equatable {
       contactAllowed: json['contact_allowed'] == true,
     );
   }
-
-  final String userId;
-  final String name;
-  final String phone;
-  final bool contactAllowed;
 
   @override
   List<Object?> get props => [userId, name, phone, contactAllowed];

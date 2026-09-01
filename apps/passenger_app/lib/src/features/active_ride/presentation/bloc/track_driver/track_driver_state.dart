@@ -8,33 +8,19 @@ sealed class TrackDriverState extends Equatable {
   List<Object?> get props => [];
 }
 
-class TrackDriverInitial extends TrackDriverState {
-  const TrackDriverInitial();
-}
+final class const TrackDriverInitial() extends TrackDriverState;
 
-class TrackDriverInProgress extends TrackDriverState {
-  final double driverLat;
-  final double driverLng;
-  final double progress;
-  final String eta;
-  final String driverName;
-  final String vehiclePlate;
-  final String vehicleType;
-  final List<List<double>>? routePoints;
-  final RideStatus status;
-
-  const TrackDriverInProgress({
-    required this.driverLat,
-    required this.driverLng,
-    required this.progress,
-    required this.eta,
-    required this.driverName,
-    required this.vehiclePlate,
-    required this.vehicleType,
-    this.routePoints,
-    this.status = RideStatus.accepted,
-  });
-
+final class const TrackDriverInProgress({
+  required final double driverLat,
+  required final double driverLng,
+  required final double progress,
+  required final String eta,
+  required final String driverName,
+  required final String vehiclePlate,
+  required final String vehicleType,
+  final List<List<double>>? routePoints,
+  final RideStatus status = RideStatus.accepted,
+}) extends TrackDriverState {
   @override
   List<Object?> get props => [
     driverLat,
@@ -49,19 +35,12 @@ class TrackDriverInProgress extends TrackDriverState {
   ];
 }
 
-class TrackDriverCompleted extends TrackDriverState {
-  final String driverId;
-  final String driverName;
-
-  const TrackDriverCompleted({
-    required this.driverId,
-    required this.driverName,
-  });
-
+final class const TrackDriverCompleted({
+  required final String driverId,
+  required final String driverName,
+}) extends TrackDriverState {
   @override
   List<Object?> get props => [driverId, driverName];
 }
 
-class TrackDriverCanceled extends TrackDriverState {
-  const TrackDriverCanceled();
-}
+final class const TrackDriverCanceled() extends TrackDriverState;

@@ -3,29 +3,17 @@ import 'package:foundation/foundation.dart';
 
 import 'package:passenger_app/src/features/active_ride/domain/entities/ride_status.dart';
 
-class RideUpdate extends Equatable {
-  final RideStatus status;
-  final String? driverId;
-  final String driverName;
-  final String vehiclePlate;
-  final String vehicleType;
-  final double? pickupLat;
-  final double? pickupLng;
-  final double? destinationLat;
-  final double? destinationLng;
-
-  const RideUpdate({
-    required this.status,
-    this.driverId,
-    this.driverName = 'Driver',
-    this.vehiclePlate = '—',
-    this.vehicleType = 'Bao Bao',
-    this.pickupLat,
-    this.pickupLng,
-    this.destinationLat,
-    this.destinationLng,
-  });
-
+final class const RideUpdate({
+  required final RideStatus status,
+  final String? driverId,
+  final String driverName = 'Driver',
+  final String vehiclePlate = '—',
+  final String vehicleType = 'Bao Bao',
+  final double? pickupLat,
+  final double? pickupLng,
+  final double? destinationLat,
+  final double? destinationLng,
+}) extends Equatable {
   factory RideUpdate.fromJson(Map<String, dynamic> json) {
     return RideUpdate(
       status: RideStatus.fromString(

@@ -7,25 +7,15 @@ sealed class RideFlowState extends Equatable {
   List<Object?> get props => [];
 }
 
-class RideFlowInitial extends RideFlowState {
-  const RideFlowInitial();
-}
+final class const RideFlowInitial() extends RideFlowState;
 
-class RideFlowNavigatingToPickup extends RideFlowState {
-  final String passengerName;
-  final double? pickupLat;
-  final double? pickupLng;
-  final double? destLat;
-  final double? destLng;
-
-  const RideFlowNavigatingToPickup({
-    required this.passengerName,
-    this.pickupLat,
-    this.pickupLng,
-    this.destLat,
-    this.destLng,
-  });
-
+final class const RideFlowNavigatingToPickup({
+  required final String passengerName,
+  final double? pickupLat,
+  final double? pickupLng,
+  final double? destLat,
+  final double? destLng,
+}) extends RideFlowState {
   @override
   List<Object?> get props => [
     passengerName,
@@ -36,23 +26,14 @@ class RideFlowNavigatingToPickup extends RideFlowState {
   ];
 }
 
-class RideFlowWaitingPassenger extends RideFlowState {
-  final String passengerName;
-  final int waitTimeSeconds;
-  final double? pickupLat;
-  final double? pickupLng;
-  final double? destLat;
-  final double? destLng;
-
-  const RideFlowWaitingPassenger({
-    required this.passengerName,
-    required this.waitTimeSeconds,
-    this.pickupLat,
-    this.pickupLng,
-    this.destLat,
-    this.destLng,
-  });
-
+final class const RideFlowWaitingPassenger({
+  required final String passengerName,
+  required final int waitTimeSeconds,
+  final double? pickupLat,
+  final double? pickupLng,
+  final double? destLat,
+  final double? destLng,
+}) extends RideFlowState {
   @override
   List<Object?> get props => [
     passengerName,
@@ -64,23 +45,14 @@ class RideFlowWaitingPassenger extends RideFlowState {
   ];
 }
 
-class RideFlowInTransit extends RideFlowState {
-  final String passengerName;
-  final double? destLat;
-  final double? destLng;
-  final double? distanceKm;
-  final double? passengerLat;
-  final double? passengerLng;
-
-  const RideFlowInTransit({
-    required this.passengerName,
-    this.destLat,
-    this.destLng,
-    this.distanceKm,
-    this.passengerLat,
-    this.passengerLng,
-  });
-
+final class const RideFlowInTransit({
+  required final String passengerName,
+  final double? destLat,
+  final double? destLng,
+  final double? distanceKm,
+  final double? passengerLat,
+  final double? passengerLng,
+}) extends RideFlowState {
   @override
   List<Object?> get props => [
     passengerName,
@@ -92,20 +64,13 @@ class RideFlowInTransit extends RideFlowState {
   ];
 }
 
-class RideFlowComplete extends RideFlowState {
-  final double fare;
-
-  const RideFlowComplete({required this.fare});
-
+final class const RideFlowComplete({required final double fare})
+    extends RideFlowState {
   @override
   List<Object?> get props => [fare];
 }
 
-class RideFlowError extends RideFlowState {
-  final String message;
-
-  const RideFlowError(this.message);
-
+final class const RideFlowError(final String message) extends RideFlowState {
   @override
   List<Object?> get props => [message];
 }
