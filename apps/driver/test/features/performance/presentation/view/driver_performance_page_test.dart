@@ -1,0 +1,66 @@
+import 'package:driver/src/app/theme/app_theme.dart';
+import 'package:driver/src/infrastructure/session/driver_session_store.dart';
+import 'package:driver/src/features/performance/presentation/bloc/driver_performance_cubit.dart';
+import 'package:driver/src/features/performance/domain/entities/driver_performance_stats.dart';
+import 'package:driver/src/features/performance/domain/repositories/driver_performance_repository.dart';
+import 'package:driver/src/features/performance/presentation/view/driver_performance_page.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:mocktail/mocktail.dart';
+
+class _MockPerformanceRepository extends Mock
+    implements DriverPerformanceRepository {}
+
+class _MockSessionService extends Mock implements DriverSessionStore {}
+
+void main() {
+  testWidgets('shows balanced driver performance metrics at compact width', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(320, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final repository = _MockPerformanceRepository();
+    final sessionService = _MockSessionService();
+    when(() => sessionService.readDriverId())
+        .thenAnswer((_) async => 'driver-1');
+    when(() => repository.fetchStats('driver-1')).thenAnswer(
+      (_) async => const Right(
+        DriverPerformanceStats(
+          todayEarningsCentavos: 1245050,
+          todayCompletedTrips: 18,
+          totalTrips: 20,
+          completedTrips: 18,
+          totalEarningsCentavos: 1245050,
+          averageRating: 4.8,
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.data,
+        home: BlocProvider<DriverPerformanceCubit>(
+          create: (_) => DriverPerformanceCubit(
+            repository: repository,
+            sessionService: sessionService,
+          )..load(),
+          child: DriverPerformancePage(onBack: () {}, onRefresh: () async {}),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Performance'), findsOneWidget);
+    expect(find.text('4.8'), findsOneWidget);
+    expect(find.text('90% trip completion'), findsOneWidget);
+    expect(find.text('Completed trips'), findsOneWidget);
+    expect(find.text('18'), findsOneWidget);
+    expect(find.text('Total trips'), findsOneWidget);
+    expect(find.text('20'), findsOneWidget);
+    expect(find.text('Lifetime earnings'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+}

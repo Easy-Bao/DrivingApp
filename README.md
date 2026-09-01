@@ -9,13 +9,14 @@ This is the Melos-based monorepo for the BaoRide booking application. It houses 
 ```
 .
 ├── apps/
-│   ├── driver_app/          # Driver-specific UI, onboarding, background tracking
-│   └── passenger_app/       # Passenger-specific UI, ride booking, payment flows
+│   ├── driver/           # Driver-specific UI, onboarding, background tracking
+│   └── passenger/        # Passenger-specific UI, ride booking, payment flows
 ├── packages/
-│   ├── api_client/          # Shared HTTP/WebSocket network layer
-│   ├── core_models/         # Shared Dart classes (Trip, User, Location, RideStatus)
-│   ├── design_system/       # Shared UI components, theme, buttons, custom maps
-│   └── location_service/    # Shared background GPS and distance matrix utilities
+│   ├── design_system/     # Shared UI components, theme, and transitions
+│   ├── foundation/        # Shared networking, lifecycle, and error handling
+│   └── maps/              # Shared maps, location, search, and routing
+├── web/
+│   └── admin/             # Owner operations portal
 ├── pubspec.yaml             # Workspace configuration
 ├── melos.yaml               # Melos workspace scripts and package paths
 └── README.md

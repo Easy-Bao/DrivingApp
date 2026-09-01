@@ -56,10 +56,10 @@ jobs:
           cache: true
 
       - name: Prepare Flutter environment assets
-        run: cp .env.example apps/driver_app/.env
+        run: cp .env.example apps/driver/.env
 
       - name: Prepare passenger environment asset
-        run: cp .env.example apps/passenger_app/.env
+        run: cp .env.example apps/passenger/.env
 
       - name: Install root dependencies
         run: flutter pub get
@@ -74,11 +74,11 @@ jobs:
         run: dart run melos exec -- "flutter analyze --no-fatal-infos ."
 
       - name: Test driver app
-        working-directory: apps/driver_app
+        working-directory: apps/driver
         run: flutter test
 
       - name: Test passenger app
-        working-directory: apps/passenger_app
+        working-directory: apps/passenger
         run: flutter test
 
   backend-quality-gate:

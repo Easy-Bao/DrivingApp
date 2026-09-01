@@ -1,0 +1,400 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:go_router_modular/go_router_modular.dart';
+import 'package:maps/maps.dart';
+import 'package:passenger/src/features/booking/presentation/widgets/map_selection_marker_widget.dart';
+import 'package:design_system/design_system.dart';
+
+class const MapPinPage({super.key}) extends StatefulWidget {
+  @override
+  State<MapPinPage> createState() => _MapPinPageState();
+}
+
+class _MapPinPageState()
+    extends State<MapPinPage>
+    with SingleTickerProviderStateMixin {
+  AppMapController? _mapController;
+  String _address = 'Move the map to select a location';
+  String _subAddress = '';
+  bool _isGeocoding = false;
+  bool _hasUserPannedMap = false;
+  bool _isProgrammaticCameraMove = false;
+  int _geocodeRequestId = 0;
+  late final AnimationController _pinAnimationController;
+  double? _centerLat = LocationService.lastPosition?.latitude;
+  double? _centerLng = LocationService.lastPosition?.longitude;
+  Widget? _cachedMapView;
+
+  @override
+  void initState() {
+    super.initState();
+    _pinAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 180),
+      reverseDuration: const Duration(milliseconds: 220),
+    );
+    if (_centerLat != null && _centerLng != null) {
+      unawaited(_reverseGeocode(_centerLat!, _centerLng!));
+    }
+    unawaited(_initLocation());
+  }
+
+  @override
+  void dispose() {
+    _pinAnimationController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _initLocation() async {
+    if (_centerLat == null || _centerLng == null) {
+      final hasLocationAccess =
+          await LocationService.getAccessState() == LocationAccessState.ready;
+      if (!hasLocationAccess) {
+        if (mounted) context.pop();
+        return;
+      }
+    }
+
+    final pos = _centerLat != null && _centerLng != null
+        ? null
+        : await LocationService.getCurrentPosition();
+    if (pos != null && mounted) {
+      if (!_hasUserPannedMap) {
+        setState(() {
+          _centerLat = pos.latitude;
+          _centerLng = pos.longitude;
+        });
+        if (_mapController != null) {
+          _isProgrammaticCameraMove = true;
+          try {
+            await MapProvider.moveCamera(
+              _mapController!,
+              pos.latitude,
+              pos.longitude,
+              zoom: 15.0,
+            );
+          } finally {
+            _isProgrammaticCameraMove = false;
+          }
+        }
+      }
+      if (!_hasUserPannedMap) {
+        unawaited(_reverseGeocode(pos.latitude, pos.longitude));
+      }
+    } else if (mounted && _address == 'Move the map to select a location') {
+      if (_centerLat != null && _centerLng != null) {
+        unawaited(_reverseGeocode(_centerLat!, _centerLng!));
+      }
+    }
+  }
+
+  void _onMapCreated(AppMapController controller) {
+    _mapController = controller;
+    if (_centerLat != null && _centerLng != null) {
+      _isProgrammaticCameraMove = true;
+      unawaited(
+        MapProvider.moveCamera(
+          controller,
+          _centerLat!,
+          _centerLng!,
+          zoom: 15.0,
+        ).whenComplete(() => _isProgrammaticCameraMove = false),
+      );
+      if (!_hasUserPannedMap) {
+        unawaited(_reverseGeocode(_centerLat!, _centerLng!));
+      }
+    }
+  }
+
+  void _onCameraChanged(AppMapController controller) {
+    unawaited(_pinAnimationController.forward());
+  }
+
+  void _onMapIdle(AppMapController controller) {
+    if (_isProgrammaticCameraMove) return;
+    _hasUserPannedMap = true;
+    unawaited(_updateCenterFromCamera(controller));
+  }
+
+  Future<void> _updateCenterFromCamera(AppMapController controller) async {
+    if (!mounted) return;
+    final center = await MapProvider.getCameraCenter(controller);
+    if (!mounted || _isProgrammaticCameraMove) return;
+    unawaited(_reverseGeocode(center.latitude, center.longitude));
+  }
+
+  Future<void> _reverseGeocode(double lat, double lng) async {
+    if (!mounted) return;
+    final requestId = ++_geocodeRequestId;
+    setState(() {
+      _centerLat = lat;
+      _centerLng = lng;
+      _address = 'Locating...';
+      _subAddress = '';
+      _isGeocoding = true;
+    });
+    final place = await MapProvider.getPlaceFromCoordinates(lat, lng);
+    if (mounted && requestId == _geocodeRequestId) {
+      final placeName = place?.displayName.trim() ?? '';
+      final rawPlaceName = place?.name.trim() ?? '';
+      final fullAddress = place?.fullAddress.trim() ?? '';
+      final addressParts = fullAddress
+          .split(',')
+          .map((part) => part.trim())
+          .where((part) => part.isNotEmpty)
+          .toList();
+      final title = placeName.isNotEmpty
+          ? placeName
+          : addressParts.firstOrNull ?? 'Unknown location';
+      if (rawPlaceName.isNotEmpty &&
+          addressParts.isNotEmpty &&
+          addressParts.first.toLowerCase() == rawPlaceName.toLowerCase()) {
+        addressParts.removeAt(0);
+      }
+      setState(() {
+        _address = title;
+        _subAddress = addressParts.join(', ');
+        _centerLat = lat;
+        _centerLng = lng;
+        _isGeocoding = false;
+      });
+      unawaited(_pinAnimationController.reverse());
+    }
+  }
+
+  void _confirmLocation() {
+    if (_centerLat == null || _centerLng == null) return;
+    final result = Place(
+      id: 'pin_${DateTime.now().millisecondsSinceEpoch}',
+      name: _address,
+      fullAddress: [
+        _address,
+        if (_subAddress.isNotEmpty) _subAddress,
+      ].join(', '),
+      latitude: _centerLat!,
+      longitude: _centerLng!,
+    );
+    context.pop(result);
+  }
+
+  Widget _getMapView() {
+    if (_centerLat == null || _centerLng == null) {
+      return const SizedBox.shrink();
+    }
+    _cachedMapView ??= MapProvider.buildMapView(
+      latitude: _centerLat!,
+      longitude: _centerLng!,
+      zoom: 15.0,
+      onMapCreated: _onMapCreated,
+      onCameraChanged: _onCameraChanged,
+      onMapIdle: _onMapIdle,
+    );
+    return _cachedMapView!;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_centerLat == null || _centerLng == null) {
+      return Scaffold(
+        backgroundColor: context.colorScheme.surface,
+        appBar: AppBar(
+          backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
+          elevation: 0,
+          leading: Center(
+            child: _buildTripBackButton(context, () => context.pop()),
+          ),
+        ),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: context.colorScheme.onSurface,
+          ),
+        ),
+      );
+    }
+    return Scaffold(
+      backgroundColor: context.colorScheme.surface,
+      body: Stack(
+        children: [
+          _getMapView(),
+          Center(
+            child: AnimatedBuilder(
+              animation: _pinAnimationController,
+              builder: (context, child) {
+                final lift = Curves.easeOut.transform(
+                  _pinAnimationController.value,
+                );
+                return Transform.translate(
+                  offset: Offset(
+                    0,
+                    -(MapSelectionMarkerWidget.height / 2) - (5 * lift),
+                  ),
+                  child: child,
+                );
+              },
+              child: const Hero(
+                tag: 'map_pin_button',
+                child: MapSelectionMarkerWidget(),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: SizedBox(
+                height: 52,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: _buildTripBackButton(context, () => context.pop()),
+                ),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+              decoration: BoxDecoration(
+                color: context.colorScheme.surface,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: context.colorScheme.onSurface.withValues(
+                      alpha: 0.12,
+                    ),
+                    blurRadius: 24,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 38,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: context.colorScheme.onSurface.withValues(
+                          alpha: 0.16,
+                        ),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: context.colorScheme.secondaryContainer,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Center(
+                          child: Icon(
+                            LucideIcons.map_pin,
+                            color: context.colorScheme.onSurface,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _address,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: context.colorScheme.onSurface,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (_subAddress.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                _subAddress,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: context.colorScheme.onSurface
+                                      .withValues(alpha: 0.6),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: _isGeocoding ? null : _confirmLocation,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: context.colorScheme.onSurface,
+                        foregroundColor: context.colorScheme.onPrimary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(26),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        _isGeocoding ? 'Locating...' : 'Set location',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
+  return Tooltip(
+    message: MaterialLocalizations.of(context).backButtonTooltip,
+    child: Material(
+      color: context.colorScheme.surface,
+      elevation: 2,
+      shadowColor: context.colorScheme.onSurface.withValues(alpha: 0.08),
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: 46,
+          height: 46,
+          child: Center(
+            child: Icon(
+              LucideIcons.arrow_left,
+              color: context.colorScheme.onSurface,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}

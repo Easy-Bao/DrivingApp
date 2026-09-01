@@ -97,7 +97,7 @@ services:
 
   admin-app:
     build:
-      context: ./web/admin_app
+      context: ./web/admin
       dockerfile: Dockerfile
     restart: always
     ports:

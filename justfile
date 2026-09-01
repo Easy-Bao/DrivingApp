@@ -15,9 +15,6 @@ clean:
 update:
     flutter pub upgrade
 
-watch-flutter:
-    dart run build_runner watch --delete-conflicting-outputs
-
 analyze:
     dart run melos exec -- "flutter analyze --no-fatal-infos ."
 
@@ -40,8 +37,8 @@ ci-flutter:
     dart run melos bootstrap
     dart format --set-exit-if-changed apps packages
     dart run melos exec -- "flutter analyze --no-fatal-infos ."
-    cd apps/driver_app && flutter test
-    cd apps/passenger_app && flutter test
+    cd apps/driver && flutter test
+    cd apps/passenger && flutter test
 
 ci-local: ci-guards ci-flutter ci-backend
 
