@@ -1,8 +1,47 @@
 import 'package:foundation/foundation.dart';
 import 'package:maps/maps.dart';
 
+final RegExp _nonAlphanumericSearchPattern = RegExp(r'[^a-z0-9]+');
+const double _coordinateDuplicateTolerance = 0.0001;
+
 String destinationPlaceKey(Place place) {
   return '${place.id}:${place.latitude.toStringAsFixed(5)}:${place.longitude.toStringAsFixed(5)}';
+}
+
+String destinationNameKey(Place place) {
+  return place.name.toLowerCase().replaceAll(_nonAlphanumericSearchPattern, '');
+}
+
+List<Place> mergeUniqueDestinationResults(
+  Iterable<Place> existing,
+  Iterable<Place> incoming, {
+  bool compareCoordinates = false,
+}) {
+  final merged = existing.toList();
+  final knownNames = merged.map(destinationNameKey).toSet();
+  final coordinateBuckets = <(int, int), List<Place>>{};
+
+  if (compareCoordinates) {
+    for (final place in merged) {
+      _indexDestinationCoordinate(coordinateBuckets, place);
+    }
+  }
+
+  for (final place in incoming) {
+    final nameKey = destinationNameKey(place);
+    if (knownNames.contains(nameKey) ||
+        compareCoordinates &&
+            _hasMatchingDestinationCoordinate(coordinateBuckets, place)) {
+      continue;
+    }
+    merged.add(place);
+    knownNames.add(nameKey);
+    if (compareCoordinates) {
+      _indexDestinationCoordinate(coordinateBuckets, place);
+    }
+  }
+
+  return merged;
 }
 
 bool destinationMatchesSearchQuery(Place place, String query) {
@@ -70,7 +109,10 @@ String formatDestinationPlaceDistance(
 }
 
 String _normalizeSearchText(String value) {
-  return value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
+  return value
+      .toLowerCase()
+      .replaceAll(_nonAlphanumericSearchPattern, ' ')
+      .trim();
 }
 
 String _compactSearchText(String value) {
@@ -81,4 +123,47 @@ double _distanceForSorting(Place place, Map<String, double> drivingDistances) {
   return drivingDistances[destinationPlaceKey(place)] ??
       place.distanceKm ??
       double.maxFinite;
+}
+
+(int, int) _destinationCoordinateBucket(Place place) {
+  return (
+    (place.latitude / _coordinateDuplicateTolerance).floor(),
+    (place.longitude / _coordinateDuplicateTolerance).floor(),
+  );
+}
+
+void _indexDestinationCoordinate(
+  Map<(int, int), List<Place>> buckets,
+  Place place,
+) {
+  (buckets[_destinationCoordinateBucket(place)] ??= []).add(place);
+}
+
+bool _hasMatchingDestinationCoordinate(
+  Map<(int, int), List<Place>> buckets,
+  Place candidate,
+) {
+  final (latitudeBucket, longitudeBucket) = _destinationCoordinateBucket(
+    candidate,
+  );
+  for (var latitudeOffset = -1; latitudeOffset <= 1; latitudeOffset++) {
+    for (var longitudeOffset = -1; longitudeOffset <= 1; longitudeOffset++) {
+      final nearbyPlaces =
+          buckets[(
+            latitudeBucket + latitudeOffset,
+            longitudeBucket + longitudeOffset,
+          )];
+      if (nearbyPlaces == null) continue;
+      if (nearbyPlaces.any(
+        (place) =>
+            (place.latitude - candidate.latitude).abs() <
+                _coordinateDuplicateTolerance &&
+            (place.longitude - candidate.longitude).abs() <
+                _coordinateDuplicateTolerance,
+      )) {
+        return true;
+      }
+    }
+  }
+  return false;
 }

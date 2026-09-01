@@ -150,18 +150,12 @@ class _SearchDestinationPageState()
         if (moreResults.isEmpty) {
           _hasMoreNearbyPages = false;
         } else {
-          var addedCount = 0;
-          for (final item in moreResults) {
-            final isDup = _allNearbyPlaces.any(
-              (p) =>
-                  p.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '') ==
-                  item.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), ''),
-            );
-            if (!isDup) {
-              _allNearbyPlaces.add(item);
-              addedCount++;
-            }
-          }
+          final previousCount = _allNearbyPlaces.length;
+          _allNearbyPlaces = mergeUniqueDestinationResults(
+            _allNearbyPlaces,
+            moreResults,
+          );
+          final addedCount = _allNearbyPlaces.length - previousCount;
           _allNearbyPlaces.sort((a, b) {
             final double distA = a.distanceKm ?? double.maxFinite;
             final double distB = b.distanceKm ?? double.maxFinite;
@@ -287,23 +281,15 @@ class _SearchDestinationPageState()
       lng: _userLng,
     );
 
-    final mergedResults = <Place>[...localMatches];
-    for (final res in apiResults.where(
-      (place) =>
-          (place.distanceKm == null || place.distanceKm! <= 10.0) &&
-          destinationMatchesSearchQuery(place, query),
-    )) {
-      final isDuplicate = mergedResults.any(
-        (m) =>
-            m.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '') ==
-                res.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '') ||
-            ((m.latitude - res.latitude).abs() < 0.0001 &&
-                (m.longitude - res.longitude).abs() < 0.0001),
-      );
-      if (!isDuplicate) {
-        mergedResults.add(res);
-      }
-    }
+    final mergedResults = mergeUniqueDestinationResults(
+      localMatches,
+      apiResults.where(
+        (place) =>
+            (place.distanceKm == null || place.distanceKm! <= 10.0) &&
+            destinationMatchesSearchQuery(place, query),
+      ),
+      compareCoordinates: true,
+    );
 
     if (mounted && requestId == _searchRequestId) {
       setState(() {

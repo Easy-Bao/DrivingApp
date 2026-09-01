@@ -35,6 +35,49 @@ void main() {
     expect(sorted, [mountainView, vistaSlope]);
   });
 
+  test('merges destination names once after punctuation normalization', () {
+    const renamedMountainView = Place(
+      id: 'duplicate-name',
+      name: 'Mountain-View!',
+      fullAddress: 'Another address',
+      latitude: 1,
+      longitude: 2,
+    );
+
+    final merged = mergeUniqueDestinationResults(
+      [mountainView],
+      [renamedMountainView, vistaSlope],
+    );
+
+    expect(destinationNameKey(renamedMountainView), 'mountainview');
+    expect(merged, [mountainView, vistaSlope]);
+  });
+
+  test('deduplicates nearby coordinates without dropping distinct places', () {
+    const sameCoordinate = Place(
+      id: 'same-coordinate',
+      name: 'Different name',
+      fullAddress: 'Nearby address',
+      latitude: 37.38615,
+      longitude: -122.08385,
+    );
+    const distinctCoordinate = Place(
+      id: 'distinct-coordinate',
+      name: 'Another name',
+      fullAddress: 'Farther address',
+      latitude: 37.38621,
+      longitude: -122.0839,
+    );
+
+    final merged = mergeUniqueDestinationResults(
+      [mountainView],
+      [sameCoordinate, distinctCoordinate],
+      compareCoordinates: true,
+    );
+
+    expect(merged, [mountainView, distinctCoordinate]);
+  });
+
   test('formats pending, route, and nearby destination distances', () {
     expect(
       formatDestinationPlaceDistance(mountainView, const {}, {
