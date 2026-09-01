@@ -15,9 +15,7 @@ import 'package:maps/src/support/route_request_key.dart';
 export 'package:maps/src/map/map_annotation_service.dart';
 export 'package:maps/src/map/map_camera_service.dart';
 
-class MapProvider {
-  MapProvider._();
-
+class MapProvider._() {
   static const double nearbyRadiusKm = 5.0;
   static const _routeCacheTtl = Duration(seconds: 20);
 

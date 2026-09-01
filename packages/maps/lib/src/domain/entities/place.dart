@@ -42,7 +42,7 @@ class const Place({
     return 'Near $value';
   }
 
-  factory Place.fromJson(Map<String, dynamic> json) {
+  factory fromJson(Map<String, dynamic> json) {
     final context = <String, String>{};
     final rawContext = json['context'];
     if (rawContext is Map) {

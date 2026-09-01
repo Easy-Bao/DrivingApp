@@ -6,9 +6,7 @@ import 'package:maps/src/domain/entities/place.dart';
 ///
 /// Map providers may omit `distance_km` for valid results. Keeping the
 /// fallback here makes both clients apply the same radius and distance rules.
-class NearbyPlaceResolver {
-  NearbyPlaceResolver._();
-
+class NearbyPlaceResolver._() {
   static List<Place> withinRadius({
     required List<Place> places,
     required double latitude,

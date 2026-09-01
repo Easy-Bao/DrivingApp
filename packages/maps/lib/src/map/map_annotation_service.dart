@@ -6,9 +6,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
 import 'package:maps/src/map/map_camera_service.dart';
 
-class TripMapMarkerStyle {
-  TripMapMarkerStyle._();
-
+class TripMapMarkerStyle._() {
   static const double pinIconSize = 1.22;
   static const Color ownLocation = Color(0xFF100E11);
   static const Color tripLocation = Color(0xFF198754);
@@ -20,9 +18,7 @@ class TripMapMarkerStyle {
   }
 }
 
-class MapAnnotationService {
-  MapAnnotationService._();
-
+class MapAnnotationService._() {
   static Future<mapbox.PointAnnotationManager> addMarker(
     AppMapController controller,
     double lat,

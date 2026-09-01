@@ -4,9 +4,7 @@ import 'package:maps/src/map/map_native_service.dart';
 
 enum LocationAccessState { ready, serviceDisabled, denied, deniedForever }
 
-class LocationService {
-  LocationService._();
-
+class LocationService._() {
   static Position? _lastPosition;
   static MapNativeService? _nativeService;
 

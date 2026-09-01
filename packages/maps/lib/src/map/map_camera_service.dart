@@ -12,9 +12,7 @@ class const AppMapController(this.native) {
   final mapbox.MapboxMap native;
 }
 
-class MapCameraService {
-  MapCameraService._();
-
+class MapCameraService._() {
   static Future<void> moveCamera(
     AppMapController controller,
     double lat,

@@ -35,7 +35,7 @@ class const Route({
   final String preference;
   final String profile;
 
-  factory Route.fromJson(Map<String, dynamic> json) {
+  factory fromJson(Map<String, dynamic> json) {
     final rawPoints = _readPointCollection(json);
     final points = rawPoints.map(_readPoint).whereType<List<double>>().toList();
 
