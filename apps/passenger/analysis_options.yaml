@@ -47,13 +47,3 @@ linter:
     discarded_futures: true
     avoid_void_async: true
     exhaustive_cases: true 
-
-bloc:
-  rules:
-    - avoid_flutter_imports
-    - avoid_public_fields
-    - avoid_public_bloc_methods
-    - prefer_void_public_cubit_methods
-    - prefer_file_naming_conventions
-    - avoid_build_context_extensions
-    - prefer_cubit
