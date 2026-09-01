@@ -12,15 +12,15 @@ import 'package:passenger_app/src/features/profile/domain/repositories/passenger
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final class PassengerProfileRepositoryImpl
-    implements PassengerProfileRepository {
-  PassengerProfileRepositoryImpl({
-    required PassengerProfileRemoteDataSource remoteDataSource,
-    required PassengerSessionStore sessionService,
-    required SharedPreferences preferences,
-  }) : _remoteDataSource = remoteDataSource,
-       _sessionService = sessionService,
-       _preferences = preferences;
+final class PassengerProfileRepositoryImpl({
+  required PassengerProfileRemoteDataSource remoteDataSource,
+  required PassengerSessionStore sessionService,
+  required SharedPreferences preferences,
+}) implements PassengerProfileRepository {
+  this
+    : _remoteDataSource = remoteDataSource,
+      _sessionService = sessionService,
+      _preferences = preferences;
 
   final PassengerProfileRemoteDataSource _remoteDataSource;
   final PassengerSessionStore _sessionService;

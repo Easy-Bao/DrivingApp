@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:design_system/design_system.dart';
 
-enum BookingAuthAction { signIn, signUp }
+enum BookingAuthAction() {
+  signIn,
+  signUp,
+}
 
-class BookingAuthBottomSheetWidget extends StatelessWidget {
-  const BookingAuthBottomSheetWidget({super.key});
-
+class const BookingAuthBottomSheetWidget({super.key}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(

@@ -9,12 +9,11 @@ import 'package:foundation/foundation.dart';
 
 export 'package:passenger_app/src/features/profile/presentation/bloc/profile/profile_state.dart';
 
-class ProfileCubit extends Cubit<ProfileState> {
+class ProfileCubit({required PassengerProfileRepository repository})
+    extends Cubit<ProfileState> {
   final PassengerProfileRepository _repository;
 
-  ProfileCubit({required PassengerProfileRepository repository})
-    : _repository = repository,
-      super(const ProfileState());
+  this : _repository = repository, super(const ProfileState());
 
   Future<void> loadProfile() async {
     if (isClosed) return;

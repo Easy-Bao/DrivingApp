@@ -9,10 +9,8 @@ abstract class InboxRemoteDataSource {
   });
 }
 
-class InboxRemoteDataSourceImpl implements InboxRemoteDataSource {
+class InboxRemoteDataSourceImpl(this._dio) implements InboxRemoteDataSource {
   final Dio _dio;
-
-  InboxRemoteDataSourceImpl(this._dio);
 
   @override
   Future<OffsetPage<Map<String, dynamic>>> fetchNotifications(

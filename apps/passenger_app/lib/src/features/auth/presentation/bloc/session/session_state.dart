@@ -1,8 +1,6 @@
 part of 'session_bloc.dart';
 
-sealed class SessionState extends Equatable {
-  const SessionState();
-
+sealed class const SessionState() extends Equatable {
   bool get isAuthenticated => this is AuthenticatedSession;
 
   @override

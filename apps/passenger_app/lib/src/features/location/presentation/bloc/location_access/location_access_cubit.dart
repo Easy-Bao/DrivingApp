@@ -5,10 +5,9 @@ import 'package:maps/maps.dart';
 import 'package:passenger_app/src/features/location/presentation/bloc/location_access/location_access_state.dart';
 import 'package:passenger_app/src/features/location/domain/repositories/location_access_repository.dart';
 
-class LocationAccessCubit extends Cubit<LocationAccessViewState> {
-  LocationAccessCubit({required LocationAccessRepository repository})
-    : _repository = repository,
-      super(const LocationAccessChecking());
+class LocationAccessCubit({required LocationAccessRepository repository})
+    extends Cubit<LocationAccessViewState> {
+  this : _repository = repository, super(const LocationAccessChecking());
 
   final LocationAccessRepository _repository;
 

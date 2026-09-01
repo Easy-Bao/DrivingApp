@@ -13,7 +13,22 @@ import 'package:passenger_app/src/features/driver_profile/presentation/driver_pr
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class DriverMatchedPage extends StatefulWidget {
+class const DriverMatchedPage({
+  super.key,
+  required this.rideType,
+  required this.fare,
+  required this.destination,
+  required this.distance,
+  required this.duration,
+  this.driverId,
+  this.driverName,
+  this.driverRating,
+  this.vehicleType,
+  this.plateNumber,
+  this.pickupAddress,
+  this.createdRide,
+  required this.profileRepository,
+}) extends StatefulWidget {
   final String rideType;
   final double fare;
   final Place destination;
@@ -27,23 +42,6 @@ class DriverMatchedPage extends StatefulWidget {
   final String? pickupAddress;
   final RideHistory? createdRide;
   final DriverProfileRepository profileRepository;
-
-  const DriverMatchedPage({
-    super.key,
-    required this.rideType,
-    required this.fare,
-    required this.destination,
-    required this.distance,
-    required this.duration,
-    this.driverId,
-    this.driverName,
-    this.driverRating,
-    this.vehicleType,
-    this.plateNumber,
-    this.pickupAddress,
-    this.createdRide,
-    required this.profileRepository,
-  });
 
   @override
   State<DriverMatchedPage> createState() => _DriverMatchedPageState();

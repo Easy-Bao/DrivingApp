@@ -17,11 +17,9 @@ abstract class PassengerProfileRemoteDataSource {
   });
 }
 
-class PassengerProfileRemoteDataSourceImpl
+class PassengerProfileRemoteDataSourceImpl(this._dio)
     implements PassengerProfileRemoteDataSource {
   final Dio _dio;
-
-  PassengerProfileRemoteDataSourceImpl(this._dio);
 
   @override
   Future<Map<String, dynamic>> fetchProfile(String passengerId) async {

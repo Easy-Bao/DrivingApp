@@ -3,10 +3,9 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/features/home/domain/entities/public_driver_summary.dart';
 import 'package:design_system/design_system.dart';
 
-class PublicDriverSummaryCardWidget extends StatelessWidget {
+class const PublicDriverSummaryCardWidget({super.key, required this.summaries})
+    extends StatelessWidget {
   final List<PublicDriverSummary> summaries;
-
-  const PublicDriverSummaryCardWidget({super.key, required this.summaries});
 
   @override
   Widget build(BuildContext context) {

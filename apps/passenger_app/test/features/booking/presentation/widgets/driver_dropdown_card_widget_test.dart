@@ -65,9 +65,7 @@ void main() {
   });
 }
 
-class _DriverCardHarness extends StatefulWidget {
-  const _DriverCardHarness();
-
+class const _DriverCardHarness() extends StatefulWidget {
   @override
   State<_DriverCardHarness> createState() => _DriverCardHarnessState();
 }

@@ -4,23 +4,21 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class FindingDriverNoDriverPanelWidget extends StatelessWidget {
+class const FindingDriverNoDriverPanelWidget({
+  super.key,
+  required this.rideType,
+  required this.fare,
+  required this.destination,
+  required this.onRetryPressed,
+  required this.onCancelPressed,
+  this.isCanceling = false,
+}) extends StatelessWidget {
   final String rideType;
   final double fare;
   final Place destination;
   final VoidCallback onRetryPressed;
   final VoidCallback onCancelPressed;
   final bool isCanceling;
-
-  const FindingDriverNoDriverPanelWidget({
-    super.key,
-    required this.rideType,
-    required this.fare,
-    required this.destination,
-    required this.onRetryPressed,
-    required this.onCancelPressed,
-    this.isCanceling = false,
-  });
 
   @override
   Widget build(BuildContext context) {

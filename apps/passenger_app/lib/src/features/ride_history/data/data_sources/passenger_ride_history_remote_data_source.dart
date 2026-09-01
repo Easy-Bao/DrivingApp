@@ -11,11 +11,9 @@ abstract class PassengerRideHistoryRemoteDataSource {
   Future<Map<String, dynamic>> fetchSummary(String passengerId);
 }
 
-class PassengerRideHistoryRemoteDataSourceImpl
+class PassengerRideHistoryRemoteDataSourceImpl(this._dio)
     implements PassengerRideHistoryRemoteDataSource {
   final Dio _dio;
-
-  PassengerRideHistoryRemoteDataSourceImpl(this._dio);
 
   @override
   Future<OffsetPage<Map<String, dynamic>>> fetchRideHistory(

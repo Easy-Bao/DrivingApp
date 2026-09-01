@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:design_system/design_system.dart';
 
-class RecentRideHistoryEmptyStateWidget extends StatelessWidget {
-  const RecentRideHistoryEmptyStateWidget({required this.isGuest, super.key});
-
+class const RecentRideHistoryEmptyStateWidget({
+  required this.isGuest,
+  super.key,
+}) extends StatelessWidget {
   final bool isGuest;
 
   @override

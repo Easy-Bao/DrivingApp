@@ -18,10 +18,10 @@ import 'package:passenger_app/src/features/booking/presentation/bloc/booking_dra
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class PassengerDependencies extends Module {
+class PassengerDependencies({required SharedPreferences prefs}) extends Module {
   final SharedPreferences _prefs;
 
-  PassengerDependencies({required SharedPreferences prefs}) : _prefs = prefs;
+  this : _prefs = prefs;
 
   @override
   void binds(Injector i) {

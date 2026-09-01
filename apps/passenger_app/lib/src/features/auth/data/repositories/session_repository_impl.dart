@@ -5,15 +5,15 @@ import 'package:passenger_app/src/features/auth/domain/repositories/session_repo
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final class SessionRepositoryImpl implements SessionRepository {
+final class SessionRepositoryImpl({
+  required PassengerSessionStore secureSessionService,
+  required SharedPreferences preferences,
+}) implements SessionRepository {
   final PassengerSessionStore _secureSessionService;
   final SharedPreferences _preferences;
 
-  SessionRepositoryImpl({
-    required PassengerSessionStore secureSessionService,
-    required SharedPreferences preferences,
-  }) : _secureSessionService = secureSessionService,
-       _preferences = preferences;
+  this
+    : _secureSessionService = secureSessionService, _preferences = preferences;
 
   @override
   Future<Either<Failure, PassengerSession>> restoreSession() async {

@@ -12,7 +12,16 @@ import 'package:passenger_app/src/features/chat/presentation/bloc/chat/chat_cubi
 import 'package:passenger_app/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:design_system/design_system.dart';
 
-class PassengerChatPage extends StatefulWidget {
+class const PassengerChatPage({
+  super.key,
+  this.roomId,
+  this.userId,
+  this.peerId,
+  this.peerName,
+  required this.trackRepository,
+  required this.chatRepositoryFactory,
+  this.token,
+}) extends StatefulWidget {
   final String? roomId;
   final String? userId;
   final String? peerId;
@@ -20,17 +29,6 @@ class PassengerChatPage extends StatefulWidget {
   final TrackRepository trackRepository;
   final ChatRepositoryFactory chatRepositoryFactory;
   final String? token;
-
-  const PassengerChatPage({
-    super.key,
-    this.roomId,
-    this.userId,
-    this.peerId,
-    this.peerName,
-    required this.trackRepository,
-    required this.chatRepositoryFactory,
-    this.token,
-  });
 
   @override
   State<PassengerChatPage> createState() => _PassengerChatPageState();

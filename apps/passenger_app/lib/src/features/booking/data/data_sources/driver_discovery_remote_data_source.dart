@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 
-abstract class DriverDiscoveryRemoteDataSource {
+abstract class DriverDiscoveryRemoteDataSource() {
   Future<List<Map<String, dynamic>>> fetchOnlineDrivers(List<String> driverIds);
 
   Future<List<Map<String, dynamic>>> fetchNearbyDrivers({
@@ -10,11 +10,9 @@ abstract class DriverDiscoveryRemoteDataSource {
   });
 }
 
-class DriverDiscoveryRemoteDataSourceImpl
+class DriverDiscoveryRemoteDataSourceImpl(this._dio)
     implements DriverDiscoveryRemoteDataSource {
   final Dio _dio;
-
-  DriverDiscoveryRemoteDataSourceImpl(this._dio);
 
   @override
   Future<List<Map<String, dynamic>>> fetchOnlineDrivers(

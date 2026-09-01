@@ -16,10 +16,8 @@ abstract class RideRemoteDataSource {
   Future<Map<String, dynamic>> fetchCounterparty(String rideId);
 }
 
-class RideRemoteDataSourceImpl implements RideRemoteDataSource {
+class RideRemoteDataSourceImpl(this._dio) implements RideRemoteDataSource {
   final Dio _dio;
-
-  RideRemoteDataSourceImpl(this._dio);
 
   @override
   Future<Map<String, dynamic>?> fetchRide(String rideId) async {

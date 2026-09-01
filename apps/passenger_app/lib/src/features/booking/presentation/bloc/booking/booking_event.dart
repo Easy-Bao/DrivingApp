@@ -1,56 +1,56 @@
 part of 'booking_bloc.dart';
 
-abstract class BookingEvent {
-  const BookingEvent();
-}
+abstract class const BookingEvent();
 
-class LocateNearestDriverEvent extends BookingEvent {
+class const LocateNearestDriverEvent({
+  required this.pickupLat,
+  required this.pickupLng,
+  required this.trip,
+}) extends BookingEvent {
   final double pickupLat;
   final double pickupLng;
   final BidSessionTrip trip;
-
-  const LocateNearestDriverEvent({
-    required this.pickupLat,
-    required this.pickupLng,
-    required this.trip,
-  });
 }
 
-class StartDirectBookingEvent extends BookingEvent {
+class const StartDirectBookingEvent({
+  required this.targetDriver,
+  required this.trip,
+  required this.pickupLat,
+  required this.pickupLng,
+  required this.distanceKm,
+  required this.durationMinutes,
+}) extends BookingEvent {
   final DriverModel targetDriver;
   final BidSessionTrip trip;
   final double pickupLat;
   final double pickupLng;
   final double distanceKm;
   final double durationMinutes;
-
-  const StartDirectBookingEvent({
-    required this.targetDriver,
-    required this.trip,
-    required this.pickupLat,
-    required this.pickupLng,
-    required this.distanceKm,
-    required this.durationMinutes,
-  });
 }
 
-class StartOpenBookingEvent extends BookingEvent {
+class const StartOpenBookingEvent({
+  required this.trip,
+  required this.pickupLat,
+  required this.pickupLng,
+  required this.distanceKm,
+  required this.durationMinutes,
+}) extends BookingEvent {
   final BidSessionTrip trip;
   final double pickupLat;
   final double pickupLng;
   final double distanceKm;
   final double durationMinutes;
-
-  const StartOpenBookingEvent({
-    required this.trip,
-    required this.pickupLat,
-    required this.pickupLng,
-    required this.distanceKm,
-    required this.durationMinutes,
-  });
 }
 
-class AcceptBidOfferEvent extends BookingEvent {
+class const AcceptBidOfferEvent({
+  required this.offerId,
+  required this.driverId,
+  required this.driverName,
+  required this.vehicleType,
+  required this.plateNumber,
+  required this.proposedFare,
+  this.driverRating,
+}) extends BookingEvent {
   final String offerId;
   final String driverId;
   final String driverName;
@@ -58,34 +58,16 @@ class AcceptBidOfferEvent extends BookingEvent {
   final String plateNumber;
   final double proposedFare;
   final String? driverRating;
-
-  const AcceptBidOfferEvent({
-    required this.offerId,
-    required this.driverId,
-    required this.driverName,
-    required this.vehicleType,
-    required this.plateNumber,
-    required this.proposedFare,
-    this.driverRating,
-  });
 }
 
-class CancelBookingEvent extends BookingEvent {
-  const CancelBookingEvent();
-}
+class const CancelBookingEvent() extends BookingEvent;
 
-class ResetBookingEvent extends BookingEvent {
-  const ResetBookingEvent();
-}
+class const ResetBookingEvent() extends BookingEvent;
 
-class UpdateOffersEvent extends BookingEvent {
+class const UpdateOffersEvent(this.offers) extends BookingEvent {
   final List<BookingOffer> offers;
-
-  const UpdateOffersEvent(this.offers);
 }
 
-class DriverMatchedEvent extends BookingEvent {
+class const DriverMatchedEvent(this.matchResult) extends BookingEvent {
   final DriverMatchResult matchResult;
-
-  const DriverMatchedEvent(this.matchResult);
 }

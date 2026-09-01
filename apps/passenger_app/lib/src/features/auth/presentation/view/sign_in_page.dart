@@ -12,9 +12,7 @@ import 'package:passenger_app/src/features/auth/presentation/widgets/social_logi
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:design_system/design_system.dart';
 
-class SigninPage extends StatelessWidget {
-  const SigninPage({super.key});
-
+class const SigninPage({super.key}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider<SignInBloc>(
@@ -24,9 +22,7 @@ class SigninPage extends StatelessWidget {
   }
 }
 
-class _SigninPageContent extends StatefulWidget {
-  const _SigninPageContent();
-
+class const _SigninPageContent() extends StatefulWidget {
   @override
   State<_SigninPageContent> createState() => _SigninPageContentState();
 }

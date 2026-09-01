@@ -1,13 +1,11 @@
 import 'package:foundation/foundation.dart';
 
-class DriverReview {
-  const DriverReview({
-    required this.passengerName,
-    required this.comment,
-    required this.rating,
-    this.createdAt,
-  });
-
+class const DriverReview({
+  required this.passengerName,
+  required this.comment,
+  required this.rating,
+  this.createdAt,
+}) {
   factory DriverReview.fromJson(Map<String, dynamic> json) {
     return DriverReview(
       passengerName: SafeParse.toStringValue(

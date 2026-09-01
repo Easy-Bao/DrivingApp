@@ -1,8 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-sealed class ForgotPasswordState extends Equatable {
-  const ForgotPasswordState();
-
+sealed class const ForgotPasswordState() extends Equatable {
   @override
   List<Object?> get props => [];
 }

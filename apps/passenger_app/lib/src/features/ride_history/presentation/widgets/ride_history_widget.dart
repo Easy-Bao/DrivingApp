@@ -8,7 +8,19 @@ import 'package:passenger_app/src/features/ride_history/presentation/widgets/rid
 import 'package:passenger_app/src/features/ride_history/presentation/widgets/ride_history_ride_card_widget.dart';
 import 'package:design_system/design_system.dart';
 
-class RideHistoryWidget extends StatefulWidget {
+class const RideHistoryWidget({
+  required this.activeRides,
+  required this.pastRides,
+  required this.referenceTime,
+  required this.onRideTap,
+  this.hasMore = false,
+  this.isLoadingMore = false,
+  this.loadMoreError,
+  this.onLoadMore,
+  this.weeklyFare,
+  this.weeklyRideCount,
+  super.key,
+}) extends StatefulWidget {
   final List<RideHistory> activeRides;
   final List<RideHistory> pastRides;
   final DateTime referenceTime;
@@ -19,20 +31,6 @@ class RideHistoryWidget extends StatefulWidget {
   final VoidCallback? onLoadMore;
   final double? weeklyFare;
   final int? weeklyRideCount;
-
-  const RideHistoryWidget({
-    required this.activeRides,
-    required this.pastRides,
-    required this.referenceTime,
-    required this.onRideTap,
-    this.hasMore = false,
-    this.isLoadingMore = false,
-    this.loadMoreError,
-    this.onLoadMore,
-    this.weeklyFare,
-    this.weeklyRideCount,
-    super.key,
-  });
 
   @override
   State<RideHistoryWidget> createState() => _RideHistoryWidgetState();

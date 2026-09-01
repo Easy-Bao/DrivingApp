@@ -3,16 +3,14 @@ import 'package:passenger_app/src/features/home/domain/entities/public_driver_su
 
 enum PublicDriverSummaryStatus { initial, loading, success, failure }
 
-class PublicDriverSummaryState extends Equatable {
+class const PublicDriverSummaryState({
+  this.status = PublicDriverSummaryStatus.initial,
+  this.summaries = const [],
+  this.errorMessage,
+}) extends Equatable {
   final PublicDriverSummaryStatus status;
   final List<PublicDriverSummary> summaries;
   final String? errorMessage;
-
-  const PublicDriverSummaryState({
-    this.status = PublicDriverSummaryStatus.initial,
-    this.summaries = const [],
-    this.errorMessage,
-  });
 
   PublicDriverSummaryState copyWith({
     PublicDriverSummaryStatus? status,

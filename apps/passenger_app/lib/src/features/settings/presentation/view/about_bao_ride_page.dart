@@ -4,9 +4,8 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger_app/src/features/settings/settings_routes.dart';
 import 'package:design_system/design_system.dart';
 
-class AboutBaoRidePage extends StatelessWidget {
-  const AboutBaoRidePage({super.key, this.onBack, this.onLicensesTap});
-
+class const AboutBaoRidePage({super.key, this.onBack, this.onLicensesTap})
+    extends StatelessWidget {
   final VoidCallback? onBack;
   final VoidCallback? onLicensesTap;
 

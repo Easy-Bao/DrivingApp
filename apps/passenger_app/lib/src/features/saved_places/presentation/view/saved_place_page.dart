@@ -15,9 +15,7 @@ import 'package:passenger_app/src/features/booking/booking_routes.dart';
 import 'package:design_system/design_system.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-class SavedPlacePage extends StatefulWidget {
-  const SavedPlacePage({super.key});
-
+class const SavedPlacePage({super.key}) extends StatefulWidget {
   @override
   State<SavedPlacePage> createState() => _SavedPlacePageState();
 }

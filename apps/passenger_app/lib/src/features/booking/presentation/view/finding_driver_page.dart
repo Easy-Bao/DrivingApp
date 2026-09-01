@@ -22,7 +22,19 @@ import 'package:passenger_app/src/features/booking/presentation/widgets/finding_
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class FindingDriverPage extends StatelessWidget {
+class const FindingDriverPage({
+  super.key,
+  required this.rideType,
+  required this.fare,
+  required this.destination,
+  required this.distance,
+  required this.duration,
+  this.pickupAddress,
+  this.pickupLatitude,
+  this.pickupLongitude,
+  this.passengerNote = '',
+  required this.profileRepository,
+}) extends StatelessWidget {
   final String rideType;
   final double fare;
   final Place destination;
@@ -33,20 +45,6 @@ class FindingDriverPage extends StatelessWidget {
   final double? pickupLongitude;
   final String passengerNote;
   final DriverProfileRepository profileRepository;
-
-  const FindingDriverPage({
-    super.key,
-    required this.rideType,
-    required this.fare,
-    required this.destination,
-    required this.distance,
-    required this.duration,
-    this.pickupAddress,
-    this.pickupLatitude,
-    this.pickupLongitude,
-    this.passengerNote = '',
-    required this.profileRepository,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +69,19 @@ class FindingDriverPage extends StatelessWidget {
   }
 }
 
-class FindingDriverPageContent extends StatefulWidget {
+class const FindingDriverPageContent({
+  super.key,
+  required this.rideType,
+  required this.fare,
+  required this.destination,
+  required this.distance,
+  required this.duration,
+  this.pickupAddress,
+  this.pickupLatitude,
+  this.pickupLongitude,
+  this.passengerNote = '',
+  required this.profileRepository,
+}) extends StatefulWidget {
   final String rideType;
   final double fare;
   final Place destination;
@@ -83,26 +93,13 @@ class FindingDriverPageContent extends StatefulWidget {
   final String passengerNote;
   final DriverProfileRepository profileRepository;
 
-  const FindingDriverPageContent({
-    super.key,
-    required this.rideType,
-    required this.fare,
-    required this.destination,
-    required this.distance,
-    required this.duration,
-    this.pickupAddress,
-    this.pickupLatitude,
-    this.pickupLongitude,
-    this.passengerNote = '',
-    required this.profileRepository,
-  });
-
   @override
   State<FindingDriverPageContent> createState() =>
       _FindingDriverPageContentState();
 }
 
-class _FindingDriverPageContentState extends State<FindingDriverPageContent>
+class _FindingDriverPageContentState()
+    extends State<FindingDriverPageContent>
     with TickerProviderStateMixin {
   late AnimationController _radarCtrl;
   late AnimationController _dotCtrl;

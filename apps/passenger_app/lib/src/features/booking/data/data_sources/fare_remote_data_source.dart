@@ -1,7 +1,7 @@
 import 'package:passenger_app/src/features/booking/booking.dart';
 import 'package:dio/dio.dart';
 
-abstract class FareRemoteDataSource {
+abstract class FareRemoteDataSource() {
   Future<FareEstimate> fetchEstimate({
     required double distanceKm,
     required double durationMinutes,
@@ -12,10 +12,8 @@ abstract class FareRemoteDataSource {
   });
 }
 
-class FareRemoteDataSourceImpl implements FareRemoteDataSource {
+class FareRemoteDataSourceImpl(this._dio) implements FareRemoteDataSource {
   final Dio _dio;
-
-  FareRemoteDataSourceImpl(this._dio);
 
   @override
   Future<FareEstimate> fetchEstimate({

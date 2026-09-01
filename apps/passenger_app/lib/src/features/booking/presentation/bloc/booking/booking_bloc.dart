@@ -24,7 +24,19 @@ import 'package:foundation/foundation.dart';
 part 'booking_event.dart';
 part 'booking_state.dart';
 
-class BookingBloc extends Bloc<BookingEvent, BookingState> {
+class BookingBloc({
+  required DriverRepository driverRepository,
+  required BookingRepository bookingRepository,
+  required DriverProfileRepository driverProfileRepository,
+  required PassengerSessionStore secureSessionService,
+  InboxCubit? inboxCubit,
+  PassengerBackgroundTelemetry? backgroundTelemetryService,
+  RealtimeWebSocketClient? realtimeClient,
+  required AppLifecycleCoordinator lifecycleCoordinator,
+  int nearestDriverMaxAttempts = 5,
+  Duration nearestDriverRetryDelay = const Duration(seconds: 2),
+  Duration offerRefreshInterval = const Duration(seconds: 3),
+}) extends Bloc<BookingEvent, BookingState> {
   final DriverRepository _driverRepository;
   final BookingRepository _bookingRepository;
   final DriverProfileRepository _driverProfileRepository;
@@ -58,32 +70,21 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   double? _dropoffLng;
   String? _dropoffName;
 
-  BookingBloc({
-    required DriverRepository driverRepository,
-    required BookingRepository bookingRepository,
-    required DriverProfileRepository driverProfileRepository,
-    required PassengerSessionStore secureSessionService,
-    InboxCubit? inboxCubit,
-    PassengerBackgroundTelemetry? backgroundTelemetryService,
-    RealtimeWebSocketClient? realtimeClient,
-    required AppLifecycleCoordinator lifecycleCoordinator,
-    int nearestDriverMaxAttempts = 5,
-    Duration nearestDriverRetryDelay = const Duration(seconds: 2),
-    Duration offerRefreshInterval = const Duration(seconds: 3),
-  }) : assert(nearestDriverMaxAttempts > 0),
-       assert(offerRefreshInterval > Duration.zero),
-       _driverRepository = driverRepository,
-       _bookingRepository = bookingRepository,
-       _driverProfileRepository = driverProfileRepository,
-       _secureSessionService = secureSessionService,
-       _inboxCubit = inboxCubit,
-       _backgroundTelemetryService = backgroundTelemetryService,
-       _realtimeClient = realtimeClient,
-       _lifecycleCoordinator = lifecycleCoordinator,
-       _nearestDriverMaxAttempts = nearestDriverMaxAttempts,
-       _nearestDriverRetryDelay = nearestDriverRetryDelay,
-       _offerRefreshInterval = offerRefreshInterval,
-       super(BookingInitial()) {
+  this
+    : assert(nearestDriverMaxAttempts > 0),
+      assert(offerRefreshInterval > Duration.zero),
+      _driverRepository = driverRepository,
+      _bookingRepository = bookingRepository,
+      _driverProfileRepository = driverProfileRepository,
+      _secureSessionService = secureSessionService,
+      _inboxCubit = inboxCubit,
+      _backgroundTelemetryService = backgroundTelemetryService,
+      _realtimeClient = realtimeClient,
+      _lifecycleCoordinator = lifecycleCoordinator,
+      _nearestDriverMaxAttempts = nearestDriverMaxAttempts,
+      _nearestDriverRetryDelay = nearestDriverRetryDelay,
+      _offerRefreshInterval = offerRefreshInterval,
+      super(BookingInitial()) {
     on<LocateNearestDriverEvent>(
       _onLocateNearestDriver,
       transformer: (events, mapper) => events.exhaustMap(mapper),

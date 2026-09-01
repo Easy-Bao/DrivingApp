@@ -5,7 +5,7 @@ import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notificat
 import 'package:passenger_app/src/features/inbox/domain/repositories/inbox_repository.dart';
 import 'package:foundation/foundation.dart';
 
-class InboxCubit extends Cubit<InboxState> {
+class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
   static const _pageSize = 50;
 
   final InboxRepository inboxRepository;
@@ -13,8 +13,7 @@ class InboxCubit extends Cubit<InboxState> {
   String? _activePassengerId;
   int _sessionRevision = 0;
 
-  InboxCubit({required this.inboxRepository})
-    : super(const InboxInitialState());
+  this : super(const InboxInitialState());
 
   Future<void> loadNotifications(String passengerId) async {
     if (_activePassengerId != passengerId) {

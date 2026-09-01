@@ -5,21 +5,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:design_system/design_system.dart';
 
-class ProfileAvatarWidget extends StatelessWidget {
+class const ProfileAvatarWidget({
+  super.key,
+  required this.initials,
+  this.imagePath,
+  this.imageData,
+  this.size = 72,
+  this.onCameraTap,
+}) extends StatelessWidget {
   final String initials;
   final String? imagePath;
   final String? imageData;
   final double size;
   final VoidCallback? onCameraTap;
-
-  const ProfileAvatarWidget({
-    super.key,
-    required this.initials,
-    this.imagePath,
-    this.imageData,
-    this.size = 72,
-    this.onCameraTap,
-  });
 
   @override
   Widget build(BuildContext context) {

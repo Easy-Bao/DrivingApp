@@ -13,10 +13,9 @@ import 'package:passenger_app/src/features/profile/presentation/bloc/profile/pro
 import 'package:passenger_app/src/features/profile/presentation/widgets/profile_avatar_widget.dart';
 import 'package:design_system/design_system.dart';
 
-class ProfileInfoPage extends StatefulWidget {
+class const ProfileInfoPage({super.key, this.pickPhoto})
+    extends StatefulWidget {
   final Future<XFile?> Function()? pickPhoto;
-
-  const ProfileInfoPage({super.key, this.pickPhoto});
 
   @override
   State<ProfileInfoPage> createState() => _ProfileInfoPageState();
@@ -582,9 +581,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   }
 }
 
-class _PhoneParts {
+class const _PhoneParts({required this.prefix, required this.number}) {
   final String prefix;
   final String number;
-
-  const _PhoneParts({required this.prefix, required this.number});
 }

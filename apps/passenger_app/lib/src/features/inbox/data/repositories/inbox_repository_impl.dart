@@ -4,11 +4,9 @@ import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notificat
 import 'package:passenger_app/src/features/inbox/domain/repositories/inbox_repository.dart';
 import 'package:foundation/foundation.dart';
 
-final class InboxRepositoryImpl
+final class InboxRepositoryImpl({required this.remoteDataSource})
     implements InboxRepository, PaginatedInboxRepository {
   final InboxRemoteDataSource remoteDataSource;
-
-  InboxRepositoryImpl({required this.remoteDataSource});
 
   @override
   Future<Either<Failure, List<InboxNotification>>> fetchPassengerNotifications(

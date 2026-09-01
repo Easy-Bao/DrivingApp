@@ -4,7 +4,7 @@ import 'package:passenger_app/src/features/booking/domain/entities/booking_offer
 import 'package:passenger_app/src/features/booking/domain/entities/booking_session_request.dart';
 import 'package:foundation/foundation.dart';
 
-abstract interface class BookingRepository {
+abstract interface class BookingRepository() {
   Future<Either<Failure, String>> createSession(BookingSessionRequest request);
 
   Future<Either<Failure, List<BookingOffer>>> fetchOffers(String sessionId);

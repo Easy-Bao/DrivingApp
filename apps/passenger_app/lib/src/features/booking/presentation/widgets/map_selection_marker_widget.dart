@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:maps/maps.dart';
 import 'package:design_system/design_system.dart';
 
-class MapSelectionMarkerWidget extends StatelessWidget {
+class const MapSelectionMarkerWidget({super.key}) extends StatelessWidget {
   static const double width = 32;
   static const double height = 38;
   static const Color markerColor = TripMapMarkerStyle.tripLocation;
-
-  const MapSelectionMarkerWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -28,14 +26,12 @@ class MapSelectionMarkerWidget extends StatelessWidget {
   }
 }
 
-class _MapSelectionMarkerPainter extends CustomPainter {
+class const _MapSelectionMarkerPainter({
+  required this.shadowColor,
+  required this.surfaceColor,
+}) extends CustomPainter {
   final Color shadowColor;
   final Color surfaceColor;
-
-  const _MapSelectionMarkerPainter({
-    required this.shadowColor,
-    required this.surfaceColor,
-  });
 
   @override
   void paint(Canvas canvas, Size size) {

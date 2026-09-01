@@ -9,10 +9,10 @@ import 'package:foundation/foundation.dart';
 part 'sign_up_event.dart';
 part 'sign_up_state.dart';
 
-class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
+class SignUpBloc(this._authRepository) extends Bloc<SignUpEvent, SignUpState> {
   final PassengerAuthRepository _authRepository;
 
-  SignUpBloc(this._authRepository) : super(const SignUpInitial()) {
+  this : super(const SignUpInitial()) {
     on<SignUpSubmitted>(_onSignUpSubmitted);
   }
 

@@ -17,9 +17,7 @@ import 'package:passenger_app/src/features/booking/booking_routes.dart';
 import 'package:design_system/design_system.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-class RideHistoryPage extends StatefulWidget {
-  const RideHistoryPage({super.key});
-
+class const RideHistoryPage({super.key}) extends StatefulWidget {
   @override
   State<RideHistoryPage> createState() => _RideHistoryPageState();
 }
@@ -142,22 +140,20 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
   }
 }
 
-class _RideHistoryMessageView extends StatelessWidget {
+class const _RideHistoryMessageView({
+  required this.subtitle,
+  required this.title,
+  required this.message,
+  this.icon = LucideIcons.route,
+  this.actionLabel,
+  this.onAction,
+}) extends StatelessWidget {
   final String subtitle;
   final String title;
   final String message;
   final IconData icon;
   final String? actionLabel;
   final Future<void> Function()? onAction;
-
-  const _RideHistoryMessageView({
-    required this.subtitle,
-    required this.title,
-    required this.message,
-    this.icon = LucideIcons.route,
-    this.actionLabel,
-    this.onAction,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -220,10 +216,9 @@ class _RideHistoryMessageView extends StatelessWidget {
   }
 }
 
-class _RideHistoryLoadingView extends StatelessWidget {
+class const _RideHistoryLoadingView({required this.itemCount})
+    extends StatelessWidget {
   final int itemCount;
-
-  const _RideHistoryLoadingView({required this.itemCount});
 
   @override
   Widget build(BuildContext context) {

@@ -20,9 +20,8 @@ class FakeResponse extends Fake implements Response<dynamic> {}
 
 class FakeDioException extends Fake implements DioException {}
 
-class TestSecureSessionService extends PassengerSessionStore {
-  TestSecureSessionService(this.refreshTokenValue);
-
+class TestSecureSessionService(this.refreshTokenValue)
+    extends PassengerSessionStore {
   final String? refreshTokenValue;
   bool sessionCleared = false;
 

@@ -8,7 +8,8 @@ import 'package:foundation/foundation.dart';
 part 'ride_history_event.dart';
 part 'ride_history_state.dart';
 
-class RideHistoryBloc extends Bloc<RideHistoryEvent, RideHistoryState> {
+class RideHistoryBloc({required RideHistoryRepository repository})
+    extends Bloc<RideHistoryEvent, RideHistoryState> {
   final RideHistoryRepository _repository;
 
   static const _pageSize = 25;
@@ -22,9 +23,7 @@ class RideHistoryBloc extends Bloc<RideHistoryEvent, RideHistoryState> {
     RideStatus.inTransit,
   };
 
-  RideHistoryBloc({required RideHistoryRepository repository})
-    : _repository = repository,
-      super(const RideHistoryInitial()) {
+  this : _repository = repository, super(const RideHistoryInitial()) {
     on<LoadRideHistoryEvent>(_onLoad);
     on<RefreshRideHistoryEvent>(_onRefresh);
     on<LoadMoreRideHistoryEvent>(_onLoadMore);

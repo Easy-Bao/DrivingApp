@@ -11,19 +11,17 @@ import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 
-final class ChatRepositoryImpl implements ChatRepository {
+final class ChatRepositoryImpl({
+  required this.remoteDataSource,
+  required this.currentUserId,
+  required this.clientDio,
+  this.tokenProvider,
+}) implements ChatRepository {
   static const _maxMessageBytes = 4096;
   final ChatRemoteDataSource remoteDataSource;
   final String currentUserId;
   final Dio clientDio;
   final Future<String?> Function()? tokenProvider;
-
-  ChatRepositoryImpl({
-    required this.remoteDataSource,
-    required this.currentUserId,
-    required this.clientDio,
-    this.tokenProvider,
-  });
 
   @override
   bool get isSessionConnected => remoteDataSource.isWebSocketConnected;

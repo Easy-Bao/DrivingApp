@@ -55,9 +55,7 @@ String? _asNonEmptyString(Object? value) {
   return text.isEmpty ? null : text;
 }
 
-class _ChatUnavailablePage extends StatelessWidget {
-  const _ChatUnavailablePage();
-
+class const _ChatUnavailablePage() extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(

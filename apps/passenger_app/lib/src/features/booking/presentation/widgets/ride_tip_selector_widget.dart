@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:design_system/design_system.dart';
 
-class RideTipSelectorWidget extends StatelessWidget {
+class const RideTipSelectorWidget({
+  super.key,
+  required this.selectedTipAmount,
+  required this.onTipSelected,
+}) extends StatelessWidget {
   static const tipOptions = [0, 10, 20, 30, 50, 100];
 
   final int selectedTipAmount;
   final ValueChanged<int> onTipSelected;
-
-  const RideTipSelectorWidget({
-    super.key,
-    required this.selectedTipAmount,
-    required this.onTipSelected,
-  });
 
   String _labelFor(int amount) {
     return amount == 0 ? 'No tip' : '₱$amount';

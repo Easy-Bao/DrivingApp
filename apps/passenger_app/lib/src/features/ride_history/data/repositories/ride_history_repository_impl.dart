@@ -30,12 +30,12 @@ String _shortenAddress(String fullAddress) {
   return fullAddress;
 }
 
-final class RideHistoryRepositoryImpl implements RideHistoryRepository {
+final class RideHistoryRepositoryImpl({
+  required PassengerRideHistoryRemoteDataSource remoteDataSource,
+}) implements RideHistoryRepository {
   final PassengerRideHistoryRemoteDataSource _remoteDataSource;
 
-  RideHistoryRepositoryImpl({
-    required PassengerRideHistoryRemoteDataSource remoteDataSource,
-  }) : _remoteDataSource = remoteDataSource;
+  this : _remoteDataSource = remoteDataSource;
 
   Failure _mapExceptionToFailure(Object error) {
     if (error is DioException) {

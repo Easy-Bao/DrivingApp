@@ -1,8 +1,6 @@
 part of 'verify_otp_bloc.dart';
 
-sealed class VerifyOtpState extends Equatable {
-  const VerifyOtpState();
-
+sealed class const VerifyOtpState() extends Equatable {
   @override
   List<Object?> get props => [];
 }

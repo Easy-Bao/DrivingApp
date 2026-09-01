@@ -1,8 +1,6 @@
 import 'package:passenger_app/src/features/auth/domain/validators/phone_number_validator.dart';
 
-final class AuthFormValidator {
-  const AuthFormValidator();
-
+final class const AuthFormValidator() {
   static final RegExp _emailPattern = RegExp(
     r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
   );

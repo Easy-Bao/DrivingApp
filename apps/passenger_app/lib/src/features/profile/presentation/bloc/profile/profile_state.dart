@@ -1,6 +1,18 @@
 import 'package:equatable/equatable.dart';
 
-class ProfileState extends Equatable {
+class const ProfileState({
+  this.name = '',
+  this.phone = '',
+  this.email = '',
+  this.address = '',
+  this.gender = '',
+  this.avatarPath = '',
+  this.avatarUrl = '',
+  this.avatarData = '',
+  this.isLoading = false,
+  this.isSaving = false,
+  this.errorMessage,
+}) extends Equatable {
   final String name;
   final String phone;
   final String email;
@@ -12,20 +24,6 @@ class ProfileState extends Equatable {
   final bool isLoading;
   final bool isSaving;
   final String? errorMessage;
-
-  const ProfileState({
-    this.name = '',
-    this.phone = '',
-    this.email = '',
-    this.address = '',
-    this.gender = '',
-    this.avatarPath = '',
-    this.avatarUrl = '',
-    this.avatarData = '',
-    this.isLoading = false,
-    this.isSaving = false,
-    this.errorMessage,
-  });
 
   ProfileState copyWith({
     String? name,

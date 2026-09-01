@@ -7,12 +7,13 @@ import 'package:passenger_app/src/features/auth/domain/repositories/passenger_au
 part 'verify_otp_event.dart';
 part 'verify_otp_state.dart';
 
-class VerifyOtpBloc extends Bloc<VerifyOtpEvent, VerifyOtpState> {
+class VerifyOtpBloc(this._authRepository)
+    extends Bloc<VerifyOtpEvent, VerifyOtpState> {
   final PassengerAuthRepository _authRepository;
   Timer? _timer;
   int _seconds = 60;
 
-  VerifyOtpBloc(this._authRepository) : super(const VerifyOtpInitial()) {
+  this : super(const VerifyOtpInitial()) {
     on<VerifyOtpTimerStarted>(_onVerifyOtpTimerStarted);
     on<VerifyOtpTimerTicked>(_onVerifyOtpTimerTicked);
     on<VerifyOtpSubmitted>(_onVerifyOtpSubmitted);

@@ -4,21 +4,19 @@ import 'package:passenger_app/src/features/booking/domain/entities/booking_offer
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class FindingDriverBidsPanelWidget extends StatelessWidget {
+class const FindingDriverBidsPanelWidget({
+  super.key,
+  required this.offers,
+  required this.onAcceptOfferPressed,
+  required this.onCancelPressed,
+  this.acceptingOfferId,
+  this.isCanceling = false,
+}) extends StatelessWidget {
   final List<BookingOffer> offers;
   final ValueChanged<BookingOffer> onAcceptOfferPressed;
   final VoidCallback onCancelPressed;
   final String? acceptingOfferId;
   final bool isCanceling;
-
-  const FindingDriverBidsPanelWidget({
-    super.key,
-    required this.offers,
-    required this.onAcceptOfferPressed,
-    required this.onCancelPressed,
-    this.acceptingOfferId,
-    this.isCanceling = false,
-  });
 
   @override
   Widget build(BuildContext context) {

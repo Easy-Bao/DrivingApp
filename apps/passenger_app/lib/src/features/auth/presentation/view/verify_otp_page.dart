@@ -10,15 +10,13 @@ import 'package:passenger_app/src/features/auth/presentation/bloc/verify_otp/ver
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:design_system/design_system.dart';
 
-class VerifyOtpPage extends StatelessWidget {
+class const VerifyOtpPage({
+  super.key,
+  required this.email,
+  this.isForgotPassword = false,
+}) extends StatelessWidget {
   final String email;
   final bool isForgotPassword;
-
-  const VerifyOtpPage({
-    super.key,
-    required this.email,
-    this.isForgotPassword = false,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -33,14 +31,12 @@ class VerifyOtpPage extends StatelessWidget {
   }
 }
 
-class _VerifyOtpPageContent extends StatefulWidget {
+class const _VerifyOtpPageContent({
+  required this.email,
+  required this.isForgotPassword,
+}) extends StatefulWidget {
   final String email;
   final bool isForgotPassword;
-
-  const _VerifyOtpPageContent({
-    required this.email,
-    required this.isForgotPassword,
-  });
 
   @override
   State<_VerifyOtpPageContent> createState() => _VerifyOtpPageContentState();

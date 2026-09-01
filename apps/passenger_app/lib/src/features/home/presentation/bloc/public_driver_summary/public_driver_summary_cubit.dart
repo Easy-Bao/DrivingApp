@@ -3,13 +3,13 @@ import 'package:passenger_app/src/features/home/presentation/bloc/public_driver_
 import 'package:passenger_app/src/features/home/domain/repositories/public_driver_summary_repository.dart';
 import 'package:foundation/foundation.dart';
 
-class PublicDriverSummaryCubit extends Cubit<PublicDriverSummaryState> {
+class PublicDriverSummaryCubit({
+  required PublicDriverSummaryRepository repository,
+}) extends Cubit<PublicDriverSummaryState> {
   final PublicDriverSummaryRepository _repository;
   bool _hasLoaded = false;
 
-  PublicDriverSummaryCubit({required PublicDriverSummaryRepository repository})
-    : _repository = repository,
-      super(const PublicDriverSummaryState());
+  this : _repository = repository, super(const PublicDriverSummaryState());
 
   Future<void> load({bool force = false}) async {
     if (_hasLoaded && !force) return;

@@ -4,13 +4,12 @@ import 'package:passenger_app/src/features/home/domain/entities/public_driver_su
 import 'package:passenger_app/src/features/home/domain/repositories/public_driver_summary_repository.dart';
 import 'package:foundation/foundation.dart';
 
-final class PublicDriverSummaryRepositoryImpl
-    implements PublicDriverSummaryRepository {
+final class PublicDriverSummaryRepositoryImpl({
+  required PublicDriverRemoteDataSource remoteDataSource,
+}) implements PublicDriverSummaryRepository {
   final PublicDriverRemoteDataSource _remoteDataSource;
 
-  PublicDriverSummaryRepositoryImpl({
-    required PublicDriverRemoteDataSource remoteDataSource,
-  }) : _remoteDataSource = remoteDataSource;
+  this : _remoteDataSource = remoteDataSource;
 
   @override
   Future<Either<Failure, List<PublicDriverSummary>>> fetchSummaries() async {

@@ -5,9 +5,9 @@ import 'package:passenger_app/src/features/booking/data/data_sources/fare_remote
 import 'package:passenger_app/src/features/booking/domain/repositories/fare_repository.dart';
 import 'package:foundation/foundation.dart';
 
-final class FareRepositoryImpl implements FareRepository {
-  FareRepositoryImpl({required FareRemoteDataSource remoteDataSource})
-    : _remoteDataSource = remoteDataSource;
+final class FareRepositoryImpl({required FareRemoteDataSource remoteDataSource})
+    implements FareRepository {
+  this : _remoteDataSource = remoteDataSource;
 
   final FareRemoteDataSource _remoteDataSource;
 

@@ -10,21 +10,20 @@ import 'package:passenger_app/src/features/booking/presentation/search_destinati
 import 'package:design_system/design_system.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-class SearchDestinationPage extends StatefulWidget {
+class const SearchDestinationPage({
+  super.key,
+  this.preselectedRideType,
+  this.pickupAddress,
+}) extends StatefulWidget {
   final String? preselectedRideType;
   final String? pickupAddress;
-
-  const SearchDestinationPage({
-    super.key,
-    this.preselectedRideType,
-    this.pickupAddress,
-  });
 
   @override
   State<SearchDestinationPage> createState() => _SearchDestinationPageState();
 }
 
-class _SearchDestinationPageState extends State<SearchDestinationPage>
+class _SearchDestinationPageState()
+    extends State<SearchDestinationPage>
     with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _focusNode = FocusNode();

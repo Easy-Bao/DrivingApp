@@ -11,11 +11,10 @@ import 'package:passenger_app/src/features/saved_places/saved_places_routes.dart
 import 'package:passenger_app/src/features/settings/settings_routes.dart';
 import 'package:design_system/design_system.dart';
 
-class AccountPage extends StatelessWidget {
+class const AccountPage({super.key, this.onProfileTap, this.onLogout})
+    extends StatelessWidget {
   final VoidCallback? onProfileTap;
   final VoidCallback? onLogout;
-
-  const AccountPage({super.key, this.onProfileTap, this.onLogout});
 
   @override
   Widget build(BuildContext context) {
@@ -305,14 +304,12 @@ class AccountPage extends StatelessWidget {
   }
 }
 
-class _AccountMenuItem {
+class const _AccountMenuItem({
+  required this.title,
+  required this.subtitle,
+  required this.onTap,
+}) {
   final String title;
   final String subtitle;
   final VoidCallback onTap;
-
-  const _AccountMenuItem({
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
 }

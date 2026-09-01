@@ -1,7 +1,19 @@
 import 'package:equatable/equatable.dart';
 import 'package:foundation/foundation.dart';
 
-class InboxNotification extends Equatable {
+class const InboxNotification({
+  required this.id,
+  required this.title,
+  required this.message,
+  required this.timestamp,
+  required this.type,
+  required this.isRead,
+  this.roomId,
+  this.peerId,
+  this.peerName,
+  this.userId,
+  this.expiresAt,
+}) extends Equatable {
   final String id;
   final String title;
   final String message;
@@ -13,20 +25,6 @@ class InboxNotification extends Equatable {
   final String? peerName;
   final String? userId;
   final DateTime? expiresAt;
-
-  const InboxNotification({
-    required this.id,
-    required this.title,
-    required this.message,
-    required this.timestamp,
-    required this.type,
-    required this.isRead,
-    this.roomId,
-    this.peerId,
-    this.peerName,
-    this.userId,
-    this.expiresAt,
-  });
 
   bool get isExpired =>
       expiresAt != null && !expiresAt!.isAfter(DateTime.now());

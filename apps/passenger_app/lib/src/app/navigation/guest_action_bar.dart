@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:design_system/design_system.dart';
 
-class GuestActionBarWidget extends StatelessWidget {
+class const GuestActionBarWidget({
+  super.key,
+  required this.onSignUp,
+  required this.onSignIn,
+  required this.onHelp,
+}) extends StatelessWidget {
   final VoidCallback onSignUp;
   final VoidCallback onSignIn;
   final VoidCallback onHelp;
-
-  const GuestActionBarWidget({
-    super.key,
-    required this.onSignUp,
-    required this.onSignIn,
-    required this.onHelp,
-  });
 
   @override
   Widget build(BuildContext context) {

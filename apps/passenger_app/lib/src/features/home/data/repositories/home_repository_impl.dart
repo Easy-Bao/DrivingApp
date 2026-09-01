@@ -7,11 +7,12 @@ import 'package:passenger_app/src/features/home/domain/entities/recent_location.
 import 'package:passenger_app/src/features/home/domain/repositories/home_repository.dart';
 import 'package:foundation/foundation.dart';
 
-final class HomeRepositoryImpl implements HomeRepository {
+final class HomeRepositoryImpl({
+  required HomeRemoteDataSource homeRemoteDataSource,
+}) implements HomeRepository {
   final HomeRemoteDataSource _homeRemoteDataSource;
 
-  HomeRepositoryImpl({required HomeRemoteDataSource homeRemoteDataSource})
-    : _homeRemoteDataSource = homeRemoteDataSource;
+  this : _homeRemoteDataSource = homeRemoteDataSource;
 
   @override
   Future<Either<Failure, HomeData>> loadHomeData({

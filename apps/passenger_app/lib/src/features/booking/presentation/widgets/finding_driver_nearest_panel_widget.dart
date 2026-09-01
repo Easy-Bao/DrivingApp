@@ -4,7 +4,16 @@ import 'package:passenger_app/src/features/booking/presentation/bloc/booking/boo
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class FindingDriverNearestPanelWidget extends StatelessWidget {
+class const FindingDriverNearestPanelWidget({
+  super.key,
+  required this.state,
+  required this.fare,
+  required this.onViewFullProfilePressed,
+  required this.onBookDirectPressed,
+  required this.onSearchAllDriversPressed,
+  required this.onCancelRidePressed,
+  this.isCanceling = false,
+}) extends StatelessWidget {
   final NearestDriverFound state;
   final double fare;
   final VoidCallback onViewFullProfilePressed;
@@ -12,17 +21,6 @@ class FindingDriverNearestPanelWidget extends StatelessWidget {
   final VoidCallback onSearchAllDriversPressed;
   final VoidCallback onCancelRidePressed;
   final bool isCanceling;
-
-  const FindingDriverNearestPanelWidget({
-    super.key,
-    required this.state,
-    required this.fare,
-    required this.onViewFullProfilePressed,
-    required this.onBookDirectPressed,
-    required this.onSearchAllDriversPressed,
-    required this.onCancelRidePressed,
-    this.isCanceling = false,
-  });
 
   @override
   Widget build(BuildContext context) {

@@ -1,35 +1,27 @@
 import 'package:equatable/equatable.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
 
-sealed class InboxState extends Equatable {
-  const InboxState();
-
+sealed class const InboxState() extends Equatable {
   @override
   List<Object?> get props => [];
 }
 
-class InboxInitialState extends InboxState {
-  const InboxInitialState();
-}
+class const InboxInitialState() extends InboxState {}
 
-class InboxLoadingState extends InboxState {
-  const InboxLoadingState();
-}
+class const InboxLoadingState() extends InboxState {}
 
-class InboxLoadedState extends InboxState {
+class const InboxLoadedState(
+  this.notifications, {
+  this.hasMore = false,
+  this.nextOffset,
+  this.isLoadingMore = false,
+  this.loadMoreError,
+}) extends InboxState {
   final List<InboxNotification> notifications;
   final bool hasMore;
   final int? nextOffset;
   final bool isLoadingMore;
   final String? loadMoreError;
-
-  const InboxLoadedState(
-    this.notifications, {
-    this.hasMore = false,
-    this.nextOffset,
-    this.isLoadingMore = false,
-    this.loadMoreError,
-  });
 
   InboxLoadedState copyWith({
     List<InboxNotification>? notifications,
@@ -60,10 +52,8 @@ class InboxLoadedState extends InboxState {
   ];
 }
 
-class InboxErrorState extends InboxState {
+class const InboxErrorState(this.message) extends InboxState {
   final String message;
-
-  const InboxErrorState(this.message);
 
   @override
   List<Object?> get props => [message];

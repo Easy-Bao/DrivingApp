@@ -1,18 +1,16 @@
 import 'package:foundation/foundation.dart';
 
-class BookingOffer {
-  const BookingOffer({
-    required this.offerId,
-    required this.sessionId,
-    required this.driverId,
-    required this.driverName,
-    required this.vehicleType,
-    required this.plateNumber,
-    required this.status,
-    required this.proposedFareCentavos,
-    this.driverRating,
-  });
-
+class const BookingOffer({
+  required this.offerId,
+  required this.sessionId,
+  required this.driverId,
+  required this.driverName,
+  required this.vehicleType,
+  required this.plateNumber,
+  required this.status,
+  required this.proposedFareCentavos,
+  this.driverRating,
+}) {
   static BookingOffer? tryParse(Map<String, dynamic> json) {
     final offerId = SafeParse.toStringValue(json['id'] ?? json['offer_id'])
         .trim();

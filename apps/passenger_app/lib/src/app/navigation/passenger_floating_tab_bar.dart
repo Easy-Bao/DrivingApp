@@ -6,7 +6,13 @@ import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox/inbox_c
 import 'package:passenger_app/src/features/inbox/presentation/bloc/inbox/inbox_state.dart';
 import 'package:design_system/design_system.dart';
 
-class PassengerFloatingTabBar extends StatelessWidget {
+class const PassengerFloatingTabBar({
+  super.key,
+  required this.selectedIndex,
+  required this.onDestinationSelected,
+  required this.inboxCubit,
+  this.pagePosition,
+}) extends StatelessWidget {
   static const animationDuration = AppFloatingTabBar.animationDuration;
   static const height = AppFloatingTabBar.height;
 
@@ -21,14 +27,6 @@ class PassengerFloatingTabBar extends StatelessWidget {
   final ValueChanged<int> onDestinationSelected;
   final InboxCubit inboxCubit;
   final ValueListenable<double>? pagePosition;
-
-  const PassengerFloatingTabBar({
-    super.key,
-    required this.selectedIndex,
-    required this.onDestinationSelected,
-    required this.inboxCubit,
-    this.pagePosition,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -50,11 +48,10 @@ class PassengerFloatingTabBar extends StatelessWidget {
   }
 }
 
-class _InboxTabIcon extends StatelessWidget {
+class const _InboxTabIcon({required this.color, required this.inboxCubit})
+    extends StatelessWidget {
   final Color color;
   final InboxCubit inboxCubit;
-
-  const _InboxTabIcon({required this.color, required this.inboxCubit});
 
   @override
   Widget build(BuildContext context) {

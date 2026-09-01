@@ -3,15 +3,13 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:design_system/design_system.dart';
 
-class InboxNotificationCardWidget extends StatelessWidget {
+class const InboxNotificationCardWidget({
+  super.key,
+  required this.notification,
+  required this.onTap,
+}) extends StatelessWidget {
   final InboxNotification notification;
   final VoidCallback onTap;
-
-  const InboxNotificationCardWidget({
-    super.key,
-    required this.notification,
-    required this.onTap,
-  });
 
   String _formatTimestamp(DateTime timestamp) {
     final now = DateTime.now();

@@ -1,24 +1,19 @@
 import 'package:equatable/equatable.dart';
 import 'package:maps/maps.dart';
 
-sealed class LocationAccessViewState extends Equatable {
-  const LocationAccessViewState();
-
+sealed class const LocationAccessViewState() extends Equatable {
   @override
   List<Object?> get props => const [];
 }
 
-final class LocationAccessChecking extends LocationAccessViewState {
-  const LocationAccessChecking();
-}
+final class const LocationAccessChecking() extends LocationAccessViewState {}
 
-final class LocationAccessReady extends LocationAccessViewState {
-  const LocationAccessReady();
-}
+final class const LocationAccessReady() extends LocationAccessViewState {}
 
-final class LocationAccessUnavailable extends LocationAccessViewState {
-  const LocationAccessUnavailable({required this.accessState, this.message});
-
+final class const LocationAccessUnavailable({
+  required this.accessState,
+  this.message,
+}) extends LocationAccessViewState {
   final LocationAccessState accessState;
   final String? message;
 

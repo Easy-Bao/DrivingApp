@@ -1,7 +1,23 @@
 import 'package:equatable/equatable.dart';
 import 'package:foundation/foundation.dart';
 
-class RideHistory extends Equatable {
+class const RideHistory({
+  required this.id,
+  required this.pickup,
+  required this.destination,
+  required this.pickupLat,
+  required this.pickupLng,
+  required this.destLat,
+  required this.destLng,
+  required this.date,
+  required this.price,
+  required this.status,
+  required this.driverId,
+  required this.driverName,
+  required this.vehiclePlate,
+  required this.vehicleType,
+  this.driverRating,
+}) extends Equatable {
   final String id;
   final String pickup;
   final String destination;
@@ -17,24 +33,6 @@ class RideHistory extends Equatable {
   final String vehiclePlate;
   final String vehicleType;
   final double? driverRating;
-
-  const RideHistory({
-    required this.id,
-    required this.pickup,
-    required this.destination,
-    required this.pickupLat,
-    required this.pickupLng,
-    required this.destLat,
-    required this.destLng,
-    required this.date,
-    required this.price,
-    required this.status,
-    required this.driverId,
-    required this.driverName,
-    required this.vehiclePlate,
-    required this.vehicleType,
-    this.driverRating,
-  });
 
   String get displayDriverName {
     final value = driverName.trim();

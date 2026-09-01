@@ -6,13 +6,13 @@ import 'package:passenger_app/src/features/saved_places/domain/repositories/save
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final class SavedPlacesRepositoryImpl implements SavedPlacesRepository {
+final class SavedPlacesRepositoryImpl({required SharedPreferences preferences})
+    implements SavedPlacesRepository {
   static const String _storageKey = 'passenger_saved_places_v1';
 
   final SharedPreferences _preferences;
 
-  SavedPlacesRepositoryImpl({required SharedPreferences preferences})
-    : _preferences = preferences;
+  this : _preferences = preferences;
 
   @override
   Future<List<Map<String, dynamic>>> loadPlaces() async {

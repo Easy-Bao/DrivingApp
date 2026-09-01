@@ -5,10 +5,9 @@ import 'package:passenger_app/src/features/ride_history/ride_history_routes.dart
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class PassengerPaymentPage extends StatelessWidget {
+class const PassengerPaymentPage({super.key, required this.ride})
+    extends StatelessWidget {
   final RideHistory ride;
-
-  const PassengerPaymentPage({super.key, required this.ride});
 
   @override
   Widget build(BuildContext context) {

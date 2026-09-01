@@ -1,7 +1,21 @@
 import 'package:equatable/equatable.dart';
 import 'package:foundation/foundation.dart';
 
-class DriverModel extends Equatable {
+class const DriverModel({
+  required this.id,
+  required this.name,
+  required this.vehicleType,
+  required this.plateNumber,
+  required this.rating,
+  required this.lat,
+  required this.lng,
+  required this.distanceKm,
+  required this.etaMinutes,
+  required this.score,
+  this.onboardPassengerCount,
+  this.avatarUrl,
+  this.recentFeedback,
+}) extends Equatable {
   final String id;
   final String name;
   final String vehicleType;
@@ -15,22 +29,6 @@ class DriverModel extends Equatable {
   final int? onboardPassengerCount;
   final String? avatarUrl;
   final String? recentFeedback;
-
-  const DriverModel({
-    required this.id,
-    required this.name,
-    required this.vehicleType,
-    required this.plateNumber,
-    required this.rating,
-    required this.lat,
-    required this.lng,
-    required this.distanceKm,
-    required this.etaMinutes,
-    required this.score,
-    this.onboardPassengerCount,
-    this.avatarUrl,
-    this.recentFeedback,
-  });
 
   bool get hasPassengerOnboard => (onboardPassengerCount ?? 0) > 0;
 

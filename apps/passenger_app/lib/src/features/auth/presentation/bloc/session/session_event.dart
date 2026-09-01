@@ -1,33 +1,23 @@
 part of 'session_bloc.dart';
 
-sealed class SessionEvent extends Equatable {
-  const SessionEvent();
-
+sealed class const SessionEvent() extends Equatable {
   @override
   List<Object?> get props => [];
 }
 
-final class SessionStarted extends SessionEvent {
-  const SessionStarted();
-}
+final class const SessionStarted() extends SessionEvent {}
 
-final class SessionAuthenticatedRequested extends SessionEvent {
+final class const SessionAuthenticatedRequested({
+  required this.passengerId,
+  this.passengerName = '',
+}) extends SessionEvent {
   final String passengerId;
   final String passengerName;
-
-  const SessionAuthenticatedRequested({
-    required this.passengerId,
-    this.passengerName = '',
-  });
 
   @override
   List<Object?> get props => [passengerId, passengerName];
 }
 
-final class SessionGuestRequested extends SessionEvent {
-  const SessionGuestRequested();
-}
+final class const SessionGuestRequested() extends SessionEvent {}
 
-final class SessionLogoutRequested extends SessionEvent {
-  const SessionLogoutRequested();
-}
+final class const SessionLogoutRequested() extends SessionEvent {}

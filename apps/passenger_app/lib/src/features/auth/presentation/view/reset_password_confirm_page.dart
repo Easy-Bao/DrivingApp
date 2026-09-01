@@ -7,15 +7,13 @@ import 'package:passenger_app/src/features/auth/presentation/bloc/reset_password
 import 'package:passenger_app/src/features/auth/presentation/validation/auth_form_validator.dart';
 import 'package:design_system/design_system.dart';
 
-class ResetPasswordConfirmPage extends StatelessWidget {
+class const ResetPasswordConfirmPage({
+  super.key,
+  required this.email,
+  required this.code,
+}) extends StatelessWidget {
   final String email;
   final String code;
-
-  const ResetPasswordConfirmPage({
-    super.key,
-    required this.email,
-    required this.code,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -26,14 +24,12 @@ class ResetPasswordConfirmPage extends StatelessWidget {
   }
 }
 
-class _ResetPasswordConfirmPageContent extends StatefulWidget {
+class const _ResetPasswordConfirmPageContent({
+  required this.email,
+  required this.code,
+}) extends StatefulWidget {
   final String email;
   final String code;
-
-  const _ResetPasswordConfirmPageContent({
-    required this.email,
-    required this.code,
-  });
 
   @override
   State<_ResetPasswordConfirmPageContent> createState() =>

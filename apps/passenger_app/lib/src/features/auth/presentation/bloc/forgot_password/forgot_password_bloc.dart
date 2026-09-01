@@ -8,12 +8,11 @@ import 'package:passenger_app/src/features/auth/presentation/validation/auth_for
 export 'forgot_password_event.dart';
 export 'forgot_password_state.dart';
 
-class ForgotPasswordBloc
+class ForgotPasswordBloc(this._authRepository)
     extends Bloc<ForgotPasswordEvent, ForgotPasswordState> {
   final PassengerAuthRepository _authRepository;
 
-  ForgotPasswordBloc(this._authRepository)
-    : super(const ForgotPasswordInitial()) {
+  this : super(const ForgotPasswordInitial()) {
     on<ForgotPasswordSubmitted>(_onForgotPasswordSubmitted);
   }
 

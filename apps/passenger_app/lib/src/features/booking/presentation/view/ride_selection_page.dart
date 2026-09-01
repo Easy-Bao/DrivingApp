@@ -20,7 +20,20 @@ import 'package:passenger_app/src/features/booking/presentation/widgets/ride_tip
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class RideSelectionPage extends StatefulWidget {
+class const RideSelectionPage({
+  super.key,
+  required this.destination,
+  this.distance,
+  this.duration,
+  this.distanceKm,
+  this.rideType = 'solo',
+  this.pickupAddress,
+  this.pickupLatitude,
+  this.pickupLongitude,
+  this.initialTipAmount = 0,
+  this.initialNotes = '',
+  required this.fareRepository,
+}) extends StatefulWidget {
   final Place destination;
   final String? distance;
   final String? duration;
@@ -33,26 +46,11 @@ class RideSelectionPage extends StatefulWidget {
   final String initialNotes;
   final FareRepository fareRepository;
 
-  const RideSelectionPage({
-    super.key,
-    required this.destination,
-    this.distance,
-    this.duration,
-    this.distanceKm,
-    this.rideType = 'solo',
-    this.pickupAddress,
-    this.pickupLatitude,
-    this.pickupLongitude,
-    this.initialTipAmount = 0,
-    this.initialNotes = '',
-    required this.fareRepository,
-  });
-
   @override
   State<RideSelectionPage> createState() => _RideSelectionPageState();
 }
 
-class _RideSelectionPageState extends State<RideSelectionPage> {
+class _RideSelectionPageState() extends State<RideSelectionPage> {
   late int _selectedTipAmount;
   final TextEditingController _customFareController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();

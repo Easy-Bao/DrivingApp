@@ -14,9 +14,7 @@ import 'package:passenger_app/src/features/inbox/presentation/widgets/inbox_noti
 import 'package:design_system/design_system.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-class InboxPage extends StatefulWidget {
-  const InboxPage({super.key});
-
+class const InboxPage({super.key}) extends StatefulWidget {
   @override
   State<InboxPage> createState() => _InboxPageState();
 }

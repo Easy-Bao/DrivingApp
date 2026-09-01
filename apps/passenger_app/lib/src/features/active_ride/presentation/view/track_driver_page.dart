@@ -25,37 +25,33 @@ import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class _MapUpdateRequest {
+class const _MapUpdateRequest({
+  required this.driverLat,
+  required this.driverLng,
+  required this.routePoints,
+  required this.status,
+  required this.driverName,
+}) {
   final double driverLat;
   final double driverLng;
   final List<List<double>>? routePoints;
   final RideStatus status;
   final String driverName;
-
-  const _MapUpdateRequest({
-    required this.driverLat,
-    required this.driverLng,
-    required this.routePoints,
-    required this.status,
-    required this.driverName,
-  });
 }
 
-class TrackDriverPage extends StatefulWidget {
+class const TrackDriverPage({
+  super.key,
+  required this.ride,
+  required this.trackRepository,
+  required this.chatRepositoryFactory,
+  required this.sessionService,
+  required this.lifecycleCoordinator,
+}) extends StatefulWidget {
   final RideHistory ride;
   final TrackRepository trackRepository;
   final ChatRepositoryFactory chatRepositoryFactory;
   final PassengerSessionStore sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;
-
-  const TrackDriverPage({
-    super.key,
-    required this.ride,
-    required this.trackRepository,
-    required this.chatRepositoryFactory,
-    required this.sessionService,
-    required this.lifecycleCoordinator,
-  });
 
   @override
   State<TrackDriverPage> createState() => _TrackDriverPageState();

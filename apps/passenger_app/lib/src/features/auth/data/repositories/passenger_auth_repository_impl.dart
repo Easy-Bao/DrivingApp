@@ -8,18 +8,19 @@ import 'package:passenger_app/src/features/auth/domain/failures/auth_failures.da
 import 'package:passenger_app/src/features/auth/domain/repositories/passenger_auth_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final class PassengerAuthRepositoryImpl implements PassengerAuthRepository {
+final class PassengerAuthRepositoryImpl({
+  required PassengerAuthRemoteDataSource remoteDataSource,
+  required PassengerSessionStore secureSessionService,
+  required SharedPreferences preferences,
+}) implements PassengerAuthRepository {
   final PassengerAuthRemoteDataSource _remoteDataSource;
   final PassengerSessionStore _secureSessionService;
   final SharedPreferences _preferences;
 
-  PassengerAuthRepositoryImpl({
-    required PassengerAuthRemoteDataSource remoteDataSource,
-    required PassengerSessionStore secureSessionService,
-    required SharedPreferences preferences,
-  }) : _remoteDataSource = remoteDataSource,
-       _secureSessionService = secureSessionService,
-       _preferences = preferences;
+  this
+    : _remoteDataSource = remoteDataSource,
+      _secureSessionService = secureSessionService,
+      _preferences = preferences;
 
   @override
   Future<Either<Failure, PassengerAuthCredentials>> authenticate({

@@ -1,18 +1,16 @@
 import 'package:equatable/equatable.dart';
 import 'package:passenger_app/src/features/home/domain/entities/recent_location.dart';
 
-class HomeState extends Equatable {
+class const HomeState({
+  this.isLoading = false,
+  this.currentAddress = '',
+  this.locationErrorMessage = '',
+  this.recentLocations = const [],
+}) extends Equatable {
   final bool isLoading;
   final String currentAddress;
   final String locationErrorMessage;
   final List<RecentLocation> recentLocations;
-
-  const HomeState({
-    this.isLoading = false,
-    this.currentAddress = '',
-    this.locationErrorMessage = '',
-    this.recentLocations = const [],
-  });
 
   HomeState copyWith({
     bool? isLoading,

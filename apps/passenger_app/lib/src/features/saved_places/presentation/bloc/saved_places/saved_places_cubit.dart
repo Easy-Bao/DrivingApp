@@ -6,12 +6,11 @@ import 'package:passenger_app/src/features/saved_places/domain/repositories/save
 import 'package:passenger_app/src/features/saved_places/domain/saved_place_defaults.dart';
 import 'package:foundation/foundation.dart';
 
-class SavedPlacesCubit extends Cubit<SavedPlacesState> {
+class SavedPlacesCubit({required SavedPlacesRepository repository})
+    extends Cubit<SavedPlacesState> {
   final SavedPlacesRepository _repository;
 
-  SavedPlacesCubit({required SavedPlacesRepository repository})
-    : _repository = repository,
-      super(const SavedPlacesState());
+  this : _repository = repository, super(const SavedPlacesState());
 
   Future<void> loadPlaces() async {
     emit(state.copyWith(isLoading: true, clearErrorMessage: true));

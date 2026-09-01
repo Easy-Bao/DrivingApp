@@ -14,17 +14,15 @@ import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class RideDetailsPage extends StatefulWidget {
+class const RideDetailsPage({
+  super.key,
+  required this.trackRepository,
+  required this.sessionService,
+  this.ride,
+}) extends StatefulWidget {
   final RideHistory? ride;
   final TrackRepository trackRepository;
   final PassengerSessionStore sessionService;
-
-  const RideDetailsPage({
-    super.key,
-    required this.trackRepository,
-    required this.sessionService,
-    this.ride,
-  });
 
   @override
   State<RideDetailsPage> createState() => _RideDetailsPageState();

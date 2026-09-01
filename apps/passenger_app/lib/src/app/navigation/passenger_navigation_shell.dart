@@ -15,19 +15,17 @@ import 'package:design_system/design_system.dart';
 
 typedef PassengerTabNavigationCoordinator = TabNavigationCoordinator;
 
-class PassengerTabBranchContainer extends StatelessWidget {
+class const PassengerTabBranchContainer({
+  super.key,
+  required this.navigationShell,
+  required this.children,
+  required this.onNavigationSettled,
+  required this.onPagePositionChanged,
+}) extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
   final List<Widget> children;
   final ValueChanged<int> onNavigationSettled;
   final ValueChanged<double> onPagePositionChanged;
-
-  const PassengerTabBranchContainer({
-    super.key,
-    required this.navigationShell,
-    required this.children,
-    required this.onNavigationSettled,
-    required this.onPagePositionChanged,
-  });
 
   @override
   Widget build(BuildContext context) => AppTabBranchContainer(
@@ -42,21 +40,19 @@ class PassengerTabBranchContainer extends StatelessWidget {
   );
 }
 
-class PassengerShellLayout extends StatefulWidget {
+class const PassengerShellLayout({
+  super.key,
+  required this.navigationShell,
+  required this.inboxCubit,
+  required this.realtimeClient,
+  required this.lifecycleCoordinator,
+  required this.navigationCoordinator,
+}) extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
   final InboxCubit inboxCubit;
   final RealtimeWebSocketClient realtimeClient;
   final AppLifecycleCoordinator lifecycleCoordinator;
   final PassengerTabNavigationCoordinator navigationCoordinator;
-
-  const PassengerShellLayout({
-    super.key,
-    required this.navigationShell,
-    required this.inboxCubit,
-    required this.realtimeClient,
-    required this.lifecycleCoordinator,
-    required this.navigationCoordinator,
-  });
 
   @override
   State<PassengerShellLayout> createState() => _PassengerShellLayoutState();

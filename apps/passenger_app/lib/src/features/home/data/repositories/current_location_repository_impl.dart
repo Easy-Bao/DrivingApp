@@ -5,10 +5,10 @@ import 'package:passenger_app/src/features/home/domain/failures/current_location
 import 'package:passenger_app/src/features/home/domain/repositories/current_location_repository.dart';
 import 'package:foundation/foundation.dart';
 
-final class CurrentLocationRepositoryImpl implements CurrentLocationRepository {
-  const CurrentLocationRepositoryImpl({
-    required CurrentLocationDataSource dataSource,
-  }) : _dataSource = dataSource;
+final class const CurrentLocationRepositoryImpl({
+  required CurrentLocationDataSource dataSource,
+}) implements CurrentLocationRepository {
+  this : _dataSource = dataSource;
 
   final CurrentLocationDataSource _dataSource;
 

@@ -5,17 +5,15 @@ import 'package:flutter/widget_previews.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:design_system/design_system.dart';
 
-class RideTripSummaryWidget extends StatelessWidget {
+class const RideTripSummaryWidget({
+  super.key,
+  required this.pickupLabel,
+  required this.destinationName,
+  required this.destinationAddress,
+}) extends StatelessWidget {
   final String pickupLabel;
   final String destinationName;
   final String destinationAddress;
-
-  const RideTripSummaryWidget({
-    super.key,
-    required this.pickupLabel,
-    required this.destinationName,
-    required this.destinationAddress,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -51,30 +49,31 @@ class RideTripSummaryWidget extends StatelessWidget {
   }
 }
 
-class _TripLocationTimeline extends MultiChildRenderObjectWidget {
+class _TripLocationTimeline({
+  required this.pickupLabel,
+  required this.destinationName,
+  required this.destinationAddress,
+}) extends MultiChildRenderObjectWidget {
   static const _routeGap = 38.0;
 
   final String pickupLabel;
   final String destinationName;
   final String destinationAddress;
 
-  _TripLocationTimeline({
-    required this.pickupLabel,
-    required this.destinationName,
-    required this.destinationAddress,
-  }) : super(
-         children: [
-           const _LocationIcon(icon: LucideIcons.locate_fixed),
-           _LocationDetails(label: 'Pickup', value: pickupLabel),
-           const _DashedRouteConnector(),
-           const _LocationIcon(icon: LucideIcons.map_pin),
-           _LocationDetails(
-             label: 'Destination',
-             value: destinationName,
-             subtitle: destinationAddress,
-           ),
-         ],
-       );
+  this
+    : super(
+        children: [
+          const _LocationIcon(icon: LucideIcons.locate_fixed),
+          _LocationDetails(label: 'Pickup', value: pickupLabel),
+          const _DashedRouteConnector(),
+          const _LocationIcon(icon: LucideIcons.map_pin),
+          _LocationDetails(
+            label: 'Destination',
+            value: destinationName,
+            subtitle: destinationAddress,
+          ),
+        ],
+      );
 
   @override
   RenderObject createRenderObject(BuildContext context) {
@@ -88,9 +87,10 @@ class _TripLocationTimeline extends MultiChildRenderObjectWidget {
   ) {}
 }
 
-class _TripLocationParentData extends ContainerBoxParentData<RenderBox> {}
+class _TripLocationParentData() extends ContainerBoxParentData<RenderBox> {}
 
-class _TripLocationTimelineRenderObject extends RenderBox
+class _TripLocationTimelineRenderObject({required this.routeGap})
+    extends RenderBox
     with
         ContainerRenderObjectMixin<RenderBox, _TripLocationParentData>,
         RenderBoxContainerDefaultsMixin<RenderBox, _TripLocationParentData> {
@@ -99,8 +99,6 @@ class _TripLocationTimelineRenderObject extends RenderBox
   static const _connectorWidth = 2.0;
 
   final double routeGap;
-
-  _TripLocationTimelineRenderObject({required this.routeGap});
 
   @override
   void setupParentData(RenderObject child) {
@@ -180,10 +178,8 @@ class _TripLocationTimelineRenderObject extends RenderBox
   }
 }
 
-class _LocationIcon extends StatelessWidget {
+class const _LocationIcon({required this.icon}) extends StatelessWidget {
   final IconData icon;
-
-  const _LocationIcon({required this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -195,16 +191,14 @@ class _LocationIcon extends StatelessWidget {
   }
 }
 
-class _LocationDetails extends StatelessWidget {
+class const _LocationDetails({
+  required this.label,
+  required this.value,
+  this.subtitle,
+}) extends StatelessWidget {
   final String label;
   final String value;
   final String? subtitle;
-
-  const _LocationDetails({
-    required this.label,
-    required this.value,
-    this.subtitle,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -248,9 +242,7 @@ class _LocationDetails extends StatelessWidget {
   }
 }
 
-class _DashedRouteConnector extends StatelessWidget {
-  const _DashedRouteConnector();
-
+class const _DashedRouteConnector() extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
@@ -262,12 +254,10 @@ class _DashedRouteConnector extends StatelessWidget {
   }
 }
 
-class _DashedRoutePainter extends CustomPainter {
+class const _DashedRoutePainter(this.color) extends CustomPainter {
   static const _dashHeight = 4.0;
   static const _gapHeight = 5.0;
   final Color color;
-
-  const _DashedRoutePainter(this.color);
 
   @override
   void paint(Canvas canvas, Size size) {

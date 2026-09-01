@@ -1,4 +1,4 @@
-abstract final class BookingRoutes {
+abstract final class BookingRoutes() {
   static const String searchDestination = 'SearchDestination';
   static const String searchDestinationPath = 'home/search';
   static const String destinationMap = 'DestinationMap';

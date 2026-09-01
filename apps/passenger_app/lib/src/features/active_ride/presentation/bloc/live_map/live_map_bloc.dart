@@ -11,7 +11,8 @@ import 'package:rxdart/rxdart.dart';
 part 'live_map_event.dart';
 part 'live_map_state.dart';
 
-class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
+class LiveMapBloc({required TrackRepository trackRepository})
+    extends Bloc<LiveMapEvent, LiveMapState> {
   final TrackRepository _trackRepository;
 
   AppMapController? _mapController;
@@ -29,15 +30,12 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
   late final StreamSubscription<DispatchTelemetryLocationEvent>
   _locationSubscription;
 
-  LiveMapBloc({required TrackRepository trackRepository})
-    : _trackRepository = trackRepository,
-      super(LiveMapInitial()) {
+  this : _trackRepository = trackRepository, super(LiveMapInitial()) {
     on<InitializeMapEvent>(_onInitializeMap);
     on<DrawDriverToRiderRouteEvent>(_onDrawDriverToRiderRoute);
     on<AddMapMarkerEvent>(_onAddMapMarker);
     on<ClearMapAnnotationsEvent>(_onClearMapAnnotations);
     on<FitMapToCoordinatesEvent>(_onFitMapToCoordinates);
-
     _locationSubscription = _locationSubject
         .throttleTime(const Duration(seconds: 5))
         .listen((event) async {
@@ -57,7 +55,6 @@ class LiveMapBloc extends Bloc<LiveMapEvent, LiveMapState> {
             dev.log('Passenger telemetry update failed: $error');
           }
         });
-
     on<DispatchTelemetryLocationEvent>((event, emit) {
       _locationSubject.add(event);
     });

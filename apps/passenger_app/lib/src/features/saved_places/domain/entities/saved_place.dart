@@ -1,19 +1,17 @@
-class SavedPlace {
+class const SavedPlace({
+  required this.label,
+  required this.iconName,
+  this.savedAddress,
+  this.latitude,
+  this.longitude,
+  this.isDefault = false,
+}) {
   final String label;
   final String iconName;
   final String? savedAddress;
   final double? latitude;
   final double? longitude;
   final bool isDefault;
-
-  const SavedPlace({
-    required this.label,
-    required this.iconName,
-    this.savedAddress,
-    this.latitude,
-    this.longitude,
-    this.isDefault = false,
-  });
 
   bool get hasLocation => latitude != null && longitude != null;
 

@@ -2,19 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:design_system/design_system.dart';
 
-class PendingBookingBannerWidget extends StatelessWidget {
+class const PendingBookingBannerWidget({
+  super.key,
+  required this.isAuthenticated,
+  required this.destinationName,
+  required this.onContinue,
+  required this.onDismiss,
+}) extends StatelessWidget {
   final bool isAuthenticated;
   final String destinationName;
   final VoidCallback onContinue;
   final VoidCallback onDismiss;
-
-  const PendingBookingBannerWidget({
-    super.key,
-    required this.isAuthenticated,
-    required this.destinationName,
-    required this.onContinue,
-    required this.onDismiss,
-  });
 
   @override
   Widget build(BuildContext context) {

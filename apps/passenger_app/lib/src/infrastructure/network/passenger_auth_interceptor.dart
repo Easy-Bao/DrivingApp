@@ -3,7 +3,13 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:passenger_app/src/infrastructure/session/passenger_session_store.dart';
 
-class PassengerAuthInterceptor extends Interceptor {
+class PassengerAuthInterceptor(
+  this._secureSessionService, {
+  Dio? dio,
+  Dio? refreshClient,
+  Uri? allowedBaseUri,
+  FutureOr<void> Function()? onSessionExpired,
+}) extends Interceptor {
   static const String _authRetryAttemptKey = 'authRetryAttempt';
   static const String _skipAuthRefreshKey = 'skipAuthRefresh';
   static const String _skipAuthTokenKey = 'skipAuthToken';
@@ -18,16 +24,11 @@ class PassengerAuthInterceptor extends Interceptor {
   Future<String?>? _refreshInFlight;
   bool _sessionExpiryNotified = false;
 
-  PassengerAuthInterceptor(
-    this._secureSessionService, {
-    Dio? dio,
-    Dio? refreshClient,
-    Uri? allowedBaseUri,
-    FutureOr<void> Function()? onSessionExpired,
-  }) : _dio = dio,
-       _refreshClient = refreshClient,
-       _allowedBaseUri = allowedBaseUri,
-       _onSessionExpired = onSessionExpired;
+  this
+    : _dio = dio,
+      _refreshClient = refreshClient,
+      _allowedBaseUri = allowedBaseUri,
+      _onSessionExpired = onSessionExpired;
 
   @override
   Future<void> onRequest(

@@ -4,7 +4,17 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class FindingDriverSearchingPanelWidget extends StatelessWidget {
+class const FindingDriverSearchingPanelWidget({
+  super.key,
+  required this.message,
+  required this.rideType,
+  required this.fare,
+  required this.destination,
+  this.pickupAddress,
+  required this.dotAnimation,
+  required this.onCancelPressed,
+  this.isCanceling = false,
+}) extends StatelessWidget {
   final String message;
   final String rideType;
   final double fare;
@@ -13,18 +23,6 @@ class FindingDriverSearchingPanelWidget extends StatelessWidget {
   final Animation<double> dotAnimation;
   final VoidCallback onCancelPressed;
   final bool isCanceling;
-
-  const FindingDriverSearchingPanelWidget({
-    super.key,
-    required this.message,
-    required this.rideType,
-    required this.fare,
-    required this.destination,
-    this.pickupAddress,
-    required this.dotAnimation,
-    required this.onCancelPressed,
-    this.isCanceling = false,
-  });
 
   @override
   Widget build(BuildContext context) {

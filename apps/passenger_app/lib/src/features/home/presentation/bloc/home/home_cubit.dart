@@ -12,7 +12,10 @@ import 'package:foundation/foundation.dart';
 const _pickupLocationUnavailableMessage =
     'Unable to find your pickup location. Tap to retry.';
 
-class HomeCubit extends Cubit<HomeState> {
+class HomeCubit({
+  required HomeRepository repository,
+  required CurrentLocationRepository currentLocationRepository,
+}) extends Cubit<HomeState> {
   final HomeRepository _repository;
   final CurrentLocationRepository _currentLocationRepository;
 
@@ -26,12 +29,10 @@ class HomeCubit extends Cubit<HomeState> {
   int _dataRevision = 0;
   bool _isTrackingLocation = false;
 
-  HomeCubit({
-    required HomeRepository repository,
-    required CurrentLocationRepository currentLocationRepository,
-  }) : _repository = repository,
-       _currentLocationRepository = currentLocationRepository,
-       super(const HomeState());
+  this
+    : _repository = repository,
+      _currentLocationRepository = currentLocationRepository,
+      super(const HomeState());
 
   Future<void> loadHomeData({required double lat, required double lng}) async {
     if (_lastLat != null &&

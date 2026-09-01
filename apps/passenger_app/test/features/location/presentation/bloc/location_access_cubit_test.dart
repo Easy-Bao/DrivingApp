@@ -71,9 +71,8 @@ void main() {
   });
 }
 
-class _FakeLocationAccessRepository implements LocationAccessRepository {
-  _FakeLocationAccessRepository(this.currentAccessState);
-
+class _FakeLocationAccessRepository(this.currentAccessState)
+    implements LocationAccessRepository {
   final StreamController<LocationAccessState> _changes =
       StreamController<LocationAccessState>.broadcast();
 

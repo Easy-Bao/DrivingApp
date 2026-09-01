@@ -1,11 +1,10 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:passenger_app/src/infrastructure/session/passenger_storage_keys.dart';
 
-class PassengerSessionStore {
+class PassengerSessionStore({FlutterSecureStorage? storage}) {
   final FlutterSecureStorage _storage;
 
-  PassengerSessionStore({FlutterSecureStorage? storage})
-    : _storage = storage ?? const FlutterSecureStorage();
+  this : _storage = storage ?? const FlutterSecureStorage();
 
   Future<void> saveToken(String token) async {
     await _storage.write(key: PassengerStorageKeys.jwtToken, value: token);

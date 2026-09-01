@@ -2,11 +2,10 @@ import 'package:passenger_app/src/features/active_ride/active_ride.dart';
 import 'package:passenger_app/src/features/ride_history/ride_history.dart';
 import 'package:foundation/foundation.dart';
 
-class RideHistoryPresenter {
+class RideHistoryPresenter(DateTime referenceTime) {
   final DateTime referenceTime;
 
-  RideHistoryPresenter(DateTime referenceTime)
-    : referenceTime = referenceTime.toLocal();
+  this : referenceTime = referenceTime.toLocal();
 
   List<RideHistory> sortPastRides(List<RideHistory> rides) {
     final sorted = List<RideHistory>.of(rides);
@@ -155,11 +154,9 @@ class RideHistoryPresenter {
   }
 }
 
-class _RideMoment {
+class const _RideMoment({this.dateTime, this.hasTime = false}) {
   final DateTime? dateTime;
   final bool hasTime;
-
-  const _RideMoment({this.dateTime, this.hasTime = false});
 }
 
 const _monthNames = <String>[

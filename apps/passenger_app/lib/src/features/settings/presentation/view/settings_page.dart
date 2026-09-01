@@ -9,15 +9,13 @@ import 'package:passenger_app/src/features/profile/profile_routes.dart';
 import 'package:passenger_app/src/features/settings/settings_routes.dart';
 import 'package:design_system/design_system.dart';
 
-class SettingsPage extends StatelessWidget {
-  const SettingsPage({
-    super.key,
-    this.onLocationTap,
-    this.onHelpCenterTap,
-    this.onTermsTap,
-    this.onAboutTap,
-  });
-
+class const SettingsPage({
+  super.key,
+  this.onLocationTap,
+  this.onHelpCenterTap,
+  this.onTermsTap,
+  this.onAboutTap,
+}) extends StatelessWidget {
   final VoidCallback? onLocationTap;
   final VoidCallback? onHelpCenterTap;
   final VoidCallback? onTermsTap;

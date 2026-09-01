@@ -7,12 +7,11 @@ import 'package:foundation/foundation.dart';
 part 'session_event.dart';
 part 'session_state.dart';
 
-class SessionBloc extends Bloc<SessionEvent, SessionState> {
+class SessionBloc({required SessionRepository sessionRepository})
+    extends Bloc<SessionEvent, SessionState> {
   final SessionRepository _sessionRepository;
 
-  SessionBloc({required SessionRepository sessionRepository})
-    : _sessionRepository = sessionRepository,
-      super(const SessionLoading()) {
+  this : _sessionRepository = sessionRepository, super(const SessionLoading()) {
     on<SessionStarted>(_onSessionStarted);
     on<SessionAuthenticatedRequested>(_onSessionAuthenticatedRequested);
     on<SessionGuestRequested>(_onSessionGuestRequested);

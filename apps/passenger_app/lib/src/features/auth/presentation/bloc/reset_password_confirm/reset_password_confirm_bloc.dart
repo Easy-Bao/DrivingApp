@@ -7,12 +7,11 @@ import 'package:passenger_app/src/features/auth/presentation/validation/auth_for
 part 'reset_password_confirm_event.dart';
 part 'reset_password_confirm_state.dart';
 
-class ResetPasswordConfirmBloc
+class ResetPasswordConfirmBloc(this._authRepository)
     extends Bloc<ResetPasswordConfirmEvent, ResetPasswordConfirmState> {
   final PassengerAuthRepository _authRepository;
 
-  ResetPasswordConfirmBloc(this._authRepository)
-    : super(const ResetPasswordConfirmInitial()) {
+  this : super(const ResetPasswordConfirmInitial()) {
     on<ResetPasswordConfirmSubmitted>(_onResetPasswordConfirmSubmitted);
   }
 

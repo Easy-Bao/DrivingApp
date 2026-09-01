@@ -16,9 +16,7 @@ import 'package:passenger_app/src/features/active_ride/domain/repositories/track
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class PassengerApp extends StatefulWidget {
-  const PassengerApp({super.key});
-
+class const PassengerApp({super.key}) extends StatefulWidget {
   @override
   State<PassengerApp> createState() => _PassengerAppState();
 }

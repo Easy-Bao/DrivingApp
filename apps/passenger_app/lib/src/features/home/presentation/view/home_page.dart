@@ -31,9 +31,7 @@ import 'package:passenger_app/src/features/booking/booking_routes.dart';
 import 'package:design_system/design_system.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
-
+class const HomePage({super.key}) extends StatefulWidget {
   @override
   State<HomePage> createState() => _HomePageState();
 }

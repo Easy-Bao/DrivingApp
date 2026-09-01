@@ -2,10 +2,8 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger_app/src/features/booking/domain/entities/booking_draft.dart';
 
-class BookingDraftState extends Equatable {
+class const BookingDraftState({this.draft}) extends Equatable {
   final BookingDraft? draft;
-
-  const BookingDraftState({this.draft});
 
   bool get hasDraft => draft != null;
 
@@ -13,8 +11,8 @@ class BookingDraftState extends Equatable {
   List<Object?> get props => [draft];
 }
 
-class BookingDraftCubit extends Cubit<BookingDraftState> {
-  BookingDraftCubit() : super(const BookingDraftState());
+class BookingDraftCubit() extends Cubit<BookingDraftState> {
+  this : super(const BookingDraftState());
 
   void save(BookingDraft draft) {
     emit(BookingDraftState(draft: draft));

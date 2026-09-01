@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:design_system/design_system.dart';
 
-class InboxEmptyStateWidget extends StatelessWidget {
-  const InboxEmptyStateWidget({super.key});
-
+class const InboxEmptyStateWidget({super.key}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(

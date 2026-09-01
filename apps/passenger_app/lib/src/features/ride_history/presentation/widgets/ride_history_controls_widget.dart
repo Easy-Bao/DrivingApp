@@ -5,15 +5,13 @@ import 'package:design_system/design_system.dart';
 
 enum RideHistoryFilter { all, completed, cancelled }
 
-class RideHistorySummaryWidget extends StatelessWidget {
+class const RideHistorySummaryWidget({
+  required this.weeklyFare,
+  required this.weeklyRideCount,
+  super.key,
+}) extends StatelessWidget {
   final double weeklyFare;
   final int weeklyRideCount;
-
-  const RideHistorySummaryWidget({
-    required this.weeklyFare,
-    required this.weeklyRideCount,
-    super.key,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -43,15 +41,13 @@ class RideHistorySummaryWidget extends StatelessWidget {
   }
 }
 
-class RideHistoryFiltersWidget extends StatelessWidget {
+class const RideHistoryFiltersWidget({
+  required this.selectedFilter,
+  required this.onSelected,
+  super.key,
+}) extends StatelessWidget {
   final RideHistoryFilter selectedFilter;
   final ValueChanged<RideHistoryFilter> onSelected;
-
-  const RideHistoryFiltersWidget({
-    required this.selectedFilter,
-    required this.onSelected,
-    super.key,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -70,10 +66,9 @@ class RideHistoryFiltersWidget extends StatelessWidget {
   }
 }
 
-class RideHistorySectionLabel extends StatelessWidget {
+class const RideHistorySectionLabel({required this.label, super.key})
+    extends StatelessWidget {
   final String label;
-
-  const RideHistorySectionLabel({required this.label, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -87,10 +82,9 @@ class RideHistorySectionLabel extends StatelessWidget {
   }
 }
 
-class RideHistoryFilteredEmptyWidget extends StatelessWidget {
+class const RideHistoryFilteredEmptyWidget({required this.filter, super.key})
+    extends StatelessWidget {
   final RideHistoryFilter filter;
-
-  const RideHistoryFilteredEmptyWidget({required this.filter, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -126,18 +120,16 @@ class RideHistoryFilteredEmptyWidget extends StatelessWidget {
   }
 }
 
-class _SummaryCard extends StatelessWidget {
+class const _SummaryCard({
+  required this.label,
+  required this.value,
+  required this.backgroundColor,
+  required this.valueKey,
+}) extends StatelessWidget {
   final String label;
   final String value;
   final Color backgroundColor;
   final Key valueKey;
-
-  const _SummaryCard({
-    required this.label,
-    required this.value,
-    required this.backgroundColor,
-    required this.valueKey,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -180,16 +172,14 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-class _RideHistoryFilterChip extends StatelessWidget {
+class const _RideHistoryFilterChip({
+  required this.filter,
+  required this.isSelected,
+  required this.onTap,
+}) extends StatelessWidget {
   final RideHistoryFilter filter;
   final bool isSelected;
   final VoidCallback onTap;
-
-  const _RideHistoryFilterChip({
-    required this.filter,
-    required this.isSelected,
-    required this.onTap,
-  });
 
   String get _label => switch (filter) {
     RideHistoryFilter.all => 'All',

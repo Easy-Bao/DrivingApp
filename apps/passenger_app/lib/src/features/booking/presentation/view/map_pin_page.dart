@@ -7,14 +7,13 @@ import 'package:maps/maps.dart';
 import 'package:passenger_app/src/features/booking/presentation/widgets/map_selection_marker_widget.dart';
 import 'package:design_system/design_system.dart';
 
-class MapPinPage extends StatefulWidget {
-  const MapPinPage({super.key});
-
+class const MapPinPage({super.key}) extends StatefulWidget {
   @override
   State<MapPinPage> createState() => _MapPinPageState();
 }
 
-class _MapPinPageState extends State<MapPinPage>
+class _MapPinPageState()
+    extends State<MapPinPage>
     with SingleTickerProviderStateMixin {
   AppMapController? _mapController;
   String _address = 'Move the map to select a location';

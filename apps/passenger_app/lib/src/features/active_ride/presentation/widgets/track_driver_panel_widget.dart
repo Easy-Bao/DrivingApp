@@ -3,7 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:design_system/design_system.dart';
 
-class TrackDriverPanelWidget extends StatelessWidget {
+class const TrackDriverPanelWidget({
+  super.key,
+  required this.ride,
+  required this.statusTitle,
+  required this.statusSubtitle,
+  required this.etaText,
+  this.driverName,
+  this.vehicleSummary,
+  required this.unreadChatMessagesCount,
+  this.showContactActions = true,
+  this.isCancellingTrip = false,
+  required this.onCallDriverPressed,
+  required this.onChatDriverPressed,
+  required this.onCancelTripPressed,
+}) extends StatelessWidget {
   final RideHistory ride;
   final String statusTitle;
   final String statusSubtitle;
@@ -16,22 +30,6 @@ class TrackDriverPanelWidget extends StatelessWidget {
   final VoidCallback onCallDriverPressed;
   final VoidCallback onChatDriverPressed;
   final VoidCallback onCancelTripPressed;
-
-  const TrackDriverPanelWidget({
-    super.key,
-    required this.ride,
-    required this.statusTitle,
-    required this.statusSubtitle,
-    required this.etaText,
-    this.driverName,
-    this.vehicleSummary,
-    required this.unreadChatMessagesCount,
-    this.showContactActions = true,
-    this.isCancellingTrip = false,
-    required this.onCallDriverPressed,
-    required this.onChatDriverPressed,
-    required this.onCancelTripPressed,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -244,18 +242,16 @@ class TrackDriverPanelWidget extends StatelessWidget {
   }
 }
 
-class _ActionButton extends StatelessWidget {
+class const _ActionButton({
+  required this.icon,
+  required this.label,
+  required this.onTap,
+  this.filled = false,
+}) extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool filled;
   final VoidCallback onTap;
-
-  const _ActionButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.filled = false,
-  });
 
   @override
   Widget build(BuildContext context) {

@@ -5,17 +5,15 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger_app/src/features/ride_history/presentation/widgets/ride_history_presenter.dart';
 import 'package:design_system/design_system.dart';
 
-class PassengerActiveRideCardWidget extends StatelessWidget {
+class const PassengerActiveRideCardWidget({
+  required this.ride,
+  required this.presenter,
+  required this.onTap,
+  super.key,
+}) extends StatelessWidget {
   final RideHistory ride;
   final RideHistoryPresenter presenter;
   final VoidCallback onTap;
-
-  const PassengerActiveRideCardWidget({
-    required this.ride,
-    required this.presenter,
-    required this.onTap,
-    super.key,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -120,17 +118,15 @@ class PassengerActiveRideCardWidget extends StatelessWidget {
   }
 }
 
-class PassengerPastRideCardWidget extends StatelessWidget {
+class const PassengerPastRideCardWidget({
+  required this.ride,
+  required this.presenter,
+  required this.onTap,
+  super.key,
+}) extends StatelessWidget {
   final RideHistory ride;
   final RideHistoryPresenter presenter;
   final VoidCallback onTap;
-
-  const PassengerPastRideCardWidget({
-    required this.ride,
-    required this.presenter,
-    required this.onTap,
-    super.key,
-  });
 
   @override
   Widget build(BuildContext context) {

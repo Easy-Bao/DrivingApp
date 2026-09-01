@@ -1,20 +1,18 @@
 import 'package:passenger_app/src/features/chat/domain/entities/chat_message.dart';
 import 'package:equatable/equatable.dart';
 
-class ChatMessageDto extends Equatable {
+class const ChatMessageDto({
+  this.id = '',
+  required this.text,
+  required this.senderId,
+  required this.createdAt,
+  this.deliveryStatus = ChatMessageDeliveryStatus.delivered,
+}) extends Equatable {
   final String id;
   final String text;
   final String senderId;
   final DateTime createdAt;
   final ChatMessageDeliveryStatus deliveryStatus;
-
-  const ChatMessageDto({
-    this.id = '',
-    required this.text,
-    required this.senderId,
-    required this.createdAt,
-    this.deliveryStatus = ChatMessageDeliveryStatus.delivered,
-  });
 
   factory ChatMessageDto.fromJson(Map<String, dynamic> json) {
     final text = json['text'] as String? ?? json['message'] as String? ?? '';

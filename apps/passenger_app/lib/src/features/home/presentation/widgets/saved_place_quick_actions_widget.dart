@@ -5,19 +5,17 @@ import 'package:passenger_app/src/features/saved_places/domain/saved_place_defau
 import 'package:passenger_app/src/features/saved_places/presentation/saved_place_icon.dart';
 import 'package:design_system/design_system.dart';
 
-class SavedPlaceQuickActionsWidget extends StatelessWidget {
+class const SavedPlaceQuickActionsWidget({
+  required this.places,
+  required this.onPlaceTap,
+  required this.onAddPlace,
+  this.onPlaceLongPress,
+  super.key,
+}) extends StatelessWidget {
   final List<SavedPlace> places;
   final ValueChanged<SavedPlace> onPlaceTap;
   final ValueChanged<SavedPlace>? onPlaceLongPress;
   final VoidCallback onAddPlace;
-
-  const SavedPlaceQuickActionsWidget({
-    required this.places,
-    required this.onPlaceTap,
-    required this.onAddPlace,
-    this.onPlaceLongPress,
-    super.key,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -53,11 +51,10 @@ class SavedPlaceQuickActionsWidget extends StatelessWidget {
   }
 }
 
-class _SavedPlaceChip extends StatelessWidget {
+class const _SavedPlaceChip({required this.place, required this.isActive})
+    extends StatelessWidget {
   final SavedPlace place;
   final bool isActive;
-
-  const _SavedPlaceChip({required this.place, required this.isActive});
 
   @override
   Widget build(BuildContext context) {
@@ -104,10 +101,8 @@ class _SavedPlaceChip extends StatelessWidget {
   }
 }
 
-class _AddPlaceChip extends StatelessWidget {
+class const _AddPlaceChip({required this.onTap}) extends StatelessWidget {
   final VoidCallback onTap;
-
-  const _AddPlaceChip({required this.onTap});
 
   @override
   Widget build(BuildContext context) {

@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 
-abstract class BookingRemoteDataSource {
+abstract class BookingRemoteDataSource() {
   Future<Map<String, dynamic>> createSession(Map<String, dynamic> body);
 
   Future<List<Map<String, dynamic>>> fetchOffers(String sessionId);
@@ -13,10 +13,9 @@ abstract class BookingRemoteDataSource {
   Future<bool> cancelSession(String sessionId);
 }
 
-class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
+class BookingRemoteDataSourceImpl(this._dio)
+    implements BookingRemoteDataSource {
   final Dio _dio;
-
-  BookingRemoteDataSourceImpl(this._dio);
 
   @override
   Future<Map<String, dynamic>> createSession(Map<String, dynamic> body) async {

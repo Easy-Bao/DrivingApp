@@ -389,9 +389,7 @@ class _TrackingRealtimeSocketConnector implements RealtimeSocketConnector {
   }
 }
 
-class _TrackingRealtimeSocket implements RealtimeSocket {
-  _TrackingRealtimeSocket(this.onClose);
-
+class _TrackingRealtimeSocket(this.onClose) implements RealtimeSocket {
   final void Function() onClose;
   final _messages = StreamController<Object?>();
   bool _closed = false;

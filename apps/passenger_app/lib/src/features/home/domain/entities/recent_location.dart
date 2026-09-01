@@ -1,13 +1,11 @@
 import 'package:equatable/equatable.dart';
 
-class RecentLocation extends Equatable {
-  const RecentLocation({
-    required this.title,
-    required this.subtitle,
-    required this.latitude,
-    required this.longitude,
-  });
-
+class const RecentLocation({
+  required this.title,
+  required this.subtitle,
+  required this.latitude,
+  required this.longitude,
+}) extends Equatable {
   final String title;
   final String subtitle;
   final double latitude;

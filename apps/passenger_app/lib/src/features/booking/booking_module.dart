@@ -26,9 +26,7 @@ import 'package:passenger_app/src/features/booking/presentation/view/search_dest
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class BookingModule {
-  BookingModule._();
-
+class BookingModule._() {
   static void binds(Injector i) {
     i
       ..addLazySingleton<BookingRemoteDataSource>(

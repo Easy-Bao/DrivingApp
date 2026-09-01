@@ -7,10 +7,8 @@ abstract class HomeRemoteDataSource {
   });
 }
 
-class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
+class HomeRemoteDataSourceImpl(this._dio) implements HomeRemoteDataSource {
   final Dio _dio;
-
-  HomeRemoteDataSourceImpl(this._dio);
 
   @override
   Future<Map<String, dynamic>> fetchHomeData({

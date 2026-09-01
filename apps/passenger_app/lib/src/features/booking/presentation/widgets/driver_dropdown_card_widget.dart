@@ -11,7 +11,17 @@ import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-class DriverDropdownCardWidget extends StatefulWidget {
+class const DriverDropdownCardWidget({
+  super.key,
+  required this.driver,
+  required this.isNearestDriver,
+  this.isProfileVisible = false,
+  required this.onViewFullProfilePressed,
+  required this.onProfileBackPressed,
+  required this.onSelectDriverPressed,
+  required this.onCloseDropdownPressed,
+  required this.profileRepository,
+}) extends StatefulWidget {
   final DriverModel driver;
   final bool isNearestDriver;
   final bool isProfileVisible;
@@ -21,24 +31,13 @@ class DriverDropdownCardWidget extends StatefulWidget {
   final VoidCallback onCloseDropdownPressed;
   final DriverProfileRepository profileRepository;
 
-  const DriverDropdownCardWidget({
-    super.key,
-    required this.driver,
-    required this.isNearestDriver,
-    this.isProfileVisible = false,
-    required this.onViewFullProfilePressed,
-    required this.onProfileBackPressed,
-    required this.onSelectDriverPressed,
-    required this.onCloseDropdownPressed,
-    required this.profileRepository,
-  });
-
   @override
   State<DriverDropdownCardWidget> createState() =>
       _DriverDropdownCardWidgetState();
 }
 
-class _DriverDropdownCardWidgetState extends State<DriverDropdownCardWidget>
+class _DriverDropdownCardWidgetState()
+    extends State<DriverDropdownCardWidget>
     with SingleTickerProviderStateMixin {
   late final AnimationController _dropdownAnimationController;
   late final Animation<Offset> _slideAnimation;

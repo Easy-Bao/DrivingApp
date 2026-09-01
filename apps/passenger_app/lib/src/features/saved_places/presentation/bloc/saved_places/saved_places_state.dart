@@ -4,18 +4,16 @@ import 'package:passenger_app/src/features/saved_places/domain/saved_place_defau
 
 enum SavedPlacesErrorSource { load, persistence }
 
-class SavedPlacesState extends Equatable {
+class const SavedPlacesState({
+  this.places = const [],
+  this.isLoading = true,
+  this.errorMessage,
+  this.errorSource,
+}) extends Equatable {
   final List<SavedPlace> places;
   final bool isLoading;
   final String? errorMessage;
   final SavedPlacesErrorSource? errorSource;
-
-  const SavedPlacesState({
-    this.places = const [],
-    this.isLoading = true,
-    this.errorMessage,
-    this.errorSource,
-  });
 
   SavedPlacesState copyWith({
     List<SavedPlace>? places,

@@ -8,9 +8,9 @@ import 'package:passenger_app/src/features/booking/domain/entities/booking_sessi
 import 'package:passenger_app/src/features/booking/domain/repositories/booking_repository.dart';
 import 'package:foundation/foundation.dart';
 
-final class BookingRepositoryImpl implements BookingRepository {
-  BookingRepositoryImpl({required BookingRemoteDataSource dataSource})
-    : _dataSource = dataSource;
+final class BookingRepositoryImpl({required BookingRemoteDataSource dataSource})
+    implements BookingRepository {
+  this : _dataSource = dataSource;
 
   final BookingRemoteDataSource _dataSource;
 

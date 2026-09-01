@@ -3,13 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:design_system/design_system.dart';
 
-class RecentRideHistoryPreviewWidget extends StatelessWidget {
-  const RecentRideHistoryPreviewWidget({
-    required this.rides,
-    required this.onRideTap,
-    super.key,
-  });
-
+class const RecentRideHistoryPreviewWidget({
+  required this.rides,
+  required this.onRideTap,
+  super.key,
+}) extends StatelessWidget {
   final List<RideHistory> rides;
   final ValueChanged<RideHistory> onRideTap;
 

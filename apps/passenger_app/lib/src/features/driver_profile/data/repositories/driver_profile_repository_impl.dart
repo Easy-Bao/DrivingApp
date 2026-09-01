@@ -7,10 +7,10 @@ import 'package:passenger_app/src/features/driver_profile/domain/entities/driver
 import 'package:passenger_app/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:foundation/foundation.dart';
 
-final class DriverProfileRepositoryImpl implements DriverProfileRepository {
-  DriverProfileRepositoryImpl({
-    required DriverProfileRemoteDataSource dataSource,
-  }) : _dataSource = dataSource;
+final class DriverProfileRepositoryImpl({
+  required DriverProfileRemoteDataSource dataSource,
+}) implements DriverProfileRepository {
+  this : _dataSource = dataSource;
 
   final DriverProfileRemoteDataSource _dataSource;
 

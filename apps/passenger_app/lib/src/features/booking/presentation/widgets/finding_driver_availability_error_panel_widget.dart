@@ -4,23 +4,21 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class FindingDriverAvailabilityErrorPanelWidget extends StatelessWidget {
+class const FindingDriverAvailabilityErrorPanelWidget({
+  super.key,
+  required this.message,
+  required this.fare,
+  required this.destination,
+  required this.onRetryPressed,
+  required this.onCancelPressed,
+  this.isCanceling = false,
+}) extends StatelessWidget {
   final String message;
   final double fare;
   final Place destination;
   final VoidCallback onRetryPressed;
   final VoidCallback onCancelPressed;
   final bool isCanceling;
-
-  const FindingDriverAvailabilityErrorPanelWidget({
-    super.key,
-    required this.message,
-    required this.fare,
-    required this.destination,
-    required this.onRetryPressed,
-    required this.onCancelPressed,
-    this.isCanceling = false,
-  });
 
   @override
   Widget build(BuildContext context) {

@@ -17,11 +17,9 @@ abstract class DriverProfileRemoteDataSource {
   });
 }
 
-class DriverProfileRemoteDataSourceImpl
+class DriverProfileRemoteDataSourceImpl(this._dio)
     implements DriverProfileRemoteDataSource {
   final Dio _dio;
-
-  DriverProfileRemoteDataSourceImpl(this._dio);
 
   @override
   Future<Map<String, dynamic>> fetchStats(String driverId) async {

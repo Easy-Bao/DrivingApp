@@ -8,17 +8,15 @@ import 'package:maps/maps.dart';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:design_system/design_system.dart';
 
-class AddCategoryPage extends StatefulWidget {
+class const AddCategoryPage({
+  super.key,
+  this.initialPlace,
+  this.initialLabel,
+  this.initialIconName,
+}) extends StatefulWidget {
   final Place? initialPlace;
   final String? initialLabel;
   final String? initialIconName;
-
-  const AddCategoryPage({
-    super.key,
-    this.initialPlace,
-    this.initialLabel,
-    this.initialIconName,
-  });
 
   @override
   State<AddCategoryPage> createState() => _AddCategoryPageState();

@@ -7,25 +7,23 @@ import 'package:maps/maps.dart';
 import 'package:passenger_app/src/features/booking/booking_routes.dart';
 import 'package:design_system/design_system.dart';
 
-class DestinationMapPage extends StatefulWidget {
+class const DestinationMapPage({
+  super.key,
+  required this.placeName,
+  required this.placeSubtitle,
+  required this.destinationLat,
+  required this.destinationLng,
+}) extends StatefulWidget {
   final String placeName;
   final String placeSubtitle;
   final double destinationLat;
   final double destinationLng;
 
-  const DestinationMapPage({
-    super.key,
-    required this.placeName,
-    required this.placeSubtitle,
-    required this.destinationLat,
-    required this.destinationLng,
-  });
-
   @override
   State<DestinationMapPage> createState() => _DestinationMapPageState();
 }
 
-class _DestinationMapPageState extends State<DestinationMapPage> {
+class _DestinationMapPageState() extends State<DestinationMapPage> {
   AppMapController? _mapController;
   String _fullAddress = '';
   bool _isLoading = true;

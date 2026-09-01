@@ -4,10 +4,9 @@ abstract class PublicDriverRemoteDataSource {
   Future<List<Map<String, dynamic>>> fetchSummaries();
 }
 
-class PublicDriverRemoteDataSourceImpl implements PublicDriverRemoteDataSource {
+class PublicDriverRemoteDataSourceImpl(this._dio)
+    implements PublicDriverRemoteDataSource {
   final Dio _dio;
-
-  PublicDriverRemoteDataSourceImpl(this._dio);
 
   @override
   Future<List<Map<String, dynamic>>> fetchSummaries() async {

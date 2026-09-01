@@ -2,23 +2,16 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-sealed class ChatConnectionState {
-  const ChatConnectionState();
-}
+sealed class const ChatConnectionState() {}
 
-final class ChatConnecting extends ChatConnectionState {
-  const ChatConnecting(this.attempt);
-
+final class const ChatConnecting(this.attempt) extends ChatConnectionState {
   final int attempt;
 }
 
-final class ChatConnected extends ChatConnectionState {
-  const ChatConnected();
-}
+final class const ChatConnected() extends ChatConnectionState {}
 
-final class ChatDisconnected extends ChatConnectionState {
-  const ChatDisconnected({this.reconnectIn});
-
+final class const ChatDisconnected({this.reconnectIn})
+    extends ChatConnectionState {
   final Duration? reconnectIn;
 }
 

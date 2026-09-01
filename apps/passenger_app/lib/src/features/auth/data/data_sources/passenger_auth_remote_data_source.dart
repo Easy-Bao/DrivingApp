@@ -13,10 +13,8 @@ abstract interface class PassengerAuthRemoteDataSource {
   });
 }
 
-final class PassengerAuthRemoteDataSourceImpl
+final class PassengerAuthRemoteDataSourceImpl(this._dio)
     implements PassengerAuthRemoteDataSource {
-  PassengerAuthRemoteDataSourceImpl(this._dio);
-
   final Dio _dio;
 
   @override

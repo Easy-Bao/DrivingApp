@@ -6,9 +6,7 @@ import 'package:passenger_app/src/features/auth/presentation/bloc/forgot_passwor
 import 'package:passenger_app/src/features/auth/presentation/validation/auth_form_validator.dart';
 import 'package:design_system/design_system.dart';
 
-class ForgotPasswordPage extends StatelessWidget {
-  const ForgotPasswordPage({super.key});
-
+class const ForgotPasswordPage({super.key}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider<ForgotPasswordBloc>(
@@ -18,9 +16,7 @@ class ForgotPasswordPage extends StatelessWidget {
   }
 }
 
-class _ForgotPasswordPageContent extends StatefulWidget {
-  const _ForgotPasswordPageContent();
-
+class const _ForgotPasswordPageContent() extends StatefulWidget {
   @override
   State<_ForgotPasswordPageContent> createState() =>
       _ForgotPasswordPageContentState();

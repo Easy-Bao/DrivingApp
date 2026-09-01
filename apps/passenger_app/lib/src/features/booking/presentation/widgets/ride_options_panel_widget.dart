@@ -9,7 +9,26 @@ import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-class RideOptionsPanelWidget extends StatefulWidget {
+class const RideOptionsPanelWidget({
+  super.key,
+  required this.passengerName,
+  required this.pickupLabel,
+  required this.destinationName,
+  required this.destinationAddress,
+  required this.fareResult,
+  required this.onBookPressed,
+  required this.customFareController,
+  required this.customFareError,
+  required this.isLoadingFare,
+  required this.fareError,
+  required this.onRetryFare,
+  required this.onCustomFareChanged,
+  required this.notesController,
+  required this.onNotesChanged,
+  required this.selectedTipAmount,
+  required this.onTipSelected,
+  required this.totalFare,
+}) extends StatefulWidget {
   final String passengerName;
   final String pickupLabel;
   final String destinationName;
@@ -28,34 +47,18 @@ class RideOptionsPanelWidget extends StatefulWidget {
   final ValueChanged<int> onTipSelected;
   final double totalFare;
 
-  const RideOptionsPanelWidget({
-    super.key,
-    required this.passengerName,
-    required this.pickupLabel,
-    required this.destinationName,
-    required this.destinationAddress,
-    required this.fareResult,
-    required this.onBookPressed,
-    required this.customFareController,
-    required this.customFareError,
-    required this.isLoadingFare,
-    required this.fareError,
-    required this.onRetryFare,
-    required this.onCustomFareChanged,
-    required this.notesController,
-    required this.onNotesChanged,
-    required this.selectedTipAmount,
-    required this.onTipSelected,
-    required this.totalFare,
-  });
-
   @override
   State<RideOptionsPanelWidget> createState() => _RideOptionsPanelWidgetState();
 }
 
-enum _RideOptionsPanelView { summary, customOffer, tripNote, fareDetails }
+enum _RideOptionsPanelView() {
+  summary,
+  customOffer,
+  tripNote,
+  fareDetails,
+}
 
-class _RideOptionsPanelWidgetState extends State<RideOptionsPanelWidget> {
+class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
   static const _viewTransitionDuration = Duration(milliseconds: 160);
 
   _RideOptionsPanelView _currentView = _RideOptionsPanelView.summary;

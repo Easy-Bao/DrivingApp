@@ -1,19 +1,17 @@
 import 'package:equatable/equatable.dart';
 
-class FareEstimate extends Equatable {
+class const FareEstimate({
+  required this.baseFare,
+  required this.distanceCharge,
+  required this.timeCharge,
+  required this.surgeCharge,
+  required this.totalFare,
+}) extends Equatable {
   final double baseFare;
   final double distanceCharge;
   final double timeCharge;
   final double surgeCharge;
   final double totalFare;
-
-  const FareEstimate({
-    required this.baseFare,
-    required this.distanceCharge,
-    required this.timeCharge,
-    required this.surgeCharge,
-    required this.totalFare,
-  });
 
   factory FareEstimate.fromJson(Map<String, dynamic> json) {
     return FareEstimate(

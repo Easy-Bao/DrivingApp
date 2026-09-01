@@ -1,8 +1,6 @@
 part of 'live_map_bloc.dart';
 
-sealed class LiveMapState {
-  const LiveMapState();
-}
+sealed class const LiveMapState() {}
 
 final class LiveMapInitial() extends LiveMapState;
 

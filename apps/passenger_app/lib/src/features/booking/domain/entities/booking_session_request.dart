@@ -1,19 +1,17 @@
-class BookingSessionRequest {
-  const BookingSessionRequest({
-    required this.rideType,
-    required this.pickupLatitude,
-    required this.pickupLongitude,
-    required this.pickupName,
-    required this.dropoffLatitude,
-    required this.dropoffLongitude,
-    required this.dropoffName,
-    required this.distanceKm,
-    required this.durationMinutes,
-    required this.customFareCentavos,
-    required this.passengerNote,
-    this.targetDriverId,
-  });
-
+class const BookingSessionRequest({
+  required this.rideType,
+  required this.pickupLatitude,
+  required this.pickupLongitude,
+  required this.pickupName,
+  required this.dropoffLatitude,
+  required this.dropoffLongitude,
+  required this.dropoffName,
+  required this.distanceKm,
+  required this.durationMinutes,
+  required this.customFareCentavos,
+  required this.passengerNote,
+  this.targetDriverId,
+}) {
   final String rideType;
   final double pickupLatitude;
   final double pickupLongitude;

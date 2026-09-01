@@ -7,7 +7,18 @@ import 'package:passenger_app/src/features/driver_profile/domain/repositories/dr
 import 'package:design_system/design_system.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-class DriverProfileDetailsSheet extends StatefulWidget {
+class const DriverProfileDetailsSheet({
+  super.key,
+  required this.driverId,
+  required this.driverName,
+  required this.vehicleType,
+  required this.plateNumber,
+  required this.rating,
+  this.onboardPassengerCount,
+  this.embedded = false,
+  this.onBackPressed,
+  required this.repository,
+}) extends StatefulWidget {
   final String driverId;
   final String driverName;
   final String vehicleType;
@@ -17,19 +28,6 @@ class DriverProfileDetailsSheet extends StatefulWidget {
   final bool embedded;
   final VoidCallback? onBackPressed;
   final DriverProfileRepository repository;
-
-  const DriverProfileDetailsSheet({
-    super.key,
-    required this.driverId,
-    required this.driverName,
-    required this.vehicleType,
-    required this.plateNumber,
-    required this.rating,
-    this.onboardPassengerCount,
-    this.embedded = false,
-    this.onBackPressed,
-    required this.repository,
-  });
 
   @override
   State<DriverProfileDetailsSheet> createState() =>

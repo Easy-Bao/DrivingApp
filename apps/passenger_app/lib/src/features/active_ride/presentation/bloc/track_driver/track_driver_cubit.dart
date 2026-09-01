@@ -10,7 +10,12 @@ import 'package:passenger_app/src/features/active_ride/presentation/bloc/track_d
 import 'package:passenger_app/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:foundation/foundation.dart';
 
-class TrackDriverCubit extends Cubit<TrackDriverState> {
+class TrackDriverCubit({
+  required TrackRepository repository,
+  required PassengerSessionStore sessionService,
+  required AppLifecycleCoordinator lifecycleCoordinator,
+  PassengerBackgroundTelemetry? backgroundTelemetryService,
+}) extends Cubit<TrackDriverState> {
   final TrackRepository _repository;
   final PassengerSessionStore _sessionService;
   final PassengerBackgroundTelemetry? _backgroundTelemetryService;
@@ -18,16 +23,12 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
   AppLifecyclePeriodicTask? _trackingTask;
   bool _isSyncing = false;
 
-  TrackDriverCubit({
-    required TrackRepository repository,
-    required PassengerSessionStore sessionService,
-    required AppLifecycleCoordinator lifecycleCoordinator,
-    PassengerBackgroundTelemetry? backgroundTelemetryService,
-  }) : _repository = repository,
-       _sessionService = sessionService,
-       _backgroundTelemetryService = backgroundTelemetryService,
-       _lifecycleCoordinator = lifecycleCoordinator,
-       super(const TrackDriverInitial());
+  this
+    : _repository = repository,
+      _sessionService = sessionService,
+      _backgroundTelemetryService = backgroundTelemetryService,
+      _lifecycleCoordinator = lifecycleCoordinator,
+      super(const TrackDriverInitial());
 
   Future<void> startTracking({
     required double startLat,

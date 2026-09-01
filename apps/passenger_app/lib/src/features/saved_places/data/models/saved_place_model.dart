@@ -3,16 +3,14 @@ import 'dart:convert';
 import 'package:passenger_app/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:foundation/foundation.dart';
 
-class SavedPlaceModel extends SavedPlace {
-  const SavedPlaceModel({
-    required super.label,
-    required super.iconName,
-    super.savedAddress,
-    super.latitude,
-    super.longitude,
-    super.isDefault,
-  });
-
+class const SavedPlaceModel({
+  required super.label,
+  required super.iconName,
+  super.savedAddress,
+  super.latitude,
+  super.longitude,
+  super.isDefault,
+}) extends SavedPlace {
   Map<String, dynamic> toJson() => {
     'label': label,
     'iconName': iconName,

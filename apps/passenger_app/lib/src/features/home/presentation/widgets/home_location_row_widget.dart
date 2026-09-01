@@ -3,18 +3,16 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:design_system/design_system.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-class HomeLocationRowWidget extends StatelessWidget {
-  const HomeLocationRowWidget({
-    required this.isAccessChecking,
-    required this.hasLocationAccess,
-    required this.isAddressLoading,
-    required this.currentAddress,
-    this.locationErrorMessage = '',
-    required this.onRequestLocation,
-    required this.onRetryAddress,
-    super.key,
-  });
-
+class const HomeLocationRowWidget({
+  required this.isAccessChecking,
+  required this.hasLocationAccess,
+  required this.isAddressLoading,
+  required this.currentAddress,
+  this.locationErrorMessage = '',
+  required this.onRequestLocation,
+  required this.onRetryAddress,
+  super.key,
+}) extends StatelessWidget {
   final bool isAccessChecking;
   final bool hasLocationAccess;
   final bool isAddressLoading;
@@ -63,9 +61,8 @@ class HomeLocationRowWidget extends StatelessWidget {
   }
 }
 
-class _LocationRowLabel extends StatelessWidget {
-  const _LocationRowLabel({required this.label, this.expands = false});
-
+class const _LocationRowLabel({required this.label, this.expands = false})
+    extends StatelessWidget {
   final String label;
   final bool expands;
 

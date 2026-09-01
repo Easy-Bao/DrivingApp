@@ -1,8 +1,6 @@
 part of 'reset_password_confirm_bloc.dart';
 
-sealed class ResetPasswordConfirmState extends Equatable {
-  const ResetPasswordConfirmState();
-
+sealed class const ResetPasswordConfirmState() extends Equatable {
   @override
   List<Object?> get props => [];
 }

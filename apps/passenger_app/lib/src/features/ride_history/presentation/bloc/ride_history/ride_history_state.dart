@@ -1,20 +1,15 @@
 part of 'ride_history_bloc.dart';
 
-sealed class RideHistoryState extends Equatable {
-  const RideHistoryState();
-
+sealed class const RideHistoryState() extends Equatable {
   @override
   List<Object?> get props => [];
 }
 
-final class RideHistoryInitial extends RideHistoryState {
-  const RideHistoryInitial();
-}
+final class const RideHistoryInitial() extends RideHistoryState {}
 
-final class RideHistoryLoading extends RideHistoryState {
+final class const RideHistoryLoading({this.existingRideCount = 0})
+    extends RideHistoryState {
   final int existingRideCount;
-
-  const RideHistoryLoading({this.existingRideCount = 0});
 
   bool get hasExistingRides => existingRideCount > 0;
 
@@ -22,7 +17,16 @@ final class RideHistoryLoading extends RideHistoryState {
   List<Object?> get props => [existingRideCount];
 }
 
-final class RideHistoryLoaded extends RideHistoryState {
+final class const RideHistoryLoaded({
+  required this.past,
+  required this.upcoming,
+  this.hasMore = false,
+  this.nextOffset,
+  this.isLoadingMore = false,
+  this.loadMoreError,
+  this.weeklyFareCentavos = 0,
+  this.weeklyRideCount = 0,
+}) extends RideHistoryState {
   final List<RideHistory> past;
   final List<RideHistory> upcoming;
   final bool hasMore;
@@ -31,17 +35,6 @@ final class RideHistoryLoaded extends RideHistoryState {
   final String? loadMoreError;
   final int weeklyFareCentavos;
   final int weeklyRideCount;
-
-  const RideHistoryLoaded({
-    required this.past,
-    required this.upcoming,
-    this.hasMore = false,
-    this.nextOffset,
-    this.isLoadingMore = false,
-    this.loadMoreError,
-    this.weeklyFareCentavos = 0,
-    this.weeklyRideCount = 0,
-  });
 
   List<RideHistory> get rides => [...upcoming, ...past];
 
@@ -83,10 +76,9 @@ final class RideHistoryLoaded extends RideHistoryState {
   ];
 }
 
-final class RideHistoryError extends RideHistoryState {
+final class const RideHistoryError({required this.message})
+    extends RideHistoryState {
   final String message;
-
-  const RideHistoryError({required this.message});
 
   @override
   List<Object?> get props => [message];

@@ -7,18 +7,19 @@ import 'package:passenger_app/src/features/booking/data/data_sources/driver_disc
 import 'package:passenger_app/src/features/booking/domain/repositories/driver_repository.dart';
 import 'package:foundation/foundation.dart';
 
-final class DriverRepositoryImpl implements DriverRepository {
+final class DriverRepositoryImpl({
+  required DriverDiscoveryRemoteDataSource discoveryDataSource,
+  required LocationRepository locationRepository,
+}) implements DriverRepository {
   final DriverDiscoveryRemoteDataSource _discoveryDataSource;
   final LocationRepository _locationRepository;
 
   Future<Either<Failure, List<DriverModel>>>? _activeNearbyLookup;
   ({double lat, double lng})? _activeNearbyCoordinates;
 
-  DriverRepositoryImpl({
-    required DriverDiscoveryRemoteDataSource discoveryDataSource,
-    required LocationRepository locationRepository,
-  }) : _discoveryDataSource = discoveryDataSource,
-       _locationRepository = locationRepository;
+  this
+    : _discoveryDataSource = discoveryDataSource,
+      _locationRepository = locationRepository;
 
   Failure _mapExceptionToFailure(Object error) {
     if (error is DioException) {
@@ -341,9 +342,7 @@ final class DriverRepositoryImpl implements DriverRepository {
   }
 }
 
-class _TravelMetric {
+class const _TravelMetric({this.distanceKm, this.durationMinutes}) {
   final double? distanceKm;
   final double? durationMinutes;
-
-  const _TravelMetric({this.distanceKm, this.durationMinutes});
 }

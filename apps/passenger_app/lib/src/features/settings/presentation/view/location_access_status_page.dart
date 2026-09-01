@@ -9,9 +9,8 @@ import 'package:passenger_app/src/features/location/presentation/bloc/location_a
 import 'package:passenger_app/src/features/location/presentation/bloc/location_access/location_access_state.dart';
 import 'package:design_system/design_system.dart';
 
-class LocationAccessStatusPage extends StatelessWidget {
-  const LocationAccessStatusPage({super.key, this.onBack});
-
+class const LocationAccessStatusPage({super.key, this.onBack})
+    extends StatelessWidget {
   final VoidCallback? onBack;
 
   @override

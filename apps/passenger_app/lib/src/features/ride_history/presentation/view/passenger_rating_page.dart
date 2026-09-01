@@ -7,19 +7,17 @@ import 'package:passenger_app/src/features/driver_profile/domain/repositories/dr
 import 'package:passenger_app/src/features/home/home_routes.dart';
 import 'package:design_system/design_system.dart';
 
-class PassengerRatingPage extends StatefulWidget {
+class const PassengerRatingPage({
+  super.key,
+  required this.driverId,
+  required this.driverName,
+  required this.rideId,
+  required this.profileRepository,
+}) extends StatefulWidget {
   final String driverId;
   final String driverName;
   final String rideId;
   final DriverProfileRepository profileRepository;
-
-  const PassengerRatingPage({
-    super.key,
-    required this.driverId,
-    required this.driverName,
-    required this.rideId,
-    required this.profileRepository,
-  });
 
   @override
   State<PassengerRatingPage> createState() => _PassengerRatingPageState();
