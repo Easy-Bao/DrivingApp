@@ -14,7 +14,7 @@ class const ChatMessageDto({
   final DateTime createdAt;
   final ChatMessageDeliveryStatus deliveryStatus;
 
-  factory ChatMessageDto.fromJson(Map<String, dynamic> json) {
+  factory fromJson(Map<String, dynamic> json) {
     final text = json['text'] as String? ?? json['message'] as String? ?? '';
     final senderId =
         json['senderId'] as String? ?? json['sender_id'] as String? ?? '';

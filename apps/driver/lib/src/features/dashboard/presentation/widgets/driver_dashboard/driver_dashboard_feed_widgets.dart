@@ -432,10 +432,8 @@ class const DriverDashboardSectionLabel({
   final int? activeRideCount,
   super.key,
 }) extends StatelessWidget {
-  const factory DriverDashboardSectionLabel.activeRides({
-    required int activeRideCount,
-    Key? key,
-  }) = DriverDashboardSectionLabel;
+  const factory activeRides({required int activeRideCount, Key? key}) =
+      DriverDashboardSectionLabel;
 
   static const maximumActiveRides = 5;
 

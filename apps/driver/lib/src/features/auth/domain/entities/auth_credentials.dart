@@ -11,7 +11,7 @@ final class const DriverAuthCredentials({
   final String token = '',
   final String refreshToken = '',
 }) extends Equatable {
-  factory DriverAuthCredentials.fromJson(Map<String, dynamic> json) {
+  factory fromJson(Map<String, dynamic> json) {
     return DriverAuthCredentials(
       driverId: SafeParse.toStringValue(json['driverId'] ?? json['id']),
       driverName: SafeParse.toStringValue(json['driverName'] ?? json['name']),

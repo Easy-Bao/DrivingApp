@@ -4,9 +4,7 @@ import 'package:driver/src/infrastructure/network/driver_auth_interceptor.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:foundation/foundation.dart';
 
-class DriverApiClient {
-  DriverApiClient._();
-
+class DriverApiClient._() {
   static Dio create({
     required Uri baseUrl,
     required DriverSessionStore sessionService,

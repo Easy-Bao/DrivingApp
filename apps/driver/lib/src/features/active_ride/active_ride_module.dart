@@ -13,9 +13,7 @@ import 'package:driver/src/features/active_ride/presentation/view/waiting_passen
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class ActiveRideModule {
-  ActiveRideModule._();
-
+class ActiveRideModule._() {
   static void binds(Injector i) {
     i.addFactory<LiveMapBloc>(
       (i) => LiveMapBloc(rideRepository: i.get<DriverRideRepository>()),

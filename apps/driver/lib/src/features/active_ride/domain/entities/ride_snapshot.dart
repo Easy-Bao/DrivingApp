@@ -20,10 +20,7 @@ final class const RideSnapshot({
   final double? durationMinutes,
   final int? fareCentavos,
 }) extends Equatable {
-  factory RideSnapshot.fromJson(
-    Map<String, dynamic> json, {
-    String? fallbackId,
-  }) {
+  factory fromJson(Map<String, dynamic> json, {String? fallbackId}) {
     return RideSnapshot(
       id: _nullableString(json['id']) ?? fallbackId ?? '',
       status: SafeParse.toStringValue(json['status']).trim().toLowerCase(),

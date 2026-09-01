@@ -7,7 +7,7 @@ final class const RideCounterparty({
   required final String phone,
   required final bool contactAllowed,
 }) extends Equatable {
-  factory RideCounterparty.fromJson(Map<String, dynamic> json) {
+  factory fromJson(Map<String, dynamic> json) {
     return RideCounterparty(
       userId: SafeParse.toStringValue(json['user_id'] ?? json['userId']).trim(),
       name: SafeParse.toStringValue(json['name']).trim(),

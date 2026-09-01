@@ -35,7 +35,7 @@ class const ProfileModel({
   final double? rating;
   final bool? isOnline;
 
-  factory ProfileModel.fromJson(Map<String, dynamic> response) {
+  factory fromJson(Map<String, dynamic> response) {
     final payload = _payload(response);
     return ProfileModel(
       id: _readString(payload, const ['id', 'profile_id', 'profileId']),

@@ -8,9 +8,7 @@ import 'package:driver/src/features/chat/presentation/view/driver_chat_page.dart
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:design_system/design_system.dart';
 
-class ChatModule {
-  ChatModule._();
-
+class ChatModule._() {
   static void binds(Injector i) {
     i.addLazySingleton<ChatRepositoryFactory>(
       (i) => DefaultChatRepositoryFactory(

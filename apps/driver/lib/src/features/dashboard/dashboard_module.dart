@@ -17,9 +17,7 @@ import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class DashboardModule {
-  DashboardModule._();
-
+class DashboardModule._() {
   static void binds(Injector i) {
     i
       ..addLazySingleton<DriverAvailabilityRemoteDataSource>(

@@ -3,9 +3,7 @@ import 'package:driver/src/features/help_center/presentation/view/driver_help_ce
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:design_system/design_system.dart';
 
-class DriverHelpCenterModule {
-  DriverHelpCenterModule._();
-
+class DriverHelpCenterModule._() {
   static List<ModularRoute> routes = [
     ChildRoute(
       name: DriverHelpCenterRoutes.helpCenter,
