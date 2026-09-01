@@ -41,9 +41,9 @@ void main() {
     ]);
 
     final stored = await repository.loadPlaces();
-    expect(stored.single['label'], 'Home');
-    expect(stored.single['savedAddress'], 'Mountain View');
-    expect(stored.single['latitude'], 14.5995);
-    expect(stored.single['isDefault'], isTrue);
+    expect(stored.single.label, 'Home');
+    expect(stored.single.savedAddress, 'Mountain View');
+    expect(stored.single.latitude, 14.5995);
+    expect(stored.single.isDefault, isTrue);
   });
 }

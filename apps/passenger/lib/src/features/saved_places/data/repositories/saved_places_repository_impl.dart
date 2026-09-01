@@ -13,7 +13,7 @@ final class SavedPlacesRepositoryImpl({required this._preferences})
   final SharedPreferences _preferences;
 
   @override
-  Future<List<Map<String, dynamic>>> loadPlaces() async {
+  Future<List<SavedPlace>> loadPlaces() async {
     try {
       final raw = _preferences.getString(_storageKey);
       if (raw == null || raw.trim().isEmpty) {
@@ -26,13 +26,13 @@ final class SavedPlacesRepositoryImpl({required this._preferences})
         return const [];
       }
 
-      final places = <Map<String, dynamic>>[];
+      final places = <SavedPlace>[];
       for (final item in decoded) {
         if (item is! Map) {
           await _preferences.remove(_storageKey);
           return const [];
         }
-        places.add(Map<String, dynamic>.from(item));
+        places.add(SavedPlaceModel.fromJson(Map<String, dynamic>.from(item)));
       }
       return places;
     } catch (error) {

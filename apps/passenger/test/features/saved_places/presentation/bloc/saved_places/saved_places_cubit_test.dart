@@ -29,9 +29,9 @@ void main() {
       'loadPlaces emits loaded places with isLoading false on success',
       build: () {
         when(() => mockRepository.loadPlaces()).thenAnswer(
-          (_) async => <Map<String, dynamic>>[
-            {'label': 'Home', 'iconName': 'house'},
-            {'label': 'Work', 'iconName': 'briefcase'},
+          (_) async => const <SavedPlace>[
+            SavedPlace(label: 'Home', iconName: 'house'),
+            SavedPlace(label: 'Work', iconName: 'briefcase'),
           ],
         );
         when(() => mockRepository.savePlaces(any())).thenAnswer((_) async {});
@@ -61,13 +61,13 @@ void main() {
       'repairs legacy storage with multiple defaults and keeps the first one',
       build: () {
         when(() => mockRepository.loadPlaces()).thenAnswer(
-          (_) async => <Map<String, dynamic>>[
-            {'label': 'Home', 'iconName': 'house', 'isDefault': true},
-            {
-              'label': 'Near Bathroom',
-              'iconName': 'map_pin',
-              'isDefault': true,
-            },
+          (_) async => const <SavedPlace>[
+            SavedPlace(label: 'Home', iconName: 'house', isDefault: true),
+            SavedPlace(
+              label: 'Near Bathroom',
+              iconName: 'map_pin',
+              isDefault: true,
+            ),
           ],
         );
         when(() => mockRepository.savePlaces(any())).thenAnswer((_) async {});

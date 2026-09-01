@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
-import 'package:passenger/src/features/saved_places/data/models/saved_place_model.dart';
 import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger/src/features/saved_places/domain/repositories/saved_places_repository.dart';
 import 'package:passenger/src/features/saved_places/domain/saved_place_defaults.dart';
@@ -16,13 +15,10 @@ class SavedPlacesCubit({required this._repository})
     emit(state.copyWith(isLoading: true, clearErrorMessage: true));
 
     try {
-      final rawPlaces = await _repository.loadPlaces();
-      final parsedPlaces = rawPlaces
-          .map((raw) => SavedPlaceModel.fromJson(raw))
-          .toList();
-      final places = normalizeSavedPlaceDefaults(parsedPlaces);
+      final loadedPlaces = await _repository.loadPlaces();
+      final places = normalizeSavedPlaceDefaults(loadedPlaces);
       String? repairErrorMessage;
-      if (_needsDefaultRepair(parsedPlaces)) {
+      if (_needsDefaultRepair(loadedPlaces)) {
         try {
           await _repository.savePlaces(places);
         } catch (error, stackTrace) {
