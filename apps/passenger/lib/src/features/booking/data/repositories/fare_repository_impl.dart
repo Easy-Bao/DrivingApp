@@ -1,13 +1,13 @@
-import 'package:passenger/src/features/booking/booking.dart';
 import 'package:dio/dio.dart';
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/data/data_sources/fare_remote_data_source.dart';
 import 'package:passenger/src/features/booking/domain/repositories/fare_repository.dart';
-import 'package:foundation/foundation.dart';
 
-final class FareRepositoryImpl({required FareRemoteDataSource remoteDataSource})
+final class FareRepositoryImpl({required this._remoteDataSource})
     implements FareRepository {
-  this : _remoteDataSource = remoteDataSource;
+  this;
 
   final FareRemoteDataSource _remoteDataSource;
 

@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:passenger/src/features/chat/chat.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:passenger/src/features/chat/chat.dart';
 
 class FakeChatRemoteDataSource implements ChatRemoteDataSource {
   bool sent = false;

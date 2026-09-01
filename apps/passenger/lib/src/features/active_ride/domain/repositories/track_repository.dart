@@ -1,6 +1,6 @@
-import 'package:passenger/src/features/active_ride/active_ride.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:foundation/foundation.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:passenger/src/features/active_ride/active_ride.dart';
 
 abstract interface class TrackRepository {
   Future<List<List<double>>?> getRoutePolyline({

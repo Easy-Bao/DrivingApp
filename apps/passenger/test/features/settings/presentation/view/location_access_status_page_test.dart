@@ -1,10 +1,10 @@
-import 'package:passenger/src/app/theme/app_theme.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
 import 'package:maps/maps.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:passenger/src/app/theme/app_theme.dart';
 import 'package:passenger/src/features/location/presentation/bloc/location_access/location_access_cubit.dart';
 import 'package:passenger/src/features/location/presentation/bloc/location_access/location_access_state.dart';
 import 'package:passenger/src/features/settings/presentation/view/location_access_status_page.dart';

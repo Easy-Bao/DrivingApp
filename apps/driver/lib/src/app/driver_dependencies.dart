@@ -19,14 +19,13 @@ import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DriverDependencies({
-  required SharedPreferences prefs,
+  required this._prefs,
   DriverSessionStore? sessionService,
 }) extends Module {
   final SharedPreferences _prefs;
   final DriverSessionStore _sessionService;
 
-  this
-    : _prefs = prefs, _sessionService = sessionService ?? DriverSessionStore();
+  this : _sessionService = sessionService ?? DriverSessionStore();
 
   @override
   void binds(Injector i) {

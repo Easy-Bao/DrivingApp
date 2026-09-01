@@ -1,7 +1,7 @@
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
-import 'package:design_system/design_system.dart';
 
 class const InboxNotificationCardWidget({
   super.key,

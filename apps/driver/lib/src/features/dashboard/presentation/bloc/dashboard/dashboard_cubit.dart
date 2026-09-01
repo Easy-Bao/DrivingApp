@@ -8,9 +8,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 
 class DashboardCubit({
-  required DashboardRepository repository,
+  required this._repository,
   DateTime Function()? now,
-  Duration silentDispatchFailureCooldown = const Duration(seconds: 15),
+  this._silentDispatchFailureCooldown = const Duration(seconds: 15),
 }) extends Cubit<DashboardState> {
   final DashboardRepository _repository;
   final DateTime Function() _now;
@@ -20,11 +20,7 @@ class DashboardCubit({
   Future<void>? _statsRequestInFlight;
   DateTime? _silentDispatchRetryAfter;
 
-  this
-    : _repository = repository,
-      _now = now ?? DateTime.now,
-      _silentDispatchFailureCooldown = silentDispatchFailureCooldown,
-      super(const DashboardState());
+  this : _now = now ?? DateTime.now, super(const DashboardState());
 
   Future<void> initialize() async {
     final existingInitialization = _initialization;

@@ -1,26 +1,25 @@
-import 'package:passenger/src/features/booking/booking.dart';
-
 import 'dart:async';
 
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
-import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
-import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
-import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
+import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/domain/entities/bid_session_trip.dart';
+import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/driver_dropdown_card_widget.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_availability_error_panel_widget.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_bids_panel_widget.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_nearest_panel_widget.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_no_driver_panel_widget.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_searching_panel_widget.dart';
-import 'package:foundation/foundation.dart';
-import 'package:design_system/design_system.dart';
+import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
+import 'package:passenger/src/features/home/home_routes.dart';
 
 class const FindingDriverPage({
   super.key,

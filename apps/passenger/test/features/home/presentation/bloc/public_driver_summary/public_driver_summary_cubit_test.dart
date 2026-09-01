@@ -1,11 +1,11 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_cubit.dart';
-import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_state.dart';
 import 'package:passenger/src/features/home/domain/entities/public_driver_summary.dart';
 import 'package:passenger/src/features/home/domain/repositories/public_driver_summary_repository.dart';
-import 'package:foundation/foundation.dart';
+import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_cubit.dart';
+import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_state.dart';
 
 class MockPublicDriverSummaryRepository extends Mock
     implements PublicDriverSummaryRepository {}

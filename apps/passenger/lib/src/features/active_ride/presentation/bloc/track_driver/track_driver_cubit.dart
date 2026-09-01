@@ -1,20 +1,19 @@
-import 'package:passenger/src/features/active_ride/active_ride.dart';
-
 import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger/src/infrastructure/telemetry/passenger_background_telemetry.dart';
-import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
-import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_state.dart';
-import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:foundation/foundation.dart';
+import 'package:passenger/src/features/active_ride/active_ride.dart';
+import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
+import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_state.dart';
+import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
+import 'package:passenger/src/infrastructure/telemetry/passenger_background_telemetry.dart';
 
 class TrackDriverCubit({
-  required TrackRepository repository,
-  required PassengerSessionStore sessionService,
-  required AppLifecycleCoordinator lifecycleCoordinator,
-  PassengerBackgroundTelemetry? backgroundTelemetryService,
+  required this._repository,
+  required this._sessionService,
+  required this._lifecycleCoordinator,
+  this._backgroundTelemetryService,
 }) extends Cubit<TrackDriverState> {
   final TrackRepository _repository;
   final PassengerSessionStore _sessionService;
@@ -23,12 +22,7 @@ class TrackDriverCubit({
   AppLifecyclePeriodicTask? _trackingTask;
   bool _isSyncing = false;
 
-  this
-    : _repository = repository,
-      _sessionService = sessionService,
-      _backgroundTelemetryService = backgroundTelemetryService,
-      _lifecycleCoordinator = lifecycleCoordinator,
-      super(const TrackDriverInitial());
+  this : super(const TrackDriverInitial());
 
   Future<void> startTracking({
     required double startLat,

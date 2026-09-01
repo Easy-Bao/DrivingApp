@@ -1,17 +1,17 @@
 import 'dart:async';
 
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger/src/features/chat/chat_routes.dart';
+import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_state.dart';
-import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger/src/features/inbox/presentation/widgets/inbox_empty_state_widget.dart';
 import 'package:passenger/src/features/inbox/presentation/widgets/inbox_notification_card_widget.dart';
-import 'package:design_system/design_system.dart';
+import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class const InboxPage({super.key}) extends StatefulWidget {

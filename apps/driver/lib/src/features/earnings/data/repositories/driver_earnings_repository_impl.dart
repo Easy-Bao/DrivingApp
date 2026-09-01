@@ -5,10 +5,9 @@ import 'package:driver/src/features/earnings/domain/repositories/driver_earnings
 import 'package:fpdart/fpdart.dart';
 import 'package:foundation/foundation.dart';
 
-final class DriverEarningsRepositoryImpl({
-  required DriverEarningsRemoteDataSource dataSource,
-}) implements DriverEarningsRepository {
-  this : _dataSource = dataSource;
+final class DriverEarningsRepositoryImpl({required this._dataSource})
+    implements DriverEarningsRepository {
+  this;
 
   final DriverEarningsRemoteDataSource _dataSource;
 

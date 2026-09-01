@@ -1,16 +1,16 @@
-import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:dio/dio.dart';
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:passenger/src/features/booking/data/data_sources/booking_remote_data_source.dart';
 import 'package:passenger/src/features/active_ride/domain/entities/accepted_booking.dart';
+import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
+import 'package:passenger/src/features/booking/data/data_sources/booking_remote_data_source.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_offer.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_session_request.dart';
 import 'package:passenger/src/features/booking/domain/repositories/booking_repository.dart';
-import 'package:foundation/foundation.dart';
 
-final class BookingRepositoryImpl({required BookingRemoteDataSource dataSource})
+final class BookingRepositoryImpl({required this._dataSource})
     implements BookingRepository {
-  this : _dataSource = dataSource;
+  this;
 
   final BookingRemoteDataSource _dataSource;
 

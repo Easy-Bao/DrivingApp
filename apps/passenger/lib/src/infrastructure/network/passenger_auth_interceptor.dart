@@ -5,10 +5,10 @@ import 'package:passenger/src/infrastructure/session/passenger_session_store.dar
 
 class PassengerAuthInterceptor(
   this._secureSessionService, {
-  Dio? dio,
-  Dio? refreshClient,
-  Uri? allowedBaseUri,
-  FutureOr<void> Function()? onSessionExpired,
+  this._dio,
+  this._refreshClient,
+  this._allowedBaseUri,
+  this._onSessionExpired,
 }) extends Interceptor {
   static const String _authRetryAttemptKey = 'authRetryAttempt';
   static const String _skipAuthRefreshKey = 'skipAuthRefresh';
@@ -24,11 +24,7 @@ class PassengerAuthInterceptor(
   Future<String?>? _refreshInFlight;
   bool _sessionExpiryNotified = false;
 
-  this
-    : _dio = dio,
-      _refreshClient = refreshClient,
-      _allowedBaseUri = allowedBaseUri,
-      _onSessionExpired = onSessionExpired;
+  this;
 
   @override
   Future<void> onRequest(

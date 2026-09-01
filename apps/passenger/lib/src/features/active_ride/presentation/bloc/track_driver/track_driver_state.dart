@@ -1,5 +1,5 @@
-import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:equatable/equatable.dart';
+import 'package:passenger/src/features/active_ride/active_ride.dart';
 
 sealed class const TrackDriverState() extends Equatable {
   @override

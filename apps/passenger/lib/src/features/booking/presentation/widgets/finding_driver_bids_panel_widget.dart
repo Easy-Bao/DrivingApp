@@ -1,8 +1,8 @@
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger/src/features/booking/domain/entities/booking_offer.dart';
 import 'package:foundation/foundation.dart';
-import 'package:design_system/design_system.dart';
+import 'package:passenger/src/features/booking/domain/entities/booking_offer.dart';
 
 class const FindingDriverBidsPanelWidget({
   super.key,

@@ -1,17 +1,17 @@
+import 'package:dio/dio.dart';
 import 'package:passenger/src/features/chat/data/data_sources/chat_remote_data_source.dart';
 import 'package:passenger/src/features/chat/data/repositories/chat_repository_impl.dart';
 import 'package:passenger/src/features/chat/domain/repositories/chat_repository.dart';
-import 'package:dio/dio.dart';
 
 abstract interface class ChatRepositoryFactory {
   ChatRepository create({required String currentUserId});
 }
 
 final class DefaultChatRepositoryFactory({
-  required Dio clientDio,
-  required Future<String?> Function() tokenProvider,
+  required this._clientDio,
+  required this._tokenProvider,
 }) implements ChatRepositoryFactory {
-  this : _clientDio = clientDio, _tokenProvider = tokenProvider;
+  this;
 
   final Dio _clientDio;
   final Future<String?> Function() _tokenProvider;

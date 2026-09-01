@@ -1,7 +1,7 @@
-import 'package:passenger/src/features/ride_history/ride_history.dart';
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:design_system/design_system.dart';
+import 'package:passenger/src/features/ride_history/ride_history.dart';
 
 class const TrackDriverPanelWidget({
   super.key,

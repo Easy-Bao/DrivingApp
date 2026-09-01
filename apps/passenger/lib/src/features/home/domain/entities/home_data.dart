@@ -1,11 +1,17 @@
 import 'package:equatable/equatable.dart';
 import 'package:passenger/src/features/home/domain/entities/recent_location.dart';
 
-class HomeData({
+class const HomeData({
   required this.currentAddress,
-  required List<RecentLocation> recentLocations,
+  required this.recentLocations,
 }) extends Equatable {
-  this : recentLocations = List.unmodifiable(recentLocations);
+  HomeData.fromList({
+    required String currentAddress,
+    required List<RecentLocation> recentLocations,
+  }) : this(
+         currentAddress: currentAddress,
+         recentLocations: List.unmodifiable(recentLocations),
+       );
 
   final String currentAddress;
   final List<RecentLocation> recentLocations;

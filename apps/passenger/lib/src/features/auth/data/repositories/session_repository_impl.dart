@@ -1,19 +1,18 @@
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger/src/features/auth/domain/entities/passenger_session.dart';
 import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
-import 'package:foundation/foundation.dart';
+import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final class SessionRepositoryImpl({
-  required PassengerSessionStore secureSessionService,
-  required SharedPreferences preferences,
+  required this._secureSessionService,
+  required this._preferences,
 }) implements SessionRepository {
   final PassengerSessionStore _secureSessionService;
   final SharedPreferences _preferences;
 
-  this
-    : _secureSessionService = secureSessionService, _preferences = preferences;
+  this;
 
   @override
   Future<Either<Failure, PassengerSession>> restoreSession() async {

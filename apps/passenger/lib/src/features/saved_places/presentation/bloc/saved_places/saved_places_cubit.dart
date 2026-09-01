@@ -1,16 +1,16 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places/saved_places_state.dart';
+import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/saved_places/data/models/saved_place_model.dart';
 import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger/src/features/saved_places/domain/repositories/saved_places_repository.dart';
 import 'package:passenger/src/features/saved_places/domain/saved_place_defaults.dart';
-import 'package:foundation/foundation.dart';
+import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places/saved_places_state.dart';
 
-class SavedPlacesCubit({required SavedPlacesRepository repository})
+class SavedPlacesCubit({required this._repository})
     extends Cubit<SavedPlacesState> {
   final SavedPlacesRepository _repository;
 
-  this : _repository = repository, super(const SavedPlacesState());
+  this : super(const SavedPlacesState());
 
   Future<void> loadPlaces() async {
     emit(state.copyWith(isLoading: true, clearErrorMessage: true));

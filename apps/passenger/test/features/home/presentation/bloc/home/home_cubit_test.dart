@@ -2,17 +2,17 @@ import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger/src/features/home/presentation/bloc/home/home_cubit.dart';
-import 'package:passenger/src/features/home/presentation/bloc/home/home_state.dart';
 import 'package:passenger/src/features/home/domain/entities/current_location.dart';
 import 'package:passenger/src/features/home/domain/entities/home_data.dart';
 import 'package:passenger/src/features/home/domain/entities/recent_location.dart';
 import 'package:passenger/src/features/home/domain/failures/current_location_failure.dart';
 import 'package:passenger/src/features/home/domain/repositories/current_location_repository.dart';
 import 'package:passenger/src/features/home/domain/repositories/home_repository.dart';
-import 'package:foundation/foundation.dart';
+import 'package:passenger/src/features/home/presentation/bloc/home/home_cubit.dart';
+import 'package:passenger/src/features/home/presentation/bloc/home/home_state.dart';
 
 class MockHomeRepo extends Mock implements HomeRepository {}
 
@@ -64,7 +64,7 @@ void main() {
             lng: any(named: 'lng'),
           ),
         ).thenAnswer(
-          (_) async => Right(
+          (_) async => const Right(
             HomeData(
               currentAddress: resolvedAddress,
               recentLocations: mockLocations,
@@ -115,7 +115,7 @@ void main() {
           ),
         ).thenAnswer(
           (_) async =>
-              Right(HomeData(currentAddress: '', recentLocations: const [])),
+              const Right(HomeData(currentAddress: '', recentLocations: [])),
         );
         return _makeCubit(repo, currentLocationRepo);
       },
@@ -197,11 +197,8 @@ void main() {
             lng: any(named: 'lng'),
           ),
         ).thenAnswer(
-          (_) async => Right(
-            HomeData(
-              currentAddress: 'Tuburan, Pagadian',
-              recentLocations: const [],
-            ),
+          (_) async => const Right(
+            HomeData(currentAddress: 'Tuburan, Pagadian', recentLocations: []),
           ),
         );
       },
@@ -275,11 +272,8 @@ void main() {
           secondRequestStarted.complete();
         }
         return Future.value(
-          Right(
-            HomeData(
-              currentAddress: 'Latest pickup',
-              recentLocations: const [],
-            ),
+          const Right(
+            HomeData(currentAddress: 'Latest pickup', recentLocations: []),
           ),
         );
       });
@@ -300,8 +294,8 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       firstRequest.complete(
-        Right(
-          HomeData(currentAddress: 'First pickup', recentLocations: const []),
+        const Right(
+          HomeData(currentAddress: 'First pickup', recentLocations: []),
         ),
       );
       await secondRequestStarted.future.timeout(const Duration(seconds: 1));

@@ -1,16 +1,15 @@
-import 'package:passenger/src/features/active_ride/active_ride.dart';
-import 'package:passenger/src/features/chat/chat.dart';
-
 import 'dart:async';
 
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger/src/infrastructure/config/passenger_env_config.dart';
-import 'package:passenger/src/features/chat/presentation/bloc/chat/chat_cubit.dart';
+import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
-import 'package:design_system/design_system.dart';
+import 'package:passenger/src/features/chat/chat.dart';
+import 'package:passenger/src/features/chat/presentation/bloc/chat/chat_cubit.dart';
+import 'package:passenger/src/infrastructure/config/passenger_env_config.dart';
 
 class const PassengerChatPage({
   super.key,

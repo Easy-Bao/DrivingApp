@@ -1,17 +1,15 @@
-import 'package:passenger/src/features/ride_history/ride_history.dart';
-
 import 'dart:async';
 
-import 'package:maps/maps.dart';
-
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:maps/maps.dart';
 import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/driver_profile/presentation/driver_profile_details_sheet.dart';
-import 'package:foundation/foundation.dart';
-import 'package:design_system/design_system.dart';
+import 'package:passenger/src/features/ride_history/ride_history.dart';
 
 class const DriverMatchedPage({
   super.key,

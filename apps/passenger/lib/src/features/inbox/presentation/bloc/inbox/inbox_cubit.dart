@@ -1,9 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_state.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger/src/features/inbox/domain/repositories/inbox_repository.dart';
-import 'package:foundation/foundation.dart';
+import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_state.dart';
 
 class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
   static const _pageSize = 50;

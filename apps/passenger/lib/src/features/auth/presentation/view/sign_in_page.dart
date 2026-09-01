@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -10,7 +11,6 @@ import 'package:passenger/src/features/auth/presentation/bloc/sign_in/sign_in_bl
 import 'package:passenger/src/features/auth/presentation/validation/auth_form_validator.dart';
 import 'package:passenger/src/features/auth/presentation/widgets/social_login_widget.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
-import 'package:design_system/design_system.dart';
 
 class const SigninPage({super.key}) extends StatelessWidget {
   @override

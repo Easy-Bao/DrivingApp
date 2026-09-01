@@ -1,8 +1,7 @@
 import 'dart:async';
 
-import 'package:maps/maps.dart';
-
 import 'package:flutter_test/flutter_test.dart';
+import 'package:maps/maps.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/booking/data/data_sources/driver_discovery_remote_data_source.dart';
 import 'package:passenger/src/features/booking/data/repositories/driver_repository_impl.dart';

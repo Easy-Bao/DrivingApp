@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:maps/maps.dart';
-import 'package:passenger/src/features/location/presentation/bloc/location_access/location_access_state.dart';
 import 'package:passenger/src/features/location/domain/repositories/location_access_repository.dart';
+import 'package:passenger/src/features/location/presentation/bloc/location_access/location_access_state.dart';
 
-class LocationAccessCubit({required LocationAccessRepository repository})
+class LocationAccessCubit({required this._repository})
     extends Cubit<LocationAccessViewState> {
-  this : _repository = repository, super(const LocationAccessChecking());
+  this : super(const LocationAccessChecking());
 
   final LocationAccessRepository _repository;
 

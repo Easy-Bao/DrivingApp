@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:foundation/foundation.dart';
+import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
 
 class const SavedPlaceModel({
   required super.label,

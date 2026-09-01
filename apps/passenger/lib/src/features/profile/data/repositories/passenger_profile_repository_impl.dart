@@ -1,26 +1,22 @@
-import 'package:passenger/src/features/profile/domain/entities/profile_model.dart';
-import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
-
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:fpdart/fpdart.dart';
-import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
-import 'package:passenger/src/features/profile/data/data_sources/passenger_profile_remote_data_source.dart';
-import 'package:passenger/src/features/profile/domain/repositories/passenger_profile_repository.dart';
 import 'package:foundation/foundation.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
+import 'package:passenger/src/features/profile/data/data_sources/passenger_profile_remote_data_source.dart';
+import 'package:passenger/src/features/profile/domain/entities/profile_model.dart';
+import 'package:passenger/src/features/profile/domain/repositories/passenger_profile_repository.dart';
+import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final class PassengerProfileRepositoryImpl({
-  required PassengerProfileRemoteDataSource remoteDataSource,
-  required PassengerSessionStore sessionService,
-  required SharedPreferences preferences,
+  required this._remoteDataSource,
+  required this._sessionService,
+  required this._preferences,
 }) implements PassengerProfileRepository {
-  this
-    : _remoteDataSource = remoteDataSource,
-      _sessionService = sessionService,
-      _preferences = preferences;
+  this;
 
   final PassengerProfileRemoteDataSource _remoteDataSource;
   final PassengerSessionStore _sessionService;

@@ -1,10 +1,10 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger/src/features/auth/presentation/bloc/verify_otp/verify_otp_bloc.dart';
 import 'package:passenger/src/features/auth/domain/repositories/passenger_auth_repository.dart';
-import 'package:foundation/foundation.dart';
+import 'package:passenger/src/features/auth/presentation/bloc/verify_otp/verify_otp_bloc.dart';
 
 class MockPassengerAuthRepository extends Mock
     implements PassengerAuthRepository {}

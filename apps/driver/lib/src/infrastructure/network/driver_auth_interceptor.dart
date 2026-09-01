@@ -5,9 +5,9 @@ import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 
 class DriverAuthInterceptor(
   this._secureSessionService, {
-  Dio? dio,
-  Dio? refreshClient,
-  Uri? allowedBaseUri,
+  this._dio,
+  this._refreshClient,
+  this._allowedBaseUri,
 }) extends Interceptor {
   static const String _authRetryAttemptKey = 'authRetryAttempt';
   static const String _skipAuthRefreshKey = 'skipAuthRefresh';
@@ -21,10 +21,7 @@ class DriverAuthInterceptor(
 
   Future<String?>? _refreshInFlight;
 
-  this
-    : _dio = dio,
-      _refreshClient = refreshClient,
-      _allowedBaseUri = allowedBaseUri;
+  this;
 
   @override
   Future<void> onRequest(

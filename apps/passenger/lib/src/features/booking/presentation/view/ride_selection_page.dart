@@ -1,24 +1,23 @@
-import 'package:passenger/src/features/booking/booking.dart';
-
 import 'dart:async';
 
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart' hide Route;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger/src/features/auth/auth_routes.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
-import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
-import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
+import 'package:passenger/src/features/booking/booking.dart';
+import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_draft.dart';
 import 'package:passenger/src/features/booking/domain/repositories/fare_repository.dart';
-import 'package:passenger/src/features/booking/booking_routes.dart';
+import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
+import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/booking_auth_bottom_sheet_widget.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_options_panel_widget.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_tip_selector_widget.dart';
-import 'package:foundation/foundation.dart';
-import 'package:design_system/design_system.dart';
 
 class const RideSelectionPage({
   super.key,

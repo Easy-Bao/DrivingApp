@@ -1,11 +1,11 @@
-import 'package:passenger/src/features/ride_history/ride_history.dart';
-import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:dio/dio.dart';
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/ride_history/data/data_sources/passenger_ride_history_remote_data_source.dart';
 import 'package:passenger/src/features/ride_history/domain/entities/ride_history_overview.dart';
 import 'package:passenger/src/features/ride_history/domain/repositories/ride_history_repository.dart';
-import 'package:foundation/foundation.dart';
+import 'package:passenger/src/features/ride_history/ride_history.dart';
 
 const List<String> _monthAbbreviations = <String>[
   'Jan',
@@ -30,12 +30,11 @@ String _shortenAddress(String fullAddress) {
   return fullAddress;
 }
 
-final class RideHistoryRepositoryImpl({
-  required PassengerRideHistoryRemoteDataSource remoteDataSource,
-}) implements RideHistoryRepository {
+final class RideHistoryRepositoryImpl({required this._remoteDataSource})
+    implements RideHistoryRepository {
   final PassengerRideHistoryRemoteDataSource _remoteDataSource;
 
-  this : _remoteDataSource = remoteDataSource;
+  this;
 
   Failure _mapExceptionToFailure(Object error) {
     if (error is DioException) {

@@ -1,16 +1,15 @@
-import 'package:passenger/src/features/active_ride/active_ride.dart';
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:maps/maps.dart';
+import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/data/data_sources/ride_remote_data_source.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
-import 'package:foundation/foundation.dart';
 
-final class TrackRepositoryImpl({
-  required RideRemoteDataSource remoteDataSource,
-}) implements TrackRepository {
+final class TrackRepositoryImpl({required this._remoteDataSource})
+    implements TrackRepository {
   final RideRemoteDataSource _remoteDataSource;
 
-  this : _remoteDataSource = remoteDataSource;
+  this;
 
   @override
   Future<List<List<double>>?> getRoutePolyline({

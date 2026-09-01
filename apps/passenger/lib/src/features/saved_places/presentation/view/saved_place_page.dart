@@ -1,18 +1,17 @@
 import 'dart:async';
 
-import 'package:maps/maps.dart';
-
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:maps/maps.dart';
+import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
+import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places/saved_places_cubit.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places/saved_places_state.dart';
-import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger/src/features/saved_places/presentation/saved_place_icon.dart';
-import 'package:passenger/src/features/booking/booking_routes.dart';
-import 'package:design_system/design_system.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class const SavedPlacePage({super.key}) extends StatefulWidget {

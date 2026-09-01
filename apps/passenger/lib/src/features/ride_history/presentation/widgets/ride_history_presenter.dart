@@ -1,6 +1,6 @@
+import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
-import 'package:foundation/foundation.dart';
 
 class RideHistoryPresenter(DateTime referenceTime) {
   final DateTime referenceTime;

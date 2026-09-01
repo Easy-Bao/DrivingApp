@@ -1,15 +1,13 @@
-import 'package:passenger/src/features/chat/chat.dart';
-
 import 'dart:async';
 
-import 'package:foundation/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:foundation/foundation.dart';
+import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/chat/presentation/bloc/chat/chat_state.dart';
 
 export 'package:passenger/src/features/chat/presentation/bloc/chat/chat_state.dart';
 
-class ChatCubit({required ChatRepository chatRepository})
-    extends Cubit<ChatState> {
+class ChatCubit({required this._chatRepository}) extends Cubit<ChatState> {
   static const _peerTypingTimeout = Duration(seconds: 3);
 
   final ChatRepository _chatRepository;
@@ -20,7 +18,7 @@ class ChatCubit({required ChatRepository chatRepository})
   bool _everConnected = false;
   bool _historyRequested = false;
 
-  this : _chatRepository = chatRepository, super(const ChatState());
+  this : super(const ChatState());
 
   Future<bool> initializeChatRoom({required String roomId}) async {
     final result = await _chatRepository.initializeChatRoom(roomId: roomId);

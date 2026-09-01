@@ -1,40 +1,39 @@
-import 'package:passenger/src/features/active_ride/active_ride.dart';
-import 'package:passenger/src/features/ride_history/ride_history.dart';
-import 'package:passenger/src/features/booking/booking.dart';
-import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
-
 import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger/src/infrastructure/telemetry/passenger_background_telemetry.dart';
-import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
-import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
-import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
-import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
+import 'package:foundation/foundation.dart';
+import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/domain/entities/accepted_booking.dart';
+import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
+import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/domain/entities/bid_session_trip.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_offer.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_session_request.dart';
 import 'package:passenger/src/features/booking/domain/repositories/booking_repository.dart';
 import 'package:passenger/src/features/booking/domain/repositories/driver_repository.dart';
+import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
+import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
+import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
+import 'package:passenger/src/features/ride_history/ride_history.dart';
+import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
+import 'package:passenger/src/infrastructure/telemetry/passenger_background_telemetry.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:foundation/foundation.dart';
 
 part 'booking_event.dart';
 part 'booking_state.dart';
 
 class BookingBloc({
-  required DriverRepository driverRepository,
-  required BookingRepository bookingRepository,
-  required DriverProfileRepository driverProfileRepository,
-  required PassengerSessionStore secureSessionService,
-  InboxCubit? inboxCubit,
-  PassengerBackgroundTelemetry? backgroundTelemetryService,
-  RealtimeWebSocketClient? realtimeClient,
-  required AppLifecycleCoordinator lifecycleCoordinator,
+  required this._driverRepository,
+  required this._bookingRepository,
+  required this._driverProfileRepository,
+  required this._secureSessionService,
+  this._inboxCubit,
+  this._backgroundTelemetryService,
+  this._realtimeClient,
+  required this._lifecycleCoordinator,
   int nearestDriverMaxAttempts = 5,
-  Duration nearestDriverRetryDelay = const Duration(seconds: 2),
+  this._nearestDriverRetryDelay = const Duration(seconds: 2),
   Duration offerRefreshInterval = const Duration(seconds: 3),
 }) extends Bloc<BookingEvent, BookingState> {
   final DriverRepository _driverRepository;
@@ -73,16 +72,7 @@ class BookingBloc({
   this
     : assert(nearestDriverMaxAttempts > 0),
       assert(offerRefreshInterval > Duration.zero),
-      _driverRepository = driverRepository,
-      _bookingRepository = bookingRepository,
-      _driverProfileRepository = driverProfileRepository,
-      _secureSessionService = secureSessionService,
-      _inboxCubit = inboxCubit,
-      _backgroundTelemetryService = backgroundTelemetryService,
-      _realtimeClient = realtimeClient,
-      _lifecycleCoordinator = lifecycleCoordinator,
       _nearestDriverMaxAttempts = nearestDriverMaxAttempts,
-      _nearestDriverRetryDelay = nearestDriverRetryDelay,
       _offerRefreshInterval = offerRefreshInterval,
       super(BookingInitial()) {
     on<LocateNearestDriverEvent>(

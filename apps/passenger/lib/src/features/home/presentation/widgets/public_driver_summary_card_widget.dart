@@ -1,7 +1,7 @@
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger/src/features/home/domain/entities/public_driver_summary.dart';
-import 'package:design_system/design_system.dart';
 
 class const PublicDriverSummaryCardWidget({super.key, required this.summaries})
     extends StatelessWidget {

@@ -1,12 +1,12 @@
 import 'dart:async';
 
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:maps/maps.dart';
 import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
-import 'package:design_system/design_system.dart';
 
 class const AddCategoryPage({
   super.key,

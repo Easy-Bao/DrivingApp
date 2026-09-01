@@ -1,20 +1,19 @@
-import 'package:passenger/src/features/active_ride/active_ride.dart';
-import 'package:passenger/src/features/ride_history/ride_history.dart';
-
 import 'dart:async';
 
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
+import 'package:passenger/src/features/active_ride/active_ride.dart';
+import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
+import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
+import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
 import 'package:passenger/src/features/ride_history/presentation/widgets/ride_history_header_widget.dart';
 import 'package:passenger/src/features/ride_history/presentation/widgets/ride_history_widget.dart';
-import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
-import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
-import 'package:passenger/src/features/booking/booking_routes.dart';
-import 'package:design_system/design_system.dart';
+import 'package:passenger/src/features/ride_history/ride_history.dart';
+import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class const RideHistoryPage({super.key}) extends StatefulWidget {

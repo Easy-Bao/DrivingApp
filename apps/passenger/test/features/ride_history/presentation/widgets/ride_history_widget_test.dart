@@ -1,8 +1,8 @@
-import 'package:passenger/src/app/theme/app_theme.dart';
-import 'package:passenger/src/features/ride_history/ride_history.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:passenger/src/app/theme/app_theme.dart';
 import 'package:passenger/src/features/ride_history/presentation/widgets/ride_history_widget.dart';
+import 'package:passenger/src/features/ride_history/ride_history.dart';
 
 void main() {
   final referenceTime = DateTime(2026, 8, 22, 18);

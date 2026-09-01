@@ -1,8 +1,8 @@
+import 'package:foundation/foundation.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/chat/data/data_sources/chat_remote_data_source.dart';
 import 'package:passenger/src/features/chat/domain/entities/chat_event.dart';
 import 'package:passenger/src/features/chat/domain/entities/chat_message.dart';
-import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 
 abstract interface class ChatRepository {
   Future<Either<Failure, void>> establishChatConnection({

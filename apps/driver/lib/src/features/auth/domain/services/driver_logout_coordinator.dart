@@ -8,14 +8,11 @@ typedef DriverLogoutStep = Future<void> Function();
 /// from being cleared. Session cleanup remains the final required step and its
 /// error is allowed to reach the caller.
 final class const DriverLogoutCoordinator({
-  required DriverLogoutStep forceOffline,
-  required DriverLogoutStep stopTelemetry,
-  required DriverLogoutStep clearSession,
+  required this._forceOffline,
+  required this._stopTelemetry,
+  required this._clearSession,
 }) {
-  this
-    : _forceOffline = forceOffline,
-      _stopTelemetry = stopTelemetry,
-      _clearSession = clearSession;
+  this;
 
   final DriverLogoutStep _forceOffline;
   final DriverLogoutStep _stopTelemetry;

@@ -1,7 +1,7 @@
-import 'package:passenger/src/app/theme/app_theme.dart';
-import 'package:passenger/src/features/booking/booking.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:passenger/src/app/theme/app_theme.dart';
+import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_options_panel_widget.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_trip_summary_widget.dart';
 

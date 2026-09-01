@@ -1,6 +1,6 @@
-import 'package:passenger/src/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:passenger/src/app/theme/app_theme.dart';
 import 'package:passenger/src/features/profile/presentation/view/help_center_page.dart';
 
 void main() {

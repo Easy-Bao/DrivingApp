@@ -1,14 +1,13 @@
-import 'package:passenger/src/features/booking/booking.dart';
-
 import 'dart:async';
 
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:foundation/foundation.dart';
+import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/driver_profile/domain/entities/driver_review.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/driver_profile/presentation/driver_profile_details_sheet.dart';
-import 'package:foundation/foundation.dart';
-import 'package:design_system/design_system.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class const DriverDropdownCardWidget({

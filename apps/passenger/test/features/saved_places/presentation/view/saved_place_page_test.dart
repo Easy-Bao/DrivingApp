@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places/saved_places_cubit.dart';
 import 'package:passenger/src/features/saved_places/domain/repositories/saved_places_repository.dart';
+import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places/saved_places_cubit.dart';
 import 'package:passenger/src/features/saved_places/presentation/view/saved_place_page.dart';
 
 class MockSavedPlacesRepository extends Mock implements SavedPlacesRepository {}

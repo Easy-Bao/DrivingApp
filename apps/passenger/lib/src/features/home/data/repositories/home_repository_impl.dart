@@ -1,18 +1,17 @@
-import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:dio/dio.dart';
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/home/data/data_sources/home_remote_data_source.dart';
 import 'package:passenger/src/features/home/domain/entities/home_data.dart';
 import 'package:passenger/src/features/home/domain/entities/recent_location.dart';
 import 'package:passenger/src/features/home/domain/repositories/home_repository.dart';
-import 'package:foundation/foundation.dart';
 
-final class HomeRepositoryImpl({
-  required HomeRemoteDataSource homeRemoteDataSource,
-}) implements HomeRepository {
+final class HomeRepositoryImpl({required this._homeRemoteDataSource})
+    implements HomeRepository {
   final HomeRemoteDataSource _homeRemoteDataSource;
 
-  this : _homeRemoteDataSource = homeRemoteDataSource;
+  this;
 
   @override
   Future<Either<Failure, HomeData>> loadHomeData({
@@ -31,7 +30,7 @@ final class HomeRepositoryImpl({
         );
       }
       return Right(
-        HomeData(
+        HomeData.fromList(
           currentAddress: rawAddress as String? ?? '',
           recentLocations: _parseRecentLocations(response['recent_locations']),
         ),

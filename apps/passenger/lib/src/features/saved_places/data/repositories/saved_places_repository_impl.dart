@@ -1,18 +1,18 @@
 import 'dart:convert';
 
+import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/saved_places/data/models/saved_place_model.dart';
 import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger/src/features/saved_places/domain/repositories/saved_places_repository.dart';
-import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final class SavedPlacesRepositoryImpl({required SharedPreferences preferences})
+final class SavedPlacesRepositoryImpl({required this._preferences})
     implements SavedPlacesRepository {
   static const String _storageKey = 'passenger_saved_places_v1';
 
   final SharedPreferences _preferences;
 
-  this : _preferences = preferences;
+  this;
 
   @override
   Future<List<Map<String, dynamic>>> loadPlaces() async {

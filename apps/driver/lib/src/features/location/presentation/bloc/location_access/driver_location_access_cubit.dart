@@ -5,10 +5,9 @@ import 'package:driver/src/features/location/presentation/bloc/location_access/d
 import 'package:driver/src/features/location/domain/repositories/driver_location_access_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class DriverLocationAccessCubit({
-  required DriverLocationAccessRepository repository,
-}) extends Cubit<DriverLocationAccessViewState> {
-  this : _repository = repository, super(const DriverLocationAccessChecking());
+class DriverLocationAccessCubit({required this._repository})
+    extends Cubit<DriverLocationAccessViewState> {
+  this : super(const DriverLocationAccessChecking());
 
   final DriverLocationAccessRepository _repository;
 

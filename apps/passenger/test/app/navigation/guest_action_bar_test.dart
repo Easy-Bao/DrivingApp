@@ -1,7 +1,7 @@
-import 'package:passenger/src/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:passenger/src/app/navigation/guest_action_bar.dart';
+import 'package:passenger/src/app/theme/app_theme.dart';
 
 void main() {
   testWidgets('renders guest actions and dispatches authentication intents', (

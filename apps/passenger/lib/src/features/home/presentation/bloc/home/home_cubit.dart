@@ -2,19 +2,19 @@ import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:passenger/src/features/home/presentation/bloc/home/home_state.dart';
 import 'package:passenger/src/features/home/domain/entities/current_location.dart';
 import 'package:passenger/src/features/home/domain/repositories/current_location_repository.dart';
 import 'package:passenger/src/features/home/domain/repositories/home_repository.dart';
-import 'package:foundation/foundation.dart';
+import 'package:passenger/src/features/home/presentation/bloc/home/home_state.dart';
 
 const _pickupLocationUnavailableMessage =
     'Unable to find your pickup location. Tap to retry.';
 
 class HomeCubit({
-  required HomeRepository repository,
-  required CurrentLocationRepository currentLocationRepository,
+  required this._repository,
+  required this._currentLocationRepository,
 }) extends Cubit<HomeState> {
   final HomeRepository _repository;
   final CurrentLocationRepository _currentLocationRepository;
@@ -29,10 +29,7 @@ class HomeCubit({
   int _dataRevision = 0;
   bool _isTrackingLocation = false;
 
-  this
-    : _repository = repository,
-      _currentLocationRepository = currentLocationRepository,
-      super(const HomeState());
+  this : super(const HomeState());
 
   Future<void> loadHomeData({required double lat, required double lng}) async {
     if (_lastLat != null &&

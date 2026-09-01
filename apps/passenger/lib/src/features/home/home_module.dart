@@ -1,13 +1,10 @@
 import 'dart:async';
 
-import 'package:maps/maps.dart';
-
+import 'package:design_system/design_system.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
-import 'package:passenger/src/features/home/presentation/bloc/home/home_cubit.dart';
-import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_cubit.dart';
+import 'package:maps/maps.dart';
 import 'package:passenger/src/features/home/data/data_sources/current_location_data_source.dart';
 import 'package:passenger/src/features/home/data/data_sources/home_remote_data_source.dart';
 import 'package:passenger/src/features/home/data/data_sources/public_driver_remote_data_source.dart';
@@ -18,10 +15,12 @@ import 'package:passenger/src/features/home/domain/repositories/current_location
 import 'package:passenger/src/features/home/domain/repositories/home_repository.dart';
 import 'package:passenger/src/features/home/domain/repositories/public_driver_summary_repository.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
+import 'package:passenger/src/features/home/presentation/bloc/home/home_cubit.dart';
+import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_cubit.dart';
 import 'package:passenger/src/features/home/presentation/view/home_page.dart';
+import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places/saved_places_cubit.dart';
 import 'package:passenger/src/features/saved_places/presentation/view/add_category_page.dart';
-import 'package:design_system/design_system.dart';
 
 class HomeModule {
   HomeModule._();

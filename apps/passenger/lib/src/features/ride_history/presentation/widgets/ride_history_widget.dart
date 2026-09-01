@@ -1,12 +1,12 @@
-import 'package:passenger/src/features/active_ride/active_ride.dart';
-import 'package:passenger/src/features/ride_history/ride_history.dart';
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/ride_history/presentation/widgets/ride_history_controls_widget.dart';
 import 'package:passenger/src/features/ride_history/presentation/widgets/ride_history_header_widget.dart';
 import 'package:passenger/src/features/ride_history/presentation/widgets/ride_history_presenter.dart';
 import 'package:passenger/src/features/ride_history/presentation/widgets/ride_history_ride_card_widget.dart';
-import 'package:design_system/design_system.dart';
+import 'package:passenger/src/features/ride_history/ride_history.dart';
 
 class const RideHistoryWidget({
   required this.activeRides,

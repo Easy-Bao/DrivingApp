@@ -1,23 +1,23 @@
-import 'package:passenger/src/features/booking/booking.dart';
 import 'package:bloc_test/bloc_test.dart';
-import 'package:maps/maps.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:maps/maps.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
-import 'package:passenger/src/features/driver_profile/domain/entities/driver_profile_stats.dart';
-import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
-import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
-import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_state.dart';
-import 'package:passenger/src/features/inbox/domain/repositories/inbox_repository.dart';
-import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/active_ride/domain/entities/accepted_booking.dart';
+import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/domain/entities/bid_session_trip.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_offer.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_session_request.dart';
 import 'package:passenger/src/features/booking/domain/repositories/booking_repository.dart';
 import 'package:passenger/src/features/booking/domain/repositories/driver_repository.dart';
-import 'package:foundation/foundation.dart';
+import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
+import 'package:passenger/src/features/driver_profile/domain/entities/driver_profile_stats.dart';
+import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
+import 'package:passenger/src/features/inbox/domain/repositories/inbox_repository.dart';
+import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
+import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_state.dart';
+import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 
 class MockDriverRepo extends Mock implements DriverRepository {}
 

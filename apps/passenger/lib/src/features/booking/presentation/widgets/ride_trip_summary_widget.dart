@@ -1,9 +1,9 @@
-import 'package:passenger/src/app/theme/app_theme.dart';
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:design_system/design_system.dart';
+import 'package:passenger/src/app/theme/app_theme.dart';
 
 class const RideTripSummaryWidget({
   super.key,
@@ -39,9 +39,17 @@ class const RideTripSummaryWidget({
           ),
           const SizedBox(height: 14),
           _TripLocationTimeline(
-            pickupLabel: pickupLabel,
-            destinationName: destinationName,
-            destinationAddress: destinationAddress,
+            children: [
+              const _LocationIcon(icon: LucideIcons.locate_fixed),
+              _LocationDetails(label: 'Pickup', value: pickupLabel),
+              const _DashedRouteConnector(),
+              const _LocationIcon(icon: LucideIcons.map_pin),
+              _LocationDetails(
+                label: 'Destination',
+                value: destinationName,
+                subtitle: destinationAddress,
+              ),
+            ],
           ),
         ],
       ),
@@ -49,31 +57,9 @@ class const RideTripSummaryWidget({
   }
 }
 
-class _TripLocationTimeline({
-  required this.pickupLabel,
-  required this.destinationName,
-  required this.destinationAddress,
-}) extends MultiChildRenderObjectWidget {
+class const _TripLocationTimeline({required super.children})
+    extends MultiChildRenderObjectWidget {
   static const _routeGap = 38.0;
-
-  final String pickupLabel;
-  final String destinationName;
-  final String destinationAddress;
-
-  this
-    : super(
-        children: [
-          const _LocationIcon(icon: LucideIcons.locate_fixed),
-          _LocationDetails(label: 'Pickup', value: pickupLabel),
-          const _DashedRouteConnector(),
-          const _LocationIcon(icon: LucideIcons.map_pin),
-          _LocationDetails(
-            label: 'Destination',
-            value: destinationName,
-            subtitle: destinationAddress,
-          ),
-        ],
-      );
 
   @override
   RenderObject createRenderObject(BuildContext context) {

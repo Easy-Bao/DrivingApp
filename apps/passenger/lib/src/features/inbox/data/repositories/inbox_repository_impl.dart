@@ -1,8 +1,8 @@
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/inbox/data/data_sources/inbox_remote_data_source.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger/src/features/inbox/domain/repositories/inbox_repository.dart';
-import 'package:foundation/foundation.dart';
 
 final class InboxRepositoryImpl({required this.remoteDataSource})
     implements InboxRepository, PaginatedInboxRepository {

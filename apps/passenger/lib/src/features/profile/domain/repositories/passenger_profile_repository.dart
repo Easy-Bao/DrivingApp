@@ -1,6 +1,6 @@
-import 'package:passenger/src/features/profile/domain/entities/profile_model.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:foundation/foundation.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:passenger/src/features/profile/domain/entities/profile_model.dart';
 
 abstract interface class PassengerProfileRepository {
   ProfileModel getCachedProfile();

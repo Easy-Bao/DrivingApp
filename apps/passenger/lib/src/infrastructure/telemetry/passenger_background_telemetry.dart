@@ -5,17 +5,17 @@ import 'dart:ui';
 import 'package:dio/dio.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:foundation/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:passenger/src/infrastructure/session/passenger_storage_keys.dart';
-import 'package:foundation/foundation.dart';
 
 const _backgroundTelemetryInterval = Duration(seconds: 10);
 const _notificationChannelId = 'easyride_passenger_location';
 const _notificationId = 4802;
 
 class PassengerBackgroundTelemetry({
-  required Uri apiBaseUri,
-  required AppLifecycleCoordinator lifecycleCoordinator,
+  required this._apiBaseUri,
+  required this._lifecycleCoordinator,
   FlutterBackgroundService? service,
 }) {
   final Uri _apiBaseUri;
@@ -23,10 +23,7 @@ class PassengerBackgroundTelemetry({
   final AppLifecycleCoordinator _lifecycleCoordinator;
   bool _configured = false;
 
-  this
-    : _apiBaseUri = apiBaseUri,
-      _service = service ?? FlutterBackgroundService(),
-      _lifecycleCoordinator = lifecycleCoordinator;
+  this : _service = service ?? FlutterBackgroundService();
 
   static Future<void> stopExistingServiceForStartup() async {
     await _stopRunningService(FlutterBackgroundService());

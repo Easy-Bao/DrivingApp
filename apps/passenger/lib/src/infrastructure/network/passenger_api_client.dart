@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:foundation/foundation.dart';
 import 'package:passenger/src/infrastructure/network/passenger_auth_interceptor.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
-import 'package:foundation/foundation.dart';
 
 class PassengerApiClient {
   PassengerApiClient._();

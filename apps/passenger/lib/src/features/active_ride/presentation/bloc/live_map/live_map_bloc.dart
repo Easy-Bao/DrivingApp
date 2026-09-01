@@ -11,7 +11,7 @@ import 'package:rxdart/rxdart.dart';
 part 'live_map_event.dart';
 part 'live_map_state.dart';
 
-class LiveMapBloc({required TrackRepository trackRepository})
+class LiveMapBloc({required this._trackRepository})
     extends Bloc<LiveMapEvent, LiveMapState> {
   final TrackRepository _trackRepository;
 
@@ -30,7 +30,7 @@ class LiveMapBloc({required TrackRepository trackRepository})
   late final StreamSubscription<DispatchTelemetryLocationEvent>
   _locationSubscription;
 
-  this : _trackRepository = trackRepository, super(LiveMapInitial()) {
+  this : super(LiveMapInitial()) {
     on<InitializeMapEvent>(_onInitializeMap);
     on<DrawDriverToRiderRouteEvent>(_onDrawDriverToRiderRoute);
     on<AddMapMarkerEvent>(_onAddMapMarker);

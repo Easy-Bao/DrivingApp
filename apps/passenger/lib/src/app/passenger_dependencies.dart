@@ -1,27 +1,27 @@
 import 'package:dio/dio.dart';
-import 'package:maps/maps.dart';
+import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger/src/app/passenger_router.dart';
-import 'package:passenger/src/infrastructure/config/passenger_env_config.dart';
-import 'package:passenger/src/infrastructure/network/passenger_api_client.dart';
+import 'package:maps/maps.dart';
 import 'package:passenger/src/app/navigation/app_routes.dart';
-import 'package:passenger/src/infrastructure/telemetry/passenger_background_telemetry.dart';
-import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
+import 'package:passenger/src/app/passenger_router.dart';
 import 'package:passenger/src/features/auth/auth_module.dart';
-import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/auth/data/repositories/session_repository_impl.dart';
 import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
-import 'package:passenger/src/features/location/presentation/bloc/location_access/location_access_cubit.dart';
+import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
+import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger/src/features/location/data/repositories/location_access_repository_impl.dart';
 import 'package:passenger/src/features/location/domain/repositories/location_access_repository.dart';
-import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
-import 'package:foundation/foundation.dart';
+import 'package:passenger/src/features/location/presentation/bloc/location_access/location_access_cubit.dart';
+import 'package:passenger/src/infrastructure/config/passenger_env_config.dart';
+import 'package:passenger/src/infrastructure/network/passenger_api_client.dart';
+import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
+import 'package:passenger/src/infrastructure/telemetry/passenger_background_telemetry.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class PassengerDependencies({required SharedPreferences prefs}) extends Module {
+class PassengerDependencies({required this._prefs}) extends Module {
   final SharedPreferences _prefs;
 
-  this : _prefs = prefs;
+  this;
 
   @override
   void binds(Injector i) {

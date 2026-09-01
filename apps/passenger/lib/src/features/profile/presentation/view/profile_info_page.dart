@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer' as developer;
 
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,7 +12,6 @@ import 'package:passenger/src/features/auth/auth_routes.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/profile/presentation/bloc/profile/profile_cubit.dart';
 import 'package:passenger/src/features/profile/presentation/widgets/profile_avatar_widget.dart';
-import 'package:design_system/design_system.dart';
 
 class const ProfileInfoPage({super.key, this.pickPhoto})
     extends StatefulWidget {

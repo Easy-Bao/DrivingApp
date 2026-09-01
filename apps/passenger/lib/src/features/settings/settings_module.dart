@@ -1,11 +1,11 @@
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger/src/features/settings/settings_routes.dart';
 import 'package:passenger/src/features/settings/presentation/view/about_bao_ride_page.dart';
 import 'package:passenger/src/features/settings/presentation/view/location_access_status_page.dart';
 import 'package:passenger/src/features/settings/presentation/view/settings_page.dart';
 import 'package:passenger/src/features/settings/presentation/view/terms_of_service_page.dart';
-import 'package:design_system/design_system.dart';
+import 'package:passenger/src/features/settings/settings_routes.dart';
 
 class SettingsModule {
   SettingsModule._();

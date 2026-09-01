@@ -1,25 +1,25 @@
 import 'dart:async';
 
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:go_router/go_router.dart';
+import 'package:passenger/src/app/navigation/passenger_floating_tab_bar.dart';
+import 'package:passenger/src/app/navigation/passenger_navigation_shell.dart';
 import 'package:passenger/src/app/theme/app_theme.dart';
-import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
-import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/auth/domain/entities/passenger_session.dart';
 import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
+import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
-import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger/src/features/inbox/domain/repositories/inbox_repository.dart';
 import 'package:passenger/src/features/inbox/inbox_routes.dart';
+import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger/src/features/profile/profile_routes.dart';
-import 'package:passenger/src/app/navigation/passenger_floating_tab_bar.dart';
-import 'package:passenger/src/app/navigation/passenger_navigation_shell.dart';
-import 'package:foundation/foundation.dart';
-import 'package:design_system/design_system.dart';
+import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
 
 void main() {
   testWidgets('realtime follows the passenger app lifecycle', (tester) async {

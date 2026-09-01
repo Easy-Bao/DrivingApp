@@ -1,13 +1,11 @@
+import 'package:design_system/design_system.dart';
 import 'package:dio/dio.dart';
-import 'package:maps/maps.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger/src/infrastructure/telemetry/passenger_background_telemetry.dart';
-import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
-import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
-import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
-import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
+import 'package:maps/maps.dart';
+import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/booking/data/data_sources/booking_remote_data_source.dart';
 import 'package:passenger/src/features/booking/data/data_sources/driver_discovery_remote_data_source.dart';
 import 'package:passenger/src/features/booking/data/data_sources/fare_remote_data_source.dart';
@@ -17,14 +15,16 @@ import 'package:passenger/src/features/booking/data/repositories/fare_repository
 import 'package:passenger/src/features/booking/domain/repositories/booking_repository.dart';
 import 'package:passenger/src/features/booking/domain/repositories/driver_repository.dart';
 import 'package:passenger/src/features/booking/domain/repositories/fare_repository.dart';
-import 'package:passenger/src/features/booking/booking_routes.dart';
+import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/view/destination_map_page.dart';
 import 'package:passenger/src/features/booking/presentation/view/finding_driver_page.dart';
 import 'package:passenger/src/features/booking/presentation/view/map_pin_page.dart';
 import 'package:passenger/src/features/booking/presentation/view/ride_selection_page.dart';
 import 'package:passenger/src/features/booking/presentation/view/search_destination_page.dart';
-import 'package:foundation/foundation.dart';
-import 'package:design_system/design_system.dart';
+import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
+import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
+import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
+import 'package:passenger/src/infrastructure/telemetry/passenger_background_telemetry.dart';
 
 class BookingModule._() {
   static void binds(Injector i) {

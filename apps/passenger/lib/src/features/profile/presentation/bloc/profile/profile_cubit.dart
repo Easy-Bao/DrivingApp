@@ -1,19 +1,17 @@
-import 'package:passenger/src/features/profile/domain/entities/profile_model.dart';
-
 import 'dart:developer' as dev;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger/src/features/profile/presentation/bloc/profile/profile_state.dart';
-import 'package:passenger/src/features/profile/domain/repositories/passenger_profile_repository.dart';
 import 'package:foundation/foundation.dart';
+import 'package:passenger/src/features/profile/domain/entities/profile_model.dart';
+import 'package:passenger/src/features/profile/domain/repositories/passenger_profile_repository.dart';
+import 'package:passenger/src/features/profile/presentation/bloc/profile/profile_state.dart';
 
 export 'package:passenger/src/features/profile/presentation/bloc/profile/profile_state.dart';
 
-class ProfileCubit({required PassengerProfileRepository repository})
-    extends Cubit<ProfileState> {
+class ProfileCubit({required this._repository}) extends Cubit<ProfileState> {
   final PassengerProfileRepository _repository;
 
-  this : _repository = repository, super(const ProfileState());
+  this : super(const ProfileState());
 
   Future<void> loadProfile() async {
     if (isClosed) return;

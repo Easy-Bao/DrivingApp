@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger/src/features/auth/data/passenger_auth_endpoints.dart';
-import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger/src/features/auth/data/data_sources/passenger_auth_remote_data_source.dart';
+import 'package:passenger/src/features/auth/data/passenger_auth_endpoints.dart';
 import 'package:passenger/src/features/auth/data/repositories/passenger_auth_repository_impl.dart';
 import 'package:passenger/src/features/auth/domain/entities/auth_credentials.dart';
+import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MockAuthRemoteDataSource extends Mock

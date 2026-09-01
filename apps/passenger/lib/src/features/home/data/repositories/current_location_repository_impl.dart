@@ -1,14 +1,13 @@
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/home/data/data_sources/current_location_data_source.dart';
 import 'package:passenger/src/features/home/domain/entities/current_location.dart';
 import 'package:passenger/src/features/home/domain/failures/current_location_failure.dart';
 import 'package:passenger/src/features/home/domain/repositories/current_location_repository.dart';
-import 'package:foundation/foundation.dart';
 
-final class const CurrentLocationRepositoryImpl({
-  required CurrentLocationDataSource dataSource,
-}) implements CurrentLocationRepository {
-  this : _dataSource = dataSource;
+final class const CurrentLocationRepositoryImpl({required this._dataSource})
+    implements CurrentLocationRepository {
+  this;
 
   final CurrentLocationDataSource _dataSource;
 

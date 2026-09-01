@@ -13,7 +13,7 @@ import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_
 part 'live_map_event.dart';
 part 'live_map_state.dart';
 
-class LiveMapBloc({required DriverRideRepository rideRepository})
+class LiveMapBloc({required this._rideRepository})
     extends Bloc<LiveMapEvent, LiveMapState> {
   final DriverRideRepository _rideRepository;
 
@@ -34,7 +34,7 @@ class LiveMapBloc({required DriverRideRepository rideRepository})
   late final StreamSubscription<DispatchTelemetryLocationEvent>
   _locationSubscription;
 
-  this : _rideRepository = rideRepository, super(LiveMapInitial()) {
+  this : super(LiveMapInitial()) {
     on<InitializeMapEvent>(_onInitializeMap);
     on<UpdateLocationsAndDrawRouteEvent>(
       _onUpdateLocationsAndDrawRoute,

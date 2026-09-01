@@ -1,26 +1,23 @@
 import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:passenger/src/features/auth/data/passenger_auth_endpoints.dart';
-import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger/src/features/auth/data/data_sources/passenger_auth_remote_data_source.dart';
+import 'package:passenger/src/features/auth/data/passenger_auth_endpoints.dart';
 import 'package:passenger/src/features/auth/domain/entities/auth_credentials.dart';
 import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/auth/domain/repositories/passenger_auth_repository.dart';
+import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final class PassengerAuthRepositoryImpl({
-  required PassengerAuthRemoteDataSource remoteDataSource,
-  required PassengerSessionStore secureSessionService,
-  required SharedPreferences preferences,
+  required this._remoteDataSource,
+  required this._secureSessionService,
+  required this._preferences,
 }) implements PassengerAuthRepository {
   final PassengerAuthRemoteDataSource _remoteDataSource;
   final PassengerSessionStore _secureSessionService;
   final SharedPreferences _preferences;
 
-  this
-    : _remoteDataSource = remoteDataSource,
-      _secureSessionService = secureSessionService,
-      _preferences = preferences;
+  this;
 
   @override
   Future<Either<Failure, PassengerAuthCredentials>> authenticate({

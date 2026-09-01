@@ -1,17 +1,17 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/auth/domain/entities/passenger_session.dart';
 import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
-import 'package:foundation/foundation.dart';
 
 part 'session_event.dart';
 part 'session_state.dart';
 
-class SessionBloc({required SessionRepository sessionRepository})
+class SessionBloc({required this._sessionRepository})
     extends Bloc<SessionEvent, SessionState> {
   final SessionRepository _sessionRepository;
 
-  this : _sessionRepository = sessionRepository, super(const SessionLoading()) {
+  this : super(const SessionLoading()) {
     on<SessionStarted>(_onSessionStarted);
     on<SessionAuthenticatedRequested>(_onSessionAuthenticatedRequested);
     on<SessionGuestRequested>(_onSessionGuestRequested);

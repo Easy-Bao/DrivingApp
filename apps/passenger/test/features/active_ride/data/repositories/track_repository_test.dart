@@ -1,6 +1,6 @@
-import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/data/data_sources/ride_remote_data_source.dart';
 import 'package:passenger/src/features/active_ride/data/repositories/track_repository_impl.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';

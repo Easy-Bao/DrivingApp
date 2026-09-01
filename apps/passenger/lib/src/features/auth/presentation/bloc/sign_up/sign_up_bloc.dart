@@ -1,10 +1,10 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/auth/domain/entities/auth_credentials.dart';
 import 'package:passenger/src/features/auth/domain/repositories/passenger_auth_repository.dart';
 import 'package:passenger/src/features/auth/presentation/validation/auth_failure_message.dart';
 import 'package:passenger/src/features/auth/presentation/validation/auth_form_validator.dart';
-import 'package:foundation/foundation.dart';
 
 part 'sign_up_event.dart';
 part 'sign_up_state.dart';

@@ -1,5 +1,5 @@
-import 'package:passenger/src/features/chat/domain/entities/chat_message.dart';
 import 'package:equatable/equatable.dart';
+import 'package:passenger/src/features/chat/domain/entities/chat_message.dart';
 
 class const ChatMessageDto({
   this.id = '',

@@ -1,8 +1,8 @@
-import 'package:passenger/src/app/theme/app_theme.dart';
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:passenger/src/app/theme/app_theme.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/map_selection_marker_widget.dart';
-import 'package:design_system/design_system.dart';
 
 void main() {
   testWidgets('renders the compact green trip-location marker', (tester) async {

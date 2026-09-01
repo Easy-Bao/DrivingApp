@@ -1,11 +1,11 @@
-import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/ride_history/data/data_sources/passenger_ride_history_remote_data_source.dart';
 import 'package:passenger/src/features/ride_history/data/repositories/ride_history_repository_impl.dart';
 import 'package:passenger/src/features/ride_history/domain/repositories/ride_history_repository.dart';
-import 'package:foundation/foundation.dart';
 
 class MockPassengerRideHistoryRemoteDataSource extends Mock
     implements PassengerRideHistoryRemoteDataSource {}

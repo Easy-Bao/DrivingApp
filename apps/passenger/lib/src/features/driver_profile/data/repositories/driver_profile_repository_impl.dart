@@ -1,16 +1,15 @@
-import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:dio/dio.dart';
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/driver_profile/data/data_sources/driver_profile_remote_data_source.dart';
 import 'package:passenger/src/features/driver_profile/domain/entities/driver_profile_stats.dart';
 import 'package:passenger/src/features/driver_profile/domain/entities/driver_review.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
-import 'package:foundation/foundation.dart';
 
-final class DriverProfileRepositoryImpl({
-  required DriverProfileRemoteDataSource dataSource,
-}) implements DriverProfileRepository {
-  this : _dataSource = dataSource;
+final class DriverProfileRepositoryImpl({required this._dataSource})
+    implements DriverProfileRepository {
+  this;
 
   final DriverProfileRemoteDataSource _dataSource;
 

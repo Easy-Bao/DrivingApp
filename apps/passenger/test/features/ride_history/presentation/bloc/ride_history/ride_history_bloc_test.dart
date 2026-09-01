@@ -1,12 +1,12 @@
-import 'package:passenger/src/features/ride_history/ride_history.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
 import 'package:passenger/src/features/ride_history/domain/entities/ride_history_overview.dart';
 import 'package:passenger/src/features/ride_history/domain/repositories/ride_history_repository.dart';
-import 'package:foundation/foundation.dart';
+import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
+import 'package:passenger/src/features/ride_history/ride_history.dart';
 
 class MockRideHistoryRepository extends Mock implements RideHistoryRepository {}
 

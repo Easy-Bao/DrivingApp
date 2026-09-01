@@ -1,14 +1,14 @@
-import 'package:passenger/src/features/active_ride/active_ride.dart';
-import 'package:passenger/src/features/ride_history/ride_history.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger/src/features/ride_history/domain/repositories/ride_history_repository.dart';
 import 'package:foundation/foundation.dart';
+import 'package:passenger/src/features/active_ride/active_ride.dart';
+import 'package:passenger/src/features/ride_history/domain/repositories/ride_history_repository.dart';
+import 'package:passenger/src/features/ride_history/ride_history.dart';
 
 part 'ride_history_event.dart';
 part 'ride_history_state.dart';
 
-class RideHistoryBloc({required RideHistoryRepository repository})
+class RideHistoryBloc({required this._repository})
     extends Bloc<RideHistoryEvent, RideHistoryState> {
   final RideHistoryRepository _repository;
 
@@ -23,7 +23,7 @@ class RideHistoryBloc({required RideHistoryRepository repository})
     RideStatus.inTransit,
   };
 
-  this : _repository = repository, super(const RideHistoryInitial()) {
+  this : super(const RideHistoryInitial()) {
     on<LoadRideHistoryEvent>(_onLoad);
     on<RefreshRideHistoryEvent>(_onRefresh);
     on<LoadMoreRideHistoryEvent>(_onLoadMore);

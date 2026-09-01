@@ -19,14 +19,14 @@ import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final class DashboardRepositoryImpl({
-  required DriverPerformanceRepository performanceRepository,
-  required DriverRideHistoryRepository rideHistoryRepository,
-  required DriverAvailabilityRemoteDataSource availabilityDataSource,
-  required RideOfferRemoteDataSource rideOfferDataSource,
-  required DriverRideRepository rideRepository,
-  required DriverSessionStore sessionService,
-  required SharedPreferences preferences,
-  DriverBackgroundTelemetry? backgroundTelemetryService,
+  required this._performanceRepository,
+  required this._rideHistoryRepository,
+  required this._availabilityDataSource,
+  required this._rideOfferDataSource,
+  required this._rideRepository,
+  required this._sessionService,
+  required this._preferences,
+  this._backgroundTelemetryService,
 }) implements DashboardRepository {
   final DriverPerformanceRepository _performanceRepository;
   final DriverRideHistoryRepository _rideHistoryRepository;
@@ -37,15 +37,7 @@ final class DashboardRepositoryImpl({
   final SharedPreferences _preferences;
   final DriverBackgroundTelemetry? _backgroundTelemetryService;
 
-  this
-    : _performanceRepository = performanceRepository,
-      _rideHistoryRepository = rideHistoryRepository,
-      _availabilityDataSource = availabilityDataSource,
-      _rideOfferDataSource = rideOfferDataSource,
-      _rideRepository = rideRepository,
-      _sessionService = sessionService,
-      _preferences = preferences,
-      _backgroundTelemetryService = backgroundTelemetryService;
+  this;
 
   Failure _mapExceptionToFailure(Object error) => switch (error) {
     final DioException exception => _mapDioFailure(exception),

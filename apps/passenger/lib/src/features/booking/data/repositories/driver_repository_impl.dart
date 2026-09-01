@@ -1,15 +1,15 @@
-import 'package:passenger/src/features/booking/booking.dart';
-import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:dio/dio.dart';
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:maps/maps.dart';
+import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
+import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/data/data_sources/driver_discovery_remote_data_source.dart';
 import 'package:passenger/src/features/booking/domain/repositories/driver_repository.dart';
-import 'package:foundation/foundation.dart';
 
 final class DriverRepositoryImpl({
-  required DriverDiscoveryRemoteDataSource discoveryDataSource,
-  required LocationRepository locationRepository,
+  required this._discoveryDataSource,
+  required this._locationRepository,
 }) implements DriverRepository {
   final DriverDiscoveryRemoteDataSource _discoveryDataSource;
   final LocationRepository _locationRepository;
@@ -17,9 +17,7 @@ final class DriverRepositoryImpl({
   Future<Either<Failure, List<DriverModel>>>? _activeNearbyLookup;
   ({double lat, double lng})? _activeNearbyCoordinates;
 
-  this
-    : _discoveryDataSource = discoveryDataSource,
-      _locationRepository = locationRepository;
+  this;
 
   Failure _mapExceptionToFailure(Object error) {
     if (error is DioException) {

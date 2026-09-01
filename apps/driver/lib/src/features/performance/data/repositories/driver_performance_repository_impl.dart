@@ -6,10 +6,9 @@ import 'package:driver/src/features/performance/domain/repositories/driver_perfo
 import 'package:fpdart/fpdart.dart';
 import 'package:foundation/foundation.dart';
 
-final class DriverPerformanceRepositoryImpl({
-  required DriverPerformanceRemoteDataSource dataSource,
-}) implements DriverPerformanceRepository {
-  this : _dataSource = dataSource;
+final class DriverPerformanceRepositoryImpl({required this._dataSource})
+    implements DriverPerformanceRepository {
+  this;
 
   final DriverPerformanceRemoteDataSource _dataSource;
 

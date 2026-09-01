@@ -1,19 +1,20 @@
 import 'dart:async';
 
-import 'package:maps/maps.dart';
-
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
-import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
+import 'package:maps/maps.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
+import 'package:passenger/src/features/booking/booking_routes.dart';
+import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
+import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
+import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/home/presentation/bloc/home/home_cubit.dart';
 import 'package:passenger/src/features/home/presentation/bloc/home/home_state.dart';
 import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_cubit.dart';
 import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_state.dart';
-import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/home/presentation/widgets/home_location_row_widget.dart';
 import 'package:passenger/src/features/home/presentation/widgets/pending_booking_banner_widget.dart';
 import 'package:passenger/src/features/home/presentation/widgets/public_driver_summary_card_widget.dart';
@@ -22,13 +23,11 @@ import 'package:passenger/src/features/home/presentation/widgets/recent_ride_his
 import 'package:passenger/src/features/home/presentation/widgets/saved_place_quick_actions_widget.dart';
 import 'package:passenger/src/features/location/presentation/bloc/location_access/location_access_cubit.dart';
 import 'package:passenger/src/features/location/presentation/bloc/location_access/location_access_state.dart';
+import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
+import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
+import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places/saved_places_cubit.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places/saved_places_state.dart';
-import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
-import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
-import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
-import 'package:passenger/src/features/booking/booking_routes.dart';
-import 'package:design_system/design_system.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class const HomePage({super.key}) extends StatefulWidget {

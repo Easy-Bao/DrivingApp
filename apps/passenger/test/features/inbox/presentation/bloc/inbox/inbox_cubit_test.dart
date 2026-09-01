@@ -1,13 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
-import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_state.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger/src/features/inbox/domain/repositories/inbox_repository.dart';
-import 'package:foundation/foundation.dart';
+import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
+import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_state.dart';
 
 class MockInboxRepository extends Mock implements InboxRepository {}
 

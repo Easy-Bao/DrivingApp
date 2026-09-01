@@ -1,3 +1,4 @@
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -7,7 +8,6 @@ import 'package:passenger/src/features/location/presentation/bloc/location_acces
 import 'package:passenger/src/features/location/presentation/bloc/location_access/location_access_state.dart';
 import 'package:passenger/src/features/profile/profile_routes.dart';
 import 'package:passenger/src/features/settings/settings_routes.dart';
-import 'package:design_system/design_system.dart';
 
 class const SettingsPage({
   super.key,

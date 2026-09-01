@@ -1,12 +1,12 @@
+import 'package:design_system/design_system.dart';
 import 'package:dio/dio.dart';
-import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
-import 'package:passenger/src/features/chat/chat.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
+import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/chat/chat_routes.dart';
 import 'package:passenger/src/features/chat/presentation/view/passenger_chat_page.dart';
-import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
-import 'package:design_system/design_system.dart';
+import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 
 class ChatModule {
   ChatModule._();

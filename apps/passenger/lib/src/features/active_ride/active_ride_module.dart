@@ -1,11 +1,9 @@
-import 'package:passenger/src/features/ride_history/ride_history.dart';
-import 'package:passenger/src/features/chat/chat.dart';
+import 'package:design_system/design_system.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
-import 'package:passenger/src/infrastructure/telemetry/passenger_background_telemetry.dart';
-import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger/src/features/active_ride/data/data_sources/ride_remote_data_source.dart';
 import 'package:passenger/src/features/active_ride/data/repositories/track_repository_impl.dart';
@@ -14,9 +12,11 @@ import 'package:passenger/src/features/active_ride/presentation/bloc/live_map/li
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger/src/features/active_ride/presentation/view/driver_matched_page.dart';
 import 'package:passenger/src/features/active_ride/presentation/view/track_driver_page.dart';
+import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
-import 'package:foundation/foundation.dart';
-import 'package:design_system/design_system.dart';
+import 'package:passenger/src/features/ride_history/ride_history.dart';
+import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
+import 'package:passenger/src/infrastructure/telemetry/passenger_background_telemetry.dart';
 
 class ActiveRideModule {
   ActiveRideModule._();

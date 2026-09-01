@@ -1,15 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
+import 'package:foundation/foundation.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/chat/data/data_sources/chat_remote_data_source.dart';
 import 'package:passenger/src/features/chat/data/dto/chat_message_dto.dart';
 import 'package:passenger/src/features/chat/domain/entities/chat_event.dart';
 import 'package:passenger/src/features/chat/domain/entities/chat_message.dart';
 import 'package:passenger/src/features/chat/domain/failures/chat_failure.dart';
 import 'package:passenger/src/features/chat/domain/repositories/chat_repository.dart';
-import 'package:dio/dio.dart';
-import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 
 final class ChatRepositoryImpl({
   required this.remoteDataSource,

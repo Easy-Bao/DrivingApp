@@ -1,10 +1,10 @@
+import 'package:design_system/design_system.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_state.dart';
-import 'package:design_system/design_system.dart';
 
 class const PassengerFloatingTabBar({
   super.key,

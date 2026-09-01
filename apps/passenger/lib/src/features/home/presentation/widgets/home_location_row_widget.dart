@@ -1,6 +1,6 @@
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:design_system/design_system.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class const HomeLocationRowWidget({

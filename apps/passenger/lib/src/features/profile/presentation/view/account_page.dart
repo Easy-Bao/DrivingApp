@@ -1,15 +1,15 @@
 import 'dart:async';
 
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger/src/features/profile/presentation/bloc/profile/profile_cubit.dart';
-import 'package:passenger/src/features/profile/profile_routes.dart';
 import 'package:passenger/src/features/profile/presentation/widgets/profile_avatar_widget.dart';
+import 'package:passenger/src/features/profile/profile_routes.dart';
 import 'package:passenger/src/features/saved_places/saved_places_routes.dart';
 import 'package:passenger/src/features/settings/settings_routes.dart';
-import 'package:design_system/design_system.dart';
 
 class const AccountPage({super.key, this.onProfileTap, this.onLogout})
     extends StatelessWidget {

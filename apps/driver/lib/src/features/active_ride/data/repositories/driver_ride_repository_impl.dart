@@ -9,14 +9,11 @@ import 'package:fpdart/fpdart.dart';
 import 'package:foundation/foundation.dart';
 
 final class DriverRideRepositoryImpl({
-  required RideRemoteDataSource rideDataSource,
-  required RideCounterpartyRemoteDataSource counterpartyDataSource,
-  required TelemetryRemoteDataSource telemetryDataSource,
+  required this._rideDataSource,
+  required this._counterpartyDataSource,
+  required this._telemetryDataSource,
 }) implements DriverRideRepository {
-  this
-    : _rideDataSource = rideDataSource,
-      _counterpartyDataSource = counterpartyDataSource,
-      _telemetryDataSource = telemetryDataSource;
+  this;
 
   final RideRemoteDataSource _rideDataSource;
   final RideCounterpartyRemoteDataSource _counterpartyDataSource;

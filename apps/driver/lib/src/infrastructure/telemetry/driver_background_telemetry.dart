@@ -15,8 +15,8 @@ const _notificationChannelId = 'easyride_driver_location';
 const _notificationId = 4801;
 
 class DriverBackgroundTelemetry({
-  required Uri apiBaseUri,
-  required AppLifecycleCoordinator lifecycleCoordinator,
+  required this._apiBaseUri,
+  required this._lifecycleCoordinator,
   FlutterBackgroundService? service,
   bool? enabled,
 }) {
@@ -27,9 +27,7 @@ class DriverBackgroundTelemetry({
   bool _configured = false;
 
   this
-    : _apiBaseUri = apiBaseUri,
-      _service = service ?? FlutterBackgroundService(),
-      _lifecycleCoordinator = lifecycleCoordinator,
+    : _service = service ?? FlutterBackgroundService(),
       _isEnabled = enabled ?? false;
 
   bool get isEnabled => _isEnabled;

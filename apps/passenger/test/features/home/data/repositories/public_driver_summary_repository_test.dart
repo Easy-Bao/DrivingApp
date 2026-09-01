@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/home/data/data_sources/public_driver_remote_data_source.dart';
 import 'package:passenger/src/features/home/data/repositories/public_driver_summary_repository_impl.dart';
 import 'package:passenger/src/features/home/domain/entities/public_driver_summary.dart';
-import 'package:foundation/foundation.dart';
 
 class MockPublicDriverRemoteDataSource extends Mock
     implements PublicDriverRemoteDataSource {}

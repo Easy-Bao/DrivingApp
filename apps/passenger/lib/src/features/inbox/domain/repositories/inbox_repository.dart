@@ -1,6 +1,6 @@
+import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
-import 'package:foundation/foundation.dart';
 
 abstract interface class InboxRepository {
   Future<Either<Failure, List<InboxNotification>>> fetchPassengerNotifications(

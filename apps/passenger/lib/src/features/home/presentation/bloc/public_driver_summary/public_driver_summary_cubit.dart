@@ -1,15 +1,14 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_state.dart';
-import 'package:passenger/src/features/home/domain/repositories/public_driver_summary_repository.dart';
 import 'package:foundation/foundation.dart';
+import 'package:passenger/src/features/home/domain/repositories/public_driver_summary_repository.dart';
+import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_state.dart';
 
-class PublicDriverSummaryCubit({
-  required PublicDriverSummaryRepository repository,
-}) extends Cubit<PublicDriverSummaryState> {
+class PublicDriverSummaryCubit({required this._repository})
+    extends Cubit<PublicDriverSummaryState> {
   final PublicDriverSummaryRepository _repository;
   bool _hasLoaded = false;
 
-  this : _repository = repository, super(const PublicDriverSummaryState());
+  this : super(const PublicDriverSummaryState());
 
   Future<void> load({bool force = false}) async {
     if (_hasLoaded && !force) return;

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -8,7 +9,6 @@ import 'package:passenger/src/features/auth/auth_routes.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/verify_otp/verify_otp_bloc.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
-import 'package:design_system/design_system.dart';
 
 class const VerifyOtpPage({
   super.key,

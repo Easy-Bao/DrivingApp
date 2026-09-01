@@ -40,11 +40,11 @@ void main() {
       expect(result.isRight(), isTrue);
       expect(
         result.getOrElse(
-          (_) => HomeData(currentAddress: '', recentLocations: const []),
+          (_) => const HomeData(currentAddress: '', recentLocations: []),
         ),
-        HomeData(
+        const HomeData(
           currentAddress: 'Pagadian City',
-          recentLocations: const [
+          recentLocations: [
             RecentLocation(
               title: 'City Plaza',
               subtitle: 'Downtown',

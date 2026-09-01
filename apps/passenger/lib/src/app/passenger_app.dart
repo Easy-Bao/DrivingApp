@@ -1,20 +1,20 @@
 import 'dart:async';
 
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger/src/app/navigation/app_routes.dart';
 import 'package:passenger/src/app/theme/app_theme.dart';
-import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
+import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
+import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
+import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger/src/features/location/presentation/bloc/location_access/location_access_cubit.dart';
 import 'package:passenger/src/features/location/presentation/bloc/location_access/location_access_state.dart';
-import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
-import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_cubit.dart';
-import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
-import 'package:foundation/foundation.dart';
-import 'package:design_system/design_system.dart';
+import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 
 class const PassengerApp({super.key}) extends StatefulWidget {
   @override
