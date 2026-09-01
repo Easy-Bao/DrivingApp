@@ -42,6 +42,7 @@ func (handler *Handler) UpdateDriverLocation(writer http.ResponseWriter, request
 		DriverID: identity.Subject, Latitude: input.Latitude, Longitude: input.Longitude,
 		Heading: input.Heading, Speed: input.Speed,
 	}
+
 	if err := handler.service.Ingest(request.Context(), point); err != nil {
 		if errors.Is(err, domain.ErrInvalidLocation) {
 			response.Error(writer, http.StatusBadRequest, "invalid location")
