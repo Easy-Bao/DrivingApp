@@ -7,28 +7,17 @@ sealed class SignInState extends Equatable {
   List<Object?> get props => [];
 }
 
-final class SignInInitial extends SignInState {
-  const SignInInitial();
-}
+final class const SignInInitial() extends SignInState;
 
-final class SignInLoading extends SignInState {
-  const SignInLoading();
-}
+final class const SignInLoading() extends SignInState;
 
-final class SignInSuccess extends SignInState {
-  final DriverAuthCredentials credentials;
-
-  const SignInSuccess(this.credentials);
-
+final class const SignInSuccess(final DriverAuthCredentials credentials)
+    extends SignInState {
   @override
   List<Object?> get props => [credentials];
 }
 
-final class SignInFailure extends SignInState {
-  final String errorMessage;
-
-  const SignInFailure(this.errorMessage);
-
+final class const SignInFailure(final String errorMessage) extends SignInState {
   @override
   List<Object?> get props => [errorMessage];
 }

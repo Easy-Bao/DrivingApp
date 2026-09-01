@@ -1,27 +1,16 @@
 import 'package:equatable/equatable.dart';
 import 'package:foundation/foundation.dart';
 
-class DriverAuthCredentials extends Equatable {
-  final String driverId;
-  final String driverName;
-  final String driverEmail;
-  final String vehicleType;
-  final String plateNumber;
-  final double rating;
-  final String token;
-  final String refreshToken;
-
-  const DriverAuthCredentials({
-    required this.driverId,
-    required this.driverName,
-    required this.driverEmail,
-    required this.vehicleType,
-    required this.plateNumber,
-    required this.rating,
-    this.token = '',
-    this.refreshToken = '',
-  });
-
+final class const DriverAuthCredentials({
+  required final String driverId,
+  required final String driverName,
+  required final String driverEmail,
+  required final String vehicleType,
+  required final String plateNumber,
+  required final double rating,
+  final String token = '',
+  final String refreshToken = '',
+}) extends Equatable {
   factory DriverAuthCredentials.fromJson(Map<String, dynamic> json) {
     return DriverAuthCredentials(
       driverId: SafeParse.toStringValue(json['driverId'] ?? json['id']),

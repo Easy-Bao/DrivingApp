@@ -7,23 +7,14 @@ sealed class ForgotPasswordState extends Equatable {
   List<Object?> get props => [];
 }
 
-class ForgotPasswordInitial extends ForgotPasswordState {
-  const ForgotPasswordInitial();
-}
+final class const ForgotPasswordInitial() extends ForgotPasswordState;
 
-class ForgotPasswordLoading extends ForgotPasswordState {
-  const ForgotPasswordLoading();
-}
+final class const ForgotPasswordLoading() extends ForgotPasswordState;
 
-class ForgotPasswordSuccess extends ForgotPasswordState {
-  const ForgotPasswordSuccess();
-}
+final class const ForgotPasswordSuccess() extends ForgotPasswordState;
 
-class ForgotPasswordFailure extends ForgotPasswordState {
-  final String errorMessage;
-
-  const ForgotPasswordFailure(this.errorMessage);
-
+final class const ForgotPasswordFailure(final String errorMessage)
+    extends ForgotPasswordState {
   @override
   List<Object?> get props => [errorMessage];
 }

@@ -7,23 +7,17 @@ sealed class ResetPasswordConfirmState extends Equatable {
   List<Object?> get props => [];
 }
 
-class ResetPasswordConfirmInitial extends ResetPasswordConfirmState {
-  const ResetPasswordConfirmInitial();
-}
+final class const ResetPasswordConfirmInitial()
+    extends ResetPasswordConfirmState;
 
-class ResetPasswordConfirmLoading extends ResetPasswordConfirmState {
-  const ResetPasswordConfirmLoading();
-}
+final class const ResetPasswordConfirmLoading()
+    extends ResetPasswordConfirmState;
 
-class ResetPasswordConfirmSuccess extends ResetPasswordConfirmState {
-  const ResetPasswordConfirmSuccess();
-}
+final class const ResetPasswordConfirmSuccess()
+    extends ResetPasswordConfirmState;
 
-class ResetPasswordConfirmFailure extends ResetPasswordConfirmState {
-  final String errorMessage;
-
-  const ResetPasswordConfirmFailure(this.errorMessage);
-
+final class const ResetPasswordConfirmFailure(final String errorMessage)
+    extends ResetPasswordConfirmState {
   @override
   List<Object?> get props => [errorMessage];
 }

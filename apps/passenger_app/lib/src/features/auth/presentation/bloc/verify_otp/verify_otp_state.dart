@@ -7,53 +7,32 @@ sealed class VerifyOtpState extends Equatable {
   List<Object?> get props => [];
 }
 
-class VerifyOtpInitial extends VerifyOtpState {
-  const VerifyOtpInitial();
-}
+final class const VerifyOtpInitial() extends VerifyOtpState;
 
-class VerifyOtpTimerTicking extends VerifyOtpState {
-  final int secondsRemaining;
-
-  const VerifyOtpTimerTicking(this.secondsRemaining);
-
+final class const VerifyOtpTimerTicking(final int secondsRemaining)
+    extends VerifyOtpState {
   @override
   List<Object?> get props => [secondsRemaining];
 }
 
-class VerifyOtpTimerExpired extends VerifyOtpState {
-  const VerifyOtpTimerExpired();
-}
+final class const VerifyOtpTimerExpired() extends VerifyOtpState;
 
-class VerifyOtpLoading extends VerifyOtpState {
-  const VerifyOtpLoading();
-}
+final class const VerifyOtpLoading() extends VerifyOtpState;
 
-class VerifyOtpSuccess extends VerifyOtpState {
-  const VerifyOtpSuccess();
-}
+final class const VerifyOtpSuccess() extends VerifyOtpState;
 
-class VerifyOtpFailure extends VerifyOtpState {
-  final String errorMessage;
-
-  const VerifyOtpFailure(this.errorMessage);
-
+final class const VerifyOtpFailure(final String errorMessage)
+    extends VerifyOtpState {
   @override
   List<Object?> get props => [errorMessage];
 }
 
-class VerifyOtpResending extends VerifyOtpState {
-  const VerifyOtpResending();
-}
+final class const VerifyOtpResending() extends VerifyOtpState;
 
-class VerifyOtpResent extends VerifyOtpState {
-  const VerifyOtpResent();
-}
+final class const VerifyOtpResent() extends VerifyOtpState;
 
-class VerifyOtpResendFailure extends VerifyOtpState {
-  final String errorMessage;
-
-  const VerifyOtpResendFailure(this.errorMessage);
-
+final class const VerifyOtpResendFailure(final String errorMessage)
+    extends VerifyOtpState {
   @override
   List<Object?> get props => [errorMessage];
 }

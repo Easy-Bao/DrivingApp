@@ -1,24 +1,14 @@
 import 'package:equatable/equatable.dart';
 
-class PassengerAuthCredentials extends Equatable {
-  final String passengerId;
-  final String passengerName;
-  final String passengerEmail;
-  final String passengerPhone;
-  final String token;
-  final String refreshToken;
-  final bool needsVerification;
-
-  const PassengerAuthCredentials({
-    required this.passengerId,
-    required this.passengerName,
-    required this.passengerEmail,
-    required this.passengerPhone,
-    required this.token,
-    this.refreshToken = '',
-    this.needsVerification = false,
-  });
-
+final class const PassengerAuthCredentials({
+  required final String passengerId,
+  required final String passengerName,
+  required final String passengerEmail,
+  required final String passengerPhone,
+  required final String token,
+  final String refreshToken = '',
+  final bool needsVerification = false,
+}) extends Equatable {
   factory PassengerAuthCredentials.fromJson(Map<String, dynamic> json) {
     return PassengerAuthCredentials(
       passengerId:

@@ -7,37 +7,23 @@ sealed class SignUpState extends Equatable {
   List<Object?> get props => [];
 }
 
-class SignUpInitial extends SignUpState {
-  const SignUpInitial();
-}
+final class const SignUpInitial() extends SignUpState;
 
-class SignUpLoading extends SignUpState {
-  const SignUpLoading();
-}
+final class const SignUpLoading() extends SignUpState;
 
-class SignUpNeedsVerification extends SignUpState {
-  final String email;
-
-  const SignUpNeedsVerification(this.email);
-
+final class const SignUpNeedsVerification(final String email)
+    extends SignUpState {
   @override
   List<Object?> get props => [email];
 }
 
-class SignUpSuccess extends SignUpState {
-  final PassengerAuthCredentials credentials;
-
-  const SignUpSuccess(this.credentials);
-
+final class const SignUpSuccess(final PassengerAuthCredentials credentials)
+    extends SignUpState {
   @override
   List<Object?> get props => [credentials];
 }
 
-class SignUpFailure extends SignUpState {
-  final String errorMessage;
-
-  const SignUpFailure(this.errorMessage);
-
+final class const SignUpFailure(final String errorMessage) extends SignUpState {
   @override
   List<Object?> get props => [errorMessage];
 }
