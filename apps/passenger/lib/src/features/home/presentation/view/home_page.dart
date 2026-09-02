@@ -4,8 +4,10 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
+import 'package:passenger/src/app/navigation/passenger_navigation_observer.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
@@ -39,6 +41,9 @@ class _HomePageState extends State<HomePage> {
   static const int _recentRideHistoryPreviewLimit = 5;
 
   late final BookingBloc _bookingBloc;
+  late final HomeCubit _homeCubit;
+  late final StreamSubscription<void> _routePopSubscription;
+  late final StreamSubscription<AppLifecycleStatus> _lifecycleSubscription;
   bool _isSavedPlaceFlowOpen = false;
 
   @override
@@ -86,6 +91,16 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _bookingBloc = Modular.get<BookingBloc>();
+    _homeCubit = BlocProvider.of<HomeCubit>(context, listen: false);
+    _routePopSubscription = passengerNavigationObserver.routePopEvents.listen(
+      (_) => _refreshLocationSnapshot(),
+    );
+    _lifecycleSubscription = Modular.get<AppLifecycleCoordinator>().changes
+        .listen((status) {
+          if (status == AppLifecycleStatus.foreground) {
+            _refreshLocationSnapshot();
+          }
+        });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -94,9 +109,25 @@ class _HomePageState extends State<HomePage> {
       if (!mounted) return;
       if (BlocProvider.of<LocationAccessCubit>(context).state
           is LocationAccessReady) {
-        unawaited(BlocProvider.of<HomeCubit>(context).startLocationTracking());
+        unawaited(_homeCubit.startLocationTracking());
       }
     });
+  }
+
+  @override
+  void dispose() {
+    unawaited(_routePopSubscription.cancel());
+    unawaited(_lifecycleSubscription.cancel());
+    super.dispose();
+  }
+
+  void _refreshLocationSnapshot() {
+    if (!mounted ||
+        BlocProvider.of<LocationAccessCubit>(context).state
+            is! LocationAccessReady) {
+      return;
+    }
+    unawaited(_homeCubit.startLocationTracking());
   }
 
   void _loadRecentRideHistory() {
@@ -182,6 +213,7 @@ class _HomePageState extends State<HomePage> {
             destinationName: draft.destination.name,
             onContinue: () {
               final pickupAddress = draft.pickupAddress;
+              final position = LocationService.lastPosition;
               BlocProvider.of<BookingDraftCubit>(context).clear();
               unawaited(
                 context.pushNamed(
@@ -194,6 +226,10 @@ class _HomePageState extends State<HomePage> {
                   queryParameters: {
                     if (pickupAddress != null && pickupAddress.isNotEmpty)
                       'pickupAddress': pickupAddress,
+                    if (position != null) ...{
+                      'pickupLat': position.latitude.toString(),
+                      'pickupLng': position.longitude.toString(),
+                    },
                   },
                 ),
               );
@@ -469,11 +505,18 @@ class _HomePageState extends State<HomePage> {
         longitude: place.longitude!,
       );
       final address = BlocProvider.of<HomeCubit>(context).state.currentAddress;
+      final position = LocationService.lastPosition;
       unawaited(
         context.pushNamed(
           BookingRoutes.rideSelection,
           extra: syntheticPlace,
-          queryParameters: {'pickupAddress': address},
+          queryParameters: {
+            'pickupAddress': address,
+            if (position != null) ...{
+              'pickupLat': position.latitude.toString(),
+              'pickupLng': position.longitude.toString(),
+            },
+          },
         ),
       );
     } else {

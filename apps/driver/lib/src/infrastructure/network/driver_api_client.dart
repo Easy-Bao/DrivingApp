@@ -9,6 +9,7 @@ class DriverApiClient._() {
     required Uri baseUrl,
     required DriverSessionStore sessionService,
     NetworkAvailabilityCoordinator? networkAvailability,
+    RefreshableTokenProvider? tokenProvider,
   }) {
     final dio = Dio(
       BaseOptions(
@@ -19,14 +20,16 @@ class DriverApiClient._() {
       ),
     );
 
-    final refreshClient = Dio(
-      BaseOptions(
-        baseUrl: baseUrl.toString(),
-        connectTimeout: const Duration(seconds: 15),
-        receiveTimeout: const Duration(seconds: 15),
-        sendTimeout: const Duration(seconds: 15),
-      ),
-    );
+    final refreshClient = tokenProvider == null
+        ? Dio(
+            BaseOptions(
+              baseUrl: baseUrl.toString(),
+              connectTimeout: const Duration(seconds: 15),
+              receiveTimeout: const Duration(seconds: 15),
+              sendTimeout: const Duration(seconds: 15),
+            ),
+          )
+        : null;
 
     dio.interceptors.add(
       DriverAuthInterceptor(
@@ -34,6 +37,7 @@ class DriverApiClient._() {
         dio: dio,
         refreshClient: refreshClient,
         allowedBaseUri: baseUrl,
+        tokenProvider: tokenProvider,
       ),
     );
     if (kDebugMode) {

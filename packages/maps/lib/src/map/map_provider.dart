@@ -6,6 +6,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:maps/src/device/device_location_service.dart';
 import 'package:maps/src/domain/entities/place.dart';
 import 'package:maps/src/domain/entities/route.dart';
+import 'package:maps/src/domain/failures/place_failure.dart';
 import 'package:maps/src/map/map_annotation_service.dart';
 import 'package:maps/src/map/map_camera_service.dart';
 import 'package:maps/src/map/map_native_service.dart';
@@ -18,6 +19,7 @@ export 'package:maps/src/map/map_camera_service.dart';
 class MapProvider._() {
   static const double nearbyRadiusKm = 5.0;
   static const _routeCacheTtl = Duration(seconds: 20);
+  static const _routeRetryDelay = Duration(milliseconds: 250);
 
   static bool _initialized = false;
   static MapNativeService? _nativeService;
@@ -151,24 +153,31 @@ class MapProvider._() {
     required RouteProfile profile,
     required List<({double lat, double lng})> excludePoints,
   }) async {
-    try {
-      final either = await nativeService.getRoute(
-        originLat: originLat,
-        originLng: originLng,
-        destLat: destLat,
-        destLng: destLng,
-        preference: preference,
-        profile: profile,
-        excludePoints: excludePoints,
-      );
-      return await either.fold((failure) {
-        debugPrint('MapProvider.getRoute failure: ${failure.runtimeType}');
+    for (var attempt = 0; attempt < 2; attempt++) {
+      try {
+        final either = await nativeService.getRoute(
+          originLat: originLat,
+          originLng: originLng,
+          destLat: destLat,
+          destLng: destLng,
+          preference: preference,
+          profile: profile,
+          excludePoints: excludePoints,
+        );
+        Route? route;
+        var retryable = false;
+        either.fold((failure) {
+          debugPrint('MapProvider.getRoute failure: ${failure.runtimeType}');
+          retryable = failure is PlaceNetworkError;
+        }, (value) => route = value);
+        if (route != null || !retryable || attempt == 1) return route;
+      } catch (_) {
+        debugPrint('MapProvider.getRoute error.');
         return null;
-      }, (route) => route);
-    } catch (_) {
-      debugPrint('MapProvider.getRoute error.');
-      return null;
+      }
+      await Future<void>.delayed(_routeRetryDelay);
     }
+    return null;
   }
 
   static Future<List<double>?> getDrivingDistances({

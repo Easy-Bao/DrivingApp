@@ -12,6 +12,7 @@ class PassengerApiClient._() {
     required PassengerSessionStore sessionService,
     NetworkAvailabilityCoordinator? networkAvailability,
     FutureOr<void> Function()? onSessionExpired,
+    RefreshableTokenProvider? tokenProvider,
   }) {
     final dio = Dio(
       BaseOptions(
@@ -22,14 +23,16 @@ class PassengerApiClient._() {
       ),
     );
 
-    final refreshClient = Dio(
-      BaseOptions(
-        baseUrl: baseUrl.toString(),
-        connectTimeout: const Duration(seconds: 15),
-        receiveTimeout: const Duration(seconds: 15),
-        sendTimeout: const Duration(seconds: 15),
-      ),
-    );
+    final refreshClient = tokenProvider == null
+        ? Dio(
+            BaseOptions(
+              baseUrl: baseUrl.toString(),
+              connectTimeout: const Duration(seconds: 15),
+              receiveTimeout: const Duration(seconds: 15),
+              sendTimeout: const Duration(seconds: 15),
+            ),
+          )
+        : null;
 
     dio.interceptors.add(
       PassengerAuthInterceptor(
@@ -38,6 +41,7 @@ class PassengerApiClient._() {
         refreshClient: refreshClient,
         allowedBaseUri: baseUrl,
         onSessionExpired: onSessionExpired,
+        tokenProvider: tokenProvider,
       ),
     );
     if (kDebugMode) {

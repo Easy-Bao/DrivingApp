@@ -11,6 +11,7 @@ import 'package:passenger/src/features/home/presentation/bloc/home/home_state.da
 
 const _pickupLocationUnavailableMessage =
     'Unable to find your pickup location. Tap to retry.';
+const _locationFailureGracePeriod = Duration(milliseconds: 300);
 
 class HomeCubit({
   required this._repository,
@@ -111,7 +112,10 @@ class HomeCubit({
   }
 
   Future<void> startLocationTracking() async {
-    if (_isTrackingLocation) return;
+    if (_isTrackingLocation) {
+      await refreshCurrentLocation();
+      return;
+    }
 
     _isTrackingLocation = true;
     final trackingRevision = ++_trackingRevision;
@@ -158,7 +162,12 @@ class HomeCubit({
 
     await result.fold((failure) async {
       dev.log('Passenger current location unavailable: ${failure.message}');
-      if (!isClosed && _locationSubscription == null) {
+      if (_locationSubscription != null) {
+        await Future<void>.delayed(_locationFailureGracePeriod);
+      }
+      if (!isClosed &&
+          state.currentAddress.isEmpty &&
+          _isActiveTrackingRevision(expectedRevision)) {
         emit(
           state.copyWith(
             isLoading: false,

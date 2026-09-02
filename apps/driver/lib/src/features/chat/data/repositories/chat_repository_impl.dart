@@ -38,7 +38,9 @@ final class ChatRepositoryImpl({
     String? token,
   }) async {
     try {
-      final resolvedToken = token ?? await tokenProvider?.call();
+      final resolvedToken = tokenProvider == null
+          ? token
+          : await tokenProvider!.call();
       await remoteDataSource.establishWebSocketConnection(
         chatUri,
         token: resolvedToken,

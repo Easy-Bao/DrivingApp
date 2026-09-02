@@ -32,6 +32,26 @@ class PassengerDependencies({required this._prefs}) extends Module {
         (_) => NetworkAvailabilityCoordinator(),
       )
       ..addLazySingleton<PassengerSessionStore>((i) => PassengerSessionStore())
+      ..addLazySingleton<RefreshableTokenProvider>((i) {
+        final session = i.get<PassengerSessionStore>();
+        return RefreshableTokenProvider(
+          readAccessToken: session.readToken,
+          readRefreshToken: session.readRefreshToken,
+          saveAccessToken: session.saveToken,
+          saveRefreshToken: session.saveRefreshToken,
+          clearSession: session.clearSession,
+          refreshClient: Dio(
+            BaseOptions(
+              baseUrl: PassengerEnvConfig.apiBaseUri.toString(),
+              connectTimeout: const Duration(seconds: 15),
+              receiveTimeout: const Duration(seconds: 15),
+              sendTimeout: const Duration(seconds: 15),
+            ),
+          ),
+          onSessionExpired: () =>
+              i.get<SessionBloc>().add(const SessionGuestRequested()),
+        );
+      })
       ..addLazySingleton<PassengerBackgroundTelemetry>(
         (i) => PassengerBackgroundTelemetry(
           apiBaseUri: PassengerEnvConfig.apiBaseUri,
@@ -61,6 +81,7 @@ class PassengerDependencies({required this._prefs}) extends Module {
           networkAvailability: i.get<NetworkAvailabilityCoordinator>(),
           onSessionExpired: () =>
               i.get<SessionBloc>().add(const SessionGuestRequested()),
+          tokenProvider: i.get<RefreshableTokenProvider>(),
         ),
       )
       ..addLazySingleton<LocationRepository>(

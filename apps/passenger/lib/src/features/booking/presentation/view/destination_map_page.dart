@@ -60,22 +60,24 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
   Future<void> _loadRouteData() async {
     try {
       final position = await LocationService.getCurrentPosition();
-      final origin = (
-        lat: position?.latitude ?? widget.destinationLat,
-        lng: position?.longitude ?? widget.destinationLng,
-      );
+      final originPosition = position ?? LocationService.lastPosition;
+      final origin = originPosition == null
+          ? null
+          : (lat: originPosition.latitude, lng: originPosition.longitude);
 
       _originCoordinate = origin;
       final placeRequest = MapProvider.getPlaceFromCoordinates(
         widget.destinationLat,
         widget.destinationLng,
       );
-      final routeRequest = MapProvider.getRoute(
-        origin.lat,
-        origin.lng,
-        widget.destinationLat,
-        widget.destinationLng,
-      );
+      final routeRequest = origin == null
+          ? Future<Route?>.value(null)
+          : MapProvider.getRoute(
+              origin.lat,
+              origin.lng,
+              widget.destinationLat,
+              widget.destinationLng,
+            );
       final place = await placeRequest;
       _route = await routeRequest;
 
@@ -274,6 +276,12 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
                           context.pushNamed(
                             BookingRoutes.rideSelection,
                             extra: place,
+                            queryParameters: {
+                              if (_originCoordinate != null) ...{
+                                'pickupLat': _originCoordinate!.lat.toString(),
+                                'pickupLng': _originCoordinate!.lng.toString(),
+                              },
+                            },
                           ),
                         );
                       },

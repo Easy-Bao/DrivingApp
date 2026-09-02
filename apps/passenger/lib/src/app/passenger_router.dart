@@ -15,7 +15,6 @@ import 'package:passenger/src/features/ride_history/ride_history_module.dart';
 import 'package:passenger/src/features/saved_places/saved_places_module.dart';
 import 'package:passenger/src/features/settings/settings_module.dart';
 import 'package:passenger/src/infrastructure/config/passenger_env_config.dart';
-import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 
 class PassengerRouter extends Module {
   @override
@@ -79,7 +78,8 @@ class PassengerRouter extends Module {
           uri: PassengerEnvConfig.webSocketBaseUri.replace(
             path: '/api/v1/realtime/ws',
           ),
-          tokenProvider: i.get<PassengerSessionStore>().readToken,
+          tokenProvider: i.get<RefreshableTokenProvider>().getToken,
+          refreshToken: i.get<RefreshableTokenProvider>().refreshAccessToken,
         ),
       );
   }

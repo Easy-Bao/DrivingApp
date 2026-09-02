@@ -343,6 +343,10 @@ class _SearchDestinationPageState()
     if (widget.pickupAddress != null) {
       queryParams['pickupAddress'] = widget.pickupAddress!;
     }
+    if (_userLat != null && _userLng != null) {
+      queryParams['pickupLat'] = _userLat!.toString();
+      queryParams['pickupLng'] = _userLng!.toString();
+    }
     unawaited(
       context.pushNamed(
         BookingRoutes.rideSelection,

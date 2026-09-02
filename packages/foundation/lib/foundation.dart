@@ -3,6 +3,7 @@ export 'src/errors/error_handler.dart';
 export 'src/errors/exceptions.dart';
 export 'src/errors/failure_mapper.dart';
 export 'src/errors/failures.dart';
+export 'src/auth/refreshable_token_provider.dart';
 export 'src/lifecycle/app_lifecycle_coordinator.dart';
 export 'src/lifecycle/app_lifecycle_periodic_task.dart';
 export 'src/network/api_base_uri.dart';

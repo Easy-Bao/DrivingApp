@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
+import 'package:passenger/src/app/navigation/passenger_navigation_observer.dart';
 import 'package:passenger/src/app/passenger_app.dart';
 import 'package:passenger/src/app/passenger_dependencies.dart';
 import 'package:passenger/src/app/theme/app_theme.dart';
@@ -43,6 +44,7 @@ Future<void> bootstrapPassengerApp() async {
       debugLogDiagnostics: true,
       debugLogDiagnosticsGoRouter: true,
       debugLogEventBus: true,
+      observers: [passengerNavigationObserver],
     );
 
     runApp(const PassengerApp());

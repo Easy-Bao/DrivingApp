@@ -6,6 +6,7 @@ import 'dart:math';
 import 'package:foundation/src/realtime/realtime_event.dart';
 
 typedef RealtimeTokenProvider = FutureOr<String?> Function();
+typedef RealtimeTokenRefresher = Future<String?> Function();
 typedef ReconnectDelay = Duration Function(int attempt);
 
 abstract interface class RealtimeSocket {
@@ -57,10 +58,13 @@ final class const RealtimeConnecting(this.attempt)
 final class const RealtimeConnected() extends RealtimeConnectionState {}
 
 /// Maintains one authenticated event stream for a signed-in app session.
-/// Snapshot refresh remains the caller's responsibility after a reconnect.
+/// The token provider is consulted for every connection attempt. An optional
+/// refresher handles failures that happen before a server can identify an
+/// expired or rotated access token during the WebSocket handshake.
 final class RealtimeWebSocketClient({
   required Uri uri,
   required RealtimeTokenProvider tokenProvider,
+  RealtimeTokenRefresher? refreshToken,
   RealtimeSocketConnector connector = const IoRealtimeSocketConnector(),
   ReconnectDelay? reconnectDelay,
   Random? random,
@@ -68,6 +72,7 @@ final class RealtimeWebSocketClient({
   this
     : _uri = uri,
       _tokenProvider = tokenProvider,
+      _refreshToken = refreshToken,
       _connector = connector,
       _reconnectDelay = reconnectDelay ?? _defaultReconnectDelay,
       _random = random ?? Random();
@@ -76,6 +81,7 @@ final class RealtimeWebSocketClient({
 
   final Uri _uri;
   final RealtimeTokenProvider _tokenProvider;
+  final RealtimeTokenRefresher? _refreshToken;
   final RealtimeSocketConnector _connector;
   final ReconnectDelay _reconnectDelay;
   final Random _random;
@@ -186,6 +192,13 @@ final class RealtimeWebSocketClient({
       );
       _emitState(const RealtimeConnected());
     } catch (_) {
+      if (_attempt > 0) {
+        try {
+          await _refreshToken?.call();
+        } catch (_) {
+          // The regular reconnect schedule remains responsible for recovery.
+        }
+      }
       _scheduleReconnect();
     }
   }

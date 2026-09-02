@@ -180,6 +180,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
 
   final storage = const FlutterSecureStorage();
   Dio? telemetryClient;
+  RefreshableTokenProvider? tokenProvider;
   var sending = false;
   var pollingRideRequests = false;
   var appIsVisible = false;
@@ -194,16 +195,28 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
       isConfigured = false;
       telemetryClient?.close(force: true);
       telemetryClient = null;
+      tokenProvider = null;
       return;
     }
     telemetryClient?.close(force: true);
-    telemetryClient = Dio(
+    final client = Dio(
       BaseOptions(
         baseUrl: parsed.toString(),
         connectTimeout: const Duration(seconds: 10),
         sendTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 10),
       ),
+    );
+    telemetryClient = client;
+    tokenProvider = RefreshableTokenProvider(
+      readAccessToken: () => storage.read(key: DriverStorageKeys.jwtToken),
+      readRefreshToken: () => storage.read(key: DriverStorageKeys.refreshToken),
+      saveAccessToken: (token) =>
+          storage.write(key: DriverStorageKeys.jwtToken, value: token),
+      saveRefreshToken: (token) =>
+          storage.write(key: DriverStorageKeys.refreshToken, value: token),
+      clearSession: storage.deleteAll,
+      refreshClient: client,
     );
     isConfigured = true;
   });
@@ -213,9 +226,16 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
 
   Future<void> sendLocation() async {
     final client = telemetryClient;
-    if (!isConfigured || appIsVisible || sending || client == null) return;
+    final provider = tokenProvider;
+    if (!isConfigured ||
+        appIsVisible ||
+        sending ||
+        client == null ||
+        provider == null) {
+      return;
+    }
 
-    final token = await storage.read(key: DriverStorageKeys.jwtToken);
+    final token = await provider.getToken();
     if (token == null || token.isEmpty) {
       return;
     }
@@ -268,14 +288,16 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
 
   Future<void> pollRideRequests() async {
     final client = telemetryClient;
+    final provider = tokenProvider;
     if (!isConfigured ||
         appIsVisible ||
         pollingRideRequests ||
-        client == null) {
+        client == null ||
+        provider == null) {
       return;
     }
 
-    final token = await storage.read(key: DriverStorageKeys.jwtToken);
+    final token = await provider.getToken();
     final driverId = await storage.read(key: DriverStorageKeys.driverId);
     if (token == null ||
         token.isEmpty ||

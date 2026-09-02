@@ -134,6 +134,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
 
   final storage = const FlutterSecureStorage();
   Dio? telemetryClient;
+  RefreshableTokenProvider? tokenProvider;
   var sending = false;
 
   service.on('configure').listen((event) {
@@ -142,10 +143,11 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     if (parsed == null || !_isValidTelemetryBaseUri(parsed)) {
       telemetryClient?.close(force: true);
       telemetryClient = null;
+      tokenProvider = null;
       return;
     }
     telemetryClient?.close(force: true);
-    telemetryClient = Dio(
+    final client = Dio(
       BaseOptions(
         baseUrl: parsed.toString(),
         connectTimeout: const Duration(seconds: 10),
@@ -153,13 +155,26 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
         receiveTimeout: const Duration(seconds: 10),
       ),
     );
+    telemetryClient = client;
+    tokenProvider = RefreshableTokenProvider(
+      readAccessToken: () => storage.read(key: PassengerStorageKeys.jwtToken),
+      readRefreshToken: () =>
+          storage.read(key: PassengerStorageKeys.refreshToken),
+      saveAccessToken: (token) =>
+          storage.write(key: PassengerStorageKeys.jwtToken, value: token),
+      saveRefreshToken: (token) =>
+          storage.write(key: PassengerStorageKeys.refreshToken, value: token),
+      clearSession: storage.deleteAll,
+      refreshClient: client,
+    );
   });
 
   Future<void> sendLocation() async {
     final client = telemetryClient;
-    if (sending || client == null) return;
+    final provider = tokenProvider;
+    if (sending || client == null || provider == null) return;
 
-    final token = await storage.read(key: PassengerStorageKeys.jwtToken);
+    final token = await provider.getToken();
     final rideId = await storage.read(key: PassengerStorageKeys.activeRideId);
     if (token == null || token.isEmpty || rideId == null || rideId.isEmpty) {
       return;

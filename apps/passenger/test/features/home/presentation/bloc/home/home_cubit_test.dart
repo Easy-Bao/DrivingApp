@@ -214,6 +214,38 @@ void main() {
       },
     );
 
+    blocTest<HomeCubit, HomeState>(
+      'reports an immediate GPS failure even while the location stream is open',
+      setUp: () {
+        when(() => currentLocationRepo.getCurrentLocation())
+            .thenAnswer((_) async => const Left(CurrentLocationFailure()));
+        when(() => currentLocationRepo.watchCurrentLocation())
+            .thenAnswer((_) => const Stream.empty());
+      },
+      build: () => _makeCubit(repo, currentLocationRepo),
+      act: (cubit) => cubit.startLocationTracking(),
+      expect: () => const [
+        HomeState(isLoading: true),
+        HomeState(
+          locationErrorMessage: 'The current device location is unavailable.',
+        ),
+      ],
+    );
+
+    test('refreshes an already active location tracking session', () async {
+      when(() => currentLocationRepo.getCurrentLocation())
+          .thenAnswer((_) async => const Left(CurrentLocationFailure()));
+      when(() => currentLocationRepo.watchCurrentLocation())
+          .thenAnswer((_) => const Stream.empty());
+
+      final cubit = _makeCubit(repo, currentLocationRepo);
+      await cubit.startLocationTracking();
+      await cubit.startLocationTracking();
+
+      verify(() => currentLocationRepo.getCurrentLocation()).called(2);
+      await cubit.close();
+    });
+
     test(
       'ignores an in-flight GPS fix after location access is lost',
       () async {

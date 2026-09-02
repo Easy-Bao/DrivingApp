@@ -28,7 +28,10 @@ abstract class ChatRemoteDataSource {
   Future<void> dispose();
 }
 
-class WebSocketChatRemoteDataSource implements ChatRemoteDataSource {
+class WebSocketChatRemoteDataSource({
+  FutureOr<String?> Function()? tokenProvider,
+  Future<String?> Function()? refreshTokenProvider,
+}) implements ChatRemoteDataSource {
   static const _connectionTimeout = Duration(seconds: 15);
   static const _maximumReconnectAttempt = 6;
 
@@ -37,6 +40,9 @@ class WebSocketChatRemoteDataSource implements ChatRemoteDataSource {
   bool _shouldReconnect = false;
   Uri? _chatServiceUri;
   String? _token;
+  final FutureOr<String?> Function()? _tokenProvider = tokenProvider;
+  final Future<String?> Function()? _refreshTokenProvider =
+      refreshTokenProvider;
   int _connectionVersion = 0;
   int _reconnectAttempt = 0;
   Timer? _reconnectTimer;
@@ -118,12 +124,14 @@ class WebSocketChatRemoteDataSource implements ChatRemoteDataSource {
     _emitConnectionState(ChatConnecting(_reconnectAttempt));
 
     try {
-      final token = _token;
+      final token = _tokenProvider == null
+          ? _token
+          : await _tokenProvider.call();
       final socket = await WebSocket.connect(
         uri.toString(),
-        headers: token == null || token.isEmpty
+        headers: token == null || token.trim().isEmpty
             ? null
-            : {'Authorization': 'Bearer $token'},
+            : {'Authorization': 'Bearer ${token.trim()}'},
       ).timeout(_connectionTimeout);
 
       if (!_shouldReconnect ||
@@ -155,6 +163,13 @@ class WebSocketChatRemoteDataSource implements ChatRemoteDataSource {
     } catch (error, stackTrace) {
       if (connectionVersion != _connectionVersion || !_shouldReconnect) {
         return;
+      }
+      if (_reconnectAttempt > 0) {
+        try {
+          await _refreshTokenProvider?.call();
+        } catch (_) {
+          // The regular reconnect schedule remains responsible for recovery.
+        }
       }
       _scheduleReconnect();
       if (reportFailure) {

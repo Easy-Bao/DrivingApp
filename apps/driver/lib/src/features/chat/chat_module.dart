@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:driver/src/infrastructure/session/driver_session_store.dart';
+import 'package:foundation/foundation.dart';
 import 'package:driver/src/features/chat/chat.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -13,7 +13,10 @@ class ChatModule._() {
     i.addLazySingleton<ChatRepositoryFactory>(
       (i) => DefaultChatRepositoryFactory(
         clientDio: i.get<Dio>(),
-        tokenProvider: i.get<DriverSessionStore>().readToken,
+        tokenProvider: i.get<RefreshableTokenProvider>().getToken,
+        refreshTokenProvider: i
+            .get<RefreshableTokenProvider>()
+            .refreshAccessToken,
       ),
     );
   }

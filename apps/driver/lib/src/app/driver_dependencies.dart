@@ -46,6 +46,24 @@ class DriverDependencies({
         ),
       )
       ..addLazySingleton<DriverSessionStore>((i) => _sessionService)
+      ..addLazySingleton<RefreshableTokenProvider>((i) {
+        final session = i.get<DriverSessionStore>();
+        return RefreshableTokenProvider(
+          readAccessToken: session.readToken,
+          readRefreshToken: session.readRefreshToken,
+          saveAccessToken: session.saveToken,
+          saveRefreshToken: session.saveRefreshToken,
+          clearSession: session.clearSession,
+          refreshClient: Dio(
+            BaseOptions(
+              baseUrl: DriverEnvConfig.apiBaseUri.toString(),
+              connectTimeout: const Duration(seconds: 15),
+              receiveTimeout: const Duration(seconds: 15),
+              sendTimeout: const Duration(seconds: 15),
+            ),
+          ),
+        );
+      })
       ..addLazySingleton<DriverBackgroundTelemetry>(
         (i) => DriverBackgroundTelemetry(
           apiBaseUri: DriverEnvConfig.apiBaseUri,
@@ -58,7 +76,8 @@ class DriverDependencies({
           uri: DriverEnvConfig.webSocketBaseUri.replace(
             path: '/api/v1/realtime/ws',
           ),
-          tokenProvider: i.get<DriverSessionStore>().readToken,
+          tokenProvider: i.get<RefreshableTokenProvider>().getToken,
+          refreshToken: i.get<RefreshableTokenProvider>().refreshAccessToken,
         ),
       )
       ..addLazySingleton<Dio>(
@@ -66,6 +85,7 @@ class DriverDependencies({
           baseUrl: DriverEnvConfig.apiBaseUri,
           sessionService: i.get<DriverSessionStore>(),
           networkAvailability: i.get<NetworkAvailabilityCoordinator>(),
+          tokenProvider: i.get<RefreshableTokenProvider>(),
         ),
       )
       // Active ride state spans dashboard and active-ride routes, so its transport

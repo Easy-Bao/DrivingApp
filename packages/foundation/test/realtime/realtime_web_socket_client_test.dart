@@ -48,6 +48,34 @@ void main() {
     expect(client.isConnected, isFalse);
     await client.dispose();
   });
+
+  test(
+    'refreshes credentials before a later failed reconnect attempt',
+    () async {
+      var accessToken = 'old-token';
+      var refreshCount = 0;
+      final connected = Completer<void>();
+      final connector = _FailThenConnectConnector(connected);
+      final client = RealtimeWebSocketClient(
+        uri: Uri.parse('ws://example.test/api/v1/realtime/ws'),
+        tokenProvider: () async => accessToken,
+        refreshToken: () async {
+          refreshCount++;
+          accessToken = 'new-token';
+          return accessToken;
+        },
+        connector: connector,
+        reconnectDelay: (_) => Duration.zero,
+      );
+
+      await client.start();
+      await connected.future.timeout(const Duration(seconds: 1));
+
+      expect(refreshCount, 1);
+      expect(connector.headers.last, {'Authorization': 'Bearer new-token'});
+      await client.dispose();
+    },
+  );
 }
 
 String _eventJson(String id) =>
@@ -87,5 +115,26 @@ final class _Socket implements RealtimeSocket {
   Future<void> close() async {
     wasClosed = true;
     await _messages.close();
+  }
+}
+
+final class _FailThenConnectConnector(this._connected)
+    implements RealtimeSocketConnector {
+  final Completer<void> _connected;
+  final headers = <Map<String, String>>[];
+  var _attempt = 0;
+
+  @override
+  Future<RealtimeSocket> connect(
+    Uri _, {
+    required Map<String, String> headers,
+  }) async {
+    this.headers.add(headers);
+    _attempt++;
+    if (_attempt < 3) {
+      throw StateError('connection rejected');
+    }
+    if (!_connected.isCompleted) _connected.complete();
+    return _Socket();
   }
 }

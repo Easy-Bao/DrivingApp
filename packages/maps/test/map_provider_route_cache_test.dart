@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maps/maps.dart';
 
@@ -55,15 +56,38 @@ void main() {
       expect(apiClient.routeCallCount, 2);
     },
   );
+
+  test('retries a transient route network failure once', () async {
+    final callsBeforeRetry = apiClient.routeCallCount;
+    apiClient.failNextRoute = true;
+
+    final route = await MapProvider.getRoute(
+      8.8242,
+      124.4350,
+      8.8300,
+      124.4400,
+    );
+
+    expect(route, isNotNull);
+    expect(apiClient.routeCallCount, callsBeforeRetry + 2);
+  });
 }
 
 class _DelayedLocationRemoteDataSource extends MockLocationRemoteDataSource {
   final Completer<Route> _pendingRoute = Completer<Route>();
   int routeCallCount = 0;
+  bool failNextRoute = false;
 
   @override
   Future<Route> getRoute({required Map<String, dynamic> body}) {
     routeCallCount++;
+    if (failNextRoute) {
+      failNextRoute = false;
+      throw DioException(
+        requestOptions: RequestOptions(path: '/api/v1/location/route'),
+        type: DioExceptionType.connectionError,
+      );
+    }
     if (routeCallCount == 1) return _pendingRoute.future;
     return Future.value(_route);
   }
