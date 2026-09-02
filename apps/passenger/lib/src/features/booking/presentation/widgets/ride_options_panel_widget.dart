@@ -1,8 +1,10 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widget_previews.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
+import 'package:passenger/src/app/theme/app_theme.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_fare_details_widget.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_tip_selector_widget.dart';
@@ -28,6 +30,10 @@ class const RideOptionsPanelWidget({
   required this.selectedTipAmount,
   required this.onTipSelected,
   required this.totalFare,
+  this.isExpanded = false,
+  this.scrollController,
+  this.onExpandRequested,
+  this.onPageBackPressed,
 }) extends StatefulWidget {
   final String passengerName;
   final String pickupLabel;
@@ -46,6 +52,10 @@ class const RideOptionsPanelWidget({
   final int selectedTipAmount;
   final ValueChanged<int> onTipSelected;
   final double totalFare;
+  final bool isExpanded;
+  final ScrollController? scrollController;
+  final VoidCallback? onExpandRequested;
+  final VoidCallback? onPageBackPressed;
 
   @override
   State<RideOptionsPanelWidget> createState() => _RideOptionsPanelWidgetState();
@@ -59,7 +69,7 @@ enum _RideOptionsPanelView() {
 }
 
 class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
-  static const _viewTransitionDuration = Duration(milliseconds: 160);
+  static const _viewTransitionDuration = Duration(milliseconds: 260);
 
   _RideOptionsPanelView _currentView = _RideOptionsPanelView.summary;
 
@@ -83,7 +93,15 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
 
   void _showView(_RideOptionsPanelView view) {
     if (!mounted) return;
+    if (view != _RideOptionsPanelView.summary) {
+      widget.onExpandRequested?.call();
+    }
     setState(() => _currentView = view);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final controller = widget.scrollController;
+      if (!mounted || controller == null || !controller.hasClients) return;
+      if (controller.offset > 0) controller.jumpTo(0);
+    });
   }
 
   void _saveCustomOffer() {
@@ -470,19 +488,24 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
     );
   }
 
+  Widget _buildPrimaryButton({
+    Key? key,
+    required String label,
+    required VoidCallback? onPressed,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(key: key, onPressed: onPressed, child: Text(label)),
+    );
+  }
+
   Widget _buildPanelHeader({required String title, required String details}) {
     return Row(
       children: [
-        IconButton(
+        _buildPanelBackButton(
           key: const ValueKey('panel-back'),
           onPressed: () => _showView(_RideOptionsPanelView.summary),
           tooltip: 'Back to trip summary',
-          style: IconButton.styleFrom(shape: const CircleBorder()),
-          icon: Icon(
-            LucideIcons.arrow_left,
-            color: context.colorScheme.onSurface,
-            size: 20,
-          ),
         ),
         const SizedBox(width: 4),
         Expanded(
@@ -512,6 +535,71 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
     );
   }
 
+  Widget _buildPanelBackButton({
+    required Key key,
+    required VoidCallback onPressed,
+    required String tooltip,
+  }) {
+    return HeroMode(
+      enabled: widget.isExpanded,
+      child: Hero(
+        tag: 'ride-selection-back-button',
+        child: IconButton(
+          key: key,
+          onPressed: onPressed,
+          tooltip: tooltip,
+          style: IconButton.styleFrom(shape: const CircleBorder()),
+          icon: Icon(
+            LucideIcons.arrow_left,
+            color: context.colorScheme.onSurface,
+            size: 20,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExpandedSummaryHeader() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          _buildPanelBackButton(
+            key: const ValueKey('panel-page-back'),
+            onPressed:
+                widget.onPageBackPressed ??
+                () => _showView(_RideOptionsPanelView.summary),
+            tooltip: 'Back to map',
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Trip details',
+                  style: TextStyle(
+                    color: context.colorScheme.onSurface,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Review your ride before booking.',
+                  style: TextStyle(
+                    color: context.colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSummaryContent() {
     final fareResult = _fareResult;
     final enteredFare = _enteredFare;
@@ -525,6 +613,7 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (widget.isExpanded) _buildExpandedSummaryHeader(),
         RideTripSummaryWidget(
           pickupLabel: widget.pickupLabel,
           destinationName: widget.destinationName,
@@ -562,15 +651,13 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
           _buildTotalFareCard(),
           const SizedBox(height: 12),
         ],
-        ElevatedButton(
+        _buildPrimaryButton(
           onPressed: _hasValidFare ? widget.onBookPressed : null,
-          child: Text(
-            fareResult == null
-                ? widget.isLoadingFare
-                      ? 'Calculating fare…'
-                      : 'Fare unavailable'
-                : 'Book directly',
-          ),
+          label: fareResult == null
+              ? widget.isLoadingFare
+                    ? 'Calculating fare…'
+                    : 'Fare unavailable'
+              : 'Book directly',
         ),
       ],
     );
@@ -587,16 +674,15 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
       children: [
         _buildPanelHeader(
           title: 'Set your offer',
-          details: 'Offers cannot be below the calculated fare.',
+          details: 'Match or raise the calculated fare.',
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 16),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
           decoration: BoxDecoration(
             color: context.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: context.colorScheme.outlineVariant),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -605,26 +691,55 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
                 'Calculated minimum',
                 style: TextStyle(
                   color: context.colorScheme.onSurfaceVariant,
-                  fontSize: 13,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                _currency(minimumFare),
-                style: TextStyle(
-                  color: context.colorScheme.onSurface,
-                  fontSize: 25,
-                  fontWeight: FontWeight.w800,
-                ),
+              const SizedBox(height: 6),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Text(
+                      _currency(minimumFare),
+                      style: TextStyle(
+                        color: context.colorScheme.onSurface,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: context.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'Minimum',
+                      style: TextStyle(
+                        color: context.colorScheme.onSurfaceVariant,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const Divider(height: 28),
+              const SizedBox(height: 16),
+              Divider(height: 1, color: context.colorScheme.outlineVariant),
+              const SizedBox(height: 16),
               Text(
                 'Your offer',
                 key: const ValueKey('custom-offer-label'),
                 style: TextStyle(
                   color: context.colorScheme.onSurface,
                   fontSize: 13,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
               const SizedBox(height: 8),
@@ -638,30 +753,30 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
                 ],
+                textInputAction: TextInputAction.done,
                 onChanged: (value) {
                   widget.onCustomFareChanged(value);
                   setState(() {});
                 },
+                onSubmitted: (_) => _saveCustomOffer(),
                 decoration: InputDecoration(
                   prefixText: '₱ ',
-                  helperText: 'Enter a higher amount if you want to adjust it.',
+                  hintText: '0.00',
+                  helperText: widget.customFareError == null
+                      ? 'Match or raise the calculated fare.'
+                      : null,
+                  helperMaxLines: 2,
                   errorText: widget.customFareError,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(
-                      color: context.colorScheme.outlineVariant,
-                    ),
-                  ),
                 ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 16),
-        ElevatedButton(
+        _buildPrimaryButton(
           key: const ValueKey('custom-offer-save'),
           onPressed: _hasValidFare ? _saveCustomOffer : null,
-          child: const Text('Save offer'),
+          label: 'Save offer',
         ),
       ],
     );
@@ -675,22 +790,21 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
       children: [
         _buildPanelHeader(
           title: 'Add a trip note',
-          details: 'Keep instructions short and useful for pickup.',
+          details: 'Help your driver find you quickly.',
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 16),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 10),
           decoration: BoxDecoration(
             color: context.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: context.colorScheme.outlineVariant),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Trip note (optional)',
+                'Pickup note',
                 style: TextStyle(
                   color: context.colorScheme.onSurface,
                   fontSize: 14,
@@ -699,7 +813,7 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Share a concise pickup instruction when it helps.',
+                'Optional · visible to your driver before pickup.',
                 style: TextStyle(
                   color: context.colorScheme.onSurfaceVariant,
                   fontSize: 12,
@@ -710,10 +824,11 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
                 key: const ValueKey('trip-note-input'),
                 controller: widget.notesController,
                 autofocus: true,
-                minLines: 3,
-                maxLines: 4,
+                minLines: 4,
+                maxLines: 5,
                 maxLength: 160,
                 textCapitalization: TextCapitalization.sentences,
+                textInputAction: TextInputAction.newline,
                 onChanged: (value) {
                   widget.onNotesChanged(value);
                   setState(() {});
@@ -721,28 +836,10 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
                 decoration: InputDecoration(
                   hintText: 'For example: Meet me at the side entrance.',
                   contentPadding: const EdgeInsets.all(16),
+                  alignLabelWithHint: true,
                   counterStyle: TextStyle(
                     color: context.colorScheme.onSurfaceVariant,
                     fontSize: 11,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(
-                      color: context.colorScheme.outlineVariant,
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(
-                      color: context.colorScheme.outlineVariant,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(
-                      color: context.colorScheme.onSurface,
-                      width: 1.2,
-                    ),
                   ),
                 ),
               ),
@@ -750,10 +847,10 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
           ),
         ),
         const SizedBox(height: 16),
-        ElevatedButton(
+        _buildPrimaryButton(
           key: const ValueKey('trip-note-save'),
           onPressed: () => _showView(_RideOptionsPanelView.summary),
-          child: const Text('Save note'),
+          label: 'Save note',
         ),
       ],
     );
@@ -803,8 +900,17 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
   @override
   Widget build(BuildContext context) {
     final entryOffset = _entryOffsetForCurrentView();
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+    final mediaPadding = MediaQuery.paddingOf(context);
+    final topPadding = 12.0 + (widget.isExpanded ? mediaPadding.top : 0);
+    return AnimatedContainer(
+      duration: _viewTransitionDuration,
+      curve: Curves.easeOutCubic,
+      padding: EdgeInsets.fromLTRB(
+        20,
+        topPadding,
+        20,
+        16 + mediaPadding.bottom,
+      ),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
@@ -817,6 +923,7 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
         ],
       ),
       child: SingleChildScrollView(
+        controller: widget.scrollController,
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -861,4 +968,44 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
       ),
     );
   }
+}
+
+@Preview(
+  group: 'Trip selection',
+  name: 'Interactive ride options panel',
+  size: Size(390, 800),
+)
+Widget rideOptionsPanelPreview() {
+  const fareResult = FareEstimate(
+    baseFare: 20,
+    distanceCharge: 5,
+    timeCharge: 3.17,
+    surgeCharge: 0,
+    totalFare: 28.17,
+  );
+
+  return MaterialApp(
+    theme: AppTheme.data,
+    home: Scaffold(
+      body: RideOptionsPanelWidget(
+        passengerName: 'Avery Cruz',
+        pickupLabel: 'Mountain View',
+        destinationName: 'Near Bathroom',
+        destinationAddress: 'Near Bathroom, 1600 Amphitheatre Pkwy, Mountain View, California 94043, United States',
+        fareResult: fareResult,
+        customFareController: TextEditingController(text: '28.17'),
+        customFareError: null,
+        isLoadingFare: false,
+        fareError: null,
+        onRetryFare: null,
+        onCustomFareChanged: (_) {},
+        notesController: TextEditingController(),
+        onNotesChanged: (_) {},
+        selectedTipAmount: 0,
+        onTipSelected: (_) {},
+        totalFare: fareResult.totalFare,
+        onBookPressed: () {},
+      ),
+    ),
+  );
 }

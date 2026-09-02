@@ -23,6 +23,9 @@ void main() {
     String passengerName = 'Avery Cruz',
     String? offeredFare,
     double? totalFare,
+    bool isExpanded = false,
+    VoidCallback? onExpandRequested,
+    VoidCallback? onPageBackPressed,
   }) {
     final customFareController = TextEditingController(
       text: offeredFare ?? result?.totalFare.toStringAsFixed(2) ?? '',
@@ -49,6 +52,9 @@ void main() {
           selectedTipAmount: 0,
           onTipSelected: onTipSelected ?? (_) {},
           totalFare: totalFare ?? result?.totalFare ?? 0,
+          isExpanded: isExpanded,
+          onExpandRequested: onExpandRequested,
+          onPageBackPressed: onPageBackPressed,
         ),
       ),
     );
@@ -143,6 +149,21 @@ void main() {
     expect(find.text('Your offer: ₱40'), findsOneWidget);
   });
 
+  testWidgets('requests sheet expansion before opening an editor', (
+    tester,
+  ) async {
+    var expansionRequests = 0;
+    await tester.pumpWidget(
+      buildPanel(onExpandRequested: () => expansionRequests++),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('custom-offer-trigger')));
+    await tester.pump();
+
+    expect(expansionRequests, 1);
+    expect(find.text('Set your offer'), findsOneWidget);
+  });
+
   testWidgets('opens a dedicated trip note editor instead of an inline field', (
     tester,
   ) async {
@@ -193,6 +214,21 @@ void main() {
     await tester.tap(find.byTooltip('Back to trip summary'));
     await tester.pumpAndSettle();
     expect(find.text('Trip Details'), findsOneWidget);
+  });
+
+  testWidgets('shows a page back affordance when the sheet is expanded', (
+    tester,
+  ) async {
+    var pageBackRequests = 0;
+    await tester.pumpWidget(
+      buildPanel(isExpanded: true, onPageBackPressed: () => pageBackRequests++),
+    );
+
+    expect(find.byKey(const ValueKey('panel-page-back')), findsOneWidget);
+    expect(find.text('Review your ride before booking.'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('panel-page-back')));
+    expect(pageBackRequests, 1);
   });
 
   testWidgets('selects a tip from the summary', (tester) async {
