@@ -32,7 +32,6 @@ class const RideOptionsPanelWidget({
   required this.totalFare,
   this.isExpanded = false,
   this.scrollController,
-  this.onExpandRequested,
   this.onPageBackPressed,
 }) extends StatefulWidget {
   final String passengerName;
@@ -54,7 +53,6 @@ class const RideOptionsPanelWidget({
   final double totalFare;
   final bool isExpanded;
   final ScrollController? scrollController;
-  final VoidCallback? onExpandRequested;
   final VoidCallback? onPageBackPressed;
 
   @override
@@ -93,9 +91,6 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
 
   void _showView(_RideOptionsPanelView view) {
     if (!mounted) return;
-    if (view != _RideOptionsPanelView.summary) {
-      widget.onExpandRequested?.call();
-    }
     setState(() => _currentView = view);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final controller = widget.scrollController;
@@ -110,7 +105,7 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
     }
   }
 
-  Widget _buildLoadingContent() {
+  Widget _buildLoadingContent({bool showPrimaryAction = true}) {
     return Skeletonizer.zone(
       key: const ValueKey('ride-options-loading'),
       child: Column(
@@ -128,11 +123,12 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
           const SizedBox(height: 12),
           _buildLoadingTotalFare(),
           const SizedBox(height: 12),
-          const Bone.button(
-            width: double.infinity,
-            height: 50,
-            borderRadius: BorderRadius.all(Radius.circular(16)),
-          ),
+          if (showPrimaryAction)
+            const Bone.button(
+              width: double.infinity,
+              height: 50,
+              borderRadius: BorderRadius.all(Radius.circular(16)),
+            ),
         ],
       ),
     );
@@ -499,15 +495,57 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
     );
   }
 
+  Widget _buildSummaryPrimaryAction() {
+    final fareResult = _fareResult;
+    return _buildPrimaryButton(
+      onPressed: _hasValidFare ? widget.onBookPressed : null,
+      label: fareResult == null
+          ? widget.isLoadingFare
+                ? 'Calculating fare…'
+                : 'Fare unavailable'
+          : 'Book directly',
+    );
+  }
+
+  Widget _buildCustomOfferPrimaryAction() {
+    return _buildPrimaryButton(
+      key: const ValueKey('custom-offer-save'),
+      onPressed: _hasValidFare ? _saveCustomOffer : null,
+      label: 'Save offer',
+    );
+  }
+
+  Widget _buildTripNotePrimaryAction() {
+    return _buildPrimaryButton(
+      key: const ValueKey('trip-note-save'),
+      onPressed: () => _showView(_RideOptionsPanelView.summary),
+      label: 'Save note',
+    );
+  }
+
+  Widget? _buildPinnedPrimaryAction() {
+    if (!widget.isExpanded) return null;
+
+    return switch (_currentView) {
+      _RideOptionsPanelView.summary => _buildSummaryPrimaryAction(),
+      _RideOptionsPanelView.customOffer when _minimumFare != null =>
+        _buildCustomOfferPrimaryAction(),
+      _RideOptionsPanelView.customOffer => _buildSummaryPrimaryAction(),
+      _RideOptionsPanelView.tripNote => _buildTripNotePrimaryAction(),
+      _RideOptionsPanelView.fareDetails => null,
+    };
+  }
+
   Widget _buildPanelHeader({required String title, required String details}) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildPanelBackButton(
           key: const ValueKey('panel-back'),
           onPressed: () => _showView(_RideOptionsPanelView.summary),
           tooltip: 'Back to trip summary',
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: 8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -548,6 +586,8 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
           key: key,
           onPressed: onPressed,
           tooltip: tooltip,
+          constraints: const BoxConstraints.tightFor(width: 40, height: 40),
+          padding: EdgeInsets.zero,
           style: IconButton.styleFrom(shape: const CircleBorder()),
           icon: Icon(
             LucideIcons.arrow_left,
@@ -563,6 +603,7 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildPanelBackButton(
             key: const ValueKey('panel-page-back'),
@@ -571,7 +612,7 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
                 () => _showView(_RideOptionsPanelView.summary),
             tooltip: 'Back to map',
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -600,7 +641,7 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
     );
   }
 
-  Widget _buildSummaryContent() {
+  Widget _buildSummaryContent({bool showPrimaryAction = true}) {
     final fareResult = _fareResult;
     final enteredFare = _enteredFare;
     final minimumFare = _minimumFare;
@@ -651,21 +692,16 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
           _buildTotalFareCard(),
           const SizedBox(height: 12),
         ],
-        _buildPrimaryButton(
-          onPressed: _hasValidFare ? widget.onBookPressed : null,
-          label: fareResult == null
-              ? widget.isLoadingFare
-                    ? 'Calculating fare…'
-                    : 'Fare unavailable'
-              : 'Book directly',
-        ),
+        if (showPrimaryAction) _buildSummaryPrimaryAction(),
       ],
     );
   }
 
-  Widget _buildCustomOfferContent() {
+  Widget _buildCustomOfferContent({bool showPrimaryAction = true}) {
     final minimumFare = _minimumFare;
-    if (minimumFare == null) return _buildSummaryContent();
+    if (minimumFare == null) {
+      return _buildSummaryContent(showPrimaryAction: showPrimaryAction);
+    }
 
     return Column(
       key: const ValueKey('custom-offer-content'),
@@ -773,16 +809,12 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
           ),
         ),
         const SizedBox(height: 16),
-        _buildPrimaryButton(
-          key: const ValueKey('custom-offer-save'),
-          onPressed: _hasValidFare ? _saveCustomOffer : null,
-          label: 'Save offer',
-        ),
+        if (showPrimaryAction) _buildCustomOfferPrimaryAction(),
       ],
     );
   }
 
-  Widget _buildTripNoteContent() {
+  Widget _buildTripNoteContent({bool showPrimaryAction = true}) {
     return Column(
       key: const ValueKey('trip-note-content'),
       mainAxisSize: MainAxisSize.min,
@@ -847,11 +879,7 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
           ),
         ),
         const SizedBox(height: 16),
-        _buildPrimaryButton(
-          key: const ValueKey('trip-note-save'),
-          onPressed: () => _showView(_RideOptionsPanelView.summary),
-          label: 'Save note',
-        ),
+        if (showPrimaryAction) _buildTripNotePrimaryAction(),
       ],
     );
   }
@@ -874,17 +902,27 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
     );
   }
 
-  Widget _buildContent() {
-    if (widget.isLoadingFare) return _buildLoadingContent();
+  Widget _buildContent({bool showPrimaryAction = true}) {
+    if (widget.isLoadingFare) {
+      return _buildLoadingContent(showPrimaryAction: showPrimaryAction);
+    }
 
     final fareResult = _fareResult;
     return switch (_currentView) {
-      _RideOptionsPanelView.summary => _buildSummaryContent(),
-      _RideOptionsPanelView.customOffer => _buildCustomOfferContent(),
-      _RideOptionsPanelView.tripNote => _buildTripNoteContent(),
+      _RideOptionsPanelView.summary => _buildSummaryContent(
+        showPrimaryAction: showPrimaryAction,
+      ),
+      _RideOptionsPanelView.customOffer => _buildCustomOfferContent(
+        showPrimaryAction: showPrimaryAction,
+      ),
+      _RideOptionsPanelView.tripNote => _buildTripNoteContent(
+        showPrimaryAction: showPrimaryAction,
+      ),
       _RideOptionsPanelView.fareDetails when fareResult != null =>
         _buildFareDetailsContent(fareResult),
-      _RideOptionsPanelView.fareDetails => _buildSummaryContent(),
+      _RideOptionsPanelView.fareDetails => _buildSummaryContent(
+        showPrimaryAction: showPrimaryAction,
+      ),
     };
   }
 
@@ -901,70 +939,85 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
   Widget build(BuildContext context) {
     final entryOffset = _entryOffsetForCurrentView();
     final mediaPadding = MediaQuery.paddingOf(context);
-    final topPadding = 12.0 + (widget.isExpanded ? mediaPadding.top : 0);
+    final viewInsets = MediaQuery.viewInsetsOf(context);
+    final bottomInset = viewInsets.bottom > mediaPadding.bottom
+        ? viewInsets.bottom
+        : mediaPadding.bottom;
+    final topPadding = widget.isExpanded ? mediaPadding.top + 8 : 12.0;
+    final pinnedAction = _buildPinnedPrimaryAction();
+    final isActionPinned = pinnedAction != null;
     return AnimatedContainer(
       duration: _viewTransitionDuration,
       curve: Curves.easeOutCubic,
-      padding: EdgeInsets.fromLTRB(
-        20,
-        topPadding,
-        20,
-        16 + mediaPadding.bottom,
-      ),
+      padding: EdgeInsets.fromLTRB(20, topPadding, 20, 16 + bottomInset),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        boxShadow: [
-          BoxShadow(
-            color: context.colorScheme.onSurface.withValues(alpha: 0.12),
-            blurRadius: 30,
-            offset: const Offset(0, -10),
-          ),
-        ],
-      ),
-      child: SingleChildScrollView(
-        controller: widget.scrollController,
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: context.colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(2),
+        borderRadius: widget.isExpanded
+            ? BorderRadius.zero
+            : const BorderRadius.vertical(top: Radius.circular(32)),
+        boxShadow: widget.isExpanded
+            ? const []
+            : [
+                BoxShadow(
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.12),
+                  blurRadius: 30,
+                  offset: const Offset(0, -10),
                 ),
-              ),
-            ),
-            AnimatedSize(
-              duration: _viewTransitionDuration,
-              curve: Curves.easeOutCubic,
-              alignment: Alignment.topCenter,
-              child: AnimatedSwitcher(
-                duration: _viewTransitionDuration,
-                switchInCurve: Curves.easeOutCubic,
-                switchOutCurve: Curves.easeInCubic,
-                layoutBuilder: (currentChild, _) =>
-                    ClipRect(child: currentChild ?? const SizedBox.shrink()),
-                transitionBuilder: (child, animation) => FadeTransition(
-                  opacity: animation,
-                  child: SlideTransition(
-                    position: Tween<Offset>(
-                      begin: entryOffset,
-                      end: Offset.zero,
-                    ).animate(animation),
-                    child: child,
+              ],
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          SingleChildScrollView(
+            controller: widget.scrollController,
+            padding: EdgeInsets.only(bottom: isActionPinned ? 68 : 0),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (!widget.isExpanded)
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: context.colorScheme.outlineVariant,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                AnimatedSize(
+                  duration: _viewTransitionDuration,
+                  curve: Curves.easeOutCubic,
+                  alignment: Alignment.topCenter,
+                  child: AnimatedSwitcher(
+                    duration: _viewTransitionDuration,
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeInCubic,
+                    layoutBuilder: (currentChild, _) => ClipRect(
+                      child: currentChild ?? const SizedBox.shrink(),
+                    ),
+                    transitionBuilder: (child, animation) => FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: entryOffset,
+                          end: Offset.zero,
+                        ).animate(animation),
+                        child: child,
+                      ),
+                    ),
+                    child: _buildContent(showPrimaryAction: !isActionPinned),
                   ),
                 ),
-                child: _buildContent(),
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+          if (pinnedAction != null)
+            Positioned(left: 0, right: 0, bottom: 0, child: pinnedAction),
+        ],
       ),
     );
   }

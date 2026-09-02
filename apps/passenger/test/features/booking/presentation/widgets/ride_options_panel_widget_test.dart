@@ -24,39 +24,58 @@ void main() {
     String? offeredFare,
     double? totalFare,
     bool isExpanded = false,
-    VoidCallback? onExpandRequested,
     VoidCallback? onPageBackPressed,
+    DraggableScrollableController? sheetController,
   }) {
     final customFareController = TextEditingController(
       text: offeredFare ?? result?.totalFare.toStringAsFixed(2) ?? '',
     );
     final notesController = TextEditingController();
+
+    RideOptionsPanelWidget buildPanelWidget(
+      ScrollController? scrollController,
+    ) {
+      return RideOptionsPanelWidget(
+        passengerName: passengerName,
+        pickupLabel: 'Current location',
+        destinationName: 'Central Park',
+        destinationAddress: '123 Main Street',
+        fareResult: result,
+        onBookPressed: () {},
+        customFareController: customFareController,
+        customFareError: null,
+        isLoadingFare: isLoadingFare,
+        fareError: fareError,
+        onRetryFare: onRetryFare,
+        onCustomFareChanged: (_) {},
+        notesController: notesController,
+        onNotesChanged: (_) {},
+        selectedTipAmount: 0,
+        onTipSelected: onTipSelected ?? (_) {},
+        totalFare: totalFare ?? result?.totalFare ?? 0,
+        isExpanded: isExpanded,
+        scrollController: scrollController,
+        onPageBackPressed: onPageBackPressed,
+      );
+    }
+
+    final panel = sheetController == null
+        ? buildPanelWidget(null)
+        : SizedBox.expand(
+            child: DraggableScrollableSheet(
+              controller: sheetController,
+              expand: false,
+              initialChildSize: 0.8,
+              minChildSize: 0.34,
+              maxChildSize: 1,
+              builder: (context, scrollController) =>
+                  buildPanelWidget(scrollController),
+            ),
+          );
+
     return MaterialApp(
       theme: AppTheme.data,
-      home: Scaffold(
-        body: RideOptionsPanelWidget(
-          passengerName: passengerName,
-          pickupLabel: 'Current location',
-          destinationName: 'Central Park',
-          destinationAddress: '123 Main Street',
-          fareResult: result,
-          onBookPressed: () {},
-          customFareController: customFareController,
-          customFareError: null,
-          isLoadingFare: isLoadingFare,
-          fareError: fareError,
-          onRetryFare: onRetryFare,
-          onCustomFareChanged: (_) {},
-          notesController: notesController,
-          onNotesChanged: (_) {},
-          selectedTipAmount: 0,
-          onTipSelected: onTipSelected ?? (_) {},
-          totalFare: totalFare ?? result?.totalFare ?? 0,
-          isExpanded: isExpanded,
-          onExpandRequested: onExpandRequested,
-          onPageBackPressed: onPageBackPressed,
-        ),
-      ),
+      home: Scaffold(body: panel),
     );
   }
 
@@ -149,18 +168,20 @@ void main() {
     expect(find.text('Your offer: ₱40'), findsOneWidget);
   });
 
-  testWidgets('requests sheet expansion before opening an editor', (
+  testWidgets('keeps the current sheet extent when opening an editor', (
     tester,
   ) async {
-    var expansionRequests = 0;
-    await tester.pumpWidget(
-      buildPanel(onExpandRequested: () => expansionRequests++),
-    );
+    final sheetController = DraggableScrollableController();
+    addTearDown(sheetController.dispose);
+    await tester.pumpWidget(buildPanel(sheetController: sheetController));
+
+    expect(sheetController.isAttached, isTrue);
+    expect(sheetController.size, closeTo(0.8, 0.001));
 
     await tester.tap(find.byKey(const ValueKey('custom-offer-trigger')));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
-    expect(expansionRequests, 1);
+    expect(sheetController.size, closeTo(0.8, 0.001));
     expect(find.text('Set your offer'), findsOneWidget);
   });
 
@@ -229,6 +250,26 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('panel-page-back')));
     expect(pageBackRequests, 1);
+  });
+
+  testWidgets('pins the expanded editor action to the bottom edge', (
+    tester,
+  ) async {
+    await tester.pumpWidget(buildPanel(isExpanded: true));
+
+    await tester.tap(find.byKey(const ValueKey('custom-offer-trigger')));
+    await tester.pumpAndSettle();
+
+    final scaffoldBottom = tester.getRect(find.byType(Scaffold)).bottom;
+    final actionBottom = tester
+        .getRect(find.byKey(const ValueKey('custom-offer-save')))
+        .bottom;
+    final backTop = tester
+        .getRect(find.byKey(const ValueKey('panel-back')))
+        .top;
+    final titleTop = tester.getRect(find.text('Set your offer')).top;
+    expect(scaffoldBottom - actionBottom, closeTo(16, 1));
+    expect(backTop, closeTo(titleTop, 1));
   });
 
   testWidgets('selects a tip from the summary', (tester) async {

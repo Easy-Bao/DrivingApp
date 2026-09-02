@@ -151,17 +151,6 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
     setState(() => _isPanelExpanded = isExpanded);
   }
 
-  void _expandOptionsPanel() {
-    if (!_panelController.isAttached) return;
-    unawaited(
-      _panelController.animateTo(
-        _panelMaxSize,
-        duration: _panelAnimationDuration,
-        curve: Curves.easeOutCubic,
-      ),
-    );
-  }
-
   Future<void> _resolvePickupLocation() async {
     try {
       final position = await LocationService.getCurrentPosition();
@@ -651,7 +640,6 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
                         totalFare: _totalFare,
                         isExpanded: _isPanelExpanded,
                         scrollController: scrollController,
-                        onExpandRequested: _expandOptionsPanel,
                         onPageBackPressed: () => context.pop(),
                         onBookPressed: () => unawaited(_handleBookPressed()),
                       );
