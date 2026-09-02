@@ -524,7 +524,10 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
   }
 
   Widget? _buildPinnedPrimaryAction() {
-    if (!widget.isExpanded) return null;
+    if (widget.isLoadingFare ||
+        (_currentView == _RideOptionsPanelView.summary && !widget.isExpanded)) {
+      return null;
+    }
 
     return switch (_currentView) {
       _RideOptionsPanelView.summary => _buildSummaryPrimaryAction(),
@@ -537,36 +540,59 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
   }
 
   Widget _buildPanelHeader({required String title, required String details}) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return _buildIndependentHeader(
+      backKey: const ValueKey('panel-back'),
+      onBackPressed: () => _showView(_RideOptionsPanelView.summary),
+      tooltip: 'Back to trip summary',
+      title: title,
+      details: details,
+    );
+  }
+
+  Widget _buildIndependentHeader({
+    required Key backKey,
+    required VoidCallback onBackPressed,
+    required String tooltip,
+    required String title,
+    required String details,
+  }) {
+    return Stack(
       children: [
-        _buildPanelBackButton(
-          key: const ValueKey('panel-back'),
-          onPressed: () => _showView(_RideOptionsPanelView.summary),
-          tooltip: 'Back to trip summary',
+        Padding(
+          padding: const EdgeInsets.only(left: 48),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 40),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: context.colorScheme.onSurface,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  details,
+                  style: TextStyle(
+                    color: context.colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: context.colorScheme.onSurface,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                details,
-                style: TextStyle(
-                  color: context.colorScheme.onSurfaceVariant,
-                  fontSize: 12,
-                ),
-              ),
-            ],
+        Positioned(
+          top: 0,
+          left: 0,
+          child: _buildPanelBackButton(
+            key: backKey,
+            onPressed: onBackPressed,
+            tooltip: tooltip,
           ),
         ),
       ],
@@ -602,41 +628,14 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
   Widget _buildExpandedSummaryHeader() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildPanelBackButton(
-            key: const ValueKey('panel-page-back'),
-            onPressed:
-                widget.onPageBackPressed ??
-                () => _showView(_RideOptionsPanelView.summary),
-            tooltip: 'Back to map',
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Trip details',
-                  style: TextStyle(
-                    color: context.colorScheme.onSurface,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Review your ride before booking.',
-                  style: TextStyle(
-                    color: context.colorScheme.onSurfaceVariant,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+      child: _buildIndependentHeader(
+        backKey: const ValueKey('panel-page-back'),
+        onBackPressed:
+            widget.onPageBackPressed ??
+            () => _showView(_RideOptionsPanelView.summary),
+        tooltip: 'Back to map',
+        title: 'Trip details',
+        details: 'Review your ride before booking.',
       ),
     );
   }
@@ -947,6 +946,7 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
     final pinnedAction = _buildPinnedPrimaryAction();
     final isActionPinned = pinnedAction != null;
     return AnimatedContainer(
+      key: const ValueKey('ride-options-panel'),
       duration: _viewTransitionDuration,
       curve: Curves.easeOutCubic,
       padding: EdgeInsets.fromLTRB(20, topPadding, 20, 16 + bottomInset),

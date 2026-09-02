@@ -252,24 +252,50 @@ void main() {
     expect(pageBackRequests, 1);
   });
 
-  testWidgets('pins the expanded editor action to the bottom edge', (
+  testWidgets('pins the editor action to the current sheet edge', (
     tester,
   ) async {
-    await tester.pumpWidget(buildPanel(isExpanded: true));
+    final sheetController = DraggableScrollableController();
+    addTearDown(sheetController.dispose);
+    await tester.pumpWidget(buildPanel(sheetController: sheetController));
 
     await tester.tap(find.byKey(const ValueKey('custom-offer-trigger')));
     await tester.pumpAndSettle();
 
-    final scaffoldBottom = tester.getRect(find.byType(Scaffold)).bottom;
+    final panelBottom = tester
+        .getRect(find.byKey(const ValueKey('ride-options-panel')))
+        .bottom;
     final actionBottom = tester
         .getRect(find.byKey(const ValueKey('custom-offer-save')))
         .bottom;
+    expect(panelBottom - actionBottom, closeTo(16, 1));
+    expect(sheetController.size, closeTo(0.8, 0.001));
+
     final backTop = tester
         .getRect(find.byKey(const ValueKey('panel-back')))
         .top;
     final titleTop = tester.getRect(find.text('Set your offer')).top;
-    expect(scaffoldBottom - actionBottom, closeTo(16, 1));
     expect(backTop, closeTo(titleTop, 1));
+  });
+
+  testWidgets('keeps the compact summary clear of its booking action', (
+    tester,
+  ) async {
+    final sheetController = DraggableScrollableController();
+    addTearDown(sheetController.dispose);
+    await tester.pumpWidget(buildPanel(sheetController: sheetController));
+
+    sheetController.jumpTo(0.34);
+    await tester.pump();
+
+    expect(
+      find.ancestor(
+        of: find.text('Book directly'),
+        matching: find.byType(Positioned),
+      ),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('selects a tip from the summary', (tester) async {
