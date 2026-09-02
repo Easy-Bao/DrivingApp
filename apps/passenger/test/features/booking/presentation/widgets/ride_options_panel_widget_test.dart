@@ -271,11 +271,9 @@ void main() {
     expect(panelBottom - actionBottom, closeTo(16, 1));
     expect(sheetController.size, closeTo(0.8, 0.001));
 
-    final backTop = tester
-        .getRect(find.byKey(const ValueKey('panel-back')))
-        .top;
+    final backRect = tester.getRect(find.byKey(const ValueKey('panel-back')));
     final titleTop = tester.getRect(find.text('Set your offer')).top;
-    expect(backTop, closeTo(titleTop, 1));
+    expect(titleTop, greaterThanOrEqualTo(backRect.bottom + 8));
   });
 
   testWidgets('keeps the compact summary clear of its booking action', (
