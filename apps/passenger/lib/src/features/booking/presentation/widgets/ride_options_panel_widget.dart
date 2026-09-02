@@ -556,7 +556,7 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
     required String title,
     required String details,
   }) {
-    return Column(
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildPanelBackButton(
@@ -564,21 +564,28 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
           onPressed: onBackPressed,
           tooltip: tooltip,
         ),
-        const SizedBox(height: 8),
-        Text(
-          title,
-          style: TextStyle(
-            color: context.colorScheme.onSurface,
-            fontSize: 17,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          details,
-          style: TextStyle(
-            color: context.colorScheme.onSurfaceVariant,
-            fontSize: 12,
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  color: context.colorScheme.onSurface,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                details,
+                style: TextStyle(
+                  color: context.colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                ),
+              ),
+            ],
           ),
         ),
       ],
