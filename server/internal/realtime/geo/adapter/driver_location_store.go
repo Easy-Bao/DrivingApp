@@ -2,7 +2,7 @@ package adapter
 
 import (
 	"context"
-	"encoding/json"
+	jsonv2 "encoding/json/v2"
 	"log/slog"
 	"time"
 
@@ -45,7 +45,7 @@ func (repository *DriverLocationStore) WithLogger(logger *slog.Logger) *DriverLo
 	return repository
 }
 func (repository *DriverLocationStore) Upsert(ctx context.Context, point domain.DriverPoint) error {
-	payload, err := json.Marshal(point)
+	payload, err := jsonv2.Marshal(point)
 	if err != nil {
 		return err
 	}
@@ -129,7 +129,7 @@ func (repository *DriverLocationStore) Nearby(ctx context.Context, latitude, lon
 			continue
 		}
 		var point domain.DriverPoint
-		if json.Unmarshal([]byte(payload), &point) != nil ||
+		if jsonv2.Unmarshal([]byte(payload), &point) != nil ||
 			point.DriverID == "" ||
 			point.DriverID != locationID {
 			staleLocations = append(staleLocations, locationID)
@@ -167,7 +167,7 @@ func (repository *DriverLocationStore) Get(ctx context.Context, driverID string)
 }
 
 func (repository *DriverLocationStore) UpsertPassenger(ctx context.Context, rideID string, point domain.DriverPoint) error {
-	payload, err := json.Marshal(point)
+	payload, err := jsonv2.Marshal(point)
 	if err != nil {
 		return err
 	}
@@ -184,7 +184,7 @@ func (repository *DriverLocationStore) get(ctx context.Context, key string) (dom
 		return domain.DriverPoint{}, err
 	}
 	var point domain.DriverPoint
-	if err := json.Unmarshal(payload, &point); err != nil {
+	if err := jsonv2.Unmarshal(payload, &point); err != nil {
 		return domain.DriverPoint{}, err
 	}
 	return point, nil

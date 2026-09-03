@@ -98,3 +98,19 @@ func TestEnvelopeTopicsAreDerivedFromValidatedScope(t *testing.T) {
 		t.Fatalf("Topics() = %v, want %v", got, want)
 	}
 }
+
+func TestDecodeRejectsDuplicateObjectMembers(t *testing.T) {
+	t.Parallel()
+
+	_, err := Decode([]byte(`{
+        "id":"event-1",
+        "version":1,
+        "type":"ride.status.changed",
+        "occurred_at":"2026-08-10T10:00:00.000Z",
+        "scope":{"ride_id":"ride-1"},
+        "payload":{"status":"accepted","status":"completed"}
+    }`))
+	if err == nil {
+		t.Fatal("Decode() error = nil, want duplicate-member error")
+	}
+}

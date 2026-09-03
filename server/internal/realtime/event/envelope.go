@@ -6,6 +6,8 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/json/jsontext"
+	jsonv2 "encoding/json/v2"
 	"errors"
 	"fmt"
 	"strings"
@@ -67,7 +69,7 @@ func NewID() string {
 }
 
 func New(id string, eventType Type, occurredAt time.Time, scope Scope, payload map[string]any) (Envelope, error) {
-	encodedPayload, err := json.Marshal(payload)
+	encodedPayload, err := jsonv2.Marshal(payload)
 	if err != nil {
 		return Envelope{}, fmt.Errorf("marshal realtime event payload: %w", err)
 	}
@@ -88,7 +90,7 @@ func New(id string, eventType Type, occurredAt time.Time, scope Scope, payload m
 
 func Decode(data []byte) (Envelope, error) {
 	var envelope Envelope
-	if err := json.Unmarshal(data, &envelope); err != nil {
+	if err := jsonv2.Unmarshal(data, &envelope); err != nil {
 		return Envelope{}, fmt.Errorf("decode realtime event: %w", err)
 	}
 	if err := envelope.Validate(); err != nil {
@@ -101,7 +103,7 @@ func (envelope Envelope) Encode() ([]byte, error) {
 	if err := envelope.Validate(); err != nil {
 		return nil, err
 	}
-	encoded, err := json.Marshal(envelope)
+	encoded, err := jsonv2.Marshal(envelope)
 	if err != nil {
 		return nil, fmt.Errorf("encode realtime event: %w", err)
 	}
@@ -228,14 +230,14 @@ func validateIdentifier(name, value string, required bool) error {
 
 func validatePayload(payload json.RawMessage) error {
 	trimmed := strings.TrimSpace(string(payload))
-	if len(trimmed) == 0 || !json.Valid(payload) {
+	if len(trimmed) == 0 || !jsontext.Value(payload).IsValid() {
 		return errors.New("realtime event payload must be valid JSON")
 	}
-	if !strings.HasPrefix(trimmed, "{") || !strings.HasSuffix(trimmed, "}") {
+	if jsontext.Value(payload).Kind() != jsontext.KindBeginObject {
 		return errors.New("realtime event payload must be a JSON object")
 	}
 	var object map[string]json.RawMessage
-	if err := json.Unmarshal(payload, &object); err != nil {
+	if err := jsonv2.Unmarshal(payload, &object); err != nil {
 		return fmt.Errorf("decode realtime event payload: %w", err)
 	}
 	return nil
