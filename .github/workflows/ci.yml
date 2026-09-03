@@ -31,7 +31,7 @@ jobs:
       - name: Set up Gitleaks runtime
         uses: actions/setup-go@v7
         with:
-          go-version: '1.25.0'
+          go-version: '1.27.0'
           cache: false
 
       - name: Install Gitleaks CLI

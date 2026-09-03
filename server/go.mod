@@ -1,6 +1,6 @@
 module github.com/Easy-Bao/DrivingApp/server
 
-go 1.25.0
+go 1.27.0
 
 require (
 	entgo.io/ent v0.14.5
