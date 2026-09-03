@@ -45,12 +45,14 @@ class const TrackDriverPage({
   required this.chatRepositoryFactory,
   required this.sessionService,
   required this.lifecycleCoordinator,
+  this.realtimeClient,
 }) extends StatefulWidget {
   final RideHistory ride;
   final TrackRepository trackRepository;
   final ChatRepositoryFactory chatRepositoryFactory;
   final PassengerSessionStore sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;
+  final RealtimeWebSocketClient? realtimeClient;
 
   @override
   State<TrackDriverPage> createState() => _TrackDriverPageState();
@@ -83,6 +85,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
   void initState() {
     super.initState();
     _liveMapBloc = Modular.get<LiveMapBloc>();
+    widget.realtimeClient?.setActiveTripResyncHandler(_resyncActiveTrip);
     _chatMessagesPollingTask = AppLifecyclePeriodicTask(
       lifecycleCoordinator: widget.lifecycleCoordinator,
       interval: const Duration(seconds: 4),
@@ -106,6 +109,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
 
   @override
   void dispose() {
+    widget.realtimeClient?.setActiveTripResyncHandler(null);
     unawaited(_locationSubscription?.cancel());
     unawaited(_chatMessagesPollingTask.dispose());
     unawaited(_chatRepository?.dispose());
@@ -118,6 +122,11 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
       unawaited(MapProvider.clearAnnotations(manager));
     }
     super.dispose();
+  }
+
+  Future<void> _resyncActiveTrip() async {
+    if (!mounted) return;
+    await BlocProvider.of<TrackDriverCubit>(context).resyncActiveTrip();
   }
 
   Future<void> _updateUnreadMessagesCount() async {

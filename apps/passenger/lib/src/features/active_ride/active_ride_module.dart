@@ -99,6 +99,7 @@ class ActiveRideModule._() {
           chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
           sessionService: Modular.get<PassengerSessionStore>(),
           lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
+          realtimeClient: Modular.get<RealtimeWebSocketClient>(),
         );
       },
       transition: AppTransitions.push.toLeft,
