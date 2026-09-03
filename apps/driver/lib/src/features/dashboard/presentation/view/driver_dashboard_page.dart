@@ -77,6 +77,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     );
     _liveMapBloc = Modular.get<LiveMapBloc>();
     _realtimeClient = Modular.get<RealtimeWebSocketClient>();
+    _realtimeClient!.setActiveTripResyncHandler(_resyncActiveTrip);
     _realtimeEventsSubscription = _realtimeClient!.events.listen(
       _handleRealtimeEvent,
     );
@@ -105,6 +106,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   @override
   void dispose() {
+    _realtimeClient?.setActiveTripResyncHandler(null);
     unawaited(_lifecycleSubscription.cancel());
     _pulseCtrl.dispose();
     _availabilityCtrl.dispose();
@@ -121,6 +123,11 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _pollGeneration++;
     unawaited(_liveMapBloc?.close());
     super.dispose();
+  }
+
+  Future<void> _resyncActiveTrip() async {
+    if (!mounted || !_isForeground) return;
+    await BlocProvider.of<DashboardCubit>(context).resyncActiveTrip();
   }
 
   void _onLifecycleChanged(AppLifecycleStatus status) {
