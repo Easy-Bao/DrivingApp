@@ -162,19 +162,29 @@ class TrackDriverCubit({
             final eta = _getEtaLabel(rideUpdate.status);
 
             if (!isClosed && _lifecycleCoordinator.isForeground) {
-              emit(
-                TrackDriverInProgress(
-                  driverLat: driverLat!,
-                  driverLng: driverLng!,
-                  progress: progress,
-                  eta: eta,
-                  routePoints: routePoints,
-                  status: rideUpdate.status,
-                  driverName: rideUpdate.driverName,
-                  vehiclePlate: rideUpdate.vehiclePlate,
-                  vehicleType: rideUpdate.vehicleType,
-                ),
-              );
+              final trackingState = rideUpdate.status == RideStatus.inTransit
+                  ? TrackDriverTripInProgress(
+                      driverLat: driverLat!,
+                      driverLng: driverLng!,
+                      progress: progress,
+                      eta: eta,
+                      routePoints: routePoints,
+                      driverName: rideUpdate.driverName,
+                      vehiclePlate: rideUpdate.vehiclePlate,
+                      vehicleType: rideUpdate.vehicleType,
+                    )
+                  : TrackDriverInProgress(
+                      driverLat: driverLat!,
+                      driverLng: driverLng!,
+                      progress: progress,
+                      eta: eta,
+                      routePoints: routePoints,
+                      status: rideUpdate.status,
+                      driverName: rideUpdate.driverName,
+                      vehiclePlate: rideUpdate.vehiclePlate,
+                      vehicleType: rideUpdate.vehicleType,
+                    );
+              emit(trackingState);
             }
           },
         );
