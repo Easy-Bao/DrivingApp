@@ -424,34 +424,50 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
 
     return BlocListener<TrackDriverCubit, TrackDriverState>(
       listener: (context, state) {
-        if (state is TrackDriverInProgress) {
-          unawaited(
-            _updateMapElements(
-              state.driverLat,
-              state.driverLng,
-              state.routePoints,
-              state.status,
-              state.driverName,
-            ),
-          );
-        } else if (state is TrackDriverCompleted) {
-          if (_hasHandledTerminalState) return;
-          _hasHandledTerminalState = true;
-          Modular.get<BookingBloc>().add(const ResetBookingEvent());
-          context.pushReplacementNamed(
-            RideHistoryRoutes.passengerPayment,
-            extra: widget.ride.copyWith(
-              driverId: state.driverId,
-              driverName: state.driverName,
-            ),
-          );
-        } else if (state is TrackDriverCanceled) {
-          if (_hasHandledTerminalState) return;
-          _hasHandledTerminalState = true;
-          Modular.get<BookingBloc>().add(const ResetBookingEvent());
-          if (mounted) {
-            context.goNamed(HomeRoutes.home);
-          }
+        switch (state) {
+          case DriverEnRoute(
+            :final driverLat,
+            :final driverLng,
+            :final routePoints,
+            :final status,
+            :final driverName,
+          ):
+          case TripInProgress(
+            :final driverLat,
+            :final driverLng,
+            :final routePoints,
+            :final status,
+            :final driverName,
+          ):
+            unawaited(
+              _updateMapElements(
+                driverLat,
+                driverLng,
+                routePoints,
+                status,
+                driverName,
+              ),
+            );
+          case TripCompleted(:final driverId, :final driverName):
+            if (_hasHandledTerminalState) return;
+            _hasHandledTerminalState = true;
+            Modular.get<BookingBloc>().add(const ResetBookingEvent());
+            context.pushReplacementNamed(
+              RideHistoryRoutes.passengerPayment,
+              extra: widget.ride.copyWith(
+                driverId: driverId,
+                driverName: driverName,
+              ),
+            );
+          case RideFailed():
+            if (_hasHandledTerminalState) return;
+            _hasHandledTerminalState = true;
+            Modular.get<BookingBloc>().add(const ResetBookingEvent());
+            if (mounted) {
+              context.goNamed(HomeRoutes.home);
+            }
+          case Idle() || SearchingDriver():
+            return;
         }
       },
       child: Scaffold(
@@ -497,38 +513,38 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                 top: false,
                 child: BlocBuilder<TrackDriverCubit, TrackDriverState>(
                   builder: (context, state) {
-                    final isInTransit =
-                        state is TrackDriverInProgress &&
-                        state.status == RideStatus.inTransit;
-                    final hasArrived =
-                        state is TrackDriverInProgress &&
-                        state.status == RideStatus.arrived;
+                    final isInTransit = state.isInTransit;
+                    final hasArrived = state.hasArrived;
                     final statusTitle = isInTransit
                         ? 'Heading To Your Destination'
                         : hasArrived
                         ? 'Driver Has Arrived'
-                        : state is TrackDriverInProgress
+                        : state.isTracking
                         ? 'Driver Is Picking You Up'
                         : 'Driver Assigned';
                     final statusSubtitle = isInTransit
                         ? 'Heading To ${widget.ride.destination}'
                         : hasArrived
                         ? 'Meet Your Driver At Pickup'
-                        : state is TrackDriverInProgress
+                        : state.isTracking
                         ? 'Your Driver Is On The Way To Pickup'
                         : 'Your Driver Is Preparing For Pickup';
-                    final etaText = state is TrackDriverInProgress
-                        ? hasArrived
-                              ? 'Driver Arrived'
-                              : isInTransit
-                              ? 'To Drop Off'
-                              : 'To Pickup'
-                        : 'To Pickup';
-                    final driverName = state is TrackDriverInProgress
-                        ? state.driverName
+                    final etaText = switch (state) {
+                      DriverEnRoute(:final status) =>
+                        status == RideStatus.arrived
+                            ? 'Driver Arrived'
+                            : 'To Pickup',
+                      TripInProgress() => 'To Drop Off',
+                      Idle() ||
+                      SearchingDriver() ||
+                      TripCompleted() ||
+                      RideFailed() => 'To Pickup',
+                    };
+                    final driverName = state.isTracking
+                        ? state.activeDriverName
                         : null;
-                    final vehicleSummary = state is TrackDriverInProgress
-                        ? [state.vehicleType, state.vehiclePlate]
+                    final vehicleSummary = state.isTracking
+                        ? [state.activeVehicleType, state.activeVehiclePlate]
                               .where((value) => value.trim().isNotEmpty)
                               .join(' • ')
                         : null;
@@ -576,10 +592,8 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                                   await widget.sessionService
                                       .readPassengerId() ??
                                   '';
-                              final dName = state is TrackDriverInProgress
-                                  ? (state.driverName.isNotEmpty
-                                        ? state.driverName
-                                        : widget.ride.displayDriverName)
+                              final dName = state.activeDriverName.isNotEmpty
+                                  ? state.activeDriverName
                                   : widget.ride.displayDriverName;
                               if (context.mounted) {
                                 setState(() {
