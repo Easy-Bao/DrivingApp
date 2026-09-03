@@ -87,7 +87,7 @@ final class RealtimeWebSocketClient({
   final Uri _uri;
   final RealtimeTokenProvider _tokenProvider;
   final RealtimeTokenRefresher? _refreshToken;
-  final RealtimeActiveTripResync? _onResyncActiveTrip;
+  RealtimeActiveTripResync? _onResyncActiveTrip;
   final RealtimeSocketConnector _connector;
   final ReconnectDelay _reconnectDelay;
   final Random _random;
@@ -111,6 +111,13 @@ final class RealtimeWebSocketClient({
   Stream<RealtimeEvent> get events => _events.stream;
   Stream<RealtimeConnectionState> get states => _states.stream;
   bool get isConnected => _socket != null;
+
+  /// Replaces the screen-scoped active-trip recovery owner without requiring
+  /// a new authenticated socket. Passing null detaches the current owner.
+  void setActiveTripResyncHandler(RealtimeActiveTripResync? handler) {
+    if (_disposed) return;
+    _onResyncActiveTrip = handler;
+  }
 
   /// Runs the configured authoritative active-trip recovery once at a time.
   /// Concurrent callers share the same future instead of issuing duplicate

@@ -134,6 +134,38 @@ void main() {
     await Future.wait([first, second]);
     await client.dispose();
   });
+
+  test(
+    'accepts a screen-scoped resync handler after socket construction',
+    () async {
+      final firstSocket = _Socket();
+      final secondSocket = _Socket();
+      final connector = _SequenceConnector([firstSocket, secondSocket]);
+      final resynced = Completer<void>();
+      var resyncCount = 0;
+      final client = RealtimeWebSocketClient(
+        uri: Uri.parse('ws://example.test/api/v1/realtime/ws'),
+        tokenProvider: () => 'access-token',
+        connector: connector,
+        reconnectDelay: (_) => Duration.zero,
+      );
+
+      await client.start();
+      client.setActiveTripResyncHandler(() {
+        resyncCount++;
+        if (!resynced.isCompleted) resynced.complete();
+        return Future<void>.value();
+      });
+      await firstSocket.close();
+      await connector.secondConnection.future.timeout(
+        const Duration(seconds: 1),
+      );
+      await resynced.future.timeout(const Duration(seconds: 1));
+
+      expect(resyncCount, 1);
+      await client.dispose();
+    },
+  );
 }
 
 String _eventJson(String id) =>
