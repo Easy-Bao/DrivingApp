@@ -2,9 +2,15 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:driver/src/infrastructure/session/driver_storage_keys.dart';
 
 class DriverSessionStore({FlutterSecureStorage? storage}) {
+  static const _defaultStorage = FlutterSecureStorage(
+    // Keep the Android storage mode explicit for existing encrypted entries.
+    // ignore: deprecated_member_use
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+  );
+
   final FlutterSecureStorage _storage;
 
-  this : _storage = storage ?? const FlutterSecureStorage();
+  this : _storage = storage ?? _defaultStorage;
 
   Future<void> saveToken(String token) async {
     await _storage.write(key: DriverStorageKeys.jwtToken, value: token);
@@ -75,6 +81,15 @@ class DriverSessionStore({FlutterSecureStorage? storage}) {
   }
 
   Future<void> clearSession() async {
-    await _storage.deleteAll();
+    await Future.wait(
+      const [
+        DriverStorageKeys.jwtToken,
+        DriverStorageKeys.refreshToken,
+        DriverStorageKeys.driverId,
+        DriverStorageKeys.driverOnlineStatus,
+        DriverStorageKeys.passengerId,
+        DriverStorageKeys.activeRideId,
+      ].map((key) => _storage.delete(key: key)),
+    );
   }
 }

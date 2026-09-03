@@ -7,7 +7,7 @@ import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:foundation/foundation.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:passenger/src/infrastructure/session/passenger_storage_keys.dart';
+import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 
 const _backgroundTelemetryInterval = Duration(seconds: 10);
 const _notificationChannelId = 'easyride_passenger_location';
@@ -132,7 +132,12 @@ class PassengerBackgroundTelemetry({
 void backgroundTelemetryOnStart(ServiceInstance service) {
   DartPluginRegistrant.ensureInitialized();
 
-  final storage = const FlutterSecureStorage();
+  final storage = const FlutterSecureStorage(
+    // Keep the Android storage mode explicit for existing encrypted entries.
+    // ignore: deprecated_member_use
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+  );
+  final sessionStore = PassengerSessionStore(storage: storage);
   Dio? telemetryClient;
   RefreshableTokenProvider? tokenProvider;
   var sending = false;
@@ -157,14 +162,11 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     );
     telemetryClient = client;
     tokenProvider = RefreshableTokenProvider(
-      readAccessToken: () => storage.read(key: PassengerStorageKeys.jwtToken),
-      readRefreshToken: () =>
-          storage.read(key: PassengerStorageKeys.refreshToken),
-      saveAccessToken: (token) =>
-          storage.write(key: PassengerStorageKeys.jwtToken, value: token),
-      saveRefreshToken: (token) =>
-          storage.write(key: PassengerStorageKeys.refreshToken, value: token),
-      clearSession: storage.deleteAll,
+      readAccessToken: sessionStore.readToken,
+      readRefreshToken: sessionStore.readRefreshToken,
+      saveAccessToken: sessionStore.saveToken,
+      saveRefreshToken: sessionStore.saveRefreshToken,
+      clearSession: sessionStore.clearSession,
       refreshClient: client,
     );
   });
@@ -175,7 +177,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     if (sending || client == null || provider == null) return;
 
     final token = await provider.getToken();
-    final rideId = await storage.read(key: PassengerStorageKeys.activeRideId);
+    final rideId = await sessionStore.readActiveRideId();
     if (token == null || token.isEmpty || rideId == null || rideId.isEmpty) {
       return;
     }

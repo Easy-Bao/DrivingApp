@@ -6,7 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:driver/src/infrastructure/session/driver_storage_keys.dart';
+import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:foundation/foundation.dart';
 
 const _backgroundTelemetryInterval = Duration(seconds: 10);
@@ -178,7 +178,12 @@ class DriverBackgroundTelemetry({
 void backgroundTelemetryOnStart(ServiceInstance service) {
   DartPluginRegistrant.ensureInitialized();
 
-  final storage = const FlutterSecureStorage();
+  final storage = const FlutterSecureStorage(
+    // Keep the Android storage mode explicit for existing encrypted entries.
+    // ignore: deprecated_member_use
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+  );
+  final sessionStore = DriverSessionStore(storage: storage);
   Dio? telemetryClient;
   RefreshableTokenProvider? tokenProvider;
   var sending = false;
@@ -209,13 +214,11 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     );
     telemetryClient = client;
     tokenProvider = RefreshableTokenProvider(
-      readAccessToken: () => storage.read(key: DriverStorageKeys.jwtToken),
-      readRefreshToken: () => storage.read(key: DriverStorageKeys.refreshToken),
-      saveAccessToken: (token) =>
-          storage.write(key: DriverStorageKeys.jwtToken, value: token),
-      saveRefreshToken: (token) =>
-          storage.write(key: DriverStorageKeys.refreshToken, value: token),
-      clearSession: storage.deleteAll,
+      readAccessToken: sessionStore.readToken,
+      readRefreshToken: sessionStore.readRefreshToken,
+      saveAccessToken: sessionStore.saveToken,
+      saveRefreshToken: sessionStore.saveRefreshToken,
+      clearSession: sessionStore.clearSession,
       refreshClient: client,
     );
     isConfigured = true;
@@ -298,7 +301,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     }
 
     final token = await provider.getToken();
-    final driverId = await storage.read(key: DriverStorageKeys.driverId);
+    final driverId = await sessionStore.readDriverId();
     if (token == null ||
         token.isEmpty ||
         driverId == null ||

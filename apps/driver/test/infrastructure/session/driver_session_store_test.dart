@@ -19,6 +19,7 @@ void main() {
         value: any(named: 'value'),
       ),
     ).thenAnswer((_) async {});
+    when(() => storage.delete(key: any(named: 'key'))).thenAnswer((_) async {});
   });
 
   test(
@@ -55,5 +56,21 @@ void main() {
       ),
     ).called(1);
     expect(await sessionService.readRefreshToken(), 'refresh-jwt-token');
+  });
+
+  test('clears only driver-owned session keys', () async {
+    await sessionService.clearSession();
+
+    for (final key in const [
+      DriverStorageKeys.jwtToken,
+      DriverStorageKeys.refreshToken,
+      DriverStorageKeys.driverId,
+      DriverStorageKeys.driverOnlineStatus,
+      DriverStorageKeys.passengerId,
+      DriverStorageKeys.activeRideId,
+    ]) {
+      verify(() => storage.delete(key: key)).called(1);
+    }
+    verifyNever(() => storage.deleteAll());
   });
 }

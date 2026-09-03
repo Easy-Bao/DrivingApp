@@ -2,9 +2,15 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:passenger/src/infrastructure/session/passenger_storage_keys.dart';
 
 class PassengerSessionStore({FlutterSecureStorage? storage}) {
+  static const _defaultStorage = FlutterSecureStorage(
+    // Keep the Android storage mode explicit for existing encrypted entries.
+    // ignore: deprecated_member_use
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+  );
+
   final FlutterSecureStorage _storage;
 
-  this : _storage = storage ?? const FlutterSecureStorage();
+  this : _storage = storage ?? _defaultStorage;
 
   Future<void> saveToken(String token) async {
     await _storage.write(key: PassengerStorageKeys.jwtToken, value: token);
@@ -15,7 +21,7 @@ class PassengerSessionStore({FlutterSecureStorage? storage}) {
   }
 
   Future<void> deleteToken() async {
-    await _storage.delete(key: PassengerStorageKeys.jwtToken);
+    await _deleteKeys(const [PassengerStorageKeys.jwtToken]);
   }
 
   Future<void> saveRefreshToken(String token) async {
@@ -27,7 +33,7 @@ class PassengerSessionStore({FlutterSecureStorage? storage}) {
   }
 
   Future<void> deleteRefreshToken() async {
-    await _storage.delete(key: PassengerStorageKeys.refreshToken);
+    await _deleteKeys(const [PassengerStorageKeys.refreshToken]);
   }
 
   Future<void> savePassengerId(String passengerId) async {
@@ -42,7 +48,7 @@ class PassengerSessionStore({FlutterSecureStorage? storage}) {
   }
 
   Future<void> deletePassengerId() async {
-    await _storage.delete(key: PassengerStorageKeys.passengerId);
+    await _deleteKeys(const [PassengerStorageKeys.passengerId]);
   }
 
   Future<void> saveActiveRideId(String rideId) async {
@@ -54,10 +60,20 @@ class PassengerSessionStore({FlutterSecureStorage? storage}) {
   }
 
   Future<void> deleteActiveRideId() async {
-    await _storage.delete(key: PassengerStorageKeys.activeRideId);
+    await _deleteKeys(const [PassengerStorageKeys.activeRideId]);
   }
 
   Future<void> clearSession() async {
-    await _storage.deleteAll();
+    await _deleteKeys(const [
+      PassengerStorageKeys.jwtToken,
+      PassengerStorageKeys.refreshToken,
+      PassengerStorageKeys.driverId,
+      PassengerStorageKeys.passengerId,
+      PassengerStorageKeys.activeRideId,
+    ]);
+  }
+
+  Future<void> _deleteKeys(Iterable<String> keys) async {
+    await Future.wait(keys.map((key) => _storage.delete(key: key)));
   }
 }
