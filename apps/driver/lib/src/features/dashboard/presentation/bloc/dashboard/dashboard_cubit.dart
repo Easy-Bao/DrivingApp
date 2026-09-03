@@ -107,8 +107,9 @@ class DashboardCubit({
   Future<bool> loadDispatchSnapshot({
     bool includeOffers = true,
     bool silent = false,
+    bool force = false,
   }) async {
-    if (silent && _isSilentDispatchCoolingDown) return false;
+    if (silent && !force && _isSilentDispatchCoolingDown) return false;
     if (_isDispatchRequestInFlight) return false;
     _isDispatchRequestInFlight = true;
     if (!silent) {
@@ -170,6 +171,12 @@ class DashboardCubit({
     } finally {
       _isDispatchRequestInFlight = false;
     }
+  }
+
+  /// Reconciles active offers and trips through one authoritative snapshot
+  /// after realtime transport recovery.
+  Future<void> resyncActiveTrip() async {
+    await loadDispatchSnapshot(includeOffers: true, silent: true, force: true);
   }
 
   bool get _isSilentDispatchCoolingDown {

@@ -153,6 +153,36 @@ void main() {
   });
 
   group('DashboardCubit — dispatch feed', () {
+    test('resync bypasses the silent polling cooldown', () async {
+      var requestCount = 0;
+      when(() => repo.getDispatchSnapshot(includeOffers: true))
+          .thenAnswer((_) async {
+            requestCount++;
+            if (requestCount == 1) {
+              return const Left(NetworkFailure('service unavailable'));
+            }
+            return const Right(
+              DriverDispatchSnapshot(
+                activeTrips: [
+                  {'id': 'trip-1', 'status': 'in_transit'},
+                ],
+                rideOffers: [],
+              ),
+            );
+          });
+      final cubit = DashboardCubit(
+        repository: repo,
+        now: () => DateTime.utc(2026, 8, 28, 8),
+      );
+
+      expect(await cubit.loadDispatchSnapshot(silent: true), isFalse);
+      await cubit.resyncActiveTrip();
+
+      expect(cubit.state.activeTrips.single['id'], 'trip-1');
+      verify(() => repo.getDispatchSnapshot(includeOffers: true)).called(2);
+      await cubit.close();
+    });
+
     test(
       'cools down silent polling after the service becomes unreachable',
       () async {
