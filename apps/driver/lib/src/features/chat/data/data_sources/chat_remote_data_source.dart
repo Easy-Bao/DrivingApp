@@ -46,6 +46,10 @@ class WebSocketChatRemoteDataSource({
   int _connectionVersion = 0;
   int _reconnectAttempt = 0;
   Timer? _reconnectTimer;
+  // Cancellation is owned by terminate and the disconnect path so a new
+  // connection never leaves the previous listener attached.
+  // ignore: cancel_subscriptions
+  StreamSubscription<dynamic>? _socketSubscription;
   final StreamController<String> _chatEventStreamController =
       StreamController<String>.broadcast();
   final StreamController<ChatConnectionState> _connectionStateController =
@@ -102,8 +106,11 @@ class WebSocketChatRemoteDataSource({
     _connectionVersion++;
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
+    final subscription = _socketSubscription;
+    _socketSubscription = null;
     final socket = _chatWebSocket;
     _chatWebSocket = null;
+    await _cancelSocketSubscription(subscription);
     await socket?.close();
     _emitConnectionState(const ChatDisconnected());
   }
@@ -144,7 +151,7 @@ class WebSocketChatRemoteDataSource({
       _chatWebSocket = socket;
       _reconnectAttempt = 0;
       _emitConnectionState(const ChatConnected());
-      socket.listen(
+      _socketSubscription = socket.listen(
         (event) {
           if (!_disposed && event is String) {
             _chatEventStreamController.add(event);
@@ -180,8 +187,24 @@ class WebSocketChatRemoteDataSource({
 
   void _handleSocketDisconnect(WebSocket socket) {
     if (!identical(_chatWebSocket, socket)) return;
+    final subscription = _socketSubscription;
+    _socketSubscription = null;
     _chatWebSocket = null;
+    if (subscription != null) {
+      unawaited(_cancelSocketSubscription(subscription));
+    }
     _scheduleReconnect();
+  }
+
+  Future<void> _cancelSocketSubscription(
+    StreamSubscription<dynamic>? subscription,
+  ) async {
+    try {
+      await subscription?.cancel();
+    } catch (_) {
+      // The socket is already in its disconnect path; no recovery action is
+      // possible for a failed cancellation.
+    }
   }
 
   void _scheduleReconnect() {
