@@ -71,6 +71,52 @@ void main() {
   });
 
   group('TrackDriverCubit — startTracking()', () {
+    test(
+      'reuses the active synchronization path for a realtime resync',
+      () async {
+        when(
+          () => repo.getRoutePolyline(
+            startLat: any(named: 'startLat'),
+            startLng: any(named: 'startLng'),
+            endLat: any(named: 'endLat'),
+            endLng: any(named: 'endLng'),
+          ),
+        ).thenAnswer((_) async => null);
+        when(() => repo.getRideStatusUpdate('ride-1')).thenAnswer(
+          (_) async => const Right(
+            RideUpdate(
+              status: RideStatus.accepted,
+              driverId: 'drv-1',
+              driverName: 'Driver',
+              vehiclePlate: 'ABC-123',
+              vehicleType: 'Sedan',
+            ),
+          ),
+        );
+        when(() => repo.fetchDriverLocation('ride-1'))
+            .thenAnswer((_) async => const Right((7.828, 123.434)));
+        when(() => session.readActiveRideId())
+            .thenAnswer((_) async => 'ride-1');
+        final cubit = _makeCubit(repo, session);
+
+        await cubit.startTracking(
+          startLat: 7.828,
+          startLng: 123.434,
+          endLat: 7.830,
+          endLng: 123.436,
+          rideId: 'ride-1',
+          driverId: 'drv-1',
+          driverName: 'Driver',
+          vehiclePlate: 'ABC-123',
+          vehicleType: 'Sedan',
+        );
+        await cubit.resyncActiveTrip();
+
+        verify(() => repo.getRideStatusUpdate('ride-1')).called(2);
+        await cubit.close();
+      },
+    );
+
     blocTest<TrackDriverCubit, TrackDriverState>(
       'emits TrackDriverInProgress when repo returns route polyline',
       build: () {

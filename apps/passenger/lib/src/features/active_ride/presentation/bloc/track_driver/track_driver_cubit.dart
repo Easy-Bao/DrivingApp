@@ -20,6 +20,7 @@ class TrackDriverCubit({
   final PassengerBackgroundTelemetry? _backgroundTelemetryService;
   final AppLifecycleCoordinator _lifecycleCoordinator;
   AppLifecyclePeriodicTask? _trackingTask;
+  Future<void> Function()? _activeTripResync;
   bool _isSyncing = false;
 
   this : super(const TrackDriverInitial());
@@ -39,6 +40,7 @@ class TrackDriverCubit({
   }) async {
     unawaited(_trackingTask?.dispose());
     _trackingTask = null;
+    _activeTripResync = null;
 
     final session = _sessionService;
     if (rideId.isNotEmpty) {
@@ -54,6 +56,8 @@ class TrackDriverCubit({
     DateTime? pickupRouteLastAttempt;
     DateTime? destinationRouteLastAttempt;
     var trackingCompleted = false;
+
+    late final Future<void> Function() activeTripResync;
 
     Future<void> syncTracking() async {
       if (isClosed ||
@@ -77,6 +81,9 @@ class TrackDriverCubit({
               trackingCompleted = true;
               unawaited(_trackingTask?.dispose());
               _trackingTask = null;
+              if (identical(_activeTripResync, activeTripResync)) {
+                _activeTripResync = null;
+              }
               emit(
                 TrackDriverCompleted(
                   driverId: rideUpdate.driverId ?? driverId,
@@ -199,17 +206,29 @@ class TrackDriverCubit({
       }
     }
 
-    if (_lifecycleCoordinator.isForeground) await syncTracking();
+    activeTripResync = syncTracking;
+    _activeTripResync = activeTripResync;
+
+    if (_lifecycleCoordinator.isForeground) await activeTripResync();
     if (!trackingCompleted && !isClosed) {
       final task = AppLifecyclePeriodicTask(
         lifecycleCoordinator: _lifecycleCoordinator,
         interval: const Duration(seconds: 2),
-        onTick: syncTracking,
+        onTick: activeTripResync,
         runImmediatelyOnResume: true,
       );
       _trackingTask = task;
       task.start();
     }
+  }
+
+  /// Reconciles the mounted trip against one authoritative status/location
+  /// snapshot after realtime transport recovery.
+  Future<void> resyncActiveTrip() async {
+    if (isClosed) return;
+    final resync = _activeTripResync;
+    if (resync == null) return;
+    await resync();
   }
 
   bool _canRetryRoute(DateTime? lastAttempt, DateTime now) {
@@ -234,6 +253,7 @@ class TrackDriverCubit({
   Future<void> cancelTrip() async {
     unawaited(_trackingTask?.dispose());
     _trackingTask = null;
+    _activeTripResync = null;
     try {
       final rideId = await _sessionService.readActiveRideId() ?? '';
       if (rideId.isNotEmpty) {
@@ -264,6 +284,7 @@ class TrackDriverCubit({
   Future<void> close() {
     unawaited(_trackingTask?.dispose());
     _trackingTask = null;
+    _activeTripResync = null;
     unawaited(_stopBackgroundTelemetry());
     return super.close();
   }
