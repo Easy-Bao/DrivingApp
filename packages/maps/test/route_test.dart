@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maps/maps.dart';
 
@@ -23,6 +25,10 @@ void main() {
     );
     expect(route.hasGeometry, isTrue);
     expect(route.startCoordinate, (lat: 7.8, lng: 123.4));
+    expect(route.coordinateBuffer, isA<Float64List>());
+    expect(route.coordinateBuffer.toList(), [123.4, 7.8, 123.5, 7.9]);
+    expect(route.bufferedStartCoordinate, (lat: 7.8, lng: 123.4));
+    expect(() => route.coordinateBuffer[0] = 0, throwsUnsupportedError);
   });
 
   test(

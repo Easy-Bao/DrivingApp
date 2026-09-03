@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:equatable/equatable.dart';
 
 import 'package:foundation/foundation.dart';
@@ -5,6 +7,8 @@ import 'package:foundation/foundation.dart';
 enum RoutePreference { fastest, shortest }
 
 enum RouteProfile { driving, drivingTraffic }
+
+final Expando<Float64List> _routeCoordinateBuffers = Expando<Float64List>();
 
 extension RoutePreferenceApi on RoutePreference {
   String get apiValue => switch (this) {
@@ -34,6 +38,17 @@ class const Route({
   final String summary;
   final String preference;
   final String profile;
+
+  /// Interleaved, map-ready coordinates in GeoJSON order: longitude,
+  /// latitude, longitude, latitude. The read-only buffer is weakly cached
+  /// because this entity intentionally retains its const constructor.
+  Float64List get coordinateBuffer {
+    final cached = _routeCoordinateBuffers[this];
+    if (cached != null) return cached;
+    final buffer = _buildCoordinateBuffer(polylinePoints).asUnmodifiableView();
+    _routeCoordinateBuffers[this] = buffer;
+    return buffer;
+  }
 
   factory fromJson(Map<String, dynamic> json) {
     final rawPoints = _readPointCollection(json);
@@ -109,6 +124,14 @@ extension RouteExtension on Route {
 
   bool get hasGeometry => validPolylinePoints.length >= 2;
 
+  /// Returns the first valid point from the cached coordinate representation.
+  /// Mapbox coordinates are ordered longitude first.
+  ({double lat, double lng})? get bufferedStartCoordinate {
+    final buffer = coordinateBuffer;
+    if (buffer.length < 2) return null;
+    return (lat: buffer[1], lng: buffer[0]);
+  }
+
   /// Returns the first valid point from the GeoJSON polyline as a map-ready
   /// latitude/longitude pair. Mapbox coordinates are ordered longitude first.
   ({double lat, double lng})? get startCoordinate {
@@ -126,4 +149,15 @@ bool _isValidPolylinePoint(List<double> point) {
       point[1] <= 90 &&
       point[0] >= -180 &&
       point[0] <= 180;
+}
+
+Float64List _buildCoordinateBuffer(List<List<double>> points) {
+  final buffer = Float64List(points.length * 2);
+  var offset = 0;
+  for (final point in points) {
+    if (!_isValidPolylinePoint(point)) continue;
+    buffer[offset++] = point[0];
+    buffer[offset++] = point[1];
+  }
+  return offset == buffer.length ? buffer : buffer.sublist(0, offset);
 }
