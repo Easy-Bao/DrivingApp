@@ -76,6 +76,64 @@ void main() {
       await client.dispose();
     },
   );
+
+  test(
+    'cancels a dropped socket subscription and resynchronizes once',
+    () async {
+      final firstSocket = _Socket();
+      final secondSocket = _Socket();
+      final connector = _SequenceConnector([firstSocket, secondSocket]);
+      final resynced = Completer<void>();
+      var resyncCount = 0;
+      final client = RealtimeWebSocketClient(
+        uri: Uri.parse('ws://example.test/api/v1/realtime/ws'),
+        tokenProvider: () => 'access-token',
+        onResyncActiveTrip: () {
+          resyncCount++;
+          if (!resynced.isCompleted) resynced.complete();
+          return Future<void>.value();
+        },
+        connector: connector,
+        reconnectDelay: (_) => Duration.zero,
+      );
+
+      await client.start();
+      await firstSocket.close();
+      await connector.secondConnection.future.timeout(
+        const Duration(seconds: 1),
+      );
+      await resynced.future.timeout(const Duration(seconds: 1));
+
+      expect(firstSocket.subscriptionCancelled, isTrue);
+      expect(resyncCount, 1);
+      await client.dispose();
+    },
+  );
+
+  test('coalesces concurrent active-trip resynchronization requests', () async {
+    final release = Completer<void>();
+    var resyncCount = 0;
+    final socket = _Socket();
+    final client = RealtimeWebSocketClient(
+      uri: Uri.parse('ws://example.test/api/v1/realtime/ws'),
+      tokenProvider: () => 'access-token',
+      onResyncActiveTrip: () {
+        resyncCount++;
+        return release.future;
+      },
+      connector: _Connector(socket),
+    );
+
+    await client.start();
+    final first = client.resyncActiveTrip();
+    final second = client.resyncActiveTrip();
+
+    expect(identical(first, second), isTrue);
+    expect(resyncCount, 1);
+    release.complete();
+    await Future.wait([first, second]);
+    await client.dispose();
+  });
 }
 
 String _eventJson(String id) =>
@@ -103,8 +161,15 @@ final class _Connector(this.socket) implements RealtimeSocketConnector {
 }
 
 final class _Socket implements RealtimeSocket {
-  final _messages = StreamController<Object?>.broadcast();
+  late final StreamController<Object?> _messages;
   bool wasClosed = false;
+  bool subscriptionCancelled = false;
+
+  _Socket() {
+    _messages = StreamController<Object?>.broadcast(
+      onCancel: () => subscriptionCancelled = true,
+    );
+  }
 
   @override
   Stream<Object?> get messages => _messages.stream;
@@ -115,6 +180,26 @@ final class _Socket implements RealtimeSocket {
   Future<void> close() async {
     wasClosed = true;
     await _messages.close();
+  }
+}
+
+final class _SequenceConnector implements RealtimeSocketConnector {
+  _SequenceConnector(this._sockets);
+
+  final List<RealtimeSocket> _sockets;
+  final secondConnection = Completer<void>();
+  var _connectionCount = 0;
+
+  @override
+  Future<RealtimeSocket> connect(
+    Uri _, {
+    required Map<String, String> headers,
+  }) async {
+    final socket = _sockets[_connectionCount++];
+    if (_connectionCount == 2) {
+      if (!secondConnection.isCompleted) secondConnection.complete();
+    }
+    return socket;
   }
 }
 

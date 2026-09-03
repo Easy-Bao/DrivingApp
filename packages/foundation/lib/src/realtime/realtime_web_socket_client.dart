@@ -8,6 +8,7 @@ import 'package:foundation/src/realtime/realtime_event.dart';
 typedef RealtimeTokenProvider = FutureOr<String?> Function();
 typedef RealtimeTokenRefresher = Future<String?> Function();
 typedef ReconnectDelay = Duration Function(int attempt);
+typedef RealtimeActiveTripResync = Future<void> Function();
 
 abstract interface class RealtimeSocket {
   Stream<Object?> get messages;
@@ -60,11 +61,14 @@ final class const RealtimeConnected() extends RealtimeConnectionState {}
 /// Maintains one authenticated event stream for a signed-in app session.
 /// The token provider is consulted for every connection attempt. An optional
 /// refresher handles failures that happen before a server can identify an
-/// expired or rotated access token during the WebSocket handshake.
+/// expired or rotated access token during the WebSocket handshake. When a
+/// connection is restored, an optional active-trip resync callback runs as one
+/// coalesced operation so screens can consume one authoritative snapshot.
 final class RealtimeWebSocketClient({
   required Uri uri,
   required RealtimeTokenProvider tokenProvider,
   RealtimeTokenRefresher? refreshToken,
+  RealtimeActiveTripResync? onResyncActiveTrip,
   RealtimeSocketConnector connector = const IoRealtimeSocketConnector(),
   ReconnectDelay? reconnectDelay,
   Random? random,
@@ -73,6 +77,7 @@ final class RealtimeWebSocketClient({
     : _uri = uri,
       _tokenProvider = tokenProvider,
       _refreshToken = refreshToken,
+      _onResyncActiveTrip = onResyncActiveTrip,
       _connector = connector,
       _reconnectDelay = reconnectDelay ?? _defaultReconnectDelay,
       _random = random ?? Random();
@@ -82,6 +87,7 @@ final class RealtimeWebSocketClient({
   final Uri _uri;
   final RealtimeTokenProvider _tokenProvider;
   final RealtimeTokenRefresher? _refreshToken;
+  final RealtimeActiveTripResync? _onResyncActiveTrip;
   final RealtimeSocketConnector _connector;
   final ReconnectDelay _reconnectDelay;
   final Random _random;
@@ -98,11 +104,35 @@ final class RealtimeWebSocketClient({
   Future<void>? _stopping;
   bool _wanted = false;
   bool _disposed = false;
+  bool _hasEstablishedConnection = false;
+  Future<void>? _resyncing;
   int _attempt = 0;
 
   Stream<RealtimeEvent> get events => _events.stream;
   Stream<RealtimeConnectionState> get states => _states.stream;
   bool get isConnected => _socket != null;
+
+  /// Runs the configured authoritative active-trip recovery once at a time.
+  /// Concurrent callers share the same future instead of issuing duplicate
+  /// status, location, and offer requests after a network transition.
+  Future<void> resyncActiveTrip() {
+    final handler = _onResyncActiveTrip;
+    if (handler == null || !_wanted || _socket == null) {
+      return Future<void>.value();
+    }
+
+    final active = _resyncing;
+    if (active != null) return active;
+
+    late final Future<void> resyncing;
+    resyncing = Future<void>.sync(handler).whenComplete(() {
+      if (identical(_resyncing, resyncing)) {
+        _resyncing = null;
+      }
+    });
+    _resyncing = resyncing;
+    return resyncing;
+  }
 
   Future<void> start() async {
     if (_disposed) {
@@ -182,6 +212,8 @@ final class RealtimeWebSocketClient({
         await socket.close();
         return;
       }
+      final shouldResync = _hasEstablishedConnection;
+      _hasEstablishedConnection = true;
       _socket = socket;
       _attempt = 0;
       // ignore: cancel_subscriptions
@@ -191,6 +223,9 @@ final class RealtimeWebSocketClient({
         onDone: () => _onDisconnect(socket),
       );
       _emitState(const RealtimeConnected());
+      if (shouldResync) {
+        unawaited(_resyncAfterReconnect());
+      }
     } catch (_) {
       if (_attempt > 0) {
         try {
@@ -229,9 +264,31 @@ final class RealtimeWebSocketClient({
     if (!identical(_socket, socket)) {
       return;
     }
+    final subscription = _socketSubscription;
     _socket = null;
     _socketSubscription = null;
+    unawaited(_cancelSocketSubscription(subscription));
     _scheduleReconnect();
+  }
+
+  Future<void> _resyncAfterReconnect() async {
+    try {
+      await resyncActiveTrip();
+    } catch (_) {
+      // A failed snapshot must not tear down a healthy stream. The owning
+      // domain handler remains responsible for its bounded retry policy.
+    }
+  }
+
+  Future<void> _cancelSocketSubscription(
+    StreamSubscription<Object?>? subscription,
+  ) async {
+    try {
+      await subscription?.cancel();
+    } catch (_) {
+      // The socket is already in its disconnect path; no recovery action is
+      // possible for a failed cancellation.
+    }
   }
 
   void _scheduleReconnect() {
