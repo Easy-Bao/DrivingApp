@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -1022,8 +1023,8 @@ func (repository *RideRepository) DriverReviews(ctx context.Context, driverID, l
 		return nil, err
 	}
 	result := make([]domain.Review, 0, len(items))
-	for index := len(items) - 1; index >= 0; index-- {
-		item := fromReview(items[index])
+	for _, item := range slices.Backward(items) {
+		item := fromReview(item)
 		if strings.TrimSpace(item.PassengerName) == "" {
 			item.PassengerName = passengerNames[item.PassengerID]
 		}

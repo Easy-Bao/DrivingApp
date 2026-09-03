@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
+	"slices"
 	"strings"
 )
 
@@ -99,9 +100,9 @@ func (trust *ProxyTrust) isTrusted(address netip.Addr) bool {
 
 func (trust *ProxyTrust) forwardedClient(headerValues []string) (netip.Addr, bool) {
 	addresses := forwardedAddresses(headerValues)
-	for index := len(addresses) - 1; index >= 0; index-- {
-		if !trust.isTrusted(addresses[index]) {
-			return addresses[index], true
+	for _, address := range slices.Backward(addresses) {
+		if !trust.isTrusted(address) {
+			return address, true
 		}
 	}
 	if len(addresses) > 0 {
@@ -123,10 +124,10 @@ func forwardedAddresses(headerValues []string) []netip.Addr {
 }
 
 func forwardedScheme(headerValues []string) string {
-	for valueIndex := len(headerValues) - 1; valueIndex >= 0; valueIndex-- {
-		parts := strings.Split(headerValues[valueIndex], ",")
-		for partIndex := len(parts) - 1; partIndex >= 0; partIndex-- {
-			value := strings.ToLower(strings.TrimSpace(parts[partIndex]))
+	for _, headerValue := range slices.Backward(headerValues) {
+		parts := strings.Split(headerValue, ",")
+		for _, part := range slices.Backward(parts) {
+			value := strings.ToLower(strings.TrimSpace(part))
 			if value == "http" || value == "https" {
 				return value
 			}
