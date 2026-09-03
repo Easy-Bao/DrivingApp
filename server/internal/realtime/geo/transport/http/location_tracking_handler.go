@@ -29,7 +29,7 @@ func NewHandler(
 
 func (handler *Handler) UpdateDriverLocation(writer http.ResponseWriter, request *http.Request) {
 	var input dto.LocationUpdate
-	if sharedrequest.DecodeJSON(writer, request, &input, 8<<10) != nil {
+	if sharedrequest.DecodeJSONV2(writer, request, &input, 8<<10) != nil {
 		response.Error(writer, http.StatusBadRequest, "invalid location")
 		return
 	}
@@ -115,7 +115,7 @@ func (handler *Handler) UpdatePassengerLocation(writer http.ResponseWriter, requ
 		return
 	}
 	var input dto.PassengerLocationUpdate
-	if sharedrequest.DecodeJSON(writer, request, &input, 8<<10) != nil {
+	if sharedrequest.DecodeJSONV2(writer, request, &input, 8<<10) != nil {
 		response.Error(writer, http.StatusBadRequest, "invalid location")
 		return
 	}

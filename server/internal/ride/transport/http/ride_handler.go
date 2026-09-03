@@ -34,7 +34,7 @@ func (handler *Handler) CreateRide(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var input dto.CreateRideRequest
-	if sharedrequest.DecodeJSON(w, r, &input, 16<<10) != nil || input.FareCentavos < 0 {
+	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil || input.FareCentavos < 0 {
 		response.Error(w, 400, "invalid fare")
 		return
 	}
@@ -77,7 +77,7 @@ func (handler *Handler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var input dto.StatusRequest
-	if sharedrequest.DecodeJSON(w, r, &input, 16<<10) != nil || input.Status == "" {
+	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil || input.Status == "" {
 		response.Error(w, 400, "invalid ride status")
 		return
 	}
@@ -119,7 +119,7 @@ func (handler *Handler) SubmitBid(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var input dto.SubmitBidRequest
-	if sharedrequest.DecodeJSON(w, r, &input, 16<<10) != nil || input.FareCentavos <= 0 {
+	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil || input.FareCentavos <= 0 {
 		response.Error(w, 400, "invalid fare")
 		return
 	}
@@ -362,7 +362,7 @@ func (handler *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var input dto.ReviewRequest
-	if sharedrequest.DecodeJSON(w, r, &input, 16<<10) != nil || input.RideID <= 0 {
+	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil || input.RideID <= 0 {
 		response.Error(w, 400, "invalid review")
 		return
 	}
@@ -386,7 +386,7 @@ func (handler *Handler) CreatePassengerReview(w http.ResponseWriter, r *http.Req
 		return
 	}
 	var input dto.ReviewRequest
-	if sharedrequest.DecodeJSON(w, r, &input, 16<<10) != nil || input.RideID <= 0 {
+	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil || input.RideID <= 0 {
 		response.Error(w, 400, "invalid review")
 		return
 	}
@@ -460,7 +460,7 @@ func driverIDsFromQuery(request *http.Request) ([]int, error) {
 
 func (handler *Handler) Estimate(w http.ResponseWriter, r *http.Request) {
 	var input dto.FareEstimateRequest
-	if sharedrequest.DecodeJSON(w, r, &input, 16<<10) != nil {
+	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil {
 		response.Error(w, 400, "invalid fare input")
 		return
 	}
@@ -483,7 +483,7 @@ func (handler *Handler) RatingConfig(w http.ResponseWriter, _ *http.Request) {
 }
 func (handler *Handler) CalculateFinal(w http.ResponseWriter, r *http.Request) {
 	var input dto.FinalFareRequest
-	if sharedrequest.DecodeJSON(w, r, &input, 16<<10) != nil || input.DistanceKm < 0 || input.DurationMinutes < 0 || input.CommissionBPS < 0 || input.CommissionBPS > 10000 {
+	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil || input.DistanceKm < 0 || input.DurationMinutes < 0 || input.CommissionBPS < 0 || input.CommissionBPS > 10000 {
 		response.Error(w, 400, "invalid final fare input")
 		return
 	}
@@ -504,7 +504,7 @@ func (handler *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var input dto.BidSessionRequest
-	if sharedrequest.DecodeJSON(w, r, &input, 16<<10) != nil {
+	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil {
 		response.Error(w, 400, "invalid bid session")
 		return
 	}
@@ -589,7 +589,7 @@ func (handler *Handler) PlaceOffer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var input dto.BidOfferRequest
-	if sharedrequest.DecodeJSON(w, r, &input, 16<<10) != nil {
+	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil {
 		response.Error(w, 400, "invalid bid offer")
 		return
 	}
