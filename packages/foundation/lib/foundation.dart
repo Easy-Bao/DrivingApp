@@ -15,6 +15,7 @@ export 'src/network/request_metrics.dart';
 export 'src/network/retry_interceptor.dart';
 export 'src/realtime/realtime_event.dart';
 export 'src/realtime/realtime_web_socket_client.dart';
+export 'src/result.dart';
 export 'src/route_data.dart';
 export 'src/utils/async_ttl_cache.dart';
 export 'src/utils/currency_formatter.dart';
