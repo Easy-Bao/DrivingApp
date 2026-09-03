@@ -9,9 +9,7 @@ class const InTransitPassengerCardWidget({super.key}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = BlocProvider.of<RideFlowCubit>(context).state;
-    final passengerName = state is RideFlowInTransit
-        ? state.passengerName
-        : 'Passenger';
+    final passengerName = state.passengerNameOr('Passenger');
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),

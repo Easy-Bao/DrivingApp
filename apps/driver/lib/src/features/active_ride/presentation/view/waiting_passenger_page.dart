@@ -134,9 +134,9 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
   Future<void> _startTrip() async {
     if (_isStartingTrip) return;
     final state = BlocProvider.of<RideFlowCubit>(context).state;
-    if (state is! RideFlowWaitingPassenger ||
-        state.pickupLat == null ||
-        state.pickupLng == null) {
+    if (!state.isWaitingAtPickup ||
+        state.pickupLatitude == null ||
+        state.pickupLongitude == null) {
       _showError(ErrorHandler.getErrorMessage(const LocationFailure()));
       return;
     }
@@ -145,20 +145,19 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
     try {
       final rideCubit = BlocProvider.of<RideFlowCubit>(context);
       final started = await rideCubit.startRide(
-        passengerName: state.passengerName,
-        destLat: state.destLat,
-        destLng: state.destLng,
+        passengerName: state.passengerNameOr('Passenger'),
+        destLat: state.destinationLatitude,
+        destLng: state.destinationLongitude,
         distanceKm: widget.distance,
-        passengerLat: state.pickupLat,
-        passengerLng: state.pickupLng,
+        passengerLat: state.pickupLatitude,
+        passengerLng: state.pickupLongitude,
       );
 
       if (mounted && !started) {
         final errorState = rideCubit.state;
         _showError(
-          errorState is RideFlowError
-              ? errorState.message
-              : ErrorHandler.getErrorMessage(const ServerFailure()),
+          errorState.failureMessage ??
+              ErrorHandler.getErrorMessage(const ServerFailure()),
         );
       }
       if (mounted && started) {
@@ -189,11 +188,11 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<RideFlowCubit>().state;
-    final passengerName = state is RideFlowWaitingPassenger
-        ? state.passengerName
+    final passengerName = state.isWaitingAtPickup
+        ? state.passengerNameOr('—')
         : '—';
-    final waitFormatted = state is RideFlowWaitingPassenger
-        ? _formatWaitDuration(state.waitTimeSeconds)
+    final waitFormatted = state.isWaitingAtPickup
+        ? _formatWaitDuration(state.waitTimeSecondsOr(0))
         : '00:00';
 
     return Scaffold(
@@ -279,10 +278,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                                   final rState = BlocProvider.of<RideFlowCubit>(
                                     context,
                                   ).state;
-                                  final pName =
-                                      rState is RideFlowWaitingPassenger
-                                      ? rState.passengerName
-                                      : '—';
+                                  final pName = rState.passengerNameOr('—');
                                   final cubit = BlocProvider.of<RideFlowCubit>(
                                     context,
                                   );

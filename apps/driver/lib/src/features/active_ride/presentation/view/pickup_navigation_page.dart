@@ -176,9 +176,11 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
       // position. A location permission delay must not leave the map blank or
       // prevent the route from being drawn once telemetry becomes available.
       final rideState = BlocProvider.of<RideFlowCubit>(context).state;
-      if (rideState is RideFlowNavigatingToPickup) {
-        _pickupLat = rideState.pickupLat;
-        _pickupLng = rideState.pickupLng;
+      final pickupLat = rideState.pickupLatitude;
+      final pickupLng = rideState.pickupLongitude;
+      if (pickupLat != null && pickupLng != null) {
+        _pickupLat = pickupLat;
+        _pickupLng = pickupLng;
       } else {
         final places = await MapProvider.searchPlaces(widget.pickup);
         if (places.isNotEmpty) {
@@ -242,12 +244,9 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
   Future<void> _confirmArrival(BuildContext context) async {
     if (_isConfirmingArrival) return;
     final state = BlocProvider.of<RideFlowCubit>(context).state;
-    final passengerName = state is RideFlowNavigatingToPickup
-        ? state.passengerName
-        : 'Passenger';
-    final pickupState = state is RideFlowNavigatingToPickup ? state : null;
-    final pickupLat = pickupState?.pickupLat ?? _pickupLat;
-    final pickupLng = pickupState?.pickupLng ?? _pickupLng;
+    final passengerName = state.passengerNameOr('Passenger');
+    final pickupLat = state.pickupLatitude ?? _pickupLat;
+    final pickupLng = state.pickupLongitude ?? _pickupLng;
     if (pickupLat == null || pickupLng == null) return;
 
     setState(() => _isConfirmingArrival = true);
@@ -257,11 +256,11 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
         passengerName,
         pickupLat: pickupLat,
         pickupLng: pickupLng,
-        destLat: pickupState?.destLat,
-        destLng: pickupState?.destLng,
+        destLat: state.destinationLatitude,
+        destLng: state.destinationLongitude,
       );
       if (!mounted) return;
-      if (rideCubit.state is! RideFlowWaitingPassenger) {
+      if (!rideCubit.state.isWaitingAtPickup) {
         CustomToast.show(
           this.context,
           'Unable to confirm arrival. Please try again.',
@@ -306,11 +305,10 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
         builder: (context) {
           final rideCubitState = BlocProvider.of<RideFlowCubit>(context).state;
           final position = LocationService.lastPosition;
-          final pickupState = rideCubitState is RideFlowNavigatingToPickup
-              ? rideCubitState
-              : null;
-          final defaultLat = position?.latitude ?? pickupState?.pickupLat;
-          final defaultLng = position?.longitude ?? pickupState?.pickupLng;
+          final defaultLat =
+              position?.latitude ?? rideCubitState.pickupLatitude;
+          final defaultLng =
+              position?.longitude ?? rideCubitState.pickupLongitude;
           if (defaultLat == null || defaultLng == null) {
             return const Scaffold(
               body: Center(child: Text('Pickup location is unavailable.')),
@@ -342,10 +340,9 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
                         final rideState = BlocProvider.of<RideFlowCubit>(
                           context,
                         ).state;
-                        final passengerName =
-                            rideState is RideFlowNavigatingToPickup
-                            ? rideState.passengerName
-                            : 'Passenger';
+                        final passengerName = rideState.passengerNameOr(
+                          'Passenger',
+                        );
 
                         return ConstrainedBox(
                           constraints: BoxConstraints(
@@ -400,9 +397,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
                               final state = BlocProvider.of<RideFlowCubit>(
                                 context,
                               ).state;
-                              final pName = state is RideFlowNavigatingToPickup
-                                  ? state.passengerName
-                                  : 'Passenger';
+                              final pName = state.passengerNameOr('Passenger');
                               final driverId =
                                   await widget.sessionService.readDriverId() ??
                                   '';

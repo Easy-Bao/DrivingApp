@@ -101,3 +101,84 @@ final class RideFlowComplete extends TripCompleted {
 final class RideFlowError extends RideFailed {
   const RideFlowError(super.message);
 }
+
+extension RideStatePresentation on RideState {
+  bool get isWaitingAtPickup => switch (this) {
+    Idle() ||
+    SearchingDriver() ||
+    TripInProgress() ||
+    TripCompleted() ||
+    RideFailed() => false,
+    DriverEnRoute(:final waitTimeSeconds) => waitTimeSeconds != null,
+  };
+
+  String passengerNameOr(String fallback) => switch (this) {
+    Idle() || SearchingDriver() || TripCompleted() || RideFailed() => fallback,
+    DriverEnRoute(:final passengerName) ||
+    TripInProgress(:final passengerName) => passengerName,
+  };
+
+  int waitTimeSecondsOr(int fallback) => switch (this) {
+    Idle() ||
+    SearchingDriver() ||
+    TripInProgress() ||
+    TripCompleted() ||
+    RideFailed() => fallback,
+    DriverEnRoute(:final waitTimeSeconds) => waitTimeSeconds ?? fallback,
+  };
+
+  double? get pickupLatitude => switch (this) {
+    Idle() ||
+    SearchingDriver() ||
+    TripInProgress() ||
+    TripCompleted() ||
+    RideFailed() => null,
+    DriverEnRoute(:final pickupLat) => pickupLat,
+  };
+
+  double? get pickupLongitude => switch (this) {
+    Idle() ||
+    SearchingDriver() ||
+    TripInProgress() ||
+    TripCompleted() ||
+    RideFailed() => null,
+    DriverEnRoute(:final pickupLng) => pickupLng,
+  };
+
+  double? get destinationLatitude => switch (this) {
+    Idle() || SearchingDriver() || TripCompleted() || RideFailed() => null,
+    DriverEnRoute(:final destLat) || TripInProgress(:final destLat) => destLat,
+  };
+
+  double? get destinationLongitude => switch (this) {
+    Idle() || SearchingDriver() || TripCompleted() || RideFailed() => null,
+    DriverEnRoute(:final destLng) || TripInProgress(:final destLng) => destLng,
+  };
+
+  double? get passengerLatitude => switch (this) {
+    Idle() ||
+    SearchingDriver() ||
+    DriverEnRoute() ||
+    TripCompleted() ||
+    RideFailed() => null,
+    TripInProgress(:final passengerLat) => passengerLat,
+  };
+
+  double? get passengerLongitude => switch (this) {
+    Idle() ||
+    SearchingDriver() ||
+    DriverEnRoute() ||
+    TripCompleted() ||
+    RideFailed() => null,
+    TripInProgress(:final passengerLng) => passengerLng,
+  };
+
+  String? get failureMessage => switch (this) {
+    Idle() ||
+    SearchingDriver() ||
+    DriverEnRoute() ||
+    TripInProgress() ||
+    TripCompleted() => null,
+    RideFailed(:final message) => message,
+  };
+}

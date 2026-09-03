@@ -122,9 +122,11 @@ class _InTransitPageState extends State<InTransitPage> {
       // Resolve the destination before waiting on driver location so a
       // delayed permission response cannot prevent the destination leg from
       // being rendered.
-      if (rideState is RideFlowInTransit) {
-        _destLat = rideState.destLat;
-        _destLng = rideState.destLng;
+      final destinationLat = rideState.destinationLatitude;
+      final destinationLng = rideState.destinationLongitude;
+      if (destinationLat != null && destinationLng != null) {
+        _destLat = destinationLat;
+        _destLng = destinationLng;
       } else {
         final places = await MapProvider.searchPlaces(widget.dropoff);
         if (places.isNotEmpty) {
@@ -132,10 +134,8 @@ class _InTransitPageState extends State<InTransitPage> {
           _destLng = places.first.longitude;
         }
       }
-      if (rideState is RideFlowInTransit) {
-        _passengerLat = rideState.passengerLat;
-        _passengerLng = rideState.passengerLng;
-      }
+      _passengerLat = rideState.passengerLatitude;
+      _passengerLng = rideState.passengerLongitude;
 
       final rideId = rideCubit.activeRideId;
       if (_passengerLat == null && rideId != null && rideId.isNotEmpty) {
@@ -246,13 +246,14 @@ class _InTransitPageState extends State<InTransitPage> {
         builder: (context) {
           final rideCubitState = BlocProvider.of<RideFlowCubit>(context).state;
           final position = LocationService.lastPosition;
-          final transitState = rideCubitState is RideFlowInTransit
-              ? rideCubitState
-              : null;
           final defaultLat =
-              position?.latitude ?? transitState?.destLat ?? _destLat;
+              position?.latitude ??
+              rideCubitState.destinationLatitude ??
+              _destLat;
           final defaultLng =
-              position?.longitude ?? transitState?.destLng ?? _destLng;
+              position?.longitude ??
+              rideCubitState.destinationLongitude ??
+              _destLng;
           if (defaultLat == null || defaultLng == null) {
             return const Scaffold(
               body: Center(child: Text('Destination location is unavailable.')),
