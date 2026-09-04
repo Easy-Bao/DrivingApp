@@ -420,7 +420,15 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
 
     setState(() => _isCancellingTrip = true);
     try {
-      await BlocProvider.of<TrackDriverCubit>(context).cancelTrip();
+      final canceled = await BlocProvider.of<TrackDriverCubit>(context)
+          .cancelTripRequest();
+      if (mounted && !canceled) {
+        CustomToast.show(
+          context,
+          'The trip could not be canceled. Please try again.',
+          isError: true,
+        );
+      }
     } finally {
       if (mounted) setState(() => _isCancellingTrip = false);
     }

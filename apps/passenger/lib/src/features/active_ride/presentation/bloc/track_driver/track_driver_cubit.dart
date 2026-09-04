@@ -22,6 +22,7 @@ class TrackDriverCubit({
   AppLifecyclePeriodicTask? _trackingTask;
   Future<void> Function()? _activeTripResync;
   bool _isSyncing = false;
+  bool _isCancellingTrip = false;
 
   this : super(const TrackDriverInitial());
 
@@ -251,20 +252,50 @@ class TrackDriverCubit({
   }
 
   Future<void> cancelTrip() async {
-    unawaited(_trackingTask?.dispose());
-    _trackingTask = null;
-    _activeTripResync = null;
+    await cancelTripRequest();
+  }
+
+  /// Requests cancellation while keeping the active tracker alive until the
+  /// server confirms the transition. A false result leaves the prior ride
+  /// state and polling owner in place for UI rollback.
+  Future<bool> cancelTripRequest() async {
+    if (isClosed || _isCancellingTrip) return false;
+    _isCancellingTrip = true;
     try {
       final rideId = await _sessionService.readActiveRideId() ?? '';
       if (rideId.isNotEmpty) {
-        await _repository.updateRideStatus(rideId, RideStatus.cancelled);
-        await _sessionService.saveActiveRideId('');
+        final result = await _repository.updateRideStatusResult(
+          rideId,
+          RideStatus.cancelled,
+        );
+        final failure = result.fold<Failure?>((value) => value, (_) => null);
+        if (failure != null) {
+          dev.log('Unable to cancel passenger trip: ${failure.message}');
+          return false;
+        }
+        try {
+          await _sessionService.saveActiveRideId('');
+        } catch (error, stackTrace) {
+          dev.log(
+            'Unable to clear the canceled passenger ride locally.',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        }
       }
+
+      unawaited(_trackingTask?.dispose());
+      _trackingTask = null;
+      _activeTripResync = null;
       await _stopBackgroundTelemetry();
+      if (!isClosed) emit(const TrackDriverCanceled());
+      return true;
     } catch (error) {
       dev.log('Error canceling trip in track cubit: $error');
+      return false;
+    } finally {
+      _isCancellingTrip = false;
     }
-    emit(const TrackDriverCanceled());
   }
 
   String _getEtaLabel(RideStatus status) {

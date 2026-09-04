@@ -68,6 +68,24 @@ void main() {
             .called(1);
       },
     );
+
+    test(
+      'keeps the current ride state when cancellation is rejected',
+      () async {
+        when(() => session.readActiveRideId())
+            .thenAnswer((_) async => 'ride-42');
+        when(() => repo.updateRideStatus(any(), any())).thenAnswer(
+          (_) async => const Left(NetworkFailure('cancel rejected')),
+        );
+        final cubit = _makeCubit(repo, session);
+
+        expect(await cubit.cancelTripRequest(), isFalse);
+        expect(cubit.state, isA<TrackDriverInitial>());
+        verify(() => repo.updateRideStatus('ride-42', RideStatus.cancelled))
+            .called(1);
+        await cubit.close();
+      },
+    );
   });
 
   group('TrackDriverCubit — startTracking()', () {
