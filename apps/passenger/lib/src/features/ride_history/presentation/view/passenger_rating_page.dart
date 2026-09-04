@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
@@ -41,14 +42,22 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
       _error = null;
     });
     try {
-      final result = await widget.profileRepository.submitReview(
+      final result = await widget.profileRepository.submitReviewResult(
         driverId: widget.driverId,
         rideId: widget.rideId,
         rating: _selectedStars.toDouble(),
         comment: _feedbackController.text.trim(),
       );
-      if (result.isLeft()) throw StateError('review was not accepted');
-      if (mounted) context.goNamed(HomeRoutes.home);
+      switch (result) {
+        case Ok<void, DomainFailure>():
+          if (mounted) context.goNamed(HomeRoutes.home);
+        case Err<void, DomainFailure>():
+          if (mounted) {
+            setState(
+              () => _error = 'Unable to submit your rating. Please try again.',
+            );
+          }
+      }
     } catch (_) {
       if (mounted) {
         setState(

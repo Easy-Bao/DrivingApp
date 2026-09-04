@@ -71,7 +71,7 @@ class _DriverDropdownCardWidgetState()
 
   Future<void> _loadRecentFeedback() async {
     List<DriverReview> reviews = const [];
-    (await widget.profileRepository.fetchReviews(
+    (await widget.profileRepository.fetchReviewsResult(
       widget.driver.id,
       page: 1,
       limit: 6,

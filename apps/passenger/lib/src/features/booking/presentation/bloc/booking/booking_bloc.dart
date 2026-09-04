@@ -220,7 +220,7 @@ class BookingBloc({
 
   Future<int?> _loadDriverTripCount(String driverId) async {
     int? totalTrips;
-    (await _driverProfileRepository.fetchStats(driverId)).fold(
+    (await _driverProfileRepository.fetchStatsResult(driverId)).fold(
       (failure) => dev.log('Unable to load driver stats: ${failure.message}'),
       (stats) => totalTrips = stats.completedTrips,
     );
@@ -229,7 +229,7 @@ class BookingBloc({
 
   Future<List<Map<String, dynamic>>> _loadDriverReviews(String driverId) async {
     List<Map<String, dynamic>> reviews = const [];
-    (await _driverProfileRepository.fetchReviews(driverId)).fold(
+    (await _driverProfileRepository.fetchReviewsResult(driverId)).fold(
       (failure) => dev.log('Failed to process reviews: ${failure.message}'),
       (values) => reviews = values
           .map(

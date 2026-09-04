@@ -68,8 +68,8 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
   Future<void> _loadDriverProfileStats() async {
     _currentPage = 1;
     _hasMore = true;
-    final statsFuture = widget.repository.fetchStats(widget.driverId);
-    final reviewsFuture = widget.repository.fetchReviews(
+    final statsFuture = widget.repository.fetchStatsResult(widget.driverId);
+    final reviewsFuture = widget.repository.fetchReviewsResult(
       widget.driverId,
       page: _currentPage,
       limit: _reviewPageSize,
@@ -103,7 +103,7 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
 
     final nextPage = _currentPage + 1;
     List<DriverReview> nextReviews = const [];
-    (await widget.repository.fetchReviews(
+    (await widget.repository.fetchReviewsResult(
       widget.driverId,
       page: nextPage,
       limit: _reviewPageSize,
