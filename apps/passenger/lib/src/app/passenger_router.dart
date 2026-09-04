@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger/src/app/navigation/passenger_navigation_shell.dart';
 import 'package:passenger/src/features/active_ride/active_ride_module.dart';
+import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/booking_module.dart';
 import 'package:passenger/src/features/chat/chat_module.dart';
 import 'package:passenger/src/features/driver_profile/driver_profile_module.dart';
@@ -39,14 +41,17 @@ class PassengerRouter extends Module {
             navigationShell: navigationShell,
           ),
       navigatorContainerBuilder: (context, navigationShell, children) =>
-          PassengerTabBranchContainer(
-            navigationShell: navigationShell,
-            onNavigationSettled:
-                Modular.get<PassengerTabNavigationCoordinator>().commit,
-            onPagePositionChanged:
-                Modular.get<PassengerTabNavigationCoordinator>()
-                    .updatePagePosition,
-            children: children,
+          BlocBuilder<SessionBloc, SessionState>(
+            builder: (context, sessionState) => PassengerTabBranchContainer(
+              navigationShell: navigationShell,
+              allowUserNavigation: sessionState.isAuthenticated,
+              onNavigationSettled:
+                  Modular.get<PassengerTabNavigationCoordinator>().commit,
+              onPagePositionChanged:
+                  Modular.get<PassengerTabNavigationCoordinator>()
+                      .updatePagePosition,
+              children: children,
+            ),
           ),
       branches: [
         ModularBranch(routes: HomeModule.shellRoutes),

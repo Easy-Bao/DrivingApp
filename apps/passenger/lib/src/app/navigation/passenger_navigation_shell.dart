@@ -21,11 +21,13 @@ class const PassengerTabBranchContainer({
   required this.children,
   required this.onNavigationSettled,
   required this.onPagePositionChanged,
+  this.allowUserNavigation = true,
 }) extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
   final List<Widget> children;
   final ValueChanged<int> onNavigationSettled;
   final ValueChanged<double> onPagePositionChanged;
+  final bool allowUserNavigation;
 
   @override
   Widget build(BuildContext context) => AppTabBranchContainer(
@@ -34,6 +36,7 @@ class const PassengerTabBranchContainer({
     onBranchChanged: (index) => navigationShell.goBranch(index),
     onNavigationSettled: onNavigationSettled,
     onPagePositionChanged: onPagePositionChanged,
+    allowUserNavigation: allowUserNavigation,
     backgroundColor: context.canvasColor,
     pageViewKey: 'passenger-tab-page-view',
     children: children,
@@ -81,6 +84,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        _forceHomeForGuest();
         unawaited(_loadInboxNotifications());
       }
     });
@@ -175,6 +179,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
           case AuthenticatedSession():
             unawaited(_loadInboxNotifications());
           case GuestSession() || SessionFailure():
+            _forceHomeForGuest();
             _loadedInboxPassengerId = null;
             _activePassengerId = null;
             unawaited(widget.realtimeClient.stop());
@@ -230,8 +235,22 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
   }
 
   void _onItemTapped(int index) {
+    if (!BlocProvider.of<SessionBloc>(context).state.isAuthenticated) {
+      _forceHomeForGuest();
+      return;
+    }
     if (widget.navigationCoordinator.selectedIndex == index) return;
     widget.navigationCoordinator.commit(index);
     widget.navigationShell.goBranch(index);
+  }
+
+  void _forceHomeForGuest() {
+    if (!mounted ||
+        BlocProvider.of<SessionBloc>(context).state.isAuthenticated ||
+        widget.navigationShell.currentIndex == 0) {
+      return;
+    }
+    widget.navigationCoordinator.commit(0);
+    widget.navigationShell.goBranch(0);
   }
 }

@@ -244,16 +244,71 @@ void main() {
     expect(find.byKey(const ValueKey<String>('activity-page')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('guest sessions stay on Home and cannot swipe to another tab', (
+    tester,
+  ) async {
+    final sessionBloc = SessionBloc(sessionRepository: _SessionRepositoryStub())
+      ..add(const SessionGuestRequested());
+    final inboxCubit = InboxCubit(inboxRepository: _InboxRepositoryStub());
+    final realtimeClient = RealtimeWebSocketClient(
+      uri: Uri.parse('ws://localhost/realtime'),
+      tokenProvider: () async => 'test-token',
+      connector: _RealtimeSocketConnectorStub(),
+    );
+    final navigationCoordinator = PassengerTabNavigationCoordinator();
+    final lifecycleCoordinator = AppLifecycleCoordinator();
+    final router = _createRouter(
+      inboxCubit,
+      realtimeClient,
+      navigationCoordinator,
+      lifecycleCoordinator,
+      initialLocation: RideHistoryRoutes.fullRideHistoryPath,
+    );
+    addTearDown(() async {
+      router.dispose();
+      await sessionBloc.close();
+      await inboxCubit.close();
+      await realtimeClient.dispose();
+      navigationCoordinator.dispose();
+      await lifecycleCoordinator.dispose();
+    });
+
+    await tester.pumpWidget(
+      BlocProvider<SessionBloc>.value(
+        value: sessionBloc,
+        child: MaterialApp.router(theme: AppTheme.data, routerConfig: router),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(router.state.uri.path, HomeRoutes.fullHomePath);
+    expect(find.byType(PassengerFloatingTabBar), findsNothing);
+    expect(find.text('View all'), findsNothing);
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byKey(const ValueKey<String>('home-page'))),
+    );
+    await gesture.moveBy(const Offset(-500, 0));
+    await tester.pump();
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(router.state.uri.path, HomeRoutes.fullHomePath);
+    expect(navigationCoordinator.selectedIndex, 0);
+    expect(find.byKey(const ValueKey<String>('home-page')), findsOneWidget);
+  });
 }
 
 GoRouter _createRouter(
   InboxCubit inboxCubit,
   RealtimeWebSocketClient realtimeClient,
   PassengerTabNavigationCoordinator navigationCoordinator,
-  AppLifecycleCoordinator lifecycleCoordinator,
-) {
+  AppLifecycleCoordinator lifecycleCoordinator, {
+  String initialLocation = HomeRoutes.fullHomePath,
+}) {
   return GoRouter(
-    initialLocation: HomeRoutes.fullHomePath,
+    initialLocation: initialLocation,
     routes: [
       StatefulShellRoute(
         builder: (context, state, navigationShell) => PassengerShellLayout(
@@ -264,11 +319,14 @@ GoRouter _createRouter(
           navigationShell: navigationShell,
         ),
         navigatorContainerBuilder: (context, navigationShell, children) =>
-            PassengerTabBranchContainer(
-              navigationShell: navigationShell,
-              onNavigationSettled: navigationCoordinator.commit,
-              onPagePositionChanged: navigationCoordinator.updatePagePosition,
-              children: children,
+            BlocBuilder<SessionBloc, SessionState>(
+              builder: (context, sessionState) => PassengerTabBranchContainer(
+                navigationShell: navigationShell,
+                allowUserNavigation: sessionState.isAuthenticated,
+                onNavigationSettled: navigationCoordinator.commit,
+                onPagePositionChanged: navigationCoordinator.updatePagePosition,
+                children: children,
+              ),
             ),
         branches: [
           StatefulShellBranch(
@@ -279,14 +337,21 @@ GoRouter _createRouter(
                 builder: (context, _) => ColoredBox(
                   key: const ValueKey<String>('home-page'),
                   color: Colors.white,
-                  child: Align(
-                    alignment: Alignment.topRight,
-                    child: TextButton(
-                      key: const ValueKey<String>('home-view-all-activity'),
-                      onPressed: () =>
-                          context.goNamed(RideHistoryRoutes.rideHistory),
-                      child: const Text('View all'),
-                    ),
+                  child: BlocBuilder<SessionBloc, SessionState>(
+                    builder: (context, sessionState) {
+                      if (!sessionState.isAuthenticated) {
+                        return const SizedBox.shrink();
+                      }
+                      return Align(
+                        alignment: Alignment.topRight,
+                        child: TextButton(
+                          key: const ValueKey<String>('home-view-all-activity'),
+                          onPressed: () =>
+                              context.goNamed(RideHistoryRoutes.rideHistory),
+                          child: const Text('View all'),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),

@@ -18,6 +18,7 @@ class const AppTabBranchContainer({
   required this.onPagePositionChanged,
   required this.backgroundColor,
   required this.pageViewKey,
+  this.allowUserNavigation = true,
 }) extends StatefulWidget {
   static const pageAnimationDuration = Duration(milliseconds: 280);
 
@@ -28,6 +29,7 @@ class const AppTabBranchContainer({
   final ValueChanged<double> onPagePositionChanged;
   final Color backgroundColor;
   final String pageViewKey;
+  final bool allowUserNavigation;
 
   this : assert(children.length > 0);
 
@@ -78,7 +80,10 @@ class _AppTabBranchContainerState extends State<AppTabBranchContainer> {
         child: PageView(
           key: ValueKey<String>(widget.pageViewKey),
           controller: _pageController,
-          allowImplicitScrolling: true,
+          allowImplicitScrolling: widget.allowUserNavigation,
+          physics: widget.allowUserNavigation
+              ? null
+              : const NeverScrollableScrollPhysics(),
           children: widget.children,
           onPageChanged: (index) {
             if (_isUserDragging || index != widget.currentIndex) return;
