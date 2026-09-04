@@ -53,7 +53,7 @@ type MapboxProvider struct {
 }
 
 type routeCacheEntry struct {
-	route     *domain.Route
+	routes    []mapboxRoute
 	createdAt time.Time
 }
 
@@ -503,8 +503,8 @@ func (provider *MapboxProvider) Route(ctx context.Context, origin, destination d
 		return nil, err
 	}
 	cacheKey := routeCacheKey(origin, destination, normalizedOptions)
-	if route, ok := provider.cachedRoute(cacheKey); ok {
-		return route, nil
+	if routes, ok := provider.cachedRoutes(cacheKey); ok {
+		return routeFromMapbox(origin, destination, normalizedOptions, routes), nil
 	}
 	coordinates := strings.Join([]string{
 		coordinate(origin.Longitude) + "," + coordinate(origin.Latitude),
@@ -531,23 +531,13 @@ func (provider *MapboxProvider) Route(ctx context.Context, origin, destination d
 	if len(response.Routes) == 0 {
 		return nil, fmt.Errorf("mapbox returned no route")
 	}
-	selected := selectRoute(response.Routes, normalizedOptions.Preference)
-	route := &domain.Route{
-		Origin:      origin,
-		Destination: destination,
-		Preference:  string(normalizedOptions.Preference),
-		Profile:     string(normalizedOptions.Profile),
-		DistanceKm:  selected.Distance / 1000,
-		DurationMin: selected.Duration / 60,
-		Polyline:    selected.Geometry.Coordinates,
-	}
-	provider.storeRoute(cacheKey, route)
-	return route, nil
+	provider.storeRoutes(cacheKey, response.Routes)
+	return routeFromMapbox(origin, destination, normalizedOptions, response.Routes), nil
 }
 
 func routeCacheKey(origin, destination domain.Coordinates, options domain.RouteOptions) string {
 	var builder strings.Builder
-	fmt.Fprintf(&builder, "%s;%s|%s|%s", coordinate(origin.Longitude)+","+coordinate(origin.Latitude), coordinate(destination.Longitude)+","+coordinate(destination.Latitude), options.Profile, options.Preference)
+	fmt.Fprintf(&builder, "%s;%s|%s", coordinate(origin.Longitude)+","+coordinate(origin.Latitude), coordinate(destination.Longitude)+","+coordinate(destination.Latitude), options.Profile)
 	for _, point := range options.ExcludePoints {
 		builder.WriteByte('|')
 		builder.WriteString(coordinate(point.Longitude))
@@ -557,7 +547,24 @@ func routeCacheKey(origin, destination domain.Coordinates, options domain.RouteO
 	return builder.String()
 }
 
-func (provider *MapboxProvider) cachedRoute(key string) (*domain.Route, bool) {
+func routeFromMapbox(
+	origin, destination domain.Coordinates,
+	options domain.RouteOptions,
+	routes []mapboxRoute,
+) *domain.Route {
+	selected := selectRoute(routes, options.Preference)
+	return &domain.Route{
+		Origin:      origin,
+		Destination: destination,
+		Preference:  string(options.Preference),
+		Profile:     string(options.Profile),
+		DistanceKm:  selected.Distance / 1000,
+		DurationMin: selected.Duration / 60,
+		Polyline:    slices.Clone(selected.Geometry.Coordinates),
+	}
+}
+
+func (provider *MapboxProvider) cachedRoutes(key string) ([]mapboxRoute, bool) {
 	provider.routeCacheMu.Lock()
 	defer provider.routeCacheMu.Unlock()
 
@@ -569,11 +576,11 @@ func (provider *MapboxProvider) cachedRoute(key string) (*domain.Route, bool) {
 		delete(provider.routeCache, key)
 		return nil, false
 	}
-	return cloneRoute(entry.route), true
+	return cloneMapboxRoutes(entry.routes), true
 }
 
-func (provider *MapboxProvider) storeRoute(key string, route *domain.Route) {
-	if route == nil {
+func (provider *MapboxProvider) storeRoutes(key string, routes []mapboxRoute) {
+	if len(routes) == 0 {
 		return
 	}
 	provider.routeCacheMu.Lock()
@@ -593,21 +600,21 @@ func (provider *MapboxProvider) storeRoute(key string, route *domain.Route) {
 		}
 		delete(provider.routeCache, oldestKey)
 	}
-	provider.routeCache[key] = routeCacheEntry{route: cloneRoute(route), createdAt: time.Now()}
+	provider.routeCache[key] = routeCacheEntry{
+		routes:    cloneMapboxRoutes(routes),
+		createdAt: time.Now(),
+	}
 }
 
-func cloneRoute(route *domain.Route) *domain.Route {
-	if route == nil {
-		return nil
-	}
-	clone := *route
-	if route.Polyline != nil {
-		clone.Polyline = make([][]float64, len(route.Polyline))
-		for index, point := range route.Polyline {
-			clone.Polyline[index] = slices.Clone(point)
+func cloneMapboxRoutes(routes []mapboxRoute) []mapboxRoute {
+	clones := slices.Clone(routes)
+	for index := range clones {
+		clones[index].Geometry.Coordinates = make([][]float64, len(routes[index].Geometry.Coordinates))
+		for pointIndex, point := range routes[index].Geometry.Coordinates {
+			clones[index].Geometry.Coordinates[pointIndex] = slices.Clone(point)
 		}
 	}
-	return &clone
+	return clones
 }
 
 func (provider *MapboxProvider) Matrix(ctx context.Context, origin domain.Coordinates, destinations []domain.Coordinates) (*domain.Matrix, error) {

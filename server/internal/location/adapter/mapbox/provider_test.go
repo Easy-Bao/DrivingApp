@@ -351,23 +351,36 @@ func TestRouteReusesRecentCalculation(t *testing.T) {
 	provider.client = &http.Client{
 		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
 			requestCount++
-			return responseWithBody(request, `{"routes":[{"distance":3000,"duration":300,"geometry":{"coordinates":[[123.4,7.8],[123.5,7.9]]}}]}`), nil
+			return responseWithBody(request, `{"routes":[
+				{"distance":3000,"duration":300,"geometry":{"coordinates":[[123.4,7.8],[123.5,7.9]]}},
+				{"distance":2000,"duration":500,"geometry":{"coordinates":[[123.4,7.8],[123.45,7.85],[123.5,7.9]]}}
+			]}`), nil
 		}),
 	}
 
 	origin := domain.Coordinates{Latitude: 7.8, Longitude: 123.4}
 	destination := domain.Coordinates{Latitude: 7.9, Longitude: 123.5}
-	first, err := provider.Route(context.Background(), origin, destination, domain.RouteOptions{})
+	first, err := provider.Route(context.Background(), origin, destination, domain.RouteOptions{
+		Preference: domain.RoutePreferenceShortest,
+	})
 	if err != nil {
 		t.Fatalf("first route failed: %v", err)
 	}
+	if first.DistanceKm != 2 {
+		t.Fatalf("unexpected shortest route: %#v", first)
+	}
 	first.Polyline[0][0] = -1
-	second, err := provider.Route(context.Background(), origin, destination, domain.RouteOptions{})
+	second, err := provider.Route(context.Background(), origin, destination, domain.RouteOptions{
+		Preference: domain.RoutePreferenceFastest,
+	})
 	if err != nil {
 		t.Fatalf("second route failed: %v", err)
 	}
 	if requestCount != 1 {
 		t.Fatalf("provider requests = %d, want 1", requestCount)
+	}
+	if second.DistanceKm != 3 {
+		t.Fatalf("unexpected fastest route: %#v", second)
 	}
 	if second.Polyline[0][0] != 123.4 {
 		t.Fatalf("cached route was exposed to caller mutation: %#v", second.Polyline)
