@@ -297,7 +297,7 @@ class BookingBloc({
     try {
       String? sessionId;
       Failure? failure;
-      (await _bookingRepository.createSession(
+      (await _bookingRepository.createSessionResult(
         _bookingRequest(
           trip: event.trip,
           pickupLat: event.pickupLat,
@@ -338,7 +338,7 @@ class BookingBloc({
     try {
       String? sessionId;
       Failure? failure;
-      (await _bookingRepository.createSession(
+      (await _bookingRepository.createSessionResult(
         _bookingRequest(
           trip: event.trip,
           pickupLat: event.pickupLat,
@@ -459,7 +459,7 @@ class BookingBloc({
     }
     _isRefreshingOffers = true;
     try {
-      (await _bookingRepository.fetchOffers(sessionId)).fold(
+      (await _bookingRepository.fetchOffersResult(sessionId)).fold(
         (failure) =>
             dev.log('Failed to refresh booking offers: ${failure.message}'),
         (offers) {
@@ -586,7 +586,7 @@ class BookingBloc({
     try {
       AcceptedBooking? acceptedBooking;
       Failure? failure;
-      (await _bookingRepository.acceptOffer(
+      (await _bookingRepository.acceptOfferResult(
         sessionId: sessionId,
         offerId: event.offerId,
       )).fold((value) => failure = value, (value) => acceptedBooking = value);
@@ -657,7 +657,7 @@ class BookingBloc({
     try {
       if (sessionId != null && sessionId.isNotEmpty) {
         await _bookingRepository
-            .cancelSession(sessionId)
+            .cancelSessionResult(sessionId)
             .timeout(const Duration(seconds: 5));
       }
     } catch (error) {

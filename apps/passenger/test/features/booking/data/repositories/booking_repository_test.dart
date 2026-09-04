@@ -5,6 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/booking/data/data_sources/booking_remote_data_source.dart';
 import 'package:passenger/src/features/booking/data/repositories/booking_repository_impl.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_session_request.dart';
+import 'package:passenger/src/features/booking/domain/repositories/booking_repository.dart';
 
 class MockBookingRemoteDataSource extends Mock
     implements BookingRemoteDataSource {}
@@ -52,6 +53,31 @@ void main() {
     expect(sentBody?['dropoff_latitude'], 7.85);
     expect(sentBody?['dropoff_longitude'], 123.45);
     expect(sentBody, isNot(contains('custom_fare')));
+  });
+
+  test('exposes legacy repository success through a strict result', () async {
+    when(() => dataSource.createSession(any()))
+        .thenAnswer((_) async => <String, dynamic>{'id': 77});
+
+    final BookingRepository contract = repository;
+    final result = await contract.createSessionResult(
+      const BookingSessionRequest(
+        rideType: 'solo',
+        pickupLatitude: 7.828,
+        pickupLongitude: 123.434,
+        pickupName: 'Mountain View',
+        dropoffLatitude: 7.85,
+        dropoffLongitude: 123.45,
+        dropoffName: 'Vista Slope',
+        distanceKm: 3.2,
+        durationMinutes: 8,
+        customFareCentavos: 2764,
+        passengerNote: '',
+      ),
+    );
+
+    expect(result, isA<Ok<String, DomainFailure>>());
+    expect(result.fold((failure) => failure, (value) => value), '77');
   });
 
   test('normalizes numeric accepted ride IDs and centavo fare', () async {
