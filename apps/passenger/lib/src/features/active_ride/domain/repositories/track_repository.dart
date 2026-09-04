@@ -30,3 +30,50 @@ abstract interface class TrackRepository {
     required double longitude,
   });
 }
+
+extension TrackRepositoryResultAdapters on TrackRepository {
+  /// Converts the legacy repository contract into the strict result used by
+  /// active-trip synchronization without changing existing implementations.
+  Future<Result<RideUpdate, DomainFailure>> getRideStatusResult(
+    String rideId,
+  ) async {
+    try {
+      final result = await getRideStatusUpdate(rideId);
+      return await result.fold(
+        (failure) => Err<RideUpdate, DomainFailure>(failure),
+        (value) => Ok<RideUpdate, DomainFailure>(value),
+      );
+    } catch (error) {
+      return Err<RideUpdate, DomainFailure>(
+        FailureMapper.fromException(
+          error,
+          serverMessage:
+              'Ride status is temporarily unavailable. Please try again.',
+        ),
+      );
+    }
+  }
+
+  /// Converts the legacy location contract into a strict domain result so a
+  /// telemetry gap cannot surface as an untyped exception in the UI layer.
+  Future<Result<(double latitude, double longitude), DomainFailure>>
+  fetchDriverLocationResult(String rideId) async {
+    try {
+      final result = await fetchDriverLocation(rideId);
+      return await result.fold(
+        (failure) =>
+            Err<(double latitude, double longitude), DomainFailure>(failure),
+        (value) =>
+            Ok<(double latitude, double longitude), DomainFailure>(value),
+      );
+    } catch (error) {
+      return Err<(double latitude, double longitude), DomainFailure>(
+        FailureMapper.fromException(
+          error,
+          serverMessage:
+              'Driver location is temporarily unavailable. Please try again.',
+        ),
+      );
+    }
+  }
+}

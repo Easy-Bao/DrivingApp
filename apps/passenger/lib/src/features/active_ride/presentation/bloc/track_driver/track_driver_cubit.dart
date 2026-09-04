@@ -70,7 +70,7 @@ class TrackDriverCubit({
 
       _isSyncing = true;
       try {
-        final result = await _repository.getRideStatusUpdate(activeRideId);
+        final result = await _repository.getRideStatusResult(activeRideId);
         await result.fold(
           (failure) async {
             dev.log('Error fetching status update: ${failure.message}');
@@ -101,7 +101,7 @@ class TrackDriverCubit({
             double? driverLng;
             bool locationFetched = false;
 
-            final locResult = await _repository.fetchDriverLocation(
+            final locResult = await _repository.fetchDriverLocationResult(
               activeRideId,
             );
             locResult.fold(
