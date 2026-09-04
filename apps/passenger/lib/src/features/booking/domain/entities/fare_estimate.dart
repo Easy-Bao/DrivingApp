@@ -14,12 +14,22 @@ class const FareEstimate({
   final double totalFare;
 
   factory fromJson(Map<String, dynamic> json) {
+    final {
+      'base_fare': rawBaseFare,
+      'distance_charge': rawDistanceCharge,
+      'time_charge': rawTimeCharge,
+      'surge_charge': rawSurgeCharge,
+      'total_fare': rawTotalFare,
+    } = _canonicalPayload(
+      json,
+    );
+
     return FareEstimate(
-      baseFare: _requiredNumber(json, 'base_fare'),
-      distanceCharge: _requiredNumber(json, 'distance_charge'),
-      timeCharge: _requiredNumber(json, 'time_charge'),
-      surgeCharge: _requiredNumber(json, 'surge_charge'),
-      totalFare: _requiredNumber(json, 'total_fare'),
+      baseFare: _requiredNumber(rawBaseFare, 'base_fare'),
+      distanceCharge: _requiredNumber(rawDistanceCharge, 'distance_charge'),
+      timeCharge: _requiredNumber(rawTimeCharge, 'time_charge'),
+      surgeCharge: _requiredNumber(rawSurgeCharge, 'surge_charge'),
+      totalFare: _requiredNumber(rawTotalFare, 'total_fare'),
     );
   }
 
@@ -43,10 +53,17 @@ class const FareEstimate({
   ];
 }
 
-double _requiredNumber(Map<String, dynamic> json, String key) {
-  final value = json[key];
-  if (value is! num) {
-    throw FormatException('Missing numeric fare result: $key');
-  }
-  return value.toDouble();
+Map<String, Object?> _canonicalPayload(Map<String, dynamic> json) => {
+  'base_fare': json['base_fare'],
+  'distance_charge': json['distance_charge'],
+  'time_charge': json['time_charge'],
+  'surge_charge': json['surge_charge'],
+  'total_fare': json['total_fare'],
+};
+
+double _requiredNumber(Object? value, String key) {
+  return switch (value) {
+    final num amount => amount.toDouble(),
+    _ => throw FormatException('Missing numeric fare result: $key'),
+  };
 }
