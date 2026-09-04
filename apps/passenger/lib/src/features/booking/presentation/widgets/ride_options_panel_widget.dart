@@ -524,9 +524,17 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
   }
 
   Widget? _buildPinnedPrimaryAction() {
-    if (widget.isLoadingFare ||
-        (_currentView == _RideOptionsPanelView.summary && !widget.isExpanded)) {
-      return null;
+    if (widget.isLoadingFare) {
+      return const Bone.button(
+        key: ValueKey('ride-options-loading-primary-action'),
+        width: double.infinity,
+        height: 50,
+        borderRadius: BorderRadius.all(Radius.circular(16)),
+      );
+    }
+
+    if (_currentView == _RideOptionsPanelView.summary && !widget.isExpanded) {
+      return _buildSummaryPrimaryAction();
     }
 
     return switch (_currentView) {

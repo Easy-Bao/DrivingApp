@@ -100,6 +100,10 @@ void main() {
     expect(find.text('Set your offer'), findsNothing);
     expect(find.text('Add a tip'), findsNothing);
     expect(find.text('Add a trip note'), findsNothing);
+    expect(
+      find.byKey(const ValueKey('ride-options-loading-primary-action')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('shows a recoverable fare error without exposing providers', (
@@ -277,7 +281,7 @@ void main() {
     expect(titleRect.top, closeTo(backRect.top, 1));
   });
 
-  testWidgets('keeps the compact summary clear of its booking action', (
+  testWidgets('pins the compact summary booking action to the sheet edge', (
     tester,
   ) async {
     final sheetController = DraggableScrollableController();
@@ -292,7 +296,7 @@ void main() {
         of: find.text('Book directly'),
         matching: find.byType(Positioned),
       ),
-      findsNothing,
+      findsOneWidget,
     );
     expect(tester.takeException(), isNull);
   });
