@@ -173,6 +173,14 @@ extension RouteExtension on Route {
   }
 }
 
+extension RoutePolylinePointsApi on List<List<double>> {
+  /// Converts raw GeoJSON route points to the interleaved map buffer format.
+  /// Invalid points are discarded so legacy tracking payloads remain safe to
+  /// render without allocating intermediate `Position` objects.
+  Float64List toCoordinateBuffer() =>
+      _buildCoordinateBuffer(this).asUnmodifiableView();
+}
+
 bool _isValidPolylinePoint(List<double> point) {
   return point.length >= 2 &&
       point[0].isFinite &&

@@ -29,6 +29,15 @@ void main() {
     expect(route.coordinateBuffer.toList(), [123.4, 7.8, 123.5, 7.9]);
     expect(route.bufferedStartCoordinate, (lat: 7.8, lng: 123.4));
     expect(() => route.coordinateBuffer[0] = 0, throwsUnsupportedError);
+
+    final rawBuffer = const <List<double>>[
+      [123.4, 7.8],
+      [double.nan, 7.9],
+      [123.5, 7.9],
+    ].toCoordinateBuffer();
+    expect(rawBuffer, isA<Float64List>());
+    expect(rawBuffer.toList(), [123.4, 7.8, 123.5, 7.9]);
+    expect(() => rawBuffer[0] = 0, throwsUnsupportedError);
   });
 
   test(
