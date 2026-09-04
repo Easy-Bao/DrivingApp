@@ -51,7 +51,7 @@ class LiveMapBloc({required this._rideRepository})
 
   Future<void> _publishLocation(DispatchTelemetryLocationEvent event) async {
     try {
-      final result = await _rideRepository.publishDriverLocation(
+      final result = await _rideRepository.publishDriverLocationResult(
         latitude: event.lat,
         longitude: event.lng,
       );

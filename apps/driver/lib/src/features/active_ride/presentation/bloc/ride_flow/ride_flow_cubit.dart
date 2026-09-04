@@ -96,7 +96,7 @@ class RideFlowCubit({
     }
 
     try {
-      final result = await _rideRepository.acceptRide(
+      final result = await _rideRepository.acceptRideResult(
         rideId: rideId,
         driverId: driverId,
       );
@@ -133,7 +133,7 @@ class RideFlowCubit({
 
     if (_activeRideId != null) {
       try {
-        final result = await _rideRepository.updateRideStatus(
+        final result = await _rideRepository.updateRideStatusResult(
           rideId: _activeRideId!,
           status: RideStatus.arrived,
         );
@@ -204,7 +204,7 @@ class RideFlowCubit({
 
     if (_activeRideId != null) {
       try {
-        final result = await _rideRepository.updateRideStatus(
+        final result = await _rideRepository.updateRideStatusResult(
           rideId: _activeRideId!,
           status: RideStatus.inTransit,
         );
@@ -241,7 +241,7 @@ class RideFlowCubit({
 
     try {
       RideSnapshot? ride;
-      (await _rideRepository.fetchRide(rideId))
+      (await _rideRepository.fetchRideResult(rideId))
           .fold((_) {}, (value) => ride = value);
       final latitude = ride?.dropoffLatitude;
       final longitude = ride?.dropoffLongitude;
@@ -281,7 +281,7 @@ class RideFlowCubit({
     try {
       RideSnapshot? ride;
       Failure? loadFailure;
-      (await _rideRepository.fetchRide(rideId))
+      (await _rideRepository.fetchRideResult(rideId))
           .fold((failure) => loadFailure = failure, (value) => ride = value);
       if (ride == null) {
         final failure = loadFailure;
@@ -298,7 +298,7 @@ class RideFlowCubit({
       _activePassengerName ??= ride!.passengerName;
       final status = ride!.status;
       if (status != 'completed') {
-        final result = await _rideRepository.updateRideStatus(
+        final result = await _rideRepository.updateRideStatusResult(
           rideId: rideId,
           status: RideStatus.completed,
         );
@@ -338,7 +338,7 @@ class RideFlowCubit({
     try {
       int? fareCentavos;
       Failure? settleFailure;
-      (await _rideRepository.settleCash(rideId)).fold(
+      (await _rideRepository.settleCashResult(rideId)).fold(
         (failure) => settleFailure = failure,
         (value) => fareCentavos = value,
       );
