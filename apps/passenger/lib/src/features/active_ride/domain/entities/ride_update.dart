@@ -15,27 +15,32 @@ final class const RideUpdate({
   final double? destinationLng,
 }) extends Equatable {
   factory fromJson(Map<String, dynamic> json) {
+    final {
+      'status': rawStatus,
+      'driver_id': rawDriverId,
+      'driver_name': rawDriverName,
+      'plate_number': rawVehiclePlate,
+      'vehicle_type': rawVehicleType,
+      'pickup_latitude': rawPickupLat,
+      'pickup_longitude': rawPickupLng,
+      'dropoff_latitude': rawDestinationLat,
+      'dropoff_longitude': rawDestinationLng,
+    } = _canonicalPayload(
+      json,
+    );
+
     return RideUpdate(
       status: RideStatus.fromString(
-        SafeParse.toStringValue(json['status'], 'requested'),
+        SafeParse.toStringValue(rawStatus, 'requested'),
       ),
-      driverId: _nullableString(json['driver_id'] ?? json['driverId']),
-      driverName: SafeParse.toStringValue(
-        json['driver_name'] ?? json['driverName'],
-        'Driver',
-      ),
-      vehiclePlate: SafeParse.toStringValue(
-        json['plate_number'] ?? json['vehiclePlate'],
-        '—',
-      ),
-      vehicleType: SafeParse.toStringValue(
-        json['vehicle_type'] ?? json['vehicleType'],
-        'Bao Bao',
-      ),
-      pickupLat: SafeParse.toNullableDouble(json['pickup_latitude']),
-      pickupLng: SafeParse.toNullableDouble(json['pickup_longitude']),
-      destinationLat: SafeParse.toNullableDouble(json['dropoff_latitude']),
-      destinationLng: SafeParse.toNullableDouble(json['dropoff_longitude']),
+      driverId: _nullableString(rawDriverId),
+      driverName: SafeParse.toStringValue(rawDriverName, 'Driver'),
+      vehiclePlate: SafeParse.toStringValue(rawVehiclePlate, '—'),
+      vehicleType: SafeParse.toStringValue(rawVehicleType, 'Bao Bao'),
+      pickupLat: SafeParse.toNullableDouble(rawPickupLat),
+      pickupLng: SafeParse.toNullableDouble(rawPickupLng),
+      destinationLat: SafeParse.toNullableDouble(rawDestinationLat),
+      destinationLng: SafeParse.toNullableDouble(rawDestinationLng),
     );
   }
 
@@ -62,6 +67,18 @@ final class const RideUpdate({
     destinationLng,
   ];
 }
+
+Map<String, Object?> _canonicalPayload(Map<String, dynamic> json) => {
+  'status': json['status'],
+  'driver_id': json['driver_id'] ?? json['driverId'],
+  'driver_name': json['driver_name'] ?? json['driverName'],
+  'plate_number': json['plate_number'] ?? json['vehiclePlate'],
+  'vehicle_type': json['vehicle_type'] ?? json['vehicleType'],
+  'pickup_latitude': json['pickup_latitude'],
+  'pickup_longitude': json['pickup_longitude'],
+  'dropoff_latitude': json['dropoff_latitude'],
+  'dropoff_longitude': json['dropoff_longitude'],
+};
 
 String? _nullableString(Object? value) {
   final normalized = SafeParse.toStringValue(value).trim();
