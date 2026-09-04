@@ -475,7 +475,10 @@ class BookingBloc({
     }
   }
 
-  void _onUpdateOffers(UpdateOffersEvent event, Emitter<BookingState> emit) {
+  Future<void> _onUpdateOffers(
+    UpdateOffersEvent event,
+    Emitter<BookingState> emit,
+  ) async {
     final isDirectBooking = switch (state) {
       BookingSearching(:final isDirect) => isDirect,
       BookingOffersReceived(:final isDirect) => isDirect,
@@ -512,7 +515,7 @@ class BookingBloc({
           pendingOffer.displayPlateNumber,
         );
         _isAutoAcceptingOffer = true;
-        add(
+        await _onAcceptBidOffer(
           AcceptBidOfferEvent(
             offerId: pendingOffer.offerId,
             driverId: pendingOffer.driverId,
@@ -522,6 +525,7 @@ class BookingBloc({
             proposedFare: pendingOffer.proposedFare,
             driverRating: pendingOffer.ratingLabel,
           ),
+          emit,
         );
         return;
       }
