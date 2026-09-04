@@ -43,38 +43,34 @@ class const Place({
   }
 
   factory fromJson(Map<String, dynamic> json) {
-    final context = <String, String>{};
-    final rawContext = json['context'];
-    if (rawContext is Map) {
-      rawContext.forEach((key, value) {
-        if (value != null) {
-          context[key.toString()] = value.toString();
-        }
-      });
-    }
+    final {
+      'id': rawId,
+      'name': rawName,
+      'full_address': rawFullAddress,
+      'latitude': rawLatitude,
+      'longitude': rawLongitude,
+      'category': rawCategory,
+      'distance_km': rawDistanceKm,
+      'match_type': rawMatchType,
+      'distance_meters': rawDistanceMeters,
+      'confidence': rawConfidence,
+      'context': rawContext,
+    } = _canonicalPayload(
+      json,
+    );
 
     return Place(
-      id: json['id']?.toString() ?? '',
-      name: json['name']?.toString() ?? '',
-      fullAddress:
-          json['fullAddress']?.toString() ??
-          json['full_address']?.toString() ??
-          json['address']?.toString() ??
-          '',
-      latitude: (json['latitude'] as num? ?? json['lat'] as num? ?? 0.0)
-          .toDouble(),
-      longitude: (json['longitude'] as num? ?? json['lng'] as num? ?? 0.0)
-          .toDouble(),
-      category: json['category']?.toString(),
-      distanceKm: (json['distanceKm'] as num? ?? json['distance_km'] as num?)
-          ?.toDouble(),
-      matchType:
-          json['matchType']?.toString() ?? json['match_type']?.toString(),
-      distanceMeters:
-          (json['distanceMeters'] as num? ?? json['distance_meters'] as num?)
-              ?.toDouble(),
-      confidence: (json['confidence'] as num?)?.toDouble(),
-      context: context,
+      id: rawId?.toString() ?? '',
+      name: rawName?.toString() ?? '',
+      fullAddress: rawFullAddress?.toString() ?? '',
+      latitude: _numberOrDefault(rawLatitude, 'latitude'),
+      longitude: _numberOrDefault(rawLongitude, 'longitude'),
+      category: rawCategory?.toString(),
+      distanceKm: _nullableNumber(rawDistanceKm, 'distance_km'),
+      matchType: rawMatchType?.toString(),
+      distanceMeters: _nullableNumber(rawDistanceMeters, 'distance_meters'),
+      confidence: _nullableNumber(rawConfidence, 'confidence'),
+      context: _contextMap(rawContext),
     );
   }
 
@@ -136,4 +132,55 @@ class const Place({
     confidence,
     context,
   ];
+}
+
+Map<String, Object?> _canonicalPayload(Map<String, dynamic> json) => {
+  'id': json['id'],
+  'name': json['name'],
+  'full_address':
+      json['fullAddress'] ?? json['full_address'] ?? json['address'],
+  'latitude': json['latitude'] ?? json['lat'],
+  'longitude': json['longitude'] ?? json['lng'],
+  'category': json['category'],
+  'distance_km': json['distanceKm'] ?? json['distance_km'],
+  'match_type': json['matchType'] ?? json['match_type'],
+  'distance_meters': json['distanceMeters'] ?? json['distance_meters'],
+  'confidence': json['confidence'],
+  'context': json['context'],
+};
+
+double _numberOrDefault(Object? value, String field) {
+  return switch (value) {
+    null => 0,
+    final num number => number.toDouble(),
+    final String text => _parseStringNumber(text, field),
+    _ => throw FormatException('Place $field must be numeric.'),
+  };
+}
+
+double? _nullableNumber(Object? value, String field) {
+  return switch (value) {
+    null => null,
+    final num number => number.toDouble(),
+    final String text => _parseStringNumber(text, field),
+    _ => throw FormatException('Place $field must be numeric.'),
+  };
+}
+
+double _parseStringNumber(String value, String field) {
+  final parsed = double.tryParse(value);
+  if (parsed == null) {
+    throw FormatException('Place $field must be numeric.');
+  }
+  return parsed;
+}
+
+Map<String, String> _contextMap(Object? value) {
+  final context = <String, String>{};
+  if (value is Map) {
+    value.forEach((key, item) {
+      if (item != null) context[key.toString()] = item.toString();
+    });
+  }
+  return context;
 }
