@@ -1,10 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:foundation/foundation.dart';
 import 'package:maps/maps.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/data/data_sources/driver_discovery_remote_data_source.dart';
 import 'package:passenger/src/features/booking/data/repositories/driver_repository_impl.dart';
+import 'package:passenger/src/features/booking/domain/repositories/driver_repository.dart';
 
 class MockDriverDiscoveryRemoteDataSource extends Mock
     implements DriverDiscoveryRemoteDataSource {}
@@ -49,13 +52,21 @@ void main() {
             },
           );
 
-      final result = await DriverRepositoryImpl(
+      final repository = DriverRepositoryImpl(
         discoveryDataSource: dataSource,
         locationRepository: locationRepository,
-      ).getNearbyDrivers(lat: latitude, lng: longitude);
+      );
+      final DriverRepository contract = repository;
+      final result = await contract.getNearbyDriversResult(
+        lat: latitude,
+        lng: longitude,
+      );
 
-      expect(result.isRight(), isTrue);
-      final drivers = result.getOrElse((_) => const []);
+      expect(result, isA<Ok<List<DriverModel>, DomainFailure>>());
+      final drivers = result.fold(
+        (_) => const <DriverModel>[],
+        (value) => value,
+      );
       expect(drivers, hasLength(1));
       expect(drivers.single.id, '42');
       expect(drivers.single.lat, latitude);

@@ -123,7 +123,7 @@ class BookingBloc({
     var lastLookupSucceeded = false;
 
     for (int attempt = 0; attempt < _nearestDriverMaxAttempts; attempt++) {
-      final result = await _driverRepository.getNearbyDrivers(
+      final result = await _driverRepository.getNearbyDriversResult(
         lat: event.pickupLat,
         lng: event.pickupLng,
       );
