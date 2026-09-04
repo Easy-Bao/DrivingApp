@@ -50,38 +50,42 @@ class const RideHistory({
   }
 
   factory fromJson(Map<String, dynamic> json) {
+    final {
+      'id': rawId,
+      'pickup': rawPickup,
+      'destination': rawDestination,
+      'pickup_latitude': rawPickupLat,
+      'pickup_longitude': rawPickupLng,
+      'destination_latitude': rawDestLat,
+      'destination_longitude': rawDestLng,
+      'date': rawDate,
+      'price': rawPrice,
+      'status': rawStatus,
+      'driver_id': rawDriverId,
+      'driver_name': rawDriverName,
+      'vehicle_plate': rawVehiclePlate,
+      'vehicle_type': rawVehicleType,
+      'driver_rating': rawDriverRating,
+    } = _canonicalPayload(
+      json,
+    );
+
     return RideHistory(
-      id: SafeParse.toStringValue(json['id']),
-      pickup: SafeParse.toStringValue(json['pickup'] ?? json['pickup_name']),
-      destination: SafeParse.toStringValue(
-        json['destination'] ?? json['dropoff_name'],
-      ),
-      pickupLat: SafeParse.toDouble(
-        json['pickupLat'] ?? json['pickup_latitude'],
-      ),
-      pickupLng: SafeParse.toDouble(
-        json['pickupLng'] ?? json['pickup_longitude'],
-      ),
-      destLat: SafeParse.toDouble(json['destLat'] ?? json['dropoff_latitude']),
-      destLng: SafeParse.toDouble(json['destLng'] ?? json['dropoff_longitude']),
-      date: SafeParse.toStringValue(
-        json['date'] ?? json['completed_at'] ?? json['created_at'],
-      ),
-      price: SafeParse.toStringValue(json['price'] ?? json['fare']),
-      status: SafeParse.toStringValue(json['status']),
-      driverId: SafeParse.toStringValue(json['driverId'] ?? json['driver_id']),
-      driverName: SafeParse.toStringValue(
-        json['driverName'] ?? json['driver_name'],
-      ),
-      vehiclePlate: SafeParse.toStringValue(
-        json['vehiclePlate'] ?? json['plate_number'],
-      ),
-      vehicleType: SafeParse.toStringValue(
-        json['vehicleType'] ?? json['vehicle_type'],
-      ),
-      driverRating: SafeParse.toNullableDouble(
-        json['driver_rating'] ?? json['driverRating'],
-      ),
+      id: SafeParse.toStringValue(rawId),
+      pickup: SafeParse.toStringValue(rawPickup),
+      destination: SafeParse.toStringValue(rawDestination),
+      pickupLat: SafeParse.toDouble(rawPickupLat),
+      pickupLng: SafeParse.toDouble(rawPickupLng),
+      destLat: SafeParse.toDouble(rawDestLat),
+      destLng: SafeParse.toDouble(rawDestLng),
+      date: SafeParse.toStringValue(rawDate),
+      price: SafeParse.toStringValue(rawPrice),
+      status: SafeParse.toStringValue(rawStatus),
+      driverId: SafeParse.toStringValue(rawDriverId),
+      driverName: SafeParse.toStringValue(rawDriverName),
+      vehiclePlate: SafeParse.toStringValue(rawVehiclePlate),
+      vehicleType: SafeParse.toStringValue(rawVehicleType),
+      driverRating: SafeParse.toNullableDouble(rawDriverRating),
     );
   }
 
@@ -160,3 +164,21 @@ class const RideHistory({
     driverRating,
   ];
 }
+
+Map<String, Object?> _canonicalPayload(Map<String, dynamic> json) => {
+  'id': json['id'],
+  'pickup': json['pickup'] ?? json['pickup_name'],
+  'destination': json['destination'] ?? json['dropoff_name'],
+  'pickup_latitude': json['pickupLat'] ?? json['pickup_latitude'],
+  'pickup_longitude': json['pickupLng'] ?? json['pickup_longitude'],
+  'destination_latitude': json['destLat'] ?? json['dropoff_latitude'],
+  'destination_longitude': json['destLng'] ?? json['dropoff_longitude'],
+  'date': json['date'] ?? json['completed_at'] ?? json['created_at'],
+  'price': json['price'] ?? json['fare'],
+  'status': json['status'],
+  'driver_id': json['driverId'] ?? json['driver_id'],
+  'driver_name': json['driverName'] ?? json['driver_name'],
+  'vehicle_plate': json['vehiclePlate'] ?? json['plate_number'],
+  'vehicle_type': json['vehicleType'] ?? json['vehicle_type'],
+  'driver_rating': json['driver_rating'] ?? json['driverRating'],
+};
