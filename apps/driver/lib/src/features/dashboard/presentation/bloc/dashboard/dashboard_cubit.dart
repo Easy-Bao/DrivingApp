@@ -42,7 +42,8 @@ class DashboardCubit({
 
   Future<void> _initialize() async {
     try {
-      final onlineStatusResult = await _repository.getPersistedOnlineStatus();
+      final onlineStatusResult = await _repository
+          .getPersistedOnlineStatusResult();
       onlineStatusResult.fold(
         (failure) => dev.log(
           'Unable to restore driver online status: ${failure.message}',
@@ -76,7 +77,7 @@ class DashboardCubit({
   Future<void> _loadStats() async {
     emit(state.copyWith(isLoadingStats: true, statsErrorMessage: null));
     try {
-      final result = await _repository.getDashboardStats();
+      final result = await _repository.getDashboardStatsResult();
       result.fold(
         (failure) => emit(
           state.copyWith(
@@ -117,7 +118,7 @@ class DashboardCubit({
     }
 
     try {
-      final result = await _repository.getDispatchSnapshot(
+      final result = await _repository.getDispatchSnapshotResult(
         includeOffers: includeOffers,
       );
       return await result.fold(
@@ -249,7 +250,7 @@ class DashboardCubit({
     required double farePesos,
   }) async {
     try {
-      final result = await _repository.submitRideOffer(
+      final result = await _repository.submitRideOfferResult(
         sessionId: sessionId,
         farePesos: farePesos,
       );
@@ -278,7 +279,7 @@ class DashboardCubit({
 
   Future<RideSnapshot?> fetchAuthoritativeRide(String rideId) async {
     try {
-      final result = await _repository.fetchRide(rideId);
+      final result = await _repository.fetchRideResult(rideId);
       return await result.fold((failure) {
         dev.log('Unable to refresh driver trip $rideId: ${failure.message}');
         return null;
@@ -303,7 +304,7 @@ class DashboardCubit({
     emit(state.copyWith(isOnline: goingOnline, errorMessage: null));
 
     try {
-      final updateResult = await _repository.updateOnlineStatus(
+      final updateResult = await _repository.updateOnlineStatusResult(
         isOnline: goingOnline,
         lat: lat,
         lng: lng,
@@ -334,7 +335,7 @@ class DashboardCubit({
   }
 
   Future<void> forceOffline({required double lat, required double lng}) async {
-    final updateResult = await _repository.updateOnlineStatus(
+    final updateResult = await _repository.updateOnlineStatusResult(
       isOnline: false,
       lat: lat,
       lng: lng,
@@ -357,7 +358,7 @@ class DashboardCubit({
   }) async {
     if (!state.isOnline) return false;
 
-    final updateResult = await _repository.updateOnlineStatus(
+    final updateResult = await _repository.updateOnlineStatusResult(
       isOnline: true,
       lat: lat,
       lng: lng,
