@@ -48,30 +48,38 @@ class const DriverModel({
   }
 
   factory fromJson(Map<String, dynamic> json) {
+    final {
+      'id': rawId,
+      'name': rawName,
+      'vehicle_type': rawVehicleType,
+      'plate_number': rawPlateNumber,
+      'rating': rawRating,
+      'lat': rawLatitude,
+      'lng': rawLongitude,
+      'distance_km': rawDistanceKm,
+      'eta_minutes': rawEtaMinutes,
+      'score': rawScore,
+      'onboard_passenger_count': rawOnboardPassengerCount,
+      'avatar_url': rawAvatarUrl,
+      'recent_feedback': rawRecentFeedback,
+    } = _canonicalPayload(
+      json,
+    );
+
     return DriverModel(
-      id: SafeParse.toStringValue(json['id'] ?? json['user_id']),
-      name: SafeParse.toStringValue(
-        json['name'] ?? json['driver_name'] ?? json['driverName'],
-      ),
-      vehicleType: SafeParse.toStringValue(
-        json['vehicleType'] ?? json['vehicle_type'],
-      ),
-      plateNumber: SafeParse.toStringValue(
-        json['plateNumber'] ?? json['plate_number'],
-      ),
-      rating: SafeParse.toDouble(json['rating']),
-      lat: SafeParse.toDouble(json['lat']),
-      lng: SafeParse.toDouble(json['lng']),
-      distanceKm: SafeParse.toDouble(json['distanceKm'] ?? json['distance_km']),
-      etaMinutes: SafeParse.toDouble(json['etaMinutes'] ?? json['eta_minutes']),
-      score: SafeParse.toDouble(json['score']),
-      onboardPassengerCount: _nullableInt(
-        json['onboardPassengerCount'] ?? json['onboard_passenger_count'],
-      ),
-      avatarUrl: _nullableString(json['avatarUrl'] ?? json['avatar_url']),
-      recentFeedback: _nullableString(
-        json['recentFeedback'] ?? json['recent_feedback'],
-      ),
+      id: SafeParse.toStringValue(rawId),
+      name: SafeParse.toStringValue(rawName),
+      vehicleType: SafeParse.toStringValue(rawVehicleType),
+      plateNumber: SafeParse.toStringValue(rawPlateNumber),
+      rating: SafeParse.toDouble(rawRating),
+      lat: SafeParse.toDouble(rawLatitude),
+      lng: SafeParse.toDouble(rawLongitude),
+      distanceKm: SafeParse.toDouble(rawDistanceKm),
+      etaMinutes: SafeParse.toDouble(rawEtaMinutes),
+      score: SafeParse.toDouble(rawScore),
+      onboardPassengerCount: _nullableInt(rawOnboardPassengerCount),
+      avatarUrl: _nullableString(rawAvatarUrl),
+      recentFeedback: _nullableString(rawRecentFeedback),
     );
   }
 
@@ -110,6 +118,23 @@ class const DriverModel({
     recentFeedback,
   ];
 }
+
+Map<String, Object?> _canonicalPayload(Map<String, dynamic> json) => {
+  'id': json['id'] ?? json['user_id'],
+  'name': json['name'] ?? json['driver_name'] ?? json['driverName'],
+  'vehicle_type': json['vehicleType'] ?? json['vehicle_type'],
+  'plate_number': json['plateNumber'] ?? json['plate_number'],
+  'rating': json['rating'],
+  'lat': json['lat'],
+  'lng': json['lng'],
+  'distance_km': json['distanceKm'] ?? json['distance_km'],
+  'eta_minutes': json['etaMinutes'] ?? json['eta_minutes'],
+  'score': json['score'],
+  'onboard_passenger_count':
+      json['onboardPassengerCount'] ?? json['onboard_passenger_count'],
+  'avatar_url': json['avatarUrl'] ?? json['avatar_url'],
+  'recent_feedback': json['recentFeedback'] ?? json['recent_feedback'],
+};
 
 int? _nullableInt(Object? value) {
   if (value is num) return value.toInt();
