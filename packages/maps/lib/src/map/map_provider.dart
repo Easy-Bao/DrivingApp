@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart' hide Route;
 import 'package:foundation/foundation.dart';
@@ -416,6 +417,18 @@ class MapProvider._() {
     width: width,
   );
 
+  static Future<mapbox.PolylineAnnotationManager> addPolylineBuffer(
+    AppMapController controller,
+    Float64List coordinates, {
+    Color color = TripMapMarkerStyle.ownLocation,
+    double width = 4.0,
+  }) => MapAnnotationService.addPolylineBuffer(
+    controller,
+    coordinates,
+    color: color,
+    width: width,
+  );
+
   static Future<void> replacePolyline(
     mapbox.PolylineAnnotationManager annotationManager,
     List<List<double>> points, {
@@ -424,6 +437,18 @@ class MapProvider._() {
   }) => MapAnnotationService.replacePolyline(
     annotationManager,
     points,
+    color: color,
+    width: width,
+  );
+
+  static Future<void> replacePolylineBuffer(
+    mapbox.PolylineAnnotationManager annotationManager,
+    Float64List coordinates, {
+    Color color = TripMapMarkerStyle.ownLocation,
+    double width = 4.0,
+  }) => MapAnnotationService.replacePolylineBuffer(
+    annotationManager,
+    coordinates,
     color: color,
     width: width,
   );

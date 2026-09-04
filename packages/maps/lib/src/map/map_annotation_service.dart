@@ -308,6 +308,28 @@ class MapAnnotationService._() {
     return annotationManager;
   }
 
+  static Future<mapbox.PolylineAnnotationManager> addPolylineBuffer(
+    AppMapController controller,
+    Float64List coordinates, {
+    Color color = TripMapMarkerStyle.ownLocation,
+    double width = 4.0,
+  }) async {
+    final positions = _positionsFromBuffer(coordinates);
+    final mapCtrl = controller.native;
+    final annotationManager = await mapCtrl.annotations
+        .createPolylineAnnotationManager();
+
+    await annotationManager.create(
+      mapbox.PolylineAnnotationOptions(
+        geometry: mapbox.LineString(coordinates: positions),
+        lineWidth: width,
+        lineColor: color.toARGB32(),
+        lineJoin: mapbox.LineJoin.ROUND,
+      ),
+    );
+    return annotationManager;
+  }
+
   static Future<void> replacePolyline(
     mapbox.PolylineAnnotationManager annotationManager,
     List<List<double>> points, {
@@ -348,14 +370,66 @@ class MapAnnotationService._() {
     }
   }
 
+  static Future<void> replacePolylineBuffer(
+    mapbox.PolylineAnnotationManager annotationManager,
+    Float64List coordinates, {
+    Color color = TripMapMarkerStyle.ownLocation,
+    double width = 4.0,
+  }) async {
+    final positions = _positionsFromBuffer(coordinates);
+    final annotations = await annotationManager.getAnnotations();
+    if (annotations.isEmpty) {
+      await annotationManager.create(
+        mapbox.PolylineAnnotationOptions(
+          geometry: mapbox.LineString(coordinates: positions),
+          lineWidth: width,
+          lineColor: color.toARGB32(),
+          lineJoin: mapbox.LineJoin.ROUND,
+        ),
+      );
+      return;
+    }
+    final annotation = annotations.first;
+    annotation.geometry = mapbox.LineString(coordinates: positions);
+    annotation.lineWidth = width;
+    annotation.lineColor = color.toARGB32();
+    annotation.lineJoin = mapbox.LineJoin.ROUND;
+    await annotationManager.update(annotation);
+    if (annotations.length > 1) {
+      await annotationManager.deleteMulti(annotations.skip(1).toList());
+    }
+  }
+
+  static List<mapbox.Position> _positionsFromBuffer(Float64List coordinates) {
+    final positions = <mapbox.Position>[];
+    for (var index = 0; index + 1 < coordinates.length; index += 2) {
+      final longitude = coordinates[index];
+      final latitude = coordinates[index + 1];
+      if (_isValidPolylineCoordinate(longitude, latitude)) {
+        positions.add(mapbox.Position(longitude, latitude));
+      }
+    }
+    if (positions.length < 2) {
+      throw ArgumentError.value(
+        coordinates,
+        'coordinates',
+        'at least two valid coordinates are required',
+      );
+    }
+    return positions;
+  }
+
   static bool _isValidPolylinePoint(List<double> point) {
-    return point.length >= 2 &&
-        point[0].isFinite &&
-        point[1].isFinite &&
-        point[1] >= -90 &&
-        point[1] <= 90 &&
-        point[0] >= -180 &&
-        point[0] <= 180;
+    return point.length >= 2 && _isValidPolylineCoordinate(point[0], point[1]);
+  }
+
+  static bool _isValidPolylineCoordinate(double longitude, double latitude) {
+    return longitude.isFinite &&
+        latitude.isFinite &&
+        latitude >= -90 &&
+        latitude <= 90 &&
+        longitude >= -180 &&
+        longitude <= 180;
   }
 
   static Future<void> clearAnnotations(

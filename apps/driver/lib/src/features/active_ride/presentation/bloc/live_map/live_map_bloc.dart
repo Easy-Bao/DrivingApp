@@ -2,6 +2,7 @@ import 'package:maps/maps.dart';
 
 import 'dart:async';
 import 'dart:developer' as dev;
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart' show Color;
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -172,12 +173,12 @@ class LiveMapBloc({required this._rideRepository})
           targetLat,
           targetLng,
         );
-        final routePoints = route?.validPolylinePoints;
-        if (routePoints != null && routePoints.length >= 2) {
+        final routeCoordinates = route?.coordinateBuffer;
+        if (routeCoordinates != null && routeCoordinates.length >= 4) {
           _routePolylineManager = await _upsertRoute(
             _routePolylineManager,
             mapController,
-            routePoints,
+            routeCoordinates,
           );
         } else {
           await _clearAnnotations(_routePolylineManager);
@@ -252,19 +253,19 @@ class LiveMapBloc({required this._rideRepository})
   Future<mapbox.PolylineAnnotationManager> _upsertRoute(
     mapbox.PolylineAnnotationManager? annotationManager,
     AppMapController mapController,
-    List<List<double>> routePoints,
+    Float64List routeCoordinates,
   ) async {
     if (annotationManager == null) {
-      return MapProvider.addPolyline(
+      return MapProvider.addPolylineBuffer(
         mapController,
-        routePoints,
+        routeCoordinates,
         color: _routeColor,
         width: 4.0,
       );
     }
-    await MapProvider.replacePolyline(
+    await MapProvider.replacePolylineBuffer(
       annotationManager,
-      routePoints,
+      routeCoordinates,
       color: _routeColor,
       width: 4.0,
     );

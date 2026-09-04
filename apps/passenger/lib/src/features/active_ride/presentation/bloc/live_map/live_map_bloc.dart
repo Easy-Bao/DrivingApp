@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:developer' as dev;
+import 'dart:typed_data';
 import 'dart:ui' show Color;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -127,11 +128,11 @@ class LiveMapBloc({required this._trackRepository})
       event.riderLat,
       event.riderLng,
     );
-    if (route != null && route.hasGeometry) {
+    if (route != null && route.coordinateBuffer.length >= 4) {
       _routePolylineManager = await _upsertPolyline(
         _routePolylineManager,
         _mapController!,
-        route.validPolylinePoints,
+        route.coordinateBuffer,
         color: _routeColor,
         width: 5.0,
       );
@@ -231,21 +232,21 @@ class LiveMapBloc({required this._trackRepository})
   Future<mapbox.PolylineAnnotationManager> _upsertPolyline(
     mapbox.PolylineAnnotationManager? manager,
     AppMapController controller,
-    List<List<double>> points, {
+    Float64List coordinates, {
     required Color color,
     required double width,
   }) async {
     if (manager == null) {
-      return MapProvider.addPolyline(
+      return MapProvider.addPolylineBuffer(
         controller,
-        points,
+        coordinates,
         color: color,
         width: width,
       );
     }
-    await MapProvider.replacePolyline(
+    await MapProvider.replacePolylineBuffer(
       manager,
-      points,
+      coordinates,
       color: color,
       width: width,
     );
