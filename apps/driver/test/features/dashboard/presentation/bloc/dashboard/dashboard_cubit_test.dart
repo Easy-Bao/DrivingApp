@@ -341,7 +341,29 @@ void main() {
       },
       act: (cubit) => cubit.toggleOnline(lat: lat, lng: lng),
       expect: () => [
+        const DashboardState(isOnline: true),
         const DashboardState(
+          errorMessage: 'You are currently offline. Please check your Wi-Fi or mobile data.',
+        ),
+      ],
+    );
+
+    blocTest<DashboardCubit, DashboardState>(
+      'rolls back an optimistic offline transition when the server rejects it',
+      build: () {
+        when(() => repo.updateOnlineStatus(isOnline: false, lat: lat, lng: lng))
+            .thenAnswer(
+              (_) async => const Left(NetworkFailure('offline update failed')),
+            );
+        return _makeCubit(repo);
+      },
+      seed: () => const DashboardState(isOnline: true),
+      act: (cubit) =>
+          cubit.toggleOnline(requestedOnline: false, lat: lat, lng: lng),
+      expect: () => [
+        const DashboardState(isOnline: false),
+        const DashboardState(
+          isOnline: true,
           errorMessage: 'You are currently offline. Please check your Wi-Fi or mobile data.',
         ),
       ],

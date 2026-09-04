@@ -299,30 +299,37 @@ class DashboardCubit({
     bool? requestedOnline,
   }) async {
     final goingOnline = requestedOnline ?? !state.isOnline;
+    final previousOnline = state.isOnline;
+    emit(state.copyWith(isOnline: goingOnline, errorMessage: null));
 
-    final updateResult = await _repository.updateOnlineStatus(
-      isOnline: goingOnline,
-      lat: lat,
-      lng: lng,
-    );
+    try {
+      final updateResult = await _repository.updateOnlineStatus(
+        isOnline: goingOnline,
+        lat: lat,
+        lng: lng,
+      );
 
-    if (updateResult.isLeft()) {
       updateResult.fold(
         (failure) => emit(
           state.copyWith(
-            isOnline: false,
+            isOnline: previousOnline,
             errorMessage: ErrorHandler.getErrorMessage(failure),
           ),
         ),
-        (_) {},
+        (_) => emit(state.copyWith(isOnline: goingOnline, errorMessage: null)),
       );
-      return;
-    }
-
-    if (goingOnline) {
-      emit(state.copyWith(isOnline: true, errorMessage: null));
-    } else {
-      emit(state.copyWith(isOnline: false, errorMessage: null));
+    } catch (error, stackTrace) {
+      dev.log(
+        'Unable to update driver online status.',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      emit(
+        state.copyWith(
+          isOnline: previousOnline,
+          errorMessage: ErrorHandler.getErrorMessage(error, stackTrace),
+        ),
+      );
     }
   }
 
