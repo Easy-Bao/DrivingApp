@@ -287,22 +287,35 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
       if (pickup == null) {
         throw StateError('Pickup location is unavailable.');
       }
-      FareEstimate? fareResult;
-      (await widget.fareRepository.estimateFare(
+      final result = await widget.fareRepository.estimateFareResult(
         distanceKm: distanceKm,
         durationMinutes: durationMinutes,
         originLatitude: pickup.lat,
         originLongitude: pickup.lng,
         destinationLatitude: widget.destination.latitude,
         destinationLongitude: widget.destination.longitude,
-      )).fold((failure) => throw failure, (value) => fareResult = value);
-      if (fareResult != null && mounted) {
-        setState(() {
-          _fareResult = fareResult;
-          _customFareController.text = fareResult!.totalFare.toStringAsFixed(2);
-          _fareError = null;
-          _customFareError = null;
-        });
+      );
+      switch (result) {
+        case Ok<FareEstimate, DomainFailure>(value: final fareResult):
+          if (mounted) {
+            setState(() {
+              _fareResult = fareResult;
+              _customFareController.text = fareResult.totalFare.toStringAsFixed(
+                2,
+              );
+              _fareError = null;
+              _customFareError = null;
+            });
+          }
+        case Err<FareEstimate, DomainFailure>():
+          if (mounted) {
+            setState(() {
+              _isLoadingFare = false;
+              _fareError = 'We couldn’t calculate a fare for this route. Please try again.';
+              _fareResult = null;
+              _customFareController.clear();
+            });
+          }
       }
     } catch (_) {
       if (mounted) {
