@@ -106,6 +106,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   @override
   void dispose() {
+    _pollGeneration++;
     _realtimeClient?.setActiveTripResyncHandler(null);
     unawaited(_lifecycleSubscription.cancel());
     _pulseCtrl.dispose();
@@ -114,13 +115,13 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _presenceHeartbeatTimer?.cancel();
     _locationAccessPoller?.cancel();
     _requestCountdownTimer?.cancel();
-    _locationSubscription?.cancel();
-    _realtimeEventsSubscription?.cancel();
+    _cancelLocationSubscription();
+    unawaited(_realtimeEventsSubscription?.cancel());
+    _realtimeEventsSubscription = null;
     final realtimeClient = _realtimeClient;
     if (realtimeClient != null) {
       unawaited(realtimeClient.stop());
     }
-    _pollGeneration++;
     unawaited(_liveMapBloc?.close());
     super.dispose();
   }
@@ -322,9 +323,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     if (!_isForeground) return;
     final pollGeneration = ++_pollGeneration;
     _startLocationAccessMonitoring();
-    _locationSubscription?.cancel();
+    _cancelLocationSubscription();
     _locationSubscription = LocationService.getPositionStream().listen(
       (pos) {
+        if (!mounted || pollGeneration != _pollGeneration) return;
         _liveMapBloc?.add(
           DispatchTelemetryLocationEvent(lat: pos.latitude, lng: pos.longitude),
         );
@@ -445,8 +447,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   void _cancelOnlineForegroundWork({required bool clearActiveBids}) {
     _pollGeneration++;
-    _locationSubscription?.cancel();
-    _locationSubscription = null;
+    _cancelLocationSubscription();
     _rideTriggerTimer?.cancel();
     _rideTriggerTimer = null;
     _presenceHeartbeatTimer?.cancel();
@@ -459,6 +460,12 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     if (mounted && clearActiveBids) {
       BlocProvider.of<DashboardCubit>(context).clearActiveBids();
     }
+  }
+
+  void _cancelLocationSubscription() {
+    final subscription = _locationSubscription;
+    _locationSubscription = null;
+    if (subscription != null) unawaited(subscription.cancel());
   }
 
   Future<void> _toggleOnline(BuildContext context, bool requestedOnline) async {
