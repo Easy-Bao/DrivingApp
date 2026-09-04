@@ -183,3 +183,23 @@ func (repository *ProfileRepository) Notifications(ctx context.Context, userID, 
 	}
 	return result, nil
 }
+
+func (repository *ProfileRepository) DeleteNotification(
+	ctx context.Context,
+	userID int,
+	notificationID int,
+) error {
+	deleted, err := repository.client.Notification.Delete().
+		Where(
+			notification.IDEQ(notificationID),
+			notification.UserIDEQ(userID),
+		).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+	if deleted == 0 {
+		return domain.ErrNotificationNotFound
+	}
+	return nil
+}

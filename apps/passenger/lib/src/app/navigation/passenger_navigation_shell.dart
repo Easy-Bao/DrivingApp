@@ -158,7 +158,6 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
         userId: passengerId,
         peerId: senderId,
         peerName: 'Driver',
-        expiresAt: receivedAt.add(const Duration(hours: 24)),
       ),
     );
   }

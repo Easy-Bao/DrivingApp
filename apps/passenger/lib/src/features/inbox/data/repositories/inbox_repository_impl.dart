@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/inbox/data/data_sources/inbox_remote_data_source.dart';
@@ -5,7 +6,10 @@ import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.
 import 'package:passenger/src/features/inbox/domain/repositories/inbox_repository.dart';
 
 final class InboxRepositoryImpl({required this.remoteDataSource})
-    implements InboxRepository, PaginatedInboxRepository {
+    implements
+        InboxRepository,
+        PaginatedInboxRepository,
+        DismissibleInboxRepository {
   final InboxRemoteDataSource remoteDataSource;
 
   @override
@@ -71,6 +75,26 @@ final class InboxRepositoryImpl({required this.remoteDataSource})
       return const Left(
         ServerFailure('Notifications are temporarily unavailable.'),
       );
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deletePassengerNotification(
+    String passengerId,
+    String notificationId,
+  ) async {
+    try {
+      await remoteDataSource.deleteNotification(passengerId, notificationId);
+      return const Right(null);
+    } on DioException catch (error) {
+      return Left(
+        ServerFailure.withStatusCode(
+          'The message could not be deleted.',
+          error.response?.statusCode ?? 500,
+        ),
+      );
+    } catch (_) {
+      return const Left(ServerFailure('The message could not be deleted.'));
     }
   }
 

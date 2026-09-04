@@ -16,3 +16,10 @@ abstract interface class PaginatedInboxRepository {
     int offset = 0,
   });
 }
+
+abstract interface class DismissibleInboxRepository {
+  Future<Either<Failure, void>> deletePassengerNotification(
+    String passengerId,
+    String notificationId,
+  );
+}

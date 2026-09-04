@@ -60,3 +60,18 @@ func (service *ProfileService) Notifications(ctx context.Context, userID, limit,
 	}
 	return repository.Notifications(ctx, userID, limit, offset)
 }
+
+func (service *ProfileService) DeleteNotification(
+	ctx context.Context,
+	userID int,
+	notificationID int,
+) error {
+	repository, ok := service.repository.(domain.NotificationRepository)
+	if !ok {
+		return nil
+	}
+	if userID <= 0 || notificationID <= 0 {
+		return errors.New("notification identity is invalid")
+	}
+	return repository.DeleteNotification(ctx, userID, notificationID)
+}

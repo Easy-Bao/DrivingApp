@@ -7,6 +7,8 @@ abstract class InboxRemoteDataSource {
     int limit = 50,
     int offset = 0,
   });
+
+  Future<void> deleteNotification(String passengerId, String notificationId);
 }
 
 class InboxRemoteDataSourceImpl(this._dio) implements InboxRemoteDataSource {
@@ -26,6 +28,16 @@ class InboxRemoteDataSourceImpl(this._dio) implements InboxRemoteDataSource {
       response.data ?? const <String, dynamic>{},
       (value) =>
           decodeObjectMap(value, message: 'Notification item is invalid.'),
+    );
+  }
+
+  @override
+  Future<void> deleteNotification(
+    String passengerId,
+    String notificationId,
+  ) async {
+    await _dio.delete<void>(
+      '/api/v1/passengers/${Uri.encodeComponent(passengerId)}/notifications/${Uri.encodeComponent(notificationId)}',
     );
   }
 }

@@ -27,6 +27,7 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 		routes.With(middleware.RequireRole(security.RolePassenger)).Get("/passengers/{id}/avatar", router.handler.Avatar)
 		routes.With(middleware.RequireRole(security.RolePassenger)).Post("/passengers/{id}/avatar", router.handler.AvatarUpload)
 		routes.With(middleware.RequireRole(security.RolePassenger)).Get("/passengers/{id}/notifications", router.handler.Notifications)
+		routes.With(middleware.RequireRole(security.RolePassenger)).Delete("/passengers/{id}/notifications/{notificationID}", router.handler.DeleteNotification)
 		routes.With(middleware.RequireRole(security.RoleDriver)).Get("/drivers/{id}", router.handler.Profile)
 		routes.With(middleware.RequireRole(security.RoleDriver)).Post("/drivers/{id}/online", router.handler.Online)
 	})

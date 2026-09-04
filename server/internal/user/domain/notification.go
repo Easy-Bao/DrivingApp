@@ -1,5 +1,9 @@
 package domain
 
+import "errors"
+
+var ErrNotificationNotFound = errors.New("notification not found")
+
 type Notification struct {
 	ID        int    `json:"id"`
 	UserID    int    `json:"user_id"`

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/chat/chat_routes.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
@@ -30,6 +31,9 @@ class _InboxPageState extends State<InboxPage> {
   }
 
   Future<void> _initializeInbox() async {
+    if (BlocProvider.of<SessionBloc>(context).state is! AuthenticatedSession) {
+      return;
+    }
     if (_inboxCubit.state is! InboxLoadedState) {
       final passengerId =
           await Modular.get<PassengerSessionStore>().readPassengerId() ?? '';
@@ -115,101 +119,112 @@ class _InboxPageState extends State<InboxPage> {
       child: Scaffold(
         backgroundColor: context.canvasColor,
         body: SafeArea(
-          child: BlocBuilder<InboxCubit, InboxState>(
-            builder: (context, state) {
-              if (state is InboxLoadingState || state is InboxInitialState) {
-                return _buildLoadingState();
+          child: BlocBuilder<SessionBloc, SessionState>(
+            builder: (context, sessionState) {
+              final isGuest =
+                  sessionState is GuestSession ||
+                  sessionState is SessionFailure;
+              if (isGuest) {
+                return _buildInboxContent(
+                  const InboxLoadedState(<InboxNotification>[]),
+                  isGuest: true,
+                );
               }
-
-              final notifications = state is InboxLoadedState
-                  ? state.notifications
-                  : <InboxNotification>[];
-              final loadedState = state is InboxLoadedState ? state : null;
-
-              return CustomScrollView(
-                physics: const BouncingScrollPhysics(),
-                slivers: [
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(24.0, 0.0, 24.0, 16.0),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate([
-                        Text(
-                          'Inbox',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w700,
-                            color: context.colorScheme.onSurface,
-                            letterSpacing: -1.0,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Messages and receipts',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: context.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ]),
-                    ),
-                  ),
-                  if (notifications.isEmpty)
-                    const SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: InboxEmptyStateWidget(),
-                    )
-                  else
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate((context, index) {
-                          final notification = notifications[index];
-                          return Dismissible(
-                            key: Key(notification.id),
-                            direction: DismissDirection.endToStart,
-                            onDismissed: (_) =>
-                                _inboxCubit.dismissNotification(index),
-                            background: Container(
-                              alignment: Alignment.centerRight,
-                              padding: const EdgeInsets.only(right: 24),
-                              margin: const EdgeInsets.only(bottom: 12),
-                              decoration: BoxDecoration(
-                                color: context.colorScheme.error.withValues(
-                                  alpha: 0.1,
-                                ),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Icon(
-                                LucideIcons.trash_2,
-                                color: context.colorScheme.error,
-                                size: 20,
-                              ),
-                            ),
-                            child: InboxNotificationCardWidget(
-                              notification: notification,
-                              onTap: () => unawaited(
-                                _openNotification(notification, index),
-                              ),
-                            ),
-                          );
-                        }, childCount: notifications.length),
-                      ),
-                    ),
-                  if (notifications.isNotEmpty)
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(vertical: 36.0),
-                      sliver: SliverToBoxAdapter(
-                        child: _buildFooter(loadedState!),
-                      ),
-                    ),
-                ],
+              return BlocBuilder<InboxCubit, InboxState>(
+                builder: (context, state) {
+                  if (state is InboxLoadingState ||
+                      state is InboxInitialState) {
+                    return _buildLoadingState();
+                  }
+                  return _buildInboxContent(state, isGuest: false);
+                },
               );
             },
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildInboxContent(InboxState state, {required bool isGuest}) {
+    final notifications = state is InboxLoadedState
+        ? state.notifications
+        : <InboxNotification>[];
+    final loadedState = state is InboxLoadedState ? state : null;
+
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(24.0, 0.0, 24.0, 16.0),
+          sliver: SliverList(
+            delegate: SliverChildListDelegate([
+              Text(
+                'Inbox',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w700,
+                  color: context.colorScheme.onSurface,
+                  letterSpacing: -1.0,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Messages and receipts',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 16),
+            ]),
+          ),
+        ),
+        if (notifications.isEmpty)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: InboxEmptyStateWidget(isGuest: isGuest),
+          )
+        else
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final notification = notifications[index];
+                return Dismissible(
+                  key: Key(notification.id),
+                  direction: DismissDirection.endToStart,
+                  onDismissed: (_) => _inboxCubit.dismissNotification(index),
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 24),
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: context.colorScheme.error.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Icon(
+                      LucideIcons.trash_2,
+                      color: context.colorScheme.error,
+                      size: 20,
+                    ),
+                  ),
+                  child: InboxNotificationCardWidget(
+                    notification: notification,
+                    onTap: () =>
+                        unawaited(_openNotification(notification, index)),
+                  ),
+                );
+              }, childCount: notifications.length),
+            ),
+          ),
+        if (notifications.isNotEmpty)
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(vertical: 36.0),
+            sliver: SliverToBoxAdapter(child: _buildFooter(loadedState!)),
+          ),
+      ],
     );
   }
 
@@ -280,7 +295,6 @@ class _InboxPageState extends State<InboxPage> {
   ) async {
     _inboxCubit.markNotificationAsRead(index);
     if (notification.type != 'chat' ||
-        notification.isExpired ||
         notification.roomId == null ||
         notification.userId == null ||
         notification.peerId == null) {

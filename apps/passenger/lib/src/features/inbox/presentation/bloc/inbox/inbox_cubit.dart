@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
@@ -10,6 +13,7 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
 
   final InboxRepository inboxRepository;
   final List<InboxNotification> _localNotifications = [];
+  final Set<String> _dismissedNotificationIds = {};
   String? _activePassengerId;
   int _sessionRevision = 0;
 
@@ -20,6 +24,7 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
       _activePassengerId = passengerId;
       _sessionRevision++;
       _localNotifications.clear();
+      _dismissedNotificationIds.clear();
     }
     final requestRevision = _sessionRevision;
     if (state is! InboxLoadedState) {
@@ -95,8 +100,6 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
   }
 
   void addLocalNotification(InboxNotification notification) {
-    _removeExpiredLocalNotifications();
-    if (notification.isExpired) return;
     _localNotifications.removeWhere((item) => item.id == notification.id);
     _localNotifications.insert(0, notification);
     final currentNotifications = state is InboxLoadedState
@@ -115,10 +118,11 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
   List<InboxNotification> _mergeLocalNotifications(
     List<InboxNotification> remoteNotifications,
   ) {
-    _removeExpiredLocalNotifications();
     final byId = <String, InboxNotification>{};
     for (final remote in remoteNotifications) {
-      if (!remote.isExpired) byId.putIfAbsent(remote.id, () => remote);
+      if (!_dismissedNotificationIds.contains(remote.id)) {
+        byId.putIfAbsent(remote.id, () => remote);
+      }
     }
     for (final local in _localNotifications.reversed) {
       byId[local.id] = local;
@@ -126,10 +130,6 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
     final notifications = byId.values.toList();
     notifications.sort((a, b) => b.timestamp.compareTo(a.timestamp));
     return notifications;
-  }
-
-  void _removeExpiredLocalNotifications() {
-    _localNotifications.removeWhere((notification) => notification.isExpired);
   }
 
   void markNotificationAsRead(int index) {
@@ -150,19 +150,44 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
         (state as InboxLoadedState).notifications,
       );
       if (index >= 0 && index < currentList.length) {
-        _localNotifications.removeWhere(
-          (item) => item.id == currentList[index].id,
-        );
+        final notification = currentList[index];
+        _localNotifications.removeWhere((item) => item.id == notification.id);
+        _dismissedNotificationIds.add(notification.id);
         currentList.removeAt(index);
         emit((state as InboxLoadedState).copyWith(notifications: currentList));
+        unawaited(_deleteRemoteNotification(notification));
       }
     }
+  }
+
+  Future<void> _deleteRemoteNotification(InboxNotification notification) async {
+    final passengerId = _activePassengerId;
+    final notificationId = int.tryParse(notification.id);
+    final repository = inboxRepository;
+    if (passengerId == null ||
+        passengerId.isEmpty ||
+        notificationId == null ||
+        repository is! DismissibleInboxRepository) {
+      return;
+    }
+
+    final dismissibleRepository = repository as DismissibleInboxRepository;
+    final result = await dismissibleRepository.deletePassengerNotification(
+      passengerId,
+      notification.id,
+    );
+    result.fold(
+      (failure) =>
+          debugPrint('Inbox notification deletion failed: ${failure.message}'),
+      (_) {},
+    );
   }
 
   void clearSessionData() {
     _activePassengerId = null;
     _sessionRevision++;
     _localNotifications.clear();
+    _dismissedNotificationIds.clear();
     emit(const InboxInitialState());
   }
 }

@@ -9,4 +9,5 @@ type Repository interface {
 
 type NotificationRepository interface {
 	Notifications(ctx context.Context, userID, limit, offset int) ([]Notification, error)
+	DeleteNotification(ctx context.Context, userID, notificationID int) error
 }

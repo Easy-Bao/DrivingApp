@@ -255,6 +255,33 @@ func (handler *Handler) Notifications(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, 200, response.NewOffsetPage(items, page.Limit, page.Offset))
 }
 
+func (handler *Handler) DeleteNotification(w http.ResponseWriter, r *http.Request) {
+	actorID, ok := handler.identity(r)
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	targetID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil || targetID != actorID {
+		response.Error(w, http.StatusForbidden, "forbidden")
+		return
+	}
+	notificationID, err := strconv.Atoi(chi.URLParam(r, "notificationID"))
+	if err != nil || notificationID <= 0 {
+		response.Error(w, http.StatusBadRequest, "invalid notification")
+		return
+	}
+	if err := handler.service.DeleteNotification(r.Context(), targetID, notificationID); err != nil {
+		if errors.Is(err, domain.ErrNotificationNotFound) {
+			response.Error(w, http.StatusNotFound, "notification not found")
+			return
+		}
+		response.Error(w, http.StatusInternalServerError, "The notification could not be deleted.")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (handler *Handler) Online(w http.ResponseWriter, r *http.Request) {
 	actorID, ok := handler.identity(r)
 	if !ok {

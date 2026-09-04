@@ -12,7 +12,6 @@ class const InboxNotification({
   this.peerId,
   this.peerName,
   this.userId,
-  this.expiresAt,
 }) extends Equatable {
   final String id;
   final String title;
@@ -24,11 +23,6 @@ class const InboxNotification({
   final String? peerId;
   final String? peerName;
   final String? userId;
-  final DateTime? expiresAt;
-
-  bool get isExpired =>
-      expiresAt != null && !expiresAt!.isAfter(DateTime.now());
-
   InboxNotification copyWith({
     String? id,
     String? title,
@@ -40,7 +34,6 @@ class const InboxNotification({
     String? peerId,
     String? peerName,
     String? userId,
-    DateTime? expiresAt,
   }) {
     return InboxNotification(
       id: id ?? this.id,
@@ -53,7 +46,6 @@ class const InboxNotification({
       peerId: peerId ?? this.peerId,
       peerName: peerName ?? this.peerName,
       userId: userId ?? this.userId,
-      expiresAt: expiresAt ?? this.expiresAt,
     );
   }
 
@@ -73,7 +65,6 @@ class const InboxNotification({
       peerId: _nullableString(json['peerId'] ?? json['peer_id']),
       peerName: _nullableString(json['peerName'] ?? json['peer_name']),
       userId: _nullableString(json['userId'] ?? json['user_id']),
-      expiresAt: _parseDate(json['expiresAt'] ?? json['expires_at']),
     );
   }
 
@@ -89,7 +80,6 @@ class const InboxNotification({
       if (peerId != null) 'peerId': peerId,
       if (peerName != null) 'peerName': peerName,
       if (userId != null) 'userId': userId,
-      if (expiresAt != null) 'expiresAt': expiresAt!.toIso8601String(),
     };
   }
 
@@ -105,18 +95,12 @@ class const InboxNotification({
     peerId,
     peerName,
     userId,
-    expiresAt,
   ];
 }
 
 String? _nullableString(Object? value) {
   final normalized = SafeParse.toStringValue(value).trim();
   return normalized.isEmpty ? null : normalized;
-}
-
-DateTime? _parseDate(Object? value) {
-  final normalized = SafeParse.toStringValue(value).trim();
-  return normalized.isEmpty ? null : DateTime.tryParse(normalized);
 }
 
 bool _toBool(Object? value) {

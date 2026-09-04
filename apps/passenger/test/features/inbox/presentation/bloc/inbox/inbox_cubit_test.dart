@@ -14,6 +14,12 @@ class MockInboxRepository extends Mock implements InboxRepository {}
 class MockPaginatedInboxRepository extends Mock
     implements InboxRepository, PaginatedInboxRepository {}
 
+class MockDismissibleInboxRepository extends Mock
+    implements
+        InboxRepository,
+        PaginatedInboxRepository,
+        DismissibleInboxRepository {}
+
 void main() {
   final notification = InboxNotification(
     id: 'private-notification',
@@ -89,6 +95,63 @@ void main() {
     final state = cubit.state as InboxLoadedState;
     expect(state.notifications, hasLength(1), reason: 'duplicate ids merge');
     expect(state.hasMore, isFalse);
+    await cubit.close();
+  });
+
+  test(
+    'retains a notification after its legacy expiry timestamp passes',
+    () async {
+      final repository = MockInboxRepository();
+      final legacyNotification = InboxNotification.fromJson(const {
+        'id': 'legacy-notification',
+        'title': 'Ride update',
+        'body': 'Your ride is still available in history.',
+        'type': 'ride',
+        'is_read': true,
+        'created_at': '2026-01-01T00:00:00Z',
+        'expires_at': '2026-01-02T00:00:00Z',
+      });
+      when(() => repository.fetchPassengerNotifications('passenger-1'))
+          .thenAnswer((_) async => Right([legacyNotification]));
+      final cubit = InboxCubit(inboxRepository: repository);
+
+      await cubit.loadNotifications('passenger-1');
+
+      final state = cubit.state as InboxLoadedState;
+      expect(state.notifications.single, legacyNotification);
+      await cubit.close();
+    },
+  );
+
+  test('persists a server notification dismissal after a swipe', () async {
+    final repository = MockDismissibleInboxRepository();
+    final remoteNotification = notification.copyWith(id: '7');
+    when(
+      () => repository.fetchPassengerNotificationsPage(
+        'passenger-1',
+        limit: 50,
+        offset: 0,
+      ),
+    ).thenAnswer(
+      (_) async => Right(
+        OffsetPage(
+          items: [remoteNotification],
+          hasMore: false,
+          nextOffset: null,
+        ),
+      ),
+    );
+    when(() => repository.deletePassengerNotification('passenger-1', '7'))
+        .thenAnswer((_) async => const Right(null));
+    final cubit = InboxCubit(inboxRepository: repository);
+
+    await cubit.loadNotifications('passenger-1');
+    cubit.dismissNotification(0);
+    await Future<void>.delayed(Duration.zero);
+
+    expect((cubit.state as InboxLoadedState).notifications, isEmpty);
+    verify(() => repository.deletePassengerNotification('passenger-1', '7'))
+        .called(1);
     await cubit.close();
   });
 }
