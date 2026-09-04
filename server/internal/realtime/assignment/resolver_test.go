@@ -95,3 +95,66 @@ func TestResolverFallsBackAfterRoutingCacheFailure(t *testing.T) {
 		t.Fatalf("ForDriver() = %#v, %v", values, err)
 	}
 }
+
+func TestResolverStopsFallbackWhenRideContextIsCanceled(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	authorityCalls := 0
+	authority := lookupStub{
+		byRide:       Assignment{RideID: "303", DriverID: "42", PassengerID: "99"},
+		forRideCalls: &authorityCalls,
+	}
+
+	_, found, err := NewResolver(lookupStub{}, authority).ForRide(ctx, "303")
+
+	if !errors.Is(err, context.Canceled) || found {
+		t.Fatalf("ForRide() found = %t, error = %v; want canceled", found, err)
+	}
+	if authorityCalls != 0 {
+		t.Fatalf("authority ForRide() calls = %d, want 0", authorityCalls)
+	}
+}
+
+func TestResolverStopsDriverFallbackWhenContextIsCanceled(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	authority := lookupStub{ridesByDriver: []Assignment{{RideID: "303"}}}
+
+	values, err := NewResolver(lookupStub{}, authority).ForDriver(ctx, "42")
+
+	if !errors.Is(err, context.Canceled) || values != nil {
+		t.Fatalf("ForDriver() = %#v, %v; want canceled", values, err)
+	}
+}
+
+func TestResolverStopsAfterRoutingCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	authorityCalls := 0
+	authority := lookupStub{
+		byRide:       Assignment{RideID: "303", DriverID: "42", PassengerID: "99"},
+		forRideCalls: &authorityCalls,
+	}
+	routing := cancelingLookup{cancel: cancel}
+
+	_, found, err := NewResolver(routing, authority).ForRide(ctx, "303")
+
+	if !errors.Is(err, context.Canceled) || found {
+		t.Fatalf("ForRide() found = %t, error = %v; want canceled", found, err)
+	}
+	if authorityCalls != 0 {
+		t.Fatalf("authority ForRide() calls = %d, want 0", authorityCalls)
+	}
+}
+
+type cancelingLookup struct {
+	cancel context.CancelFunc
+}
+
+func (lookup cancelingLookup) ForRide(context.Context, string) (Assignment, bool, error) {
+	lookup.cancel()
+	return Assignment{}, false, context.Canceled
+}
+
+func (cancelingLookup) ForDriver(context.Context, string) ([]Assignment, error) {
+	return nil, context.Canceled
+}

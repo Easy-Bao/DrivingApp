@@ -17,20 +17,32 @@ func (resolver *Resolver) ForRide(ctx context.Context, rideID string) (Assignmen
 	if resolver == nil {
 		return Assignment{}, false, nil
 	}
+	if err := contextError(ctx); err != nil {
+		return Assignment{}, false, err
+	}
 	if resolver.routing != nil {
 		value, found, err := resolver.routing.ForRide(ctx, rideID)
 		if err == nil && found {
 			return value, true, nil
 		}
+		if contextErr := contextError(ctx); contextErr != nil {
+			return Assignment{}, false, contextErr
+		}
 		if err != nil && resolver.authority == nil {
 			return Assignment{}, false, err
 		}
+	}
+	if err := contextError(ctx); err != nil {
+		return Assignment{}, false, err
 	}
 	if resolver.authority == nil {
 		return Assignment{}, false, nil
 	}
 	value, found, err := resolver.authority.ForRide(ctx, rideID)
 	if err != nil {
+		return Assignment{}, false, err
+	}
+	if err := contextError(ctx); err != nil {
 		return Assignment{}, false, err
 	}
 	if found {
@@ -40,15 +52,30 @@ func (resolver *Resolver) ForRide(ctx context.Context, rideID string) (Assignmen
 }
 
 func (resolver *Resolver) ForDriver(ctx context.Context, driverID string) ([]Assignment, error) {
-	if resolver != nil && resolver.routing != nil {
+	if resolver == nil {
+		return nil, nil
+	}
+	if err := contextError(ctx); err != nil {
+		return nil, err
+	}
+	if resolver.routing != nil {
 		assignments, err := resolver.routing.ForDriver(ctx, driverID)
 		if err == nil && len(assignments) > 0 {
 			return assignments, nil
 		}
+		if contextErr := contextError(ctx); contextErr != nil {
+			return nil, contextErr
+		}
 	}
-	if resolver != nil && resolver.authority != nil {
+	if err := contextError(ctx); err != nil {
+		return nil, err
+	}
+	if resolver.authority != nil {
 		assignments, err := resolver.authority.ForDriver(ctx, driverID)
 		if err == nil {
+			if contextErr := contextError(ctx); contextErr != nil {
+				return nil, contextErr
+			}
 			resolver.remember(driverID, assignments)
 		}
 		return assignments, err
@@ -64,4 +91,11 @@ func (resolver *Resolver) remember(driverID string, assignments []Assignment) {
 	if ok {
 		projection.Remember(driverID, assignments)
 	}
+}
+
+func contextError(ctx context.Context) error {
+	if ctx == nil {
+		return nil
+	}
+	return ctx.Err()
 }
