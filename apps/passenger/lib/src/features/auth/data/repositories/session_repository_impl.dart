@@ -11,6 +11,14 @@ final class SessionRepositoryImpl({
 }) implements SessionRepository {
   final PassengerSessionStore _secureSessionService;
   final SharedPreferences _preferences;
+  static const _profileCacheKeys = [
+    'passenger_name',
+    'passenger_email',
+    'passenger_phone',
+    'passenger_address',
+    'passenger_gender',
+    'passenger_avatar_path',
+  ];
 
   @override
   Future<Either<Failure, PassengerSession>> restoreSession() async {
@@ -39,7 +47,10 @@ final class SessionRepositoryImpl({
   @override
   Future<Either<Failure, PassengerSession>> clearSession() async {
     try {
-      await _secureSessionService.clearSession();
+      await Future.wait([
+        _secureSessionService.clearSession(),
+        for (final key in _profileCacheKeys) _preferences.remove(key),
+      ]);
       return const Right(PassengerSession.guest());
     } catch (_) {
       return const Left(CacheFailure('Unable to clear the passenger session.'));
