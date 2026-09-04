@@ -191,8 +191,47 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
   var appIsVisible = false;
   var isConfigured = false;
   var activeRequestIds = <String>{};
+  Timer? locationTimer;
+  Timer? requestTimer;
+  StreamSubscription<Map<String, dynamic>?>? configureSubscription;
+  StreamSubscription<Map<String, dynamic>?>? visibilitySubscription;
+  StreamSubscription<Map<String, dynamic>?>? stopSubscription;
+  var isStopping = false;
 
-  service.on('configure').listen((event) {
+  Future<void> shutdown() async {
+    if (isStopping) return;
+    isStopping = true;
+    locationTimer?.cancel();
+    requestTimer?.cancel();
+    locationTimer = null;
+    requestTimer = null;
+    activeRequestIds = <String>{};
+    isConfigured = false;
+
+    final client = telemetryClient;
+    telemetryClient = null;
+    tokenProvider = null;
+    client?.close(force: true);
+
+    try {
+      await Future.wait([
+        configureSubscription?.cancel() ?? Future<void>.value(),
+        visibilitySubscription?.cancel() ?? Future<void>.value(),
+        stopSubscription?.cancel() ?? Future<void>.value(),
+      ]);
+    } catch (error) {
+      dev.log('Unable to close telemetry event subscriptions: $error');
+    }
+
+    try {
+      await service.stopSelf();
+    } catch (error) {
+      dev.log('Unable to stop driver telemetry service: $error');
+    }
+  }
+
+  configureSubscription = service.on('configure').listen((event) {
+    if (isStopping) return;
     appIsVisible = event?['appVisible'] == true;
     final baseUrl = event?['baseUrl'] as String?;
     final parsed = Uri.tryParse(baseUrl ?? '');
@@ -223,7 +262,8 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     );
     isConfigured = true;
   });
-  service.on('setAppVisible').listen((event) {
+  visibilitySubscription = service.on('setAppVisible').listen((event) {
+    if (isStopping) return;
     appIsVisible = event?['visible'] == true;
   });
 
@@ -340,15 +380,8 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     }
   }
 
-  Timer? locationTimer;
-  Timer? requestTimer;
-  service.on('stopService').listen((_) {
-    locationTimer?.cancel();
-    requestTimer?.cancel();
-    activeRequestIds = <String>{};
-    telemetryClient?.close(force: true);
-    telemetryClient = null;
-    unawaited(service.stopSelf());
+  stopSubscription = service.on('stopService').listen((_) {
+    unawaited(shutdown());
   });
   locationTimer = Timer.periodic(
     _backgroundTelemetryInterval,

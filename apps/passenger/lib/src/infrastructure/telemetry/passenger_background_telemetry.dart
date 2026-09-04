@@ -141,8 +141,40 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
   Dio? telemetryClient;
   RefreshableTokenProvider? tokenProvider;
   var sending = false;
+  Timer? timer;
+  StreamSubscription<Map<String, dynamic>?>? configureSubscription;
+  StreamSubscription<Map<String, dynamic>?>? stopSubscription;
+  var isStopping = false;
 
-  service.on('configure').listen((event) {
+  Future<void> shutdown() async {
+    if (isStopping) return;
+    isStopping = true;
+    timer?.cancel();
+    timer = null;
+
+    final client = telemetryClient;
+    telemetryClient = null;
+    tokenProvider = null;
+    client?.close(force: true);
+
+    try {
+      await Future.wait([
+        configureSubscription?.cancel() ?? Future<void>.value(),
+        stopSubscription?.cancel() ?? Future<void>.value(),
+      ]);
+    } catch (error) {
+      dev.log('Unable to close telemetry event subscriptions: $error');
+    }
+
+    try {
+      await service.stopSelf();
+    } catch (error) {
+      dev.log('Unable to stop passenger telemetry service: $error');
+    }
+  }
+
+  configureSubscription = service.on('configure').listen((event) {
+    if (isStopping) return;
     final baseUrl = event?['baseUrl'] as String?;
     final parsed = Uri.tryParse(baseUrl ?? '');
     if (parsed == null || !_isValidTelemetryBaseUri(parsed)) {
@@ -206,12 +238,8 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     }
   }
 
-  Timer? timer;
-  service.on('stopService').listen((_) {
-    timer?.cancel();
-    telemetryClient?.close(force: true);
-    telemetryClient = null;
-    unawaited(service.stopSelf());
+  stopSubscription = service.on('stopService').listen((_) {
+    unawaited(shutdown());
   });
   timer = Timer.periodic(
     _backgroundTelemetryInterval,
