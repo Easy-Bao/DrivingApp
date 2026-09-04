@@ -48,7 +48,7 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
     if (rId.isEmpty) return;
     try {
       RideSnapshot? ride;
-      (await widget.trackRepository.fetchRide(rId))
+      (await widget.trackRepository.fetchRideResult(rId))
           .fold((_) {}, (value) => ride = value);
       if (ride?.isTerminal == true && mounted) {
         setState(() => _isTripFinished = true);

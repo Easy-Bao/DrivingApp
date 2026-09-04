@@ -45,8 +45,8 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
 
     final passengerId = await widget.sessionService.readPassengerId() ?? '';
 
-    final rideFuture = widget.trackRepository.fetchRide(ride.id);
-    final counterpartyFuture = widget.trackRepository.fetchCounterparty(
+    final rideFuture = widget.trackRepository.fetchRideResult(ride.id);
+    final counterpartyFuture = widget.trackRepository.fetchCounterpartyResult(
       ride.id,
     );
     RideSnapshot? retrievedRideData;
@@ -103,7 +103,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
     try {
       RideCounterparty? driverProfile = _counterpartyData;
       if (driverProfile == null) {
-        (await widget.trackRepository.fetchCounterparty(ride.id))
+        (await widget.trackRepository.fetchCounterpartyResult(ride.id))
             .fold((_) {}, (value) => driverProfile = value);
       }
       final phone = driverProfile?.phone ?? '';

@@ -49,7 +49,7 @@ class LiveMapBloc({required this._trackRepository})
     DispatchTelemetryLocationEvent event,
   ) async {
     try {
-      final result = await _trackRepository.publishPassengerLocation(
+      final result = await _trackRepository.publishPassengerLocationResult(
         rideId: event.rideId,
         latitude: event.lat,
         longitude: event.lng,

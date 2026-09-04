@@ -54,6 +54,48 @@ extension TrackRepositoryResultAdapters on TrackRepository {
     }
   }
 
+  Future<Result<RideSnapshot, DomainFailure>> fetchRideResult(
+    String rideId,
+  ) async {
+    try {
+      final result = await fetchRide(rideId);
+      final Result<RideSnapshot, DomainFailure> converted = result
+          .fold<Result<RideSnapshot, DomainFailure>>(
+            (failure) => Err<RideSnapshot, DomainFailure>(failure),
+            (value) => Ok<RideSnapshot, DomainFailure>(value),
+          );
+      return converted;
+    } catch (error) {
+      return Err<RideSnapshot, DomainFailure>(
+        FailureMapper.fromException(
+          error,
+          serverMessage: 'Ride details are temporarily unavailable.',
+        ),
+      );
+    }
+  }
+
+  Future<Result<RideCounterparty, DomainFailure>> fetchCounterpartyResult(
+    String rideId,
+  ) async {
+    try {
+      final result = await fetchCounterparty(rideId);
+      final Result<RideCounterparty, DomainFailure> converted = result
+          .fold<Result<RideCounterparty, DomainFailure>>(
+            (failure) => Err<RideCounterparty, DomainFailure>(failure),
+            (value) => Ok<RideCounterparty, DomainFailure>(value),
+          );
+      return converted;
+    } catch (error) {
+      return Err<RideCounterparty, DomainFailure>(
+        FailureMapper.fromException(
+          error,
+          serverMessage: 'Driver contact details are temporarily unavailable.',
+        ),
+      );
+    }
+  }
+
   /// Converts the legacy location contract into a strict domain result so a
   /// telemetry gap cannot surface as an untyped exception in the UI layer.
   Future<Result<(double latitude, double longitude), DomainFailure>>
@@ -93,6 +135,33 @@ extension TrackRepositoryResultAdapters on TrackRepository {
           error,
           serverMessage:
               'The ride status could not be updated. Please try again.',
+        ),
+      );
+    }
+  }
+
+  Future<Result<void, DomainFailure>> publishPassengerLocationResult({
+    required String rideId,
+    required double latitude,
+    required double longitude,
+  }) async {
+    try {
+      final result = await publishPassengerLocation(
+        rideId: rideId,
+        latitude: latitude,
+        longitude: longitude,
+      );
+      final Result<void, DomainFailure> converted = result
+          .fold<Result<void, DomainFailure>>(
+            (failure) => Err<void, DomainFailure>(failure),
+            (_) => const Ok<void, DomainFailure>(null),
+          );
+      return converted;
+    } catch (error) {
+      return Err<void, DomainFailure>(
+        FailureMapper.fromException(
+          error,
+          serverMessage: 'Unable to share your current trip location.',
         ),
       );
     }
