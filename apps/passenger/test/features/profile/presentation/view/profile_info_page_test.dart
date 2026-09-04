@@ -85,7 +85,7 @@ void main() {
     expect(find.byType(TextField), findsNWidgets(3));
   });
 
-  testWidgets('saves the edited profile and keeps logout in profile info', (
+  testWidgets('saves the edited profile without a logout action', (
     tester,
   ) async {
     await tester.pumpWidget(buildSubject());
@@ -111,17 +111,10 @@ void main() {
       ),
     ).called(1);
 
-    final logoutButton = find.byKey(
-      const ValueKey<String>('passenger-profile-logout'),
+    expect(
+      find.byKey(const ValueKey<String>('passenger-profile-logout')),
+      findsNothing,
     );
-    await tester.scrollUntilVisible(
-      logoutButton,
-      420,
-      scrollable: find.byType(Scrollable).last,
-    );
-    await tester.tap(logoutButton);
-    await tester.pump();
-    verify(() => sessionBloc.add(const SessionLogoutRequested())).called(1);
   });
 
   testWidgets('camera action adds a photo draft and reveals Save', (

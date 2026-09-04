@@ -5,21 +5,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/profile/presentation/bloc/profile/profile_cubit.dart';
 import 'package:passenger/src/features/profile/presentation/widgets/profile_avatar_widget.dart';
 import 'package:passenger/src/features/profile/profile_routes.dart';
 import 'package:passenger/src/features/saved_places/saved_places_routes.dart';
 import 'package:passenger/src/features/settings/settings_routes.dart';
 
-class const AccountPage({super.key, this.onProfileTap, this.onLogout})
-    extends StatelessWidget {
-  final VoidCallback? onProfileTap;
+class const AccountPage({super.key, this.onLogout}) extends StatelessWidget {
   final VoidCallback? onLogout;
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ProfileCubit, ProfileState>(
       builder: (context, state) {
+        final isAuthenticated = context
+            .watch<SessionBloc>()
+            .state
+            .isAuthenticated;
+        final visibleState = isAuthenticated ? state : const ProfileState();
         return Scaffold(
           backgroundColor: context.canvasColor,
           body: SafeArea(
@@ -50,7 +54,7 @@ class const AccountPage({super.key, this.onProfileTap, this.onLogout})
                         ),
                       ),
                       const SizedBox(height: 26),
-                      _buildProfileSummary(context, state),
+                      _buildProfileSummary(context, visibleState),
                       const SizedBox(height: 38),
                       _buildSectionTitle(context, 'Personal information'),
                       const SizedBox(height: 12),
@@ -104,7 +108,7 @@ class const AccountPage({super.key, this.onProfileTap, this.onLogout})
                           onTap: () => context.pushNamed(SettingsRoutes.about),
                         ),
                       ]),
-                      if (onLogout != null) ...[
+                      if (onLogout != null && isAuthenticated) ...[
                         const SizedBox(height: 32),
                         _buildLogoutButton(context),
                       ],
@@ -123,56 +127,52 @@ class const AccountPage({super.key, this.onProfileTap, this.onLogout})
     final displayName = state.name.isEmpty ? 'Passenger' : state.name;
 
     return Material(
+      key: const ValueKey<String>('passenger-profile-summary'),
       color: Colors.transparent,
-      child: InkWell(
-        key: const ValueKey<String>('passenger-profile-summary'),
-        onTap: () => _openProfileInfo(context),
-        borderRadius: BorderRadius.circular(24),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            children: [
-              ProfileAvatarWidget(
-                initials: _getInitials(displayName),
-                imagePath: state.avatarPath,
-                imageData: state.avatarData,
-                size: 76,
-              ),
-              const SizedBox(width: 18),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      displayName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 20,
-                        height: 1.15,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.35,
-                        color: context.colorScheme.onSurface,
-                      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            ProfileAvatarWidget(
+              initials: _getInitials(displayName),
+              imagePath: state.avatarPath,
+              imageData: state.avatarData,
+              size: 76,
+            ),
+            const SizedBox(width: 18),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    displayName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 20,
+                      height: 1.15,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.35,
+                      color: context.colorScheme.onSurface,
                     ),
-                    const SizedBox(height: 7),
-                    Text(
-                      state.phone.isEmpty
-                          ? 'Add your mobile number'
-                          : state.phone,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: context.colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  ),
+                  const SizedBox(height: 7),
+                  Text(
+                    state.phone.isEmpty
+                        ? 'Add your mobile number'
+                        : state.phone,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: context.colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -185,11 +185,6 @@ class const AccountPage({super.key, this.onProfileTap, this.onLogout})
   }
 
   void _openProfileInfo(BuildContext context) {
-    final onProfileTap = this.onProfileTap;
-    if (onProfileTap != null) {
-      onProfileTap();
-      return;
-    }
     unawaited(_pushProfileInfo(context));
   }
 

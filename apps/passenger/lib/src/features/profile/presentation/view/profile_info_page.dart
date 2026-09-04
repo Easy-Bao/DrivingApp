@@ -48,7 +48,6 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   bool _isApplyingProfile = false;
   bool _isDirty = false;
   bool _isSaving = false;
-  bool _isLoggingOut = false;
   String? _nameError;
   String? _phoneError;
   String? _emailError;
@@ -322,8 +321,6 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                       const SizedBox(height: 24),
                       _buildGenderField(),
                       const SizedBox(height: 44),
-                      const SizedBox(height: 44),
-                      _buildLogoutButton(context),
                     ],
                   ),
                 ),
@@ -492,58 +489,13 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     );
   }
 
-  Widget _buildLogoutButton(BuildContext context) {
-    return SizedBox(
-      height: 58,
-      width: double.infinity,
-      child: OutlinedButton(
-        key: const ValueKey<String>('passenger-profile-logout'),
-        onPressed: _isLoggingOut ? null : () => _handleLogout(context),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: context.colorScheme.error,
-          side: BorderSide(
-            color: context.colorScheme.error.withValues(alpha: 0.35),
-          ),
-          backgroundColor: context.colorScheme.error.withValues(alpha: 0.04),
-          shape: const StadiumBorder(),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-        ),
-        child: _isLoggingOut
-            ? SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.4,
-                  color: context.colorScheme.error,
-                ),
-              )
-            : const Text('Log Out'),
-      ),
-    );
-  }
-
   void _handleSessionState(BuildContext context, SessionState state) {
     switch (state) {
-      case GuestSession():
+      case GuestSession() || SessionFailure():
         context.goNamed(AuthRoutes.signin);
-      case SessionFailure():
-        if (_isLoggingOut) {
-          setState(() => _isLoggingOut = false);
-          CustomToast.show(
-            context,
-            'Unable to log out. Please try again.',
-            isError: true,
-          );
-        }
       case SessionLoading() || AuthenticatedSession():
         break;
     }
-  }
-
-  void _handleLogout(BuildContext context) {
-    if (_isLoggingOut) return;
-    setState(() => _isLoggingOut = true);
-    BlocProvider.of<SessionBloc>(context).add(const SessionLogoutRequested());
   }
 
   String _getInitials(String name) {
