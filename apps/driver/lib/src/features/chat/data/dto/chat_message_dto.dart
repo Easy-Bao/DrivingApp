@@ -15,15 +15,20 @@ class const ChatMessageDto({
   final ChatMessageDeliveryStatus deliveryStatus;
 
   factory fromJson(Map<String, dynamic> json) {
-    final text = json['text'] as String? ?? json['message'] as String? ?? '';
-    final senderId =
-        json['senderId'] as String? ?? json['sender_id'] as String? ?? '';
-    final createdAt =
-        DateTime.tryParse(
-          json['createdAt'] as String? ?? json['created_at'] as String? ?? '',
-        ) ??
-        DateTime.now();
-    final suppliedId = json['id'] ?? json['messageId'] ?? json['message_id'];
+    final {
+      'id': rawId,
+      'text': rawText,
+      'sender_id': rawSenderId,
+      'created_at': rawCreatedAt,
+      'delivery_status': rawDeliveryStatus,
+    } = _canonicalPayload(
+      json,
+    );
+
+    final text = _readString(rawText, 'text');
+    final senderId = _readSenderId(rawSenderId);
+    final createdAt = _readDateTime(rawCreatedAt, 'created_at');
+    final suppliedId = rawId;
     final id = suppliedId is String && suppliedId.trim().isNotEmpty
         ? suppliedId.trim()
         : 'legacy:$senderId:${createdAt.toUtc().toIso8601String()}:$text';
@@ -33,9 +38,7 @@ class const ChatMessageDto({
       text: text,
       senderId: senderId,
       createdAt: createdAt,
-      deliveryStatus: _deliveryStatus(
-        json['deliveryStatus'] ?? json['delivery_status'],
-      ),
+      deliveryStatus: _deliveryStatus(rawDeliveryStatus),
     );
   }
 
@@ -62,6 +65,41 @@ class const ChatMessageDto({
 
   @override
   List<Object?> get props => [id, text, senderId, createdAt, deliveryStatus];
+}
+
+Map<String, Object?> _canonicalPayload(Map<String, dynamic> json) => {
+  'id': json['id'] ?? json['messageId'] ?? json['message_id'],
+  'text': json['text'] ?? json['message'],
+  'sender_id': json['senderId'] ?? json['sender_id'],
+  'created_at': json['createdAt'] ?? json['created_at'],
+  'delivery_status': json['deliveryStatus'] ?? json['delivery_status'],
+};
+
+String _readString(Object? value, String field) {
+  return switch (value) {
+    null => '',
+    final String text => text,
+    _ => throw FormatException('Chat message $field must be a string.'),
+  };
+}
+
+String _readSenderId(Object? value) {
+  return switch (value) {
+    null => '',
+    final String senderId => senderId,
+    final num senderId => senderId.toString(),
+    _ => throw const FormatException(
+      'Chat message sender_id must be a scalar.',
+    ),
+  };
+}
+
+DateTime _readDateTime(Object? value, String field) {
+  return switch (value) {
+    null => DateTime.now(),
+    final String timestamp => DateTime.tryParse(timestamp) ?? DateTime.now(),
+    _ => throw FormatException('Chat message $field must be a string.'),
+  };
 }
 
 ChatMessageDeliveryStatus _deliveryStatus(Object? value) {
