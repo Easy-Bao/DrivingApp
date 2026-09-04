@@ -303,33 +303,49 @@ class _SearchDestinationPageState()
   Future<void> _loadDrivingDistances(List<Place> places, int requestId) async {
     if (_userLat == null || _userLng == null) return;
 
+    final pendingPlaces = <Place>[];
+    final pendingKeys = <String>[];
     for (final place in places) {
       final key = destinationPlaceKey(place);
       if (_drivingDistances.containsKey(key) ||
           !_drivingDistanceRequests.add(key)) {
         continue;
       }
+      pendingPlaces.add(place);
+      pendingKeys.add(key);
+    }
 
-      try {
-        final route = await MapProvider.getRoute(
-          _userLat!,
-          _userLng!,
-          place.latitude,
-          place.longitude,
-        );
-        if (route != null && mounted) {
-          setState(() {
-            _drivingDistances[key] = route.distanceKm;
-            if (requestId == _searchRequestId) {
-              _results = sortDestinationsByDistance(
-                _results,
-                _drivingDistances,
-              );
-            }
-          });
+    if (pendingPlaces.isEmpty) return;
+
+    try {
+      final distances = await MapProvider.getDrivingDistances(
+        originLat: _userLat!,
+        originLng: _userLng!,
+        destinations: [
+          for (final place in pendingPlaces)
+            (lat: place.latitude, lng: place.longitude),
+        ],
+      );
+      if (distances == null || !mounted) return;
+
+      final resolvedDistances = <String, double>{};
+      for (var index = 0; index < pendingKeys.length; index++) {
+        if (index >= distances.length) break;
+        final distance = distances[index];
+        if (distance.isFinite && distance >= 0) {
+          resolvedDistances[pendingKeys[index]] = distance;
         }
-      } catch (_) {
-      } finally {
+      }
+      if (resolvedDistances.isEmpty) return;
+
+      setState(() {
+        _drivingDistances.addAll(resolvedDistances);
+        if (requestId == _searchRequestId) {
+          _results = sortDestinationsByDistance(_results, _drivingDistances);
+        }
+      });
+    } finally {
+      for (final key in pendingKeys) {
         _drivingDistanceRequests.remove(key);
       }
     }

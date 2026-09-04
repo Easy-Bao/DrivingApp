@@ -19,11 +19,22 @@ export 'package:maps/src/map/map_camera_service.dart';
 
 class MapProvider._() {
   static const double nearbyRadiusKm = 5.0;
+  static const _lookupCacheTtl = Duration(seconds: 15);
   static const _routeCacheTtl = Duration(seconds: 20);
   static const _routeRetryDelay = Duration(milliseconds: 250);
 
   static bool _initialized = false;
   static MapNativeService? _nativeService;
+  static final AsyncTtlCache<String, List<Place>> _searchCache = AsyncTtlCache(
+    ttl: _lookupCacheTtl,
+    maxEntries: 24,
+  );
+  static final AsyncTtlCache<String, List<Place>> _nearbyCache = AsyncTtlCache(
+    ttl: _lookupCacheTtl,
+    maxEntries: 24,
+  );
+  static final AsyncTtlCache<String, List<double>?> _drivingDistanceCache =
+      AsyncTtlCache(ttl: _lookupCacheTtl, maxEntries: 24);
   static final AsyncTtlCache<RouteRequestKey, Route?> _routeCache =
       AsyncTtlCache(ttl: _routeCacheTtl, maxEntries: 24);
 
@@ -35,6 +46,9 @@ class MapProvider._() {
   }) async {
     if (_initialized) return;
     _nativeService = nativeService;
+    _searchCache.clear();
+    _nearbyCache.clear();
+    _drivingDistanceCache.clear();
     _routeCache.clear();
     if (token != null && token.isNotEmpty) {
       mapbox.MapboxOptions.setAccessToken(token);
@@ -54,30 +68,37 @@ class MapProvider._() {
       throw StateError('MapProvider not initialized.');
     }
 
+    final userLat = lat ?? LocationService.lastPosition?.latitude;
+    final userLng = lng ?? LocationService.lastPosition?.longitude;
+    final key = _searchRequestKey(query, userLat, userLng);
+
     try {
-      final userLat = lat ?? LocationService.lastPosition?.latitude;
-      final userLng = lng ?? LocationService.lastPosition?.longitude;
+      return await _searchCache.getOrLoad(key, () async {
+        final either = await nativeService.searchPlaces(
+          query: query,
+          proximityLat: lat,
+          proximityLng: lng,
+          userLat: userLat,
+          userLng: userLng,
+        );
 
-      final either = await nativeService.searchPlaces(
-        query: query,
-        proximityLat: lat,
-        proximityLng: lng,
-        userLat: userLat,
-        userLng: userLng,
-      );
-
-      return await either.fold(
-        (failure) {
-          debugPrint(
-            'MapProvider.searchPlaces failure: ${failure.runtimeType}',
-          );
-          return <Place>[];
-        },
-        (places) => places.where((p) {
-          final distance = p.distanceKm;
-          return distance == null || distance <= 30.0;
-        }).toList(),
-      );
+        return either.fold(
+          (failure) {
+            debugPrint(
+              'MapProvider.searchPlaces failure: ${failure.runtimeType}',
+            );
+            throw const _MapProviderLookupFailure();
+          },
+          (places) => places
+              .where((p) {
+                final distance = p.distanceKm;
+                return distance == null || distance <= 30.0;
+              })
+              .toList(growable: false),
+        );
+      });
+    } on _MapProviderLookupFailure {
+      return [];
     } catch (_) {
       debugPrint('MapProvider.searchPlaces error.');
       return [];
@@ -192,18 +213,21 @@ class MapProvider._() {
     }
     if (destinations.isEmpty) return const [];
 
+    final key = _drivingDistanceRequestKey(originLat, originLng, destinations);
     try {
-      final either = await nativeService.getDrivingDistances(
-        originLat: originLat,
-        originLng: originLng,
-        destinations: destinations,
-      );
-      return await either.fold((failure) {
-        debugPrint(
-          'MapProvider.getDrivingDistances failure: ${failure.runtimeType}',
+      return await _drivingDistanceCache.getOrLoad(key, () async {
+        final either = await nativeService.getDrivingDistances(
+          originLat: originLat,
+          originLng: originLng,
+          destinations: destinations,
         );
-        return null;
-      }, (distances) => distances);
+        return either.fold((failure) {
+          debugPrint(
+            'MapProvider.getDrivingDistances failure: ${failure.runtimeType}',
+          );
+          return null;
+        }, (distances) => distances);
+      }, shouldCache: (distances) => distances != null);
     } catch (_) {
       debugPrint('MapProvider.getDrivingDistances error.');
       return null;
@@ -220,26 +244,31 @@ class MapProvider._() {
       throw StateError('MapProvider not initialized.');
     }
 
+    final key = _nearbyRequestKey(lat, lng, page);
     try {
-      final either = await nativeService.getNearbyPois(
-        lat: lat,
-        lng: lng,
-        page: page,
-      );
-      return await either.fold(
-        (failure) {
-          debugPrint(
-            'MapProvider.getNearbyPOIs failure: ${failure.runtimeType}',
-          );
-          return <Place>[];
-        },
-        (pois) => NearbyPlaceResolver.withinRadius(
-          places: pois,
-          latitude: lat,
-          longitude: lng,
-          radiusKm: nearbyRadiusKm,
-        ),
-      );
+      return await _nearbyCache.getOrLoad(key, () async {
+        final either = await nativeService.getNearbyPois(
+          lat: lat,
+          lng: lng,
+          page: page,
+        );
+        return either.fold(
+          (failure) {
+            debugPrint(
+              'MapProvider.getNearbyPOIs failure: ${failure.runtimeType}',
+            );
+            throw const _MapProviderLookupFailure();
+          },
+          (pois) => NearbyPlaceResolver.withinRadius(
+            places: pois,
+            latitude: lat,
+            longitude: lng,
+            radiusKm: nearbyRadiusKm,
+          ),
+        );
+      });
+    } on _MapProviderLookupFailure {
+      return [];
     } catch (_) {
       debugPrint('MapProvider.getNearbyPOIs error.');
       return [];
@@ -456,3 +485,28 @@ class MapProvider._() {
   static Future<void> clearAnnotations(mapbox.BaseAnnotationManager? manager) =>
       MapAnnotationService.clearAnnotations(manager);
 }
+
+String _searchRequestKey(String query, double? lat, double? lng) =>
+    '${query.trim().toLowerCase()}|${_coordinateCacheKey(lat)}|${_coordinateCacheKey(lng)}';
+
+String _nearbyRequestKey(double lat, double lng, int page) =>
+    '${_coordinateCacheKey(lat)}|${_coordinateCacheKey(lng)}|$page';
+
+String _drivingDistanceRequestKey(
+  double originLat,
+  double originLng,
+  List<({double lat, double lng})> destinations,
+) {
+  final destinationKey = destinations
+      .map(
+        (destination) =>
+            '${_coordinateCacheKey(destination.lat)},${_coordinateCacheKey(destination.lng)}',
+      )
+      .join(';');
+  return '${_coordinateCacheKey(originLat)},${_coordinateCacheKey(originLng)}|$destinationKey';
+}
+
+String _coordinateCacheKey(double? value) =>
+    value?.toStringAsFixed(6) ?? 'none';
+
+class const _MapProviderLookupFailure() implements Exception {}

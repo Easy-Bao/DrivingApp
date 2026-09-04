@@ -23,6 +23,50 @@ void main() {
     expect(MapProvider.styleUriFor(), 'mapbox://styles/mapbox/streets-v12');
   });
 
+  test('coalesces and reuses nearby place lookups', () async {
+    const lat = 10.123456;
+    const lng = 20.654321;
+
+    final first = MapProvider.getNearbyPOIs(lat: lat, lng: lng);
+    final second = MapProvider.getNearbyPOIs(lat: lat, lng: lng);
+
+    expect(await Future.wait([first, second]), everyElement(isNotEmpty));
+    expect(apiClient.nearbyCallCount, 1);
+
+    await MapProvider.getNearbyPOIs(lat: lat, lng: lng);
+    expect(apiClient.nearbyCallCount, 1);
+  });
+
+  test('coalesces and reuses travel matrix lookups', () async {
+    const originLat = 11.123456;
+    const originLng = 21.654321;
+    const destinations = [
+      (lat: 11.130000, lng: 21.660000),
+      (lat: 11.140000, lng: 21.670000),
+    ];
+
+    final first = MapProvider.getDrivingDistances(
+      originLat: originLat,
+      originLng: originLng,
+      destinations: destinations,
+    );
+    final second = MapProvider.getDrivingDistances(
+      originLat: originLat,
+      originLng: originLng,
+      destinations: destinations,
+    );
+
+    expect(await Future.wait([first, second]), everyElement(isNotNull));
+    expect(apiClient.matrixCallCount, 1);
+
+    await MapProvider.getDrivingDistances(
+      originLat: originLat,
+      originLng: originLng,
+      destinations: destinations,
+    );
+    expect(apiClient.matrixCallCount, 1);
+  });
+
   test(
     'coalesces the same route request and keeps route preferences separate',
     () async {
@@ -76,7 +120,27 @@ void main() {
 class _DelayedLocationRemoteDataSource extends MockLocationRemoteDataSource {
   final Completer<Route> _pendingRoute = Completer<Route>();
   int routeCallCount = 0;
+  int nearbyCallCount = 0;
+  int matrixCallCount = 0;
   bool failNextRoute = false;
+
+  @override
+  Future<Map<String, dynamic>> getNearbyPois({
+    required double lat,
+    required double lng,
+    int page = 1,
+  }) {
+    nearbyCallCount++;
+    return super.getNearbyPois(lat: lat, lng: lng, page: page);
+  }
+
+  @override
+  Future<Map<String, dynamic>> getTravelMatrix({
+    required Map<String, dynamic> body,
+  }) {
+    matrixCallCount++;
+    return super.getTravelMatrix(body: body);
+  }
 
   @override
   Future<Route> getRoute({required Map<String, dynamic> body}) {
