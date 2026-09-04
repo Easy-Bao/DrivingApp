@@ -63,6 +63,23 @@ void main() {
     },
   );
 
+  test('coalesces concurrent loads for the same passenger', () async {
+    final repository = MockInboxRepository();
+    final response = Completer<Either<Failure, List<InboxNotification>>>();
+    when(() => repository.fetchPassengerNotifications('passenger-1'))
+        .thenAnswer((_) => response.future);
+    final cubit = InboxCubit(inboxRepository: repository);
+
+    final firstLoad = cubit.loadNotifications('passenger-1');
+    final secondLoad = cubit.loadNotifications('passenger-1');
+    response.complete(Right([notification]));
+    await Future.wait([firstLoad, secondLoad]);
+
+    verify(() => repository.fetchPassengerNotifications('passenger-1'))
+        .called(1);
+    await cubit.close();
+  });
+
   test('appends a paginated notification page', () async {
     final repository = MockPaginatedInboxRepository();
     when(

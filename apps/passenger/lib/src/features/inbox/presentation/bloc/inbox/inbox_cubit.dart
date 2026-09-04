@@ -16,10 +16,32 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
   final Set<String> _dismissedNotificationIds = {};
   String? _activePassengerId;
   int _sessionRevision = 0;
+  Future<void>? _activeLoad;
+  String? _activeLoadPassengerId;
 
   this : super(const InboxInitialState());
 
   Future<void> loadNotifications(String passengerId) async {
+    final activeLoad = _activeLoad;
+    if (activeLoad != null && _activeLoadPassengerId == passengerId) {
+      await activeLoad;
+      return;
+    }
+
+    final load = _loadNotifications(passengerId);
+    _activeLoad = load;
+    _activeLoadPassengerId = passengerId;
+    try {
+      await load;
+    } finally {
+      if (identical(_activeLoad, load)) {
+        _activeLoad = null;
+        _activeLoadPassengerId = null;
+      }
+    }
+  }
+
+  Future<void> _loadNotifications(String passengerId) async {
     if (_activePassengerId != passengerId) {
       _activePassengerId = passengerId;
       _sessionRevision++;
@@ -185,6 +207,8 @@ class InboxCubit({required this.inboxRepository}) extends Cubit<InboxState> {
 
   void clearSessionData() {
     _activePassengerId = null;
+    _activeLoad = null;
+    _activeLoadPassengerId = null;
     _sessionRevision++;
     _localNotifications.clear();
     _dismissedNotificationIds.clear();
