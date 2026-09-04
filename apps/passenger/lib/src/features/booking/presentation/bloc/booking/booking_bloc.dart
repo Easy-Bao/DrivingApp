@@ -32,7 +32,7 @@ class BookingBloc({
   this._backgroundTelemetryService,
   this._realtimeClient,
   required this._lifecycleCoordinator,
-  int nearestDriverMaxAttempts = 5,
+  int nearestDriverMaxAttempts = 1,
   this._nearestDriverRetryDelay = const Duration(seconds: 2),
   Duration offerRefreshInterval = const Duration(seconds: 3),
 }) extends Bloc<BookingEvent, BookingState> {
@@ -61,6 +61,7 @@ class BookingBloc({
   bool _isRefreshingOffers = false;
   bool _realtimeWasConnected = false;
   String? _activeBidSessionId;
+  BidSessionTrip? _activeTrip;
 
   double? _pickupLat;
   double? _pickupLng;
@@ -94,6 +95,23 @@ class BookingBloc({
       state is BookingSearching ||
       state is BookingOffersReceived;
 
+  ActiveDriverSearch? get activeDriverSearch {
+    final trip = _activeTrip;
+    final pickupLat = _pickupLat;
+    final pickupLng = _pickupLng;
+    if (!hasActiveDriverSearch ||
+        trip == null ||
+        pickupLat == null ||
+        pickupLng == null) {
+      return null;
+    }
+    return ActiveDriverSearch(
+      trip: trip,
+      pickupLat: pickupLat,
+      pickupLng: pickupLng,
+    );
+  }
+
   bool get hasActiveBooking =>
       state is BookingSearching ||
       state is BookingOffersReceived ||
@@ -110,6 +128,13 @@ class BookingBloc({
     _totalTrips = null;
     _reviews = const [];
     _isLoadingReviews = false;
+    _activeTrip = event.trip;
+    _pickupLat = event.pickupLat;
+    _pickupLng = event.pickupLng;
+    _pickupName = _pickupNameForTrip(event.trip);
+    _dropoffLat = event.trip.destination.latitude;
+    _dropoffLng = event.trip.destination.longitude;
+    _dropoffName = event.trip.destination.name;
     emit(
       FindingNearestDriver(
         trip: event.trip,
@@ -151,6 +176,7 @@ class BookingBloc({
 
     if (nearbyDrivers.isEmpty) {
       if (!lastLookupSucceeded && lastFailure != null) {
+        _activeTrip = null;
         emit(BookingFailure(ErrorHandler.getErrorMessage(lastFailure!)));
         return;
       }
@@ -158,6 +184,7 @@ class BookingBloc({
         _notifyNoDriverFound();
       }
       if (isClosed || _nearestSearchCancelled) return;
+      _activeTrip = null;
       emit(
         BookingFailure(
           lastFailure == null
@@ -273,26 +300,28 @@ class BookingBloc({
     final targetDriver = event.targetDriver;
     final targetDriverId = int.tryParse(targetDriver.id);
     if (targetDriverId == null || targetDriverId <= 0) {
+      _activeTrip = null;
       emit(
         BookingFailure(ErrorHandler.getErrorMessage(const ValidationFailure())),
       );
       return;
     }
     _isAutoAcceptingOffer = false;
-    emit(BookingSearching(isDirect: true, targetDriver: targetDriver));
-
-    final passengerId = await _secureSessionService.readPassengerId() ?? '';
-    if (passengerId.isEmpty) {
-      emit(BookingFailure(ErrorHandler.getErrorMessage(const AuthFailure())));
-      return;
-    }
-
+    _activeTrip = event.trip;
     _pickupLat = event.pickupLat;
     _pickupLng = event.pickupLng;
     _pickupName = _pickupNameForTrip(event.trip);
     _dropoffLat = event.trip.destination.latitude;
     _dropoffLng = event.trip.destination.longitude;
     _dropoffName = event.trip.destination.name;
+    emit(BookingSearching(isDirect: true, targetDriver: targetDriver));
+
+    final passengerId = await _secureSessionService.readPassengerId() ?? '';
+    if (passengerId.isEmpty) {
+      _activeTrip = null;
+      emit(BookingFailure(ErrorHandler.getErrorMessage(const AuthFailure())));
+      return;
+    }
 
     try {
       String? sessionId;
@@ -311,6 +340,7 @@ class BookingBloc({
       _activeBidSessionId = sessionId;
       _subscribeToSession(sessionId!);
     } catch (error) {
+      _activeTrip = null;
       emit(BookingFailure(ErrorHandler.getErrorMessage(error)));
     }
   }
@@ -320,20 +350,21 @@ class BookingBloc({
     Emitter<BookingState> emit,
   ) async {
     if (hasActiveBooking) return;
-    emit(const BookingSearching(isDirect: false));
-
-    final passengerId = await _secureSessionService.readPassengerId() ?? '';
-    if (passengerId.isEmpty) {
-      emit(BookingFailure(ErrorHandler.getErrorMessage(const AuthFailure())));
-      return;
-    }
-
+    _activeTrip = event.trip;
     _pickupLat = event.pickupLat;
     _pickupLng = event.pickupLng;
     _pickupName = _pickupNameForTrip(event.trip);
     _dropoffLat = event.trip.destination.latitude;
     _dropoffLng = event.trip.destination.longitude;
     _dropoffName = event.trip.destination.name;
+    emit(const BookingSearching(isDirect: false));
+
+    final passengerId = await _secureSessionService.readPassengerId() ?? '';
+    if (passengerId.isEmpty) {
+      _activeTrip = null;
+      emit(BookingFailure(ErrorHandler.getErrorMessage(const AuthFailure())));
+      return;
+    }
 
     try {
       String? sessionId;
@@ -351,6 +382,7 @@ class BookingBloc({
       _activeBidSessionId = sessionId;
       _subscribeToSession(sessionId!);
     } catch (error) {
+      _activeTrip = null;
       emit(BookingFailure(ErrorHandler.getErrorMessage(error)));
     }
   }
@@ -569,6 +601,7 @@ class BookingBloc({
   ) async {
     _nearestSearchCancelled = true;
     _cleanupSubscriptions();
+    _activeTrip = null;
 
     emit(BookingDriverMatched(matchResult: event.matchResult));
   }
@@ -607,6 +640,7 @@ class BookingBloc({
           acceptedBooking!.fareCentavos ?? (event.proposedFare * 100).round();
       await _secureSessionService.saveActiveRideId(rideId);
       _cleanupSubscriptions();
+      _activeTrip = null;
       emit(
         BookingDriverMatched(
           matchResult: DriverMatchResult(
@@ -642,6 +676,7 @@ class BookingBloc({
     } catch (error) {
       _isAutoAcceptingOffer = false;
       _cleanupSubscriptions();
+      _activeTrip = null;
       emit(BookingFailure(ErrorHandler.getErrorMessage(error)));
     }
   }
@@ -665,12 +700,14 @@ class BookingBloc({
     }
     emit(BookingCanceled());
     _activeBidSessionId = null;
+    _activeTrip = null;
   }
 
   void _onResetBooking(ResetBookingEvent event, Emitter<BookingState> emit) {
     _nearestSearchCancelled = true;
     _cleanupSubscriptions();
     _activeBidSessionId = null;
+    _activeTrip = null;
     _pickupLat = null;
     _pickupLng = null;
     _pickupName = null;

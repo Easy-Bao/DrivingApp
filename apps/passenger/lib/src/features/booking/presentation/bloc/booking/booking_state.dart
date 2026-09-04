@@ -4,6 +4,16 @@ abstract class const BookingState();
 
 class BookingInitial() extends BookingState {}
 
+class const ActiveDriverSearch({
+  required this.trip,
+  required this.pickupLat,
+  required this.pickupLng,
+}) {
+  final BidSessionTrip trip;
+  final double pickupLat;
+  final double pickupLng;
+}
+
 class const FindingNearestDriver({
   required this.trip,
   required this.pickupLat,

@@ -331,16 +331,19 @@ class _HomePageState extends State<HomePage> {
             color: context.colorScheme.onSurface,
           ),
         ),
-        TextButton(
-          onPressed: () => context.goNamed(RideHistoryRoutes.rideHistory),
-          child: Text(
-            'View all',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: context.colorScheme.onSurface,
+        if (context.select<SessionBloc, bool>(
+          (bloc) => bloc.state.isAuthenticated,
+        ))
+          TextButton(
+            onPressed: () => context.goNamed(RideHistoryRoutes.rideHistory),
+            child: Text(
+              'View all',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: context.colorScheme.onSurface,
+              ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -441,11 +444,24 @@ class _HomePageState extends State<HomePage> {
   Widget _buildSearchBar() {
     return GestureDetector(
       onTap: () {
-        if (_bookingBloc.hasActiveDriverSearch) {
-          CustomToast.show(
-            context,
-            'A driver search is already in progress.',
-            isError: true,
+        final activeSearch = _bookingBloc.activeDriverSearch;
+        if (activeSearch != null) {
+          final trip = activeSearch.trip;
+          unawaited(
+            context.pushNamed(
+              BookingRoutes.findingDriver,
+              extra: {
+                'rideType': trip.rideType,
+                'fare': trip.fare,
+                'destination': trip.destination,
+                'distance': trip.distance,
+                'duration': trip.duration,
+                'pickupAddress': trip.pickupAddress,
+                'pickupLat': activeSearch.pickupLat,
+                'pickupLng': activeSearch.pickupLng,
+                'passengerNote': trip.passengerNote,
+              },
+            ),
           );
           return;
         }

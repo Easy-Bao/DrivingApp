@@ -146,6 +146,95 @@ void main() {
   });
 
   group('BookingBloc — LocateNearestDriverEvent', () {
+    test(
+      'publishes an inbox notice after one authoritative empty lookup',
+      () async {
+        when(
+          () => driverRepo.getNearbyDrivers(
+            lat: any(named: 'lat'),
+            lng: any(named: 'lng'),
+          ),
+        ).thenAnswer((_) async => const Right([]));
+        final inboxCubit = InboxCubit(inboxRepository: inboxRepository);
+        final bloc = _makeBookingBloc(
+          driverRepo: driverRepo,
+          bookingRepository: bookingRepository,
+          driverProfileRepository: driverProfileRepository,
+          secureSessionService: secureSessionService,
+          inboxCubit: inboxCubit,
+          nearestDriverMaxAttempts: 1,
+          nearestDriverRetryDelay: Duration.zero,
+        );
+
+        final failure = bloc.stream.firstWhere(
+          (state) => state is BookingFailure,
+        );
+        bloc.add(
+          const LocateNearestDriverEvent(
+            pickupLat: 7.828,
+            pickupLng: 123.434,
+            trip: testTrip,
+          ),
+        );
+
+        expect(await failure, isA<BookingFailure>());
+        final inboxState = inboxCubit.state as InboxLoadedState;
+        expect(inboxState.notifications.single.title, 'No driver found');
+        verify(() => driverRepo.getNearbyDrivers(lat: 7.828, lng: 123.434))
+            .called(1);
+
+        await bloc.close();
+        await inboxCubit.close();
+      },
+    );
+
+    test(
+      'keeps the active trip available when the search leaves the page',
+      () async {
+        when(
+          () => driverRepo.getNearbyDrivers(
+            lat: any(named: 'lat'),
+            lng: any(named: 'lng'),
+          ),
+        ).thenAnswer((_) async => const Right([testDriver]));
+        when(() => driverProfileRepository.fetchStats(any())).thenAnswer(
+          (_) async => const Right(DriverProfileStats(completedTrips: 42)),
+        );
+        when(() => driverProfileRepository.fetchReviews(any()))
+            .thenAnswer((_) async => const Right([]));
+        final bloc = _makeBookingBloc(
+          driverRepo: driverRepo,
+          bookingRepository: bookingRepository,
+          driverProfileRepository: driverProfileRepository,
+          secureSessionService: secureSessionService,
+          nearestDriverMaxAttempts: 1,
+          nearestDriverRetryDelay: Duration.zero,
+        );
+
+        final finding = bloc.stream.firstWhere(
+          (state) => state is FindingNearestDriver,
+        );
+        final nearest = bloc.stream.firstWhere(
+          (state) => state is NearestDriverFound,
+        );
+        bloc.add(
+          const LocateNearestDriverEvent(
+            pickupLat: 7.828,
+            pickupLng: 123.434,
+            trip: testTrip,
+          ),
+        );
+        await finding;
+
+        expect(bloc.activeDriverSearch?.trip, testTrip);
+        expect(bloc.activeDriverSearch?.pickupLat, 7.828);
+        expect(bloc.activeDriverSearch?.pickupLng, 123.434);
+
+        await nearest;
+        await bloc.close();
+      },
+    );
+
     blocTest<BookingBloc, BookingState>(
       'emits [FindingNearestDriver, NearestDriverFound] when nearby drivers exist',
       build: () {

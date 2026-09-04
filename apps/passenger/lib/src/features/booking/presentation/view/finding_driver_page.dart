@@ -569,7 +569,7 @@ class _FindingDriverPageContentState()
                                   ),
                                   child: _buildTripBackButton(
                                     context,
-                                    _handleCancel,
+                                    _returnHome,
                                   ),
                                 ),
                                 if (showDriverDiscovery &&
