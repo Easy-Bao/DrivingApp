@@ -158,6 +158,9 @@ func (service *RideService) Fare(ctx context.Context, originLat, originLng, dest
 }
 
 func (service *RideService) authoritativeRoute(ctx context.Context, pickupLatitude, pickupLongitude, dropoffLatitude, dropoffLongitude, distanceKm, durationMinutes float64) (RouteMetrics, error) {
+	if err := contextError(ctx); err != nil {
+		return RouteMetrics{}, err
+	}
 	if service.routeCalculator == nil {
 		if err := validateTrip(pickupLatitude, pickupLongitude, dropoffLatitude, dropoffLongitude, distanceKm, durationMinutes); err != nil {
 			return RouteMetrics{}, err
@@ -169,12 +172,27 @@ func (service *RideService) authoritativeRoute(ctx context.Context, pickupLatitu
 	}
 	metrics, err := service.routeCalculator.CalculateRoute(ctx, pickupLatitude, pickupLongitude, dropoffLatitude, dropoffLongitude)
 	if err != nil {
+		if contextErr := contextError(ctx); contextErr != nil {
+			return RouteMetrics{}, contextErr
+		}
 		return RouteMetrics{}, domain.ErrRouteUnavailable
+	}
+	if err := contextError(ctx); err != nil {
+		return RouteMetrics{}, err
 	}
 	if err := validateTrip(pickupLatitude, pickupLongitude, dropoffLatitude, dropoffLongitude, metrics.DistanceKm, metrics.DurationMinutes); err != nil {
 		return RouteMetrics{}, domain.ErrRouteUnavailable
 	}
 	return metrics, nil
+}
+
+func contextError(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		return nil
+	}
 }
 
 func (service *RideService) AcceptRide(ctx context.Context, rideID, driverID int) (domain.Ride, error) {

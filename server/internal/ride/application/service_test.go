@@ -173,6 +173,35 @@ func TestCreateSessionFailsWhenAuthoritativeRouteIsUnavailable(t *testing.T) {
 	}
 }
 
+func TestCreateSessionPreservesRouteContextCancellation(t *testing.T) {
+	stub := &ridesRepositoryStub{}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	service := NewRideServiceWithRouteCalculator(
+		stub,
+		RouteCalculatorFunc(func(context.Context, float64, float64, float64, float64) (RouteMetrics, error) {
+			cancel()
+			return RouteMetrics{DistanceKm: 4, DurationMinutes: 20}, nil
+		}),
+		testPricingConfig(t),
+		nil,
+	)
+
+	_, err := service.CreateSession(ctx, domain.BidSession{
+		PassengerID:      7,
+		PickupLatitude:   6.7,
+		PickupLongitude:  122.1,
+		DropoffLatitude:  6.71,
+		DropoffLongitude: 122.11,
+	})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("expected context cancellation, got %v", err)
+	}
+	if stub.session.PassengerID != 0 {
+		t.Fatalf("canceled route must not persist a session: %#v", stub.session)
+	}
+}
+
 func TestCreateSessionRejectsOfferBelowCalculatedMinimum(t *testing.T) {
 	stub := &ridesRepositoryStub{}
 	service := NewRideService(stub, testPricingConfig(t), nil)
