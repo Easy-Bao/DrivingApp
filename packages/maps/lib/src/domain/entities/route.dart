@@ -51,24 +51,38 @@ class const Route({
   }
 
   factory fromJson(Map<String, dynamic> json) {
-    final rawPoints = _readPointCollection(json);
+    final {
+      'polyline_points': rawPolylinePoints,
+      'polyline': rawPolyline,
+      'waypoints': rawWaypoints,
+      'distance_km': rawDistanceKm,
+      'duration_seconds': rawDurationSeconds,
+      'duration_minutes': rawDurationMinutes,
+      'summary': rawSummary,
+      'preference': rawPreference,
+      'profile': rawProfile,
+    } = _canonicalPayload(
+      json,
+    );
+
+    final rawPoints = _readPointCollection(
+      rawPolylinePoints,
+      rawPolyline,
+      rawWaypoints,
+    );
     final points = rawPoints.map(_readPoint).whereType<List<double>>().toList();
 
-    final durationSeconds = SafeParse.toNullableDouble(
-      json['durationSeconds'] ?? json['duration_seconds'],
-    );
-    final durationMinutes = SafeParse.toNullableDouble(
-      json['durationMin'] ?? json['duration_min'],
-    );
+    final durationSeconds = SafeParse.toNullableDouble(rawDurationSeconds);
+    final durationMinutes = SafeParse.toNullableDouble(rawDurationMinutes);
 
     return Route(
       polylinePoints: points,
-      distanceKm: SafeParse.toDouble(json['distanceKm'] ?? json['distance_km']),
+      distanceKm: SafeParse.toDouble(rawDistanceKm),
       durationSeconds:
           durationSeconds?.toInt() ?? ((durationMinutes ?? 0) * 60).round(),
-      summary: _readString(json['summary']),
-      preference: _readString(json['preference'], 'fastest'),
-      profile: _readString(json['profile'], 'driving'),
+      summary: _readString(rawSummary),
+      preference: _readString(rawPreference, 'fastest'),
+      profile: _readString(rawProfile, 'driving'),
     );
   }
 
@@ -94,18 +108,36 @@ class const Route({
   ];
 }
 
-List<Object?> _readPointCollection(Map<String, dynamic> json) {
-  for (final key in ['polylinePoints', 'polyline', 'waypoints']) {
-    final value = json[key];
+Map<String, Object?> _canonicalPayload(Map<String, dynamic> json) => {
+  'polyline_points': json['polylinePoints'],
+  'polyline': json['polyline'],
+  'waypoints': json['waypoints'],
+  'distance_km': json['distanceKm'] ?? json['distance_km'],
+  'duration_seconds': json['durationSeconds'] ?? json['duration_seconds'],
+  'duration_minutes': json['durationMin'] ?? json['duration_min'],
+  'summary': json['summary'],
+  'preference': json['preference'],
+  'profile': json['profile'],
+};
+
+List<Object?> _readPointCollection(
+  Object? polylinePoints,
+  Object? polyline,
+  Object? waypoints,
+) {
+  for (final value in [polylinePoints, polyline, waypoints]) {
     if (value is List) return List<Object?>.from(value);
   }
   return const [];
 }
 
 List<double>? _readPoint(Object? rawPoint) {
-  if (rawPoint is! List || rawPoint.length < 2) return null;
-  final longitude = SafeParse.toNullableDouble(rawPoint[0]);
-  final latitude = SafeParse.toNullableDouble(rawPoint[1]);
+  final (longitudeValue, latitudeValue) = switch (rawPoint) {
+    [final longitude, final latitude, ...] => (longitude, latitude),
+    _ => (null, null),
+  };
+  final longitude = SafeParse.toNullableDouble(longitudeValue);
+  final latitude = SafeParse.toNullableDouble(latitudeValue);
   if (longitude == null || latitude == null) return null;
   return [longitude, latitude];
 }
