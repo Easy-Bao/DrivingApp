@@ -21,7 +21,9 @@ class ChatCubit({required this._chatRepository}) extends Cubit<ChatState> {
   this : super(const ChatState());
 
   Future<bool> initializeChatRoom({required String roomId}) async {
-    final result = await _chatRepository.initializeChatRoom(roomId: roomId);
+    final result = await _chatRepository.initializeChatRoomResult(
+      roomId: roomId,
+    );
     return result.fold((failure) {
       if (!isClosed) {
         if (failure is ChatRoomLockedFailure) {
@@ -65,7 +67,7 @@ class ChatCubit({required this._chatRepository}) extends Cubit<ChatState> {
     emit(state.copyWith(isConnecting: true, errorMessage: null));
 
     try {
-      final connResult = await _chatRepository.establishChatConnection(
+      final connResult = await _chatRepository.establishChatConnectionResult(
         roomId: roomId,
         chatUri: wsUri,
         token: token,
@@ -99,7 +101,7 @@ class ChatCubit({required this._chatRepository}) extends Cubit<ChatState> {
   }
 
   Future<void> _loadHistory(String roomId) async {
-    final result = await _chatRepository.fetchRoomMessages(roomId);
+    final result = await _chatRepository.fetchRoomMessagesResult(roomId);
     if (isClosed) return;
     result.fold(
       (failure) => emit(
@@ -122,10 +124,10 @@ class ChatCubit({required this._chatRepository}) extends Cubit<ChatState> {
 
   void _ensureChatSubscription() {
     if (_chatSubscription != null) return;
-    _chatSubscription = _chatRepository.chatEventsStream.listen(
-      (eitherEvent) {
+    _chatSubscription = _chatRepository.chatEventsResultStream.listen(
+      (eventResult) {
         if (isClosed) return;
-        eitherEvent.fold(
+        eventResult.fold(
           (failure) => emit(
             state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)),
           ),
@@ -178,7 +180,7 @@ class ChatCubit({required this._chatRepository}) extends Cubit<ChatState> {
     if (state.isRoomLocked || text.trim().isEmpty) return false;
 
     if (!_chatRepository.isSessionConnected) return false;
-    final result = await _chatRepository.sendChatMessage(text);
+    final result = await _chatRepository.sendChatMessageResult(text);
     return result.fold((failure) {
       if (!isClosed) {
         emit(
@@ -191,7 +193,14 @@ class ChatCubit({required this._chatRepository}) extends Cubit<ChatState> {
 
   Future<void> updateTypingStatus(bool isTyping) async {
     if (isClosed || state.isRoomLocked) return;
-    await _chatRepository.sendTypingStatus(isTyping);
+    final result = await _chatRepository.sendTypingStatusResult(isTyping);
+    result.fold((failure) {
+      if (!isClosed) {
+        emit(
+          state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)),
+        );
+      }
+    }, (_) {});
   }
 
   void _updatePeerTyping(bool isTyping) {
@@ -258,14 +267,14 @@ class ChatCubit({required this._chatRepository}) extends Cubit<ChatState> {
 
   Future<void> resolveChatRoom(String roomId) async {
     try {
-      final result = await _chatRepository.resolveChatRoom(roomId);
+      final result = await _chatRepository.resolveChatRoomResult(roomId);
       await result.fold(
         (failure) async => emit(
           state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)),
         ),
         (_) async {
           await _chatSubscription?.cancel();
-          await _chatRepository.terminateChatConnection();
+          await _chatRepository.terminateChatConnectionResult();
           if (!isClosed) {
             emit(
               state.copyWith(
@@ -294,7 +303,7 @@ class ChatCubit({required this._chatRepository}) extends Cubit<ChatState> {
     _peerTypingTimer?.cancel();
     await _chatSubscription?.cancel();
     await _connectionStateSubscription?.cancel();
-    await _chatRepository.terminateChatConnection();
+    await _chatRepository.terminateChatConnectionResult();
     await _chatRepository.dispose();
     return super.close();
   }
