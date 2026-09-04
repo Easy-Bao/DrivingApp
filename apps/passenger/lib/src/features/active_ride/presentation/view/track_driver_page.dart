@@ -575,7 +575,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                                 if (rideId.isNotEmpty) {
                                   String phone = '';
                                   (await widget.trackRepository
-                                          .fetchCounterparty(rideId))
+                                          .fetchCounterpartyResult(rideId))
                                       .fold(
                                         (_) {},
                                         (driver) => phone = driver.phone,
