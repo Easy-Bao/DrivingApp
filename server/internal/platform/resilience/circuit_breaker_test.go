@@ -31,7 +31,10 @@ func TestCircuitBreakerAllowsOneProbeAfterReset(t *testing.T) {
 		if err := breaker.Do(context.Background(), func(context.Context) error { return failure }); err == nil {
 			t.Fatal("expected initial failure")
 		}
-		time.Sleep(2 * time.Millisecond)
+		timer := time.NewTimer(2 * time.Millisecond)
+		defer timer.Stop()
+		<-timer.C
+		synctest.Wait()
 		if err := breaker.Do(context.Background(), func(context.Context) error { return nil }); err != nil {
 			t.Fatalf("probe error = %v, want nil", err)
 		}
