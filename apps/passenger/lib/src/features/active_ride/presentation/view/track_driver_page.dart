@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
@@ -27,13 +28,13 @@ import 'package:url_launcher/url_launcher.dart';
 class const _MapUpdateRequest({
   required this.driverLat,
   required this.driverLng,
-  required this.routePoints,
+  required this.routeCoordinates,
   required this.status,
   required this.driverName,
 }) {
   final double driverLat;
   final double driverLng;
-  final List<List<double>>? routePoints;
+  final Float64List? routeCoordinates;
   final RideStatus status;
   final String driverName;
 }
@@ -209,7 +210,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
   Future<void> _updateMapElements(
     double driverLat,
     double driverLng,
-    List<List<double>>? routePoints,
+    Float64List? routeCoordinates,
     RideStatus status,
     String driverName,
   ) async {
@@ -217,7 +218,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
     final request = _MapUpdateRequest(
       driverLat: driverLat,
       driverLng: driverLng,
-      routePoints: routePoints,
+      routeCoordinates: routeCoordinates,
       status: status,
       driverName: driverName,
     );
@@ -233,14 +234,11 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
       final isInTransit = status == RideStatus.inTransit;
       final targetLat = isInTransit ? widget.ride.destLat : passengerLat;
       final targetLng = isInTransit ? widget.ride.destLng : passengerLng;
-      final validRoutePoints = routePoints
-          ?.where(_isValidRoutePoint)
-          .toList(growable: false);
-      if (validRoutePoints != null && validRoutePoints.length >= 2) {
+      if (routeCoordinates != null && routeCoordinates.length >= 4) {
         _routeLineManager = await _upsertRoute(
           _routeLineManager,
           mapController,
-          validRoutePoints,
+          routeCoordinates,
         );
       } else if (_routeLineManager != null) {
         await MapProvider.clearAnnotations(_routeLineManager);
@@ -294,23 +292,13 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
           _updateMapElements(
             pending.driverLat,
             pending.driverLng,
-            pending.routePoints,
+            pending.routeCoordinates,
             pending.status,
             pending.driverName,
           ),
         );
       }
     }
-  }
-
-  bool _isValidRoutePoint(List<double> point) {
-    return point.length >= 2 &&
-        point[0].isFinite &&
-        point[1].isFinite &&
-        point[0] >= -180 &&
-        point[0] <= 180 &&
-        point[1] >= -90 &&
-        point[1] <= 90;
   }
 
   Future<mapbox.PointAnnotationManager> _upsertMarker(
@@ -348,19 +336,19 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
   Future<mapbox.PolylineAnnotationManager> _upsertRoute(
     mapbox.PolylineAnnotationManager? annotationManager,
     AppMapController mapController,
-    List<List<double>> routePoints,
+    Float64List routeCoordinates,
   ) async {
     if (annotationManager == null) {
-      return MapProvider.addPolyline(
+      return MapProvider.addPolylineBuffer(
         mapController,
-        routePoints,
+        routeCoordinates,
         color: context.colorScheme.onSurface,
         width: 4.0,
       );
     }
-    await MapProvider.replacePolyline(
+    await MapProvider.replacePolylineBuffer(
       annotationManager,
-      routePoints,
+      routeCoordinates,
       color: context.colorScheme.onSurface,
       width: 4.0,
     );
@@ -458,7 +446,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
               _updateMapElements(
                 driverLat,
                 driverLng,
-                routePoints,
+                routePoints?.toCoordinateBuffer(),
                 status,
                 driverName,
               ),
