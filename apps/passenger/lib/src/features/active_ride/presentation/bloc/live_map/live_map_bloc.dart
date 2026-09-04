@@ -39,26 +39,33 @@ class LiveMapBloc({required this._trackRepository})
     on<FitMapToCoordinatesEvent>(_onFitMapToCoordinates);
     _locationSubscription = _locationSubject
         .throttleTime(const Duration(seconds: 5))
-        .listen((event) async {
-          try {
-            final result = await _trackRepository.publishPassengerLocation(
-              rideId: event.rideId,
-              latitude: event.lat,
-              longitude: event.lng,
-            );
-            result.fold(
-              (failure) => dev.log(
-                'Passenger telemetry update failed: ${failure.message}',
-              ),
-              (_) {},
-            );
-          } catch (error) {
-            dev.log('Passenger telemetry update failed: $error');
-          }
-        });
+        .listen((event) => unawaited(_publishPassengerLocation(event)));
     on<DispatchTelemetryLocationEvent>((event, emit) {
       _locationSubject.add(event);
     });
+  }
+
+  Future<void> _publishPassengerLocation(
+    DispatchTelemetryLocationEvent event,
+  ) async {
+    try {
+      final result = await _trackRepository.publishPassengerLocation(
+        rideId: event.rideId,
+        latitude: event.lat,
+        longitude: event.lng,
+      );
+      result.fold(
+        (failure) =>
+            dev.log('Passenger telemetry update failed: ${failure.message}'),
+        (_) {},
+      );
+    } catch (error, stackTrace) {
+      dev.log(
+        'Passenger telemetry update failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   Future<void> _onInitializeMap(

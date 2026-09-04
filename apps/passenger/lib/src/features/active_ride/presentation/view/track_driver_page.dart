@@ -178,9 +178,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
       if (_locationSubscription != null) {
         unawaited(_locationSubscription!.cancel());
       }
-      _locationSubscription = LocationService.getPositionStream().listen((
-        pos,
-      ) async {
+      _locationSubscription = LocationService.getPositionStream().listen((pos) {
         _liveMapBloc?.add(
           DispatchTelemetryLocationEvent(
             lat: pos.latitude,
