@@ -13,9 +13,11 @@ import (
 type locationRepositoryStub struct {
 	driverPoint    domain.DriverPoint
 	passengerPoint domain.DriverPoint
+	upsertCalls    int
 }
 
 func (stub *locationRepositoryStub) Upsert(_ context.Context, point domain.DriverPoint) error {
+	stub.upsertCalls++
 	stub.driverPoint = point
 	return nil
 }
@@ -63,6 +65,25 @@ func TestIngestRejectsInvalidCoordinates(t *testing.T) {
 	}
 	if err := service.Ingest(context.Background(), domain.DriverPoint{DriverID: "7", Latitude: 6.7, Longitude: 181}); err == nil {
 		t.Fatal("expected invalid longitude to be rejected")
+	}
+}
+
+func TestIngestStopsBeforePersistenceWhenContextIsCanceled(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	repository := &locationRepositoryStub{}
+	service := NewLocationTrackingService(repository)
+
+	err := service.Ingest(ctx, domain.DriverPoint{
+		DriverID:  "driver-1",
+		Latitude:  6.7,
+		Longitude: 122.1,
+	})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("Ingest() error = %v, want context cancellation", err)
+	}
+	if repository.upsertCalls != 0 {
+		t.Fatalf("Upsert() calls = %d, want 0", repository.upsertCalls)
 	}
 }
 
