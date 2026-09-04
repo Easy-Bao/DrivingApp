@@ -50,7 +50,7 @@ class const FindingDriverPage({
     return MultiBlocProvider(
       providers: [
         BlocProvider<BookingBloc>.value(value: Modular.get<BookingBloc>()),
-        BlocProvider<LiveMapBloc>.value(value: Modular.get<LiveMapBloc>()),
+        BlocProvider<LiveMapBloc>(create: (_) => Modular.get<LiveMapBloc>()),
       ],
       child: FindingDriverPageContent(
         rideType: rideType,
