@@ -371,7 +371,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
                                 if (rideId.isNotEmpty) {
                                   String? phone;
                                   (await widget.rideRepository
-                                          .fetchCounterparty(rideId))
+                                          .fetchCounterpartyResult(rideId))
                                       .fold(
                                         (_) {},
                                         (passenger) => phone = passenger.phone,

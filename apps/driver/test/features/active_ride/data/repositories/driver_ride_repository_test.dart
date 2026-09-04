@@ -3,6 +3,7 @@ import 'package:driver/src/features/active_ride/data/data_sources/ride_counterpa
 import 'package:driver/src/features/active_ride/data/data_sources/ride_remote_data_source.dart';
 import 'package:driver/src/features/active_ride/data/data_sources/telemetry_remote_data_source.dart';
 import 'package:driver/src/features/active_ride/data/repositories/driver_ride_repository_impl.dart';
+import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
@@ -87,4 +88,45 @@ void main() {
       ),
     ).called(1);
   });
+
+  test(
+    'adapts passenger reads and location cleanup into strict results',
+    () async {
+      when(() => counterpartyDataSource.fetch('ride-7')).thenAnswer(
+        (_) async => {
+          'user_id': 'passenger-42',
+          'name': 'Passenger',
+          'phone': '+639171234567',
+          'contact_allowed': true,
+        },
+      );
+      when(() => telemetryDataSource.fetchPassengerLocation('ride-7'))
+          .thenAnswer((_) async => {'lat': '7.828', 'lng': '123.434'});
+      when(() => telemetryDataSource.removeLocation())
+          .thenAnswer((_) async => true);
+
+      final counterpartyResult = await repository.fetchCounterpartyResult(
+        'ride-7',
+      );
+      final locationResult = await repository.fetchPassengerLocationResult(
+        'ride-7',
+      );
+      final cleanupResult = await repository.clearDriverLocationResult();
+
+      expect(counterpartyResult, isA<Ok<RideCounterparty, DomainFailure>>());
+      expect(
+        locationResult,
+        isA<Ok<(double latitude, double longitude)?, DomainFailure>>(),
+      );
+      expect(cleanupResult, isA<Ok<void, DomainFailure>>());
+      expect(
+        counterpartyResult.fold((_) => '', (value) => value.userId),
+        'passenger-42',
+      );
+      expect(
+        locationResult.fold<(double, double)?>((_) => null, (value) => value),
+        (7.828, 123.434),
+      );
+    },
+  );
 }

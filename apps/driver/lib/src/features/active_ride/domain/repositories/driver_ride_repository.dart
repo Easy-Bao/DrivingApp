@@ -38,7 +38,7 @@ extension DriverRideRepositoryResultAdapters on DriverRideRepository {
     required String driverId,
   }) {
     return _captureResult(
-      acceptRide(rideId: rideId, driverId: driverId),
+      () => acceptRide(rideId: rideId, driverId: driverId),
       message: 'Unable to accept this ride right now.',
     );
   }
@@ -48,22 +48,39 @@ extension DriverRideRepositoryResultAdapters on DriverRideRepository {
     required RideStatus status,
   }) {
     return _captureResult(
-      updateRideStatus(rideId: rideId, status: status),
+      () => updateRideStatus(rideId: rideId, status: status),
       message: 'Unable to update this ride right now.',
     );
   }
 
   Future<Result<RideSnapshot, DomainFailure>> fetchRideResult(String rideId) {
     return _captureResult(
-      fetchRide(rideId),
+      () => fetchRide(rideId),
       message: 'Unable to load this ride right now.',
     );
   }
 
   Future<Result<int, DomainFailure>> settleCashResult(String rideId) {
     return _captureResult(
-      settleCash(rideId),
+      () => settleCash(rideId),
       message: 'Unable to settle this cash ride right now.',
+    );
+  }
+
+  Future<Result<RideCounterparty, DomainFailure>> fetchCounterpartyResult(
+    String rideId,
+  ) {
+    return _captureResult(
+      () => fetchCounterparty(rideId),
+      message: 'Unable to load passenger contact details right now.',
+    );
+  }
+
+  Future<Result<(double latitude, double longitude)?, DomainFailure>>
+  fetchPassengerLocationResult(String rideId) {
+    return _captureResult(
+      () => fetchPassengerLocation(rideId),
+      message: 'Unable to load passenger location right now.',
     );
   }
 
@@ -74,7 +91,7 @@ extension DriverRideRepositoryResultAdapters on DriverRideRepository {
     double? speed,
   }) {
     return _captureResult(
-      publishDriverLocation(
+      () => publishDriverLocation(
         latitude: latitude,
         longitude: longitude,
         heading: heading,
@@ -83,14 +100,21 @@ extension DriverRideRepositoryResultAdapters on DriverRideRepository {
       message: 'Unable to share driver location right now.',
     );
   }
+
+  Future<Result<void, DomainFailure>> clearDriverLocationResult() {
+    return _captureResult(
+      clearDriverLocation,
+      message: 'Unable to remove driver location right now.',
+    );
+  }
 }
 
 Future<Result<T, DomainFailure>> _captureResult<T>(
-  Future<Either<Failure, T>> operation, {
+  Future<Either<Failure, T>> Function() operation, {
   required String message,
 }) async {
   try {
-    final result = await operation;
+    final result = await operation();
     return await result.fold(
       (failure) => Err<T, DomainFailure>(failure),
       (value) => Ok<T, DomainFailure>(value),

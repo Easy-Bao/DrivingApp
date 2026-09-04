@@ -163,7 +163,7 @@ final class DashboardRepositoryImpl({
     }
 
     try {
-      final result = await _rideRepository.clearDriverLocation();
+      final result = await _rideRepository.clearDriverLocationResult();
       result.fold(
         (failure) => dev.log(
           'Unable to remove driver location during cleanup: ${failure.message}',
@@ -221,7 +221,7 @@ final class DashboardRepositoryImpl({
 
     try {
       Failure? locationFailure;
-      (await _rideRepository.publishDriverLocation(
+      (await _rideRepository.publishDriverLocationResult(
         latitude: lat,
         longitude: lng,
       )).fold((failure) => locationFailure = failure, (_) {});

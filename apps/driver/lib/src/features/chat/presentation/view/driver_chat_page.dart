@@ -47,7 +47,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
     if (rId.isEmpty) return;
     try {
       RideSnapshot? ride;
-      (await widget.rideRepository.fetchRide(rId))
+      (await widget.rideRepository.fetchRideResult(rId))
           .fold((_) {}, (value) => ride = value);
       if (ride?.isTerminal == true && mounted) {
         setState(() => _isTripFinished = true);

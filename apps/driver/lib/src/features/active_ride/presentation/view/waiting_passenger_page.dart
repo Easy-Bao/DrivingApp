@@ -246,7 +246,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                                     if (rideId.isNotEmpty) {
                                       String? phone;
                                       (await widget.rideRepository
-                                              .fetchCounterparty(rideId))
+                                              .fetchCounterpartyResult(rideId))
                                           .fold(
                                             (_) {},
                                             (passenger) =>

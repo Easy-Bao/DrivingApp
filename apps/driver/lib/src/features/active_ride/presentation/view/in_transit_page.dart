@@ -162,7 +162,7 @@ class _InTransitPageState extends State<InTransitPage> {
   }
 
   Future<void> _refreshPassengerLocation(String rideId) async {
-    (await widget.rideRepository.fetchPassengerLocation(rideId))
+    (await widget.rideRepository.fetchPassengerLocationResult(rideId))
         .fold((_) {}, (location) {
           if (location == null) return;
           _passengerLat = location.$1;
