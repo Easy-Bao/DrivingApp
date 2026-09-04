@@ -141,10 +141,10 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
       ]);
 
       final route = _route;
-      if (route == null) return;
-      await MapProvider.addPolyline(
+      if (route == null || !route.hasGeometry) return;
+      await MapProvider.addPolylineBuffer(
         controller,
-        route.polylinePoints,
+        route.coordinateBuffer,
         color: routeColor,
         width: 5.0,
       );

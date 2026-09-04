@@ -478,9 +478,9 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
           isOrigin: false,
           color: TripMapMarkerStyle.tripLocation,
         );
-        await MapProvider.addPolyline(
+        await MapProvider.addPolylineBuffer(
           _mapController!,
-          routePoints,
+          route.coordinateBuffer,
           color: routeColor,
           width: 5.0,
         );

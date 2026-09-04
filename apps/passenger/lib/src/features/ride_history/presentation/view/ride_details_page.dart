@@ -141,10 +141,10 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
         ride.destLat,
         ride.destLng,
       );
-      if (route != null) {
-        await MapProvider.addPolyline(
+      if (route != null && route.hasGeometry) {
+        await MapProvider.addPolylineBuffer(
           controller,
-          route.polylinePoints,
+          route.coordinateBuffer,
           color: routeColor,
           width: 4.0,
         );
