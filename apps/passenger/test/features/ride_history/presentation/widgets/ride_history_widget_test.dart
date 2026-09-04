@@ -115,6 +115,41 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('uses a larger readable scale for Activity content', (
+    tester,
+  ) async {
+    await _pumpHistory(
+      tester,
+      rides: [
+        _ride(
+          id: 'readable-ride',
+          destination: 'Shoreline Park',
+          date: 'Aug 22, 2:57 PM',
+          price: '₱26',
+          status: 'completed',
+        ),
+      ],
+      referenceTime: referenceTime,
+    );
+
+    final header = tester.widget<Text>(find.text('Activity'));
+    expect(header.style?.fontSize, 32);
+    expect(
+      tester
+          .getSize(
+            find.byKey(const ValueKey<String>('past-ride-readable-ride')),
+          )
+          .height,
+      greaterThanOrEqualTo(68),
+    );
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey<String>('activity-filter-all')))
+          .height,
+      greaterThanOrEqualTo(38),
+    );
+  });
+
   testWidgets('keeps an active ride prominent and actionable', (tester) async {
     String? selectedRideId;
     final activeRide = _ride(

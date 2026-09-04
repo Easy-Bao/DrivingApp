@@ -74,7 +74,7 @@ class const RideHistorySectionLabel({required this.label, super.key})
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+      style: Theme.of(context).textTheme.labelMedium?.copyWith(
         color: context.colorScheme.onSurfaceVariant,
         fontWeight: FontWeight.w600,
       ),
@@ -136,8 +136,8 @@ class const _SummaryCard({
     final textTheme = Theme.of(context).textTheme;
 
     return Container(
-      height: 78,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      height: 88,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(16),
@@ -150,7 +150,7 @@ class const _SummaryCard({
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: textTheme.labelSmall?.copyWith(
+            style: textTheme.labelMedium?.copyWith(
               color: context.colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w600,
             ),
@@ -161,7 +161,7 @@ class const _SummaryCard({
             key: valueKey,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: textTheme.titleMedium?.copyWith(
+            style: textTheme.titleLarge?.copyWith(
               color: context.colorScheme.onSurface,
               fontWeight: FontWeight.w800,
             ),
@@ -203,7 +203,7 @@ class const _RideHistoryFilterChip({
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
             curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               color: isSelected
                   ? context.colorScheme.onSurface
@@ -217,7 +217,7 @@ class const _RideHistoryFilterChip({
             ),
             child: Text(
               _label,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
                 color: isSelected
                     ? context.colorScheme.surface
                     : context.colorScheme.onSurfaceVariant,

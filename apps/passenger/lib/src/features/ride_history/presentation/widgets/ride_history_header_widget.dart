@@ -14,16 +14,17 @@ class const RideHistoryHeaderWidget({required this.subtitle, super.key})
       children: [
         Text(
           'Activity',
-          style: textTheme.headlineMedium?.copyWith(
+          style: textTheme.headlineLarge?.copyWith(
             color: context.colorScheme.onSurface,
+            fontSize: 32,
             fontWeight: FontWeight.w800,
-            letterSpacing: -0.8,
+            letterSpacing: -1,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           subtitle,
-          style: textTheme.bodySmall?.copyWith(
+          style: textTheme.bodyMedium?.copyWith(
             color: context.colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w500,
           ),

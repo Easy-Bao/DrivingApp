@@ -48,8 +48,8 @@ class const PassengerActiveRideCardWidget({
                 Row(
                   children: [
                     Container(
-                      width: 34,
-                      height: 34,
+                      width: 40,
+                      height: 40,
                       decoration: BoxDecoration(
                         color: context.colorScheme.onSurface.withValues(
                           alpha: 0.08,
@@ -58,15 +58,15 @@ class const PassengerActiveRideCardWidget({
                       ),
                       child: Icon(
                         LucideIcons.navigation,
-                        size: 16,
+                        size: 18,
                         color: context.colorScheme.onSurface,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Text(
                         statusLabel,
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           color: context.colorScheme.onSurface,
                           fontWeight: FontWeight.w800,
                         ),
@@ -76,7 +76,7 @@ class const PassengerActiveRideCardWidget({
                       presenter.fareLabel(ride),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: context.colorScheme.onSurface,
                         fontWeight: FontWeight.w800,
                       ),
@@ -85,7 +85,7 @@ class const PassengerActiveRideCardWidget({
                     Icon(
                       LucideIcons.chevron_right,
                       color: context.colorScheme.onSurfaceVariant,
-                      size: 16,
+                      size: 18,
                     ),
                   ],
                 ),
@@ -153,12 +153,12 @@ class const PassengerPastRideCardWidget({
           key: ValueKey<String>('past-ride-${ride.id}'),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             child: Row(
               children: [
                 Container(
-                  width: 36,
-                  height: 36,
+                  width: 42,
+                  height: 42,
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
@@ -166,10 +166,10 @@ class const PassengerPastRideCardWidget({
                   child: Icon(
                     isCancelled ? LucideIcons.x : LucideIcons.check,
                     color: statusColor,
-                    size: 16,
+                    size: 18,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,7 +178,7 @@ class const PassengerPastRideCardWidget({
                         destination,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: context.colorScheme.onSurface,
                           fontWeight: FontWeight.w700,
                         ),
@@ -189,7 +189,7 @@ class const PassengerPastRideCardWidget({
                           metadata,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall
+                          style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
                                 color: context.colorScheme.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
@@ -207,7 +207,7 @@ class const PassengerPastRideCardWidget({
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.end,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       color: context.colorScheme.onSurface,
                       fontWeight: FontWeight.w800,
                     ),
@@ -217,7 +217,7 @@ class const PassengerPastRideCardWidget({
                 Icon(
                   LucideIcons.chevron_right,
                   color: context.colorScheme.onSurfaceVariant,
-                  size: 15,
+                  size: 18,
                 ),
               ],
             ),
