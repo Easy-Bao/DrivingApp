@@ -13,16 +13,17 @@ import 'package:passenger/src/features/home/home_routes.dart';
 class const VerifyOtpPage({
   super.key,
   required this.email,
+  required this.verifyOtpBloc,
   this.isForgotPassword = false,
 }) extends StatelessWidget {
   final String email;
+  final VerifyOtpBloc verifyOtpBloc;
   final bool isForgotPassword;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider<VerifyOtpBloc>(
-      create: (context) =>
-          Modular.get<VerifyOtpBloc>()..add(const VerifyOtpTimerStarted()),
+      create: (_) => verifyOtpBloc..add(const VerifyOtpTimerStarted()),
       child: _VerifyOtpPageContent(
         email: email,
         isForgotPassword: isForgotPassword,

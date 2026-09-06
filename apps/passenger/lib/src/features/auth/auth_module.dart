@@ -30,21 +30,25 @@ class AuthModule extends Module {
     ChildRoute(
       name: AuthRoutes.signin,
       AuthRoutes.signinPath,
-      child: (context, GoRouterState state) => const SigninPage(),
+      child: (context, GoRouterState state) =>
+          SigninPage(signInBloc: Modular.get<SignInBloc>()),
       transition: AppTransitions.sharedAxisHorizontal,
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
       name: AuthRoutes.signup,
       AuthRoutes.signupPath,
-      child: (context, GoRouterState state) => const SignupPage(),
+      child: (context, GoRouterState state) =>
+          SignupPage(signUpBloc: Modular.get<SignUpBloc>()),
       transition: AppTransitions.sharedAxisHorizontal,
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
       name: AuthRoutes.forgotPassword,
       AuthRoutes.forgotPasswordPath,
-      child: (context, GoRouterState state) => const ForgotPasswordPage(),
+      child: (context, GoRouterState state) => ForgotPasswordPage(
+        forgotPasswordBloc: Modular.get<ForgotPasswordBloc>(),
+      ),
       transition: AppTransitions.sharedAxisHorizontal,
       transitionDuration: AppTransitions.pushDuration,
     ),
@@ -58,7 +62,11 @@ class AuthModule extends Module {
                 extra['email']?.toString()) ??
             '';
         final isForgotPassword = extra['isForgotPassword'] == true;
-        return VerifyOtpPage(email: email, isForgotPassword: isForgotPassword);
+        return VerifyOtpPage(
+          email: email,
+          isForgotPassword: isForgotPassword,
+          verifyOtpBloc: Modular.get<VerifyOtpBloc>(),
+        );
       },
       transition: AppTransitions.sharedAxisHorizontal,
       transitionDuration: AppTransitions.pushDuration,
@@ -70,7 +78,11 @@ class AuthModule extends Module {
         final extra = state.extra is Map ? state.extra as Map : {};
         final email = extra['email']?.toString() ?? '';
         final code = extra['code']?.toString() ?? '';
-        return ResetPasswordConfirmPage(email: email, code: code);
+        return ResetPasswordConfirmPage(
+          email: email,
+          code: code,
+          resetPasswordConfirmBloc: Modular.get<ResetPasswordConfirmBloc>(),
+        );
       },
       transition: AppTransitions.sharedAxisHorizontal,
       transitionDuration: AppTransitions.pushDuration,

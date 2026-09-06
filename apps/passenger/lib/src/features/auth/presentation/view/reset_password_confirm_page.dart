@@ -11,14 +11,16 @@ class const ResetPasswordConfirmPage({
   super.key,
   required this.email,
   required this.code,
+  required this.resetPasswordConfirmBloc,
 }) extends StatelessWidget {
   final String email;
   final String code;
+  final ResetPasswordConfirmBloc resetPasswordConfirmBloc;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider<ResetPasswordConfirmBloc>(
-      create: (context) => Modular.get<ResetPasswordConfirmBloc>(),
+      create: (_) => resetPasswordConfirmBloc,
       child: _ResetPasswordConfirmPageContent(email: email, code: code),
     );
   }

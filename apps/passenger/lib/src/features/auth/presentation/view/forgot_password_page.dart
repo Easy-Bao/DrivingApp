@@ -6,11 +6,14 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/forgot_password/forgot_password_bloc.dart';
 import 'package:passenger/src/features/auth/presentation/validation/auth_form_validator.dart';
 
-class const ForgotPasswordPage({super.key}) extends StatelessWidget {
+class const ForgotPasswordPage({super.key, required this.forgotPasswordBloc})
+    extends StatelessWidget {
+  final ForgotPasswordBloc forgotPasswordBloc;
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider<ForgotPasswordBloc>(
-      create: (context) => Modular.get<ForgotPasswordBloc>(),
+      create: (_) => forgotPasswordBloc,
       child: const _ForgotPasswordPageContent(),
     );
   }

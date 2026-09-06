@@ -13,11 +13,14 @@ import 'package:passenger/src/features/auth/presentation/validation/auth_form_va
 import 'package:passenger/src/features/auth/presentation/widgets/social_login_widget.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 
-class const SignupPage({super.key}) extends StatelessWidget {
+class const SignupPage({super.key, required this.signUpBloc})
+    extends StatelessWidget {
+  final SignUpBloc signUpBloc;
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider<SignUpBloc>(
-      create: (context) => Modular.get<SignUpBloc>(),
+      create: (_) => signUpBloc,
       child: const _SignupPageContent(),
     );
   }
