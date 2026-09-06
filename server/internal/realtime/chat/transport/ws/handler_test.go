@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -26,6 +27,32 @@ type rejectingSinkStub struct{}
 
 func (rejectingSinkStub) Handle(context.Context, []byte) error {
 	return errors.New("room locked")
+}
+
+type testHTTPServer struct {
+	URL    string
+	server *http.Server
+}
+
+func (server *testHTTPServer) Close() error {
+	return server.server.Close()
+}
+
+func newIPv4TestServer(t *testing.T, handler http.Handler) *testHTTPServer {
+	t.Helper()
+
+	listener, err := net.Listen("tcp4", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("listen for test server: %v", err)
+	}
+	httpServer := &http.Server{Handler: handler}
+	go func() {
+		_ = httpServer.Serve(listener)
+	}()
+	return &testHTTPServer{
+		URL:    "http://" + listener.Addr().String(),
+		server: httpServer,
+	}
 }
 
 func TestChatWebSocketOriginPolicy(t *testing.T) {
@@ -101,7 +128,7 @@ func TestChatWebSocketDoesNotBroadcastRejectedMessages(t *testing.T) {
 		rejectingSinkStub{},
 		roomAuthorizerStub{},
 	)
-	server := httptest.NewServer(handler)
+	server := newIPv4TestServer(t, handler)
 	defer server.Close()
 
 	url := "ws" + strings.TrimPrefix(server.URL, "http") + "/api/v1/chat/ws?roomId=303"

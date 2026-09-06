@@ -2,6 +2,7 @@ package hub
 
 import (
 	"errors"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -18,6 +19,32 @@ type authenticatorStub struct {
 	err      error
 }
 
+type testHTTPServer struct {
+	URL    string
+	server *http.Server
+}
+
+func (server *testHTTPServer) Close() error {
+	return server.server.Close()
+}
+
+func newIPv4TestServer(t *testing.T, handler http.Handler) *testHTTPServer {
+	t.Helper()
+
+	listener, err := net.Listen("tcp4", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("listen for test server: %v", err)
+	}
+	httpServer := &http.Server{Handler: handler}
+	go func() {
+		_ = httpServer.Serve(listener)
+	}()
+	return &testHTTPServer{
+		URL:    "http://" + listener.Addr().String(),
+		server: httpServer,
+	}
+}
+
 func (stub authenticatorStub) VerifyIdentity(string) (security.Identity, error) {
 	return stub.identity, stub.err
 }
@@ -25,7 +52,7 @@ func (stub authenticatorStub) VerifyIdentity(string) (security.Identity, error) 
 func TestHandlerStreamsEventsOnlyToTheVerifiedIdentity(t *testing.T) {
 	hub := NewHub()
 	handler := NewHandler(hub, authenticatorStub{identity: security.Identity{Subject: "7", Role: "driver"}}, nil)
-	server := httptest.NewServer(handler)
+	server := newIPv4TestServer(t, handler)
 	defer server.Close()
 
 	url := "ws" + strings.TrimPrefix(server.URL, "http")
@@ -60,7 +87,7 @@ func TestHandlerStreamsEventsOnlyToTheVerifiedIdentity(t *testing.T) {
 func TestHandlerStreamsOpenOffersToVerifiedDrivers(t *testing.T) {
 	hub := NewHub()
 	handler := NewHandler(hub, authenticatorStub{identity: security.Identity{Subject: "7", Role: "driver"}}, nil)
-	server := httptest.NewServer(handler)
+	server := newIPv4TestServer(t, handler)
 	defer server.Close()
 
 	url := "ws" + strings.TrimPrefix(server.URL, "http")
