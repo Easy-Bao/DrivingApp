@@ -29,42 +29,6 @@ class _PassengerAppState extends State<PassengerApp>
   late final NetworkAvailabilityCoordinator _networkAvailabilityCoordinator;
 
   @override
-  void initState() {
-    super.initState();
-    _sessionBloc = Modular.get<SessionBloc>()..add(const SessionStarted());
-    _locationAccessCubit = Modular.get<LocationAccessCubit>();
-    _lifecycleCoordinator = Modular.get<AppLifecycleCoordinator>();
-    _networkAvailabilityCoordinator =
-        Modular.get<NetworkAvailabilityCoordinator>();
-    WidgetsBinding.instance.addObserver(this);
-    final lifecycleState = WidgetsBinding.instance.lifecycleState;
-    if (lifecycleState != null) {
-      _lifecycleCoordinator.update(
-        isForeground: lifecycleState == AppLifecycleState.resumed,
-      );
-    }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(_locationAccessCubit.start());
-    });
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    _lifecycleCoordinator.update(
-      isForeground: state == AppLifecycleState.resumed,
-    );
-    if (state == .resumed) {
-      unawaited(_locationAccessCubit.refresh());
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
@@ -121,16 +85,40 @@ class _PassengerAppState extends State<PassengerApp>
     );
   }
 
-  Widget _buildRouteWithLocationOverlay(
-    BuildContext context,
-    Widget? child,
-    LocationAccessViewState locationState,
-  ) {
-    final overlay = _buildLocationOverlay(context, locationState);
-    return Stack(
-      fit: StackFit.expand,
-      children: [child ?? const SizedBox.shrink(), ?overlay],
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _lifecycleCoordinator.update(
+      isForeground: state == AppLifecycleState.resumed,
     );
+    if (state == .resumed) {
+      unawaited(_locationAccessCubit.refresh());
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _sessionBloc = Modular.get<SessionBloc>()..add(const SessionStarted());
+    _locationAccessCubit = Modular.get<LocationAccessCubit>();
+    _lifecycleCoordinator = Modular.get<AppLifecycleCoordinator>();
+    _networkAvailabilityCoordinator =
+        Modular.get<NetworkAvailabilityCoordinator>();
+    WidgetsBinding.instance.addObserver(this);
+    final lifecycleState = WidgetsBinding.instance.lifecycleState;
+    if (lifecycleState != null) {
+      _lifecycleCoordinator.update(
+        isForeground: lifecycleState == AppLifecycleState.resumed,
+      );
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_locationAccessCubit.start());
+    });
   }
 
   Widget? _buildLocationOverlay(
@@ -176,5 +164,17 @@ class _PassengerAppState extends State<PassengerApp>
           ),
         },
     };
+  }
+
+  Widget _buildRouteWithLocationOverlay(
+    BuildContext context,
+    Widget? child,
+    LocationAccessViewState locationState,
+  ) {
+    final overlay = _buildLocationOverlay(context, locationState);
+    return Stack(
+      fit: StackFit.expand,
+      children: [child ?? const SizedBox.shrink(), ?overlay],
+    );
   }
 }
