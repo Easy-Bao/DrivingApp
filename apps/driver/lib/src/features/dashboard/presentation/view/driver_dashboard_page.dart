@@ -57,7 +57,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   StreamSubscription<Position>? _locationSubscription;
   StreamSubscription<RealtimeEvent>? _realtimeEventsSubscription;
   late final StreamSubscription<AppLifecycleStatus> _lifecycleSubscription;
-  RealtimeWebSocketClient? _realtimeClient;
+  late final RealtimeWebSocketClient _realtimeClient;
   LiveMapBloc? _liveMapBloc;
   bool _isTogglingOnline = false;
   bool _isResumingOnline = false;
@@ -83,8 +83,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     );
     _liveMapBloc = widget.liveMapBloc;
     _realtimeClient = widget.realtimeClient;
-    _realtimeClient!.setActiveTripResyncHandler(_resyncActiveTrip);
-    _realtimeEventsSubscription = _realtimeClient!.events.listen(
+    _realtimeClient.setActiveTripResyncHandler(_resyncActiveTrip);
+    _realtimeEventsSubscription = _realtimeClient.events.listen(
       _handleRealtimeEvent,
     );
     _pulseCtrl = AnimationController(
@@ -113,7 +113,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   @override
   void dispose() {
     _pollGeneration++;
-    _realtimeClient?.setActiveTripResyncHandler(null);
+    _realtimeClient.setActiveTripResyncHandler(null);
     unawaited(_lifecycleSubscription.cancel());
     _pulseCtrl.dispose();
     _availabilityCtrl.dispose();
@@ -124,10 +124,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _cancelLocationSubscription();
     unawaited(_realtimeEventsSubscription?.cancel());
     _realtimeEventsSubscription = null;
-    final realtimeClient = _realtimeClient;
-    if (realtimeClient != null) {
-      unawaited(realtimeClient.stop());
-    }
+    unawaited(_realtimeClient.stop());
     unawaited(_liveMapBloc?.close());
     super.dispose();
   }
@@ -368,10 +365,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   Future<void> _startRealtimeUpdates() async {
     if (!_isForeground) return;
-    final realtimeClient = _realtimeClient;
-    if (realtimeClient == null) return;
     try {
-      await realtimeClient.start();
+      await _realtimeClient.start();
     } catch (error) {
       dev.log('Unable to start driver ride realtime updates: $error');
     }
@@ -459,10 +454,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _presenceHeartbeatTimer?.cancel();
     _presenceHeartbeatTimer = null;
     _stopLocationAccessMonitoring();
-    final realtimeClient = _realtimeClient;
-    if (realtimeClient != null) {
-      unawaited(realtimeClient.stop());
-    }
+    unawaited(_realtimeClient.stop());
     if (mounted && clearActiveBids) {
       BlocProvider.of<DashboardCubit>(context).clearActiveBids();
     }
@@ -766,6 +758,15 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         ),
       ],
       child: BlocBuilder<DashboardCubit, DashboardState>(
+        buildWhen: (previous, current) =>
+            previous.isOnline != current.isOnline ||
+            previous.isLoadingStats != current.isLoadingStats ||
+            previous.earnings != current.earnings ||
+            previous.completedTrips != current.completedTrips ||
+            previous.errorMessage != current.errorMessage ||
+            previous.statsErrorMessage != current.statsErrorMessage ||
+            previous.activeTrips != current.activeTrips ||
+            previous.activeBids != current.activeBids,
         builder: (context, state) {
           final activeTrips = state.activeTrips;
           final activeBids = state.activeBids;
