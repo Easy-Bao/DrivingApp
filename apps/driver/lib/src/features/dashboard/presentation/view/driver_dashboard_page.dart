@@ -32,9 +32,13 @@ bool _isActiveDriverTripStatus(Object? value) {
   }.contains(dashboardValueAsString(value));
 }
 
-class const DriverDashboardPage({super.key, required this.lifecycleCoordinator})
-    extends StatefulWidget {
+class const DriverDashboardPage({
+  super.key,
+  required this.lifecycleCoordinator,
+  required this.liveMapBloc,
+}) extends StatefulWidget {
   final AppLifecycleCoordinator lifecycleCoordinator;
+  final LiveMapBloc liveMapBloc;
 
   @override
   State<DriverDashboardPage> createState() => _DriverDashboardPageState();
@@ -75,7 +79,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _lifecycleSubscription = widget.lifecycleCoordinator.changes.listen(
       _onLifecycleChanged,
     );
-    _liveMapBloc = Modular.get<LiveMapBloc>();
+    _liveMapBloc = widget.liveMapBloc;
     _realtimeClient = Modular.get<RealtimeWebSocketClient>();
     _realtimeClient!.setActiveTripResyncHandler(_resyncActiveTrip);
     _realtimeEventsSubscription = _realtimeClient!.events.listen(

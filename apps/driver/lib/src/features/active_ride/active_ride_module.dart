@@ -39,6 +39,7 @@ class ActiveRideModule._() {
           chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
           sessionService: Modular.get<DriverSessionStore>(),
           lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
+          liveMapBloc: Modular.get<LiveMapBloc>(),
         );
       },
       transition: AppTransitions.push.toLeft,
@@ -83,6 +84,7 @@ class ActiveRideModule._() {
           duration: data.duration,
           rideRepository: Modular.get<DriverRideRepository>(),
           lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
+          liveMapBloc: Modular.get<LiveMapBloc>(),
         );
       },
       transition: AppTransitions.push.toLeft,

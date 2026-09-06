@@ -99,6 +99,7 @@ class ActiveRideModule._() {
           chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
           sessionService: Modular.get<PassengerSessionStore>(),
           lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
+          liveMapBloc: Modular.get<LiveMapBloc>(),
           realtimeClient: Modular.get<RealtimeWebSocketClient>(),
         );
       },

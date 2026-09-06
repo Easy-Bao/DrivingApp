@@ -46,6 +46,7 @@ class const TrackDriverPage({
   required this.chatRepositoryFactory,
   required this.sessionService,
   required this.lifecycleCoordinator,
+  required this.liveMapBloc,
   this.realtimeClient,
 }) extends StatefulWidget {
   final RideHistory ride;
@@ -53,6 +54,7 @@ class const TrackDriverPage({
   final ChatRepositoryFactory chatRepositoryFactory;
   final PassengerSessionStore sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;
+  final LiveMapBloc liveMapBloc;
   final RealtimeWebSocketClient? realtimeClient;
 
   @override
@@ -85,7 +87,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
   @override
   void initState() {
     super.initState();
-    _liveMapBloc = Modular.get<LiveMapBloc>();
+    _liveMapBloc = widget.liveMapBloc;
     widget.realtimeClient?.setActiveTripResyncHandler(_resyncActiveTrip);
     _chatMessagesPollingTask = AppLifecyclePeriodicTask(
       lifecycleCoordinator: widget.lifecycleCoordinator,

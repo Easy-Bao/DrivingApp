@@ -25,6 +25,7 @@ class const InTransitPage({
   required this.duration,
   required this.rideRepository,
   required this.lifecycleCoordinator,
+  required this.liveMapBloc,
 }) extends StatefulWidget {
   final String pickup;
   final String dropoff;
@@ -33,6 +34,7 @@ class const InTransitPage({
   final double fare;
   final DriverRideRepository rideRepository;
   final AppLifecycleCoordinator lifecycleCoordinator;
+  final LiveMapBloc liveMapBloc;
 
   @override
   State<InTransitPage> createState() => _InTransitPageState();
@@ -52,7 +54,7 @@ class _InTransitPageState extends State<InTransitPage> {
   @override
   void initState() {
     super.initState();
-    _liveMapBloc = Modular.get<LiveMapBloc>();
+    _liveMapBloc = widget.liveMapBloc;
     _trackingTask = AppLifecyclePeriodicTask(
       lifecycleCoordinator: widget.lifecycleCoordinator,
       interval: const Duration(seconds: 4),

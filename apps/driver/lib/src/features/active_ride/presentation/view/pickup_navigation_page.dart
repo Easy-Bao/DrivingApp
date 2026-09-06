@@ -30,6 +30,7 @@ class const PickupNavigationPage({
   required this.chatRepositoryFactory,
   required this.sessionService,
   required this.lifecycleCoordinator,
+  required this.liveMapBloc,
 }) extends StatefulWidget {
   final String pickup;
   final String dropoff;
@@ -40,6 +41,7 @@ class const PickupNavigationPage({
   final ChatRepositoryFactory chatRepositoryFactory;
   final DriverSessionStore sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;
+  final LiveMapBloc liveMapBloc;
 
   @override
   State<PickupNavigationPage> createState() => _PickupNavigationPageState();
@@ -63,7 +65,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
   @override
   void initState() {
     super.initState();
-    _liveMapBloc = Modular.get<LiveMapBloc>();
+    _liveMapBloc = widget.liveMapBloc;
     final cubit = BlocProvider.of<RideFlowCubit>(context);
     _routeTrackingTask = AppLifecyclePeriodicTask(
       lifecycleCoordinator: widget.lifecycleCoordinator,
