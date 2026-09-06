@@ -53,7 +53,18 @@ func PostgresPoolConfigFromEnv() PostgresPoolConfig {
 }
 
 func OpenPostgres(databaseURL string) (*ent.Client, error) {
-	connection, err := OpenPostgresConnectionWithConfig(databaseURL, PostgresPoolConfigFromEnv())
+	return OpenPostgresWithContext(context.Background(), databaseURL)
+}
+
+// OpenPostgresWithContext opens PostgreSQL using ctx for the initial health
+// probe. The existing OpenPostgres entry point remains available for callers
+// that do not have a lifecycle context.
+func OpenPostgresWithContext(ctx context.Context, databaseURL string) (*ent.Client, error) {
+	connection, err := OpenPostgresConnectionWithContext(
+		ctx,
+		databaseURL,
+		PostgresPoolConfigFromEnv(),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +72,13 @@ func OpenPostgres(databaseURL string) (*ent.Client, error) {
 }
 
 func OpenPostgresWithConfig(databaseURL string, config PostgresPoolConfig) (*ent.Client, error) {
-	connection, err := OpenPostgresConnectionWithConfig(databaseURL, config)
+	return OpenPostgresWithContextAndConfig(context.Background(), databaseURL, config)
+}
+
+// OpenPostgresWithContextAndConfig is the context-aware counterpart to
+// OpenPostgresWithConfig.
+func OpenPostgresWithContextAndConfig(ctx context.Context, databaseURL string, config PostgresPoolConfig) (*ent.Client, error) {
+	connection, err := OpenPostgresConnectionWithContext(ctx, databaseURL, config)
 	if err != nil {
 		return nil, err
 	}
@@ -69,10 +86,24 @@ func OpenPostgresWithConfig(databaseURL string, config PostgresPoolConfig) (*ent
 }
 
 func OpenPostgresConnection(databaseURL string) (*PostgresConnection, error) {
-	return OpenPostgresConnectionWithConfig(databaseURL, PostgresPoolConfigFromEnv())
+	return OpenPostgresConnectionWithContext(
+		context.Background(),
+		databaseURL,
+		PostgresPoolConfigFromEnv(),
+	)
 }
 
 func OpenPostgresConnectionWithConfig(databaseURL string, config PostgresPoolConfig) (*PostgresConnection, error) {
+	return OpenPostgresConnectionWithContext(context.Background(), databaseURL, config)
+}
+
+func OpenPostgresConnectionWithContext(ctx context.Context, databaseURL string, config PostgresPoolConfig) (*PostgresConnection, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	if strings.TrimSpace(databaseURL) == "" {
 		return nil, fmt.Errorf("database URL is required")
 	}
@@ -90,7 +121,7 @@ func OpenPostgresConnectionWithConfig(databaseURL string, config PostgresPoolCon
 	pool.SetConnMaxLifetime(config.ConnectionMaxLifetime)
 	pool.SetConnMaxIdleTime(config.ConnectionMaxIdleTime)
 
-	pingContext, cancel := context.WithTimeout(context.Background(), config.PingTimeout)
+	pingContext, cancel := context.WithTimeout(ctx, config.PingTimeout)
 	defer cancel()
 	if err := pool.PingContext(pingContext); err != nil {
 		_ = driver.Close()

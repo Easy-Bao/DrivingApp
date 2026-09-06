@@ -1,9 +1,24 @@
 package database
 
 import (
+	"context"
 	"testing"
 	"time"
 )
+
+func TestOpenPostgresConnectionWithContextStopsBeforeOpeningWhenCanceled(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := OpenPostgresConnectionWithContext(
+		ctx,
+		"postgres://localhost/test",
+		DefaultPostgresPoolConfig(),
+	)
+	if err != context.Canceled {
+		t.Fatalf("error = %v, want context canceled", err)
+	}
+}
 
 func TestNormalizePostgresURLDisablesTLSForLocalHosts(t *testing.T) {
 	value := NormalizePostgresURL("postgres://user:pass@localhost:5432/app?sslmode=require")

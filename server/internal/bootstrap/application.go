@@ -37,7 +37,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 		return nil, err
 	}
 
-	databaseClient, err := database.OpenPostgres(config.DatabaseURL)
+	databaseClient, err := database.OpenPostgresWithContext(ctx, config.DatabaseURL)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 		return nil, fmt.Errorf("database schema is not ready: %w", err)
 	}
 
-	redisClient, err := database.OpenRedis(config.RedisURL)
+	redisClient, err := database.OpenRedisWithContext(ctx, config.RedisURL)
 	if err != nil {
 		return nil, err
 	}
