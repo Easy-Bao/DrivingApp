@@ -569,10 +569,12 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
     }
     final defaultLat = pickup.lat;
     final defaultLng = pickup.lng;
-    final passengerName = switch (context.watch<SessionBloc>().state) {
-      AuthenticatedSession(:final passengerName) => passengerName,
-      _ => '',
-    };
+    final passengerName = context.select<SessionBloc, String>(
+      (bloc) => switch (bloc.state) {
+        AuthenticatedSession(:final passengerName) => passengerName,
+        _ => '',
+      },
+    );
 
     return Scaffold(
       backgroundColor: context.colorScheme.surface,

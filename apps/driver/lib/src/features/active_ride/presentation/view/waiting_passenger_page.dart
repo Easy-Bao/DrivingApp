@@ -19,6 +19,11 @@ import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+typedef _WaitingPassengerPresentation = ({
+  String passengerName,
+  String waitFormatted,
+});
+
 class const WaitingPassengerPage({
   super.key,
   required this.pickup,
@@ -187,13 +192,18 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<RideFlowCubit>().state;
-    final passengerName = state.isWaitingAtPickup
-        ? state.passengerNameOr('—')
-        : '—';
-    final waitFormatted = state.isWaitingAtPickup
-        ? _formatWaitDuration(state.waitTimeSecondsOr(0))
-        : '00:00';
+    final presentation = context
+        .select<RideFlowCubit, _WaitingPassengerPresentation>((cubit) {
+          final state = cubit.state;
+          return (
+            passengerName: state.isWaitingAtPickup
+                ? state.passengerNameOr('—')
+                : '—',
+            waitFormatted: state.isWaitingAtPickup
+                ? _formatWaitDuration(state.waitTimeSecondsOr(0))
+                : '00:00',
+          );
+        });
 
     return Scaffold(
       backgroundColor: context.canvasColor,
@@ -230,8 +240,8 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                               WaitingPassengerPanelWidget(
                                 pickup: widget.pickup,
                                 dropoff: widget.dropoff,
-                                passengerName: passengerName,
-                                waitFormatted: waitFormatted,
+                                passengerName: presentation.passengerName,
+                                waitFormatted: presentation.waitFormatted,
                                 fare: widget.fare,
                                 includeStartTripButton: false,
                                 unreadChatMessagesCount:

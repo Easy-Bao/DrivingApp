@@ -8,8 +8,9 @@ import 'package:design_system/design_system.dart';
 class const InTransitPassengerCardWidget({super.key}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final state = BlocProvider.of<RideFlowCubit>(context).state;
-    final passengerName = state.passengerNameOr('Passenger');
+    final passengerName = context.select<RideFlowCubit, String>(
+      (cubit) => cubit.state.passengerNameOr('Passenger'),
+    );
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
