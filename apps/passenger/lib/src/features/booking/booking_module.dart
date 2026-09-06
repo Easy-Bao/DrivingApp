@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
+import 'package:passenger/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/booking/data/data_sources/booking_remote_data_source.dart';
 import 'package:passenger/src/features/booking/data/data_sources/driver_discovery_remote_data_source.dart';
@@ -179,6 +180,8 @@ class BookingModule._() {
           pickupAddress: data.string('pickupAddress'),
           passengerNote: data.string('passengerNote') ?? '',
           profileRepository: Modular.get<DriverProfileRepository>(),
+          bookingBloc: Modular.get<BookingBloc>(),
+          liveMapBloc: Modular.get<LiveMapBloc>(),
         );
       },
       transition: AppTransitions.modal.toTop,

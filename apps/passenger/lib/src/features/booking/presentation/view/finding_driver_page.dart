@@ -33,6 +33,8 @@ class const FindingDriverPage({
   this.pickupLongitude,
   this.passengerNote = '',
   required this.profileRepository,
+  required this.bookingBloc,
+  required this.liveMapBloc,
 }) extends StatelessWidget {
   final String rideType;
   final double fare;
@@ -44,13 +46,15 @@ class const FindingDriverPage({
   final double? pickupLongitude;
   final String passengerNote;
   final DriverProfileRepository profileRepository;
+  final BookingBloc bookingBloc;
+  final LiveMapBloc liveMapBloc;
 
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<BookingBloc>.value(value: Modular.get<BookingBloc>()),
-        BlocProvider<LiveMapBloc>(create: (_) => Modular.get<LiveMapBloc>()),
+        BlocProvider<BookingBloc>.value(value: bookingBloc),
+        BlocProvider<LiveMapBloc>(create: (_) => liveMapBloc),
       ],
       child: FindingDriverPageContent(
         rideType: rideType,
