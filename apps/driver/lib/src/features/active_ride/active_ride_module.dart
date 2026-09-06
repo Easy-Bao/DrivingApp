@@ -5,6 +5,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
+import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver/src/features/active_ride/active_ride_routes.dart';
 import 'package:driver/src/features/active_ride/presentation/view/pickup_navigation_page.dart';
 import 'package:driver/src/features/active_ride/presentation/view/fare_summary_page.dart';
@@ -104,6 +105,7 @@ class ActiveRideModule._() {
           distance: data.distance,
           fare: data.fare,
           duration: data.duration,
+          dashboardCubit: Modular.get<DashboardCubit>(),
         );
       },
       transition: AppTransitions.modal.toTop,

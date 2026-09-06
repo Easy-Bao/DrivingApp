@@ -15,7 +15,14 @@ import 'package:passenger/src/features/inbox/presentation/widgets/inbox_notifica
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-class const InboxPage({super.key}) extends StatefulWidget {
+class const InboxPage({
+  super.key,
+  required this.inboxCubit,
+  required this.sessionService,
+}) extends StatefulWidget {
+  final InboxCubit inboxCubit;
+  final PassengerSessionStore sessionService;
+
   @override
   State<InboxPage> createState() => _InboxPageState();
 }
@@ -26,7 +33,7 @@ class _InboxPageState extends State<InboxPage> {
   @override
   void initState() {
     super.initState();
-    _inboxCubit = Modular.get<InboxCubit>();
+    _inboxCubit = widget.inboxCubit;
     unawaited(_initializeInbox());
   }
 
@@ -35,8 +42,7 @@ class _InboxPageState extends State<InboxPage> {
       return;
     }
     if (_inboxCubit.state is! InboxLoadedState) {
-      final passengerId =
-          await Modular.get<PassengerSessionStore>().readPassengerId() ?? '';
+      final passengerId = await widget.sessionService.readPassengerId() ?? '';
       if (passengerId.isNotEmpty) {
         unawaited(_inboxCubit.loadNotifications(passengerId));
       }

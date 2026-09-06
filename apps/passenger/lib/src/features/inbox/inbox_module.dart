@@ -7,6 +7,7 @@ import 'package:passenger/src/features/inbox/domain/repositories/inbox_repositor
 import 'package:passenger/src/features/inbox/inbox_routes.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger/src/features/inbox/presentation/view/inbox_page.dart';
+import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 
 class InboxModule._() {
   static void binds(Injector i) {
@@ -30,7 +31,10 @@ class InboxModule._() {
     ChildRoute(
       name: InboxRoutes.inbox,
       InboxRoutes.inboxPath,
-      child: (context, GoRouterState state) => const InboxPage(),
+      child: (context, GoRouterState state) => InboxPage(
+        inboxCubit: Modular.get<InboxCubit>(),
+        sessionService: Modular.get<PassengerSessionStore>(),
+      ),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,
     ),

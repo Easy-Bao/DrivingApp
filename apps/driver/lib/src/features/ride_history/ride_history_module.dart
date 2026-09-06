@@ -34,8 +34,10 @@ class RideHistoryModule._() {
     ChildRoute(
       name: RideHistoryRoutes.tripDetail,
       RideHistoryRoutes.tripDetailPath,
-      child: (context, GoRouterState state) =>
-          DriverTripDetailPage(trip: SafeRouteExtra.asMap(state.extra)),
+      child: (context, GoRouterState state) => DriverTripDetailPage(
+        trip: SafeRouteExtra.asMap(state.extra),
+        sessionService: Modular.get<DriverSessionStore>(),
+      ),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),

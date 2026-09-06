@@ -7,9 +7,13 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
-class const DriverTripDetailPage({super.key, required this.trip})
-    extends StatefulWidget {
+class const DriverTripDetailPage({
+  super.key,
+  required this.trip,
+  required this.sessionService,
+}) extends StatefulWidget {
   final Map<String, dynamic> trip;
+  final DriverSessionStore sessionService;
 
   @override
   State<DriverTripDetailPage> createState() => _DriverTripDetailPageState();
@@ -50,8 +54,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
       _chatFeedbackMessage = null;
     });
 
-    final driverId =
-        await Modular.get<DriverSessionStore>().readDriverId() ?? '';
+    final driverId = await widget.sessionService.readDriverId() ?? '';
     if (driverId.isEmpty) {
       if (mounted) {
         setState(() {

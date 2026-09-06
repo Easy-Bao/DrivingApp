@@ -16,12 +16,14 @@ class const FareSummaryPage({
   required this.distance,
   required this.fare,
   required this.duration,
+  required this.dashboardCubit,
 }) extends StatefulWidget {
   final String pickup;
   final String dropoff;
   final String duration;
   final double distance;
   final double fare;
+  final DashboardCubit dashboardCubit;
 
   @override
   State<FareSummaryPage> createState() => _FareSummaryPageState();
@@ -50,7 +52,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
         return;
       }
 
-      final dashboardCubit = Modular.get<DashboardCubit>();
+      final dashboardCubit = widget.dashboardCubit;
       final wasOnline = dashboardCubit.state.isOnline;
       cubit.reset();
       if (wasOnline) {

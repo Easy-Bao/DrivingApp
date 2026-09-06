@@ -1,5 +1,6 @@
 import 'package:driver/src/app/theme/app_theme.dart';
 import 'package:driver/src/features/ride_history/presentation/view/driver_trip_detail_page.dart';
+import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -13,7 +14,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.data,
-        home: const DriverTripDetailPage(
+        home: DriverTripDetailPage(
+          sessionService: DriverSessionStore(),
           trip: {
             'id': 42,
             'passenger_id': 7,
