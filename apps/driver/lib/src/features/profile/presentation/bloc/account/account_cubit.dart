@@ -10,7 +10,7 @@ class DriverAccountCubit({required this._repository})
   this : super(const DriverAccountState());
 
   Future<void> load() async {
-    if (isClosed) return;
+    if (isClosed || state.isLoading) return;
     emit(state.copyWith(isLoading: true, isSaving: false, clearError: true));
 
     try {

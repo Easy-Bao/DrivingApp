@@ -14,7 +14,7 @@ class DriverPerformanceCubit({
   final DriverSessionStore _sessionService;
 
   Future<void> load() async {
-    if (isClosed) return;
+    if (isClosed || state.isLoading) return;
     emit(DriverPerformanceLoading(stats: state.stats));
 
     try {

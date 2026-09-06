@@ -14,7 +14,7 @@ class DriverEarningsCubit({
   this : super(const DriverEarningsState());
 
   Future<void> load() async {
-    if (isClosed) return;
+    if (isClosed || state.isLoading) return;
 
     emit(state.copyWith(isLoading: true, clearError: true));
 

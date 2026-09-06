@@ -8,10 +8,29 @@ import 'package:passenger/src/features/saved_places/presentation/bloc/saved_plac
 class SavedPlacesCubit({required this._repository})
     extends Cubit<SavedPlacesState> {
   final SavedPlacesRepository _repository;
+  Future<void>? _loadInFlight;
 
   this : super(const SavedPlacesState());
 
   Future<void> loadPlaces() async {
+    final existingLoad = _loadInFlight;
+    if (existingLoad != null) {
+      await existingLoad;
+      return;
+    }
+
+    late final Future<void> request;
+    request = _loadOnce().whenComplete(() {
+      if (identical(_loadInFlight, request)) {
+        _loadInFlight = null;
+      }
+    });
+    _loadInFlight = request;
+    await request;
+  }
+
+  Future<void> _loadOnce() async {
+    if (isClosed) return;
     emit(state.copyWith(isLoading: true, clearErrorMessage: true));
 
     try {
@@ -25,6 +44,7 @@ class SavedPlacesCubit({required this._repository})
           repairErrorMessage = ErrorHandler.getErrorMessage(error, stackTrace);
         }
       }
+      if (isClosed) return;
       emit(
         SavedPlacesState(
           places: places,
@@ -36,6 +56,7 @@ class SavedPlacesCubit({required this._repository})
         ),
       );
     } catch (error) {
+      if (isClosed) return;
       emit(
         SavedPlacesState(
           places: state.places,
@@ -83,6 +104,7 @@ class SavedPlacesCubit({required this._repository})
     try {
       await _repository.savePlaces(normalizedPlaces);
     } catch (error, stackTrace) {
+      if (isClosed) return;
       emit(
         previous.copyWith(
           errorMessage: ErrorHandler.getErrorMessage(error, stackTrace),

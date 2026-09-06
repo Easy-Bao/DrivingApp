@@ -25,6 +25,23 @@ void main() {
       unawaited(cubit.close());
     });
 
+    test('shares an overlapping load request', () async {
+      final response = Completer<List<SavedPlace>>();
+      when(() => mockRepository.loadPlaces())
+          .thenAnswer((_) => response.future);
+      final cubit = SavedPlacesCubit(repository: mockRepository);
+
+      final first = cubit.loadPlaces();
+      final second = cubit.loadPlaces();
+      await Future<void>.delayed(Duration.zero);
+      verify(() => mockRepository.loadPlaces()).called(1);
+
+      response.complete(const <SavedPlace>[]);
+      await Future.wait([first, second]);
+      expect(cubit.state.isLoading, isFalse);
+      await cubit.close();
+    });
+
     blocTest<SavedPlacesCubit, SavedPlacesState>(
       'loadPlaces emits loaded places with isLoading false on success',
       build: () {

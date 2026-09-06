@@ -14,7 +14,7 @@ class ProfileCubit({required this._repository}) extends Cubit<ProfileState> {
   this : super(const ProfileState());
 
   Future<void> loadProfile() async {
-    if (isClosed) return;
+    if (isClosed || state.isLoading) return;
     emit(state.copyWith(isLoading: true, clearError: true));
 
     try {

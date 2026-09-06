@@ -32,6 +32,7 @@ class DriverTripHistoryCubit({
     if (isClosed) return;
 
     final current = state;
+    if (loadMore ? current.isLoadingMore : current.isLoading) return;
     final offset = current.nextOffset;
     if (loadMore && offset == null) return;
 
