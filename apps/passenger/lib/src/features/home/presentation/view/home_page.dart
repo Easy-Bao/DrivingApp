@@ -32,7 +32,14 @@ import 'package:passenger/src/features/saved_places/presentation/bloc/saved_plac
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places/saved_places_state.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-class const HomePage({super.key}) extends StatefulWidget {
+class const HomePage({
+  super.key,
+  required this.bookingBloc,
+  required this.lifecycleCoordinator,
+}) extends StatefulWidget {
+  final BookingBloc bookingBloc;
+  final AppLifecycleCoordinator lifecycleCoordinator;
+
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -90,17 +97,18 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _bookingBloc = Modular.get<BookingBloc>();
+    _bookingBloc = widget.bookingBloc;
     _homeCubit = BlocProvider.of<HomeCubit>(context, listen: false);
     _routePopSubscription = passengerNavigationObserver.routePopEvents.listen(
       (_) => _refreshLocationSnapshot(),
     );
-    _lifecycleSubscription = Modular.get<AppLifecycleCoordinator>().changes
-        .listen((status) {
-          if (status == AppLifecycleStatus.foreground) {
-            _refreshLocationSnapshot();
-          }
-        });
+    _lifecycleSubscription = widget.lifecycleCoordinator.changes.listen((
+      status,
+    ) {
+      if (status == AppLifecycleStatus.foreground) {
+        _refreshLocationSnapshot();
+      }
+    });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;

@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:design_system/design_system.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
+import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/home/data/data_sources/current_location_data_source.dart';
 import 'package:passenger/src/features/home/data/data_sources/home_remote_data_source.dart';
 import 'package:passenger/src/features/home/data/data_sources/public_driver_remote_data_source.dart';
@@ -104,7 +106,10 @@ class HomeModule._() {
             value: Modular.get<SavedPlacesCubit>(),
           ),
         ],
-        child: const HomePage(),
+        child: HomePage(
+          bookingBloc: Modular.get<BookingBloc>(),
+          lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
+        ),
       ),
       transition: AppTransitions.none,
       transitionDuration: Duration.zero,
