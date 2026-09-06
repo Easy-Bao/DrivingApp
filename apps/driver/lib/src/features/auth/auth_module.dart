@@ -35,14 +35,17 @@ class AuthModule extends Module {
     ChildRoute(
       name: AuthRoutes.signin,
       AuthRoutes.signinPath,
-      child: (context, GoRouterState state) => const SigninPage(),
+      child: (context, GoRouterState state) =>
+          SigninPage(signInBloc: Modular.get<SignInBloc>()),
       transition: AppTransitions.fade,
       transitionDuration: AppTransitions.fadeDuration,
     ),
     ChildRoute(
       name: AuthRoutes.forgotPassword,
       AuthRoutes.forgotPasswordPath,
-      child: (context, GoRouterState state) => const ForgotPasswordPage(),
+      child: (context, GoRouterState state) => ForgotPasswordPage(
+        forgotPasswordBloc: Modular.get<ForgotPasswordBloc>(),
+      ),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),

@@ -11,11 +11,14 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:design_system/design_system.dart';
 
-class const SigninPage({super.key}) extends StatelessWidget {
+class const SigninPage({super.key, required this.signInBloc})
+    extends StatelessWidget {
+  final SignInBloc signInBloc;
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider<SignInBloc>(
-      create: (context) => Modular.get<SignInBloc>(),
+      create: (_) => signInBloc,
       child: const _SigninPageContent(),
     );
   }
