@@ -55,6 +55,7 @@ class DashboardModule._() {
         child: DriverDashboardPage(
           lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
           liveMapBloc: Modular.get<LiveMapBloc>(),
+          realtimeClient: Modular.get<RealtimeWebSocketClient>(),
         ),
       ),
       transition: AppTransitions.none,

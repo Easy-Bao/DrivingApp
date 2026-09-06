@@ -36,9 +36,11 @@ class const DriverDashboardPage({
   super.key,
   required this.lifecycleCoordinator,
   required this.liveMapBloc,
+  required this.realtimeClient,
 }) extends StatefulWidget {
   final AppLifecycleCoordinator lifecycleCoordinator;
   final LiveMapBloc liveMapBloc;
+  final RealtimeWebSocketClient realtimeClient;
 
   @override
   State<DriverDashboardPage> createState() => _DriverDashboardPageState();
@@ -80,7 +82,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       _onLifecycleChanged,
     );
     _liveMapBloc = widget.liveMapBloc;
-    _realtimeClient = Modular.get<RealtimeWebSocketClient>();
+    _realtimeClient = widget.realtimeClient;
     _realtimeClient!.setActiveTripResyncHandler(_resyncActiveTrip);
     _realtimeEventsSubscription = _realtimeClient!.events.listen(
       _handleRealtimeEvent,
