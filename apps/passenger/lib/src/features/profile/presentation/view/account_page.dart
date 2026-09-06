@@ -19,10 +19,9 @@ class const AccountPage({super.key, this.onLogout}) extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<ProfileCubit, ProfileState>(
       builder: (context, state) {
-        final isAuthenticated = context
-            .watch<SessionBloc>()
-            .state
-            .isAuthenticated;
+        final isAuthenticated = context.select<SessionBloc, bool>(
+          (bloc) => bloc.state.isAuthenticated,
+        );
         final visibleState = isAuthenticated ? state : const ProfileState();
         return Scaffold(
           backgroundColor: context.canvasColor,

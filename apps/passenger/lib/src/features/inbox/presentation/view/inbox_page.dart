@@ -119,11 +119,10 @@ class _InboxPageState extends State<InboxPage> {
       child: Scaffold(
         backgroundColor: context.canvasColor,
         body: SafeArea(
-          child: BlocBuilder<SessionBloc, SessionState>(
-            builder: (context, sessionState) {
-              final isGuest =
-                  sessionState is GuestSession ||
-                  sessionState is SessionFailure;
+          child: BlocSelector<SessionBloc, SessionState, bool>(
+            selector: (state) =>
+                state is GuestSession || state is SessionFailure,
+            builder: (context, isGuest) {
               if (isGuest) {
                 return _buildInboxContent(
                   const InboxLoadedState(<InboxNotification>[]),

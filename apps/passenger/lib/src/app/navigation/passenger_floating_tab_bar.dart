@@ -55,15 +55,14 @@ class const _InboxTabIcon({required this.color, required this.inboxCubit})
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<InboxCubit, InboxState>(
+    return BlocSelector<InboxCubit, InboxState, int>(
       bloc: inboxCubit,
-      builder: (context, state) {
-        final unreadCount = state is InboxLoadedState
-            ? state.notifications
-                  .where((notification) => !notification.isRead)
-                  .length
-            : 0;
-
+      selector: (state) => state is InboxLoadedState
+          ? state.notifications
+                .where((notification) => !notification.isRead)
+                .length
+          : 0,
+      builder: (context, unreadCount) {
         return SizedBox(
           width: 26,
           height: 22,

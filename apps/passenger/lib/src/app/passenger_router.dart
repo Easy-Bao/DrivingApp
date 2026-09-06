@@ -41,10 +41,11 @@ class PassengerRouter extends Module {
             navigationShell: navigationShell,
           ),
       navigatorContainerBuilder: (context, navigationShell, children) =>
-          BlocBuilder<SessionBloc, SessionState>(
-            builder: (context, sessionState) => PassengerTabBranchContainer(
+          BlocSelector<SessionBloc, SessionState, bool>(
+            selector: (state) => state.isAuthenticated,
+            builder: (context, isAuthenticated) => PassengerTabBranchContainer(
               navigationShell: navigationShell,
-              allowUserNavigation: sessionState.isAuthenticated,
+              allowUserNavigation: isAuthenticated,
               onNavigationSettled:
                   Modular.get<PassengerTabNavigationCoordinator>().commit,
               onPagePositionChanged:

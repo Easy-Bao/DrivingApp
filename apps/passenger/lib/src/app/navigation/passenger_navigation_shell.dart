@@ -201,9 +201,9 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
         child: Scaffold(
           extendBody: true,
           body: widget.navigationShell,
-          bottomNavigationBar: BlocBuilder<SessionBloc, SessionState>(
-            builder: (context, sessionState) {
-              final isAuthenticated = sessionState is AuthenticatedSession;
+          bottomNavigationBar: BlocSelector<SessionBloc, SessionState, bool>(
+            selector: (state) => state.isAuthenticated,
+            builder: (context, isAuthenticated) {
               if (!isAuthenticated) {
                 return GuestActionBarWidget(
                   onSignUp: () => context.pushNamed(AuthRoutes.signup),
