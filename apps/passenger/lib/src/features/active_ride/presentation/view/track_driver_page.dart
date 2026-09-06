@@ -47,6 +47,7 @@ class const TrackDriverPage({
   required this.sessionService,
   required this.lifecycleCoordinator,
   required this.liveMapBloc,
+  required this.bookingBloc,
   this.realtimeClient,
 }) extends StatefulWidget {
   final RideHistory ride;
@@ -55,6 +56,7 @@ class const TrackDriverPage({
   final PassengerSessionStore sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;
   final LiveMapBloc liveMapBloc;
+  final BookingBloc bookingBloc;
   final RealtimeWebSocketClient? realtimeClient;
 
   @override
@@ -456,7 +458,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
           case TripCompleted(:final driverId, :final driverName):
             if (_hasHandledTerminalState) return;
             _hasHandledTerminalState = true;
-            Modular.get<BookingBloc>().add(const ResetBookingEvent());
+            widget.bookingBloc.add(const ResetBookingEvent());
             context.pushReplacementNamed(
               RideHistoryRoutes.passengerPayment,
               extra: widget.ride.copyWith(
@@ -467,7 +469,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
           case RideFailed():
             if (_hasHandledTerminalState) return;
             _hasHandledTerminalState = true;
-            Modular.get<BookingBloc>().add(const ResetBookingEvent());
+            widget.bookingBloc.add(const ResetBookingEvent());
             if (mounted) {
               context.goNamed(HomeRoutes.home);
             }
