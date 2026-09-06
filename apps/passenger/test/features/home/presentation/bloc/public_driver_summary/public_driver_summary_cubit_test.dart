@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
@@ -39,4 +42,45 @@ void main() {
       ),
     ],
   );
+
+  test('allows a normal retry after a failed load', () async {
+    final repository = MockPublicDriverSummaryRepository();
+    when(() => repository.fetchSummaries()).thenAnswer(
+      (_) async =>
+          const Left<Failure, List<PublicDriverSummary>>(NetworkFailure()),
+    );
+    final cubit = PublicDriverSummaryCubit(repository: repository);
+
+    await cubit.load();
+    verify(() => repository.fetchSummaries()).called(1);
+
+    when(() => repository.fetchSummaries()).thenAnswer(
+      (_) async => const Right<Failure, List<PublicDriverSummary>>([summary]),
+    );
+    await cubit.load();
+
+    expect(cubit.state.status, PublicDriverSummaryStatus.success);
+    expect(cubit.state.summaries, [summary]);
+    verify(() => repository.fetchSummaries()).called(1);
+    await cubit.close();
+  });
+
+  test('shares one in-flight request between concurrent callers', () async {
+    final repository = MockPublicDriverSummaryRepository();
+    final response = Completer<Either<Failure, List<PublicDriverSummary>>>();
+    when(() => repository.fetchSummaries()).thenAnswer((_) => response.future);
+    final cubit = PublicDriverSummaryCubit(repository: repository);
+
+    final first = cubit.load();
+    final second = cubit.load();
+    await Future<void>.delayed(Duration.zero);
+    verify(() => repository.fetchSummaries()).called(1);
+
+    response.complete(
+      const Right<Failure, List<PublicDriverSummary>>([summary]),
+    );
+    await Future.wait([first, second]);
+    expect(cubit.state.status, PublicDriverSummaryStatus.success);
+    await cubit.close();
+  });
 }
