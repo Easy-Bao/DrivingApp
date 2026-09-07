@@ -31,6 +31,7 @@ ci-backend:
     cd server && go mod download
     cd server && go mod verify
     cd server && go generate ./ent/generate.go
+    cd server && go tool sqlc generate
     cd server && go mod tidy -diff
     cd server && go vet ./...
     cd server && go test -count=1 -shuffle=on ./...
@@ -150,3 +151,6 @@ docker-logs: services-logs
 
 generate-ent:
     cd server && go generate ./ent/generate.go
+
+generate-sqlc:
+    cd server && go tool sqlc generate
