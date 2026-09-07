@@ -47,6 +47,7 @@ import (
 	ridehttp "github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/http"
 	userpostgres "github.com/Easy-Bao/DrivingApp/server/internal/user/adapter/postgres"
 	userapplication "github.com/Easy-Bao/DrivingApp/server/internal/user/application"
+	userdomain "github.com/Easy-Bao/DrivingApp/server/internal/user/domain"
 	userhttp "github.com/Easy-Bao/DrivingApp/server/internal/user/transport/http"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -54,6 +55,8 @@ import (
 )
 
 func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclient.Client, applicationLogger *slog.Logger) (*chi.Mux, *hub.Hub) {
+	privateObjectStore := storagepostgres.NewObjectStore(databaseClient)
+	profileRepository := userpostgres.NewProfileRepository(databaseClient, privateObjectStore).WithLogger(applicationLogger)
 	return newRouterWithRepositories(
 		config,
 		databaseClient,
@@ -62,9 +65,10 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 		applicationLogger,
 		authpostgres.NewUserRepository(databaseClient),
 		authpostgres.NewRefreshSessionRepository(databaseClient),
+		profileRepository,
 		adminpostgres.NewDashboardStatsRepository(databaseClient),
 		documentpostgres.NewDocumentRepository(databaseClient),
-		storagepostgres.NewObjectStore(databaseClient),
+		privateObjectStore,
 	)
 }
 
@@ -77,6 +81,8 @@ func newRouterWithUserRepository(
 	authRepository authdomain.VerifiedUserRepository,
 	refreshSessionRepository authdomain.RefreshSessionStore,
 ) (*chi.Mux, *hub.Hub) {
+	privateObjectStore := storagepostgres.NewObjectStore(databaseClient)
+	profileRepository := userpostgres.NewProfileRepository(databaseClient, privateObjectStore).WithLogger(applicationLogger)
 	return newRouterWithRepositories(
 		config,
 		databaseClient,
@@ -85,9 +91,10 @@ func newRouterWithUserRepository(
 		applicationLogger,
 		authRepository,
 		refreshSessionRepository,
+		profileRepository,
 		adminpostgres.NewDashboardStatsRepository(databaseClient),
 		documentpostgres.NewDocumentRepository(databaseClient),
-		storagepostgres.NewObjectStore(databaseClient),
+		privateObjectStore,
 	)
 }
 
@@ -99,6 +106,7 @@ func newRouterWithRepositories(
 	applicationLogger *slog.Logger,
 	authRepository authdomain.VerifiedUserRepository,
 	refreshSessionRepository authdomain.RefreshSessionStore,
+	profileRepository userdomain.Repository,
 	statsRepository admindomain.Repository,
 	documentRepository documentdomain.Repository,
 	privateObjectStore platformstorage.ObjectStore,
@@ -119,7 +127,6 @@ func newRouterWithRepositories(
 	).WithLogger(applicationLogger)
 	authRouter := authhttp.NewRouter(registerService, authenticateService, otpService)
 
-	profileRepository := userpostgres.NewProfileRepository(databaseClient, privateObjectStore).WithLogger(applicationLogger)
 	usersRouter := userhttp.NewRouter(userapplication.NewProfileService(profileRepository), verifier)
 	documentRouter := documenthttp.NewRouter(
 		documentapplication.NewDocumentService(

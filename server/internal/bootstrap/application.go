@@ -18,6 +18,7 @@ import (
 	platformmigration "github.com/Easy-Bao/DrivingApp/server/internal/platform/migration"
 	storagepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/hub"
+	userpostgres "github.com/Easy-Bao/DrivingApp/server/internal/user/adapter/postgres"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -108,6 +109,10 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
+	profileRepository, err := userpostgres.NewPostgresProfileRepository(postgresPool, privateObjectStore)
+	if err != nil {
+		return nil, err
+	}
 	router, eventHub := newRouterWithRepositories(
 		config,
 		databaseClient,
@@ -116,6 +121,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 		applicationLogger,
 		authRepository,
 		refreshSessionRepository,
+		profileRepository,
 		dashboardStatsRepository,
 		documentRepository,
 		privateObjectStore,

@@ -16,6 +16,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/user/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/user/transport/http/dto"
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5"
 )
 
 type Handler struct {
@@ -224,11 +225,15 @@ func writeAvatarError(w http.ResponseWriter, err error) {
 }
 
 func writeProfileReadError(w http.ResponseWriter, err error) {
-	if ent.IsNotFound(err) {
+	if isProfileNotFound(err) {
 		response.Error(w, http.StatusNotFound, "Profile not found.")
 		return
 	}
 	response.Error(w, http.StatusInternalServerError, "Your profile is temporarily unavailable.")
+}
+
+func isProfileNotFound(err error) bool {
+	return ent.IsNotFound(err) || errors.Is(err, pgx.ErrNoRows)
 }
 
 func (handler *Handler) Notifications(w http.ResponseWriter, r *http.Request) {
@@ -295,7 +300,7 @@ func (handler *Handler) Online(w http.ResponseWriter, r *http.Request) {
 	}
 	profile, err := handler.service.Get(r.Context(), actorID)
 	if err != nil {
-		if ent.IsNotFound(err) {
+		if isProfileNotFound(err) {
 			response.Error(w, http.StatusForbidden, "driver profile required")
 			return
 		}
