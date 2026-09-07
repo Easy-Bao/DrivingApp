@@ -74,6 +74,14 @@ type DriverProfile struct {
 	WalletBalanceCentavos int64   `db:"wallet_balance_centavos"`
 }
 
+type DriverWalletAccount struct {
+	ID              int32              `db:"id"`
+	DriverID        int32              `db:"driver_id"`
+	BalanceCentavos int64              `db:"balance_centavos"`
+	Version         int64              `db:"version"`
+	UpdatedAt       pgtype.Timestamptz `db:"updated_at"`
+}
+
 type Notification struct {
 	ID        int32              `db:"id"`
 	UserID    int32              `db:"user_id"`
@@ -143,6 +151,20 @@ type Ride struct {
 	DriverPayoutCentavos int64              `db:"driver_payout_centavos"`
 }
 
+type RideSettlement struct {
+	ID                   int32              `db:"id"`
+	RideID               int32              `db:"ride_id"`
+	GrossFareCentavos    int64              `db:"gross_fare_centavos"`
+	CommissionBps        pgtype.Int8        `db:"commission_bps"`
+	CommissionCentavos   int64              `db:"commission_centavos"`
+	DriverPayoutCentavos int64              `db:"driver_payout_centavos"`
+	PaymentStatus        string             `db:"payment_status"`
+	CashReceivedAt       pgtype.Timestamptz `db:"cash_received_at"`
+	SettledAt            pgtype.Timestamptz `db:"settled_at"`
+	CreatedAt            pgtype.Timestamptz `db:"created_at"`
+	UpdatedAt            pgtype.Timestamptz `db:"updated_at"`
+}
+
 type User struct {
 	ID           int32       `db:"id"`
 	Name         pgtype.Text `db:"name"`
@@ -151,4 +173,14 @@ type User struct {
 	PasswordHash string      `db:"password_hash"`
 	Role         string      `db:"role"`
 	IsVerified   bool        `db:"is_verified"`
+}
+
+type WalletLedger struct {
+	ID                 int32              `db:"id"`
+	DriverID           int32              `db:"driver_id"`
+	RideID             int32              `db:"ride_id"`
+	AmountCentavos     int64              `db:"amount_centavos"`
+	CommissionCentavos int64              `db:"commission_centavos"`
+	Kind               string             `db:"kind"`
+	CreatedAt          pgtype.Timestamptz `db:"created_at"`
 }
