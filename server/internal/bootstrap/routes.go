@@ -17,6 +17,7 @@ import (
 	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/auth/transport/http"
 	documentpostgres "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/adapter/postgres"
 	documentapplication "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/application"
+	documentdomain "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/domain"
 	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/mapbox"
 	locationredis "github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/redis"
@@ -61,6 +62,7 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 		authpostgres.NewUserRepository(databaseClient),
 		authpostgres.NewRefreshSessionRepository(databaseClient),
 		adminpostgres.NewDashboardStatsRepository(databaseClient),
+		documentpostgres.NewDocumentRepository(databaseClient),
 	)
 }
 
@@ -82,6 +84,7 @@ func newRouterWithUserRepository(
 		authRepository,
 		refreshSessionRepository,
 		adminpostgres.NewDashboardStatsRepository(databaseClient),
+		documentpostgres.NewDocumentRepository(databaseClient),
 	)
 }
 
@@ -94,6 +97,7 @@ func newRouterWithRepositories(
 	authRepository authdomain.VerifiedUserRepository,
 	refreshSessionRepository authdomain.RefreshSessionStore,
 	statsRepository admindomain.Repository,
+	documentRepository documentdomain.Repository,
 ) (*chi.Mux, *hub.Hub) {
 	verifier := security.NewTokenManager(config.JWTSecret)
 	adminAuthorizer := security.NewAdminAuthorizer(config.AdminUserIDs)
@@ -116,7 +120,7 @@ func newRouterWithRepositories(
 	usersRouter := userhttp.NewRouter(userapplication.NewProfileService(profileRepository), verifier)
 	documentRouter := documenthttp.NewRouter(
 		documentapplication.NewDocumentService(
-			documentpostgres.NewDocumentRepository(databaseClient),
+			documentRepository,
 			privateObjectStore,
 			config.Security.UploadBodyLimit,
 		),
