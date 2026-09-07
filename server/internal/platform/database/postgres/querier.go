@@ -16,6 +16,7 @@ type Querier interface {
 	CountDriverDocuments(ctx context.Context) (int64, error)
 	CountRides(ctx context.Context) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
+	CreateBid(ctx context.Context, arg CreateBidParams) (Bid, error)
 	CreateBidOffer(ctx context.Context, arg CreateBidOfferParams) (BidOffer, error)
 	CreateBidSession(ctx context.Context, arg CreateBidSessionParams) (BidSession, error)
 	CreateDriverDocument(ctx context.Context, arg CreateDriverDocumentParams) (DriverDocument, error)
@@ -23,6 +24,7 @@ type Querier interface {
 	CreatePassengerProfile(ctx context.Context, arg CreatePassengerProfileParams) error
 	CreatePrivateObject(ctx context.Context, arg CreatePrivateObjectParams) error
 	CreateRefreshSession(ctx context.Context, arg CreateRefreshSessionParams) error
+	CreateRide(ctx context.Context, arg CreateRideParams) (Ride, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteNotification(ctx context.Context, arg DeleteNotificationParams) (int64, error)
 	DeletePrivateObjectByStorageKey(ctx context.Context, storageKey string) error
@@ -43,6 +45,7 @@ type Querier interface {
 	GetUserByID(ctx context.Context, id int32) (User, error)
 	HasActiveBidSession(ctx context.Context, arg HasActiveBidSessionParams) (bool, error)
 	HasActivePassengerRide(ctx context.Context, passengerID int32) (bool, error)
+	HasPendingBid(ctx context.Context, arg HasPendingBidParams) (bool, error)
 	HasPendingBidOffer(ctx context.Context, arg HasPendingBidOfferParams) (bool, error)
 	ListActiveBidSessions(ctx context.Context, expiresAt pgtype.Timestamptz) ([]BidSession, error)
 	ListActiveRidesForDriver(ctx context.Context, driverID pgtype.Int4) ([]Ride, error)
@@ -53,6 +56,7 @@ type Querier interface {
 	ListTargetedActiveBidSessions(ctx context.Context, arg ListTargetedActiveBidSessionsParams) ([]BidSession, error)
 	LockActiveBidSessionForOffer(ctx context.Context, arg LockActiveBidSessionForOfferParams) (BidSession, error)
 	LockOnlineDriverProfileForBidding(ctx context.Context, userID int32) (DriverProfile, error)
+	LockRequestedRideForBid(ctx context.Context, id int32) (int32, error)
 	LockUserForBidSession(ctx context.Context, id int32) (int32, error)
 	MarkUserVerified(ctx context.Context, id int32) (int64, error)
 	RejectBidOffer(ctx context.Context, id int32) (BidOffer, error)
