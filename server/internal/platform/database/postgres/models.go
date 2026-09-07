@@ -30,6 +30,16 @@ type PassengerProfile struct {
 	PreferredRideType pgtype.Text `db:"preferred_ride_type"`
 }
 
+type RefreshSession struct {
+	ID         int32              `db:"id"`
+	UserID     int32              `db:"user_id"`
+	TokenHash  string             `db:"token_hash"`
+	ExpiresAt  pgtype.Timestamptz `db:"expires_at"`
+	CreatedAt  pgtype.Timestamptz `db:"created_at"`
+	LastUsedAt pgtype.Timestamptz `db:"last_used_at"`
+	RevokedAt  pgtype.Timestamptz `db:"revoked_at"`
+}
+
 type User struct {
 	ID           int32       `db:"id"`
 	Name         pgtype.Text `db:"name"`
