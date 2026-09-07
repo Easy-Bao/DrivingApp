@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/ent"
+	adminpostgres "github.com/Easy-Bao/DrivingApp/server/internal/admin/adapter/postgres"
 	authpostgres "github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/logger"
@@ -93,7 +94,11 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
-	router, eventHub := newRouterWithUserRepository(
+	dashboardStatsRepository, err := adminpostgres.NewPostgresDashboardStatsRepository(postgresPool)
+	if err != nil {
+		return nil, err
+	}
+	router, eventHub := newRouterWithRepositories(
 		config,
 		databaseClient,
 		postgresPool,
@@ -101,6 +106,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 		applicationLogger,
 		authRepository,
 		refreshSessionRepository,
+		dashboardStatsRepository,
 	)
 	secureHandler := middleware.SecureHTTPWithIdempotency(
 		router,

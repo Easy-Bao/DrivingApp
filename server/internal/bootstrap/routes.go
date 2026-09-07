@@ -7,6 +7,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent"
 	adminpostgres "github.com/Easy-Bao/DrivingApp/server/internal/admin/adapter/postgres"
 	adminapplication "github.com/Easy-Bao/DrivingApp/server/internal/admin/application"
+	admindomain "github.com/Easy-Bao/DrivingApp/server/internal/admin/domain"
 	adminhttp "github.com/Easy-Bao/DrivingApp/server/internal/admin/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/email"
 	authpostgres "github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/postgres"
@@ -51,7 +52,7 @@ import (
 )
 
 func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclient.Client, applicationLogger *slog.Logger) (*chi.Mux, *hub.Hub) {
-	return newRouterWithUserRepository(
+	return newRouterWithRepositories(
 		config,
 		databaseClient,
 		nil,
@@ -59,6 +60,7 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 		applicationLogger,
 		authpostgres.NewUserRepository(databaseClient),
 		authpostgres.NewRefreshSessionRepository(databaseClient),
+		adminpostgres.NewDashboardStatsRepository(databaseClient),
 	)
 }
 
@@ -70,6 +72,28 @@ func newRouterWithUserRepository(
 	applicationLogger *slog.Logger,
 	authRepository authdomain.VerifiedUserRepository,
 	refreshSessionRepository authdomain.RefreshSessionStore,
+) (*chi.Mux, *hub.Hub) {
+	return newRouterWithRepositories(
+		config,
+		databaseClient,
+		postgresPool,
+		redisClient,
+		applicationLogger,
+		authRepository,
+		refreshSessionRepository,
+		adminpostgres.NewDashboardStatsRepository(databaseClient),
+	)
+}
+
+func newRouterWithRepositories(
+	config Config,
+	databaseClient *ent.Client,
+	postgresPool *pgxpool.Pool,
+	redisClient *redisclient.Client,
+	applicationLogger *slog.Logger,
+	authRepository authdomain.VerifiedUserRepository,
+	refreshSessionRepository authdomain.RefreshSessionStore,
+	statsRepository admindomain.Repository,
 ) (*chi.Mux, *hub.Hub) {
 	verifier := security.NewTokenManager(config.JWTSecret)
 	adminAuthorizer := security.NewAdminAuthorizer(config.AdminUserIDs)
@@ -124,7 +148,7 @@ func newRouterWithUserRepository(
 	)
 
 	ridesRouter := ridehttp.NewRouter(ridesService, verifier)
-	adminRouter := adminhttp.NewRouter(adminapplication.NewDashboardStatsService(adminpostgres.NewDashboardStatsRepository(databaseClient)), verifier, adminAuthorizer)
+	adminRouter := adminhttp.NewRouter(adminapplication.NewDashboardStatsService(statsRepository), verifier, adminAuthorizer)
 	geoService := geoapplication.NewLocationTrackingService(
 		geo.NewDriverLocationStore(redisClient).WithLogger(applicationLogger),
 		geoapplication.WithRideAssignments(rideAssignments),
