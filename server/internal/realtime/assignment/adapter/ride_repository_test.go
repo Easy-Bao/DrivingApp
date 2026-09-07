@@ -1,10 +1,13 @@
 package adapter
 
 import (
+	"errors"
+	"fmt"
 	"testing"
 	"time"
 
 	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
+	"github.com/jackc/pgx/v5"
 )
 
 func TestCompletedRideCommunicationWindow(t *testing.T) {
@@ -24,5 +27,14 @@ func TestCompletedRideCommunicationWindow(t *testing.T) {
 	})
 	if !found || expiredAssignment.AllowsCommunication() {
 		t.Fatalf("expired assignment = %#v, found = %t", expiredAssignment, found)
+	}
+}
+
+func TestIsRideNotFoundRecognizesNativeDatabaseErrors(t *testing.T) {
+	if !isRideNotFound(fmt.Errorf("load ride: %w", pgx.ErrNoRows)) {
+		t.Fatal("expected wrapped PostgreSQL no-rows error to be classified as not found")
+	}
+	if isRideNotFound(errors.New("ride query failed")) {
+		t.Fatal("unexpected not-found classification for unrelated error")
 	}
 }

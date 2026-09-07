@@ -2,6 +2,7 @@ package adapter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/ent"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment"
 	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
+	"github.com/jackc/pgx/v5"
 )
 
 type RideRepository interface {
@@ -35,13 +37,17 @@ func (lookup *RideRepositoryLookup) ForRide(ctx context.Context, rideID string) 
 	}
 	ride, err := lookup.repository.Get(ctx, id)
 	if err != nil {
-		if ent.IsNotFound(err) {
+		if isRideNotFound(err) {
 			return assignment.Assignment{}, false, nil
 		}
 		return assignment.Assignment{}, false, fmt.Errorf("load ride assignment: %w", err)
 	}
 	value, ok := fromRide(ride)
 	return value, ok, nil
+}
+
+func isRideNotFound(err error) bool {
+	return ent.IsNotFound(err) || errors.Is(err, pgx.ErrNoRows)
 }
 
 func (lookup *RideRepositoryLookup) ForDriver(ctx context.Context, driverID string) ([]assignment.Assignment, error) {

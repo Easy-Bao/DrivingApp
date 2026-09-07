@@ -44,6 +44,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/hub"
 	ridepostgres "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/postgres"
 	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
+	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	ridehttp "github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/http"
 	userpostgres "github.com/Easy-Bao/DrivingApp/server/internal/user/adapter/postgres"
 	userapplication "github.com/Easy-Bao/DrivingApp/server/internal/user/application"
@@ -54,9 +55,15 @@ import (
 	redisclient "github.com/redis/go-redis/v9"
 )
 
+type ridePersistence interface {
+	ridedomain.Repository
+	ActiveRidesForDriver(context.Context, int) ([]ridedomain.Ride, error)
+}
+
 func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclient.Client, applicationLogger *slog.Logger) (*chi.Mux, *hub.Hub) {
 	privateObjectStore := storagepostgres.NewObjectStore(databaseClient)
 	profileRepository := userpostgres.NewProfileRepository(databaseClient, privateObjectStore).WithLogger(applicationLogger)
+	ridesRepository := ridepostgres.NewRideRepository(databaseClient, config.Pricing.PlatformCommissionBPS)
 	return newRouterWithRepositories(
 		config,
 		databaseClient,
@@ -65,6 +72,7 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 		applicationLogger,
 		authpostgres.NewUserRepository(databaseClient),
 		authpostgres.NewRefreshSessionRepository(databaseClient),
+		ridesRepository,
 		profileRepository,
 		adminpostgres.NewDashboardStatsRepository(databaseClient),
 		documentpostgres.NewDocumentRepository(databaseClient),
@@ -83,6 +91,7 @@ func newRouterWithUserRepository(
 ) (*chi.Mux, *hub.Hub) {
 	privateObjectStore := storagepostgres.NewObjectStore(databaseClient)
 	profileRepository := userpostgres.NewProfileRepository(databaseClient, privateObjectStore).WithLogger(applicationLogger)
+	ridesRepository := ridepostgres.NewRideRepository(databaseClient, config.Pricing.PlatformCommissionBPS)
 	return newRouterWithRepositories(
 		config,
 		databaseClient,
@@ -91,6 +100,7 @@ func newRouterWithUserRepository(
 		applicationLogger,
 		authRepository,
 		refreshSessionRepository,
+		ridesRepository,
 		profileRepository,
 		adminpostgres.NewDashboardStatsRepository(databaseClient),
 		documentpostgres.NewDocumentRepository(databaseClient),
@@ -106,6 +116,7 @@ func newRouterWithRepositories(
 	applicationLogger *slog.Logger,
 	authRepository authdomain.VerifiedUserRepository,
 	refreshSessionRepository authdomain.RefreshSessionStore,
+	ridesRepository ridePersistence,
 	profileRepository userdomain.Repository,
 	statsRepository admindomain.Repository,
 	documentRepository documentdomain.Repository,
@@ -146,7 +157,6 @@ func newRouterWithRepositories(
 		}
 		return rideapplication.RouteMetrics{DistanceKm: route.DistanceKm, DurationMinutes: route.DurationMin}, nil
 	})
-	ridesRepository := ridepostgres.NewRideRepository(databaseClient, config.Pricing.PlatformCommissionBPS)
 	eventHub := hub.NewHub()
 	assignmentProjection := assignmentadapter.NewMemoryProjection()
 	realtimePublisher := eventadapter.NewMemoryPublisher(assignmentProjection, eventHub)
