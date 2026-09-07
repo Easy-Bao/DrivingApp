@@ -89,6 +89,10 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
+	refreshSessionRepository, err := authpostgres.NewPostgresRefreshSessionRepository(postgresPool)
+	if err != nil {
+		return nil, err
+	}
 	router, eventHub := newRouterWithUserRepository(
 		config,
 		databaseClient,
@@ -96,6 +100,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 		redisClient,
 		applicationLogger,
 		authRepository,
+		refreshSessionRepository,
 	)
 	secureHandler := middleware.SecureHTTPWithIdempotency(
 		router,

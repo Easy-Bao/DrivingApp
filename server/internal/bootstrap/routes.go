@@ -58,6 +58,7 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 		redisClient,
 		applicationLogger,
 		authpostgres.NewUserRepository(databaseClient),
+		authpostgres.NewRefreshSessionRepository(databaseClient),
 	)
 }
 
@@ -68,12 +69,12 @@ func newRouterWithUserRepository(
 	redisClient *redisclient.Client,
 	applicationLogger *slog.Logger,
 	authRepository authdomain.VerifiedUserRepository,
+	refreshSessionRepository authdomain.RefreshSessionStore,
 ) (*chi.Mux, *hub.Hub) {
 	verifier := security.NewTokenManager(config.JWTSecret)
 	adminAuthorizer := security.NewAdminAuthorizer(config.AdminUserIDs)
 	privateObjectStore := storagepostgres.NewObjectStore(databaseClient)
 
-	refreshSessionRepository := authpostgres.NewRefreshSessionRepository(databaseClient)
 	registerService := authapplication.NewRegisterService(authRepository, verifier, refreshSessionRepository)
 	authenticateService := authapplication.NewAuthenticateService(authRepository, verifier, refreshSessionRepository).WithLogger(applicationLogger)
 	otpService := authapplication.NewOTPServiceWithPending(
