@@ -9,6 +9,9 @@ import (
 )
 
 type Querier interface {
+	CountDriverDocuments(ctx context.Context) (int64, error)
+	CountRides(ctx context.Context) (int64, error)
+	CountUsers(ctx context.Context) (int64, error)
 	CreateDriverProfile(ctx context.Context, arg CreateDriverProfileParams) error
 	CreatePassengerProfile(ctx context.Context, arg CreatePassengerProfileParams) error
 	CreateRefreshSession(ctx context.Context, arg CreateRefreshSessionParams) error

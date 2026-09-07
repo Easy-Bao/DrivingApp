@@ -8,6 +8,20 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type DriverDocument struct {
+	ID             int32              `db:"id"`
+	DriverID       int32              `db:"driver_id"`
+	DocumentType   string             `db:"document_type"`
+	StorageKey     string             `db:"storage_key"`
+	Status         string             `db:"status"`
+	ContentType    string             `db:"content_type"`
+	SizeBytes      int64              `db:"size_bytes"`
+	ChecksumSha256 string             `db:"checksum_sha256"`
+	CreatedAt      pgtype.Timestamptz `db:"created_at"`
+	ReviewedAt     pgtype.Timestamptz `db:"reviewed_at"`
+	ReviewedBy     pgtype.Int4        `db:"reviewed_by"`
+}
+
 type DriverProfile struct {
 	ID                    int32   `db:"id"`
 	UserID                int32   `db:"user_id"`
@@ -38,6 +52,34 @@ type RefreshSession struct {
 	CreatedAt  pgtype.Timestamptz `db:"created_at"`
 	LastUsedAt pgtype.Timestamptz `db:"last_used_at"`
 	RevokedAt  pgtype.Timestamptz `db:"revoked_at"`
+}
+
+type Ride struct {
+	ID                   int32              `db:"id"`
+	PassengerID          int32              `db:"passenger_id"`
+	DriverID             pgtype.Int4        `db:"driver_id"`
+	Status               string             `db:"status"`
+	FareCentavos         int64              `db:"fare_centavos"`
+	RideType             string             `db:"ride_type"`
+	PickupLatitude       pgtype.Float8      `db:"pickup_latitude"`
+	PickupLongitude      pgtype.Float8      `db:"pickup_longitude"`
+	PickupName           pgtype.Text        `db:"pickup_name"`
+	DropoffLatitude      pgtype.Float8      `db:"dropoff_latitude"`
+	DropoffLongitude     pgtype.Float8      `db:"dropoff_longitude"`
+	DropoffName          pgtype.Text        `db:"dropoff_name"`
+	DistanceKm           pgtype.Float8      `db:"distance_km"`
+	DurationMinutes      pgtype.Float8      `db:"duration_minutes"`
+	DriverName           pgtype.Text        `db:"driver_name"`
+	VehicleType          pgtype.Text        `db:"vehicle_type"`
+	PlateNumber          pgtype.Text        `db:"plate_number"`
+	DriverRating         pgtype.Float8      `db:"driver_rating"`
+	CreatedAt            pgtype.Timestamptz `db:"created_at"`
+	CompletedAt          pgtype.Timestamptz `db:"completed_at"`
+	PaymentStatus        string             `db:"payment_status"`
+	CashReceivedAt       pgtype.Timestamptz `db:"cash_received_at"`
+	CommissionBps        pgtype.Int8        `db:"commission_bps"`
+	CommissionCentavos   int64              `db:"commission_centavos"`
+	DriverPayoutCentavos int64              `db:"driver_payout_centavos"`
 }
 
 type User struct {
