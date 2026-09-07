@@ -11,6 +11,80 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const acceptRideFromRequest = `-- name: AcceptRideFromRequest :one
+UPDATE rides
+SET status = 'accepted',
+    driver_id = $2,
+    driver_name = $3,
+    vehicle_type = $4,
+    plate_number = $5,
+    commission_bps = $6,
+    commission_centavos = $7,
+    driver_payout_centavos = $8
+WHERE id = $1
+  AND status = 'requested'
+RETURNING id, passenger_id, driver_id, status, fare_centavos, ride_type,
+    pickup_latitude, pickup_longitude, pickup_name,
+    dropoff_latitude, dropoff_longitude, dropoff_name,
+    distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
+    driver_rating, created_at, completed_at, payment_status,
+    cash_received_at, commission_bps, commission_centavos,
+    driver_payout_centavos
+`
+
+type AcceptRideFromRequestParams struct {
+	ID                   int32       `db:"id"`
+	DriverID             pgtype.Int4 `db:"driver_id"`
+	DriverName           pgtype.Text `db:"driver_name"`
+	VehicleType          pgtype.Text `db:"vehicle_type"`
+	PlateNumber          pgtype.Text `db:"plate_number"`
+	CommissionBps        pgtype.Int8 `db:"commission_bps"`
+	CommissionCentavos   int64       `db:"commission_centavos"`
+	DriverPayoutCentavos int64       `db:"driver_payout_centavos"`
+}
+
+func (q *Queries) AcceptRideFromRequest(ctx context.Context, arg AcceptRideFromRequestParams) (Ride, error) {
+	row := q.db.QueryRow(ctx, acceptRideFromRequest,
+		arg.ID,
+		arg.DriverID,
+		arg.DriverName,
+		arg.VehicleType,
+		arg.PlateNumber,
+		arg.CommissionBps,
+		arg.CommissionCentavos,
+		arg.DriverPayoutCentavos,
+	)
+	var i Ride
+	err := row.Scan(
+		&i.ID,
+		&i.PassengerID,
+		&i.DriverID,
+		&i.Status,
+		&i.FareCentavos,
+		&i.RideType,
+		&i.PickupLatitude,
+		&i.PickupLongitude,
+		&i.PickupName,
+		&i.DropoffLatitude,
+		&i.DropoffLongitude,
+		&i.DropoffName,
+		&i.DistanceKm,
+		&i.DurationMinutes,
+		&i.DriverName,
+		&i.VehicleType,
+		&i.PlateNumber,
+		&i.DriverRating,
+		&i.CreatedAt,
+		&i.CompletedAt,
+		&i.PaymentStatus,
+		&i.CashReceivedAt,
+		&i.CommissionBps,
+		&i.CommissionCentavos,
+		&i.DriverPayoutCentavos,
+	)
+	return i, err
+}
+
 const assignRideFromAcceptance = `-- name: AssignRideFromAcceptance :one
 UPDATE rides
 SET status = 'assigned',

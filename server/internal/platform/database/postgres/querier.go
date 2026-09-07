@@ -11,6 +11,7 @@ import (
 )
 
 type Querier interface {
+	AcceptRideFromRequest(ctx context.Context, arg AcceptRideFromRequestParams) (Ride, error)
 	AssignRideFromAcceptance(ctx context.Context, arg AssignRideFromAcceptanceParams) (Ride, error)
 	CancelBidSession(ctx context.Context, arg CancelBidSessionParams) (BidSession, error)
 	CountActiveRidesForAcceptance(ctx context.Context, driverID pgtype.Int4) (int64, error)
