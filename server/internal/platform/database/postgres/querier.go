@@ -25,12 +25,17 @@ type Querier interface {
 	CreateBidSession(ctx context.Context, arg CreateBidSessionParams) (BidSession, error)
 	CreateDriverDocument(ctx context.Context, arg CreateDriverDocumentParams) (DriverDocument, error)
 	CreateDriverProfile(ctx context.Context, arg CreateDriverProfileParams) error
+	CreateDriverWalletAccount(ctx context.Context, arg CreateDriverWalletAccountParams) (DriverWalletAccount, error)
 	CreatePassengerProfile(ctx context.Context, arg CreatePassengerProfileParams) error
 	CreatePrivateObject(ctx context.Context, arg CreatePrivateObjectParams) error
 	CreateRefreshSession(ctx context.Context, arg CreateRefreshSessionParams) error
 	CreateRide(ctx context.Context, arg CreateRideParams) (Ride, error)
 	CreateRideSettlement(ctx context.Context, arg CreateRideSettlementParams) error
+	CreateRideSettlementForCash(ctx context.Context, arg CreateRideSettlementForCashParams) (RideSettlement, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	CreateWalletLedger(ctx context.Context, arg CreateWalletLedgerParams) error
+	CreditDriverProfileWallet(ctx context.Context, arg CreditDriverProfileWalletParams) error
+	CreditDriverWalletAccount(ctx context.Context, arg CreditDriverWalletAccountParams) (DriverWalletAccount, error)
 	DeleteNotification(ctx context.Context, arg DeleteNotificationParams) (int64, error)
 	DeletePrivateObjectByStorageKey(ctx context.Context, storageKey string) error
 	ExpireBidSessions(ctx context.Context, arg ExpireBidSessionsParams) error
@@ -40,12 +45,14 @@ type Querier interface {
 	GetDriverDocumentByID(ctx context.Context, id int32) (DriverDocument, error)
 	GetDriverProfileByUserID(ctx context.Context, userID int32) (GetDriverProfileByUserIDRow, error)
 	GetDriverProfileByUserIDFull(ctx context.Context, userID int32) (DriverProfile, error)
+	GetDriverWalletAccountForUpdate(ctx context.Context, driverID int32) (DriverWalletAccount, error)
 	GetOnlineDriverProfileForBidding(ctx context.Context, userID int32) (DriverProfile, error)
 	GetPassengerProfileByUserID(ctx context.Context, userID int32) (GetPassengerProfileByUserIDRow, error)
 	GetPassengerProfileByUserIDFull(ctx context.Context, userID int32) (PassengerProfile, error)
 	GetPendingBidOffer(ctx context.Context, arg GetPendingBidOfferParams) (BidOffer, error)
 	GetPrivateObjectByStorageKey(ctx context.Context, storageKey string) (GetPrivateObjectByStorageKeyRow, error)
 	GetRideByID(ctx context.Context, id int32) (Ride, error)
+	GetRideSettlementByRideID(ctx context.Context, rideID int32) (RideSettlement, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id int32) (User, error)
 	HasActiveBidSession(ctx context.Context, arg HasActiveBidSessionParams) (bool, error)
@@ -60,6 +67,7 @@ type Querier interface {
 	ListNotifications(ctx context.Context, arg ListNotificationsParams) ([]Notification, error)
 	ListTargetedActiveBidSessions(ctx context.Context, arg ListTargetedActiveBidSessionsParams) ([]BidSession, error)
 	LockActiveBidSessionForOffer(ctx context.Context, arg LockActiveBidSessionForOfferParams) (BidSession, error)
+	LockCompletedRideForCashSettlement(ctx context.Context, arg LockCompletedRideForCashSettlementParams) (Ride, error)
 	LockOnlineDriverProfileForBidding(ctx context.Context, userID int32) (DriverProfile, error)
 	LockPendingBidForAcceptance(ctx context.Context, arg LockPendingBidForAcceptanceParams) (Bid, error)
 	LockPendingBidOfferForAcceptance(ctx context.Context, arg LockPendingBidOfferForAcceptanceParams) (BidOffer, error)
@@ -69,6 +77,8 @@ type Querier interface {
 	MarkBidAccepted(ctx context.Context, id int32) (Bid, error)
 	MarkBidOfferAccepted(ctx context.Context, id int32) (BidOffer, error)
 	MarkBidSessionAccepted(ctx context.Context, arg MarkBidSessionAcceptedParams) (BidSession, error)
+	MarkRidePaidFromSettlement(ctx context.Context, arg MarkRidePaidFromSettlementParams) (Ride, error)
+	MarkRideSettlementPaid(ctx context.Context, arg MarkRideSettlementPaidParams) (RideSettlement, error)
 	MarkUserVerified(ctx context.Context, id int32) (int64, error)
 	RejectBidOffer(ctx context.Context, id int32) (BidOffer, error)
 	RejectOtherPendingBidOffers(ctx context.Context, arg RejectOtherPendingBidOffersParams) error
@@ -79,6 +89,7 @@ type Querier interface {
 	UpdateDriverProfile(ctx context.Context, arg UpdateDriverProfileParams) (DriverProfile, error)
 	UpdatePassengerAvatar(ctx context.Context, arg UpdatePassengerAvatarParams) (int64, error)
 	UpdatePassengerProfile(ctx context.Context, arg UpdatePassengerProfileParams) (PassengerProfile, error)
+	UpdateRideSettlementEconomics(ctx context.Context, arg UpdateRideSettlementEconomicsParams) (RideSettlement, error)
 	UpdateRideStatus(ctx context.Context, arg UpdateRideStatusParams) (Ride, error)
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) (int64, error)
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error)
