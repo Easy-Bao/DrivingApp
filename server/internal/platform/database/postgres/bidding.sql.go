@@ -518,6 +518,50 @@ func (q *Queries) ListTargetedActiveBidSessions(ctx context.Context, arg ListTar
 	return items, nil
 }
 
+const lockActiveBidSessionForOffer = `-- name: LockActiveBidSessionForOffer :one
+SELECT id, passenger_id, ride_type, pickup_latitude, pickup_longitude,
+    pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
+    passenger_note, distance_km, duration_minutes, offered_fare_centavos,
+    status, target_driver_id, accepted_driver_id, expires_at, created_at
+FROM bid_sessions
+WHERE id = $1
+  AND status = 'open'
+  AND expires_at > $2
+LIMIT 1
+FOR UPDATE
+`
+
+type LockActiveBidSessionForOfferParams struct {
+	ID        int32              `db:"id"`
+	ExpiresAt pgtype.Timestamptz `db:"expires_at"`
+}
+
+func (q *Queries) LockActiveBidSessionForOffer(ctx context.Context, arg LockActiveBidSessionForOfferParams) (BidSession, error) {
+	row := q.db.QueryRow(ctx, lockActiveBidSessionForOffer, arg.ID, arg.ExpiresAt)
+	var i BidSession
+	err := row.Scan(
+		&i.ID,
+		&i.PassengerID,
+		&i.RideType,
+		&i.PickupLatitude,
+		&i.PickupLongitude,
+		&i.PickupName,
+		&i.DropoffLatitude,
+		&i.DropoffLongitude,
+		&i.DropoffName,
+		&i.PassengerNote,
+		&i.DistanceKm,
+		&i.DurationMinutes,
+		&i.OfferedFareCentavos,
+		&i.Status,
+		&i.TargetDriverID,
+		&i.AcceptedDriverID,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const lockOnlineDriverProfileForBidding = `-- name: LockOnlineDriverProfileForBidding :one
 SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online,
     wallet_balance_centavos
