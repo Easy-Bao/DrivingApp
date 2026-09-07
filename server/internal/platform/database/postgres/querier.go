@@ -11,6 +11,7 @@ import (
 )
 
 type Querier interface {
+	AssignRideFromAcceptance(ctx context.Context, arg AssignRideFromAcceptanceParams) (Ride, error)
 	CancelBidSession(ctx context.Context, arg CancelBidSessionParams) (BidSession, error)
 	CountActiveRidesForDriver(ctx context.Context, driverID pgtype.Int4) (int64, error)
 	CountDriverDocuments(ctx context.Context) (int64, error)
@@ -25,6 +26,7 @@ type Querier interface {
 	CreatePrivateObject(ctx context.Context, arg CreatePrivateObjectParams) error
 	CreateRefreshSession(ctx context.Context, arg CreateRefreshSessionParams) error
 	CreateRide(ctx context.Context, arg CreateRideParams) (Ride, error)
+	CreateRideSettlement(ctx context.Context, arg CreateRideSettlementParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteNotification(ctx context.Context, arg DeleteNotificationParams) (int64, error)
 	DeletePrivateObjectByStorageKey(ctx context.Context, storageKey string) error
@@ -56,8 +58,11 @@ type Querier interface {
 	ListTargetedActiveBidSessions(ctx context.Context, arg ListTargetedActiveBidSessionsParams) ([]BidSession, error)
 	LockActiveBidSessionForOffer(ctx context.Context, arg LockActiveBidSessionForOfferParams) (BidSession, error)
 	LockOnlineDriverProfileForBidding(ctx context.Context, userID int32) (DriverProfile, error)
+	LockPendingBidForAcceptance(ctx context.Context, arg LockPendingBidForAcceptanceParams) (Bid, error)
+	LockRequestedRideForAcceptance(ctx context.Context, id int32) (Ride, error)
 	LockRequestedRideForBid(ctx context.Context, id int32) (int32, error)
 	LockUserForBidSession(ctx context.Context, id int32) (int32, error)
+	MarkBidAccepted(ctx context.Context, id int32) (Bid, error)
 	MarkUserVerified(ctx context.Context, id int32) (int64, error)
 	RejectBidOffer(ctx context.Context, id int32) (BidOffer, error)
 	ReviewDriverDocument(ctx context.Context, arg ReviewDriverDocumentParams) (DriverDocument, error)
