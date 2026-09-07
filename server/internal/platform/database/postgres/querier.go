@@ -6,6 +6,8 @@ package postgres
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
@@ -28,8 +30,10 @@ type Querier interface {
 	GetPassengerProfileByUserID(ctx context.Context, userID int32) (GetPassengerProfileByUserIDRow, error)
 	GetPassengerProfileByUserIDFull(ctx context.Context, userID int32) (PassengerProfile, error)
 	GetPrivateObjectByStorageKey(ctx context.Context, storageKey string) (GetPrivateObjectByStorageKeyRow, error)
+	GetRideByID(ctx context.Context, id int32) (Ride, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id int32) (User, error)
+	ListActiveRidesForDriver(ctx context.Context, driverID pgtype.Int4) ([]Ride, error)
 	ListDriverDocumentsByDriverID(ctx context.Context, arg ListDriverDocumentsByDriverIDParams) ([]DriverDocument, error)
 	ListDriverDocumentsForReview(ctx context.Context, arg ListDriverDocumentsForReviewParams) ([]DriverDocument, error)
 	ListNotifications(ctx context.Context, arg ListNotificationsParams) ([]Notification, error)
