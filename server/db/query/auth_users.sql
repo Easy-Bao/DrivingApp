@@ -3,12 +3,12 @@ INSERT INTO users (name, phone, email, password_hash, role, is_verified)
 VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING id, name, phone, email, password_hash, role, is_verified;
 
--- name: MarkUserVerified :exec
+-- name: MarkUserVerified :execrows
 UPDATE users
 SET is_verified = true
 WHERE id = $1;
 
--- name: UpdateUserPassword :exec
+-- name: UpdateUserPassword :execrows
 UPDATE users
 SET password_hash = $2
 WHERE id = $1;

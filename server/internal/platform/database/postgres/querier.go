@@ -16,8 +16,8 @@ type Querier interface {
 	GetPassengerProfileByUserID(ctx context.Context, userID int32) (GetPassengerProfileByUserIDRow, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id int32) (User, error)
-	MarkUserVerified(ctx context.Context, id int32) error
-	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
+	MarkUserVerified(ctx context.Context, id int32) (int64, error)
+	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) (int64, error)
 }
 
 var _ Querier = (*Queries)(nil)

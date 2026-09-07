@@ -125,18 +125,21 @@ func (q *Queries) GetPassengerProfileByUserID(ctx context.Context, userID int32)
 	return i, err
 }
 
-const markUserVerified = `-- name: MarkUserVerified :exec
+const markUserVerified = `-- name: MarkUserVerified :execrows
 UPDATE users
 SET is_verified = true
 WHERE id = $1
 `
 
-func (q *Queries) MarkUserVerified(ctx context.Context, id int32) error {
-	_, err := q.db.Exec(ctx, markUserVerified, id)
-	return err
+func (q *Queries) MarkUserVerified(ctx context.Context, id int32) (int64, error) {
+	result, err := q.db.Exec(ctx, markUserVerified, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
-const updateUserPassword = `-- name: UpdateUserPassword :exec
+const updateUserPassword = `-- name: UpdateUserPassword :execrows
 UPDATE users
 SET password_hash = $2
 WHERE id = $1
@@ -147,7 +150,10 @@ type UpdateUserPasswordParams struct {
 	PasswordHash string `db:"password_hash"`
 }
 
-func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error {
-	_, err := q.db.Exec(ctx, updateUserPassword, arg.ID, arg.PasswordHash)
-	return err
+func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateUserPassword, arg.ID, arg.PasswordHash)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
