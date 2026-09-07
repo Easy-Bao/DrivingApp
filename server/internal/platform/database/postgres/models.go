@@ -8,6 +8,28 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type DriverProfile struct {
+	ID                    int32   `db:"id"`
+	UserID                int32   `db:"user_id"`
+	Name                  string  `db:"name"`
+	VehicleType           string  `db:"vehicle_type"`
+	PlateNumber           string  `db:"plate_number"`
+	Rating                float64 `db:"rating"`
+	IsOnline              bool    `db:"is_online"`
+	WalletBalanceCentavos int64   `db:"wallet_balance_centavos"`
+}
+
+type PassengerProfile struct {
+	ID                int32       `db:"id"`
+	UserID            int32       `db:"user_id"`
+	Name              string      `db:"name"`
+	Address           pgtype.Text `db:"address"`
+	Gender            string      `db:"gender"`
+	AvatarStorageKey  pgtype.Text `db:"avatar_storage_key"`
+	AvatarContentType pgtype.Text `db:"avatar_content_type"`
+	PreferredRideType pgtype.Text `db:"preferred_ride_type"`
+}
+
 type User struct {
 	ID           int32       `db:"id"`
 	Name         pgtype.Text `db:"name"`

@@ -9,8 +9,15 @@ import (
 )
 
 type Querier interface {
+	CreateDriverProfile(ctx context.Context, arg CreateDriverProfileParams) error
+	CreatePassengerProfile(ctx context.Context, arg CreatePassengerProfileParams) error
+	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	GetDriverProfileByUserID(ctx context.Context, userID int32) (GetDriverProfileByUserIDRow, error)
+	GetPassengerProfileByUserID(ctx context.Context, userID int32) (GetPassengerProfileByUserIDRow, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id int32) (User, error)
+	MarkUserVerified(ctx context.Context, id int32) error
+	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 }
 
 var _ Querier = (*Queries)(nil)
