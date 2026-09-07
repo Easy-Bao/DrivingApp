@@ -44,6 +44,16 @@ type PassengerProfile struct {
 	PreferredRideType pgtype.Text `db:"preferred_ride_type"`
 }
 
+type PrivateObject struct {
+	ID             int32              `db:"id"`
+	StorageKey     string             `db:"storage_key"`
+	Content        []byte             `db:"content"`
+	ContentType    string             `db:"content_type"`
+	SizeBytes      int64              `db:"size_bytes"`
+	ChecksumSha256 string             `db:"checksum_sha256"`
+	CreatedAt      pgtype.Timestamptz `db:"created_at"`
+}
+
 type RefreshSession struct {
 	ID         int32              `db:"id"`
 	UserID     int32              `db:"user_id"`

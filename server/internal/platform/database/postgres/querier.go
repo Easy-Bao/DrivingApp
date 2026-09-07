@@ -15,13 +15,16 @@ type Querier interface {
 	CreateDriverDocument(ctx context.Context, arg CreateDriverDocumentParams) (DriverDocument, error)
 	CreateDriverProfile(ctx context.Context, arg CreateDriverProfileParams) error
 	CreatePassengerProfile(ctx context.Context, arg CreatePassengerProfileParams) error
+	CreatePrivateObject(ctx context.Context, arg CreatePrivateObjectParams) error
 	CreateRefreshSession(ctx context.Context, arg CreateRefreshSessionParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	DeletePrivateObjectByStorageKey(ctx context.Context, storageKey string) error
 	GetActiveRefreshSession(ctx context.Context, arg GetActiveRefreshSessionParams) (GetActiveRefreshSessionRow, error)
 	GetActiveRefreshSessionForUpdate(ctx context.Context, arg GetActiveRefreshSessionForUpdateParams) (GetActiveRefreshSessionForUpdateRow, error)
 	GetDriverDocumentByID(ctx context.Context, id int32) (DriverDocument, error)
 	GetDriverProfileByUserID(ctx context.Context, userID int32) (GetDriverProfileByUserIDRow, error)
 	GetPassengerProfileByUserID(ctx context.Context, userID int32) (GetPassengerProfileByUserIDRow, error)
+	GetPrivateObjectByStorageKey(ctx context.Context, storageKey string) (GetPrivateObjectByStorageKeyRow, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id int32) (User, error)
 	ListDriverDocumentsByDriverID(ctx context.Context, arg ListDriverDocumentsByDriverIDParams) ([]DriverDocument, error)
