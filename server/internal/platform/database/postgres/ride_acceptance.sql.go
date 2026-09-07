@@ -85,6 +85,20 @@ func (q *Queries) AssignRideFromAcceptance(ctx context.Context, arg AssignRideFr
 	return i, err
 }
 
+const countActiveRidesForAcceptance = `-- name: CountActiveRidesForAcceptance :one
+SELECT count(*)
+FROM rides
+WHERE driver_id = $1
+  AND status IN ('requested', 'assigned', 'accepted', 'arrived', 'in_transit')
+`
+
+func (q *Queries) CountActiveRidesForAcceptance(ctx context.Context, driverID pgtype.Int4) (int64, error) {
+	row := q.db.QueryRow(ctx, countActiveRidesForAcceptance, driverID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createRideSettlement = `-- name: CreateRideSettlement :exec
 INSERT INTO ride_settlements (
     ride_id, gross_fare_centavos, commission_bps, commission_centavos,

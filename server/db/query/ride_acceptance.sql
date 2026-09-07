@@ -28,6 +28,12 @@ WHERE id = $1
 LIMIT 1
 FOR UPDATE;
 
+-- name: CountActiveRidesForAcceptance :one
+SELECT count(*)
+FROM rides
+WHERE driver_id = $1
+  AND status IN ('requested', 'assigned', 'accepted', 'arrived', 'in_transit');
+
 -- name: AssignRideFromAcceptance :one
 UPDATE rides
 SET status = 'assigned',

@@ -13,6 +13,7 @@ import (
 type Querier interface {
 	AssignRideFromAcceptance(ctx context.Context, arg AssignRideFromAcceptanceParams) (Ride, error)
 	CancelBidSession(ctx context.Context, arg CancelBidSessionParams) (BidSession, error)
+	CountActiveRidesForAcceptance(ctx context.Context, driverID pgtype.Int4) (int64, error)
 	CountActiveRidesForDriver(ctx context.Context, driverID pgtype.Int4) (int64, error)
 	CountDriverDocuments(ctx context.Context) (int64, error)
 	CountRides(ctx context.Context) (int64, error)
