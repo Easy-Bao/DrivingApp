@@ -8,6 +8,47 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Bid struct {
+	ID                  int32  `db:"id"`
+	RideID              int32  `db:"ride_id"`
+	DriverID            int32  `db:"driver_id"`
+	OfferedFareCentavos int64  `db:"offered_fare_centavos"`
+	Status              string `db:"status"`
+}
+
+type BidOffer struct {
+	ID                   int32              `db:"id"`
+	SessionID            int32              `db:"session_id"`
+	DriverID             int32              `db:"driver_id"`
+	DriverName           pgtype.Text        `db:"driver_name"`
+	PlateNumber          pgtype.Text        `db:"plate_number"`
+	VehicleType          pgtype.Text        `db:"vehicle_type"`
+	ProposedFareCentavos int64              `db:"proposed_fare_centavos"`
+	Status               string             `db:"status"`
+	CreatedAt            pgtype.Timestamptz `db:"created_at"`
+}
+
+type BidSession struct {
+	ID                  int32              `db:"id"`
+	PassengerID         int32              `db:"passenger_id"`
+	RideType            string             `db:"ride_type"`
+	PickupLatitude      float64            `db:"pickup_latitude"`
+	PickupLongitude     float64            `db:"pickup_longitude"`
+	PickupName          string             `db:"pickup_name"`
+	DropoffLatitude     float64            `db:"dropoff_latitude"`
+	DropoffLongitude    float64            `db:"dropoff_longitude"`
+	DropoffName         string             `db:"dropoff_name"`
+	PassengerNote       pgtype.Text        `db:"passenger_note"`
+	DistanceKm          float64            `db:"distance_km"`
+	DurationMinutes     float64            `db:"duration_minutes"`
+	OfferedFareCentavos int64              `db:"offered_fare_centavos"`
+	Status              string             `db:"status"`
+	TargetDriverID      pgtype.Int4        `db:"target_driver_id"`
+	AcceptedDriverID    pgtype.Int4        `db:"accepted_driver_id"`
+	ExpiresAt           pgtype.Timestamptz `db:"expires_at"`
+	CreatedAt           pgtype.Timestamptz `db:"created_at"`
+}
+
 type DriverDocument struct {
 	ID             int32              `db:"id"`
 	DriverID       int32              `db:"driver_id"`
