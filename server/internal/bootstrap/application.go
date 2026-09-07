@@ -9,16 +9,19 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/ent"
+	authpostgres "github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/logger"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	platformmigration "github.com/Easy-Bao/DrivingApp/server/internal/platform/migration"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/hub"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Application struct {
 	server         *http.Server
 	databaseClient *ent.Client
+	postgresPool   *pgxpool.Pool
 	redisClient    redisClient
 	eventHub       *hub.Hub
 	logger         *slog.Logger
@@ -55,6 +58,21 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 		return nil, fmt.Errorf("database schema is not ready: %w", err)
 	}
 
+	postgresPool, err := database.OpenPostgresPoolWithContext(
+		ctx,
+		config.DatabaseURL,
+		database.PostgresNativePoolConfigFromEnv(),
+	)
+	if err != nil {
+		return nil, err
+	}
+	closePostgresPool := true
+	defer func() {
+		if closePostgresPool {
+			postgresPool.Close()
+		}
+	}()
+
 	redisClient, err := database.OpenRedisWithContext(ctx, config.RedisURL)
 	if err != nil {
 		return nil, err
@@ -67,7 +85,18 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	}()
 
 	applicationLogger := logger.New(serviceName)
-	router, eventHub := newRouter(config, databaseClient, redisClient, applicationLogger)
+	authRepository, err := authpostgres.NewPostgresUserRepository(postgresPool)
+	if err != nil {
+		return nil, err
+	}
+	router, eventHub := newRouterWithUserRepository(
+		config,
+		databaseClient,
+		postgresPool,
+		redisClient,
+		applicationLogger,
+		authRepository,
+	)
 	secureHandler := middleware.SecureHTTPWithIdempotency(
 		router,
 		config.Security,
@@ -86,12 +115,14 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 			IdleTimeout:       60 * time.Second,
 		},
 		databaseClient: databaseClient,
+		postgresPool:   postgresPool,
 		redisClient:    redisClient,
 		eventHub:       eventHub,
 		logger:         applicationLogger,
 	}
 	application.server.RegisterOnShutdown(eventHub.Close)
 	closeDatabase = false
+	closePostgresPool = false
 	closeRedis = false
 	return application, nil
 }
@@ -137,6 +168,9 @@ func (application *Application) close() {
 	}
 	if application.databaseClient != nil {
 		_ = application.databaseClient.Close()
+	}
+	if application.postgresPool != nil {
+		application.postgresPool.Close()
 	}
 	if application.redisClient != nil {
 		_ = application.redisClient.Close()

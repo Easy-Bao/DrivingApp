@@ -9,10 +9,11 @@ import (
 	platformmigration "github.com/Easy-Bao/DrivingApp/server/internal/platform/migration"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	redisclient "github.com/redis/go-redis/v9"
 )
 
-func registerHealthRoutes(router chi.Router, databaseClient *ent.Client, redisClient *redisclient.Client) {
+func registerHealthRoutes(router chi.Router, databaseClient *ent.Client, redisClient *redisclient.Client, postgresPool *pgxpool.Pool) {
 	router.Get("/health", func(writer http.ResponseWriter, _ *http.Request) {
 		response.JSON(writer, http.StatusOK, map[string]string{
 			"status":  "ok",
@@ -25,6 +26,12 @@ func registerHealthRoutes(router chi.Router, databaseClient *ent.Client, redisCl
 		if err := platformmigration.ValidateEntSchema(checkContext, databaseClient); err != nil {
 			writeReadinessResponse(writer, http.StatusServiceUnavailable, false)
 			return
+		}
+		if postgresPool != nil {
+			if err := postgresPool.Ping(checkContext); err != nil {
+				writeReadinessResponse(writer, http.StatusServiceUnavailable, false)
+				return
+			}
 		}
 		if err := redisClient.Ping(checkContext).Err(); err != nil {
 			writeReadinessResponse(writer, http.StatusServiceUnavailable, false)

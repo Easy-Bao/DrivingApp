@@ -12,6 +12,7 @@ import (
 	authpostgres "github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/postgres"
 	authredis "github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/redis"
 	authapplication "github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
+	authdomain "github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/auth/transport/http"
 	documentpostgres "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/adapter/postgres"
 	documentapplication "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/application"
@@ -45,15 +46,33 @@ import (
 	userapplication "github.com/Easy-Bao/DrivingApp/server/internal/user/application"
 	userhttp "github.com/Easy-Bao/DrivingApp/server/internal/user/transport/http"
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	redisclient "github.com/redis/go-redis/v9"
 )
 
 func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclient.Client, applicationLogger *slog.Logger) (*chi.Mux, *hub.Hub) {
+	return newRouterWithUserRepository(
+		config,
+		databaseClient,
+		nil,
+		redisClient,
+		applicationLogger,
+		authpostgres.NewUserRepository(databaseClient),
+	)
+}
+
+func newRouterWithUserRepository(
+	config Config,
+	databaseClient *ent.Client,
+	postgresPool *pgxpool.Pool,
+	redisClient *redisclient.Client,
+	applicationLogger *slog.Logger,
+	authRepository authdomain.VerifiedUserRepository,
+) (*chi.Mux, *hub.Hub) {
 	verifier := security.NewTokenManager(config.JWTSecret)
 	adminAuthorizer := security.NewAdminAuthorizer(config.AdminUserIDs)
 	privateObjectStore := storagepostgres.NewObjectStore(databaseClient)
 
-	authRepository := authpostgres.NewUserRepository(databaseClient)
 	refreshSessionRepository := authpostgres.NewRefreshSessionRepository(databaseClient)
 	registerService := authapplication.NewRegisterService(authRepository, verifier, refreshSessionRepository)
 	authenticateService := authapplication.NewAuthenticateService(authRepository, verifier, refreshSessionRepository).WithLogger(applicationLogger)
@@ -147,7 +166,7 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 	router.Handle(api.V1Prefix+"/realtime/ws", hub.NewHandler(eventHub, verifier, config.Security.AllowedOrigins))
 	geoh.NewRouter(geoService, verifier).RegisterRoutes(router)
 	chath.NewRouter(chatService, verifier).RegisterRoutes(router)
-	registerHealthRoutes(router, databaseClient, redisClient)
+	registerHealthRoutes(router, databaseClient, redisClient, postgresPool)
 
 	return router, eventHub
 }
