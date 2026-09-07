@@ -29,6 +29,7 @@ import (
 	passengerridecontexthttp "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ride_context/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
+	platformstorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage"
 	storagepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment"
 	assignmentadapter "github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment/adapter"
@@ -63,6 +64,7 @@ func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclie
 		authpostgres.NewRefreshSessionRepository(databaseClient),
 		adminpostgres.NewDashboardStatsRepository(databaseClient),
 		documentpostgres.NewDocumentRepository(databaseClient),
+		storagepostgres.NewObjectStore(databaseClient),
 	)
 }
 
@@ -85,6 +87,7 @@ func newRouterWithUserRepository(
 		refreshSessionRepository,
 		adminpostgres.NewDashboardStatsRepository(databaseClient),
 		documentpostgres.NewDocumentRepository(databaseClient),
+		storagepostgres.NewObjectStore(databaseClient),
 	)
 }
 
@@ -98,10 +101,10 @@ func newRouterWithRepositories(
 	refreshSessionRepository authdomain.RefreshSessionStore,
 	statsRepository admindomain.Repository,
 	documentRepository documentdomain.Repository,
+	privateObjectStore platformstorage.ObjectStore,
 ) (*chi.Mux, *hub.Hub) {
 	verifier := security.NewTokenManager(config.JWTSecret)
 	adminAuthorizer := security.NewAdminAuthorizer(config.AdminUserIDs)
-	privateObjectStore := storagepostgres.NewObjectStore(databaseClient)
 
 	registerService := authapplication.NewRegisterService(authRepository, verifier, refreshSessionRepository)
 	authenticateService := authapplication.NewAuthenticateService(authRepository, verifier, refreshSessionRepository).WithLogger(applicationLogger)

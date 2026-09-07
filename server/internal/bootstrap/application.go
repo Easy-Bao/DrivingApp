@@ -16,6 +16,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/logger"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	platformmigration "github.com/Easy-Bao/DrivingApp/server/internal/platform/migration"
+	storagepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/hub"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -103,6 +104,10 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
+	privateObjectStore, err := storagepostgres.NewPostgresObjectStore(postgresPool)
+	if err != nil {
+		return nil, err
+	}
 	router, eventHub := newRouterWithRepositories(
 		config,
 		databaseClient,
@@ -113,6 +118,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 		refreshSessionRepository,
 		dashboardStatsRepository,
 		documentRepository,
+		privateObjectStore,
 	)
 	secureHandler := middleware.SecureHTTPWithIdempotency(
 		router,
