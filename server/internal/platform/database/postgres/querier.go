@@ -79,6 +79,7 @@ type Querier interface {
 	UpdateDriverProfile(ctx context.Context, arg UpdateDriverProfileParams) (DriverProfile, error)
 	UpdatePassengerAvatar(ctx context.Context, arg UpdatePassengerAvatarParams) (int64, error)
 	UpdatePassengerProfile(ctx context.Context, arg UpdatePassengerProfileParams) (PassengerProfile, error)
+	UpdateRideStatus(ctx context.Context, arg UpdateRideStatusParams) (Ride, error)
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) (int64, error)
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error)
 }
