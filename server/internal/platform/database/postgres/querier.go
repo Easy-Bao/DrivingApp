@@ -18,23 +18,31 @@ type Querier interface {
 	CreatePrivateObject(ctx context.Context, arg CreatePrivateObjectParams) error
 	CreateRefreshSession(ctx context.Context, arg CreateRefreshSessionParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	DeleteNotification(ctx context.Context, arg DeleteNotificationParams) (int64, error)
 	DeletePrivateObjectByStorageKey(ctx context.Context, storageKey string) error
 	GetActiveRefreshSession(ctx context.Context, arg GetActiveRefreshSessionParams) (GetActiveRefreshSessionRow, error)
 	GetActiveRefreshSessionForUpdate(ctx context.Context, arg GetActiveRefreshSessionForUpdateParams) (GetActiveRefreshSessionForUpdateRow, error)
 	GetDriverDocumentByID(ctx context.Context, id int32) (DriverDocument, error)
 	GetDriverProfileByUserID(ctx context.Context, userID int32) (GetDriverProfileByUserIDRow, error)
+	GetDriverProfileByUserIDFull(ctx context.Context, userID int32) (DriverProfile, error)
 	GetPassengerProfileByUserID(ctx context.Context, userID int32) (GetPassengerProfileByUserIDRow, error)
+	GetPassengerProfileByUserIDFull(ctx context.Context, userID int32) (PassengerProfile, error)
 	GetPrivateObjectByStorageKey(ctx context.Context, storageKey string) (GetPrivateObjectByStorageKeyRow, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id int32) (User, error)
 	ListDriverDocumentsByDriverID(ctx context.Context, arg ListDriverDocumentsByDriverIDParams) ([]DriverDocument, error)
 	ListDriverDocumentsForReview(ctx context.Context, arg ListDriverDocumentsForReviewParams) ([]DriverDocument, error)
+	ListNotifications(ctx context.Context, arg ListNotificationsParams) ([]Notification, error)
 	MarkUserVerified(ctx context.Context, id int32) (int64, error)
 	ReviewDriverDocument(ctx context.Context, arg ReviewDriverDocumentParams) (DriverDocument, error)
 	RevokeRefreshSession(ctx context.Context, arg RevokeRefreshSessionParams) error
 	RevokeRefreshSessionByID(ctx context.Context, arg RevokeRefreshSessionByIDParams) (int64, error)
 	RevokeUserRefreshSessions(ctx context.Context, arg RevokeUserRefreshSessionsParams) error
+	UpdateDriverProfile(ctx context.Context, arg UpdateDriverProfileParams) (DriverProfile, error)
+	UpdatePassengerAvatar(ctx context.Context, arg UpdatePassengerAvatarParams) (int64, error)
+	UpdatePassengerProfile(ctx context.Context, arg UpdatePassengerProfileParams) (PassengerProfile, error)
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) (int64, error)
+	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error)
 }
 
 var _ Querier = (*Queries)(nil)

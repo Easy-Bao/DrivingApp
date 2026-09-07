@@ -33,6 +33,16 @@ type DriverProfile struct {
 	WalletBalanceCentavos int64   `db:"wallet_balance_centavos"`
 }
 
+type Notification struct {
+	ID        int32              `db:"id"`
+	UserID    int32              `db:"user_id"`
+	Type      string             `db:"type"`
+	Title     string             `db:"title"`
+	Body      string             `db:"body"`
+	IsRead    bool               `db:"is_read"`
+	CreatedAt pgtype.Timestamptz `db:"created_at"`
+}
+
 type PassengerProfile struct {
 	ID                int32       `db:"id"`
 	UserID            int32       `db:"user_id"`
