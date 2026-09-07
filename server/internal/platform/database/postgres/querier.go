@@ -12,17 +12,22 @@ type Querier interface {
 	CountDriverDocuments(ctx context.Context) (int64, error)
 	CountRides(ctx context.Context) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
+	CreateDriverDocument(ctx context.Context, arg CreateDriverDocumentParams) (DriverDocument, error)
 	CreateDriverProfile(ctx context.Context, arg CreateDriverProfileParams) error
 	CreatePassengerProfile(ctx context.Context, arg CreatePassengerProfileParams) error
 	CreateRefreshSession(ctx context.Context, arg CreateRefreshSessionParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	GetActiveRefreshSession(ctx context.Context, arg GetActiveRefreshSessionParams) (GetActiveRefreshSessionRow, error)
 	GetActiveRefreshSessionForUpdate(ctx context.Context, arg GetActiveRefreshSessionForUpdateParams) (GetActiveRefreshSessionForUpdateRow, error)
+	GetDriverDocumentByID(ctx context.Context, id int32) (DriverDocument, error)
 	GetDriverProfileByUserID(ctx context.Context, userID int32) (GetDriverProfileByUserIDRow, error)
 	GetPassengerProfileByUserID(ctx context.Context, userID int32) (GetPassengerProfileByUserIDRow, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id int32) (User, error)
+	ListDriverDocumentsByDriverID(ctx context.Context, arg ListDriverDocumentsByDriverIDParams) ([]DriverDocument, error)
+	ListDriverDocumentsForReview(ctx context.Context, arg ListDriverDocumentsForReviewParams) ([]DriverDocument, error)
 	MarkUserVerified(ctx context.Context, id int32) (int64, error)
+	ReviewDriverDocument(ctx context.Context, arg ReviewDriverDocumentParams) (DriverDocument, error)
 	RevokeRefreshSession(ctx context.Context, arg RevokeRefreshSessionParams) error
 	RevokeRefreshSessionByID(ctx context.Context, arg RevokeRefreshSessionByIDParams) (int64, error)
 	RevokeUserRefreshSessions(ctx context.Context, arg RevokeUserRefreshSessionsParams) error
