@@ -8,18 +8,18 @@ func TestNewPostgresDashboardStatsRepositoryRejectsNilPool(t *testing.T) {
 	}
 }
 
-func TestPostgresCountToIntRejectsNegativeValues(t *testing.T) {
-	if _, err := postgresCountToInt(-1); err == nil {
+func TestCountToIntRejectsNegativeValues(t *testing.T) {
+	if _, err := countToInt(-1); err == nil {
 		t.Fatal("expected negative count to be rejected")
 	}
 }
 
-func TestPostgresCountToIntMapsValidValues(t *testing.T) {
-	value, err := postgresCountToInt(42)
+func TestCountToIntMapsValidValues(t *testing.T) {
+	value, err := countToInt(42)
 	if err != nil {
-		t.Fatalf("postgresCountToInt() error = %v", err)
+		t.Fatalf("countToInt() error = %v", err)
 	}
 	if value != 42 {
-		t.Fatalf("postgresCountToInt() = %d, want 42", value)
+		t.Fatalf("countToInt() = %d, want 42", value)
 	}
 }

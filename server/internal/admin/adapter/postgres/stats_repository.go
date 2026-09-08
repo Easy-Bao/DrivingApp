@@ -2,27 +2,84 @@ package postgres
 
 import (
 	"context"
-	"github.com/Easy-Bao/DrivingApp/server/ent"
+	"errors"
+	"fmt"
+
 	"github.com/Easy-Bao/DrivingApp/server/internal/admin/domain"
+	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type DashboardStatsRepository struct{ client *ent.Client }
-
-func NewDashboardStatsRepository(client *ent.Client) *DashboardStatsRepository {
-	return &DashboardStatsRepository{client: client}
+// PostgresDashboardStatsRepository reads dashboard aggregates through the
+// generated PostgreSQL queries.
+type PostgresDashboardStatsRepository struct {
+	pool    *pgxpool.Pool
+	queries *databasepostgres.Queries
 }
-func (repository *DashboardStatsRepository) Stats(ctx context.Context) (domain.Stats, error) {
-	users, err := repository.client.User.Query().Count(ctx)
-	if err != nil {
+
+var _ domain.Repository = (*PostgresDashboardStatsRepository)(nil)
+
+func NewPostgresDashboardStatsRepository(pool *pgxpool.Pool) (*PostgresDashboardStatsRepository, error) {
+	if pool == nil {
+		return nil, errors.New("postgresql pool is required")
+	}
+	return &PostgresDashboardStatsRepository{
+		pool:    pool,
+		queries: databasepostgres.New(pool),
+	}, nil
+}
+
+func (repository *PostgresDashboardStatsRepository) Stats(ctx context.Context) (domain.Stats, error) {
+	if err := repository.validate(); err != nil {
 		return domain.Stats{}, err
 	}
-	rides, err := repository.client.Ride.Query().Count(ctx)
+
+	users, err := repository.queries.CountUsers(ctx)
 	if err != nil {
-		return domain.Stats{}, err
+		return domain.Stats{}, fmt.Errorf("count users: %w", err)
 	}
-	documents, err := repository.client.DriverDocument.Query().Count(ctx)
+	rides, err := repository.queries.CountRides(ctx)
 	if err != nil {
-		return domain.Stats{}, err
+		return domain.Stats{}, fmt.Errorf("count rides: %w", err)
 	}
-	return domain.Stats{Users: users, Rides: rides, DriverDocuments: documents}, nil
+	documents, err := repository.queries.CountDriverDocuments(ctx)
+	if err != nil {
+		return domain.Stats{}, fmt.Errorf("count driver documents: %w", err)
+	}
+
+	userCount, err := countToInt(users)
+	if err != nil {
+		return domain.Stats{}, fmt.Errorf("map user count: %w", err)
+	}
+	rideCount, err := countToInt(rides)
+	if err != nil {
+		return domain.Stats{}, fmt.Errorf("map ride count: %w", err)
+	}
+	documentCount, err := countToInt(documents)
+	if err != nil {
+		return domain.Stats{}, fmt.Errorf("map driver document count: %w", err)
+	}
+
+	return domain.Stats{
+		Users:           userCount,
+		Rides:           rideCount,
+		DriverDocuments: documentCount,
+	}, nil
+}
+
+func (repository *PostgresDashboardStatsRepository) validate() error {
+	if repository == nil || repository.pool == nil || repository.queries == nil {
+		return errors.New("postgresql dashboard stats repository is not initialized")
+	}
+	return nil
+}
+
+func countToInt(value int64) (int, error) {
+	if value < 0 {
+		return 0, fmt.Errorf("count cannot be negative: %d", value)
+	}
+	if uint64(value) > uint64(^uint(0)>>1) {
+		return 0, fmt.Errorf("count %d exceeds native integer range", value)
+	}
+	return int(value), nil
 }
