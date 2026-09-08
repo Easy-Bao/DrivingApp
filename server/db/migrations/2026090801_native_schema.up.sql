@@ -1,4 +1,4 @@
--- This baseline reconciles the schema created by the former Ent runner with
+-- This baseline reconciles the schema created by the former runner with
 -- the native query boundary. It is intentionally idempotent so an existing
 -- deployment can adopt the new migration ledger without rewriting data.
 
@@ -211,7 +211,7 @@ CREATE TABLE IF NOT EXISTS audit_events (
     created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- These columns were introduced by later Ent schema revisions. Keep the
+-- These columns were introduced by later schema revisions. Keep the
 -- adoption safe for databases that have only the earlier table shape.
 ALTER TABLE driver_documents
     ADD COLUMN IF NOT EXISTS content_type varchar(64) NOT NULL DEFAULT 'application/octet-stream';

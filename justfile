@@ -30,7 +30,6 @@ ci-guards:
 ci-backend:
     cd server && go mod download
     cd server && go mod verify
-    cd server && go generate ./ent/generate.go
     cd server && go tool sqlc generate
     cd server && go mod tidy -diff
     cd server && go vet ./...
@@ -148,9 +147,6 @@ docker-build:
 
 # View logs for all Docker services.
 docker-logs: services-logs
-
-generate-ent:
-    cd server && go generate ./ent/generate.go
 
 generate-sqlc:
     cd server && go tool sqlc generate

@@ -7,15 +7,12 @@ transient event delivery, and infrastructure adapters.
 
 The other commands are one-shot developer tools:
 
-- `cmd/migrate` applies the ordered, advisory-locked migration plan.
-- `cmd/entgenerate` regenerates the Ent client.
+- `cmd/migrate` applies the embedded, versioned PostgreSQL migration stream.
 
-Ent ownership is intentionally explicit: `ent/schema/` contains the
-handwritten Ent schema definitions, while the remaining files under `ent/`
-are generated client and migration code. Application packages under
-`internal/` may use the generated client through their persistence adapters,
-but should not define additional Ent schemas there. Regenerate it with
-`just generate-ent` (or `cd server && go generate ./ent/generate.go`).
+The SQL boundary is intentionally explicit: `db/schema/` is the schema input
+used by sqlc, `db/query/` contains handwritten queries, and generated query
+code is written to `internal/platform/database/postgres/`. Regenerate it with
+`just generate-sqlc` (or `cd server && go tool sqlc generate`).
 
 ## Native local development (default)
 
@@ -56,10 +53,9 @@ artifacts, and request protection rather than as a required event broker.
 Driver GEO members are swept from a companion expiry index, and passenger
 coordinates expire automatically after a short active-ride window.
 
-The API performs a read-only Ent schema preflight before listening. Docker
-Compose runs the migration binary after PostgreSQL is healthy and does not
-start the API until that migration process exits successfully. Native startup
-still requires `just db-migrate` to be run explicitly.
+Docker Compose runs the migration binary after PostgreSQL is healthy and does
+not start the API until that migration process exits successfully. Native
+startup still requires `just db-migrate` to be run explicitly.
 
 ### Runtime protection and connection pools
 
@@ -77,7 +73,7 @@ networks that are allowed to supply forwarded client and protocol headers.
 Headers sent by direct clients are discarded. This prevents address spoofing
 without grouping every deployed user under a known reverse proxy's address.
 
-The API uses one PostgreSQL handle for startup health checking and Ent. The
+The API uses one native PostgreSQL pool for repositories and health checks. The
 pool defaults to 25 open and 10 idle connections, with a 30-minute connection
 lifetime, a 5-minute idle lifetime, and a 5-second startup ping timeout. Tune
 these using the `POSTGRES_*` values documented in `.env.example`; keep the idle
@@ -101,7 +97,7 @@ just db-migrate
 
 The long-running API process never changes the database schema. Run the
 migration command once for each deployment before starting or replacing API
-instances. Applied versions are recorded in `schema_migrations`; incompatible
+instances. Applied versions are recorded in `app_schema_migrations`; incompatible
 legacy identifier types are rejected with an actionable error instead of being
 renamed during application startup.
 
@@ -130,7 +126,7 @@ request for multiple destinations and a directions request for one destination.
 ### Private uploads
 
 Driver documents and passenger avatars are immutable private objects stored in
-PostgreSQL through the Ent object-store adapter. Feature tables retain only
+PostgreSQL through the native object-store adapter. Feature tables retain only
 ownership, workflow, and content metadata; the binary data never uses a local
 filesystem directory or Redis as a source of truth. Authorized endpoints read
 objects only after the owning feature verifies the requesting identity.
@@ -191,7 +187,8 @@ only needed when testing verification emails.
 
 The health command should return an object whose service is `api`.
 The readiness command is `http://127.0.0.1:<GATEWAY_PORT>/readyz` and returns `503`
-until PostgreSQL, Redis, and the generated Ent schema are available.
+until PostgreSQL and Redis are available. Compose gates API startup on the
+successful migration checkpoint before the readiness endpoint is exposed.
 API requests should use `http://127.0.0.1:<GATEWAY_PORT>/api/v1/...`.
 
 ### Optional admin web app
@@ -237,11 +234,11 @@ and survives a normal `docker compose down` command.
 
 ```sh
 cd server
-go generate ./ent/generate.go
+go tool sqlc generate
 go test ./...
 go vet ./...
 ```
 
-The generated Ent files are checked into the repository. Schema changes must be
-reviewed with their additive PostgreSQL migration before they are used by a
-shared environment.
+Generated sqlc files are checked into the repository. Schema changes must be
+reviewed with a versioned PostgreSQL migration before they are used by a shared
+environment.

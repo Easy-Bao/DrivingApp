@@ -279,11 +279,11 @@ jobs:
       - name: Verify Go modules
         run: go mod verify
 
-      - name: Generate Ent client
-        run: go generate ./ent/generate.go
+      - name: Generate sqlc client
+        run: go tool sqlc generate
 
-      - name: Verify generated Ent client is current
-        run: git diff --exit-code -- ent
+      - name: Verify generated sqlc client is current
+        run: git diff --exit-code -- internal/platform/database/postgres
 
       - name: Check Go module tidiness
         run: go mod tidy -diff
