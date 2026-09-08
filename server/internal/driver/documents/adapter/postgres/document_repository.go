@@ -15,26 +15,26 @@ import (
 
 const maxPostgresDocumentID = 1<<31 - 1
 
-// PostgresDocumentRepository persists driver-document metadata through the
-// generated PostgreSQL queries.
-type PostgresDocumentRepository struct {
+// DocumentRepository persists driver-document metadata through the generated
+// queries.
+type DocumentRepository struct {
 	pool    *pgxpool.Pool
 	queries *databasepostgres.Queries
 }
 
-var _ domain.Repository = (*PostgresDocumentRepository)(nil)
+var _ domain.Repository = (*DocumentRepository)(nil)
 
-func NewPostgresDocumentRepository(pool *pgxpool.Pool) (*PostgresDocumentRepository, error) {
+func NewDocumentRepository(pool *pgxpool.Pool) (*DocumentRepository, error) {
 	if pool == nil {
 		return nil, errors.New("postgresql pool is required")
 	}
-	return &PostgresDocumentRepository{
+	return &DocumentRepository{
 		pool:    pool,
 		queries: databasepostgres.New(pool),
 	}, nil
 }
 
-func (repository *PostgresDocumentRepository) Create(ctx context.Context, item domain.Document) (domain.Document, error) {
+func (repository *DocumentRepository) Create(ctx context.Context, item domain.Document) (domain.Document, error) {
 	if err := repository.validate(); err != nil {
 		return domain.Document{}, err
 	}
@@ -57,7 +57,7 @@ func (repository *PostgresDocumentRepository) Create(ctx context.Context, item d
 	return fromPostgresDocument(created)
 }
 
-func (repository *PostgresDocumentRepository) Get(ctx context.Context, id int) (domain.Document, error) {
+func (repository *DocumentRepository) Get(ctx context.Context, id int) (domain.Document, error) {
 	if err := repository.validate(); err != nil {
 		return domain.Document{}, err
 	}
@@ -75,7 +75,7 @@ func (repository *PostgresDocumentRepository) Get(ctx context.Context, id int) (
 	return fromPostgresDocument(item)
 }
 
-func (repository *PostgresDocumentRepository) ListByDriver(ctx context.Context, driverID, limit int) ([]domain.Document, error) {
+func (repository *DocumentRepository) ListByDriver(ctx context.Context, driverID, limit int) ([]domain.Document, error) {
 	if err := repository.validate(); err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (repository *PostgresDocumentRepository) ListByDriver(ctx context.Context, 
 	return fromPostgresDocuments(items)
 }
 
-func (repository *PostgresDocumentRepository) ListForReview(ctx context.Context, status domain.Status, limit, offset int) ([]domain.Document, error) {
+func (repository *DocumentRepository) ListForReview(ctx context.Context, status domain.Status, limit, offset int) ([]domain.Document, error) {
 	if err := repository.validate(); err != nil {
 		return nil, err
 	}
@@ -123,7 +123,7 @@ func (repository *PostgresDocumentRepository) ListForReview(ctx context.Context,
 	return fromPostgresDocuments(items)
 }
 
-func (repository *PostgresDocumentRepository) Review(ctx context.Context, id, reviewerID int, status domain.Status) (domain.Document, error) {
+func (repository *DocumentRepository) Review(ctx context.Context, id, reviewerID int, status domain.Status) (domain.Document, error) {
 	if err := repository.validate(); err != nil {
 		return domain.Document{}, err
 	}
@@ -150,7 +150,7 @@ func (repository *PostgresDocumentRepository) Review(ctx context.Context, id, re
 	return fromPostgresDocument(updated)
 }
 
-func (repository *PostgresDocumentRepository) reviewMiss(ctx context.Context, documentID int32) (domain.Document, error) {
+func (repository *DocumentRepository) reviewMiss(ctx context.Context, documentID int32) (domain.Document, error) {
 	_, err := repository.queries.GetDriverDocumentByID(ctx, documentID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.Document{}, domain.ErrDocumentNotFound
@@ -161,7 +161,7 @@ func (repository *PostgresDocumentRepository) reviewMiss(ctx context.Context, do
 	return domain.Document{}, domain.ErrDocumentFinalized
 }
 
-func (repository *PostgresDocumentRepository) validate() error {
+func (repository *DocumentRepository) validate() error {
 	if repository == nil || repository.pool == nil || repository.queries == nil {
 		return errors.New("postgresql document repository is not initialized")
 	}

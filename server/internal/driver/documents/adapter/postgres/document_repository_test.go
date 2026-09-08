@@ -8,8 +8,8 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func TestNewPostgresDocumentRepositoryRejectsNilPool(t *testing.T) {
-	if _, err := NewPostgresDocumentRepository(nil); err == nil {
+func TestNewDocumentRepositoryRejectsNilPool(t *testing.T) {
+	if _, err := NewDocumentRepository(nil); err == nil {
 		t.Fatal("expected nil PostgreSQL pool to be rejected")
 	}
 }

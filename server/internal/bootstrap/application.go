@@ -102,7 +102,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
-	documentRepository, err := documentpostgres.NewPostgresDocumentRepository(postgresPool)
+	documentRepository, err := documentpostgres.NewDocumentRepository(postgresPool)
 	if err != nil {
 		return nil, err
 	}
