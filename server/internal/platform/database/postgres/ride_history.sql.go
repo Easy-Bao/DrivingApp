@@ -12,8 +12,15 @@ import (
 )
 
 const listDriverRides = `-- name: ListDriverRides :many
-SELECT r.id, r.passenger_id, r.driver_id, r.status, r.fare_centavos, r.ride_type, r.pickup_latitude, r.pickup_longitude, r.pickup_name, r.dropoff_latitude, r.dropoff_longitude, r.dropoff_name, r.distance_km, r.duration_minutes, r.driver_name, r.vehicle_type, r.plate_number, r.driver_rating, r.created_at, r.completed_at, r.payment_status, r.cash_received_at, r.commission_bps, r.commission_centavos, r.driver_payout_centavos
+SELECT r.id, r.passenger_id, r.driver_id, r.status, r.fare_centavos, r.ride_type, r.pickup_latitude, r.pickup_longitude, r.pickup_name, r.dropoff_latitude, r.dropoff_longitude, r.dropoff_name, r.distance_km, r.duration_minutes, r.driver_name, r.vehicle_type, r.plate_number, r.driver_rating, r.created_at, r.completed_at, r.payment_status, r.cash_received_at, r.commission_bps, r.commission_centavos, r.driver_payout_centavos,
+    COALESCE(NULLIF(passenger_profile.name, ''), user_account.name, '') AS passenger_name,
+    COALESCE(user_account.phone, '') AS passenger_phone,
+    passenger_review.rating AS passenger_rating,
+    passenger_review.comment AS passenger_feedback
 FROM rides AS r
+LEFT JOIN users AS user_account ON user_account.id = r.passenger_id
+LEFT JOIN passenger_profiles AS passenger_profile ON passenger_profile.user_id = r.passenger_id
+LEFT JOIN reviews AS passenger_review ON passenger_review.ride_id = r.id
 WHERE r.driver_id = $1
   AND (
       $2::boolean = false
@@ -32,7 +39,11 @@ type ListDriverRidesParams struct {
 }
 
 type ListDriverRidesRow struct {
-	Ride Ride `db:"ride"`
+	Ride              Ride          `db:"ride"`
+	PassengerName     string        `db:"passenger_name"`
+	PassengerPhone    string        `db:"passenger_phone"`
+	PassengerRating   pgtype.Float8 `db:"passenger_rating"`
+	PassengerFeedback pgtype.Text   `db:"passenger_feedback"`
 }
 
 func (q *Queries) ListDriverRides(ctx context.Context, arg ListDriverRidesParams) ([]ListDriverRidesRow, error) {
@@ -75,6 +86,10 @@ func (q *Queries) ListDriverRides(ctx context.Context, arg ListDriverRidesParams
 			&i.Ride.CommissionBps,
 			&i.Ride.CommissionCentavos,
 			&i.Ride.DriverPayoutCentavos,
+			&i.PassengerName,
+			&i.PassengerPhone,
+			&i.PassengerRating,
+			&i.PassengerFeedback,
 		); err != nil {
 			return nil, err
 		}
@@ -87,8 +102,12 @@ func (q *Queries) ListDriverRides(ctx context.Context, arg ListDriverRidesParams
 }
 
 const listPassengerRides = `-- name: ListPassengerRides :many
-SELECT r.id, r.passenger_id, r.driver_id, r.status, r.fare_centavos, r.ride_type, r.pickup_latitude, r.pickup_longitude, r.pickup_name, r.dropoff_latitude, r.dropoff_longitude, r.dropoff_name, r.distance_km, r.duration_minutes, r.driver_name, r.vehicle_type, r.plate_number, r.driver_rating, r.created_at, r.completed_at, r.payment_status, r.cash_received_at, r.commission_bps, r.commission_centavos, r.driver_payout_centavos
+SELECT r.id, r.passenger_id, r.driver_id, r.status, r.fare_centavos, r.ride_type, r.pickup_latitude, r.pickup_longitude, r.pickup_name, r.dropoff_latitude, r.dropoff_longitude, r.dropoff_name, r.distance_km, r.duration_minutes, r.driver_name, r.vehicle_type, r.plate_number, r.driver_rating, r.created_at, r.completed_at, r.payment_status, r.cash_received_at, r.commission_bps, r.commission_centavos, r.driver_payout_centavos,
+    COALESCE(driver_profile.name, '') AS driver_profile_name,
+    COALESCE(driver_profile.vehicle_type, '') AS driver_profile_vehicle_type,
+    COALESCE(driver_profile.plate_number, '') AS driver_profile_plate_number
 FROM rides AS r
+LEFT JOIN driver_profiles AS driver_profile ON driver_profile.user_id = r.driver_id
 WHERE r.passenger_id = $1
 ORDER BY r.created_at DESC, r.id DESC
 LIMIT $3::int
@@ -102,7 +121,10 @@ type ListPassengerRidesParams struct {
 }
 
 type ListPassengerRidesRow struct {
-	Ride Ride `db:"ride"`
+	Ride                     Ride   `db:"ride"`
+	DriverProfileName        string `db:"driver_profile_name"`
+	DriverProfileVehicleType string `db:"driver_profile_vehicle_type"`
+	DriverProfilePlateNumber string `db:"driver_profile_plate_number"`
 }
 
 func (q *Queries) ListPassengerRides(ctx context.Context, arg ListPassengerRidesParams) ([]ListPassengerRidesRow, error) {
@@ -140,6 +162,9 @@ func (q *Queries) ListPassengerRides(ctx context.Context, arg ListPassengerRides
 			&i.Ride.CommissionBps,
 			&i.Ride.CommissionCentavos,
 			&i.Ride.DriverPayoutCentavos,
+			&i.DriverProfileName,
+			&i.DriverProfileVehicleType,
+			&i.DriverProfilePlateNumber,
 		); err != nil {
 			return nil, err
 		}
@@ -152,8 +177,12 @@ func (q *Queries) ListPassengerRides(ctx context.Context, arg ListPassengerRides
 }
 
 const listRecentPassengerRides = `-- name: ListRecentPassengerRides :many
-SELECT r.id, r.passenger_id, r.driver_id, r.status, r.fare_centavos, r.ride_type, r.pickup_latitude, r.pickup_longitude, r.pickup_name, r.dropoff_latitude, r.dropoff_longitude, r.dropoff_name, r.distance_km, r.duration_minutes, r.driver_name, r.vehicle_type, r.plate_number, r.driver_rating, r.created_at, r.completed_at, r.payment_status, r.cash_received_at, r.commission_bps, r.commission_centavos, r.driver_payout_centavos
+SELECT r.id, r.passenger_id, r.driver_id, r.status, r.fare_centavos, r.ride_type, r.pickup_latitude, r.pickup_longitude, r.pickup_name, r.dropoff_latitude, r.dropoff_longitude, r.dropoff_name, r.distance_km, r.duration_minutes, r.driver_name, r.vehicle_type, r.plate_number, r.driver_rating, r.created_at, r.completed_at, r.payment_status, r.cash_received_at, r.commission_bps, r.commission_centavos, r.driver_payout_centavos,
+    COALESCE(driver_profile.name, '') AS driver_profile_name,
+    COALESCE(driver_profile.vehicle_type, '') AS driver_profile_vehicle_type,
+    COALESCE(driver_profile.plate_number, '') AS driver_profile_plate_number
 FROM rides AS r
+LEFT JOIN driver_profiles AS driver_profile ON driver_profile.user_id = r.driver_id
 WHERE r.passenger_id = $1
 ORDER BY r.id DESC
 LIMIT $2::int
@@ -165,7 +194,10 @@ type ListRecentPassengerRidesParams struct {
 }
 
 type ListRecentPassengerRidesRow struct {
-	Ride Ride `db:"ride"`
+	Ride                     Ride   `db:"ride"`
+	DriverProfileName        string `db:"driver_profile_name"`
+	DriverProfileVehicleType string `db:"driver_profile_vehicle_type"`
+	DriverProfilePlateNumber string `db:"driver_profile_plate_number"`
 }
 
 func (q *Queries) ListRecentPassengerRides(ctx context.Context, arg ListRecentPassengerRidesParams) ([]ListRecentPassengerRidesRow, error) {
@@ -203,6 +235,9 @@ func (q *Queries) ListRecentPassengerRides(ctx context.Context, arg ListRecentPa
 			&i.Ride.CommissionBps,
 			&i.Ride.CommissionCentavos,
 			&i.Ride.DriverPayoutCentavos,
+			&i.DriverProfileName,
+			&i.DriverProfileVehicleType,
+			&i.DriverProfilePlateNumber,
 		); err != nil {
 			return nil, err
 		}
