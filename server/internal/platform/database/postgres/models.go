@@ -8,6 +8,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AuditEvent struct {
+	ID         int32              `db:"id"`
+	ActorID    int32              `db:"actor_id"`
+	Action     string             `db:"action"`
+	TargetType string             `db:"target_type"`
+	TargetID   pgtype.Text        `db:"target_id"`
+	Outcome    string             `db:"outcome"`
+	RequestID  string             `db:"request_id"`
+	CreatedAt  pgtype.Timestamptz `db:"created_at"`
+}
+
 type Bid struct {
 	ID                  int32  `db:"id"`
 	RideID              int32  `db:"ride_id"`

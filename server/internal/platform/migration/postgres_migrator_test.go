@@ -31,7 +31,7 @@ func TestNewPostgresMigratorRequiresDatabase(t *testing.T) {
 
 func TestDefaultPostgresMigratorConfig(t *testing.T) {
 	config := DefaultPostgresMigratorConfig()
-	if config.MigrationsTable != "schema_migrations" {
+	if config.MigrationsTable != "app_schema_migrations" {
 		t.Fatalf("migration table = %q", config.MigrationsTable)
 	}
 	if err := config.validate(); err != nil {

@@ -30,7 +30,7 @@ type PostgresMigratorConfig struct {
 
 func DefaultPostgresMigratorConfig() PostgresMigratorConfig {
 	return PostgresMigratorConfig{
-		MigrationsTable:       "schema_migrations",
+		MigrationsTable:       "app_schema_migrations",
 		StatementTimeout:      defaultTimeout,
 		MultiStatementMaxSize: 10 * 1 << 20,
 	}
