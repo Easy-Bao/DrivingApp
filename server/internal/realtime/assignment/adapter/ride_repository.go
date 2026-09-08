@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/ent"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment"
 	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/jackc/pgx/v5"
@@ -47,7 +46,7 @@ func (lookup *RideRepositoryLookup) ForRide(ctx context.Context, rideID string) 
 }
 
 func isRideNotFound(err error) bool {
-	return ent.IsNotFound(err) || errors.Is(err, pgx.ErrNoRows)
+	return errors.Is(err, pgx.ErrNoRows)
 }
 
 func (lookup *RideRepositoryLookup) ForDriver(ctx context.Context, driverID string) ([]assignment.Assignment, error) {

@@ -8,14 +8,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/ent"
 	adminpostgres "github.com/Easy-Bao/DrivingApp/server/internal/admin/adapter/postgres"
 	authpostgres "github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/postgres"
 	documentpostgres "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/adapter/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/logger"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
-	platformmigration "github.com/Easy-Bao/DrivingApp/server/internal/platform/migration"
 	storagepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/hub"
 	ridepostgres "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/postgres"
@@ -24,12 +22,11 @@ import (
 )
 
 type Application struct {
-	server         *http.Server
-	databaseClient *ent.Client
-	postgresPool   *pgxpool.Pool
-	redisClient    redisClient
-	eventHub       *hub.Hub
-	logger         *slog.Logger
+	server       *http.Server
+	postgresPool *pgxpool.Pool
+	redisClient  redisClient
+	eventHub     *hub.Hub
+	logger       *slog.Logger
 }
 
 type redisClient interface {
@@ -43,24 +40,6 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	proxyTrust, err := middleware.NewProxyTrust(config.TrustedProxyCIDRs)
 	if err != nil {
 		return nil, err
-	}
-
-	databaseClient, err := database.OpenPostgresWithContext(ctx, config.DatabaseURL)
-	if err != nil {
-		return nil, err
-	}
-	closeDatabase := true
-	defer func() {
-		if closeDatabase {
-			_ = databaseClient.Close()
-		}
-	}()
-
-	schemaContext, cancelSchemaCheck := context.WithTimeout(ctx, 15*time.Second)
-	err = platformmigration.ValidateEntSchema(schemaContext, databaseClient)
-	cancelSchemaCheck()
-	if err != nil {
-		return nil, fmt.Errorf("database schema is not ready: %w", err)
 	}
 
 	postgresPool, err := database.OpenPostgresPoolWithContext(
@@ -123,7 +102,6 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	}
 	router, eventHub := newRouterWithRepositories(
 		config,
-		databaseClient,
 		postgresPool,
 		redisClient,
 		applicationLogger,
@@ -152,14 +130,12 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 			WriteTimeout:      15 * time.Second,
 			IdleTimeout:       60 * time.Second,
 		},
-		databaseClient: databaseClient,
-		postgresPool:   postgresPool,
-		redisClient:    redisClient,
-		eventHub:       eventHub,
-		logger:         applicationLogger,
+		postgresPool: postgresPool,
+		redisClient:  redisClient,
+		eventHub:     eventHub,
+		logger:       applicationLogger,
 	}
 	application.server.RegisterOnShutdown(eventHub.Close)
-	closeDatabase = false
 	closePostgresPool = false
 	closeRedis = false
 	return application, nil
@@ -203,9 +179,6 @@ func (application *Application) Run(ctx context.Context) error {
 func (application *Application) close() {
 	if application.eventHub != nil {
 		application.eventHub.Close()
-	}
-	if application.databaseClient != nil {
-		_ = application.databaseClient.Close()
 	}
 	if application.postgresPool != nil {
 		application.postgresPool.Close()

@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Easy-Bao/DrivingApp/server/ent"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
@@ -233,7 +232,7 @@ func writeProfileReadError(w http.ResponseWriter, err error) {
 }
 
 func isProfileNotFound(err error) bool {
-	return ent.IsNotFound(err) || errors.Is(err, pgx.ErrNoRows)
+	return errors.Is(err, pgx.ErrNoRows)
 }
 
 func (handler *Handler) Notifications(w http.ResponseWriter, r *http.Request) {

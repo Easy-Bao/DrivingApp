@@ -4,7 +4,6 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/Easy-Bao/DrivingApp/server/ent"
 	adminapplication "github.com/Easy-Bao/DrivingApp/server/internal/admin/application"
 	admindomain "github.com/Easy-Bao/DrivingApp/server/internal/admin/domain"
 	adminhttp "github.com/Easy-Bao/DrivingApp/server/internal/admin/transport/http"
@@ -56,7 +55,6 @@ type ridePersistence interface {
 
 func newRouterWithRepositories(
 	config Config,
-	databaseClient *ent.Client,
 	postgresPool *pgxpool.Pool,
 	redisClient *redisclient.Client,
 	applicationLogger *slog.Logger,
@@ -161,7 +159,7 @@ func newRouterWithRepositories(
 	router.Handle(api.V1Prefix+"/realtime/ws", hub.NewHandler(eventHub, verifier, config.Security.AllowedOrigins))
 	geoh.NewRouter(geoService, verifier).RegisterRoutes(router)
 	chath.NewRouter(chatService, verifier).RegisterRoutes(router)
-	registerHealthRoutes(router, databaseClient, redisClient, postgresPool)
+	registerHealthRoutes(router, redisClient, postgresPool)
 
 	return router, eventHub
 }
