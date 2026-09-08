@@ -74,6 +74,35 @@ func TestFromPostgresDriverStatsMapsMetrics(t *testing.T) {
 	}
 }
 
+func TestFromPostgresDriverEarningFallsBackToCreationTime(t *testing.T) {
+	createdAt := time.Date(2026, time.January, 2, 3, 4, 5, 0, time.FixedZone("PHT", 8*60*60))
+	entry, err := fromPostgresDriverEarning(databasepostgres.ListDriverEarningsRow{
+		CreatedAt:            pgtype.Timestamptz{Time: createdAt, Valid: true},
+		DriverPayoutCentavos: 1_250,
+	})
+	if err != nil {
+		t.Fatalf("fromPostgresDriverEarning() error = %v", err)
+	}
+	if !entry.CompletedAt.Equal(createdAt) || entry.PayoutCentavos != 1_250 {
+		t.Fatalf("mapped driver earning = %+v", entry)
+	}
+}
+
+func TestFromPostgresDriverEarningUsesCompletedTime(t *testing.T) {
+	createdAt := time.Date(2026, time.January, 2, 3, 4, 5, 0, time.UTC)
+	completedAt := createdAt.Add(45 * time.Minute)
+	entry, err := fromPostgresDriverEarning(databasepostgres.ListDriverEarningsRow{
+		CreatedAt:   pgtype.Timestamptz{Time: createdAt, Valid: true},
+		CompletedAt: pgtype.Timestamptz{Time: completedAt, Valid: true},
+	})
+	if err != nil {
+		t.Fatalf("fromPostgresDriverEarning() error = %v", err)
+	}
+	if !entry.CompletedAt.Equal(completedAt) {
+		t.Fatalf("mapped completion time = %v", entry.CompletedAt)
+	}
+}
+
 func TestToNativeRideCountRejectsNegativeValues(t *testing.T) {
 	if _, err := toNativeRideCount(-1, "trip count"); err == nil {
 		t.Fatal("expected negative trip count to be rejected")
