@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	minPostgresUserID = -1 << 31
-	maxPostgresUserID = 1<<31 - 1
+	minInt32UserID = -1 << 31
+	maxInt32UserID = 1<<31 - 1
 )
 
 // PostgresUserRepository persists authentication accounts through the generated
@@ -42,7 +42,7 @@ func (repository *PostgresUserRepository) Create(ctx context.Context, account do
 	if err := repository.validate(); err != nil {
 		return domain.User{}, err
 	}
-	if err := validatePostgresUserRole(account.Role); err != nil {
+	if err := validateUserRole(account.Role); err != nil {
 		return domain.User{}, err
 	}
 
@@ -105,21 +105,21 @@ func (repository *PostgresUserRepository) Create(ctx context.Context, account do
 	return result, nil
 }
 
-func (repository *PostgresUserRepository) MarkVerified(ctx context.Context, id int) error {
+func (repository *PostgresUserRepository) MarkVerified(ctx context.Context, userID int) error {
 	if err := repository.validate(); err != nil {
 		return err
 	}
-	postgresID, err := toPostgresUserID(id)
+	dbUserID, err := toPostgresUserID(userID)
 	if err != nil {
 		return err
 	}
 
-	rows, err := repository.queries.MarkUserVerified(ctx, postgresID)
+	rows, err := repository.queries.MarkUserVerified(ctx, dbUserID)
 	if err != nil {
-		return fmt.Errorf("mark user %d verified: %w", id, err)
+		return fmt.Errorf("mark user %d verified: %w", userID, err)
 	}
 	if rows == 0 {
-		return fmt.Errorf("mark user %d verified: %w", id, pgx.ErrNoRows)
+		return fmt.Errorf("mark user %d verified: %w", userID, pgx.ErrNoRows)
 	}
 	return nil
 }
@@ -135,40 +135,40 @@ func (repository *PostgresUserRepository) FindByEmail(ctx context.Context, email
 	return repository.withProfile(ctx, fromPostgresUser(account))
 }
 
-func (repository *PostgresUserRepository) FindByID(ctx context.Context, id int) (domain.User, error) {
+func (repository *PostgresUserRepository) FindByID(ctx context.Context, userID int) (domain.User, error) {
 	if err := repository.validate(); err != nil {
 		return domain.User{}, err
 	}
-	postgresID, err := toPostgresUserID(id)
+	dbUserID, err := toPostgresUserID(userID)
 	if err != nil {
 		return domain.User{}, err
 	}
 
-	account, err := repository.queries.GetUserByID(ctx, postgresID)
+	account, err := repository.queries.GetUserByID(ctx, dbUserID)
 	if err != nil {
 		return domain.User{}, fmt.Errorf("find user by id: %w", err)
 	}
 	return repository.withProfile(ctx, fromPostgresUser(account))
 }
 
-func (repository *PostgresUserRepository) UpdatePassword(ctx context.Context, id int, passwordHash string) error {
+func (repository *PostgresUserRepository) UpdatePassword(ctx context.Context, userID int, passwordHash string) error {
 	if err := repository.validate(); err != nil {
 		return err
 	}
-	postgresID, err := toPostgresUserID(id)
+	dbUserID, err := toPostgresUserID(userID)
 	if err != nil {
 		return err
 	}
 
 	rows, err := repository.queries.UpdateUserPassword(ctx, databasepostgres.UpdateUserPasswordParams{
-		ID:           postgresID,
+		ID:           dbUserID,
 		PasswordHash: passwordHash,
 	})
 	if err != nil {
-		return fmt.Errorf("update password for user %d: %w", id, err)
+		return fmt.Errorf("update password for user %d: %w", userID, err)
 	}
 	if rows == 0 {
-		return fmt.Errorf("update password for user %d: %w", id, pgx.ErrNoRows)
+		return fmt.Errorf("update password for user %d: %w", userID, pgx.ErrNoRows)
 	}
 	return nil
 }
@@ -189,7 +189,7 @@ func (repository *PostgresUserRepository) withProfile(ctx context.Context, accou
 			return domain.User{}, fmt.Errorf("find passenger profile for user %d: %w", account.ID, err)
 		}
 		account.Name = profile.Name
-		account.PreferredRideType = postgresTextValue(profile.PreferredRideType)
+		account.PreferredRideType = textValue(profile.PreferredRideType)
 	default:
 		return domain.User{}, domain.ErrInvalidRole
 	}
@@ -203,7 +203,7 @@ func (repository *PostgresUserRepository) validate() error {
 	return nil
 }
 
-func validatePostgresUserRole(role domain.Role) error {
+func validateUserRole(role domain.Role) error {
 	switch role {
 	case domain.Driver, domain.Passenger:
 		return nil
@@ -212,12 +212,12 @@ func validatePostgresUserRole(role domain.Role) error {
 	}
 }
 
-func toPostgresUserID(id int) (int32, error) {
-	id64 := int64(id)
-	if id64 < minPostgresUserID || id64 > maxPostgresUserID {
-		return 0, fmt.Errorf("user id %d is outside PostgreSQL integer range", id)
+func toPostgresUserID(userID int) (int32, error) {
+	userID64 := int64(userID)
+	if userID64 < minInt32UserID || userID64 > maxInt32UserID {
+		return 0, fmt.Errorf("user id %d is outside PostgreSQL integer range", userID)
 	}
-	return int32(id), nil
+	return int32(userID), nil
 }
 
 func fromPostgresUser(account databasepostgres.User) domain.User {
@@ -225,7 +225,7 @@ func fromPostgresUser(account databasepostgres.User) domain.User {
 		ID:           int(account.ID),
 		Email:        account.Email,
 		Phone:        account.Phone,
-		Name:         postgresTextValue(account.Name),
+		Name:         textValue(account.Name),
 		Role:         domain.Role(account.Role),
 		PasswordHash: account.PasswordHash,
 		IsVerified:   account.IsVerified,
@@ -236,7 +236,7 @@ func toPostgresText(value string) pgtype.Text {
 	return pgtype.Text{String: value, Valid: true}
 }
 
-func postgresTextValue(value pgtype.Text) string {
+func textValue(value pgtype.Text) string {
 	if !value.Valid {
 		return ""
 	}
@@ -244,6 +244,6 @@ func postgresTextValue(value pgtype.Text) string {
 }
 
 func isPostgresUniqueViolation(err error) bool {
-	var postgresError *pgconn.PgError
-	return errors.As(err, &postgresError) && postgresError.Code == "23505"
+	var databaseError *pgconn.PgError
+	return errors.As(err, &databaseError) && databaseError.Code == "23505"
 }

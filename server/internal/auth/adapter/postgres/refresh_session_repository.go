@@ -140,12 +140,12 @@ func (repository *PostgresRefreshSessionRepository) RevokeAll(ctx context.Contex
 	if err := repository.validate(); err != nil {
 		return err
 	}
-	postgresUserID, err := toPostgresUserID(userID)
+	dbUserID, err := toPostgresUserID(userID)
 	if err != nil {
 		return err
 	}
 	if err := repository.queries.RevokeUserRefreshSessions(ctx, databasepostgres.RevokeUserRefreshSessionsParams{
-		UserID:    postgresUserID,
+		UserID:    dbUserID,
 		RevokedAt: toPostgresTimestamp(now),
 	}); err != nil {
 		return fmt.Errorf("revoke user refresh sessions: %w", err)

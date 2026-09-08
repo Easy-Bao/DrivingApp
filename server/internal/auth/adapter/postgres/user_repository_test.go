@@ -17,23 +17,23 @@ func TestNewPostgresUserRepositoryRejectsNilPool(t *testing.T) {
 	}
 }
 
-func TestValidatePostgresUserRole(t *testing.T) {
+func TestValidateUserRole(t *testing.T) {
 	for _, role := range []domain.Role{domain.Driver, domain.Passenger} {
-		if err := validatePostgresUserRole(role); err != nil {
-			t.Errorf("validatePostgresUserRole(%q) = %v", role, err)
+		if err := validateUserRole(role); err != nil {
+			t.Errorf("validateUserRole(%q) = %v", role, err)
 		}
 	}
 
-	if err := validatePostgresUserRole("admin"); !errors.Is(err, domain.ErrInvalidRole) {
-		t.Fatalf("validatePostgresUserRole(admin) = %v, want invalid role", err)
+	if err := validateUserRole("admin"); !errors.Is(err, domain.ErrInvalidRole) {
+		t.Fatalf("validateUserRole(admin) = %v, want invalid role", err)
 	}
 }
 
-func TestPostgresTextValue(t *testing.T) {
-	if got := postgresTextValue(pgtype.Text{String: "Ada", Valid: true}); got != "Ada" {
+func TestTextValue(t *testing.T) {
+	if got := textValue(pgtype.Text{String: "Ada", Valid: true}); got != "Ada" {
 		t.Fatalf("valid text = %q, want Ada", got)
 	}
-	if got := postgresTextValue(pgtype.Text{}); got != "" {
+	if got := textValue(pgtype.Text{}); got != "" {
 		t.Fatalf("invalid text = %q, want empty string", got)
 	}
 }
