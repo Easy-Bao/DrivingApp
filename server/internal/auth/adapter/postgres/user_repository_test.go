@@ -11,8 +11,8 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func TestNewPostgresUserRepositoryRejectsNilPool(t *testing.T) {
-	if _, err := NewPostgresUserRepository(nil); err == nil {
+func TestNewUserRepositoryRejectsNilPool(t *testing.T) {
+	if _, err := NewUserRepository(nil); err == nil {
 		t.Fatal("expected nil PostgreSQL pool to be rejected")
 	}
 }

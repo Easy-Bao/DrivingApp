@@ -90,11 +90,11 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	}()
 
 	applicationLogger := logger.New(serviceName)
-	authRepository, err := authpostgres.NewPostgresUserRepository(postgresPool)
+	authRepository, err := authpostgres.NewUserRepository(postgresPool)
 	if err != nil {
 		return nil, err
 	}
-	refreshSessionRepository, err := authpostgres.NewPostgresRefreshSessionRepository(postgresPool)
+	refreshSessionRepository, err := authpostgres.NewRefreshSessionRepository(postgresPool)
 	if err != nil {
 		return nil, err
 	}

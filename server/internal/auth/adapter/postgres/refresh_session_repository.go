@@ -13,26 +13,26 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// PostgresRefreshSessionRepository stores only refresh-token digests and keeps
+// RefreshSessionRepository stores only refresh-token digests and keeps
 // rotation atomic through a PostgreSQL row lock.
-type PostgresRefreshSessionRepository struct {
+type RefreshSessionRepository struct {
 	pool    *pgxpool.Pool
 	queries *databasepostgres.Queries
 }
 
-var _ domain.RefreshSessionStore = (*PostgresRefreshSessionRepository)(nil)
+var _ domain.RefreshSessionStore = (*RefreshSessionRepository)(nil)
 
-func NewPostgresRefreshSessionRepository(pool *pgxpool.Pool) (*PostgresRefreshSessionRepository, error) {
+func NewRefreshSessionRepository(pool *pgxpool.Pool) (*RefreshSessionRepository, error) {
 	if pool == nil {
 		return nil, errors.New("postgresql pool is required")
 	}
-	return &PostgresRefreshSessionRepository{
+	return &RefreshSessionRepository{
 		pool:    pool,
 		queries: databasepostgres.New(pool),
 	}, nil
 }
 
-func (repository *PostgresRefreshSessionRepository) Create(ctx context.Context, session domain.RefreshSession) error {
+func (repository *RefreshSessionRepository) Create(ctx context.Context, session domain.RefreshSession) error {
 	if err := repository.validate(); err != nil {
 		return err
 	}
@@ -50,7 +50,7 @@ func (repository *PostgresRefreshSessionRepository) Create(ctx context.Context, 
 	return nil
 }
 
-func (repository *PostgresRefreshSessionRepository) FindActive(ctx context.Context, tokenHash string, now time.Time) (domain.RefreshSession, error) {
+func (repository *RefreshSessionRepository) FindActive(ctx context.Context, tokenHash string, now time.Time) (domain.RefreshSession, error) {
 	if err := repository.validate(); err != nil {
 		return domain.RefreshSession{}, err
 	}
@@ -67,7 +67,7 @@ func (repository *PostgresRefreshSessionRepository) FindActive(ctx context.Conte
 	return fromPostgresRefreshSession(row.UserID, row.TokenHash, row.ExpiresAt)
 }
 
-func (repository *PostgresRefreshSessionRepository) Rotate(ctx context.Context, tokenHash string, replacement domain.RefreshSession, now time.Time) error {
+func (repository *RefreshSessionRepository) Rotate(ctx context.Context, tokenHash string, replacement domain.RefreshSession, now time.Time) error {
 	if err := repository.validate(); err != nil {
 		return err
 	}
@@ -123,7 +123,7 @@ func (repository *PostgresRefreshSessionRepository) Rotate(ctx context.Context, 
 	return nil
 }
 
-func (repository *PostgresRefreshSessionRepository) Revoke(ctx context.Context, tokenHash string, now time.Time) error {
+func (repository *RefreshSessionRepository) Revoke(ctx context.Context, tokenHash string, now time.Time) error {
 	if err := repository.validate(); err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func (repository *PostgresRefreshSessionRepository) Revoke(ctx context.Context, 
 	return nil
 }
 
-func (repository *PostgresRefreshSessionRepository) RevokeAll(ctx context.Context, userID int, now time.Time) error {
+func (repository *RefreshSessionRepository) RevokeAll(ctx context.Context, userID int, now time.Time) error {
 	if err := repository.validate(); err != nil {
 		return err
 	}
@@ -153,7 +153,7 @@ func (repository *PostgresRefreshSessionRepository) RevokeAll(ctx context.Contex
 	return nil
 }
 
-func (repository *PostgresRefreshSessionRepository) validate() error {
+func (repository *RefreshSessionRepository) validate() error {
 	if repository == nil || repository.pool == nil || repository.queries == nil {
 		return errors.New("postgresql refresh session repository is not initialized")
 	}

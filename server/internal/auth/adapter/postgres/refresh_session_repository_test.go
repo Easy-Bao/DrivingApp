@@ -7,8 +7,8 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func TestNewPostgresRefreshSessionRepositoryRejectsNilPool(t *testing.T) {
-	if _, err := NewPostgresRefreshSessionRepository(nil); err == nil {
+func TestNewRefreshSessionRepositoryRejectsNilPool(t *testing.T) {
+	if _, err := NewRefreshSessionRepository(nil); err == nil {
 		t.Fatal("expected nil PostgreSQL pool to be rejected")
 	}
 }

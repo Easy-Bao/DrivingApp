@@ -18,27 +18,26 @@ const (
 	maxInt32UserID = 1<<31 - 1
 )
 
-// PostgresUserRepository persists authentication accounts through the generated
-// PostgreSQL queries. The existing UserRepository remains available while the
-// rest of the server moves off Ent incrementally.
-type PostgresUserRepository struct {
+// UserRepository persists authentication accounts through the generated
+// queries.
+type UserRepository struct {
 	pool    *pgxpool.Pool
 	queries *databasepostgres.Queries
 }
 
-var _ domain.VerifiedUserRepository = (*PostgresUserRepository)(nil)
+var _ domain.VerifiedUserRepository = (*UserRepository)(nil)
 
-func NewPostgresUserRepository(pool *pgxpool.Pool) (*PostgresUserRepository, error) {
+func NewUserRepository(pool *pgxpool.Pool) (*UserRepository, error) {
 	if pool == nil {
 		return nil, errors.New("postgresql pool is required")
 	}
-	return &PostgresUserRepository{
+	return &UserRepository{
 		pool:    pool,
 		queries: databasepostgres.New(pool),
 	}, nil
 }
 
-func (repository *PostgresUserRepository) Create(ctx context.Context, account domain.User) (domain.User, error) {
+func (repository *UserRepository) Create(ctx context.Context, account domain.User) (domain.User, error) {
 	if err := repository.validate(); err != nil {
 		return domain.User{}, err
 	}
@@ -105,7 +104,7 @@ func (repository *PostgresUserRepository) Create(ctx context.Context, account do
 	return result, nil
 }
 
-func (repository *PostgresUserRepository) MarkVerified(ctx context.Context, userID int) error {
+func (repository *UserRepository) MarkVerified(ctx context.Context, userID int) error {
 	if err := repository.validate(); err != nil {
 		return err
 	}
@@ -124,7 +123,7 @@ func (repository *PostgresUserRepository) MarkVerified(ctx context.Context, user
 	return nil
 }
 
-func (repository *PostgresUserRepository) FindByEmail(ctx context.Context, email string) (domain.User, error) {
+func (repository *UserRepository) FindByEmail(ctx context.Context, email string) (domain.User, error) {
 	if err := repository.validate(); err != nil {
 		return domain.User{}, err
 	}
@@ -135,7 +134,7 @@ func (repository *PostgresUserRepository) FindByEmail(ctx context.Context, email
 	return repository.withProfile(ctx, fromPostgresUser(account))
 }
 
-func (repository *PostgresUserRepository) FindByID(ctx context.Context, userID int) (domain.User, error) {
+func (repository *UserRepository) FindByID(ctx context.Context, userID int) (domain.User, error) {
 	if err := repository.validate(); err != nil {
 		return domain.User{}, err
 	}
@@ -151,7 +150,7 @@ func (repository *PostgresUserRepository) FindByID(ctx context.Context, userID i
 	return repository.withProfile(ctx, fromPostgresUser(account))
 }
 
-func (repository *PostgresUserRepository) UpdatePassword(ctx context.Context, userID int, passwordHash string) error {
+func (repository *UserRepository) UpdatePassword(ctx context.Context, userID int, passwordHash string) error {
 	if err := repository.validate(); err != nil {
 		return err
 	}
@@ -173,7 +172,7 @@ func (repository *PostgresUserRepository) UpdatePassword(ctx context.Context, us
 	return nil
 }
 
-func (repository *PostgresUserRepository) withProfile(ctx context.Context, account domain.User) (domain.User, error) {
+func (repository *UserRepository) withProfile(ctx context.Context, account domain.User) (domain.User, error) {
 	switch account.Role {
 	case domain.Driver:
 		profile, err := repository.queries.GetDriverProfileByUserID(ctx, int32(account.ID))
@@ -196,7 +195,7 @@ func (repository *PostgresUserRepository) withProfile(ctx context.Context, accou
 	return account, nil
 }
 
-func (repository *PostgresUserRepository) validate() error {
+func (repository *UserRepository) validate() error {
 	if repository == nil || repository.pool == nil || repository.queries == nil {
 		return errors.New("postgresql user repository is not initialized")
 	}
