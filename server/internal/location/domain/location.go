@@ -11,8 +11,15 @@ type Coordinates struct {
 }
 
 func (coordinates Coordinates) Valid() bool {
-	return !math.IsNaN(coordinates.Latitude) && !math.IsInf(coordinates.Latitude, 0) && coordinates.Latitude >= -90 && coordinates.Latitude <= 90 &&
-		!math.IsNaN(coordinates.Longitude) && !math.IsInf(coordinates.Longitude, 0) && coordinates.Longitude >= -180 && coordinates.Longitude <= 180
+	return isFiniteInRange(coordinates.Latitude, -90, 90) &&
+		isFiniteInRange(coordinates.Longitude, -180, 180)
+}
+
+func isFiniteInRange(value, minimum, maximum float64) bool {
+	return !math.IsNaN(value) &&
+		!math.IsInf(value, 0) &&
+		value >= minimum &&
+		value <= maximum
 }
 
 type RoutePreference string

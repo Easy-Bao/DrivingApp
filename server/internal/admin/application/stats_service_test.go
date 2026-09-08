@@ -2,9 +2,10 @@ package application_test
 
 import (
 	"context"
+	"testing"
+
 	"github.com/Easy-Bao/DrivingApp/server/internal/admin/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/admin/domain"
-	"testing"
 )
 
 type repository struct{}

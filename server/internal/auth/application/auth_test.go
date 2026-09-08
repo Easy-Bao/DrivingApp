@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"testing"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
@@ -65,7 +66,7 @@ func TestAuthenticationRejectsWrongPassword(t *testing.T) {
 	register := application.NewRegisterService(repository, issuer{}, sessions)
 	_, _, _ = register.Passenger(context.Background(), application.RegisterInput{Email: "user@example.test", Phone: "+639171234503", Name: "User", Password: "secret-8"})
 	authenticate := application.NewAuthenticateService(repository, issuer{}, sessions)
-	if _, _, err := authenticate.Execute(context.Background(), "user@example.test", "wrong"); err != domain.ErrInvalidCredentials {
+	if _, _, err := authenticate.Execute(context.Background(), "user@example.test", "wrong"); !errors.Is(err, domain.ErrInvalidCredentials) {
 		t.Fatalf("expected invalid credentials, got %v", err)
 	}
 }
@@ -75,12 +76,12 @@ func TestRegistrationRejectsIncompleteRoleContracts(t *testing.T) {
 
 	if _, _, err := service.Passenger(context.Background(), application.RegisterInput{
 		Email: "passenger@example.test", Name: "Passenger", Password: "secret-8",
-	}); err != domain.ErrInvalidCredentials {
+	}); !errors.Is(err, domain.ErrInvalidCredentials) {
 		t.Fatalf("missing passenger phone error = %v", err)
 	}
 	if _, _, err := service.Driver(context.Background(), application.RegisterInput{
 		Email: "driver@example.test", Phone: "+639171234504", Name: "Driver", Password: "secret-8",
-	}); err != domain.ErrInvalidCredentials {
+	}); !errors.Is(err, domain.ErrInvalidCredentials) {
 		t.Fatalf("missing vehicle contract error = %v", err)
 	}
 }

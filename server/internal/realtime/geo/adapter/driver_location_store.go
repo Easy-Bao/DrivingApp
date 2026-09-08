@@ -116,7 +116,7 @@ func (repository *DriverLocationStore) Nearby(ctx context.Context, latitude, lon
 	}
 
 	result := make([]domain.DriverPoint, 0, len(locationIDs))
-	staleLocations := make([]string, 0)
+	staleLocations := make([]string, 0, len(locationIDs))
 	for index, locationID := range locationIDs {
 		if index >= len(payloads) {
 			staleLocations = append(staleLocations, locationID)

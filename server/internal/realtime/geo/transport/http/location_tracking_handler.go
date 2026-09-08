@@ -156,7 +156,10 @@ func (handler *Handler) NearbyDrivers(writer http.ResponseWriter, request *http.
 	latitude, latErr := strconv.ParseFloat(query.Get("latitude"), 64)
 	longitude, lonErr := strconv.ParseFloat(query.Get("longitude"), 64)
 	radius, radiusErr := strconv.ParseFloat(query.Get("radius_km"), 64)
-	if latErr != nil || lonErr != nil || radiusErr != nil || radius <= 0 || radius > 50 || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180 {
+	parseFailed := latErr != nil || lonErr != nil || radiusErr != nil
+	invalidCoordinates := latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180
+	invalidRadius := radius <= 0 || radius > 50
+	if parseFailed || invalidCoordinates || invalidRadius {
 		response.Error(writer, http.StatusBadRequest, "invalid nearby query")
 		return
 	}

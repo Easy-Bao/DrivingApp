@@ -3,6 +3,7 @@ package application_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment"
@@ -76,7 +77,7 @@ func TestChatCreateRoomDoesNotReplaceParticipants(t *testing.T) {
 		context.Background(),
 		"ride-1",
 		"passenger-2",
-	); err != domain.ErrForbidden {
+	); !errors.Is(err, domain.ErrForbidden) {
 		t.Fatalf("create room error = %v, want %v", err, domain.ErrForbidden)
 	}
 	if history.passengerID != "passenger-1" || history.driverID != "driver-1" {
@@ -102,7 +103,7 @@ func TestChatCreateRoomRequiresTheAssignedRideParticipants(t *testing.T) {
 		context.Background(),
 		"ride-1",
 		"driver-2",
-	); err != domain.ErrForbidden {
+	); !errors.Is(err, domain.ErrForbidden) {
 		t.Fatalf("create room error = %v, want %v", err, domain.ErrForbidden)
 	}
 	if err := service.OpenRideRoom(
@@ -149,7 +150,7 @@ func TestChatRelayRejectsResolvedRoom(t *testing.T) {
 		SenderID: "driver-1",
 		Body:     "This message must not be stored.",
 	})
-	if err != domain.ErrRoomLocked {
+	if !errors.Is(err, domain.ErrRoomLocked) {
 		t.Fatalf("relay error = %v, want %v", err, domain.ErrRoomLocked)
 	}
 	if len(history.messages) != 0 {

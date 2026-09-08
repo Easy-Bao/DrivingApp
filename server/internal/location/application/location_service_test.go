@@ -69,7 +69,7 @@ func (provider *routeProviderSpy) Route(_ context.Context, _, _ domain.Coordinat
 func TestServiceRejectsEmptySearch(t *testing.T) {
 	service := application.NewLocationService(providerStub{})
 	_, err := service.Search(context.Background(), "  ", domain.Coordinates{})
-	if err != application.ErrEmptySearch {
+	if !errors.Is(err, application.ErrEmptySearch) {
 		t.Fatalf("expected ErrEmptySearch, got %v", err)
 	}
 }
@@ -100,7 +100,7 @@ func TestServiceSupportsNearbyPlacesAndCaching(t *testing.T) {
 
 func TestServiceRejectsUnboundedSearchAndInvalidRouteCoordinates(t *testing.T) {
 	service := application.NewLocationService(providerStub{})
-	if _, err := service.Search(context.Background(), strings.Repeat("x", 257), domain.Coordinates{}); err != application.ErrSearchTooLong {
+	if _, err := service.Search(context.Background(), strings.Repeat("x", 257), domain.Coordinates{}); !errors.Is(err, application.ErrSearchTooLong) {
 		t.Fatalf("long search error = %v, want %v", err, application.ErrSearchTooLong)
 	}
 	if _, err := service.Route(
@@ -108,7 +108,7 @@ func TestServiceRejectsUnboundedSearchAndInvalidRouteCoordinates(t *testing.T) {
 		domain.Coordinates{Latitude: 91, Longitude: 123},
 		domain.Coordinates{Latitude: 7, Longitude: 123},
 		domain.RouteOptions{},
-	); err != application.ErrInvalidCoordinates {
+	); !errors.Is(err, application.ErrInvalidCoordinates) {
 		t.Fatalf("invalid route error = %v, want %v", err, application.ErrInvalidCoordinates)
 	}
 }
