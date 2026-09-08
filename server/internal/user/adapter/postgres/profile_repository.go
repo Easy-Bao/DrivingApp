@@ -19,10 +19,9 @@ import (
 
 const maxPostgresProfileID = 1<<31 - 1
 
-// PostgresProfileRepository persists user profiles and notifications through
-// the generated PostgreSQL queries. It keeps the existing profile ports stable
-// while the remaining legacy adapters migrate incrementally.
-type PostgresProfileRepository struct {
+// ProfileRepository persists user profiles and notifications through the
+// generated queries.
+type ProfileRepository struct {
 	pool          *pgxpool.Pool
 	queries       *databasepostgres.Queries
 	avatarStorage platformstorage.ObjectStore
@@ -30,19 +29,19 @@ type PostgresProfileRepository struct {
 }
 
 var (
-	_ domain.Repository             = (*PostgresProfileRepository)(nil)
-	_ domain.AvatarRepository       = (*PostgresProfileRepository)(nil)
-	_ domain.NotificationRepository = (*PostgresProfileRepository)(nil)
+	_ domain.Repository             = (*ProfileRepository)(nil)
+	_ domain.AvatarRepository       = (*ProfileRepository)(nil)
+	_ domain.NotificationRepository = (*ProfileRepository)(nil)
 )
 
-func NewPostgresProfileRepository(
+func NewProfileRepository(
 	pool *pgxpool.Pool,
 	avatarStorage platformstorage.ObjectStore,
-) (*PostgresProfileRepository, error) {
+) (*ProfileRepository, error) {
 	if pool == nil {
 		return nil, errors.New("postgresql pool is required")
 	}
-	return &PostgresProfileRepository{
+	return &ProfileRepository{
 		pool:          pool,
 		queries:       databasepostgres.New(pool),
 		avatarStorage: avatarStorage,
@@ -50,14 +49,14 @@ func NewPostgresProfileRepository(
 	}, nil
 }
 
-func (repository *PostgresProfileRepository) WithLogger(logger *slog.Logger) *PostgresProfileRepository {
+func (repository *ProfileRepository) WithLogger(logger *slog.Logger) *ProfileRepository {
 	if logger != nil {
 		repository.logger = logger
 	}
 	return repository
 }
 
-func (repository *PostgresProfileRepository) Get(ctx context.Context, userID int) (domain.Profile, error) {
+func (repository *ProfileRepository) Get(ctx context.Context, userID int) (domain.Profile, error) {
 	if err := repository.validate(); err != nil {
 		return domain.Profile{}, err
 	}
@@ -86,7 +85,7 @@ func (repository *PostgresProfileRepository) Get(ctx context.Context, userID int
 	return passengerProfileFromPostgres(account, passengerProfile), nil
 }
 
-func (repository *PostgresProfileRepository) Save(ctx context.Context, profile domain.Profile) (domain.Profile, error) {
+func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Profile) (domain.Profile, error) {
 	if err := repository.validate(); err != nil {
 		return domain.Profile{}, err
 	}
@@ -155,7 +154,7 @@ func (repository *PostgresProfileRepository) Save(ctx context.Context, profile d
 	return updated, nil
 }
 
-func (repository *PostgresProfileRepository) SaveAvatar(
+func (repository *ProfileRepository) SaveAvatar(
 	ctx context.Context,
 	userID int,
 	content []byte,
@@ -205,7 +204,7 @@ func (repository *PostgresProfileRepository) SaveAvatar(
 	return repository.Get(ctx, userID)
 }
 
-func (repository *PostgresProfileRepository) cleanupAvatar(ctx context.Context, storageKey string) {
+func (repository *ProfileRepository) cleanupAvatar(ctx context.Context, storageKey string) {
 	cleanupContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Second)
 	defer cancel()
 	if err := repository.avatarStorage.Delete(cleanupContext, storageKey); err != nil {
@@ -213,7 +212,7 @@ func (repository *PostgresProfileRepository) cleanupAvatar(ctx context.Context, 
 	}
 }
 
-func (repository *PostgresProfileRepository) GetAvatar(ctx context.Context, userID int) (domain.Avatar, error) {
+func (repository *ProfileRepository) GetAvatar(ctx context.Context, userID int) (domain.Avatar, error) {
 	if err := repository.validate(); err != nil {
 		return domain.Avatar{}, err
 	}
@@ -250,7 +249,7 @@ func (repository *PostgresProfileRepository) GetAvatar(ctx context.Context, user
 	return domain.Avatar{Bytes: content, ContentType: contentType}, nil
 }
 
-func (repository *PostgresProfileRepository) Notifications(
+func (repository *ProfileRepository) Notifications(
 	ctx context.Context,
 	userID int,
 	limit int,
@@ -297,7 +296,7 @@ func (repository *PostgresProfileRepository) Notifications(
 	return result, nil
 }
 
-func (repository *PostgresProfileRepository) DeleteNotification(
+func (repository *ProfileRepository) DeleteNotification(
 	ctx context.Context,
 	userID int,
 	notificationID int,
@@ -326,7 +325,7 @@ func (repository *PostgresProfileRepository) DeleteNotification(
 	return nil
 }
 
-func (repository *PostgresProfileRepository) validate() error {
+func (repository *ProfileRepository) validate() error {
 	if repository == nil || repository.pool == nil || repository.queries == nil {
 		return errors.New("postgresql profile repository is not initialized")
 	}
@@ -361,6 +360,13 @@ func passengerProfileFromPostgres(account databasepostgres.User, profile databas
 		AvatarURL:         passengerAvatarURL(int(profile.UserID), profileTextValue(profile.AvatarStorageKey)),
 		PreferredRideType: profileTextValue(profile.PreferredRideType),
 	}
+}
+
+func passengerAvatarURL(userID int, storageKey string) string {
+	if userID <= 0 || strings.TrimSpace(storageKey) == "" {
+		return ""
+	}
+	return fmt.Sprintf("/api/v1/passengers/%d/avatar", userID)
 }
 
 func fromPostgresNotification(item databasepostgres.Notification) (domain.Notification, error) {

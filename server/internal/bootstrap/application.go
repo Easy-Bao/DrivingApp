@@ -110,7 +110,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
-	profileRepository, err := userpostgres.NewPostgresProfileRepository(postgresPool, privateObjectStore)
+	profileRepository, err := userpostgres.NewProfileRepository(postgresPool, privateObjectStore)
 	if err != nil {
 		return nil, err
 	}
