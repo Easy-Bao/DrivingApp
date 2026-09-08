@@ -82,6 +82,52 @@ func (q *Queries) GetDriverStats(ctx context.Context, arg GetDriverStatsParams) 
 	return i, err
 }
 
+const getPassengerActivitySummary = `-- name: GetPassengerActivitySummary :one
+SELECT
+    COALESCE(SUM(r.fare_centavos) FILTER (
+        WHERE r.status = 'completed'
+          AND (
+              (r.completed_at >= $1 AND r.completed_at < $2)
+              OR (
+                  r.completed_at IS NULL
+                  AND r.created_at >= $1
+                  AND r.created_at < $2
+              )
+          )
+    ), 0)::bigint AS this_week_fare_centavos,
+    COUNT(*) FILTER (
+        WHERE r.status = 'completed'
+          AND (
+              (r.completed_at >= $1 AND r.completed_at < $2)
+              OR (
+                  r.completed_at IS NULL
+                  AND r.created_at >= $1
+                  AND r.created_at < $2
+              )
+          )
+    )::bigint AS this_week_completed_rides
+FROM rides AS r
+WHERE r.passenger_id = $3
+`
+
+type GetPassengerActivitySummaryParams struct {
+	WeekStart   pgtype.Timestamptz `db:"week_start"`
+	WeekEnd     pgtype.Timestamptz `db:"week_end"`
+	PassengerID int32              `db:"passenger_id"`
+}
+
+type GetPassengerActivitySummaryRow struct {
+	ThisWeekFareCentavos   int64 `db:"this_week_fare_centavos"`
+	ThisWeekCompletedRides int64 `db:"this_week_completed_rides"`
+}
+
+func (q *Queries) GetPassengerActivitySummary(ctx context.Context, arg GetPassengerActivitySummaryParams) (GetPassengerActivitySummaryRow, error) {
+	row := q.db.QueryRow(ctx, getPassengerActivitySummary, arg.WeekStart, arg.WeekEnd, arg.PassengerID)
+	var i GetPassengerActivitySummaryRow
+	err := row.Scan(&i.ThisWeekFareCentavos, &i.ThisWeekCompletedRides)
+	return i, err
+}
+
 const listDriverEarnings = `-- name: ListDriverEarnings :many
 SELECT created_at, completed_at, driver_payout_centavos
 FROM rides

@@ -48,6 +48,7 @@ type Querier interface {
 	GetDriverStats(ctx context.Context, arg GetDriverStatsParams) (GetDriverStatsRow, error)
 	GetDriverWalletAccountForUpdate(ctx context.Context, driverID int32) (DriverWalletAccount, error)
 	GetOnlineDriverProfileForBidding(ctx context.Context, userID int32) (DriverProfile, error)
+	GetPassengerActivitySummary(ctx context.Context, arg GetPassengerActivitySummaryParams) (GetPassengerActivitySummaryRow, error)
 	GetPassengerProfileByUserID(ctx context.Context, userID int32) (GetPassengerProfileByUserIDRow, error)
 	GetPassengerProfileByUserIDFull(ctx context.Context, userID int32) (PassengerProfile, error)
 	GetPendingBidOffer(ctx context.Context, arg GetPendingBidOfferParams) (BidOffer, error)
