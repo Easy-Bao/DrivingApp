@@ -65,6 +65,7 @@ type Querier interface {
 	ListBidOffersBySession(ctx context.Context, sessionID int32) ([]BidOffer, error)
 	ListDriverDocumentsByDriverID(ctx context.Context, arg ListDriverDocumentsByDriverIDParams) ([]DriverDocument, error)
 	ListDriverDocumentsForReview(ctx context.Context, arg ListDriverDocumentsForReviewParams) ([]DriverDocument, error)
+	ListDriverEarnings(ctx context.Context, arg ListDriverEarningsParams) ([]ListDriverEarningsRow, error)
 	ListNotifications(ctx context.Context, arg ListNotificationsParams) ([]Notification, error)
 	ListTargetedActiveBidSessions(ctx context.Context, arg ListTargetedActiveBidSessionsParams) ([]BidSession, error)
 	LockActiveBidSessionForOffer(ctx context.Context, arg LockActiveBidSessionForOfferParams) (BidSession, error)

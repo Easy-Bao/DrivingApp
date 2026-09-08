@@ -81,3 +81,54 @@ func (q *Queries) GetDriverStats(ctx context.Context, arg GetDriverStatsParams) 
 	)
 	return i, err
 }
+
+const listDriverEarnings = `-- name: ListDriverEarnings :many
+SELECT created_at, completed_at, driver_payout_centavos
+FROM rides
+WHERE driver_id = $1
+  AND status = 'completed'
+  AND (
+      (
+          completed_at IS NOT NULL
+          AND completed_at >= $2
+          AND completed_at < $3
+      )
+      OR (
+          completed_at IS NULL
+          AND created_at >= $2
+          AND created_at < $3
+      )
+  )
+`
+
+type ListDriverEarningsParams struct {
+	DriverID   pgtype.Int4        `db:"driver_id"`
+	MonthStart pgtype.Timestamptz `db:"month_start"`
+	MonthEnd   pgtype.Timestamptz `db:"month_end"`
+}
+
+type ListDriverEarningsRow struct {
+	CreatedAt            pgtype.Timestamptz `db:"created_at"`
+	CompletedAt          pgtype.Timestamptz `db:"completed_at"`
+	DriverPayoutCentavos int64              `db:"driver_payout_centavos"`
+}
+
+func (q *Queries) ListDriverEarnings(ctx context.Context, arg ListDriverEarningsParams) ([]ListDriverEarningsRow, error) {
+	rows, err := q.db.Query(ctx, listDriverEarnings, arg.DriverID, arg.MonthStart, arg.MonthEnd)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListDriverEarningsRow{}
+	for rows.Next() {
+		var i ListDriverEarningsRow
+		if err := rows.Scan(&i.CreatedAt, &i.CompletedAt, &i.DriverPayoutCentavos); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
