@@ -27,8 +27,10 @@ type Querier interface {
 	CreateDriverProfile(ctx context.Context, arg CreateDriverProfileParams) error
 	CreateDriverWalletAccount(ctx context.Context, arg CreateDriverWalletAccountParams) (DriverWalletAccount, error)
 	CreatePassengerProfile(ctx context.Context, arg CreatePassengerProfileParams) error
+	CreatePassengerReview(ctx context.Context, arg CreatePassengerReviewParams) (PassengerReview, error)
 	CreatePrivateObject(ctx context.Context, arg CreatePrivateObjectParams) error
 	CreateRefreshSession(ctx context.Context, arg CreateRefreshSessionParams) error
+	CreateReview(ctx context.Context, arg CreateReviewParams) (Review, error)
 	CreateRide(ctx context.Context, arg CreateRideParams) (Ride, error)
 	CreateRideSettlement(ctx context.Context, arg CreateRideSettlementParams) error
 	CreateRideSettlementForCash(ctx context.Context, arg CreateRideSettlementForCashParams) (RideSettlement, error)
@@ -49,6 +51,7 @@ type Querier interface {
 	GetDriverWalletAccountForUpdate(ctx context.Context, driverID int32) (DriverWalletAccount, error)
 	GetOnlineDriverProfileForBidding(ctx context.Context, userID int32) (DriverProfile, error)
 	GetPassengerActivitySummary(ctx context.Context, arg GetPassengerActivitySummaryParams) (GetPassengerActivitySummaryRow, error)
+	GetPassengerName(ctx context.Context, passengerID int32) (string, error)
 	GetPassengerProfileByUserID(ctx context.Context, userID int32) (GetPassengerProfileByUserIDRow, error)
 	GetPassengerProfileByUserIDFull(ctx context.Context, userID int32) (PassengerProfile, error)
 	GetPendingBidOffer(ctx context.Context, arg GetPendingBidOfferParams) (BidOffer, error)
@@ -59,14 +62,17 @@ type Querier interface {
 	GetUserByID(ctx context.Context, id int32) (User, error)
 	HasActiveBidSession(ctx context.Context, arg HasActiveBidSessionParams) (bool, error)
 	HasActivePassengerRide(ctx context.Context, passengerID int32) (bool, error)
+	HasPassengerReviewForRide(ctx context.Context, rideID int32) (bool, error)
 	HasPendingBid(ctx context.Context, arg HasPendingBidParams) (bool, error)
 	HasPendingBidOffer(ctx context.Context, arg HasPendingBidOfferParams) (bool, error)
+	HasReviewForRide(ctx context.Context, rideID pgtype.Int4) (bool, error)
 	ListActiveBidSessions(ctx context.Context, expiresAt pgtype.Timestamptz) ([]BidSession, error)
 	ListActiveRidesForDriver(ctx context.Context, driverID pgtype.Int4) ([]Ride, error)
 	ListBidOffersBySession(ctx context.Context, sessionID int32) ([]BidOffer, error)
 	ListDriverDocumentsByDriverID(ctx context.Context, arg ListDriverDocumentsByDriverIDParams) ([]DriverDocument, error)
 	ListDriverDocumentsForReview(ctx context.Context, arg ListDriverDocumentsForReviewParams) ([]DriverDocument, error)
 	ListDriverEarnings(ctx context.Context, arg ListDriverEarningsParams) ([]ListDriverEarningsRow, error)
+	ListDriverReviews(ctx context.Context, arg ListDriverReviewsParams) ([]ListDriverReviewsRow, error)
 	ListDriverRides(ctx context.Context, arg ListDriverRidesParams) ([]ListDriverRidesRow, error)
 	ListNotifications(ctx context.Context, arg ListNotificationsParams) ([]Notification, error)
 	ListPassengerRides(ctx context.Context, arg ListPassengerRidesParams) ([]ListPassengerRidesRow, error)

@@ -102,7 +102,7 @@ func (repository *PostgresRideRepository) CreateBid(ctx context.Context, value d
 		Status:              value.Status,
 	})
 	if err != nil {
-		if isPostgresBiddingUniqueViolation(err) {
+		if isPostgresUniqueViolation(err) {
 			return domain.Bid{}, domain.ErrDuplicateBid
 		}
 		return domain.Bid{}, fmt.Errorf("create bid: %w", err)

@@ -97,7 +97,7 @@ func (repository *PostgresRideRepository) CreateSession(ctx context.Context, val
 		CreatedAt:           createdAt,
 	})
 	if err != nil {
-		if isPostgresBiddingUniqueViolation(err) {
+		if isPostgresUniqueViolation(err) {
 			return domain.BidSession{}, domain.ErrActiveBooking
 		}
 		return domain.BidSession{}, fmt.Errorf("create bid session: %w", err)
@@ -241,7 +241,7 @@ func (repository *PostgresRideRepository) PlaceOffer(ctx context.Context, value 
 		ProposedFareCentavos: value.ProposedFareCentavos,
 	})
 	if err != nil {
-		if isPostgresBiddingUniqueViolation(err) {
+		if isPostgresUniqueViolation(err) {
 			return domain.BidOffer{}, domain.ErrDuplicateBid
 		}
 		return domain.BidOffer{}, fmt.Errorf("create bid offer: %w", err)
@@ -385,7 +385,7 @@ func bidTextValue(value pgtype.Text) string {
 	return value.String
 }
 
-func isPostgresBiddingUniqueViolation(err error) bool {
+func isPostgresUniqueViolation(err error) bool {
 	var databaseError *pgconn.PgError
 	return errors.As(err, &databaseError) && databaseError.Code == "23505"
 }
