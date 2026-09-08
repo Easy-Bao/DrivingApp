@@ -537,7 +537,15 @@ func (provider *MapboxProvider) Route(ctx context.Context, origin, destination d
 
 func routeCacheKey(origin, destination domain.Coordinates, options domain.RouteOptions) string {
 	var builder strings.Builder
-	fmt.Fprintf(&builder, "%s;%s|%s", coordinate(origin.Longitude)+","+coordinate(origin.Latitude), coordinate(destination.Longitude)+","+coordinate(destination.Latitude), options.Profile)
+	builder.WriteString(coordinate(origin.Longitude))
+	builder.WriteByte(',')
+	builder.WriteString(coordinate(origin.Latitude))
+	builder.WriteByte(';')
+	builder.WriteString(coordinate(destination.Longitude))
+	builder.WriteByte(',')
+	builder.WriteString(coordinate(destination.Latitude))
+	builder.WriteByte('|')
+	builder.WriteString(string(options.Profile))
 	for _, point := range options.ExcludePoints {
 		builder.WriteByte('|')
 		builder.WriteString(coordinate(point.Longitude))
@@ -715,11 +723,11 @@ func (provider *MapboxProvider) getJSON(ctx context.Context, endpoint string, ta
 func (provider *MapboxProvider) fetchJSON(ctx context.Context, endpoint string, target any) error {
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("create location provider request: %w", err)
 	}
 	response, err := provider.client.Do(request)
 	if err != nil {
-		return err
+		return fmt.Errorf("send location provider request: %w", err)
 	}
 	defer response.Body.Close()
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
@@ -727,12 +735,15 @@ func (provider *MapboxProvider) fetchJSON(ctx context.Context, endpoint string, 
 	}
 	body, err := io.ReadAll(io.LimitReader(response.Body, maxProviderResponseBytes+1))
 	if err != nil {
-		return err
+		return fmt.Errorf("read location provider response: %w", err)
 	}
 	if int64(len(body)) > maxProviderResponseBytes {
 		return fmt.Errorf("location provider response exceeds %d bytes", maxProviderResponseBytes)
 	}
-	return json.Unmarshal(body, target)
+	if err := json.Unmarshal(body, target); err != nil {
+		return fmt.Errorf("decode location provider response: %w", err)
+	}
+	return nil
 }
 
 func coordinate(value float64) string {
