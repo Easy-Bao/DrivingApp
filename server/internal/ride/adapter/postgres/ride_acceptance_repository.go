@@ -9,7 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (repository *PostgresRideRepository) AcceptRide(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
+func (repository *RideRepository) AcceptRide(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.Ride{}, err
 	}

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/ent"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/jackc/pgx/v5"
@@ -16,41 +15,35 @@ import (
 
 const maxPostgresRideID = 1<<31 - 1
 
-// PostgresRideRepository gradually moves ride persistence to generated
-// PostgreSQL queries. The embedded repository preserves the existing domain
-// surface for operations that have not migrated yet.
-type PostgresRideRepository struct {
-	*RideRepository
-	pool    *pgxpool.Pool
-	queries *databasepostgres.Queries
+// RideRepository persists ride-domain data through generated queries.
+type RideRepository struct {
+	pool                  *pgxpool.Pool
+	queries               *databasepostgres.Queries
+	platformCommissionBPS int64
 }
 
 var (
-	_ domain.Repository = (*PostgresRideRepository)(nil)
+	_ domain.Repository = (*RideRepository)(nil)
 	_ interface {
 		ActiveRidesForDriver(context.Context, int) ([]domain.Ride, error)
-	} = (*PostgresRideRepository)(nil)
+	} = (*RideRepository)(nil)
 )
 
-func NewPostgresRideRepository(
-	client *ent.Client,
+func NewRideRepository(
 	pool *pgxpool.Pool,
 	platformCommissionBPS int64,
-) (*PostgresRideRepository, error) {
-	if client == nil {
-		return nil, errors.New("ent client is required for the compatibility ride repository")
-	}
+) (*RideRepository, error) {
 	if pool == nil {
 		return nil, errors.New("postgresql pool is required")
 	}
-	return &PostgresRideRepository{
-		RideRepository: NewRideRepository(client, platformCommissionBPS),
-		pool:           pool,
-		queries:        databasepostgres.New(pool),
+	return &RideRepository{
+		pool:                  pool,
+		queries:               databasepostgres.New(pool),
+		platformCommissionBPS: platformCommissionBPS,
 	}, nil
 }
 
-func (repository *PostgresRideRepository) Get(ctx context.Context, rideID int) (domain.Ride, error) {
+func (repository *RideRepository) Get(ctx context.Context, rideID int) (domain.Ride, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.Ride{}, err
 	}
@@ -89,7 +82,7 @@ func (repository *PostgresRideRepository) Get(ctx context.Context, rideID int) (
 	return ride, nil
 }
 
-func (repository *PostgresRideRepository) ActiveRidesForDriver(ctx context.Context, driverID int) ([]domain.Ride, error) {
+func (repository *RideRepository) ActiveRidesForDriver(ctx context.Context, driverID int) ([]domain.Ride, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return nil, err
 	}
@@ -112,7 +105,7 @@ func (repository *PostgresRideRepository) ActiveRidesForDriver(ctx context.Conte
 	return result, nil
 }
 
-func (repository *PostgresRideRepository) validateNativeReadRepository() error {
+func (repository *RideRepository) validateNativeReadRepository() error {
 	if repository == nil || repository.pool == nil || repository.queries == nil {
 		return errors.New("postgresql ride read repository is not initialized")
 	}

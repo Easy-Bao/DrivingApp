@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (repository *PostgresRideRepository) DriverEarnings(
+func (repository *RideRepository) DriverEarnings(
 	ctx context.Context,
 	driverID int,
 	monthStart, monthEnd time.Time,

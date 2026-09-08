@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (repository *PostgresRideRepository) SettleCash(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
+func (repository *RideRepository) SettleCash(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.Ride{}, err
 	}
@@ -110,7 +110,7 @@ func (repository *PostgresRideRepository) SettleCash(ctx context.Context, rideID
 	return fromPostgresRide(rideItem)
 }
 
-func (repository *PostgresRideRepository) ensureNativeRideSettlement(
+func (repository *RideRepository) ensureNativeRideSettlement(
 	ctx context.Context,
 	queries *databasepostgres.Queries,
 	rideItem databasepostgres.Ride,

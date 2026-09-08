@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (repository *PostgresRideRepository) AcceptOffer(ctx context.Context, sessionID, offerID, passengerID int) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
+func (repository *RideRepository) AcceptOffer(ctx context.Context, sessionID, offerID, passengerID int) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
 	}

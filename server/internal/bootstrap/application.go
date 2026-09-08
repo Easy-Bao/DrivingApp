@@ -114,8 +114,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
-	ridesRepository, err := ridepostgres.NewPostgresRideRepository(
-		databaseClient,
+	ridesRepository, err := ridepostgres.NewRideRepository(
 		postgresPool,
 		config.Pricing.PlatformCommissionBPS,
 	)

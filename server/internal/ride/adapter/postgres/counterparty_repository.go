@@ -10,7 +10,9 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (repository *PostgresRideRepository) Counterparty(ctx context.Context, rideID, actorID int) (domain.Counterparty, error) {
+const rideContactWindow = 48 * time.Hour
+
+func (repository *RideRepository) Counterparty(ctx context.Context, rideID, actorID int) (domain.Counterparty, error) {
 	ride, err := repository.Get(ctx, rideID)
 	if err != nil {
 		return domain.Counterparty{}, err
@@ -94,4 +96,11 @@ func rideContactAvailabilityFromRide(ride domain.Ride) (bool, *string) {
 	default:
 		return false, nil
 	}
+}
+
+func firstNonEmpty(preferred, fallback string) string {
+	if preferred != "" {
+		return preferred
+	}
+	return fallback
 }

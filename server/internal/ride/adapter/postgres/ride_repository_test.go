@@ -8,9 +8,9 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func TestNewPostgresRideRepositoryRejectsMissingDependencies(t *testing.T) {
-	if _, err := NewPostgresRideRepository(nil, nil, 1500); err == nil {
-		t.Fatal("expected missing compatibility client to be rejected")
+func TestNewRideRepositoryRejectsMissingPool(t *testing.T) {
+	if _, err := NewRideRepository(nil, 1500); err == nil {
+		t.Fatal("expected missing PostgreSQL pool to be rejected")
 	}
 }
 

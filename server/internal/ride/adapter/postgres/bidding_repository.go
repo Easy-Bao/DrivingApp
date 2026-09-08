@@ -12,9 +12,9 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-var _ domain.BiddingRepository = (*PostgresRideRepository)(nil)
+var _ domain.BiddingRepository = (*RideRepository)(nil)
 
-func (repository *PostgresRideRepository) CreateSession(ctx context.Context, value domain.BidSession) (domain.BidSession, error) {
+func (repository *RideRepository) CreateSession(ctx context.Context, value domain.BidSession) (domain.BidSession, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.BidSession{}, err
 	}
@@ -108,7 +108,7 @@ func (repository *PostgresRideRepository) CreateSession(ctx context.Context, val
 	return fromPostgresBidSession(created)
 }
 
-func (repository *PostgresRideRepository) ActiveSessions(ctx context.Context, driverID *int) ([]domain.BidSession, error) {
+func (repository *RideRepository) ActiveSessions(ctx context.Context, driverID *int) ([]domain.BidSession, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return nil, err
 	}
@@ -153,7 +153,7 @@ func (repository *PostgresRideRepository) ActiveSessions(ctx context.Context, dr
 	return result, nil
 }
 
-func (repository *PostgresRideRepository) Offers(ctx context.Context, sessionID int) ([]domain.BidOffer, error) {
+func (repository *RideRepository) Offers(ctx context.Context, sessionID int) ([]domain.BidOffer, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return nil, err
 	}
@@ -176,7 +176,7 @@ func (repository *PostgresRideRepository) Offers(ctx context.Context, sessionID 
 	return result, nil
 }
 
-func (repository *PostgresRideRepository) PlaceOffer(ctx context.Context, value domain.BidOffer) (domain.BidOffer, error) {
+func (repository *RideRepository) PlaceOffer(ctx context.Context, value domain.BidOffer) (domain.BidOffer, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.BidOffer{}, err
 	}
@@ -252,7 +252,7 @@ func (repository *PostgresRideRepository) PlaceOffer(ctx context.Context, value 
 	return fromPostgresBidOffer(created)
 }
 
-func (repository *PostgresRideRepository) CancelSession(ctx context.Context, sessionID, passengerID int) (domain.BidSession, error) {
+func (repository *RideRepository) CancelSession(ctx context.Context, sessionID, passengerID int) (domain.BidSession, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.BidSession{}, err
 	}
@@ -274,7 +274,7 @@ func (repository *PostgresRideRepository) CancelSession(ctx context.Context, ses
 	return fromPostgresBidSession(item)
 }
 
-func (repository *PostgresRideRepository) CancelOffer(ctx context.Context, sessionID, driverID int) (domain.BidOffer, error) {
+func (repository *RideRepository) CancelOffer(ctx context.Context, sessionID, driverID int) (domain.BidOffer, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.BidOffer{}, err
 	}
@@ -300,7 +300,7 @@ func (repository *PostgresRideRepository) CancelOffer(ctx context.Context, sessi
 	return fromPostgresBidOffer(item)
 }
 
-func (repository *PostgresRideRepository) Session(ctx context.Context, sessionID int) (domain.BidSession, error) {
+func (repository *RideRepository) Session(ctx context.Context, sessionID int) (domain.BidSession, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.BidSession{}, err
 	}

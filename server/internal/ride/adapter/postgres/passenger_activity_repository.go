@@ -10,9 +10,9 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-var _ domain.PassengerActivitySummaryRepository = (*PostgresRideRepository)(nil)
+var _ domain.PassengerActivitySummaryRepository = (*RideRepository)(nil)
 
-func (repository *PostgresRideRepository) PassengerActivitySummary(
+func (repository *RideRepository) PassengerActivitySummary(
 	ctx context.Context,
 	passengerID int,
 	weekStart, weekEnd time.Time,

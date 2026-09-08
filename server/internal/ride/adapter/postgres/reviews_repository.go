@@ -12,11 +12,11 @@ import (
 )
 
 var (
-	_ domain.ReviewRepository          = (*PostgresRideRepository)(nil)
-	_ domain.PassengerReviewRepository = (*PostgresRideRepository)(nil)
+	_ domain.ReviewRepository          = (*RideRepository)(nil)
+	_ domain.PassengerReviewRepository = (*RideRepository)(nil)
 )
 
-func (repository *PostgresRideRepository) DriverReviews(
+func (repository *RideRepository) DriverReviews(
 	ctx context.Context,
 	driverID, limit, offset int,
 ) ([]domain.Review, error) {
@@ -56,7 +56,7 @@ func (repository *PostgresRideRepository) DriverReviews(
 	return result, nil
 }
 
-func (repository *PostgresRideRepository) CreateReview(ctx context.Context, value domain.Review) (domain.Review, error) {
+func (repository *RideRepository) CreateReview(ctx context.Context, value domain.Review) (domain.Review, error) {
 	trip, err := repository.Get(ctx, value.RideID)
 	if err != nil || trip.Status != string(domain.RideCompleted) || trip.PassengerID != value.PassengerID || trip.DriverID == nil || *trip.DriverID != value.DriverID {
 		return domain.Review{}, domain.ErrReviewNotAllowed
@@ -103,7 +103,7 @@ func (repository *PostgresRideRepository) CreateReview(ctx context.Context, valu
 	return fromPostgresCreatedReview(item)
 }
 
-func (repository *PostgresRideRepository) CreatePassengerReview(ctx context.Context, value domain.PassengerReview) (domain.PassengerReview, error) {
+func (repository *RideRepository) CreatePassengerReview(ctx context.Context, value domain.PassengerReview) (domain.PassengerReview, error) {
 	trip, err := repository.Get(ctx, value.RideID)
 	if err != nil || trip.Status != string(domain.RideCompleted) || trip.PassengerID != value.PassengerID || trip.DriverID == nil || *trip.DriverID != value.DriverID {
 		return domain.PassengerReview{}, domain.ErrReviewNotAllowed

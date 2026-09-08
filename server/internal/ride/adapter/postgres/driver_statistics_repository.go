@@ -9,7 +9,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 )
 
-func (repository *PostgresRideRepository) DriverStats(
+func (repository *RideRepository) DriverStats(
 	ctx context.Context,
 	driverID int,
 	dayStart, dayEnd time.Time,

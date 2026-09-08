@@ -9,7 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (repository *PostgresRideRepository) CreateRide(ctx context.Context, value domain.Ride) (domain.Ride, error) {
+func (repository *RideRepository) CreateRide(ctx context.Context, value domain.Ride) (domain.Ride, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.Ride{}, err
 	}
@@ -48,7 +48,7 @@ func (repository *PostgresRideRepository) CreateRide(ctx context.Context, value 
 	return fromPostgresRide(item)
 }
 
-func (repository *PostgresRideRepository) CreateBid(ctx context.Context, value domain.Bid) (domain.Bid, error) {
+func (repository *RideRepository) CreateBid(ctx context.Context, value domain.Bid) (domain.Bid, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.Bid{}, err
 	}

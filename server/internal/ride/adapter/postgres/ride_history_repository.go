@@ -11,11 +11,11 @@ import (
 )
 
 var (
-	_ domain.TripHistoryRepository          = (*PostgresRideRepository)(nil)
-	_ domain.RecentPassengerRidesRepository = (*PostgresRideRepository)(nil)
+	_ domain.TripHistoryRepository          = (*RideRepository)(nil)
+	_ domain.RecentPassengerRidesRepository = (*RideRepository)(nil)
 )
 
-func (repository *PostgresRideRepository) DriverTrips(
+func (repository *RideRepository) DriverTrips(
 	ctx context.Context,
 	driverID int,
 	history domain.TripHistoryQuery,
@@ -56,7 +56,7 @@ func (repository *PostgresRideRepository) DriverTrips(
 	return result, nil
 }
 
-func (repository *PostgresRideRepository) PassengerRides(
+func (repository *RideRepository) PassengerRides(
 	ctx context.Context,
 	passengerID int,
 	history domain.TripHistoryQuery,
@@ -96,7 +96,7 @@ func (repository *PostgresRideRepository) PassengerRides(
 	return result, nil
 }
 
-func (repository *PostgresRideRepository) PassengerRecentRides(
+func (repository *RideRepository) PassengerRecentRides(
 	ctx context.Context,
 	passengerID, limit int,
 ) ([]domain.Ride, error) {

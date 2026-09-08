@@ -8,9 +8,9 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 )
 
-var _ domain.DriverAvailabilityRepository = (*PostgresRideRepository)(nil)
+var _ domain.DriverAvailabilityRepository = (*RideRepository)(nil)
 
-func (repository *PostgresRideRepository) OnlineDrivers(
+func (repository *RideRepository) OnlineDrivers(
 	ctx context.Context,
 	driverIDs []int,
 ) ([]domain.OnlineDriver, error) {
@@ -45,7 +45,7 @@ func (repository *PostgresRideRepository) OnlineDrivers(
 	return result, nil
 }
 
-func (repository *PostgresRideRepository) PublicDriverSummaries(
+func (repository *RideRepository) PublicDriverSummaries(
 	ctx context.Context,
 	limit int,
 ) ([]domain.PublicDriverSummary, error) {
