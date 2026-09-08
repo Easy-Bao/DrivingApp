@@ -98,7 +98,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
-	dashboardStatsRepository, err := adminpostgres.NewPostgresDashboardStatsRepository(postgresPool)
+	statsRepository, err := adminpostgres.NewStatsRepository(postgresPool)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +132,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 		refreshSessionRepository,
 		ridesRepository,
 		profileRepository,
-		dashboardStatsRepository,
+		statsRepository,
 		documentRepository,
 		privateObjectStore,
 	)

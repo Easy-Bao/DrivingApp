@@ -35,7 +35,7 @@ func TestStatsRequiresConfiguredAdministrator(t *testing.T) {
 
 	router := chi.NewRouter()
 	adminhttp.NewRouter(
-		adminapplication.NewDashboardStatsService(httpRepository{}),
+		adminapplication.NewStatsService(httpRepository{}),
 		tokenManager,
 		security.NewAdminAuthorizer("42"),
 	).RegisterRoutes(router)

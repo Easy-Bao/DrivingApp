@@ -8,14 +8,14 @@ import (
 )
 
 type Handler struct {
-	service *application.DashboardStatsService
+	service *application.StatsService
 }
 
-func NewHandler(service *application.DashboardStatsService) *Handler {
+func NewHandler(service *application.StatsService) *Handler {
 	return &Handler{service: service}
 }
 func (handler *Handler) Stats(w http.ResponseWriter, r *http.Request) {
-	stats, err := handler.service.DashboardStats(r.Context())
+	stats, err := handler.service.Stats(r.Context())
 	if err != nil {
 		response.Error(w, 500, "Dashboard statistics are temporarily unavailable.")
 		return

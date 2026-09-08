@@ -5,17 +5,14 @@ import (
 	"log/slog"
 
 	"github.com/Easy-Bao/DrivingApp/server/ent"
-	adminpostgres "github.com/Easy-Bao/DrivingApp/server/internal/admin/adapter/postgres"
 	adminapplication "github.com/Easy-Bao/DrivingApp/server/internal/admin/application"
 	admindomain "github.com/Easy-Bao/DrivingApp/server/internal/admin/domain"
 	adminhttp "github.com/Easy-Bao/DrivingApp/server/internal/admin/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/email"
-	authpostgres "github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/postgres"
 	authredis "github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/redis"
 	authapplication "github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
 	authdomain "github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/auth/transport/http"
-	documentpostgres "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/adapter/postgres"
 	documentapplication "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/application"
 	documentdomain "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/domain"
 	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/transport/http"
@@ -30,7 +27,6 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	platformstorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage"
-	storagepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment"
 	assignmentadapter "github.com/Easy-Bao/DrivingApp/server/internal/realtime/assignment/adapter"
 	chatadapter "github.com/Easy-Bao/DrivingApp/server/internal/realtime/chat/adapter"
@@ -42,11 +38,9 @@ import (
 	geoapplication "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/application"
 	geoh "github.com/Easy-Bao/DrivingApp/server/internal/realtime/geo/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/hub"
-	ridepostgres "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/postgres"
 	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
 	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	ridehttp "github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/http"
-	userpostgres "github.com/Easy-Bao/DrivingApp/server/internal/user/adapter/postgres"
 	userapplication "github.com/Easy-Bao/DrivingApp/server/internal/user/application"
 	userdomain "github.com/Easy-Bao/DrivingApp/server/internal/user/domain"
 	userhttp "github.com/Easy-Bao/DrivingApp/server/internal/user/transport/http"
@@ -58,54 +52,6 @@ import (
 type ridePersistence interface {
 	ridedomain.Repository
 	ActiveRidesForDriver(context.Context, int) ([]ridedomain.Ride, error)
-}
-
-func newRouter(config Config, databaseClient *ent.Client, redisClient *redisclient.Client, applicationLogger *slog.Logger) (*chi.Mux, *hub.Hub) {
-	privateObjectStore := storagepostgres.NewObjectStore(databaseClient)
-	profileRepository := userpostgres.NewProfileRepository(databaseClient, privateObjectStore).WithLogger(applicationLogger)
-	ridesRepository := ridepostgres.NewRideRepository(databaseClient, config.Pricing.PlatformCommissionBPS)
-	return newRouterWithRepositories(
-		config,
-		databaseClient,
-		nil,
-		redisClient,
-		applicationLogger,
-		authpostgres.NewUserRepository(databaseClient),
-		authpostgres.NewRefreshSessionRepository(databaseClient),
-		ridesRepository,
-		profileRepository,
-		adminpostgres.NewDashboardStatsRepository(databaseClient),
-		documentpostgres.NewDocumentRepository(databaseClient),
-		privateObjectStore,
-	)
-}
-
-func newRouterWithUserRepository(
-	config Config,
-	databaseClient *ent.Client,
-	postgresPool *pgxpool.Pool,
-	redisClient *redisclient.Client,
-	applicationLogger *slog.Logger,
-	authRepository authdomain.VerifiedUserRepository,
-	refreshSessionRepository authdomain.RefreshSessionStore,
-) (*chi.Mux, *hub.Hub) {
-	privateObjectStore := storagepostgres.NewObjectStore(databaseClient)
-	profileRepository := userpostgres.NewProfileRepository(databaseClient, privateObjectStore).WithLogger(applicationLogger)
-	ridesRepository := ridepostgres.NewRideRepository(databaseClient, config.Pricing.PlatformCommissionBPS)
-	return newRouterWithRepositories(
-		config,
-		databaseClient,
-		postgresPool,
-		redisClient,
-		applicationLogger,
-		authRepository,
-		refreshSessionRepository,
-		ridesRepository,
-		profileRepository,
-		adminpostgres.NewDashboardStatsRepository(databaseClient),
-		documentpostgres.NewDocumentRepository(databaseClient),
-		privateObjectStore,
-	)
 }
 
 func newRouterWithRepositories(
@@ -172,7 +118,7 @@ func newRouterWithRepositories(
 	)
 
 	ridesRouter := ridehttp.NewRouter(ridesService, verifier)
-	adminRouter := adminhttp.NewRouter(adminapplication.NewDashboardStatsService(statsRepository), verifier, adminAuthorizer)
+	adminRouter := adminhttp.NewRouter(adminapplication.NewStatsService(statsRepository), verifier, adminAuthorizer)
 	geoService := geoapplication.NewLocationTrackingService(
 		geo.NewDriverLocationStore(redisClient).WithLogger(applicationLogger),
 		geoapplication.WithRideAssignments(rideAssignments),
