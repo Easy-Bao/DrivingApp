@@ -2,126 +2,175 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/ent"
-	"github.com/Easy-Bao/DrivingApp/server/ent/refreshsession"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
+	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// RefreshSessionRepository persists only server-side refresh-token digests.
-// The opaque token itself never crosses this adapter boundary.
-type RefreshSessionRepository struct {
-	client *ent.Client
+// PostgresRefreshSessionRepository stores only refresh-token digests and keeps
+// rotation atomic through a PostgreSQL row lock.
+type PostgresRefreshSessionRepository struct {
+	pool    *pgxpool.Pool
+	queries *databasepostgres.Queries
 }
 
-func NewRefreshSessionRepository(client *ent.Client) *RefreshSessionRepository {
-	return &RefreshSessionRepository{client: client}
+var _ domain.RefreshSessionStore = (*PostgresRefreshSessionRepository)(nil)
+
+func NewPostgresRefreshSessionRepository(pool *pgxpool.Pool) (*PostgresRefreshSessionRepository, error) {
+	if pool == nil {
+		return nil, errors.New("postgresql pool is required")
+	}
+	return &PostgresRefreshSessionRepository{
+		pool:    pool,
+		queries: databasepostgres.New(pool),
+	}, nil
 }
 
-func (repository *RefreshSessionRepository) Create(ctx context.Context, session domain.RefreshSession) error {
-	_, err := repository.client.RefreshSession.Create().
-		SetUserID(session.UserID).
-		SetTokenHash(session.TokenHash).
-		SetExpiresAt(session.ExpiresAt).
-		Save(ctx)
+func (repository *PostgresRefreshSessionRepository) Create(ctx context.Context, session domain.RefreshSession) error {
+	if err := repository.validate(); err != nil {
+		return err
+	}
+	userID, err := toPostgresUserID(session.UserID)
 	if err != nil {
+		return err
+	}
+	if err := repository.queries.CreateRefreshSession(ctx, databasepostgres.CreateRefreshSessionParams{
+		UserID:    userID,
+		TokenHash: session.TokenHash,
+		ExpiresAt: toPostgresTimestamp(session.ExpiresAt),
+	}); err != nil {
 		return fmt.Errorf("create refresh session: %w", err)
 	}
 	return nil
 }
 
-func (repository *RefreshSessionRepository) FindActive(ctx context.Context, tokenHash string, now time.Time) (domain.RefreshSession, error) {
-	session, err := repository.client.RefreshSession.Query().
-		Where(
-			refreshsession.TokenHashEQ(tokenHash),
-			refreshsession.RevokedAtIsNil(),
-			refreshsession.ExpiresAtGT(now),
-		).
-		Only(ctx)
-	if ent.IsNotFound(err) {
+func (repository *PostgresRefreshSessionRepository) FindActive(ctx context.Context, tokenHash string, now time.Time) (domain.RefreshSession, error) {
+	if err := repository.validate(); err != nil {
+		return domain.RefreshSession{}, err
+	}
+	row, err := repository.queries.GetActiveRefreshSession(ctx, databasepostgres.GetActiveRefreshSessionParams{
+		TokenHash: tokenHash,
+		ExpiresAt: toPostgresTimestamp(now),
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.RefreshSession{}, domain.ErrInvalidRefreshToken
 	}
 	if err != nil {
 		return domain.RefreshSession{}, fmt.Errorf("find active refresh session: %w", err)
 	}
-	return toDomainRefreshSession(session), nil
+	return fromPostgresRefreshSession(row.UserID, row.TokenHash, row.ExpiresAt)
 }
 
-func (repository *RefreshSessionRepository) Rotate(ctx context.Context, tokenHash string, replacement domain.RefreshSession, now time.Time) error {
-	transaction, err := repository.client.Tx(ctx)
+func (repository *PostgresRefreshSessionRepository) Rotate(ctx context.Context, tokenHash string, replacement domain.RefreshSession, now time.Time) error {
+	if err := repository.validate(); err != nil {
+		return err
+	}
+	replacementUserID, err := toPostgresUserID(replacement.UserID)
+	if err != nil {
+		return err
+	}
+
+	transaction, err := repository.pool.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("begin refresh session rotation: %w", err)
 	}
-	defer transaction.Rollback()
+	defer func() {
+		_ = transaction.Rollback(ctx)
+	}()
 
-	current, err := transaction.RefreshSession.Query().
-		Where(
-			refreshsession.TokenHashEQ(tokenHash),
-			refreshsession.RevokedAtIsNil(),
-			refreshsession.ExpiresAtGT(now),
-		).
-		ForUpdate().
-		Only(ctx)
-	if ent.IsNotFound(err) {
+	transactionQueries := repository.queries.WithTx(transaction)
+	current, err := transactionQueries.GetActiveRefreshSessionForUpdate(ctx, databasepostgres.GetActiveRefreshSessionForUpdateParams{
+		TokenHash: tokenHash,
+		ExpiresAt: toPostgresTimestamp(now),
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.ErrInvalidRefreshToken
 	}
 	if err != nil {
 		return fmt.Errorf("load refresh session for rotation: %w", err)
 	}
-	if current.UserID != replacement.UserID {
+	if current.UserID != replacementUserID {
 		return domain.ErrInvalidRefreshToken
 	}
 
-	if _, err := current.Update().SetRevokedAt(now).SetLastUsedAt(now).Save(ctx); err != nil {
+	rows, err := transactionQueries.RevokeRefreshSessionByID(ctx, databasepostgres.RevokeRefreshSessionByIDParams{
+		ID:        current.ID,
+		RevokedAt: toPostgresTimestamp(now),
+	})
+	if err != nil {
 		return fmt.Errorf("revoke refresh session during rotation: %w", err)
 	}
-	if _, err := transaction.RefreshSession.Create().
-		SetUserID(replacement.UserID).
-		SetTokenHash(replacement.TokenHash).
-		SetExpiresAt(replacement.ExpiresAt).
-		Save(ctx); err != nil {
+	if rows != 1 {
+		return fmt.Errorf("revoke refresh session during rotation: %w", pgx.ErrNoRows)
+	}
+
+	if err := transactionQueries.CreateRefreshSession(ctx, databasepostgres.CreateRefreshSessionParams{
+		UserID:    replacementUserID,
+		TokenHash: replacement.TokenHash,
+		ExpiresAt: toPostgresTimestamp(replacement.ExpiresAt),
+	}); err != nil {
 		return fmt.Errorf("create replacement refresh session: %w", err)
 	}
-	if err := transaction.Commit(); err != nil {
+	if err := transaction.Commit(ctx); err != nil {
 		return fmt.Errorf("commit refresh session rotation: %w", err)
 	}
 	return nil
 }
 
-func (repository *RefreshSessionRepository) Revoke(ctx context.Context, tokenHash string, now time.Time) error {
-	_, err := repository.client.RefreshSession.Update().
-		Where(
-			refreshsession.TokenHashEQ(tokenHash),
-			refreshsession.RevokedAtIsNil(),
-		).
-		SetRevokedAt(now).
-		Save(ctx)
-	if err != nil {
+func (repository *PostgresRefreshSessionRepository) Revoke(ctx context.Context, tokenHash string, now time.Time) error {
+	if err := repository.validate(); err != nil {
+		return err
+	}
+	if err := repository.queries.RevokeRefreshSession(ctx, databasepostgres.RevokeRefreshSessionParams{
+		TokenHash: tokenHash,
+		RevokedAt: toPostgresTimestamp(now),
+	}); err != nil {
 		return fmt.Errorf("revoke refresh session: %w", err)
 	}
 	return nil
 }
 
-func (repository *RefreshSessionRepository) RevokeAll(ctx context.Context, userID int, now time.Time) error {
-	_, err := repository.client.RefreshSession.Update().
-		Where(
-			refreshsession.UserIDEQ(userID),
-			refreshsession.RevokedAtIsNil(),
-		).
-		SetRevokedAt(now).
-		Save(ctx)
+func (repository *PostgresRefreshSessionRepository) RevokeAll(ctx context.Context, userID int, now time.Time) error {
+	if err := repository.validate(); err != nil {
+		return err
+	}
+	postgresUserID, err := toPostgresUserID(userID)
 	if err != nil {
+		return err
+	}
+	if err := repository.queries.RevokeUserRefreshSessions(ctx, databasepostgres.RevokeUserRefreshSessionsParams{
+		UserID:    postgresUserID,
+		RevokedAt: toPostgresTimestamp(now),
+	}); err != nil {
 		return fmt.Errorf("revoke user refresh sessions: %w", err)
 	}
 	return nil
 }
 
-func toDomainRefreshSession(session *ent.RefreshSession) domain.RefreshSession {
-	return domain.RefreshSession{
-		UserID:    session.UserID,
-		TokenHash: session.TokenHash,
-		ExpiresAt: session.ExpiresAt,
+func (repository *PostgresRefreshSessionRepository) validate() error {
+	if repository == nil || repository.pool == nil || repository.queries == nil {
+		return errors.New("postgresql refresh session repository is not initialized")
 	}
+	return nil
+}
+
+func fromPostgresRefreshSession(userID int32, tokenHash string, expiresAt pgtype.Timestamptz) (domain.RefreshSession, error) {
+	if !expiresAt.Valid {
+		return domain.RefreshSession{}, errors.New("refresh session expiry is null")
+	}
+	return domain.RefreshSession{
+		UserID:    int(userID),
+		TokenHash: tokenHash,
+		ExpiresAt: expiresAt.Time,
+	}, nil
+}
+
+func toPostgresTimestamp(value time.Time) pgtype.Timestamptz {
+	return pgtype.Timestamptz{Time: value, Valid: true}
 }
