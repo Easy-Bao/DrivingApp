@@ -19,11 +19,11 @@ func (repository *PostgresRideRepository) UpdateStatus(ctx context.Context, ride
 	if !currentOK || !nextOK {
 		return domain.Ride{}, domain.ErrInvalidStatusTransition
 	}
-	postgresRideID, err := toPostgresRideID(rideID, "ride id")
+	dbRideID, err := toPostgresRideID(rideID, "ride id")
 	if err != nil {
 		return domain.Ride{}, err
 	}
-	postgresActorID, err := toPostgresRideID(actorID, "actor id")
+	dbActorID, err := toPostgresRideID(actorID, "actor id")
 	if err != nil {
 		return domain.Ride{}, err
 	}
@@ -34,9 +34,9 @@ func (repository *PostgresRideRepository) UpdateStatus(ctx context.Context, ride
 	item, err := repository.queries.UpdateRideStatus(ctx, databasepostgres.UpdateRideStatusParams{
 		NextStatus:    string(next),
 		CompletedAt:   completedAt,
-		RideID:        postgresRideID,
+		RideID:        dbRideID,
 		CurrentStatus: string(current),
-		ActorID:       postgresActorID,
+		ActorID:       dbActorID,
 	})
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("update ride status: %w", err)

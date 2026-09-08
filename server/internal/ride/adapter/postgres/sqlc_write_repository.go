@@ -33,14 +33,14 @@ func (repository *PostgresRideRepository) CreateRide(ctx context.Context, value 
 		Status:           string(normalizedStatus),
 		FareCentavos:     value.FareCentavos,
 		RideType:         value.RideType,
-		PickupLatitude:   postgresRideFloat(value.PickupLatitude),
-		PickupLongitude:  postgresRideFloat(value.PickupLongitude),
-		PickupName:       postgresRideText(value.PickupName),
-		DropoffLatitude:  postgresRideFloat(value.DropoffLatitude),
-		DropoffLongitude: postgresRideFloat(value.DropoffLongitude),
-		DropoffName:      postgresRideText(value.DropoffName),
-		DistanceKm:       postgresRideFloat(value.DistanceKm),
-		DurationMinutes:  postgresRideFloat(value.DurationMinutes),
+		PickupLatitude:   rideFloat(value.PickupLatitude),
+		PickupLongitude:  rideFloat(value.PickupLongitude),
+		PickupName:       rideText(value.PickupName),
+		DropoffLatitude:  rideFloat(value.DropoffLatitude),
+		DropoffLongitude: rideFloat(value.DropoffLongitude),
+		DropoffName:      rideText(value.DropoffName),
+		DistanceKm:       rideFloat(value.DistanceKm),
+		DurationMinutes:  rideFloat(value.DurationMinutes),
 	})
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("create ride: %w", err)
@@ -123,10 +123,10 @@ func fromPostgresBid(item databasepostgres.Bid) domain.Bid {
 	}
 }
 
-func postgresRideFloat(value float64) pgtype.Float8 {
+func rideFloat(value float64) pgtype.Float8 {
 	return pgtype.Float8{Float64: value, Valid: true}
 }
 
-func postgresRideText(value string) pgtype.Text {
+func rideText(value string) pgtype.Text {
 	return pgtype.Text{String: value, Valid: true}
 }

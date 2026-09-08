@@ -38,7 +38,7 @@ func (repository *PostgresRideRepository) CreateSession(ctx context.Context, val
 	}
 	createdAt := pgtype.Timestamptz{}
 	if !value.CreatedAt.IsZero() {
-		createdAt = postgresBidTimestamp(value.CreatedAt)
+		createdAt = bidTimestamp(value.CreatedAt)
 	}
 
 	transaction, err := repository.pool.Begin(ctx)
@@ -53,7 +53,7 @@ func (repository *PostgresRideRepository) CreateSession(ctx context.Context, val
 	if _, err := transactionQueries.LockUserForBidSession(ctx, passengerID); err != nil {
 		return domain.BidSession{}, fmt.Errorf("lock passenger for bid session: %w", err)
 	}
-	now := postgresBidTimestamp(time.Now().UTC())
+	now := bidTimestamp(time.Now().UTC())
 	if err := transactionQueries.ExpireBidSessions(ctx, databasepostgres.ExpireBidSessionsParams{
 		PassengerID: passengerID,
 		ExpiresAt:   now,
@@ -93,7 +93,7 @@ func (repository *PostgresRideRepository) CreateSession(ctx context.Context, val
 		OfferedFareCentavos: value.OfferedFareCentavos,
 		Status:              value.Status,
 		TargetDriverID:      targetDriverID,
-		ExpiresAt:           postgresBidTimestamp(value.ExpiresAt),
+		ExpiresAt:           bidTimestamp(value.ExpiresAt),
 		CreatedAt:           createdAt,
 	})
 	if err != nil {
@@ -112,7 +112,7 @@ func (repository *PostgresRideRepository) ActiveSessions(ctx context.Context, dr
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return nil, err
 	}
-	now := postgresBidTimestamp(time.Now().UTC())
+	now := bidTimestamp(time.Now().UTC())
 	var (
 		items []databasepostgres.BidSession
 		err   error
@@ -120,14 +120,14 @@ func (repository *PostgresRideRepository) ActiveSessions(ctx context.Context, dr
 	if driverID == nil {
 		items, err = repository.queries.ListActiveBidSessions(ctx, now)
 	} else {
-		postgresDriverID, idErr := toPostgresRideID(*driverID, "driver id")
+		dbDriverID, idErr := toPostgresRideID(*driverID, "driver id")
 		if idErr != nil {
 			return nil, idErr
 		}
-		if _, profileErr := repository.queries.GetOnlineDriverProfileForBidding(ctx, postgresDriverID); profileErr != nil {
+		if _, profileErr := repository.queries.GetOnlineDriverProfileForBidding(ctx, dbDriverID); profileErr != nil {
 			return nil, domain.ErrDriverUnavailable
 		}
-		activeRides, countErr := repository.queries.CountActiveRidesForDriver(ctx, pgtype.Int4{Int32: postgresDriverID, Valid: true})
+		activeRides, countErr := repository.queries.CountActiveRidesForDriver(ctx, pgtype.Int4{Int32: dbDriverID, Valid: true})
 		if countErr != nil {
 			return nil, fmt.Errorf("count active driver rides: %w", countErr)
 		}
@@ -136,7 +136,7 @@ func (repository *PostgresRideRepository) ActiveSessions(ctx context.Context, dr
 		}
 		items, err = repository.queries.ListTargetedActiveBidSessions(ctx, databasepostgres.ListTargetedActiveBidSessionsParams{
 			ExpiresAt:      now,
-			TargetDriverID: pgtype.Int4{Int32: postgresDriverID, Valid: true},
+			TargetDriverID: pgtype.Int4{Int32: dbDriverID, Valid: true},
 		})
 	}
 	if err != nil {
@@ -157,11 +157,11 @@ func (repository *PostgresRideRepository) Offers(ctx context.Context, sessionID 
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return nil, err
 	}
-	postgresSessionID, err := toPostgresRideID(sessionID, "session id")
+	dbSessionID, err := toPostgresRideID(sessionID, "session id")
 	if err != nil {
 		return nil, err
 	}
-	items, err := repository.queries.ListBidOffersBySession(ctx, postgresSessionID)
+	items, err := repository.queries.ListBidOffersBySession(ctx, dbSessionID)
 	if err != nil {
 		return nil, fmt.Errorf("list bid offers: %w", err)
 	}
@@ -200,7 +200,7 @@ func (repository *PostgresRideRepository) PlaceOffer(ctx context.Context, value 
 		_ = transaction.Rollback(ctx)
 	}()
 	transactionQueries := repository.queries.WithTx(transaction)
-	now := postgresBidTimestamp(time.Now().UTC())
+	now := bidTimestamp(time.Now().UTC())
 	session, err := transactionQueries.LockActiveBidSessionForOffer(ctx, databasepostgres.LockActiveBidSessionForOfferParams{
 		ID:        sessionID,
 		ExpiresAt: now,
@@ -256,17 +256,17 @@ func (repository *PostgresRideRepository) CancelSession(ctx context.Context, ses
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.BidSession{}, err
 	}
-	postgresSessionID, err := toPostgresRideID(sessionID, "session id")
+	dbSessionID, err := toPostgresRideID(sessionID, "session id")
 	if err != nil {
 		return domain.BidSession{}, err
 	}
-	postgresPassengerID, err := toPostgresRideID(passengerID, "passenger id")
+	dbPassengerID, err := toPostgresRideID(passengerID, "passenger id")
 	if err != nil {
 		return domain.BidSession{}, err
 	}
 	item, err := repository.queries.CancelBidSession(ctx, databasepostgres.CancelBidSessionParams{
-		ID:          postgresSessionID,
-		PassengerID: postgresPassengerID,
+		ID:          dbSessionID,
+		PassengerID: dbPassengerID,
 	})
 	if err != nil {
 		return domain.BidSession{}, fmt.Errorf("cancel bid session: %w", err)
@@ -278,17 +278,17 @@ func (repository *PostgresRideRepository) CancelOffer(ctx context.Context, sessi
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.BidOffer{}, err
 	}
-	postgresSessionID, err := toPostgresRideID(sessionID, "session id")
+	dbSessionID, err := toPostgresRideID(sessionID, "session id")
 	if err != nil {
 		return domain.BidOffer{}, err
 	}
-	postgresDriverID, err := toPostgresRideID(driverID, "driver id")
+	dbDriverID, err := toPostgresRideID(driverID, "driver id")
 	if err != nil {
 		return domain.BidOffer{}, err
 	}
 	pending, err := repository.queries.GetPendingBidOffer(ctx, databasepostgres.GetPendingBidOfferParams{
-		SessionID: postgresSessionID,
-		DriverID:  postgresDriverID,
+		SessionID: dbSessionID,
+		DriverID:  dbDriverID,
 	})
 	if err != nil {
 		return domain.BidOffer{}, fmt.Errorf("find pending bid offer: %w", err)
@@ -304,11 +304,11 @@ func (repository *PostgresRideRepository) Session(ctx context.Context, sessionID
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.BidSession{}, err
 	}
-	postgresSessionID, err := toPostgresRideID(sessionID, "session id")
+	dbSessionID, err := toPostgresRideID(sessionID, "session id")
 	if err != nil {
 		return domain.BidSession{}, err
 	}
-	item, err := repository.queries.GetBidSessionByID(ctx, postgresSessionID)
+	item, err := repository.queries.GetBidSessionByID(ctx, dbSessionID)
 	if err != nil {
 		return domain.BidSession{}, fmt.Errorf("find bid session: %w", err)
 	}
@@ -341,7 +341,7 @@ func fromPostgresBidSession(item databasepostgres.BidSession) (domain.BidSession
 		DropoffLatitude:     item.DropoffLatitude,
 		DropoffLongitude:    item.DropoffLongitude,
 		DropoffName:         item.DropoffName,
-		PassengerNote:       postgresBidTextValue(item.PassengerNote),
+		PassengerNote:       bidTextValue(item.PassengerNote),
 		DistanceKm:          item.DistanceKm,
 		DurationMinutes:     item.DurationMinutes,
 		OfferedFareCentavos: item.OfferedFareCentavos,
@@ -361,16 +361,16 @@ func fromPostgresBidOffer(item databasepostgres.BidOffer) (domain.BidOffer, erro
 		ID:                   int64(item.ID),
 		SessionID:            int(item.SessionID),
 		DriverID:             int(item.DriverID),
-		DriverName:           postgresBidTextValue(item.DriverName),
-		PlateNumber:          postgresBidTextValue(item.PlateNumber),
-		VehicleType:          postgresBidTextValue(item.VehicleType),
+		DriverName:           bidTextValue(item.DriverName),
+		PlateNumber:          bidTextValue(item.PlateNumber),
+		VehicleType:          bidTextValue(item.VehicleType),
 		ProposedFareCentavos: item.ProposedFareCentavos,
 		Status:               item.Status,
 		CreatedAt:            item.CreatedAt.Time,
 	}, nil
 }
 
-func postgresBidTimestamp(value time.Time) pgtype.Timestamptz {
+func bidTimestamp(value time.Time) pgtype.Timestamptz {
 	return pgtype.Timestamptz{Time: value, Valid: true}
 }
 
@@ -378,7 +378,7 @@ func toPostgresBidText(value string) pgtype.Text {
 	return pgtype.Text{String: value, Valid: true}
 }
 
-func postgresBidTextValue(value pgtype.Text) string {
+func bidTextValue(value pgtype.Text) string {
 	if !value.Valid {
 		return ""
 	}
@@ -386,6 +386,6 @@ func postgresBidTextValue(value pgtype.Text) string {
 }
 
 func isPostgresBiddingUniqueViolation(err error) bool {
-	var postgresError *pgconn.PgError
-	return errors.As(err, &postgresError) && postgresError.Code == "23505"
+	var databaseError *pgconn.PgError
+	return errors.As(err, &databaseError) && databaseError.Code == "23505"
 }

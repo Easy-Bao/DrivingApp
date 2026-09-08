@@ -15,8 +15,8 @@ func TestFromPostgresBidSessionMapsNullableIdentityFields(t *testing.T) {
 		RideType:       "solo",
 		PassengerNote:  pgtype.Text{String: "Call on arrival", Valid: true},
 		TargetDriverID: pgtype.Int4{Int32: 11, Valid: true},
-		ExpiresAt:      postgresBidTimestamp(time.Date(2026, time.January, 2, 3, 4, 5, 0, time.UTC)),
-		CreatedAt:      postgresBidTimestamp(time.Date(2026, time.January, 2, 3, 0, 0, 0, time.UTC)),
+		ExpiresAt:      bidTimestamp(time.Date(2026, time.January, 2, 3, 4, 5, 0, time.UTC)),
+		CreatedAt:      bidTimestamp(time.Date(2026, time.January, 2, 3, 0, 0, 0, time.UTC)),
 	}
 
 	session, err := fromPostgresBidSession(item)
@@ -37,7 +37,7 @@ func TestFromPostgresBidOfferMapsDriverSnapshot(t *testing.T) {
 		VehicleType:          pgtype.Text{String: "sedan", Valid: true},
 		ProposedFareCentavos: 3200,
 		Status:               "pending",
-		CreatedAt:            postgresBidTimestamp(time.Now()),
+		CreatedAt:            bidTimestamp(time.Now()),
 	})
 	if err != nil {
 		t.Fatalf("fromPostgresBidOffer() error = %v", err)

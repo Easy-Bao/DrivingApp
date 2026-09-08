@@ -18,14 +18,14 @@ func (repository *PostgresRideRepository) DriverEarnings(
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return nil, err
 	}
-	postgresDriverID, err := toPostgresRideID(driverID, "driver id")
+	dbDriverID, err := toPostgresRideID(driverID, "driver id")
 	if err != nil {
 		return nil, err
 	}
 	items, err := repository.queries.ListDriverEarnings(ctx, databasepostgres.ListDriverEarningsParams{
-		DriverID:   pgtype.Int4{Int32: postgresDriverID, Valid: true},
-		MonthStart: postgresBidTimestamp(monthStart.UTC()),
-		MonthEnd:   postgresBidTimestamp(monthEnd.UTC()),
+		DriverID:   pgtype.Int4{Int32: dbDriverID, Valid: true},
+		MonthStart: bidTimestamp(monthStart.UTC()),
+		MonthEnd:   bidTimestamp(monthEnd.UTC()),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("list driver earnings: %w", err)

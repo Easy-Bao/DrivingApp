@@ -16,11 +16,11 @@ func (repository *PostgresRideRepository) SettleCash(ctx context.Context, rideID
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.Ride{}, err
 	}
-	postgresRideID, err := toPostgresRideID(rideID, "ride id")
+	dbRideID, err := toPostgresRideID(rideID, "ride id")
 	if err != nil {
 		return domain.Ride{}, err
 	}
-	postgresDriverID, err := toPostgresRideID(driverID, "driver id")
+	dbDriverID, err := toPostgresRideID(driverID, "driver id")
 	if err != nil {
 		return domain.Ride{}, err
 	}
@@ -35,8 +35,8 @@ func (repository *PostgresRideRepository) SettleCash(ctx context.Context, rideID
 
 	transactionQueries := repository.queries.WithTx(transaction)
 	rideItem, err := transactionQueries.LockCompletedRideForCashSettlement(ctx, databasepostgres.LockCompletedRideForCashSettlementParams{
-		ID:       postgresRideID,
-		DriverID: pgtype.Int4{Int32: postgresDriverID, Valid: true},
+		ID:       dbRideID,
+		DriverID: pgtype.Int4{Int32: dbDriverID, Valid: true},
 	})
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("find completed ride: %w", err)
@@ -64,7 +64,7 @@ func (repository *PostgresRideRepository) SettleCash(ctx context.Context, rideID
 		return fromPostgresRide(rideItem)
 	}
 
-	profile, err := transactionQueries.GetDriverProfileByUserIDFull(ctx, postgresDriverID)
+	profile, err := transactionQueries.GetDriverProfileByUserIDFull(ctx, dbDriverID)
 	if err != nil {
 		return domain.Ride{}, domain.ErrUnauthorizedRide
 	}
@@ -72,7 +72,7 @@ func (repository *PostgresRideRepository) SettleCash(ctx context.Context, rideID
 		return domain.Ride{}, domain.ErrInvalidFareOffer
 	}
 	if err := transactionQueries.CreateWalletLedger(ctx, databasepostgres.CreateWalletLedgerParams{
-		DriverID:           postgresDriverID,
+		DriverID:           dbDriverID,
 		RideID:             rideItem.ID,
 		AmountCentavos:     settlement.DriverPayoutCentavos,
 		CommissionCentavos: settlement.CommissionCentavos,

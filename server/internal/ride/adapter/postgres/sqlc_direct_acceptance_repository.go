@@ -13,11 +13,11 @@ func (repository *PostgresRideRepository) AcceptRide(ctx context.Context, rideID
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.Ride{}, err
 	}
-	postgresRideID, err := toPostgresRideID(rideID, "ride id")
+	dbRideID, err := toPostgresRideID(rideID, "ride id")
 	if err != nil {
 		return domain.Ride{}, err
 	}
-	postgresDriverID, err := toPostgresRideID(driverID, "driver id")
+	dbDriverID, err := toPostgresRideID(driverID, "driver id")
 	if err != nil {
 		return domain.Ride{}, err
 	}
@@ -31,7 +31,7 @@ func (repository *PostgresRideRepository) AcceptRide(ctx context.Context, rideID
 	}()
 
 	transactionQueries := repository.queries.WithTx(transaction)
-	profile, err := transactionQueries.LockOnlineDriverProfileForBidding(ctx, postgresDriverID)
+	profile, err := transactionQueries.LockOnlineDriverProfileForBidding(ctx, dbDriverID)
 	if err != nil {
 		return domain.Ride{}, domain.ErrDriverUnavailable
 	}
@@ -42,7 +42,7 @@ func (repository *PostgresRideRepository) AcceptRide(ctx context.Context, rideID
 	if activeRides >= 5 {
 		return domain.Ride{}, domain.ErrDriverAtCapacity
 	}
-	trip, err := transactionQueries.LockRequestedRideForAcceptance(ctx, postgresRideID)
+	trip, err := transactionQueries.LockRequestedRideForAcceptance(ctx, dbRideID)
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("find requested ride: %w", err)
 	}
@@ -56,9 +56,9 @@ func (repository *PostgresRideRepository) AcceptRide(ctx context.Context, rideID
 	updatedRide, err := transactionQueries.AcceptRideFromRequest(ctx, databasepostgres.AcceptRideFromRequestParams{
 		ID:                   trip.ID,
 		DriverID:             pgtype.Int4{Int32: profile.UserID, Valid: true},
-		DriverName:           postgresRideText(profile.Name),
-		VehicleType:          postgresRideText(profile.VehicleType),
-		PlateNumber:          postgresRideText(profile.PlateNumber),
+		DriverName:           rideText(profile.Name),
+		VehicleType:          rideText(profile.VehicleType),
+		PlateNumber:          rideText(profile.PlateNumber),
 		CommissionBps:        pgtype.Int8{Int64: settlement.CommissionBPS, Valid: true},
 		CommissionCentavos:   settlement.CommissionCentavos,
 		DriverPayoutCentavos: settlement.DriverPayoutCentavos,

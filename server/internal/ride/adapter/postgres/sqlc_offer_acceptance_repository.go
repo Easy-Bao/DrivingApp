@@ -14,15 +14,15 @@ func (repository *PostgresRideRepository) AcceptOffer(ctx context.Context, sessi
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
 	}
-	postgresSessionID, err := toPostgresRideID(sessionID, "session id")
+	dbSessionID, err := toPostgresRideID(sessionID, "session id")
 	if err != nil {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
 	}
-	postgresOfferID, err := toPostgresRideID(offerID, "offer id")
+	dbOfferID, err := toPostgresRideID(offerID, "offer id")
 	if err != nil {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
 	}
-	postgresPassengerID, err := toPostgresRideID(passengerID, "passenger id")
+	dbPassengerID, err := toPostgresRideID(passengerID, "passenger id")
 	if err != nil {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
 	}
@@ -37,18 +37,18 @@ func (repository *PostgresRideRepository) AcceptOffer(ctx context.Context, sessi
 
 	transactionQueries := repository.queries.WithTx(transaction)
 	session, err := transactionQueries.LockActiveBidSessionForOffer(ctx, databasepostgres.LockActiveBidSessionForOfferParams{
-		ID:        postgresSessionID,
-		ExpiresAt: postgresBidTimestamp(time.Now().UTC()),
+		ID:        dbSessionID,
+		ExpiresAt: bidTimestamp(time.Now().UTC()),
 	})
 	if err != nil {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, fmt.Errorf("find active bid session: %w", err)
 	}
-	if session.PassengerID != postgresPassengerID {
+	if session.PassengerID != dbPassengerID {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, domain.ErrUnauthorizedSession
 	}
 	offer, err := transactionQueries.LockPendingBidOfferForAcceptance(ctx, databasepostgres.LockPendingBidOfferForAcceptanceParams{
-		ID:        postgresOfferID,
-		SessionID: postgresSessionID,
+		ID:        dbOfferID,
+		SessionID: dbSessionID,
 	})
 	if err != nil {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, fmt.Errorf("find pending bid offer: %w", err)
@@ -115,26 +115,26 @@ func (repository *PostgresRideRepository) AcceptOffer(ctx context.Context, sessi
 	if acceptedRide.DriverID == nil || acceptedRide.CommissionBPS == nil {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, domain.ErrInvalidSettlement
 	}
-	postgresAcceptedDriverID, err := toPostgresRideID(*acceptedRide.DriverID, "driver id")
+	dbAcceptedDriverID, err := toPostgresRideID(*acceptedRide.DriverID, "driver id")
 	if err != nil {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
 	}
 	createdRide, err := transactionQueries.CreateAcceptedRide(ctx, databasepostgres.CreateAcceptedRideParams{
 		PassengerID:          session.PassengerID,
-		DriverID:             pgtype.Int4{Int32: postgresAcceptedDriverID, Valid: true},
+		DriverID:             pgtype.Int4{Int32: dbAcceptedDriverID, Valid: true},
 		FareCentavos:         acceptedRide.FareCentavos,
 		RideType:             acceptedRide.RideType,
-		PickupLatitude:       postgresRideFloat(acceptedRide.PickupLatitude),
-		PickupLongitude:      postgresRideFloat(acceptedRide.PickupLongitude),
-		PickupName:           postgresRideText(acceptedRide.PickupName),
-		DropoffLatitude:      postgresRideFloat(acceptedRide.DropoffLatitude),
-		DropoffLongitude:     postgresRideFloat(acceptedRide.DropoffLongitude),
-		DropoffName:          postgresRideText(acceptedRide.DropoffName),
-		DistanceKm:           postgresRideFloat(acceptedRide.DistanceKm),
-		DurationMinutes:      postgresRideFloat(acceptedRide.DurationMinutes),
-		DriverName:           postgresRideText(acceptedRide.DriverName),
-		VehicleType:          postgresRideText(acceptedRide.VehicleType),
-		PlateNumber:          postgresRideText(acceptedRide.PlateNumber),
+		PickupLatitude:       rideFloat(acceptedRide.PickupLatitude),
+		PickupLongitude:      rideFloat(acceptedRide.PickupLongitude),
+		PickupName:           rideText(acceptedRide.PickupName),
+		DropoffLatitude:      rideFloat(acceptedRide.DropoffLatitude),
+		DropoffLongitude:     rideFloat(acceptedRide.DropoffLongitude),
+		DropoffName:          rideText(acceptedRide.DropoffName),
+		DistanceKm:           rideFloat(acceptedRide.DistanceKm),
+		DurationMinutes:      rideFloat(acceptedRide.DurationMinutes),
+		DriverName:           rideText(acceptedRide.DriverName),
+		VehicleType:          rideText(acceptedRide.VehicleType),
+		PlateNumber:          rideText(acceptedRide.PlateNumber),
 		CommissionBps:        pgtype.Int8{Int64: *acceptedRide.CommissionBPS, Valid: true},
 		CommissionCentavos:   acceptedRide.CommissionCentavos,
 		DriverPayoutCentavos: acceptedRide.DriverPayoutCentavos,

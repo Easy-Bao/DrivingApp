@@ -19,11 +19,11 @@ func (repository *PostgresRideRepository) Counterparty(ctx context.Context, ride
 	if err != nil {
 		return domain.Counterparty{}, err
 	}
-	postgresTargetID, err := toPostgresRideID(targetID, "counterparty id")
+	dbTargetID, err := toPostgresRideID(targetID, "counterparty id")
 	if err != nil {
 		return domain.Counterparty{}, err
 	}
-	account, err := repository.queries.GetUserByID(ctx, postgresTargetID)
+	account, err := repository.queries.GetUserByID(ctx, dbTargetID)
 	if err != nil {
 		return domain.Counterparty{}, fmt.Errorf("find counterparty account: %w", err)
 	}
@@ -31,7 +31,7 @@ func (repository *PostgresRideRepository) Counterparty(ctx context.Context, ride
 		RideID:     ride.ID,
 		UserID:     targetID,
 		Role:       targetRole,
-		Name:       postgresRideTextValue(account.Name),
+		Name:       rideTextValue(account.Name),
 		RideStatus: ride.Status,
 	}
 	result.ContactAllowed, result.ContactAllowedUntil = rideContactAvailabilityFromRide(ride)
@@ -40,7 +40,7 @@ func (repository *PostgresRideRepository) Counterparty(ctx context.Context, ride
 	}
 
 	if targetRole == "driver" {
-		profile, profileErr := repository.queries.GetDriverProfileByUserIDFull(ctx, postgresTargetID)
+		profile, profileErr := repository.queries.GetDriverProfileByUserIDFull(ctx, dbTargetID)
 		if profileErr != nil && !errors.Is(profileErr, pgx.ErrNoRows) {
 			return domain.Counterparty{}, fmt.Errorf("find counterparty driver profile: %w", profileErr)
 		}
@@ -53,7 +53,7 @@ func (repository *PostgresRideRepository) Counterparty(ctx context.Context, ride
 		return result, nil
 	}
 
-	profile, profileErr := repository.queries.GetPassengerProfileByUserIDFull(ctx, postgresTargetID)
+	profile, profileErr := repository.queries.GetPassengerProfileByUserIDFull(ctx, dbTargetID)
 	if profileErr != nil && !errors.Is(profileErr, pgx.ErrNoRows) {
 		return domain.Counterparty{}, fmt.Errorf("find counterparty passenger profile: %w", profileErr)
 	}

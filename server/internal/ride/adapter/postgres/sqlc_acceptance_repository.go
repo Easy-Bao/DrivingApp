@@ -13,11 +13,11 @@ func (repository *PostgresRideRepository) AcceptBid(ctx context.Context, bidID, 
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.Bid{}, domain.Ride{}, err
 	}
-	postgresBidID, err := toPostgresRideID(bidID, "bid id")
+	dbBidID, err := toPostgresRideID(bidID, "bid id")
 	if err != nil {
 		return domain.Bid{}, domain.Ride{}, err
 	}
-	postgresDriverID, err := toPostgresRideID(driverID, "driver id")
+	dbDriverID, err := toPostgresRideID(driverID, "driver id")
 	if err != nil {
 		return domain.Bid{}, domain.Ride{}, err
 	}
@@ -32,13 +32,13 @@ func (repository *PostgresRideRepository) AcceptBid(ctx context.Context, bidID, 
 
 	transactionQueries := repository.queries.WithTx(transaction)
 	offer, err := transactionQueries.LockPendingBidForAcceptance(ctx, databasepostgres.LockPendingBidForAcceptanceParams{
-		ID:       postgresBidID,
-		DriverID: postgresDriverID,
+		ID:       dbBidID,
+		DriverID: dbDriverID,
 	})
 	if err != nil {
 		return domain.Bid{}, domain.Ride{}, fmt.Errorf("find pending bid: %w", err)
 	}
-	profile, err := transactionQueries.LockOnlineDriverProfileForBidding(ctx, postgresDriverID)
+	profile, err := transactionQueries.LockOnlineDriverProfileForBidding(ctx, dbDriverID)
 	if err != nil {
 		return domain.Bid{}, domain.Ride{}, domain.ErrDriverUnavailable
 	}
@@ -67,9 +67,9 @@ func (repository *PostgresRideRepository) AcceptBid(ctx context.Context, bidID, 
 	updatedRide, err := transactionQueries.AssignRideFromAcceptance(ctx, databasepostgres.AssignRideFromAcceptanceParams{
 		ID:                   trip.ID,
 		DriverID:             pgtype.Int4{Int32: profile.UserID, Valid: true},
-		DriverName:           postgresRideText(profile.Name),
-		VehicleType:          postgresRideText(profile.VehicleType),
-		PlateNumber:          postgresRideText(profile.PlateNumber),
+		DriverName:           rideText(profile.Name),
+		VehicleType:          rideText(profile.VehicleType),
+		PlateNumber:          rideText(profile.PlateNumber),
 		CommissionBps:        pgtype.Int8{Int64: settlement.CommissionBPS, Valid: true},
 		CommissionCentavos:   settlement.CommissionCentavos,
 		DriverPayoutCentavos: settlement.DriverPayoutCentavos,

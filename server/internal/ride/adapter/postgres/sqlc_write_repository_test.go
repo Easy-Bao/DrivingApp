@@ -22,10 +22,10 @@ func TestFromPostgresBidMapsGeneratedRow(t *testing.T) {
 }
 
 func TestPostgresRideValuesRemainPresentWhenZeroValued(t *testing.T) {
-	if value := postgresRideFloat(0); !value.Valid || value.Float64 != 0 {
-		t.Fatalf("postgresRideFloat(0) = %+v", value)
+	if value := rideFloat(0); !value.Valid || value.Float64 != 0 {
+		t.Fatalf("rideFloat(0) = %+v", value)
 	}
-	if value := postgresRideText(""); !value.Valid || value.String != "" {
-		t.Fatalf("postgresRideText(\"\") = %+v", value)
+	if value := rideText(""); !value.Valid || value.String != "" {
+		t.Fatalf("rideText(\"\") = %+v", value)
 	}
 }

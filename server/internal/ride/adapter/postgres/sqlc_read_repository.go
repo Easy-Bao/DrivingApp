@@ -50,15 +50,15 @@ func NewPostgresRideRepository(
 	}, nil
 }
 
-func (repository *PostgresRideRepository) Get(ctx context.Context, id int) (domain.Ride, error) {
+func (repository *PostgresRideRepository) Get(ctx context.Context, rideID int) (domain.Ride, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.Ride{}, err
 	}
-	postgresID, err := toPostgresRideID(id, "ride id")
+	dbRideID, err := toPostgresRideID(rideID, "ride id")
 	if err != nil {
 		return domain.Ride{}, err
 	}
-	item, err := repository.queries.GetRideByID(ctx, postgresID)
+	item, err := repository.queries.GetRideByID(ctx, dbRideID)
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("find ride: %w", err)
 	}
@@ -93,11 +93,11 @@ func (repository *PostgresRideRepository) ActiveRidesForDriver(ctx context.Conte
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return nil, err
 	}
-	postgresDriverID, err := toPostgresRideID(driverID, "driver id")
+	dbDriverID, err := toPostgresRideID(driverID, "driver id")
 	if err != nil {
 		return nil, err
 	}
-	items, err := repository.queries.ListActiveRidesForDriver(ctx, pgtype.Int4{Int32: postgresDriverID, Valid: true})
+	items, err := repository.queries.ListActiveRidesForDriver(ctx, pgtype.Int4{Int32: dbDriverID, Valid: true})
 	if err != nil {
 		return nil, fmt.Errorf("list active driver rides: %w", err)
 	}
@@ -140,20 +140,20 @@ func fromPostgresRide(item databasepostgres.Ride) (domain.Ride, error) {
 		Status:               item.Status,
 		FareCentavos:         item.FareCentavos,
 		RideType:             item.RideType,
-		PickupLatitude:       postgresRideFloatValue(item.PickupLatitude),
-		PickupLongitude:      postgresRideFloatValue(item.PickupLongitude),
-		PickupName:           postgresRideTextValue(item.PickupName),
-		DropoffLatitude:      postgresRideFloatValue(item.DropoffLatitude),
-		DropoffLongitude:     postgresRideFloatValue(item.DropoffLongitude),
-		DropoffName:          postgresRideTextValue(item.DropoffName),
-		DistanceKm:           postgresRideFloatValue(item.DistanceKm),
-		DurationMinutes:      postgresRideFloatValue(item.DurationMinutes),
-		DriverName:           postgresRideTextValue(item.DriverName),
-		VehicleType:          postgresRideTextValue(item.VehicleType),
-		PlateNumber:          postgresRideTextValue(item.PlateNumber),
-		DriverRating:         postgresRideFloatValue(item.DriverRating),
-		CreatedAt:            postgresRideTimestamp(item.CreatedAt),
-		CompletedAt:          postgresRideTimestamp(item.CompletedAt),
+		PickupLatitude:       rideFloatValue(item.PickupLatitude),
+		PickupLongitude:      rideFloatValue(item.PickupLongitude),
+		PickupName:           rideTextValue(item.PickupName),
+		DropoffLatitude:      rideFloatValue(item.DropoffLatitude),
+		DropoffLongitude:     rideFloatValue(item.DropoffLongitude),
+		DropoffName:          rideTextValue(item.DropoffName),
+		DistanceKm:           rideFloatValue(item.DistanceKm),
+		DurationMinutes:      rideFloatValue(item.DurationMinutes),
+		DriverName:           rideTextValue(item.DriverName),
+		VehicleType:          rideTextValue(item.VehicleType),
+		PlateNumber:          rideTextValue(item.PlateNumber),
+		DriverRating:         rideFloatValue(item.DriverRating),
+		CreatedAt:            rideTimestamp(item.CreatedAt),
+		CompletedAt:          rideTimestamp(item.CompletedAt),
 		PaymentStatus:        item.PaymentStatus,
 		CommissionBPS:        commissionBPS,
 		CommissionCentavos:   item.CommissionCentavos,
@@ -161,7 +161,7 @@ func fromPostgresRide(item databasepostgres.Ride) (domain.Ride, error) {
 	}, nil
 }
 
-func postgresRideTimestamp(value pgtype.Timestamptz) *string {
+func rideTimestamp(value pgtype.Timestamptz) *string {
 	if !value.Valid {
 		return nil
 	}
@@ -169,14 +169,14 @@ func postgresRideTimestamp(value pgtype.Timestamptz) *string {
 	return &formatted
 }
 
-func postgresRideTextValue(value pgtype.Text) string {
+func rideTextValue(value pgtype.Text) string {
 	if !value.Valid {
 		return ""
 	}
 	return value.String
 }
 
-func postgresRideFloatValue(value pgtype.Float8) float64 {
+func rideFloatValue(value pgtype.Float8) float64 {
 	if !value.Valid {
 		return 0
 	}

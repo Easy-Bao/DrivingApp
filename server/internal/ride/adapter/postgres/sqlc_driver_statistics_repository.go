@@ -17,14 +17,14 @@ func (repository *PostgresRideRepository) DriverStats(
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.DriverStats{}, err
 	}
-	postgresDriverID, err := toPostgresRideID(driverID, "driver id")
+	dbDriverID, err := toPostgresRideID(driverID, "driver id")
 	if err != nil {
 		return domain.DriverStats{}, err
 	}
 	row, err := repository.queries.GetDriverStats(ctx, databasepostgres.GetDriverStatsParams{
-		DayStart: postgresBidTimestamp(dayStart.UTC()),
-		DayEnd:   postgresBidTimestamp(dayEnd.UTC()),
-		DriverID: postgresDriverID,
+		DayStart: bidTimestamp(dayStart.UTC()),
+		DayEnd:   bidTimestamp(dayEnd.UTC()),
+		DriverID: dbDriverID,
 	})
 	if err != nil {
 		return domain.DriverStats{}, fmt.Errorf("load driver statistics: %w", err)
