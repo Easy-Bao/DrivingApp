@@ -145,3 +145,19 @@ func nonNegativeInt32Env(key string, fallback int32) int32 {
 	}
 	return int32(parsed)
 }
+
+func positiveIntEnv(key string, fallback int) int {
+	value, err := strconv.Atoi(strings.TrimSpace(os.Getenv(key)))
+	if err != nil || value <= 0 {
+		return fallback
+	}
+	return value
+}
+
+func positiveDurationEnv(key string, fallback time.Duration) time.Duration {
+	value, err := time.ParseDuration(strings.TrimSpace(os.Getenv(key)))
+	if err != nil || value <= 0 {
+		return fallback
+	}
+	return value
+}
