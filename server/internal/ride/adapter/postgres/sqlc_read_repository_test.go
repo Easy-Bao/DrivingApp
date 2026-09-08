@@ -54,6 +54,32 @@ func TestFromPostgresRideRejectsMissingCreationTime(t *testing.T) {
 	}
 }
 
+func TestFromPostgresDriverStatsMapsMetrics(t *testing.T) {
+	stats, err := fromPostgresDriverStats(7, databasepostgres.GetDriverStatsRow{
+		TotalTrips:            12,
+		CompletedTrips:        8,
+		ActiveTrips:           2,
+		TotalEarningsCentavos: 48_000,
+		TodayCompletedTrips:   3,
+		TodayEarningsCentavos: 15_000,
+		AverageRating:         4.75,
+	})
+	if err != nil {
+		t.Fatalf("fromPostgresDriverStats() error = %v", err)
+	}
+	if stats.DriverID != 7 || stats.TotalTrips != 12 || stats.CompletedTrips != 8 || stats.ActiveTrips != 2 ||
+		stats.TotalEarnings != 48_000 || stats.TodayCompletedTrips != 3 || stats.TodayEarnings != 15_000 ||
+		stats.AverageRating != 4.75 {
+		t.Fatalf("mapped driver stats = %+v", stats)
+	}
+}
+
+func TestToNativeRideCountRejectsNegativeValues(t *testing.T) {
+	if _, err := toNativeRideCount(-1, "trip count"); err == nil {
+		t.Fatal("expected negative trip count to be rejected")
+	}
+}
+
 func TestToPostgresRideIDRequiresPositiveInt32(t *testing.T) {
 	if got, err := toPostgresRideID(7, "ride id"); err != nil || got != 7 {
 		t.Fatalf("toPostgresRideID(7) = %d, %v", got, err)
