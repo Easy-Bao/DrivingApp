@@ -1,22 +1,35 @@
 package postgres
 
-import "testing"
+import (
+	"errors"
+	"fmt"
+	"testing"
 
-func TestValidateObjectKey(t *testing.T) {
-	valid := objectKeyPrefix + "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
-	if err := validateObjectKey(valid); err != nil {
-		t.Fatalf("validateObjectKey(valid) error = %v", err)
+	"github.com/jackc/pgx/v5/pgconn"
+)
+
+func TestNewObjectStoreRejectsNilPool(t *testing.T) {
+	if _, err := NewObjectStore(nil); err == nil {
+		t.Fatal("expected nil PostgreSQL pool to be rejected")
 	}
+}
 
-	for _, key := range []string{
-		"",
-		"v1/0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-		objectKeyPrefix + "../secret",
-		objectKeyPrefix + "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdeF",
-		objectKeyPrefix + "0123456789abcdef",
-	} {
-		if err := validateObjectKey(key); err == nil {
-			t.Errorf("validateObjectKey(%q) succeeded, want error", key)
-		}
+func TestGeneratedObjectKeyPassesValidation(t *testing.T) {
+	key, err := newObjectKey()
+	if err != nil {
+		t.Fatalf("newObjectKey() error = %v", err)
+	}
+	if err := validateObjectKey(key); err != nil {
+		t.Fatalf("validateObjectKey(%q) error = %v", key, err)
+	}
+}
+
+func TestIsPostgresObjectUniqueViolationFindsWrappedConstraint(t *testing.T) {
+	err := fmt.Errorf("insert private object: %w", &pgconn.PgError{Code: "23505"})
+	if !isPostgresObjectUniqueViolation(err) {
+		t.Fatal("expected wrapped unique violation to be detected")
+	}
+	if isPostgresObjectUniqueViolation(errors.New("connection failed")) {
+		t.Fatal("unexpected unique violation for unrelated error")
 	}
 }

@@ -106,7 +106,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
-	privateObjectStore, err := storagepostgres.NewPostgresObjectStore(postgresPool)
+	privateObjectStore, err := storagepostgres.NewObjectStore(postgresPool)
 	if err != nil {
 		return nil, err
 	}

@@ -10,9 +10,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Easy-Bao/DrivingApp/server/ent"
-	"github.com/Easy-Bao/DrivingApp/server/ent/privateobject"
+	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
 	platformstorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const (
@@ -21,22 +22,29 @@ const (
 	objectKeyPrefix = "db/v1/"
 )
 
-var _ platformstorage.ObjectStore = (*ObjectStore)(nil)
-
-// ObjectStore stores private objects as PostgreSQL bytea values through Ent.
-// It deliberately exposes opaque keys instead of filesystem paths or public
-// URLs, keeping authorization in the owning feature module.
+// ObjectStore stores private objects as PostgreSQL bytea values through the
+// database adapter. It exposes opaque keys so owning feature modules retain
+// authorization over the objects they reference.
 type ObjectStore struct {
-	client *ent.Client
+	pool    *pgxpool.Pool
+	queries *databasepostgres.Queries
 }
 
-func NewObjectStore(client *ent.Client) *ObjectStore {
-	return &ObjectStore{client: client}
+var _ platformstorage.ObjectStore = (*ObjectStore)(nil)
+
+func NewObjectStore(pool *pgxpool.Pool) (*ObjectStore, error) {
+	if pool == nil {
+		return nil, errors.New("postgresql pool is required")
+	}
+	return &ObjectStore{
+		pool:    pool,
+		queries: databasepostgres.New(pool),
+	}, nil
 }
 
 func (store *ObjectStore) Store(ctx context.Context, content []byte) (string, error) {
-	if store == nil || store.client == nil {
-		return "", errors.New("private object store is not configured")
+	if err := store.validate(); err != nil {
+		return "", err
 	}
 	if err := ctx.Err(); err != nil {
 		return "", err
@@ -52,17 +60,17 @@ func (store *ObjectStore) Store(ctx context.Context, content []byte) (string, er
 		if err != nil {
 			return "", err
 		}
-		_, err = store.client.PrivateObject.Create().
-			SetStorageKey(key).
-			SetContent(append([]byte(nil), content...)).
-			SetContentType(contentType).
-			SetSizeBytes(int64(len(content))).
-			SetChecksumSha256(hex.EncodeToString(checksum[:])).
-			Save(ctx)
+		err = store.queries.CreatePrivateObject(ctx, databasepostgres.CreatePrivateObjectParams{
+			StorageKey:     key,
+			Content:        append([]byte(nil), content...),
+			ContentType:    contentType,
+			SizeBytes:      int64(len(content)),
+			ChecksumSha256: hex.EncodeToString(checksum[:]),
+		})
 		if err == nil {
 			return key, nil
 		}
-		if !ent.IsConstraintError(err) {
+		if !isPostgresObjectUniqueViolation(err) {
 			return "", fmt.Errorf("create private object: %w", err)
 		}
 	}
@@ -70,8 +78,8 @@ func (store *ObjectStore) Store(ctx context.Context, content []byte) (string, er
 }
 
 func (store *ObjectStore) Read(ctx context.Context, key string, maxBytes int64) ([]byte, error) {
-	if store == nil || store.client == nil {
-		return nil, errors.New("private object store is not configured")
+	if err := store.validate(); err != nil {
+		return nil, err
 	}
 	if maxBytes <= 0 {
 		return nil, errors.New("private object read limit must be positive")
@@ -83,9 +91,7 @@ func (store *ObjectStore) Read(ctx context.Context, key string, maxBytes int64) 
 		return nil, err
 	}
 
-	object, err := store.client.PrivateObject.Query().
-		Where(privateobject.StorageKeyEQ(key)).
-		Only(ctx)
+	object, err := store.queries.GetPrivateObjectByStorageKey(ctx, key)
 	if err != nil {
 		return nil, fmt.Errorf("query private object: %w", err)
 	}
@@ -103,8 +109,8 @@ func (store *ObjectStore) Read(ctx context.Context, key string, maxBytes int64) 
 }
 
 func (store *ObjectStore) Delete(ctx context.Context, key string) error {
-	if store == nil || store.client == nil {
-		return errors.New("private object store is not configured")
+	if err := store.validate(); err != nil {
+		return err
 	}
 	if err := validateObjectKey(key); err != nil {
 		return err
@@ -112,12 +118,22 @@ func (store *ObjectStore) Delete(ctx context.Context, key string) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if _, err := store.client.PrivateObject.Delete().
-		Where(privateobject.StorageKeyEQ(key)).
-		Exec(ctx); err != nil {
+	if err := store.queries.DeletePrivateObjectByStorageKey(ctx, key); err != nil {
 		return fmt.Errorf("delete private object: %w", err)
 	}
 	return nil
+}
+
+func (store *ObjectStore) validate() error {
+	if store == nil || store.pool == nil || store.queries == nil {
+		return errors.New("postgresql object store is not configured")
+	}
+	return nil
+}
+
+func isPostgresObjectUniqueViolation(err error) bool {
+	var databaseError *pgconn.PgError
+	return errors.As(err, &databaseError) && databaseError.Code == "23505"
 }
 
 func validateObjectKey(key string) error {
