@@ -103,6 +103,16 @@ type PassengerProfile struct {
 	PreferredRideType pgtype.Text `db:"preferred_ride_type"`
 }
 
+type PassengerReview struct {
+	ID          int32              `db:"id"`
+	RideID      int32              `db:"ride_id"`
+	DriverID    int32              `db:"driver_id"`
+	PassengerID int32              `db:"passenger_id"`
+	Rating      float64            `db:"rating"`
+	Comment     pgtype.Text        `db:"comment"`
+	CreatedAt   pgtype.Timestamptz `db:"created_at"`
+}
+
 type PrivateObject struct {
 	ID             int32              `db:"id"`
 	StorageKey     string             `db:"storage_key"`
@@ -121,6 +131,17 @@ type RefreshSession struct {
 	CreatedAt  pgtype.Timestamptz `db:"created_at"`
 	LastUsedAt pgtype.Timestamptz `db:"last_used_at"`
 	RevokedAt  pgtype.Timestamptz `db:"revoked_at"`
+}
+
+type Review struct {
+	ID            int32              `db:"id"`
+	RideID        pgtype.Int4        `db:"ride_id"`
+	DriverID      int32              `db:"driver_id"`
+	PassengerID   int32              `db:"passenger_id"`
+	PassengerName pgtype.Text        `db:"passenger_name"`
+	Rating        float64            `db:"rating"`
+	Comment       pgtype.Text        `db:"comment"`
+	CreatedAt     pgtype.Timestamptz `db:"created_at"`
 }
 
 type Ride struct {
