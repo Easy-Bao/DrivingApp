@@ -125,7 +125,7 @@ type PassengerReview struct {
 }
 
 type PrivateObject struct {
-	ID             int32              `db:"id"`
+	ID             int64              `db:"id"`
 	StorageKey     string             `db:"storage_key"`
 	Content        []byte             `db:"content"`
 	ContentType    string             `db:"content_type"`
