@@ -15,11 +15,11 @@ func TestNewPostgresProfileRepositoryRejectsNilPool(t *testing.T) {
 	}
 }
 
-func TestPostgresProfileTextValue(t *testing.T) {
-	if got := postgresProfileTextValue(pgtype.Text{String: "Quezon City", Valid: true}); got != "Quezon City" {
+func TestProfileTextValue(t *testing.T) {
+	if got := profileTextValue(pgtype.Text{String: "Quezon City", Valid: true}); got != "Quezon City" {
 		t.Fatalf("valid text = %q, want Quezon City", got)
 	}
-	if got := postgresProfileTextValue(pgtype.Text{}); got != "" {
+	if got := profileTextValue(pgtype.Text{}); got != "" {
 		t.Fatalf("invalid text = %q, want empty string", got)
 	}
 }
