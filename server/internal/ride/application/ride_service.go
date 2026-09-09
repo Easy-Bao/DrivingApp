@@ -29,7 +29,7 @@ type RideService struct {
 	repository        domain.Repository
 	routeCalculator   RouteCalculator
 	pricingConfig     PricingConfig
-	eventPublisher    domain.EventPublisher
+	eventPublisher    EventPublisher
 	reportingLocation *time.Location
 	logger            *slog.Logger
 }
@@ -37,7 +37,7 @@ type RideService struct {
 func NewRideService(
 	repository domain.Repository,
 	pricingConfig PricingConfig,
-	publisher domain.EventPublisher,
+	publisher EventPublisher,
 ) *RideService {
 	return &RideService{
 		repository:        repository,
@@ -52,7 +52,7 @@ func NewRideServiceWithRouteCalculator(
 	repository domain.Repository,
 	calculator RouteCalculator,
 	pricingConfig PricingConfig,
-	publisher domain.EventPublisher,
+	publisher EventPublisher,
 ) *RideService {
 	return &RideService{
 		repository:        repository,

@@ -2,8 +2,6 @@ package domain
 
 import (
 	"context"
-
-	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/event"
 )
 
 type Repository interface {
@@ -37,11 +35,4 @@ type BiddingRepository interface {
 	CancelSession(ctx context.Context, sessionID, passengerID int) (BidSession, error)
 	CancelOffer(ctx context.Context, sessionID, driverID int) (BidOffer, error)
 	Session(ctx context.Context, sessionID int) (BidSession, error)
-}
-
-// EventPublisher is an outbound port. Event delivery is intentionally
-// separate from persistence: clients recover authoritative state from REST
-// snapshots when transient fan-out is unavailable.
-type EventPublisher interface {
-	Publish(ctx context.Context, envelope event.Envelope) error
 }

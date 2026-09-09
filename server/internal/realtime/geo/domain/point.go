@@ -3,8 +3,6 @@ package domain
 import (
 	"context"
 	"errors"
-
-	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/event"
 )
 
 var (
@@ -31,8 +29,4 @@ type LocationRepository interface {
 	Get(ctx context.Context, driverID string) (DriverPoint, error)
 	UpsertPassenger(ctx context.Context, rideID string, point DriverPoint) error
 	GetPassenger(ctx context.Context, rideID string) (DriverPoint, error)
-}
-
-type EventPublisher interface {
-	Publish(ctx context.Context, envelope event.Envelope) error
 }

@@ -16,7 +16,7 @@ import (
 type LocationTrackingService struct {
 	repository     domain.Repository
 	assignments    assignment.Lookup
-	eventPublisher domain.EventPublisher
+	eventPublisher EventPublisher
 	logger         *slog.Logger
 }
 
@@ -26,7 +26,7 @@ func WithRideAssignments(assignments assignment.Lookup) Option {
 	return func(service *LocationTrackingService) { service.assignments = assignments }
 }
 
-func WithEventPublisher(publisher domain.EventPublisher) Option {
+func WithEventPublisher(publisher EventPublisher) Option {
 	return func(service *LocationTrackingService) { service.eventPublisher = publisher }
 }
 
