@@ -29,7 +29,7 @@ services:
     ports:
       - "127.0.0.1:${REDIS_HOST_PORT}:${REDIS_PORT}"
     healthcheck:
-      test: ["CMD", "redis-cli", "-p", "$${REDIS_PORT}", "ping"]
+      test: ["CMD-SHELL", "redis-cli -p $${REDIS_PORT} ping"]
       interval: 5s
       timeout: 5s
       retries: 12
