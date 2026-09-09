@@ -276,7 +276,7 @@ func validateTrip(pickupLatitude, pickupLongitude, dropoffLatitude, dropoffLongi
 }
 
 func (service *RideService) DriverStats(ctx context.Context, driverID int) (domain.DriverStats, error) {
-	repository, ok := service.repository.(domain.DriverStatisticsRepository)
+	repository, ok := service.repository.(domain.DriverStatisticsReader)
 	if !ok {
 		return domain.DriverStats{}, errors.New("driver analytics persistence is unavailable")
 	}
@@ -285,7 +285,7 @@ func (service *RideService) DriverStats(ctx context.Context, driverID int) (doma
 }
 
 func (service *RideService) DriverEarnings(ctx context.Context, driverID int) (domain.DriverEarningsSummary, error) {
-	repository, ok := service.repository.(domain.DriverEarningsRepository)
+	repository, ok := service.repository.(domain.DriverEarningsReader)
 	if !ok {
 		return domain.DriverEarningsSummary{}, errors.New("driver earnings persistence is unavailable")
 	}
@@ -304,7 +304,7 @@ func (service *RideService) DriverEarnings(ctx context.Context, driverID int) (d
 }
 
 func (service *RideService) DriverTrips(ctx context.Context, driverID int, query domain.TripHistoryQuery) ([]domain.Ride, error) {
-	repository, ok := service.repository.(domain.TripHistoryRepository)
+	repository, ok := service.repository.(domain.RideHistoryReader)
 	if !ok {
 		return nil, errors.New("driver trip persistence is unavailable")
 	}
@@ -315,7 +315,7 @@ func (service *RideService) DriverTrips(ctx context.Context, driverID int, query
 }
 
 func (service *RideService) PassengerRides(ctx context.Context, passengerID int, query domain.TripHistoryQuery) ([]domain.Ride, error) {
-	repository, ok := service.repository.(domain.TripHistoryRepository)
+	repository, ok := service.repository.(domain.RideHistoryReader)
 	if !ok {
 		return nil, errors.New("passenger ride persistence is unavailable")
 	}
@@ -326,7 +326,7 @@ func (service *RideService) PassengerRides(ctx context.Context, passengerID int,
 }
 
 func (service *RideService) PassengerActivitySummary(ctx context.Context, passengerID int) (domain.PassengerActivitySummary, error) {
-	repository, ok := service.repository.(domain.PassengerActivitySummaryRepository)
+	repository, ok := service.repository.(domain.PassengerActivityReader)
 	if !ok {
 		return domain.PassengerActivitySummary{}, errors.New("passenger activity persistence is unavailable")
 	}
@@ -338,7 +338,7 @@ func (service *RideService) PassengerRecentRides(ctx context.Context, passengerI
 	if passengerID <= 0 || limit <= 0 || limit > 100 {
 		return nil, errors.New("invalid passenger recent rides request")
 	}
-	if repository, ok := service.repository.(domain.RecentPassengerRidesRepository); ok {
+	if repository, ok := service.repository.(domain.RecentPassengerRidesReader); ok {
 		return repository.PassengerRecentRides(ctx, passengerID, limit)
 	}
 	rides, err := service.PassengerRides(ctx, passengerID, domain.TripHistoryQuery{Limit: limit, Offset: 0})

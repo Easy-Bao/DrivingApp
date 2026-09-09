@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	_ domain.TripHistoryRepository          = (*RideRepository)(nil)
-	_ domain.RecentPassengerRidesRepository = (*RideRepository)(nil)
+	_ domain.RideHistoryReader          = (*RideRepository)(nil)
+	_ domain.RecentPassengerRidesReader = (*RideRepository)(nil)
 )
 
 func (repository *RideRepository) DriverTrips(

@@ -9,6 +9,8 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 )
 
+var _ domain.DriverStatisticsReader = (*RideRepository)(nil)
+
 func (repository *RideRepository) DriverStats(
 	ctx context.Context,
 	driverID int,

@@ -10,6 +10,10 @@ type PassengerActivitySummary struct {
 	ThisWeekCompletedRides int   `json:"this_week_completed_rides"`
 }
 
-type PassengerActivitySummaryRepository interface {
+// PassengerActivityReader exposes the read-only passenger activity projection.
+type PassengerActivityReader interface {
 	PassengerActivitySummary(ctx context.Context, passengerID int, weekStart, weekEnd time.Time) (PassengerActivitySummary, error)
 }
+
+// PassengerActivitySummaryRepository preserves the legacy port name for existing callers.
+type PassengerActivitySummaryRepository = PassengerActivityReader

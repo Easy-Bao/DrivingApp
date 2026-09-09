@@ -10,6 +10,8 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+var _ domain.DriverEarningsReader = (*RideRepository)(nil)
+
 func (repository *RideRepository) DriverEarnings(
 	ctx context.Context,
 	driverID int,

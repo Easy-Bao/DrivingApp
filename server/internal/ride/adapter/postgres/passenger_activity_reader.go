@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-var _ domain.PassengerActivitySummaryRepository = (*RideRepository)(nil)
+var _ domain.PassengerActivityReader = (*RideRepository)(nil)
 
 func (repository *RideRepository) PassengerActivitySummary(
 	ctx context.Context,

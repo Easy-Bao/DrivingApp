@@ -16,6 +16,11 @@ type DriverStats struct {
 	AverageRating       float64 `json:"average_rating"`
 }
 
-type DriverStatisticsRepository interface {
+// DriverStatisticsReader exposes the read-only statistics projection used by
+// driver reporting use cases.
+type DriverStatisticsReader interface {
 	DriverStats(ctx context.Context, driverID int, dayStart, dayEnd time.Time) (DriverStats, error)
 }
+
+// DriverStatisticsRepository preserves the legacy port name for existing callers.
+type DriverStatisticsRepository = DriverStatisticsReader
