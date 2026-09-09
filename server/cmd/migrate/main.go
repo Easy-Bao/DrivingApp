@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	dbmigrations "github.com/Easy-Bao/DrivingApp/server/db/migrations"
+	"github.com/Easy-Bao/DrivingApp/server/database/migrations"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	platformmigration "github.com/Easy-Bao/DrivingApp/server/internal/platform/migration"
 	"github.com/golang-migrate/migrate/v4"
@@ -38,7 +38,7 @@ func run(ctx context.Context) error {
 		return err
 	}
 	migrator, err := platformmigration.NewPostgresMigrator(
-		dbmigrations.FS,
+		migrations.FS,
 		".",
 		sqlDatabase,
 		platformmigration.DefaultPostgresMigratorConfig(),

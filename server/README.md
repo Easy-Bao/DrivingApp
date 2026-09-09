@@ -9,10 +9,10 @@ The other commands are one-shot developer tools:
 
 - `cmd/migrate` applies the embedded, versioned PostgreSQL migration stream.
 
-The SQL boundary is intentionally explicit. `db/migrations/` is the runtime
+The SQL boundary is intentionally explicit. `database/migrations/` is the runtime
 schema history applied by `cmd/migrate`; applied migrations are immutable.
-`db/schema/` is the compile-time schema input used by sqlc and must be updated
-alongside a schema migration. `db/query/` contains handwritten queries, and
+`database/schema/` is the compile-time schema input used by sqlc and must be updated
+alongside a schema migration. `database/query/` contains handwritten queries, and
 generated query code is written to `internal/platform/database/postgres/`.
 Regenerate it with `just generate-sqlc` (or `cd server && go tool sqlc generate`).
 
