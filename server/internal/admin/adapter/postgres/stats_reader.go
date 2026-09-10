@@ -11,7 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// StatsRepository reads admin aggregate statistics through the database.
 type StatsRepository struct {
 	pool    *pgxpool.Pool
 	queries *databasepostgres.Queries

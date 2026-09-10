@@ -6,7 +6,8 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
 )
 
-// Provider is the location module's outbound mapping-provider port.
+// Provider isolates search, route, and geocoding use cases from the mapping
+// vendor.
 type Provider interface {
 	Search(ctx context.Context, query string, origin domain.Coordinates) ([]domain.Place, error)
 	Nearby(ctx context.Context, origin domain.Coordinates, page int) ([]domain.Place, error)

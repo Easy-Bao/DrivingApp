@@ -6,7 +6,8 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 )
 
-// RideLifecycleStore persists participant-authorized ride state transitions.
+// RideLifecycleStore is the atomic boundary for participant-authorized state
+// changes.
 type RideLifecycleStore interface {
 	RideReader
 	AcceptRide(ctx context.Context, rideID, driverID int) (domain.Ride, error)

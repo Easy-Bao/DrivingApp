@@ -33,4 +33,4 @@ if [[ "${DATABASE_URL}" == *"127.0.0.1"* || "${DATABASE_URL}" == *"localhost"* |
 fi
 
 cd "${repository_root}/server"
-GOCACHE="${GOCACHE:-/tmp/easyride-go-cache}" DATABASE_URL="${DATABASE_URL}" go run ./cmd/migrate
+GOCACHE="${GOCACHE:-/tmp/easyride-go-cache}" DATABASE_URL="${DATABASE_URL}" go run ./internal/cmd/migrate

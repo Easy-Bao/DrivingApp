@@ -7,7 +7,8 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 )
 
-// SessionStore persists refresh-session rotation and revocation state.
+// SessionStore owns refresh-token rotation and revocation state. Implementations
+// must preserve rotation atomicity.
 type SessionStore interface {
 	Create(ctx context.Context, session domain.RefreshSession) error
 	FindActive(ctx context.Context, tokenHash string, now time.Time) (domain.RefreshSession, error)

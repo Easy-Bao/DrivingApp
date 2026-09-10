@@ -7,22 +7,23 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 )
 
-// RideReader loads the ride aggregate needed by application use cases.
+// RideReader supplies the aggregate snapshot needed for authorization and
+// lifecycle decisions.
 type RideReader interface {
 	Get(ctx context.Context, id int) (domain.Ride, error)
 }
 
-// RideWriter persists a newly requested ride.
+// RideWriter is the command boundary for creating requested rides.
 type RideWriter interface {
 	CreateRide(ctx context.Context, ride domain.Ride) (domain.Ride, error)
 }
 
-// BidWriter persists the legacy ride bid command.
+// BidWriter retains the legacy bid command boundary.
 type BidWriter interface {
 	CreateBid(ctx context.Context, bid domain.Bid) (domain.Bid, error)
 }
 
-// BidAcceptanceStore atomically accepts a legacy ride bid.
+// BidAcceptanceStore keeps legacy bid acceptance atomic with ride matching.
 type BidAcceptanceStore interface {
 	AcceptBid(ctx context.Context, bidID, driverID int) (domain.Bid, domain.Ride, error)
 }

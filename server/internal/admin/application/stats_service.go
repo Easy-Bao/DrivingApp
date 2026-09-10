@@ -7,6 +7,8 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/admin/ports"
 )
 
+// StatsService serves administrative read models without coupling the use case
+// to a storage technology.
 type StatsService struct{ repository ports.StatsReader }
 
 func NewStatsService(repository ports.StatsReader) *StatsService {

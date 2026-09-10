@@ -12,16 +12,17 @@ import (
 
 var ErrPersistenceUnavailable = errors.New("ride lifecycle persistence is unavailable")
 
-// RideEventPublisher publishes an event scoped to an authoritative ride.
+// RideEventPublisher routes a post-persistence event for an authoritative ride.
 type RideEventPublisher func(ctx context.Context, eventType event.Type, ride domain.Ride, payload map[string]any)
 
-// Dependencies contains the lifecycle outbound seams.
+// Dependencies collects the persistence and event seams used by lifecycle
+// decisions.
 type Dependencies struct {
 	Store       ports.RideLifecycleStore
 	PublishRide RideEventPublisher
 }
 
-// Service implements participant-authorized ride transitions.
+// Service enforces participant authorization before persisting ride transitions.
 type Service struct {
 	store       ports.RideLifecycleStore
 	publishRide RideEventPublisher
@@ -34,7 +35,7 @@ func NewService(dependencies Dependencies) *Service {
 	}
 }
 
-// AcceptRide assigns an available driver to a ride.
+// AcceptRide delegates an atomic driver-to-ride match to the lifecycle port.
 func (service *Service) AcceptRide(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
 	if service.store == nil {
 		return domain.Ride{}, ErrPersistenceUnavailable

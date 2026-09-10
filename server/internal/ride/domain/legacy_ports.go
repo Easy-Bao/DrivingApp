@@ -4,8 +4,9 @@ import (
 	"context"
 )
 
-// Repository is retained for compatibility with existing internal adapters.
-// New application code should depend on ride/ports instead.
+// Repository is the legacy aggregate persistence contract.
+//
+// Deprecated: use the focused contracts in ride/ports instead.
 type Repository interface {
 	CreateRide(ctx context.Context, ride Ride) (Ride, error)
 	CreateBid(ctx context.Context, bid Bid) (Bid, error)
@@ -13,28 +14,32 @@ type Repository interface {
 	Get(ctx context.Context, id int) (Ride, error)
 }
 
-// LifecycleRepository is retained for compatibility with existing internal
-// adapters. New application code should depend on ride/ports instead.
+// LifecycleRepository is the legacy ride-lifecycle persistence contract.
+//
+// Deprecated: use the focused contracts in ride/ports instead.
 type LifecycleRepository interface {
 	Repository
 	AcceptRide(ctx context.Context, rideID, driverID int) (Ride, error)
 	UpdateStatus(ctx context.Context, rideID, actorID int, currentStatus, nextStatus string) (Ride, error)
 }
 
-// PaymentRepository is retained for compatibility with existing internal
-// adapters. New application code should depend on ride/ports instead.
+// PaymentRepository is the legacy cash-settlement persistence contract.
+//
+// Deprecated: use the focused contracts in ride/ports instead.
 type PaymentRepository interface {
 	SettleCash(ctx context.Context, rideID, driverID int) (Ride, error)
 }
 
-// CounterpartyRepository is retained for compatibility with existing internal
-// adapters. New application code should depend on ride/ports instead.
+// CounterpartyRepository is the legacy ride-participant lookup contract.
+//
+// Deprecated: use the focused contracts in ride/ports instead.
 type CounterpartyRepository interface {
 	Counterparty(ctx context.Context, rideID, actorID int) (Counterparty, error)
 }
 
-// BiddingRepository is retained for compatibility with existing internal
-// adapters. New application code should depend on ride/ports instead.
+// BiddingRepository is the legacy bid-session persistence contract.
+//
+// Deprecated: use the focused contracts in ride/ports instead.
 type BiddingRepository interface {
 	Repository
 	CreateSession(ctx context.Context, session BidSession) (BidSession, error)
@@ -47,17 +52,25 @@ type BiddingRepository interface {
 	Session(ctx context.Context, sessionID int) (BidSession, error)
 }
 
+// ReviewRepository is the legacy driver-review persistence contract.
+//
 // Deprecated: use ride/ports.ReviewStore instead.
 type ReviewRepository interface {
 	DriverReviews(ctx context.Context, driverID int, limit, offset int) ([]Review, error)
 	CreateReview(ctx context.Context, review Review) (Review, error)
 }
 
+// PassengerReviewRepository is the legacy passenger-review persistence
+// contract.
+//
 // Deprecated: use ride/ports.PassengerReviewStore instead.
 type PassengerReviewRepository interface {
 	CreatePassengerReview(ctx context.Context, review PassengerReview) (PassengerReview, error)
 }
 
+// DriverAvailabilityRepository is the legacy driver-availability query
+// contract.
+//
 // Deprecated: use ride/ports.DriverAvailabilityReader instead.
 type DriverAvailabilityRepository interface {
 	OnlineDrivers(ctx context.Context, driverIDs []int) ([]OnlineDriver, error)

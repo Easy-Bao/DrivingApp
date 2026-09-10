@@ -18,13 +18,14 @@ var errUnavailable = errors.New("ride booking persistence is unavailable")
 // mapping adapter and of the ride facade kept for compatibility.
 type RouteResolver = ports.RouteResolver
 
-// FareCalculator calculates the server-authoritative fare.
+// FareCalculator keeps pricing policy injectable at the application boundary.
 type FareCalculator func(distanceKm, durationMinutes float64) int64
 
-// RideEventPublisher publishes a ride event after persistence succeeds.
+// RideEventPublisher routes a ride event only after persistence succeeds.
 type RideEventPublisher func(ctx context.Context, eventType event.Type, ride domain.Ride, payload map[string]any)
 
-// Dependencies contains the seams used by booking use cases.
+// Dependencies collects the policies and ports that keep booking independent
+// of concrete adapters.
 type Dependencies struct {
 	Writer           ports.RideWriter
 	ResolveRoute     RouteResolver
@@ -33,7 +34,7 @@ type Dependencies struct {
 	HasRouteProvider bool
 }
 
-// Service implements booking use cases behind focused outbound ports.
+// Service keeps ride creation behind focused outbound ports.
 type Service struct {
 	writer           ports.RideWriter
 	resolveRoute     RouteResolver
@@ -52,7 +53,7 @@ func NewService(dependencies Dependencies) *Service {
 	}
 }
 
-// Create records a simple passenger ride request.
+// Create is the minimal ride-creation path for callers without route details.
 func (service *Service) Create(ctx context.Context, passengerID int, fareCentavos int64) (domain.Ride, error) {
 	if passengerID <= 0 || fareCentavos <= 0 {
 		return domain.Ride{}, domain.ErrInvalidTrip
@@ -73,8 +74,8 @@ func (service *Service) Create(ctx context.Context, passengerID int, fareCentavo
 	return ride, nil
 }
 
-// CreateWithDetails calculates authoritative route metrics and persists a
-// fully described passenger ride request.
+// CreateWithDetails replaces client-supplied route metrics with authoritative
+// values before persisting a fully described ride request.
 func (service *Service) CreateWithDetails(ctx context.Context, ride domain.Ride) (domain.Ride, error) {
 	if ride.PassengerID <= 0 {
 		return domain.Ride{}, domain.ErrInvalidTrip
@@ -115,7 +116,8 @@ func (service *Service) CreateWithDetails(ctx context.Context, ride domain.Ride)
 	return created, nil
 }
 
-// EstimateFare returns the route metrics and server-calculated fare.
+// EstimateFare uses provider metrics when coordinates are available and
+// validates supplied metrics when the provider is not configured.
 func (service *Service) EstimateFare(
 	ctx context.Context,
 	originLatitude, originLongitude, destinationLatitude, destinationLongitude *float64,

@@ -13,20 +13,20 @@ import (
 
 var ErrPersistenceUnavailable = errors.New("bidding persistence is unavailable")
 
-// FareCalculator calculates the server-authoritative fare.
+// FareCalculator keeps pricing policy injectable at the application boundary.
 type FareCalculator func(distanceKm, durationMinutes float64) int64
 
-// RideEventPublisher publishes an event scoped to an authoritative ride.
+// RideEventPublisher routes a post-persistence event for an authoritative ride.
 type RideEventPublisher func(ctx context.Context, eventType event.Type, ride domain.Ride, payload map[string]any)
 
-// SessionEventPublisher publishes an event scoped to bid-session
-// participants.
+// SessionEventPublisher routes transient updates to bid-session participants.
 type SessionEventPublisher func(ctx context.Context, eventType event.Type, session domain.BidSession, payload map[string]any)
 
-// DriverOfferPublisher publishes an offer event scoped to one driver.
+// DriverOfferPublisher keeps offer delivery targeted to its driver.
 type DriverOfferPublisher func(ctx context.Context, offer domain.BidOffer, payload map[string]any)
 
-// Dependencies contains the outbound seams used by bidding use cases.
+// Dependencies collects the policies and ports that make bidding independent
+// of concrete adapters.
 type Dependencies struct {
 	Store              ports.BiddingStore
 	ResolveRoute       ports.RouteResolver
@@ -36,7 +36,7 @@ type Dependencies struct {
 	PublishDriverOffer DriverOfferPublisher
 }
 
-// Service implements bid-session and offer use cases.
+// Service keeps bid-session decisions behind the ride application's ports.
 type Service struct {
 	store              ports.BiddingStore
 	resolveRoute       ports.RouteResolver

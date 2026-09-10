@@ -5,11 +5,15 @@ import (
 	"math"
 )
 
+// Coordinates identifies a point in decimal degrees. Callers should validate
+// it before sending the value to a provider.
 type Coordinates struct {
 	Latitude  float64 `json:"lat"`
 	Longitude float64 `json:"lng"`
 }
 
+// Valid reports whether both coordinates are finite and within geographic
+// latitude and longitude bounds.
 func (coordinates Coordinates) Valid() bool {
 	return isFiniteInRange(coordinates.Latitude, -90, 90) &&
 		isFiniteInRange(coordinates.Longitude, -180, 180)
@@ -36,12 +40,16 @@ const (
 	RouteProfileDrivingTraffic RouteProfile = "driving-traffic"
 )
 
+// RouteOptions controls route optimization, profile selection, and excluded
+// map points.
 type RouteOptions struct {
 	Preference    RoutePreference
 	Profile       RouteProfile
 	ExcludePoints []Coordinates
 }
 
+// Normalize fills defaults and rejects unsupported route options or invalid
+// exclusion points.
 func (options RouteOptions) Normalize() (RouteOptions, error) {
 	if options.Preference == "" {
 		options.Preference = RoutePreferenceFastest

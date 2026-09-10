@@ -16,11 +16,13 @@ type DriverStats struct {
 	AverageRating       float64 `json:"average_rating"`
 }
 
-// DriverStatisticsReader exposes the read-only statistics projection used by
-// driver reporting use cases.
+// DriverStatisticsReader supplies the driver dashboard read model without
+// exposing ride command persistence.
 type DriverStatisticsReader interface {
 	DriverStats(ctx context.Context, driverID int, dayStart, dayEnd time.Time) (DriverStats, error)
 }
 
-// DriverStatisticsRepository preserves the legacy port name for existing callers.
+// DriverStatisticsRepository is the legacy name for DriverStatisticsReader.
+//
+// Deprecated: use DriverStatisticsReader instead.
 type DriverStatisticsRepository = DriverStatisticsReader

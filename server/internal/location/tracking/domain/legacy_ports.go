@@ -1,14 +1,20 @@
+// Package domain contains the location-tracking value objects and compatibility
+// contracts used by the tracking module.
 package domain
 
 import "context"
 
-// These contracts remain temporarily for callers that still compile against
-// the pre-ports package. New code must depend on tracking/ports instead.
+// Repository is the legacy location-tracking write and proximity port.
+//
+// Deprecated: use tracking/ports.LocationStore instead.
 type Repository interface {
 	Upsert(ctx context.Context, point DriverPoint) error
 	Nearby(ctx context.Context, latitude, longitude float64, radiusKm float64) ([]DriverPoint, error)
 }
 
+// LocationRepository is the legacy full location-tracking port.
+//
+// Deprecated: use tracking/ports.LocationStore instead.
 type LocationRepository interface {
 	Repository
 	Remove(ctx context.Context, driverID string) error

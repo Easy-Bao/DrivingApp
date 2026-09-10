@@ -16,6 +16,7 @@ const (
 	maxHistoryEntries = 100
 )
 
+// ChatHistoryStore is the Redis adapter for the bounded chat-room history port.
 type ChatHistoryStore struct{ client *redis.Client }
 
 var _ chatports.RoomStore = (*ChatHistoryStore)(nil)
@@ -24,8 +25,10 @@ func NewChatHistoryStore(client *redis.Client) *ChatHistoryStore {
 	return &ChatHistoryStore{client: client}
 }
 
+// CreateRoom creates a participant-scoped room without extending an existing
+// room's expiry.
 func (repository *ChatHistoryStore) CreateRoom(ctx context.Context, roomID, passengerID, driverID string) error {
-	// A room is a fixed 24-hour conversation window. Re-opening the same ride
+	// A room is a fixed 48-hour conversation window. Re-opening the same ride
 	// must not reset its lock state or extend its expiry.
 	exists, err := repository.client.Exists(ctx, roomKey(roomID)).Result()
 	if err != nil {
@@ -48,6 +51,7 @@ func (repository *ChatHistoryStore) CreateRoom(ctx context.Context, roomID, pass
 	return err
 }
 
+// Append stores a message and preserves the room's remaining lifetime.
 func (repository *ChatHistoryStore) Append(ctx context.Context, message domain.Message) error {
 	if message.CreatedAt == "" {
 		message.CreatedAt = time.Now().UTC().Format(time.RFC3339Nano)
@@ -77,6 +81,8 @@ func (repository *ChatHistoryStore) Append(ctx context.Context, message domain.M
 	return err
 }
 
+// Messages returns valid entries from the bounded room history. Malformed
+// stored entries are ignored so one bad record cannot hide later messages.
 func (repository *ChatHistoryStore) Messages(ctx context.Context, roomID string) ([]domain.Message, error) {
 	items, err := repository.client.LRange(ctx, messagesKey(roomID), -maxHistoryEntries, -1).Result()
 	if err != nil {
@@ -102,6 +108,7 @@ func (repository *ChatHistoryStore) Messages(ctx context.Context, roomID string)
 	return result, nil
 }
 
+// Resolve marks a room closed for the service's subsequent message checks.
 func (repository *ChatHistoryStore) Resolve(ctx context.Context, roomID string) error {
 	return repository.client.HSet(ctx, roomKey(roomID), "locked", "1").Err()
 }

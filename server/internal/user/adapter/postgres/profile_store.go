@@ -20,8 +20,6 @@ import (
 
 const maxPostgresProfileID = 1<<31 - 1
 
-// ProfileRepository persists user profiles and notifications through the
-// generated queries.
 type ProfileRepository struct {
 	pool          *pgxpool.Pool
 	queries       *databasepostgres.Queries

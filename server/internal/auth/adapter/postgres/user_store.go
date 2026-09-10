@@ -19,8 +19,6 @@ const (
 	maxInt32UserID = 1<<31 - 1
 )
 
-// UserRepository persists authentication accounts through the generated
-// queries.
 type UserRepository struct {
 	pool    *pgxpool.Pool
 	queries *databasepostgres.Queries

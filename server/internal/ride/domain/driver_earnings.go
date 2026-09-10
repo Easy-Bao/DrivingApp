@@ -30,11 +30,13 @@ type DriverEarningsSummary struct {
 	MonthWeeks []EarningsBucket `json:"month_weeks"`
 }
 
-// DriverEarningsReader exposes the read-only earnings projection used by
-// driver reporting use cases.
+// DriverEarningsReader supplies reporting data without exposing ride command
+// persistence.
 type DriverEarningsReader interface {
 	DriverEarnings(ctx context.Context, driverID int, monthStart, monthEnd time.Time) ([]DriverEarning, error)
 }
 
-// DriverEarningsRepository preserves the legacy port name for existing callers.
+// DriverEarningsRepository is the legacy name for DriverEarningsReader.
+//
+// Deprecated: use DriverEarningsReader instead.
 type DriverEarningsRepository = DriverEarningsReader

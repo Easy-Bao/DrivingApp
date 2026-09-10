@@ -16,7 +16,6 @@ import (
 
 const maxPostgresRideID = 1<<31 - 1
 
-// RideRepository persists ride-domain data through generated queries.
 type RideRepository struct {
 	pool                  *pgxpool.Pool
 	queries               *databasepostgres.Queries

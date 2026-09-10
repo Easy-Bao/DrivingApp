@@ -67,7 +67,7 @@ infra-up:
 
 # Apply the ordered additive migration plan to configured native PostgreSQL.
 db-migrate:
-    cd server && go run ./cmd/migrate
+    cd server && go run ./internal/cmd/migrate
 
 # Apply the migration stream to Docker Compose PostgreSQL instead.
 docker-db-migrate: infra-up
@@ -109,7 +109,7 @@ server:
             exit 1; \
         fi; \
     fi
-    cd server && go run ./cmd/api
+    cd server && go run ./internal/cmd/api
 
 native-server: server
 

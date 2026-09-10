@@ -1,18 +1,19 @@
 # Go backend
 
 This directory contains the Go modular monolith. The `internal/*` packages
-own the business modules and their ports/adapters; `cmd/api` is the single
+own the business modules and their ports/adapters; `internal/cmd/api` is the single
 long-running application process that composes HTTP, WebSocket, persistence,
 transient event delivery, and infrastructure adapters.
 
 The other commands are one-shot developer tools:
 
-- `cmd/migrate` applies the embedded, versioned PostgreSQL migration stream.
+- `internal/cmd/migrate` applies the embedded, versioned PostgreSQL migration stream.
 
-The SQL boundary is intentionally explicit. `database/migrations/` is the runtime
-schema history applied by `cmd/migrate`; applied migrations are immutable.
+The SQL boundary is intentionally explicit. `internal/platform/database/migrations/`
+is the runtime schema history applied by `internal/cmd/migrate`; applied migrations
+are immutable.
 `database/schema/` is the compile-time schema input used by sqlc and must be updated
-alongside a schema migration. `database/query/` contains handwritten queries, and
+alongside a schema migration. `database/queries/` contains handwritten queries, and
 generated query code is written to `internal/platform/database/postgres/`.
 Regenerate it with `just generate-sqlc` (or `cd server && go tool sqlc generate`).
 
@@ -74,7 +75,7 @@ This runs the equivalent of:
 
 ```sh
 cd server
-go run ./cmd/api
+go run ./internal/cmd/api
 ```
 
 The public client URL is configured by `API_BASE_URL`. Its host and listening

@@ -12,9 +12,11 @@ type CreateRideRequest struct {
 	DistanceKm       float64 `json:"distance_km"`
 	DurationMinutes  float64 `json:"duration_minutes"`
 }
+
 type SubmitBidRequest struct {
 	FareCentavos int64 `json:"fare_centavos"`
 }
+
 type FareEstimateRequest struct {
 	DistanceKm           float64  `json:"distance_km"`
 	DurationMinutes      float64  `json:"duration_minutes"`
@@ -23,6 +25,7 @@ type FareEstimateRequest struct {
 	DestinationLatitude  *float64 `json:"destination_latitude"`
 	DestinationLongitude *float64 `json:"destination_longitude"`
 }
+
 type FinalFareRequest struct {
 	DistanceKm           float64  `json:"distance_km"`
 	DurationMinutes      float64  `json:"duration_minutes"`

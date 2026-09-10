@@ -6,7 +6,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/domain"
 )
 
-// DocumentStore persists document metadata and review state.
+// DocumentStore isolates document workflow state from the database adapter.
 type DocumentStore interface {
 	Create(ctx context.Context, document domain.Document) (domain.Document, error)
 	Get(ctx context.Context, id int) (domain.Document, error)

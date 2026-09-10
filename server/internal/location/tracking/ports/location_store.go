@@ -6,8 +6,8 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/domain"
 )
 
-// LocationStore persists driver telemetry and the passenger location used by
-// active ride tracking.
+// LocationStore is the tracking module's persistence boundary for telemetry
+// and active-ride location.
 type LocationStore interface {
 	Upsert(ctx context.Context, point domain.DriverPoint) error
 	Nearby(ctx context.Context, latitude, longitude float64, radiusKm float64) ([]domain.DriverPoint, error)

@@ -16,8 +16,6 @@ import (
 
 const maxPostgresDocumentID = 1<<31 - 1
 
-// DocumentRepository persists driver-document metadata through the generated
-// queries.
 type DocumentRepository struct {
 	pool    *pgxpool.Pool
 	queries *databasepostgres.Queries
@@ -66,6 +64,7 @@ func (repository *DocumentRepository) Create(ctx context.Context, item domain.Do
 	return fromPostgresDocument(created)
 }
 
+// Get maps an absent database row to domain.ErrDocumentNotFound.
 func (repository *DocumentRepository) Get(ctx context.Context, id int) (domain.Document, error) {
 	if err := repository.validate(); err != nil {
 		return domain.Document{}, err
@@ -132,6 +131,8 @@ func (repository *DocumentRepository) ListForReview(ctx context.Context, status 
 	return fromPostgresDocuments(items)
 }
 
+// Review persists a moderation decision and distinguishes missing or finalized
+// documents in its returned domain error.
 func (repository *DocumentRepository) Review(ctx context.Context, id, reviewerID int, status domain.Status) (domain.Document, error) {
 	if err := repository.validate(); err != nil {
 		return domain.Document{}, err

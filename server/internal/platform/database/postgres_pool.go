@@ -11,12 +11,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// PostgresNativePoolConfig describes the native PostgreSQL pool used by generated queries.
-// MinIdleConnections keeps warm connections available without treating an idle
-// connection count as a hard upper bound.
+// PostgresNativePoolConfig controls native PostgreSQL pool limits and
+// connection lifetimes.
 type PostgresNativePoolConfig struct {
-	MaxConnections        int32
-	MinConnections        int32
+	MaxConnections int32
+	MinConnections int32
+	// MinIdleConnections keeps warm connections available without treating an
+	// idle connection count as a hard upper bound.
 	MinIdleConnections    int32
 	ConnectionMaxLifetime time.Duration
 	ConnectionMaxIdleTime time.Duration

@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 )
 
-// EventRouter keeps realtime event ownership explicit: geo and chat receive
-// only the messages belonging to their bounded context.
+// EventRouter keeps event ownership explicit: location tracking and chat
+// receive only messages belonging to their bounded context.
 type EventRouter struct{ handlers map[string]EventSink }
 
 func NewEventRouter() *EventRouter { return &EventRouter{handlers: map[string]EventSink{}} }

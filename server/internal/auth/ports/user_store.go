@@ -6,7 +6,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 )
 
-// UserStore is the auth application's account persistence port.
+// UserStore isolates account commands and queries from persistence details.
 type UserStore interface {
 	Create(ctx context.Context, user domain.User) (domain.User, error)
 	FindByEmail(ctx context.Context, email string) (domain.User, error)
@@ -14,7 +14,7 @@ type UserStore interface {
 	UpdatePassword(ctx context.Context, id int, passwordHash string) error
 }
 
-// VerifiedUserStore adds the verification command required by OTP use cases.
+// VerifiedUserStore adds the state change required after OTP verification.
 type VerifiedUserStore interface {
 	UserStore
 	MarkVerified(ctx context.Context, id int) error

@@ -6,7 +6,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 )
 
-// BiddingStore persists bid-session and offer commands and their read models.
+// BiddingStore is the application boundary for bid-session and offer state.
 type BiddingStore interface {
 	CreateSession(ctx context.Context, session domain.BidSession) (domain.BidSession, error)
 	ActiveSessions(ctx context.Context, driverID *int) ([]domain.BidSession, error)

@@ -12,16 +12,16 @@ import (
 
 var ErrPersistenceUnavailable = errors.New("cash settlement persistence is unavailable")
 
-// RideEventPublisher publishes an event scoped to an authoritative ride.
+// RideEventPublisher routes a post-persistence event for an authoritative ride.
 type RideEventPublisher func(ctx context.Context, eventType event.Type, ride domain.Ride, payload map[string]any)
 
-// Dependencies contains the settlement outbound seams.
+// Dependencies collects the settlement persistence and event seams.
 type Dependencies struct {
 	Store       ports.CashSettlementStore
 	PublishRide RideEventPublisher
 }
 
-// Service implements cash settlement for a ride.
+// Service validates and records cash settlement at the application boundary.
 type Service struct {
 	store       ports.CashSettlementStore
 	publishRide RideEventPublisher

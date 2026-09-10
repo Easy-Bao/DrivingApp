@@ -8,8 +8,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/Easy-Bao/DrivingApp/server/database/migrations"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/migrations"
 	"github.com/golang-migrate/migrate/v4"
 )
 

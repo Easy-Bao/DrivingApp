@@ -10,10 +10,14 @@ type PassengerActivitySummary struct {
 	ThisWeekCompletedRides int   `json:"this_week_completed_rides"`
 }
 
-// PassengerActivityReader exposes the read-only passenger activity projection.
+// PassengerActivityReader supplies dashboard activity without exposing ride
+// command persistence.
 type PassengerActivityReader interface {
 	PassengerActivitySummary(ctx context.Context, passengerID int, weekStart, weekEnd time.Time) (PassengerActivitySummary, error)
 }
 
-// PassengerActivitySummaryRepository preserves the legacy port name for existing callers.
+// PassengerActivitySummaryRepository is the legacy name for
+// PassengerActivityReader.
+//
+// Deprecated: use PassengerActivityReader instead.
 type PassengerActivitySummaryRepository = PassengerActivityReader

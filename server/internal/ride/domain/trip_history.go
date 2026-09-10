@@ -8,19 +8,26 @@ type TripHistoryQuery struct {
 	ActiveOnly bool
 }
 
-// RideHistoryReader exposes read-only trip history projections.
+// RideHistoryReader supplies trip-history read models without exposing command
+// persistence.
 type RideHistoryReader interface {
 	DriverTrips(ctx context.Context, driverID int, query TripHistoryQuery) ([]Ride, error)
 	PassengerRides(ctx context.Context, passengerID int, query TripHistoryQuery) ([]Ride, error)
 }
 
-// RecentPassengerRidesReader exposes the bounded recent-rides projection.
+// RecentPassengerRidesReader keeps the passenger home query bounded to recent
+// records.
 type RecentPassengerRidesReader interface {
 	PassengerRecentRides(ctx context.Context, passengerID, limit int) ([]Ride, error)
 }
 
-// TripHistoryRepository preserves the legacy port name for existing callers.
+// TripHistoryRepository is the legacy name for RideHistoryReader.
+//
+// Deprecated: use RideHistoryReader instead.
 type TripHistoryRepository = RideHistoryReader
 
-// RecentPassengerRidesRepository preserves the legacy port name for existing callers.
+// RecentPassengerRidesRepository is the legacy name for
+// RecentPassengerRidesReader.
+//
+// Deprecated: use RecentPassengerRidesReader instead.
 type RecentPassengerRidesRepository = RecentPassengerRidesReader
