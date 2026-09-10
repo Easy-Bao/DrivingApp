@@ -10,22 +10,23 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
+	authports "github.com/Easy-Bao/DrivingApp/server/internal/auth/ports"
 )
 
 const otpLifetime = 10 * time.Minute
 
 type OTPService struct {
-	users         domain.VerifiedUserRepository
-	store         domain.OTPStore
-	gateway       domain.OTPGateway
-	tokens        domain.TokenIssuer
-	sessions      domain.RefreshSessionStore
-	pending       domain.PendingRegistrationStore
+	users         authports.VerifiedUserStore
+	store         authports.OTPStore
+	gateway       authports.OTPSender
+	tokens        authports.TokenIssuer
+	sessions      authports.SessionStore
+	pending       authports.PendingRegistrationStore
 	registrations *RegisterService
 	logger        *slog.Logger
 }
 
-func NewOTPService(users domain.VerifiedUserRepository, store domain.OTPStore, gateway domain.OTPGateway, tokens domain.TokenIssuer, sessions domain.RefreshSessionStore) *OTPService {
+func NewOTPService(users authports.VerifiedUserStore, store authports.OTPStore, gateway authports.OTPSender, tokens authports.TokenIssuer, sessions authports.SessionStore) *OTPService {
 	return &OTPService{
 		users:    users,
 		store:    store,
@@ -36,7 +37,7 @@ func NewOTPService(users domain.VerifiedUserRepository, store domain.OTPStore, g
 	}
 }
 
-func NewOTPServiceWithPending(users domain.VerifiedUserRepository, store domain.OTPStore, gateway domain.OTPGateway, tokens domain.TokenIssuer, pending domain.PendingRegistrationStore, registrations *RegisterService, sessions domain.RefreshSessionStore) *OTPService {
+func NewOTPServiceWithPending(users authports.VerifiedUserStore, store authports.OTPStore, gateway authports.OTPSender, tokens authports.TokenIssuer, pending authports.PendingRegistrationStore, registrations *RegisterService, sessions authports.SessionStore) *OTPService {
 	return &OTPService{
 		users:         users,
 		store:         store,

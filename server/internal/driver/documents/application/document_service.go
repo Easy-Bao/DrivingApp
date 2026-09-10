@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/domain"
+	documentports "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/ports"
 )
 
 var allowedContentTypes = map[string]struct{}{
@@ -20,14 +21,14 @@ var allowedContentTypes = map[string]struct{}{
 }
 
 type DocumentService struct {
-	repository       domain.Repository
-	storage          domain.ObjectStorage
+	repository       documentports.DocumentStore
+	storage          documentports.ObjectStore
 	maxDocumentBytes int64
 }
 
 func NewDocumentService(
-	repository domain.Repository,
-	storage domain.ObjectStorage,
+	repository documentports.DocumentStore,
+	storage documentports.ObjectStore,
 	maxDocumentBytes int64,
 ) *DocumentService {
 	return &DocumentService{

@@ -4,11 +4,12 @@ import (
 	"context"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/admin/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/admin/ports"
 )
 
-type StatsService struct{ repository domain.Repository }
+type StatsService struct{ repository ports.StatsReader }
 
-func NewStatsService(repository domain.Repository) *StatsService {
+func NewStatsService(repository ports.StatsReader) *StatsService {
 	return &StatsService{repository: repository}
 }
 

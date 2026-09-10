@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
+	authports "github.com/Easy-Bao/DrivingApp/server/internal/auth/ports"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 )
 
@@ -25,14 +26,14 @@ type SessionTokens struct {
 	RefreshToken string
 }
 
-func issueToken(issuer domain.TokenIssuer, subject string, role domain.Role) (string, error) {
+func issueToken(issuer authports.TokenIssuer, subject string, role domain.Role) (string, error) {
 	if roleIssuer, ok := issuer.(roleTokenIssuer); ok {
 		return roleIssuer.IssueWithRole(subject, string(role))
 	}
 	return issuer.Issue(subject)
 }
 
-func issueSessionTokens(ctx context.Context, sessions domain.RefreshSessionStore, issuer domain.TokenIssuer, subject string, role domain.Role) (SessionTokens, error) {
+func issueSessionTokens(ctx context.Context, sessions authports.SessionStore, issuer authports.TokenIssuer, subject string, role domain.Role) (SessionTokens, error) {
 	accessToken, err := issueToken(issuer, subject, role)
 	if err != nil {
 		return SessionTokens{}, err
@@ -44,7 +45,7 @@ func issueSessionTokens(ctx context.Context, sessions domain.RefreshSessionStore
 	return SessionTokens{AccessToken: accessToken, RefreshToken: refreshToken}, nil
 }
 
-func issueRefreshToken(ctx context.Context, sessions domain.RefreshSessionStore, subject string, role domain.Role) (string, error) {
+func issueRefreshToken(ctx context.Context, sessions authports.SessionStore, subject string, role domain.Role) (string, error) {
 	if sessions == nil {
 		return "", domain.ErrRefreshSessionUnavailable
 	}

@@ -10,7 +10,6 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/database/migrations"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
-	platformmigration "github.com/Easy-Bao/DrivingApp/server/internal/platform/migration"
 	"github.com/golang-migrate/migrate/v4"
 )
 
@@ -37,11 +36,11 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	migrator, err := platformmigration.NewPostgresMigrator(
+	migrator, err := database.NewPostgresMigrator(
 		migrations.FS,
 		".",
 		sqlDatabase,
-		platformmigration.DefaultPostgresMigratorConfig(),
+		database.DefaultPostgresMigratorConfig(),
 	)
 	if err != nil {
 		_ = sqlDatabase.Close()

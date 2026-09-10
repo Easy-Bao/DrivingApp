@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/realtime/event"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 )
 

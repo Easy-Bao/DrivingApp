@@ -7,54 +7,71 @@ import (
 	"math"
 	"time"
 
+	biddingapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application/bidding"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/application/booking"
+	lifecycleapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application/lifecycle"
+	settlementapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application/settlement"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
 )
 
-type RouteMetrics struct {
-	DistanceKm      float64
-	DurationMinutes float64
-}
-
-type RouteCalculator interface {
-	CalculateRoute(ctx context.Context, originLat, originLng, destinationLat, destinationLng float64) (RouteMetrics, error)
-}
-
-type RouteCalculatorFunc func(context.Context, float64, float64, float64, float64) (RouteMetrics, error)
-
-func (calculator RouteCalculatorFunc) CalculateRoute(ctx context.Context, originLat, originLng, destinationLat, destinationLng float64) (RouteMetrics, error) {
-	return calculator(ctx, originLat, originLng, destinationLat, destinationLng)
-}
+type RouteMetrics = ports.RouteMetrics
+type RouteCalculator = ports.RouteProvider
+type RouteCalculatorFunc = ports.RouteProviderFunc
 
 type RideService struct {
-	repository        domain.Repository
+	repository        ports.RideStore
 	routeCalculator   RouteCalculator
 	pricingConfig     PricingConfig
 	eventPublisher    EventPublisher
+	bookingService    *booking.Service
+	biddingService    *biddingapplication.Service
+	lifecycleService  *lifecycleapplication.Service
+	settlementService *settlementapplication.Service
 	reportingLocation *time.Location
 	logger            *slog.Logger
 }
 
 func NewRideService(
-	repository domain.Repository,
+	repository ports.RideStore,
 	pricingConfig PricingConfig,
 	publisher EventPublisher,
 ) *RideService {
-	return &RideService{
+	service := &RideService{
 		repository:        repository,
 		pricingConfig:     pricingConfig,
 		eventPublisher:    publisher,
 		reportingLocation: defaultReportingLocation,
 		logger:            slog.Default(),
 	}
+	service.bookingService = booking.NewService(booking.Dependencies{
+		Writer:           repository,
+		ResolveRoute:     service.authoritativeRoute,
+		CalculateFare:    pricingConfig.FareCentavos,
+		PublishRide:      service.publishRide,
+		HasRouteProvider: false,
+	})
+	service.biddingService = newBiddingService(service)
+	lifecycleStore, _ := repository.(ports.RideLifecycleStore)
+	service.lifecycleService = lifecycleapplication.NewService(lifecycleapplication.Dependencies{
+		Store:       lifecycleStore,
+		PublishRide: service.publishRide,
+	})
+	settlementStore, _ := repository.(ports.CashSettlementStore)
+	service.settlementService = settlementapplication.NewService(settlementapplication.Dependencies{
+		Store:       settlementStore,
+		PublishRide: service.publishRide,
+	})
+	return service
 }
 
 func NewRideServiceWithRouteCalculator(
-	repository domain.Repository,
+	repository ports.RideStore,
 	calculator RouteCalculator,
 	pricingConfig PricingConfig,
 	publisher EventPublisher,
 ) *RideService {
-	return &RideService{
+	service := &RideService{
 		repository:        repository,
 		routeCalculator:   calculator,
 		pricingConfig:     pricingConfig,
@@ -62,6 +79,25 @@ func NewRideServiceWithRouteCalculator(
 		reportingLocation: defaultReportingLocation,
 		logger:            slog.Default(),
 	}
+	service.bookingService = booking.NewService(booking.Dependencies{
+		Writer:           repository,
+		ResolveRoute:     service.authoritativeRoute,
+		CalculateFare:    pricingConfig.FareCentavos,
+		PublishRide:      service.publishRide,
+		HasRouteProvider: calculator != nil,
+	})
+	service.biddingService = newBiddingService(service)
+	lifecycleStore, _ := repository.(ports.RideLifecycleStore)
+	service.lifecycleService = lifecycleapplication.NewService(lifecycleapplication.Dependencies{
+		Store:       lifecycleStore,
+		PublishRide: service.publishRide,
+	})
+	settlementStore, _ := repository.(ports.CashSettlementStore)
+	service.settlementService = settlementapplication.NewService(settlementapplication.Dependencies{
+		Store:       settlementStore,
+		PublishRide: service.publishRide,
+	})
+	return service
 }
 
 func (service *RideService) WithLogger(logger *slog.Logger) *RideService {
@@ -75,15 +111,7 @@ func (service *RideService) PricingConfig() PricingConfig {
 	return service.pricingConfig
 }
 func (service *RideService) CreateRide(ctx context.Context, passengerID int, fareCentavos int64) (domain.Ride, error) {
-	if passengerID <= 0 || fareCentavos <= 0 {
-		return domain.Ride{}, domain.ErrInvalidTrip
-	}
-	ride, err := service.repository.CreateRide(ctx, domain.Ride{PassengerID: passengerID, Status: string(domain.RideRequested), FareCentavos: fareCentavos, RideType: "Solo Ride"})
-	if err != nil {
-		return domain.Ride{}, err
-	}
-	service.publishRide(ctx, rideCreatedEvent, ride, map[string]any{"ride": ride})
-	return ride, nil
+	return service.bookingService.Create(ctx, passengerID, fareCentavos)
 }
 func (service *RideService) SubmitBid(ctx context.Context, rideID, driverID int, fareCentavos int64) (domain.Bid, error) {
 	if rideID <= 0 || driverID <= 0 || fareCentavos <= 0 {
@@ -111,50 +139,11 @@ func (service *RideService) Get(ctx context.Context, id int) (domain.Ride, error
 }
 
 func (service *RideService) CreateRideWithDetails(ctx context.Context, ride domain.Ride) (domain.Ride, error) {
-	if ride.PassengerID <= 0 {
-		return domain.Ride{}, domain.ErrInvalidTrip
-	}
-	if ride.Status != "" {
-		status, ok := domain.NormalizeRideStatus(ride.Status)
-		if !ok || status != domain.RideRequested {
-			return domain.Ride{}, domain.ErrInvalidTrip
-		}
-	}
-	metrics, err := service.authoritativeRoute(ctx, ride.PickupLatitude, ride.PickupLongitude, ride.DropoffLatitude, ride.DropoffLongitude, ride.DistanceKm, ride.DurationMinutes)
-	if err != nil {
-		return domain.Ride{}, err
-	}
-	ride.DistanceKm = metrics.DistanceKm
-	ride.DurationMinutes = metrics.DurationMinutes
-	ride.FareCentavos = service.CalculateFare(metrics.DistanceKm, metrics.DurationMinutes)
-	ride.Status = string(domain.RideRequested)
-	if ride.RideType == "" {
-		ride.RideType = "solo"
-	}
-	created, err := service.repository.CreateRide(ctx, ride)
-	if err != nil {
-		return domain.Ride{}, err
-	}
-	service.publishRide(ctx, rideCreatedEvent, created, map[string]any{"ride": created})
-	return created, nil
+	return service.bookingService.CreateWithDetails(ctx, ride)
 }
 
 func (service *RideService) Fare(ctx context.Context, originLat, originLng, destinationLat, destinationLng *float64, distanceKm, durationMinutes float64) (RouteMetrics, int64, error) {
-	if service.routeCalculator != nil {
-		if originLat == nil || originLng == nil || destinationLat == nil || destinationLng == nil {
-			return RouteMetrics{}, 0, domain.ErrInvalidTrip
-		}
-		metrics, err := service.authoritativeRoute(ctx, *originLat, *originLng, *destinationLat, *destinationLng, distanceKm, durationMinutes)
-		if err != nil {
-			return RouteMetrics{}, 0, err
-		}
-		return metrics, service.CalculateFare(metrics.DistanceKm, metrics.DurationMinutes), nil
-	}
-	if err := validateTrip(0, 0, 0, 0, distanceKm, durationMinutes); err != nil {
-		return RouteMetrics{}, 0, err
-	}
-	metrics := RouteMetrics{DistanceKm: distanceKm, DurationMinutes: durationMinutes}
-	return metrics, service.CalculateFare(distanceKm, durationMinutes), nil
+	return service.bookingService.EstimateFare(ctx, originLat, originLng, destinationLat, destinationLng, distanceKm, durationMinutes)
 }
 
 func (service *RideService) authoritativeRoute(ctx context.Context, pickupLatitude, pickupLongitude, dropoffLatitude, dropoffLongitude, distanceKm, durationMinutes float64) (RouteMetrics, error) {
@@ -196,66 +185,15 @@ func contextError(ctx context.Context) error {
 }
 
 func (service *RideService) AcceptRide(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
-	repository, ok := service.repository.(domain.LifecycleRepository)
-	if !ok {
-		return domain.Ride{}, errors.New("ride lifecycle persistence is unavailable")
-	}
-	ride, err := repository.AcceptRide(ctx, rideID, driverID)
-	if err != nil {
-		return domain.Ride{}, err
-	}
-	service.publishRide(ctx, rideMatchedEvent, ride, map[string]any{"ride": ride})
-	return ride, nil
+	return service.lifecycleService.AcceptRide(ctx, rideID, driverID)
 }
 
 func (service *RideService) SettleCash(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
-	repository, ok := service.repository.(domain.PaymentRepository)
-	if !ok {
-		return domain.Ride{}, errors.New("cash settlement persistence is unavailable")
-	}
-	if driverID <= 0 {
-		return domain.Ride{}, domain.ErrUnauthorizedRide
-	}
-	ride, err := repository.SettleCash(ctx, rideID, driverID)
-	if err != nil {
-		return domain.Ride{}, err
-	}
-	service.publishRide(ctx, rideStatusChangedEvent, ride, map[string]any{"ride": ride, "payment_status": ride.PaymentStatus})
-	return ride, nil
+	return service.settlementService.SettleCash(ctx, rideID, driverID)
 }
 
 func (service *RideService) UpdateStatus(ctx context.Context, rideID, actorID int, next string) (domain.Ride, error) {
-	repository, ok := service.repository.(domain.LifecycleRepository)
-	if !ok {
-		return domain.Ride{}, errors.New("ride lifecycle persistence is unavailable")
-	}
-	current, err := service.repository.Get(ctx, rideID)
-	if err != nil {
-		return domain.Ride{}, err
-	}
-	if current.PassengerID != actorID && (current.DriverID == nil || *current.DriverID != actorID) {
-		return domain.Ride{}, domain.ErrUnauthorizedRide
-	}
-	currentStatus, currentOK := domain.NormalizeRideStatus(current.Status)
-	nextStatus, nextOK := domain.NormalizeRideStatus(next)
-	if !currentOK || !nextOK || !domain.CanTransition(string(currentStatus), string(nextStatus)) {
-		return domain.Ride{}, domain.ErrInvalidStatusTransition
-	}
-	if current.PassengerID == actorID && nextStatus != domain.RideCancelled {
-		return domain.Ride{}, domain.ErrUnauthorizedRide
-	}
-	if current.DriverID == nil && nextStatus != domain.RideCancelled {
-		return domain.Ride{}, domain.ErrUnauthorizedRide
-	}
-	updated, err := repository.UpdateStatus(ctx, rideID, actorID, string(currentStatus), string(nextStatus))
-	if err != nil {
-		return domain.Ride{}, err
-	}
-	service.publishRide(ctx, rideStatusChangedEvent, updated, map[string]any{
-		"previous_status": string(currentStatus),
-		"ride":            updated,
-	})
-	return updated, nil
+	return service.lifecycleService.UpdateStatus(ctx, rideID, actorID, next)
 }
 
 func (service *RideService) CalculateFare(distanceKm, durationMinutes float64) int64 {
@@ -276,7 +214,7 @@ func validateTrip(pickupLatitude, pickupLongitude, dropoffLatitude, dropoffLongi
 }
 
 func (service *RideService) DriverStats(ctx context.Context, driverID int) (domain.DriverStats, error) {
-	repository, ok := service.repository.(domain.DriverStatisticsReader)
+	repository, ok := service.repository.(ports.DriverStatisticsReader)
 	if !ok {
 		return domain.DriverStats{}, errors.New("driver analytics persistence is unavailable")
 	}
@@ -285,7 +223,7 @@ func (service *RideService) DriverStats(ctx context.Context, driverID int) (doma
 }
 
 func (service *RideService) DriverEarnings(ctx context.Context, driverID int) (domain.DriverEarningsSummary, error) {
-	repository, ok := service.repository.(domain.DriverEarningsReader)
+	repository, ok := service.repository.(ports.DriverEarningsReader)
 	if !ok {
 		return domain.DriverEarningsSummary{}, errors.New("driver earnings persistence is unavailable")
 	}
@@ -304,7 +242,7 @@ func (service *RideService) DriverEarnings(ctx context.Context, driverID int) (d
 }
 
 func (service *RideService) DriverTrips(ctx context.Context, driverID int, query domain.TripHistoryQuery) ([]domain.Ride, error) {
-	repository, ok := service.repository.(domain.RideHistoryReader)
+	repository, ok := service.repository.(ports.RideHistoryReader)
 	if !ok {
 		return nil, errors.New("driver trip persistence is unavailable")
 	}
@@ -315,7 +253,7 @@ func (service *RideService) DriverTrips(ctx context.Context, driverID int, query
 }
 
 func (service *RideService) PassengerRides(ctx context.Context, passengerID int, query domain.TripHistoryQuery) ([]domain.Ride, error) {
-	repository, ok := service.repository.(domain.RideHistoryReader)
+	repository, ok := service.repository.(ports.RideHistoryReader)
 	if !ok {
 		return nil, errors.New("passenger ride persistence is unavailable")
 	}
@@ -326,7 +264,7 @@ func (service *RideService) PassengerRides(ctx context.Context, passengerID int,
 }
 
 func (service *RideService) PassengerActivitySummary(ctx context.Context, passengerID int) (domain.PassengerActivitySummary, error) {
-	repository, ok := service.repository.(domain.PassengerActivityReader)
+	repository, ok := service.repository.(ports.PassengerActivityReader)
 	if !ok {
 		return domain.PassengerActivitySummary{}, errors.New("passenger activity persistence is unavailable")
 	}
@@ -338,7 +276,7 @@ func (service *RideService) PassengerRecentRides(ctx context.Context, passengerI
 	if passengerID <= 0 || limit <= 0 || limit > 100 {
 		return nil, errors.New("invalid passenger recent rides request")
 	}
-	if repository, ok := service.repository.(domain.RecentPassengerRidesReader); ok {
+	if repository, ok := service.repository.(ports.RecentPassengerRidesReader); ok {
 		return repository.PassengerRecentRides(ctx, passengerID, limit)
 	}
 	rides, err := service.PassengerRides(ctx, passengerID, domain.TripHistoryQuery{Limit: limit, Offset: 0})
@@ -352,7 +290,7 @@ func (service *RideService) PassengerRecentRides(ctx context.Context, passengerI
 }
 
 func (service *RideService) DriverReviews(ctx context.Context, driverID, limit, offset int) ([]domain.Review, error) {
-	repository, ok := service.repository.(domain.ReviewRepository)
+	repository, ok := service.repository.(ports.ReviewStore)
 	if !ok {
 		return nil, errors.New("driver review persistence is unavailable")
 	}
@@ -360,7 +298,7 @@ func (service *RideService) DriverReviews(ctx context.Context, driverID, limit, 
 }
 
 func (service *RideService) CreateReview(ctx context.Context, review domain.Review) (domain.Review, error) {
-	repository, ok := service.repository.(domain.ReviewRepository)
+	repository, ok := service.repository.(ports.ReviewStore)
 	if !ok {
 		return domain.Review{}, errors.New("driver review persistence is unavailable")
 	}
@@ -371,7 +309,7 @@ func (service *RideService) CreateReview(ctx context.Context, review domain.Revi
 }
 
 func (service *RideService) CreatePassengerReview(ctx context.Context, review domain.PassengerReview) (domain.PassengerReview, error) {
-	repository, ok := service.repository.(domain.PassengerReviewRepository)
+	repository, ok := service.repository.(ports.PassengerReviewStore)
 	if !ok {
 		return domain.PassengerReview{}, errors.New("passenger review persistence is unavailable")
 	}
@@ -382,7 +320,7 @@ func (service *RideService) CreatePassengerReview(ctx context.Context, review do
 }
 
 func (service *RideService) OnlineDrivers(ctx context.Context, driverIDs []int) ([]domain.OnlineDriver, error) {
-	repository, ok := service.repository.(domain.DriverAvailabilityRepository)
+	repository, ok := service.repository.(ports.DriverAvailabilityReader)
 	if !ok {
 		return nil, errors.New("online driver persistence is unavailable")
 	}
@@ -393,7 +331,7 @@ func (service *RideService) OnlineDrivers(ctx context.Context, driverIDs []int) 
 }
 
 func (service *RideService) PublicDriverSummaries(ctx context.Context, limit int) ([]domain.PublicDriverSummary, error) {
-	repository, ok := service.repository.(domain.DriverAvailabilityRepository)
+	repository, ok := service.repository.(ports.DriverAvailabilityReader)
 	if !ok {
 		return nil, errors.New("public driver summaries are unavailable")
 	}

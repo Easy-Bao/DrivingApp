@@ -9,16 +9,17 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
+	authports "github.com/Easy-Bao/DrivingApp/server/internal/auth/ports"
 )
 
 type AuthenticateService struct {
-	repository domain.UserRepository
-	tokens     domain.TokenIssuer
-	sessions   domain.RefreshSessionStore
+	repository authports.UserStore
+	tokens     authports.TokenIssuer
+	sessions   authports.SessionStore
 	logger     *slog.Logger
 }
 
-func NewAuthenticateService(repository domain.UserRepository, tokens domain.TokenIssuer, sessions domain.RefreshSessionStore) *AuthenticateService {
+func NewAuthenticateService(repository authports.UserStore, tokens authports.TokenIssuer, sessions authports.SessionStore) *AuthenticateService {
 	return &AuthenticateService{
 		repository: repository,
 		tokens:     tokens,

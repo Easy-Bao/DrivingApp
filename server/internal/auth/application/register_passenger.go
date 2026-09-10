@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
+	authports "github.com/Easy-Bao/DrivingApp/server/internal/auth/ports"
 )
 
 type RegisterInput struct {
@@ -19,12 +20,12 @@ type RegisterInput struct {
 }
 
 type RegisterService struct {
-	repository domain.UserRepository
-	tokens     domain.TokenIssuer
-	sessions   domain.RefreshSessionStore
+	repository authports.UserStore
+	tokens     authports.TokenIssuer
+	sessions   authports.SessionStore
 }
 
-func NewRegisterService(repository domain.UserRepository, tokens domain.TokenIssuer, sessions domain.RefreshSessionStore) *RegisterService {
+func NewRegisterService(repository authports.UserStore, tokens authports.TokenIssuer, sessions authports.SessionStore) *RegisterService {
 	return &RegisterService{repository: repository, tokens: tokens, sessions: sessions}
 }
 

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
+	locationports "github.com/Easy-Bao/DrivingApp/server/internal/location/ports"
 )
 
 var (
@@ -26,16 +27,16 @@ const (
 )
 
 type LocationService struct {
-	provider domain.Provider
-	cache    domain.Cache
+	provider locationports.Provider
+	cache    locationports.Cache
 	logger   *slog.Logger
 }
 
-func NewLocationService(provider domain.Provider) *LocationService {
+func NewLocationService(provider locationports.Provider) *LocationService {
 	return NewLocationServiceWithCache(provider, nil)
 }
 
-func NewLocationServiceWithCache(provider domain.Provider, cache domain.Cache) *LocationService {
+func NewLocationServiceWithCache(provider locationports.Provider, cache locationports.Cache) *LocationService {
 	return &LocationService{provider: provider, cache: cache, logger: slog.Default()}
 }
 

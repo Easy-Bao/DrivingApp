@@ -20,6 +20,42 @@ For a schema change, add the versioned migration first, update the matching
 sqlc schema definition, regenerate the checked-in client, and run the backend
 validation gates before sharing the change with another environment.
 
+## DDD, hexagonal, and modular-monolith boundaries
+
+Each `internal/<module>` directory is a bounded module inside the one Go
+process. Its domain package contains business state, invariants, and errors;
+its application package contains use cases; its `ports` package contains
+consumer-owned inbound and outbound contracts; its adapters translate those
+contracts to PostgreSQL, Redis, Mapbox, email, or in-memory infrastructure;
+and its transport package maps HTTP/WebSocket requests to application inputs.
+
+The composition root is `internal/app`: it loads configuration, constructs
+platform services and module adapters, injects ports, and registers routes.
+`internal/platform` contains shared technical capabilities only, including
+the PostgreSQL/sqlc boundary, Redis client, private object storage, event
+envelopes, WebSocket hub, security, middleware, and resilience helpers.
+
+The current module ownership is:
+
+- `ride`: booking, bidding, lifecycle, settlement, ride reporting, and ride
+  transport; the use-case groups live under `ride/application/{booking,bidding,lifecycle,settlement}`.
+- `auth`, `user`, `admin`, and `driver/documents`: identity, profiles,
+  administration, and driver-document workflows with feature-owned ports.
+- `location` and `location/tracking`: provider-backed location queries and
+  active telemetry, respectively.
+- `chat` and `dispatch/assignment`: communication rooms and ride-assignment
+  lookup/projection, each with domain/application/ports/adapters boundaries.
+  Assignment is shared by chat and tracking through a small lookup contract.
+- `passenger/ridecontext`: the passenger home read model, with its query use
+  case and location/history reader ports separated from transport.
+
+There is no generic `realtime` business module. Chat and tracking own their
+business behavior; the process-local event publisher and WebSocket hub belong
+to `internal/platform`. `domain/legacy_ports.go` files are compatibility
+contracts for the migration boundary only. New code must import the relevant
+feature `ports` package, and no domain or application package may depend on
+generated sqlc types, pgx pools, or Redis clients.
+
 ## Native local development (default)
 
 The native workflow expects PostgreSQL and Redis to be installed and started

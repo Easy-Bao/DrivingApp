@@ -7,9 +7,10 @@ import (
 
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
 )
 
-var _ domain.DriverStatisticsReader = (*RideRepository)(nil)
+var _ ports.DriverStatisticsReader = (*RideRepository)(nil)
 
 func (repository *RideRepository) DriverStats(
 	ctx context.Context,

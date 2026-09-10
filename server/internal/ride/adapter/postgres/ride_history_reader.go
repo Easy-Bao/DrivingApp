@@ -7,12 +7,13 @@ import (
 
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 var (
-	_ domain.RideHistoryReader          = (*RideRepository)(nil)
-	_ domain.RecentPassengerRidesReader = (*RideRepository)(nil)
+	_ ports.RideHistoryReader          = (*RideRepository)(nil)
+	_ ports.RecentPassengerRidesReader = (*RideRepository)(nil)
 )
 
 func (repository *RideRepository) DriverTrips(

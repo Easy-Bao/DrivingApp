@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/bootstrap"
+	"github.com/Easy-Bao/DrivingApp/server/internal/app"
 )
 
 func main() {
@@ -21,11 +21,11 @@ func main() {
 }
 
 func run(ctx context.Context) error {
-	config, err := bootstrap.LoadConfig()
+	config, err := app.LoadConfig()
 	if err != nil {
 		return err
 	}
-	application, err := bootstrap.NewApplication(ctx, config)
+	application, err := app.NewApplication(ctx, config)
 	if err != nil {
 		return err
 	}

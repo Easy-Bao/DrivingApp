@@ -6,11 +6,12 @@ import (
 	"net/http"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/user/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/user/ports"
 )
 
-type ProfileService struct{ repository domain.Repository }
+type ProfileService struct{ repository ports.ProfileStore }
 
-func NewProfileService(repository domain.Repository) *ProfileService {
+func NewProfileService(repository ports.ProfileStore) *ProfileService {
 	return &ProfileService{repository: repository}
 }
 func (service *ProfileService) Get(ctx context.Context, userID int) (domain.Profile, error) {
@@ -32,7 +33,7 @@ func (service *ProfileService) SaveAvatar(ctx context.Context, userID int, conte
 	if contentType != "image/jpeg" && contentType != "image/png" {
 		return domain.Profile{}, domain.ErrInvalidAvatar
 	}
-	repository, ok := service.repository.(domain.AvatarRepository)
+	repository, ok := service.repository.(ports.AvatarStore)
 	if !ok {
 		return domain.Profile{}, domain.ErrAvatarStorageUnavailable
 	}
@@ -43,7 +44,7 @@ func (service *ProfileService) Avatar(ctx context.Context, userID int) (domain.A
 	if userID <= 0 {
 		return domain.Avatar{}, domain.ErrAvatarNotFound
 	}
-	repository, ok := service.repository.(domain.AvatarRepository)
+	repository, ok := service.repository.(ports.AvatarStore)
 	if !ok {
 		return domain.Avatar{}, domain.ErrAvatarStorageUnavailable
 	}
@@ -51,7 +52,7 @@ func (service *ProfileService) Avatar(ctx context.Context, userID int) (domain.A
 }
 
 func (service *ProfileService) Notifications(ctx context.Context, userID, limit, offset int) ([]domain.Notification, error) {
-	repository, ok := service.repository.(domain.NotificationRepository)
+	repository, ok := service.repository.(ports.NotificationStore)
 	if !ok {
 		return []domain.Notification{}, nil
 	}
@@ -66,7 +67,7 @@ func (service *ProfileService) DeleteNotification(
 	userID int,
 	notificationID int,
 ) error {
-	repository, ok := service.repository.(domain.NotificationRepository)
+	repository, ok := service.repository.(ports.NotificationStore)
 	if !ok {
 		return nil
 	}

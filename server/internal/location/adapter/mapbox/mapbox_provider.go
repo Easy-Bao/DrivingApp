@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
+	locationports "github.com/Easy-Bao/DrivingApp/server/internal/location/ports"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/resilience"
 )
 
@@ -51,6 +52,8 @@ type MapboxProvider struct {
 	routeCacheMu     sync.Mutex
 	routeCache       map[string]routeCacheEntry
 }
+
+var _ locationports.Provider = (*MapboxProvider)(nil)
 
 type routeCacheEntry struct {
 	routes    []mapboxRoute

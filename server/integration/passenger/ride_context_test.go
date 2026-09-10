@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	ridecontext "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ride_context"
-	ridecontexthttp "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ride_context/transport/http"
+	ridecontext "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext"
+	ridecontexthttp "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
