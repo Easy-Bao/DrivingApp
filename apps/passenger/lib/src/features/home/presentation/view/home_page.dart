@@ -55,8 +55,19 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<LocationAccessCubit, LocationAccessViewState>(
-      listener: _handleLocationAccess,
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<LocationAccessCubit, LocationAccessViewState>(
+          listener: _handleLocationAccess,
+        ),
+        BlocListener<SessionBloc, SessionState>(
+          listenWhen: (_, current) => current is AuthenticatedSession,
+          listener: (_, _) {
+            _loadRecentRideHistory();
+            _refreshLocationSnapshot();
+          },
+        ),
+      ],
       child: Scaffold(
         backgroundColor: context.canvasColor,
         body: SafeArea(
