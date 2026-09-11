@@ -51,7 +51,12 @@ func (store *RedisCounterStore) Increment(ctx context.Context, key string, windo
 	if expirationMilliseconds <= 0 {
 		expirationMilliseconds = 1
 	}
-	return store.client.Eval(ctx, atomicIncrementScript, []string{key}, expirationMilliseconds).Int64()
+	return store.client.Eval(
+		ctx,
+		atomicIncrementScript,
+		[]string{key},
+		expirationMilliseconds,
+	).Int64()
 }
 
 type MemoryCounterStore struct {

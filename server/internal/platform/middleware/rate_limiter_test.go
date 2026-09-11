@@ -85,14 +85,32 @@ func TestRateLimiterKeepsTelemetrySeparateFromMutations(t *testing.T) {
 	handler := NewRateLimiter(NewMemoryCounterStore(), config).Middleware(noContentHandler())
 	remoteAddr := "192.0.2.13:1234"
 
-	if response := serveRateLimitedRequest(handler, http.MethodPost, "/api/v1/telemetry/location", remoteAddr); response.Code != http.StatusNoContent {
-		t.Fatalf("telemetry status = %d", response.Code)
+	telemetryResponse := serveRateLimitedRequest(
+		handler,
+		http.MethodPost,
+		"/api/v1/telemetry/location",
+		remoteAddr,
+	)
+	if telemetryResponse.Code != http.StatusNoContent {
+		t.Fatalf("telemetry status = %d", telemetryResponse.Code)
 	}
-	if response := serveRateLimitedRequest(handler, http.MethodPost, "/api/v1/rides", remoteAddr); response.Code != http.StatusNoContent {
-		t.Fatalf("mutation status = %d", response.Code)
+	mutationResponse := serveRateLimitedRequest(
+		handler,
+		http.MethodPost,
+		"/api/v1/rides",
+		remoteAddr,
+	)
+	if mutationResponse.Code != http.StatusNoContent {
+		t.Fatalf("mutation status = %d", mutationResponse.Code)
 	}
-	if response := serveRateLimitedRequest(handler, http.MethodPost, "/api/v1/telemetry/location", remoteAddr); response.Code != http.StatusTooManyRequests {
-		t.Fatalf("second telemetry status = %d, want %d", response.Code, http.StatusTooManyRequests)
+	secondTelemetryResponse := serveRateLimitedRequest(
+		handler,
+		http.MethodPost,
+		"/api/v1/telemetry/location",
+		remoteAddr,
+	)
+	if secondTelemetryResponse.Code != http.StatusTooManyRequests {
+		t.Fatalf("second telemetry status = %d, want %d", secondTelemetryResponse.Code, http.StatusTooManyRequests)
 	}
 }
 
@@ -154,9 +172,11 @@ func TestRateLimiterDoesNotTrustRawForwardedAddress(t *testing.T) {
 
 func TestRateLimiterFailsClosedForPublicProtection(t *testing.T) {
 	called := false
-	handler := NewRateLimiter(failingCounterStore{}, DefaultRateLimitConfig()).Middleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
-		called = true
-	}))
+	handler := NewRateLimiter(failingCounterStore{}, DefaultRateLimitConfig()).Middleware(
+		http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+			called = true
+		}),
+	)
 	response := serveRateLimitedRequest(handler, http.MethodPost, "/api/v1/auth/login", "192.0.2.15:1234")
 	if response.Code != http.StatusServiceUnavailable || called {
 		t.Fatalf("status = %d, handler called = %t", response.Code, called)

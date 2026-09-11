@@ -38,7 +38,12 @@ func SecureHTTP(next http.Handler, config SecurityConfig, limiter *RateLimiter) 
 	return SecureHTTPWithIdempotency(next, config, limiter, nil)
 }
 
-func SecureHTTPWithIdempotency(next http.Handler, config SecurityConfig, limiter *RateLimiter, idempotency *Idempotency) http.Handler {
+func SecureHTTPWithIdempotency(
+	next http.Handler,
+	config SecurityConfig,
+	limiter *RateLimiter,
+	idempotency *Idempotency,
+) http.Handler {
 	if config.JSONBodyLimit <= 0 {
 		config.JSONBodyLimit = defaultJSONBodyLimit
 	}

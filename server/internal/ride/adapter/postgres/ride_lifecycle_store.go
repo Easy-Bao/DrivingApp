@@ -13,7 +13,13 @@ import (
 
 var _ ports.RideLifecycleStore = (*RideRepository)(nil)
 
-func (repository *RideRepository) UpdateStatus(ctx context.Context, rideID, actorID int, currentStatus, status string) (domain.Ride, error) {
+func (repository *RideRepository) UpdateStatus(
+	ctx context.Context,
+	rideID int,
+	actorID int,
+	currentStatus string,
+	status string,
+) (domain.Ride, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.Ride{}, err
 	}

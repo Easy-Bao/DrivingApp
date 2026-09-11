@@ -81,7 +81,12 @@ func (handler *Handler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 400, "invalid ride status")
 		return
 	}
-	item, err := handler.service.UpdateStatus(r.Context(), rideID, actorID, input.Status)
+	item, err := handler.service.UpdateStatus(
+		r.Context(),
+		rideID,
+		actorID,
+		input.Status,
+	)
 	if err != nil {
 		response.Error(w, 409, safeRideError(err))
 		return
@@ -164,7 +169,9 @@ func (handler *Handler) GetRide(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 404, "ride not found")
 		return
 	}
-	if ride.PassengerID != actorID && (ride.DriverID == nil || *ride.DriverID != actorID) {
+	isPassenger := ride.PassengerID == actorID
+	isDriver := ride.DriverID != nil && *ride.DriverID == actorID
+	if !isPassenger && !isDriver {
 		response.Error(w, 403, "forbidden")
 		return
 	}
@@ -366,7 +373,13 @@ func (handler *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 400, "invalid review")
 		return
 	}
-	item, err := handler.service.CreateReview(r.Context(), domain.Review{RideID: input.RideID, DriverID: driverID, PassengerID: passengerID, Rating: input.Rating, Comment: input.Comment})
+	item, err := handler.service.CreateReview(r.Context(), domain.Review{
+		RideID:      input.RideID,
+		DriverID:    driverID,
+		PassengerID: passengerID,
+		Rating:      input.Rating,
+		Comment:     input.Comment,
+	})
 	if err != nil {
 		response.Error(w, 400, safeRideError(err))
 		return
@@ -390,7 +403,13 @@ func (handler *Handler) CreatePassengerReview(w http.ResponseWriter, r *http.Req
 		response.Error(w, 400, "invalid review")
 		return
 	}
-	item, err := handler.service.CreatePassengerReview(r.Context(), domain.PassengerReview{RideID: input.RideID, DriverID: driverID, PassengerID: passengerID, Rating: input.Rating, Comment: input.Comment})
+	item, err := handler.service.CreatePassengerReview(r.Context(), domain.PassengerReview{
+		RideID:      input.RideID,
+		DriverID:    driverID,
+		PassengerID: passengerID,
+		Rating:      input.Rating,
+		Comment:     input.Comment,
+	})
 	if err != nil {
 		response.Error(w, 400, safeRideError(err))
 		return
@@ -421,7 +440,8 @@ func (handler *Handler) PublicDriverSummaries(w http.ResponseWriter, r *http.Req
 	if r.URL.Query().Has("limit") {
 		var err error
 		limit, err = strconv.Atoi(r.URL.Query().Get("limit"))
-		if err != nil || limit <= 0 || limit > 20 {
+		invalidLimit := err != nil || limit <= 0 || limit > 20
+		if invalidLimit {
 			response.Error(w, http.StatusBadRequest, "invalid limit")
 			return
 		}
@@ -464,7 +484,15 @@ func (handler *Handler) Estimate(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 400, "invalid fare input")
 		return
 	}
-	metrics, total, err := handler.service.Fare(r.Context(), input.OriginLatitude, input.OriginLongitude, input.DestinationLatitude, input.DestinationLongitude, input.DistanceKm, input.DurationMinutes)
+	metrics, total, err := handler.service.Fare(
+		r.Context(),
+		input.OriginLatitude,
+		input.OriginLongitude,
+		input.DestinationLatitude,
+		input.DestinationLongitude,
+		input.DistanceKm,
+		input.DurationMinutes,
+	)
 	if err != nil {
 		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
@@ -473,7 +501,14 @@ func (handler *Handler) Estimate(w http.ResponseWriter, r *http.Request) {
 	base := float64(config.BaseFareCentavos) / 100
 	distanceCharge := metrics.DistanceKm * float64(config.PerKilometerCentavos) / 100
 	timeCharge := metrics.DurationMinutes * float64(config.PerMinuteCentavos) / 100
-	response.JSON(w, 200, map[string]any{"base_fare": base, "distance_charge": distanceCharge, "time_charge": timeCharge, "surge_charge": float64(0), "fare_centavos": total, "total_fare": float64(total) / 100})
+	response.JSON(w, 200, map[string]any{
+		"base_fare":       base,
+		"distance_charge": distanceCharge,
+		"time_charge":     timeCharge,
+		"surge_charge":    float64(0),
+		"fare_centavos":   total,
+		"total_fare":      float64(total) / 100,
+	})
 }
 func (handler *Handler) FareConfigs(w http.ResponseWriter, _ *http.Request) {
 	response.JSON(w, 200, handler.service.PricingConfig().FareConfigsJSON())
@@ -483,18 +518,39 @@ func (handler *Handler) RatingConfig(w http.ResponseWriter, _ *http.Request) {
 }
 func (handler *Handler) CalculateFinal(w http.ResponseWriter, r *http.Request) {
 	var input dto.FinalFareRequest
-	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil || input.DistanceKm < 0 || input.DurationMinutes < 0 || input.CommissionBPS < 0 || input.CommissionBPS > 10000 {
+	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil {
 		response.Error(w, 400, "invalid final fare input")
 		return
 	}
-	metrics, fare, err := handler.service.Fare(r.Context(), input.OriginLatitude, input.OriginLongitude, input.DestinationLatitude, input.DestinationLongitude, input.DistanceKm, input.DurationMinutes)
+	invalidDistance := input.DistanceKm < 0
+	invalidDuration := input.DurationMinutes < 0
+	invalidCommission := input.CommissionBPS < 0 || input.CommissionBPS > 10000
+	if invalidDistance || invalidDuration || invalidCommission {
+		response.Error(w, 400, "invalid final fare input")
+		return
+	}
+	metrics, fare, err := handler.service.Fare(
+		r.Context(),
+		input.OriginLatitude,
+		input.OriginLongitude,
+		input.DestinationLatitude,
+		input.DestinationLongitude,
+		input.DistanceKm,
+		input.DurationMinutes,
+	)
 	if err != nil {
 		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
 	commissionBPS := handler.service.PricingConfig().PlatformCommissionBPS
 	commission := fare * commissionBPS / 10000
-	response.JSON(w, 200, map[string]any{"fare_centavos": fare, "distance_km": metrics.DistanceKm, "duration_minutes": metrics.DurationMinutes, "commission_centavos": commission, "driver_payout_centavos": fare - commission})
+	response.JSON(w, 200, map[string]any{
+		"fare_centavos":          fare,
+		"distance_km":            metrics.DistanceKm,
+		"duration_minutes":       metrics.DurationMinutes,
+		"commission_centavos":    commission,
+		"driver_payout_centavos": fare - commission,
+	})
 }
 
 func (handler *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
@@ -508,7 +564,21 @@ func (handler *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 400, "invalid bid session")
 		return
 	}
-	session, err := handler.service.CreateSession(r.Context(), domain.BidSession{PassengerID: passengerID, RideType: input.RideType, PickupLatitude: input.PickupLatitude, PickupLongitude: input.PickupLongitude, PickupName: input.PickupName, DropoffLatitude: input.DropoffLatitude, DropoffLongitude: input.DropoffLongitude, DropoffName: input.DropoffName, PassengerNote: strings.TrimSpace(input.PassengerNote), DistanceKm: input.DistanceKm, DurationMinutes: input.DurationMinutes, TargetDriverID: input.TargetDriverID, CustomFareCentavos: input.CustomFareCentavos})
+	session, err := handler.service.CreateSession(r.Context(), domain.BidSession{
+		PassengerID:        passengerID,
+		RideType:           input.RideType,
+		PickupLatitude:     input.PickupLatitude,
+		PickupLongitude:    input.PickupLongitude,
+		PickupName:         input.PickupName,
+		DropoffLatitude:    input.DropoffLatitude,
+		DropoffLongitude:   input.DropoffLongitude,
+		DropoffName:        input.DropoffName,
+		PassengerNote:      strings.TrimSpace(input.PassengerNote),
+		DistanceKm:         input.DistanceKm,
+		DurationMinutes:    input.DurationMinutes,
+		TargetDriverID:     input.TargetDriverID,
+		CustomFareCentavos: input.CustomFareCentavos,
+	})
 	if err != nil {
 		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
@@ -597,7 +667,14 @@ func (handler *Handler) PlaceOffer(w http.ResponseWriter, r *http.Request) {
 	if fare == 0 && input.OfferPrice > 0 {
 		fare = int64(input.OfferPrice * 100)
 	}
-	offer, err := handler.service.PlaceOffer(r.Context(), domain.BidOffer{SessionID: sessionID, DriverID: driverID, DriverName: input.DriverName, PlateNumber: input.PlateNumber, VehicleType: input.VehicleType, ProposedFareCentavos: fare})
+	offer, err := handler.service.PlaceOffer(r.Context(), domain.BidOffer{
+		SessionID:            sessionID,
+		DriverID:             driverID,
+		DriverName:           input.DriverName,
+		PlateNumber:          input.PlateNumber,
+		VehicleType:          input.VehicleType,
+		ProposedFareCentavos: fare,
+	})
 	if err != nil {
 		response.Error(w, 409, safeRideError(err))
 		return
@@ -617,12 +694,22 @@ func (handler *Handler) AcceptOffer(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 400, "invalid bid id")
 		return
 	}
-	session, offer, ride, err := handler.service.AcceptOffer(r.Context(), sessionID, offerID, passengerID)
+	session, offer, ride, err := handler.service.AcceptOffer(
+		r.Context(),
+		sessionID,
+		offerID,
+		passengerID,
+	)
 	if err != nil {
 		response.Error(w, 409, "offer cannot be accepted")
 		return
 	}
-	response.JSON(w, 200, map[string]any{"session": session, "offer": offer, "ride": ride, "ride_id": ride.ID})
+	response.JSON(w, 200, map[string]any{
+		"session": session,
+		"offer":   offer,
+		"ride":    ride,
+		"ride_id": ride.ID,
+	})
 }
 
 func (handler *Handler) CancelSession(w http.ResponseWriter, r *http.Request) {
@@ -668,7 +755,20 @@ func domainRide(passengerID int, input dto.CreateRideRequest) domain.Ride {
 	if rideType == "" {
 		rideType = "solo"
 	}
-	return domain.Ride{PassengerID: passengerID, FareCentavos: input.FareCentavos, Status: "requested", RideType: rideType, PickupLatitude: input.PickupLatitude, PickupLongitude: input.PickupLongitude, PickupName: input.PickupName, DropoffLatitude: input.DropoffLatitude, DropoffLongitude: input.DropoffLongitude, DropoffName: input.DropoffName, DistanceKm: input.DistanceKm, DurationMinutes: input.DurationMinutes}
+	return domain.Ride{
+		PassengerID:      passengerID,
+		FareCentavos:     input.FareCentavos,
+		Status:           "requested",
+		RideType:         rideType,
+		PickupLatitude:   input.PickupLatitude,
+		PickupLongitude:  input.PickupLongitude,
+		PickupName:       input.PickupName,
+		DropoffLatitude:  input.DropoffLatitude,
+		DropoffLongitude: input.DropoffLongitude,
+		DropoffName:      input.DropoffName,
+		DistanceKm:       input.DistanceKm,
+		DurationMinutes:  input.DurationMinutes,
+	}
 }
 
 func rideErrorStatus(err error) int {

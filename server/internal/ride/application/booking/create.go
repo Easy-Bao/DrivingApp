@@ -70,7 +70,12 @@ func (service *Service) Create(ctx context.Context, passengerID int, fareCentavo
 	if err != nil {
 		return domain.Ride{}, err
 	}
-	service.publish(event.RideOfferCreated, ctx, ride, map[string]any{"ride": ride})
+	service.publish(
+		ctx,
+		event.RideOfferCreated,
+		ride,
+		map[string]any{"ride": ride},
+	)
 	return ride, nil
 }
 
@@ -86,7 +91,10 @@ func (service *Service) CreateWithDetails(ctx context.Context, ride domain.Ride)
 			return domain.Ride{}, domain.ErrInvalidTrip
 		}
 	}
-	if service.resolveRoute == nil || service.calculateFare == nil || service.writer == nil {
+	missingRouteResolver := service.resolveRoute == nil
+	missingFareCalculator := service.calculateFare == nil
+	missingWriter := service.writer == nil
+	if missingRouteResolver || missingFareCalculator || missingWriter {
 		return domain.Ride{}, errUnavailable
 	}
 	metrics, err := service.resolveRoute(
@@ -112,7 +120,12 @@ func (service *Service) CreateWithDetails(ctx context.Context, ride domain.Ride)
 	if err != nil {
 		return domain.Ride{}, err
 	}
-	service.publish(event.RideOfferCreated, ctx, created, map[string]any{"ride": created})
+	service.publish(
+		ctx,
+		event.RideOfferCreated,
+		created,
+		map[string]any{"ride": created},
+	)
 	return created, nil
 }
 
@@ -127,7 +140,9 @@ func (service *Service) EstimateFare(
 		return ports.RouteMetrics{}, 0, errUnavailable
 	}
 	if service.hasRouteProvider {
-		if originLatitude == nil || originLongitude == nil || destinationLatitude == nil || destinationLongitude == nil {
+		missingOrigin := originLatitude == nil || originLongitude == nil
+		missingDestination := destinationLatitude == nil || destinationLongitude == nil
+		if missingOrigin || missingDestination {
 			return ports.RouteMetrics{}, 0, domain.ErrInvalidTrip
 		}
 		if service.resolveRoute == nil {
@@ -147,7 +162,14 @@ func (service *Service) EstimateFare(
 		}
 		return metrics, service.calculateFare(metrics.DistanceKm, metrics.DurationMinutes), nil
 	}
-	if err := validateTrip(0, 0, 0, 0, distanceKm, durationMinutes); err != nil {
+	if err := validateTrip(
+		0,
+		0,
+		0,
+		0,
+		distanceKm,
+		durationMinutes,
+	); err != nil {
 		return ports.RouteMetrics{}, 0, err
 	}
 	metrics := ports.RouteMetrics{DistanceKm: distanceKm, DurationMinutes: durationMinutes}
@@ -155,13 +177,18 @@ func (service *Service) EstimateFare(
 }
 
 func (service *Service) publish(
-	eventType event.Type,
 	ctx context.Context,
+	eventType event.Type,
 	ride domain.Ride,
 	payload map[string]any,
 ) {
 	if service.publishRide != nil {
-		service.publishRide(ctx, eventType, ride, payload)
+		service.publishRide(
+			ctx,
+			eventType,
+			ride,
+			payload,
+		)
 	}
 }
 
@@ -174,11 +201,15 @@ func validateTrip(
 			return domain.ErrInvalidTrip
 		}
 	}
-	if pickupLatitude < -90 || pickupLatitude > 90 ||
-		dropoffLatitude < -90 || dropoffLatitude > 90 ||
-		pickupLongitude < -180 || pickupLongitude > 180 ||
-		dropoffLongitude < -180 || dropoffLongitude > 180 ||
-		distanceKm < 0 || durationMinutes < 0 {
+	invalidPickupLatitude := pickupLatitude < -90 || pickupLatitude > 90
+	invalidDropoffLatitude := dropoffLatitude < -90 || dropoffLatitude > 90
+	invalidPickupLongitude := pickupLongitude < -180 || pickupLongitude > 180
+	invalidDropoffLongitude := dropoffLongitude < -180 || dropoffLongitude > 180
+	invalidDistance := distanceKm < 0
+	invalidDuration := durationMinutes < 0
+	if invalidPickupLatitude || invalidDropoffLatitude ||
+		invalidPickupLongitude || invalidDropoffLongitude ||
+		invalidDistance || invalidDuration {
 		return domain.ErrInvalidTrip
 	}
 	return nil

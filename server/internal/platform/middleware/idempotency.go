@@ -48,22 +48,47 @@ func (store *RedisIdempotencyStore) Set(ctx context.Context, key string, value [
 	if store == nil || store.client == nil {
 		return fmt.Errorf("redis idempotency store is not configured")
 	}
-	return store.client.Set(ctx, key, value, expiration).Err()
+	return store.client.Set(
+		ctx,
+		key,
+		value,
+		expiration,
+	).Err()
 }
 
-func (store *RedisIdempotencyStore) SetNX(ctx context.Context, key string, value []byte, expiration time.Duration) (bool, error) {
+func (store *RedisIdempotencyStore) SetNX(
+	ctx context.Context,
+	key string,
+	value []byte,
+	expiration time.Duration,
+) (bool, error) {
 	if store == nil || store.client == nil {
 		return false, fmt.Errorf("redis idempotency store is not configured")
 	}
-	return store.client.SetNX(ctx, key, value, expiration).Result()
+	return store.client.SetNX(
+		ctx,
+		key,
+		value,
+		expiration,
+	).Result()
 }
 
 func (store *RedisIdempotencyStore) DeleteIfValue(ctx context.Context, key string, value []byte) error {
 	if store == nil || store.client == nil {
 		return fmt.Errorf("redis idempotency store is not configured")
 	}
-	const releaseLockScript = `if redis.call("GET", KEYS[1]) == ARGV[1] then return redis.call("DEL", KEYS[1]) else return 0 end`
-	return store.client.Eval(ctx, releaseLockScript, []string{key}, value).Err()
+	const releaseLockScript = `
+if redis.call("GET", KEYS[1]) == ARGV[1] then
+    return redis.call("DEL", KEYS[1])
+else
+    return 0
+end`
+	return store.client.Eval(
+		ctx,
+		releaseLockScript,
+		[]string{key},
+		value,
+	).Err()
 }
 
 type MemoryIdempotencyStore struct {
@@ -98,7 +123,12 @@ func (store *MemoryIdempotencyStore) Set(_ context.Context, key string, value []
 	return nil
 }
 
-func (store *MemoryIdempotencyStore) SetNX(_ context.Context, key string, value []byte, expiration time.Duration) (bool, error) {
+func (store *MemoryIdempotencyStore) SetNX(
+	_ context.Context,
+	key string,
+	value []byte,
+	expiration time.Duration,
+) (bool, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	now := time.Now()
@@ -149,7 +179,11 @@ func (idempotency *Idempotency) WithLogger(logger *slog.Logger) *Idempotency {
 
 func (idempotency *Idempotency) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		if idempotency == nil || idempotency.store == nil || !supportsIdempotency(request) {
+		if idempotency == nil {
+			next.ServeHTTP(writer, request)
+			return
+		}
+		if idempotency.store == nil || !supportsIdempotency(request) {
 			next.ServeHTTP(writer, request)
 			return
 		}
@@ -195,7 +229,12 @@ func (idempotency *Idempotency) Middleware(next http.Handler) http.Handler {
 			writeSecurityError(writer, http.StatusServiceUnavailable, "request protection is temporarily unavailable")
 			return
 		}
-		acquired, err := idempotency.store.SetNX(request.Context(), lockKey, lockToken, idempotency.lockTimeout)
+		acquired, err := idempotency.store.SetNX(
+			request.Context(),
+			lockKey,
+			lockToken,
+			idempotency.lockTimeout,
+		)
 		if err != nil {
 			writer.Header().Set("Retry-After", "1")
 			writeSecurityError(writer, http.StatusServiceUnavailable, "request protection is temporarily unavailable")
@@ -220,10 +259,22 @@ func (idempotency *Idempotency) Middleware(next http.Handler) http.Handler {
 				idempotency.logger.ErrorContext(request.Context(), "encode idempotency response failed", "error", marshalErr)
 			} else {
 				resultContext, cancel := context.WithTimeout(context.WithoutCancel(request.Context()), time.Second)
-				setErr := idempotency.store.Set(resultContext, resultKey, record, idempotency.expiration)
+				setErr := idempotency.store.Set(
+					resultContext,
+					resultKey,
+					record,
+					idempotency.expiration,
+				)
 				cancel()
 				if setErr != nil {
-					idempotency.logger.WarnContext(request.Context(), "store idempotency response failed", "error", setErr, "key_hash", hashIdempotencyKey(idempotencyKey))
+					idempotency.logger.WarnContext(
+						request.Context(),
+						"store idempotency response failed",
+						"error",
+						setErr,
+						"key_hash",
+						hashIdempotencyKey(idempotencyKey),
+					)
 				}
 			}
 		}
@@ -234,7 +285,14 @@ func (idempotency *Idempotency) releaseLock(request *http.Request, key string, t
 	cleanupContext, cancel := context.WithTimeout(context.WithoutCancel(request.Context()), time.Second)
 	defer cancel()
 	if err := idempotency.store.DeleteIfValue(cleanupContext, key, token); err != nil {
-		idempotency.logger.WarnContext(request.Context(), "release idempotency lock failed", "error", err, "key_hash", hashIdempotencyKey(request.Header.Get("Idempotency-Key")))
+		idempotency.logger.WarnContext(
+			request.Context(),
+			"release idempotency lock failed",
+			"error",
+			err,
+			"key_hash",
+			hashIdempotencyKey(request.Header.Get("Idempotency-Key")),
+		)
 	}
 }
 

@@ -68,7 +68,11 @@ func TestLogoutRevokesRefreshSession(t *testing.T) {
 	if err := service.Logout(context.Background(), issued.RefreshToken); err != nil {
 		t.Fatalf("logout: %v", err)
 	}
-	if _, err := service.Refresh(context.Background(), issued.RefreshToken); !errors.Is(err, domain.ErrInvalidRefreshToken) {
+	_, err = service.Refresh(
+		context.Background(),
+		issued.RefreshToken,
+	)
+	if !errors.Is(err, domain.ErrInvalidRefreshToken) {
 		t.Fatalf("revoked refresh token error = %v, want invalid refresh token", err)
 	}
 }

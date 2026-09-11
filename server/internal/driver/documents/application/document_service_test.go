@@ -42,7 +42,11 @@ func (repository *documentRepositoryFake) Get(_ context.Context, id int) (domain
 	return document, nil
 }
 
-func (repository *documentRepositoryFake) ListByDriver(_ context.Context, driverID, limit int) ([]domain.Document, error) {
+func (repository *documentRepositoryFake) ListByDriver(
+	_ context.Context,
+	driverID int,
+	limit int,
+) ([]domain.Document, error) {
 	items := make([]domain.Document, 0, limit)
 	for _, document := range repository.documents {
 		if document.DriverID == driverID && len(items) < limit {
@@ -52,7 +56,12 @@ func (repository *documentRepositoryFake) ListByDriver(_ context.Context, driver
 	return items, nil
 }
 
-func (repository *documentRepositoryFake) ListForReview(_ context.Context, status domain.Status, limit, offset int) ([]domain.Document, error) {
+func (repository *documentRepositoryFake) ListForReview(
+	_ context.Context,
+	status domain.Status,
+	limit int,
+	offset int,
+) ([]domain.Document, error) {
 	items := make([]domain.Document, 0, limit+1)
 	for _, document := range repository.documents {
 		if document.Status == status {
@@ -69,7 +78,12 @@ func (repository *documentRepositoryFake) ListForReview(_ context.Context, statu
 	return items, nil
 }
 
-func (repository *documentRepositoryFake) Review(_ context.Context, id, reviewerID int, status domain.Status) (domain.Document, error) {
+func (repository *documentRepositoryFake) Review(
+	_ context.Context,
+	id int,
+	reviewerID int,
+	status domain.Status,
+) (domain.Document, error) {
 	document, ok := repository.documents[id]
 	if !ok {
 		return domain.Document{}, domain.ErrDocumentNotFound
@@ -139,7 +153,9 @@ func TestUploadCreatesAnImmutablePendingRevision(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(string(encoded), document.StorageKey) || strings.Contains(string(encoded), document.ChecksumSHA256) {
+	storageKeyExposed := strings.Contains(string(encoded), document.StorageKey)
+	checksumExposed := strings.Contains(string(encoded), document.ChecksumSHA256)
+	if storageKeyExposed || checksumExposed {
 		t.Fatalf("private object metadata leaked in %s", encoded)
 	}
 }
@@ -198,7 +214,13 @@ func TestReviewCannotRewriteAFinalDecision(t *testing.T) {
 	if _, err := service.Review(context.Background(), document.ID, 42, domain.Approved); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := service.Review(context.Background(), document.ID, 42, domain.Rejected); !errors.Is(err, domain.ErrDocumentFinalized) {
+	_, err = service.Review(
+		context.Background(),
+		document.ID,
+		42,
+		domain.Rejected,
+	)
+	if !errors.Is(err, domain.ErrDocumentFinalized) {
 		t.Fatalf("second review error = %v", err)
 	}
 }

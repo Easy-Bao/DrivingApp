@@ -42,8 +42,16 @@ func (service *DocumentService) MaxDocumentBytes() int64 {
 	return service.maxDocumentBytes
 }
 
-func (service *DocumentService) Upload(ctx context.Context, driverID int, rawType, claimedContentType string, content []byte) (domain.Document, error) {
-	if driverID <= 0 || len(content) == 0 || int64(len(content)) > service.maxDocumentBytes {
+func (service *DocumentService) Upload(
+	ctx context.Context,
+	driverID int,
+	rawType string,
+	claimedContentType string,
+	content []byte,
+) (domain.Document, error) {
+	invalidDriverID := driverID <= 0
+	invalidSize := len(content) == 0 || int64(len(content)) > service.maxDocumentBytes
+	if invalidDriverID || invalidSize {
 		return domain.Document{}, domain.ErrInvalidDocument
 	}
 	documentType, err := domain.ParseType(rawType)
@@ -84,21 +92,46 @@ func (service *DocumentService) Status(ctx context.Context, driverID int) ([]dom
 	return service.repository.ListByDriver(ctx, driverID, 20)
 }
 
-func (service *DocumentService) ReviewQueue(ctx context.Context, status domain.Status, limit, offset int) ([]domain.Document, error) {
-	if status != domain.Pending && status != domain.Approved && status != domain.Rejected {
+func (service *DocumentService) ReviewQueue(
+	ctx context.Context,
+	status domain.Status,
+	limit int,
+	offset int,
+) ([]domain.Document, error) {
+	validStatus := status == domain.Pending || status == domain.Approved || status == domain.Rejected
+	if !validStatus {
 		return nil, domain.ErrInvalidDocument
 	}
-	if limit <= 0 || limit > 100 || offset < 0 {
+	invalidLimit := limit <= 0 || limit > 100
+	invalidOffset := offset < 0
+	if invalidLimit || invalidOffset {
 		return nil, domain.ErrInvalidDocument
 	}
-	return service.repository.ListForReview(ctx, status, limit, offset)
+	return service.repository.ListForReview(
+		ctx,
+		status,
+		limit,
+		offset,
+	)
 }
 
-func (service *DocumentService) Review(ctx context.Context, id, reviewerID int, status domain.Status) (domain.Document, error) {
-	if id <= 0 || reviewerID <= 0 || (status != domain.Approved && status != domain.Rejected) {
+func (service *DocumentService) Review(
+	ctx context.Context,
+	id int,
+	reviewerID int,
+	status domain.Status,
+) (domain.Document, error) {
+	invalidIdentity := id <= 0 || reviewerID <= 0
+	invalidStatus := status != domain.Approved && status != domain.Rejected
+	if invalidIdentity || invalidStatus {
 		return domain.Document{}, domain.ErrInvalidDocument
 	}
-	return service.repository.Review(ctx, id, reviewerID, status)
+	return service.repository.Review(
+		ctx,
+		id,
+		reviewerID,
+		status,
+	)
 }
 
 func (service *DocumentService) DriverContent(ctx context.Context, driverID, documentID int) (domain.Content, error) {

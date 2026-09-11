@@ -26,7 +26,9 @@ func (service *ProfileService) MaxAvatarBytes() int64 {
 }
 
 func (service *ProfileService) SaveAvatar(ctx context.Context, userID int, content []byte) (domain.Profile, error) {
-	if userID <= 0 || len(content) == 0 || int64(len(content)) > domain.MaxAvatarBytes {
+	invalidUserID := userID <= 0
+	invalidSize := len(content) == 0 || int64(len(content)) > domain.MaxAvatarBytes
+	if invalidUserID || invalidSize {
 		return domain.Profile{}, domain.ErrInvalidAvatar
 	}
 	contentType := http.DetectContentType(content)
@@ -51,12 +53,19 @@ func (service *ProfileService) Avatar(ctx context.Context, userID int) (domain.A
 	return repository.GetAvatar(ctx, userID)
 }
 
-func (service *ProfileService) Notifications(ctx context.Context, userID, limit, offset int) ([]domain.Notification, error) {
+func (service *ProfileService) Notifications(
+	ctx context.Context,
+	userID int,
+	limit int,
+	offset int,
+) ([]domain.Notification, error) {
 	repository, ok := service.repository.(ports.NotificationStore)
 	if !ok {
 		return []domain.Notification{}, nil
 	}
-	if limit <= 0 || limit > 100 || offset < 0 || offset > 1_000_000 {
+	invalidLimit := limit <= 0 || limit > 100
+	invalidOffset := offset < 0 || offset > 1_000_000
+	if invalidLimit || invalidOffset {
 		return nil, errors.New("notification pagination is invalid")
 	}
 	return repository.Notifications(ctx, userID, limit, offset)

@@ -40,7 +40,11 @@ func (repository *documentRepositoryFake) Get(_ context.Context, id int) (domain
 	return document, nil
 }
 
-func (repository *documentRepositoryFake) ListByDriver(_ context.Context, driverID, limit int) ([]domain.Document, error) {
+func (repository *documentRepositoryFake) ListByDriver(
+	_ context.Context,
+	driverID int,
+	limit int,
+) ([]domain.Document, error) {
 	items := make([]domain.Document, 0, limit)
 	for _, document := range repository.documents {
 		if document.DriverID == driverID && len(items) < limit {
@@ -50,7 +54,12 @@ func (repository *documentRepositoryFake) ListByDriver(_ context.Context, driver
 	return items, nil
 }
 
-func (repository *documentRepositoryFake) ListForReview(_ context.Context, status domain.Status, limit, offset int) ([]domain.Document, error) {
+func (repository *documentRepositoryFake) ListForReview(
+	_ context.Context,
+	status domain.Status,
+	limit int,
+	offset int,
+) ([]domain.Document, error) {
 	items := make([]domain.Document, 0, limit+1)
 	for _, document := range repository.documents {
 		if document.Status == status {
@@ -67,7 +76,12 @@ func (repository *documentRepositoryFake) ListForReview(_ context.Context, statu
 	return items, nil
 }
 
-func (repository *documentRepositoryFake) Review(_ context.Context, id, reviewerID int, status domain.Status) (domain.Document, error) {
+func (repository *documentRepositoryFake) Review(
+	_ context.Context,
+	id int,
+	reviewerID int,
+	status domain.Status,
+) (domain.Document, error) {
 	document, ok := repository.documents[id]
 	if !ok {
 		return domain.Document{}, domain.ErrDocumentNotFound

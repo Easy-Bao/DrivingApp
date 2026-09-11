@@ -34,7 +34,11 @@ func (store *testRefreshSessionStore) Create(_ context.Context, session domain.R
 	return nil
 }
 
-func (store *testRefreshSessionStore) FindActive(_ context.Context, tokenHash string, now time.Time) (domain.RefreshSession, error) {
+func (store *testRefreshSessionStore) FindActive(
+	_ context.Context,
+	tokenHash string,
+	now time.Time,
+) (domain.RefreshSession, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	item, exists := store.sessions[tokenHash]
@@ -44,11 +48,20 @@ func (store *testRefreshSessionStore) FindActive(_ context.Context, tokenHash st
 	return item.session, nil
 }
 
-func (store *testRefreshSessionStore) Rotate(_ context.Context, tokenHash string, replacement domain.RefreshSession, now time.Time) error {
+func (store *testRefreshSessionStore) Rotate(
+	_ context.Context,
+	tokenHash string,
+	replacement domain.RefreshSession,
+	now time.Time,
+) error {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	item, exists := store.sessions[tokenHash]
-	if !exists || item.revokedAt != nil || !item.session.ExpiresAt.After(now) || item.session.UserID != replacement.UserID {
+	missingSession := !exists
+	revoked := item.revokedAt != nil
+	expired := !item.session.ExpiresAt.After(now)
+	wrongUser := item.session.UserID != replacement.UserID
+	if missingSession || revoked || expired || wrongUser {
 		return domain.ErrInvalidRefreshToken
 	}
 	if _, exists := store.sessions[replacement.TokenHash]; exists {

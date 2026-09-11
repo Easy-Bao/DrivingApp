@@ -23,7 +23,10 @@ func TestFromPostgresBidSessionMapsNullableIdentityFields(t *testing.T) {
 	if err != nil {
 		t.Fatalf("fromPostgresBidSession() error = %v", err)
 	}
-	if session.ID != 17 || session.PassengerNote != "Call on arrival" || session.TargetDriverID == nil || *session.TargetDriverID != 11 {
+	invalidSessionID := session.ID != 17
+	invalidPassengerNote := session.PassengerNote != "Call on arrival"
+	invalidTargetDriverID := session.TargetDriverID == nil || *session.TargetDriverID != 11
+	if invalidSessionID || invalidPassengerNote || invalidTargetDriverID {
 		t.Fatalf("mapped bid session = %+v", session)
 	}
 }

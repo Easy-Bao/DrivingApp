@@ -37,7 +37,11 @@ func TestFromPostgresRideMapsOptionalFieldsAndTimestamps(t *testing.T) {
 	if err != nil {
 		t.Fatalf("fromPostgresRide() error = %v", err)
 	}
-	if ride.ID != 19 || ride.DriverID == nil || *ride.DriverID != 11 || ride.PickupName != "Makati" || ride.DriverName != "Ada" {
+	invalidRideID := ride.ID != 19
+	invalidDriverID := ride.DriverID == nil || *ride.DriverID != 11
+	invalidPickupName := ride.PickupName != "Makati"
+	invalidDriverName := ride.DriverName != "Ada"
+	if invalidRideID || invalidDriverID || invalidPickupName || invalidDriverName {
 		t.Fatalf("mapped ride = %+v", ride)
 	}
 	if ride.CreatedAt == nil || *ride.CreatedAt != "2026-01-01T19:04:05Z" {

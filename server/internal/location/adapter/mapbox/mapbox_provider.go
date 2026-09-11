@@ -106,7 +106,11 @@ type categoryResult struct {
 	err    error
 }
 
-func (provider *MapboxProvider) Search(ctx context.Context, query string, origin domain.Coordinates) ([]domain.Place, error) {
+func (provider *MapboxProvider) Search(
+	ctx context.Context,
+	query string,
+	origin domain.Coordinates,
+) ([]domain.Place, error) {
 	if len(query) > maxSearchQueryBytes || !origin.Valid() {
 		return nil, fmt.Errorf("invalid location search")
 	}
@@ -130,8 +134,13 @@ func (provider *MapboxProvider) Search(ctx context.Context, query string, origin
 	return places, nil
 }
 
-func (provider *MapboxProvider) Nearby(ctx context.Context, origin domain.Coordinates, page int) ([]domain.Place, error) {
-	if page < 1 || page > maxNearbyPage || !origin.Valid() {
+func (provider *MapboxProvider) Nearby(
+	ctx context.Context,
+	origin domain.Coordinates,
+	page int,
+) ([]domain.Place, error) {
+	invalidPage := page < 1 || page > maxNearbyPage
+	if invalidPage || !origin.Valid() {
 		return nil, fmt.Errorf("invalid nearby page or coordinates")
 	}
 	categories := provider.nearbyCategories
@@ -183,14 +192,19 @@ func (provider *MapboxProvider) Nearby(ctx context.Context, origin domain.Coordi
 	return places[start:end], nil
 }
 
-func (provider *MapboxProvider) nearbyCategory(ctx context.Context, origin domain.Coordinates, category string) categoryResult {
+func (provider *MapboxProvider) nearbyCategory(
+	ctx context.Context,
+	origin domain.Coordinates,
+	category string,
+) categoryResult {
 	queryParams := url.Values{
 		"access_token": {provider.token},
 		"limit":        {"25"},
 		"proximity":    {coordinate(origin.Longitude) + "," + coordinate(origin.Latitude)},
 	}
 	var response featureResponse
-	if err := provider.getJSON(ctx, searchURL+"/category/"+url.PathEscape(category)+"?"+queryParams.Encode(), &response); err != nil {
+	endpoint := searchURL + "/category/" + url.PathEscape(category) + "?" + queryParams.Encode()
+	if err := provider.getJSON(ctx, endpoint, &response); err != nil {
 		return categoryResult{err: err}
 	}
 	places := make([]domain.Place, 0, len(response.Features))
@@ -268,7 +282,10 @@ func uniqueNearbyPlaces(places []domain.Place) []domain.Place {
 	return unique
 }
 
-func (provider *MapboxProvider) ReverseGeocode(ctx context.Context, coordinates domain.Coordinates) (*domain.Place, error) {
+func (provider *MapboxProvider) ReverseGeocode(
+	ctx context.Context,
+	coordinates domain.Coordinates,
+) (*domain.Place, error) {
 	queryParams := url.Values{
 		"longitude":    {coordinate(coordinates.Longitude)},
 		"latitude":     {coordinate(coordinates.Latitude)},
@@ -326,9 +343,12 @@ func mostSpecificReverseFeature(features []feature, origin domain.Coordinates) (
 		}
 		distanceMeters := haversine(origin.Latitude, origin.Longitude, latitude, longitude) * 1000
 		rank := reverseCandidateRankFor(candidate, distanceMeters)
-		if !found || rank.stage < selectedRank.stage ||
-			(rank.stage == selectedRank.stage && rank.prominence > selectedRank.prominence) ||
-			(rank.stage == selectedRank.stage && rank.prominence == selectedRank.prominence && rank.distanceMtr < selectedRank.distanceMtr) {
+		isEarlierStage := rank.stage < selectedRank.stage
+		isMoreProminent := rank.stage == selectedRank.stage && rank.prominence > selectedRank.prominence
+		isCloser := rank.stage == selectedRank.stage &&
+			rank.prominence == selectedRank.prominence &&
+			rank.distanceMtr < selectedRank.distanceMtr
+		if !found || isEarlierStage || isMoreProminent || isCloser {
 			selected = candidate
 			selectedMatch = reverseMatchFor(candidate, distanceMeters)
 			selectedRank = rank
@@ -396,11 +416,17 @@ func reverseFeatureProminence(candidate feature) int {
 	prominence := 6
 	for _, rawCategory := range categoryValues(candidate.Properties.Category) {
 		category := strings.ToLower(rawCategory)
-		if strings.Contains(category, "transit") || strings.Contains(category, "airport") || strings.Contains(category, "hospital") {
+		isHighProminenceCategory := strings.Contains(category, "transit") ||
+			strings.Contains(category, "airport") ||
+			strings.Contains(category, "hospital")
+		if isHighProminenceCategory {
 			prominence = 10
 			break
 		}
-		if strings.Contains(category, "university") || strings.Contains(category, "school") || strings.Contains(category, "government") {
+		isMediumProminenceCategory := strings.Contains(category, "university") ||
+			strings.Contains(category, "school") ||
+			strings.Contains(category, "government")
+		if isMediumProminenceCategory {
 			prominence = 9
 		}
 	}
@@ -409,9 +435,9 @@ func reverseFeatureProminence(candidate feature) int {
 
 func categoryValues(raw json.RawMessage) []string {
 	if len(raw) == 0 {
-		return nil
+		return []string{}
 	}
-	var categories []string
+	categories := []string{}
 	if json.Unmarshal(raw, &categories) == nil {
 		return categories
 	}
@@ -419,7 +445,7 @@ func categoryValues(raw json.RawMessage) []string {
 	if json.Unmarshal(raw, &category) == nil && category != "" {
 		return []string{category}
 	}
-	return nil
+	return []string{}
 }
 
 func reverseConfidence(matchType string, distanceMeters float64) float64 {
@@ -497,7 +523,12 @@ type mapboxRoute struct {
 	} `json:"geometry"`
 }
 
-func (provider *MapboxProvider) Route(ctx context.Context, origin, destination domain.Coordinates, options domain.RouteOptions) (*domain.Route, error) {
+func (provider *MapboxProvider) Route(
+	ctx context.Context,
+	origin domain.Coordinates,
+	destination domain.Coordinates,
+	options domain.RouteOptions,
+) (*domain.Route, error) {
 	if !origin.Valid() || !destination.Valid() {
 		return nil, fmt.Errorf("invalid route coordinates")
 	}
@@ -507,7 +538,12 @@ func (provider *MapboxProvider) Route(ctx context.Context, origin, destination d
 	}
 	cacheKey := routeCacheKey(origin, destination, normalizedOptions)
 	if routes, ok := provider.cachedRoutes(cacheKey); ok {
-		return routeFromMapbox(origin, destination, normalizedOptions, routes), nil
+		return routeFromMapbox(
+			origin,
+			destination,
+			normalizedOptions,
+			routes,
+		), nil
 	}
 	coordinates := strings.Join([]string{
 		coordinate(origin.Longitude) + "," + coordinate(origin.Latitude),
@@ -522,7 +558,12 @@ func (provider *MapboxProvider) Route(ctx context.Context, origin, destination d
 	if len(normalizedOptions.ExcludePoints) > 0 {
 		excludedPoints := make([]string, 0, len(normalizedOptions.ExcludePoints))
 		for _, point := range normalizedOptions.ExcludePoints {
-			excludedPoints = append(excludedPoints, fmt.Sprintf("point(%s %s)", coordinate(point.Longitude), coordinate(point.Latitude)))
+			pointValue := fmt.Sprintf(
+				"point(%s %s)",
+				coordinate(point.Longitude),
+				coordinate(point.Latitude),
+			)
+			excludedPoints = append(excludedPoints, pointValue)
 		}
 		queryParams.Set("exclude", strings.Join(excludedPoints, ","))
 	}
@@ -628,8 +669,14 @@ func cloneMapboxRoutes(routes []mapboxRoute) []mapboxRoute {
 	return clones
 }
 
-func (provider *MapboxProvider) Matrix(ctx context.Context, origin domain.Coordinates, destinations []domain.Coordinates) (*domain.Matrix, error) {
-	if !origin.Valid() || len(destinations) == 0 || len(destinations) > 10 {
+func (provider *MapboxProvider) Matrix(
+	ctx context.Context,
+	origin domain.Coordinates,
+	destinations []domain.Coordinates,
+) (*domain.Matrix, error) {
+	invalidOrigin := !origin.Valid()
+	invalidDestinationCount := len(destinations) == 0 || len(destinations) > 10
+	if invalidOrigin || invalidDestinationCount {
 		return nil, fmt.Errorf("invalid travel matrix coordinates")
 	}
 	for _, destination := range destinations {
@@ -638,7 +685,12 @@ func (provider *MapboxProvider) Matrix(ctx context.Context, origin domain.Coordi
 		}
 	}
 	if len(destinations) == 1 {
-		route, err := provider.Route(ctx, origin, destinations[0], domain.RouteOptions{})
+		route, err := provider.Route(
+			ctx,
+			origin,
+			destinations[0],
+			domain.RouteOptions{},
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -666,8 +718,15 @@ func (provider *MapboxProvider) Matrix(ctx context.Context, origin domain.Coordi
 	if err := provider.getJSON(ctx, endpoint, &response); err != nil {
 		return nil, err
 	}
-	if response.Code != "Ok" || len(response.Distances) != 1 || len(response.Durations) != 1 ||
-		len(response.Distances[0]) != len(destinations) || len(response.Durations[0]) != len(destinations) {
+	invalidDistanceRows := len(response.Distances) != 1
+	invalidDurationRows := len(response.Durations) != 1
+	invalidResponseCode := response.Code != "Ok"
+	if invalidResponseCode || invalidDistanceRows || invalidDurationRows {
+		return nil, fmt.Errorf("location provider returned an invalid travel matrix")
+	}
+	invalidDistanceCount := len(response.Distances[0]) != len(destinations)
+	invalidDurationCount := len(response.Durations[0]) != len(destinations)
+	if invalidDistanceCount || invalidDurationCount {
 		return nil, fmt.Errorf("location provider returned an invalid travel matrix")
 	}
 	matrix := &domain.Matrix{
@@ -677,8 +736,11 @@ func (provider *MapboxProvider) Matrix(ctx context.Context, origin domain.Coordi
 	for index := range destinations {
 		distance := response.Distances[0][index]
 		duration := response.Durations[0][index]
-		if distance == nil || duration == nil || math.IsNaN(*distance) || math.IsInf(*distance, 0) ||
-			math.IsNaN(*duration) || math.IsInf(*duration, 0) || *distance < 0 || *duration < 0 {
+		invalidDistance := distance == nil ||
+			math.IsNaN(*distance) || math.IsInf(*distance, 0) || *distance < 0
+		invalidDuration := duration == nil ||
+			math.IsNaN(*duration) || math.IsInf(*duration, 0) || *duration < 0
+		if invalidDistance || invalidDuration {
 			return nil, fmt.Errorf("location provider could not route every travel matrix destination")
 		}
 		matrix.DistancesKm[index] = *distance / 1000

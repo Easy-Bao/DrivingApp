@@ -22,7 +22,11 @@ func TestFromPostgresDriverRideMapsPassengerDetails(t *testing.T) {
 	if err != nil {
 		t.Fatalf("fromPostgresDriverRide() error = %v", err)
 	}
-	if ride.PassengerName != "Passenger" || ride.PassengerPhone != "+639171234567" || ride.PassengerRating != 4.5 || ride.PassengerFeedback != "Great passenger" {
+	invalidPassengerName := ride.PassengerName != "Passenger"
+	invalidPassengerPhone := ride.PassengerPhone != "+639171234567"
+	invalidPassengerRating := ride.PassengerRating != 4.5
+	invalidPassengerFeedback := ride.PassengerFeedback != "Great passenger"
+	if invalidPassengerName || invalidPassengerPhone || invalidPassengerRating || invalidPassengerFeedback {
 		t.Fatalf("mapped passenger details = %+v", ride)
 	}
 }

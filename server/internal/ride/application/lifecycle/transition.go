@@ -44,7 +44,12 @@ func (service *Service) AcceptRide(ctx context.Context, rideID, driverID int) (d
 	if err != nil {
 		return domain.Ride{}, err
 	}
-	service.publish(ctx, event.RideMatched, ride, map[string]any{"ride": ride})
+	service.publish(
+		ctx,
+		event.RideMatched,
+		ride,
+		map[string]any{"ride": ride},
+	)
 	return ride, nil
 }
 
@@ -58,12 +63,17 @@ func (service *Service) UpdateStatus(ctx context.Context, rideID, actorID int, n
 	if err != nil {
 		return domain.Ride{}, err
 	}
-	if current.PassengerID != actorID && (current.DriverID == nil || *current.DriverID != actorID) {
+	isPassenger := current.PassengerID == actorID
+	isDriver := current.DriverID != nil && *current.DriverID == actorID
+	if !isPassenger && !isDriver {
 		return domain.Ride{}, domain.ErrUnauthorizedRide
 	}
 	currentStatus, currentOK := domain.NormalizeRideStatus(current.Status)
 	nextStatus, nextOK := domain.NormalizeRideStatus(next)
-	if !currentOK || !nextOK || !domain.CanTransition(string(currentStatus), string(nextStatus)) {
+	invalidCurrentStatus := !currentOK
+	invalidNextStatus := !nextOK
+	invalidTransition := !domain.CanTransition(string(currentStatus), string(nextStatus))
+	if invalidCurrentStatus || invalidNextStatus || invalidTransition {
 		return domain.Ride{}, domain.ErrInvalidStatusTransition
 	}
 	if current.PassengerID == actorID && nextStatus != domain.RideCancelled {
@@ -72,19 +82,40 @@ func (service *Service) UpdateStatus(ctx context.Context, rideID, actorID int, n
 	if current.DriverID == nil && nextStatus != domain.RideCancelled {
 		return domain.Ride{}, domain.ErrUnauthorizedRide
 	}
-	updated, err := service.store.UpdateStatus(ctx, rideID, actorID, string(currentStatus), string(nextStatus))
+	updated, err := service.store.UpdateStatus(
+		ctx,
+		rideID,
+		actorID,
+		string(currentStatus),
+		string(nextStatus),
+	)
 	if err != nil {
 		return domain.Ride{}, err
 	}
-	service.publish(ctx, event.RideStatusChanged, updated, map[string]any{
-		"previous_status": string(currentStatus),
-		"ride":            updated,
-	})
+	service.publish(
+		ctx,
+		event.RideStatusChanged,
+		updated,
+		map[string]any{
+			"previous_status": string(currentStatus),
+			"ride":            updated,
+		},
+	)
 	return updated, nil
 }
 
-func (service *Service) publish(ctx context.Context, eventType event.Type, ride domain.Ride, payload map[string]any) {
+func (service *Service) publish(
+	ctx context.Context,
+	eventType event.Type,
+	ride domain.Ride,
+	payload map[string]any,
+) {
 	if service.publishRide != nil {
-		service.publishRide(ctx, eventType, ride, payload)
+		service.publishRide(
+			ctx,
+			eventType,
+			ride,
+			payload,
+		)
 	}
 }

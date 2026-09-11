@@ -13,7 +13,12 @@ type PassengerActivitySummary struct {
 // PassengerActivityReader supplies dashboard activity without exposing ride
 // command persistence.
 type PassengerActivityReader interface {
-	PassengerActivitySummary(ctx context.Context, passengerID int, weekStart, weekEnd time.Time) (PassengerActivitySummary, error)
+	PassengerActivitySummary(
+		ctx context.Context,
+		passengerID int,
+		weekStart time.Time,
+		weekEnd time.Time,
+	) (PassengerActivitySummary, error)
 }
 
 // PassengerActivitySummaryRepository is the legacy name for

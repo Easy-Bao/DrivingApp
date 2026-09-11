@@ -10,7 +10,12 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (repository *RideRepository) AcceptOffer(ctx context.Context, sessionID, offerID, passengerID int) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
+func (repository *RideRepository) AcceptOffer(
+	ctx context.Context,
+	sessionID int,
+	offerID int,
+	passengerID int,
+) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
 	}
@@ -29,27 +34,36 @@ func (repository *RideRepository) AcceptOffer(ctx context.Context, sessionID, of
 
 	transaction, err := repository.pool.Begin(ctx)
 	if err != nil {
-		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, fmt.Errorf("begin offer acceptance transaction: %w", err)
+		return domain.BidSession{},
+			domain.BidOffer{},
+			domain.Ride{},
+			fmt.Errorf("begin offer acceptance transaction: %w", err)
 	}
 	defer func() {
 		_ = transaction.Rollback(ctx)
 	}()
 
 	transactionQueries := repository.queries.WithTx(transaction)
-	session, err := transactionQueries.LockActiveBidSessionForOffer(ctx, databasepostgres.LockActiveBidSessionForOfferParams{
-		ID:        dbSessionID,
-		ExpiresAt: bidTimestamp(time.Now().UTC()),
-	})
+	session, err := transactionQueries.LockActiveBidSessionForOffer(
+		ctx,
+		databasepostgres.LockActiveBidSessionForOfferParams{
+			ID:        dbSessionID,
+			ExpiresAt: bidTimestamp(time.Now().UTC()),
+		},
+	)
 	if err != nil {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, fmt.Errorf("find active bid session: %w", err)
 	}
 	if session.PassengerID != dbPassengerID {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, domain.ErrUnauthorizedSession
 	}
-	offer, err := transactionQueries.LockPendingBidOfferForAcceptance(ctx, databasepostgres.LockPendingBidOfferForAcceptanceParams{
-		ID:        dbOfferID,
-		SessionID: dbSessionID,
-	})
+	offer, err := transactionQueries.LockPendingBidOfferForAcceptance(
+		ctx,
+		databasepostgres.LockPendingBidOfferForAcceptanceParams{
+			ID:        dbOfferID,
+			SessionID: dbSessionID,
+		},
+	)
 	if err != nil {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, fmt.Errorf("find pending bid offer: %w", err)
 	}
@@ -60,7 +74,10 @@ func (repository *RideRepository) AcceptOffer(ctx context.Context, sessionID, of
 	if err != nil {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, domain.ErrDriverUnavailable
 	}
-	activeDriverRides, err := transactionQueries.CountActiveRidesForAcceptance(ctx, pgtype.Int4{Int32: profile.UserID, Valid: true})
+	activeDriverRides, err := transactionQueries.CountActiveRidesForAcceptance(
+		ctx,
+		pgtype.Int4{Int32: profile.UserID, Valid: true},
+	)
 	if err != nil {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, fmt.Errorf("count active driver rides: %w", err)
 	}
@@ -152,7 +169,10 @@ func (repository *RideRepository) AcceptOffer(ctx context.Context, sessionID, of
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, fmt.Errorf("create ride settlement: %w", err)
 	}
 	if err := transaction.Commit(ctx); err != nil {
-		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, fmt.Errorf("commit offer acceptance transaction: %w", err)
+		return domain.BidSession{},
+			domain.BidOffer{},
+			domain.Ride{},
+			fmt.Errorf("commit offer acceptance transaction: %w", err)
 	}
 	resultSession, err := fromPostgresBidSession(updatedSession)
 	if err != nil {

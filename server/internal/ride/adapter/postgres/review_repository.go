@@ -59,7 +59,7 @@ func (repository *RideRepository) DriverReviews(
 
 func (repository *RideRepository) CreateReview(ctx context.Context, value domain.Review) (domain.Review, error) {
 	trip, err := repository.Get(ctx, value.RideID)
-	if err != nil || trip.Status != string(domain.RideCompleted) || trip.PassengerID != value.PassengerID || trip.DriverID == nil || *trip.DriverID != value.DriverID {
+	if err != nil || !canCreateReview(trip, value.PassengerID, value.DriverID) {
 		return domain.Review{}, domain.ErrReviewNotAllowed
 	}
 
@@ -104,9 +104,12 @@ func (repository *RideRepository) CreateReview(ctx context.Context, value domain
 	return fromPostgresCreatedReview(item)
 }
 
-func (repository *RideRepository) CreatePassengerReview(ctx context.Context, value domain.PassengerReview) (domain.PassengerReview, error) {
+func (repository *RideRepository) CreatePassengerReview(
+	ctx context.Context,
+	value domain.PassengerReview,
+) (domain.PassengerReview, error) {
 	trip, err := repository.Get(ctx, value.RideID)
-	if err != nil || trip.Status != string(domain.RideCompleted) || trip.PassengerID != value.PassengerID || trip.DriverID == nil || *trip.DriverID != value.DriverID {
+	if err != nil || !canCreateReview(trip, value.PassengerID, value.DriverID) {
 		return domain.PassengerReview{}, domain.ErrReviewNotAllowed
 	}
 
@@ -145,6 +148,16 @@ func (repository *RideRepository) CreatePassengerReview(ctx context.Context, val
 		return domain.PassengerReview{}, fmt.Errorf("create passenger review: %w", err)
 	}
 	return fromPostgresPassengerReview(item)
+}
+
+func canCreateReview(ride domain.Ride, passengerID, driverID int) bool {
+	if ride.Status != string(domain.RideCompleted) || ride.PassengerID != passengerID {
+		return false
+	}
+	if ride.DriverID == nil {
+		return false
+	}
+	return *ride.DriverID == driverID
 }
 
 func fromPostgresReview(item databasepostgres.ListDriverReviewsRow) (domain.Review, error) {

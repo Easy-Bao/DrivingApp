@@ -51,7 +51,11 @@ func TestProfileMappingsPreserveAccountContactDetails(t *testing.T) {
 		AvatarStorageKey:  pgtype.Text{String: "db/v1/avatar", Valid: true},
 		PreferredRideType: pgtype.Text{String: "solo-ride", Valid: true},
 	})
-	if passenger.Role != "passenger" || passenger.Address != "Makati" || passenger.AvatarURL == "" || passenger.PreferredRideType != "solo-ride" {
+	invalidRole := passenger.Role != "passenger"
+	invalidAddress := passenger.Address != "Makati"
+	missingAvatarURL := passenger.AvatarURL == ""
+	invalidRideType := passenger.PreferredRideType != "solo-ride"
+	if invalidRole || invalidAddress || missingAvatarURL || invalidRideType {
 		t.Fatalf("passenger profile = %+v", passenger)
 	}
 }

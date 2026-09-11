@@ -23,12 +23,20 @@ func NewRouter(
 func (router *Router) RegisterRoutes(mux chi.Router) {
 	mux.Group(func(protected chi.Router) {
 		protected.Use(middleware.RequireAuth(router.auth))
-		protected.With(middleware.RequireRole(security.RoleDriver)).Get(api.V1Prefix+"/telemetry/location/{driverID}", router.handler.GetDriverLocation)
-		protected.With(middleware.RequireRole(security.RolePassenger)).Get(api.V1Prefix+"/telemetry/rides/{rideID}/driver", router.handler.GetRideDriverLocation)
-		protected.With(middleware.RequireRole(security.RoleDriver)).Post(api.V1Prefix+"/telemetry/location", router.handler.UpdateDriverLocation)
-		protected.With(middleware.RequireRole(security.RoleDriver)).Delete(api.V1Prefix+"/telemetry/location", router.handler.DeleteDriverLocation)
-		protected.With(middleware.RequireRole(security.RolePassenger)).Get(api.V1Prefix+"/telemetry/location/nearby", router.handler.NearbyDrivers)
-		protected.With(middleware.RequireRole(security.RolePassenger)).Post(api.V1Prefix+"/telemetry/passenger/{rideID}", router.handler.UpdatePassengerLocation)
-		protected.With(middleware.RequireRole(security.RoleDriver)).Get(api.V1Prefix+"/telemetry/passenger/{rideID}", router.handler.GetPassengerLocation)
+		driverOnly := middleware.RequireRole(security.RoleDriver)
+		passengerOnly := middleware.RequireRole(security.RolePassenger)
+		protected.With(driverOnly).Get(api.V1Prefix+"/telemetry/location/{driverID}", router.handler.GetDriverLocation)
+		protected.With(passengerOnly).Get(
+			api.V1Prefix+"/telemetry/rides/{rideID}/driver",
+			router.handler.GetRideDriverLocation,
+		)
+		protected.With(driverOnly).Post(api.V1Prefix+"/telemetry/location", router.handler.UpdateDriverLocation)
+		protected.With(driverOnly).Delete(api.V1Prefix+"/telemetry/location", router.handler.DeleteDriverLocation)
+		protected.With(passengerOnly).Get(api.V1Prefix+"/telemetry/location/nearby", router.handler.NearbyDrivers)
+		protected.With(passengerOnly).Post(
+			api.V1Prefix+"/telemetry/passenger/{rideID}",
+			router.handler.UpdatePassengerLocation,
+		)
+		protected.With(driverOnly).Get(api.V1Prefix+"/telemetry/passenger/{rideID}", router.handler.GetPassengerLocation)
 	})
 }

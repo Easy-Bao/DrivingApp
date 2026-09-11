@@ -46,24 +46,51 @@ func TestEnvelopeRejectsInvalidContractValues(t *testing.T) {
 		want     string
 	}{
 		{
-			name:     "unsupported version",
-			envelope: Envelope{ID: "event-1", Version: 2, Type: RideMatched, OccurredAt: validTimestamp, Scope: Scope{RideID: "ride-1"}, Payload: []byte(`{}`)},
-			want:     "version",
+			name: "unsupported version",
+			envelope: Envelope{
+				ID:         "event-1",
+				Version:    2,
+				Type:       RideMatched,
+				OccurredAt: validTimestamp,
+				Scope:      Scope{RideID: "ride-1"},
+				Payload:    []byte(`{}`),
+			},
+			want: "version",
 		},
 		{
-			name:     "unsupported event type",
-			envelope: Envelope{ID: "event-1", Version: CurrentVersion, Type: "ride.deleted", OccurredAt: validTimestamp, Scope: Scope{RideID: "ride-1"}, Payload: []byte(`{}`)},
-			want:     "type",
+			name: "unsupported event type",
+			envelope: Envelope{
+				ID:         "event-1",
+				Version:    CurrentVersion,
+				Type:       "ride.deleted",
+				OccurredAt: validTimestamp,
+				Scope:      Scope{RideID: "ride-1"},
+				Payload:    []byte(`{}`),
+			},
+			want: "type",
 		},
 		{
-			name:     "missing scope",
-			envelope: Envelope{ID: "event-1", Version: CurrentVersion, Type: RideMatched, OccurredAt: validTimestamp, Payload: []byte(`{}`)},
-			want:     "scope",
+			name: "missing scope",
+			envelope: Envelope{
+				ID:         "event-1",
+				Version:    CurrentVersion,
+				Type:       RideMatched,
+				OccurredAt: validTimestamp,
+				Payload:    []byte(`{}`),
+			},
+			want: "scope",
 		},
 		{
-			name:     "array payload",
-			envelope: Envelope{ID: "event-1", Version: CurrentVersion, Type: RideMatched, OccurredAt: validTimestamp, Scope: Scope{RideID: "ride-1"}, Payload: []byte(`[]`)},
-			want:     "payload",
+			name: "array payload",
+			envelope: Envelope{
+				ID:         "event-1",
+				Version:    CurrentVersion,
+				Type:       RideMatched,
+				OccurredAt: validTimestamp,
+				Scope:      Scope{RideID: "ride-1"},
+				Payload:    []byte(`[]`),
+			},
+			want: "payload",
 		},
 	}
 

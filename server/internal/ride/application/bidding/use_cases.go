@@ -20,7 +20,12 @@ type FareCalculator func(distanceKm, durationMinutes float64) int64
 type RideEventPublisher func(ctx context.Context, eventType event.Type, ride domain.Ride, payload map[string]any)
 
 // SessionEventPublisher routes transient updates to bid-session participants.
-type SessionEventPublisher func(ctx context.Context, eventType event.Type, session domain.BidSession, payload map[string]any)
+type SessionEventPublisher func(
+	ctx context.Context,
+	eventType event.Type,
+	session domain.BidSession,
+	payload map[string]any,
+)
 
 // DriverOfferPublisher keeps offer delivery targeted to its driver.
 type DriverOfferPublisher func(ctx context.Context, offer domain.BidOffer, payload map[string]any)
@@ -104,7 +109,12 @@ func (service *Service) CreateSession(ctx context.Context, session domain.BidSes
 	if err != nil {
 		return domain.BidSession{}, err
 	}
-	service.publishSessionEvent(ctx, event.RideOfferCreated, created, map[string]any{"session": created})
+	service.publishSessionEvent(
+		ctx,
+		event.RideOfferCreated,
+		created,
+		map[string]any{"session": created},
+	)
 	return created, nil
 }
 
@@ -144,29 +154,49 @@ func (service *Service) PlaceOffer(ctx context.Context, offer domain.BidOffer) (
 		return domain.BidOffer{}, err
 	}
 	if session, sessionErr := service.store.Session(ctx, created.SessionID); sessionErr == nil {
-		service.publishSessionEvent(ctx, event.RideOfferUpdated, session, map[string]any{"offer": created})
+		service.publishSessionEvent(
+			ctx,
+			event.RideOfferUpdated,
+			session,
+			map[string]any{"offer": created},
+		)
 	} else {
 		service.publishDriverOfferEvent(ctx, created, map[string]any{"offer": created})
 	}
 	return created, nil
 }
 
-func (service *Service) AcceptOffer(ctx context.Context, sessionID, offerID, passengerID int) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
+func (service *Service) AcceptOffer(
+	ctx context.Context,
+	sessionID int,
+	offerID int,
+	passengerID int,
+) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
 	if service.store == nil {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, ErrPersistenceUnavailable
 	}
 	if passengerID <= 0 {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, domain.ErrUnauthorizedSession
 	}
-	session, offer, ride, err := service.store.AcceptOffer(ctx, sessionID, offerID, passengerID)
+	session, offer, ride, err := service.store.AcceptOffer(
+		ctx,
+		sessionID,
+		offerID,
+		passengerID,
+	)
 	if err != nil {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
 	}
-	service.publishRideEvent(ctx, event.RideMatched, ride, map[string]any{
-		"offer":   offer,
-		"ride":    ride,
-		"session": session,
-	})
+	service.publishRideEvent(
+		ctx,
+		event.RideMatched,
+		ride,
+		map[string]any{
+			"offer":   offer,
+			"ride":    ride,
+			"session": session,
+		},
+	)
 	return session, offer, ride, nil
 }
 
@@ -181,7 +211,12 @@ func (service *Service) CancelSession(ctx context.Context, sessionID, passengerI
 	if err != nil {
 		return domain.BidSession{}, err
 	}
-	service.publishSessionEvent(ctx, event.RideOfferUpdated, session, map[string]any{"session": session})
+	service.publishSessionEvent(
+		ctx,
+		event.RideOfferUpdated,
+		session,
+		map[string]any{"session": session},
+	)
 	return session, nil
 }
 
@@ -194,7 +229,12 @@ func (service *Service) CancelOffer(ctx context.Context, sessionID, driverID int
 		return domain.BidOffer{}, err
 	}
 	if session, sessionErr := service.store.Session(ctx, sessionID); sessionErr == nil {
-		service.publishSessionEvent(ctx, event.RideOfferUpdated, session, map[string]any{"offer": offer})
+		service.publishSessionEvent(
+			ctx,
+			event.RideOfferUpdated,
+			session,
+			map[string]any{"offer": offer},
+		)
 	} else {
 		service.publishDriverOfferEvent(ctx, offer, map[string]any{"offer": offer})
 	}
@@ -213,15 +253,35 @@ func (service *Service) Session(ctx context.Context, sessionID int) (domain.BidS
 	return session, err
 }
 
-func (service *Service) publishRideEvent(ctx context.Context, eventType event.Type, ride domain.Ride, payload map[string]any) {
+func (service *Service) publishRideEvent(
+	ctx context.Context,
+	eventType event.Type,
+	ride domain.Ride,
+	payload map[string]any,
+) {
 	if service.publishRide != nil {
-		service.publishRide(ctx, eventType, ride, payload)
+		service.publishRide(
+			ctx,
+			eventType,
+			ride,
+			payload,
+		)
 	}
 }
 
-func (service *Service) publishSessionEvent(ctx context.Context, eventType event.Type, session domain.BidSession, payload map[string]any) {
+func (service *Service) publishSessionEvent(
+	ctx context.Context,
+	eventType event.Type,
+	session domain.BidSession,
+	payload map[string]any,
+) {
 	if service.publishSession != nil {
-		service.publishSession(ctx, eventType, session, payload)
+		service.publishSession(
+			ctx,
+			eventType,
+			session,
+			payload,
+		)
 	}
 }
 

@@ -33,7 +33,10 @@ func TestNearbyUsesCategorySearchAndParsesMapboxCategories(t *testing.T) {
 				name = "Pagadian School"
 				category = "school"
 			}
-			body := `{"features":[{"id":"` + id + `","properties":{"name":"` + name + `","full_address":"Pagadian City","poi_category":["` + category + `"]},"geometry":{"coordinates":[123.4361,7.8282]}}]}`
+			body := `{"features":[{"id":"` + id +
+				`","properties":{"name":"` + name +
+				`","full_address":"Pagadian City","poi_category":["` + category +
+				`"]},"geometry":{"coordinates":[123.4361,7.8282]}}]}`
 			return &http.Response{
 				StatusCode: http.StatusOK,
 				Body:       io.NopCloser(strings.NewReader(body)),
@@ -133,8 +136,11 @@ func TestReverseGeocodeChoosesMostSpecificFeature(t *testing.T) {
 	provider.client = &http.Client{
 		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
 			body := `{"features":[
-				{"id":"place","properties":{"name":"Pagadian City","feature_type":"place"},"geometry":{"coordinates":[123.4361,7.8282]}},
-				{"id":"address","properties":{"name":"Antonio Salazar Street","feature_type":"address","full_address":"Antonio Salazar Street, Pagadian City","coordinates":{"accuracy":"rooftop"}},"geometry":{"coordinates":[123.4361,7.8282]}}
+				{"id":"place","properties":{"name":"Pagadian City","feature_type":"place"},
+				"geometry":{"coordinates":[123.4361,7.8282]}},
+				{"id":"address","properties":{"name":"Antonio Salazar Street","feature_type":"address",
+				"full_address":"Antonio Salazar Street, Pagadian City","coordinates":{"accuracy":"rooftop"}},
+				"geometry":{"coordinates":[123.4361,7.8282]}}
 			]}`
 			return &http.Response{
 				StatusCode: http.StatusOK,
@@ -169,7 +175,12 @@ func TestReverseGeocodeFallsBackToGeocodingWhenSearchBoxIsEmpty(t *testing.T) {
 			if request.URL.Path == "/search/searchbox/v1/reverse" {
 				return responseWithBody(request, `{"features":[]}`), nil
 			}
-			return responseWithBody(request, `{"features":[{"id":"street.1","properties":{"name":"Main Street","feature_type":"street","place_formatted":"Tuburan, Zamboanga del Sur","context":{"place":{"name":"Tuburan"}}},"geometry":{"coordinates":[123.43635,7.8282]}}]}`), nil
+			fallbackBody := `{"features":[
+				{"id":"street.1","properties":{"name":"Main Street","feature_type":"street",
+				"place_formatted":"Tuburan, Zamboanga del Sur","context":{"place":{"name":"Tuburan"}}},
+				"geometry":{"coordinates":[123.43635,7.8282]}}
+			]}`
+			return responseWithBody(request, fallbackBody), nil
 		}),
 	}
 
@@ -199,8 +210,10 @@ func TestReverseGeocodeUsesProminenceWithinRadialStage(t *testing.T) {
 	provider.client = &http.Client{
 		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
 			body := `{"features":[
-				{"id":"small-shop","properties":{"name":"Small Shop","feature_type":"poi","poi_category":["shop"]},"geometry":{"coordinates":[123.43628,7.8282]}},
-				{"id":"transit-hub","properties":{"name":"Transit Hub","feature_type":"poi","poi_category":["transit"]},"geometry":{"coordinates":[123.43645,7.8282]}}
+				{"id":"small-shop","properties":{"name":"Small Shop","feature_type":"poi",
+				"poi_category":["shop"]},"geometry":{"coordinates":[123.43628,7.8282]}},
+				{"id":"transit-hub","properties":{"name":"Transit Hub","feature_type":"poi",
+				"poi_category":["transit"]},"geometry":{"coordinates":[123.43645,7.8282]}}
 			]}`
 			return responseWithBody(request, body), nil
 		}),
@@ -393,7 +406,9 @@ func TestMatrixUsesOneBoundedProviderRequestAndConvertsUnits(t *testing.T) {
 	provider.client = &http.Client{
 		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
 			requestCount++
-			if request.URL.Path != "/directions-matrix/v1/mapbox/driving/123.400000,7.800000;123.500000,7.900000;123.600000,8.000000" {
+			matrixPath := "/directions-matrix/v1/mapbox/driving/" +
+				"123.400000,7.800000;123.500000,7.900000;123.600000,8.000000"
+			if request.URL.Path != matrixPath {
 				t.Fatalf("unexpected matrix path: %s", request.URL.Path)
 			}
 			if request.URL.Query().Get("sources") != "0" || request.URL.Query().Get("destinations") != "1;2" {

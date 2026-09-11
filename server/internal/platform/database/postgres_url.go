@@ -10,7 +10,8 @@ func NormalizePostgresURL(databaseURL string) string {
 		return databaseURL
 	}
 	host := parsed.Hostname()
-	if host != "localhost" && host != "127.0.0.1" && host != "postgres-db" {
+	isLocalHost := host == "localhost" || host == "127.0.0.1" || host == "postgres-db"
+	if !isLocalHost {
 		return databaseURL
 	}
 	query := parsed.Query()

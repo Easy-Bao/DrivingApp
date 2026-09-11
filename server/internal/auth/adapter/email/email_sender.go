@@ -11,7 +11,13 @@ import (
 	mail "github.com/wneessen/go-mail"
 )
 
-type Delivery func(context.Context, Config, string, string, string) error
+type Delivery func(
+	context.Context,
+	Config,
+	string,
+	string,
+	string,
+) error
 
 type GoMailGateway struct {
 	config  Config
@@ -56,11 +62,23 @@ func (gateway *GoMailGateway) Send(ctx context.Context, recipient, code string) 
 		return fmt.Errorf("%w: recipient is empty", ErrInvalidConfig)
 	}
 	return gateway.breaker.Do(ctx, func(ctx context.Context) error {
-		return gateway.deliver(ctx, gateway.config, recipient, gateway.config.Subject, verificationBody(code))
+		return gateway.deliver(
+			ctx,
+			gateway.config,
+			recipient,
+			gateway.config.Subject,
+			verificationBody(code),
+		)
 	})
 }
 
-func deliverWithGoMail(ctx context.Context, config Config, recipient, subject, body string) error {
+func deliverWithGoMail(
+	ctx context.Context,
+	config Config,
+	recipient string,
+	subject string,
+	body string,
+) error {
 	client, err := mail.NewClient(config.Host, clientOptions(config)...)
 	if err != nil {
 		return fmt.Errorf("create mail client: %w", err)

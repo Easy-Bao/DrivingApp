@@ -59,7 +59,14 @@ func (handler *Handler) Messages(writer http.ResponseWriter, request *http.Reque
 	}
 	result := make([]map[string]string, 0, len(items))
 	for _, item := range items {
-		result = append(result, map[string]string{"text": item.Body, "message": item.Body, "sender_id": item.SenderID, "senderId": item.SenderID, "created_at": item.CreatedAt, "createdAt": item.CreatedAt})
+		result = append(result, map[string]string{
+			"text":       item.Body,
+			"message":    item.Body,
+			"sender_id":  item.SenderID,
+			"senderId":   item.SenderID,
+			"created_at": item.CreatedAt,
+			"createdAt":  item.CreatedAt,
+		})
 	}
 	response.JSON(writer, http.StatusOK, map[string]any{"messages": result})
 }

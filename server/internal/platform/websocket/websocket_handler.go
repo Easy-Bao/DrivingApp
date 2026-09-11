@@ -44,8 +44,15 @@ func NewHandler(hub *Hub, authenticator IdentityAuthenticator, allowedOrigins []
 }
 
 func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	if handler == nil || handler.hub == nil || handler.authenticator == nil {
-		response.Error(writer, http.StatusServiceUnavailable, "Live updates are temporarily unavailable. Please try again shortly.")
+	missingHandler := handler == nil
+	missingHub := handler != nil && handler.hub == nil
+	missingAuthenticator := handler != nil && handler.authenticator == nil
+	if missingHandler || missingHub || missingAuthenticator {
+		response.Error(
+			writer,
+			http.StatusServiceUnavailable,
+			"Live updates are temporarily unavailable. Please try again shortly.",
+		)
 		return
 	}
 	identity, ok := handler.identity(request)
@@ -108,7 +115,12 @@ func (handler *Handler) readPump(connection *websocket.Conn) {
 	}
 }
 
-func (handler *Handler) writePump(connection *websocket.Conn, events <-chan event.Envelope, stop <-chan struct{}, done chan<- struct{}) {
+func (handler *Handler) writePump(
+	connection *websocket.Conn,
+	events <-chan event.Envelope,
+	stop <-chan struct{},
+	done chan<- struct{},
+) {
 	defer close(done)
 	defer connection.Close()
 

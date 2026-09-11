@@ -10,6 +10,7 @@ import (
 	jsonv2 "encoding/json/v2"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -65,7 +66,7 @@ func NewID() string {
 	if _, err := rand.Read(bytes[:]); err == nil {
 		return hex.EncodeToString(bytes[:])
 	}
-	return fmt.Sprintf("%d", time.Now().UnixNano())
+	return strconv.FormatInt(time.Now().UnixNano(), 10)
 }
 
 func New(id string, eventType Type, occurredAt time.Time, scope Scope, payload map[string]any) (Envelope, error) {

@@ -18,13 +18,30 @@ type RouteProvider interface {
 // provider dependency.
 type RouteProviderFunc func(context.Context, float64, float64, float64, float64) (RouteMetrics, error)
 
-func (provider RouteProviderFunc) CalculateRoute(ctx context.Context, originLat, originLng, destinationLat, destinationLng float64) (RouteMetrics, error) {
-	return provider(ctx, originLat, originLng, destinationLat, destinationLng)
+func (provider RouteProviderFunc) CalculateRoute(
+	ctx context.Context,
+	originLat float64,
+	originLng float64,
+	destinationLat float64,
+	destinationLng float64,
+) (RouteMetrics, error) {
+	return provider(
+		ctx,
+		originLat,
+		originLng,
+		destinationLat,
+		destinationLng,
+	)
 }
 
 // RouteResolver applies the ride application's validation and fallback policy
 // around a route provider.
 type RouteResolver func(
 	ctx context.Context,
-	pickupLatitude, pickupLongitude, dropoffLatitude, dropoffLongitude, distanceKm, durationMinutes float64,
+	pickupLatitude float64,
+	pickupLongitude float64,
+	dropoffLatitude float64,
+	dropoffLongitude float64,
+	distanceKm float64,
+	durationMinutes float64,
 ) (RouteMetrics, error)

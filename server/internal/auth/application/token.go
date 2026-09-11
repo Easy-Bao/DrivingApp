@@ -33,19 +33,35 @@ func issueToken(issuer authports.TokenIssuer, subject string, role domain.Role) 
 	return issuer.Issue(subject)
 }
 
-func issueSessionTokens(ctx context.Context, sessions authports.SessionStore, issuer authports.TokenIssuer, subject string, role domain.Role) (SessionTokens, error) {
+func issueSessionTokens(
+	ctx context.Context,
+	sessions authports.SessionStore,
+	issuer authports.TokenIssuer,
+	subject string,
+	role domain.Role,
+) (SessionTokens, error) {
 	accessToken, err := issueToken(issuer, subject, role)
 	if err != nil {
 		return SessionTokens{}, err
 	}
-	refreshToken, err := issueRefreshToken(ctx, sessions, subject, role)
+	refreshToken, err := issueRefreshToken(
+		ctx,
+		sessions,
+		subject,
+		role,
+	)
 	if err != nil {
 		return SessionTokens{}, err
 	}
 	return SessionTokens{AccessToken: accessToken, RefreshToken: refreshToken}, nil
 }
 
-func issueRefreshToken(ctx context.Context, sessions authports.SessionStore, subject string, role domain.Role) (string, error) {
+func issueRefreshToken(
+	ctx context.Context,
+	sessions authports.SessionStore,
+	subject string,
+	role domain.Role,
+) (string, error) {
 	if sessions == nil {
 		return "", domain.ErrRefreshSessionUnavailable
 	}

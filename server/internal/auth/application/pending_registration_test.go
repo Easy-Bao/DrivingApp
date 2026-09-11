@@ -46,7 +46,11 @@ func TestPassengerRegistrationCreatesAccountOnlyAfterOTP(t *testing.T) {
 	if account.ID != 1 || !account.IsVerified || token != "token:1" {
 		t.Fatalf("verified account = %#v, token = %q", account, token)
 	}
-	if _, err := pending.Get(context.Background(), registration.Email); !errors.Is(err, domain.ErrPendingRegistrationNotFound) {
+	_, err = pending.Get(
+		context.Background(),
+		registration.Email,
+	)
+	if !errors.Is(err, domain.ErrPendingRegistrationNotFound) {
 		t.Fatalf("pending registration should be deleted, got %v", err)
 	}
 }
@@ -207,7 +211,11 @@ type pendingRegistrationStore struct {
 	deleteErr    error
 }
 
-func (store *pendingRegistrationStore) Put(_ context.Context, registration domain.PendingRegistration, _ time.Duration) error {
+func (store *pendingRegistrationStore) Put(
+	_ context.Context,
+	registration domain.PendingRegistration,
+	_ time.Duration,
+) error {
 	copy := registration
 	store.registration = &copy
 	return nil

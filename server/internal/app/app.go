@@ -101,24 +101,28 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
-	router, eventHub := newHTTPRouter(
-		config,
-		postgresPool,
-		redisClient,
-		applicationLogger,
-		authStore,
-		sessionStore,
-		rideStore,
-		profileStore,
-		statsReader,
-		documentStore,
-		privateObjectStore,
-	)
+	router, eventHub := newHTTPRouter(httpRouterDependencies{
+		config:             config,
+		postgresPool:       postgresPool,
+		redisClient:        redisClient,
+		applicationLogger:  applicationLogger,
+		authStore:          authStore,
+		sessionStore:       sessionStore,
+		rideStore:          rideStore,
+		profileStore:       profileStore,
+		statsReader:        statsReader,
+		documentStore:      documentStore,
+		privateObjectStore: privateObjectStore,
+	})
+	idempotency := middleware.NewIdempotency(
+		middleware.NewRedisIdempotencyStore(redisClient),
+		10*time.Minute,
+	).WithLogger(applicationLogger)
 	secureHandler := middleware.SecureHTTPWithIdempotency(
 		router,
 		config.Security,
 		middleware.NewRateLimiterFromEnv(middleware.NewRedisCounterStore(redisClient)),
-		middleware.NewIdempotency(middleware.NewRedisIdempotencyStore(redisClient), 10*time.Minute).WithLogger(applicationLogger),
+		idempotency,
 	)
 	handler := proxyTrust.Middleware(middleware.Logging(applicationLogger)(secureHandler))
 

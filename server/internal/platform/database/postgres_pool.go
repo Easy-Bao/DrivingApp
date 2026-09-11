@@ -121,7 +121,10 @@ func (config PostgresNativePoolConfig) validate() error {
 	if config.MinIdleConnections > config.MaxConnections {
 		return fmt.Errorf("postgresql min idle connections cannot exceed max connections")
 	}
-	if config.ConnectionMaxLifetime <= 0 || config.ConnectionMaxIdleTime <= 0 || config.PingTimeout <= 0 {
+	invalidConnectionLifetime := config.ConnectionMaxLifetime <= 0
+	invalidIdleTime := config.ConnectionMaxIdleTime <= 0
+	invalidPingTimeout := config.PingTimeout <= 0
+	if invalidConnectionLifetime || invalidIdleTime || invalidPingTimeout {
 		return fmt.Errorf("postgresql connection durations must be positive")
 	}
 	return nil

@@ -19,7 +19,9 @@ func TestCounterpartyIdentityFromNativeRideUsesOptionalDriver(t *testing.T) {
 	if err != nil || targetID != 99 || role != "passenger" {
 		t.Fatalf("driver target = %d/%s, error = %v", targetID, role, err)
 	}
-	if _, _, err := counterpartyIdentityFromRide(domain.Ride{PassengerID: 99}, 99); !errors.Is(err, domain.ErrCounterpartyUnavailable) {
+	unassignedRide := domain.Ride{PassengerID: 99}
+	_, _, err = counterpartyIdentityFromRide(unassignedRide, 99)
+	if !errors.Is(err, domain.ErrCounterpartyUnavailable) {
 		t.Fatalf("unassigned passenger error = %v", err)
 	}
 }

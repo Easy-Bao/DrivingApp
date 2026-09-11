@@ -40,8 +40,18 @@ func (service *RideService) PlaceOffer(ctx context.Context, offer domain.BidOffe
 	return service.biddingService.PlaceOffer(ctx, offer)
 }
 
-func (service *RideService) AcceptOffer(ctx context.Context, sessionID, offerID, passengerID int) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
-	return service.biddingService.AcceptOffer(ctx, sessionID, offerID, passengerID)
+func (service *RideService) AcceptOffer(
+	ctx context.Context,
+	sessionID int,
+	offerID int,
+	passengerID int,
+) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
+	return service.biddingService.AcceptOffer(
+		ctx,
+		sessionID,
+		offerID,
+		passengerID,
+	)
 }
 
 func (service *RideService) CancelSession(ctx context.Context, sessionID, passengerID int) (domain.BidSession, error) {

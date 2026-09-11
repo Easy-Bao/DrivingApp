@@ -17,12 +17,21 @@ func NewPendingRegistrationStore(client *redisclient.Client) *PendingRegistratio
 	return &PendingRegistrationStore{client: client}
 }
 
-func (store *PendingRegistrationStore) Put(ctx context.Context, registration domain.PendingRegistration, ttl time.Duration) error {
+func (store *PendingRegistrationStore) Put(
+	ctx context.Context,
+	registration domain.PendingRegistration,
+	ttl time.Duration,
+) error {
 	payload, err := json.Marshal(registration)
 	if err != nil {
 		return err
 	}
-	return store.client.Set(ctx, pendingKey(registration.Email), payload, ttl).Err()
+	return store.client.Set(
+		ctx,
+		pendingKey(registration.Email),
+		payload,
+		ttl,
+	).Err()
 }
 
 func (store *PendingRegistrationStore) Get(ctx context.Context, email string) (domain.PendingRegistration, error) {

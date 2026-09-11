@@ -15,7 +15,10 @@ import (
 
 var _ ports.BiddingStore = (*RideRepository)(nil)
 
-func (repository *RideRepository) CreateSession(ctx context.Context, value domain.BidSession) (domain.BidSession, error) {
+func (repository *RideRepository) CreateSession(
+	ctx context.Context,
+	value domain.BidSession,
+) (domain.BidSession, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.BidSession{}, err
 	}
@@ -128,17 +131,23 @@ func (repository *RideRepository) ActiveSessions(ctx context.Context, driverID *
 		if _, profileErr := repository.queries.GetOnlineDriverProfileForBidding(ctx, dbDriverID); profileErr != nil {
 			return nil, domain.ErrDriverUnavailable
 		}
-		activeRides, countErr := repository.queries.CountActiveRidesForDriver(ctx, pgtype.Int4{Int32: dbDriverID, Valid: true})
+		activeRides, countErr := repository.queries.CountActiveRidesForDriver(
+			ctx,
+			pgtype.Int4{Int32: dbDriverID, Valid: true},
+		)
 		if countErr != nil {
 			return nil, fmt.Errorf("count active driver rides: %w", countErr)
 		}
 		if activeRides >= 5 {
 			return []domain.BidSession{}, nil
 		}
-		items, err = repository.queries.ListTargetedActiveBidSessions(ctx, databasepostgres.ListTargetedActiveBidSessionsParams{
-			ExpiresAt:      now,
-			TargetDriverID: pgtype.Int4{Int32: dbDriverID, Valid: true},
-		})
+		items, err = repository.queries.ListTargetedActiveBidSessions(
+			ctx,
+			databasepostgres.ListTargetedActiveBidSessionsParams{
+				ExpiresAt:      now,
+				TargetDriverID: pgtype.Int4{Int32: dbDriverID, Valid: true},
+			},
+		)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("list active bid sessions: %w", err)
@@ -202,10 +211,13 @@ func (repository *RideRepository) PlaceOffer(ctx context.Context, value domain.B
 	}()
 	transactionQueries := repository.queries.WithTx(transaction)
 	now := bidTimestamp(time.Now().UTC())
-	session, err := transactionQueries.LockActiveBidSessionForOffer(ctx, databasepostgres.LockActiveBidSessionForOfferParams{
-		ID:        sessionID,
-		ExpiresAt: now,
-	})
+	session, err := transactionQueries.LockActiveBidSessionForOffer(
+		ctx,
+		databasepostgres.LockActiveBidSessionForOfferParams{
+			ID:        sessionID,
+			ExpiresAt: now,
+		},
+	)
 	if err != nil {
 		return domain.BidOffer{}, domain.ErrDriverUnavailable
 	}
@@ -253,7 +265,11 @@ func (repository *RideRepository) PlaceOffer(ctx context.Context, value domain.B
 	return fromPostgresBidOffer(created)
 }
 
-func (repository *RideRepository) CancelSession(ctx context.Context, sessionID, passengerID int) (domain.BidSession, error) {
+func (repository *RideRepository) CancelSession(
+	ctx context.Context,
+	sessionID int,
+	passengerID int,
+) (domain.BidSession, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.BidSession{}, err
 	}

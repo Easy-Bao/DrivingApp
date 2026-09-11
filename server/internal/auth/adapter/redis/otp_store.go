@@ -14,11 +14,21 @@ type OTPStore struct{ client *redisclient.Client }
 func NewOTPStore(client *redisclient.Client) *OTPStore { return &OTPStore{client: client} }
 
 func (store *OTPStore) Put(ctx context.Context, purpose, email, code string, ttl time.Duration) error {
-	return store.client.Set(ctx, key(purpose, email), code, ttl).Err()
+	return store.client.Set(
+		ctx,
+		key(purpose, email),
+		code,
+		ttl,
+	).Err()
 }
 
 func (store *OTPStore) Consume(ctx context.Context, purpose, email, code string) error {
-	result, err := consumeScript.Run(ctx, store.client, []string{key(purpose, email)}, code).Int()
+	result, err := consumeScript.Run(
+		ctx,
+		store.client,
+		[]string{key(purpose, email)},
+		code,
+	).Int()
 	if err != nil || result != 1 {
 		return fmt.Errorf("otp was not accepted")
 	}

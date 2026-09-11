@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 )
 
@@ -21,7 +22,12 @@ func TestAuthSessionResponseVerificationState(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			payload := authSessionResponse(account, "access", "refresh", !test.verified, test.verified)
+			payload := authSessionResponse(
+				account,
+				application.SessionTokens{AccessToken: "access", RefreshToken: "refresh"},
+				!test.verified,
+				test.verified,
+			)
 			encoded, err := json.Marshal(payload)
 			if err != nil {
 				t.Fatalf("marshal session response: %v", err)

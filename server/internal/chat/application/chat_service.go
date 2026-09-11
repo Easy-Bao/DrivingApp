@@ -52,7 +52,10 @@ func (service *ChatService) WithLogger(logger *slog.Logger) *ChatService {
 	return service
 }
 func (service *ChatService) Relay(ctx context.Context, message domain.Message) error {
-	if !validRoomID(message.RoomID) || !validParticipantID(message.SenderID) || len(message.Body) == 0 || len(message.Body) > maxMessageBytes {
+	invalidRoomID := !validRoomID(message.RoomID)
+	invalidSenderID := !validParticipantID(message.SenderID)
+	invalidMessageLength := len(message.Body) == 0 || len(message.Body) > maxMessageBytes
+	if invalidRoomID || invalidSenderID || invalidMessageLength {
 		return domain.ErrInvalidMessage
 	}
 	if service.history == nil {
@@ -144,10 +147,19 @@ func (service *ChatService) OpenRideRoom(ctx context.Context, rideID, actorID st
 		}
 		return nil
 	}
-	return service.history.CreateRoom(ctx, rideID, rideAssignment.PassengerID, rideAssignment.DriverID)
+	return service.history.CreateRoom(
+		ctx,
+		rideID,
+		rideAssignment.PassengerID,
+		rideAssignment.DriverID,
+	)
 }
 
-func (service *ChatService) communicationAssignment(ctx context.Context, rideID, actorID string) (assignmentdomain.Assignment, error) {
+func (service *ChatService) communicationAssignment(
+	ctx context.Context,
+	rideID string,
+	actorID string,
+) (assignmentdomain.Assignment, error) {
 	if service.assignments == nil {
 		return assignmentdomain.Assignment{}, domain.ErrRoomUnavailable
 	}
@@ -156,8 +168,9 @@ func (service *ChatService) communicationAssignment(ctx context.Context, rideID,
 		service.logger.WarnContext(ctx, "load ride assignment for chat authorization failed", "error", err)
 		return assignmentdomain.Assignment{}, domain.ErrRoomUnavailable
 	}
-	if !found || !rideAssignment.AllowsCommunication() ||
-		(actorID != rideAssignment.PassengerID && actorID != rideAssignment.DriverID) {
+	communicationNotAllowed := !rideAssignment.AllowsCommunication()
+	actorIsNotParticipant := actorID != rideAssignment.PassengerID && actorID != rideAssignment.DriverID
+	if !found || communicationNotAllowed || actorIsNotParticipant {
 		return assignmentdomain.Assignment{}, domain.ErrForbidden
 	}
 	return rideAssignment, nil
@@ -184,7 +197,9 @@ func (service *ChatService) Resolve(ctx context.Context, roomID string) error {
 }
 
 func (service *ChatService) CanAccessRoom(ctx context.Context, roomID, userID string) (bool, error) {
-	if !validRoomID(roomID) || !validParticipantID(userID) || service.history == nil {
+	invalidRoomID := !validRoomID(roomID)
+	invalidUserID := !validParticipantID(userID)
+	if invalidRoomID || invalidUserID || service.history == nil {
 		return false, nil
 	}
 	if _, err := service.communicationAssignment(ctx, roomID, userID); err != nil {

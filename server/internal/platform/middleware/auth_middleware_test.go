@@ -68,13 +68,17 @@ func TestRequireAuthStoresNumericPrincipalAndRoleGateRejectsWrongRole(t *testing
 		t.Fatal(err)
 	}
 
-	protected := RequireAuth(manager)(RequireRole(security.RolePassenger)(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		principal, ok := PrincipalFromRequest(request)
-		if !ok || principal.UserID != 17 {
-			t.Fatalf("principal = %#v, ok = %v", principal, ok)
-		}
-		writer.WriteHeader(http.StatusNoContent)
-	})))
+	protected := RequireAuth(manager)(
+		RequireRole(security.RolePassenger)(
+			http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+				principal, ok := PrincipalFromRequest(request)
+				if !ok || principal.UserID != 17 {
+					t.Fatalf("principal = %#v, ok = %v", principal, ok)
+				}
+				writer.WriteHeader(http.StatusNoContent)
+			}),
+		),
+	)
 	request := httptest.NewRequest(http.MethodGet, "/", nil)
 	request.Header.Set("Authorization", "Bearer "+driverToken)
 	response := httptest.NewRecorder()

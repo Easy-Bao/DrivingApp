@@ -58,7 +58,7 @@ func (resolver *Resolver) ForRide(ctx context.Context, rideID string) (assignmen
 
 func (resolver *Resolver) ForDriver(ctx context.Context, driverID string) ([]assignmentdomain.Assignment, error) {
 	if resolver == nil {
-		return nil, nil
+		return []assignmentdomain.Assignment{}, nil
 	}
 	if err := contextError(ctx); err != nil {
 		return nil, err
@@ -85,7 +85,7 @@ func (resolver *Resolver) ForDriver(ctx context.Context, driverID string) ([]ass
 		}
 		return assignments, err
 	}
-	return nil, nil
+	return []assignmentdomain.Assignment{}, nil
 }
 
 func (resolver *Resolver) remember(driverID string, assignments []assignmentdomain.Assignment) {

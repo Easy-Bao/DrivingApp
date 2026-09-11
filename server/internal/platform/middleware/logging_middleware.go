@@ -33,8 +33,9 @@ func Logging(logger *slog.Logger) func(http.Handler) http.Handler {
 				"user_agent", request.UserAgent(),
 				"duration_ms", time.Since(startedAt).Milliseconds(),
 			)
-			if status == http.StatusUnauthorized || status == http.StatusForbidden ||
-				status == http.StatusTooManyRequests {
+			isSecurityStatus := status == http.StatusUnauthorized ||
+				status == http.StatusForbidden || status == http.StatusTooManyRequests
+			if isSecurityStatus {
 				logger.WarnContext(request.Context(),
 					"security event",
 					"event", securityEvent(status),

@@ -90,7 +90,8 @@ func requiredPortEnv(key string) (string, error) {
 		return "", fmt.Errorf("%s is required", key)
 	}
 	port, err := strconv.Atoi(value)
-	if err != nil || port < 1 || port > 65535 {
+	invalidPort := err != nil || port < 1 || port > 65535
+	if invalidPort {
 		return "", fmt.Errorf("%s must be between 1 and 65535", key)
 	}
 	return value, nil

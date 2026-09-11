@@ -37,10 +37,13 @@ func (repository *RideRepository) SettleCash(ctx context.Context, rideID, driver
 	}()
 
 	transactionQueries := repository.queries.WithTx(transaction)
-	rideItem, err := transactionQueries.LockCompletedRideForCashSettlement(ctx, databasepostgres.LockCompletedRideForCashSettlementParams{
-		ID:       dbRideID,
-		DriverID: pgtype.Int4{Int32: dbDriverID, Valid: true},
-	})
+	rideItem, err := transactionQueries.LockCompletedRideForCashSettlement(
+		ctx,
+		databasepostgres.LockCompletedRideForCashSettlementParams{
+			ID:       dbRideID,
+			DriverID: pgtype.Int4{Int32: dbDriverID, Valid: true},
+		},
+	)
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("find completed ride: %w", err)
 	}
@@ -160,14 +163,19 @@ func (repository *RideRepository) ensureNativeRideSettlement(
 		return databasepostgres.RideSettlement{}, domain.SettlementSnapshot{}, domain.ErrInvalidSettlement
 	}
 	if !settlementRecord.CommissionBps.Valid && settlementRecord.PaymentStatus != "paid" {
-		settlementRecord, err = queries.UpdateRideSettlementEconomics(ctx, databasepostgres.UpdateRideSettlementEconomicsParams{
-			CommissionBps:        pgtype.Int8{Int64: settlement.CommissionBPS, Valid: true},
-			CommissionCentavos:   settlement.CommissionCentavos,
-			DriverPayoutCentavos: settlement.DriverPayoutCentavos,
-			SettlementID:         settlementRecord.ID,
-		})
+		settlementRecord, err = queries.UpdateRideSettlementEconomics(
+			ctx,
+			databasepostgres.UpdateRideSettlementEconomicsParams{
+				CommissionBps:        pgtype.Int8{Int64: settlement.CommissionBPS, Valid: true},
+				CommissionCentavos:   settlement.CommissionCentavos,
+				DriverPayoutCentavos: settlement.DriverPayoutCentavos,
+				SettlementID:         settlementRecord.ID,
+			},
+		)
 		if err != nil {
-			return databasepostgres.RideSettlement{}, domain.SettlementSnapshot{}, fmt.Errorf("repair ride settlement economics: %w", err)
+			return databasepostgres.RideSettlement{},
+				domain.SettlementSnapshot{},
+				fmt.Errorf("repair ride settlement economics: %w", err)
 		}
 	}
 	return settlementRecord, settlement, nil

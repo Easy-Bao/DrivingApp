@@ -42,7 +42,12 @@ func (repository *avatarRepository) Save(_ context.Context, profile domain.Profi
 	return profile, nil
 }
 
-func (repository *avatarRepository) SaveAvatar(_ context.Context, _ int, content []byte, contentType string) (domain.Profile, error) {
+func (repository *avatarRepository) SaveAvatar(
+	_ context.Context,
+	_ int,
+	content []byte,
+	contentType string,
+) (domain.Profile, error) {
 	repository.savedContent = append([]byte(nil), content...)
 	repository.savedMimeType = contentType
 	repository.avatar = domain.Avatar{Bytes: append([]byte(nil), content...), ContentType: contentType}
@@ -176,7 +181,13 @@ func TestProfileUpdateUsesAuthenticatedIdentityAndPersistsAddress(t *testing.T) 
 	request := httptest.NewRequest(
 		http.MethodPatch,
 		"/api/v1/users/me",
-		strings.NewReader(`{"name":"After","phone":"+639170000001","email":"after@example.test","address":"Home","gender":"Male"}`),
+		strings.NewReader(`{
+            "name":"After",
+            "phone":"+639170000001",
+            "email":"after@example.test",
+            "address":"Home",
+            "gender":"Male"
+        }`),
 	)
 	request.Header.Set("Authorization", "Bearer "+token)
 	response := httptest.NewRecorder()
@@ -229,7 +240,13 @@ func TestDriverProfileUpdatePersistsAccountAndVehicleFields(t *testing.T) {
 	request := httptest.NewRequest(
 		http.MethodPatch,
 		"/api/v1/users/me",
-		strings.NewReader(`{"name":"After","phone":"+639170000001","email":"after@example.test","vehicle_type":"Sedan","plate_number":"ABC-1234"}`),
+		strings.NewReader(`{
+            "name":"After",
+            "phone":"+639170000001",
+            "email":"after@example.test",
+            "vehicle_type":"Sedan",
+            "plate_number":"ABC-1234"
+        }`),
 	)
 	request.Header.Set("Authorization", "Bearer "+token)
 	response := httptest.NewRecorder()
@@ -325,7 +342,15 @@ func TestProfileAvatarUploadAndReadUseAuthenticatedRoutes(t *testing.T) {
 	request.Header.Set("Authorization", "Bearer "+token)
 	response = httptest.NewRecorder()
 	router.ServeHTTP(response, request)
-	if response.Code != http.StatusOK || response.Header().Get("Content-Type") != "image/png" || !bytes.Equal(response.Body.Bytes(), avatarBytes) {
-		t.Fatalf("read response = status %d, type %q, body %x", response.Code, response.Header().Get("Content-Type"), response.Body.Bytes())
+	invalidStatus := response.Code != http.StatusOK
+	invalidContentType := response.Header().Get("Content-Type") != "image/png"
+	invalidBody := !bytes.Equal(response.Body.Bytes(), avatarBytes)
+	if invalidStatus || invalidContentType || invalidBody {
+		t.Fatalf(
+			"read response = status %d, type %q, body %x",
+			response.Code,
+			response.Header().Get("Content-Type"),
+			response.Body.Bytes(),
+		)
 	}
 }

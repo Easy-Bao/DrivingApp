@@ -10,7 +10,9 @@ type SettlementSnapshot struct {
 }
 
 func NewSettlementSnapshot(fareCentavos, commissionBPS int64) (SettlementSnapshot, error) {
-	if fareCentavos <= 0 || commissionBPS < 0 || commissionBPS > 10_000 {
+	invalidFare := fareCentavos <= 0
+	invalidCommission := commissionBPS < 0 || commissionBPS > 10_000
+	if invalidFare || invalidCommission {
 		return SettlementSnapshot{}, ErrInvalidSettlement
 	}
 	if commissionBPS != 0 && fareCentavos > math.MaxInt64/commissionBPS {

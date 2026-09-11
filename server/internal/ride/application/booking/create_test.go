@@ -26,7 +26,15 @@ func TestServiceCreateWithDetailsUsesAuthoritativeMetrics(t *testing.T) {
 	var published event.Type
 	service := booking.NewService(booking.Dependencies{
 		Writer: writer,
-		ResolveRoute: func(context.Context, float64, float64, float64, float64, float64, float64) (ports.RouteMetrics, error) {
+		ResolveRoute: func(
+			context.Context,
+			float64,
+			float64,
+			float64,
+			float64,
+			float64,
+			float64,
+		) (ports.RouteMetrics, error) {
 			return ports.RouteMetrics{DistanceKm: 4, DurationMinutes: 20}, nil
 		},
 		CalculateFare: func(distanceKm, durationMinutes float64) int64 {
@@ -62,12 +70,29 @@ func TestServiceEstimateFareValidatesRouteInputs(t *testing.T) {
 	service := booking.NewService(booking.Dependencies{
 		CalculateFare:    func(float64, float64) int64 { return 2500 },
 		HasRouteProvider: true,
-		ResolveRoute: func(context.Context, float64, float64, float64, float64, float64, float64) (ports.RouteMetrics, error) {
+		ResolveRoute: func(
+			context.Context,
+			float64,
+			float64,
+			float64,
+			float64,
+			float64,
+			float64,
+		) (ports.RouteMetrics, error) {
 			return ports.RouteMetrics{DistanceKm: 2, DurationMinutes: 10}, nil
 		},
 	})
 
-	if _, _, err := service.EstimateFare(context.Background(), nil, floatPointer(1), floatPointer(2), floatPointer(3), 0, 0); !errors.Is(err, domain.ErrInvalidTrip) {
+	_, _, err := service.EstimateFare(
+		context.Background(),
+		nil,
+		floatPointer(1),
+		floatPointer(2),
+		floatPointer(3),
+		0,
+		0,
+	)
+	if !errors.Is(err, domain.ErrInvalidTrip) {
 		t.Fatalf("missing route coordinate error = %v, want invalid trip", err)
 	}
 	metrics, fare, err := service.EstimateFare(

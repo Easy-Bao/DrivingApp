@@ -29,8 +29,8 @@ import (
 	trackingapplication "github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/application"
 	trackinghttp "github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/transport/http"
 	locationhttp "github.com/Easy-Bao/DrivingApp/server/internal/location/transport/http"
-	passengerridecontextapplication "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/application"
 	passengerridecontextadapter "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/adapter"
+	passengerridecontextapplication "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/application"
 	passengerridecontexthttp "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	eventadapter "github.com/Easy-Bao/DrivingApp/server/internal/platform/events/adapter"
@@ -54,24 +54,42 @@ type rideRuntimeStore interface {
 	ActiveRidesForDriver(context.Context, int) ([]ridedomain.Ride, error)
 }
 
-func newHTTPRouter(
-	config Config,
-	postgresPool *pgxpool.Pool,
-	redisClient *redisclient.Client,
-	applicationLogger *slog.Logger,
-	authStore authports.VerifiedUserStore,
-	sessionStore authports.SessionStore,
-	rideStore rideRuntimeStore,
-	profileStore userports.ProfileStore,
-	statsReader adminports.StatsReader,
-	documentStore documentports.DocumentStore,
-	privateObjectStore platformstorage.ObjectStore,
-) (*chi.Mux, *websockethub.Hub) {
+type httpRouterDependencies struct {
+	config             Config
+	postgresPool       *pgxpool.Pool
+	redisClient        *redisclient.Client
+	applicationLogger  *slog.Logger
+	authStore          authports.VerifiedUserStore
+	sessionStore       authports.SessionStore
+	rideStore          rideRuntimeStore
+	profileStore       userports.ProfileStore
+	statsReader        adminports.StatsReader
+	documentStore      documentports.DocumentStore
+	privateObjectStore platformstorage.ObjectStore
+}
+
+func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub.Hub) {
+	config := dependencies.config
+	postgresPool := dependencies.postgresPool
+	redisClient := dependencies.redisClient
+	applicationLogger := dependencies.applicationLogger
+	authStore := dependencies.authStore
+	sessionStore := dependencies.sessionStore
+	rideStore := dependencies.rideStore
+	profileStore := dependencies.profileStore
+	statsReader := dependencies.statsReader
+	documentStore := dependencies.documentStore
+	privateObjectStore := dependencies.privateObjectStore
+
 	verifier := security.NewTokenManager(config.JWTSecret)
 	adminAuthorizer := security.NewAdminAuthorizer(config.AdminUserIDs)
 
 	registerService := authapplication.NewRegisterService(authStore, verifier, sessionStore)
-	authenticateService := authapplication.NewAuthenticateService(authStore, verifier, sessionStore).WithLogger(applicationLogger)
+	authenticateService := authapplication.NewAuthenticateService(
+		authStore,
+		verifier,
+		sessionStore,
+	).WithLogger(applicationLogger)
 	otpService := authapplication.NewOTPServiceWithPending(
 		authStore,
 		authredis.NewOTPStore(redisClient),
@@ -95,13 +113,26 @@ func newHTTPRouter(
 	)
 
 	mapboxProvider := mapbox.NewMapboxProvider(config.MapboxAccessToken)
-	routeCalculator := rideapplication.RouteCalculatorFunc(func(ctx context.Context, originLat, originLng, destinationLat, destinationLng float64) (rideapplication.RouteMetrics, error) {
-		route, err := mapboxProvider.Route(ctx, locationdomain.Coordinates{Latitude: originLat, Longitude: originLng}, locationdomain.Coordinates{Latitude: destinationLat, Longitude: destinationLng}, locationdomain.RouteOptions{})
-		if err != nil {
-			return rideapplication.RouteMetrics{}, err
-		}
-		return rideapplication.RouteMetrics{DistanceKm: route.DistanceKm, DurationMinutes: route.DurationMin}, nil
-	})
+	routeCalculator := rideapplication.RouteCalculatorFunc(
+		func(
+			ctx context.Context,
+			originLat float64,
+			originLng float64,
+			destinationLat float64,
+			destinationLng float64,
+		) (rideapplication.RouteMetrics, error) {
+			route, err := mapboxProvider.Route(
+				ctx,
+				locationdomain.Coordinates{Latitude: originLat, Longitude: originLng},
+				locationdomain.Coordinates{Latitude: destinationLat, Longitude: destinationLng},
+				locationdomain.RouteOptions{},
+			)
+			if err != nil {
+				return rideapplication.RouteMetrics{}, err
+			}
+			return rideapplication.RouteMetrics{DistanceKm: route.DistanceKm, DurationMinutes: route.DurationMin}, nil
+		},
+	)
 	eventHub := websockethub.NewHub()
 	assignmentProjection := assignmentadapter.NewMemoryProjection()
 	eventPublisher := eventadapter.NewMemoryPublisher(assignmentProjection, eventHub)

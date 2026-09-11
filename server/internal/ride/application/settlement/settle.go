@@ -46,15 +46,30 @@ func (service *Service) SettleCash(ctx context.Context, rideID, driverID int) (d
 	if err != nil {
 		return domain.Ride{}, err
 	}
-	service.publish(ctx, event.RideStatusChanged, ride, map[string]any{
-		"ride":           ride,
-		"payment_status": ride.PaymentStatus,
-	})
+	service.publish(
+		ctx,
+		event.RideStatusChanged,
+		ride,
+		map[string]any{
+			"ride":           ride,
+			"payment_status": ride.PaymentStatus,
+		},
+	)
 	return ride, nil
 }
 
-func (service *Service) publish(ctx context.Context, eventType event.Type, ride domain.Ride, payload map[string]any) {
+func (service *Service) publish(
+	ctx context.Context,
+	eventType event.Type,
+	ride domain.Ride,
+	payload map[string]any,
+) {
 	if service.publishRide != nil {
-		service.publishRide(ctx, eventType, ride, payload)
+		service.publishRide(
+			ctx,
+			eventType,
+			ride,
+			payload,
+		)
 	}
 }

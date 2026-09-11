@@ -31,7 +31,8 @@ func (handler *Handler) Nearby(writer http.ResponseWriter, request *http.Request
 	page := 1
 	if rawPage := request.URL.Query().Get("page"); rawPage != "" {
 		page, err = strconv.Atoi(rawPage)
-		if err != nil || page < 1 || page > 100 {
+		invalidPage := err != nil || page < 1 || page > 100
+		if invalidPage {
 			response.Error(writer, http.StatusBadRequest, "invalid page")
 			return
 		}
@@ -50,7 +51,8 @@ func (handler *Handler) Search(writer http.ResponseWriter, request *http.Request
 	if query == "" {
 		query = request.URL.Query().Get("query")
 	}
-	if err != nil || !hasCoordinates(request) || !coordinates.Valid() {
+	invalidQuery := err != nil || !hasCoordinates(request) || !coordinates.Valid()
+	if invalidQuery {
 		response.Error(writer, http.StatusBadRequest, "invalid location coordinates")
 		return
 	}
@@ -87,7 +89,12 @@ func (handler *Handler) Route(writer http.ResponseWriter, request *http.Request)
 		response.Error(writer, http.StatusBadRequest, "invalid route options")
 		return
 	}
-	route, err := handler.service.Route(request.Context(), payload.Origin, payload.Destination, options)
+	route, err := handler.service.Route(
+		request.Context(),
+		payload.Origin,
+		payload.Destination,
+		options,
+	)
 	if err != nil {
 		writeServiceError(writer, err)
 		return

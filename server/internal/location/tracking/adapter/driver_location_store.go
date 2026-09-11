@@ -83,7 +83,12 @@ func (repository *DriverLocationStore) Remove(ctx context.Context, driverID stri
 	})
 	return err
 }
-func (repository *DriverLocationStore) Nearby(ctx context.Context, latitude, longitude, radiusKm float64) ([]domain.DriverPoint, error) {
+func (repository *DriverLocationStore) Nearby(
+	ctx context.Context,
+	latitude float64,
+	longitude float64,
+	radiusKm float64,
+) ([]domain.DriverPoint, error) {
 	// GEO members do not support individual TTLs. Sweep the companion expiry
 	// index before searching so expired payloads cannot consume result slots.
 	if err := repository.cleanupExpiredDrivers(ctx); err != nil {
@@ -169,12 +174,21 @@ func (repository *DriverLocationStore) Get(ctx context.Context, driverID string)
 	return repository.get(ctx, driverLocationKey(driverID))
 }
 
-func (repository *DriverLocationStore) UpsertPassenger(ctx context.Context, rideID string, point domain.DriverPoint) error {
+func (repository *DriverLocationStore) UpsertPassenger(
+	ctx context.Context,
+	rideID string,
+	point domain.DriverPoint,
+) error {
 	payload, err := jsonv2.Marshal(point)
 	if err != nil {
 		return err
 	}
-	return repository.client.Set(ctx, "passenger:location:"+rideID, payload, passengerLocationTTL).Err()
+	return repository.client.Set(
+		ctx,
+		"passenger:location:"+rideID,
+		payload,
+		passengerLocationTTL,
+	).Err()
 }
 
 func (repository *DriverLocationStore) GetPassenger(ctx context.Context, rideID string) (domain.DriverPoint, error) {

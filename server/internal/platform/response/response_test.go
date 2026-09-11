@@ -23,7 +23,11 @@ func TestErrorUsesProblemContractAndKeepsLegacyMessageFields(t *testing.T) {
 	if err := json.Unmarshal(writer.Body.Bytes(), &problem); err != nil {
 		t.Fatalf("decode problem: %v", err)
 	}
-	if problem.Status != http.StatusForbidden || problem.Code != "forbidden" || problem.Error != "ride access denied" || problem.Message != "ride access denied" {
+	invalidStatus := problem.Status != http.StatusForbidden
+	invalidCode := problem.Code != "forbidden"
+	invalidError := problem.Error != "ride access denied"
+	invalidMessage := problem.Message != "ride access denied"
+	if invalidStatus || invalidCode || invalidError || invalidMessage {
 		t.Fatalf("problem = %#v", problem)
 	}
 }

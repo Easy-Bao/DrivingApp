@@ -19,7 +19,11 @@ type AuthenticateService struct {
 	logger     *slog.Logger
 }
 
-func NewAuthenticateService(repository authports.UserStore, tokens authports.TokenIssuer, sessions authports.SessionStore) *AuthenticateService {
+func NewAuthenticateService(
+	repository authports.UserStore,
+	tokens authports.TokenIssuer,
+	sessions authports.SessionStore,
+) *AuthenticateService {
 	return &AuthenticateService{
 		repository: repository,
 		tokens:     tokens,
@@ -40,20 +44,39 @@ func (service *AuthenticateService) Execute(ctx context.Context, email, password
 	return account, tokens.AccessToken, err
 }
 
-func (service *AuthenticateService) ExecuteAs(ctx context.Context, email, password string, role domain.Role) (domain.User, string, error) {
+func (service *AuthenticateService) ExecuteAs(
+	ctx context.Context,
+	email string,
+	password string,
+	role domain.Role,
+) (domain.User, string, error) {
 	account, tokens, err := service.execute(ctx, email, password, role)
 	return account, tokens.AccessToken, err
 }
 
-func (service *AuthenticateService) ExecuteSession(ctx context.Context, email, password string) (domain.User, SessionTokens, error) {
+func (service *AuthenticateService) ExecuteSession(
+	ctx context.Context,
+	email string,
+	password string,
+) (domain.User, SessionTokens, error) {
 	return service.execute(ctx, email, password, "")
 }
 
-func (service *AuthenticateService) ExecuteSessionAs(ctx context.Context, email, password string, role domain.Role) (domain.User, SessionTokens, error) {
+func (service *AuthenticateService) ExecuteSessionAs(
+	ctx context.Context,
+	email string,
+	password string,
+	role domain.Role,
+) (domain.User, SessionTokens, error) {
 	return service.execute(ctx, email, password, role)
 }
 
-func (service *AuthenticateService) execute(ctx context.Context, email, password string, role domain.Role) (domain.User, SessionTokens, error) {
+func (service *AuthenticateService) execute(
+	ctx context.Context,
+	email string,
+	password string,
+	role domain.Role,
+) (domain.User, SessionTokens, error) {
 	email = strings.ToLower(strings.TrimSpace(email))
 	account, err := service.repository.FindByEmail(ctx, email)
 	if err != nil || !VerifyPassword(account.PasswordHash, password) {
@@ -70,7 +93,13 @@ func (service *AuthenticateService) execute(ctx context.Context, email, password
 			service.logger.WarnContext(ctx, "persist upgraded password hash failed", "error", err)
 		}
 	}
-	tokens, err := issueSessionTokens(ctx, service.sessions, service.tokens, strconv.Itoa(account.ID), account.Role)
+	tokens, err := issueSessionTokens(
+		ctx,
+		service.sessions,
+		service.tokens,
+		strconv.Itoa(account.ID),
+		account.Role,
+	)
 	return account, tokens, err
 }
 
@@ -106,7 +135,12 @@ func (service *AuthenticateService) Refresh(ctx context.Context, rawToken string
 	if err != nil {
 		return SessionTokens{}, err
 	}
-	if err := service.sessions.Rotate(ctx, current.TokenHash, replacement, now); err != nil {
+	if err := service.sessions.Rotate(
+		ctx,
+		current.TokenHash,
+		replacement,
+		now,
+	); err != nil {
 		if errors.Is(err, domain.ErrInvalidRefreshToken) {
 			return SessionTokens{}, domain.ErrInvalidRefreshToken
 		}

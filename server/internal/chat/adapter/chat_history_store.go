@@ -3,7 +3,6 @@ package adapter
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/chat/domain"
@@ -56,7 +55,14 @@ func (repository *ChatHistoryStore) Append(ctx context.Context, message domain.M
 	if message.CreatedAt == "" {
 		message.CreatedAt = time.Now().UTC().Format(time.RFC3339Nano)
 	}
-	payload, err := json.Marshal(map[string]string{"text": message.Body, "message": message.Body, "sender_id": message.SenderID, "senderId": message.SenderID, "created_at": message.CreatedAt, "createdAt": message.CreatedAt})
+	payload, err := json.Marshal(map[string]string{
+		"text":       message.Body,
+		"message":    message.Body,
+		"sender_id":  message.SenderID,
+		"senderId":   message.SenderID,
+		"created_at": message.CreatedAt,
+		"createdAt":  message.CreatedAt,
+	})
 	if err != nil {
 		return err
 	}
@@ -103,7 +109,12 @@ func (repository *ChatHistoryStore) Messages(ctx context.Context, roomID string)
 		if body == "" {
 			body = value.Message
 		}
-		result = append(result, domain.Message{RoomID: roomID, SenderID: value.SenderID, Body: body, CreatedAt: value.CreatedAt})
+		result = append(result, domain.Message{
+			RoomID:    roomID,
+			SenderID:  value.SenderID,
+			Body:      body,
+			CreatedAt: value.CreatedAt,
+		})
 	}
 	return result, nil
 }
@@ -140,5 +151,5 @@ func (repository *ChatHistoryStore) RoomParticipants(ctx context.Context, roomID
 	return fields["passenger_id"], fields["driver_id"], nil
 }
 
-func roomKey(roomID string) string     { return fmt.Sprintf("chat:room:%s", roomID) }
-func messagesKey(roomID string) string { return fmt.Sprintf("chat:room:%s:messages", roomID) }
+func roomKey(roomID string) string     { return "chat:room:" + roomID }
+func messagesKey(roomID string) string { return "chat:room:" + roomID + ":messages" }

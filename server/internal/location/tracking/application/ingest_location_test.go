@@ -60,10 +60,18 @@ func (stub *locationEventPublisherStub) Publish(_ context.Context, envelope even
 
 func TestIngestRejectsInvalidCoordinates(t *testing.T) {
 	service := NewLocationTrackingService(&locationRepositoryStub{})
-	if err := service.Ingest(context.Background(), domain.DriverPoint{DriverID: "7", Latitude: 91, Longitude: 122}); err == nil {
+	invalidLatitudeErr := service.Ingest(
+		context.Background(),
+		domain.DriverPoint{DriverID: "7", Latitude: 91, Longitude: 122},
+	)
+	if invalidLatitudeErr == nil {
 		t.Fatal("expected invalid latitude to be rejected")
 	}
-	if err := service.Ingest(context.Background(), domain.DriverPoint{DriverID: "7", Latitude: 6.7, Longitude: 181}); err == nil {
+	invalidLongitudeErr := service.Ingest(
+		context.Background(),
+		domain.DriverPoint{DriverID: "7", Latitude: 6.7, Longitude: 181},
+	)
+	if invalidLongitudeErr == nil {
 		t.Fatal("expected invalid longitude to be rejected")
 	}
 }
@@ -102,11 +110,22 @@ func TestIngestPublishesAnActiveRideLocationToBothParticipants(t *testing.T) {
 	publisher := &locationEventPublisherStub{}
 	service := NewLocationTrackingService(
 		repository,
-		WithRideAssignments(assignmentLookupStub{assignments: []assignment.Assignment{{RideID: "ride-7", DriverID: "driver-1", PassengerID: "passenger-2", Status: "assigned"}}}),
+		WithRideAssignments(assignmentLookupStub{
+			assignments: []assignment.Assignment{{
+				RideID:      "ride-7",
+				DriverID:    "driver-1",
+				PassengerID: "passenger-2",
+				Status:      "assigned",
+			}},
+		}),
 		WithEventPublisher(publisher),
 	)
 
-	if err := service.Ingest(context.Background(), domain.DriverPoint{DriverID: "driver-1", Latitude: 6.7, Longitude: 122.1}); err != nil {
+	err := service.Ingest(
+		context.Background(),
+		domain.DriverPoint{DriverID: "driver-1", Latitude: 6.7, Longitude: 122.1},
+	)
+	if err != nil {
 		t.Fatalf("Ingest() error = %v", err)
 	}
 	if len(publisher.envelopes) != 1 {
@@ -116,7 +135,10 @@ func TestIngestPublishesAnActiveRideLocationToBothParticipants(t *testing.T) {
 	if published.Type != event.DriverLocationUpdated {
 		t.Fatalf("event type = %q", published.Type)
 	}
-	if published.Scope.RideID != "ride-7" || published.Scope.DriverID != "driver-1" || published.Scope.PassengerID != "passenger-2" {
+	invalidRideID := published.Scope.RideID != "ride-7"
+	invalidDriverID := published.Scope.DriverID != "driver-1"
+	invalidPassengerID := published.Scope.PassengerID != "passenger-2"
+	if invalidRideID || invalidDriverID || invalidPassengerID {
 		t.Fatalf("event scope = %#v", published.Scope)
 	}
 }
@@ -124,10 +146,22 @@ func TestIngestPublishesAnActiveRideLocationToBothParticipants(t *testing.T) {
 func TestPassengerLocationRequiresTheRidePassenger(t *testing.T) {
 	service := NewLocationTrackingService(
 		&locationRepositoryStub{},
-		WithRideAssignments(assignmentLookupStub{assignments: []assignment.Assignment{{RideID: "ride-7", DriverID: "driver-1", PassengerID: "passenger-2", Status: "assigned"}}}),
+		WithRideAssignments(assignmentLookupStub{
+			assignments: []assignment.Assignment{{
+				RideID:      "ride-7",
+				DriverID:    "driver-1",
+				PassengerID: "passenger-2",
+				Status:      "assigned",
+			}},
+		}),
 	)
 
-	err := service.UpdatePassenger(context.Background(), "ride-7", "passenger-3", domain.DriverPoint{Latitude: 6.7, Longitude: 122.1})
+	err := service.UpdatePassenger(
+		context.Background(),
+		"ride-7",
+		"passenger-3",
+		domain.DriverPoint{Latitude: 6.7, Longitude: 122.1},
+	)
 	if !errors.Is(err, domain.ErrRideAccessDenied) {
 		t.Fatalf("UpdatePassenger() error = %v, want access denied", err)
 	}

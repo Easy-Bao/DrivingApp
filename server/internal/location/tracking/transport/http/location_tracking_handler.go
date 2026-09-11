@@ -57,7 +57,10 @@ func (handler *Handler) UpdateDriverLocation(writer http.ResponseWriter, request
 func (handler *Handler) GetDriverLocation(writer http.ResponseWriter, request *http.Request) {
 	driverID := chi.URLParam(request, "driverID")
 	identity, ok := handler.identity(request)
-	if !ok || identity.Role != "driver" || identity.Subject != driverID {
+	invalidIdentity := !ok
+	wrongRole := identity.Role != "driver"
+	wrongDriver := identity.Subject != driverID
+	if invalidIdentity || wrongRole || wrongDriver {
 		response.Error(writer, http.StatusForbidden, "forbidden")
 		return
 	}
@@ -120,7 +123,12 @@ func (handler *Handler) UpdatePassengerLocation(writer http.ResponseWriter, requ
 		return
 	}
 	point := domain.DriverPoint{Latitude: input.Latitude, Longitude: input.Longitude}
-	if err := handler.service.UpdatePassenger(request.Context(), chi.URLParam(request, "rideID"), identity.Subject, point); err != nil {
+	if err := handler.service.UpdatePassenger(
+		request.Context(),
+		chi.URLParam(request, "rideID"),
+		identity.Subject,
+		point,
+	); err != nil {
 		writeRideLocationError(writer, err)
 		return
 	}
@@ -137,7 +145,11 @@ func (handler *Handler) GetPassengerLocation(writer http.ResponseWriter, request
 		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	point, err := handler.service.GetPassengerForDriver(request.Context(), chi.URLParam(request, "rideID"), identity.Subject)
+	point, err := handler.service.GetPassengerForDriver(
+		request.Context(),
+		chi.URLParam(request, "rideID"),
+		identity.Subject,
+	)
 	if err != nil {
 		writeRideLocationError(writer, err)
 		return

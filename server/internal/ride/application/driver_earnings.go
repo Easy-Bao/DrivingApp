@@ -6,7 +6,11 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 )
 
-func summarizeDriverEarnings(entries []domain.DriverEarning, now time.Time, location *time.Location) domain.DriverEarningsSummary {
+func summarizeDriverEarnings(
+	entries []domain.DriverEarning,
+	now time.Time,
+	location *time.Location,
+) domain.DriverEarningsSummary {
 	localNow := now.In(location)
 	today := time.Date(localNow.Year(), localNow.Month(), localNow.Day(), 0, 0, 0, 0, location)
 	weekStart := today.AddDate(0, 0, -(int(today.Weekday())+6)%7)

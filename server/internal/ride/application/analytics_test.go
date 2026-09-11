@@ -43,7 +43,12 @@ func (analyticsRepository) DriverTrips(context.Context, int, domain.TripHistoryQ
 func (analyticsRepository) PassengerRides(context.Context, int, domain.TripHistoryQuery) ([]domain.Ride, error) {
 	return []domain.Ride{{ID: 2}}, nil
 }
-func (analyticsRepository) PassengerActivitySummary(context.Context, int, time.Time, time.Time) (domain.PassengerActivitySummary, error) {
+func (analyticsRepository) PassengerActivitySummary(
+	context.Context,
+	int,
+	time.Time,
+	time.Time,
+) (domain.PassengerActivitySummary, error) {
 	return domain.PassengerActivitySummary{ThisWeekFareCentavos: 2817, ThisWeekCompletedRides: 1}, nil
 }
 func (analyticsRepository) DriverReviews(context.Context, int, int, int) ([]domain.Review, error) {
@@ -69,7 +74,10 @@ func (analyticsRepository) PublicDriverSummaries(context.Context, int) ([]domain
 		ID: 7, Name: "Ada Driver", VehicleType: "Motorcycle", Rating: 4.8,
 	}}, nil
 }
-func (passengerReviewRepository) CreatePassengerReview(_ context.Context, review domain.PassengerReview) (domain.PassengerReview, error) {
+func (passengerReviewRepository) CreatePassengerReview(
+	_ context.Context,
+	review domain.PassengerReview,
+) (domain.PassengerReview, error) {
 	review.ID = 1
 	return review, nil
 }
@@ -108,7 +116,11 @@ func TestPassengerReviewUseCaseValidatesRatingAndDelegates(t *testing.T) {
 	if err != nil || review.ID != 1 {
 		t.Fatalf("passenger review = %#v, %v", review, err)
 	}
-	if _, err := service.CreatePassengerReview(context.Background(), domain.PassengerReview{RideID: 9, Rating: 0}); err == nil {
+	_, err = service.CreatePassengerReview(
+		context.Background(),
+		domain.PassengerReview{RideID: 9, Rating: 0},
+	)
+	if err == nil {
 		t.Fatal("expected out-of-range passenger rating to be rejected")
 	}
 }

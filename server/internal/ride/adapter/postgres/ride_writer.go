@@ -52,7 +52,10 @@ func (repository *RideRepository) CreateBid(ctx context.Context, value domain.Bi
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.Bid{}, err
 	}
-	if value.RideID <= 0 || value.DriverID <= 0 || value.FareCentavos <= 0 {
+	invalidRideID := value.RideID <= 0
+	invalidDriverID := value.DriverID <= 0
+	invalidFare := value.FareCentavos <= 0
+	if invalidRideID || invalidDriverID || invalidFare {
 		return domain.Bid{}, domain.ErrInvalidFareOffer
 	}
 	if value.Status == "" {

@@ -75,7 +75,10 @@ func (repository *StatsRepository) Stats(ctx context.Context) (domain.Stats, err
 }
 
 func (repository *StatsRepository) validate() error {
-	if repository == nil || repository.pool == nil || repository.queries == nil {
+	if repository == nil {
+		return errors.New("postgresql stats repository is not initialized")
+	}
+	if repository.pool == nil || repository.queries == nil {
 		return errors.New("postgresql stats repository is not initialized")
 	}
 	return nil

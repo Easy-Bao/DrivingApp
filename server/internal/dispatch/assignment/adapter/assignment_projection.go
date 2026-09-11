@@ -55,14 +55,20 @@ func (projection *MemoryProjection) Publish(envelope event.Envelope) {
 	}
 }
 
-func (projection *MemoryProjection) ForRide(_ context.Context, rideID string) (assignmentdomain.Assignment, bool, error) {
+func (projection *MemoryProjection) ForRide(
+	_ context.Context,
+	rideID string,
+) (assignmentdomain.Assignment, bool, error) {
 	projection.mu.RLock()
 	defer projection.mu.RUnlock()
 	value, found := projection.byRide[rideID]
 	return value, found, nil
 }
 
-func (projection *MemoryProjection) ForDriver(_ context.Context, driverID string) ([]assignmentdomain.Assignment, error) {
+func (projection *MemoryProjection) ForDriver(
+	_ context.Context,
+	driverID string,
+) ([]assignmentdomain.Assignment, error) {
 	projection.mu.RLock()
 	defer projection.mu.RUnlock()
 
@@ -94,7 +100,10 @@ func (projection *MemoryProjection) Remember(driverID string, values []assignmen
 	}
 	delete(projection.byDriver, driverID)
 	for _, value := range values {
-		if value.RideID == "" || value.DriverID != driverID || value.PassengerID == "" {
+		missingRideID := value.RideID == ""
+		wrongDriver := value.DriverID != driverID
+		missingPassengerID := value.PassengerID == ""
+		if missingRideID || wrongDriver || missingPassengerID {
 			continue
 		}
 		projection.upsertLocked(value)
@@ -102,7 +111,10 @@ func (projection *MemoryProjection) Remember(driverID string, values []assignmen
 }
 
 func (projection *MemoryProjection) upsert(scope event.Scope, status string) {
-	if scope.RideID == "" || scope.DriverID == "" || scope.PassengerID == "" {
+	missingRideID := scope.RideID == ""
+	missingDriverID := scope.DriverID == ""
+	missingPassengerID := scope.PassengerID == ""
+	if missingRideID || missingDriverID || missingPassengerID {
 		return
 	}
 	value := assignmentdomain.Assignment{

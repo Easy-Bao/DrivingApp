@@ -34,7 +34,10 @@ func NewRideLookup(source assignmentports.RideAuthority) *RideLookup {
 	return NewRideRepositoryLookup(source)
 }
 
-func (lookup *RideRepositoryLookup) ForRide(ctx context.Context, rideID string) (assignmentdomain.Assignment, bool, error) {
+func (lookup *RideRepositoryLookup) ForRide(
+	ctx context.Context,
+	rideID string,
+) (assignmentdomain.Assignment, bool, error) {
 	if lookup == nil || lookup.repository == nil {
 		return assignmentdomain.Assignment{}, false, fmt.Errorf("ride authority is unavailable")
 	}
@@ -57,13 +60,16 @@ func isRideNotFound(err error) bool {
 	return errors.Is(err, pgx.ErrNoRows)
 }
 
-func (lookup *RideRepositoryLookup) ForDriver(ctx context.Context, driverID string) ([]assignmentdomain.Assignment, error) {
+func (lookup *RideRepositoryLookup) ForDriver(
+	ctx context.Context,
+	driverID string,
+) ([]assignmentdomain.Assignment, error) {
 	if lookup == nil || lookup.repository == nil {
 		return nil, fmt.Errorf("ride authority is unavailable")
 	}
 	id, err := parseID(driverID)
 	if err != nil {
-		return nil, nil
+		return []assignmentdomain.Assignment{}, nil
 	}
 	rides, err := lookup.repository.ActiveRidesForDriver(ctx, id)
 	if err != nil {
@@ -79,7 +85,10 @@ func (lookup *RideRepositoryLookup) ForDriver(ctx context.Context, driverID stri
 }
 
 func fromRide(ride ridedomain.Ride) (assignmentdomain.Assignment, bool) {
-	if ride.ID <= 0 || ride.PassengerID <= 0 || ride.DriverID == nil || *ride.DriverID <= 0 {
+	invalidRideID := ride.ID <= 0
+	invalidPassengerID := ride.PassengerID <= 0
+	invalidDriverID := ride.DriverID == nil || *ride.DriverID <= 0
+	if invalidRideID || invalidPassengerID || invalidDriverID {
 		return assignmentdomain.Assignment{}, false
 	}
 	value := assignmentdomain.Assignment{

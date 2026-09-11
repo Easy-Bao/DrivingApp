@@ -15,7 +15,11 @@ func TestChatErrorStatusMapsDomainFailures(t *testing.T) {
 		want int
 	}{
 		{name: "invalid room", err: domain.ErrInvalidRoom, want: http.StatusBadRequest},
-		{name: "wrapped conflict", err: errors.Join(errors.New("storage"), domain.ErrRoomConflict), want: http.StatusConflict},
+		{
+			name: "wrapped conflict",
+			err:  errors.Join(errors.New("storage"), domain.ErrRoomConflict),
+			want: http.StatusConflict,
+		},
 		{name: "locked room", err: domain.ErrRoomLocked, want: http.StatusLocked},
 		{name: "forbidden", err: domain.ErrForbidden, want: http.StatusForbidden},
 		{name: "unavailable", err: domain.ErrRoomUnavailable, want: http.StatusServiceUnavailable},

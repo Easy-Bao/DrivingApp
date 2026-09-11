@@ -33,5 +33,10 @@ func (cache *Cache) Set(ctx context.Context, key string, value any) error {
 	if err != nil {
 		return err
 	}
-	return cache.client.Set(ctx, "location:"+key, payload, cache.ttl).Err()
+	return cache.client.Set(
+		ctx,
+		"location:"+key,
+		payload,
+		cache.ttl,
+	).Err()
 }

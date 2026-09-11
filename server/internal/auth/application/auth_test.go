@@ -50,11 +50,29 @@ func (issuer) Issue(subject string) (string, error) { return "token:" + subject,
 func TestPassengerAndDriverRegistrationUseCases(t *testing.T) {
 	repository := &repository{users: map[string]domain.User{}}
 	service := application.NewRegisterService(repository, issuer{}, newTestRefreshSessionStore())
-	passenger, passengerToken, err := service.Passenger(context.Background(), application.RegisterInput{Email: "passenger@example.test", Phone: "+639171234501", Name: "Passenger", Password: "secret-8"})
+	passenger, passengerToken, err := service.Passenger(
+		context.Background(),
+		application.RegisterInput{
+			Email:    "passenger@example.test",
+			Phone:    "+639171234501",
+			Name:     "Passenger",
+			Password: "secret-8",
+		},
+	)
 	if err != nil || passenger.Role != domain.Passenger || passengerToken != "token:1" {
 		t.Fatalf("passenger registration = %#v, %q, %v", passenger, passengerToken, err)
 	}
-	driver, driverToken, err := service.Driver(context.Background(), application.RegisterInput{Email: "driver@example.test", Phone: "+639171234502", Name: "Driver", Password: "secret-8", VehicleType: "Sedan", PlateNumber: "ABC 123"})
+	driver, driverToken, err := service.Driver(
+		context.Background(),
+		application.RegisterInput{
+			Email:       "driver@example.test",
+			Phone:       "+639171234502",
+			Name:        "Driver",
+			Password:    "secret-8",
+			VehicleType: "Sedan",
+			PlateNumber: "ABC 123",
+		},
+	)
 	if err != nil || driver.Role != domain.Driver || driverToken != "token:2" {
 		t.Fatalf("driver registration = %#v, %q, %v", driver, driverToken, err)
 	}
@@ -64,15 +82,32 @@ func TestAuthenticationRejectsWrongPassword(t *testing.T) {
 	repository := &repository{users: map[string]domain.User{}}
 	sessions := newTestRefreshSessionStore()
 	register := application.NewRegisterService(repository, issuer{}, sessions)
-	_, _, _ = register.Passenger(context.Background(), application.RegisterInput{Email: "user@example.test", Phone: "+639171234503", Name: "User", Password: "secret-8"})
+	_, _, _ = register.Passenger(
+		context.Background(),
+		application.RegisterInput{
+			Email:    "user@example.test",
+			Phone:    "+639171234503",
+			Name:     "User",
+			Password: "secret-8",
+		},
+	)
 	authenticate := application.NewAuthenticateService(repository, issuer{}, sessions)
-	if _, _, err := authenticate.Execute(context.Background(), "user@example.test", "wrong"); !errors.Is(err, domain.ErrInvalidCredentials) {
+	_, _, err := authenticate.Execute(
+		context.Background(),
+		"user@example.test",
+		"wrong",
+	)
+	if !errors.Is(err, domain.ErrInvalidCredentials) {
 		t.Fatalf("expected invalid credentials, got %v", err)
 	}
 }
 
 func TestRegistrationRejectsIncompleteRoleContracts(t *testing.T) {
-	service := application.NewRegisterService(&repository{users: map[string]domain.User{}}, issuer{}, newTestRefreshSessionStore())
+	service := application.NewRegisterService(
+		&repository{users: map[string]domain.User{}},
+		issuer{},
+		newTestRefreshSessionStore(),
+	)
 
 	if _, _, err := service.Passenger(context.Background(), application.RegisterInput{
 		Email: "passenger@example.test", Name: "Passenger", Password: "secret-8",

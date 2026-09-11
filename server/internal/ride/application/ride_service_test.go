@@ -47,7 +47,13 @@ func (stub *ridesRepositoryStub) AcceptRide(context.Context, int, int) (domain.R
 	return domain.Ride{}, nil
 }
 
-func (stub *ridesRepositoryStub) UpdateStatus(_ context.Context, _ int, _ int, currentStatus, nextStatus string) (domain.Ride, error) {
+func (stub *ridesRepositoryStub) UpdateStatus(
+	_ context.Context,
+	_ int,
+	_ int,
+	currentStatus string,
+	nextStatus string,
+) (domain.Ride, error) {
 	if currentStatus != stub.ride.Status {
 		return domain.Ride{}, errors.New("stale ride")
 	}
@@ -57,7 +63,10 @@ func (stub *ridesRepositoryStub) UpdateStatus(_ context.Context, _ int, _ int, c
 	return stub.updated, nil
 }
 
-func (stub *ridesRepositoryStub) CreateSession(_ context.Context, session domain.BidSession) (domain.BidSession, error) {
+func (stub *ridesRepositoryStub) CreateSession(
+	_ context.Context,
+	session domain.BidSession,
+) (domain.BidSession, error) {
 	stub.session = session
 	return session, nil
 }
@@ -74,7 +83,12 @@ func (stub *ridesRepositoryStub) PlaceOffer(context.Context, domain.BidOffer) (d
 	return domain.BidOffer{}, nil
 }
 
-func (stub *ridesRepositoryStub) AcceptOffer(context.Context, int, int, int) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
+func (stub *ridesRepositoryStub) AcceptOffer(
+	context.Context,
+	int,
+	int,
+	int,
+) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
 	return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, nil
 }
 
@@ -131,9 +145,20 @@ func TestCreateSessionUsesServerMinimumAndAcceptsValidCustomFare(t *testing.T) {
 
 func TestCreateSessionUsesAuthoritativeRouteMetrics(t *testing.T) {
 	stub := &ridesRepositoryStub{}
-	service := NewRideServiceWithRouteCalculator(stub, RouteCalculatorFunc(func(context.Context, float64, float64, float64, float64) (RouteMetrics, error) {
-		return RouteMetrics{DistanceKm: 4, DurationMinutes: 20}, nil
-	}), testPricingConfig(t), nil)
+	service := NewRideServiceWithRouteCalculator(
+		stub,
+		RouteCalculatorFunc(func(
+			context.Context,
+			float64,
+			float64,
+			float64,
+			float64,
+		) (RouteMetrics, error) {
+			return RouteMetrics{DistanceKm: 4, DurationMinutes: 20}, nil
+		}),
+		testPricingConfig(t),
+		nil,
+	)
 	custom := int64(4000)
 	session, err := service.CreateSession(context.Background(), domain.BidSession{
 		PassengerID:        7,
@@ -158,9 +183,20 @@ func TestCreateSessionUsesAuthoritativeRouteMetrics(t *testing.T) {
 
 func TestCreateSessionFailsWhenAuthoritativeRouteIsUnavailable(t *testing.T) {
 	stub := &ridesRepositoryStub{}
-	service := NewRideServiceWithRouteCalculator(stub, RouteCalculatorFunc(func(context.Context, float64, float64, float64, float64) (RouteMetrics, error) {
-		return RouteMetrics{}, errors.New("mapbox timeout")
-	}), testPricingConfig(t), nil)
+	service := NewRideServiceWithRouteCalculator(
+		stub,
+		RouteCalculatorFunc(func(
+			context.Context,
+			float64,
+			float64,
+			float64,
+			float64,
+		) (RouteMetrics, error) {
+			return RouteMetrics{}, errors.New("mapbox timeout")
+		}),
+		testPricingConfig(t),
+		nil,
+	)
 	_, err := service.CreateSession(context.Background(), domain.BidSession{
 		PassengerID:      7,
 		PickupLatitude:   6.7,
@@ -224,7 +260,12 @@ func TestCreateSessionRejectsOfferBelowCalculatedMinimum(t *testing.T) {
 func TestUpdateStatusRequiresRideParticipantAndCurrentState(t *testing.T) {
 	stub := &ridesRepositoryStub{ride: domain.Ride{ID: 9, PassengerID: 7, DriverID: intPointer(11), Status: "accepted"}}
 	service := NewRideService(stub, testPricingConfig(t), nil)
-	if _, err := service.UpdateStatus(context.Background(), 9, 99, "arrived"); !errors.Is(err, domain.ErrUnauthorizedRide) {
+	if _, err := service.UpdateStatus(
+		context.Background(),
+		9,
+		99,
+		"arrived",
+	); !errors.Is(err, domain.ErrUnauthorizedRide) {
 		t.Fatalf("expected unauthorized ride error, got %v", err)
 	}
 	if _, err := service.UpdateStatus(context.Background(), 9, 7, "arrived"); !errors.Is(err, domain.ErrUnauthorizedRide) {

@@ -78,7 +78,10 @@ func (handler *Handler) originAllowed(request *http.Request) bool {
 }
 
 func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	if handler == nil || handler.hub == nil || handler.authenticate == nil {
+	missingHandler := handler == nil
+	missingHub := handler != nil && handler.hub == nil
+	missingAuthenticator := handler != nil && handler.authenticate == nil
+	if missingHandler || missingHub || missingAuthenticator {
 		response.Error(writer, http.StatusServiceUnavailable, "Chat is temporarily unavailable. Please try again shortly.")
 		return
 	}
@@ -262,7 +265,9 @@ func enrichChatEvent(message []byte, roomID, clientID string) []byte {
 	if !ok {
 		return nil
 	}
-	if eventType != "CHAT_MESSAGE" && eventType != "message" && eventType != "typing" {
+	isChatMessage := eventType == "CHAT_MESSAGE" || eventType == "message"
+	isTypingEvent := eventType == "typing"
+	if !isChatMessage && !isTypingEvent {
 		return message
 	}
 	if roomID == "" || clientID == "" {

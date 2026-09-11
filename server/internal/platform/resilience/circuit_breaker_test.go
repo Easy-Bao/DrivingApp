@@ -46,8 +46,11 @@ func TestCircuitBreakerAllowsOneProbeAfterReset(t *testing.T) {
 
 func TestCircuitBreakerRejectsMissingDependencies(t *testing.T) {
 	var breaker *CircuitBreaker
-	if err := breaker.Do(context.Background(), func(context.Context) error { return nil }); !errors.Is(err, ErrCircuitNotConfigured) {
-		t.Fatalf("nil breaker error = %v, want %v", err, ErrCircuitNotConfigured)
+	nilBreakerErr := breaker.Do(context.Background(), func(context.Context) error {
+		return nil
+	})
+	if !errors.Is(nilBreakerErr, ErrCircuitNotConfigured) {
+		t.Fatalf("nil breaker error = %v, want %v", nilBreakerErr, ErrCircuitNotConfigured)
 	}
 
 	configured := NewCircuitBreaker(1, time.Minute)

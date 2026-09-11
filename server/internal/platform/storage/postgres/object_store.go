@@ -55,7 +55,7 @@ func (store *ObjectStore) Store(ctx context.Context, content []byte) (string, er
 
 	checksum := sha256.Sum256(content)
 	contentType := http.DetectContentType(content)
-	for attempt := 0; attempt < 3; attempt++ {
+	for range 3 {
 		key, err := newObjectKey()
 		if err != nil {
 			return "", err
@@ -95,7 +95,9 @@ func (store *ObjectStore) Read(ctx context.Context, key string, maxBytes int64) 
 	if err != nil {
 		return nil, fmt.Errorf("query private object: %w", err)
 	}
-	if object.SizeBytes <= 0 || object.SizeBytes > maxBytes || int64(len(object.Content)) != object.SizeBytes {
+	invalidSize := object.SizeBytes <= 0 || object.SizeBytes > maxBytes
+	contentSizeMismatch := int64(len(object.Content)) != object.SizeBytes
+	if invalidSize || contentSizeMismatch {
 		return nil, errors.New("private object has an invalid size")
 	}
 	checksum := sha256.Sum256(object.Content)
@@ -125,7 +127,10 @@ func (store *ObjectStore) Delete(ctx context.Context, key string) error {
 }
 
 func (store *ObjectStore) validate() error {
-	if store == nil || store.pool == nil || store.queries == nil {
+	if store == nil {
+		return errors.New("postgresql object store is not configured")
+	}
+	if store.pool == nil || store.queries == nil {
 		return errors.New("postgresql object store is not configured")
 	}
 	return nil

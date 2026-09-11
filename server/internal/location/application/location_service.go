@@ -47,7 +47,11 @@ func (service *LocationService) WithLogger(logger *slog.Logger) *LocationService
 	return service
 }
 
-func (service *LocationService) Search(ctx context.Context, query string, origin domain.Coordinates) ([]domain.Place, error) {
+func (service *LocationService) Search(
+	ctx context.Context,
+	query string,
+	origin domain.Coordinates,
+) ([]domain.Place, error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
 		return nil, ErrEmptySearch
@@ -59,7 +63,7 @@ func (service *LocationService) Search(ctx context.Context, query string, origin
 		return nil, ErrInvalidCoordinates
 	}
 	key := fmt.Sprintf("search:%s:%.4f:%.4f", query, origin.Latitude, origin.Longitude)
-	var places []domain.Place
+	places := []domain.Place{}
 	if service.cache != nil && service.cache.Get(ctx, key, &places) == nil {
 		return places, nil
 	}
@@ -70,7 +74,11 @@ func (service *LocationService) Search(ctx context.Context, query string, origin
 	return places, err
 }
 
-func (service *LocationService) Nearby(ctx context.Context, origin domain.Coordinates, page int) ([]domain.Place, error) {
+func (service *LocationService) Nearby(
+	ctx context.Context,
+	origin domain.Coordinates,
+	page int,
+) ([]domain.Place, error) {
 	if page < 1 || page > maxNearbyPage {
 		return nil, ErrInvalidNearbyPage
 	}
@@ -78,7 +86,7 @@ func (service *LocationService) Nearby(ctx context.Context, origin domain.Coordi
 		return nil, ErrInvalidCoordinates
 	}
 	key := fmt.Sprintf("nearby:%.4f:%.4f:%d", origin.Latitude, origin.Longitude, page)
-	var places []domain.Place
+	places := []domain.Place{}
 	if service.cache != nil && service.cache.Get(ctx, key, &places) == nil {
 		return places, nil
 	}
@@ -89,7 +97,10 @@ func (service *LocationService) Nearby(ctx context.Context, origin domain.Coordi
 	return places, err
 }
 
-func (service *LocationService) ReverseGeocode(ctx context.Context, coordinates domain.Coordinates) (*domain.Place, error) {
+func (service *LocationService) ReverseGeocode(
+	ctx context.Context,
+	coordinates domain.Coordinates,
+) (*domain.Place, error) {
 	if !coordinates.Valid() {
 		return nil, ErrInvalidCoordinates
 	}
@@ -108,7 +119,12 @@ func (service *LocationService) ReverseGeocode(ctx context.Context, coordinates 
 	return result, nil
 }
 
-func (service *LocationService) Route(ctx context.Context, origin, destination domain.Coordinates, options domain.RouteOptions) (*domain.Route, error) {
+func (service *LocationService) Route(
+	ctx context.Context,
+	origin domain.Coordinates,
+	destination domain.Coordinates,
+	options domain.RouteOptions,
+) (*domain.Route, error) {
 	if !origin.Valid() || !destination.Valid() {
 		return nil, ErrInvalidCoordinates
 	}
@@ -116,11 +132,22 @@ func (service *LocationService) Route(ctx context.Context, origin, destination d
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrInvalidRouteOptions, err)
 	}
-	return service.provider.Route(ctx, origin, destination, normalizedOptions)
+	return service.provider.Route(
+		ctx,
+		origin,
+		destination,
+		normalizedOptions,
+	)
 }
 
-func (service *LocationService) Matrix(ctx context.Context, origin domain.Coordinates, destinations []domain.Coordinates) (*domain.Matrix, error) {
-	if !origin.Valid() || len(destinations) == 0 || len(destinations) > maxMatrixDestinations {
+func (service *LocationService) Matrix(
+	ctx context.Context,
+	origin domain.Coordinates,
+	destinations []domain.Coordinates,
+) (*domain.Matrix, error) {
+	invalidOrigin := !origin.Valid()
+	invalidDestinationCount := len(destinations) == 0 || len(destinations) > maxMatrixDestinations
+	if invalidOrigin || invalidDestinationCount {
 		return nil, ErrInvalidMatrix
 	}
 	for _, destination := range destinations {

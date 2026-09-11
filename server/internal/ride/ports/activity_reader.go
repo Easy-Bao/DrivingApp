@@ -9,5 +9,10 @@ import (
 
 // PassengerActivityReader isolates passenger dashboard reads from ride commands.
 type PassengerActivityReader interface {
-	PassengerActivitySummary(ctx context.Context, passengerID int, weekStart, weekEnd time.Time) (domain.PassengerActivitySummary, error)
+	PassengerActivitySummary(
+		ctx context.Context,
+		passengerID int,
+		weekStart time.Time,
+		weekEnd time.Time,
+	) (domain.PassengerActivitySummary, error)
 }

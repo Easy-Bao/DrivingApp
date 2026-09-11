@@ -157,7 +157,9 @@ func TestAuthenticatedDashboardFiltersRecentDestinations(t *testing.T) {
 	if len(snapshot.RecentLocations) != 2 {
 		t.Fatalf("recent locations = %#v, want two unique completed destinations", snapshot.RecentLocations)
 	}
-	if snapshot.RecentLocations[0].Title != "Mall, Pagadian City" || snapshot.RecentLocations[1].Title != "Park, Pagadian City" {
+	invalidFirstLocation := snapshot.RecentLocations[0].Title != "Mall, Pagadian City"
+	invalidSecondLocation := snapshot.RecentLocations[1].Title != "Park, Pagadian City"
+	if invalidFirstLocation || invalidSecondLocation {
 		t.Fatalf("shortened destinations = %#v", snapshot.RecentLocations)
 	}
 }

@@ -83,7 +83,11 @@ func (repository *DocumentRepository) Get(ctx context.Context, id int) (domain.D
 	return fromPostgresDocument(item)
 }
 
-func (repository *DocumentRepository) ListByDriver(ctx context.Context, driverID, limit int) ([]domain.Document, error) {
+func (repository *DocumentRepository) ListByDriver(
+	ctx context.Context,
+	driverID int,
+	limit int,
+) ([]domain.Document, error) {
 	if err := repository.validate(); err != nil {
 		return nil, err
 	}
@@ -95,17 +99,25 @@ func (repository *DocumentRepository) ListByDriver(ctx context.Context, driverID
 	if err != nil {
 		return nil, err
 	}
-	items, err := repository.queries.ListDriverDocumentsByDriverID(ctx, databasepostgres.ListDriverDocumentsByDriverIDParams{
-		DriverID: dbDriverID,
-		Limit:    dbLimit,
-	})
+	items, err := repository.queries.ListDriverDocumentsByDriverID(
+		ctx,
+		databasepostgres.ListDriverDocumentsByDriverIDParams{
+			DriverID: dbDriverID,
+			Limit:    dbLimit,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("list driver documents: %w", err)
 	}
 	return fromPostgresDocuments(items)
 }
 
-func (repository *DocumentRepository) ListForReview(ctx context.Context, status domain.Status, limit, offset int) ([]domain.Document, error) {
+func (repository *DocumentRepository) ListForReview(
+	ctx context.Context,
+	status domain.Status,
+	limit int,
+	offset int,
+) ([]domain.Document, error) {
 	if err := repository.validate(); err != nil {
 		return nil, err
 	}
@@ -133,7 +145,12 @@ func (repository *DocumentRepository) ListForReview(ctx context.Context, status 
 
 // Review persists a moderation decision and distinguishes missing or finalized
 // documents in its returned domain error.
-func (repository *DocumentRepository) Review(ctx context.Context, id, reviewerID int, status domain.Status) (domain.Document, error) {
+func (repository *DocumentRepository) Review(
+	ctx context.Context,
+	id int,
+	reviewerID int,
+	status domain.Status,
+) (domain.Document, error) {
 	if err := repository.validate(); err != nil {
 		return domain.Document{}, err
 	}
@@ -172,7 +189,10 @@ func (repository *DocumentRepository) reviewMiss(ctx context.Context, documentID
 }
 
 func (repository *DocumentRepository) validate() error {
-	if repository == nil || repository.pool == nil || repository.queries == nil {
+	if repository == nil {
+		return errors.New("postgresql document repository is not initialized")
+	}
+	if repository.pool == nil || repository.queries == nil {
 		return errors.New("postgresql document repository is not initialized")
 	}
 	return nil

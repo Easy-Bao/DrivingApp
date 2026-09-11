@@ -114,7 +114,10 @@ func (repository *RideRepository) ActiveRidesForDriver(ctx context.Context, driv
 }
 
 func (repository *RideRepository) validateNativeReadRepository() error {
-	if repository == nil || repository.pool == nil || repository.queries == nil {
+	if repository == nil {
+		return errors.New("postgresql ride read repository is not initialized")
+	}
+	if repository.pool == nil || repository.queries == nil {
 		return errors.New("postgresql ride read repository is not initialized")
 	}
 	return nil

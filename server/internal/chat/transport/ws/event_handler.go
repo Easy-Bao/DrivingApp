@@ -21,7 +21,9 @@ func (handler *EventHandler) Handle(ctx context.Context, message []byte) error {
 		domain.Message
 		Text string `json:"text"`
 	}
-	if err := json.Unmarshal(message, &event); err != nil || (event.Type != "CHAT_MESSAGE" && event.Type != "message") {
+	invalidJSON := json.Unmarshal(message, &event) != nil
+	invalidEventType := event.Type != "CHAT_MESSAGE" && event.Type != "message"
+	if invalidJSON || invalidEventType {
 		return nil
 	}
 	if event.Message.Body == "" {

@@ -121,8 +121,10 @@ func (manager *TokenManager) verify(rawToken string) (Identity, error) {
 		Algorithm string `json:"alg"`
 		Type      string `json:"typ"`
 	}
-	if json.Unmarshal(header, &headerClaims) != nil ||
-		headerClaims.Algorithm != "HS256" || headerClaims.Type != "JWT" {
+	invalidHeaderJSON := json.Unmarshal(header, &headerClaims) != nil
+	invalidAlgorithm := headerClaims.Algorithm != "HS256"
+	invalidHeaderType := headerClaims.Type != "JWT"
+	if invalidHeaderJSON || invalidAlgorithm || invalidHeaderType {
 		return Identity{}, ErrInvalidToken
 	}
 	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
@@ -135,7 +137,10 @@ func (manager *TokenManager) verify(rawToken string) (Identity, error) {
 		Expires   int64  `json:"exp"`
 		TokenType string `json:"token_type"`
 	}
-	if json.Unmarshal(payload, &claims) != nil || claims.Subject == "" || claims.Expires <= time.Now().Unix() {
+	invalidClaimsJSON := json.Unmarshal(payload, &claims) != nil
+	missingSubject := claims.Subject == ""
+	expired := claims.Expires <= time.Now().Unix()
+	if invalidClaimsJSON || missingSubject || expired {
 		return Identity{}, ErrInvalidToken
 	}
 	return Identity{Subject: claims.Subject, Role: claims.Role, TokenType: claims.TokenType}, nil

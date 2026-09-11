@@ -35,7 +35,10 @@ func (repository *RideRepository) AcceptRide(ctx context.Context, rideID, driver
 	if err != nil {
 		return domain.Ride{}, domain.ErrDriverUnavailable
 	}
-	activeRides, err := transactionQueries.CountActiveRidesForAcceptance(ctx, pgtype.Int4{Int32: profile.UserID, Valid: true})
+	activeRides, err := transactionQueries.CountActiveRidesForAcceptance(
+		ctx,
+		pgtype.Int4{Int32: profile.UserID, Valid: true},
+	)
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("count active driver rides: %w", err)
 	}

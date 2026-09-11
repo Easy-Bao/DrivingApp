@@ -34,7 +34,12 @@ func (repository *locationRepository) Upsert(_ context.Context, point domain.Dri
 	repository.point = point
 	return nil
 }
-func (repository *locationRepository) Nearby(_ context.Context, latitude, longitude, radiusKm float64) ([]domain.DriverPoint, error) {
+func (repository *locationRepository) Nearby(
+	_ context.Context,
+	latitude float64,
+	longitude float64,
+	radiusKm float64,
+) ([]domain.DriverPoint, error) {
 	if repository.point.DriverID == "" {
 		return nil, nil
 	}
@@ -66,8 +71,14 @@ func TestTelemetryUsesTheVerifiedSubjectAsDriverID(t *testing.T) {
 		t.Fatal(err)
 	}
 	router := chi.NewRouter()
-	geoh.NewRouter(geoapplication.NewLocationTrackingService(repository), security.NewTokenManager("secret")).RegisterRoutes(router)
-	request := httptest.NewRequest(http.MethodPost, "/api/v1/telemetry/location", strings.NewReader(`{"latitude":14.1,"longitude":120.9,"heading":90,"speed":12}`))
+	trackingService := geoapplication.NewLocationTrackingService(repository)
+	geoh.NewRouter(trackingService, security.NewTokenManager("secret")).RegisterRoutes(router)
+	payload := `{"latitude":14.1,"longitude":120.9,"heading":90,"speed":12}`
+	request := httptest.NewRequest(
+		http.MethodPost,
+		"/api/v1/telemetry/location",
+		strings.NewReader(payload),
+	)
 	request.Header.Set("Authorization", "Bearer "+token)
 	response := httptest.NewRecorder()
 	router.ServeHTTP(response, request)
@@ -192,7 +203,8 @@ func TestPassengerReadsDriverLocationThroughItsRide(t *testing.T) {
 
 func TestExactTelemetryReadsRequireAuthentication(t *testing.T) {
 	router := chi.NewRouter()
-	geoh.NewRouter(geoapplication.NewLocationTrackingService(&locationRepository{}), security.NewTokenManager("secret")).RegisterRoutes(router)
+	trackingService := geoapplication.NewLocationTrackingService(&locationRepository{})
+	geoh.NewRouter(trackingService, security.NewTokenManager("secret")).RegisterRoutes(router)
 
 	for _, path := range []string{
 		"/api/v1/telemetry/location/42",
@@ -217,7 +229,12 @@ func TestPassengerTokenCannotPublishDriverTelemetry(t *testing.T) {
 	router := chi.NewRouter()
 	geoh.NewRouter(geoapplication.NewLocationTrackingService(&locationRepository{}), tokenManager).RegisterRoutes(router)
 
-	request := httptest.NewRequest(http.MethodPost, "/api/v1/telemetry/location", strings.NewReader(`{"latitude":7.828,"longitude":123.434}`))
+	payload := `{"latitude":7.828,"longitude":123.434}`
+	request := httptest.NewRequest(
+		http.MethodPost,
+		"/api/v1/telemetry/location",
+		strings.NewReader(payload),
+	)
 	request.Header.Set("Authorization", "Bearer "+passengerToken)
 	response := httptest.NewRecorder()
 	router.ServeHTTP(response, request)

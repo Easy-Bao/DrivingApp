@@ -71,15 +71,31 @@ func TestPassengerOTPVerifiesAndConsumesCode(t *testing.T) {
 	if err != nil || token != "token:7" || !repository.marked || !account.IsVerified {
 		t.Fatalf("verify result = %#v, %q, marked=%t, err=%v", account, token, repository.marked, err)
 	}
-	if _, _, err := service.VerifyPassenger(context.Background(), repository.account.Email, gateway.sent); !errors.Is(err, domain.ErrInvalidOTP) {
+	_, _, err = service.VerifyPassenger(
+		context.Background(),
+		repository.account.Email,
+		gateway.sent,
+	)
+	if !errors.Is(err, domain.ErrInvalidOTP) {
 		t.Fatalf("expected consumed otp to fail, got %v", err)
 	}
 }
 
 func TestDriverCannotUsePassengerVerificationOTP(t *testing.T) {
 	repository := &otpRepository{account: domain.User{ID: 8, Email: "driver@example.test", Role: domain.Driver}}
-	service := application.NewOTPService(repository, &otpMemoryStore{values: map[string]string{}}, &otpGateway{}, otpIssuer{}, newTestRefreshSessionStore())
-	if _, _, err := service.VerifyPassenger(context.Background(), repository.account.Email, "123456"); !errors.Is(err, domain.ErrInvalidOTP) {
+	service := application.NewOTPService(
+		repository,
+		&otpMemoryStore{values: map[string]string{}},
+		&otpGateway{},
+		otpIssuer{},
+		newTestRefreshSessionStore(),
+	)
+	_, _, err := service.VerifyPassenger(
+		context.Background(),
+		repository.account.Email,
+		"123456",
+	)
+	if !errors.Is(err, domain.ErrInvalidOTP) {
 		t.Fatalf("expected passenger-only verification to reject driver, got %v", err)
 	}
 }
@@ -89,10 +105,19 @@ func TestPasswordResetIsScopedToTheAccountRole(t *testing.T) {
 	store := &otpMemoryStore{values: map[string]string{}}
 	service := application.NewOTPService(repository, store, &otpGateway{}, otpIssuer{}, newTestRefreshSessionStore())
 
-	if err := service.RequestPasswordReset(context.Background(), repository.account.Email); !errors.Is(err, domain.ErrInvalidCredentials) {
+	err := service.RequestPasswordReset(
+		context.Background(),
+		repository.account.Email,
+	)
+	if !errors.Is(err, domain.ErrInvalidCredentials) {
 		t.Fatalf("expected passenger reset route to reject driver account, got %v", err)
 	}
-	if err := service.RequestPasswordResetForRole(context.Background(), repository.account.Email, domain.Driver); err != nil {
+	err = service.RequestPasswordResetForRole(
+		context.Background(),
+		repository.account.Email,
+		domain.Driver,
+	)
+	if err != nil {
 		t.Fatalf("driver reset request failed: %v", err)
 	}
 }

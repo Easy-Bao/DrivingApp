@@ -46,7 +46,12 @@ func (providerStub) ReverseGeocode(context.Context, domain.Coordinates) (*domain
 	return &domain.Place{Name: "Pagadian City"}, nil
 }
 
-func (providerStub) Route(context.Context, domain.Coordinates, domain.Coordinates, domain.RouteOptions) (*domain.Route, error) {
+func (providerStub) Route(
+	context.Context,
+	domain.Coordinates,
+	domain.Coordinates,
+	domain.RouteOptions,
+) (*domain.Route, error) {
 	return &domain.Route{DistanceKm: 1}, nil
 }
 
@@ -60,7 +65,12 @@ type routeProviderSpy struct {
 	calls   int
 }
 
-func (provider *routeProviderSpy) Route(_ context.Context, _, _ domain.Coordinates, options domain.RouteOptions) (*domain.Route, error) {
+func (provider *routeProviderSpy) Route(
+	_ context.Context,
+	_ domain.Coordinates,
+	_ domain.Coordinates,
+	options domain.RouteOptions,
+) (*domain.Route, error) {
 	provider.calls++
 	provider.options = options
 	return &domain.Route{DistanceKm: 1}, nil
@@ -100,7 +110,12 @@ func TestServiceSupportsNearbyPlacesAndCaching(t *testing.T) {
 
 func TestServiceRejectsUnboundedSearchAndInvalidRouteCoordinates(t *testing.T) {
 	service := application.NewLocationService(providerStub{})
-	if _, err := service.Search(context.Background(), strings.Repeat("x", 257), domain.Coordinates{}); !errors.Is(err, application.ErrSearchTooLong) {
+	_, err := service.Search(
+		context.Background(),
+		strings.Repeat("x", 257),
+		domain.Coordinates{},
+	)
+	if !errors.Is(err, application.ErrSearchTooLong) {
 		t.Fatalf("long search error = %v, want %v", err, application.ErrSearchTooLong)
 	}
 	if _, err := service.Route(
@@ -122,7 +137,9 @@ func TestServiceOwnsRouteOptionValidationAndNormalization(t *testing.T) {
 	if _, err := service.Route(context.Background(), origin, destination, domain.RouteOptions{}); err != nil {
 		t.Fatalf("route failed: %v", err)
 	}
-	if provider.options.Preference != domain.RoutePreferenceFastest || provider.options.Profile != domain.RouteProfileDriving {
+	invalidPreference := provider.options.Preference != domain.RoutePreferenceFastest
+	invalidProfile := provider.options.Profile != domain.RouteProfileDriving
+	if invalidPreference || invalidProfile {
 		t.Fatalf("provider received unnormalized options: %#v", provider.options)
 	}
 

@@ -43,10 +43,16 @@ func (repository *activeSessionsRepository) AcceptBid(context.Context, int, int)
 func (repository *activeSessionsRepository) Get(context.Context, int) (domain.Ride, error) {
 	return domain.Ride{}, nil
 }
-func (repository *activeSessionsRepository) CreateSession(context.Context, domain.BidSession) (domain.BidSession, error) {
+func (repository *activeSessionsRepository) CreateSession(
+	context.Context,
+	domain.BidSession,
+) (domain.BidSession, error) {
 	return domain.BidSession{}, nil
 }
-func (repository *activeSessionsRepository) ActiveSessions(_ context.Context, driverID *int) ([]domain.BidSession, error) {
+func (repository *activeSessionsRepository) ActiveSessions(
+	_ context.Context,
+	driverID *int,
+) ([]domain.BidSession, error) {
 	repository.requestedDriverID = driverID
 	return []domain.BidSession{{ID: 101, Status: "open"}}, nil
 }
@@ -54,20 +60,39 @@ func (repository *activeSessionsRepository) Offers(_ context.Context, sessionID 
 	repository.requestedSessionID = sessionID
 	return []domain.BidOffer{}, nil
 }
-func (repository *activeSessionsRepository) PlaceOffer(_ context.Context, offer domain.BidOffer) (domain.BidOffer, error) {
+func (repository *activeSessionsRepository) PlaceOffer(
+	_ context.Context,
+	offer domain.BidOffer,
+) (domain.BidOffer, error) {
 	repository.requestedSessionID = offer.SessionID
 	return offer, nil
 }
-func (repository *activeSessionsRepository) AcceptOffer(_ context.Context, sessionID, offerID, passengerID int) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
+func (repository *activeSessionsRepository) AcceptOffer(
+	_ context.Context,
+	sessionID int,
+	offerID int,
+	passengerID int,
+) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
 	repository.requestedSessionID = sessionID
 	repository.requestedOfferID = offerID
-	return domain.BidSession{ID: sessionID, PassengerID: passengerID}, domain.BidOffer{ID: int64(offerID), SessionID: sessionID}, domain.Ride{ID: 303, PassengerID: passengerID}, nil
+	session := domain.BidSession{ID: sessionID, PassengerID: passengerID}
+	offer := domain.BidOffer{ID: int64(offerID), SessionID: sessionID}
+	ride := domain.Ride{ID: 303, PassengerID: passengerID}
+	return session, offer, ride, nil
 }
-func (repository *activeSessionsRepository) CancelSession(_ context.Context, sessionID, passengerID int) (domain.BidSession, error) {
+func (repository *activeSessionsRepository) CancelSession(
+	_ context.Context,
+	sessionID int,
+	passengerID int,
+) (domain.BidSession, error) {
 	repository.requestedSessionID = sessionID
 	return domain.BidSession{ID: sessionID, PassengerID: passengerID}, nil
 }
-func (repository *activeSessionsRepository) CancelOffer(_ context.Context, sessionID, driverID int) (domain.BidOffer, error) {
+func (repository *activeSessionsRepository) CancelOffer(
+	_ context.Context,
+	sessionID int,
+	driverID int,
+) (domain.BidOffer, error) {
 	repository.requestedSessionID = sessionID
 	return domain.BidOffer{SessionID: sessionID, DriverID: driverID}, nil
 }
@@ -133,8 +158,18 @@ func TestBookingMutationRoutesRejectTheWrongAccountRole(t *testing.T) {
 		token  string
 		method string
 	}{
-		{name: "driver cannot create passenger ride", path: api.V1Prefix + "/rides", token: driverToken, method: http.MethodPost},
-		{name: "passenger cannot accept ride as driver", path: api.V1Prefix + "/rides/1/accept", token: passengerToken, method: http.MethodPost},
+		{
+			name:   "driver cannot create passenger ride",
+			path:   api.V1Prefix + "/rides",
+			token:  driverToken,
+			method: http.MethodPost,
+		},
+		{
+			name:   "passenger cannot accept ride as driver",
+			path:   api.V1Prefix + "/rides/1/accept",
+			token:  passengerToken,
+			method: http.MethodPost,
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			request := httptest.NewRequest(test.method, test.path, strings.NewReader(`{}`))
@@ -293,7 +328,10 @@ func TestPublicDriverSummariesExposeRatingsWithoutSensitiveDriverData(t *testing
 	if len(summaries) != 1 {
 		t.Fatalf("summaries = %#v, want one item", summaries)
 	}
-	if summaries[0]["name"] != "Ada Driver" || summaries[0]["vehicle_type"] != "Motorcycle" || summaries[0]["rating"] != 4.8 {
+	invalidName := summaries[0]["name"] != "Ada Driver"
+	invalidVehicleType := summaries[0]["vehicle_type"] != "Motorcycle"
+	invalidRating := summaries[0]["rating"] != 4.8
+	if invalidName || invalidVehicleType || invalidRating {
 		t.Fatalf("unexpected public summary: %#v", summaries[0])
 	}
 	for _, field := range []string{"user_id", "plate_number", "onboard_passenger_count", "latitude", "longitude"} {
@@ -400,12 +438,53 @@ func TestSessionRoutesBindSessionAndOfferIdentifiers(t *testing.T) {
 		expectedStatus  int
 		expectedOfferID int
 	}{
-		{name: "session", method: http.MethodGet, path: api.V1Prefix + "/bids/101", role: security.RolePassenger, expectedStatus: http.StatusOK},
-		{name: "offers", method: http.MethodGet, path: api.V1Prefix + "/bids/101/offers", role: security.RolePassenger, expectedStatus: http.StatusOK},
-		{name: "place offer", method: http.MethodPost, path: api.V1Prefix + "/bids/101/offer", body: `{"offer_price":25}`, role: security.RoleDriver, expectedStatus: http.StatusCreated},
-		{name: "accept offer", method: http.MethodPost, path: api.V1Prefix + "/bids/101/offers/202/accept", body: `{}`, role: security.RolePassenger, expectedStatus: http.StatusOK, expectedOfferID: 202},
-		{name: "cancel session", method: http.MethodPost, path: api.V1Prefix + "/bids/101/cancel", body: `{}`, role: security.RolePassenger, expectedStatus: http.StatusOK},
-		{name: "cancel offer", method: http.MethodPost, path: api.V1Prefix + "/bids/101/cancel-offer", body: `{}`, role: security.RoleDriver, expectedStatus: http.StatusOK},
+		{
+			name:           "session",
+			method:         http.MethodGet,
+			path:           api.V1Prefix + "/bids/101",
+			role:           security.RolePassenger,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "offers",
+			method:         http.MethodGet,
+			path:           api.V1Prefix + "/bids/101/offers",
+			role:           security.RolePassenger,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "place offer",
+			method:         http.MethodPost,
+			path:           api.V1Prefix + "/bids/101/offer",
+			body:           `{"offer_price":25}`,
+			role:           security.RoleDriver,
+			expectedStatus: http.StatusCreated,
+		},
+		{
+			name:            "accept offer",
+			method:          http.MethodPost,
+			path:            api.V1Prefix + "/bids/101/offers/202/accept",
+			body:            `{}`,
+			role:            security.RolePassenger,
+			expectedStatus:  http.StatusOK,
+			expectedOfferID: 202,
+		},
+		{
+			name:           "cancel session",
+			method:         http.MethodPost,
+			path:           api.V1Prefix + "/bids/101/cancel",
+			body:           `{}`,
+			role:           security.RolePassenger,
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "cancel offer",
+			method:         http.MethodPost,
+			path:           api.V1Prefix + "/bids/101/cancel-offer",
+			body:           `{}`,
+			role:           security.RoleDriver,
+			expectedStatus: http.StatusOK,
+		},
 	}
 
 	for _, test := range tests {

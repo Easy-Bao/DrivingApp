@@ -203,7 +203,10 @@ func (repository *UserRepository) withProfile(ctx context.Context, account domai
 }
 
 func (repository *UserRepository) validate() error {
-	if repository == nil || repository.pool == nil || repository.queries == nil {
+	if repository == nil {
+		return errors.New("postgresql user repository is not initialized")
+	}
+	if repository.pool == nil || repository.queries == nil {
 		return errors.New("postgresql user repository is not initialized")
 	}
 	return nil

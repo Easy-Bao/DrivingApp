@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -145,13 +146,16 @@ func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Pr
 		}
 		updated = driverProfileFromPostgres(account, driverProfile)
 	case "passenger":
-		passengerProfile, updateErr := transactionQueries.UpdatePassengerProfile(ctx, databasepostgres.UpdatePassengerProfileParams{
-			ID:                dbProfileID,
-			Name:              profile.Name,
-			Address:           toPostgresProfileText(profile.Address),
-			Gender:            profile.Gender,
-			PreferredRideType: toPostgresProfileText(profile.PreferredRideType),
-		})
+		passengerProfile, updateErr := transactionQueries.UpdatePassengerProfile(
+			ctx,
+			databasepostgres.UpdatePassengerProfileParams{
+				ID:                dbProfileID,
+				Name:              profile.Name,
+				Address:           toPostgresProfileText(profile.Address),
+				Gender:            profile.Gender,
+				PreferredRideType: toPostgresProfileText(profile.PreferredRideType),
+			},
+		)
 		if updateErr != nil {
 			return domain.Profile{}, fmt.Errorf("update passenger profile: %w", updateErr)
 		}
@@ -252,8 +256,9 @@ func (repository *ProfileRepository) GetAvatar(ctx context.Context, userID int) 
 	}
 	contentType := http.DetectContentType(content)
 	storedContentType := strings.TrimSpace(profileTextValue(passengerProfile.AvatarContentType))
-	if (contentType != "image/jpeg" && contentType != "image/png") ||
-		(storedContentType != "" && storedContentType != contentType) {
+	invalidContentType := contentType != "image/jpeg" && contentType != "image/png"
+	contentTypeMismatch := storedContentType != "" && storedContentType != contentType
+	if invalidContentType || contentTypeMismatch {
 		return domain.Avatar{}, domain.ErrAvatarCorrupt
 	}
 	return domain.Avatar{Bytes: content, ContentType: contentType}, nil
@@ -336,7 +341,10 @@ func (repository *ProfileRepository) DeleteNotification(
 }
 
 func (repository *ProfileRepository) validate() error {
-	if repository == nil || repository.pool == nil || repository.queries == nil {
+	if repository == nil {
+		return errors.New("postgresql profile repository is not initialized")
+	}
+	if repository.pool == nil || repository.queries == nil {
 		return errors.New("postgresql profile repository is not initialized")
 	}
 	return nil
@@ -357,7 +365,10 @@ func driverProfileFromPostgres(account databasepostgres.User, profile databasepo
 	}
 }
 
-func passengerProfileFromPostgres(account databasepostgres.User, profile databasepostgres.PassengerProfile) domain.Profile {
+func passengerProfileFromPostgres(
+	account databasepostgres.User,
+	profile databasepostgres.PassengerProfile,
+) domain.Profile {
 	return domain.Profile{
 		ID:                int(profile.ID),
 		UserID:            int(profile.UserID),
@@ -376,7 +387,7 @@ func passengerAvatarURL(userID int, storageKey string) string {
 	if userID <= 0 || strings.TrimSpace(storageKey) == "" {
 		return ""
 	}
-	return fmt.Sprintf("/api/v1/passengers/%d/avatar", userID)
+	return "/api/v1/passengers/" + strconv.Itoa(userID) + "/avatar"
 }
 
 func fromPostgresNotification(item databasepostgres.Notification) (domain.Notification, error) {

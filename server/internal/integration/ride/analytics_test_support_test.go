@@ -51,7 +51,12 @@ func (analyticsRepository) PassengerRides(context.Context, int, domain.TripHisto
 	return []domain.Ride{{ID: 2}}, nil
 }
 
-func (analyticsRepository) PassengerActivitySummary(context.Context, int, time.Time, time.Time) (domain.PassengerActivitySummary, error) {
+func (analyticsRepository) PassengerActivitySummary(
+	context.Context,
+	int,
+	time.Time,
+	time.Time,
+) (domain.PassengerActivitySummary, error) {
 	return domain.PassengerActivitySummary{ThisWeekFareCentavos: 2817, ThisWeekCompletedRides: 1}, nil
 }
 
@@ -82,7 +87,10 @@ func (analyticsRepository) PublicDriverSummaries(context.Context, int) ([]domain
 	}}, nil
 }
 
-func (passengerReviewRepository) CreatePassengerReview(_ context.Context, review domain.PassengerReview) (domain.PassengerReview, error) {
+func (passengerReviewRepository) CreatePassengerReview(
+	_ context.Context,
+	review domain.PassengerReview,
+) (domain.PassengerReview, error) {
 	review.ID = 1
 	return review, nil
 }

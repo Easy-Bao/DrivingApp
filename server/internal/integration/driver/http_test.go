@@ -48,7 +48,11 @@ func TestDocumentAdministrationRequiresConfiguredAdministrator(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			body, _ := json.Marshal(map[string]string{"status": "approved"})
-			request := httptest.NewRequest(http.MethodPatch, "/api/v1/admin/documents/"+strconv.Itoa(document.ID)+"/review", bytes.NewReader(body))
+			request := httptest.NewRequest(
+				http.MethodPatch,
+				"/api/v1/admin/documents/"+strconv.Itoa(document.ID)+"/review",
+				bytes.NewReader(body),
+			)
 			request.Header.Set("Authorization", "Bearer "+test.token)
 			request.Header.Set("Content-Type", "application/json")
 			response := httptest.NewRecorder()
@@ -81,10 +85,30 @@ func TestPrivateDocumentContentIsOwnerOrAdminOnly(t *testing.T) {
 		token  string
 		status int
 	}{
-		{name: "owner", path: "/api/v1/driver/documents/" + strconv.Itoa(document.ID) + "/content", token: ownerToken, status: http.StatusOK},
-		{name: "other driver", path: "/api/v1/driver/documents/" + strconv.Itoa(document.ID) + "/content", token: otherDriverToken, status: http.StatusNotFound},
-		{name: "admin", path: "/api/v1/admin/documents/" + strconv.Itoa(document.ID) + "/content", token: adminToken, status: http.StatusOK},
-		{name: "non admin", path: "/api/v1/admin/documents/" + strconv.Itoa(document.ID) + "/content", token: ownerToken, status: http.StatusForbidden},
+		{
+			name:   "owner",
+			path:   "/api/v1/driver/documents/" + strconv.Itoa(document.ID) + "/content",
+			token:  ownerToken,
+			status: http.StatusOK,
+		},
+		{
+			name:   "other driver",
+			path:   "/api/v1/driver/documents/" + strconv.Itoa(document.ID) + "/content",
+			token:  otherDriverToken,
+			status: http.StatusNotFound,
+		},
+		{
+			name:   "admin",
+			path:   "/api/v1/admin/documents/" + strconv.Itoa(document.ID) + "/content",
+			token:  adminToken,
+			status: http.StatusOK,
+		},
+		{
+			name:   "non admin",
+			path:   "/api/v1/admin/documents/" + strconv.Itoa(document.ID) + "/content",
+			token:  ownerToken,
+			status: http.StatusForbidden,
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, test.path, nil)
@@ -119,9 +143,24 @@ func TestDocumentUploadRequiresCanonicalTypeAndMatchingSignature(t *testing.T) {
 		contentType  string
 		status       int
 	}{
-		{name: "valid PDF", documentType: "driver_license", contentType: "application/pdf", status: http.StatusCreated},
-		{name: "unknown document type", documentType: "license", contentType: "application/pdf", status: http.StatusUnprocessableEntity},
-		{name: "mismatched signature", documentType: "driver_license", contentType: "image/png", status: http.StatusUnsupportedMediaType},
+		{
+			name:         "valid PDF",
+			documentType: "driver_license",
+			contentType:  "application/pdf",
+			status:       http.StatusCreated,
+		},
+		{
+			name:         "unknown document type",
+			documentType: "license",
+			contentType:  "application/pdf",
+			status:       http.StatusUnprocessableEntity,
+		},
+		{
+			name:         "mismatched signature",
+			documentType: "driver_license",
+			contentType:  "image/png",
+			status:       http.StatusUnsupportedMediaType,
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			request := httptest.NewRequest(

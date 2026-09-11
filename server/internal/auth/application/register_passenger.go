@@ -25,7 +25,11 @@ type RegisterService struct {
 	sessions   authports.SessionStore
 }
 
-func NewRegisterService(repository authports.UserStore, tokens authports.TokenIssuer, sessions authports.SessionStore) *RegisterService {
+func NewRegisterService(
+	repository authports.UserStore,
+	tokens authports.TokenIssuer,
+	sessions authports.SessionStore,
+) *RegisterService {
 	return &RegisterService{repository: repository, tokens: tokens, sessions: sessions}
 }
 
@@ -38,10 +42,18 @@ func (service *RegisterService) Driver(ctx context.Context, input RegisterInput)
 }
 
 func (service *RegisterService) IssueRefreshToken(ctx context.Context, account domain.User) (string, error) {
-	return issueRefreshToken(ctx, service.sessions, intSubject(account.ID), account.Role)
+	return issueRefreshToken(
+		ctx,
+		service.sessions,
+		intSubject(account.ID),
+		account.Role,
+	)
 }
 
-func (service *RegisterService) PreparePassenger(ctx context.Context, input RegisterInput) (domain.PendingRegistration, error) {
+func (service *RegisterService) PreparePassenger(
+	ctx context.Context,
+	input RegisterInput,
+) (domain.PendingRegistration, error) {
 	normalized, err := normalizeInput(input, domain.Passenger)
 	if err != nil {
 		return domain.PendingRegistration{}, err
@@ -61,8 +73,14 @@ func (service *RegisterService) PreparePassenger(ctx context.Context, input Regi
 	}, nil
 }
 
-func (service *RegisterService) CommitPendingPassenger(ctx context.Context, pending domain.PendingRegistration) (domain.User, string, error) {
-	if pending.Role != domain.Passenger || pending.Email == "" || pending.PasswordHash == "" {
+func (service *RegisterService) CommitPendingPassenger(
+	ctx context.Context,
+	pending domain.PendingRegistration,
+) (domain.User, string, error) {
+	invalidRole := pending.Role != domain.Passenger
+	missingEmail := pending.Email == ""
+	missingPasswordHash := pending.PasswordHash == ""
+	if invalidRole || missingEmail || missingPasswordHash {
 		return domain.User{}, "", domain.ErrInvalidCredentials
 	}
 	if existing, err := service.repository.FindByEmail(ctx, pending.Email); err == nil && existing.ID != 0 {
@@ -81,7 +99,11 @@ func (service *RegisterService) CommitPendingPassenger(ctx context.Context, pend
 	})
 }
 
-func (service *RegisterService) register(ctx context.Context, input RegisterInput, role domain.Role) (domain.User, string, error) {
+func (service *RegisterService) register(
+	ctx context.Context,
+	input RegisterInput,
+	role domain.Role,
+) (domain.User, string, error) {
 	normalized, err := normalizeInput(input, role)
 	if err != nil {
 		return domain.User{}, "", err
@@ -118,10 +140,16 @@ func normalizeInput(input RegisterInput, role domain.Role) (normalizedRegistrati
 	phone := strings.TrimSpace(input.Phone)
 	vehicleType := strings.TrimSpace(input.VehicleType)
 	plateNumber := strings.TrimSpace(input.PlateNumber)
-	if !validEmail(email) || name == "" || len([]rune(name)) > 100 || !e164Phone.MatchString(phone) || len(input.Password) < 8 || len([]byte(input.Password)) > 72 {
+	invalidEmail := !validEmail(email)
+	invalidName := name == "" || len([]rune(name)) > 100
+	invalidPhone := !e164Phone.MatchString(phone)
+	invalidPassword := len(input.Password) < 8 || len([]byte(input.Password)) > 72
+	if invalidEmail || invalidName || invalidPhone || invalidPassword {
 		return normalizedRegistration{}, domain.ErrInvalidCredentials
 	}
-	if role == domain.Driver && (vehicleType == "" || plateNumber == "" || len([]rune(vehicleType)) > 80 || len([]rune(plateNumber)) > 32) {
+	invalidVehicleType := vehicleType == "" || len([]rune(vehicleType)) > 80
+	invalidPlateNumber := plateNumber == "" || len([]rune(plateNumber)) > 32
+	if role == domain.Driver && (invalidVehicleType || invalidPlateNumber) {
 		return normalizedRegistration{}, domain.ErrInvalidCredentials
 	}
 	passwordHash, err := HashPasswordWithError(input.Password)

@@ -17,7 +17,11 @@ type Handler struct {
 	otp          *application.OTPService
 }
 
-func NewHandler(register *application.RegisterService, authenticate *application.AuthenticateService, otp *application.OTPService) *Handler {
+func NewHandler(
+	register *application.RegisterService,
+	authenticate *application.AuthenticateService,
+	otp *application.OTPService,
+) *Handler {
 	return &Handler{register: register, authenticate: authenticate, otp: otp}
 }
 func (handler *Handler) PassengerRegister(w http.ResponseWriter, r *http.Request) {
@@ -93,7 +97,12 @@ func (handler *Handler) registerDecoded(
 		response.Error(w, http.StatusServiceUnavailable, safeAuthError(err))
 		return
 	}
-	response.JSON(w, http.StatusCreated, authSessionResponse(account, token, refreshToken, !account.IsVerified, false))
+	response.JSON(w, http.StatusCreated, authSessionResponse(
+		account,
+		application.SessionTokens{AccessToken: token, RefreshToken: refreshToken},
+		!account.IsVerified,
+		false,
+	))
 }
 func (handler *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	handler.login(w, r, "")
@@ -156,7 +165,12 @@ func (handler *Handler) login(w http.ResponseWriter, r *http.Request, role domai
 		response.Error(w, http.StatusUnauthorized, "email or password is incorrect")
 		return
 	}
-	response.JSON(w, http.StatusOK, authSessionResponse(account, tokens.AccessToken, tokens.RefreshToken, !account.IsVerified, false))
+	response.JSON(w, http.StatusOK, authSessionResponse(
+		account,
+		tokens,
+		!account.IsVerified,
+		false,
+	))
 }
 
 func (handler *Handler) RequestOTP(w http.ResponseWriter, r *http.Request) {
@@ -196,7 +210,12 @@ func (handler *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusServiceUnavailable, safeAuthError(err))
 		return
 	}
-	response.JSON(w, http.StatusOK, authSessionResponse(account, token, refreshToken, false, true))
+	response.JSON(w, http.StatusOK, authSessionResponse(
+		account,
+		application.SessionTokens{AccessToken: token, RefreshToken: refreshToken},
+		false,
+		true,
+	))
 }
 
 func (handler *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
@@ -240,7 +259,13 @@ func (handler *Handler) resetPasswordForRole(w http.ResponseWriter, r *http.Requ
 	if !decode(w, r, &input) {
 		return
 	}
-	if err := handler.otp.ResetPasswordForRole(r.Context(), input.Email, input.Code, input.NewPassword, role); err != nil {
+	if err := handler.otp.ResetPasswordForRole(
+		r.Context(),
+		input.Email,
+		input.Code,
+		input.NewPassword,
+		role,
+	); err != nil {
 		response.Error(w, http.StatusBadRequest, safeAuthError(err))
 		return
 	}
@@ -248,7 +273,14 @@ func (handler *Handler) resetPasswordForRole(w http.ResponseWriter, r *http.Requ
 }
 
 func toRegisterInput(input dto.RegistrationRequest) application.RegisterInput {
-	return application.RegisterInput{Email: input.Email, Phone: input.Phone, Name: input.Name, Password: input.Password, VehicleType: input.VehicleType, PlateNumber: input.PlateNumber}
+	return application.RegisterInput{
+		Email:       input.Email,
+		Phone:       input.Phone,
+		Name:        input.Name,
+		Password:    input.Password,
+		VehicleType: input.VehicleType,
+		PlateNumber: input.PlateNumber,
+	}
 }
 
 func decode(w http.ResponseWriter, r *http.Request, value any) bool {
@@ -296,13 +328,18 @@ func registrationErrorStatus(err error) int {
 	}
 }
 
-func authSessionResponse(account domain.User, accessToken, refreshToken string, needsVerification, verified bool) dto.SessionResponse {
+func authSessionResponse(
+	account domain.User,
+	tokens application.SessionTokens,
+	needsVerification bool,
+	verified bool,
+) dto.SessionResponse {
 	return dto.SessionResponse{
 		Success: true,
 		Data: dto.SessionData{
 			User:              dto.NewAccountResponse(account),
-			Token:             accessToken,
-			RefreshToken:      refreshToken,
+			Token:             tokens.AccessToken,
+			RefreshToken:      tokens.RefreshToken,
 			NeedsVerification: needsVerification,
 			Verified:          verified,
 		},

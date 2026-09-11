@@ -6,5 +6,7 @@ import (
 )
 
 func New(serviceName string) *slog.Logger {
-	return slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})).With("service", serviceName)
+	options := &slog.HandlerOptions{Level: slog.LevelInfo}
+	handler := slog.NewJSONHandler(os.Stdout, options)
+	return slog.New(handler).With("service", serviceName)
 }

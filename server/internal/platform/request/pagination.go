@@ -20,14 +20,16 @@ func ParseOffsetPagination(values url.Values, defaultLimit, maxLimit int) (Offse
 	page := OffsetPagination{Limit: defaultLimit}
 	if values.Has("limit") {
 		limit, err := strconv.Atoi(values.Get("limit"))
-		if err != nil || limit <= 0 || limit > maxLimit {
+		invalidLimit := err != nil || limit <= 0 || limit > maxLimit
+		if invalidLimit {
 			return OffsetPagination{}, ErrInvalidPagination
 		}
 		page.Limit = limit
 	}
 	if values.Has("offset") {
 		offset, err := strconv.Atoi(values.Get("offset"))
-		if err != nil || offset < 0 || offset > 1_000_000 {
+		invalidOffset := err != nil || offset < 0 || offset > 1_000_000
+		if invalidOffset {
 			return OffsetPagination{}, ErrInvalidPagination
 		}
 		page.Offset = offset

@@ -77,7 +77,10 @@ func coordinatesFromQuery(request *http.Request) (*ridecontextdomain.Coordinates
 		Latitude:  latitude,
 		Longitude: longitude,
 	}
-	if latitudeErr != nil || longitudeErr != nil || !coordinates.Valid() {
+	invalidLatitude := latitudeErr != nil
+	invalidLongitude := longitudeErr != nil
+	invalidCoordinates := !coordinates.Valid()
+	if invalidLatitude || invalidLongitude || invalidCoordinates {
 		return nil, strconv.ErrSyntax
 	}
 	return coordinates, nil

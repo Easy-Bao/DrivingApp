@@ -12,8 +12,9 @@ func NewRideFromAcceptedOffer(
 	driver DriverAssignmentSnapshot,
 	commissionBPS int64,
 ) (Ride, error) {
-	if session.ID <= 0 || session.PassengerID <= 0 || offer.DriverID <= 0 ||
-		offer.SessionID != session.ID {
+	invalidSession := session.ID <= 0 || session.PassengerID <= 0
+	invalidOffer := offer.DriverID <= 0 || offer.SessionID != session.ID
+	if invalidSession || invalidOffer {
 		return Ride{}, ErrInvalidTrip
 	}
 
