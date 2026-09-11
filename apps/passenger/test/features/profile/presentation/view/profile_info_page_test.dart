@@ -138,4 +138,22 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('keeps the redesigned profile form inside a narrow viewport', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(buildSubject());
+
+    expect(find.text('Personal details'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('passenger-profile-info-scroll')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
 }

@@ -312,9 +312,7 @@ void main() {
     expect(find.text('No tip'), findsOneWidget);
   });
 
-  testWidgets('wraps a long destination address without a layout exception', (
-    tester,
-  ) async {
+  testWidgets('shows only the primary destination name', (tester) async {
     const longAddress =
         '1390 Pear Avenue, Mountain View, California 94043, United States of America';
     await tester.pumpWidget(
@@ -336,7 +334,8 @@ void main() {
       ),
     );
 
-    expect(find.text(longAddress), findsOneWidget);
+    expect(find.text('Silicon Valley Corporate Catering'), findsOneWidget);
+    expect(find.text(longAddress), findsNothing);
     expect(find.byKey(const ValueKey('trip-route-dashes')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

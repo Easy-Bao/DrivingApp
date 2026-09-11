@@ -104,4 +104,28 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('passenger-account-logout')));
     expect(logoutCount, 1);
   });
+
+  testWidgets('keeps the bottom scroll clearance tight above the tab bar', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 852);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(buildSubject(onLogout: () {}));
+
+    final scrollView = find.byKey(
+      const ValueKey<String>('passenger-account-scroll'),
+    );
+    await tester.drag(scrollView, const Offset(0, -1200));
+    await tester.pump();
+
+    final scrollRect = tester.getRect(scrollView);
+    final logoutRect = tester.getRect(
+      find.byKey(const ValueKey('passenger-account-logout')),
+    );
+    expect(scrollRect.bottom - logoutRect.bottom, lessThanOrEqualTo(90));
+    expect(tester.takeException(), isNull);
+  });
 }

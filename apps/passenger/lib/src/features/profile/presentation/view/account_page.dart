@@ -32,12 +32,13 @@ class const AccountPage({super.key, this.onLogout}) extends StatelessWidget {
                     ? 20.0
                     : 24.0;
                 return SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
+                  key: const ValueKey<String>('passenger-account-scroll'),
+                  physics: const ClampingScrollPhysics(),
                   padding: EdgeInsets.fromLTRB(
                     horizontalPadding,
                     20,
                     horizontalPadding,
-                    MediaQuery.paddingOf(context).bottom + 98,
+                    AppFloatingTabBar.height + 10,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -52,9 +53,9 @@ class const AccountPage({super.key, this.onLogout}) extends StatelessWidget {
                           color: context.colorScheme.onSurface,
                         ),
                       ),
-                      const SizedBox(height: 26),
+                      const SizedBox(height: 20),
                       _buildProfileSummary(context, visibleState),
-                      const SizedBox(height: 38),
+                      const SizedBox(height: 28),
                       _buildSectionTitle(context, 'Personal information'),
                       const SizedBox(height: 12),
                       _buildMenuGroup(context, [
@@ -64,7 +65,7 @@ class const AccountPage({super.key, this.onLogout}) extends StatelessWidget {
                           onTap: () => _openProfileInfo(context),
                         ),
                       ]),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 24),
                       _buildSectionTitle(context, 'Places'),
                       const SizedBox(height: 12),
                       _buildMenuGroup(context, [
@@ -75,7 +76,7 @@ class const AccountPage({super.key, this.onLogout}) extends StatelessWidget {
                               context.pushNamed(SavedPlacesRoutes.places),
                         ),
                       ]),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 24),
                       _buildSectionTitle(context, 'Support'),
                       const SizedBox(height: 12),
                       _buildMenuGroup(context, [
@@ -92,7 +93,7 @@ class const AccountPage({super.key, this.onLogout}) extends StatelessWidget {
                               context.pushNamed(SettingsRoutes.settings),
                         ),
                       ]),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 24),
                       _buildSectionTitle(context, 'Legal and app information'),
                       const SizedBox(height: 12),
                       _buildMenuGroup(context, [
@@ -108,7 +109,7 @@ class const AccountPage({super.key, this.onLogout}) extends StatelessWidget {
                         ),
                       ]),
                       if (onLogout != null && isAuthenticated) ...[
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 24),
                         _buildLogoutButton(context),
                       ],
                     ],
@@ -211,7 +212,7 @@ class const AccountPage({super.key, this.onLogout}) extends StatelessWidget {
       onTap: item.onTap,
       borderRadius: BorderRadius.circular(16),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 17),
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 15),
         child: Row(
           children: [
             Expanded(

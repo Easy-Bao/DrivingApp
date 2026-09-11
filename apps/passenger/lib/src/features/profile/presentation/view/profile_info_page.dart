@@ -216,9 +216,9 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
           if (!_isDirty && !_isSaving) _applyProfile(state);
         },
         child: Scaffold(
-          backgroundColor: context.colorScheme.surface,
+          backgroundColor: context.canvasColor,
           appBar: AppBar(
-            backgroundColor: context.colorScheme.surface,
+            backgroundColor: context.canvasColor,
             elevation: 0,
             scrolledUnderElevation: 0,
             leading: IconButton(
@@ -269,65 +269,163 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
           ),
           body: SafeArea(
             top: false,
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 560),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Center(
-                        child: ProfileAvatarWidget(
-                          key: const ValueKey<String>(
-                            'passenger-profile-avatar',
-                          ),
-                          initials: _getInitials(_nameController.text),
-                          imagePath: _avatarPath,
-                          imageData: _avatarData,
-                          size: 132,
-                          onCameraTap: _pickPhoto,
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      Center(
-                        child: Text(
-                          'Add a profile photo',
-                          style: TextStyle(
-                            color: context.colorScheme.onSurfaceVariant,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 38),
-                      _buildTextField(
-                        label: 'Full Name',
-                        controller: _nameController,
-                        errorText: _nameError,
-                        textInputAction: TextInputAction.next,
-                      ),
-                      const SizedBox(height: 24),
-                      _buildPhoneField(),
-                      const SizedBox(height: 24),
-                      _buildTextField(
-                        label: 'Email',
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        errorText: _emailError,
-                        textInputAction: TextInputAction.done,
-                      ),
-                      const SizedBox(height: 24),
-                      _buildGenderField(),
-                      const SizedBox(height: 44),
-                    ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final horizontalPadding = constraints.maxWidth < 360
+                    ? 20.0
+                    : 24.0;
+                return SingleChildScrollView(
+                  key: const ValueKey<String>('passenger-profile-info-scroll'),
+                  physics: const ClampingScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    12,
+                    horizontalPadding,
+                    24,
                   ),
-                ),
-              ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 560),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildPhotoCard(),
+                          const SizedBox(height: 24),
+                          _buildSectionHeader(),
+                          const SizedBox(height: 12),
+                          _buildDetailsCard(),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildPhotoCard() {
+    final hasProfilePhoto =
+        _avatarPath.trim().isNotEmpty || _avatarData.trim().isNotEmpty;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: context.colorScheme.secondaryContainer.withValues(alpha: 0.42),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: context.colorScheme.outlineVariant),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          ProfileAvatarWidget(
+            key: const ValueKey<String>('passenger-profile-avatar'),
+            initials: _getInitials(_nameController.text),
+            imagePath: _avatarPath,
+            imageData: _avatarData,
+            size: 104,
+            onCameraTap: _pickPhoto,
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  hasProfilePhoto ? 'Profile photo' : 'Add a profile photo',
+                  style: TextStyle(
+                    color: context.colorScheme.onSurface,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  'Help drivers recognize you at pickup.',
+                  style: TextStyle(
+                    color: context.colorScheme.onSurfaceVariant,
+                    fontSize: 13,
+                    height: 1.25,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  key: const ValueKey<String>('passenger-profile-change-photo'),
+                  onPressed: _pickPhoto,
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 40),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  icon: const Icon(LucideIcons.camera, size: 16),
+                  label: Text(hasProfilePhoto ? 'Change photo' : 'Add photo'),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Personal details',
+          style: TextStyle(
+            color: context.colorScheme.onSurface,
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Keep your contact information up to date.',
+          style: TextStyle(
+            color: context.colorScheme.onSurfaceVariant,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailsCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: context.colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: context.colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildTextField(
+            label: 'Full Name',
+            controller: _nameController,
+            errorText: _nameError,
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: 20),
+          _buildPhoneField(),
+          const SizedBox(height: 20),
+          _buildTextField(
+            label: 'Email',
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            errorText: _emailError,
+            textInputAction: TextInputAction.done,
+          ),
+          const SizedBox(height: 20),
+          _buildGenderField(),
+        ],
       ),
     );
   }

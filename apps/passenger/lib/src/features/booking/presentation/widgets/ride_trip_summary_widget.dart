@@ -44,11 +44,7 @@ class const RideTripSummaryWidget({
               _LocationDetails(label: 'Pickup', value: pickupLabel),
               const _DashedRouteConnector(),
               const _LocationIcon(icon: LucideIcons.map_pin),
-              _LocationDetails(
-                label: 'Destination',
-                value: destinationName,
-                subtitle: destinationAddress,
-              ),
+              _LocationDetails(label: 'Destination', value: destinationName),
             ],
           ),
         ],
@@ -177,14 +173,10 @@ class const _LocationIcon({required this.icon}) extends StatelessWidget {
   }
 }
 
-class const _LocationDetails({
-  required this.label,
-  required this.value,
-  this.subtitle,
-}) extends StatelessWidget {
+class const _LocationDetails({required this.label, required this.value})
+    extends StatelessWidget {
   final String label;
   final String value;
-  final String? subtitle;
 
   @override
   Widget build(BuildContext context) {
@@ -210,19 +202,6 @@ class const _LocationDetails({
             fontWeight: FontWeight.w800,
           ),
         ),
-        if (subtitle case final address? when address.trim().isNotEmpty) ...[
-          const SizedBox(height: 2),
-          Text(
-            address,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: context.colorScheme.onSurfaceVariant,
-              fontSize: 12,
-              height: 1.25,
-            ),
-          ),
-        ],
       ],
     );
   }

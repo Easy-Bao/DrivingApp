@@ -125,29 +125,65 @@ class _InboxPageState extends State<InboxPage> {
       child: Scaffold(
         backgroundColor: context.canvasColor,
         body: SafeArea(
-          child: BlocSelector<SessionBloc, SessionState, bool>(
-            selector: (state) =>
-                state is GuestSession || state is SessionFailure,
-            builder: (context, isGuest) {
-              if (isGuest) {
-                return _buildInboxContent(
+          child: BlocListener<SessionBloc, SessionState>(
+            listenWhen: (_, current) => current is AuthenticatedSession,
+            listener: (_, _) => unawaited(_initializeInbox()),
+            child: BlocBuilder<SessionBloc, SessionState>(
+              builder: (context, sessionState) => switch (sessionState) {
+                SessionLoading() => _buildSessionLoadingState(),
+                GuestSession() || SessionFailure() => _buildInboxContent(
                   const InboxLoadedState(<InboxNotification>[]),
                   isGuest: true,
-                );
-              }
-              return BlocBuilder<InboxCubit, InboxState>(
-                builder: (context, state) {
-                  if (state is InboxLoadingState ||
-                      state is InboxInitialState) {
-                    return _buildLoadingState();
-                  }
-                  return _buildInboxContent(state, isGuest: false);
-                },
-              );
-            },
+                ),
+                AuthenticatedSession() => BlocBuilder<InboxCubit, InboxState>(
+                  builder: (context, state) {
+                    if (state is InboxLoadingState) {
+                      return _buildLoadingState();
+                    }
+                    if (state is InboxInitialState) {
+                      return _buildInboxContent(
+                        const InboxLoadedState(<InboxNotification>[]),
+                        isGuest: false,
+                      );
+                    }
+                    return _buildInboxContent(state, isGuest: false);
+                  },
+                ),
+              },
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildSessionLoadingState() {
+    return const CustomScrollView(
+      physics: AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(24, 0, 24, 16),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Inbox'),
+                SizedBox(height: 4),
+                Text('Messages and receipts'),
+              ],
+            ),
+          ),
+        ),
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(
+            child: SizedBox.square(
+              dimension: 24,
+              child: CircularProgressIndicator(strokeWidth: 2.5),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
