@@ -30,7 +30,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Near Bathroom'));
+    final nearBathroom = find.byKey(
+      const ValueKey<String>('saved-place-Near Bathroom'),
+    );
+    await tester.scrollUntilVisible(nearBathroom, 300);
+    await tester.tap(nearBathroom);
     await tester.pumpAndSettle();
 
     final setDefaultAction = find.text('Set as Home quick action');
@@ -43,5 +47,54 @@ void main() {
     expect(find.text('Default'), findsOneWidget);
 
     await cubit.close();
+  });
+
+  testWidgets('keeps the redesigned shortcuts usable on a narrow screen', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final repository = MockSavedPlacesRepository();
+    when(() => repository.loadPlaces()).thenAnswer(
+      (_) async => const <SavedPlace>[
+        SavedPlace(
+          label: 'Home',
+          iconName: 'house',
+          savedAddress: 'Near Bathroom, Mountain View',
+          latitude: 37.3861,
+          longitude: -122.0839,
+        ),
+        SavedPlace(label: 'Work', iconName: 'briefcase'),
+        SavedPlace(
+          label: 'Near Bathroom',
+          iconName: 'map_pin',
+          savedAddress: '1600 Amphitheatre Parkway, Mountain View',
+          latitude: 37.422,
+          longitude: -122.084,
+          isDefault: true,
+        ),
+      ],
+    );
+    when(() => repository.savePlaces(any())).thenAnswer((_) async {});
+    final cubit = SavedPlacesCubit(repository: repository);
+    addTearDown(cubit.close);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BlocProvider.value(value: cubit, child: const SavedPlacePage()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Saved places'), findsOneWidget);
+    expect(find.text('Everyday shortcuts'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('saved-places-scroll')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
   });
 }

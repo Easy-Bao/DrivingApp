@@ -259,68 +259,90 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: context.colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: context.colorScheme.surface,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: Center(
-          child: IconButton(
+      backgroundColor: context.canvasColor,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final horizontalPadding = constraints.maxWidth < 360 ? 16.0 : 20.0;
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildPageHeader(),
+                      Expanded(
+                        child: BlocBuilder<SavedPlacesCubit, SavedPlacesState>(
+                          builder: (context, state) {
+                            final content = _buildSavedPlacesList(state);
+                            if (state.isLoading && state.places.isNotEmpty) {
+                              return Skeletonizer.zone(
+                                child: IgnorePointer(child: content),
+                              );
+                            }
+                            return content;
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPageHeader() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 18),
+      child: Row(
+        children: [
+          IconButton(
             onPressed: () => context.pop(),
             tooltip: MaterialLocalizations.of(context).backButtonTooltip,
             padding: EdgeInsets.zero,
-            style: IconButton.styleFrom(shape: const CircleBorder()),
+            style: IconButton.styleFrom(
+              minimumSize: const Size(48, 48),
+              shape: const CircleBorder(),
+            ),
             icon: Icon(
               LucideIcons.arrow_left,
               color: context.colorScheme.onSurface,
-              size: 20,
+              size: 21,
             ),
           ),
-        ),
-        title: Text(
-          'Saved places',
-          style: TextStyle(
-            color: context.colorScheme.onSurface,
-            fontWeight: FontWeight.w800,
-            fontSize: 18,
-          ),
-        ),
-        centerTitle: false,
-        titleSpacing: 0,
-      ),
-      body: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 8),
-              Text(
-                'Quick destinations ready from Home.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: context.colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w500,
+          const SizedBox(width: 4),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Saved places',
+                  style: TextStyle(
+                    color: context.colorScheme.onSurface,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 24,
+                    letterSpacing: -0.5,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              Expanded(
-                child: BlocBuilder<SavedPlacesCubit, SavedPlacesState>(
-                  builder: (context, state) {
-                    final content = _buildSavedPlacesList(state);
-                    if (state.isLoading && state.places.isNotEmpty) {
-                      return Skeletonizer.zone(
-                        child: IgnorePointer(child: content),
-                      );
-                    }
-                    return content;
-                  },
+                const SizedBox(height: 2),
+                Text(
+                  'Your everyday destinations, one tap away.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: context.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -343,8 +365,9 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
     int indexForPlace(SavedPlace place) => state.places.indexOf(place);
 
     return ListView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.only(bottom: 32),
+      key: const ValueKey<String>('saved-places-scroll'),
+      physics: const ClampingScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 24),
       children: [
         if (state.errorMessage != null &&
             state.errorSource == SavedPlacesErrorSource.load) ...[
@@ -354,9 +377,14 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
               BlocProvider.of<SavedPlacesCubit>(context).loadPlaces(),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
         ],
-        _buildSectionLabel('Essentials'),
+        _buildShortcutIntro(state),
+        const SizedBox(height: 24),
+        _buildSectionHeading(
+          title: 'Everyday shortcuts',
+          subtitle: 'The places you reach for most.',
+        ),
         const SizedBox(height: 10),
         _buildPlaceTile(
           icon: LucideIcons.house,
@@ -389,7 +417,10 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
         ),
         if (customPlaces.isNotEmpty) ...[
           const SizedBox(height: 24),
-          _buildSectionLabel('Other Places'),
+          _buildSectionHeading(
+            title: 'Other places',
+            subtitle: 'Keep favorite destinations close.',
+          ),
           const SizedBox(height: 10),
           for (final place in customPlaces) ...[
             _buildPlaceTile(
@@ -403,10 +434,10 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
             const SizedBox(height: 12),
           ],
         ],
-        const SizedBox(height: 20),
+        const SizedBox(height: 22),
         SizedBox(
           width: double.infinity,
-          height: 52,
+          height: 54,
           child: OutlinedButton.icon(
             onPressed: _openAddCategoryPage,
             icon: const Icon(LucideIcons.plus, size: 18),
@@ -425,17 +456,134 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
     );
   }
 
-  Widget _buildSectionLabel(String label) {
-    return Text(
-      label,
-      style: TextStyle(
-        color: context.colorScheme.onSurfaceVariant,
-        fontSize: 12,
-        fontWeight: FontWeight.w800,
-        letterSpacing: 0.9,
+  Widget _buildShortcutIntro(SavedPlacesState state) {
+    final placeCount = state.places.length;
+    final countLabel = placeCount == 0
+        ? 'No shortcuts yet'
+        : '$placeCount ${placeCount == 1 ? 'shortcut' : 'shortcuts'} saved';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+      decoration: BoxDecoration(
+        color: context.colorScheme.primary,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: context.colorScheme.secondaryContainer,
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Icon(
+                  LucideIcons.map_pin,
+                  color: context.colorScheme.onSecondaryContainer,
+                  size: 21,
+                ),
+              ),
+              const Spacer(),
+              Icon(
+                LucideIcons.arrow_up_right,
+                color: context.colorScheme.onPrimary.withValues(alpha: 0.7),
+                size: 21,
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Text(
+            'Save the places you go often',
+            style: TextStyle(
+              color: context.colorScheme.onPrimary,
+              fontSize: 19,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Find them instantly from Home when you are ready to ride.',
+            style: TextStyle(
+              color: context.colorScheme.onPrimary.withValues(alpha: 0.72),
+              fontSize: 13,
+              height: 1.35,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: context.colorScheme.onPrimary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              countLabel,
+              style: TextStyle(
+                color: context.colorScheme.onPrimary,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
+
+  Widget _buildSectionHeading({
+    required String title,
+    required String subtitle,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            color: context.colorScheme.onSurface,
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.1,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          subtitle,
+          style: TextStyle(
+            color: context.colorScheme.onSurfaceVariant,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDefaultBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: context.colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        'Default',
+        style: TextStyle(
+          color: context.colorScheme.onSecondaryContainer,
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+
+  String _placeKey(String label) => 'saved-place-$label';
 
   Widget _buildPlaceTile({
     required IconData icon,
@@ -445,91 +593,99 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
     required bool isDefault,
     required VoidCallback onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: isConfigured
-              ? context.colorScheme.surface
-              : context.colorScheme.surfaceContainerHighest.withValues(
-                  alpha: 0.55,
-                ),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isConfigured
-                ? context.colorScheme.outlineVariant
-                : context.colorScheme.outlineVariant.withValues(alpha: 0.7),
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: isConfigured
-                    ? context.colorScheme.secondaryContainer
-                    : context.colorScheme.surface,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(icon, color: context.colorScheme.onSurface, size: 20),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: context.colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    address,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: isConfigured
-                          ? FontWeight.w500
-                          : FontWeight.w600,
-                      color: isConfigured
-                          ? context.colorScheme.onSurfaceVariant
-                          : context.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
+    final backgroundColor = isDefault
+        ? context.colorScheme.secondaryContainer.withValues(alpha: 0.28)
+        : isConfigured
+        ? context.colorScheme.surface
+        : context.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6);
+
+    return Semantics(
+      button: true,
+      label: '$label, $address',
+      child: Material(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          key: ValueKey<String>(_placeKey(label)),
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDefault
+                    ? context.colorScheme.primary.withValues(alpha: 0.28)
+                    : context.colorScheme.outlineVariant,
               ),
             ),
-            if (isDefault)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: context.colorScheme.secondaryContainer,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  'Default',
-                  style: TextStyle(
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: isDefault
+                        ? context.colorScheme.secondaryContainer
+                        : isConfigured
+                        ? context.colorScheme.primaryContainer
+                        : context.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(
+                    icon,
                     color: context.colorScheme.onSurface,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
+                    size: 21,
                   ),
                 ),
-              )
-            else
-              Icon(
-                isConfigured ? LucideIcons.pencil : LucideIcons.plus,
-                color: context.colorScheme.onSurfaceVariant,
-                size: isConfigured ? 16 : 18,
-              ),
-          ],
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: context.colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        address,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: isConfigured
+                              ? FontWeight.w500
+                              : FontWeight.w600,
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    if (isDefault) _buildDefaultBadge(),
+                    if (isDefault) const SizedBox(height: 5),
+                    Icon(
+                      isConfigured
+                          ? LucideIcons.chevron_right
+                          : LucideIcons.plus,
+                      color: context.colorScheme.onSurfaceVariant,
+                      size: isConfigured ? 18 : 20,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
