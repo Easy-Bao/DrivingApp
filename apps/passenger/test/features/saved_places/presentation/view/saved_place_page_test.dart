@@ -90,6 +90,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Saved places'), findsOneWidget);
+    expect(
+      find.text('Your everyday destinations, one tap away.'),
+      findsNothing,
+    );
+    expect(find.text('Save the places you go often'), findsNothing);
     expect(find.text('Everyday shortcuts'), findsOneWidget);
     expect(
       find.byKey(const ValueKey<String>('saved-places-scroll')),

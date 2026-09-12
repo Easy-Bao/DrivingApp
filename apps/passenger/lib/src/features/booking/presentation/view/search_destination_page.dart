@@ -467,6 +467,40 @@ class _SearchDestinationPageState()
     }
   }
 
+  Widget _buildResultsLoadingState({required bool hasQuery}) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox.square(
+            dimension: 26,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.4,
+              color: context.colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            hasQuery ? 'Searching places…' : 'Finding nearby places…',
+            style: TextStyle(
+              color: context.colorScheme.onSurface,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'This should only take a moment.',
+            style: TextStyle(
+              color: context.colorScheme.onSurfaceVariant,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_userLat == null || _userLng == null) {
@@ -583,51 +617,57 @@ class _SearchDestinationPageState()
                                       child:
                                           (_isSearching ||
                                               (_isLoadingNearby && !hasQuery))
-                                          ? Skeletonizer.zone(
-                                              child: ListView.separated(
-                                                padding: EdgeInsets.fromLTRB(
-                                                  16,
-                                                  4,
-                                                  16,
-                                                  bottomPadding + 16,
-                                                ),
-                                                physics:
-                                                    const AlwaysScrollableScrollPhysics(
-                                                      parent:
-                                                          BouncingScrollPhysics(),
-                                                    ),
-                                                itemCount: 8,
-                                                separatorBuilder: (_, _) =>
-                                                    Divider(
-                                                      height: 1,
-                                                      color: context
-                                                          .colorScheme
-                                                          .outlineVariant,
-                                                    ),
-                                                itemBuilder: (_, _) =>
-                                                    const ListTile(
-                                                      contentPadding:
-                                                          EdgeInsets.symmetric(
-                                                            horizontal: 8,
-                                                            vertical: 4,
+                                          ? displayList.isEmpty
+                                                ? _buildResultsLoadingState(
+                                                    hasQuery: hasQuery,
+                                                  )
+                                                : Skeletonizer.zone(
+                                                    child: ListView.separated(
+                                                      padding:
+                                                          EdgeInsets.fromLTRB(
+                                                            16,
+                                                            4,
+                                                            16,
+                                                            bottomPadding + 16,
                                                           ),
-                                                      leading: Bone.circle(
-                                                        size: 44,
-                                                      ),
-                                                      title: Bone.text(
-                                                        width: 130,
-                                                        fontSize: 15,
-                                                      ),
-                                                      subtitle: Bone.text(
-                                                        width: 90,
-                                                        fontSize: 13,
-                                                      ),
-                                                      trailing: Bone.icon(
-                                                        size: 18,
-                                                      ),
+                                                      physics:
+                                                          const AlwaysScrollableScrollPhysics(
+                                                            parent:
+                                                                BouncingScrollPhysics(),
+                                                          ),
+                                                      itemCount: 8,
+                                                      separatorBuilder:
+                                                          (_, _) => Divider(
+                                                            height: 1,
+                                                            color: context
+                                                                .colorScheme
+                                                                .outlineVariant,
+                                                          ),
+                                                      itemBuilder: (_, _) =>
+                                                          const ListTile(
+                                                            contentPadding:
+                                                                EdgeInsets.symmetric(
+                                                                  horizontal: 8,
+                                                                  vertical: 4,
+                                                                ),
+                                                            leading:
+                                                                Bone.circle(
+                                                                  size: 44,
+                                                                ),
+                                                            title: Bone.text(
+                                                              width: 130,
+                                                              fontSize: 15,
+                                                            ),
+                                                            subtitle: Bone.text(
+                                                              width: 90,
+                                                              fontSize: 13,
+                                                            ),
+                                                            trailing: Bone.icon(
+                                                              size: 18,
+                                                            ),
+                                                          ),
                                                     ),
-                                              ),
-                                            )
+                                                  )
                                           : displayList.isEmpty
                                           ? Center(
                                               child: Text(
@@ -832,16 +872,6 @@ class _SearchDestinationPageState()
                                         color:
                                             context.colorScheme.outlineVariant,
                                       ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: context.colorScheme.onSurface
-                                              .withValues(
-                                                alpha: 0.08 * (1 - t),
-                                              ),
-                                          blurRadius: 15,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
                                     ),
                                     child: Row(
                                       children: [

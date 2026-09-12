@@ -52,6 +52,7 @@ void main() {
         const DashboardState(isLoadingStats: true),
         const DashboardState(
           isLoadingStats: false,
+          hasLoadedStats: true,
           earnings: 385.50,
           completedTrips: 7,
         ),
@@ -103,6 +104,7 @@ void main() {
         const DashboardState(isLoadingStats: true),
         const DashboardState(
           isLoadingStats: false,
+          hasLoadedStats: true,
           earnings: 12.50,
           completedTrips: 1,
         ),

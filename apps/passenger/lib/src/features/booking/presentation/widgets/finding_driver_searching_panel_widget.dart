@@ -1,8 +1,7 @@
-import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:foundation/foundation.dart';
 import 'package:maps/maps.dart';
+import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_status_sheet.dart';
 
 class const FindingDriverSearchingPanelWidget({
   super.key,
@@ -26,133 +25,19 @@ class const FindingDriverSearchingPanelWidget({
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-      decoration: BoxDecoration(
-        color: context.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        boxShadow: [
-          BoxShadow(
-            color: context.colorScheme.onSurface.withValues(alpha: 0.08),
-            blurRadius: 30,
-            offset: const Offset(0, -10),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: context.colorScheme.outlineVariant,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          AnimatedBuilder(
-            animation: dotAnimation,
-            builder: (ctx, _) {
-              final dots = '.' * (1 + (dotAnimation.value * 3).floor());
-              return Text(
-                '$message$dots',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: context.colorScheme.onSurface,
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 8),
-          Text(
-            pickupAddress != null
-                ? 'Request Sent. Your Driver Is Reviewing Your Ride Request.'
-                : 'Looking For $rideType Drivers Nearby...',
-            style: TextStyle(
-              fontSize: 14,
-              color: context.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: context.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: context.colorScheme.outlineVariant),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      LucideIcons.map_pin,
-                      size: 16,
-                      color: context.colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 8),
-                    SizedBox(
-                      width: 160,
-                      child: Text(
-                        destination.name,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: context.colorScheme.onSurface,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                Text(
-                  formatPesoAmount(fare),
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: context.colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          GestureDetector(
-            onTap: isCanceling ? null : onCancelPressed,
-            child: Container(
-              width: double.infinity,
-              alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              decoration: BoxDecoration(
-                color: context.colorScheme.error.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(32),
-              ),
-              child: isCanceling
-                  ? SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: context.colorScheme.error,
-                      ),
-                    )
-                  : Text(
-                      'Cancel Search',
-                      style: TextStyle(
-                        color: context.colorScheme.error,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
-                      ),
-                    ),
-            ),
-          ),
-        ],
-      ),
+    return FindingDriverStatusSheet(
+      eyebrow: 'Finding a driver',
+      title: message,
+      message: pickupAddress != null
+          ? 'Your request is with nearby drivers. We’ll let you know as soon as one accepts.'
+          : 'We’re checking nearby $rideType drivers for your ride.',
+      statusIcon: LucideIcons.search,
+      statusColor: Theme.of(context).colorScheme.primary,
+      statusAnimation: dotAnimation,
+      destination: destination.name,
+      fare: fare,
+      onCancelPressed: onCancelPressed,
+      isCanceling: isCanceling,
     );
   }
 }

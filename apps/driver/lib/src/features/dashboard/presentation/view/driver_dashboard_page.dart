@@ -1048,6 +1048,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   Widget _buildStatsRow(DashboardState state) {
     return DriverDashboardStatsRowWidget(
       isLoadingStats: state.isLoadingStats,
+      hasExistingStats: state.hasLoadedStats,
       earnings: state.earnings,
       completedTrips: state.completedTrips,
       errorMessage: state.errorMessage == null ? state.statsErrorMessage : null,

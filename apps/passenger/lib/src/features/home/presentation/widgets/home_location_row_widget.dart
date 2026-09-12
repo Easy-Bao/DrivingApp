@@ -1,7 +1,6 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 
 class const HomeLocationRowWidget({
   required this.isAccessChecking,
@@ -25,14 +24,29 @@ class const HomeLocationRowWidget({
   Widget build(BuildContext context) {
     final Widget content;
     if (isAccessChecking || isAddressLoading) {
-      content = const Skeletonizer.zone(
-        child: Row(
-          children: [
-            Bone.icon(size: 14),
-            SizedBox(width: 6),
-            Bone.text(width: 140, fontSize: 13),
-          ],
-        ),
+      content = Row(
+        children: [
+          SizedBox.square(
+            dimension: 14,
+            child: CircularProgressIndicator(
+              strokeWidth: 1.8,
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            isAccessChecking
+                ? 'Checking location access…'
+                : 'Finding your pickup location…',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       );
     } else if (!hasLocationAccess) {
       content = const _LocationRowLabel(

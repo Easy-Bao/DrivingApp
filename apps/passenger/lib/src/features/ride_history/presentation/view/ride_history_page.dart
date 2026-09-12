@@ -64,7 +64,8 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                       RideHistoryInitial() => const _RideHistoryProgressView(
                         subtitle: 'Preparing your activity',
                       ),
-                      RideHistoryLoading(:final existingRideCount) =>
+                      RideHistoryLoading(:final existingRideCount)
+                          when existingRideCount > 0 =>
                         _RideHistoryLoadingView(
                           itemCount: existingRideCount
                               .clamp(
@@ -73,6 +74,9 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                               )
                               .toInt(),
                         ),
+                      RideHistoryLoading() => const _RideHistoryProgressView(
+                        subtitle: 'Loading your activity',
+                      ),
                       RideHistoryError(:final message) =>
                         _RideHistoryMessageView(
                           subtitle: 'Tap a ride to see details',

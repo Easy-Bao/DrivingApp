@@ -1,6 +1,7 @@
 import 'package:driver/src/features/dashboard/presentation/widgets/driver_dashboard/driver_dashboard_stats_row_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 void main() {
   testWidgets('renders one inline dashboard error with one retry action', (
@@ -31,7 +32,7 @@ void main() {
     expect(retryCount, 1);
   });
 
-  testWidgets('keeps the stats skeleton visible while loading', (tester) async {
+  testWidgets('shows a progress status before stats exist', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
@@ -46,6 +47,31 @@ void main() {
     );
 
     expect(find.text('stale error'), findsNothing);
+    expect(find.text("Today's Net Earnings"), findsNothing);
+    expect(find.byType(Bone), findsNothing);
+    expect(find.text("Loading today's activity"), findsOneWidget);
+  });
+
+  testWidgets('keeps the stats skeleton during a refresh with existing data', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: DriverDashboardStatsRowWidget(
+            isLoadingStats: true,
+            hasExistingStats: true,
+            earnings: 385.5,
+            completedTrips: 7,
+          ),
+        ),
+      ),
+    );
+
     expect(find.text("Today's Net Earnings"), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('driver-dashboard-stats-skeleton')),
+      findsOneWidget,
+    );
   });
 }

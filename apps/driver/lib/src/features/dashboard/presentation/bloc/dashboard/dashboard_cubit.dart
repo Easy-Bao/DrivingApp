@@ -88,6 +88,7 @@ class DashboardCubit({
         (stats) => emit(
           state.copyWith(
             isLoadingStats: false,
+            hasLoadedStats: true,
             earnings: stats.earnings,
             completedTrips: stats.completedTrips,
             statsErrorMessage: null,

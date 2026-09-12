@@ -299,50 +299,40 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
 
   Widget _buildPageHeader() {
     return Padding(
-      padding: const EdgeInsets.only(top: 8, bottom: 18),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => context.pop(),
-            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-            padding: EdgeInsets.zero,
-            style: IconButton.styleFrom(
-              minimumSize: const Size(48, 48),
-              shape: const CircleBorder(),
+      padding: const EdgeInsets.only(top: 8, bottom: 12),
+      child: SizedBox(
+        height: 48,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Text(
+              'Saved places',
+              style: TextStyle(
+                color: context.colorScheme.onSurface,
+                fontWeight: FontWeight.w800,
+                fontSize: 22,
+                letterSpacing: -0.4,
+              ),
             ),
-            icon: Icon(
-              LucideIcons.arrow_left,
-              color: context.colorScheme.onSurface,
-              size: 21,
-            ),
-          ),
-          const SizedBox(width: 4),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Saved places',
-                  style: TextStyle(
-                    color: context.colorScheme.onSurface,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 24,
-                    letterSpacing: -0.5,
-                  ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: IconButton(
+                onPressed: () => context.pop(),
+                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                padding: EdgeInsets.zero,
+                style: IconButton.styleFrom(
+                  minimumSize: const Size(48, 48),
+                  shape: const CircleBorder(),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  'Your everyday destinations, one tap away.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: context.colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
-                  ),
+                icon: Icon(
+                  LucideIcons.arrow_left,
+                  color: context.colorScheme.onSurface,
+                  size: 21,
                 ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -379,8 +369,6 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
           ),
           const SizedBox(height: 14),
         ],
-        _buildShortcutIntro(state),
-        const SizedBox(height: 24),
         _buildSectionHeading(
           title: 'Everyday shortcuts',
           subtitle: 'The places you reach for most.',
@@ -453,86 +441,6 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildShortcutIntro(SavedPlacesState state) {
-    final placeCount = state.places.length;
-    final countLabel = placeCount == 0
-        ? 'No shortcuts yet'
-        : '$placeCount ${placeCount == 1 ? 'shortcut' : 'shortcuts'} saved';
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
-      decoration: BoxDecoration(
-        color: context.colorScheme.primary,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: context.colorScheme.secondaryContainer,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Icon(
-                  LucideIcons.map_pin,
-                  color: context.colorScheme.onSecondaryContainer,
-                  size: 21,
-                ),
-              ),
-              const Spacer(),
-              Icon(
-                LucideIcons.arrow_up_right,
-                color: context.colorScheme.onPrimary.withValues(alpha: 0.7),
-                size: 21,
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Text(
-            'Save the places you go often',
-            style: TextStyle(
-              color: context.colorScheme.onPrimary,
-              fontSize: 19,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.2,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Find them instantly from Home when you are ready to ride.',
-            style: TextStyle(
-              color: context.colorScheme.onPrimary.withValues(alpha: 0.72),
-              fontSize: 13,
-              height: 1.35,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: context.colorScheme.onPrimary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              countLabel,
-              style: TextStyle(
-                color: context.colorScheme.onPrimary,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 

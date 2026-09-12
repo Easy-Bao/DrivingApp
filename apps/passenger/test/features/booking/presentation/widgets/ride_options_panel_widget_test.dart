@@ -104,6 +104,10 @@ void main() {
       find.byKey(const ValueKey('ride-options-loading-primary-action')),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const ValueKey('ride-options-loading-total-fare')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('shows a recoverable fare error without exposing providers', (

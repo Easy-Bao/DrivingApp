@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger/src/features/driver_profile/domain/entities/driver_review.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 
 class const DriverProfileDetailsSheet({
   super.key,
@@ -299,29 +298,27 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
 
   Widget _buildReviews() {
     if (_isLoadingStats) {
-      return Skeletonizer.zone(
-        child: ListView.separated(
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: _reviewPageSize,
-          separatorBuilder: (_, _) => const SizedBox(height: 8),
-          itemBuilder: (_, _) => Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: context.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: context.colorScheme.outlineVariant),
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox.square(
+              dimension: 22,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.2,
+                color: context.colorScheme.onSurface,
+              ),
             ),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Bone.text(width: 140, fontSize: 14),
-                SizedBox(height: 8),
-                Bone.text(width: 110, fontSize: 12),
-                SizedBox(height: 8),
-                Bone.multiText(lines: 2, fontSize: 13),
-              ],
+            const SizedBox(height: 10),
+            Text(
+              'Loading passenger reviews…',
+              style: TextStyle(
+                color: context.colorScheme.onSurfaceVariant,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
+          ],
         ),
       );
     }

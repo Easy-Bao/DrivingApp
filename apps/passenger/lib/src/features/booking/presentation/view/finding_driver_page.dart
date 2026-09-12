@@ -104,7 +104,6 @@ class const FindingDriverPageContent({
 class _FindingDriverPageContentState()
     extends State<FindingDriverPageContent>
     with TickerProviderStateMixin {
-  late AnimationController _radarCtrl;
   late AnimationController _dotCtrl;
   bool _initialized = false;
   DriverModel? _selectedDriver;
@@ -136,11 +135,6 @@ class _FindingDriverPageContentState()
   @override
   void initState() {
     super.initState();
-    _radarCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    );
-    unawaited(_radarCtrl.repeat());
     _dotCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -190,7 +184,6 @@ class _FindingDriverPageContentState()
 
   @override
   void dispose() {
-    _radarCtrl.dispose();
     _dotCtrl.dispose();
     super.dispose();
   }
@@ -486,70 +479,6 @@ class _FindingDriverPageContentState()
                             _onMapCreated(controller, context),
                       ),
                     ),
-                  ),
-                  BlocBuilder<BookingBloc, BookingState>(
-                    builder: (context, state) {
-                      final showRadar =
-                          state is FindingNearestDriver ||
-                          (state is BookingSearching &&
-                              state.isDirect == false) ||
-                          (state is BookingOffersReceived &&
-                              state.offers.isEmpty);
-                      if (showRadar) {
-                        return Center(
-                          child: AnimatedBuilder(
-                            animation: _radarCtrl,
-                            builder: (ctx, _) {
-                              return Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  ...List.generate(3, (i) {
-                                    final timerSeconds =
-                                        (_radarCtrl.value + i * 0.33) % 1.0;
-                                    return Container(
-                                      width: 60 + timerSeconds * 200,
-                                      height: 60 + timerSeconds * 200,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: context.colorScheme.onSurface
-                                              .withValues(
-                                                alpha:
-                                                    0.15 * (1 - timerSeconds),
-                                              ),
-                                          width: 2,
-                                        ),
-                                      ),
-                                    );
-                                  }),
-                                  Container(
-                                    width: 60,
-                                    height: 60,
-                                    decoration: BoxDecoration(
-                                      color: context.colorScheme.onSurface,
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: context.colorScheme.onSurface
-                                              .withValues(alpha: 0.3),
-                                          blurRadius: 20,
-                                        ),
-                                      ],
-                                    ),
-                                    child: Icon(
-                                      LucideIcons.navigation,
-                                      color: context.colorScheme.surface,
-                                      size: 24,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
                   ),
                   SafeArea(
                     child: Align(

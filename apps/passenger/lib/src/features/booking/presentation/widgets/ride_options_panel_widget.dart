@@ -266,6 +266,7 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
 
   Widget _buildLoadingTotalFare() {
     return Container(
+      key: const ValueKey('ride-options-loading-total-fare'),
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -827,31 +828,59 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
         const SizedBox(height: 16),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 10),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
           decoration: BoxDecoration(
             color: context.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: context.colorScheme.outlineVariant),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Pickup note',
-                style: TextStyle(
-                  color: context.colorScheme.onSurface,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: context.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      LucideIcons.file_text,
+                      size: 18,
+                      color: context.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(width: 11),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Pickup note',
+                          style: TextStyle(
+                            color: context.colorScheme.onSurface,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Optional · visible to your driver before pickup.',
+                          style: TextStyle(
+                            color: context.colorScheme.onSurfaceVariant,
+                            fontSize: 12,
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Optional · visible to your driver before pickup.',
-                style: TextStyle(
-                  color: context.colorScheme.onSurfaceVariant,
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               TextField(
                 key: const ValueKey('trip-note-input'),
                 controller: widget.notesController,
@@ -867,7 +896,7 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
                 },
                 decoration: InputDecoration(
                   hintText: 'For example: Meet me at the side entrance.',
-                  contentPadding: const EdgeInsets.all(16),
+                  contentPadding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
                   alignLabelWithHint: true,
                   counterStyle: TextStyle(
                     color: context.colorScheme.onSurfaceVariant,

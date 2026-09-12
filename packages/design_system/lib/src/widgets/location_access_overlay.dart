@@ -137,7 +137,7 @@ class const _LocationAccessSheet({
                           color: presentation
                               .color(colorScheme)
                               .withValues(alpha: 0.13),
-                          shape: BoxShape.circle,
+                          borderRadius: BorderRadius.circular(17),
                         ),
                         alignment: Alignment.center,
                         child: state == LocationAccessOverlayState.checking
@@ -161,7 +161,11 @@ class const _LocationAccessSheet({
                           children: [
                             Text(
                               presentation.title,
-                              style: Theme.of(context).textTheme.titleLarge,
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.3,
+                                  ),
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -169,6 +173,7 @@ class const _LocationAccessSheet({
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
                                     color: colorScheme.onSurfaceVariant,
+                                    height: 1.35,
                                   ),
                             ),
                           ],
@@ -179,10 +184,16 @@ class const _LocationAccessSheet({
                   if (primaryAction != null) ...[
                     const SizedBox(height: 16),
                     SizedBox(
-                      height: 48,
-                      child: FilledButton(
+                      height: 50,
+                      child: FilledButton.icon(
                         onPressed: primaryAction.callback,
-                        child: Text(primaryAction.label),
+                        icon: Icon(
+                          primaryAction.label.contains('Settings')
+                              ? LucideIcons.settings
+                              : LucideIcons.refresh_cw,
+                          size: 18,
+                        ),
+                        label: Text(primaryAction.label),
                       ),
                     ),
                   ],
@@ -192,9 +203,10 @@ class const _LocationAccessSheet({
                     const SizedBox(height: 4),
                     SizedBox(
                       height: 48,
-                      child: TextButton(
+                      child: TextButton.icon(
                         onPressed: onTryAgain,
-                        child: const Text('Try Again'),
+                        icon: const Icon(LucideIcons.refresh_cw, size: 16),
+                        label: const Text('Try Again'),
                       ),
                     ),
                   ],

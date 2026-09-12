@@ -8,7 +8,6 @@ import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/driver_profile/domain/entities/driver_review.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/driver_profile/presentation/driver_profile_details_sheet.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 
 class const DriverDropdownCardWidget({
   super.key,
@@ -102,17 +101,25 @@ class _DriverDropdownCardWidgetState()
       width: double.infinity,
       height: _isLoadingFeedback || _recentReviews.isEmpty ? null : 190,
       child: _isLoadingFeedback
-          ? const Skeletonizer(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Bone.text(words: 5),
-                  SizedBox(height: 7),
-                  Bone.text(words: 4),
-                  SizedBox(height: 7),
-                  Bone.text(words: 6),
-                ],
-              ),
+          ? Row(
+              children: [
+                SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: context.colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Loading feedback…',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             )
           : _recentReviews.isEmpty
           ? Text(

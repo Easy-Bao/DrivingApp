@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 class const DashboardState({
   this.isOnline = false,
   this.isLoadingStats = false,
+  this.hasLoadedStats = false,
   this.earnings = 0.0,
   this.completedTrips = 0,
   this.errorMessage,
@@ -15,6 +16,7 @@ class const DashboardState({
 
   final bool isOnline;
   final bool isLoadingStats;
+  final bool hasLoadedStats;
   final double earnings;
   final int completedTrips;
   final String? errorMessage;
@@ -26,6 +28,7 @@ class const DashboardState({
   DashboardState copyWith({
     bool? isOnline,
     bool? isLoadingStats,
+    bool? hasLoadedStats,
     double? earnings,
     int? completedTrips,
     Object? errorMessage = _unset,
@@ -37,6 +40,7 @@ class const DashboardState({
     return DashboardState(
       isOnline: isOnline ?? this.isOnline,
       isLoadingStats: isLoadingStats ?? this.isLoadingStats,
+      hasLoadedStats: hasLoadedStats ?? this.hasLoadedStats,
       earnings: earnings ?? this.earnings,
       completedTrips: completedTrips ?? this.completedTrips,
       errorMessage: identical(errorMessage, _unset)
@@ -55,6 +59,7 @@ class const DashboardState({
   List<Object?> get props => [
     isOnline,
     isLoadingStats,
+    hasLoadedStats,
     earnings,
     completedTrips,
     errorMessage,

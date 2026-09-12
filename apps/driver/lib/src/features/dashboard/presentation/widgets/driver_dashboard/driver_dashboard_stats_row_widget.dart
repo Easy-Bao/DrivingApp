@@ -9,12 +9,14 @@ class const DriverDashboardStatsRowWidget({
   required this.isLoadingStats,
   required this.earnings,
   required this.completedTrips,
+  this.hasExistingStats = false,
   this.errorMessage,
   this.onRetry,
 }) extends StatelessWidget {
   final bool isLoadingStats;
   final double earnings;
   final int completedTrips;
+  final bool hasExistingStats;
   final String? errorMessage;
   final VoidCallback? onRetry;
 
@@ -25,8 +27,13 @@ class const DriverDashboardStatsRowWidget({
       return DriverDashboardErrorCard(message: errorMessage, onRetry: onRetry);
     }
 
+    if (isLoadingStats && !hasExistingStats) {
+      return _buildInitialLoadingState(context);
+    }
+
     return Skeletonizer.zone(
-      enabled: isLoadingStats,
+      key: const ValueKey<String>('driver-dashboard-stats-skeleton'),
+      enabled: isLoadingStats && hasExistingStats,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Row(
@@ -79,7 +86,7 @@ class const DriverDashboardStatsRowWidget({
             ),
           ),
           const SizedBox(height: 6),
-          if (isLoadingStats)
+          if (isLoadingStats && hasExistingStats)
             Bone.text(width: skeletonWidth, fontSize: 22)
           else
             Text(
@@ -91,6 +98,57 @@ class const DriverDashboardStatsRowWidget({
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildInitialLoadingState(BuildContext context) {
+    return Padding(
+      key: const ValueKey<String>('driver-dashboard-stats-loading'),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+        decoration: BoxDecoration(
+          color: context.colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: context.colorScheme.outlineVariant),
+        ),
+        child: Row(
+          children: [
+            SizedBox.square(
+              dimension: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.2,
+                color: context.colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Loading today's activity",
+                    style: TextStyle(
+                      color: context.colorScheme.onSurface,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Your earnings and trips will appear here shortly.',
+                    style: TextStyle(
+                      color: context.colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

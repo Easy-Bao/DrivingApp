@@ -13,7 +13,6 @@ import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_state
 import 'package:passenger/src/features/inbox/presentation/widgets/inbox_empty_state_widget.dart';
 import 'package:passenger/src/features/inbox/presentation/widgets/inbox_notification_card_widget.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 
 class const InboxPage({
   super.key,
@@ -50,71 +49,58 @@ class _InboxPageState extends State<InboxPage> {
   }
 
   Widget _buildLoadingState() {
-    return Skeletonizer.zone(
-      child: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          const SliverPadding(
-            padding: EdgeInsets.fromLTRB(24, 0, 24, 16),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Bone.text(width: 100, fontSize: 32),
-                  SizedBox(height: 4),
-                  Bone.text(width: 160, fontSize: 15),
-                ],
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+          sliver: SliverToBoxAdapter(
+            child: Text(
+              'Inbox',
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.w700,
+                color: context.colorScheme.onSurface,
+                letterSpacing: -1.0,
               ),
             ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => _buildLoadingNotification(),
-                childCount: 5,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLoadingNotification() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: context.colorScheme.surfaceContainerHighest.withValues(
-            alpha: 0.25,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: context.colorScheme.outlineVariant.withValues(alpha: 0.2),
           ),
         ),
-        child: const Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Bone.circle(size: 48),
-            SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Bone.text(width: 130, fontSize: 15),
-                  SizedBox(height: 4),
-                  Bone.text(width: 180, fontSize: 13),
-                ],
-              ),
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox.square(
+                  dimension: 28,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: context.colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  'Loading your inbox',
+                  style: TextStyle(
+                    color: context.colorScheme.onSurface,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Messages and receipts will appear here.',
+                  style: TextStyle(
+                    color: context.colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ),
-            SizedBox(width: 12),
-            Bone.text(width: 48, fontSize: 11),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
