@@ -35,7 +35,9 @@ class const DriverDashboardStatsRowWidget({
       key: const ValueKey<String>('driver-dashboard-stats-skeleton'),
       enabled: isLoadingStats && hasExistingStats,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDesignTokens.pageHorizontalPadding,
+        ),
         child: Row(
           children: [
             Expanded(
@@ -46,7 +48,7 @@ class const DriverDashboardStatsRowWidget({
                 skeletonWidth: 84,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppDesignTokens.compactGap),
             Expanded(
               child: _buildStatCard(
                 context,
@@ -68,10 +70,10 @@ class const DriverDashboardStatsRowWidget({
     required double skeletonWidth,
   }) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(AppDesignTokens.cardPadding),
       decoration: BoxDecoration(
         color: context.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppDesignTokens.cardRadius),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(
@@ -105,13 +107,18 @@ class const DriverDashboardStatsRowWidget({
   Widget _buildInitialLoadingState(BuildContext context) {
     return Padding(
       key: const ValueKey<String>('driver-dashboard-stats-loading'),
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDesignTokens.pageHorizontalPadding,
+      ),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDesignTokens.cardPadding,
+          vertical: 15,
+        ),
         decoration: BoxDecoration(
           color: context.colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(AppDesignTokens.cardRadius),
           border: Border.all(color: context.colorScheme.outlineVariant),
         ),
         child: Row(

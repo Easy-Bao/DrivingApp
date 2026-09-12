@@ -12,7 +12,7 @@ class const DriverFloatingTabBar({
   static const animationDuration = AppFloatingTabBar.animationDuration;
   static const height = AppFloatingTabBar.height;
 
-  static const _destinations = <AppTabDestination>[
+  static const destinations = <AppTabDestination>[
     AppTabDestination(icon: LucideIcons.layout_dashboard, label: 'Dashboard'),
     AppTabDestination(icon: LucideIcons.history, label: 'Trips'),
     AppTabDestination(icon: LucideIcons.wallet, label: 'Earnings'),
@@ -29,9 +29,27 @@ class const DriverFloatingTabBar({
       selectedIndex: selectedIndex,
       onDestinationSelected: onDestinationSelected,
       pagePosition: pagePosition,
-      destinations: _destinations,
+      destinations: destinations,
       itemKeyPrefix: 'driver-floating-tab-item',
       indicatorKey: 'driver-floating-tab-indicator',
+    );
+  }
+}
+
+class const DriverNavigationRail({
+  super.key,
+  required this.selectedIndex,
+  required this.onDestinationSelected,
+}) extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onDestinationSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppNavigationRail(
+      destinations: DriverFloatingTabBar.destinations,
+      selectedIndex: selectedIndex,
+      onDestinationSelected: onDestinationSelected,
     );
   }
 }

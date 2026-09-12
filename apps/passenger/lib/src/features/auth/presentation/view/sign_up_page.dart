@@ -252,26 +252,34 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                 filled: true,
                                 fillColor: context.colorScheme.surface,
                                 enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(36),
+                                  borderRadius: BorderRadius.circular(
+                                    AppDesignTokens.fieldRadius,
+                                  ),
                                   borderSide: BorderSide(
                                     color: context.colorScheme.outlineVariant,
                                   ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(36),
+                                  borderRadius: BorderRadius.circular(
+                                    AppDesignTokens.fieldRadius,
+                                  ),
                                   borderSide: BorderSide(
                                     color: context.colorScheme.onSurface,
                                     width: 1.5,
                                   ),
                                 ),
                                 errorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(36),
+                                  borderRadius: BorderRadius.circular(
+                                    AppDesignTokens.fieldRadius,
+                                  ),
                                   borderSide: BorderSide(
                                     color: context.colorScheme.error,
                                   ),
                                 ),
                                 focusedErrorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(36),
+                                  borderRadius: BorderRadius.circular(
+                                    AppDesignTokens.fieldRadius,
+                                  ),
                                   borderSide: BorderSide(
                                     color: context.colorScheme.error,
                                     width: 1.5,
@@ -322,26 +330,34 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                 filled: true,
                                 fillColor: context.colorScheme.surface,
                                 enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(36),
+                                  borderRadius: BorderRadius.circular(
+                                    AppDesignTokens.fieldRadius,
+                                  ),
                                   borderSide: BorderSide(
                                     color: context.colorScheme.outlineVariant,
                                   ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(36),
+                                  borderRadius: BorderRadius.circular(
+                                    AppDesignTokens.fieldRadius,
+                                  ),
                                   borderSide: BorderSide(
                                     color: context.colorScheme.onSurface,
                                     width: 1.5,
                                   ),
                                 ),
                                 errorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(36),
+                                  borderRadius: BorderRadius.circular(
+                                    AppDesignTokens.fieldRadius,
+                                  ),
                                   borderSide: BorderSide(
                                     color: context.colorScheme.error,
                                   ),
                                 ),
                                 focusedErrorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(36),
+                                  borderRadius: BorderRadius.circular(
+                                    AppDesignTokens.fieldRadius,
+                                  ),
                                   borderSide: BorderSide(
                                     color: context.colorScheme.error,
                                     width: 1.5,
@@ -398,27 +414,35 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                     filled: true,
                                     fillColor: context.colorScheme.surface,
                                     enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(36),
+                                      borderRadius: BorderRadius.circular(
+                                        AppDesignTokens.fieldRadius,
+                                      ),
                                       borderSide: BorderSide(
                                         color:
                                             context.colorScheme.outlineVariant,
                                       ),
                                     ),
                                     focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(36),
+                                      borderRadius: BorderRadius.circular(
+                                        AppDesignTokens.fieldRadius,
+                                      ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.onSurface,
                                         width: 1.5,
                                       ),
                                     ),
                                     errorBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(36),
+                                      borderRadius: BorderRadius.circular(
+                                        AppDesignTokens.fieldRadius,
+                                      ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.error,
                                       ),
                                     ),
                                     focusedErrorBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(36),
+                                      borderRadius: BorderRadius.circular(
+                                        AppDesignTokens.fieldRadius,
+                                      ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.error,
                                         width: 1.5,
@@ -494,27 +518,35 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                     filled: true,
                                     fillColor: context.colorScheme.surface,
                                     enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(36),
+                                      borderRadius: BorderRadius.circular(
+                                        AppDesignTokens.fieldRadius,
+                                      ),
                                       borderSide: BorderSide(
                                         color:
                                             context.colorScheme.outlineVariant,
                                       ),
                                     ),
                                     focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(36),
+                                      borderRadius: BorderRadius.circular(
+                                        AppDesignTokens.fieldRadius,
+                                      ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.onSurface,
                                         width: 1.5,
                                       ),
                                     ),
                                     errorBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(36),
+                                      borderRadius: BorderRadius.circular(
+                                        AppDesignTokens.fieldRadius,
+                                      ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.error,
                                       ),
                                     ),
                                     focusedErrorBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(36),
+                                      borderRadius: BorderRadius.circular(
+                                        AppDesignTokens.fieldRadius,
+                                      ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.error,
                                         width: 1.5,
@@ -540,7 +572,9 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                         context.colorScheme.onPrimary,
                                     minimumSize: const Size.fromHeight(56),
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(36),
+                                      borderRadius: BorderRadius.circular(
+                                        AppDesignTokens.controlRadius,
+                                      ),
                                     ),
                                     elevation: 0,
                                   ),

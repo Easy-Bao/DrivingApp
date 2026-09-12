@@ -52,17 +52,17 @@ class _InboxPageState extends State<InboxPage> {
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+        const SliverPadding(
+          padding: EdgeInsets.fromLTRB(
+            AppDesignTokens.pageHorizontalPadding,
+            0,
+            AppDesignTokens.pageHorizontalPadding,
+            16,
+          ),
           sliver: SliverToBoxAdapter(
-            child: Text(
-              'Inbox',
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w700,
-                color: context.colorScheme.onSurface,
-                letterSpacing: -1.0,
-              ),
+            child: AppPageHeader(
+              title: 'Inbox',
+              subtitle: 'Messages and receipts',
             ),
           ),
         ),
@@ -82,19 +82,12 @@ class _InboxPageState extends State<InboxPage> {
                 const SizedBox(height: 14),
                 Text(
                   'Loading your inbox',
-                  style: TextStyle(
-                    color: context.colorScheme.onSurface,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: context.textStyles.titleMedium,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Messages and receipts will appear here.',
-                  style: TextStyle(
-                    color: context.colorScheme.onSurfaceVariant,
-                    fontSize: 12,
-                  ),
+                  style: context.textStyles.bodySmall,
                 ),
               ],
             ),
@@ -148,15 +141,16 @@ class _InboxPageState extends State<InboxPage> {
       physics: AlwaysScrollableScrollPhysics(),
       slivers: [
         SliverPadding(
-          padding: EdgeInsets.fromLTRB(24, 0, 24, 16),
+          padding: EdgeInsets.fromLTRB(
+            AppDesignTokens.pageHorizontalPadding,
+            0,
+            AppDesignTokens.pageHorizontalPadding,
+            16,
+          ),
           sliver: SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Inbox'),
-                SizedBox(height: 4),
-                Text('Messages and receipts'),
-              ],
+            child: AppPageHeader(
+              title: 'Inbox',
+              subtitle: 'Messages and receipts',
             ),
           ),
         ),
@@ -183,28 +177,19 @@ class _InboxPageState extends State<InboxPage> {
       physics: const BouncingScrollPhysics(),
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(24.0, 0.0, 24.0, 16.0),
+          padding: const EdgeInsets.fromLTRB(
+            AppDesignTokens.pageHorizontalPadding,
+            0,
+            AppDesignTokens.pageHorizontalPadding,
+            16,
+          ),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
-              Text(
-                'Inbox',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w700,
-                  color: context.colorScheme.onSurface,
-                  letterSpacing: -1.0,
-                ),
+              const AppPageHeader(
+                title: 'Inbox',
+                subtitle: 'Messages and receipts',
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Messages and receipts',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppDesignTokens.compactGap * 2),
             ]),
           ),
         ),
@@ -215,7 +200,9 @@ class _InboxPageState extends State<InboxPage> {
           )
         else
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDesignTokens.pageHorizontalPadding,
+            ),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {
                 final notification = notifications[index];

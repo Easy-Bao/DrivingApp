@@ -61,7 +61,10 @@ class const _SavedPlaceChip({required this.place, required this.isActive})
     final showActiveStyle = isActive && place.hasLocation;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+      constraints: const BoxConstraints(
+        minHeight: AppDesignTokens.minimumTouchTarget,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: showActiveStyle
             ? context.colorScheme.primary
@@ -72,7 +75,7 @@ class const _SavedPlaceChip({required this.place, required this.isActive})
               : context.colorScheme.outlineVariant,
           width: showActiveStyle ? 1.5 : 1.0,
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppDesignTokens.pillRadius),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -109,13 +112,16 @@ class const _AddPlaceChip({required this.onTap}) extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        constraints: const BoxConstraints(
+          minHeight: AppDesignTokens.minimumTouchTarget,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: context.colorScheme.surface.withValues(alpha: 0),
           border: Border.all(
             color: context.colorScheme.onSurface.withValues(alpha: 0.25),
           ),
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppDesignTokens.pillRadius),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

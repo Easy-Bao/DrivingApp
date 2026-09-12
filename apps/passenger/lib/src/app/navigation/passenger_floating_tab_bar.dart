@@ -16,7 +16,7 @@ class const PassengerFloatingTabBar({
   static const animationDuration = AppFloatingTabBar.animationDuration;
   static const height = AppFloatingTabBar.height;
 
-  static const _destinations = <AppTabDestination>[
+  static const destinations = <AppTabDestination>[
     AppTabDestination(icon: LucideIcons.house, label: 'Home'),
     AppTabDestination(icon: LucideIcons.history, label: 'Activity'),
     AppTabDestination(icon: LucideIcons.mail, label: 'Inbox'),
@@ -34,9 +34,36 @@ class const PassengerFloatingTabBar({
       selectedIndex: selectedIndex,
       onDestinationSelected: onDestinationSelected,
       pagePosition: pagePosition,
-      destinations: _destinations,
+      destinations: destinations,
       itemKeyPrefix: 'passenger-floating-tab-item',
       indicatorKey: 'passenger-floating-tab-indicator',
+      iconBuilder: (context, index, destination, color) => index == 2
+          ? _InboxTabIcon(color: color, inboxCubit: inboxCubit)
+          : Icon(
+              destination.icon,
+              size: AppDesignTokens.navigationIconSize,
+              color: color,
+            ),
+    );
+  }
+}
+
+class const PassengerNavigationRail({
+  super.key,
+  required this.selectedIndex,
+  required this.onDestinationSelected,
+  required this.inboxCubit,
+}) extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onDestinationSelected;
+  final InboxCubit inboxCubit;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppNavigationRail(
+      destinations: PassengerFloatingTabBar.destinations,
+      selectedIndex: selectedIndex,
+      onDestinationSelected: onDestinationSelected,
       iconBuilder: (context, index, destination, color) => index == 2
           ? _InboxTabIcon(color: color, inboxCubit: inboxCubit)
           : Icon(

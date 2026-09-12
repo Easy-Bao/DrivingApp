@@ -16,7 +16,12 @@ class const GuestActionBarWidget({
     return SafeArea(
       top: false,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(24, 14, 24, 12),
+        padding: const EdgeInsets.fromLTRB(
+          AppDesignTokens.pageHorizontalPaddingWide,
+          14,
+          AppDesignTokens.pageHorizontalPaddingWide,
+          12,
+        ),
         decoration: BoxDecoration(
           color: context.colorScheme.surface,
           border: Border(
@@ -32,26 +37,34 @@ class const GuestActionBarWidget({
                   child: FilledButton(
                     onPressed: onSignUp,
                     style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(48),
+                      minimumSize: const Size.fromHeight(
+                        AppDesignTokens.controlHeight,
+                      ),
                       backgroundColor: context.colorScheme.secondaryContainer,
-                      foregroundColor: context.colorScheme.onSurface,
+                      foregroundColor: context.colorScheme.onSecondaryContainer,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(
+                          AppDesignTokens.controlRadius,
+                        ),
                       ),
                     ),
                     child: const Text('Sign Up'),
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: AppDesignTokens.sectionGap),
                 Expanded(
                   child: FilledButton(
                     onPressed: onSignIn,
                     style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(48),
+                      minimumSize: const Size.fromHeight(
+                        AppDesignTokens.controlHeight,
+                      ),
                       backgroundColor: context.colorScheme.onSurface,
                       foregroundColor: context.colorScheme.onPrimary,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(
+                          AppDesignTokens.controlRadius,
+                        ),
                       ),
                     ),
                     child: const Text('Log In'),
@@ -59,7 +72,7 @@ class const GuestActionBarWidget({
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppDesignTokens.compactGap),
             TextButton(
               onPressed: onHelp,
               style: TextButton.styleFrom(

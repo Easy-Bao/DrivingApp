@@ -273,22 +273,23 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
   Widget _buildSummaryCard(_EarningsSummary summary) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [context.colorScheme.primary, context.colorScheme.primary],
-        ),
-        borderRadius: BorderRadius.circular(20),
+        color: context.colorScheme.primary,
+        borderRadius: BorderRadius.circular(AppDesignTokens.cardRadius),
         boxShadow: [
           BoxShadow(
-            color: context.colorScheme.onSurface.withValues(alpha: 0.16),
+            color: context.colorScheme.primary.withValues(alpha: 0.16),
             blurRadius: 18,
-            offset: Offset(0, 8),
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
+        padding: const EdgeInsets.fromLTRB(
+          AppDesignTokens.cardPadding,
+          AppDesignTokens.cardPadding,
+          AppDesignTokens.cardPadding,
+          14,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

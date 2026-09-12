@@ -20,10 +20,15 @@ class const PendingBookingBannerWidget({
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 14, 10, 14),
+      padding: const EdgeInsets.fromLTRB(
+        AppDesignTokens.cardPadding,
+        14,
+        10,
+        14,
+      ),
       decoration: BoxDecoration(
         color: context.colorScheme.secondaryContainer.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppDesignTokens.cardRadius),
         border: Border.all(color: context.colorScheme.secondaryContainer),
       ),
       child: Row(

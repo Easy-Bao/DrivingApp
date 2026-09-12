@@ -74,11 +74,15 @@ class _HomePageState extends State<HomePage> {
         body: SafeArea(
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600),
+              constraints: const BoxConstraints(
+                maxWidth: AppDesignTokens.pageMaxWidth,
+              ),
               child: Stack(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDesignTokens.pageHorizontalPadding,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -280,32 +284,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'EasyRide',
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w700,
-                color: context.colorScheme.onSurface,
-                letterSpacing: -1.5,
-              ),
-            ),
-            Text(
-              'Ready to ride today?',
-              style: TextStyle(
-                fontSize: 16,
-                color: context.colorScheme.onSurface,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ],
+    return const AppPageHeader(
+      title: 'EasyRide',
+      subtitle: 'Ready to ride today?',
     );
   }
 
@@ -343,26 +324,13 @@ class _HomePageState extends State<HomePage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          'Recent Activity',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: context.colorScheme.onSurface,
-          ),
-        ),
+        Text('Recent Activity', style: context.textStyles.titleLarge),
         if (context.select<SessionBloc, bool>(
           (bloc) => bloc.state.isAuthenticated,
         ))
           TextButton(
             onPressed: () => context.goNamed(RideHistoryRoutes.rideHistory),
-            child: Text(
-              'View all',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: context.colorScheme.onSurface,
-              ),
-            ),
+            child: const Text('View all'),
           ),
       ],
     );
@@ -505,10 +473,12 @@ class _HomePageState extends State<HomePage> {
           child: Material(
             color: context.colorScheme.surface.withValues(alpha: 0),
             child: Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppDesignTokens.cardPadding),
               decoration: BoxDecoration(
                 color: context.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(36),
+                borderRadius: BorderRadius.circular(
+                  AppDesignTokens.controlRadius,
+                ),
                 border: Border.all(color: context.colorScheme.outlineVariant),
               ),
               child: Row(

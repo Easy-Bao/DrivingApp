@@ -121,14 +121,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
         elevation: 0,
         scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
-        title: Text(
-          'Trip History',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: context.colorScheme.onSurface,
-          ),
-        ),
+        title: const Text('Trip History'),
         centerTitle: false,
         actions: [
           IconButton(
@@ -177,7 +170,12 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
               child: Skeletonizer(
                 enabled: state.isLoading,
                 child: ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 96),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppDesignTokens.pageHorizontalPadding,
+                    4,
+                    AppDesignTokens.pageHorizontalPadding,
+                    AppFloatingTabBar.height + AppDesignTokens.sectionGap,
+                  ),
                   physics: const AlwaysScrollableScrollPhysics(
                     parent: BouncingScrollPhysics(),
                   ),
@@ -285,7 +283,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
         padding: const EdgeInsets.fromLTRB(14, 12, 10, 10),
         decoration: BoxDecoration(
           color: context.colorScheme.error.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppDesignTokens.smallRadius),
           border: Border.all(
             color: context.colorScheme.error.withValues(alpha: 0.2),
           ),
@@ -408,15 +406,15 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppDesignTokens.cardRadius),
         child: InkWell(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppDesignTokens.cardRadius),
           onTap: () =>
               context.pushNamed(RideHistoryRoutes.tripDetail, extra: trip),
           child: Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppDesignTokens.cardPadding),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppDesignTokens.cardRadius),
               border: Border.all(color: context.colorScheme.outlineVariant),
             ),
             child: Column(
@@ -440,7 +438,9 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
                       ),
                       decoration: BoxDecoration(
                         color: statusColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(
+                          AppDesignTokens.pillRadius,
+                        ),
                       ),
                       child: Text(
                         statusLabel,

@@ -26,96 +26,106 @@ class const AccountPage({super.key, this.onLogout}) extends StatelessWidget {
         return Scaffold(
           backgroundColor: context.canvasColor,
           body: SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final horizontalPadding = constraints.maxWidth < 360
-                    ? 20.0
-                    : 24.0;
-                return SingleChildScrollView(
-                  key: const ValueKey<String>('passenger-account-scroll'),
-                  physics: const ClampingScrollPhysics(),
-                  padding: EdgeInsets.fromLTRB(
-                    horizontalPadding,
-                    20,
-                    horizontalPadding,
-                    AppFloatingTabBar.height + 10,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        'Account',
-                        style: TextStyle(
-                          fontSize: 27,
-                          height: 1.1,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.8,
-                          color: context.colorScheme.onSurface,
-                        ),
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: AppDesignTokens.pageMaxWidth,
+                ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final horizontalPadding = constraints.maxWidth < 360
+                        ? 20.0
+                        : AppDesignTokens.pageHorizontalPaddingWide;
+                    return SingleChildScrollView(
+                      key: const ValueKey<String>('passenger-account-scroll'),
+                      physics: const ClampingScrollPhysics(),
+                      padding: EdgeInsets.fromLTRB(
+                        horizontalPadding,
+                        AppDesignTokens.pageTopPadding,
+                        horizontalPadding,
+                        AppFloatingTabBar.height + 10,
                       ),
-                      const SizedBox(height: 20),
-                      _buildProfileSummary(context, visibleState),
-                      const SizedBox(height: 28),
-                      _buildSectionTitle(context, 'Personal information'),
-                      const SizedBox(height: 12),
-                      _buildMenuGroup(context, [
-                        _AccountMenuItem(
-                          title: 'Personal Details',
-                          subtitle: 'Name, phone, email, and profile photo',
-                          onTap: () => _openProfileInfo(context),
-                        ),
-                      ]),
-                      const SizedBox(height: 24),
-                      _buildSectionTitle(context, 'Places'),
-                      const SizedBox(height: 12),
-                      _buildMenuGroup(context, [
-                        _AccountMenuItem(
-                          title: 'Saved Places',
-                          subtitle: 'Home, work, and favorite destinations',
-                          onTap: () =>
-                              context.pushNamed(SavedPlacesRoutes.places),
-                        ),
-                      ]),
-                      const SizedBox(height: 24),
-                      _buildSectionTitle(context, 'Support'),
-                      const SizedBox(height: 12),
-                      _buildMenuGroup(context, [
-                        _AccountMenuItem(
-                          title: 'Help Center',
-                          subtitle: 'Get help with rides and payments',
-                          onTap: () =>
-                              context.pushNamed(ProfileRoutes.helpCenter),
-                        ),
-                        _AccountMenuItem(
-                          title: 'Settings',
-                          subtitle: 'Location access and app support',
-                          onTap: () =>
-                              context.pushNamed(SettingsRoutes.settings),
-                        ),
-                      ]),
-                      const SizedBox(height: 24),
-                      _buildSectionTitle(context, 'Legal and app information'),
-                      const SizedBox(height: 12),
-                      _buildMenuGroup(context, [
-                        _AccountMenuItem(
-                          title: 'Terms of Service',
-                          subtitle: 'Read the rules for using BaoRide',
-                          onTap: () => context.pushNamed(SettingsRoutes.terms),
-                        ),
-                        _AccountMenuItem(
-                          title: 'About BaoRide',
-                          subtitle: 'Version and open-source licenses',
-                          onTap: () => context.pushNamed(SettingsRoutes.about),
-                        ),
-                      ]),
-                      if (onLogout != null && isAuthenticated) ...[
-                        const SizedBox(height: 24),
-                        _buildLogoutButton(context),
-                      ],
-                    ],
-                  ),
-                );
-              },
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const AppPageHeader(title: 'Account'),
+                          const SizedBox(height: AppDesignTokens.sectionGap),
+                          _buildProfileSummary(context, visibleState),
+                          const SizedBox(height: 28),
+                          _buildSectionTitle(context, 'Personal information'),
+                          const SizedBox(height: 12),
+                          _buildMenuGroup(context, [
+                            _AccountMenuItem(
+                              icon: LucideIcons.user_round,
+                              title: 'Personal Details',
+                              subtitle: 'Name, phone, email, and profile photo',
+                              onTap: () => _openProfileInfo(context),
+                            ),
+                          ]),
+                          const SizedBox(height: 24),
+                          _buildSectionTitle(context, 'Places'),
+                          const SizedBox(height: 12),
+                          _buildMenuGroup(context, [
+                            _AccountMenuItem(
+                              icon: LucideIcons.map_pin,
+                              title: 'Saved Places',
+                              subtitle: 'Home, work, and favorite destinations',
+                              onTap: () =>
+                                  context.pushNamed(SavedPlacesRoutes.places),
+                            ),
+                          ]),
+                          const SizedBox(height: 24),
+                          _buildSectionTitle(context, 'Support'),
+                          const SizedBox(height: 12),
+                          _buildMenuGroup(context, [
+                            _AccountMenuItem(
+                              icon: LucideIcons.circle_question_mark,
+                              title: 'Help Center',
+                              subtitle: 'Get help with rides and payments',
+                              onTap: () =>
+                                  context.pushNamed(ProfileRoutes.helpCenter),
+                            ),
+                            _AccountMenuItem(
+                              icon: LucideIcons.settings,
+                              title: 'Settings',
+                              subtitle: 'Location access and app support',
+                              onTap: () =>
+                                  context.pushNamed(SettingsRoutes.settings),
+                            ),
+                          ]),
+                          const SizedBox(height: 24),
+                          _buildSectionTitle(
+                            context,
+                            'Legal and app information',
+                          ),
+                          const SizedBox(height: 12),
+                          _buildMenuGroup(context, [
+                            _AccountMenuItem(
+                              icon: LucideIcons.file_text,
+                              title: 'Terms of Service',
+                              subtitle: 'Read the rules for using BaoRide',
+                              onTap: () =>
+                                  context.pushNamed(SettingsRoutes.terms),
+                            ),
+                            _AccountMenuItem(
+                              icon: LucideIcons.info,
+                              title: 'About BaoRide',
+                              subtitle: 'Version and open-source licenses',
+                              onTap: () =>
+                                  context.pushNamed(SettingsRoutes.about),
+                            ),
+                          ]),
+                          if (onLogout != null && isAuthenticated) ...[
+                            const SizedBox(height: 24),
+                            _buildLogoutButton(context),
+                          ],
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
             ),
           ),
         );
@@ -189,20 +199,25 @@ class const AccountPage({super.key, this.onLogout}) extends StatelessWidget {
   }
 
   Widget _buildMenuGroup(BuildContext context, List<_AccountMenuItem> items) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (var index = 0; index < items.length; index++) ...[
-          _buildMenuTile(context, items[index]),
-          if (index != items.length - 1)
-            Divider(
-              height: 1,
-              indent: 2,
-              endIndent: 2,
-              color: context.colorScheme.outlineVariant.withValues(alpha: 0.65),
-            ),
+    return AppSurfaceCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var index = 0; index < items.length; index++) ...[
+            _buildMenuTile(context, items[index]),
+            if (index != items.length - 1)
+              Divider(
+                height: 1,
+                indent: 2,
+                endIndent: 2,
+                color: context.colorScheme.outlineVariant.withValues(
+                  alpha: 0.65,
+                ),
+              ),
+          ],
         ],
-      ],
+      ),
     );
   }
 
@@ -210,46 +225,55 @@ class const AccountPage({super.key, this.onLogout}) extends StatelessWidget {
     return InkWell(
       key: ValueKey<String>('passenger-account-item-${item.title}'),
       onTap: item.onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 15),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      height: 1.2,
-                      fontWeight: FontWeight.w800,
-                      color: context.colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    item.subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
-                      height: 1.2,
-                      color: context.colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minHeight: AppDesignTokens.minimumTouchTarget + 28,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDesignTokens.cardPadding,
+            vertical: 12,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: context.colorScheme.primaryContainer,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  item.icon,
+                  size: 18,
+                  color: context.colorScheme.onPrimaryContainer,
+                ),
               ),
-            ),
-            const SizedBox(width: 14),
-            Icon(
-              LucideIcons.chevron_right,
-              color: context.colorScheme.onSurfaceVariant,
-              size: 23,
-            ),
-          ],
+              const SizedBox(width: AppDesignTokens.cardPadding),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(item.title, style: context.textStyles.titleMedium),
+                    const SizedBox(height: AppDesignTokens.compactGap / 2),
+                    Text(
+                      item.subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.textStyles.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppDesignTokens.compactGap),
+              Icon(
+                LucideIcons.chevron_right,
+                color: context.colorScheme.onSurfaceVariant,
+                size: AppDesignTokens.navigationIconSize,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -300,10 +324,12 @@ class const AccountPage({super.key, this.onLogout}) extends StatelessWidget {
 }
 
 class const _AccountMenuItem({
+  required this.icon,
   required this.title,
   required this.subtitle,
   required this.onTap,
 }) {
+  final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;

@@ -44,10 +44,10 @@ class const DriverActiveTripCard({
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppDesignTokens.cardPadding),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppDesignTokens.cardRadius),
         border: Border.all(
           color: context.colorScheme.onSurface.withValues(alpha: 0.12),
         ),
@@ -70,7 +70,9 @@ class const DriverActiveTripCard({
                 ),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(
+                    AppDesignTokens.smallRadius,
+                  ),
                 ),
                 child: Text(
                   statusLabel,
@@ -255,10 +257,10 @@ class const DriverPoolBidCard({
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppDesignTokens.cardPadding),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppDesignTokens.cardRadius),
         border: Border.all(color: context.colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
@@ -289,7 +291,9 @@ class const DriverPoolBidCard({
                 ),
                 decoration: BoxDecoration(
                   color: context.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(
+                    AppDesignTokens.controlRadius,
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -321,7 +325,9 @@ class const DriverPoolBidCard({
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
               decoration: BoxDecoration(
                 color: context.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(
+                  AppDesignTokens.smallRadius,
+                ),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,

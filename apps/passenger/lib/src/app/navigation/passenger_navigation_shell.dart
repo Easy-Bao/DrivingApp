@@ -169,6 +169,12 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
   @override
   Widget build(BuildContext context) {
     final sel = widget.navigationCoordinator.selectedIndex;
+    final isAuthenticated = context.select<SessionBloc, bool>(
+      (bloc) => bloc.state.isAuthenticated,
+    );
+    final isWide =
+        MediaQuery.sizeOf(context).width >=
+        AppDesignTokens.wideLayoutBreakpoint;
     return BlocListener<SessionBloc, SessionState>(
       listenWhen: (_, current) =>
           current is AuthenticatedSession ||
@@ -200,7 +206,19 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
         },
         child: Scaffold(
           extendBody: true,
-          body: widget.navigationShell,
+          body: isWide && isAuthenticated
+              ? Row(
+                  children: [
+                    PassengerNavigationRail(
+                      selectedIndex: sel,
+                      onDestinationSelected: _onItemTapped,
+                      inboxCubit: widget.inboxCubit,
+                    ),
+                    const VerticalDivider(width: 1),
+                    Expanded(child: widget.navigationShell),
+                  ],
+                )
+              : widget.navigationShell,
           bottomNavigationBar: BlocSelector<SessionBloc, SessionState, bool>(
             selector: (state) => state.isAuthenticated,
             builder: (context, isAuthenticated) {
@@ -211,6 +229,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
                   onHelp: () => context.pushNamed(ProfileRoutes.helpCenter),
                 );
               }
+              if (isWide) return const SizedBox.shrink();
               final bottomPadding = MediaQuery.of(context).padding.bottom;
               return Padding(
                 padding: EdgeInsets.only(bottom: bottomPadding + 10),

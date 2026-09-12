@@ -168,7 +168,12 @@ class const _RideHistoryProgressView({required this.subtitle})
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
+          padding: const EdgeInsets.fromLTRB(
+            AppDesignTokens.pageHorizontalPadding,
+            8,
+            AppDesignTokens.pageHorizontalPadding,
+            18,
+          ),
           sliver: SliverToBoxAdapter(
             child: RideHistoryHeaderWidget(subtitle: subtitle),
           ),
@@ -219,7 +224,12 @@ class const _RideHistoryMessageView({
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
+          padding: const EdgeInsets.fromLTRB(
+            AppDesignTokens.pageHorizontalPadding,
+            8,
+            AppDesignTokens.pageHorizontalPadding,
+            18,
+          ),
           sliver: SliverToBoxAdapter(
             child: RideHistoryHeaderWidget(subtitle: subtitle),
           ),
@@ -289,7 +299,12 @@ class const _RideHistoryLoadingView({required this.itemCount})
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
         const SliverPadding(
-          padding: EdgeInsets.fromLTRB(20, 8, 20, 18),
+          padding: EdgeInsets.fromLTRB(
+            AppDesignTokens.pageHorizontalPadding,
+            8,
+            AppDesignTokens.pageHorizontalPadding,
+            18,
+          ),
           sliver: SliverToBoxAdapter(
             child: RideHistoryHeaderWidget(
               subtitle: 'Tap a ride to see details',
@@ -297,7 +312,9 @@ class const _RideHistoryLoadingView({required this.itemCount})
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDesignTokens.pageHorizontalPadding,
+          ),
           sliver: Skeletonizer.sliver(
             key: const ValueKey<String>('activity-loading-skeleton'),
             child: SliverList(

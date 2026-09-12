@@ -36,10 +36,17 @@ class const DriverPerformancePage({super.key, this.onBack, this.onRefresh})
           child: Align(
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600),
+              constraints: const BoxConstraints(
+                maxWidth: AppDesignTokens.pageMaxWidth,
+              ),
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 48),
+                padding: const EdgeInsets.fromLTRB(
+                  AppDesignTokens.pageHorizontalPadding,
+                  AppDesignTokens.pageTopPadding,
+                  AppDesignTokens.pageHorizontalPadding,
+                  48,
+                ),
                 children: [
                   if (state.isLoading) const LinearProgressIndicator(),
                   if (state.isLoading) const SizedBox(height: 18),
@@ -80,10 +87,10 @@ class const _PerformanceSummary({required this.stats}) extends StatelessWidget {
         : (completedTrips / totalTrips * 100).round();
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(AppDesignTokens.cardPadding),
       decoration: BoxDecoration(
         color: context.colorScheme.primary,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppDesignTokens.cardRadius),
       ),
       child: Column(
         children: [
@@ -110,7 +117,7 @@ class const _PerformanceSummary({required this.stats}) extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
             decoration: BoxDecoration(
               color: context.colorScheme.onPrimary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(99),
+              borderRadius: BorderRadius.circular(AppDesignTokens.pillRadius),
             ),
             child: Text(
               '$completionRate% trip completion',
@@ -182,10 +189,10 @@ class const _PerformanceMetricCard({
     return Container(
       width: width,
       constraints: const BoxConstraints(minHeight: 124),
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(AppDesignTokens.cardPadding),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppDesignTokens.cardRadius),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(

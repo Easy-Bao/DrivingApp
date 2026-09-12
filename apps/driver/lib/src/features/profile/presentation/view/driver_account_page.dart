@@ -34,28 +34,27 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
           child: Align(
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600),
+              constraints: const BoxConstraints(
+                maxWidth: AppDesignTokens.pageMaxWidth,
+              ),
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final horizontalPadding = constraints.maxWidth < 360
                       ? 20.0
-                      : 24.0;
+                      : AppDesignTokens.pageHorizontalPaddingWide;
                   return SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
                     padding: EdgeInsets.fromLTRB(
                       horizontalPadding,
-                      20,
+                      AppDesignTokens.pageTopPadding,
                       horizontalPadding,
                       MediaQuery.paddingOf(context).bottom + 98,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(
-                          'Account',
-                          style: Theme.of(context).textTheme.headlineMedium,
-                        ),
-                        const SizedBox(height: 26),
+                        const AppPageHeader(title: 'Account'),
+                        const SizedBox(height: AppDesignTokens.sectionGap),
                         _buildProfileSummary(context, state.account),
                         if (state.isLoading) ...[
                           const SizedBox(height: 20),
@@ -71,11 +70,12 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                             ),
                           ),
                         ],
-                        const SizedBox(height: 38),
+                        const SizedBox(height: AppDesignTokens.sectionGap),
                         _buildSectionTitle(context, 'Driver Details'),
                         const SizedBox(height: 12),
                         _buildMenuGroup(context, [
                           _DriverAccountMenuItem(
+                            icon: LucideIcons.car_front,
                             title: 'Vehicle Information',
                             subtitle: _vehicleSummary(state.account),
                             onTap: () => unawaited(
@@ -86,6 +86,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                             ),
                           ),
                           _DriverAccountMenuItem(
+                            icon: LucideIcons.wallet_cards,
                             title: 'Performance',
                             subtitle: 'Ratings, trips, and earnings',
                             onTap: () => context.pushNamed(
@@ -98,6 +99,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                         const SizedBox(height: 12),
                         _buildMenuGroup(context, [
                           _DriverAccountMenuItem(
+                            icon: LucideIcons.settings,
                             title: 'Settings',
                             subtitle: 'Location access and app support',
                             onTap: () => context.pushNamed(
@@ -105,6 +107,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                             ),
                           ),
                           _DriverAccountMenuItem(
+                            icon: LucideIcons.circle_question_mark,
                             title: 'Help Center',
                             subtitle: 'Support and frequently asked questions',
                             onTap: () => context.pushNamed(
@@ -112,6 +115,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                             ),
                           ),
                           _DriverAccountMenuItem(
+                            icon: LucideIcons.info,
                             title: 'About BaoRide',
                             subtitle: 'Driver app version and licenses',
                             onTap: () =>
@@ -233,20 +237,25 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
     BuildContext context,
     List<_DriverAccountMenuItem> items,
   ) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (var index = 0; index < items.length; index++) ...[
-          _buildMenuTile(context, items[index]),
-          if (index != items.length - 1)
-            Divider(
-              height: 1,
-              indent: 2,
-              endIndent: 2,
-              color: context.colorScheme.outlineVariant.withValues(alpha: 0.65),
-            ),
+    return AppSurfaceCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var index = 0; index < items.length; index++) ...[
+            _buildMenuTile(context, items[index]),
+            if (index != items.length - 1)
+              Divider(
+                height: 1,
+                indent: 2,
+                endIndent: 2,
+                color: context.colorScheme.outlineVariant.withValues(
+                  alpha: 0.65,
+                ),
+              ),
+          ],
         ],
-      ],
+      ),
     );
   }
 
@@ -261,14 +270,31 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
   Widget _buildMenuTile(BuildContext context, _DriverAccountMenuItem item) {
     return InkWell(
       key: ValueKey<String>('driver-account-item-${item.title}'),
-      borderRadius: BorderRadius.circular(16),
       onTap: item.onTap,
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 76),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 14),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDesignTokens.cardPadding,
+            vertical: 12,
+          ),
           child: Row(
             children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: context.colorScheme.primaryContainer,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  item.icon,
+                  size: 18,
+                  color: context.colorScheme.onPrimaryContainer,
+                ),
+              ),
+              const SizedBox(width: AppDesignTokens.cardPadding),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -278,7 +304,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                       item.title,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: AppDesignTokens.compactGap / 2),
                     Text(
                       item.subtitle,
                       maxLines: 2,
@@ -290,11 +316,11 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                   ],
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: AppDesignTokens.compactGap),
               Icon(
                 LucideIcons.chevron_right,
                 color: context.colorScheme.onSurfaceVariant,
-                size: 21,
+                size: AppDesignTokens.navigationIconSize,
               ),
             ],
           ),
@@ -358,10 +384,12 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
 }
 
 class const _DriverAccountMenuItem({
+  required this.icon,
   required this.title,
   required this.subtitle,
   required this.onTap,
 }) {
+  final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;

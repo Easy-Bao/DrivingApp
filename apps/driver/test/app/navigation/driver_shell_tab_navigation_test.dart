@@ -74,11 +74,11 @@ void main() {
       expect(inkWell.splashFactory, NoSplash.splashFactory);
       expect(
         inkWell.overlayColor?.resolve({WidgetState.pressed}),
-        AppTheme.data.colorScheme.surface.withValues(alpha: 0),
+        AppTheme.data.colorScheme.primary.withValues(alpha: 0.12),
       );
       expect(
         inkWell.overlayColor?.resolve({WidgetState.hovered}),
-        AppTheme.data.colorScheme.surface.withValues(alpha: 0),
+        AppTheme.data.colorScheme.primary.withValues(alpha: 0.08),
       );
     }
 

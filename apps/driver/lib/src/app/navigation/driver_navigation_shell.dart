@@ -65,7 +65,9 @@ class _DriverShellLayoutState extends State<DriverShellLayout> {
   @override
   Widget build(BuildContext context) {
     final selectedIndex = widget.navigationCoordinator.selectedIndex;
-    final bottomPadding = MediaQuery.paddingOf(context).bottom;
+    final isWide =
+        MediaQuery.sizeOf(context).width >=
+        AppDesignTokens.wideLayoutBreakpoint;
 
     return PopScope(
       canPop: widget.navigationCoordinator.canPop,
@@ -77,21 +79,36 @@ class _DriverShellLayoutState extends State<DriverShellLayout> {
       },
       child: Scaffold(
         extendBody: true,
-        body: widget.navigationShell,
-        bottomNavigationBar: Padding(
-          padding: EdgeInsets.only(bottom: bottomPadding + 10),
-          child: FractionallySizedBox(
-            widthFactor: 0.94,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 520),
-              child: DriverFloatingTabBar(
-                selectedIndex: selectedIndex,
-                onDestinationSelected: _onItemTapped,
-                pagePosition: widget.navigationCoordinator.pagePosition,
+        body: isWide
+            ? Row(
+                children: [
+                  DriverNavigationRail(
+                    selectedIndex: selectedIndex,
+                    onDestinationSelected: _onItemTapped,
+                  ),
+                  const VerticalDivider(width: 1),
+                  Expanded(child: widget.navigationShell),
+                ],
+              )
+            : widget.navigationShell,
+        bottomNavigationBar: isWide
+            ? const SizedBox.shrink()
+            : Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.paddingOf(context).bottom + 10,
+                ),
+                child: FractionallySizedBox(
+                  widthFactor: 0.94,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 520),
+                    child: DriverFloatingTabBar(
+                      selectedIndex: selectedIndex,
+                      onDestinationSelected: _onItemTapped,
+                      pagePosition: widget.navigationCoordinator.pagePosition,
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ),
-        ),
       ),
     );
   }

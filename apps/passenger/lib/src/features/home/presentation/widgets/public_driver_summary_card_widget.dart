@@ -12,10 +12,15 @@ class const PublicDriverSummaryCardWidget({super.key, required this.summaries})
     final visibleSummaries = summaries.take(3).toList(growable: false);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+      padding: const EdgeInsets.fromLTRB(
+        AppDesignTokens.cardPadding,
+        AppDesignTokens.cardPadding,
+        AppDesignTokens.cardPadding,
+        12,
+      ),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppDesignTokens.cardRadius),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(

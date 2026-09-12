@@ -784,24 +784,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'BaoRide',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      color: context.colorScheme.onSurface,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  SizedBox(height: 1),
-                  Text(
-                    'Driver',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: context.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
+                  Text('BaoRide', style: context.textStyles.titleLarge),
+                  const SizedBox(height: AppDesignTokens.compactGap / 2),
+                  Text('Driver', style: context.textStyles.labelMedium),
                 ],
               ),
               actions: [
@@ -822,73 +807,82 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
             ),
             body: SafeArea(
               top: false,
-              child: Column(
-                children: [
-                  const SizedBox(height: 8),
-                  _buildOnlineCardBanner(context, state),
-                  if (state.errorMessage != null) ...[
-                    const SizedBox(height: 16),
-                    DriverDashboardErrorCard(message: state.errorMessage!),
-                  ],
-                  const SizedBox(height: 16),
-                  _buildStatsRow(state),
-                  const SizedBox(height: 16),
-                  if (showFeed)
-                    Expanded(
-                      child: ListView(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        physics: const BouncingScrollPhysics(),
-                        children: [
-                          if (activeTrips.isNotEmpty) ...[
-                            DriverDashboardSectionLabel.activeRides(
-                              activeRideCount: activeTrips.length,
-                            ),
-                            const SizedBox(height: 10),
-                            ...activeTrips.asMap().entries.map(
-                              (entry) => DriverActiveTripCard(
-                                trip: entry.value,
-                                queueIndex: entry.key,
-                                hasCurrentTransitRide: activeTrips.any(
-                                  (activeTrip) =>
-                                      activeTrip['status'] == 'in_transit',
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: AppDesignTokens.wideContentMaxWidth,
+                  ),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      _buildOnlineCardBanner(context, state),
+                      if (state.errorMessage != null) ...[
+                        const SizedBox(height: 16),
+                        DriverDashboardErrorCard(message: state.errorMessage!),
+                      ],
+                      const SizedBox(height: 16),
+                      _buildStatsRow(state),
+                      const SizedBox(height: 16),
+                      if (showFeed)
+                        Expanded(
+                          child: ListView(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            physics: const BouncingScrollPhysics(),
+                            children: [
+                              if (activeTrips.isNotEmpty) ...[
+                                DriverDashboardSectionLabel.activeRides(
+                                  activeRideCount: activeTrips.length,
                                 ),
-                                isCompletingTrip:
-                                    _completingTripId ==
-                                    dashboardValueAsString(entry.value['id']),
-                                onResume: () => _resumeTrip(entry.value),
-                                onComplete: () =>
-                                    _completeTripFromDashboard(entry.value),
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                          ],
-                          if (activeBids.isNotEmpty) ...[
-                            const DriverDashboardSectionLabel(
-                              label: 'Incoming Requests',
-                            ),
-                            const SizedBox(height: 10),
-                            ...activeBids.map(
-                              (bid) => DriverPoolBidCard(
-                                bid: bid,
-                                submittingBidId: _submittingBidId,
-                                onDecline: () =>
-                                    BlocProvider.of<DashboardCubit>(context)
-                                        .removeActiveBid(
-                                          dashboardValueAsString(bid['id']),
+                                const SizedBox(height: 10),
+                                ...activeTrips.asMap().entries.map(
+                                  (entry) => DriverActiveTripCard(
+                                    trip: entry.value,
+                                    queueIndex: entry.key,
+                                    hasCurrentTransitRide: activeTrips.any(
+                                      (activeTrip) =>
+                                          activeTrip['status'] == 'in_transit',
+                                    ),
+                                    isCompletingTrip:
+                                        _completingTripId ==
+                                        dashboardValueAsString(
+                                          entry.value['id'],
                                         ),
-                                onAccept: () => _acceptBid(bid),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    )
-                  else ...[
-                    const Spacer(),
-                    _buildStatusIndicator(state),
-                    const Spacer(),
-                  ],
-                ],
+                                    onResume: () => _resumeTrip(entry.value),
+                                    onComplete: () =>
+                                        _completeTripFromDashboard(entry.value),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                              ],
+                              if (activeBids.isNotEmpty) ...[
+                                const DriverDashboardSectionLabel(
+                                  label: 'Incoming Requests',
+                                ),
+                                const SizedBox(height: 10),
+                                ...activeBids.map(
+                                  (bid) => DriverPoolBidCard(
+                                    bid: bid,
+                                    submittingBidId: _submittingBidId,
+                                    onDecline: () =>
+                                        BlocProvider.of<DashboardCubit>(context)
+                                            .removeActiveBid(
+                                              dashboardValueAsString(bid['id']),
+                                            ),
+                                    onAccept: () => _acceptBid(bid),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        )
+                      else ...[
+                        const Spacer(),
+                        _buildStatusIndicator(state),
+                        const Spacer(),
+                      ],
+                    ],
+                  ),
+                ),
               ),
             ),
           );
@@ -903,14 +897,16 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       (cubit) => cubit.state is DriverLocationAccessReady,
     );
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDesignTokens.pageHorizontalPadding,
+      ),
       child: LayoutBuilder(
         builder: (context, constraints) => AnimatedBuilder(
           animation: _availabilityCtrl,
           builder: (context, _) {
             final fillWidth = constraints.maxWidth * _availabilityCtrl.value;
             return ClipRRect(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppDesignTokens.cardRadius),
               child: Container(
                 decoration: BoxDecoration(
                   color: context.colorScheme.surfaceContainerHighest,
@@ -930,8 +926,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 16,
+                        horizontal: AppDesignTokens.cardPadding,
+                        vertical: AppDesignTokens.cardPadding,
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1011,7 +1007,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: trackColor,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppDesignTokens.pillRadius),
         ),
         child: _isTogglingOnline
             ? Center(
