@@ -17,6 +17,7 @@ import 'package:passenger/src/features/home/presentation/bloc/home/home_cubit.da
 import 'package:passenger/src/features/home/presentation/bloc/home/home_state.dart';
 import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_cubit.dart';
 import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_state.dart';
+import 'package:passenger/src/features/home/presentation/widgets/home_destination_search_hint_widget.dart';
 import 'package:passenger/src/features/home/presentation/widgets/home_location_row_widget.dart';
 import 'package:passenger/src/features/home/presentation/widgets/pending_booking_banner_widget.dart';
 import 'package:passenger/src/features/home/presentation/widgets/public_driver_summary_card_widget.dart';
@@ -461,67 +462,66 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildSearchBar() {
-    return GestureDetector(
-      onTap: () {
-        final activeSearch = _bookingBloc.activeDriverSearch;
-        if (activeSearch != null) {
-          final trip = activeSearch.trip;
+    return Semantics(
+      button: true,
+      label: 'Search for a destination',
+      hint: 'Opens destination search',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          final activeSearch = _bookingBloc.activeDriverSearch;
+          if (activeSearch != null) {
+            final trip = activeSearch.trip;
+            unawaited(
+              context.pushNamed(
+                BookingRoutes.findingDriver,
+                extra: {
+                  'rideType': trip.rideType,
+                  'fare': trip.fare,
+                  'destination': trip.destination,
+                  'distance': trip.distance,
+                  'duration': trip.duration,
+                  'pickupAddress': trip.pickupAddress,
+                  'pickupLat': activeSearch.pickupLat,
+                  'pickupLng': activeSearch.pickupLng,
+                  'passengerNote': trip.passengerNote,
+                },
+              ),
+            );
+            return;
+          }
+          final address = BlocProvider.of<HomeCubit>(context)
+              .state
+              .currentAddress;
           unawaited(
             context.pushNamed(
-              BookingRoutes.findingDriver,
-              extra: {
-                'rideType': trip.rideType,
-                'fare': trip.fare,
-                'destination': trip.destination,
-                'distance': trip.distance,
-                'duration': trip.duration,
-                'pickupAddress': trip.pickupAddress,
-                'pickupLat': activeSearch.pickupLat,
-                'pickupLng': activeSearch.pickupLng,
-                'passengerNote': trip.passengerNote,
-              },
+              BookingRoutes.searchDestination,
+              queryParameters: {'pickupAddress': address},
             ),
           );
-          return;
-        }
-        final address = BlocProvider.of<HomeCubit>(context)
-            .state
-            .currentAddress;
-        unawaited(
-          context.pushNamed(
-            BookingRoutes.searchDestination,
-            queryParameters: {'pickupAddress': address},
-          ),
-        );
-      },
-      child: Hero(
-        tag: 'search_bar_field',
-        child: Material(
-          color: context.colorScheme.surface.withValues(alpha: 0),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: context.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(36),
-              border: Border.all(color: context.colorScheme.outlineVariant),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  LucideIcons.search,
-                  color: context.colorScheme.onSurface,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Search destination',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: context.colorScheme.onSurface.withValues(alpha: 0.6),
-                    fontWeight: FontWeight.w500,
+        },
+        child: Hero(
+          tag: 'search_bar_field',
+          child: Material(
+            color: context.colorScheme.surface.withValues(alpha: 0),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: context.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(36),
+                border: Border.all(color: context.colorScheme.outlineVariant),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    LucideIcons.search,
+                    color: context.colorScheme.onSurface,
+                    size: 20,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  const Expanded(child: HomeDestinationSearchHintWidget()),
+                ],
+              ),
             ),
           ),
         ),
