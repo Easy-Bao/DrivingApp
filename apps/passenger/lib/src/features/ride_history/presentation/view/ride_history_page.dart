@@ -16,7 +16,18 @@ import 'package:passenger/src/features/ride_history/ride_history.dart';
 import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-class const RideHistoryPage({super.key}) extends StatefulWidget {
+class const RideHistoryPage({
+  this.title = 'Activity',
+  this.subtitle = 'Tap a ride to see details',
+  this.showSummary = true,
+  this.showFilters = true,
+  super.key,
+}) extends StatefulWidget {
+  final String title;
+  final String subtitle;
+  final bool showSummary;
+  final bool showFilters;
+
   @override
   State<RideHistoryPage> createState() => _RideHistoryPageState();
 }
@@ -49,11 +60,12 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
             listener: (_, _) => unawaited(_loadRideHistory()),
             child: BlocBuilder<SessionBloc, SessionState>(
               builder: (context, sessionState) => switch (sessionState) {
-                SessionLoading() => const _RideHistoryProgressView(
+                SessionLoading() => _RideHistoryProgressView(
+                  title: widget.title,
                   subtitle: 'Checking your account',
                 ),
-                GuestSession() ||
-                SessionFailure() => const _RideHistoryMessageView(
+                GuestSession() || SessionFailure() => _RideHistoryMessageView(
+                  headerTitle: widget.title,
                   subtitle: 'Sign in to view your ride history',
                   title: 'Guest mode',
                   message: 'Sign in to see your recent trips.',
@@ -61,12 +73,15 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                 AuthenticatedSession() =>
                   BlocBuilder<RideHistoryBloc, RideHistoryState>(
                     builder: (context, state) => switch (state) {
-                      RideHistoryInitial() => const _RideHistoryProgressView(
+                      RideHistoryInitial() => _RideHistoryProgressView(
+                        title: widget.title,
                         subtitle: 'Preparing your activity',
                       ),
                       RideHistoryLoading(:final existingRideCount)
                           when existingRideCount > 0 =>
                         _RideHistoryLoadingView(
+                          title: widget.title,
+                          subtitle: widget.subtitle,
                           itemCount: existingRideCount
                               .clamp(
                                 _defaultSkeletonCount,
@@ -74,12 +89,14 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                               )
                               .toInt(),
                         ),
-                      RideHistoryLoading() => const _RideHistoryProgressView(
+                      RideHistoryLoading() => _RideHistoryProgressView(
+                        title: widget.title,
                         subtitle: 'Loading your activity',
                       ),
                       RideHistoryError(:final message) =>
                         _RideHistoryMessageView(
-                          subtitle: 'Tap a ride to see details',
+                          headerTitle: widget.title,
+                          subtitle: widget.subtitle,
                           title: 'Could not load activity',
                           message: message,
                           icon: LucideIcons.wifi_off,
@@ -88,8 +105,9 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                         ),
                       RideHistoryLoaded(:final past, :final upcoming)
                           when past.isEmpty && upcoming.isEmpty =>
-                        const _RideHistoryMessageView(
-                          subtitle: 'Tap a ride to see details',
+                        _RideHistoryMessageView(
+                          headerTitle: widget.title,
+                          subtitle: widget.subtitle,
                           title: 'No rides yet',
                           message: 'Your completed and cancelled rides will appear here.',
                         ),
@@ -103,6 +121,10 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                         :final weeklyRideCount,
                       ) =>
                         RideHistoryWidget(
+                          headerTitle: widget.title,
+                          headerSubtitle: widget.subtitle,
+                          showSummary: widget.showSummary,
+                          showFilters: widget.showFilters,
                           activeRides: upcoming,
                           pastRides: past,
                           referenceTime: DateTime.now(),
@@ -158,9 +180,12 @@ double _rideHistoryBottomClearance(BuildContext context) {
   return AppFloatingTabBar.height + MediaQuery.paddingOf(context).bottom + 10;
 }
 
-class const _RideHistoryProgressView({required this.subtitle})
-    extends StatelessWidget {
+class const _RideHistoryProgressView({
+  required this.subtitle,
+  this.title = 'Activity',
+}) extends StatelessWidget {
   final String subtitle;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
@@ -169,13 +194,13 @@ class const _RideHistoryProgressView({required this.subtitle})
       slivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(
-            AppDesignTokens.pageHorizontalPadding,
+            EasyRideDesignTokens.pageHorizontalPadding,
             8,
-            AppDesignTokens.pageHorizontalPadding,
+            EasyRideDesignTokens.pageHorizontalPadding,
             18,
           ),
           sliver: SliverToBoxAdapter(
-            child: RideHistoryHeaderWidget(subtitle: subtitle),
+            child: RideHistoryHeaderWidget(title: title, subtitle: subtitle),
           ),
         ),
         SliverFillRemaining(
@@ -207,6 +232,7 @@ class const _RideHistoryMessageView({
   required this.subtitle,
   required this.title,
   required this.message,
+  this.headerTitle = 'Activity',
   this.icon = LucideIcons.route,
   this.actionLabel,
   this.onAction,
@@ -214,6 +240,7 @@ class const _RideHistoryMessageView({
   final String subtitle;
   final String title;
   final String message;
+  final String headerTitle;
   final IconData icon;
   final String? actionLabel;
   final Future<void> Function()? onAction;
@@ -225,13 +252,16 @@ class const _RideHistoryMessageView({
       slivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(
-            AppDesignTokens.pageHorizontalPadding,
+            EasyRideDesignTokens.pageHorizontalPadding,
             8,
-            AppDesignTokens.pageHorizontalPadding,
+            EasyRideDesignTokens.pageHorizontalPadding,
             18,
           ),
           sliver: SliverToBoxAdapter(
-            child: RideHistoryHeaderWidget(subtitle: subtitle),
+            child: RideHistoryHeaderWidget(
+              title: headerTitle,
+              subtitle: subtitle,
+            ),
           ),
         ),
         SliverFillRemaining(
@@ -289,31 +319,34 @@ class const _RideHistoryMessageView({
   }
 }
 
-class const _RideHistoryLoadingView({required this.itemCount})
-    extends StatelessWidget {
+class const _RideHistoryLoadingView({
+  required this.itemCount,
+  this.title = 'Activity',
+  this.subtitle = 'Tap a ride to see details',
+}) extends StatelessWidget {
   final int itemCount;
+  final String title;
+  final String subtitle;
 
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
-        const SliverPadding(
-          padding: EdgeInsets.fromLTRB(
-            AppDesignTokens.pageHorizontalPadding,
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(
+            EasyRideDesignTokens.pageHorizontalPadding,
             8,
-            AppDesignTokens.pageHorizontalPadding,
+            EasyRideDesignTokens.pageHorizontalPadding,
             18,
           ),
           sliver: SliverToBoxAdapter(
-            child: RideHistoryHeaderWidget(
-              subtitle: 'Tap a ride to see details',
-            ),
+            child: RideHistoryHeaderWidget(title: title, subtitle: subtitle),
           ),
         ),
         SliverPadding(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppDesignTokens.pageHorizontalPadding,
+            horizontal: EasyRideDesignTokens.pageHorizontalPadding,
           ),
           sliver: Skeletonizer.sliver(
             key: const ValueKey<String>('activity-loading-skeleton'),
@@ -367,7 +400,7 @@ class const _ActivitySkeletonSummaryCard({required this.valueWidth})
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: context.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.controlRadius),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -390,19 +423,25 @@ class const _ActivitySkeletonFilters() extends StatelessWidget {
         Bone.button(
           width: 48,
           height: 38,
-          borderRadius: BorderRadius.all(Radius.circular(22)),
+          borderRadius: BorderRadius.all(
+            Radius.circular(EasyRideDesignTokens.controlRadius),
+          ),
         ),
         SizedBox(width: 8),
         Bone.button(
           width: 88,
           height: 38,
-          borderRadius: BorderRadius.all(Radius.circular(22)),
+          borderRadius: BorderRadius.all(
+            Radius.circular(EasyRideDesignTokens.controlRadius),
+          ),
         ),
         SizedBox(width: 8),
         Bone.button(
           width: 84,
           height: 38,
-          borderRadius: BorderRadius.all(Radius.circular(22)),
+          borderRadius: BorderRadius.all(
+            Radius.circular(EasyRideDesignTokens.controlRadius),
+          ),
         ),
       ],
     );
@@ -416,7 +455,7 @@ class const _ActivitySkeletonRideCard() extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.controlRadius),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: const Row(

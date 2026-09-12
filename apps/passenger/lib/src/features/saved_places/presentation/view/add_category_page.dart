@@ -220,14 +220,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
           icon: Icon(LucideIcons.x, color: context.colorScheme.onSurface),
           onPressed: () => context.pop(),
         ),
-        title: Text(
-          'Add place',
-          style: TextStyle(
-            color: context.colorScheme.onSurface,
-            fontWeight: FontWeight.w800,
-            fontSize: 18,
-          ),
-        ),
+        title: Text('Add place', style: context.textStyles.titleLarge),
         actions: [
           TextButton(
             onPressed: _isLoadingLocation || !_isLocationPinned
@@ -235,12 +228,10 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                 : _handleSave,
             child: Text(
               'Save',
-              style: TextStyle(
+              style: context.textStyles.labelLarge?.copyWith(
                 color: _isLoadingLocation
                     ? context.colorScheme.onSurfaceVariant
                     : context.colorScheme.onSurface,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
               ),
             ),
           ),
@@ -275,20 +266,13 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
               ],
             ),
             Padding(
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.all(
+                EasyRideDesignTokens.pageHorizontalPaddingWide,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Location',
-                    style: TextStyle(
-                      color: context.colorScheme.onSurface.withValues(
-                        alpha: 0.6,
-                      ),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  Text('Location', style: context.textStyles.labelMedium),
                   const SizedBox(height: 8),
                   Container(
                     width: double.infinity,
@@ -298,7 +282,9 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                     ),
                     decoration: BoxDecoration(
                       color: context.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(
+                        EasyRideDesignTokens.controlRadius,
+                      ),
                       border: Border.all(
                         color: context.colorScheme.outlineVariant,
                       ),
@@ -310,49 +296,41 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                               : _isLocationPinned
                               ? 'Location pinned'
                               : 'Location unavailable'),
-                      style: TextStyle(
-                        color: context.colorScheme.onSurface,
-                        fontSize: 15,
-                      ),
+                      style: context.textStyles.bodyMedium,
                     ),
                   ),
                   const SizedBox(height: 24),
                   Text(
                     'Name this place',
-                    style: TextStyle(
-                      color: context.colorScheme.onSurface.withValues(
-                        alpha: 0.6,
-                      ),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: context.textStyles.labelMedium,
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _controller,
-                    style: TextStyle(
-                      color: context.colorScheme.onSurface,
-                      fontSize: 15,
-                    ),
+                    style: context.textStyles.bodyMedium,
                     decoration: InputDecoration(
                       hintText: "e.g. Ate's house",
-                      hintStyle: TextStyle(
+                      hintStyle: context.textStyles.bodyMedium?.copyWith(
                         color: context.colorScheme.onSurfaceVariant,
                       ),
                       filled: true,
                       fillColor: context.colorScheme.surfaceContainerHighest,
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
+                        horizontal: EasyRideDesignTokens.pageHorizontalPadding,
+                        vertical: 16,
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(
+                          EasyRideDesignTokens.controlRadius,
+                        ),
                         borderSide: BorderSide(
                           color: context.colorScheme.outlineVariant,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(
+                          EasyRideDesignTokens.controlRadius,
+                        ),
                         borderSide: BorderSide(
                           color: context.colorScheme.onSurface,
                         ),
@@ -378,30 +356,39 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                       itemBuilder: (context, index) {
                         final icon = _availableIcons[index];
                         final isSelected = selectedIcon == icon;
-                        return GestureDetector(
-                          onTap: () => setState(() => selectedIcon = icon),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            width: 64,
-                            height: 64,
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? context.colorScheme.onSurface.withValues(
-                                      alpha: 0.1,
-                                    )
-                                  : context.colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
+                        return Semantics(
+                          button: true,
+                          selected: isSelected,
+                          label: 'Select place icon ${index + 1}',
+                          child: GestureDetector(
+                            onTap: () => setState(() => selectedIcon = icon),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              width: 64,
+                              height: 64,
+                              decoration: BoxDecoration(
                                 color: isSelected
-                                    ? context.colorScheme.onSurface
-                                    : context.colorScheme.outlineVariant,
-                                width: isSelected ? 1.5 : 1,
+                                    ? context.colorScheme.onSurface.withValues(
+                                        alpha: 0.1,
+                                      )
+                                    : context
+                                          .colorScheme
+                                          .surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(
+                                  EasyRideDesignTokens.controlRadius,
+                                ),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? context.colorScheme.onSurface
+                                      : context.colorScheme.outlineVariant,
+                                  width: isSelected ? 1.5 : 1,
+                                ),
                               ),
-                            ),
-                            child: Icon(
-                              icon,
-                              color: context.colorScheme.onSurface,
-                              size: 24,
+                              child: Icon(
+                                icon,
+                                color: context.colorScheme.onSurface,
+                                size: 24,
+                              ),
                             ),
                           ),
                         );

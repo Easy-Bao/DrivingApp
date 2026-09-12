@@ -24,7 +24,7 @@ void main() {
         DriverLocationAccessUnavailable(
           accessState: LocationAccessState.serviceDisabled,
           message:
-              'Turn on device location in Settings, then return to BaoRide.',
+              'Turn on device location in Settings, then return to EasyRide.',
         ),
       ],
     );
@@ -60,7 +60,7 @@ void main() {
         DriverLocationAccessUnavailable(
           accessState: LocationAccessState.serviceDisabled,
           message:
-              'Turn on device location in Settings, then return to BaoRide.',
+              'Turn on device location in Settings, then return to EasyRide.',
         ),
       ],
     );

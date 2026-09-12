@@ -10,6 +10,10 @@ abstract final class RideHistoryRoutes {
   static const String passengerPaymentPath = 'activity/payment';
   static const String rideHistory = 'RideHistory';
   static const String rideHistoryPath = 'activity';
+  static const String recentActivity = 'RecentActivity';
+  static const String recentActivityPath = 'activity/recent';
+  static const String fullRecentActivityPath =
+      '${AppRoutes.passengerModulePath}$recentActivityPath';
   static const String fullRideHistoryPath =
       '${AppRoutes.passengerModulePath}$rideHistoryPath';
 }

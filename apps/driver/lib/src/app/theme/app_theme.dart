@@ -1,7 +1,7 @@
-import 'package:design_system/design_system.dart';
-import 'package:flutter/material.dart';
+import 'package:driver/src/app/theme/easy_ride_app_theme.dart';
 
-/// The default Material theme composed for the Driver client.
-class AppTheme._() {
-  static ThemeData get data => EasyRideTheme.data;
-}
+export 'easy_ride_app_theme.dart';
+
+/// Compatibility alias for the former generic app-local name.
+@Deprecated('Use EasyRideAppTheme instead.')
+typedef AppTheme = EasyRideAppTheme;

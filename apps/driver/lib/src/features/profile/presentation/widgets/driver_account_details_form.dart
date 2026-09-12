@@ -253,14 +253,24 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 560),
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 48),
+              padding: const EdgeInsets.fromLTRB(
+                EasyRideDesignTokens.pageHorizontalPaddingWide,
+                EasyRideDesignTokens.pageTopPadding,
+                EasyRideDesignTokens.pageHorizontalPaddingWide,
+                EasyRideDesignTokens.sectionGap * 2,
+              ),
               children: [
                 _buildHeader(),
-                const SizedBox(height: 30),
-                if (widget.section == DriverAccountDetailsSection.personal)
-                  ..._buildPersonalFields()
-                else
-                  ..._buildVehicleFields(),
+                const SizedBox(height: EasyRideDesignTokens.sectionGap),
+                EasyRideSurfaceCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children:
+                        widget.section == DriverAccountDetailsSection.personal
+                        ? _buildPersonalFields()
+                        : _buildVehicleFields(),
+                  ),
+                ),
               ],
             ),
           ),
@@ -362,7 +372,9 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
               width: 88,
               decoration: BoxDecoration(
                 color: context.colorScheme.surface,
-                borderRadius: BorderRadius.circular(17),
+                borderRadius: BorderRadius.circular(
+                  EasyRideDesignTokens.fieldRadius,
+                ),
                 border: Border.all(color: context.colorScheme.outlineVariant),
               ),
               alignment: Alignment.center,
@@ -453,7 +465,7 @@ InputDecoration _fieldDecoration(
   String? errorText,
 }) {
   final border = OutlineInputBorder(
-    borderRadius: BorderRadius.circular(17),
+    borderRadius: BorderRadius.circular(EasyRideDesignTokens.fieldRadius),
     borderSide: BorderSide(color: context.colorScheme.outlineVariant),
   );
   return InputDecoration(
@@ -461,7 +473,10 @@ InputDecoration _fieldDecoration(
     errorText: errorText,
     filled: true,
     fillColor: context.colorScheme.surface,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+    contentPadding: const EdgeInsets.symmetric(
+      horizontal: EasyRideDesignTokens.pageHorizontalPadding,
+      vertical: 16,
+    ),
     border: border,
     enabledBorder: border,
     focusedBorder: border.copyWith(

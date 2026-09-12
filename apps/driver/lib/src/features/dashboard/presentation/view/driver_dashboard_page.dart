@@ -784,8 +784,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('BaoRide', style: context.textStyles.titleLarge),
-                  const SizedBox(height: AppDesignTokens.compactGap / 2),
+                  Text('EasyRide', style: context.textStyles.titleLarge),
+                  const SizedBox(height: EasyRideDesignTokens.compactGap / 2),
                   Text('Driver', style: context.textStyles.labelMedium),
                 ],
               ),
@@ -810,7 +810,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(
-                    maxWidth: AppDesignTokens.wideContentMaxWidth,
+                    maxWidth: EasyRideDesignTokens.wideContentMaxWidth,
                   ),
                   child: Column(
                     children: [
@@ -898,7 +898,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     );
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppDesignTokens.pageHorizontalPadding,
+        horizontal: EasyRideDesignTokens.pageHorizontalPadding,
       ),
       child: LayoutBuilder(
         builder: (context, constraints) => AnimatedBuilder(
@@ -906,7 +906,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
           builder: (context, _) {
             final fillWidth = constraints.maxWidth * _availabilityCtrl.value;
             return ClipRRect(
-              borderRadius: BorderRadius.circular(AppDesignTokens.cardRadius),
+              borderRadius: BorderRadius.circular(
+                EasyRideDesignTokens.cardRadius,
+              ),
               child: Container(
                 decoration: BoxDecoration(
                   color: context.colorScheme.surfaceContainerHighest,
@@ -926,8 +928,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: AppDesignTokens.cardPadding,
-                        vertical: AppDesignTokens.cardPadding,
+                        horizontal: EasyRideDesignTokens.cardPadding,
+                        vertical: EasyRideDesignTokens.cardPadding,
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1007,7 +1009,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: trackColor,
-          borderRadius: BorderRadius.circular(AppDesignTokens.pillRadius),
+          borderRadius: BorderRadius.circular(EasyRideDesignTokens.pillRadius),
         ),
         child: _isTogglingOnline
             ? Center(

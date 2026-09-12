@@ -52,7 +52,7 @@ class const DriverLocationAccessStatusPage({super.key, this.onBack})
       DriverLocationAccessChecking() => const AppLocationAccessPresentation(
         icon: LucideIcons.loader_circle,
         title: 'Checking location access',
-        message: 'BaoRide is checking your phone settings and permission.',
+        message: 'EasyRide is checking your phone settings and permission.',
         tone: AppLocationAccessTone.neutral,
       ),
       DriverLocationAccessReady() => const AppLocationAccessPresentation(
@@ -80,7 +80,7 @@ class const DriverLocationAccessStatusPage({super.key, this.onBack})
           LocationAccessState.denied => const AppLocationAccessPresentation(
             icon: LucideIcons.shield_alert,
             title: 'Location permission is needed',
-            message: 'Allow location when prompted so BaoRide can send nearby rides.',
+            message: 'Allow location when prompted so EasyRide can send nearby rides.',
             tone: AppLocationAccessTone.warning,
           ),
           LocationAccessState.deniedForever =>
@@ -88,7 +88,7 @@ class const DriverLocationAccessStatusPage({super.key, this.onBack})
               icon: LucideIcons.settings,
               title: 'Location permission is blocked',
               message:
-                  'Open app settings and allow location access for BaoRide.',
+                  'Open app settings and allow location access for EasyRide.',
               tone: AppLocationAccessTone.error,
             ),
         },

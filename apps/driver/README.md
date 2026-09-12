@@ -1,4 +1,4 @@
-# BaoRide Driver
+# EasyRide Driver
 
 The driver client reads its public runtime configuration from the local `.env`
 asset. Copy `.env.example` to `.env`, set the API origin and Mapbox public

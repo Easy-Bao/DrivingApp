@@ -46,7 +46,7 @@ class const DriverNavigationRail({
 
   @override
   Widget build(BuildContext context) {
-    return AppNavigationRail(
+    return EasyRideNavigationRail(
       destinations: DriverFloatingTabBar.destinations,
       selectedIndex: selectedIndex,
       onDestinationSelected: onDestinationSelected,

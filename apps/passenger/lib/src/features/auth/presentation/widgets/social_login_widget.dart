@@ -57,7 +57,7 @@ class const SocialLoginWidget({
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(
-                    AppDesignTokens.controlRadius,
+                    EasyRideDesignTokens.controlRadius,
                   ),
                 ),
                 elevation: 0,

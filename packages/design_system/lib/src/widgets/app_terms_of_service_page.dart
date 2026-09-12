@@ -28,7 +28,7 @@ class const AppTermsOfServicePage({super.key, required this.onBack})
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 48),
             children: [
               Text(
-                'BaoRide Terms of Service',
+                'EasyRide Terms of Service',
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 6),
@@ -39,7 +39,7 @@ class const AppTermsOfServicePage({super.key, required this.onBack})
               ),
               const SizedBox(height: 24),
               const _TermsSection(
-                title: 'Using BaoRide',
+                title: 'Using EasyRide',
                 body: 'Use accurate account and trip information, follow applicable laws, and treat everyone involved in a ride respectfully.',
               ),
               const _TermsSection(
@@ -48,7 +48,7 @@ class const AppTermsOfServicePage({super.key, required this.onBack})
               ),
               const _TermsSection(
                 title: 'Safety and availability',
-                body: 'Do not use BaoRide for emergencies. Service availability can vary by location, network access, driver supply, and operational conditions.',
+                body: 'Do not use EasyRide for emergencies. Service availability can vary by location, network access, driver supply, and operational conditions.',
               ),
               const _TermsSection(
                 title: 'Account responsibility',
@@ -56,7 +56,7 @@ class const AppTermsOfServicePage({super.key, required this.onBack})
               ),
               const _TermsSection(
                 title: 'Changes to the service',
-                body: 'Features may change as BaoRide improves. Material terms should be presented in the app before they take effect.',
+                body: 'Features may change as EasyRide improves. Material terms should be presented in the app before they take effect.',
               ),
             ],
           ),

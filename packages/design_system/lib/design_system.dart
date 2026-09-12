@@ -1,8 +1,11 @@
 export 'package:design_system/src/navigation/tab_navigation_coordinator.dart';
 export 'package:design_system/src/router/safe_route_extra.dart';
-export 'package:design_system/src/theme/app_design_tokens.dart';
+export 'package:design_system/src/theme/easy_ride_design_tokens.dart';
 export 'package:design_system/src/theme/easy_ride_theme.dart';
 export 'package:design_system/src/theme/easy_ride_semantic_colors.dart';
+// Deprecated package-root aliases retained for existing clients.
+export 'package:design_system/src/theme/app_design_tokens.dart'
+    show AppDesignTokens;
 export 'package:design_system/src/theme/design_system_context.dart';
 export 'package:design_system/src/transitions/app_transitions.dart';
 export 'package:design_system/src/transitions/custom_page_transition.dart';
@@ -12,7 +15,9 @@ export 'package:design_system/src/widgets/app_error_banner.dart';
 export 'package:design_system/src/widgets/app_floating_tab_bar.dart';
 export 'package:design_system/src/widgets/app_help_center_page.dart';
 export 'package:design_system/src/widgets/app_location_access_status_page.dart';
-export 'package:design_system/src/widgets/app_layout.dart';
+export 'package:design_system/src/widgets/easy_ride_layout.dart';
+export 'package:design_system/src/widgets/app_layout.dart'
+    show AppPageHeader, AppPageFrame, AppSurfaceCard, AppNavigationRail;
 export 'package:design_system/src/widgets/app_network_image_widget.dart';
 export 'package:design_system/src/widgets/app_network_status_banner.dart';
 export 'package:design_system/src/widgets/app_settings_navigation.dart';

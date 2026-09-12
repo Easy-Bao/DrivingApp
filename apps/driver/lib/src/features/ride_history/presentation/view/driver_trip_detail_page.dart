@@ -158,13 +158,15 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
         top: false,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final horizontalPadding = constraints.maxWidth < 360 ? 16.0 : 24.0;
+            final horizontalPadding = constraints.maxWidth < 360
+                ? EasyRideDesignTokens.pageHorizontalPadding
+                : EasyRideDesignTokens.pageHorizontalPaddingWide;
             return SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
                 horizontalPadding,
                 12,
                 horizontalPadding,
-                32,
+                EasyRideDesignTokens.sectionGap * 2,
               ),
               physics: const BouncingScrollPhysics(),
               child: Center(
@@ -251,7 +253,9 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                         style: FilledButton.styleFrom(
                           minimumSize: const Size.fromHeight(50),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(
+                              EasyRideDesignTokens.controlRadius,
+                            ),
                           ),
                           textStyle: const TextStyle(
                             fontSize: 14,
@@ -277,7 +281,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.smallRadius),
         border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Row(
@@ -304,7 +308,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.smallRadius),
       ),
       child: Text(
         label,
@@ -325,7 +329,12 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
   }) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+        padding: const EdgeInsets.fromLTRB(
+          EasyRideDesignTokens.cardPadding,
+          EasyRideDesignTokens.cardPadding,
+          EasyRideDesignTokens.cardPadding,
+          14,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -515,7 +524,9 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                   height: 50,
                   decoration: BoxDecoration(
                     color: context.colorScheme.secondaryContainer,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(
+                      EasyRideDesignTokens.controlRadius,
+                    ),
                   ),
                   alignment: Alignment.center,
                   child: Text(
@@ -566,7 +577,9 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                       color: context.semanticColors.success.withValues(
                         alpha: 0.1,
                       ),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(
+                        EasyRideDesignTokens.smallRadius,
+                      ),
                     ),
                     child: Text(
                       '${rating.toStringAsFixed(1)} rating',

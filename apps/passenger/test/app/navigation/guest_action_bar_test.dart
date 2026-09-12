@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:passenger/src/app/navigation/guest_action_bar.dart';
-import 'package:passenger/src/app/theme/app_theme.dart';
+import 'package:passenger/src/app/theme/easy_ride_app_theme.dart';
 
 void main() {
   testWidgets('renders guest actions and dispatches authentication intents', (
@@ -13,7 +13,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.data,
+        theme: EasyRideAppTheme.data,
         home: Scaffold(
           bottomNavigationBar: GuestActionBarWidget(
             onSignUp: () => signUpPressed = true,

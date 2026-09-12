@@ -1,4 +1,4 @@
-import 'package:driver/src/app/theme/app_theme.dart';
+import 'package:driver/src/app/theme/easy_ride_app_theme.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:maps/maps.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
@@ -28,7 +28,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.data,
+        theme: EasyRideAppTheme.data,
         home: BlocProvider<DriverLocationAccessCubit>.value(
           value: cubit,
           child: DriverLocationAccessStatusPage(onBack: () {}),

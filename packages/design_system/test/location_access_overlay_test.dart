@@ -24,7 +24,7 @@ void main() {
             ),
             LocationAccessOverlay(
               state: LocationAccessOverlayState.serviceDisabled,
-              appName: 'BaoRide',
+              appName: 'EasyRide',
               onOpenLocationSettings: () => locationSettingsOpened = true,
               onTryAgain: () => retried = true,
             ),
@@ -83,7 +83,7 @@ void main() {
         theme: ThemeData(useMaterial3: true),
         home: const LocationAccessOverlay(
           state: LocationAccessOverlayState.permissionDeniedForever,
-          appName: 'BaoRide',
+          appName: 'EasyRide',
           onOpenAppSettings: _noop,
           onTryAgain: _noop,
         ),

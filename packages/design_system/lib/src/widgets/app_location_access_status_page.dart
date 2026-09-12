@@ -106,7 +106,7 @@ class const AppLocationAccessStatusPage({
               ],
               const SizedBox(height: 20),
               Text(
-                'Why BaoRide needs location',
+                'Why EasyRide needs location',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 12),

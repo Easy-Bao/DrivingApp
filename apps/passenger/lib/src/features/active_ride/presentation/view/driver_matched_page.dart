@@ -93,7 +93,9 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
       backgroundColor: context.colorScheme.surface,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.symmetric(
+            horizontal: EasyRideDesignTokens.pageHorizontalPaddingWide,
+          ),
           child: Column(
             children: [
               const Spacer(flex: 2),
@@ -174,10 +176,14 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                   );
                 },
                 child: Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(
+                    EasyRideDesignTokens.cardPadding,
+                  ),
                   decoration: BoxDecoration(
                     color: context.colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(
+                      EasyRideDesignTokens.cardRadius,
+                    ),
                     border: Border.all(
                       color: context.colorScheme.outlineVariant,
                     ),
@@ -191,7 +197,9 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                             height: 56,
                             decoration: BoxDecoration(
                               color: context.colorScheme.secondaryContainer,
-                              borderRadius: BorderRadius.circular(18),
+                              borderRadius: BorderRadius.circular(
+                                EasyRideDesignTokens.cardRadius,
+                              ),
                             ),
                             child: Icon(
                               LucideIcons.user,
@@ -275,7 +283,9 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: context.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(
+                    EasyRideDesignTokens.cardRadius,
+                  ),
                   border: Border.all(color: context.colorScheme.outlineVariant),
                 ),
                 child: Row(
@@ -312,15 +322,13 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
 
               SizedBox(
                 width: double.infinity,
-                height: 56,
+                height: EasyRideDesignTokens.controlHeight,
                 child: ElevatedButton(
                   onPressed: _goToTracking,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: context.colorScheme.onSurface,
                     foregroundColor: context.colorScheme.onPrimary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(32),
-                    ),
+                    shape: const StadiumBorder(),
                     elevation: 0,
                   ),
                   child: const Text(
@@ -350,7 +358,7 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.smallRadius),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

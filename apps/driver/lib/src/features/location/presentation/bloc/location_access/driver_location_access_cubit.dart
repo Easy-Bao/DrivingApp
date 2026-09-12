@@ -104,9 +104,9 @@ class DriverLocationAccessCubit({required this._repository})
   String? _settingsMessage(LocationAccessState accessState) {
     return switch (accessState) {
       LocationAccessState.serviceDisabled =>
-        'Turn on device location in Settings, then return to BaoRide.',
+        'Turn on device location in Settings, then return to EasyRide.',
       LocationAccessState.deniedForever =>
-        'Allow location in app Settings, then return to BaoRide.',
+        'Allow location in app Settings, then return to EasyRide.',
       LocationAccessState.denied || LocationAccessState.ready => null,
     };
   }

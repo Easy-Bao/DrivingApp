@@ -1,4 +1,4 @@
-import 'package:driver/src/app/theme/app_theme.dart';
+import 'package:driver/src/app/theme/easy_ride_app_theme.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver/src/features/performance/presentation/bloc/driver_performance_cubit.dart';
 import 'package:driver/src/features/performance/domain/entities/driver_performance_stats.dart';
@@ -41,7 +41,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.data,
+        theme: EasyRideAppTheme.data,
         home: BlocProvider<DriverPerformanceCubit>(
           create: (_) => DriverPerformanceCubit(
             repository: repository,

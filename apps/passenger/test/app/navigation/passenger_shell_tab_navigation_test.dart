@@ -9,7 +9,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:go_router/go_router.dart';
 import 'package:passenger/src/app/navigation/passenger_floating_tab_bar.dart';
 import 'package:passenger/src/app/navigation/passenger_navigation_shell.dart';
-import 'package:passenger/src/app/theme/app_theme.dart';
+import 'package:passenger/src/app/theme/easy_ride_app_theme.dart';
 import 'package:passenger/src/features/auth/domain/entities/passenger_session.dart';
 import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
@@ -53,7 +53,10 @@ void main() {
     await tester.pumpWidget(
       BlocProvider<SessionBloc>.value(
         value: sessionBloc,
-        child: MaterialApp.router(theme: AppTheme.data, routerConfig: router),
+        child: MaterialApp.router(
+          theme: EasyRideAppTheme.data,
+          routerConfig: router,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -108,7 +111,10 @@ void main() {
     await tester.pumpWidget(
       BlocProvider<SessionBloc>.value(
         value: sessionBloc,
-        child: MaterialApp.router(theme: AppTheme.data, routerConfig: router),
+        child: MaterialApp.router(
+          theme: EasyRideAppTheme.data,
+          routerConfig: router,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -131,17 +137,20 @@ void main() {
         find.descendant(of: item, matching: find.byType(Icon)),
       );
       final inkWell = tester.widget<InkWell>(item);
-      expect(labelWidget.style?.fontSize, AppDesignTokens.navigationLabelSize);
+      expect(
+        labelWidget.style?.fontSize,
+        EasyRideDesignTokens.navigationLabelSize,
+      );
       expect(labelWidget.style?.fontWeight, FontWeight.w500);
-      expect(iconWidget.size, AppDesignTokens.navigationIconSize);
+      expect(iconWidget.size, EasyRideDesignTokens.navigationIconSize);
       expect(inkWell.splashFactory, NoSplash.splashFactory);
       expect(
         inkWell.overlayColor?.resolve({WidgetState.pressed}),
-        AppTheme.data.colorScheme.primary.withValues(alpha: 0.12),
+        EasyRideAppTheme.data.colorScheme.primary.withValues(alpha: 0.12),
       );
       expect(
         inkWell.overlayColor?.resolve({WidgetState.hovered}),
-        AppTheme.data.colorScheme.primary.withValues(alpha: 0.08),
+        EasyRideAppTheme.data.colorScheme.primary.withValues(alpha: 0.08),
       );
     }
 
@@ -239,9 +248,12 @@ void main() {
       find.byKey(const ValueKey<String>('home-view-all-activity')),
     );
     await tester.pumpAndSettle();
-    expect(router.state.uri.path, RideHistoryRoutes.fullRideHistoryPath);
-    expect(navigationCoordinator.selectedIndex, 1);
-    expect(find.byKey(const ValueKey<String>('activity-page')), findsOneWidget);
+    expect(router.state.uri.path, RideHistoryRoutes.fullRecentActivityPath);
+    expect(navigationCoordinator.selectedIndex, 0);
+    expect(
+      find.byKey(const ValueKey<String>('recent-activity-page')),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -277,7 +289,10 @@ void main() {
     await tester.pumpWidget(
       BlocProvider<SessionBloc>.value(
         value: sessionBloc,
-        child: MaterialApp.router(theme: AppTheme.data, routerConfig: router),
+        child: MaterialApp.router(
+          theme: EasyRideAppTheme.data,
+          routerConfig: router,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -310,6 +325,14 @@ GoRouter _createRouter(
   return GoRouter(
     initialLocation: initialLocation,
     routes: [
+      GoRoute(
+        name: RideHistoryRoutes.recentActivity,
+        path: RideHistoryRoutes.fullRecentActivityPath,
+        builder: (_, _) => const ColoredBox(
+          key: ValueKey<String>('recent-activity-page'),
+          color: Colors.white,
+        ),
+      ),
       StatefulShellRoute(
         builder: (context, state, navigationShell) => PassengerShellLayout(
           inboxCubit: inboxCubit,
@@ -346,8 +369,9 @@ GoRouter _createRouter(
                         alignment: Alignment.topRight,
                         child: TextButton(
                           key: const ValueKey<String>('home-view-all-activity'),
-                          onPressed: () =>
-                              context.goNamed(RideHistoryRoutes.rideHistory),
+                          onPressed: () => context.pushNamed(
+                            RideHistoryRoutes.recentActivity,
+                          ),
                           child: const Text('View all'),
                         ),
                       );

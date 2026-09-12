@@ -171,10 +171,10 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
                 enabled: state.isLoading,
                 child: ListView.builder(
                   padding: const EdgeInsets.fromLTRB(
-                    AppDesignTokens.pageHorizontalPadding,
+                    EasyRideDesignTokens.pageHorizontalPadding,
                     4,
-                    AppDesignTokens.pageHorizontalPadding,
-                    AppFloatingTabBar.height + AppDesignTokens.sectionGap,
+                    EasyRideDesignTokens.pageHorizontalPadding,
+                    AppFloatingTabBar.height + EasyRideDesignTokens.sectionGap,
                   ),
                   physics: const AlwaysScrollableScrollPhysics(
                     parent: BouncingScrollPhysics(),
@@ -283,7 +283,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
         padding: const EdgeInsets.fromLTRB(14, 12, 10, 10),
         decoration: BoxDecoration(
           color: context.colorScheme.error.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(AppDesignTokens.smallRadius),
+          borderRadius: BorderRadius.circular(EasyRideDesignTokens.smallRadius),
           border: Border.all(
             color: context.colorScheme.error.withValues(alpha: 0.2),
           ),
@@ -406,15 +406,17 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppDesignTokens.cardRadius),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
         child: InkWell(
-          borderRadius: BorderRadius.circular(AppDesignTokens.cardRadius),
+          borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
           onTap: () =>
               context.pushNamed(RideHistoryRoutes.tripDetail, extra: trip),
           child: Container(
-            padding: const EdgeInsets.all(AppDesignTokens.cardPadding),
+            padding: const EdgeInsets.all(EasyRideDesignTokens.cardPadding),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppDesignTokens.cardRadius),
+              borderRadius: BorderRadius.circular(
+                EasyRideDesignTokens.cardRadius,
+              ),
               border: Border.all(color: context.colorScheme.outlineVariant),
             ),
             child: Column(
@@ -439,7 +441,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
                       decoration: BoxDecoration(
                         color: statusColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(
-                          AppDesignTokens.pillRadius,
+                          EasyRideDesignTokens.pillRadius,
                         ),
                       ),
                       child: Text(

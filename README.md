@@ -1,6 +1,6 @@
-# BaoRide Monorepo
+# EasyRide Monorepo
 
-This is the Melos-based monorepo for the BaoRide booking application. It houses both passenger and driver applications, along with shared Dart and Flutter packages.
+This is the Melos-based monorepo for the EasyRide booking application. It houses both passenger and driver applications, along with shared Dart and Flutter packages.
 
 ---
 

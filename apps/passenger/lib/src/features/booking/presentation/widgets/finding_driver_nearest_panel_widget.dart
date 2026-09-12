@@ -29,7 +29,9 @@ class const FindingDriverNearestPanelWidget({
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(EasyRideDesignTokens.sheetRadius),
+        ),
         boxShadow: [
           BoxShadow(
             color: context.colorScheme.onSurface.withValues(alpha: 0.08),

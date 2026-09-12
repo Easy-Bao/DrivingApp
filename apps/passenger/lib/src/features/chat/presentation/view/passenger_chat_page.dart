@@ -261,7 +261,9 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                     height: 36,
                     decoration: BoxDecoration(
                       color: context.colorScheme.secondaryContainer,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(
+                        EasyRideDesignTokens.smallRadius,
+                      ),
                     ),
                     child: Icon(
                       LucideIcons.user,
@@ -359,7 +361,9 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                           ),
                           decoration: BoxDecoration(
                             color: context.colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(
+                              EasyRideDesignTokens.cardRadius,
+                            ),
                             border: Border.all(
                               color: context.colorScheme.outlineVariant,
                             ),
@@ -399,7 +403,9 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                             decoration: BoxDecoration(
                               color:
                                   context.colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(24),
+                              borderRadius: BorderRadius.circular(
+                                EasyRideDesignTokens.cardRadius,
+                              ),
                               border: Border.all(
                                 color: context.colorScheme.outlineVariant,
                               ),
@@ -527,7 +533,7 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: context.colorScheme.secondaryContainer.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.smallRadius),
         border: Border.all(
           color: context.semanticColors.success.withValues(alpha: 0.25),
         ),
@@ -607,7 +613,7 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: context.colorScheme.error.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.smallRadius),
         border: Border.all(
           color: context.colorScheme.error.withValues(alpha: 0.22),
         ),
@@ -661,8 +667,12 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                     ? context.colorScheme.onSurface
                     : context.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(20),
-                  topRight: const Radius.circular(20),
+                  topLeft: const Radius.circular(
+                    EasyRideDesignTokens.cardRadius,
+                  ),
+                  topRight: const Radius.circular(
+                    EasyRideDesignTokens.cardRadius,
+                  ),
                   bottomLeft: Radius.circular(isMe ? 20 : 4),
                   bottomRight: Radius.circular(isMe ? 4 : 20),
                 ),

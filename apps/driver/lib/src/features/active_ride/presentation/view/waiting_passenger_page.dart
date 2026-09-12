@@ -217,7 +217,9 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                   maxWidth: isWide ? 600.0 : double.infinity,
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: EasyRideDesignTokens.pageHorizontalPadding,
+                  ),
                   child: Column(
                     children: [
                       const SizedBox(height: 12),
@@ -234,94 +236,100 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                       Expanded(
                         child: Padding(
                           padding: const EdgeInsets.only(bottom: 12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              WaitingPassengerPanelWidget(
-                                pickup: widget.pickup,
-                                dropoff: widget.dropoff,
-                                passengerName: presentation.passengerName,
-                                waitFormatted: presentation.waitFormatted,
-                                fare: widget.fare,
-                                includeStartTripButton: false,
-                                unreadChatMessagesCount:
-                                    _unreadChatMessagesCount,
-                                onStartTripPressed: _startTrip,
-                                onCallPressed: () async {
-                                  try {
+                          child: EasyRideSurfaceCard(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                WaitingPassengerPanelWidget(
+                                  pickup: widget.pickup,
+                                  dropoff: widget.dropoff,
+                                  passengerName: presentation.passengerName,
+                                  waitFormatted: presentation.waitFormatted,
+                                  fare: widget.fare,
+                                  includeStartTripButton: false,
+                                  unreadChatMessagesCount:
+                                      _unreadChatMessagesCount,
+                                  onStartTripPressed: _startTrip,
+                                  onCallPressed: () async {
+                                    try {
+                                      final rideId =
+                                          BlocProvider.of<RideFlowCubit>(
+                                            context,
+                                          ).activeRideId ??
+                                          '';
+                                      if (rideId.isNotEmpty) {
+                                        String? phone;
+                                        (await widget.rideRepository
+                                                .fetchCounterpartyResult(
+                                                  rideId,
+                                                ))
+                                            .fold(
+                                              (_) {},
+                                              (passenger) =>
+                                                  phone = passenger.phone,
+                                            );
+                                        final passengerPhone = phone;
+                                        if (passengerPhone != null &&
+                                            passengerPhone.isNotEmpty) {
+                                          final uri = Uri.parse(
+                                            'tel:$passengerPhone',
+                                          );
+                                          if (await canLaunchUrl(uri)) {
+                                            await launchUrl(uri);
+                                          }
+                                        }
+                                      }
+                                    } catch (error) {
+                                      dev.log(
+                                        'Unable to call passenger: $error',
+                                      );
+                                      _showError(
+                                        'Unable to contact the passenger.',
+                                      );
+                                    }
+                                  },
+                                  onChatPressed: () async {
                                     final rideId =
                                         BlocProvider.of<RideFlowCubit>(context)
                                             .activeRideId ??
                                         '';
-                                    if (rideId.isNotEmpty) {
-                                      String? phone;
-                                      (await widget.rideRepository
-                                              .fetchCounterpartyResult(rideId))
-                                          .fold(
-                                            (_) {},
-                                            (passenger) =>
-                                                phone = passenger.phone,
-                                          );
-                                      final passengerPhone = phone;
-                                      if (passengerPhone != null &&
-                                          passengerPhone.isNotEmpty) {
-                                        final uri = Uri.parse(
-                                          'tel:$passengerPhone',
-                                        );
-                                        if (await canLaunchUrl(uri)) {
-                                          await launchUrl(uri);
-                                        }
-                                      }
-                                    }
-                                  } catch (error) {
-                                    dev.log('Unable to call passenger: $error');
-                                    _showError(
-                                      'Unable to contact the passenger.',
+                                    final rState =
+                                        BlocProvider.of<RideFlowCubit>(context)
+                                            .state;
+                                    final pName = rState.passengerNameOr('—');
+                                    final cubit =
+                                        BlocProvider.of<RideFlowCubit>(context);
+                                    final driverId =
+                                        await widget.sessionService
+                                            .readDriverId() ??
+                                        '';
+                                    if (!context.mounted) return;
+                                    setState(() {
+                                      _viewedPassengerMessagesCount +=
+                                          _unreadChatMessagesCount;
+                                      _unreadChatMessagesCount = 0;
+                                      _isInitialChatMessagesCountFetched = true;
+                                    });
+                                    await context.pushNamed(
+                                      ChatRoutes.chat,
+                                      extra: {
+                                        'roomId': rideId,
+                                        'userId': driverId,
+                                        'peerId': cubit.activePassengerId,
+                                        'peerName': pName,
+                                      },
                                     );
-                                  }
-                                },
-                                onChatPressed: () async {
-                                  final rideId =
-                                      BlocProvider.of<RideFlowCubit>(context)
-                                          .activeRideId ??
-                                      '';
-                                  final rState = BlocProvider.of<RideFlowCubit>(
-                                    context,
-                                  ).state;
-                                  final pName = rState.passengerNameOr('—');
-                                  final cubit = BlocProvider.of<RideFlowCubit>(
-                                    context,
-                                  );
-                                  final driverId =
-                                      await widget.sessionService
-                                          .readDriverId() ??
-                                      '';
-                                  if (!context.mounted) return;
-                                  setState(() {
-                                    _viewedPassengerMessagesCount +=
-                                        _unreadChatMessagesCount;
-                                    _unreadChatMessagesCount = 0;
-                                    _isInitialChatMessagesCountFetched = true;
-                                  });
-                                  await context.pushNamed(
-                                    ChatRoutes.chat,
-                                    extra: {
-                                      'roomId': rideId,
-                                      'userId': driverId,
-                                      'peerId': cubit.activePassengerId,
-                                      'peerName': pName,
-                                    },
-                                  );
-                                  if (!mounted) return;
-                                  await _updateUnreadMessagesCount(cubit);
-                                },
-                              ),
-                              const Spacer(),
-                              WaitingPassengerStartTripButton(
-                                isStartingTrip: _isStartingTrip,
-                                onPressed: _startTrip,
-                              ),
-                            ],
+                                    if (!mounted) return;
+                                    await _updateUnreadMessagesCount(cubit);
+                                  },
+                                ),
+                                const Spacer(),
+                                WaitingPassengerStartTripButton(
+                                  isStartingTrip: _isStartingTrip,
+                                  onPressed: _startTrip,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -342,7 +350,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: context.colorScheme.error.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.smallRadius),
       ),
       child: Text(
         _errorMessage!,

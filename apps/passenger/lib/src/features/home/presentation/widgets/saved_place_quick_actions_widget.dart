@@ -62,7 +62,7 @@ class const _SavedPlaceChip({required this.place, required this.isActive})
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       constraints: const BoxConstraints(
-        minHeight: AppDesignTokens.minimumTouchTarget,
+        minHeight: EasyRideDesignTokens.minimumTouchTarget,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
@@ -75,7 +75,7 @@ class const _SavedPlaceChip({required this.place, required this.isActive})
               : context.colorScheme.outlineVariant,
           width: showActiveStyle ? 1.5 : 1.0,
         ),
-        borderRadius: BorderRadius.circular(AppDesignTokens.pillRadius),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.pillRadius),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -113,7 +113,7 @@ class const _AddPlaceChip({required this.onTap}) extends StatelessWidget {
       onTap: onTap,
       child: Container(
         constraints: const BoxConstraints(
-          minHeight: AppDesignTokens.minimumTouchTarget,
+          minHeight: EasyRideDesignTokens.minimumTouchTarget,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
@@ -121,7 +121,7 @@ class const _AddPlaceChip({required this.onTap}) extends StatelessWidget {
           border: Border.all(
             color: context.colorScheme.onSurface.withValues(alpha: 0.25),
           ),
-          borderRadius: BorderRadius.circular(AppDesignTokens.pillRadius),
+          borderRadius: BorderRadius.circular(EasyRideDesignTokens.pillRadius),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

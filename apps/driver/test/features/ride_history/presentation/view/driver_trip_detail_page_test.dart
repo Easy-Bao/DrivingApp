@@ -1,4 +1,4 @@
-import 'package:driver/src/app/theme/app_theme.dart';
+import 'package:driver/src/app/theme/easy_ride_app_theme.dart';
 import 'package:driver/src/features/ride_history/presentation/view/driver_trip_detail_page.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +13,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.data,
+        theme: EasyRideAppTheme.data,
         home: DriverTripDetailPage(
           sessionService: DriverSessionStore(),
           trip: {

@@ -19,6 +19,10 @@ class const RideHistoryWidget({
   this.onLoadMore,
   this.weeklyFare,
   this.weeklyRideCount,
+  this.headerTitle = 'Activity',
+  this.headerSubtitle = 'Tap a ride to see details',
+  this.showSummary = true,
+  this.showFilters = true,
   super.key,
 }) extends StatefulWidget {
   final List<RideHistory> activeRides;
@@ -31,6 +35,10 @@ class const RideHistoryWidget({
   final VoidCallback? onLoadMore;
   final double? weeklyFare;
   final int? weeklyRideCount;
+  final String headerTitle;
+  final String headerSubtitle;
+  final bool showSummary;
+  final bool showFilters;
 
   @override
   State<RideHistoryWidget> createState() => _RideHistoryWidgetState();
@@ -57,34 +65,49 @@ class _RideHistoryWidgetState extends State<RideHistoryWidget> {
       key: const ValueKey<String>('passenger-activity-history'),
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
-        const SliverPadding(
-          padding: EdgeInsets.fromLTRB(20, 8, 20, 18),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(
+            EasyRideDesignTokens.pageHorizontalPadding,
+            8,
+            EasyRideDesignTokens.pageHorizontalPadding,
+            18,
+          ),
           sliver: SliverToBoxAdapter(
             child: RideHistoryHeaderWidget(
-              subtitle: 'Tap a ride to see details',
+              title: widget.headerTitle,
+              subtitle: widget.headerSubtitle,
             ),
           ),
         ),
         if (widget.activeRides.isNotEmpty) ..._activeRideSlivers(presenter),
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          sliver: SliverToBoxAdapter(
-            child: RideHistorySummaryWidget(
-              weeklyFare: widget.weeklyFare ?? fallbackWeeklyFare,
-              weeklyRideCount:
-                  widget.weeklyRideCount ?? fallbackWeeklyRides.length,
+        if (widget.showSummary)
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: EasyRideDesignTokens.pageHorizontalPadding,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: RideHistorySummaryWidget(
+                weeklyFare: widget.weeklyFare ?? fallbackWeeklyFare,
+                weeklyRideCount:
+                    widget.weeklyRideCount ?? fallbackWeeklyRides.length,
+              ),
             ),
           ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 18),
-          sliver: SliverToBoxAdapter(
-            child: RideHistoryFiltersWidget(
-              selectedFilter: _selectedFilter,
-              onSelected: _selectFilter,
+        if (widget.showFilters)
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(
+              EasyRideDesignTokens.pageHorizontalPadding,
+              12,
+              EasyRideDesignTokens.pageHorizontalPadding,
+              18,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: RideHistoryFiltersWidget(
+                selectedFilter: _selectedFilter,
+                onSelected: _selectFilter,
+              ),
             ),
           ),
-        ),
         if (filteredRides.isEmpty)
           SliverFillRemaining(
             hasScrollBody: false,
@@ -95,7 +118,12 @@ class _RideHistoryWidgetState extends State<RideHistoryWidget> {
         if (filteredRides.isNotEmpty &&
             (widget.hasMore || widget.loadMoreError != null))
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+            padding: const EdgeInsets.fromLTRB(
+              EasyRideDesignTokens.pageHorizontalPadding,
+              10,
+              EasyRideDesignTokens.pageHorizontalPadding,
+              0,
+            ),
             sliver: SliverToBoxAdapter(child: _buildLoadMore()),
           ),
         if (filteredRides.isNotEmpty)
@@ -172,13 +200,20 @@ class _RideHistoryWidgetState extends State<RideHistoryWidget> {
   List<Widget> _activeRideSlivers(RideHistoryPresenter presenter) {
     return [
       const SliverPadding(
-        padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
+        padding: EdgeInsets.fromLTRB(
+          EasyRideDesignTokens.pageHorizontalPadding,
+          0,
+          EasyRideDesignTokens.pageHorizontalPadding,
+          8,
+        ),
         sliver: SliverToBoxAdapter(
           child: RideHistorySectionLabel(label: 'Active ride'),
         ),
       ),
       SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(
+          horizontal: EasyRideDesignTokens.pageHorizontalPadding,
+        ),
         sliver: SliverList.builder(
           itemCount: widget.activeRides.length,
           itemBuilder: (context, index) {
@@ -207,7 +242,12 @@ class _RideHistoryWidgetState extends State<RideHistoryWidget> {
       slivers
         ..add(
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            padding: const EdgeInsets.fromLTRB(
+              EasyRideDesignTokens.pageHorizontalPadding,
+              0,
+              EasyRideDesignTokens.pageHorizontalPadding,
+              8,
+            ),
             sliver: SliverToBoxAdapter(
               child: RideHistorySectionLabel(label: entry.key),
             ),
@@ -215,7 +255,9 @@ class _RideHistoryWidgetState extends State<RideHistoryWidget> {
         )
         ..add(
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(
+              horizontal: EasyRideDesignTokens.pageHorizontalPadding,
+            ),
             sliver: SliverList.builder(
               itemCount: entry.value.length,
               itemBuilder: (context, index) {

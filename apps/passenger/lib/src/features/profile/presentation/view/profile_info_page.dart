@@ -230,15 +230,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                 size: 23,
               ),
             ),
-            title: Text(
-              'Profile Info',
-              style: TextStyle(
-                color: context.colorScheme.onSurface,
-                fontWeight: FontWeight.w800,
-                fontSize: 21,
-                letterSpacing: -0.3,
-              ),
-            ),
+            title: Text('Profile Info', style: context.textStyles.titleLarge),
             centerTitle: true,
             actions: [
               if (_isDirty)
@@ -254,14 +246,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                             color: context.colorScheme.onSurface,
                           ),
                         )
-                      : Text(
-                          'Save',
-                          style: TextStyle(
-                            color: context.colorScheme.onSurface,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
+                      : Text('Save', style: context.textStyles.labelLarge),
                 )
               else
                 const SizedBox(width: 24),
@@ -272,8 +257,8 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final horizontalPadding = constraints.maxWidth < 360
-                    ? 20.0
-                    : 24.0;
+                    ? EasyRideDesignTokens.pageHorizontalPadding
+                    : EasyRideDesignTokens.pageHorizontalPaddingWide;
                 return SingleChildScrollView(
                   key: const ValueKey<String>('passenger-profile-info-scroll'),
                   physics: const ClampingScrollPhysics(),
@@ -311,10 +296,10 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     final hasProfilePhoto =
         _avatarPath.trim().isNotEmpty || _avatarData.trim().isNotEmpty;
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(EasyRideDesignTokens.cardPadding),
       decoration: BoxDecoration(
         color: context.colorScheme.secondaryContainer.withValues(alpha: 0.42),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Row(
@@ -335,21 +320,12 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
               children: [
                 Text(
                   hasProfilePhoto ? 'Profile photo' : 'Add a profile photo',
-                  style: TextStyle(
-                    color: context.colorScheme.onSurface,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: context.textStyles.titleMedium,
                 ),
                 const SizedBox(height: 5),
                 Text(
                   'Help drivers recognize you at pickup.',
-                  style: TextStyle(
-                    color: context.colorScheme.onSurfaceVariant,
-                    fontSize: 13,
-                    height: 1.25,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: context.textStyles.bodySmall,
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
@@ -375,22 +351,11 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Personal details',
-          style: TextStyle(
-            color: context.colorScheme.onSurface,
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
+        Text('Personal details', style: context.textStyles.titleMedium),
         const SizedBox(height: 4),
         Text(
           'Keep your contact information up to date.',
-          style: TextStyle(
-            color: context.colorScheme.onSurfaceVariant,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
+          style: context.textStyles.bodySmall,
         ),
       ],
     );
@@ -398,10 +363,10 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
 
   Widget _buildDetailsCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(EasyRideDesignTokens.cardPadding),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(
@@ -447,10 +412,8 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
           controller: controller,
           keyboardType: keyboardType,
           textInputAction: textInputAction,
-          style: TextStyle(
-            color: context.colorScheme.onSurface,
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
+          style: context.textStyles.bodyLarge?.copyWith(
+            fontWeight: FontWeight.w600,
           ),
           decoration: _fieldDecoration(errorText: errorText),
         ),
@@ -472,18 +435,13 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
               width: 94,
               decoration: BoxDecoration(
                 color: context.canvasColor,
-                borderRadius: BorderRadius.circular(17),
+                borderRadius: BorderRadius.circular(
+                  EasyRideDesignTokens.fieldRadius,
+                ),
                 border: Border.all(color: context.colorScheme.outlineVariant),
               ),
               alignment: Alignment.center,
-              child: Text(
-                _phonePrefix,
-                style: TextStyle(
-                  color: context.colorScheme.onSurface,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
+              child: Text(_phonePrefix, style: context.textStyles.titleMedium),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -493,10 +451,8 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                 keyboardType: TextInputType.phone,
                 textInputAction: TextInputAction.next,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                style: TextStyle(
-                  color: context.colorScheme.onSurface,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
+                style: context.textStyles.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
                 ),
                 decoration: _fieldDecoration(
                   hintText: '917 000 0001',
@@ -525,10 +481,8 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
             size: 21,
             color: context.colorScheme.onSurface,
           ),
-          style: TextStyle(
-            color: context.colorScheme.onSurface,
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
+          style: context.textStyles.bodyLarge?.copyWith(
+            fontWeight: FontWeight.w600,
           ),
           decoration: _fieldDecoration(),
           items: [
@@ -549,7 +503,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
 
   InputDecoration _fieldDecoration({String? hintText, String? errorText}) {
     final border = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(17),
+      borderRadius: BorderRadius.circular(EasyRideDesignTokens.fieldRadius),
       borderSide: BorderSide(color: context.colorScheme.outlineVariant),
     );
     return InputDecoration(
@@ -557,7 +511,10 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
       errorText: errorText,
       filled: true,
       fillColor: context.canvasColor,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: EasyRideDesignTokens.pageHorizontalPadding,
+        vertical: 16,
+      ),
       border: border,
       enabledBorder: border,
       focusedBorder: border.copyWith(
@@ -578,11 +535,9 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   Widget _buildFieldLabel(String label) {
     return Text(
       label,
-      style: TextStyle(
-        color: context.colorScheme.onSurfaceVariant,
-        fontSize: 13,
-        fontWeight: FontWeight.w800,
-        letterSpacing: 0.7,
+      style: context.textStyles.labelMedium?.copyWith(
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.35,
       ),
     );
   }

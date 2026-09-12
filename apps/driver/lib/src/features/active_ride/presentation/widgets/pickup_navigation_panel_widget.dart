@@ -36,7 +36,9 @@ class const PickupNavigationPanelWidget({
     return Container(
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(EasyRideDesignTokens.sheetRadius),
+        ),
         boxShadow: [
           BoxShadow(
             color: context.colorScheme.onSurface.withValues(alpha: 0.14),
@@ -45,7 +47,12 @@ class const PickupNavigationPanelWidget({
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 18),
+      padding: const EdgeInsets.fromLTRB(
+        EasyRideDesignTokens.cardPadding,
+        10,
+        EasyRideDesignTokens.cardPadding,
+        EasyRideDesignTokens.cardPadding,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -155,7 +162,7 @@ class const PickupNavigationPanelWidget({
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.controlRadius),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Row(
@@ -214,14 +221,16 @@ class const PickupNavigationPanelWidget({
         : context.colorScheme.onSurface;
     return Material(
       color: background,
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(EasyRideDesignTokens.controlRadius),
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.controlRadius),
         child: Container(
           height: 44,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(
+              EasyRideDesignTokens.controlRadius,
+            ),
             border: filled
                 ? null
                 : Border.all(color: context.colorScheme.outlineVariant),
@@ -257,7 +266,9 @@ class const PickupNavigationPanelWidget({
           height: 52,
           decoration: BoxDecoration(
             color: context.semanticColors.success.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(26),
+            borderRadius: BorderRadius.circular(
+              EasyRideDesignTokens.controlRadius,
+            ),
           ),
           child: Stack(
             children: [

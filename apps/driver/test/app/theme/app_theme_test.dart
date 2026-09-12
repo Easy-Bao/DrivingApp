@@ -1,11 +1,11 @@
 import 'package:design_system/design_system.dart';
-import 'package:driver/src/app/theme/app_theme.dart';
+import 'package:driver/src/app/theme/easy_ride_app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('exposes the approved default semantic palette', () {
-    final theme = AppTheme.data;
+    final theme = EasyRideAppTheme.data;
     final scheme = theme.colorScheme;
     final semantic = theme.extension<EasyRideSemanticColors>();
 
@@ -26,7 +26,7 @@ void main() {
   });
 
   test('exposes the balanced type scale', () {
-    final theme = AppTheme.data;
+    final theme = EasyRideAppTheme.data;
     expect(theme.textTheme.headlineLarge?.fontSize, 28);
     expect(theme.textTheme.headlineLarge?.fontWeight, FontWeight.w800);
     expect(theme.textTheme.titleLarge?.fontSize, 20);
@@ -42,7 +42,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.data,
+        theme: EasyRideAppTheme.data,
         home: Scaffold(
           body: Align(
             alignment: Alignment.bottomCenter,
@@ -62,7 +62,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final scheme = AppTheme.data.colorScheme;
+    final scheme = EasyRideAppTheme.data.colorScheme;
     final tabBar = find.byType(AppFloatingTabBar);
     final tabContainer = tester.widget<Container>(
       find.descendant(of: tabBar, matching: find.byType(Container)),
@@ -74,7 +74,7 @@ void main() {
 
     expect(tabColor, scheme.surface);
     expect(indicator.color, scheme.surfaceContainerHighest);
-    expect(indicator.color, AppDesignTokens.neutral);
+    expect(indicator.color, EasyRideDesignTokens.neutral);
     expect(indicator.color, isNot(tabColor));
   });
 }

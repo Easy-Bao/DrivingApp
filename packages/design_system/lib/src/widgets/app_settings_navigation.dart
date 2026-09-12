@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:design_system/src/theme/app_design_tokens.dart';
+import 'package:design_system/src/theme/easy_ride_design_tokens.dart';
 import 'package:design_system/src/theme/design_system_context.dart';
 
-/// A centered settings page shell shared by both BaoRide clients.
+/// A centered settings page shell shared by both EasyRide clients.
 class const AppSettingsScaffold({
   super.key,
   required this.onBack,
@@ -35,13 +35,13 @@ class const AppSettingsScaffold({
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
           constraints: const BoxConstraints(
-            maxWidth: AppDesignTokens.pageMaxWidth,
+            maxWidth: EasyRideDesignTokens.pageMaxWidth,
           ),
           child: ListView(
             padding: const EdgeInsets.fromLTRB(
-              AppDesignTokens.pageHorizontalPadding,
-              AppDesignTokens.pageTopPadding,
-              AppDesignTokens.pageHorizontalPadding,
+              EasyRideDesignTokens.pageHorizontalPadding,
+              EasyRideDesignTokens.pageTopPadding,
+              EasyRideDesignTokens.pageHorizontalPadding,
               40,
             ),
             children: [
@@ -52,7 +52,7 @@ class const AppSettingsScaffold({
                 style: Theme.of(context).textTheme.bodyMedium
                     ?.copyWith(color: context.colorScheme.onSurfaceVariant),
               ),
-              const SizedBox(height: AppDesignTokens.sectionGap),
+              const SizedBox(height: EasyRideDesignTokens.sectionGap),
               ...children,
             ],
           ),
@@ -85,7 +85,9 @@ class const AppSettingsSection({
         Material(
           color: context.colorScheme.surface,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDesignTokens.cardRadius),
+            borderRadius: BorderRadius.circular(
+              EasyRideDesignTokens.cardRadius,
+            ),
             side: BorderSide(color: context.colorScheme.outlineVariant),
           ),
           clipBehavior: Clip.antiAlias,

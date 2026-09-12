@@ -111,7 +111,9 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
         context: context,
         backgroundColor: context.colorScheme.surface,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(EasyRideDesignTokens.cardRadius),
+          ),
         ),
         builder: (sheetContext) {
           return SafeArea(
@@ -263,7 +265,9 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final horizontalPadding = constraints.maxWidth < 360 ? 16.0 : 20.0;
+            final horizontalPadding = constraints.maxWidth < 360
+                ? EasyRideDesignTokens.pageHorizontalPadding
+                : EasyRideDesignTokens.pageHorizontalPaddingWide;
             return Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
@@ -305,15 +309,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            Text(
-              'Saved places',
-              style: TextStyle(
-                color: context.colorScheme.onSurface,
-                fontWeight: FontWeight.w800,
-                fontSize: 22,
-                letterSpacing: -0.4,
-              ),
-            ),
+            Text('Saved places', style: context.textStyles.headlineSmall),
             Align(
               alignment: Alignment.centerLeft,
               child: IconButton(
@@ -434,7 +430,9 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
               foregroundColor: context.colorScheme.onSurface,
               side: BorderSide(color: context.colorScheme.outlineVariant),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(
+                  EasyRideDesignTokens.sheetRadius,
+                ),
               ),
               textStyle: const TextStyle(fontWeight: FontWeight.w700),
             ),
@@ -451,24 +449,9 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: TextStyle(
-            color: context.colorScheme.onSurface,
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.1,
-          ),
-        ),
+        Text(title, style: context.textStyles.titleMedium),
         const SizedBox(height: 2),
-        Text(
-          subtitle,
-          style: TextStyle(
-            color: context.colorScheme.onSurfaceVariant,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+        Text(subtitle, style: context.textStyles.bodySmall),
       ],
     );
   }
@@ -478,7 +461,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: context.colorScheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.smallRadius),
       ),
       child: Text(
         'Default',
@@ -512,15 +495,17 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
       label: '$label, $address',
       child: Material(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
         child: InkWell(
           key: ValueKey<String>(_placeKey(label)),
           onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+            padding: const EdgeInsets.all(EasyRideDesignTokens.cardPadding),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(
+                EasyRideDesignTokens.cardRadius,
+              ),
               border: Border.all(
                 color: isDefault
                     ? context.colorScheme.primary.withValues(alpha: 0.28)
@@ -538,7 +523,9 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
                         : isConfigured
                         ? context.colorScheme.primaryContainer
                         : context.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(
+                      EasyRideDesignTokens.controlRadius,
+                    ),
                   ),
                   child: Icon(
                     icon,
@@ -551,25 +538,16 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        label,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: context.colorScheme.onSurface,
-                        ),
-                      ),
+                      Text(label, style: context.textStyles.titleMedium),
                       const SizedBox(height: 4),
                       Text(
                         address,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13,
+                        style: context.textStyles.bodySmall?.copyWith(
                           fontWeight: isConfigured
                               ? FontWeight.w500
                               : FontWeight.w600,
-                          color: context.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],

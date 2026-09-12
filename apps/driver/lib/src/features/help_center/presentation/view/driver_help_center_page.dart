@@ -10,12 +10,12 @@ class const DriverHelpCenterPage({super.key, this.onBack})
     AppHelpTopic(
       category: 'Going online',
       question: 'Why can’t I go online?',
-      answer: 'Confirm that location services and BaoRide location permission are enabled. Your account and vehicle must also be active before ride requests can be received.',
+      answer: 'Confirm that location services and EasyRide location permission are enabled. Your account and vehicle must also be active before ride requests can be received.',
     ),
     AppHelpTopic(
       category: 'Going online',
-      question: 'Why did BaoRide switch me offline?',
-      answer: 'BaoRide may switch you offline when location access is lost or your session expires. Restore access, sign in if needed, then try going online again.',
+      question: 'Why did EasyRide switch me offline?',
+      answer: 'EasyRide may switch you offline when location access is lost or your session expires. Restore access, sign in if needed, then try going online again.',
     ),
     AppHelpTopic(
       category: 'Trips',

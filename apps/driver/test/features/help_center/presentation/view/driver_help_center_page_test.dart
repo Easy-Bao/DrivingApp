@@ -1,4 +1,4 @@
-import 'package:driver/src/app/theme/app_theme.dart';
+import 'package:driver/src/app/theme/easy_ride_app_theme.dart';
 import 'package:driver/src/features/help_center/presentation/view/driver_help_center_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,7 +9,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.data,
+        theme: EasyRideAppTheme.data,
         home: DriverHelpCenterPage(onBack: () {}),
       ),
     );

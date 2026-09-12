@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger/src/app/theme/app_theme.dart';
+import 'package:passenger/src/app/theme/easy_ride_app_theme.dart';
 import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
@@ -106,7 +106,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.data,
+        theme: EasyRideAppTheme.data,
         home: MultiBlocProvider(
           providers: [
             BlocProvider<SessionBloc>.value(value: sessionBloc),

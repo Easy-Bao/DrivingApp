@@ -5,7 +5,7 @@ abstract final class SettingsRoutes {
   static const String locationAccessPath = 'settings/location-access';
   static const String terms = 'TermsOfService';
   static const String termsPath = 'settings/terms';
-  static const String about = 'AboutBaoRide';
+  static const String about = 'AboutEasyRide';
   static const String aboutPath = 'settings/about';
   static const String licenses = 'OpenSourceLicenses';
   static const String licensesPath = 'settings/licenses';

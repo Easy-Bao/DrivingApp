@@ -6,7 +6,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
 import 'package:driver/src/app/driver_app.dart';
 import 'package:driver/src/app/driver_dependencies.dart';
-import 'package:driver/src/app/theme/app_theme.dart';
+import 'package:driver/src/app/theme/easy_ride_app_theme.dart';
 import 'package:driver/src/features/auth/auth_routes.dart';
 import 'package:driver/src/features/dashboard/dashboard_routes.dart';
 import 'package:driver/src/infrastructure/config/driver_env_config.dart';
@@ -56,7 +56,7 @@ Future<void> bootstrapDriverApp() async {
   } catch (error, stackTrace) {
     runApp(
       SafeClientErrorApp(
-        theme: AppTheme.data,
+        theme: EasyRideAppTheme.data,
         message: ErrorHandler.getErrorMessage(error, stackTrace),
       ),
     );

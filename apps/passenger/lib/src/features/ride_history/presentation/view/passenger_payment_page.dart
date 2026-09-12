@@ -67,7 +67,9 @@ class const PassengerPaymentPage({super.key, required this.ride})
                     ),
                     decoration: BoxDecoration(
                       color: context.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(22),
+                      borderRadius: BorderRadius.circular(
+                        EasyRideDesignTokens.controlRadius,
+                      ),
                       border: Border.all(
                         color: context.colorScheme.outlineVariant,
                       ),
@@ -100,7 +102,9 @@ class const PassengerPaymentPage({super.key, required this.ride})
                           ),
                           decoration: BoxDecoration(
                             color: context.colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(18),
+                            borderRadius: BorderRadius.circular(
+                              EasyRideDesignTokens.cardRadius,
+                            ),
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,

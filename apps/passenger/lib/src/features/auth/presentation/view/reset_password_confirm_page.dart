@@ -233,7 +233,7 @@ class _ResetPasswordConfirmPageContentState
                                     fillColor: context.colorScheme.surface,
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        AppDesignTokens.fieldRadius,
+                                        EasyRideDesignTokens.fieldRadius,
                                       ),
                                       borderSide: BorderSide(
                                         color:
@@ -242,7 +242,7 @@ class _ResetPasswordConfirmPageContentState
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        AppDesignTokens.fieldRadius,
+                                        EasyRideDesignTokens.fieldRadius,
                                       ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.onSurface,
@@ -251,7 +251,7 @@ class _ResetPasswordConfirmPageContentState
                                     ),
                                     errorBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        AppDesignTokens.fieldRadius,
+                                        EasyRideDesignTokens.fieldRadius,
                                       ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.error,
@@ -259,7 +259,7 @@ class _ResetPasswordConfirmPageContentState
                                     ),
                                     focusedErrorBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        AppDesignTokens.fieldRadius,
+                                        EasyRideDesignTokens.fieldRadius,
                                       ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.error,
@@ -335,7 +335,7 @@ class _ResetPasswordConfirmPageContentState
                                     fillColor: context.colorScheme.surface,
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        AppDesignTokens.fieldRadius,
+                                        EasyRideDesignTokens.fieldRadius,
                                       ),
                                       borderSide: BorderSide(
                                         color:
@@ -344,7 +344,7 @@ class _ResetPasswordConfirmPageContentState
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        AppDesignTokens.fieldRadius,
+                                        EasyRideDesignTokens.fieldRadius,
                                       ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.onSurface,
@@ -353,7 +353,7 @@ class _ResetPasswordConfirmPageContentState
                                     ),
                                     errorBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        AppDesignTokens.fieldRadius,
+                                        EasyRideDesignTokens.fieldRadius,
                                       ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.error,
@@ -361,7 +361,7 @@ class _ResetPasswordConfirmPageContentState
                                     ),
                                     focusedErrorBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        AppDesignTokens.fieldRadius,
+                                        EasyRideDesignTokens.fieldRadius,
                                       ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.error,
@@ -384,7 +384,7 @@ class _ResetPasswordConfirmPageContentState
                               minimumSize: const Size.fromHeight(56),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(
-                                  AppDesignTokens.controlRadius,
+                                  EasyRideDesignTokens.controlRadius,
                                 ),
                               ),
                               elevation: 0,

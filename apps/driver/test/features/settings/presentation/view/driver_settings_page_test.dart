@@ -1,4 +1,4 @@
-import 'package:driver/src/app/theme/app_theme.dart';
+import 'package:driver/src/app/theme/easy_ride_app_theme.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_state.dart';
@@ -28,7 +28,7 @@ void main() {
           BlocProvider<DriverLocationAccessCubit>.value(value: locationCubit),
         ],
         child: MaterialApp(
-          theme: AppTheme.data,
+          theme: EasyRideAppTheme.data,
           home: DriverSettingsPage(
             onBack: () => backTaps++,
             onLocationTap: () => destinationTaps.add('location'),
@@ -45,7 +45,7 @@ void main() {
     expect(find.text('Ready to go online'), findsOneWidget);
     expect(find.text('Help Center'), findsOneWidget);
     expect(find.text('Terms of Service'), findsOneWidget);
-    expect(find.text('About BaoRide'), findsOneWidget);
+    expect(find.text('About EasyRide'), findsOneWidget);
     expect(find.text('Push Notifications'), findsNothing);
     expect(find.text('Privacy Center'), findsNothing);
 
@@ -53,7 +53,7 @@ void main() {
       'Location access',
       'Help Center',
       'Terms of Service',
-      'About BaoRide',
+      'About EasyRide',
     ]) {
       await tester.ensureVisible(find.text(label));
       await tester.tap(find.text(label));

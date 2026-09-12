@@ -67,7 +67,7 @@ class _DriverShellLayoutState extends State<DriverShellLayout> {
     final selectedIndex = widget.navigationCoordinator.selectedIndex;
     final isWide =
         MediaQuery.sizeOf(context).width >=
-        AppDesignTokens.wideLayoutBreakpoint;
+        EasyRideDesignTokens.wideLayoutBreakpoint;
 
     return PopScope(
       canPop: widget.navigationCoordinator.canPop,

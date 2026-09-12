@@ -75,13 +75,13 @@ class _HomePageState extends State<HomePage> {
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(
-                maxWidth: AppDesignTokens.pageMaxWidth,
+                maxWidth: EasyRideDesignTokens.pageMaxWidth,
               ),
               child: Stack(
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: AppDesignTokens.pageHorizontalPadding,
+                      horizontal: EasyRideDesignTokens.pageHorizontalPadding,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -284,7 +284,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildHeader() {
-    return const AppPageHeader(
+    return const EasyRidePageHeader(
       title: 'EasyRide',
       subtitle: 'Ready to ride today?',
     );
@@ -329,7 +329,8 @@ class _HomePageState extends State<HomePage> {
           (bloc) => bloc.state.isAuthenticated,
         ))
           TextButton(
-            onPressed: () => context.goNamed(RideHistoryRoutes.rideHistory),
+            onPressed: () =>
+                context.pushNamed(RideHistoryRoutes.recentActivity),
             child: const Text('View all'),
           ),
       ],
@@ -473,11 +474,11 @@ class _HomePageState extends State<HomePage> {
           child: Material(
             color: context.colorScheme.surface.withValues(alpha: 0),
             child: Container(
-              padding: const EdgeInsets.all(AppDesignTokens.cardPadding),
+              padding: const EdgeInsets.all(EasyRideDesignTokens.cardPadding),
               decoration: BoxDecoration(
                 color: context.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(
-                  AppDesignTokens.controlRadius,
+                  EasyRideDesignTokens.controlRadius,
                 ),
                 border: Border.all(color: context.colorScheme.outlineVariant),
               ),

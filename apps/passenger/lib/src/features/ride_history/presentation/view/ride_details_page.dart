@@ -231,7 +231,9 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
               width: double.infinity,
               decoration: BoxDecoration(
                 color: context.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(
+                  EasyRideDesignTokens.cardRadius,
+                ),
                 border: Border.all(
                   color: context.colorScheme.outlineVariant.withValues(
                     alpha: 0.2,
@@ -264,7 +266,9 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                           color: context.colorScheme.onSurface.withValues(
                             alpha: 0.8,
                           ),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(
+                            EasyRideDesignTokens.smallRadius,
+                          ),
                         ),
                         child: Text(
                           'Map preview',
@@ -288,7 +292,9 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                 color: context.colorScheme.surfaceContainerHighest.withValues(
                   alpha: 0.15,
                 ),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(
+                  EasyRideDesignTokens.cardRadius,
+                ),
                 border: Border.all(
                   color: context.colorScheme.outlineVariant.withValues(
                     alpha: 0.2,
@@ -398,7 +404,9 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                 color: context.colorScheme.surfaceContainerHighest.withValues(
                   alpha: 0.15,
                 ),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(
+                  EasyRideDesignTokens.cardRadius,
+                ),
                 border: Border.all(
                   color: context.colorScheme.outlineVariant.withValues(
                     alpha: 0.2,
@@ -456,7 +464,9 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                 color: context.colorScheme.surfaceContainerHighest.withValues(
                   alpha: 0.15,
                 ),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(
+                  EasyRideDesignTokens.cardRadius,
+                ),
                 border: Border.all(
                   color: context.colorScheme.outlineVariant.withValues(
                     alpha: 0.2,

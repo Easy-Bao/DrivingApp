@@ -1,4 +1,4 @@
-import 'package:driver/src/app/theme/app_theme.dart';
+import 'package:driver/src/app/theme/easy_ride_app_theme.dart';
 import 'package:driver/src/features/profile/presentation/bloc/account/account_cubit.dart';
 import 'package:driver/src/features/profile/presentation/bloc/account/account_state.dart';
 import 'package:driver/src/features/profile/domain/entities/driver_account_snapshot.dart';
@@ -66,7 +66,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.data,
+        theme: EasyRideAppTheme.data,
         home: BlocProvider<DriverAccountCubit>.value(
           value: cubit,
           child: DriverPersonalDetailsPage(onBack: () {}),

@@ -87,7 +87,12 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 600),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              padding: const EdgeInsets.fromLTRB(
+                EasyRideDesignTokens.pageHorizontalPadding,
+                12,
+                EasyRideDesignTokens.pageHorizontalPadding,
+                EasyRideDesignTokens.pageHorizontalPadding,
+              ),
               child: Column(
                 children: [
                   _buildHeader(context),
@@ -189,10 +194,10 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
   Widget _buildAmountCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(EasyRideDesignTokens.cardPadding),
       decoration: BoxDecoration(
         color: context.colorScheme.primary,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
       ),
       child: Row(
         children: [
@@ -260,7 +265,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(
@@ -362,7 +367,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
         height: 42,
         decoration: BoxDecoration(
           color: context.colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(13),
+          borderRadius: BorderRadius.circular(EasyRideDesignTokens.smallRadius),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -392,7 +397,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: context.colorScheme.error.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.smallRadius),
       ),
       child: Text(
         _error!,

@@ -27,7 +27,9 @@ class const FindingDriverBidsPanelWidget({
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(EasyRideDesignTokens.sheetRadius),
+        ),
         boxShadow: [
           BoxShadow(
             color: context.colorScheme.onSurface.withValues(alpha: 0.08),
@@ -78,7 +80,9 @@ class const FindingDriverBidsPanelWidget({
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: context.colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(
+                      EasyRideDesignTokens.cardRadius,
+                    ),
                     border: Border.all(
                       color: context.colorScheme.outlineVariant,
                     ),
@@ -164,7 +168,9 @@ class const FindingDriverBidsPanelWidget({
                                 vertical: 8,
                               ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(
+                                  EasyRideDesignTokens.controlRadius,
+                                ),
                               ),
                             ),
                             onPressed: acceptingOfferId != null || isCanceling
@@ -206,7 +212,9 @@ class const FindingDriverBidsPanelWidget({
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
                 color: context.colorScheme.error.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(32),
+                borderRadius: BorderRadius.circular(
+                  EasyRideDesignTokens.sheetRadius,
+                ),
               ),
               child: isCanceling
                   ? SizedBox(

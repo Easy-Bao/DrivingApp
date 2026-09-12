@@ -41,7 +41,7 @@ class const PassengerFloatingTabBar({
           ? _InboxTabIcon(color: color, inboxCubit: inboxCubit)
           : Icon(
               destination.icon,
-              size: AppDesignTokens.navigationIconSize,
+              size: EasyRideDesignTokens.navigationIconSize,
               color: color,
             ),
     );
@@ -60,7 +60,7 @@ class const PassengerNavigationRail({
 
   @override
   Widget build(BuildContext context) {
-    return AppNavigationRail(
+    return EasyRideNavigationRail(
       destinations: PassengerFloatingTabBar.destinations,
       selectedIndex: selectedIndex,
       onDestinationSelected: onDestinationSelected,
@@ -68,7 +68,7 @@ class const PassengerNavigationRail({
           ? _InboxTabIcon(color: color, inboxCubit: inboxCubit)
           : Icon(
               destination.icon,
-              size: AppDesignTokens.navigationIconSize,
+              size: EasyRideDesignTokens.navigationIconSize,
               color: color,
             ),
     );
@@ -99,7 +99,7 @@ class const _InboxTabIcon({required this.color, required this.inboxCubit})
             children: [
               Icon(
                 LucideIcons.mail,
-                size: AppDesignTokens.navigationIconSize,
+                size: EasyRideDesignTokens.navigationIconSize,
                 color: color,
               ),
               if (unreadCount > 0)

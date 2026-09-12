@@ -21,14 +21,14 @@ class const PendingBookingBannerWidget({
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(
-        AppDesignTokens.cardPadding,
+        EasyRideDesignTokens.cardPadding,
         14,
         10,
         14,
       ),
       decoration: BoxDecoration(
         color: context.colorScheme.secondaryContainer.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(AppDesignTokens.cardRadius),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
         border: Border.all(color: context.colorScheme.secondaryContainer),
       ),
       child: Row(

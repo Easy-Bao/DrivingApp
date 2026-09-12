@@ -35,26 +35,26 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
               constraints: const BoxConstraints(
-                maxWidth: AppDesignTokens.pageMaxWidth,
+                maxWidth: EasyRideDesignTokens.pageMaxWidth,
               ),
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final horizontalPadding = constraints.maxWidth < 360
                       ? 20.0
-                      : AppDesignTokens.pageHorizontalPaddingWide;
+                      : EasyRideDesignTokens.pageHorizontalPaddingWide;
                   return SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
                     padding: EdgeInsets.fromLTRB(
                       horizontalPadding,
-                      AppDesignTokens.pageTopPadding,
+                      EasyRideDesignTokens.pageTopPadding,
                       horizontalPadding,
                       MediaQuery.paddingOf(context).bottom + 98,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const AppPageHeader(title: 'Account'),
-                        const SizedBox(height: AppDesignTokens.sectionGap),
+                        const EasyRidePageHeader(title: 'Account'),
+                        const SizedBox(height: EasyRideDesignTokens.sectionGap),
                         _buildProfileSummary(context, state.account),
                         if (state.isLoading) ...[
                           const SizedBox(height: 20),
@@ -70,7 +70,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                             ),
                           ),
                         ],
-                        const SizedBox(height: AppDesignTokens.sectionGap),
+                        const SizedBox(height: EasyRideDesignTokens.sectionGap),
                         _buildSectionTitle(context, 'Driver Details'),
                         const SizedBox(height: 12),
                         _buildMenuGroup(context, [
@@ -116,7 +116,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                           ),
                           _DriverAccountMenuItem(
                             icon: LucideIcons.info,
-                            title: 'About BaoRide',
+                            title: 'About EasyRide',
                             subtitle: 'Driver app version and licenses',
                             onTap: () =>
                                 context.pushNamed(DriverSettingsRoutes.about),
@@ -146,7 +146,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
       color: Colors.transparent,
       child: InkWell(
         key: const ValueKey<String>('driver-profile-summary'),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
         onTap: () => unawaited(
           _openEditableDestination(context, ProfileRoutes.personalDetails),
         ),
@@ -237,7 +237,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
     BuildContext context,
     List<_DriverAccountMenuItem> items,
   ) {
-    return AppSurfaceCard(
+    return EasyRideSurfaceCard(
       padding: EdgeInsets.zero,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -275,7 +275,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
         constraints: const BoxConstraints(minHeight: 76),
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppDesignTokens.cardPadding,
+            horizontal: EasyRideDesignTokens.cardPadding,
             vertical: 12,
           ),
           child: Row(
@@ -294,7 +294,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                   color: context.colorScheme.onPrimaryContainer,
                 ),
               ),
-              const SizedBox(width: AppDesignTokens.cardPadding),
+              const SizedBox(width: EasyRideDesignTokens.cardPadding),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -304,7 +304,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                       item.title,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    const SizedBox(height: AppDesignTokens.compactGap / 2),
+                    const SizedBox(height: EasyRideDesignTokens.compactGap / 2),
                     Text(
                       item.subtitle,
                       maxLines: 2,
@@ -316,11 +316,11 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                   ],
                 ),
               ),
-              const SizedBox(width: AppDesignTokens.compactGap),
+              const SizedBox(width: EasyRideDesignTokens.compactGap),
               Icon(
                 LucideIcons.chevron_right,
                 color: context.colorScheme.onSurfaceVariant,
-                size: AppDesignTokens.navigationIconSize,
+                size: EasyRideDesignTokens.navigationIconSize,
               ),
             ],
           ),

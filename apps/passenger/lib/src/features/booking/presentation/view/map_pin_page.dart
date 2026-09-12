@@ -241,7 +241,10 @@ class _MapPinPageState()
           ),
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(
+                horizontal: EasyRideDesignTokens.pageHorizontalPadding,
+                vertical: 10,
+              ),
               child: SizedBox(
                 height: 52,
                 child: Align(
@@ -255,11 +258,16 @@ class _MapPinPageState()
             alignment: Alignment.bottomCenter,
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+              padding: const EdgeInsets.fromLTRB(
+                EasyRideDesignTokens.pageHorizontalPadding,
+                14,
+                EasyRideDesignTokens.pageHorizontalPadding,
+                EasyRideDesignTokens.sectionGap,
+              ),
               decoration: BoxDecoration(
                 color: context.colorScheme.surface,
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(28),
+                  top: Radius.circular(EasyRideDesignTokens.sheetRadius),
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -296,7 +304,9 @@ class _MapPinPageState()
                         height: 44,
                         decoration: BoxDecoration(
                           color: context.colorScheme.secondaryContainer,
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(
+                            EasyRideDesignTokens.smallRadius,
+                          ),
                         ),
                         child: Center(
                           child: Icon(
@@ -342,15 +352,13 @@ class _MapPinPageState()
                   const SizedBox(height: 18),
                   SizedBox(
                     width: double.infinity,
-                    height: 50,
+                    height: EasyRideDesignTokens.controlHeight,
                     child: ElevatedButton(
                       onPressed: _isGeocoding ? null : _confirmLocation,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: context.colorScheme.onSurface,
                         foregroundColor: context.colorScheme.onPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(26),
-                        ),
+                        shape: const StadiumBorder(),
                         elevation: 0,
                       ),
                       child: Text(

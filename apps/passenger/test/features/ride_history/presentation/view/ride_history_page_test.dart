@@ -5,13 +5,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:passenger/src/app/theme/app_theme.dart';
+import 'package:passenger/src/app/theme/easy_ride_app_theme.dart';
 import 'package:passenger/src/features/auth/domain/entities/passenger_session.dart';
 import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/ride_history/domain/entities/ride_history_overview.dart';
 import 'package:passenger/src/features/ride_history/domain/repositories/ride_history_repository.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
+import 'package:passenger/src/features/ride_history/presentation/view/recent_activity_page.dart';
 import 'package:passenger/src/features/ride_history/presentation/view/ride_history_page.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
 
@@ -30,7 +31,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          theme: AppTheme.data,
+          theme: EasyRideAppTheme.data,
           home: MultiBlocProvider(
             providers: [
               BlocProvider<SessionBloc>.value(value: sessionBloc),
@@ -68,7 +69,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.data,
+        theme: EasyRideAppTheme.data,
         home: MultiBlocProvider(
           providers: [
             BlocProvider<SessionBloc>.value(value: sessionBloc),
@@ -92,6 +93,39 @@ void main() {
     repository.complete();
     await tester.pumpAndSettle();
     expect(find.text('No rides yet'), findsOneWidget);
+  });
+
+  testWidgets('keeps Recent Activity separate from the Activity tab', (
+    tester,
+  ) async {
+    final sessionBloc = SessionBloc(
+      sessionRepository: _AuthenticatedSessionRepository(),
+    );
+    final rideHistoryBloc = RideHistoryBloc(
+      repository: _EmptyRideHistoryRepository(),
+    );
+    addTearDown(sessionBloc.close);
+    addTearDown(rideHistoryBloc.close);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: EasyRideAppTheme.data,
+        home: MultiBlocProvider(
+          providers: [
+            BlocProvider<SessionBloc>.value(value: sessionBloc),
+            BlocProvider<RideHistoryBloc>.value(value: rideHistoryBloc),
+          ],
+          child: const RecentActivityPage(),
+        ),
+      ),
+    );
+
+    final recentPage = tester.widget<RideHistoryPage>(
+      find.byType(RideHistoryPage),
+    );
+    expect(recentPage.title, 'Recent Activity');
+    expect(recentPage.showSummary, isFalse);
+    expect(recentPage.showFilters, isFalse);
   });
 }
 

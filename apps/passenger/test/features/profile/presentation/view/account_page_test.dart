@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger/src/app/theme/app_theme.dart';
+import 'package:passenger/src/app/theme/easy_ride_app_theme.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/profile/presentation/bloc/profile/profile_cubit.dart';
 import 'package:passenger/src/features/profile/presentation/view/account_page.dart';
@@ -35,7 +35,7 @@ void main() {
 
   Widget buildSubject({VoidCallback? onLogout}) {
     return MaterialApp(
-      theme: AppTheme.data,
+      theme: EasyRideAppTheme.data,
       home: MultiBlocProvider(
         providers: [
           BlocProvider<ProfileCubit>.value(value: profileCubit),
@@ -83,8 +83,11 @@ void main() {
     final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
     final title = tester.widget<Text>(find.text('Account'));
 
-    expect(scaffold.backgroundColor, AppTheme.data.scaffoldBackgroundColor);
-    expect(title.style?.color, AppTheme.data.colorScheme.onSurface);
+    expect(
+      scaffold.backgroundColor,
+      EasyRideAppTheme.data.scaffoldBackgroundColor,
+    );
+    expect(title.style?.color, EasyRideAppTheme.data.colorScheme.onSurface);
     expect(tester.takeException(), isNull);
   });
 
@@ -96,7 +99,7 @@ void main() {
 
     expect(find.text('Personal Details'), findsOneWidget);
     expect(find.text('Terms of Service'), findsOneWidget);
-    expect(find.text('About BaoRide'), findsOneWidget);
+    expect(find.text('About EasyRide'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('passenger-account-logout')),
       300,

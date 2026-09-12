@@ -174,7 +174,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
     );
     final isWide =
         MediaQuery.sizeOf(context).width >=
-        AppDesignTokens.wideLayoutBreakpoint;
+        EasyRideDesignTokens.wideLayoutBreakpoint;
     return BlocListener<SessionBloc, SessionState>(
       listenWhen: (_, current) =>
           current is AuthenticatedSession ||

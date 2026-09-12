@@ -62,13 +62,13 @@ class const SettingsPage({
             AppSettingsNavigationTile(
               icon: LucideIcons.file_text,
               title: 'Terms of Service',
-              subtitle: 'Read the rules for using BaoRide',
+              subtitle: 'Read the rules for using EasyRide',
               onTap:
                   onTermsTap ?? () => context.pushNamed(SettingsRoutes.terms),
             ),
             AppSettingsNavigationTile(
               icon: LucideIcons.info,
-              title: 'About BaoRide',
+              title: 'About EasyRide',
               subtitle: 'Version and open-source licenses',
               onTap:
                   onAboutTap ?? () => context.pushNamed(SettingsRoutes.about),

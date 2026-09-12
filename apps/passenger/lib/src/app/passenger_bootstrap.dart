@@ -7,7 +7,7 @@ import 'package:maps/maps.dart';
 import 'package:passenger/src/app/navigation/passenger_navigation_observer.dart';
 import 'package:passenger/src/app/passenger_app.dart';
 import 'package:passenger/src/app/passenger_dependencies.dart';
-import 'package:passenger/src/app/theme/app_theme.dart';
+import 'package:passenger/src/app/theme/easy_ride_app_theme.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/infrastructure/config/passenger_env_config.dart';
 import 'package:passenger/src/infrastructure/telemetry/passenger_background_telemetry.dart';
@@ -51,7 +51,7 @@ Future<void> bootstrapPassengerApp() async {
   } catch (error, stackTrace) {
     runApp(
       SafeClientErrorApp(
-        theme: AppTheme.data,
+        theme: EasyRideAppTheme.data,
         message: ErrorHandler.getErrorMessage(error, stackTrace),
       ),
     );

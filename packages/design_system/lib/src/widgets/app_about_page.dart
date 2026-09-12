@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:design_system/src/theme/design_system_context.dart';
 
-/// A role-configured BaoRide about page with a real licenses destination.
+/// A role-configured EasyRide about page with a real licenses destination.
 class const AppAboutPage({
   super.key,
   required this.applicationName,
@@ -29,7 +29,7 @@ class const AppAboutPage({
           onPressed: onBack,
           icon: const Icon(LucideIcons.arrow_left),
         ),
-        title: const Text('About BaoRide'),
+        title: const Text('About EasyRide'),
         centerTitle: true,
       ),
       body: Align(
@@ -89,7 +89,7 @@ class const AppAboutPage({
                   minVerticalPadding: 14,
                   leading: const Icon(LucideIcons.code_xml),
                   title: const Text('Open-source licenses'),
-                  subtitle: const Text('Libraries used to build BaoRide'),
+                  subtitle: const Text('Libraries used to build EasyRide'),
                   trailing: const Icon(LucideIcons.chevron_right, size: 19),
                   onTap: onLicensesTap,
                 ),

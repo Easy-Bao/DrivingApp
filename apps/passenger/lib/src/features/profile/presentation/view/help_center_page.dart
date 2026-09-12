@@ -34,7 +34,7 @@ class const HelpCenterPage({super.key, this.onBack}) extends StatelessWidget {
     AppHelpTopic(
       category: 'Location',
       question: 'How do I restore location access?',
-      answer: 'Open Account → Settings → Location access. Turn on the phone location service or grant the app permission, then return to BaoRide and try again.',
+      answer: 'Open Account → Settings → Location access. Turn on the phone location service or grant the app permission, then return to EasyRide and try again.',
     ),
   ];
 

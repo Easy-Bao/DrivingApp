@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger/src/app/theme/app_theme.dart';
+import 'package:passenger/src/app/theme/easy_ride_app_theme.dart';
 import 'package:passenger/src/features/location/presentation/bloc/location_access/location_access_cubit.dart';
 import 'package:passenger/src/features/location/presentation/bloc/location_access/location_access_state.dart';
 import 'package:passenger/src/features/settings/presentation/view/settings_page.dart';
@@ -26,7 +26,7 @@ void main() {
           BlocProvider<LocationAccessCubit>.value(value: locationCubit),
         ],
         child: MaterialApp(
-          theme: AppTheme.data,
+          theme: EasyRideAppTheme.data,
           home: SettingsPage(
             onLocationTap: () => locationTaps++,
             onHelpCenterTap: () => helpTaps++,
@@ -43,7 +43,7 @@ void main() {
     expect(find.text('Ready for pickups'), findsOneWidget);
     expect(find.text('Help Center'), findsOneWidget);
     expect(find.text('Terms of Service'), findsOneWidget);
-    expect(find.text('About BaoRide'), findsOneWidget);
+    expect(find.text('About EasyRide'), findsOneWidget);
     expect(find.text('Push Notifications'), findsNothing);
     expect(find.text('Location Sharing'), findsNothing);
     expect(find.text('Privacy Center'), findsNothing);
@@ -52,7 +52,7 @@ void main() {
       'Location access',
       'Help Center',
       'Terms of Service',
-      'About BaoRide',
+      'About EasyRide',
     ]) {
       await tester.ensureVisible(find.text(label));
       await tester.tap(find.text(label));

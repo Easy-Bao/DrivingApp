@@ -8,7 +8,10 @@ void main() {
       MaterialApp(
         theme: EasyRideTheme.data,
         home: const Scaffold(
-          body: AppPageHeader(title: 'Activity', subtitle: 'Your recent rides'),
+          body: EasyRidePageHeader(
+            title: 'Activity',
+            subtitle: 'Your recent rides',
+          ),
         ),
       ),
     );
@@ -34,7 +37,7 @@ void main() {
         theme: EasyRideTheme.data,
         home: StatefulBuilder(
           builder: (context, setState) => Scaffold(
-            body: AppNavigationRail(
+            body: EasyRideNavigationRail(
               destinations: const [
                 AppTabDestination(icon: Icons.home, label: 'Home'),
                 AppTabDestination(icon: Icons.person, label: 'Account'),

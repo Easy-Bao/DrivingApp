@@ -17,7 +17,7 @@ class const AppHelpCenterPage({
   super.key,
   required this.topics,
   required this.onBack,
-  this.description = 'Find answers for common BaoRide questions.',
+  this.description = 'Find answers for common EasyRide questions.',
   this.onEmailSupport,
   this.onCallSupport,
 }) extends StatefulWidget {

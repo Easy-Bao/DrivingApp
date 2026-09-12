@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger/src/app/theme/app_theme.dart';
+import 'package:passenger/src/app/theme/easy_ride_app_theme.dart';
 
 class const RideTripSummaryWidget({
   super.key,
@@ -22,7 +22,7 @@ class const RideTripSummaryWidget({
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: context.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(
@@ -257,7 +257,7 @@ class const _DashedRoutePainter(this.color) extends CustomPainter {
 )
 Widget rideTripSummaryLongAddressPreview() {
   return MaterialApp(
-    theme: AppTheme.data,
+    theme: EasyRideAppTheme.data,
     home: const Scaffold(
       body: Padding(
         padding: EdgeInsets.all(16),

@@ -1,4 +1,4 @@
-import 'package:driver/src/app/theme/app_theme.dart';
+import 'package:driver/src/app/theme/easy_ride_app_theme.dart';
 import 'package:driver/src/app/navigation/driver_floating_tab_bar.dart';
 import 'package:driver/src/app/navigation/driver_navigation_shell.dart';
 import 'package:flutter/material.dart';
@@ -31,7 +31,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.data,
+        theme: EasyRideAppTheme.data,
         home: Scaffold(
           body: Center(
             child: SizedBox(
@@ -68,17 +68,20 @@ void main() {
         find.descendant(of: item, matching: find.byType(Icon)),
       );
       final inkWell = tester.widget<InkWell>(item);
-      expect(labelWidget.style?.fontSize, AppDesignTokens.navigationLabelSize);
+      expect(
+        labelWidget.style?.fontSize,
+        EasyRideDesignTokens.navigationLabelSize,
+      );
       expect(labelWidget.style?.fontWeight, FontWeight.w500);
-      expect(iconWidget.size, AppDesignTokens.navigationIconSize);
+      expect(iconWidget.size, EasyRideDesignTokens.navigationIconSize);
       expect(inkWell.splashFactory, NoSplash.splashFactory);
       expect(
         inkWell.overlayColor?.resolve({WidgetState.pressed}),
-        AppTheme.data.colorScheme.primary.withValues(alpha: 0.12),
+        EasyRideAppTheme.data.colorScheme.primary.withValues(alpha: 0.12),
       );
       expect(
         inkWell.overlayColor?.resolve({WidgetState.hovered}),
-        AppTheme.data.colorScheme.primary.withValues(alpha: 0.08),
+        EasyRideAppTheme.data.colorScheme.primary.withValues(alpha: 0.08),
       );
     }
 

@@ -178,11 +178,16 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
+              padding: const EdgeInsets.fromLTRB(
+                EasyRideDesignTokens.pageHorizontalPaddingWide,
+                EasyRideDesignTokens.sectionGap,
+                EasyRideDesignTokens.pageHorizontalPaddingWide,
+                EasyRideDesignTokens.sectionGap,
+              ),
               decoration: BoxDecoration(
                 color: context.colorScheme.surface,
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(32),
+                  top: Radius.circular(EasyRideDesignTokens.sheetRadius),
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -215,7 +220,9 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
                           color: context.colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(
+                            EasyRideDesignTokens.controlRadius,
+                          ),
                         ),
                         child: Icon(
                           LucideIcons.map_pin,
@@ -262,7 +269,7 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
-                    height: 56,
+                    height: EasyRideDesignTokens.controlHeight,
                     child: ElevatedButton(
                       onPressed: () {
                         final place = Place(
@@ -288,9 +295,7 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: context.colorScheme.onSurface,
                         foregroundColor: context.colorScheme.onPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(36),
-                        ),
+                        shape: const StadiumBorder(),
                         elevation: 0,
                       ),
                       child: const Text(

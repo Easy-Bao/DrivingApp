@@ -145,7 +145,9 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                       ),
                       decoration: BoxDecoration(
                         color: context.colorScheme.surface,
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(
+                          EasyRideDesignTokens.cardRadius,
+                        ),
                         border: Border.all(
                           color: context.colorScheme.outlineVariant,
                         ),
@@ -241,7 +243,9 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       decoration: BoxDecoration(
                         color: context.colorScheme.surface,
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(
+                          EasyRideDesignTokens.cardRadius,
+                        ),
                         border: Border.all(
                           color: context.colorScheme.outlineVariant,
                         ),

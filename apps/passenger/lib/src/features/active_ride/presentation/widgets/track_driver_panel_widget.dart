@@ -43,7 +43,9 @@ class const TrackDriverPanelWidget({
     return Container(
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(EasyRideDesignTokens.sheetRadius),
+        ),
         border: Border.all(color: context.colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
@@ -53,7 +55,12 @@ class const TrackDriverPanelWidget({
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+      padding: const EdgeInsets.fromLTRB(
+        EasyRideDesignTokens.cardPadding,
+        10,
+        EasyRideDesignTokens.cardPadding,
+        14,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,7 +130,9 @@ class const TrackDriverPanelWidget({
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
               color: context.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(
+                EasyRideDesignTokens.controlRadius,
+              ),
               border: Border.all(color: context.colorScheme.outlineVariant),
             ),
             child: Row(
@@ -263,14 +272,16 @@ class const _ActionButton({
         : context.colorScheme.onSurface;
     return Material(
       color: background,
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(EasyRideDesignTokens.controlRadius),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.controlRadius),
         child: Container(
           height: 44,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(
+              EasyRideDesignTokens.controlRadius,
+            ),
             border: filled
                 ? null
                 : Border.all(color: context.colorScheme.outlineVariant),

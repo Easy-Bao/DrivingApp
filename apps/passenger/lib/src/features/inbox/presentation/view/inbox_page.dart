@@ -54,13 +54,13 @@ class _InboxPageState extends State<InboxPage> {
       slivers: [
         const SliverPadding(
           padding: EdgeInsets.fromLTRB(
-            AppDesignTokens.pageHorizontalPadding,
+            EasyRideDesignTokens.pageHorizontalPadding,
             0,
-            AppDesignTokens.pageHorizontalPadding,
+            EasyRideDesignTokens.pageHorizontalPadding,
             16,
           ),
           sliver: SliverToBoxAdapter(
-            child: AppPageHeader(
+            child: EasyRidePageHeader(
               title: 'Inbox',
               subtitle: 'Messages and receipts',
             ),
@@ -142,13 +142,13 @@ class _InboxPageState extends State<InboxPage> {
       slivers: [
         SliverPadding(
           padding: EdgeInsets.fromLTRB(
-            AppDesignTokens.pageHorizontalPadding,
+            EasyRideDesignTokens.pageHorizontalPadding,
             0,
-            AppDesignTokens.pageHorizontalPadding,
+            EasyRideDesignTokens.pageHorizontalPadding,
             16,
           ),
           sliver: SliverToBoxAdapter(
-            child: AppPageHeader(
+            child: EasyRidePageHeader(
               title: 'Inbox',
               subtitle: 'Messages and receipts',
             ),
@@ -178,18 +178,18 @@ class _InboxPageState extends State<InboxPage> {
       slivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(
-            AppDesignTokens.pageHorizontalPadding,
+            EasyRideDesignTokens.pageHorizontalPadding,
             0,
-            AppDesignTokens.pageHorizontalPadding,
+            EasyRideDesignTokens.pageHorizontalPadding,
             16,
           ),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
-              const AppPageHeader(
+              const EasyRidePageHeader(
                 title: 'Inbox',
                 subtitle: 'Messages and receipts',
               ),
-              const SizedBox(height: AppDesignTokens.compactGap * 2),
+              const SizedBox(height: EasyRideDesignTokens.compactGap * 2),
             ]),
           ),
         ),
@@ -201,7 +201,7 @@ class _InboxPageState extends State<InboxPage> {
         else
           SliverPadding(
             padding: const EdgeInsets.symmetric(
-              horizontal: AppDesignTokens.pageHorizontalPadding,
+              horizontal: EasyRideDesignTokens.pageHorizontalPadding,
             ),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {

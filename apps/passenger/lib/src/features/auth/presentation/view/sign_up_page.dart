@@ -253,7 +253,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                 fillColor: context.colorScheme.surface,
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(
-                                    AppDesignTokens.fieldRadius,
+                                    EasyRideDesignTokens.fieldRadius,
                                   ),
                                   borderSide: BorderSide(
                                     color: context.colorScheme.outlineVariant,
@@ -261,7 +261,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(
-                                    AppDesignTokens.fieldRadius,
+                                    EasyRideDesignTokens.fieldRadius,
                                   ),
                                   borderSide: BorderSide(
                                     color: context.colorScheme.onSurface,
@@ -270,7 +270,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                 ),
                                 errorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(
-                                    AppDesignTokens.fieldRadius,
+                                    EasyRideDesignTokens.fieldRadius,
                                   ),
                                   borderSide: BorderSide(
                                     color: context.colorScheme.error,
@@ -278,7 +278,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                 ),
                                 focusedErrorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(
-                                    AppDesignTokens.fieldRadius,
+                                    EasyRideDesignTokens.fieldRadius,
                                   ),
                                   borderSide: BorderSide(
                                     color: context.colorScheme.error,
@@ -331,7 +331,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                 fillColor: context.colorScheme.surface,
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(
-                                    AppDesignTokens.fieldRadius,
+                                    EasyRideDesignTokens.fieldRadius,
                                   ),
                                   borderSide: BorderSide(
                                     color: context.colorScheme.outlineVariant,
@@ -339,7 +339,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(
-                                    AppDesignTokens.fieldRadius,
+                                    EasyRideDesignTokens.fieldRadius,
                                   ),
                                   borderSide: BorderSide(
                                     color: context.colorScheme.onSurface,
@@ -348,7 +348,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                 ),
                                 errorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(
-                                    AppDesignTokens.fieldRadius,
+                                    EasyRideDesignTokens.fieldRadius,
                                   ),
                                   borderSide: BorderSide(
                                     color: context.colorScheme.error,
@@ -356,7 +356,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                 ),
                                 focusedErrorBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(
-                                    AppDesignTokens.fieldRadius,
+                                    EasyRideDesignTokens.fieldRadius,
                                   ),
                                   borderSide: BorderSide(
                                     color: context.colorScheme.error,
@@ -415,7 +415,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                     fillColor: context.colorScheme.surface,
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        AppDesignTokens.fieldRadius,
+                                        EasyRideDesignTokens.fieldRadius,
                                       ),
                                       borderSide: BorderSide(
                                         color:
@@ -424,7 +424,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        AppDesignTokens.fieldRadius,
+                                        EasyRideDesignTokens.fieldRadius,
                                       ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.onSurface,
@@ -433,7 +433,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                     ),
                                     errorBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        AppDesignTokens.fieldRadius,
+                                        EasyRideDesignTokens.fieldRadius,
                                       ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.error,
@@ -441,7 +441,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                     ),
                                     focusedErrorBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        AppDesignTokens.fieldRadius,
+                                        EasyRideDesignTokens.fieldRadius,
                                       ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.error,
@@ -519,7 +519,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                     fillColor: context.colorScheme.surface,
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        AppDesignTokens.fieldRadius,
+                                        EasyRideDesignTokens.fieldRadius,
                                       ),
                                       borderSide: BorderSide(
                                         color:
@@ -528,7 +528,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        AppDesignTokens.fieldRadius,
+                                        EasyRideDesignTokens.fieldRadius,
                                       ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.onSurface,
@@ -537,7 +537,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                     ),
                                     errorBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        AppDesignTokens.fieldRadius,
+                                        EasyRideDesignTokens.fieldRadius,
                                       ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.error,
@@ -545,7 +545,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                     ),
                                     focusedErrorBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        AppDesignTokens.fieldRadius,
+                                        EasyRideDesignTokens.fieldRadius,
                                       ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.error,
@@ -573,7 +573,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                     minimumSize: const Size.fromHeight(56),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(
-                                        AppDesignTokens.controlRadius,
+                                        EasyRideDesignTokens.controlRadius,
                                       ),
                                     ),
                                     elevation: 0,

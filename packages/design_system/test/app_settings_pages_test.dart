@@ -45,7 +45,7 @@ void main() {
       MaterialApp(
         theme: ThemeData(useMaterial3: true),
         home: AppAboutPage(
-          applicationName: 'BaoRide Driver',
+          applicationName: 'EasyRide Driver',
           applicationVersion: '1.0.0',
           description: 'Driver tools and trip information.',
           icon: LucideIcons.car_front,
@@ -55,7 +55,7 @@ void main() {
       ),
     );
 
-    expect(find.text('BaoRide Driver'), findsOneWidget);
+    expect(find.text('EasyRide Driver'), findsOneWidget);
     await tester.tap(find.text('Open-source licenses'));
     expect(openedLicenses, isTrue);
 
@@ -65,7 +65,7 @@ void main() {
         home: AppTermsOfServicePage(onBack: () {}),
       ),
     );
-    expect(find.text('BaoRide Terms of Service'), findsOneWidget);
+    expect(find.text('EasyRide Terms of Service'), findsOneWidget);
     expect(
       find.text('Account responsibility', skipOffstage: false),
       findsOneWidget,

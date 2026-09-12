@@ -1,4 +1,4 @@
-# BaoRide Passenger
+# EasyRide Passenger
 
 The passenger client reads its public runtime configuration from the local
 `.env` asset. Copy `.env.example` to `.env`, set the API origin and Mapbox

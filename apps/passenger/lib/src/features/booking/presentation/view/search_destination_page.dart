@@ -867,7 +867,9 @@ class _SearchDestinationPageState()
                                     ),
                                     decoration: BoxDecoration(
                                       color: context.colorScheme.surface,
-                                      borderRadius: BorderRadius.circular(36),
+                                      borderRadius: BorderRadius.circular(
+                                        EasyRideDesignTokens.pillRadius,
+                                      ),
                                       border: Border.all(
                                         color:
                                             context.colorScheme.outlineVariant,

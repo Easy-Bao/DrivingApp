@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:passenger/src/app/theme/app_theme.dart';
+import 'package:passenger/src/app/theme/easy_ride_app_theme.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_options_panel_widget.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_trip_summary_widget.dart';
@@ -74,7 +74,7 @@ void main() {
           );
 
     return MaterialApp(
-      theme: AppTheme.data,
+      theme: EasyRideAppTheme.data,
       home: Scaffold(body: panel),
     );
   }
@@ -321,7 +321,7 @@ void main() {
         '1390 Pear Avenue, Mountain View, California 94043, United States of America';
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.data,
+        theme: EasyRideAppTheme.data,
         home: const Scaffold(
           body: SizedBox(
             width: 320,

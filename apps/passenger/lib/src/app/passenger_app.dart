@@ -7,7 +7,7 @@ import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger/src/app/navigation/app_routes.dart';
-import 'package:passenger/src/app/theme/app_theme.dart';
+import 'package:passenger/src/app/theme/easy_ride_app_theme.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
@@ -49,7 +49,7 @@ class _PassengerAppState extends State<PassengerApp>
       ],
       child: BlocBuilder<LocationAccessCubit, LocationAccessViewState>(
         builder: (context, locationState) => ModularApp.router(
-          theme: AppTheme.data,
+          theme: EasyRideAppTheme.data,
           debugShowCheckedModeBanner: false,
           title: 'EasyRide Passenger',
           builder: (context, child) => StreamBuilder<NetworkAvailabilityStatus>(

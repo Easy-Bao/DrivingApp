@@ -1,4 +1,4 @@
-import 'package:driver/src/app/theme/app_theme.dart';
+import 'package:driver/src/app/theme/easy_ride_app_theme.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver/src/features/profile/presentation/bloc/account/account_cubit.dart';
 import 'package:driver/src/features/profile/presentation/view/driver_account_page.dart';
@@ -77,7 +77,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.data,
+        theme: EasyRideAppTheme.data,
         home: BlocProvider(
           create: (_) => DriverAccountCubit(repository: repository)..load(),
           child: const DriverAccountPage(onLogout: _noopLogout),
@@ -100,7 +100,7 @@ void main() {
     expect(find.text('Settings'), findsOneWidget);
     expect(find.text('Location access and app support'), findsOneWidget);
     expect(find.text('Help Center'), findsOneWidget);
-    expect(find.text('About BaoRide'), findsOneWidget);
+    expect(find.text('About EasyRide'), findsOneWidget);
     expect(find.text('Account Settings'), findsNothing);
     expect(
       tester.getSize(find.byKey(const ValueKey('driver-profile-avatar'))),
@@ -115,7 +115,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.data,
+        theme: EasyRideAppTheme.data,
         home: BlocProvider(
           create: (_) => DriverAccountCubit(repository: repository)..load(),
           child: const DriverAccountPage(onLogout: _noopLogout),
@@ -127,8 +127,11 @@ void main() {
     final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
     final title = tester.widget<Text>(find.text('Account'));
 
-    expect(scaffold.backgroundColor, AppTheme.data.scaffoldBackgroundColor);
-    expect(title.style?.color, AppTheme.data.colorScheme.onSurface);
+    expect(
+      scaffold.backgroundColor,
+      EasyRideAppTheme.data.scaffoldBackgroundColor,
+    );
+    expect(title.style?.color, EasyRideAppTheme.data.colorScheme.onSurface);
     expect(tester.takeException(), isNull);
   });
 }

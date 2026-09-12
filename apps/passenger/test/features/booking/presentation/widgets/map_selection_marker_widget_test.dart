@@ -1,14 +1,14 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:passenger/src/app/theme/app_theme.dart';
+import 'package:passenger/src/app/theme/easy_ride_app_theme.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/map_selection_marker_widget.dart';
 
 void main() {
   testWidgets('renders the compact green trip-location marker', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.data,
+        theme: EasyRideAppTheme.data,
         home: const Scaffold(body: Center(child: MapSelectionMarkerWidget())),
       ),
     );

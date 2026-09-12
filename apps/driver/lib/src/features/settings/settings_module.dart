@@ -1,5 +1,5 @@
 import 'package:driver/src/features/settings/settings_routes.dart';
-import 'package:driver/src/features/settings/presentation/view/driver_about_bao_ride_page.dart';
+import 'package:driver/src/features/settings/presentation/view/driver_about_easy_ride_page.dart';
 import 'package:driver/src/features/settings/presentation/view/driver_location_access_status_page.dart';
 import 'package:driver/src/features/settings/presentation/view/driver_settings_page.dart';
 import 'package:driver/src/features/settings/presentation/view/driver_terms_of_service_page.dart';
@@ -34,7 +34,7 @@ class DriverSettingsModule._() {
     ChildRoute(
       name: DriverSettingsRoutes.about,
       DriverSettingsRoutes.aboutPath,
-      child: (context, GoRouterState state) => const DriverAboutBaoRidePage(),
+      child: (context, GoRouterState state) => const DriverAboutEasyRidePage(),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
@@ -42,7 +42,7 @@ class DriverSettingsModule._() {
       name: DriverSettingsRoutes.licenses,
       DriverSettingsRoutes.licensesPath,
       child: (context, GoRouterState state) => const LicensePage(
-        applicationName: 'BaoRide Driver',
+        applicationName: 'EasyRide Driver',
         applicationVersion: '1.0.0',
       ),
       transition: AppTransitions.push.toLeft,

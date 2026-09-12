@@ -4,7 +4,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger/src/features/settings/settings_routes.dart';
 
-class const AboutBaoRidePage({super.key, this.onBack, this.onLicensesTap})
+class const AboutEasyRidePage({super.key, this.onBack, this.onLicensesTap})
     extends StatelessWidget {
   final VoidCallback? onBack;
   final VoidCallback? onLicensesTap;
@@ -12,9 +12,9 @@ class const AboutBaoRidePage({super.key, this.onBack, this.onLicensesTap})
   @override
   Widget build(BuildContext context) {
     return AppAboutPage(
-      applicationName: 'BaoRide Passenger',
+      applicationName: 'EasyRide Passenger',
       applicationVersion: '1.0.0',
-      description: 'BaoRide connects passengers with nearby drivers and keeps pickup, trip, and payment details in one focused experience.',
+      description: 'EasyRide connects passengers with nearby drivers and keeps pickup, trip, and payment details in one focused experience.',
       icon: LucideIcons.car_front,
       onBack: onBack ?? () => context.pop(),
       onLicensesTap:

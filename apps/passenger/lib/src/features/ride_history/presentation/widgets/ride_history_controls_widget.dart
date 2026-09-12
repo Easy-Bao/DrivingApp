@@ -140,7 +140,7 @@ class const _SummaryCard({
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.controlRadius),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,7 +189,7 @@ class const _RideHistoryFilterChip({
 
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(22);
+    final radius = BorderRadius.circular(EasyRideDesignTokens.controlRadius);
 
     return Semantics(
       button: true,

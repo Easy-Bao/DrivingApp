@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maps/maps.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger/src/app/theme/app_theme.dart';
+import 'package:passenger/src/app/theme/easy_ride_app_theme.dart';
 import 'package:passenger/src/features/location/presentation/bloc/location_access/location_access_cubit.dart';
 import 'package:passenger/src/features/location/presentation/bloc/location_access/location_access_state.dart';
 import 'package:passenger/src/features/settings/presentation/view/location_access_status_page.dart';
@@ -27,7 +27,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.data,
+        theme: EasyRideAppTheme.data,
         home: BlocProvider<LocationAccessCubit>.value(
           value: cubit,
           child: LocationAccessStatusPage(onBack: () {}),

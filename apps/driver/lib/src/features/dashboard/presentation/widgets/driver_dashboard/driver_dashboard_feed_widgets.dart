@@ -44,10 +44,10 @@ class const DriverActiveTripCard({
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(AppDesignTokens.cardPadding),
+      padding: const EdgeInsets.all(EasyRideDesignTokens.cardPadding),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppDesignTokens.cardRadius),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
         border: Border.all(
           color: context.colorScheme.onSurface.withValues(alpha: 0.12),
         ),
@@ -71,7 +71,7 @@ class const DriverActiveTripCard({
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(
-                    AppDesignTokens.smallRadius,
+                    EasyRideDesignTokens.smallRadius,
                   ),
                 ),
                 child: Text(
@@ -257,10 +257,10 @@ class const DriverPoolBidCard({
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(AppDesignTokens.cardPadding),
+      padding: const EdgeInsets.all(EasyRideDesignTokens.cardPadding),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppDesignTokens.cardRadius),
+        borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
         border: Border.all(color: context.colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
@@ -292,7 +292,7 @@ class const DriverPoolBidCard({
                 decoration: BoxDecoration(
                   color: context.colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(
-                    AppDesignTokens.controlRadius,
+                    EasyRideDesignTokens.controlRadius,
                   ),
                 ),
                 child: Row(
@@ -326,7 +326,7 @@ class const DriverPoolBidCard({
               decoration: BoxDecoration(
                 color: context.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(
-                  AppDesignTokens.smallRadius,
+                  EasyRideDesignTokens.smallRadius,
                 ),
               ),
               child: Row(

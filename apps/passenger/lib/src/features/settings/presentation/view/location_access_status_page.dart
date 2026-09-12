@@ -48,7 +48,7 @@ class const LocationAccessStatusPage({super.key, this.onBack})
       LocationAccessChecking() => const AppLocationAccessPresentation(
         icon: LucideIcons.loader_circle,
         title: 'Checking location access',
-        message: 'BaoRide is checking your phone settings and permission.',
+        message: 'EasyRide is checking your phone settings and permission.',
         tone: AppLocationAccessTone.neutral,
       ),
       LocationAccessReady() => const AppLocationAccessPresentation(
@@ -71,7 +71,7 @@ class const LocationAccessStatusPage({super.key, this.onBack})
             const AppLocationAccessPresentation(
               icon: LucideIcons.map_pin_off,
               title: 'Location services are off',
-              message: 'Turn on your phone location service, then return to BaoRide.',
+              message: 'Turn on your phone location service, then return to EasyRide.',
               tone: AppLocationAccessTone.warning,
             ),
           LocationAccessState.denied => const AppLocationAccessPresentation(
@@ -85,7 +85,7 @@ class const LocationAccessStatusPage({super.key, this.onBack})
               icon: LucideIcons.settings,
               title: 'Location permission is blocked',
               message:
-                  'Open app settings and allow location access for BaoRide.',
+                  'Open app settings and allow location access for EasyRide.',
               tone: AppLocationAccessTone.error,
             ),
         },

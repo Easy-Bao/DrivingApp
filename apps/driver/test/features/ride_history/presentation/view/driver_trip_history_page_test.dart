@@ -1,4 +1,4 @@
-import 'package:driver/src/app/theme/app_theme.dart';
+import 'package:driver/src/app/theme/easy_ride_app_theme.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver/src/features/ride_history/presentation/bloc/trip_history_cubit.dart';
 import 'package:driver/src/features/ride_history/domain/repositories/driver_ride_history_repository.dart';
@@ -38,7 +38,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.data,
+        theme: EasyRideAppTheme.data,
         home: BlocProvider.value(
           value: cubit,
           child: const DriverTripHistoryPage(),
