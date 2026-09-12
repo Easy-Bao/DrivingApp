@@ -174,9 +174,18 @@ class const _AppFloatingTabItem({
           key: ValueKey<String>('$itemKeyPrefix-$index'),
           borderRadius: BorderRadius.circular(AppDesignTokens.pillRadius),
           splashFactory: NoSplash.splashFactory,
-          overlayColor: WidgetStatePropertyAll(
-            colorScheme.surface.withValues(alpha: 0),
-          ),
+          overlayColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.pressed)) {
+              return colorScheme.primary.withValues(alpha: 0.12);
+            }
+            if (states.contains(WidgetState.hovered)) {
+              return colorScheme.primary.withValues(alpha: 0.08);
+            }
+            if (states.contains(WidgetState.focused)) {
+              return colorScheme.primary.withValues(alpha: 0.12);
+            }
+            return colorScheme.surface.withValues(alpha: 0);
+          }),
           onTap: () => onTap(index),
           child: Center(
             child: Column(

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 /// The shared Material theme for every EasyRide client.
 class EasyRideTheme._() {
-  static const _defaultCanvas = Color(0xFFF8F9FA);
+  static const _defaultCanvas = AppDesignTokens.background;
 
   static const _defaultScheme = ColorScheme.light(
     primary: Color(0xFF100E11),
@@ -17,7 +17,15 @@ class EasyRideTheme._() {
     onSecondaryContainer: Color(0xFF28251C),
     tertiary: Color(0xFF198754),
     onTertiary: Color(0xFFFFFFFF),
-    surface: Color(0xFFFFFFFF),
+    tertiaryContainer: Color(0xFFDDF3E7),
+    onTertiaryContainer: Color(0xFF0B3B20),
+    surface: AppDesignTokens.surface,
+    surfaceDim: Color(0xFFE2E4E6),
+    surfaceBright: Color(0xFFFFFFFF),
+    surfaceContainerLowest: Color(0xFFFFFFFF),
+    surfaceContainerLow: Color(0xFFFCFCFC),
+    surfaceContainer: Color(0xFFF8F9FA),
+    surfaceContainerHigh: Color(0xFFF4F5F6),
     surfaceContainerHighest: AppDesignTokens.neutral,
     onSurface: Color(0xFF100E11),
     onSurfaceVariant: Color(0xFF5F6670),
@@ -25,6 +33,8 @@ class EasyRideTheme._() {
     outlineVariant: Color(0xFFE5E8EB),
     error: Color(0xFFB3261E),
     onError: Color(0xFFFFFFFF),
+    errorContainer: Color(0xFFF9DEDC),
+    onErrorContainer: Color(0xFF410E0B),
     inverseSurface: Color(0xFF2F3033),
     onInverseSurface: Color(0xFFF4F0F3),
     inversePrimary: Color(0xFFD8C2CE),
@@ -106,8 +116,8 @@ class EasyRideTheme._() {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: colorScheme.surface,
-        indicatorColor: colorScheme.primary.withValues(alpha: 0.08),
-        height: 70,
+        indicatorColor: colorScheme.surfaceContainerHighest,
+        height: AppDesignTokens.navigationBarHeight,
         labelTextStyle: WidgetStatePropertyAll(
           textTheme.labelSmall?.copyWith(
             fontSize: AppDesignTokens.navigationLabelSize,
@@ -128,13 +138,17 @@ class EasyRideTheme._() {
         showDragHandle: true,
         dragHandleColor: colorScheme.outlineVariant,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppDesignTokens.sheetRadius),
+          ),
         ),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: colorScheme.surfaceContainerHigh,
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDesignTokens.cardRadius),
+        ),
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: colorScheme.inverseSurface,
@@ -143,7 +157,9 @@ class EasyRideTheme._() {
           fontWeight: FontWeight.w600,
         ),
         actionTextColor: colorScheme.inversePrimary,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDesignTokens.smallRadius),
+        ),
         behavior: SnackBarBehavior.floating,
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(
@@ -160,16 +176,25 @@ class EasyRideTheme._() {
         style: ElevatedButton.styleFrom(
           backgroundColor: colorScheme.primary,
           foregroundColor: colorScheme.onPrimary,
-          minimumSize: const Size.fromHeight(52),
+          minimumSize: const Size.fromHeight(AppDesignTokens.controlHeight),
           shape: const StadiumBorder(),
           elevation: 0,
+          textStyle: textTheme.titleMedium,
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
+          minimumSize: const Size.fromHeight(AppDesignTokens.controlHeight),
+          shape: const StadiumBorder(),
           textStyle: textTheme.titleMedium,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: colorScheme.onSurface,
-          minimumSize: const Size.fromHeight(50),
+          minimumSize: const Size.fromHeight(AppDesignTokens.controlHeight),
           side: BorderSide(color: colorScheme.outline),
           shape: const StadiumBorder(),
           textStyle: textTheme.labelLarge,
@@ -179,6 +204,37 @@ class EasyRideTheme._() {
         style: TextButton.styleFrom(
           foregroundColor: colorScheme.primary,
           textStyle: textTheme.labelLarge,
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: colorScheme.surface,
+        selectedColor: colorScheme.primaryContainer,
+        disabledColor: colorScheme.surfaceContainerHighest,
+        side: BorderSide(color: colorScheme.outlineVariant),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDesignTokens.pillRadius),
+        ),
+        labelStyle: textTheme.labelLarge,
+        secondaryLabelStyle: textTheme.labelLarge,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      ),
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: colorScheme.surface,
+        indicatorColor: colorScheme.primaryContainer,
+        selectedIconTheme: IconThemeData(
+          color: colorScheme.onPrimaryContainer,
+          size: AppDesignTokens.navigationIconSize,
+        ),
+        unselectedIconTheme: IconThemeData(
+          color: colorScheme.onSurfaceVariant,
+          size: AppDesignTokens.navigationIconSize,
+        ),
+        selectedLabelTextStyle: textTheme.labelMedium?.copyWith(
+          color: colorScheme.onSurface,
+          fontWeight: FontWeight.w700,
+        ),
+        unselectedLabelTextStyle: textTheme.labelMedium?.copyWith(
+          color: colorScheme.onSurfaceVariant,
         ),
       ),
       switchTheme: SwitchThemeData(
@@ -201,6 +257,15 @@ class EasyRideTheme._() {
         ),
         minVerticalPadding: 12,
       ),
+      tooltipTheme: TooltipThemeData(
+        decoration: BoxDecoration(
+          color: colorScheme.inverseSurface,
+          borderRadius: BorderRadius.circular(AppDesignTokens.smallRadius),
+        ),
+        textStyle: textTheme.bodySmall?.copyWith(
+          color: colorScheme.onInverseSurface,
+        ),
+      ),
     );
   }
 
@@ -222,12 +287,40 @@ class EasyRideTheme._() {
         fontWeight: FontWeight.w800,
         letterSpacing: -1,
       ),
+      displayMedium: TextStyle(
+        color: colorScheme.onSurface,
+        fontSize: 32,
+        height: 40 / 32,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.9,
+      ),
+      displaySmall: TextStyle(
+        color: colorScheme.onSurface,
+        fontSize: 28,
+        height: 36 / 28,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.7,
+      ),
       headlineLarge: TextStyle(
         color: colorScheme.onSurface,
         fontSize: 28,
         height: 34 / 28,
         fontWeight: FontWeight.w800,
         letterSpacing: -0.7,
+      ),
+      headlineMedium: TextStyle(
+        color: colorScheme.onSurface,
+        fontSize: 24,
+        height: 30 / 24,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.5,
+      ),
+      headlineSmall: TextStyle(
+        color: colorScheme.onSurface,
+        fontSize: 22,
+        height: 28 / 22,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.35,
       ),
       titleLarge: TextStyle(
         color: colorScheme.onSurface,

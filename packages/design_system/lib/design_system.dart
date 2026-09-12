@@ -12,6 +12,7 @@ export 'package:design_system/src/widgets/app_error_banner.dart';
 export 'package:design_system/src/widgets/app_floating_tab_bar.dart';
 export 'package:design_system/src/widgets/app_help_center_page.dart';
 export 'package:design_system/src/widgets/app_location_access_status_page.dart';
+export 'package:design_system/src/widgets/app_layout.dart';
 export 'package:design_system/src/widgets/app_network_image_widget.dart';
 export 'package:design_system/src/widgets/app_network_status_banner.dart';
 export 'package:design_system/src/widgets/app_settings_navigation.dart';

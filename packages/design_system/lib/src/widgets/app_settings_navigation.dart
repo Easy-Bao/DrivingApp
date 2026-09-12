@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:design_system/src/theme/app_design_tokens.dart';
 import 'package:design_system/src/theme/design_system_context.dart';
 
 /// A centered settings page shell shared by both BaoRide clients.
@@ -33,9 +34,16 @@ class const AppSettingsScaffold({
       body: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
+          constraints: const BoxConstraints(
+            maxWidth: AppDesignTokens.pageMaxWidth,
+          ),
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
+            padding: const EdgeInsets.fromLTRB(
+              AppDesignTokens.pageHorizontalPadding,
+              AppDesignTokens.pageTopPadding,
+              AppDesignTokens.pageHorizontalPadding,
+              40,
+            ),
             children: [
               Text(heading, style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: 6),
@@ -44,7 +52,7 @@ class const AppSettingsScaffold({
                 style: Theme.of(context).textTheme.bodyMedium
                     ?.copyWith(color: context.colorScheme.onSurfaceVariant),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: AppDesignTokens.sectionGap),
               ...children,
             ],
           ),
@@ -77,7 +85,7 @@ class const AppSettingsSection({
         Material(
           color: context.colorScheme.surface,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppDesignTokens.cardRadius),
             side: BorderSide(color: context.colorScheme.outlineVariant),
           ),
           clipBehavior: Clip.antiAlias,

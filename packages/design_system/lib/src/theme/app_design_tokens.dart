@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 /// from slowly developing different spacing, control sizing, and semantic
 /// colors for the same product surface.
 class AppDesignTokens._() {
+  // BaoRide's black mark remains the primary action and emphasis color.
   static const Color primary = Color(0xFF100E11);
   static const Color secondary = Color(0xFFE3E2C3);
   static const Color tertiary = Color(0xFF6C757D);
@@ -23,14 +24,24 @@ class AppDesignTokens._() {
   static const Color rating = Color(0xFFD99A32);
   static const Color warning = Color(0xFFFFC107);
 
-  static const double navigationBarHeight = 68;
-  static const double navigationIconSize = 21;
-  static const double navigationLabelSize = 11;
+  static const double navigationBarHeight = 72;
+  static const double navigationIconSize = 22;
+  static const double navigationLabelSize = 12;
   static const double minimumTouchTarget = 48;
   static const double pageHorizontalPadding = 20;
+  static const double pageHorizontalPaddingWide = 24;
+  static const double pageMaxWidth = 640;
+  static const double wideContentMaxWidth = 840;
+  static const double wideLayoutBreakpoint = 900;
+  static const double pageTopPadding = 20;
   static const double compactGap = 8;
-  static const double sectionGap = 16;
-  static const double cardRadius = 20;
+  static const double sectionGap = 24;
+  static const double cardPadding = 16;
+  static const double cardRadius = 18;
+  static const double controlRadius = 16;
+  static const double smallRadius = 12;
   static const double pillRadius = 30;
-  static const double fieldRadius = 36;
+  static const double fieldRadius = 16;
+  static const double sheetRadius = 28;
+  static const double controlHeight = 52;
 }
