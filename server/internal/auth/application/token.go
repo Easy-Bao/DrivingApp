@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -27,10 +28,21 @@ type SessionTokens struct {
 }
 
 func issueToken(issuer authports.TokenIssuer, subject string, role domain.Role) (string, error) {
-	if roleIssuer, ok := issuer.(roleTokenIssuer); ok {
-		return roleIssuer.IssueWithRole(subject, string(role))
+	if issuer == nil {
+		return "", errors.New("token issuer is nil")
 	}
-	return issuer.Issue(subject)
+	if roleIssuer, ok := issuer.(roleTokenIssuer); ok {
+		token, err := roleIssuer.IssueWithRole(subject, string(role))
+		if err != nil {
+			return "", fmt.Errorf("issue role token: %w", err)
+		}
+		return token, nil
+	}
+	token, err := issuer.Issue(subject)
+	if err != nil {
+		return "", fmt.Errorf("issue token: %w", err)
+	}
+	return token, nil
 }
 
 func issueSessionTokens(
@@ -42,7 +54,7 @@ func issueSessionTokens(
 ) (SessionTokens, error) {
 	accessToken, err := issueToken(issuer, subject, role)
 	if err != nil {
-		return SessionTokens{}, err
+		return SessionTokens{}, fmt.Errorf("issue access token: %w", err)
 	}
 	refreshToken, err := issueRefreshToken(
 		ctx,
@@ -51,7 +63,7 @@ func issueSessionTokens(
 		role,
 	)
 	if err != nil {
-		return SessionTokens{}, err
+		return SessionTokens{}, fmt.Errorf("issue refresh token: %w", err)
 	}
 	return SessionTokens{AccessToken: accessToken, RefreshToken: refreshToken}, nil
 }
@@ -67,7 +79,7 @@ func issueRefreshToken(
 	}
 	userID, err := subjectID(subject)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("parse refresh token subject: %w", err)
 	}
 
 	refreshToken, tokenHash, err := newRefreshToken()
@@ -100,7 +112,7 @@ func replacementRefreshSession(userID int, now time.Time) (string, domain.Refres
 func newRefreshToken() (string, string, error) {
 	bytes := make([]byte, refreshTokenBytes)
 	if _, err := rand.Read(bytes); err != nil {
-		return "", "", err
+		return "", "", fmt.Errorf("read refresh token randomness: %w", err)
 	}
 	token := base64.RawURLEncoding.EncodeToString(bytes)
 	return token, hashRefreshToken(token), nil

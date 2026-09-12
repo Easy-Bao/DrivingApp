@@ -89,11 +89,11 @@ func (service *RideService) publish(
 		payload,
 	)
 	if err != nil {
-		service.logger.ErrorContext(ctx, "construct realtime ride event failed", "error", err, "event_type", eventType)
+		service.log().ErrorContext(ctx, "construct realtime ride event failed", "error", err, "event_type", eventType)
 		return
 	}
 	if err := service.eventPublisher.Publish(ctx, envelope); err != nil {
-		service.logger.WarnContext(ctx, "publish realtime ride event failed", "error", err, "event_type", eventType)
+		service.log().WarnContext(ctx, "publish realtime ride event failed", "error", err, "event_type", eventType)
 	}
 }
 

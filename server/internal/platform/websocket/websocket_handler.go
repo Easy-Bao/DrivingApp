@@ -2,8 +2,10 @@ package hub
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
@@ -72,13 +74,21 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 	if err != nil {
 		return
 	}
+	var closeOnce sync.Once
+	closeConnection := func() {
+		closeOnce.Do(func() {
+			if err := connection.Close(); err != nil {
+				slog.DebugContext(request.Context(), "close realtime websocket failed", "error", err)
+			}
+		})
+	}
 
 	stopWriter := make(chan struct{})
 	writerDone := make(chan struct{})
-	go handler.writePump(connection, subscription.Events(), stopWriter, writerDone)
+	go handler.writePump(connection, subscription.Events(), stopWriter, writerDone, closeConnection)
 	handler.readPump(connection)
 	close(stopWriter)
-	_ = connection.Close()
+	closeConnection()
 	<-writerDone
 }
 
@@ -120,9 +130,10 @@ func (handler *Handler) writePump(
 	events <-chan event.Envelope,
 	stop <-chan struct{},
 	done chan<- struct{},
+	closeConnection func(),
 ) {
 	defer close(done)
-	defer connection.Close()
+	defer closeConnection()
 
 	ticker := time.NewTicker(pingPeriod)
 	defer ticker.Stop()

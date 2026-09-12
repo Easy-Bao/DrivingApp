@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -27,13 +28,13 @@ func (repository *RideRepository) AcceptRide(ctx context.Context, rideID, driver
 		return domain.Ride{}, fmt.Errorf("begin ride acceptance transaction: %w", err)
 	}
 	defer func() {
-		_ = transaction.Rollback(ctx)
+		platformdatabase.Rollback(ctx, transaction)
 	}()
 
 	transactionQueries := repository.queries.WithTx(transaction)
 	profile, err := transactionQueries.LockOnlineDriverProfileForBidding(ctx, dbDriverID)
 	if err != nil {
-		return domain.Ride{}, domain.ErrDriverUnavailable
+		return domain.Ride{}, driverUnavailableError("lock online driver profile for ride acceptance", err)
 	}
 	activeRides, err := transactionQueries.CountActiveRidesForAcceptance(
 		ctx,
@@ -81,5 +82,9 @@ func (repository *RideRepository) AcceptRide(ctx context.Context, rideID, driver
 	if err := transaction.Commit(ctx); err != nil {
 		return domain.Ride{}, fmt.Errorf("commit ride acceptance transaction: %w", err)
 	}
-	return fromPostgresRide(updatedRide)
+	ride, err := fromPostgresRide(updatedRide)
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("map accepted ride: %w", err)
+	}
+	return ride, nil
 }

@@ -26,6 +26,8 @@ type DocumentService struct {
 	maxDocumentBytes int64
 }
 
+var ErrServiceUnavailable = errors.New("driver document service is unavailable")
+
 func NewDocumentService(
 	repository documentports.DocumentStore,
 	storage documentports.ObjectStore,
@@ -54,6 +56,9 @@ func (service *DocumentService) Upload(
 	if invalidDriverID || invalidSize {
 		return domain.Document{}, domain.ErrInvalidDocument
 	}
+	if service.repository == nil || service.storage == nil {
+		return domain.Document{}, ErrServiceUnavailable
+	}
 	documentType, err := domain.ParseType(rawType)
 	if err != nil {
 		return domain.Document{}, err
@@ -79,17 +84,28 @@ func (service *DocumentService) Upload(
 	if err == nil {
 		return document, nil
 	}
+	persistenceErr := fmt.Errorf("persist driver document metadata: %w", err)
 	if cleanupErr := service.storage.Delete(context.WithoutCancel(ctx), key); cleanupErr != nil {
-		return domain.Document{}, errors.Join(err, fmt.Errorf("remove orphaned driver document: %w", cleanupErr))
+		return domain.Document{}, errors.Join(
+			persistenceErr,
+			fmt.Errorf("remove orphaned driver document: %w", cleanupErr),
+		)
 	}
-	return domain.Document{}, err
+	return domain.Document{}, persistenceErr
 }
 
 func (service *DocumentService) Status(ctx context.Context, driverID int) ([]domain.Document, error) {
 	if driverID <= 0 {
 		return nil, domain.ErrInvalidDocument
 	}
-	return service.repository.ListByDriver(ctx, driverID, 20)
+	if service.repository == nil {
+		return nil, ErrServiceUnavailable
+	}
+	documents, err := service.repository.ListByDriver(ctx, driverID, 20)
+	if err != nil {
+		return nil, fmt.Errorf("load driver document status: %w", err)
+	}
+	return documents, nil
 }
 
 func (service *DocumentService) ReviewQueue(
@@ -107,12 +123,19 @@ func (service *DocumentService) ReviewQueue(
 	if invalidLimit || invalidOffset {
 		return nil, domain.ErrInvalidDocument
 	}
-	return service.repository.ListForReview(
+	if service.repository == nil {
+		return nil, ErrServiceUnavailable
+	}
+	documents, err := service.repository.ListForReview(
 		ctx,
 		status,
 		limit,
 		offset,
 	)
+	if err != nil {
+		return nil, fmt.Errorf("load driver document review queue: %w", err)
+	}
+	return documents, nil
 }
 
 func (service *DocumentService) Review(
@@ -126,18 +149,28 @@ func (service *DocumentService) Review(
 	if invalidIdentity || invalidStatus {
 		return domain.Document{}, domain.ErrInvalidDocument
 	}
-	return service.repository.Review(
+	if service.repository == nil {
+		return domain.Document{}, ErrServiceUnavailable
+	}
+	document, err := service.repository.Review(
 		ctx,
 		id,
 		reviewerID,
 		status,
 	)
+	if err != nil {
+		return domain.Document{}, fmt.Errorf("review driver document: %w", err)
+	}
+	return document, nil
 }
 
 func (service *DocumentService) DriverContent(ctx context.Context, driverID, documentID int) (domain.Content, error) {
+	if service.repository == nil || service.storage == nil {
+		return domain.Content{}, ErrServiceUnavailable
+	}
 	document, err := service.repository.Get(ctx, documentID)
 	if err != nil {
-		return domain.Content{}, err
+		return domain.Content{}, fmt.Errorf("load driver document: %w", err)
 	}
 	if driverID <= 0 || document.DriverID != driverID {
 		return domain.Content{}, domain.ErrDocumentNotFound
@@ -146,9 +179,12 @@ func (service *DocumentService) DriverContent(ctx context.Context, driverID, doc
 }
 
 func (service *DocumentService) AdminContent(ctx context.Context, documentID int) (domain.Content, error) {
+	if service.repository == nil || service.storage == nil {
+		return domain.Content{}, ErrServiceUnavailable
+	}
 	document, err := service.repository.Get(ctx, documentID)
 	if err != nil {
-		return domain.Content{}, err
+		return domain.Content{}, fmt.Errorf("load driver document: %w", err)
 	}
 	return service.readContent(ctx, document)
 }

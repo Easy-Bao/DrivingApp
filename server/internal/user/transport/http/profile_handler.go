@@ -177,16 +177,28 @@ func (handler *Handler) AvatarUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.MultipartForm != nil {
-		defer r.MultipartForm.RemoveAll()
+		defer func() {
+			if err := r.MultipartForm.RemoveAll(); err != nil {
+				slog.DebugContext(r.Context(), "remove profile upload temporary files failed", "error", err)
+			}
+		}()
 	}
 	file, _, err := r.FormFile("photo")
 	if err != nil {
 		response.Error(w, http.StatusBadRequest, "Please choose a profile photo to upload.")
 		return
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			slog.DebugContext(r.Context(), "close profile upload failed", "error", err)
+		}
+	}()
 	content, err := io.ReadAll(io.LimitReader(file, maxBytes+1))
-	if err != nil || int64(len(content)) > maxBytes {
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "The profile photo could not be read.")
+		return
+	}
+	if int64(len(content)) > maxBytes {
 		response.Error(w, http.StatusRequestEntityTooLarge, "The profile photo is too large.")
 		return
 	}

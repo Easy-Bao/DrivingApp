@@ -4,6 +4,8 @@ package bidding
 import (
 	"context"
 	"errors"
+	"fmt"
+	"log/slog"
 	"time"
 
 	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
@@ -49,6 +51,7 @@ type Service struct {
 	publishRide        RideEventPublisher
 	publishSession     SessionEventPublisher
 	publishDriverOffer DriverOfferPublisher
+	logger             *slog.Logger
 }
 
 func NewService(dependencies Dependencies) *Service {
@@ -59,6 +62,7 @@ func NewService(dependencies Dependencies) *Service {
 		publishRide:        dependencies.PublishRide,
 		publishSession:     dependencies.PublishSession,
 		publishDriverOffer: dependencies.PublishDriverOffer,
+		logger:             slog.Default(),
 	}
 }
 
@@ -81,7 +85,7 @@ func (service *Service) CreateSession(ctx context.Context, session domain.BidSes
 		session.DurationMinutes,
 	)
 	if err != nil {
-		return domain.BidSession{}, err
+		return domain.BidSession{}, fmt.Errorf("resolve bidding route: %w", err)
 	}
 	session.DistanceKm = metrics.DistanceKm
 	session.DurationMinutes = metrics.DurationMinutes
@@ -107,7 +111,7 @@ func (service *Service) CreateSession(ctx context.Context, session domain.BidSes
 	}
 	created, err := service.store.CreateSession(ctx, session)
 	if err != nil {
-		return domain.BidSession{}, err
+		return domain.BidSession{}, fmt.Errorf("create bid session: %w", err)
 	}
 	service.publishSessionEvent(
 		ctx,
@@ -122,14 +126,22 @@ func (service *Service) ActiveSessions(ctx context.Context, driverID *int) ([]do
 	if service.store == nil {
 		return nil, ErrPersistenceUnavailable
 	}
-	return service.store.ActiveSessions(ctx, driverID)
+	sessions, err := service.store.ActiveSessions(ctx, driverID)
+	if err != nil {
+		return nil, fmt.Errorf("load active bid sessions: %w", err)
+	}
+	return sessions, nil
 }
 
 func (service *Service) Offers(ctx context.Context, sessionID int) ([]domain.BidOffer, error) {
 	if service.store == nil {
 		return nil, ErrPersistenceUnavailable
 	}
-	return service.store.Offers(ctx, sessionID)
+	offers, err := service.store.Offers(ctx, sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("load bid offers: %w", err)
+	}
+	return offers, nil
 }
 
 func (service *Service) PlaceOffer(ctx context.Context, offer domain.BidOffer) (domain.BidOffer, error) {
@@ -142,7 +154,7 @@ func (service *Service) PlaceOffer(ctx context.Context, offer domain.BidOffer) (
 	if offer.ProposedFareCentavos == 0 {
 		session, err := service.store.Session(ctx, offer.SessionID)
 		if err != nil {
-			return domain.BidOffer{}, err
+			return domain.BidOffer{}, fmt.Errorf("load bid session for offer: %w", err)
 		}
 		offer.ProposedFareCentavos = session.OfferedFareCentavos
 	}
@@ -151,9 +163,10 @@ func (service *Service) PlaceOffer(ctx context.Context, offer domain.BidOffer) (
 	}
 	created, err := service.store.PlaceOffer(ctx, offer)
 	if err != nil {
-		return domain.BidOffer{}, err
+		return domain.BidOffer{}, fmt.Errorf("place bid offer: %w", err)
 	}
-	if session, sessionErr := service.store.Session(ctx, created.SessionID); sessionErr == nil {
+	session, sessionErr := service.store.Session(ctx, created.SessionID)
+	if sessionErr == nil {
 		service.publishSessionEvent(
 			ctx,
 			event.RideOfferUpdated,
@@ -161,6 +174,12 @@ func (service *Service) PlaceOffer(ctx context.Context, offer domain.BidOffer) (
 			map[string]any{"offer": created},
 		)
 	} else {
+		service.log().DebugContext(
+			ctx,
+			"load bid session after offer placement failed; using driver notification",
+			"error",
+			sessionErr,
+		)
 		service.publishDriverOfferEvent(ctx, created, map[string]any{"offer": created})
 	}
 	return created, nil
@@ -185,7 +204,7 @@ func (service *Service) AcceptOffer(
 		passengerID,
 	)
 	if err != nil {
-		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
+		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, fmt.Errorf("accept bid offer: %w", err)
 	}
 	service.publishRideEvent(
 		ctx,
@@ -209,7 +228,7 @@ func (service *Service) CancelSession(ctx context.Context, sessionID, passengerI
 	}
 	session, err := service.store.CancelSession(ctx, sessionID, passengerID)
 	if err != nil {
-		return domain.BidSession{}, err
+		return domain.BidSession{}, fmt.Errorf("cancel bid session: %w", err)
 	}
 	service.publishSessionEvent(
 		ctx,
@@ -226,9 +245,10 @@ func (service *Service) CancelOffer(ctx context.Context, sessionID, driverID int
 	}
 	offer, err := service.store.CancelOffer(ctx, sessionID, driverID)
 	if err != nil {
-		return domain.BidOffer{}, err
+		return domain.BidOffer{}, fmt.Errorf("cancel bid offer: %w", err)
 	}
-	if session, sessionErr := service.store.Session(ctx, sessionID); sessionErr == nil {
+	session, sessionErr := service.store.Session(ctx, sessionID)
+	if sessionErr == nil {
 		service.publishSessionEvent(
 			ctx,
 			event.RideOfferUpdated,
@@ -236,6 +256,12 @@ func (service *Service) CancelOffer(ctx context.Context, sessionID, driverID int
 			map[string]any{"offer": offer},
 		)
 	} else {
+		service.log().DebugContext(
+			ctx,
+			"load bid session after offer cancellation failed; using driver notification",
+			"error",
+			sessionErr,
+		)
 		service.publishDriverOfferEvent(ctx, offer, map[string]any{"offer": offer})
 	}
 	return offer, nil
@@ -247,10 +273,14 @@ func (service *Service) Session(ctx context.Context, sessionID int) (domain.BidS
 	}
 	session, err := service.store.Session(ctx, sessionID)
 	if err != nil {
-		return domain.BidSession{}, err
+		return domain.BidSession{}, fmt.Errorf("load bid session: %w", err)
 	}
-	session.Offers, err = service.store.Offers(ctx, sessionID)
-	return session, err
+	offers, err := service.store.Offers(ctx, sessionID)
+	if err != nil {
+		return domain.BidSession{}, fmt.Errorf("load bid session offers: %w", err)
+	}
+	session.Offers = offers
+	return session, nil
 }
 
 func (service *Service) publishRideEvent(
@@ -289,4 +319,11 @@ func (service *Service) publishDriverOfferEvent(ctx context.Context, offer domai
 	if service.publishDriverOffer != nil {
 		service.publishDriverOffer(ctx, offer, payload)
 	}
+}
+
+func (service *Service) log() *slog.Logger {
+	if service != nil && service.logger != nil {
+		return service.logger
+	}
+	return slog.Default()
 }

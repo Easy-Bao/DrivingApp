@@ -3,6 +3,7 @@ package adapter
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	locationapplication "github.com/Easy-Bao/DrivingApp/server/internal/location/application"
@@ -33,7 +34,7 @@ func (resolver *LocationResolver) ResolveAddress(
 		Longitude: coordinates.Longitude,
 	})
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("reverse geocode ride context address: %w", err)
 	}
 	return formatAddress(place), nil
 }

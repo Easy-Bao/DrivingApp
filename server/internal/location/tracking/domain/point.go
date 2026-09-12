@@ -4,6 +4,7 @@ import "errors"
 
 var (
 	ErrInvalidLocation           = errors.New("invalid location")
+	ErrLocationNotFound          = errors.New("location not found")
 	ErrRideAccessDenied          = errors.New("ride location access denied")
 	ErrRideAssignmentUnavailable = errors.New("ride location authorization is unavailable")
 )

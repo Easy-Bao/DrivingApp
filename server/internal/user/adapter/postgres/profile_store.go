@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
 	platformstorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage"
 	"github.com/Easy-Bao/DrivingApp/server/internal/user/domain"
@@ -61,19 +62,26 @@ func NewProfileStore(
 }
 
 func (repository *ProfileRepository) WithLogger(logger *slog.Logger) *ProfileRepository {
-	if logger != nil {
+	if repository != nil && logger != nil {
 		repository.logger = logger
 	}
 	return repository
 }
 
+func (repository *ProfileRepository) log() *slog.Logger {
+	if repository != nil && repository.logger != nil {
+		return repository.logger
+	}
+	return slog.Default()
+}
+
 func (repository *ProfileRepository) Get(ctx context.Context, userID int) (domain.Profile, error) {
 	if err := repository.validate(); err != nil {
-		return domain.Profile{}, err
+		return domain.Profile{}, fmt.Errorf("validate profile repository: %w", err)
 	}
 	dbUserID, err := toPostgresProfileID(userID, "user id")
 	if err != nil {
-		return domain.Profile{}, err
+		return domain.Profile{}, fmt.Errorf("convert profile user id: %w", err)
 	}
 
 	account, err := repository.queries.GetUserByID(ctx, dbUserID)
@@ -98,18 +106,18 @@ func (repository *ProfileRepository) Get(ctx context.Context, userID int) (domai
 
 func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Profile) (domain.Profile, error) {
 	if err := repository.validate(); err != nil {
-		return domain.Profile{}, err
+		return domain.Profile{}, fmt.Errorf("validate profile repository: %w", err)
 	}
 	if profile.Role != "driver" && profile.Role != "passenger" {
 		return domain.Profile{}, fmt.Errorf("unsupported profile role %q", profile.Role)
 	}
 	dbUserID, err := toPostgresProfileID(profile.UserID, "user id")
 	if err != nil {
-		return domain.Profile{}, err
+		return domain.Profile{}, fmt.Errorf("convert profile user id: %w", err)
 	}
 	dbProfileID, err := toPostgresProfileID(profile.ID, "profile id")
 	if err != nil {
-		return domain.Profile{}, err
+		return domain.Profile{}, fmt.Errorf("convert profile id: %w", err)
 	}
 
 	transaction, err := repository.pool.Begin(ctx)
@@ -117,7 +125,7 @@ func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Pr
 		return domain.Profile{}, fmt.Errorf("begin profile update transaction: %w", err)
 	}
 	defer func() {
-		_ = transaction.Rollback(ctx)
+		platformdatabase.Rollback(ctx, transaction)
 	}()
 
 	transactionQueries := repository.queries.WithTx(transaction)
@@ -175,14 +183,14 @@ func (repository *ProfileRepository) SaveAvatar(
 	contentType string,
 ) (domain.Profile, error) {
 	if err := repository.validate(); err != nil {
-		return domain.Profile{}, err
+		return domain.Profile{}, fmt.Errorf("validate profile repository: %w", err)
 	}
 	if repository.avatarStorage == nil {
 		return domain.Profile{}, domain.ErrAvatarStorageUnavailable
 	}
 	dbUserID, err := toPostgresProfileID(userID, "user id")
 	if err != nil {
-		return domain.Profile{}, err
+		return domain.Profile{}, fmt.Errorf("convert profile user id: %w", err)
 	}
 
 	passengerProfile, err := repository.queries.GetPassengerProfileByUserIDFull(ctx, dbUserID)
@@ -222,20 +230,20 @@ func (repository *ProfileRepository) cleanupAvatar(ctx context.Context, storageK
 	cleanupContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Second)
 	defer cancel()
 	if err := repository.avatarStorage.Delete(cleanupContext, storageKey); err != nil {
-		repository.logger.WarnContext(ctx, "delete passenger avatar object failed", "error", err, "operation", "delete")
+		repository.log().WarnContext(ctx, "delete passenger avatar object failed", "error", err, "operation", "delete")
 	}
 }
 
 func (repository *ProfileRepository) GetAvatar(ctx context.Context, userID int) (domain.Avatar, error) {
 	if err := repository.validate(); err != nil {
-		return domain.Avatar{}, err
+		return domain.Avatar{}, fmt.Errorf("validate profile repository: %w", err)
 	}
 	if repository.avatarStorage == nil {
 		return domain.Avatar{}, domain.ErrAvatarStorageUnavailable
 	}
 	dbUserID, err := toPostgresProfileID(userID, "user id")
 	if err != nil {
-		return domain.Avatar{}, err
+		return domain.Avatar{}, fmt.Errorf("convert profile user id: %w", err)
 	}
 
 	passengerProfile, err := repository.queries.GetPassengerProfileByUserIDFull(ctx, dbUserID)
@@ -252,7 +260,10 @@ func (repository *ProfileRepository) GetAvatar(ctx context.Context, userID int) 
 
 	content, err := repository.avatarStorage.Read(ctx, storageKey, domain.MaxAvatarBytes)
 	if err != nil {
-		return domain.Avatar{}, fmt.Errorf("read passenger avatar: %w", domain.ErrAvatarCorrupt)
+		return domain.Avatar{}, errors.Join(
+			domain.ErrAvatarCorrupt,
+			fmt.Errorf("read passenger avatar: %w", err),
+		)
 	}
 	contentType := http.DetectContentType(content)
 	storedContentType := strings.TrimSpace(profileTextValue(passengerProfile.AvatarContentType))
@@ -271,11 +282,11 @@ func (repository *ProfileRepository) Notifications(
 	offset int,
 ) ([]domain.Notification, error) {
 	if err := repository.validate(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("validate profile repository: %w", err)
 	}
 	dbUserID, err := toPostgresProfileID(userID, "user id")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("convert notification user id: %w", err)
 	}
 	if limit <= 0 {
 		return nil, errors.New("notification limit must be positive")
@@ -285,11 +296,11 @@ func (repository *ProfileRepository) Notifications(
 	}
 	dbLimit, err := toPostgresProfilePageValue(limit+1, "limit")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("convert notification limit: %w", err)
 	}
 	dbOffset, err := toPostgresProfilePageValue(offset, "offset")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("convert notification offset: %w", err)
 	}
 
 	items, err := repository.queries.ListNotifications(ctx, databasepostgres.ListNotificationsParams{
@@ -304,7 +315,7 @@ func (repository *ProfileRepository) Notifications(
 	for _, item := range items {
 		notification, mappingErr := fromPostgresNotification(item)
 		if mappingErr != nil {
-			return nil, mappingErr
+			return nil, fmt.Errorf("map notification: %w", mappingErr)
 		}
 		result = append(result, notification)
 	}
@@ -317,15 +328,15 @@ func (repository *ProfileRepository) DeleteNotification(
 	notificationID int,
 ) error {
 	if err := repository.validate(); err != nil {
-		return err
+		return fmt.Errorf("validate profile repository: %w", err)
 	}
 	dbUserID, err := toPostgresProfileID(userID, "user id")
 	if err != nil {
-		return err
+		return fmt.Errorf("convert notification user id: %w", err)
 	}
 	dbNotificationID, err := toPostgresProfileID(notificationID, "notification id")
 	if err != nil {
-		return err
+		return fmt.Errorf("convert notification id: %w", err)
 	}
 	deleted, err := repository.queries.DeleteNotification(ctx, databasepostgres.DeleteNotificationParams{
 		ID:     dbNotificationID,

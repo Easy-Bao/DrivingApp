@@ -50,5 +50,9 @@ func (repository *RideRepository) UpdateStatus(
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("update ride status: %w", err)
 	}
-	return fromPostgresRide(item)
+	ride, err := fromPostgresRide(item)
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("map updated ride: %w", err)
+	}
+	return ride, nil
 }

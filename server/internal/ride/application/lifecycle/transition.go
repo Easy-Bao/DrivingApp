@@ -4,6 +4,7 @@ package lifecycle
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
@@ -42,7 +43,7 @@ func (service *Service) AcceptRide(ctx context.Context, rideID, driverID int) (d
 	}
 	ride, err := service.store.AcceptRide(ctx, rideID, driverID)
 	if err != nil {
-		return domain.Ride{}, err
+		return domain.Ride{}, fmt.Errorf("accept ride: %w", err)
 	}
 	service.publish(
 		ctx,
@@ -61,7 +62,7 @@ func (service *Service) UpdateStatus(ctx context.Context, rideID, actorID int, n
 	}
 	current, err := service.store.Get(ctx, rideID)
 	if err != nil {
-		return domain.Ride{}, err
+		return domain.Ride{}, fmt.Errorf("load ride for status update: %w", err)
 	}
 	isPassenger := current.PassengerID == actorID
 	isDriver := current.DriverID != nil && *current.DriverID == actorID
@@ -90,7 +91,7 @@ func (service *Service) UpdateStatus(ctx context.Context, rideID, actorID int, n
 		string(nextStatus),
 	)
 	if err != nil {
-		return domain.Ride{}, err
+		return domain.Ride{}, fmt.Errorf("update ride status: %w", err)
 	}
 	service.publish(
 		ctx,

@@ -33,7 +33,11 @@ func (repository *RideRepository) PassengerActivitySummary(
 	if err != nil {
 		return domain.PassengerActivitySummary{}, fmt.Errorf("load passenger activity summary: %w", err)
 	}
-	return fromPostgresPassengerActivitySummary(row)
+	activity, err := fromPostgresPassengerActivitySummary(row)
+	if err != nil {
+		return domain.PassengerActivitySummary{}, fmt.Errorf("map passenger activity summary: %w", err)
+	}
+	return activity, nil
 }
 
 func fromPostgresPassengerActivitySummary(
@@ -41,7 +45,7 @@ func fromPostgresPassengerActivitySummary(
 ) (domain.PassengerActivitySummary, error) {
 	completedRides, err := toNativeRideCount(row.ThisWeekCompletedRides, "completed rides")
 	if err != nil {
-		return domain.PassengerActivitySummary{}, err
+		return domain.PassengerActivitySummary{}, fmt.Errorf("map completed rides: %w", err)
 	}
 	return domain.PassengerActivitySummary{
 		ThisWeekFareCentavos:   row.ThisWeekFareCentavos,

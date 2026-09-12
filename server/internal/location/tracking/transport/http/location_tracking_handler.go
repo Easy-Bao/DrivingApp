@@ -192,6 +192,10 @@ func writeRideLocationError(writer http.ResponseWriter, err error) {
 		response.Error(writer, http.StatusBadRequest, "invalid location")
 		return
 	}
+	if errors.Is(err, domain.ErrLocationNotFound) {
+		response.Error(writer, http.StatusNotFound, "location not found")
+		return
+	}
 	if errors.Is(err, domain.ErrRideAccessDenied) || errors.Is(err, domain.ErrRideAssignmentUnavailable) {
 		response.Error(writer, http.StatusForbidden, "forbidden")
 		return

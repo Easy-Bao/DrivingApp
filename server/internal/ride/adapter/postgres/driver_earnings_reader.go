@@ -37,7 +37,7 @@ func (repository *RideRepository) DriverEarnings(
 	for _, item := range items {
 		entry, mappingErr := fromPostgresDriverEarning(item)
 		if mappingErr != nil {
-			return nil, mappingErr
+			return nil, fmt.Errorf("map driver earning: %w", mappingErr)
 		}
 		result = append(result, entry)
 	}

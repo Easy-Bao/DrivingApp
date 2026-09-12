@@ -50,7 +50,7 @@ func (repository *RideRepository) DriverTrips(
 	for _, item := range items {
 		ride, mappingErr := fromPostgresDriverRide(item)
 		if mappingErr != nil {
-			return nil, mappingErr
+			return nil, fmt.Errorf("map driver trip: %w", mappingErr)
 		}
 		result = append(result, ride)
 	}
@@ -90,7 +90,7 @@ func (repository *RideRepository) PassengerRides(
 	for _, item := range items {
 		ride, mappingErr := fromPostgresPassengerRide(item)
 		if mappingErr != nil {
-			return nil, mappingErr
+			return nil, fmt.Errorf("map passenger ride: %w", mappingErr)
 		}
 		result = append(result, ride)
 	}
@@ -124,7 +124,7 @@ func (repository *RideRepository) PassengerRecentRides(
 	for _, item := range items {
 		ride, mappingErr := fromPostgresRecentPassengerRide(item)
 		if mappingErr != nil {
-			return nil, mappingErr
+			return nil, fmt.Errorf("map recent passenger ride: %w", mappingErr)
 		}
 		result = append(result, ride)
 	}

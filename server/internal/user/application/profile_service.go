@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/user/domain"
@@ -11,14 +12,33 @@ import (
 
 type ProfileService struct{ repository ports.ProfileStore }
 
+var (
+	ErrProfileUnavailable      = errors.New("profile persistence is unavailable")
+	ErrNotificationUnavailable = errors.New("notification persistence is unavailable")
+)
+
 func NewProfileService(repository ports.ProfileStore) *ProfileService {
 	return &ProfileService{repository: repository}
 }
 func (service *ProfileService) Get(ctx context.Context, userID int) (domain.Profile, error) {
-	return service.repository.Get(ctx, userID)
+	if service.repository == nil {
+		return domain.Profile{}, ErrProfileUnavailable
+	}
+	profile, err := service.repository.Get(ctx, userID)
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("load profile: %w", err)
+	}
+	return profile, nil
 }
 func (service *ProfileService) Update(ctx context.Context, profile domain.Profile) (domain.Profile, error) {
-	return service.repository.Save(ctx, profile)
+	if service.repository == nil {
+		return domain.Profile{}, ErrProfileUnavailable
+	}
+	updated, err := service.repository.Save(ctx, profile)
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("save profile: %w", err)
+	}
+	return updated, nil
 }
 
 func (service *ProfileService) MaxAvatarBytes() int64 {
@@ -39,7 +59,11 @@ func (service *ProfileService) SaveAvatar(ctx context.Context, userID int, conte
 	if !ok {
 		return domain.Profile{}, domain.ErrAvatarStorageUnavailable
 	}
-	return repository.SaveAvatar(ctx, userID, content, contentType)
+	profile, err := repository.SaveAvatar(ctx, userID, content, contentType)
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("save profile avatar: %w", err)
+	}
+	return profile, nil
 }
 
 func (service *ProfileService) Avatar(ctx context.Context, userID int) (domain.Avatar, error) {
@@ -50,7 +74,11 @@ func (service *ProfileService) Avatar(ctx context.Context, userID int) (domain.A
 	if !ok {
 		return domain.Avatar{}, domain.ErrAvatarStorageUnavailable
 	}
-	return repository.GetAvatar(ctx, userID)
+	avatar, err := repository.GetAvatar(ctx, userID)
+	if err != nil {
+		return domain.Avatar{}, fmt.Errorf("load profile avatar: %w", err)
+	}
+	return avatar, nil
 }
 
 func (service *ProfileService) Notifications(
@@ -61,14 +89,21 @@ func (service *ProfileService) Notifications(
 ) ([]domain.Notification, error) {
 	repository, ok := service.repository.(ports.NotificationStore)
 	if !ok {
-		return []domain.Notification{}, nil
+		return nil, ErrNotificationUnavailable
+	}
+	if userID <= 0 {
+		return nil, errors.New("notification user id is invalid")
 	}
 	invalidLimit := limit <= 0 || limit > 100
 	invalidOffset := offset < 0 || offset > 1_000_000
 	if invalidLimit || invalidOffset {
 		return nil, errors.New("notification pagination is invalid")
 	}
-	return repository.Notifications(ctx, userID, limit, offset)
+	items, err := repository.Notifications(ctx, userID, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("load notifications: %w", err)
+	}
+	return items, nil
 }
 
 func (service *ProfileService) DeleteNotification(
@@ -78,10 +113,13 @@ func (service *ProfileService) DeleteNotification(
 ) error {
 	repository, ok := service.repository.(ports.NotificationStore)
 	if !ok {
-		return nil
+		return ErrNotificationUnavailable
 	}
 	if userID <= 0 || notificationID <= 0 {
 		return errors.New("notification identity is invalid")
 	}
-	return repository.DeleteNotification(ctx, userID, notificationID)
+	if err := repository.DeleteNotification(ctx, userID, notificationID); err != nil {
+		return fmt.Errorf("delete notification: %w", err)
+	}
+	return nil
 }

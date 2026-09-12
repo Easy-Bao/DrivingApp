@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -51,8 +52,14 @@ func OpenPostgresMigrationDatabaseWithContext(
 	pingContext, cancel := context.WithTimeout(ctx, pingTimeout)
 	defer cancel()
 	if err := sqlDatabase.PingContext(pingContext); err != nil {
-		_ = sqlDatabase.Close()
-		return nil, fmt.Errorf("ping postgresql migration database: %w", err)
+		pingErr := fmt.Errorf("ping postgresql migration database: %w", err)
+		if closeErr := sqlDatabase.Close(); closeErr != nil {
+			return nil, errors.Join(
+				pingErr,
+				fmt.Errorf("close postgresql migration database after failed ping: %w", closeErr),
+			)
+		}
+		return nil, pingErr
 	}
 
 	return sqlDatabase, nil

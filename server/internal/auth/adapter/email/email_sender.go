@@ -2,6 +2,7 @@ package email
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -51,8 +52,14 @@ func newGoMailGateway(config Config, deliver Delivery) *GoMailGateway {
 }
 
 func (gateway *GoMailGateway) Send(ctx context.Context, recipient, code string) error {
+	if gateway == nil || gateway.deliver == nil || gateway.breaker == nil {
+		return fmt.Errorf("%w: mail gateway is not configured", ErrInvalidConfig)
+	}
 	if err := gateway.config.Validate(); err != nil {
-		return err
+		return fmt.Errorf("validate mail gateway configuration: %w", err)
+	}
+	if ctx == nil {
+		return errors.New("mail delivery context is nil")
 	}
 	if err := ctx.Err(); err != nil {
 		return err
@@ -61,7 +68,7 @@ func (gateway *GoMailGateway) Send(ctx context.Context, recipient, code string) 
 	if recipient == "" {
 		return fmt.Errorf("%w: recipient is empty", ErrInvalidConfig)
 	}
-	return gateway.breaker.Do(ctx, func(ctx context.Context) error {
+	if err := gateway.breaker.Do(ctx, func(ctx context.Context) error {
 		return gateway.deliver(
 			ctx,
 			gateway.config,
@@ -69,7 +76,10 @@ func (gateway *GoMailGateway) Send(ctx context.Context, recipient, code string) 
 			gateway.config.Subject,
 			verificationBody(code),
 		)
-	})
+	}); err != nil {
+		return fmt.Errorf("send verification email: %w", err)
+	}
+	return nil
 }
 
 func deliverWithGoMail(

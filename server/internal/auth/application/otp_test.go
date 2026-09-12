@@ -3,7 +3,6 @@ package application_test
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -41,7 +40,7 @@ func (store *otpMemoryStore) Put(_ context.Context, purpose, email, code string,
 func (store *otpMemoryStore) Consume(_ context.Context, purpose, email, code string) error {
 	key := purpose + ":" + strings.ToLower(email)
 	if store.values[key] != code {
-		return fmt.Errorf("invalid otp")
+		return domain.ErrInvalidOTP
 	}
 	delete(store.values, key)
 	return nil

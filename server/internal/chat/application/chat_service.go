@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"strings"
 	"time"
@@ -46,11 +47,19 @@ func (service *ChatService) WithRideAssignmentLookup(
 }
 
 func (service *ChatService) WithLogger(logger *slog.Logger) *ChatService {
-	if logger != nil {
+	if service != nil && logger != nil {
 		service.logger = logger
 	}
 	return service
 }
+
+func (service *ChatService) log() *slog.Logger {
+	if service != nil && service.logger != nil {
+		return service.logger
+	}
+	return slog.Default()
+}
+
 func (service *ChatService) Relay(ctx context.Context, message domain.Message) error {
 	invalidRoomID := !validRoomID(message.RoomID)
 	invalidSenderID := !validParticipantID(message.SenderID)
@@ -63,20 +72,20 @@ func (service *ChatService) Relay(ctx context.Context, message domain.Message) e
 	}
 	locked, err := service.history.IsLocked(ctx, message.RoomID)
 	if err != nil {
-		return err
+		return fmt.Errorf("check chat room lock: %w", err)
 	}
 	if locked {
 		return domain.ErrRoomLocked
 	}
 	member, err := service.history.IsMember(ctx, message.RoomID, message.SenderID)
 	if err != nil {
-		return err
+		return fmt.Errorf("check chat room membership: %w", err)
 	}
 	if !member {
 		return domain.ErrForbidden
 	}
 	if err := service.history.Append(ctx, message); err != nil {
-		return err
+		return fmt.Errorf("append chat message: %w", err)
 	}
 	service.publishRealtimeMessage(ctx, message)
 	return nil
@@ -88,7 +97,7 @@ func (service *ChatService) publishRealtimeMessage(ctx context.Context, message 
 	}
 	passengerID, driverID, err := service.history.RoomParticipants(ctx, message.RoomID)
 	if err != nil {
-		service.logger.WarnContext(ctx, "load chat room participants for notification failed", "error", err)
+		service.log().WarnContext(ctx, "load chat room participants for notification failed", "error", err)
 		return
 	}
 	if passengerID == "" || driverID == "" {
@@ -111,11 +120,11 @@ func (service *ChatService) publishRealtimeMessage(ctx context.Context, message 
 		},
 	)
 	if err != nil {
-		service.logger.ErrorContext(ctx, "construct chat notification event failed", "error", err)
+		service.log().ErrorContext(ctx, "construct chat notification event failed", "error", err)
 		return
 	}
 	if err := service.events.Publish(ctx, envelope); err != nil {
-		service.logger.WarnContext(ctx, "publish chat notification event failed", "error", err)
+		service.log().WarnContext(ctx, "publish chat notification event failed", "error", err)
 	}
 }
 
@@ -132,7 +141,7 @@ func (service *ChatService) OpenRideRoom(ctx context.Context, rideID, actorID st
 	}
 	existingPassengerID, existingDriverID, err := service.history.RoomParticipants(ctx, rideID)
 	if err != nil {
-		return err
+		return fmt.Errorf("load chat room participants: %w", err)
 	}
 	if existingPassengerID != "" || existingDriverID != "" {
 		if existingPassengerID != rideAssignment.PassengerID || existingDriverID != rideAssignment.DriverID {
@@ -140,19 +149,22 @@ func (service *ChatService) OpenRideRoom(ctx context.Context, rideID, actorID st
 		}
 		locked, err := service.history.IsLocked(ctx, rideID)
 		if err != nil {
-			return err
+			return fmt.Errorf("check chat room lock: %w", err)
 		}
 		if locked {
 			return domain.ErrRoomLocked
 		}
 		return nil
 	}
-	return service.history.CreateRoom(
+	if err := service.history.CreateRoom(
 		ctx,
 		rideID,
 		rideAssignment.PassengerID,
 		rideAssignment.DriverID,
-	)
+	); err != nil {
+		return fmt.Errorf("create chat room: %w", err)
+	}
+	return nil
 }
 
 func (service *ChatService) communicationAssignment(
@@ -165,7 +177,7 @@ func (service *ChatService) communicationAssignment(
 	}
 	rideAssignment, found, err := service.assignments.ForRide(ctx, rideID)
 	if err != nil {
-		service.logger.WarnContext(ctx, "load ride assignment for chat authorization failed", "error", err)
+		service.log().WarnContext(ctx, "load ride assignment for chat authorization failed", "error", err)
 		return assignmentdomain.Assignment{}, domain.ErrRoomUnavailable
 	}
 	communicationNotAllowed := !rideAssignment.AllowsCommunication()
@@ -183,7 +195,11 @@ func (service *ChatService) Messages(ctx context.Context, roomID string) ([]doma
 	if service.history == nil {
 		return nil, domain.ErrRoomUnavailable
 	}
-	return service.history.Messages(ctx, roomID)
+	messages, err := service.history.Messages(ctx, roomID)
+	if err != nil {
+		return nil, fmt.Errorf("load chat messages: %w", err)
+	}
+	return messages, nil
 }
 
 func (service *ChatService) Resolve(ctx context.Context, roomID string) error {
@@ -193,14 +209,20 @@ func (service *ChatService) Resolve(ctx context.Context, roomID string) error {
 	if service.history == nil {
 		return domain.ErrRoomUnavailable
 	}
-	return service.history.Resolve(ctx, roomID)
+	if err := service.history.Resolve(ctx, roomID); err != nil {
+		return fmt.Errorf("resolve chat room: %w", err)
+	}
+	return nil
 }
 
 func (service *ChatService) CanAccessRoom(ctx context.Context, roomID, userID string) (bool, error) {
 	invalidRoomID := !validRoomID(roomID)
 	invalidUserID := !validParticipantID(userID)
-	if invalidRoomID || invalidUserID || service.history == nil {
+	if invalidRoomID || invalidUserID {
 		return false, nil
+	}
+	if service.history == nil {
+		return false, domain.ErrRoomUnavailable
 	}
 	if _, err := service.communicationAssignment(ctx, roomID, userID); err != nil {
 		if errors.Is(err, domain.ErrForbidden) {
@@ -209,12 +231,15 @@ func (service *ChatService) CanAccessRoom(ctx context.Context, roomID, userID st
 		return false, err
 	}
 	member, err := service.history.IsMember(ctx, roomID, userID)
-	if err != nil || !member {
-		return member, err
+	if err != nil {
+		return false, fmt.Errorf("check chat room membership: %w", err)
+	}
+	if !member {
+		return false, nil
 	}
 	locked, err := service.history.IsLocked(ctx, roomID)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("check chat room lock: %w", err)
 	}
 	if locked {
 		return false, nil
@@ -223,22 +248,25 @@ func (service *ChatService) CanAccessRoom(ctx context.Context, roomID, userID st
 }
 
 func (service *ChatService) MessagesForUser(ctx context.Context, roomID, userID string) ([]domain.Message, error) {
-	if !service.hasAccess(ctx, roomID, userID) {
+	allowed, err := service.CanAccessRoom(ctx, roomID, userID)
+	if err != nil {
+		return nil, err
+	}
+	if !allowed {
 		return nil, domain.ErrForbidden
 	}
 	return service.Messages(ctx, roomID)
 }
 
 func (service *ChatService) ResolveForUser(ctx context.Context, roomID, userID string) error {
-	if !service.hasAccess(ctx, roomID, userID) {
+	allowed, err := service.CanAccessRoom(ctx, roomID, userID)
+	if err != nil {
+		return err
+	}
+	if !allowed {
 		return domain.ErrForbidden
 	}
 	return service.Resolve(ctx, roomID)
-}
-
-func (service *ChatService) hasAccess(ctx context.Context, roomID, userID string) bool {
-	allowed, err := service.CanAccessRoom(ctx, roomID, userID)
-	return err == nil && allowed
 }
 
 func validRoomID(value string) bool {

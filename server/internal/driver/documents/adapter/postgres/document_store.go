@@ -61,7 +61,11 @@ func (repository *DocumentRepository) Create(ctx context.Context, item domain.Do
 	if err != nil {
 		return domain.Document{}, fmt.Errorf("create driver document: %w", err)
 	}
-	return fromPostgresDocument(created)
+	document, err := fromPostgresDocument(created)
+	if err != nil {
+		return domain.Document{}, fmt.Errorf("map created driver document: %w", err)
+	}
+	return document, nil
 }
 
 // Get maps an absent database row to domain.ErrDocumentNotFound.
@@ -80,7 +84,11 @@ func (repository *DocumentRepository) Get(ctx context.Context, id int) (domain.D
 	if err != nil {
 		return domain.Document{}, fmt.Errorf("find driver document: %w", err)
 	}
-	return fromPostgresDocument(item)
+	document, err := fromPostgresDocument(item)
+	if err != nil {
+		return domain.Document{}, fmt.Errorf("map driver document: %w", err)
+	}
+	return document, nil
 }
 
 func (repository *DocumentRepository) ListByDriver(
@@ -109,7 +117,11 @@ func (repository *DocumentRepository) ListByDriver(
 	if err != nil {
 		return nil, fmt.Errorf("list driver documents: %w", err)
 	}
-	return fromPostgresDocuments(items)
+	documents, err := fromPostgresDocuments(items)
+	if err != nil {
+		return nil, fmt.Errorf("map driver documents: %w", err)
+	}
+	return documents, nil
 }
 
 func (repository *DocumentRepository) ListForReview(
@@ -140,7 +152,11 @@ func (repository *DocumentRepository) ListForReview(
 	if err != nil {
 		return nil, fmt.Errorf("list driver documents for review: %w", err)
 	}
-	return fromPostgresDocuments(items)
+	documents, err := fromPostgresDocuments(items)
+	if err != nil {
+		return nil, fmt.Errorf("map driver document review queue: %w", err)
+	}
+	return documents, nil
 }
 
 // Review persists a moderation decision and distinguishes missing or finalized
@@ -174,7 +190,11 @@ func (repository *DocumentRepository) Review(
 	if err != nil {
 		return domain.Document{}, fmt.Errorf("review driver document: %w", err)
 	}
-	return fromPostgresDocument(updated)
+	document, err := fromPostgresDocument(updated)
+	if err != nil {
+		return domain.Document{}, fmt.Errorf("map reviewed driver document: %w", err)
+	}
+	return document, nil
 }
 
 func (repository *DocumentRepository) reviewMiss(ctx context.Context, documentID int32) (domain.Document, error) {

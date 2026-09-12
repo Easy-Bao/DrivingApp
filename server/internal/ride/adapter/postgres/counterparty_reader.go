@@ -18,15 +18,15 @@ var _ ports.CounterpartyReader = (*RideRepository)(nil)
 func (repository *RideRepository) Counterparty(ctx context.Context, rideID, actorID int) (domain.Counterparty, error) {
 	ride, err := repository.Get(ctx, rideID)
 	if err != nil {
-		return domain.Counterparty{}, err
+		return domain.Counterparty{}, fmt.Errorf("load ride for counterparty: %w", err)
 	}
 	targetID, targetRole, err := counterpartyIdentityFromRide(ride, actorID)
 	if err != nil {
-		return domain.Counterparty{}, err
+		return domain.Counterparty{}, fmt.Errorf("resolve ride counterparty: %w", err)
 	}
 	dbTargetID, err := toPostgresRideID(targetID, "counterparty id")
 	if err != nil {
-		return domain.Counterparty{}, err
+		return domain.Counterparty{}, fmt.Errorf("convert counterparty id: %w", err)
 	}
 	account, err := repository.queries.GetUserByID(ctx, dbTargetID)
 	if err != nil {

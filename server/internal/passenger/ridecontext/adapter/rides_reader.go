@@ -3,6 +3,7 @@ package adapter
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	ridecontextdomain "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/domain"
 	ridecontextports "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/ports"
@@ -28,7 +29,7 @@ func (reader *RidesReader) ReadRecentDestinations(
 	}
 	rides, err := reader.service.PassengerRecentRides(ctx, passengerID, limit)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("load recent passenger rides: %w", err)
 	}
 
 	destinations := make([]ridecontextdomain.RecentDestination, 0, len(rides))

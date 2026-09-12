@@ -65,7 +65,7 @@ func (repository *RideRepository) Get(ctx context.Context, rideID int) (domain.R
 	}
 	ride, err := fromPostgresRide(item)
 	if err != nil {
-		return domain.Ride{}, err
+		return domain.Ride{}, fmt.Errorf("map ride: %w", err)
 	}
 	if ride.DriverID == nil {
 		return ride, nil
@@ -106,7 +106,7 @@ func (repository *RideRepository) ActiveRidesForDriver(ctx context.Context, driv
 	for _, item := range items {
 		ride, mappingErr := fromPostgresRide(item)
 		if mappingErr != nil {
-			return nil, mappingErr
+			return nil, fmt.Errorf("map active ride: %w", mappingErr)
 		}
 		result = append(result, ride)
 	}

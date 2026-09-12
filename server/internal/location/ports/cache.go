@@ -2,7 +2,10 @@ package ports
 
 import (
 	"context"
+	"errors"
 )
+
+var ErrCacheMiss = errors.New("location cache miss")
 
 // Cache stores bounded provider responses without coupling location use cases
 // to a cache implementation.

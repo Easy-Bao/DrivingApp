@@ -72,10 +72,13 @@ func (manager *TokenManager) issue(subject, role, tokenType string, lifetime tim
 		TokenType: tokenType,
 	})
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("marshal token claims: %w", err)
 	}
 	payload := encode(claims)
-	signature := manager.sign(header + "." + payload)
+	signature, err := manager.sign(header + "." + payload)
+	if err != nil {
+		return "", fmt.Errorf("sign token: %w", err)
+	}
 	return header + "." + payload + "." + base64.RawURLEncoding.EncodeToString(signature), nil
 }
 
@@ -110,7 +113,14 @@ func (manager *TokenManager) verify(rawToken string) (Identity, error) {
 		return Identity{}, ErrInvalidToken
 	}
 	signature, err := base64.RawURLEncoding.DecodeString(parts[2])
-	if err != nil || !hmac.Equal(signature, manager.sign(parts[0]+"."+parts[1])) {
+	if err != nil {
+		return Identity{}, ErrInvalidToken
+	}
+	expectedSignature, err := manager.sign(parts[0] + "." + parts[1])
+	if err != nil {
+		return Identity{}, fmt.Errorf("sign token for verification: %w", err)
+	}
+	if !hmac.Equal(signature, expectedSignature) {
 		return Identity{}, ErrInvalidToken
 	}
 	header, err := base64.RawURLEncoding.DecodeString(parts[0])
@@ -153,10 +163,12 @@ func ValidateTokenSecret(secret string) error {
 	return nil
 }
 
-func (manager *TokenManager) sign(message string) []byte {
+func (manager *TokenManager) sign(message string) ([]byte, error) {
 	hasher := hmac.New(sha256.New, manager.secret)
-	_, _ = hasher.Write([]byte(message))
-	return hasher.Sum(nil)
+	if _, err := hasher.Write([]byte(message)); err != nil {
+		return nil, fmt.Errorf("write token signature input: %w", err)
+	}
+	return hasher.Sum(nil), nil
 }
 
 func encode(value []byte) string { return base64.RawURLEncoding.EncodeToString(value) }

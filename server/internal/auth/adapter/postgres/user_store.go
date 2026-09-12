@@ -7,6 +7,7 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 	authports "github.com/Easy-Bao/DrivingApp/server/internal/auth/ports"
+	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -46,7 +47,7 @@ func NewUserStore(pool *pgxpool.Pool) (*UserStore, error) {
 
 func (repository *UserRepository) Create(ctx context.Context, account domain.User) (domain.User, error) {
 	if err := repository.validate(); err != nil {
-		return domain.User{}, err
+		return domain.User{}, fmt.Errorf("validate user repository: %w", err)
 	}
 	if err := validateUserRole(account.Role); err != nil {
 		return domain.User{}, err
@@ -57,7 +58,7 @@ func (repository *UserRepository) Create(ctx context.Context, account domain.Use
 		return domain.User{}, fmt.Errorf("begin user creation transaction: %w", err)
 	}
 	defer func() {
-		_ = transaction.Rollback(ctx)
+		platformdatabase.Rollback(ctx, transaction)
 	}()
 
 	transactionQueries := repository.queries.WithTx(transaction)
@@ -113,11 +114,11 @@ func (repository *UserRepository) Create(ctx context.Context, account domain.Use
 
 func (repository *UserRepository) MarkVerified(ctx context.Context, userID int) error {
 	if err := repository.validate(); err != nil {
-		return err
+		return fmt.Errorf("validate user repository: %w", err)
 	}
 	dbUserID, err := toPostgresUserID(userID)
 	if err != nil {
-		return err
+		return fmt.Errorf("convert user id: %w", err)
 	}
 
 	rows, err := repository.queries.MarkUserVerified(ctx, dbUserID)
@@ -132,38 +133,52 @@ func (repository *UserRepository) MarkVerified(ctx context.Context, userID int) 
 
 func (repository *UserRepository) FindByEmail(ctx context.Context, email string) (domain.User, error) {
 	if err := repository.validate(); err != nil {
-		return domain.User{}, err
+		return domain.User{}, fmt.Errorf("validate user repository: %w", err)
 	}
 	account, err := repository.queries.GetUserByEmail(ctx, email)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return domain.User{}, domain.ErrUserNotFound
+	}
 	if err != nil {
 		return domain.User{}, fmt.Errorf("find user by email: %w", err)
 	}
-	return repository.withProfile(ctx, fromPostgresUser(account))
+	profile, err := repository.withProfile(ctx, fromPostgresUser(account))
+	if err != nil {
+		return domain.User{}, fmt.Errorf("load user profile: %w", err)
+	}
+	return profile, nil
 }
 
 func (repository *UserRepository) FindByID(ctx context.Context, userID int) (domain.User, error) {
 	if err := repository.validate(); err != nil {
-		return domain.User{}, err
+		return domain.User{}, fmt.Errorf("validate user repository: %w", err)
 	}
 	dbUserID, err := toPostgresUserID(userID)
 	if err != nil {
-		return domain.User{}, err
+		return domain.User{}, fmt.Errorf("convert user id: %w", err)
 	}
 
 	account, err := repository.queries.GetUserByID(ctx, dbUserID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return domain.User{}, domain.ErrUserNotFound
+	}
 	if err != nil {
 		return domain.User{}, fmt.Errorf("find user by id: %w", err)
 	}
-	return repository.withProfile(ctx, fromPostgresUser(account))
+	profile, err := repository.withProfile(ctx, fromPostgresUser(account))
+	if err != nil {
+		return domain.User{}, fmt.Errorf("load user profile: %w", err)
+	}
+	return profile, nil
 }
 
 func (repository *UserRepository) UpdatePassword(ctx context.Context, userID int, passwordHash string) error {
 	if err := repository.validate(); err != nil {
-		return err
+		return fmt.Errorf("validate user repository: %w", err)
 	}
 	dbUserID, err := toPostgresUserID(userID)
 	if err != nil {
-		return err
+		return fmt.Errorf("convert user id: %w", err)
 	}
 
 	rows, err := repository.queries.UpdateUserPassword(ctx, databasepostgres.UpdateUserPasswordParams{

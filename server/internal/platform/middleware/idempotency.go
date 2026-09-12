@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -37,23 +38,35 @@ func (store *RedisIdempotencyStore) Get(ctx context.Context, key string) ([]byte
 	if store == nil || store.client == nil {
 		return nil, fmt.Errorf("redis idempotency store is not configured")
 	}
+	if ctx == nil {
+		return nil, errors.New("idempotency context is nil")
+	}
 	value, err := store.client.Get(ctx, key).Bytes()
-	if err == redisclient.Nil {
+	if errors.Is(err, redisclient.Nil) {
 		return nil, nil
 	}
-	return value, err
+	if err != nil {
+		return nil, fmt.Errorf("get idempotency response: %w", err)
+	}
+	return value, nil
 }
 
 func (store *RedisIdempotencyStore) Set(ctx context.Context, key string, value []byte, expiration time.Duration) error {
 	if store == nil || store.client == nil {
 		return fmt.Errorf("redis idempotency store is not configured")
 	}
-	return store.client.Set(
+	if ctx == nil {
+		return errors.New("idempotency context is nil")
+	}
+	if err := store.client.Set(
 		ctx,
 		key,
 		value,
 		expiration,
-	).Err()
+	).Err(); err != nil {
+		return fmt.Errorf("set idempotency response: %w", err)
+	}
+	return nil
 }
 
 func (store *RedisIdempotencyStore) SetNX(
@@ -65,17 +78,27 @@ func (store *RedisIdempotencyStore) SetNX(
 	if store == nil || store.client == nil {
 		return false, fmt.Errorf("redis idempotency store is not configured")
 	}
-	return store.client.SetNX(
+	if ctx == nil {
+		return false, errors.New("idempotency context is nil")
+	}
+	acquired, err := store.client.SetNX(
 		ctx,
 		key,
 		value,
 		expiration,
 	).Result()
+	if err != nil {
+		return false, fmt.Errorf("acquire idempotency lock: %w", err)
+	}
+	return acquired, nil
 }
 
 func (store *RedisIdempotencyStore) DeleteIfValue(ctx context.Context, key string, value []byte) error {
 	if store == nil || store.client == nil {
 		return fmt.Errorf("redis idempotency store is not configured")
+	}
+	if ctx == nil {
+		return errors.New("idempotency context is nil")
 	}
 	const releaseLockScript = `
 if redis.call("GET", KEYS[1]) == ARGV[1] then
@@ -83,12 +106,15 @@ if redis.call("GET", KEYS[1]) == ARGV[1] then
 else
     return 0
 end`
-	return store.client.Eval(
+	if err := store.client.Eval(
 		ctx,
 		releaseLockScript,
 		[]string{key},
 		value,
-	).Err()
+	).Err(); err != nil {
+		return fmt.Errorf("release idempotency lock: %w", err)
+	}
+	return nil
 }
 
 type MemoryIdempotencyStore struct {
@@ -105,7 +131,13 @@ func NewMemoryIdempotencyStore() *MemoryIdempotencyStore {
 	return &MemoryIdempotencyStore{entries: make(map[string]memoryIdempotencyEntry)}
 }
 
-func (store *MemoryIdempotencyStore) Get(_ context.Context, key string) ([]byte, error) {
+func (store *MemoryIdempotencyStore) Get(ctx context.Context, key string) ([]byte, error) {
+	if store == nil {
+		return nil, errors.New("memory idempotency store is not configured")
+	}
+	if err := memoryIdempotencyContextError(ctx); err != nil {
+		return nil, err
+	}
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	entry, ok := store.entries[key]
@@ -116,21 +148,44 @@ func (store *MemoryIdempotencyStore) Get(_ context.Context, key string) ([]byte,
 	return append([]byte(nil), entry.value...), nil
 }
 
-func (store *MemoryIdempotencyStore) Set(_ context.Context, key string, value []byte, expiration time.Duration) error {
+func (store *MemoryIdempotencyStore) Set(
+	ctx context.Context,
+	key string,
+	value []byte,
+	expiration time.Duration,
+) error {
+	if store == nil {
+		return errors.New("memory idempotency store is not configured")
+	}
+	if err := memoryIdempotencyContextError(ctx); err != nil {
+		return err
+	}
 	store.mu.Lock()
 	defer store.mu.Unlock()
+	if store.entries == nil {
+		store.entries = make(map[string]memoryIdempotencyEntry)
+	}
 	store.entries[key] = memoryIdempotencyEntry{value: append([]byte(nil), value...), expires: time.Now().Add(expiration)}
 	return nil
 }
 
 func (store *MemoryIdempotencyStore) SetNX(
-	_ context.Context,
+	ctx context.Context,
 	key string,
 	value []byte,
 	expiration time.Duration,
 ) (bool, error) {
+	if store == nil {
+		return false, errors.New("memory idempotency store is not configured")
+	}
+	if err := memoryIdempotencyContextError(ctx); err != nil {
+		return false, err
+	}
 	store.mu.Lock()
 	defer store.mu.Unlock()
+	if store.entries == nil {
+		store.entries = make(map[string]memoryIdempotencyEntry)
+	}
 	now := time.Now()
 	if entry, ok := store.entries[key]; ok && now.Before(entry.expires) {
 		return false, nil
@@ -139,7 +194,13 @@ func (store *MemoryIdempotencyStore) SetNX(
 	return true, nil
 }
 
-func (store *MemoryIdempotencyStore) DeleteIfValue(_ context.Context, key string, value []byte) error {
+func (store *MemoryIdempotencyStore) DeleteIfValue(ctx context.Context, key string, value []byte) error {
+	if store == nil {
+		return errors.New("memory idempotency store is not configured")
+	}
+	if err := memoryIdempotencyContextError(ctx); err != nil {
+		return err
+	}
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	entry, ok := store.entries[key]
@@ -171,7 +232,7 @@ func NewIdempotency(store IdempotencyStore, expiration time.Duration) *Idempoten
 }
 
 func (idempotency *Idempotency) WithLogger(logger *slog.Logger) *Idempotency {
-	if logger != nil {
+	if idempotency != nil && logger != nil {
 		idempotency.logger = logger
 	}
 	return idempotency
@@ -256,7 +317,7 @@ func (idempotency *Idempotency) Middleware(next http.Handler) http.Handler {
 				Body:        capture.body.Bytes(),
 			})
 			if marshalErr != nil {
-				idempotency.logger.ErrorContext(request.Context(), "encode idempotency response failed", "error", marshalErr)
+				idempotency.log().ErrorContext(request.Context(), "encode idempotency response failed", "error", marshalErr)
 			} else {
 				resultContext, cancel := context.WithTimeout(context.WithoutCancel(request.Context()), time.Second)
 				setErr := idempotency.store.Set(
@@ -267,7 +328,7 @@ func (idempotency *Idempotency) Middleware(next http.Handler) http.Handler {
 				)
 				cancel()
 				if setErr != nil {
-					idempotency.logger.WarnContext(
+					idempotency.log().WarnContext(
 						request.Context(),
 						"store idempotency response failed",
 						"error",
@@ -285,7 +346,7 @@ func (idempotency *Idempotency) releaseLock(request *http.Request, key string, t
 	cleanupContext, cancel := context.WithTimeout(context.WithoutCancel(request.Context()), time.Second)
 	defer cancel()
 	if err := idempotency.store.DeleteIfValue(cleanupContext, key, token); err != nil {
-		idempotency.logger.WarnContext(
+		idempotency.log().WarnContext(
 			request.Context(),
 			"release idempotency lock failed",
 			"error",
@@ -294,6 +355,20 @@ func (idempotency *Idempotency) releaseLock(request *http.Request, key string, t
 			hashIdempotencyKey(request.Header.Get("Idempotency-Key")),
 		)
 	}
+}
+
+func (idempotency *Idempotency) log() *slog.Logger {
+	if idempotency != nil && idempotency.logger != nil {
+		return idempotency.logger
+	}
+	return slog.Default()
+}
+
+func memoryIdempotencyContextError(ctx context.Context) error {
+	if ctx == nil {
+		return errors.New("idempotency context is nil")
+	}
+	return ctx.Err()
 }
 
 type idempotentResponse struct {
@@ -321,13 +396,20 @@ func (writer *idempotentResponseWriter) Write(body []byte) (int, error) {
 	if writer.status == 0 {
 		writer.WriteHeader(http.StatusOK)
 	}
-	_, _ = writer.body.Write(body)
+	if _, err := writer.body.Write(body); err != nil {
+		slog.Error("capture idempotent response body failed", "error", err)
+	}
 	return writer.ResponseWriter.Write(body)
 }
 
 func replayIdempotentResponse(writer http.ResponseWriter, encoded []byte, fingerprint string) {
 	var response idempotentResponse
-	if json.Unmarshal(encoded, &response) != nil || response.Fingerprint != fingerprint {
+	if err := json.Unmarshal(encoded, &response); err != nil {
+		slog.Debug("decode cached idempotency response failed", "error", err)
+		writeSecurityError(writer, http.StatusConflict, "idempotency key was used with a different request")
+		return
+	}
+	if response.Fingerprint != fingerprint {
 		writeSecurityError(writer, http.StatusConflict, "idempotency key was used with a different request")
 		return
 	}
@@ -335,7 +417,9 @@ func replayIdempotentResponse(writer http.ResponseWriter, encoded []byte, finger
 		writer.Header()[key] = append([]string(nil), values...)
 	}
 	writer.WriteHeader(response.Status)
-	_, _ = writer.Write(response.Body)
+	if _, err := writer.Write(response.Body); err != nil {
+		slog.Debug("replay idempotent response failed", "error", err)
+	}
 }
 
 func supportsIdempotency(request *http.Request) bool {
@@ -357,10 +441,17 @@ func validIdempotencyKey(value string) bool {
 }
 
 func requestFingerprint(request *http.Request, body []byte) string {
-	hash := sha256.New()
-	_, _ = hash.Write([]byte(request.Method + "\n" + request.URL.RequestURI() + "\n" + authorizationScope(request) + "\n"))
-	_, _ = hash.Write(body)
-	return hex.EncodeToString(hash.Sum(nil))
+	authorization := authorizationScope(request)
+	value := make([]byte, 0, len(request.Method)+len(request.URL.RequestURI())+len(body)+len(authorization)+3)
+	value = append(value, request.Method...)
+	value = append(value, '\n')
+	value = append(value, request.URL.RequestURI()...)
+	value = append(value, '\n')
+	value = append(value, authorization...)
+	value = append(value, '\n')
+	value = append(value, body...)
+	hash := sha256.Sum256(value)
+	return hex.EncodeToString(hash[:])
 }
 
 func newLockToken() ([]byte, error) {

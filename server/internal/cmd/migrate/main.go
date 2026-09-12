@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -34,7 +35,7 @@ func run(ctx context.Context) error {
 		database.PostgresNativePoolConfigFromEnv().PingTimeout,
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("open migration database: %w", err)
 	}
 	migrator, err := database.NewPostgresMigrator(
 		migrations.FS,
@@ -43,8 +44,14 @@ func run(ctx context.Context) error {
 		database.DefaultPostgresMigratorConfig(),
 	)
 	if err != nil {
-		_ = sqlDatabase.Close()
-		return err
+		migratorErr := fmt.Errorf("create migrator: %w", err)
+		if closeErr := sqlDatabase.Close(); closeErr != nil {
+			return errors.Join(
+				migratorErr,
+				fmt.Errorf("close migration database: %w", closeErr),
+			)
+		}
+		return migratorErr
 	}
 	migrationErr := migrator.Up()
 	if errors.Is(migrationErr, migrate.ErrNoChange) {

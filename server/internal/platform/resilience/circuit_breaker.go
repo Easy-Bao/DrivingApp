@@ -3,6 +3,7 @@ package resilience
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 )
@@ -56,7 +57,7 @@ func (breaker *CircuitBreaker) Do(ctx context.Context, operation func(context.Co
 	err := operation(ctx)
 	if err != nil {
 		breaker.recordFailure(time.Now())
-		return err
+		return fmt.Errorf("execute circuit-protected operation: %w", err)
 	}
 	breaker.recordSuccess()
 	return nil

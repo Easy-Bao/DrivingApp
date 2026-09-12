@@ -3,8 +3,10 @@ package ws
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
@@ -115,7 +117,15 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 	if err != nil {
 		return
 	}
-	defer connection.Close()
+	var closeOnce sync.Once
+	closeConnection := func() {
+		closeOnce.Do(func() {
+			if err := connection.Close(); err != nil {
+				slog.DebugContext(request.Context(), "close chat websocket failed", "error", err)
+			}
+		})
+	}
+	defer closeConnection()
 
 	connection.SetReadLimit(16 << 10)
 	if err := connection.SetReadDeadline(time.Now().Add(chatPongWait)); err != nil {
@@ -127,10 +137,10 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 	outbound := handler.hub.Add(clientID, roomID)
 	serverMessages := make(chan []byte, 4)
 	writerDone := make(chan struct{})
-	go writePump(connection, outbound, serverMessages, writerDone)
+	go writePump(connection, outbound, serverMessages, writerDone, closeConnection)
 	defer func() {
 		handler.hub.Remove(clientID, outbound)
-		_ = connection.Close()
+		closeConnection()
 		<-writerDone
 	}()
 
@@ -166,9 +176,15 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 	}
 }
 
-func writePump(connection *websocket.Conn, outbound <-chan []byte, serverMessages <-chan []byte, done chan<- struct{}) {
+func writePump(
+	connection *websocket.Conn,
+	outbound <-chan []byte,
+	serverMessages <-chan []byte,
+	done chan<- struct{},
+	closeConnection func(),
+) {
 	defer close(done)
-	defer connection.Close()
+	defer closeConnection()
 
 	ticker := time.NewTicker(chatPingEvery)
 	defer ticker.Stop()

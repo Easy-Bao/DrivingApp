@@ -51,12 +51,16 @@ func (store *RedisCounterStore) Increment(ctx context.Context, key string, windo
 	if expirationMilliseconds <= 0 {
 		expirationMilliseconds = 1
 	}
-	return store.client.Eval(
+	count, err := store.client.Eval(
 		ctx,
 		atomicIncrementScript,
 		[]string{key},
 		expirationMilliseconds,
 	).Int64()
+	if err != nil {
+		return 0, fmt.Errorf("increment redis rate-limit counter: %w", err)
+	}
+	return count, nil
 }
 
 type MemoryCounterStore struct {
@@ -77,6 +81,9 @@ func NewMemoryCounterStore() *MemoryCounterStore {
 }
 
 func (store *MemoryCounterStore) Increment(ctx context.Context, key string, window time.Duration) (int64, error) {
+	if store == nil {
+		return 0, errors.New("memory counter store is not configured")
+	}
 	if ctx == nil {
 		return 0, errors.New("counter context is nil")
 	}
@@ -88,6 +95,9 @@ func (store *MemoryCounterStore) Increment(ctx context.Context, key string, wind
 	}
 	store.mu.Lock()
 	defer store.mu.Unlock()
+	if store.entries == nil {
+		store.entries = make(map[string]memoryCounter)
+	}
 	now := time.Now()
 	store.operations++
 	if store.operations%memoryCounterCleanupInterval == 0 {

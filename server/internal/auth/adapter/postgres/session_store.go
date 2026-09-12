@@ -8,6 +8,7 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 	authports "github.com/Easy-Bao/DrivingApp/server/internal/auth/ports"
+	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -43,11 +44,11 @@ func NewSessionStore(pool *pgxpool.Pool) (*SessionStore, error) {
 
 func (repository *RefreshSessionRepository) Create(ctx context.Context, session domain.RefreshSession) error {
 	if err := repository.validate(); err != nil {
-		return err
+		return fmt.Errorf("validate refresh session repository: %w", err)
 	}
 	userID, err := toPostgresUserID(session.UserID)
 	if err != nil {
-		return err
+		return fmt.Errorf("convert refresh session user id: %w", err)
 	}
 	if err := repository.queries.CreateRefreshSession(ctx, databasepostgres.CreateRefreshSessionParams{
 		UserID:    userID,
@@ -65,7 +66,7 @@ func (repository *RefreshSessionRepository) FindActive(
 	now time.Time,
 ) (domain.RefreshSession, error) {
 	if err := repository.validate(); err != nil {
-		return domain.RefreshSession{}, err
+		return domain.RefreshSession{}, fmt.Errorf("validate refresh session repository: %w", err)
 	}
 	row, err := repository.queries.GetActiveRefreshSession(ctx, databasepostgres.GetActiveRefreshSessionParams{
 		TokenHash: tokenHash,
@@ -77,7 +78,11 @@ func (repository *RefreshSessionRepository) FindActive(
 	if err != nil {
 		return domain.RefreshSession{}, fmt.Errorf("find active refresh session: %w", err)
 	}
-	return fromPostgresRefreshSession(row.UserID, row.TokenHash, row.ExpiresAt)
+	session, err := fromPostgresRefreshSession(row.UserID, row.TokenHash, row.ExpiresAt)
+	if err != nil {
+		return domain.RefreshSession{}, fmt.Errorf("map active refresh session: %w", err)
+	}
+	return session, nil
 }
 
 func (repository *RefreshSessionRepository) Rotate(
@@ -87,11 +92,11 @@ func (repository *RefreshSessionRepository) Rotate(
 	now time.Time,
 ) error {
 	if err := repository.validate(); err != nil {
-		return err
+		return fmt.Errorf("validate refresh session repository: %w", err)
 	}
 	replacementUserID, err := toPostgresUserID(replacement.UserID)
 	if err != nil {
-		return err
+		return fmt.Errorf("convert replacement refresh session user id: %w", err)
 	}
 
 	transaction, err := repository.pool.Begin(ctx)
@@ -99,7 +104,7 @@ func (repository *RefreshSessionRepository) Rotate(
 		return fmt.Errorf("begin refresh session rotation: %w", err)
 	}
 	defer func() {
-		_ = transaction.Rollback(ctx)
+		platformdatabase.Rollback(ctx, transaction)
 	}()
 
 	transactionQueries := repository.queries.WithTx(transaction)
@@ -146,7 +151,7 @@ func (repository *RefreshSessionRepository) Rotate(
 
 func (repository *RefreshSessionRepository) Revoke(ctx context.Context, tokenHash string, now time.Time) error {
 	if err := repository.validate(); err != nil {
-		return err
+		return fmt.Errorf("validate refresh session repository: %w", err)
 	}
 	if err := repository.queries.RevokeRefreshSession(ctx, databasepostgres.RevokeRefreshSessionParams{
 		TokenHash: tokenHash,
@@ -159,11 +164,11 @@ func (repository *RefreshSessionRepository) Revoke(ctx context.Context, tokenHas
 
 func (repository *RefreshSessionRepository) RevokeAll(ctx context.Context, userID int, now time.Time) error {
 	if err := repository.validate(); err != nil {
-		return err
+		return fmt.Errorf("validate refresh session repository: %w", err)
 	}
 	dbUserID, err := toPostgresUserID(userID)
 	if err != nil {
-		return err
+		return fmt.Errorf("convert refresh session user id: %w", err)
 	}
 	if err := repository.queries.RevokeUserRefreshSessions(ctx, databasepostgres.RevokeUserRefreshSessionsParams{
 		UserID:    dbUserID,

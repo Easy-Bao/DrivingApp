@@ -9,6 +9,7 @@ import (
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -50,7 +51,7 @@ func (repository *RideRepository) DriverReviews(
 	for index := len(items) - 1; index >= 0; index-- {
 		review, mappingErr := fromPostgresReview(items[index])
 		if mappingErr != nil {
-			return nil, mappingErr
+			return nil, fmt.Errorf("map driver review: %w", mappingErr)
 		}
 		result = append(result, review)
 	}
@@ -59,7 +60,13 @@ func (repository *RideRepository) DriverReviews(
 
 func (repository *RideRepository) CreateReview(ctx context.Context, value domain.Review) (domain.Review, error) {
 	trip, err := repository.Get(ctx, value.RideID)
-	if err != nil || !canCreateReview(trip, value.PassengerID, value.DriverID) {
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.Review{}, domain.ErrReviewNotAllowed
+		}
+		return domain.Review{}, fmt.Errorf("load ride for driver review: %w", err)
+	}
+	if !canCreateReview(trip, value.PassengerID, value.DriverID) {
 		return domain.Review{}, domain.ErrReviewNotAllowed
 	}
 
@@ -83,9 +90,11 @@ func (repository *RideRepository) CreateReview(ctx context.Context, value domain
 	if exists {
 		return domain.Review{}, domain.ErrReviewAlreadySubmitted
 	}
-	if passengerName, nameErr := repository.queries.GetPassengerName(ctx, passengerID); nameErr == nil {
-		value.PassengerName = passengerName
+	passengerName, err := repository.queries.GetPassengerName(ctx, passengerID)
+	if err != nil {
+		return domain.Review{}, fmt.Errorf("load passenger name for driver review: %w", err)
 	}
+	value.PassengerName = passengerName
 
 	item, err := repository.queries.CreateReview(ctx, databasepostgres.CreateReviewParams{
 		RideID:        pgtype.Int4{Int32: rideID, Valid: true},
@@ -101,7 +110,11 @@ func (repository *RideRepository) CreateReview(ctx context.Context, value domain
 		}
 		return domain.Review{}, fmt.Errorf("create driver review: %w", err)
 	}
-	return fromPostgresCreatedReview(item)
+	review, err := fromPostgresCreatedReview(item)
+	if err != nil {
+		return domain.Review{}, fmt.Errorf("map created driver review: %w", err)
+	}
+	return review, nil
 }
 
 func (repository *RideRepository) CreatePassengerReview(
@@ -109,7 +122,13 @@ func (repository *RideRepository) CreatePassengerReview(
 	value domain.PassengerReview,
 ) (domain.PassengerReview, error) {
 	trip, err := repository.Get(ctx, value.RideID)
-	if err != nil || !canCreateReview(trip, value.PassengerID, value.DriverID) {
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.PassengerReview{}, domain.ErrReviewNotAllowed
+		}
+		return domain.PassengerReview{}, fmt.Errorf("load ride for passenger review: %w", err)
+	}
+	if !canCreateReview(trip, value.PassengerID, value.DriverID) {
 		return domain.PassengerReview{}, domain.ErrReviewNotAllowed
 	}
 
@@ -147,7 +166,11 @@ func (repository *RideRepository) CreatePassengerReview(
 		}
 		return domain.PassengerReview{}, fmt.Errorf("create passenger review: %w", err)
 	}
-	return fromPostgresPassengerReview(item)
+	review, err := fromPostgresPassengerReview(item)
+	if err != nil {
+		return domain.PassengerReview{}, fmt.Errorf("map created passenger review: %w", err)
+	}
+	return review, nil
 }
 
 func canCreateReview(ride domain.Ride, passengerID, driverID int) bool {

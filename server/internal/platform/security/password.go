@@ -5,6 +5,7 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
@@ -20,7 +21,7 @@ func HashPassword(password string) (string, error) {
 	}
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("generate password hash: %w", err)
 	}
 	return string(hash), nil
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
@@ -50,7 +51,7 @@ func (repository *RideRepository) CreateSession(
 		return domain.BidSession{}, fmt.Errorf("begin bid session transaction: %w", err)
 	}
 	defer func() {
-		_ = transaction.Rollback(ctx)
+		platformdatabase.Rollback(ctx, transaction)
 	}()
 
 	transactionQueries := repository.queries.WithTx(transaction)
@@ -109,7 +110,11 @@ func (repository *RideRepository) CreateSession(
 	if err := transaction.Commit(ctx); err != nil {
 		return domain.BidSession{}, fmt.Errorf("commit bid session transaction: %w", err)
 	}
-	return fromPostgresBidSession(created)
+	session, err := fromPostgresBidSession(created)
+	if err != nil {
+		return domain.BidSession{}, fmt.Errorf("map created bid session: %w", err)
+	}
+	return session, nil
 }
 
 func (repository *RideRepository) ActiveSessions(ctx context.Context, driverID *int) ([]domain.BidSession, error) {
@@ -129,7 +134,7 @@ func (repository *RideRepository) ActiveSessions(ctx context.Context, driverID *
 			return nil, idErr
 		}
 		if _, profileErr := repository.queries.GetOnlineDriverProfileForBidding(ctx, dbDriverID); profileErr != nil {
-			return nil, domain.ErrDriverUnavailable
+			return nil, driverUnavailableError("find online driver profile for active sessions", profileErr)
 		}
 		activeRides, countErr := repository.queries.CountActiveRidesForDriver(
 			ctx,
@@ -156,7 +161,7 @@ func (repository *RideRepository) ActiveSessions(ctx context.Context, driverID *
 	for _, item := range items {
 		session, mappingErr := fromPostgresBidSession(item)
 		if mappingErr != nil {
-			return nil, mappingErr
+			return nil, fmt.Errorf("map active bid session: %w", mappingErr)
 		}
 		result = append(result, session)
 	}
@@ -179,7 +184,7 @@ func (repository *RideRepository) Offers(ctx context.Context, sessionID int) ([]
 	for _, item := range items {
 		offer, mappingErr := fromPostgresBidOffer(item)
 		if mappingErr != nil {
-			return nil, mappingErr
+			return nil, fmt.Errorf("map bid offer: %w", mappingErr)
 		}
 		result = append(result, offer)
 	}
@@ -207,7 +212,7 @@ func (repository *RideRepository) PlaceOffer(ctx context.Context, value domain.B
 		return domain.BidOffer{}, fmt.Errorf("begin bid offer transaction: %w", err)
 	}
 	defer func() {
-		_ = transaction.Rollback(ctx)
+		platformdatabase.Rollback(ctx, transaction)
 	}()
 	transactionQueries := repository.queries.WithTx(transaction)
 	now := bidTimestamp(time.Now().UTC())
@@ -219,14 +224,14 @@ func (repository *RideRepository) PlaceOffer(ctx context.Context, value domain.B
 		},
 	)
 	if err != nil {
-		return domain.BidOffer{}, domain.ErrDriverUnavailable
+		return domain.BidOffer{}, driverUnavailableError("lock active bid session for offer", err)
 	}
 	if session.TargetDriverID.Valid && session.TargetDriverID.Int32 != driverID {
 		return domain.BidOffer{}, domain.ErrDriverUnavailable
 	}
 	profile, err := transactionQueries.LockOnlineDriverProfileForBidding(ctx, driverID)
 	if err != nil {
-		return domain.BidOffer{}, domain.ErrDriverUnavailable
+		return domain.BidOffer{}, driverUnavailableError("lock online driver profile for offer", err)
 	}
 	activeRides, err := transactionQueries.CountActiveRidesForDriver(ctx, pgtype.Int4{Int32: profile.UserID, Valid: true})
 	if err != nil {
@@ -262,7 +267,11 @@ func (repository *RideRepository) PlaceOffer(ctx context.Context, value domain.B
 	if err := transaction.Commit(ctx); err != nil {
 		return domain.BidOffer{}, fmt.Errorf("commit bid offer transaction: %w", err)
 	}
-	return fromPostgresBidOffer(created)
+	offer, err := fromPostgresBidOffer(created)
+	if err != nil {
+		return domain.BidOffer{}, fmt.Errorf("map created bid offer: %w", err)
+	}
+	return offer, nil
 }
 
 func (repository *RideRepository) CancelSession(
@@ -288,7 +297,11 @@ func (repository *RideRepository) CancelSession(
 	if err != nil {
 		return domain.BidSession{}, fmt.Errorf("cancel bid session: %w", err)
 	}
-	return fromPostgresBidSession(item)
+	session, err := fromPostgresBidSession(item)
+	if err != nil {
+		return domain.BidSession{}, fmt.Errorf("map canceled bid session: %w", err)
+	}
+	return session, nil
 }
 
 func (repository *RideRepository) CancelOffer(ctx context.Context, sessionID, driverID int) (domain.BidOffer, error) {
@@ -314,7 +327,11 @@ func (repository *RideRepository) CancelOffer(ctx context.Context, sessionID, dr
 	if err != nil {
 		return domain.BidOffer{}, fmt.Errorf("reject bid offer: %w", err)
 	}
-	return fromPostgresBidOffer(item)
+	offer, err := fromPostgresBidOffer(item)
+	if err != nil {
+		return domain.BidOffer{}, fmt.Errorf("map canceled bid offer: %w", err)
+	}
+	return offer, nil
 }
 
 func (repository *RideRepository) Session(ctx context.Context, sessionID int) (domain.BidSession, error) {
@@ -329,7 +346,11 @@ func (repository *RideRepository) Session(ctx context.Context, sessionID int) (d
 	if err != nil {
 		return domain.BidSession{}, fmt.Errorf("find bid session: %w", err)
 	}
-	return fromPostgresBidSession(item)
+	session, err := fromPostgresBidSession(item)
+	if err != nil {
+		return domain.BidSession{}, fmt.Errorf("map bid session: %w", err)
+	}
+	return session, nil
 }
 
 func fromPostgresBidSession(item databasepostgres.BidSession) (domain.BidSession, error) {

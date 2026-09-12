@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"math"
 	"time"
@@ -18,6 +19,8 @@ import (
 type RouteMetrics = ports.RouteMetrics
 type RouteCalculator = ports.RouteProvider
 type RouteCalculatorFunc = ports.RouteProviderFunc
+
+var errRidePersistenceUnavailable = errors.New("ride persistence is unavailable")
 
 type RideService struct {
 	repository        ports.RideStore
@@ -101,10 +104,17 @@ func NewRideServiceWithRouteCalculator(
 }
 
 func (service *RideService) WithLogger(logger *slog.Logger) *RideService {
-	if logger != nil {
+	if service != nil && logger != nil {
 		service.logger = logger
 	}
 	return service
+}
+
+func (service *RideService) log() *slog.Logger {
+	if service != nil && service.logger != nil {
+		return service.logger
+	}
+	return slog.Default()
 }
 
 func (service *RideService) PricingConfig() PricingConfig {
@@ -125,6 +135,9 @@ func (service *RideService) SubmitBid(
 	if invalidRideID || invalidDriverID || invalidFare {
 		return domain.Bid{}, domain.ErrInvalidFareOffer
 	}
+	if service.repository == nil {
+		return domain.Bid{}, errRidePersistenceUnavailable
+	}
 	bid, err := service.repository.CreateBid(ctx, domain.Bid{
 		RideID:       rideID,
 		DriverID:     driverID,
@@ -132,22 +145,25 @@ func (service *RideService) SubmitBid(
 		Status:       "pending",
 	})
 	if err != nil {
-		return domain.Bid{}, err
+		return domain.Bid{}, fmt.Errorf("create bid: %w", err)
 	}
-	if ride, rideErr := service.repository.Get(ctx, rideID); rideErr == nil {
+	ride, rideErr := service.repository.Get(ctx, rideID)
+	if rideErr == nil {
 		service.publishRide(
 			ctx,
 			rideOfferUpdatedEvent,
 			ride,
 			map[string]any{"bid": bid},
 		)
+	} else {
+		service.log().DebugContext(ctx, "load ride after bid creation failed; skip ride update", "error", rideErr)
 	}
 	return bid, nil
 }
 func (service *RideService) AcceptBid(ctx context.Context, bidID, driverID int) (domain.Bid, domain.Ride, error) {
 	bid, ride, err := service.repository.AcceptBid(ctx, bidID, driverID)
 	if err != nil {
-		return domain.Bid{}, domain.Ride{}, err
+		return domain.Bid{}, domain.Ride{}, fmt.Errorf("accept bid: %w", err)
 	}
 	service.publishRide(
 		ctx,
@@ -158,7 +174,14 @@ func (service *RideService) AcceptBid(ctx context.Context, bidID, driverID int) 
 	return bid, ride, nil
 }
 func (service *RideService) Get(ctx context.Context, id int) (domain.Ride, error) {
-	return service.repository.Get(ctx, id)
+	if service.repository == nil {
+		return domain.Ride{}, errRidePersistenceUnavailable
+	}
+	ride, err := service.repository.Get(ctx, id)
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("get ride: %w", err)
+	}
+	return ride, nil
 }
 
 func (service *RideService) CreateRideWithDetails(ctx context.Context, ride domain.Ride) (domain.Ride, error) {
@@ -231,6 +254,7 @@ func (service *RideService) authoritativeRoute(
 		if contextErr := contextError(ctx); contextErr != nil {
 			return RouteMetrics{}, contextErr
 		}
+		service.log().WarnContext(ctx, "authoritative route calculation failed", "error", err)
 		return RouteMetrics{}, domain.ErrRouteUnavailable
 	}
 	if err := contextError(ctx); err != nil {
@@ -319,12 +343,16 @@ func (service *RideService) DriverStats(ctx context.Context, driverID int) (doma
 		return domain.DriverStats{}, errors.New("driver analytics persistence is unavailable")
 	}
 	dayStart, dayEnd := service.reportingDayBounds(time.Now())
-	return repository.DriverStats(
+	stats, err := repository.DriverStats(
 		ctx,
 		driverID,
 		dayStart,
 		dayEnd,
 	)
+	if err != nil {
+		return domain.DriverStats{}, fmt.Errorf("load driver statistics: %w", err)
+	}
+	return stats, nil
 }
 
 func (service *RideService) DriverEarnings(ctx context.Context, driverID int) (domain.DriverEarningsSummary, error) {
@@ -346,7 +374,7 @@ func (service *RideService) DriverEarnings(ctx context.Context, driverID int) (d
 		monthEnd.UTC(),
 	)
 	if err != nil {
-		return domain.DriverEarningsSummary{}, err
+		return domain.DriverEarningsSummary{}, fmt.Errorf("load driver earnings: %w", err)
 	}
 	return summarizeDriverEarnings(entries, now, location), nil
 }
@@ -363,7 +391,11 @@ func (service *RideService) DriverTrips(
 	if err := validateTripHistoryQuery(query); err != nil {
 		return nil, err
 	}
-	return repository.DriverTrips(ctx, driverID, query)
+	rides, err := repository.DriverTrips(ctx, driverID, query)
+	if err != nil {
+		return nil, fmt.Errorf("load driver trips: %w", err)
+	}
+	return rides, nil
 }
 
 func (service *RideService) PassengerRides(
@@ -378,7 +410,11 @@ func (service *RideService) PassengerRides(
 	if err := validateTripHistoryQuery(query); err != nil {
 		return nil, err
 	}
-	return repository.PassengerRides(ctx, passengerID, query)
+	rides, err := repository.PassengerRides(ctx, passengerID, query)
+	if err != nil {
+		return nil, fmt.Errorf("load passenger rides: %w", err)
+	}
+	return rides, nil
 }
 
 func (service *RideService) PassengerActivitySummary(
@@ -390,12 +426,16 @@ func (service *RideService) PassengerActivitySummary(
 		return domain.PassengerActivitySummary{}, errors.New("passenger activity persistence is unavailable")
 	}
 	weekStart, weekEnd := service.reportingWeekBounds(time.Now())
-	return repository.PassengerActivitySummary(
+	activity, err := repository.PassengerActivitySummary(
 		ctx,
 		passengerID,
 		weekStart,
 		weekEnd,
 	)
+	if err != nil {
+		return domain.PassengerActivitySummary{}, fmt.Errorf("load passenger activity summary: %w", err)
+	}
+	return activity, nil
 }
 
 func (service *RideService) PassengerRecentRides(ctx context.Context, passengerID, limit int) ([]domain.Ride, error) {
@@ -405,11 +445,15 @@ func (service *RideService) PassengerRecentRides(ctx context.Context, passengerI
 		return nil, errors.New("invalid passenger recent rides request")
 	}
 	if repository, ok := service.repository.(ports.RecentPassengerRidesReader); ok {
-		return repository.PassengerRecentRides(ctx, passengerID, limit)
+		rides, err := repository.PassengerRecentRides(ctx, passengerID, limit)
+		if err != nil {
+			return nil, fmt.Errorf("load recent passenger rides: %w", err)
+		}
+		return rides, nil
 	}
 	rides, err := service.PassengerRides(ctx, passengerID, domain.TripHistoryQuery{Limit: limit, Offset: 0})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("load recent passenger rides through trip history: %w", err)
 	}
 	if len(rides) > limit {
 		return rides[:limit], nil
@@ -422,12 +466,16 @@ func (service *RideService) DriverReviews(ctx context.Context, driverID, limit, 
 	if !ok {
 		return nil, errors.New("driver review persistence is unavailable")
 	}
-	return repository.DriverReviews(
+	reviews, err := repository.DriverReviews(
 		ctx,
 		driverID,
 		limit,
 		offset,
 	)
+	if err != nil {
+		return nil, fmt.Errorf("load driver reviews: %w", err)
+	}
+	return reviews, nil
 }
 
 func (service *RideService) CreateReview(ctx context.Context, review domain.Review) (domain.Review, error) {
@@ -438,7 +486,11 @@ func (service *RideService) CreateReview(ctx context.Context, review domain.Revi
 	if review.Rating < 1 || review.Rating > 5 {
 		return domain.Review{}, errors.New("rating must be between 1 and 5")
 	}
-	return repository.CreateReview(ctx, review)
+	created, err := repository.CreateReview(ctx, review)
+	if err != nil {
+		return domain.Review{}, fmt.Errorf("create driver review: %w", err)
+	}
+	return created, nil
 }
 
 func (service *RideService) CreatePassengerReview(
@@ -452,7 +504,11 @@ func (service *RideService) CreatePassengerReview(
 	if review.Rating < 1 || review.Rating > 5 {
 		return domain.PassengerReview{}, errors.New("rating must be between 1 and 5")
 	}
-	return repository.CreatePassengerReview(ctx, review)
+	created, err := repository.CreatePassengerReview(ctx, review)
+	if err != nil {
+		return domain.PassengerReview{}, fmt.Errorf("create passenger review: %w", err)
+	}
+	return created, nil
 }
 
 func (service *RideService) OnlineDrivers(ctx context.Context, driverIDs []int) ([]domain.OnlineDriver, error) {
@@ -463,7 +519,11 @@ func (service *RideService) OnlineDrivers(ctx context.Context, driverIDs []int) 
 	if len(driverIDs) == 0 || len(driverIDs) > 20 {
 		return nil, errors.New("driver availability ids are invalid")
 	}
-	return repository.OnlineDrivers(ctx, driverIDs)
+	drivers, err := repository.OnlineDrivers(ctx, driverIDs)
+	if err != nil {
+		return nil, fmt.Errorf("load online drivers: %w", err)
+	}
+	return drivers, nil
 }
 
 func (service *RideService) PublicDriverSummaries(
@@ -477,7 +537,11 @@ func (service *RideService) PublicDriverSummaries(
 	if limit <= 0 || limit > 20 {
 		return nil, errors.New("public driver summary limit is invalid")
 	}
-	return repository.PublicDriverSummaries(ctx, limit)
+	drivers, err := repository.PublicDriverSummaries(ctx, limit)
+	if err != nil {
+		return nil, fmt.Errorf("load public driver summaries: %w", err)
+	}
+	return drivers, nil
 }
 
 func validateTripHistoryQuery(query domain.TripHistoryQuery) error {

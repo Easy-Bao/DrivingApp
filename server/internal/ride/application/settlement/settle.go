@@ -4,6 +4,7 @@ package settlement
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
@@ -44,7 +45,7 @@ func (service *Service) SettleCash(ctx context.Context, rideID, driverID int) (d
 	}
 	ride, err := service.store.SettleCash(ctx, rideID, driverID)
 	if err != nil {
-		return domain.Ride{}, err
+		return domain.Ride{}, fmt.Errorf("settle ride cash payment: %w", err)
 	}
 	service.publish(
 		ctx,

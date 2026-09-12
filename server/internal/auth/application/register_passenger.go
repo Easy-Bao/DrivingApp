@@ -2,6 +2,8 @@ package application
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/mail"
 	"regexp"
 	"strings"
@@ -25,6 +27,8 @@ type RegisterService struct {
 	sessions   authports.SessionStore
 }
 
+var ErrRegistrationUnavailable = errors.New("registration is unavailable")
+
 func NewRegisterService(
 	repository authports.UserStore,
 	tokens authports.TokenIssuer,
@@ -42,6 +46,9 @@ func (service *RegisterService) Driver(ctx context.Context, input RegisterInput)
 }
 
 func (service *RegisterService) IssueRefreshToken(ctx context.Context, account domain.User) (string, error) {
+	if service == nil {
+		return "", ErrRegistrationUnavailable
+	}
 	return issueRefreshToken(
 		ctx,
 		service.sessions,
@@ -54,12 +61,19 @@ func (service *RegisterService) PreparePassenger(
 	ctx context.Context,
 	input RegisterInput,
 ) (domain.PendingRegistration, error) {
+	if service == nil || service.repository == nil {
+		return domain.PendingRegistration{}, ErrRegistrationUnavailable
+	}
 	normalized, err := normalizeInput(input, domain.Passenger)
 	if err != nil {
-		return domain.PendingRegistration{}, err
+		return domain.PendingRegistration{}, fmt.Errorf("normalize passenger registration input: %w", err)
 	}
-	if existing, err := service.repository.FindByEmail(ctx, normalized.Email); err == nil && existing.ID != 0 {
+	existing, err := service.repository.FindByEmail(ctx, normalized.Email)
+	if err == nil && existing.ID != 0 {
 		return domain.PendingRegistration{}, domain.ErrEmailTaken
+	}
+	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
+		return domain.PendingRegistration{}, fmt.Errorf("check existing passenger account: %w", err)
 	}
 	return domain.PendingRegistration{
 		Email:             normalized.Email,
@@ -77,14 +91,21 @@ func (service *RegisterService) CommitPendingPassenger(
 	ctx context.Context,
 	pending domain.PendingRegistration,
 ) (domain.User, string, error) {
+	if service == nil || service.repository == nil {
+		return domain.User{}, "", ErrRegistrationUnavailable
+	}
 	invalidRole := pending.Role != domain.Passenger
 	missingEmail := pending.Email == ""
 	missingPasswordHash := pending.PasswordHash == ""
 	if invalidRole || missingEmail || missingPasswordHash {
 		return domain.User{}, "", domain.ErrInvalidCredentials
 	}
-	if existing, err := service.repository.FindByEmail(ctx, pending.Email); err == nil && existing.ID != 0 {
+	existing, err := service.repository.FindByEmail(ctx, pending.Email)
+	if err == nil && existing.ID != 0 {
 		return domain.User{}, "", domain.ErrEmailTaken
+	}
+	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
+		return domain.User{}, "", fmt.Errorf("check existing passenger account: %w", err)
 	}
 	return service.create(ctx, domain.User{
 		Email:             pending.Email,
@@ -104,12 +125,19 @@ func (service *RegisterService) register(
 	input RegisterInput,
 	role domain.Role,
 ) (domain.User, string, error) {
+	if service == nil || service.repository == nil {
+		return domain.User{}, "", ErrRegistrationUnavailable
+	}
 	normalized, err := normalizeInput(input, role)
 	if err != nil {
-		return domain.User{}, "", err
+		return domain.User{}, "", fmt.Errorf("normalize registration input: %w", err)
 	}
-	if existing, err := service.repository.FindByEmail(ctx, normalized.Email); err == nil && existing.ID != 0 {
+	existing, err := service.repository.FindByEmail(ctx, normalized.Email)
+	if err == nil && existing.ID != 0 {
 		return domain.User{}, "", domain.ErrEmailTaken
+	}
+	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
+		return domain.User{}, "", fmt.Errorf("check existing account: %w", err)
 	}
 	return service.create(ctx, domain.User{
 		Email:             normalized.Email,
@@ -154,7 +182,7 @@ func normalizeInput(input RegisterInput, role domain.Role) (normalizedRegistrati
 	}
 	passwordHash, err := HashPasswordWithError(input.Password)
 	if err != nil {
-		return normalizedRegistration{}, domain.ErrInvalidCredentials
+		return normalizedRegistration{}, fmt.Errorf("hash registration password: %w", err)
 	}
 	return normalizedRegistration{
 		Email:             email,
@@ -169,12 +197,18 @@ func normalizeInput(input RegisterInput, role domain.Role) (normalizedRegistrati
 }
 
 func (service *RegisterService) create(ctx context.Context, account domain.User) (domain.User, string, error) {
+	if service == nil || service.repository == nil {
+		return domain.User{}, "", ErrRegistrationUnavailable
+	}
 	created, err := service.repository.Create(ctx, account)
 	if err != nil {
-		return domain.User{}, "", err
+		return domain.User{}, "", fmt.Errorf("create account: %w", err)
 	}
 	token, err := issueToken(service.tokens, intSubject(created.ID), created.Role)
-	return created, token, err
+	if err != nil {
+		return domain.User{}, "", fmt.Errorf("issue account token: %w", err)
+	}
+	return created, token, nil
 }
 
 var e164Phone = regexp.MustCompile(`^\+[1-9][0-9]{7,14}$`)

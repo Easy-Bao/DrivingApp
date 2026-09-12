@@ -39,7 +39,7 @@ func (repository *RideRepository) OnlineDrivers(
 	for _, item := range items {
 		driver, mappingErr := fromPostgresOnlineDriver(item)
 		if mappingErr != nil {
-			return nil, mappingErr
+			return nil, fmt.Errorf("map online driver: %w", mappingErr)
 		}
 		result = append(result, driver)
 	}
@@ -73,7 +73,7 @@ func (repository *RideRepository) PublicDriverSummaries(
 func fromPostgresOnlineDriver(item databasepostgres.ListOnlineDriversRow) (domain.OnlineDriver, error) {
 	onboardPassengerCount, err := toNativeRideCount(item.OnboardPassengerCount, "onboard passenger count")
 	if err != nil {
-		return domain.OnlineDriver{}, err
+		return domain.OnlineDriver{}, fmt.Errorf("map onboard passenger count: %w", err)
 	}
 	return domain.OnlineDriver{
 		ID:                    int(item.UserID),

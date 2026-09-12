@@ -3,6 +3,7 @@ package ws
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 )
 
 // EventRouter keeps event ownership explicit: location tracking and chat
@@ -20,10 +21,12 @@ func (router *EventRouter) Handle(ctx context.Context, message []byte) error {
 		Type string `json:"type"`
 	}
 	if err := json.Unmarshal(message, &event); err != nil {
-		return err
+		return fmt.Errorf("decode chat websocket event: %w", err)
 	}
 	if handler := router.handlers[event.Type]; handler != nil {
-		return handler.Handle(ctx, message)
+		if err := handler.Handle(ctx, message); err != nil {
+			return fmt.Errorf("handle chat websocket event: %w", err)
+		}
 	}
 	return nil
 }

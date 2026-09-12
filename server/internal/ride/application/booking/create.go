@@ -4,6 +4,7 @@ package booking
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math"
 
 	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
@@ -68,7 +69,7 @@ func (service *Service) Create(ctx context.Context, passengerID int, fareCentavo
 		RideType:     "Solo Ride",
 	})
 	if err != nil {
-		return domain.Ride{}, err
+		return domain.Ride{}, fmt.Errorf("create ride: %w", err)
 	}
 	service.publish(
 		ctx,
@@ -107,7 +108,7 @@ func (service *Service) CreateWithDetails(ctx context.Context, ride domain.Ride)
 		ride.DurationMinutes,
 	)
 	if err != nil {
-		return domain.Ride{}, err
+		return domain.Ride{}, fmt.Errorf("resolve authoritative route: %w", err)
 	}
 	ride.DistanceKm = metrics.DistanceKm
 	ride.DurationMinutes = metrics.DurationMinutes
@@ -118,7 +119,7 @@ func (service *Service) CreateWithDetails(ctx context.Context, ride domain.Ride)
 	}
 	created, err := service.writer.CreateRide(ctx, ride)
 	if err != nil {
-		return domain.Ride{}, err
+		return domain.Ride{}, fmt.Errorf("create ride with details: %w", err)
 	}
 	service.publish(
 		ctx,
@@ -158,7 +159,7 @@ func (service *Service) EstimateFare(
 			durationMinutes,
 		)
 		if err != nil {
-			return ports.RouteMetrics{}, 0, err
+			return ports.RouteMetrics{}, 0, fmt.Errorf("resolve authoritative fare route: %w", err)
 		}
 		return metrics, service.calculateFare(metrics.DistanceKm, metrics.DurationMinutes), nil
 	}

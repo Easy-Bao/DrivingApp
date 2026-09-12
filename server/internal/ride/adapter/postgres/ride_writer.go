@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -45,7 +46,11 @@ func (repository *RideRepository) CreateRide(ctx context.Context, value domain.R
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("create ride: %w", err)
 	}
-	return fromPostgresRide(item)
+	ride, err := fromPostgresRide(item)
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("map created ride: %w", err)
+	}
+	return ride, nil
 }
 
 func (repository *RideRepository) CreateBid(ctx context.Context, value domain.Bid) (domain.Bid, error) {
@@ -78,15 +83,15 @@ func (repository *RideRepository) CreateBid(ctx context.Context, value domain.Bi
 		return domain.Bid{}, fmt.Errorf("begin bid transaction: %w", err)
 	}
 	defer func() {
-		_ = transaction.Rollback(ctx)
+		platformdatabase.Rollback(ctx, transaction)
 	}()
 
 	transactionQueries := repository.queries.WithTx(transaction)
 	if _, err := transactionQueries.LockOnlineDriverProfileForBidding(ctx, driverID); err != nil {
-		return domain.Bid{}, domain.ErrDriverUnavailable
+		return domain.Bid{}, driverUnavailableError("lock online driver profile for bid", err)
 	}
 	if _, err := transactionQueries.LockRequestedRideForBid(ctx, rideID); err != nil {
-		return domain.Bid{}, domain.ErrDriverUnavailable
+		return domain.Bid{}, driverUnavailableError("lock requested ride for bid", err)
 	}
 	exists, err := transactionQueries.HasPendingBid(ctx, databasepostgres.HasPendingBidParams{
 		RideID:   rideID,

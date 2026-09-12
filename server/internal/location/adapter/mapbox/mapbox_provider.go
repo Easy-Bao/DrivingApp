@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -111,6 +112,9 @@ func (provider *MapboxProvider) Search(
 	query string,
 	origin domain.Coordinates,
 ) ([]domain.Place, error) {
+	if err := provider.validate(); err != nil {
+		return nil, err
+	}
 	if len(query) > maxSearchQueryBytes || !origin.Valid() {
 		return nil, fmt.Errorf("invalid location search")
 	}
@@ -123,7 +127,7 @@ func (provider *MapboxProvider) Search(
 	}
 	var response featureResponse
 	if err := provider.getJSON(ctx, searchURL+"/forward?"+queryParams.Encode(), &response); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("search location provider: %w", err)
 	}
 	places := make([]domain.Place, 0, len(response.Features))
 	for _, feature := range response.Features {
@@ -139,6 +143,9 @@ func (provider *MapboxProvider) Nearby(
 	origin domain.Coordinates,
 	page int,
 ) ([]domain.Place, error) {
+	if err := provider.validate(); err != nil {
+		return nil, err
+	}
 	invalidPage := page < 1 || page > maxNearbyPage
 	if invalidPage || !origin.Valid() {
 		return nil, fmt.Errorf("invalid nearby page or coordinates")
@@ -205,7 +212,7 @@ func (provider *MapboxProvider) nearbyCategory(
 	var response featureResponse
 	endpoint := searchURL + "/category/" + url.PathEscape(category) + "?" + queryParams.Encode()
 	if err := provider.getJSON(ctx, endpoint, &response); err != nil {
-		return categoryResult{err: err}
+		return categoryResult{err: fmt.Errorf("search nearby category %q: %w", category, err)}
 	}
 	places := make([]domain.Place, 0, len(response.Features))
 	for _, feature := range response.Features {
@@ -286,6 +293,9 @@ func (provider *MapboxProvider) ReverseGeocode(
 	ctx context.Context,
 	coordinates domain.Coordinates,
 ) (*domain.Place, error) {
+	if err := provider.validate(); err != nil {
+		return nil, err
+	}
 	queryParams := url.Values{
 		"longitude":    {coordinate(coordinates.Longitude)},
 		"latitude":     {coordinate(coordinates.Latitude)},
@@ -294,7 +304,7 @@ func (provider *MapboxProvider) ReverseGeocode(
 	}
 	var response featureResponse
 	if err := provider.getJSON(ctx, searchURL+"/reverse?"+queryParams.Encode(), &response); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("reverse geocode location: %w", err)
 	}
 	selected, match, ok := mostSpecificReverseFeature(response.Features, coordinates)
 	if !ok {
@@ -305,14 +315,17 @@ func (provider *MapboxProvider) ReverseGeocode(
 			"limit":        {"1"},
 		}
 		if err := provider.getJSON(ctx, geocodingURL+"/reverse?"+fallbackQuery.Encode(), &response); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("reverse geocode location fallback: %w", err)
 		}
 		selected, match, ok = mostSpecificReverseFeature(response.Features, coordinates)
 	}
 	if !ok {
 		return nil, fmt.Errorf("mapbox returned no place")
 	}
-	place, _ := placeFromFeature(selected, coordinates)
+	place, ok := placeFromFeature(selected, coordinates)
+	if !ok {
+		return nil, fmt.Errorf("mapbox returned an invalid place")
+	}
 	place.MatchType = match.matchType
 	place.DistanceMeters = match.distanceMeters
 	place.Confidence = match.confidence
@@ -529,12 +542,15 @@ func (provider *MapboxProvider) Route(
 	destination domain.Coordinates,
 	options domain.RouteOptions,
 ) (*domain.Route, error) {
+	if err := provider.validate(); err != nil {
+		return nil, err
+	}
 	if !origin.Valid() || !destination.Valid() {
 		return nil, fmt.Errorf("invalid route coordinates")
 	}
 	normalizedOptions, err := options.Normalize()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("normalize route options: %w", err)
 	}
 	cacheKey := routeCacheKey(origin, destination, normalizedOptions)
 	if routes, ok := provider.cachedRoutes(cacheKey); ok {
@@ -570,7 +586,7 @@ func (provider *MapboxProvider) Route(
 	var response directionsResponse
 	endpoint := directionsURL + "/" + string(normalizedOptions.Profile) + "/" + coordinates + "?" + queryParams.Encode()
 	if err := provider.getJSON(ctx, endpoint, &response); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("calculate route: %w", err)
 	}
 	if len(response.Routes) == 0 {
 		return nil, fmt.Errorf("mapbox returned no route")
@@ -674,6 +690,9 @@ func (provider *MapboxProvider) Matrix(
 	origin domain.Coordinates,
 	destinations []domain.Coordinates,
 ) (*domain.Matrix, error) {
+	if err := provider.validate(); err != nil {
+		return nil, err
+	}
 	invalidOrigin := !origin.Valid()
 	invalidDestinationCount := len(destinations) == 0 || len(destinations) > 10
 	if invalidOrigin || invalidDestinationCount {
@@ -692,7 +711,7 @@ func (provider *MapboxProvider) Matrix(
 			domain.RouteOptions{},
 		)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("calculate matrix route: %w", err)
 		}
 		return &domain.Matrix{
 			DistancesKm:  []float64{route.DistanceKm},
@@ -716,7 +735,7 @@ func (provider *MapboxProvider) Matrix(
 	var response matrixResponse
 	endpoint := matrixURL + "/" + strings.Join(coordinates, ";") + "?" + queryParams.Encode()
 	if err := provider.getJSON(ctx, endpoint, &response); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("calculate travel matrix: %w", err)
 	}
 	invalidDistanceRows := len(response.Distances) != 1
 	invalidDurationRows := len(response.Durations) != 1
@@ -774,18 +793,25 @@ func selectRoute(routes []mapboxRoute, preference domain.RoutePreference) mapbox
 }
 
 func (provider *MapboxProvider) getJSON(ctx context.Context, endpoint string, target any) error {
-	if provider == nil || provider.client == nil {
-		return fmt.Errorf("location provider is not configured")
-	}
-	if provider.breaker == nil {
-		return resilience.ErrCircuitNotConfigured
+	if err := provider.validate(); err != nil {
+		return err
 	}
 	return provider.breaker.Do(ctx, func(ctx context.Context) error {
 		return provider.fetchJSON(ctx, endpoint, target)
 	})
 }
 
-func (provider *MapboxProvider) fetchJSON(ctx context.Context, endpoint string, target any) error {
+func (provider *MapboxProvider) validate() error {
+	if provider == nil || provider.client == nil {
+		return fmt.Errorf("location provider is not configured")
+	}
+	if provider.breaker == nil {
+		return resilience.ErrCircuitNotConfigured
+	}
+	return nil
+}
+
+func (provider *MapboxProvider) fetchJSON(ctx context.Context, endpoint string, target any) (err error) {
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return fmt.Errorf("create location provider request: %w", err)
@@ -794,7 +820,16 @@ func (provider *MapboxProvider) fetchJSON(ctx context.Context, endpoint string, 
 	if err != nil {
 		return fmt.Errorf("send location provider request: %w", err)
 	}
-	defer response.Body.Close()
+	defer func() {
+		if closeErr := response.Body.Close(); closeErr != nil {
+			closeErr = fmt.Errorf("close location provider response: %w", closeErr)
+			if err == nil {
+				err = closeErr
+				return
+			}
+			err = errors.Join(err, closeErr)
+		}
+	}()
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
 		return fmt.Errorf("location provider returned status %d", response.StatusCode)
 	}

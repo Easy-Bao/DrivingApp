@@ -183,7 +183,7 @@ func (handler *Handler) RequestOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := handler.otp.RequestVerification(r.Context(), input.Email); err != nil {
-		response.Error(w, http.StatusBadRequest, safeAuthError(err))
+		response.Error(w, otpErrorStatus(err), safeAuthError(err))
 		return
 	}
 	response.JSON(w, http.StatusAccepted, map[string]any{"success": true, "data": map[string]bool{"sent": true}})
@@ -202,7 +202,7 @@ func (handler *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	account, token, err := handler.otp.VerifyPassenger(r.Context(), input.Email, input.Code)
 
 	if err != nil {
-		response.Error(w, http.StatusBadRequest, safeAuthError(err))
+		response.Error(w, otpErrorStatus(err), safeAuthError(err))
 		return
 	}
 	refreshToken, err := handler.otp.IssueRefreshToken(r.Context(), account)
@@ -236,7 +236,7 @@ func (handler *Handler) forgotPasswordForRole(w http.ResponseWriter, r *http.Req
 		return
 	}
 	if err := handler.otp.RequestPasswordResetForRole(r.Context(), input.Email, role); err != nil {
-		response.Error(w, http.StatusBadRequest, safeAuthError(err))
+		response.Error(w, otpErrorStatus(err), safeAuthError(err))
 		return
 	}
 	response.JSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]bool{"success": true}})
@@ -266,7 +266,7 @@ func (handler *Handler) resetPasswordForRole(w http.ResponseWriter, r *http.Requ
 		input.NewPassword,
 		role,
 	); err != nil {
-		response.Error(w, http.StatusBadRequest, safeAuthError(err))
+		response.Error(w, otpErrorStatus(err), safeAuthError(err))
 		return
 	}
 	response.JSON(w, http.StatusOK, map[string]any{"success": true, "message": "password reset successful"})
@@ -312,6 +312,8 @@ func safeAuthError(err error) string {
 		return "Your session has expired. Please sign in again."
 	case errors.Is(err, domain.ErrRefreshSessionUnavailable):
 		return "Authentication is temporarily unavailable. Please try again."
+	case errors.Is(err, application.ErrRegistrationUnavailable):
+		return "Registration is temporarily unavailable. Please try again."
 	default:
 		return "We could not complete that request. Please try again."
 	}
@@ -323,9 +325,18 @@ func registrationErrorStatus(err error) int {
 		return http.StatusConflict
 	case errors.Is(err, domain.ErrOTPUnavailable):
 		return http.StatusServiceUnavailable
+	case errors.Is(err, application.ErrRegistrationUnavailable):
+		return http.StatusServiceUnavailable
 	default:
 		return http.StatusBadRequest
 	}
+}
+
+func otpErrorStatus(err error) int {
+	if errors.Is(err, domain.ErrOTPUnavailable) {
+		return http.StatusServiceUnavailable
+	}
+	return http.StatusBadRequest
 }
 
 func authSessionResponse(

@@ -32,30 +32,30 @@ type Config struct {
 func LoadConfig() (Config, error) {
 	jwtSecret := strings.TrimSpace(os.Getenv("JWT_SECRET"))
 	if err := security.ValidateTokenSecret(jwtSecret); err != nil {
-		return Config{}, err
+		return Config{}, fmt.Errorf("validate JWT secret: %w", err)
 	}
 
 	databaseURL, err := requiredEnv("DATABASE_URL")
 	if err != nil {
-		return Config{}, err
+		return Config{}, fmt.Errorf("load database URL: %w", err)
 	}
 	redisURL, err := requiredEnv("REDIS_URL")
 	if err != nil {
-		return Config{}, err
+		return Config{}, fmt.Errorf("load redis URL: %w", err)
 	}
 
 	port, err := requiredPortEnv("API_PORT")
 	if err != nil {
-		return Config{}, err
+		return Config{}, fmt.Errorf("load API port: %w", err)
 	}
 
 	pricing, err := rideapplication.LoadPricingConfig()
 	if err != nil {
-		return Config{}, err
+		return Config{}, fmt.Errorf("load pricing configuration: %w", err)
 	}
 	reportingLocation, err := rideapplication.LoadReportingLocation(os.Getenv("REPORTING_TIMEZONE"))
 	if err != nil {
-		return Config{}, err
+		return Config{}, fmt.Errorf("load reporting timezone: %w", err)
 	}
 
 	return Config{

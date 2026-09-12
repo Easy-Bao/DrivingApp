@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
 	adminapplication "github.com/Easy-Bao/DrivingApp/server/internal/admin/application"
@@ -128,7 +129,7 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 				locationdomain.RouteOptions{},
 			)
 			if err != nil {
-				return rideapplication.RouteMetrics{}, err
+				return rideapplication.RouteMetrics{}, fmt.Errorf("calculate route metrics: %w", err)
 			}
 			return rideapplication.RouteMetrics{DistanceKm: route.DistanceKm, DurationMinutes: route.DurationMin}, nil
 		},
@@ -162,7 +163,7 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 	passengerRideContextQuery := passengerridecontextapplication.NewQueryService(
 		passengerridecontextadapter.NewRidesReader(ridesService),
 		passengerridecontextadapter.NewLocationResolver(locationService),
-	)
+	).WithLogger(applicationLogger)
 
 	router := chi.NewRouter()
 	authRouter.RegisterRoutes(router)

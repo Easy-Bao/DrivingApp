@@ -3,6 +3,8 @@ package application
 import (
 	"context"
 	"errors"
+	"fmt"
+	"log/slog"
 	"strings"
 	"sync"
 	"time"
@@ -25,6 +27,7 @@ var (
 type RideContextQueryService struct {
 	recentDestinations ridecontextports.RecentDestinationReader
 	addressResolver    ridecontextports.AddressResolver
+	logger             *slog.Logger
 }
 
 func NewQueryService(
@@ -34,7 +37,15 @@ func NewQueryService(
 	return &RideContextQueryService{
 		recentDestinations: recentDestinations,
 		addressResolver:    addressResolver,
+		logger:             slog.Default(),
 	}
+}
+
+func (service *RideContextQueryService) WithLogger(logger *slog.Logger) *RideContextQueryService {
+	if logger != nil {
+		service.logger = logger
+	}
+	return service
 }
 
 func (service *RideContextQueryService) Load(
@@ -57,6 +68,8 @@ func (service *RideContextQueryService) Load(
 			address, err := resolveAddress(ctx, service.addressResolver, *coordinates)
 			if err == nil {
 				snapshot.CurrentAddress = strings.TrimSpace(address)
+			} else {
+				service.log().DebugContext(ctx, "resolve current address failed", "error", err)
 			}
 		}
 		return snapshot, nil
@@ -86,13 +99,22 @@ func (service *RideContextQueryService) Load(
 	)
 	waitGroup.Wait()
 	if err != nil {
-		return ridecontextdomain.RideContextSnapshot{}, err
+		return ridecontextdomain.RideContextSnapshot{}, fmt.Errorf("load recent destinations: %w", err)
 	}
 	if addressError == nil {
 		snapshot.CurrentAddress = strings.TrimSpace(address)
+	} else {
+		service.log().DebugContext(ctx, "resolve current address failed", "error", addressError)
 	}
 	snapshot.RecentLocations = recentLocations(destinations)
 	return snapshot, nil
+}
+
+func (service *RideContextQueryService) log() *slog.Logger {
+	if service != nil && service.logger != nil {
+		return service.logger
+	}
+	return slog.Default()
 }
 
 func resolveAddress(

@@ -172,7 +172,7 @@ func (repository *pendingUserRepository) Create(_ context.Context, account domai
 func (repository *pendingUserRepository) FindByEmail(_ context.Context, email string) (domain.User, error) {
 	account, ok := repository.users[email]
 	if !ok {
-		return domain.User{}, errors.New("user not found")
+		return domain.User{}, domain.ErrUserNotFound
 	}
 	return account, nil
 }
@@ -183,7 +183,7 @@ func (repository *pendingUserRepository) FindByID(_ context.Context, id int) (do
 			return account, nil
 		}
 	}
-	return domain.User{}, errors.New("user not found")
+	return domain.User{}, domain.ErrUserNotFound
 }
 
 func (repository *pendingUserRepository) UpdatePassword(_ context.Context, id int, passwordHash string) error {

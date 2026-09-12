@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -40,7 +41,7 @@ func (repository *RideRepository) AcceptOffer(
 			fmt.Errorf("begin offer acceptance transaction: %w", err)
 	}
 	defer func() {
-		_ = transaction.Rollback(ctx)
+		platformdatabase.Rollback(ctx, transaction)
 	}()
 
 	transactionQueries := repository.queries.WithTx(transaction)
@@ -72,7 +73,10 @@ func (repository *RideRepository) AcceptOffer(
 	}
 	profile, err := transactionQueries.LockOnlineDriverProfileForBidding(ctx, offer.DriverID)
 	if err != nil {
-		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, domain.ErrDriverUnavailable
+		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, driverUnavailableError(
+			"lock online driver profile for offer acceptance",
+			err,
+		)
 	}
 	activeDriverRides, err := transactionQueries.CountActiveRidesForAcceptance(
 		ctx,
@@ -110,11 +114,17 @@ func (repository *RideRepository) AcceptOffer(
 	}
 	sessionValue, err := fromPostgresBidSession(session)
 	if err != nil {
-		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
+		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, fmt.Errorf(
+			"map bid session for offer acceptance: %w",
+			err,
+		)
 	}
 	offerValue, err := fromPostgresBidOffer(offer)
 	if err != nil {
-		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
+		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, fmt.Errorf(
+			"map bid offer for offer acceptance: %w",
+			err,
+		)
 	}
 	acceptedRide, err := domain.NewRideFromAcceptedOffer(
 		sessionValue,
@@ -176,15 +186,15 @@ func (repository *RideRepository) AcceptOffer(
 	}
 	resultSession, err := fromPostgresBidSession(updatedSession)
 	if err != nil {
-		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
+		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, fmt.Errorf("map accepted bid session: %w", err)
 	}
 	resultOffer, err := fromPostgresBidOffer(updatedOffer)
 	if err != nil {
-		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
+		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, fmt.Errorf("map accepted bid offer: %w", err)
 	}
 	resultRide, err := fromPostgresRide(createdRide)
 	if err != nil {
-		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
+		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, fmt.Errorf("map accepted ride: %w", err)
 	}
 	return resultSession, resultOffer, resultRide, nil
 }

@@ -40,7 +40,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	}
 	proxyTrust, err := middleware.NewProxyTrust(config.TrustedProxyCIDRs)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create proxy trust middleware: %w", err)
 	}
 
 	postgresPool, err := database.OpenPostgresPoolWithContext(
@@ -49,7 +49,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 		database.PostgresNativePoolConfigFromEnv(),
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("initialize postgresql pool: %w", err)
 	}
 	closePostgresPool := true
 	defer func() {
@@ -60,46 +60,48 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 
 	redisClient, err := redisplatform.OpenWithContext(ctx, config.RedisURL)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("open redis client: %w", err)
 	}
 	closeRedis := true
 	defer func() {
 		if closeRedis {
-			_ = redisClient.Close()
+			if err := redisClient.Close(); err != nil {
+				slog.Warn("close redis client after application setup failure", "error", err)
+			}
 		}
 	}()
 
 	applicationLogger := logger.New(serviceName)
 	authStore, err := authpostgres.NewUserStore(postgresPool)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create auth user store: %w", err)
 	}
 	sessionStore, err := authpostgres.NewSessionStore(postgresPool)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create auth session store: %w", err)
 	}
 	statsReader, err := adminpostgres.NewStatsReader(postgresPool)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create admin stats reader: %w", err)
 	}
 	documentStore, err := documentpostgres.NewDocumentStore(postgresPool)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create driver document store: %w", err)
 	}
 	privateObjectStore, err := storagepostgres.NewObjectStore(postgresPool)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create private object store: %w", err)
 	}
 	profileStore, err := userpostgres.NewProfileStore(postgresPool, privateObjectStore)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create profile store: %w", err)
 	}
 	rideStore, err := ridepostgres.NewRideStore(
 		postgresPool,
 		config.Pricing.PlatformCommissionBPS,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create ride store: %w", err)
 	}
 	router, eventHub := newHTTPRouter(httpRouterDependencies{
 		config:             config,
@@ -170,7 +172,7 @@ func (application *Application) Run(ctx context.Context) error {
 		if errors.Is(serverErr, http.ErrServerClosed) {
 			return nil
 		}
-		return serverErr
+		return fmt.Errorf("serve HTTP: %w", serverErr)
 	case <-ctx.Done():
 		shutdownContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), 15*time.Second)
 		defer cancel()
@@ -189,6 +191,15 @@ func (application *Application) close() {
 		application.postgresPool.Close()
 	}
 	if application.redisClient != nil {
-		_ = application.redisClient.Close()
+		if err := application.redisClient.Close(); err != nil {
+			application.log().Warn("close redis client failed", "error", err)
+		}
 	}
+}
+
+func (application *Application) log() *slog.Logger {
+	if application != nil && application.logger != nil {
+		return application.logger
+	}
+	return slog.Default()
 }

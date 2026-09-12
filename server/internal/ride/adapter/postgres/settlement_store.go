@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
@@ -33,7 +34,7 @@ func (repository *RideRepository) SettleCash(ctx context.Context, rideID, driver
 		return domain.Ride{}, fmt.Errorf("begin cash settlement transaction: %w", err)
 	}
 	defer func() {
-		_ = transaction.Rollback(ctx)
+		platformdatabase.Rollback(ctx, transaction)
 	}()
 
 	transactionQueries := repository.queries.WithTx(transaction)
@@ -67,12 +68,19 @@ func (repository *RideRepository) SettleCash(ctx context.Context, rideID, driver
 		if err := transaction.Commit(ctx); err != nil {
 			return domain.Ride{}, fmt.Errorf("commit already-settled ride: %w", err)
 		}
-		return fromPostgresRide(rideItem)
+		ride, err := fromPostgresRide(rideItem)
+		if err != nil {
+			return domain.Ride{}, fmt.Errorf("map already-settled ride: %w", err)
+		}
+		return ride, nil
 	}
 
 	profile, err := transactionQueries.GetDriverProfileByUserIDFull(ctx, dbDriverID)
 	if err != nil {
-		return domain.Ride{}, domain.ErrUnauthorizedRide
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.Ride{}, domain.ErrUnauthorizedRide
+		}
+		return domain.Ride{}, fmt.Errorf("find settlement driver profile: %w", err)
 	}
 	if settlement.DriverPayoutCentavos <= 0 {
 		return domain.Ride{}, domain.ErrInvalidFareOffer
@@ -113,7 +121,11 @@ func (repository *RideRepository) SettleCash(ctx context.Context, rideID, driver
 	if err := transaction.Commit(ctx); err != nil {
 		return domain.Ride{}, fmt.Errorf("commit cash settlement transaction: %w", err)
 	}
-	return fromPostgresRide(rideItem)
+	ride, err := fromPostgresRide(rideItem)
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("map settled ride: %w", err)
+	}
+	return ride, nil
 }
 
 func (repository *RideRepository) ensureNativeRideSettlement(
@@ -195,16 +207,19 @@ func creditNativeDriverWallet(
 		})
 	}
 	if err != nil {
-		return err
+		return fmt.Errorf("load driver wallet account: %w", err)
 	}
 	if _, err := queries.CreditDriverWalletAccount(ctx, databasepostgres.CreditDriverWalletAccountParams{
 		ID:              account.ID,
 		BalanceCentavos: amountCentavos,
 	}); err != nil {
-		return err
+		return fmt.Errorf("credit driver wallet account: %w", err)
 	}
-	return queries.CreditDriverProfileWallet(ctx, databasepostgres.CreditDriverProfileWalletParams{
+	if err := queries.CreditDriverProfileWallet(ctx, databasepostgres.CreditDriverProfileWalletParams{
 		UserID:                profile.UserID,
 		WalletBalanceCentavos: amountCentavos,
-	})
+	}); err != nil {
+		return fmt.Errorf("credit driver profile wallet: %w", err)
+	}
+	return nil
 }

@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"strconv"
 	"strings"
@@ -77,9 +78,18 @@ func (service *AuthenticateService) execute(
 	password string,
 	role domain.Role,
 ) (domain.User, SessionTokens, error) {
+	if service == nil || service.repository == nil {
+		return domain.User{}, SessionTokens{}, domain.ErrInvalidCredentials
+	}
 	email = strings.ToLower(strings.TrimSpace(email))
 	account, err := service.repository.FindByEmail(ctx, email)
-	if err != nil || !VerifyPassword(account.PasswordHash, password) {
+	if err != nil {
+		if !errors.Is(err, domain.ErrUserNotFound) {
+			service.log().WarnContext(ctx, "find account for authentication failed", "error", err)
+		}
+		return domain.User{}, SessionTokens{}, domain.ErrInvalidCredentials
+	}
+	if !VerifyPassword(account.PasswordHash, password) {
 		return domain.User{}, SessionTokens{}, domain.ErrInvalidCredentials
 	}
 	if role != "" && account.Role != role {
@@ -88,9 +98,9 @@ func (service *AuthenticateService) execute(
 	if IsLegacyPasswordHash(account.PasswordHash) {
 		upgradedHash, hashErr := HashPasswordWithError(password)
 		if hashErr != nil {
-			service.logger.WarnContext(ctx, "upgrade legacy password hash failed", "error", hashErr)
+			service.log().WarnContext(ctx, "upgrade legacy password hash failed", "error", hashErr)
 		} else if err := service.repository.UpdatePassword(ctx, account.ID, upgradedHash); err != nil {
-			service.logger.WarnContext(ctx, "persist upgraded password hash failed", "error", err)
+			service.log().WarnContext(ctx, "persist upgraded password hash failed", "error", err)
 		}
 	}
 	tokens, err := issueSessionTokens(
@@ -100,11 +110,14 @@ func (service *AuthenticateService) execute(
 		strconv.Itoa(account.ID),
 		account.Role,
 	)
-	return account, tokens, err
+	if err != nil {
+		return domain.User{}, SessionTokens{}, fmt.Errorf("issue authentication session: %w", err)
+	}
+	return account, tokens, nil
 }
 
 func (service *AuthenticateService) Refresh(ctx context.Context, rawToken string) (SessionTokens, error) {
-	if service.sessions == nil {
+	if service == nil || service.sessions == nil || service.repository == nil {
 		return SessionTokens{}, domain.ErrRefreshSessionUnavailable
 	}
 	rawToken = strings.TrimSpace(rawToken)
@@ -129,11 +142,11 @@ func (service *AuthenticateService) Refresh(ctx context.Context, rawToken string
 
 	accessToken, err := issueToken(service.tokens, strconv.Itoa(account.ID), account.Role)
 	if err != nil {
-		return SessionTokens{}, err
+		return SessionTokens{}, fmt.Errorf("issue refreshed access token: %w", err)
 	}
 	replacementToken, replacement, err := replacementRefreshSession(account.ID, now)
 	if err != nil {
-		return SessionTokens{}, err
+		return SessionTokens{}, fmt.Errorf("create replacement refresh session: %w", err)
 	}
 	if err := service.sessions.Rotate(
 		ctx,
@@ -150,7 +163,7 @@ func (service *AuthenticateService) Refresh(ctx context.Context, rawToken string
 }
 
 func (service *AuthenticateService) Logout(ctx context.Context, rawToken string) error {
-	if service.sessions == nil {
+	if service == nil || service.sessions == nil {
 		return domain.ErrRefreshSessionUnavailable
 	}
 	rawToken = strings.TrimSpace(rawToken)
@@ -161,4 +174,11 @@ func (service *AuthenticateService) Logout(ctx context.Context, rawToken string)
 		return unavailableSessionError(err)
 	}
 	return nil
+}
+
+func (service *AuthenticateService) log() *slog.Logger {
+	if service != nil && service.logger != nil {
+		return service.logger
+	}
+	return slog.Default()
 }

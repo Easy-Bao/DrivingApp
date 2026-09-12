@@ -32,25 +32,29 @@ func (repository *RideRepository) DriverStats(
 	if err != nil {
 		return domain.DriverStats{}, fmt.Errorf("load driver statistics: %w", err)
 	}
-	return fromPostgresDriverStats(driverID, row)
+	stats, err := fromPostgresDriverStats(driverID, row)
+	if err != nil {
+		return domain.DriverStats{}, fmt.Errorf("map driver statistics: %w", err)
+	}
+	return stats, nil
 }
 
 func fromPostgresDriverStats(driverID int, row databasepostgres.GetDriverStatsRow) (domain.DriverStats, error) {
 	totalTrips, err := toNativeRideCount(row.TotalTrips, "total trips")
 	if err != nil {
-		return domain.DriverStats{}, err
+		return domain.DriverStats{}, fmt.Errorf("map total trips: %w", err)
 	}
 	completedTrips, err := toNativeRideCount(row.CompletedTrips, "completed trips")
 	if err != nil {
-		return domain.DriverStats{}, err
+		return domain.DriverStats{}, fmt.Errorf("map completed trips: %w", err)
 	}
 	activeTrips, err := toNativeRideCount(row.ActiveTrips, "active trips")
 	if err != nil {
-		return domain.DriverStats{}, err
+		return domain.DriverStats{}, fmt.Errorf("map active trips: %w", err)
 	}
 	todayCompletedTrips, err := toNativeRideCount(row.TodayCompletedTrips, "today completed trips")
 	if err != nil {
-		return domain.DriverStats{}, err
+		return domain.DriverStats{}, fmt.Errorf("map today completed trips: %w", err)
 	}
 	return domain.DriverStats{
 		DriverID:            driverID,

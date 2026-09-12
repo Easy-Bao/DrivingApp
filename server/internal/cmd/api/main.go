@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -23,11 +24,14 @@ func main() {
 func run(ctx context.Context) error {
 	config, err := app.LoadConfig()
 	if err != nil {
-		return err
+		return fmt.Errorf("load application config: %w", err)
 	}
 	application, err := app.NewApplication(ctx, config)
 	if err != nil {
-		return err
+		return fmt.Errorf("create application: %w", err)
 	}
-	return application.Run(ctx)
+	if err := application.Run(ctx); err != nil {
+		return fmt.Errorf("run application: %w", err)
+	}
+	return nil
 }
