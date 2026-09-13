@@ -63,7 +63,7 @@ class const PassengerFloatingTabBar({
     final colorScheme = context.colorScheme;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: colorScheme.surface.withValues(alpha: 0.9),
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(EasyRideDesignTokens.pillRadius),
         border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: [
@@ -90,9 +90,6 @@ class const PassengerFloatingTabBar({
       pagePosition: pagePosition,
       destinations: destinations,
       transparentSurface: transparentSurface,
-      activeIndicatorBuilder: transparentSurface
-          ? _buildActiveGlassIndicator
-          : null,
       itemKeyPrefix: 'passenger-floating-tab-item',
       indicatorKey: 'passenger-floating-tab-indicator',
       iconBuilder: (context, index, destination, color) => index == 2
@@ -102,20 +99,6 @@ class const PassengerFloatingTabBar({
               size: EasyRideDesignTokens.navigationIconSize,
               color: color,
             ),
-    );
-  }
-
-  Widget _buildActiveGlassIndicator(BuildContext context, Widget child) {
-    final colorScheme = context.colorScheme;
-    return OCLiquidGlass(
-      borderRadius: EasyRideDesignTokens.pillRadius,
-      color: colorScheme.surface.withValues(alpha: 0.72),
-      shadow: BoxShadow(
-        color: colorScheme.shadow.withValues(alpha: 0.08),
-        blurRadius: 8,
-        offset: const Offset(0, 2),
-      ),
-      child: child,
     );
   }
 }

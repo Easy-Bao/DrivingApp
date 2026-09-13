@@ -30,7 +30,6 @@ class const AppFloatingTabBar({
   required this.indicatorKey,
   this.pagePosition,
   this.iconBuilder,
-  this.activeIndicatorBuilder,
   this.transparentSurface = false,
 }) extends StatelessWidget {
   static const animationDuration = Duration(milliseconds: 280);
@@ -41,7 +40,6 @@ class const AppFloatingTabBar({
   final ValueChanged<int> onDestinationSelected;
   final ValueListenable<double>? pagePosition;
   final AppTabIconBuilder? iconBuilder;
-  final AppTabIndicatorBuilder? activeIndicatorBuilder;
   final bool transparentSurface;
   final String itemKeyPrefix;
   final String indicatorKey;
@@ -111,13 +109,8 @@ class const AppFloatingTabBar({
                 key: ValueKey<String>(indicatorKey),
                 pagePosition: visualPagePosition,
                 itemCount: destinations.length,
-                color: transparentSurface
-                    ? colorScheme.surface.withValues(alpha: 0.18)
-                    : colorScheme.surfaceContainerHighest,
+                color: colorScheme.surfaceContainerHighest,
                 capsuleKeyPrefix: indicatorKey,
-                capsuleBuilder: transparentSurface
-                    ? activeIndicatorBuilder
-                    : null,
               ),
             ),
             Row(
