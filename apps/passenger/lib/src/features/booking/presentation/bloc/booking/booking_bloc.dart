@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer' as dev;
 
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
@@ -18,7 +19,6 @@ import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit
 import 'package:passenger/src/features/ride_history/ride_history.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger/src/infrastructure/telemetry/passenger_background_telemetry.dart';
-import 'package:rxdart/rxdart.dart';
 
 part 'booking_event.dart';
 part 'booking_state.dart';
@@ -78,7 +78,7 @@ class BookingBloc({
       super(BookingInitial()) {
     on<LocateNearestDriverEvent>(
       _onLocateNearestDriver,
-      transformer: (events, mapper) => events.exhaustMap(mapper),
+      transformer: droppable(),
     );
     on<StartDirectBookingEvent>(_onStartDirectBooking);
     on<StartOpenBookingEvent>(_onStartOpenBooking);
