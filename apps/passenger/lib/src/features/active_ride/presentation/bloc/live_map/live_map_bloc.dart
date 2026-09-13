@@ -3,6 +3,7 @@ import 'dart:developer' as dev;
 import 'dart:typed_data';
 import 'dart:ui' show Color;
 
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:maps/maps.dart';
@@ -33,7 +34,10 @@ class LiveMapBloc({required this._trackRepository})
 
   this : super(LiveMapInitial()) {
     on<InitializeMapEvent>(_onInitializeMap);
-    on<DrawDriverToRiderRouteEvent>(_onDrawDriverToRiderRoute);
+    on<DrawDriverToRiderRouteEvent>(
+      _onDrawDriverToRiderRoute,
+      transformer: restartable(),
+    );
     on<AddMapMarkerEvent>(_onAddMapMarker);
     on<ClearMapAnnotationsEvent>(_onClearMapAnnotations);
     on<FitMapToCoordinatesEvent>(_onFitMapToCoordinates);

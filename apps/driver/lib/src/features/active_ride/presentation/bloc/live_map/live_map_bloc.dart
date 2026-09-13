@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:developer' as dev;
 import 'dart:typed_data';
 
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter/material.dart' show Color;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
@@ -39,7 +40,7 @@ class LiveMapBloc({required this._rideRepository})
     on<InitializeMapEvent>(_onInitializeMap);
     on<UpdateLocationsAndDrawRouteEvent>(
       _onUpdateLocationsAndDrawRoute,
-      transformer: (events, mapper) => events.asyncExpand(mapper),
+      transformer: restartable(),
     );
     on<ClearMapEvent>(_onClearMap);
     _locationSubscription = _locationSubject
