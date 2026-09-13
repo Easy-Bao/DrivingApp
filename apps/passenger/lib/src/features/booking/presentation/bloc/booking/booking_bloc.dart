@@ -80,10 +80,13 @@ class BookingBloc({
       _onLocateNearestDriver,
       transformer: droppable(),
     );
-    on<StartDirectBookingEvent>(_onStartDirectBooking);
-    on<StartOpenBookingEvent>(_onStartOpenBooking);
-    on<AcceptBidOfferEvent>(_onAcceptBidOffer);
-    on<CancelBookingEvent>(_onCancelBooking);
+    on<StartDirectBookingEvent>(
+      _onStartDirectBooking,
+      transformer: droppable(),
+    );
+    on<StartOpenBookingEvent>(_onStartOpenBooking, transformer: droppable());
+    on<AcceptBidOfferEvent>(_onAcceptBidOffer, transformer: droppable());
+    on<CancelBookingEvent>(_onCancelBooking, transformer: droppable());
     on<ResetBookingEvent>(_onResetBooking);
     on<UpdateOffersEvent>(_onUpdateOffers);
     on<DriverMatchedEvent>(_onDriverMatched);
