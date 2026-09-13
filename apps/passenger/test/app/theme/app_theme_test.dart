@@ -77,6 +77,41 @@ void main() {
     expect(indicator.color, EasyRideDesignTokens.neutral);
     expect(indicator.color, isNot(tabColor));
   });
+
+  testWidgets('keeps the tab surface decorated in transparent mode', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: EasyRideAppTheme.data,
+        home: AppFloatingTabBar(
+          destinations: const [
+            AppTabDestination(icon: Icons.home, label: 'Home'),
+          ],
+          selectedIndex: 0,
+          onDestinationSelected: (_) {},
+          itemKeyPrefix: 'tab',
+          indicatorKey: 'indicator',
+          transparentSurface: true,
+        ),
+      ),
+    );
+
+    final tabContainer = tester.widget<Container>(
+      find.descendant(
+        of: find.byType(AppFloatingTabBar),
+        matching: find.byType(Container),
+      ),
+    );
+    final decoration = tabContainer.decoration! as BoxDecoration;
+    final indicator = tester.widget<SwipeActiveTabIndicator>(
+      find.byType(SwipeActiveTabIndicator),
+    );
+
+    expect(decoration.color, Colors.transparent);
+    expect(decoration.borderRadius, isNotNull);
+    expect(indicator.color.a, closeTo(0.18, 0.01));
+  });
 }
 
 double _contrast(Color foreground, Color background) {
