@@ -13,6 +13,7 @@ CREATE TABLE rides (
     dropoff_name text,
     distance_km double precision,
     duration_minutes double precision,
+    -- Captured at driver assignment so historical rides do not change with profile edits.
     driver_name text,
     vehicle_type text,
     plate_number text,
