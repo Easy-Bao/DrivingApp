@@ -276,11 +276,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                         children: [
                           _buildProfileHeader(),
                           const SizedBox(
-                            height: EasyRideDesignTokens.sectionGap,
-                          ),
-                          _buildSectionHeader(),
-                          const SizedBox(
-                            height: EasyRideDesignTokens.cardPadding,
+                            height: EasyRideDesignTokens.sectionGap * 1.5,
                           ),
                           _buildDetailsSection(),
                         ],
@@ -297,8 +293,6 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   }
 
   Widget _buildProfileHeader() {
-    final hasProfilePhoto =
-        _avatarPath.trim().isNotEmpty || _avatarData.trim().isNotEmpty;
     final displayName = _nameController.text.trim().isEmpty
         ? 'Your profile'
         : _nameController.text.trim();
@@ -332,29 +326,6 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.center,
-          style: context.textStyles.bodySmall,
-        ),
-        const SizedBox(height: 16),
-        OutlinedButton(
-          key: const ValueKey<String>('passenger-profile-change-photo'),
-          onPressed: _pickPhoto,
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 48),
-          ),
-          child: Text(hasProfilePhoto ? 'Change photo' : 'Add photo'),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSectionHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Personal details', style: context.textStyles.titleLarge),
-        const SizedBox(height: EasyRideDesignTokens.compactGap / 2),
-        Text(
-          'Keep your contact information ready for every ride.',
           style: context.textStyles.bodySmall,
         ),
       ],

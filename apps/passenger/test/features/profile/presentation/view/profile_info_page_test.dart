@@ -149,7 +149,7 @@ void main() {
 
     await tester.pumpWidget(buildSubject());
 
-    expect(find.text('Personal details'), findsOneWidget);
+    expect(find.text('Personal details'), findsNothing);
     expect(
       find.byKey(const ValueKey<String>('passenger-profile-info-scroll')),
       findsOneWidget,
