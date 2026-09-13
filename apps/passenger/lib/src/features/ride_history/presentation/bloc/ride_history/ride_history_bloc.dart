@@ -1,3 +1,4 @@
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
@@ -26,7 +27,7 @@ class RideHistoryBloc({required this._repository})
   this : super(const RideHistoryInitial()) {
     on<LoadRideHistoryEvent>(_onLoad);
     on<RefreshRideHistoryEvent>(_onRefresh);
-    on<LoadMoreRideHistoryEvent>(_onLoadMore);
+    on<LoadMoreRideHistoryEvent>(_onLoadMore, transformer: droppable());
   }
 
   Future<void> _onLoad(
