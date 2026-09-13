@@ -274,11 +274,15 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _buildPhotoCard(),
-                          const SizedBox(height: 24),
+                          _buildProfileHeader(),
+                          const SizedBox(
+                            height: EasyRideDesignTokens.sectionGap,
+                          ),
                           _buildSectionHeader(),
-                          const SizedBox(height: 12),
-                          _buildDetailsCard(),
+                          const SizedBox(
+                            height: EasyRideDesignTokens.cardPadding,
+                          ),
+                          _buildDetailsSection(),
                         ],
                       ),
                     ),
@@ -292,58 +296,54 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     );
   }
 
-  Widget _buildPhotoCard() {
+  Widget _buildProfileHeader() {
     final hasProfilePhoto =
         _avatarPath.trim().isNotEmpty || _avatarData.trim().isNotEmpty;
-    return Container(
-      padding: const EdgeInsets.all(EasyRideDesignTokens.cardPadding),
-      decoration: BoxDecoration(
-        color: context.colorScheme.secondaryContainer.withValues(alpha: 0.42),
-        borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
-        border: Border.all(color: context.colorScheme.outlineVariant),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          ProfileAvatarWidget(
+    final displayName = _nameController.text.trim().isEmpty
+        ? 'Your profile'
+        : _nameController.text.trim();
+    final displayEmail = _emailController.text.trim();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Center(
+          child: ProfileAvatarWidget(
             key: const ValueKey<String>('passenger-profile-avatar'),
             initials: _getInitials(_nameController.text),
             imagePath: _avatarPath,
             imageData: _avatarData,
-            size: 104,
+            size: 112,
             onCameraTap: _pickPhoto,
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  hasProfilePhoto ? 'Profile photo' : 'Add a profile photo',
-                  style: context.textStyles.titleMedium,
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  'Help drivers recognize you at pickup.',
-                  style: context.textStyles.bodySmall,
-                ),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  key: const ValueKey<String>('passenger-profile-change-photo'),
-                  onPressed: _pickPhoto,
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(0, 40),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                  icon: const Icon(LucideIcons.camera, size: 16),
-                  label: Text(hasProfilePhoto ? 'Change photo' : 'Add photo'),
-                ),
-              ],
-            ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          displayName,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: context.textStyles.titleLarge,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          displayEmail.isEmpty
+              ? 'Add an email for ride updates.'
+              : displayEmail,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: context.textStyles.bodySmall,
+        ),
+        const SizedBox(height: 16),
+        OutlinedButton(
+          key: const ValueKey<String>('passenger-profile-change-photo'),
+          onPressed: _pickPhoto,
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(double.infinity, 48),
           ),
-        ],
-      ),
+          child: Text(hasProfilePhoto ? 'Change photo' : 'Add photo'),
+        ),
+      ],
     );
   }
 
@@ -351,47 +351,39 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Personal details', style: context.textStyles.titleMedium),
-        const SizedBox(height: 4),
+        Text('Personal details', style: context.textStyles.titleLarge),
+        const SizedBox(height: EasyRideDesignTokens.compactGap / 2),
         Text(
-          'Keep your contact information up to date.',
+          'Keep your contact information ready for every ride.',
           style: context.textStyles.bodySmall,
         ),
       ],
     );
   }
 
-  Widget _buildDetailsCard() {
-    return Container(
-      padding: const EdgeInsets.all(EasyRideDesignTokens.cardPadding),
-      decoration: BoxDecoration(
-        color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
-        border: Border.all(color: context.colorScheme.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildTextField(
-            label: 'Full Name',
-            controller: _nameController,
-            errorText: _nameError,
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: 20),
-          _buildPhoneField(),
-          const SizedBox(height: 20),
-          _buildTextField(
-            label: 'Email',
-            controller: _emailController,
-            keyboardType: TextInputType.emailAddress,
-            errorText: _emailError,
-            textInputAction: TextInputAction.done,
-          ),
-          const SizedBox(height: 20),
-          _buildGenderField(),
-        ],
-      ),
+  Widget _buildDetailsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildTextField(
+          label: 'Full Name',
+          controller: _nameController,
+          errorText: _nameError,
+          textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: EasyRideDesignTokens.sectionGap),
+        _buildPhoneField(),
+        const SizedBox(height: EasyRideDesignTokens.sectionGap),
+        _buildTextField(
+          label: 'Email',
+          controller: _emailController,
+          keyboardType: TextInputType.emailAddress,
+          errorText: _emailError,
+          textInputAction: TextInputAction.done,
+        ),
+        const SizedBox(height: EasyRideDesignTokens.sectionGap),
+        _buildGenderField(),
+      ],
     );
   }
 
@@ -412,10 +404,18 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
           controller: controller,
           keyboardType: keyboardType,
           textInputAction: textInputAction,
+          textCapitalization: label == 'Email'
+              ? TextCapitalization.none
+              : TextCapitalization.words,
           style: context.textStyles.bodyLarge?.copyWith(
             fontWeight: FontWeight.w600,
           ),
-          decoration: _fieldDecoration(errorText: errorText),
+          decoration: _fieldDecoration(
+            errorText: errorText,
+            prefixIcon: label == 'Full Name'
+                ? LucideIcons.user_round
+                : LucideIcons.mail,
+          ),
         ),
       ],
     );
@@ -457,6 +457,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                 decoration: _fieldDecoration(
                   hintText: '917 000 0001',
                   errorText: _phoneError,
+                  prefixIcon: LucideIcons.phone,
                 ),
               ),
             ),
@@ -484,7 +485,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
           style: context.textStyles.bodyLarge?.copyWith(
             fontWeight: FontWeight.w600,
           ),
-          decoration: _fieldDecoration(),
+          decoration: _fieldDecoration(prefixIcon: LucideIcons.venus_and_mars),
           items: [
             for (final gender in _genderOptions)
               DropdownMenuItem<String>(value: gender, child: Text(gender)),
@@ -501,7 +502,11 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     );
   }
 
-  InputDecoration _fieldDecoration({String? hintText, String? errorText}) {
+  InputDecoration _fieldDecoration({
+    String? hintText,
+    String? errorText,
+    IconData? prefixIcon,
+  }) {
     final border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(EasyRideDesignTokens.fieldRadius),
       borderSide: BorderSide(color: context.colorScheme.outlineVariant),
@@ -509,11 +514,12 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     return InputDecoration(
       hintText: hintText,
       errorText: errorText,
+      prefixIcon: prefixIcon == null ? null : Icon(prefixIcon, size: 20),
       filled: true,
       fillColor: context.canvasColor,
       contentPadding: const EdgeInsets.symmetric(
         horizontal: EasyRideDesignTokens.pageHorizontalPadding,
-        vertical: 16,
+        vertical: 14,
       ),
       border: border,
       enabledBorder: border,

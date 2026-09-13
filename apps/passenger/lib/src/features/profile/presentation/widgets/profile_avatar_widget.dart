@@ -21,6 +21,8 @@ class const ProfileAvatarWidget({
 
   @override
   Widget build(BuildContext context) {
+    final cameraButtonSize = size * 0.32 < 44 ? 44.0 : size * 0.32;
+    final cameraIconSize = size * 0.16 < 16 ? 16.0 : size * 0.16;
     final imagePath = this.imagePath;
     final fallbackImage = _buildImageData(context);
     final avatar = imagePath == null || imagePath.isEmpty
@@ -40,8 +42,8 @@ class const ProfileAvatarWidget({
           ClipOval(child: SizedBox.expand(child: avatar)),
           if (onCameraTap != null)
             Positioned(
-              right: -2,
-              bottom: -2,
+              right: -4,
+              bottom: -4,
               child: Material(
                 color: context.colorScheme.onSurface,
                 shape: const CircleBorder(),
@@ -50,11 +52,11 @@ class const ProfileAvatarWidget({
                   onTap: onCameraTap,
                   customBorder: const CircleBorder(),
                   child: SizedBox(
-                    width: size * 0.32,
-                    height: size * 0.32,
+                    width: cameraButtonSize,
+                    height: cameraButtonSize,
                     child: Icon(
                       LucideIcons.camera,
-                      size: size * 0.16,
+                      size: cameraIconSize,
                       color: context.colorScheme.surface,
                     ),
                   ),
