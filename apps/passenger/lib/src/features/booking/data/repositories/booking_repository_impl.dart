@@ -31,7 +31,7 @@ final class BookingRepositoryImpl({required this._dataSource})
         'distance_km': request.distanceKm,
         'duration_minutes': request.durationMinutes,
         'target_driver_id': ?request.targetDriverId,
-        'custom_fare_centavos': request.customFareCentavos,
+        'custom_fare': request.customFareAmount,
         'passenger_note': request.passengerNote,
       });
       final sessionId = SafeParse.toStringValue(response['id']).trim();
@@ -84,10 +84,8 @@ final class BookingRepositoryImpl({required this._dataSource})
           ValidationFailure('The accepted offer has no ride ID.'),
         );
       }
-      final fare = SafeParse.toNullableDouble(ride['fare_centavos']);
-      return Right(
-        AcceptedBooking(rideId: rideId, fareCentavos: fare?.round()),
-      );
+      final fare = SafeParse.toNullableDouble(ride['fare_amount']);
+      return Right(AcceptedBooking(rideId: rideId, fareAmount: fare?.round()));
     } catch (error) {
       return Left(_mapFailure(error));
     }
@@ -114,7 +112,7 @@ bool _validRequest(BookingSessionRequest request) {
       request.distanceKm > 0 &&
       request.durationMinutes.isFinite &&
       request.durationMinutes > 0 &&
-      request.customFareCentavos > 0;
+      request.customFareAmount > 0;
 }
 
 bool _validCoordinate(double latitude, double longitude) {

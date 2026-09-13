@@ -34,7 +34,7 @@ void main() {
     );
   });
 
-  test('normalizes ride identifiers, coordinates, and centavo fare', () async {
+  test('normalizes ride identifiers, coordinates, and fare amount', () async {
     when(() => rideDataSource.getRideStatus('ride-7')).thenAnswer(
       (_) async => <String, dynamic>{
         'id': 7,
@@ -44,7 +44,7 @@ void main() {
         'passenger_id': 12,
         'dropoff_latitude': '7.85',
         'dropoff_longitude': 123.45,
-        'fare_centavos': '2764',
+        'fare_amount': '2764',
       },
     );
 
@@ -61,7 +61,7 @@ void main() {
           passengerId: '12',
           dropoffLatitude: 7.85,
           dropoffLongitude: 123.45,
-          fareCentavos: 2764,
+          fareAmount: 2764,
         ),
       ),
     );

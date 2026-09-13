@@ -11,58 +11,27 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createBid = `-- name: CreateBid :one
-INSERT INTO bids (ride_id, driver_id, offered_fare_centavos, status)
-VALUES ($1, $2, $3, $4)
-RETURNING id, ride_id, driver_id, offered_fare_centavos, status
-`
-
-type CreateBidParams struct {
-	RideID              int32  `db:"ride_id"`
-	DriverID            int32  `db:"driver_id"`
-	OfferedFareCentavos int64  `db:"offered_fare_centavos"`
-	Status              string `db:"status"`
-}
-
-func (q *Queries) CreateBid(ctx context.Context, arg CreateBidParams) (Bid, error) {
-	row := q.db.QueryRow(ctx, createBid,
-		arg.RideID,
-		arg.DriverID,
-		arg.OfferedFareCentavos,
-		arg.Status,
-	)
-	var i Bid
-	err := row.Scan(
-		&i.ID,
-		&i.RideID,
-		&i.DriverID,
-		&i.OfferedFareCentavos,
-		&i.Status,
-	)
-	return i, err
-}
-
 const createRide = `-- name: CreateRide :one
 INSERT INTO rides (
-    passenger_id, status, fare_centavos, ride_type,
+    passenger_id, status, fare_amount, ride_type,
     pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name,
     distance_km, duration_minutes
 )
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-RETURNING id, passenger_id, driver_id, status, fare_centavos, ride_type,
+RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
     pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name,
     distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
     driver_rating, created_at, completed_at, payment_status,
-    cash_received_at, commission_bps, commission_centavos,
-    driver_payout_centavos
+    cash_received_at, commission_bps, commission_amount,
+    driver_payout_amount
 `
 
 type CreateRideParams struct {
 	PassengerID      int32         `db:"passenger_id"`
 	Status           string        `db:"status"`
-	FareCentavos     int64         `db:"fare_centavos"`
+	FareAmount       int64         `db:"fare_amount"`
 	RideType         string        `db:"ride_type"`
 	PickupLatitude   pgtype.Float8 `db:"pickup_latitude"`
 	PickupLongitude  pgtype.Float8 `db:"pickup_longitude"`
@@ -78,7 +47,7 @@ func (q *Queries) CreateRide(ctx context.Context, arg CreateRideParams) (Ride, e
 	row := q.db.QueryRow(ctx, createRide,
 		arg.PassengerID,
 		arg.Status,
-		arg.FareCentavos,
+		arg.FareAmount,
 		arg.RideType,
 		arg.PickupLatitude,
 		arg.PickupLongitude,
@@ -95,7 +64,7 @@ func (q *Queries) CreateRide(ctx context.Context, arg CreateRideParams) (Ride, e
 		&i.PassengerID,
 		&i.DriverID,
 		&i.Status,
-		&i.FareCentavos,
+		&i.FareAmount,
 		&i.RideType,
 		&i.PickupLatitude,
 		&i.PickupLongitude,
@@ -114,45 +83,8 @@ func (q *Queries) CreateRide(ctx context.Context, arg CreateRideParams) (Ride, e
 		&i.PaymentStatus,
 		&i.CashReceivedAt,
 		&i.CommissionBps,
-		&i.CommissionCentavos,
-		&i.DriverPayoutCentavos,
+		&i.CommissionAmount,
+		&i.DriverPayoutAmount,
 	)
 	return i, err
-}
-
-const hasPendingBid = `-- name: HasPendingBid :one
-SELECT EXISTS (
-    SELECT 1
-    FROM bids
-    WHERE ride_id = $1
-      AND driver_id = $2
-      AND status = 'pending'
-)
-`
-
-type HasPendingBidParams struct {
-	RideID   int32 `db:"ride_id"`
-	DriverID int32 `db:"driver_id"`
-}
-
-func (q *Queries) HasPendingBid(ctx context.Context, arg HasPendingBidParams) (bool, error) {
-	row := q.db.QueryRow(ctx, hasPendingBid, arg.RideID, arg.DriverID)
-	var exists bool
-	err := row.Scan(&exists)
-	return exists, err
-}
-
-const lockRequestedRideForBid = `-- name: LockRequestedRideForBid :one
-SELECT id
-FROM rides
-WHERE id = $1
-  AND status = 'requested'
-FOR UPDATE
-`
-
-func (q *Queries) LockRequestedRideForBid(ctx context.Context, id int32) (int32, error) {
-	row := q.db.QueryRow(ctx, lockRequestedRideForBid, id)
-	var id_2 int32
-	err := row.Scan(&id_2)
-	return id_2, err
 }

@@ -117,7 +117,7 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                         :final hasMore,
                         :final isLoadingMore,
                         :final loadMoreError,
-                        :final weeklyFareCentavos,
+                        :final weeklyFareAmount,
                         :final weeklyRideCount,
                       ) =>
                         RideHistoryWidget(
@@ -133,7 +133,7 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                           isLoadingMore: isLoadingMore,
                           loadMoreError: loadMoreError,
                           onLoadMore: _loadMoreRideHistory,
-                          weeklyFare: weeklyFareCentavos / 100,
+                          weeklyFare: weeklyFareAmount / 100,
                           weeklyRideCount: weeklyRideCount,
                         ),
                     },

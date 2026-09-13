@@ -11,12 +11,20 @@ CREATE TABLE bid_sessions (
     passenger_note text,
     distance_km double precision NOT NULL,
     duration_minutes double precision NOT NULL,
-    offered_fare_centavos bigint NOT NULL,
+    offered_fare bigint NOT NULL,
     status text NOT NULL DEFAULT 'open',
     target_driver_id integer,
     accepted_driver_id integer,
     expires_at timestamptz NOT NULL,
-    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT bid_sessions_offer_check CHECK (offered_fare >= 0),
+    CONSTRAINT bid_sessions_route_metrics_check CHECK (distance_km >= 0 AND duration_minutes >= 0),
+    CONSTRAINT bid_sessions_coordinates_check CHECK (
+        pickup_latitude BETWEEN -90 AND 90
+        AND pickup_longitude BETWEEN -180 AND 180
+        AND dropoff_latitude BETWEEN -90 AND 90
+        AND dropoff_longitude BETWEEN -180 AND 180
+    )
 );
 
 CREATE INDEX bidsession_expires_at_created_at

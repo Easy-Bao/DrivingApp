@@ -33,19 +33,19 @@ func TestFromPostgresBidSessionMapsNullableIdentityFields(t *testing.T) {
 
 func TestFromPostgresBidOfferMapsDriverSnapshot(t *testing.T) {
 	offer, err := fromPostgresBidOffer(databasepostgres.BidOffer{
-		ID:                   23,
-		SessionID:            17,
-		DriverID:             11,
-		DriverName:           pgtype.Text{String: "Ada", Valid: true},
-		VehicleType:          pgtype.Text{String: "sedan", Valid: true},
-		ProposedFareCentavos: 3200,
-		Status:               "pending",
-		CreatedAt:            bidTimestamp(time.Now()),
+		ID:           23,
+		SessionID:    17,
+		DriverID:     11,
+		DriverName:   pgtype.Text{String: "Ada", Valid: true},
+		VehicleType:  pgtype.Text{String: "sedan", Valid: true},
+		ProposedFare: 3200,
+		Status:       "pending",
+		CreatedAt:    bidTimestamp(time.Now()),
 	})
 	if err != nil {
 		t.Fatalf("fromPostgresBidOffer() error = %v", err)
 	}
-	if offer.ID != 23 || offer.DriverName != "Ada" || offer.VehicleType != "sedan" || offer.ProposedFareCentavos != 3200 {
+	if offer.ID != 23 || offer.DriverName != "Ada" || offer.VehicleType != "sedan" || offer.ProposedFareAmount != 3200 {
 		t.Fatalf("mapped bid offer = %+v", offer)
 	}
 }

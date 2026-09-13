@@ -41,7 +41,7 @@ void main() {
         dropoffName: 'Vista Slope',
         distanceKm: 3.2,
         durationMinutes: 8,
-        customFareCentavos: 2764,
+        customFareAmount: 2764,
         passengerNote: 'Gate 2',
         targetDriverId: 42,
       ),
@@ -49,10 +49,9 @@ void main() {
 
     expect(result, const Right<Failure, String>('77'));
     expect(sentBody?['target_driver_id'], 42);
-    expect(sentBody?['custom_fare_centavos'], 2764);
+    expect(sentBody?['custom_fare'], 2764);
     expect(sentBody?['dropoff_latitude'], 7.85);
     expect(sentBody?['dropoff_longitude'], 123.45);
-    expect(sentBody, isNot(contains('custom_fare')));
   });
 
   test('exposes legacy repository success through a strict result', () async {
@@ -71,7 +70,7 @@ void main() {
         dropoffName: 'Vista Slope',
         distanceKm: 3.2,
         durationMinutes: 8,
-        customFareCentavos: 2764,
+        customFareAmount: 2764,
         passengerNote: '',
       ),
     );
@@ -80,13 +79,13 @@ void main() {
     expect(result.fold((failure) => failure, (value) => value), '77');
   });
 
-  test('normalizes numeric accepted ride IDs and centavo fare', () async {
+  test('normalizes numeric accepted ride IDs and minor-unit fare', () async {
     when(
       () => dataSource.acceptOffer(sessionId: 'session-1', offerId: 'offer-2'),
     ).thenAnswer(
       (_) async => <String, dynamic>{
         'ride_id': 901,
-        'ride': <String, dynamic>{'fare_centavos': '2764'},
+        'ride': <String, dynamic>{'fare_amount': '2764'},
       },
     );
 
@@ -100,7 +99,7 @@ void main() {
       (_) => throw StateError('Expected an accepted booking.'),
     );
     expect(booking.rideId, '901');
-    expect(booking.fareCentavos, 2764);
+    expect(booking.fareAmount, 2764);
   });
 
   test(
@@ -115,7 +114,7 @@ void main() {
             'driver_name': '',
             'vehicle_type': '',
             'plate_number': '',
-            'proposed_fare_centavos': 2970,
+            'proposed_fare': 2970,
             'status': 'pending',
           },
         ],
@@ -131,7 +130,7 @@ void main() {
       expect(offers.single.offerId, '25');
       expect(offers.single.sessionId, '26');
       expect(offers.single.driverId, '2');
-      expect(offers.single.proposedFareCentavos, 2970);
+      expect(offers.single.proposedFareAmount, 2970);
     },
   );
 }

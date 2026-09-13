@@ -58,7 +58,7 @@ func TestIdempotencyReplaysSuccessfulResponse(t *testing.T) {
 		request := httptest.NewRequest(
 			http.MethodPost,
 			"/api/v1/rides",
-			strings.NewReader(`{"fare_centavos":100}`),
+			strings.NewReader(`{"fare_amount":100}`),
 		)
 		request.Header.Set("Idempotency-Key", "ride-key-1")
 		response := httptest.NewRecorder()
@@ -83,11 +83,11 @@ func TestIdempotencyRejectsKeyReuseWithDifferentBody(t *testing.T) {
 		}),
 	)
 
-	first := httptest.NewRequest(http.MethodPost, "/api/v1/rides", strings.NewReader(`{"fare_centavos":100}`))
+	first := httptest.NewRequest(http.MethodPost, "/api/v1/rides", strings.NewReader(`{"fare_amount":100}`))
 	first.Header.Set("Idempotency-Key", "ride-key-2")
 	handler.ServeHTTP(httptest.NewRecorder(), first)
 
-	second := httptest.NewRequest(http.MethodPost, "/api/v1/rides", strings.NewReader(`{"fare_centavos":200}`))
+	second := httptest.NewRequest(http.MethodPost, "/api/v1/rides", strings.NewReader(`{"fare_amount":200}`))
 	second.Header.Set("Idempotency-Key", "ride-key-2")
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, second)
@@ -103,7 +103,7 @@ func TestIdempotencyFailsClosedWhenStoreIsUnavailable(t *testing.T) {
 			called = true
 		}),
 	)
-	request := httptest.NewRequest(http.MethodPost, "/api/v1/rides", strings.NewReader(`{"fare_centavos":100}`))
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/rides", strings.NewReader(`{"fare_amount":100}`))
 	request.Header.Set("Idempotency-Key", "ride-key-3")
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
@@ -183,7 +183,7 @@ func TestIdempotencyScopesKeysToAuthorizationAndQuery(t *testing.T) {
 		request := httptest.NewRequest(
 			http.MethodPost,
 			"/api/v1/rides?mode=direct",
-			strings.NewReader(`{"fare_centavos":100}`),
+			strings.NewReader(`{"fare_amount":100}`),
 		)
 		request.Header.Set("Authorization", token)
 		request.Header.Set("Idempotency-Key", "scoped-key")

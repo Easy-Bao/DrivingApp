@@ -24,7 +24,7 @@ void main() {
             'pickup_name': 'Mountain View',
             'dropoff_name': 'Aikido of Mountain View',
             'ride_type': 'solo',
-            'fare_centavos': 2973,
+            'fare_amount': 2973,
             'distance_km': 1.8,
             'duration_minutes': 6,
             'passenger_name': 'Ana Maria',

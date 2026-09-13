@@ -14,7 +14,7 @@ func TestEnvelopeEncodeDecodeRoundTrip(t *testing.T) {
 		RideOfferCreated,
 		time.Date(2026, time.August, 10, 12, 0, 0, 0, time.FixedZone("PHT", 8*60*60)),
 		Scope{RideID: "ride-1", DriverID: "driver-1"},
-		map[string]any{"offer_id": "offer-1", "fare_centavos": 12000},
+		map[string]any{"offer_id": "offer-1", "fare_amount": 12000},
 	)
 	if err != nil {
 		t.Fatalf("New() error = %v", err)

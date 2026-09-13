@@ -50,7 +50,7 @@ func NewRideService(
 	service.bookingService = booking.NewService(booking.Dependencies{
 		Writer:           repository,
 		ResolveRoute:     service.authoritativeRoute,
-		CalculateFare:    pricingConfig.FareCentavos,
+		CalculateFare:    pricingConfig.FareAmount,
 		PublishRide:      service.publishRide,
 		HasRouteProvider: false,
 	})
@@ -85,7 +85,7 @@ func NewRideServiceWithRouteCalculator(
 	service.bookingService = booking.NewService(booking.Dependencies{
 		Writer:           repository,
 		ResolveRoute:     service.authoritativeRoute,
-		CalculateFare:    pricingConfig.FareCentavos,
+		CalculateFare:    pricingConfig.FareAmount,
 		PublishRide:      service.publishRide,
 		HasRouteProvider: calculator != nil,
 	})
@@ -120,58 +120,8 @@ func (service *RideService) log() *slog.Logger {
 func (service *RideService) PricingConfig() PricingConfig {
 	return service.pricingConfig
 }
-func (service *RideService) CreateRide(ctx context.Context, passengerID int, fareCentavos int64) (domain.Ride, error) {
-	return service.bookingService.Create(ctx, passengerID, fareCentavos)
-}
-func (service *RideService) SubmitBid(
-	ctx context.Context,
-	rideID int,
-	driverID int,
-	fareCentavos int64,
-) (domain.Bid, error) {
-	invalidRideID := rideID <= 0
-	invalidDriverID := driverID <= 0
-	invalidFare := fareCentavos <= 0
-	if invalidRideID || invalidDriverID || invalidFare {
-		return domain.Bid{}, domain.ErrInvalidFareOffer
-	}
-	if service.repository == nil {
-		return domain.Bid{}, errRidePersistenceUnavailable
-	}
-	bid, err := service.repository.CreateBid(ctx, domain.Bid{
-		RideID:       rideID,
-		DriverID:     driverID,
-		FareCentavos: fareCentavos,
-		Status:       "pending",
-	})
-	if err != nil {
-		return domain.Bid{}, fmt.Errorf("create bid: %w", err)
-	}
-	ride, rideErr := service.repository.Get(ctx, rideID)
-	if rideErr == nil {
-		service.publishRide(
-			ctx,
-			rideOfferUpdatedEvent,
-			ride,
-			map[string]any{"bid": bid},
-		)
-	} else {
-		service.log().DebugContext(ctx, "load ride after bid creation failed; skip ride update", "error", rideErr)
-	}
-	return bid, nil
-}
-func (service *RideService) AcceptBid(ctx context.Context, bidID, driverID int) (domain.Bid, domain.Ride, error) {
-	bid, ride, err := service.repository.AcceptBid(ctx, bidID, driverID)
-	if err != nil {
-		return domain.Bid{}, domain.Ride{}, fmt.Errorf("accept bid: %w", err)
-	}
-	service.publishRide(
-		ctx,
-		rideMatchedEvent,
-		ride,
-		map[string]any{"ride": ride, "bid": bid},
-	)
-	return bid, ride, nil
+func (service *RideService) CreateRide(ctx context.Context, passengerID int, fareAmount int64) (domain.Ride, error) {
+	return service.bookingService.Create(ctx, passengerID, fareAmount)
 }
 func (service *RideService) Get(ctx context.Context, id int) (domain.Ride, error) {
 	if service.repository == nil {
@@ -300,7 +250,7 @@ func (service *RideService) UpdateStatus(ctx context.Context, rideID, actorID in
 }
 
 func (service *RideService) CalculateFare(distanceKm, durationMinutes float64) int64 {
-	return service.pricingConfig.FareCentavos(distanceKm, durationMinutes)
+	return service.pricingConfig.FareAmount(distanceKm, durationMinutes)
 }
 
 func validateTrip(

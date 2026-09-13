@@ -1,4 +1,3 @@
-// Package lifecycle owns participant-authorized ride state transitions.
 package lifecycle
 
 import (
@@ -16,14 +15,11 @@ var ErrPersistenceUnavailable = errors.New("ride lifecycle persistence is unavai
 // RideEventPublisher routes a post-persistence event for an authoritative ride.
 type RideEventPublisher func(ctx context.Context, eventType event.Type, ride domain.Ride, payload map[string]any)
 
-// Dependencies collects the persistence and event seams used by lifecycle
-// decisions.
 type Dependencies struct {
 	Store       ports.RideLifecycleStore
 	PublishRide RideEventPublisher
 }
 
-// Service enforces participant authorization before persisting ride transitions.
 type Service struct {
 	store       ports.RideLifecycleStore
 	publishRide RideEventPublisher
@@ -36,7 +32,6 @@ func NewService(dependencies Dependencies) *Service {
 	}
 }
 
-// AcceptRide delegates an atomic driver-to-ride match to the lifecycle port.
 func (service *Service) AcceptRide(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
 	if service.store == nil {
 		return domain.Ride{}, ErrPersistenceUnavailable

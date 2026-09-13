@@ -4,9 +4,8 @@ CREATE TABLE driver_profiles (
     name text NOT NULL,
     vehicle_type text NOT NULL,
     plate_number text NOT NULL,
-    rating double precision NOT NULL DEFAULT 0,
-    is_online boolean NOT NULL DEFAULT false,
-    wallet_balance_centavos bigint NOT NULL DEFAULT 0
+    rating double precision NOT NULL DEFAULT 0 CHECK (rating BETWEEN 0 AND 5),
+    is_online boolean NOT NULL DEFAULT false
 );
 
 CREATE TABLE passenger_profiles (

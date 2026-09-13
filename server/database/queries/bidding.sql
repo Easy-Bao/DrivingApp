@@ -32,7 +32,7 @@ SELECT EXISTS (
 INSERT INTO bid_sessions (
     passenger_id, ride_type, pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name, passenger_note,
-    distance_km, duration_minutes, offered_fare_centavos, status,
+    distance_km, duration_minutes, offered_fare, status,
     target_driver_id, expires_at, created_at
 )
 VALUES (
@@ -41,20 +41,18 @@ VALUES (
 )
 RETURNING id, passenger_id, ride_type, pickup_latitude, pickup_longitude,
     pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
-    passenger_note, distance_km, duration_minutes, offered_fare_centavos,
+    passenger_note, distance_km, duration_minutes, offered_fare,
     status, target_driver_id, accepted_driver_id, expires_at, created_at;
 
 -- name: GetOnlineDriverProfileForBidding :one
-SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online,
-    wallet_balance_centavos
+SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online
 FROM driver_profiles
 WHERE user_id = $1
   AND is_online = true
 LIMIT 1;
 
 -- name: LockOnlineDriverProfileForBidding :one
-SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online,
-    wallet_balance_centavos
+SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online
 FROM driver_profiles
 WHERE user_id = $1
   AND is_online = true
@@ -72,7 +70,7 @@ SELECT sessions.id, sessions.passenger_id, sessions.ride_type,
     sessions.pickup_latitude, sessions.pickup_longitude, sessions.pickup_name,
     sessions.dropoff_latitude, sessions.dropoff_longitude, sessions.dropoff_name,
     sessions.passenger_note, sessions.distance_km, sessions.duration_minutes,
-    sessions.offered_fare_centavos, sessions.status, sessions.target_driver_id,
+    sessions.offered_fare, sessions.status, sessions.target_driver_id,
     sessions.accepted_driver_id, sessions.expires_at, sessions.created_at
 FROM bid_sessions AS sessions
 WHERE sessions.status = 'open'
@@ -85,7 +83,7 @@ SELECT sessions.id, sessions.passenger_id, sessions.ride_type,
     sessions.pickup_latitude, sessions.pickup_longitude, sessions.pickup_name,
     sessions.dropoff_latitude, sessions.dropoff_longitude, sessions.dropoff_name,
     sessions.passenger_note, sessions.distance_km, sessions.duration_minutes,
-    sessions.offered_fare_centavos, sessions.status, sessions.target_driver_id,
+    sessions.offered_fare, sessions.status, sessions.target_driver_id,
     sessions.accepted_driver_id, sessions.expires_at, sessions.created_at
 FROM bid_sessions AS sessions
 WHERE sessions.status = 'open'
@@ -104,7 +102,7 @@ LIMIT 50;
 -- name: GetBidSessionByID :one
 SELECT id, passenger_id, ride_type, pickup_latitude, pickup_longitude,
     pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
-    passenger_note, distance_km, duration_minutes, offered_fare_centavos,
+    passenger_note, distance_km, duration_minutes, offered_fare,
     status, target_driver_id, accepted_driver_id, expires_at, created_at
 FROM bid_sessions
 WHERE id = $1
@@ -113,7 +111,7 @@ LIMIT 1;
 -- name: LockActiveBidSessionForOffer :one
 SELECT id, passenger_id, ride_type, pickup_latitude, pickup_longitude,
     pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
-    passenger_note, distance_km, duration_minutes, offered_fare_centavos,
+    passenger_note, distance_km, duration_minutes, offered_fare,
     status, target_driver_id, accepted_driver_id, expires_at, created_at
 FROM bid_sessions
 WHERE id = $1
@@ -124,7 +122,7 @@ FOR UPDATE;
 
 -- name: ListBidOffersBySession :many
 SELECT id, session_id, driver_id, driver_name, plate_number, vehicle_type,
-    proposed_fare_centavos, status, created_at
+    proposed_fare, status, created_at
 FROM bid_offers
 WHERE session_id = $1
 ORDER BY created_at;
@@ -141,11 +139,11 @@ SELECT EXISTS (
 -- name: CreateBidOffer :one
 INSERT INTO bid_offers (
     session_id, driver_id, driver_name, plate_number, vehicle_type,
-    proposed_fare_centavos, status
+    proposed_fare, status
 )
 VALUES ($1, $2, $3, $4, $5, $6, 'pending')
 RETURNING id, session_id, driver_id, driver_name, plate_number, vehicle_type,
-    proposed_fare_centavos, status, created_at;
+    proposed_fare, status, created_at;
 
 -- name: CancelBidSession :one
 UPDATE bid_sessions
@@ -155,12 +153,12 @@ WHERE id = $1
   AND status = 'open'
 RETURNING id, passenger_id, ride_type, pickup_latitude, pickup_longitude,
     pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
-    passenger_note, distance_km, duration_minutes, offered_fare_centavos,
+    passenger_note, distance_km, duration_minutes, offered_fare,
     status, target_driver_id, accepted_driver_id, expires_at, created_at;
 
 -- name: GetPendingBidOffer :one
 SELECT id, session_id, driver_id, driver_name, plate_number, vehicle_type,
-    proposed_fare_centavos, status, created_at
+    proposed_fare, status, created_at
 FROM bid_offers
 WHERE session_id = $1
   AND driver_id = $2
@@ -173,4 +171,4 @@ SET status = 'rejected'
 WHERE id = $1
   AND status = 'pending'
 RETURNING id, session_id, driver_id, driver_name, plate_number, vehicle_type,
-    proposed_fare_centavos, status, created_at;
+    proposed_fare, status, created_at;

@@ -100,9 +100,7 @@ final class RideHistoryRepositoryImpl({required this._remoteDataSource})
       return Right(
         RideHistoryOverview(
           rides: _mapPage(rawPage),
-          weeklyFareCentavos: SafeParse.toInt(
-            summary['this_week_fare_centavos'],
-          ),
+          weeklyFareAmount: SafeParse.toInt(summary['this_week_fare_amount']),
           weeklyRideCount: SafeParse.toInt(
             summary['this_week_completed_rides'],
           ),
@@ -151,7 +149,7 @@ final class RideHistoryRepositoryImpl({required this._remoteDataSource})
       destLat: SafeParse.toDouble(raw['dropoff_latitude']),
       destLng: SafeParse.toDouble(raw['dropoff_longitude']),
       date: _formatCreatedAt(raw['completed_at'] ?? raw['created_at']),
-      price: _formatPrice(raw['fare'], raw['fare_centavos']),
+      price: _formatPrice(raw['fare'], raw['fare_amount']),
       status: SafeParse.toStringValue(raw['status'], 'unknown'),
       driverId: SafeParse.toStringValue(raw['driver_id']),
       driverName: _firstNonEmpty(raw['driver_name'], raw['driverName']),
@@ -173,10 +171,10 @@ final class RideHistoryRepositoryImpl({required this._remoteDataSource})
     }
   }
 
-  String _formatPrice(dynamic price, dynamic fareCentavos) {
+  String _formatPrice(dynamic price, dynamic fareAmount) {
     final fareDouble = price != null
         ? SafeParse.toDouble(price)
-        : SafeParse.toDouble(fareCentavos) / 100;
+        : SafeParse.toDouble(fareAmount) / 100;
     return formatPesoAmount(fareDouble);
   }
 

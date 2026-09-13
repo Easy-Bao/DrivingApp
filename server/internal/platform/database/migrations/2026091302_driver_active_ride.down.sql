@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS rides_one_active_ride_per_driver_idx;

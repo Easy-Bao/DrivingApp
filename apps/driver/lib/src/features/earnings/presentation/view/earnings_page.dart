@@ -76,7 +76,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
         ? Map<String, dynamic>.from(raw)
         : const <String, dynamic>{};
     return _EarningsSummary(
-      total: SafeParse.toDouble(data['earnings_centavos']) / 100,
+      total: SafeParse.toDouble(data['earnings_amount']) / 100,
       tripsCount: SafeParse.toInt(data['completed_trips']),
       days: const [],
     );
@@ -114,7 +114,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     );
     return _EarnDay(
       label(index, date),
-      SafeParse.toDouble(bucket['earnings_centavos']) / 100,
+      SafeParse.toDouble(bucket['earnings_amount']) / 100,
       isCurrent: currentIndex == index || (date != null && _sameDay(date, now)),
     );
   }

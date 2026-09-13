@@ -20,7 +20,6 @@ type Querier interface {
 	CountRides(ctx context.Context) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
 	CreateAcceptedRide(ctx context.Context, arg CreateAcceptedRideParams) (Ride, error)
-	CreateBid(ctx context.Context, arg CreateBidParams) (Bid, error)
 	CreateBidOffer(ctx context.Context, arg CreateBidOfferParams) (BidOffer, error)
 	CreateBidSession(ctx context.Context, arg CreateBidSessionParams) (BidSession, error)
 	CreateDriverDocument(ctx context.Context, arg CreateDriverDocumentParams) (DriverDocument, error)
@@ -36,7 +35,6 @@ type Querier interface {
 	CreateRideSettlementForCash(ctx context.Context, arg CreateRideSettlementForCashParams) (RideSettlement, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateWalletLedger(ctx context.Context, arg CreateWalletLedgerParams) error
-	CreditDriverProfileWallet(ctx context.Context, arg CreditDriverProfileWalletParams) error
 	CreditDriverWalletAccount(ctx context.Context, arg CreditDriverWalletAccountParams) (DriverWalletAccount, error)
 	DeleteNotification(ctx context.Context, arg DeleteNotificationParams) (int64, error)
 	DeletePrivateObjectByStorageKey(ctx context.Context, storageKey string) error
@@ -63,7 +61,6 @@ type Querier interface {
 	HasActiveBidSession(ctx context.Context, arg HasActiveBidSessionParams) (bool, error)
 	HasActivePassengerRide(ctx context.Context, passengerID int32) (bool, error)
 	HasPassengerReviewForRide(ctx context.Context, rideID int32) (bool, error)
-	HasPendingBid(ctx context.Context, arg HasPendingBidParams) (bool, error)
 	HasPendingBidOffer(ctx context.Context, arg HasPendingBidOfferParams) (bool, error)
 	HasReviewForRide(ctx context.Context, rideID pgtype.Int4) (bool, error)
 	ListActiveBidSessions(ctx context.Context, expiresAt pgtype.Timestamptz) ([]BidSession, error)
@@ -83,12 +80,9 @@ type Querier interface {
 	LockActiveBidSessionForOffer(ctx context.Context, arg LockActiveBidSessionForOfferParams) (BidSession, error)
 	LockCompletedRideForCashSettlement(ctx context.Context, arg LockCompletedRideForCashSettlementParams) (Ride, error)
 	LockOnlineDriverProfileForBidding(ctx context.Context, userID int32) (DriverProfile, error)
-	LockPendingBidForAcceptance(ctx context.Context, arg LockPendingBidForAcceptanceParams) (Bid, error)
 	LockPendingBidOfferForAcceptance(ctx context.Context, arg LockPendingBidOfferForAcceptanceParams) (BidOffer, error)
 	LockRequestedRideForAcceptance(ctx context.Context, id int32) (Ride, error)
-	LockRequestedRideForBid(ctx context.Context, id int32) (int32, error)
 	LockUserForBidSession(ctx context.Context, id int32) (int32, error)
-	MarkBidAccepted(ctx context.Context, id int32) (Bid, error)
 	MarkBidOfferAccepted(ctx context.Context, id int32) (BidOffer, error)
 	MarkBidSessionAccepted(ctx context.Context, arg MarkBidSessionAcceptedParams) (BidSession, error)
 	MarkRidePaidFromSettlement(ctx context.Context, arg MarkRidePaidFromSettlementParams) (Ride, error)

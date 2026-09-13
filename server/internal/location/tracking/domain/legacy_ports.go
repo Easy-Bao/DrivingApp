@@ -1,5 +1,3 @@
-// Package domain contains the location-tracking value objects and compatibility
-// contracts used by the tracking module.
 package domain
 
 import "context"

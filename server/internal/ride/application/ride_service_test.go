@@ -31,14 +31,6 @@ func (stub *ridesRepositoryStub) CreateRide(_ context.Context, ride domain.Ride)
 	return stub.created, nil
 }
 
-func (stub *ridesRepositoryStub) CreateBid(context.Context, domain.Bid) (domain.Bid, error) {
-	return domain.Bid{}, nil
-}
-
-func (stub *ridesRepositoryStub) AcceptBid(context.Context, int, int) (domain.Bid, domain.Ride, error) {
-	return domain.Bid{}, domain.Ride{}, nil
-}
-
 func (stub *ridesRepositoryStub) Get(context.Context, int) (domain.Ride, error) {
 	return stub.ride, nil
 }
@@ -115,7 +107,7 @@ func TestCreateRideBuildsRequestedRide(t *testing.T) {
 	if ride.ID != 12 {
 		t.Fatalf("created ride id = %d, want 12", ride.ID)
 	}
-	if stub.created.PassengerID != 2 || stub.created.FareCentavos != 2500 ||
+	if stub.created.PassengerID != 2 || stub.created.FareAmount != 2500 ||
 		stub.created.Status != "requested" || stub.created.RideType != "Solo Ride" {
 		t.Fatalf("persisted ride = %#v", stub.created)
 	}
@@ -126,20 +118,20 @@ func TestCreateSessionUsesServerMinimumAndAcceptsValidCustomFare(t *testing.T) {
 	service := NewRideService(stub, testPricingConfig(t), nil)
 	custom := int64(5000)
 	session, err := service.CreateSession(context.Background(), domain.BidSession{
-		PassengerID:        7,
-		PickupLatitude:     6.7,
-		PickupLongitude:    122.1,
-		DropoffLatitude:    6.71,
-		DropoffLongitude:   122.11,
-		DistanceKm:         2,
-		DurationMinutes:    10,
-		CustomFareCentavos: &custom,
+		PassengerID:      7,
+		PickupLatitude:   6.7,
+		PickupLongitude:  122.1,
+		DropoffLatitude:  6.71,
+		DropoffLongitude: 122.11,
+		DistanceKm:       2,
+		DurationMinutes:  10,
+		CustomFareAmount: &custom,
 	})
 	if err != nil {
 		t.Fatalf("CreateSession returned error: %v", err)
 	}
-	if session.OfferedFareCentavos != custom || stub.session.OfferedFareCentavos != custom {
-		t.Fatalf("expected custom fare %d, got %d", custom, session.OfferedFareCentavos)
+	if session.OfferedFareAmount != custom || stub.session.OfferedFareAmount != custom {
+		t.Fatalf("expected custom fare %d, got %d", custom, session.OfferedFareAmount)
 	}
 }
 
@@ -161,14 +153,14 @@ func TestCreateSessionUsesAuthoritativeRouteMetrics(t *testing.T) {
 	)
 	custom := int64(4000)
 	session, err := service.CreateSession(context.Background(), domain.BidSession{
-		PassengerID:        7,
-		PickupLatitude:     6.7,
-		PickupLongitude:    122.1,
-		DropoffLatitude:    6.71,
-		DropoffLongitude:   122.11,
-		DistanceKm:         0.01,
-		DurationMinutes:    0.01,
-		CustomFareCentavos: &custom,
+		PassengerID:      7,
+		PickupLatitude:   6.7,
+		PickupLongitude:  122.1,
+		DropoffLatitude:  6.71,
+		DropoffLongitude: 122.11,
+		DistanceKm:       0.01,
+		DurationMinutes:  0.01,
+		CustomFareAmount: &custom,
 	})
 	if err != nil {
 		t.Fatalf("CreateSession returned error: %v", err)
@@ -176,8 +168,8 @@ func TestCreateSessionUsesAuthoritativeRouteMetrics(t *testing.T) {
 	if session.DistanceKm != 4 || session.DurationMinutes != 20 {
 		t.Fatalf("expected server route metrics, got %.2f km and %.2f minutes", session.DistanceKm, session.DurationMinutes)
 	}
-	if session.OfferedFareCentavos != custom {
-		t.Fatalf("expected custom fare %d, got %d", custom, session.OfferedFareCentavos)
+	if session.OfferedFareAmount != custom {
+		t.Fatalf("expected custom fare %d, got %d", custom, session.OfferedFareAmount)
 	}
 }
 
@@ -243,14 +235,14 @@ func TestCreateSessionRejectsOfferBelowCalculatedMinimum(t *testing.T) {
 	service := NewRideService(stub, testPricingConfig(t), nil)
 	custom := int64(1)
 	_, err := service.CreateSession(context.Background(), domain.BidSession{
-		PassengerID:        7,
-		PickupLatitude:     6.7,
-		PickupLongitude:    122.1,
-		DropoffLatitude:    6.71,
-		DropoffLongitude:   122.11,
-		DistanceKm:         2,
-		DurationMinutes:    10,
-		CustomFareCentavos: &custom,
+		PassengerID:      7,
+		PickupLatitude:   6.7,
+		PickupLongitude:  122.1,
+		DropoffLatitude:  6.71,
+		DropoffLongitude: 122.11,
+		DistanceKm:       2,
+		DurationMinutes:  10,
+		CustomFareAmount: &custom,
 	})
 	if !errors.Is(err, domain.ErrInvalidFareOffer) {
 		t.Fatalf("expected ErrInvalidFareOffer, got %v", err)

@@ -320,12 +320,12 @@ class RideFlowCubit({
     final ride = await _loadCompletedRide();
     if (ride == null) return null;
 
-    final fareCentavos = ride.fareCentavos;
-    if (fareCentavos == null || fareCentavos <= 0) {
+    final fareAmount = ride.fareAmount;
+    if (fareAmount == null || fareAmount <= 0) {
       emit(RideFlowError(ErrorHandler.getErrorMessage(const ServerFailure())));
       return null;
     }
-    return fareCentavos / 100;
+    return fareAmount / 100;
   }
 
   Future<double?> confirmCashPayment() async {
@@ -336,13 +336,13 @@ class RideFlowCubit({
     }
 
     try {
-      int? fareCentavos;
+      int? fareAmount;
       Failure? settleFailure;
       (await _rideRepository.settleCashResult(rideId)).fold(
         (failure) => settleFailure = failure,
-        (value) => fareCentavos = value,
+        (value) => fareAmount = value,
       );
-      if (fareCentavos == null) {
+      if (fareAmount == null) {
         final failure = settleFailure;
         emit(
           RideFlowError(
@@ -353,7 +353,7 @@ class RideFlowCubit({
         );
         return null;
       }
-      final finalFare = fareCentavos! / 100;
+      final finalFare = fareAmount! / 100;
       emit(RideFlowComplete(fare: finalFare));
       return finalFare;
     } catch (error) {

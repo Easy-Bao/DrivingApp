@@ -90,11 +90,11 @@ void main() {
       when(() => _performanceRepository.fetchStats('driver-42')).thenAnswer(
         (_) async => const Right(
           DriverPerformanceStats(
-            todayEarningsCentavos: 2817,
+            todayEarningsAmount: 2817,
             todayCompletedTrips: 1,
             totalTrips: 6,
             completedTrips: 6,
-            totalEarningsCentavos: 2817,
+            totalEarningsAmount: 2817,
             averageRating: 5,
           ),
         ),

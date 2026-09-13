@@ -134,34 +134,34 @@ func fromPostgresRide(item databasepostgres.Ride) (domain.Ride, error) {
 	}
 	var commissionBPS *int64
 	if item.CommissionBps.Valid {
-		value := item.CommissionBps.Int64
+		value := int64(item.CommissionBps.Int32)
 		commissionBPS = &value
 	}
 	return domain.Ride{
-		ID:                   int(item.ID),
-		PassengerID:          int(item.PassengerID),
-		DriverID:             driverID,
-		Status:               item.Status,
-		FareCentavos:         item.FareCentavos,
-		RideType:             item.RideType,
-		PickupLatitude:       rideFloatValue(item.PickupLatitude),
-		PickupLongitude:      rideFloatValue(item.PickupLongitude),
-		PickupName:           rideTextValue(item.PickupName),
-		DropoffLatitude:      rideFloatValue(item.DropoffLatitude),
-		DropoffLongitude:     rideFloatValue(item.DropoffLongitude),
-		DropoffName:          rideTextValue(item.DropoffName),
-		DistanceKm:           rideFloatValue(item.DistanceKm),
-		DurationMinutes:      rideFloatValue(item.DurationMinutes),
-		DriverName:           rideTextValue(item.DriverName),
-		VehicleType:          rideTextValue(item.VehicleType),
-		PlateNumber:          rideTextValue(item.PlateNumber),
-		DriverRating:         rideFloatValue(item.DriverRating),
-		CreatedAt:            rideTimestamp(item.CreatedAt),
-		CompletedAt:          rideTimestamp(item.CompletedAt),
-		PaymentStatus:        item.PaymentStatus,
-		CommissionBPS:        commissionBPS,
-		CommissionCentavos:   item.CommissionCentavos,
-		DriverPayoutCentavos: item.DriverPayoutCentavos,
+		ID:                 int(item.ID),
+		PassengerID:        int(item.PassengerID),
+		DriverID:           driverID,
+		Status:             item.Status,
+		FareAmount:         item.FareAmount,
+		RideType:           item.RideType,
+		PickupLatitude:     rideFloatValue(item.PickupLatitude),
+		PickupLongitude:    rideFloatValue(item.PickupLongitude),
+		PickupName:         rideTextValue(item.PickupName),
+		DropoffLatitude:    rideFloatValue(item.DropoffLatitude),
+		DropoffLongitude:   rideFloatValue(item.DropoffLongitude),
+		DropoffName:        rideTextValue(item.DropoffName),
+		DistanceKm:         rideFloatValue(item.DistanceKm),
+		DurationMinutes:    rideFloatValue(item.DurationMinutes),
+		DriverName:         rideTextValue(item.DriverName),
+		VehicleType:        rideTextValue(item.VehicleType),
+		PlateNumber:        rideTextValue(item.PlateNumber),
+		DriverRating:       rideFloatValue(item.DriverRating),
+		CreatedAt:          rideTimestamp(item.CreatedAt),
+		CompletedAt:        rideTimestamp(item.CompletedAt),
+		PaymentStatus:      item.PaymentStatus,
+		CommissionBPS:      commissionBPS,
+		CommissionAmount:   item.CommissionAmount,
+		DriverPayoutAmount: item.DriverPayoutAmount,
 	}, nil
 }
 

@@ -21,6 +21,12 @@ For a schema change, add the versioned migration first, update the matching
 sqlc schema definition, regenerate the checked-in client, and run the backend
 validation gates before sharing the change with another environment.
 
+### Monetary values
+
+Monetary database and API fields use integer minor units: `₱100.00` is sent
+and stored as `10000`. Names such as `fare_amount` and `driver_payout_amount`
+omit the unit suffix, but never use floating-point values for money.
+
 ## DDD, hexagonal, and modular-monolith boundaries
 
 Each `internal/<module>` directory is a bounded module inside the one Go

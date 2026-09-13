@@ -413,7 +413,7 @@ class BookingBloc({
       distanceKm: distanceKm,
       durationMinutes: durationMinutes,
       targetDriverId: targetDriverId,
-      customFareCentavos: (trip.fare * 100).round(),
+      customFareAmount: (trip.fare * 100).round(),
       passengerNote: trip.passengerNote,
     );
   }
@@ -636,8 +636,8 @@ class BookingBloc({
           dropoffLng == null) {
         throw StateError('Booking coordinates are unavailable');
       }
-      final fareCentavos =
-          acceptedBooking!.fareCentavos ?? (event.proposedFare * 100).round();
+      final fareAmount =
+          acceptedBooking!.fareAmount ?? (event.proposedFare * 100).round();
       await _secureSessionService.saveActiveRideId(rideId);
       _cleanupSubscriptions();
       _activeTrip = null;
@@ -660,7 +660,7 @@ class BookingBloc({
             destLat: dropoffLat,
             destLng: dropoffLng,
             date: DateTime.now().toLocal().toString(),
-            price: formatPesoAmount(fareCentavos / 100),
+            price: formatPesoAmount(fareAmount / 100),
             status: RideStatus.accepted.value,
             driverId: event.driverId,
             driverName: event.driverName,

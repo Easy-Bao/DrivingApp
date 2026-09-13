@@ -24,7 +24,7 @@ final class const RideHistoryLoaded({
   this.nextOffset,
   this.isLoadingMore = false,
   this.loadMoreError,
-  this.weeklyFareCentavos = 0,
+  this.weeklyFareAmount = 0,
   this.weeklyRideCount = 0,
 }) extends RideHistoryState {
   final List<RideHistory> past;
@@ -33,7 +33,7 @@ final class const RideHistoryLoaded({
   final int? nextOffset;
   final bool isLoadingMore;
   final String? loadMoreError;
-  final int weeklyFareCentavos;
+  final int weeklyFareAmount;
   final int weeklyRideCount;
 
   List<RideHistory> get rides => [...upcoming, ...past];
@@ -46,7 +46,7 @@ final class const RideHistoryLoaded({
     bool? isLoadingMore,
     String? loadMoreError,
     bool clearLoadMoreError = false,
-    int? weeklyFareCentavos,
+    int? weeklyFareAmount,
     int? weeklyRideCount,
   }) {
     return RideHistoryLoaded(
@@ -58,7 +58,7 @@ final class const RideHistoryLoaded({
       loadMoreError: clearLoadMoreError
           ? null
           : loadMoreError ?? this.loadMoreError,
-      weeklyFareCentavos: weeklyFareCentavos ?? this.weeklyFareCentavos,
+      weeklyFareAmount: weeklyFareAmount ?? this.weeklyFareAmount,
       weeklyRideCount: weeklyRideCount ?? this.weeklyRideCount,
     );
   }
@@ -71,7 +71,7 @@ final class const RideHistoryLoaded({
     nextOffset,
     isLoadingMore,
     loadMoreError,
-    weeklyFareCentavos,
+    weeklyFareAmount,
     weeklyRideCount,
   ];
 }

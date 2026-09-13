@@ -5,8 +5,8 @@ SELECT
     COUNT(*) FILTER (
         WHERE r.status IN ('requested', 'assigned', 'accepted', 'arrived', 'in_transit')
     )::bigint AS active_trips,
-    COALESCE(SUM(r.driver_payout_centavos) FILTER (WHERE r.status = 'completed'), 0)::bigint
-        AS total_earnings_centavos,
+    COALESCE(SUM(r.driver_payout_amount) FILTER (WHERE r.status = 'completed'), 0)::bigint
+        AS total_earnings_amount,
     COUNT(*) FILTER (
         WHERE r.status = 'completed'
           AND (
@@ -18,7 +18,7 @@ SELECT
               )
           )
     )::bigint AS today_completed_trips,
-    COALESCE(SUM(r.driver_payout_centavos) FILTER (
+    COALESCE(SUM(r.driver_payout_amount) FILTER (
         WHERE r.status = 'completed'
           AND (
               (r.completed_at >= sqlc.arg('day_start') AND r.completed_at < sqlc.arg('day_end'))
@@ -28,7 +28,7 @@ SELECT
                   AND r.created_at < sqlc.arg('day_end')
               )
           )
-    ), 0)::bigint AS today_earnings_centavos,
+    ), 0)::bigint AS today_earnings_amount,
     COALESCE((
         SELECT AVG(review.rating)
         FROM reviews AS review
@@ -38,7 +38,7 @@ FROM rides AS r
 WHERE r.driver_id = sqlc.arg('driver_id');
 
 -- name: ListDriverEarnings :many
-SELECT created_at, completed_at, driver_payout_centavos
+SELECT created_at, completed_at, driver_payout_amount
 FROM rides
 WHERE driver_id = sqlc.arg('driver_id')
   AND status = 'completed'
@@ -57,7 +57,7 @@ WHERE driver_id = sqlc.arg('driver_id')
 
 -- name: GetPassengerActivitySummary :one
 SELECT
-    COALESCE(SUM(r.fare_centavos) FILTER (
+    COALESCE(SUM(r.fare_amount) FILTER (
         WHERE r.status = 'completed'
           AND (
               (r.completed_at >= sqlc.arg('week_start') AND r.completed_at < sqlc.arg('week_end'))
@@ -67,7 +67,7 @@ SELECT
                   AND r.created_at < sqlc.arg('week_end')
               )
           )
-    ), 0)::bigint AS this_week_fare_centavos,
+    ), 0)::bigint AS this_week_fare_amount,
     COUNT(*) FILTER (
         WHERE r.status = 'completed'
           AND (

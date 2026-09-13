@@ -1,4 +1,3 @@
-// Package settlement owns ride cash-settlement use cases.
 package settlement
 
 import (
@@ -16,13 +15,11 @@ var ErrPersistenceUnavailable = errors.New("cash settlement persistence is unava
 // RideEventPublisher routes a post-persistence event for an authoritative ride.
 type RideEventPublisher func(ctx context.Context, eventType event.Type, ride domain.Ride, payload map[string]any)
 
-// Dependencies collects the settlement persistence and event seams.
 type Dependencies struct {
 	Store       ports.CashSettlementStore
 	PublishRide RideEventPublisher
 }
 
-// Service validates and records cash settlement at the application boundary.
 type Service struct {
 	store       ports.CashSettlementStore
 	publishRide RideEventPublisher
@@ -35,7 +32,6 @@ func NewService(dependencies Dependencies) *Service {
 	}
 }
 
-// SettleCash records the driver's cash settlement after validating the actor.
 func (service *Service) SettleCash(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
 	if service.store == nil {
 		return domain.Ride{}, ErrPersistenceUnavailable

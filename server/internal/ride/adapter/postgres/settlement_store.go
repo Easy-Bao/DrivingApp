@@ -55,11 +55,11 @@ func (repository *RideRepository) SettleCash(ctx context.Context, rideID, driver
 	if settlementRecord.PaymentStatus == "paid" {
 		if rideItem.PaymentStatus != "paid" {
 			rideItem, err = transactionQueries.MarkRidePaidFromSettlement(ctx, databasepostgres.MarkRidePaidFromSettlementParams{
-				CashReceivedAt:       settlementRecord.CashReceivedAt,
-				CommissionBps:        settlementRecord.CommissionBps,
-				CommissionCentavos:   settlementRecord.CommissionCentavos,
-				DriverPayoutCentavos: settlementRecord.DriverPayoutCentavos,
-				RideID:               rideItem.ID,
+				CashReceivedAt:     settlementRecord.CashReceivedAt,
+				CommissionBps:      settlementRecord.CommissionBps,
+				CommissionAmount:   settlementRecord.CommissionAmount,
+				DriverPayoutAmount: settlementRecord.DriverPayoutAmount,
+				RideID:             rideItem.ID,
 			})
 			if err != nil {
 				return domain.Ride{}, fmt.Errorf("synchronize paid ride: %w", err)
@@ -82,38 +82,38 @@ func (repository *RideRepository) SettleCash(ctx context.Context, rideID, driver
 		}
 		return domain.Ride{}, fmt.Errorf("find settlement driver profile: %w", err)
 	}
-	if settlement.DriverPayoutCentavos <= 0 {
+	if settlement.DriverPayoutAmount <= 0 {
 		return domain.Ride{}, domain.ErrInvalidFareOffer
 	}
 	if err := transactionQueries.CreateWalletLedger(ctx, databasepostgres.CreateWalletLedgerParams{
-		DriverID:           dbDriverID,
-		RideID:             rideItem.ID,
-		AmountCentavos:     settlement.DriverPayoutCentavos,
-		CommissionCentavos: settlement.CommissionCentavos,
-		Kind:               "cash_trip",
+		DriverID:         dbDriverID,
+		RideID:           rideItem.ID,
+		Amount:           settlement.DriverPayoutAmount,
+		CommissionAmount: settlement.CommissionAmount,
+		Kind:             "cash_trip",
 	}); err != nil {
 		return domain.Ride{}, fmt.Errorf("create cash settlement ledger: %w", err)
 	}
-	if err := creditNativeDriverWallet(ctx, transactionQueries, profile, settlement.DriverPayoutCentavos); err != nil {
+	if err := creditNativeDriverWallet(ctx, transactionQueries, profile, settlement.DriverPayoutAmount); err != nil {
 		return domain.Ride{}, fmt.Errorf("credit driver wallet: %w", err)
 	}
 	settledAt := pgtype.Timestamptz{Time: time.Now().UTC(), Valid: true}
 	if _, err := transactionQueries.MarkRideSettlementPaid(ctx, databasepostgres.MarkRideSettlementPaidParams{
-		CashReceivedAt:       settledAt,
-		SettledAt:            settledAt,
-		CommissionBps:        pgtype.Int8{Int64: settlement.CommissionBPS, Valid: true},
-		CommissionCentavos:   settlement.CommissionCentavos,
-		DriverPayoutCentavos: settlement.DriverPayoutCentavos,
-		SettlementID:         settlementRecord.ID,
+		CashReceivedAt:     settledAt,
+		SettledAt:          settledAt,
+		CommissionBps:      pgtype.Int4{Int32: int32(settlement.CommissionBPS), Valid: true},
+		CommissionAmount:   settlement.CommissionAmount,
+		DriverPayoutAmount: settlement.DriverPayoutAmount,
+		SettlementID:       settlementRecord.ID,
 	}); err != nil {
 		return domain.Ride{}, fmt.Errorf("mark ride settlement paid: %w", err)
 	}
 	rideItem, err = transactionQueries.MarkRidePaidFromSettlement(ctx, databasepostgres.MarkRidePaidFromSettlementParams{
-		CashReceivedAt:       settledAt,
-		CommissionBps:        pgtype.Int8{Int64: settlement.CommissionBPS, Valid: true},
-		CommissionCentavos:   settlement.CommissionCentavos,
-		DriverPayoutCentavos: settlement.DriverPayoutCentavos,
-		RideID:               rideItem.ID,
+		CashReceivedAt:     settledAt,
+		CommissionBps:      pgtype.Int4{Int32: int32(settlement.CommissionBPS), Valid: true},
+		CommissionAmount:   settlement.CommissionAmount,
+		DriverPayoutAmount: settlement.DriverPayoutAmount,
+		RideID:             rideItem.ID,
 	})
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("mark ride paid: %w", err)
@@ -142,46 +142,46 @@ func (repository *RideRepository) ensureNativeRideSettlement(
 	}
 	commissionBPS := repository.platformCommissionBPS
 	if hasSettlement && settlementRecord.CommissionBps.Valid {
-		commissionBPS = settlementRecord.CommissionBps.Int64
+		commissionBPS = int64(settlementRecord.CommissionBps.Int32)
 	} else if rideItem.CommissionBps.Valid {
-		commissionBPS = rideItem.CommissionBps.Int64
+		commissionBPS = int64(rideItem.CommissionBps.Int32)
 	}
-	settlement, err := domain.NewSettlementSnapshot(rideItem.FareCentavos, commissionBPS)
+	settlement, err := domain.NewSettlementSnapshot(rideItem.FareAmount, commissionBPS)
 	if err != nil {
 		return databasepostgres.RideSettlement{}, domain.SettlementSnapshot{}, err
 	}
 	if !hasSettlement {
 		settlementRecord, err = queries.CreateRideSettlementForCash(ctx, databasepostgres.CreateRideSettlementForCashParams{
-			RideID:               rideItem.ID,
-			GrossFareCentavos:    settlement.FareCentavos,
-			CommissionBps:        pgtype.Int8{Int64: settlement.CommissionBPS, Valid: true},
-			CommissionCentavos:   settlement.CommissionCentavos,
-			DriverPayoutCentavos: settlement.DriverPayoutCentavos,
-			PaymentStatus:        rideItem.PaymentStatus,
-			CashReceivedAt:       rideItem.CashReceivedAt,
-			SettledAt:            rideItem.CashReceivedAt,
+			RideID:             rideItem.ID,
+			GrossFare:          settlement.FareAmount,
+			CommissionBps:      pgtype.Int4{Int32: int32(settlement.CommissionBPS), Valid: true},
+			CommissionAmount:   settlement.CommissionAmount,
+			DriverPayoutAmount: settlement.DriverPayoutAmount,
+			PaymentStatus:      rideItem.PaymentStatus,
+			CashReceivedAt:     rideItem.CashReceivedAt,
+			SettledAt:          rideItem.CashReceivedAt,
 		})
 		if err != nil {
 			return databasepostgres.RideSettlement{}, domain.SettlementSnapshot{}, fmt.Errorf("create ride settlement: %w", err)
 		}
 		return settlementRecord, settlement, nil
 	}
-	if settlementRecord.GrossFareCentavos != settlement.FareCentavos {
+	if settlementRecord.GrossFare != settlement.FareAmount {
 		return databasepostgres.RideSettlement{}, domain.SettlementSnapshot{}, domain.ErrInvalidSettlement
 	}
 	if settlementRecord.CommissionBps.Valid &&
-		(settlementRecord.CommissionCentavos != settlement.CommissionCentavos ||
-			settlementRecord.DriverPayoutCentavos != settlement.DriverPayoutCentavos) {
+		(settlementRecord.CommissionAmount != settlement.CommissionAmount ||
+			settlementRecord.DriverPayoutAmount != settlement.DriverPayoutAmount) {
 		return databasepostgres.RideSettlement{}, domain.SettlementSnapshot{}, domain.ErrInvalidSettlement
 	}
 	if !settlementRecord.CommissionBps.Valid && settlementRecord.PaymentStatus != "paid" {
 		settlementRecord, err = queries.UpdateRideSettlementEconomics(
 			ctx,
 			databasepostgres.UpdateRideSettlementEconomicsParams{
-				CommissionBps:        pgtype.Int8{Int64: settlement.CommissionBPS, Valid: true},
-				CommissionCentavos:   settlement.CommissionCentavos,
-				DriverPayoutCentavos: settlement.DriverPayoutCentavos,
-				SettlementID:         settlementRecord.ID,
+				CommissionBps:      pgtype.Int4{Int32: int32(settlement.CommissionBPS), Valid: true},
+				CommissionAmount:   settlement.CommissionAmount,
+				DriverPayoutAmount: settlement.DriverPayoutAmount,
+				SettlementID:       settlementRecord.ID,
 			},
 		)
 		if err != nil {
@@ -197,29 +197,23 @@ func creditNativeDriverWallet(
 	ctx context.Context,
 	queries *databasepostgres.Queries,
 	profile databasepostgres.DriverProfile,
-	amountCentavos int64,
+	amount int64,
 ) error {
 	account, err := queries.GetDriverWalletAccountForUpdate(ctx, profile.UserID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		account, err = queries.CreateDriverWalletAccount(ctx, databasepostgres.CreateDriverWalletAccountParams{
-			DriverID:        profile.UserID,
-			BalanceCentavos: profile.WalletBalanceCentavos,
+			DriverID: profile.UserID,
+			Balance:  0,
 		})
 	}
 	if err != nil {
 		return fmt.Errorf("load driver wallet account: %w", err)
 	}
 	if _, err := queries.CreditDriverWalletAccount(ctx, databasepostgres.CreditDriverWalletAccountParams{
-		ID:              account.ID,
-		BalanceCentavos: amountCentavos,
+		ID:      account.ID,
+		Balance: amount,
 	}); err != nil {
 		return fmt.Errorf("credit driver wallet account: %w", err)
-	}
-	if err := queries.CreditDriverProfileWallet(ctx, databasepostgres.CreditDriverProfileWalletParams{
-		UserID:                profile.UserID,
-		WalletBalanceCentavos: amountCentavos,
-	}); err != nil {
-		return fmt.Errorf("credit driver profile wallet: %w", err)
 	}
 	return nil
 }

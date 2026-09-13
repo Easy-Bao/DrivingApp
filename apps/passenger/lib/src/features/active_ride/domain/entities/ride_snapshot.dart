@@ -18,7 +18,7 @@ final class const RideSnapshot({
   final double? dropoffLongitude,
   final double? distanceKm,
   final double? durationMinutes,
-  final int? fareCentavos,
+  final int? fareAmount,
 }) extends Equatable {
   factory fromJson(Map<String, dynamic> json, {String? fallbackId}) {
     final {
@@ -38,7 +38,7 @@ final class const RideSnapshot({
       'dropoff_longitude': rawDropoffLongitude,
       'distance_km': rawDistanceKm,
       'duration_minutes': rawDurationMinutes,
-      'fare_centavos': rawFareCentavos,
+      'fare_amount': rawFareAmount,
       'fare': rawFare,
     } = _canonicalPayload(
       json,
@@ -61,11 +61,11 @@ final class const RideSnapshot({
       dropoffLongitude: SafeParse.toNullableDouble(rawDropoffLongitude),
       distanceKm: SafeParse.toNullableDouble(rawDistanceKm),
       durationMinutes: SafeParse.toNullableDouble(rawDurationMinutes),
-      fareCentavos: _fareCentavos(rawFareCentavos, rawFare),
+      fareAmount: _fareAmount(rawFareAmount, rawFare),
     );
   }
 
-  double? get farePesos => fareCentavos == null ? null : fareCentavos! / 100;
+  double? get farePesos => fareAmount == null ? null : fareAmount! / 100;
 
   bool get isTerminal =>
       const {'completed', 'canceled', 'cancelled'}.contains(status);
@@ -88,7 +88,7 @@ final class const RideSnapshot({
     dropoffLongitude,
     distanceKm,
     durationMinutes,
-    fareCentavos,
+    fareAmount,
   ];
 }
 
@@ -115,14 +115,14 @@ Map<String, Object?> _canonicalPayload(Map<String, dynamic> json) => {
       json['destination_longitude'],
   'distance_km': json['distance_km'] ?? json['distance'],
   'duration_minutes': json['duration_minutes'] ?? json['durationMinutes'],
-  'fare_centavos': json['fare_centavos'],
+  'fare_amount': json['fare_amount'],
   'fare': json['fare'],
 };
 
-int? _fareCentavos(Object? rawCentavos, Object? rawPesos) {
-  final centavos = SafeParse.toNullableDouble(rawCentavos);
-  if (centavos != null && centavos.isFinite && centavos >= 0) {
-    return centavos.round();
+int? _fareAmount(Object? rawAmount, Object? rawPesos) {
+  final amount = SafeParse.toNullableDouble(rawAmount);
+  if (amount != null && amount.isFinite && amount >= 0) {
+    return amount.round();
   }
   final pesos = SafeParse.toNullableDouble(rawPesos);
   if (pesos != null && pesos.isFinite && pesos >= 0) {

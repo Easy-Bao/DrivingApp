@@ -36,7 +36,7 @@ class RideOfferRemoteDataSourceImpl(this._dio)
     final response = await _dio.post<Map<String, dynamic>>(
       '/api/v1/bids/${Uri.encodeComponent(sessionId)}/offer',
       data: {
-        'proposed_fare_centavos': (offerPrice * 100).round(),
+        'proposed_fare': (offerPrice * 100).round(),
         'driver_name': ?driverName,
         'plate_number': ?plateNumber,
         'vehicle_type': ?vehicleType,

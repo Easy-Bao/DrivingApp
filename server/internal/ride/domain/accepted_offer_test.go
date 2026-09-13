@@ -10,14 +10,14 @@ func TestNewRideFromAcceptedOfferUsesAcceptedDriverFare(t *testing.T) {
 
 	ride, err := NewRideFromAcceptedOffer(
 		BidSession{
-			ID:                  17,
-			PassengerID:         7,
-			OfferedFareCentavos: passengerFare,
+			ID:                17,
+			PassengerID:       7,
+			OfferedFareAmount: passengerFare,
 		},
 		BidOffer{
-			SessionID:            17,
-			DriverID:             11,
-			ProposedFareCentavos: driverFare,
+			SessionID:          17,
+			DriverID:           11,
+			ProposedFareAmount: driverFare,
 		},
 		DriverAssignmentSnapshot{},
 		1500,
@@ -26,15 +26,15 @@ func TestNewRideFromAcceptedOfferUsesAcceptedDriverFare(t *testing.T) {
 		t.Fatalf("NewRideFromAcceptedOffer() error = %v", err)
 	}
 
-	if ride.FareCentavos != driverFare {
+	if ride.FareAmount != driverFare {
 		t.Fatalf(
 			"accepted ride fare = %d, want selected driver offer %d",
-			ride.FareCentavos,
+			ride.FareAmount,
 			driverFare,
 		)
 	}
 	if ride.CommissionBPS == nil || *ride.CommissionBPS != 1500 ||
-		ride.CommissionCentavos != 480 || ride.DriverPayoutCentavos != 2720 {
+		ride.CommissionAmount != 480 || ride.DriverPayoutAmount != 2720 {
 		t.Fatalf("accepted ride settlement = %#v", ride)
 	}
 }
@@ -42,7 +42,7 @@ func TestNewRideFromAcceptedOfferUsesAcceptedDriverFare(t *testing.T) {
 func TestNewRideFromAcceptedOfferRejectsMismatchedSession(t *testing.T) {
 	_, err := NewRideFromAcceptedOffer(
 		BidSession{ID: 17, PassengerID: 7},
-		BidOffer{SessionID: 18, DriverID: 11, ProposedFareCentavos: 3200},
+		BidOffer{SessionID: 18, DriverID: 11, ProposedFareAmount: 3200},
 		DriverAssignmentSnapshot{},
 		1500,
 	)

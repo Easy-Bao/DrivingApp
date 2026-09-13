@@ -84,22 +84,22 @@ func (repository *RideRepository) CreateSession(
 	}
 
 	created, err := transactionQueries.CreateBidSession(ctx, databasepostgres.CreateBidSessionParams{
-		PassengerID:         passengerID,
-		RideType:            value.RideType,
-		PickupLatitude:      value.PickupLatitude,
-		PickupLongitude:     value.PickupLongitude,
-		PickupName:          value.PickupName,
-		DropoffLatitude:     value.DropoffLatitude,
-		DropoffLongitude:    value.DropoffLongitude,
-		DropoffName:         value.DropoffName,
-		PassengerNote:       toPostgresBidText(value.PassengerNote),
-		DistanceKm:          value.DistanceKm,
-		DurationMinutes:     value.DurationMinutes,
-		OfferedFareCentavos: value.OfferedFareCentavos,
-		Status:              value.Status,
-		TargetDriverID:      targetDriverID,
-		ExpiresAt:           bidTimestamp(value.ExpiresAt),
-		CreatedAt:           createdAt,
+		PassengerID:      passengerID,
+		RideType:         value.RideType,
+		PickupLatitude:   value.PickupLatitude,
+		PickupLongitude:  value.PickupLongitude,
+		PickupName:       value.PickupName,
+		DropoffLatitude:  value.DropoffLatitude,
+		DropoffLongitude: value.DropoffLongitude,
+		DropoffName:      value.DropoffName,
+		PassengerNote:    toPostgresBidText(value.PassengerNote),
+		DistanceKm:       value.DistanceKm,
+		DurationMinutes:  value.DurationMinutes,
+		OfferedFare:      value.OfferedFareAmount,
+		Status:           value.Status,
+		TargetDriverID:   targetDriverID,
+		ExpiresAt:        bidTimestamp(value.ExpiresAt),
+		CreatedAt:        createdAt,
 	})
 	if err != nil {
 		if isPostgresUniqueViolation(err) {
@@ -143,7 +143,7 @@ func (repository *RideRepository) ActiveSessions(ctx context.Context, driverID *
 		if countErr != nil {
 			return nil, fmt.Errorf("count active driver rides: %w", countErr)
 		}
-		if activeRides >= 5 {
+		if activeRides > 0 {
 			return []domain.BidSession{}, nil
 		}
 		items, err = repository.queries.ListTargetedActiveBidSessions(
@@ -195,7 +195,7 @@ func (repository *RideRepository) PlaceOffer(ctx context.Context, value domain.B
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.BidOffer{}, err
 	}
-	if value.ProposedFareCentavos <= 0 {
+	if value.ProposedFareAmount <= 0 {
 		return domain.BidOffer{}, domain.ErrInvalidFareOffer
 	}
 	sessionID, err := toPostgresRideID(value.SessionID, "session id")
@@ -237,8 +237,8 @@ func (repository *RideRepository) PlaceOffer(ctx context.Context, value domain.B
 	if err != nil {
 		return domain.BidOffer{}, fmt.Errorf("count active driver rides: %w", err)
 	}
-	if activeRides >= 5 {
-		return domain.BidOffer{}, domain.ErrDriverAtCapacity
+	if activeRides > 0 {
+		return domain.BidOffer{}, domain.ErrDriverHasActiveRide
 	}
 	existing, err := transactionQueries.HasPendingBidOffer(ctx, databasepostgres.HasPendingBidOfferParams{
 		SessionID: sessionID,
@@ -251,12 +251,12 @@ func (repository *RideRepository) PlaceOffer(ctx context.Context, value domain.B
 		return domain.BidOffer{}, domain.ErrDuplicateBid
 	}
 	created, err := transactionQueries.CreateBidOffer(ctx, databasepostgres.CreateBidOfferParams{
-		SessionID:            sessionID,
-		DriverID:             driverID,
-		DriverName:           toPostgresBidText(profile.Name),
-		PlateNumber:          toPostgresBidText(profile.PlateNumber),
-		VehicleType:          toPostgresBidText(profile.VehicleType),
-		ProposedFareCentavos: value.ProposedFareCentavos,
+		SessionID:    sessionID,
+		DriverID:     driverID,
+		DriverName:   toPostgresBidText(profile.Name),
+		PlateNumber:  toPostgresBidText(profile.PlateNumber),
+		VehicleType:  toPostgresBidText(profile.VehicleType),
+		ProposedFare: value.ProposedFareAmount,
 	})
 	if err != nil {
 		if isPostgresUniqueViolation(err) {
@@ -370,24 +370,24 @@ func fromPostgresBidSession(item databasepostgres.BidSession) (domain.BidSession
 		acceptedDriverID = &value
 	}
 	return domain.BidSession{
-		ID:                  int(item.ID),
-		PassengerID:         int(item.PassengerID),
-		RideType:            item.RideType,
-		PickupLatitude:      item.PickupLatitude,
-		PickupLongitude:     item.PickupLongitude,
-		PickupName:          item.PickupName,
-		DropoffLatitude:     item.DropoffLatitude,
-		DropoffLongitude:    item.DropoffLongitude,
-		DropoffName:         item.DropoffName,
-		PassengerNote:       bidTextValue(item.PassengerNote),
-		DistanceKm:          item.DistanceKm,
-		DurationMinutes:     item.DurationMinutes,
-		OfferedFareCentavos: item.OfferedFareCentavos,
-		Status:              item.Status,
-		TargetDriverID:      targetDriverID,
-		AcceptedDriverID:    acceptedDriverID,
-		ExpiresAt:           item.ExpiresAt.Time,
-		CreatedAt:           item.CreatedAt.Time,
+		ID:                int(item.ID),
+		PassengerID:       int(item.PassengerID),
+		RideType:          item.RideType,
+		PickupLatitude:    item.PickupLatitude,
+		PickupLongitude:   item.PickupLongitude,
+		PickupName:        item.PickupName,
+		DropoffLatitude:   item.DropoffLatitude,
+		DropoffLongitude:  item.DropoffLongitude,
+		DropoffName:       item.DropoffName,
+		PassengerNote:     bidTextValue(item.PassengerNote),
+		DistanceKm:        item.DistanceKm,
+		DurationMinutes:   item.DurationMinutes,
+		OfferedFareAmount: item.OfferedFare,
+		Status:            item.Status,
+		TargetDriverID:    targetDriverID,
+		AcceptedDriverID:  acceptedDriverID,
+		ExpiresAt:         item.ExpiresAt.Time,
+		CreatedAt:         item.CreatedAt.Time,
 	}, nil
 }
 
@@ -396,15 +396,15 @@ func fromPostgresBidOffer(item databasepostgres.BidOffer) (domain.BidOffer, erro
 		return domain.BidOffer{}, errors.New("bid offer creation time is null")
 	}
 	return domain.BidOffer{
-		ID:                   int64(item.ID),
-		SessionID:            int(item.SessionID),
-		DriverID:             int(item.DriverID),
-		DriverName:           bidTextValue(item.DriverName),
-		PlateNumber:          bidTextValue(item.PlateNumber),
-		VehicleType:          bidTextValue(item.VehicleType),
-		ProposedFareCentavos: item.ProposedFareCentavos,
-		Status:               item.Status,
-		CreatedAt:            item.CreatedAt.Time,
+		ID:                 int64(item.ID),
+		SessionID:          int(item.SessionID),
+		DriverID:           int(item.DriverID),
+		DriverName:         bidTextValue(item.DriverName),
+		PlateNumber:        bidTextValue(item.PlateNumber),
+		VehicleType:        bidTextValue(item.VehicleType),
+		ProposedFareAmount: item.ProposedFare,
+		Status:             item.Status,
+		CreatedAt:          item.CreatedAt.Time,
 	}, nil
 }
 

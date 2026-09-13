@@ -17,7 +17,7 @@ func newBiddingService(service *RideService) *biddingapplication.Service {
 	return biddingapplication.NewService(biddingapplication.Dependencies{
 		Store:              store,
 		ResolveRoute:       service.authoritativeRoute,
-		CalculateFare:      service.pricingConfig.FareCentavos,
+		CalculateFare:      service.pricingConfig.FareAmount,
 		PublishRide:        service.publishRide,
 		PublishSession:     service.publishSession,
 		PublishDriverOffer: service.publishDriverOffer,

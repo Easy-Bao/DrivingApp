@@ -53,7 +53,7 @@ func fromPostgresDriverEarning(item databasepostgres.ListDriverEarningsRow) (dom
 		completedAt = item.CompletedAt.Time
 	}
 	return domain.DriverEarning{
-		CompletedAt:    completedAt.UTC(),
-		PayoutCentavos: item.DriverPayoutCentavos,
+		CompletedAt:  completedAt.UTC(),
+		PayoutAmount: item.DriverPayoutAmount,
 	}, nil
 }

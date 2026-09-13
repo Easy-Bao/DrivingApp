@@ -1,4 +1,3 @@
-// Package bidding owns bid-session and offer use cases.
 package bidding
 
 import (
@@ -15,7 +14,6 @@ import (
 
 var ErrPersistenceUnavailable = errors.New("bidding persistence is unavailable")
 
-// FareCalculator keeps pricing policy injectable at the application boundary.
 type FareCalculator func(distanceKm, durationMinutes float64) int64
 
 // RideEventPublisher routes a post-persistence event for an authoritative ride.
@@ -32,8 +30,6 @@ type SessionEventPublisher func(
 // DriverOfferPublisher keeps offer delivery targeted to its driver.
 type DriverOfferPublisher func(ctx context.Context, offer domain.BidOffer, payload map[string]any)
 
-// Dependencies collects the policies and ports that make bidding independent
-// of concrete adapters.
 type Dependencies struct {
 	Store              ports.BiddingStore
 	ResolveRoute       ports.RouteResolver
@@ -43,7 +39,6 @@ type Dependencies struct {
 	PublishDriverOffer DriverOfferPublisher
 }
 
-// Service keeps bid-session decisions behind the ride application's ports.
 type Service struct {
 	store              ports.BiddingStore
 	resolveRoute       ports.RouteResolver
@@ -96,12 +91,12 @@ func (service *Service) CreateSession(ctx context.Context, session domain.BidSes
 	if minimumFare <= 0 {
 		return domain.BidSession{}, domain.ErrInvalidTrip
 	}
-	session.OfferedFareCentavos = minimumFare
-	if session.CustomFareCentavos != nil {
-		if *session.CustomFareCentavos < minimumFare {
+	session.OfferedFareAmount = minimumFare
+	if session.CustomFareAmount != nil {
+		if *session.CustomFareAmount < minimumFare {
 			return domain.BidSession{}, domain.ErrInvalidFareOffer
 		}
-		session.OfferedFareCentavos = *session.CustomFareCentavos
+		session.OfferedFareAmount = *session.CustomFareAmount
 	}
 	if session.Status == "" {
 		session.Status = "open"
@@ -148,15 +143,15 @@ func (service *Service) PlaceOffer(ctx context.Context, offer domain.BidOffer) (
 	if service.store == nil {
 		return domain.BidOffer{}, ErrPersistenceUnavailable
 	}
-	if offer.DriverID <= 0 || offer.ProposedFareCentavos < 0 {
+	if offer.DriverID <= 0 || offer.ProposedFareAmount < 0 {
 		return domain.BidOffer{}, domain.ErrInvalidFareOffer
 	}
-	if offer.ProposedFareCentavos == 0 {
+	if offer.ProposedFareAmount == 0 {
 		session, err := service.store.Session(ctx, offer.SessionID)
 		if err != nil {
 			return domain.BidOffer{}, fmt.Errorf("load bid session for offer: %w", err)
 		}
-		offer.ProposedFareCentavos = session.OfferedFareCentavos
+		offer.ProposedFareAmount = session.OfferedFareAmount
 	}
 	if offer.Status == "" {
 		offer.Status = "pending"

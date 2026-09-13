@@ -96,13 +96,16 @@ class _DriverAppState extends State<DriverApp> with WidgetsBindingObserver {
           ),
         ),
       ],
-      child:
-          BlocBuilder<DriverLocationAccessCubit, DriverLocationAccessViewState>(
-            builder: (context, locationState) => ModularApp.router(
-              theme: EasyRideAppTheme.data,
-              debugShowCheckedModeBanner: false,
-              title: 'EasyRide Driver',
-              builder: (context, child) =>
+      child: ModularApp.router(
+        theme: EasyRideAppTheme.data,
+        debugShowCheckedModeBanner: false,
+        title: 'EasyRide Driver',
+        builder: (context, child) =>
+            BlocBuilder<
+              DriverLocationAccessCubit,
+              DriverLocationAccessViewState
+            >(
+              builder: (context, locationState) =>
                   StreamBuilder<NetworkAvailabilityStatus>(
                     stream: _networkAvailabilityCoordinator.changes,
                     initialData: _networkAvailabilityCoordinator.status,
@@ -123,7 +126,7 @@ class _DriverAppState extends State<DriverApp> with WidgetsBindingObserver {
                     ),
                   ),
             ),
-          ),
+      ),
     );
   }
 

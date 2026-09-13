@@ -268,7 +268,7 @@ final class DashboardRepositoryImpl({
       }
       return (await _performanceRepository.fetchStats(driverId)).map(
         (stats) => DriverDashboardStats(
-          earnings: stats.todayEarningsCentavos / 100,
+          earnings: stats.todayEarningsAmount / 100,
           completedTrips: stats.todayCompletedTrips,
         ),
       );

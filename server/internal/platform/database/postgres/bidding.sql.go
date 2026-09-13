@@ -19,7 +19,7 @@ WHERE id = $1
   AND status = 'open'
 RETURNING id, passenger_id, ride_type, pickup_latitude, pickup_longitude,
     pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
-    passenger_note, distance_km, duration_minutes, offered_fare_centavos,
+    passenger_note, distance_km, duration_minutes, offered_fare,
     status, target_driver_id, accepted_driver_id, expires_at, created_at
 `
 
@@ -44,7 +44,7 @@ func (q *Queries) CancelBidSession(ctx context.Context, arg CancelBidSessionPara
 		&i.PassengerNote,
 		&i.DistanceKm,
 		&i.DurationMinutes,
-		&i.OfferedFareCentavos,
+		&i.OfferedFare,
 		&i.Status,
 		&i.TargetDriverID,
 		&i.AcceptedDriverID,
@@ -71,20 +71,20 @@ func (q *Queries) CountActiveRidesForDriver(ctx context.Context, driverID pgtype
 const createBidOffer = `-- name: CreateBidOffer :one
 INSERT INTO bid_offers (
     session_id, driver_id, driver_name, plate_number, vehicle_type,
-    proposed_fare_centavos, status
+    proposed_fare, status
 )
 VALUES ($1, $2, $3, $4, $5, $6, 'pending')
 RETURNING id, session_id, driver_id, driver_name, plate_number, vehicle_type,
-    proposed_fare_centavos, status, created_at
+    proposed_fare, status, created_at
 `
 
 type CreateBidOfferParams struct {
-	SessionID            int32       `db:"session_id"`
-	DriverID             int32       `db:"driver_id"`
-	DriverName           pgtype.Text `db:"driver_name"`
-	PlateNumber          pgtype.Text `db:"plate_number"`
-	VehicleType          pgtype.Text `db:"vehicle_type"`
-	ProposedFareCentavos int64       `db:"proposed_fare_centavos"`
+	SessionID    int32       `db:"session_id"`
+	DriverID     int32       `db:"driver_id"`
+	DriverName   pgtype.Text `db:"driver_name"`
+	PlateNumber  pgtype.Text `db:"plate_number"`
+	VehicleType  pgtype.Text `db:"vehicle_type"`
+	ProposedFare int64       `db:"proposed_fare"`
 }
 
 func (q *Queries) CreateBidOffer(ctx context.Context, arg CreateBidOfferParams) (BidOffer, error) {
@@ -94,7 +94,7 @@ func (q *Queries) CreateBidOffer(ctx context.Context, arg CreateBidOfferParams) 
 		arg.DriverName,
 		arg.PlateNumber,
 		arg.VehicleType,
-		arg.ProposedFareCentavos,
+		arg.ProposedFare,
 	)
 	var i BidOffer
 	err := row.Scan(
@@ -104,7 +104,7 @@ func (q *Queries) CreateBidOffer(ctx context.Context, arg CreateBidOfferParams) 
 		&i.DriverName,
 		&i.PlateNumber,
 		&i.VehicleType,
-		&i.ProposedFareCentavos,
+		&i.ProposedFare,
 		&i.Status,
 		&i.CreatedAt,
 	)
@@ -115,7 +115,7 @@ const createBidSession = `-- name: CreateBidSession :one
 INSERT INTO bid_sessions (
     passenger_id, ride_type, pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name, passenger_note,
-    distance_km, duration_minutes, offered_fare_centavos, status,
+    distance_km, duration_minutes, offered_fare, status,
     target_driver_id, expires_at, created_at
 )
 VALUES (
@@ -124,27 +124,27 @@ VALUES (
 )
 RETURNING id, passenger_id, ride_type, pickup_latitude, pickup_longitude,
     pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
-    passenger_note, distance_km, duration_minutes, offered_fare_centavos,
+    passenger_note, distance_km, duration_minutes, offered_fare,
     status, target_driver_id, accepted_driver_id, expires_at, created_at
 `
 
 type CreateBidSessionParams struct {
-	PassengerID         int32              `db:"passenger_id"`
-	RideType            string             `db:"ride_type"`
-	PickupLatitude      float64            `db:"pickup_latitude"`
-	PickupLongitude     float64            `db:"pickup_longitude"`
-	PickupName          string             `db:"pickup_name"`
-	DropoffLatitude     float64            `db:"dropoff_latitude"`
-	DropoffLongitude    float64            `db:"dropoff_longitude"`
-	DropoffName         string             `db:"dropoff_name"`
-	PassengerNote       pgtype.Text        `db:"passenger_note"`
-	DistanceKm          float64            `db:"distance_km"`
-	DurationMinutes     float64            `db:"duration_minutes"`
-	OfferedFareCentavos int64              `db:"offered_fare_centavos"`
-	Status              string             `db:"status"`
-	TargetDriverID      pgtype.Int4        `db:"target_driver_id"`
-	ExpiresAt           pgtype.Timestamptz `db:"expires_at"`
-	CreatedAt           pgtype.Timestamptz `db:"created_at"`
+	PassengerID      int32              `db:"passenger_id"`
+	RideType         string             `db:"ride_type"`
+	PickupLatitude   float64            `db:"pickup_latitude"`
+	PickupLongitude  float64            `db:"pickup_longitude"`
+	PickupName       string             `db:"pickup_name"`
+	DropoffLatitude  float64            `db:"dropoff_latitude"`
+	DropoffLongitude float64            `db:"dropoff_longitude"`
+	DropoffName      string             `db:"dropoff_name"`
+	PassengerNote    pgtype.Text        `db:"passenger_note"`
+	DistanceKm       float64            `db:"distance_km"`
+	DurationMinutes  float64            `db:"duration_minutes"`
+	OfferedFare      int64              `db:"offered_fare"`
+	Status           string             `db:"status"`
+	TargetDriverID   pgtype.Int4        `db:"target_driver_id"`
+	ExpiresAt        pgtype.Timestamptz `db:"expires_at"`
+	CreatedAt        pgtype.Timestamptz `db:"created_at"`
 }
 
 func (q *Queries) CreateBidSession(ctx context.Context, arg CreateBidSessionParams) (BidSession, error) {
@@ -160,7 +160,7 @@ func (q *Queries) CreateBidSession(ctx context.Context, arg CreateBidSessionPara
 		arg.PassengerNote,
 		arg.DistanceKm,
 		arg.DurationMinutes,
-		arg.OfferedFareCentavos,
+		arg.OfferedFare,
 		arg.Status,
 		arg.TargetDriverID,
 		arg.ExpiresAt,
@@ -180,7 +180,7 @@ func (q *Queries) CreateBidSession(ctx context.Context, arg CreateBidSessionPara
 		&i.PassengerNote,
 		&i.DistanceKm,
 		&i.DurationMinutes,
-		&i.OfferedFareCentavos,
+		&i.OfferedFare,
 		&i.Status,
 		&i.TargetDriverID,
 		&i.AcceptedDriverID,
@@ -211,7 +211,7 @@ func (q *Queries) ExpireBidSessions(ctx context.Context, arg ExpireBidSessionsPa
 const getBidSessionByID = `-- name: GetBidSessionByID :one
 SELECT id, passenger_id, ride_type, pickup_latitude, pickup_longitude,
     pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
-    passenger_note, distance_km, duration_minutes, offered_fare_centavos,
+    passenger_note, distance_km, duration_minutes, offered_fare,
     status, target_driver_id, accepted_driver_id, expires_at, created_at
 FROM bid_sessions
 WHERE id = $1
@@ -234,7 +234,7 @@ func (q *Queries) GetBidSessionByID(ctx context.Context, id int32) (BidSession, 
 		&i.PassengerNote,
 		&i.DistanceKm,
 		&i.DurationMinutes,
-		&i.OfferedFareCentavos,
+		&i.OfferedFare,
 		&i.Status,
 		&i.TargetDriverID,
 		&i.AcceptedDriverID,
@@ -245,8 +245,7 @@ func (q *Queries) GetBidSessionByID(ctx context.Context, id int32) (BidSession, 
 }
 
 const getOnlineDriverProfileForBidding = `-- name: GetOnlineDriverProfileForBidding :one
-SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online,
-    wallet_balance_centavos
+SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online
 FROM driver_profiles
 WHERE user_id = $1
   AND is_online = true
@@ -264,14 +263,13 @@ func (q *Queries) GetOnlineDriverProfileForBidding(ctx context.Context, userID i
 		&i.PlateNumber,
 		&i.Rating,
 		&i.IsOnline,
-		&i.WalletBalanceCentavos,
 	)
 	return i, err
 }
 
 const getPendingBidOffer = `-- name: GetPendingBidOffer :one
 SELECT id, session_id, driver_id, driver_name, plate_number, vehicle_type,
-    proposed_fare_centavos, status, created_at
+    proposed_fare, status, created_at
 FROM bid_offers
 WHERE session_id = $1
   AND driver_id = $2
@@ -294,7 +292,7 @@ func (q *Queries) GetPendingBidOffer(ctx context.Context, arg GetPendingBidOffer
 		&i.DriverName,
 		&i.PlateNumber,
 		&i.VehicleType,
-		&i.ProposedFareCentavos,
+		&i.ProposedFare,
 		&i.Status,
 		&i.CreatedAt,
 	)
@@ -366,7 +364,7 @@ SELECT sessions.id, sessions.passenger_id, sessions.ride_type,
     sessions.pickup_latitude, sessions.pickup_longitude, sessions.pickup_name,
     sessions.dropoff_latitude, sessions.dropoff_longitude, sessions.dropoff_name,
     sessions.passenger_note, sessions.distance_km, sessions.duration_minutes,
-    sessions.offered_fare_centavos, sessions.status, sessions.target_driver_id,
+    sessions.offered_fare, sessions.status, sessions.target_driver_id,
     sessions.accepted_driver_id, sessions.expires_at, sessions.created_at
 FROM bid_sessions AS sessions
 WHERE sessions.status = 'open'
@@ -397,7 +395,7 @@ func (q *Queries) ListActiveBidSessions(ctx context.Context, expiresAt pgtype.Ti
 			&i.PassengerNote,
 			&i.DistanceKm,
 			&i.DurationMinutes,
-			&i.OfferedFareCentavos,
+			&i.OfferedFare,
 			&i.Status,
 			&i.TargetDriverID,
 			&i.AcceptedDriverID,
@@ -416,7 +414,7 @@ func (q *Queries) ListActiveBidSessions(ctx context.Context, expiresAt pgtype.Ti
 
 const listBidOffersBySession = `-- name: ListBidOffersBySession :many
 SELECT id, session_id, driver_id, driver_name, plate_number, vehicle_type,
-    proposed_fare_centavos, status, created_at
+    proposed_fare, status, created_at
 FROM bid_offers
 WHERE session_id = $1
 ORDER BY created_at
@@ -438,7 +436,7 @@ func (q *Queries) ListBidOffersBySession(ctx context.Context, sessionID int32) (
 			&i.DriverName,
 			&i.PlateNumber,
 			&i.VehicleType,
-			&i.ProposedFareCentavos,
+			&i.ProposedFare,
 			&i.Status,
 			&i.CreatedAt,
 		); err != nil {
@@ -457,7 +455,7 @@ SELECT sessions.id, sessions.passenger_id, sessions.ride_type,
     sessions.pickup_latitude, sessions.pickup_longitude, sessions.pickup_name,
     sessions.dropoff_latitude, sessions.dropoff_longitude, sessions.dropoff_name,
     sessions.passenger_note, sessions.distance_km, sessions.duration_minutes,
-    sessions.offered_fare_centavos, sessions.status, sessions.target_driver_id,
+    sessions.offered_fare, sessions.status, sessions.target_driver_id,
     sessions.accepted_driver_id, sessions.expires_at, sessions.created_at
 FROM bid_sessions AS sessions
 WHERE sessions.status = 'open'
@@ -501,7 +499,7 @@ func (q *Queries) ListTargetedActiveBidSessions(ctx context.Context, arg ListTar
 			&i.PassengerNote,
 			&i.DistanceKm,
 			&i.DurationMinutes,
-			&i.OfferedFareCentavos,
+			&i.OfferedFare,
 			&i.Status,
 			&i.TargetDriverID,
 			&i.AcceptedDriverID,
@@ -521,7 +519,7 @@ func (q *Queries) ListTargetedActiveBidSessions(ctx context.Context, arg ListTar
 const lockActiveBidSessionForOffer = `-- name: LockActiveBidSessionForOffer :one
 SELECT id, passenger_id, ride_type, pickup_latitude, pickup_longitude,
     pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
-    passenger_note, distance_km, duration_minutes, offered_fare_centavos,
+    passenger_note, distance_km, duration_minutes, offered_fare,
     status, target_driver_id, accepted_driver_id, expires_at, created_at
 FROM bid_sessions
 WHERE id = $1
@@ -552,7 +550,7 @@ func (q *Queries) LockActiveBidSessionForOffer(ctx context.Context, arg LockActi
 		&i.PassengerNote,
 		&i.DistanceKm,
 		&i.DurationMinutes,
-		&i.OfferedFareCentavos,
+		&i.OfferedFare,
 		&i.Status,
 		&i.TargetDriverID,
 		&i.AcceptedDriverID,
@@ -563,8 +561,7 @@ func (q *Queries) LockActiveBidSessionForOffer(ctx context.Context, arg LockActi
 }
 
 const lockOnlineDriverProfileForBidding = `-- name: LockOnlineDriverProfileForBidding :one
-SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online,
-    wallet_balance_centavos
+SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online
 FROM driver_profiles
 WHERE user_id = $1
   AND is_online = true
@@ -583,7 +580,6 @@ func (q *Queries) LockOnlineDriverProfileForBidding(ctx context.Context, userID 
 		&i.PlateNumber,
 		&i.Rating,
 		&i.IsOnline,
-		&i.WalletBalanceCentavos,
 	)
 	return i, err
 }
@@ -608,7 +604,7 @@ SET status = 'rejected'
 WHERE id = $1
   AND status = 'pending'
 RETURNING id, session_id, driver_id, driver_name, plate_number, vehicle_type,
-    proposed_fare_centavos, status, created_at
+    proposed_fare, status, created_at
 `
 
 func (q *Queries) RejectBidOffer(ctx context.Context, id int32) (BidOffer, error) {
@@ -621,7 +617,7 @@ func (q *Queries) RejectBidOffer(ctx context.Context, id int32) (BidOffer, error
 		&i.DriverName,
 		&i.PlateNumber,
 		&i.VehicleType,
-		&i.ProposedFareCentavos,
+		&i.ProposedFare,
 		&i.Status,
 		&i.CreatedAt,
 	)

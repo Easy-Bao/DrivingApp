@@ -8,7 +8,7 @@ class const BookingSessionRequest({
   required this.dropoffName,
   required this.distanceKm,
   required this.durationMinutes,
-  required this.customFareCentavos,
+  required this.customFareAmount,
   required this.passengerNote,
   this.targetDriverId,
 }) {
@@ -21,7 +21,7 @@ class const BookingSessionRequest({
   final String dropoffName;
   final double distanceKm;
   final double durationMinutes;
-  final int customFareCentavos;
+  final int customFareAmount;
   final String passengerNote;
   final int? targetDriverId;
 }

@@ -73,13 +73,13 @@ final class DriverRideRepositoryImpl({
   Future<Either<Failure, int>> settleCash(String rideId) async {
     try {
       final data = await _rideDataSource.settleCash(rideId);
-      final fareCentavos = SafeParse.toNullableDouble(data['fare_centavos']);
-      if (fareCentavos == null || fareCentavos <= 0) {
+      final fareAmount = SafeParse.toNullableDouble(data['fare_amount']);
+      if (fareAmount == null || fareAmount <= 0) {
         return const Left(
           ValidationFailure('The settled ride has no payable fare.'),
         );
       }
-      return Right(fareCentavos.round());
+      return Right(fareAmount.round());
     } catch (error) {
       return Left(_mapFailure(error, action: 'settle this cash ride'));
     }

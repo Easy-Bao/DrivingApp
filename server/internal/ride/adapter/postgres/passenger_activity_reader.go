@@ -48,7 +48,7 @@ func fromPostgresPassengerActivitySummary(
 		return domain.PassengerActivitySummary{}, fmt.Errorf("map completed rides: %w", err)
 	}
 	return domain.PassengerActivitySummary{
-		ThisWeekFareCentavos:   row.ThisWeekFareCentavos,
+		ThisWeekFareAmount:     row.ThisWeekFareAmount,
 		ThisWeekCompletedRides: completedRides,
 	}, nil
 }

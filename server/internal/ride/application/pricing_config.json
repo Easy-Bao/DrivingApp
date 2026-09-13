@@ -1,7 +1,7 @@
 {
-  "baseFareCentavos": 2500,
-  "perKilometerCentavos": 100,
-  "perMinuteCentavos": 50,
+  "baseFareAmount": 2500,
+  "perKilometerAmount": 100,
+  "perMinuteAmount": 50,
   "platformCommissionBPS": 1500,
   "ratingPricingConfig": {
     "minimumRatingThreshold": 4.5,

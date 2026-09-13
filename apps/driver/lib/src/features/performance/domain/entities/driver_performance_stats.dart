@@ -1,27 +1,27 @@
 import 'package:equatable/equatable.dart';
 
 class const DriverPerformanceStats({
-  required this.todayEarningsCentavos,
+  required this.todayEarningsAmount,
   required this.todayCompletedTrips,
   required this.totalTrips,
   required this.completedTrips,
-  required this.totalEarningsCentavos,
+  required this.totalEarningsAmount,
   required this.averageRating,
 }) extends Equatable {
-  final int todayEarningsCentavos;
+  final int todayEarningsAmount;
   final int todayCompletedTrips;
   final int totalTrips;
   final int completedTrips;
-  final int totalEarningsCentavos;
+  final int totalEarningsAmount;
   final double averageRating;
 
   @override
   List<Object> get props => [
-    todayEarningsCentavos,
+    todayEarningsAmount,
     todayCompletedTrips,
     totalTrips,
     completedTrips,
-    totalEarningsCentavos,
+    totalEarningsAmount,
     averageRating,
   ];
 }

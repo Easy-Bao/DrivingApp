@@ -19,7 +19,7 @@ func NewRideFromAcceptedOffer(
 	}
 
 	settlement, err := NewSettlementSnapshot(
-		offer.ProposedFareCentavos,
+		offer.ProposedFareAmount,
 		commissionBPS,
 	)
 	if err != nil {
@@ -28,24 +28,24 @@ func NewRideFromAcceptedOffer(
 
 	driverID := offer.DriverID
 	return Ride{
-		PassengerID:          session.PassengerID,
-		DriverID:             &driverID,
-		Status:               "accepted",
-		FareCentavos:         settlement.FareCentavos,
-		RideType:             session.RideType,
-		PickupLatitude:       session.PickupLatitude,
-		PickupLongitude:      session.PickupLongitude,
-		PickupName:           session.PickupName,
-		DropoffLatitude:      session.DropoffLatitude,
-		DropoffLongitude:     session.DropoffLongitude,
-		DropoffName:          session.DropoffName,
-		DistanceKm:           session.DistanceKm,
-		DurationMinutes:      session.DurationMinutes,
-		DriverName:           driver.Name,
-		VehicleType:          driver.VehicleType,
-		PlateNumber:          driver.PlateNumber,
-		CommissionBPS:        &settlement.CommissionBPS,
-		CommissionCentavos:   settlement.CommissionCentavos,
-		DriverPayoutCentavos: settlement.DriverPayoutCentavos,
+		PassengerID:        session.PassengerID,
+		DriverID:           &driverID,
+		Status:             "accepted",
+		FareAmount:         settlement.FareAmount,
+		RideType:           session.RideType,
+		PickupLatitude:     session.PickupLatitude,
+		PickupLongitude:    session.PickupLongitude,
+		PickupName:         session.PickupName,
+		DropoffLatitude:    session.DropoffLatitude,
+		DropoffLongitude:   session.DropoffLongitude,
+		DropoffName:        session.DropoffName,
+		DistanceKm:         session.DistanceKm,
+		DurationMinutes:    session.DurationMinutes,
+		DriverName:         driver.Name,
+		VehicleType:        driver.VehicleType,
+		PlateNumber:        driver.PlateNumber,
+		CommissionBPS:      &settlement.CommissionBPS,
+		CommissionAmount:   settlement.CommissionAmount,
+		DriverPayoutAmount: settlement.DriverPayoutAmount,
 	}, nil
 }

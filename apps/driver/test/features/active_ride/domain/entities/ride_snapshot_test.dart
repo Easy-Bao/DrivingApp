@@ -39,7 +39,7 @@ void main() {
     expect(snapshot.dropoffLongitude, 123.5);
     expect(snapshot.distanceKm, 4.5);
     expect(snapshot.durationMinutes, 12);
-    expect(snapshot.fareCentavos, 12550);
+    expect(snapshot.fareAmount, 12550);
     expect(snapshot.farePesos, 125.5);
   });
 
@@ -52,7 +52,7 @@ void main() {
     expect(snapshot.status, 'requested');
     expect(snapshot.pickupName, 'Pickup');
     expect(snapshot.dropoffName, 'Dropoff');
-    expect(snapshot.fareCentavos, isNull);
+    expect(snapshot.fareAmount, isNull);
     expect(snapshot.isTerminal, isFalse);
   });
 }

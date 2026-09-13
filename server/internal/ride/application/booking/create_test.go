@@ -55,7 +55,7 @@ func TestServiceCreateWithDetailsUsesAuthoritativeMetrics(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateWithDetails returned error: %v", err)
 	}
-	if ride.ID != 41 || ride.DistanceKm != 4 || ride.DurationMinutes != 20 || ride.FareCentavos != 600 {
+	if ride.ID != 41 || ride.DistanceKm != 4 || ride.DurationMinutes != 20 || ride.FareAmount != 600 {
 		t.Fatalf("created ride = %#v", ride)
 	}
 	if writer.created.RideType != "solo" || writer.created.Status != string(domain.RideRequested) {

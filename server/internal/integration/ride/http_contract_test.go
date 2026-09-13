@@ -34,12 +34,6 @@ type activeSessionsRepository struct {
 func (repository *activeSessionsRepository) CreateRide(context.Context, domain.Ride) (domain.Ride, error) {
 	return domain.Ride{}, nil
 }
-func (repository *activeSessionsRepository) CreateBid(context.Context, domain.Bid) (domain.Bid, error) {
-	return domain.Bid{}, nil
-}
-func (repository *activeSessionsRepository) AcceptBid(context.Context, int, int) (domain.Bid, domain.Ride, error) {
-	return domain.Bid{}, domain.Ride{}, nil
-}
 func (repository *activeSessionsRepository) Get(context.Context, int) (domain.Ride, error) {
 	return domain.Ride{}, nil
 }
@@ -210,7 +204,7 @@ func TestDriverAnalyticsAreLimitedToTheAuthenticatedDriver(t *testing.T) {
 	if err := json.NewDecoder(response.Body).Decode(&statsResponse); err != nil {
 		t.Fatalf("decode driver stats: %v", err)
 	}
-	if statsResponse["today_earnings_centavos"] != float64(2817) ||
+	if statsResponse["today_earnings_amount"] != float64(2817) ||
 		statsResponse["today_completed_trips"] != float64(1) {
 		t.Fatalf("daily driver stats are missing: %#v", statsResponse)
 	}
@@ -232,7 +226,7 @@ func TestDriverAnalyticsAreLimitedToTheAuthenticatedDriver(t *testing.T) {
 		t.Fatalf("decode earnings: %v", err)
 	}
 	today, ok := earningsResponse["today"].(map[string]any)
-	if !ok || today["earnings_centavos"] != float64(2817) || today["completed_trips"] != float64(1) {
+	if !ok || today["earnings_amount"] != float64(2817) || today["completed_trips"] != float64(1) {
 		t.Fatalf("unexpected earnings summary: %#v", earningsResponse)
 	}
 
@@ -297,7 +291,7 @@ func TestPassengerActivitySummaryUsesAnAuthoritativeAggregate(t *testing.T) {
 	if err := json.NewDecoder(response.Body).Decode(&summary); err != nil {
 		t.Fatal(err)
 	}
-	if summary["this_week_fare_centavos"] != float64(2817) || summary["this_week_completed_rides"] != float64(1) {
+	if summary["this_week_fare_amount"] != float64(2817) || summary["this_week_completed_rides"] != float64(1) {
 		t.Fatalf("unexpected passenger activity summary: %#v", summary)
 	}
 }

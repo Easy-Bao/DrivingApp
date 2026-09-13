@@ -13,7 +13,7 @@ void main() {
     'type': type,
     'occurred_at': occurredAt.toIso8601String(),
     'scope': {'ride_id': 'ride-1', 'driver_id': 'driver-1'},
-    'payload': {'offer_id': 'offer-1', 'fare_centavos': 12000},
+    'payload': {'offer_id': 'offer-1', 'fare_amount': 12000},
   };
 
   test('parses a versioned realtime event into an exhaustive variant', () {
@@ -22,7 +22,7 @@ void main() {
 
     expect(event, isA<RideOfferCreatedEvent>());
     expect(envelope.scope.rideId, 'ride-1');
-    expect(envelope.payload['fare_centavos'], 12000);
+    expect(envelope.payload['fare_amount'], 12000);
     expect(envelope.occurredAt, occurredAt);
   });
 

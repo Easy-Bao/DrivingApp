@@ -51,11 +51,9 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 
 		protected.With(driverOnly).Post(apiPrefix+"/rides/{id}/accept", router.handler.AcceptRide)
 		protected.With(driverOnly).Post(apiPrefix+"/rides/{id}/cash-settle", router.handler.SettleCash)
-		protected.With(driverOnly).Post(apiPrefix+"/rides/{id}/bids", router.handler.SubmitBid)
 		protected.With(driverOnly).Get(apiPrefix+"/bids/active", router.handler.ActiveSessions)
 		protected.With(driverOnly).Post(apiPrefix+"/bids/{sessionID}/offer", router.handler.PlaceOffer)
 		protected.With(driverOnly).Post(apiPrefix+"/bids/{sessionID}/cancel-offer", router.handler.CancelOffer)
-		protected.With(driverOnly).Post(apiPrefix+"/bids/{id}/accept", router.handler.AcceptBid)
 		protected.With(driverOnly).Post(apiPrefix+"/passengers/{id}/reviews", router.handler.CreatePassengerReview)
 		protected.With(driverOnly).Get(apiPrefix+"/drivers/{id}/stats", router.handler.DriverStats)
 		protected.With(driverOnly).Get(apiPrefix+"/drivers/{id}/earnings", router.handler.DriverEarnings)

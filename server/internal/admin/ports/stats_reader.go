@@ -1,4 +1,3 @@
-// Package ports defines the admin module's outbound contracts.
 package ports
 
 import (

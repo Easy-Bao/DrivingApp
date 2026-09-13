@@ -20,7 +20,7 @@ func TestFromPostgresRideMapsOptionalFieldsAndTimestamps(t *testing.T) {
 		PassengerID:    7,
 		DriverID:       pgtype.Int4{Int32: 11, Valid: true},
 		Status:         "assigned",
-		FareCentavos:   3200,
+		FareAmount:     3200,
 		RideType:       "solo",
 		PickupLatitude: pgtype.Float8{Float64: 14.6, Valid: true},
 		PickupName:     pgtype.Text{String: "Makati", Valid: true},
@@ -30,7 +30,7 @@ func TestFromPostgresRideMapsOptionalFieldsAndTimestamps(t *testing.T) {
 			Valid: true,
 		},
 		PaymentStatus: "unpaid",
-		CommissionBps: pgtype.Int8{Int64: 1500, Valid: true},
+		CommissionBps: pgtype.Int4{Int32: 1500, Valid: true},
 	}
 
 	ride, err := fromPostgresRide(item)
@@ -60,13 +60,13 @@ func TestFromPostgresRideRejectsMissingCreationTime(t *testing.T) {
 
 func TestFromPostgresDriverStatsMapsMetrics(t *testing.T) {
 	stats, err := fromPostgresDriverStats(7, databasepostgres.GetDriverStatsRow{
-		TotalTrips:            12,
-		CompletedTrips:        8,
-		ActiveTrips:           2,
-		TotalEarningsCentavos: 48_000,
-		TodayCompletedTrips:   3,
-		TodayEarningsCentavos: 15_000,
-		AverageRating:         4.75,
+		TotalTrips:          12,
+		CompletedTrips:      8,
+		ActiveTrips:         2,
+		TotalEarningsAmount: 48_000,
+		TodayCompletedTrips: 3,
+		TodayEarningsAmount: 15_000,
+		AverageRating:       4.75,
 	})
 	if err != nil {
 		t.Fatalf("fromPostgresDriverStats() error = %v", err)
@@ -81,13 +81,13 @@ func TestFromPostgresDriverStatsMapsMetrics(t *testing.T) {
 func TestFromPostgresDriverEarningFallsBackToCreationTime(t *testing.T) {
 	createdAt := time.Date(2026, time.January, 2, 3, 4, 5, 0, time.FixedZone("PHT", 8*60*60))
 	entry, err := fromPostgresDriverEarning(databasepostgres.ListDriverEarningsRow{
-		CreatedAt:            pgtype.Timestamptz{Time: createdAt, Valid: true},
-		DriverPayoutCentavos: 1_250,
+		CreatedAt:          pgtype.Timestamptz{Time: createdAt, Valid: true},
+		DriverPayoutAmount: 1_250,
 	})
 	if err != nil {
 		t.Fatalf("fromPostgresDriverEarning() error = %v", err)
 	}
-	if !entry.CompletedAt.Equal(createdAt) || entry.PayoutCentavos != 1_250 {
+	if !entry.CompletedAt.Equal(createdAt) || entry.PayoutAmount != 1_250 {
 		t.Fatalf("mapped driver earning = %+v", entry)
 	}
 }

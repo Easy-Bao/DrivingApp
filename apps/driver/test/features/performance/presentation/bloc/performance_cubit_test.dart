@@ -33,11 +33,11 @@ void main() {
       when(() => repository.fetchStats('driver-1')).thenAnswer(
         (_) async => const Right(
           DriverPerformanceStats(
-            todayEarningsCentavos: 2817,
+            todayEarningsAmount: 2817,
             todayCompletedTrips: 1,
             totalTrips: 6,
             completedTrips: 5,
-            totalEarningsCentavos: 14085,
+            totalEarningsAmount: 14085,
             averageRating: 4.8,
           ),
         ),
@@ -73,11 +73,11 @@ void main() {
       response.complete(
         const Right(
           DriverPerformanceStats(
-            todayEarningsCentavos: 100,
+            todayEarningsAmount: 100,
             todayCompletedTrips: 1,
             totalTrips: 1,
             completedTrips: 1,
-            totalEarningsCentavos: 100,
+            totalEarningsAmount: 100,
             averageRating: 5,
           ),
         ),

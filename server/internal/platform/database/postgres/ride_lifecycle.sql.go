@@ -18,13 +18,13 @@ SET status = $1,
 WHERE id = $3
   AND status = $4
   AND (passenger_id = $5 OR driver_id = $5)
-RETURNING id, passenger_id, driver_id, status, fare_centavos, ride_type,
+RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
     pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name,
     distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
     driver_rating, created_at, completed_at, payment_status,
-    cash_received_at, commission_bps, commission_centavos,
-    driver_payout_centavos
+    cash_received_at, commission_bps, commission_amount,
+    driver_payout_amount
 `
 
 type UpdateRideStatusParams struct {
@@ -49,7 +49,7 @@ func (q *Queries) UpdateRideStatus(ctx context.Context, arg UpdateRideStatusPara
 		&i.PassengerID,
 		&i.DriverID,
 		&i.Status,
-		&i.FareCentavos,
+		&i.FareAmount,
 		&i.RideType,
 		&i.PickupLatitude,
 		&i.PickupLongitude,
@@ -68,8 +68,8 @@ func (q *Queries) UpdateRideStatus(ctx context.Context, arg UpdateRideStatusPara
 		&i.PaymentStatus,
 		&i.CashReceivedAt,
 		&i.CommissionBps,
-		&i.CommissionCentavos,
-		&i.DriverPayoutCentavos,
+		&i.CommissionAmount,
+		&i.DriverPayoutAmount,
 	)
 	return i, err
 }

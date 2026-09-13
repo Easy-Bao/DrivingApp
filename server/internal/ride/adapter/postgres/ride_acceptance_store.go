@@ -43,39 +43,39 @@ func (repository *RideRepository) AcceptRide(ctx context.Context, rideID, driver
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("count active driver rides: %w", err)
 	}
-	if activeRides >= 5 {
-		return domain.Ride{}, domain.ErrDriverAtCapacity
+	if activeRides > 0 {
+		return domain.Ride{}, domain.ErrDriverHasActiveRide
 	}
 	trip, err := transactionQueries.LockRequestedRideForAcceptance(ctx, dbRideID)
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("find requested ride: %w", err)
 	}
 	settlement, err := domain.NewSettlementSnapshot(
-		trip.FareCentavos,
+		trip.FareAmount,
 		repository.platformCommissionBPS,
 	)
 	if err != nil {
 		return domain.Ride{}, err
 	}
 	updatedRide, err := transactionQueries.AcceptRideFromRequest(ctx, databasepostgres.AcceptRideFromRequestParams{
-		ID:                   trip.ID,
-		DriverID:             pgtype.Int4{Int32: profile.UserID, Valid: true},
-		DriverName:           rideText(profile.Name),
-		VehicleType:          rideText(profile.VehicleType),
-		PlateNumber:          rideText(profile.PlateNumber),
-		CommissionBps:        pgtype.Int8{Int64: settlement.CommissionBPS, Valid: true},
-		CommissionCentavos:   settlement.CommissionCentavos,
-		DriverPayoutCentavos: settlement.DriverPayoutCentavos,
+		ID:                 trip.ID,
+		DriverID:           pgtype.Int4{Int32: profile.UserID, Valid: true},
+		DriverName:         rideText(profile.Name),
+		VehicleType:        rideText(profile.VehicleType),
+		PlateNumber:        rideText(profile.PlateNumber),
+		CommissionBps:      pgtype.Int4{Int32: int32(settlement.CommissionBPS), Valid: true},
+		CommissionAmount:   settlement.CommissionAmount,
+		DriverPayoutAmount: settlement.DriverPayoutAmount,
 	})
 	if err != nil {
-		return domain.Ride{}, fmt.Errorf("accept ride: %w", err)
+		return domain.Ride{}, driverActiveRideConflictError("accept ride", err)
 	}
 	if err := transactionQueries.CreateRideSettlement(ctx, databasepostgres.CreateRideSettlementParams{
-		RideID:               updatedRide.ID,
-		GrossFareCentavos:    settlement.FareCentavos,
-		CommissionBps:        pgtype.Int8{Int64: settlement.CommissionBPS, Valid: true},
-		CommissionCentavos:   settlement.CommissionCentavos,
-		DriverPayoutCentavos: settlement.DriverPayoutCentavos,
+		RideID:             updatedRide.ID,
+		GrossFare:          settlement.FareAmount,
+		CommissionBps:      pgtype.Int4{Int32: int32(settlement.CommissionBPS), Valid: true},
+		CommissionAmount:   settlement.CommissionAmount,
+		DriverPayoutAmount: settlement.DriverPayoutAmount,
 	}); err != nil {
 		return domain.Ride{}, fmt.Errorf("create ride settlement: %w", err)
 	}

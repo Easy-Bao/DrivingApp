@@ -1,10 +1,8 @@
 double? dashboardFareInPesos(Map<String, dynamic> value) {
-  final centavoValue =
-      value['fare_centavos'] ??
-      value['offered_fare_centavos'] ??
-      value['proposed_fare_centavos'];
-  if (centavoValue is num && centavoValue.isFinite) {
-    return centavoValue.toDouble() / 100;
+  final amountValue =
+      value['fare_amount'] ?? value['offered_fare'] ?? value['proposed_fare'];
+  if (amountValue is num && amountValue.isFinite) {
+    return amountValue.toDouble() / 100;
   }
 
   final legacyFare = value['fare'];

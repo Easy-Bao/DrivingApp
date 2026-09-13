@@ -51,7 +51,7 @@ void main() {
         ),
         statusCode: 200,
         data: const {
-          'this_week_fare_centavos': 21426,
+          'this_week_fare_amount': 21426,
           'this_week_completed_rides': 6,
         },
       ),

@@ -47,40 +47,45 @@ class _PassengerAppState extends State<PassengerApp>
           },
         ),
       ],
-      child: BlocBuilder<LocationAccessCubit, LocationAccessViewState>(
-        builder: (context, locationState) => ModularApp.router(
-          theme: EasyRideAppTheme.data,
-          debugShowCheckedModeBanner: false,
-          title: 'EasyRide Passenger',
-          builder: (context, child) => StreamBuilder<NetworkAvailabilityStatus>(
-            stream: _networkAvailabilityCoordinator.changes,
-            initialData: _networkAvailabilityCoordinator.status,
-            builder: (context, snapshot) => Stack(
-              fit: StackFit.expand,
-              children: [
-                MultiBlocListener(
-                  listeners: [
-                    BlocListener<SessionBloc, SessionState>(
-                      listenWhen: (_, current) =>
-                          current is GuestSession || current is SessionFailure,
-                      listener: (context, _) =>
-                          BlocProvider.of<BookingDraftCubit>(context).clear(),
+      child: ModularApp.router(
+        theme: EasyRideAppTheme.data,
+        debugShowCheckedModeBanner: false,
+        title: 'EasyRide Passenger',
+        builder: (context, child) =>
+            BlocBuilder<LocationAccessCubit, LocationAccessViewState>(
+              builder: (context, locationState) =>
+                  StreamBuilder<NetworkAvailabilityStatus>(
+                    stream: _networkAvailabilityCoordinator.changes,
+                    initialData: _networkAvailabilityCoordinator.status,
+                    builder: (context, snapshot) => Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        MultiBlocListener(
+                          listeners: [
+                            BlocListener<SessionBloc, SessionState>(
+                              listenWhen: (_, current) =>
+                                  current is GuestSession ||
+                                  current is SessionFailure,
+                              listener: (context, _) =>
+                                  BlocProvider.of<BookingDraftCubit>(context)
+                                      .clear(),
+                            ),
+                          ],
+                          child: _buildRouteWithLocationOverlay(
+                            context,
+                            child,
+                            locationState,
+                          ),
+                        ),
+                        AppNetworkStatusBanner(
+                          isVisible:
+                              snapshot.data ==
+                              NetworkAvailabilityStatus.unavailable,
+                        ),
+                      ],
                     ),
-                  ],
-                  child: _buildRouteWithLocationOverlay(
-                    context,
-                    child,
-                    locationState,
                   ),
-                ),
-                AppNetworkStatusBanner(
-                  isVisible:
-                      snapshot.data == NetworkAvailabilityStatus.unavailable,
-                ),
-              ],
             ),
-          ),
-        ),
       ),
     );
   }

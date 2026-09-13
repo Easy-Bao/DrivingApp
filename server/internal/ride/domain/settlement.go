@@ -3,27 +3,27 @@ package domain
 import "math"
 
 type SettlementSnapshot struct {
-	FareCentavos         int64
-	CommissionBPS        int64
-	CommissionCentavos   int64
-	DriverPayoutCentavos int64
+	FareAmount         int64
+	CommissionBPS      int64
+	CommissionAmount   int64
+	DriverPayoutAmount int64
 }
 
-func NewSettlementSnapshot(fareCentavos, commissionBPS int64) (SettlementSnapshot, error) {
-	invalidFare := fareCentavos <= 0
+func NewSettlementSnapshot(fareAmount, commissionBPS int64) (SettlementSnapshot, error) {
+	invalidFare := fareAmount <= 0
 	invalidCommission := commissionBPS < 0 || commissionBPS > 10_000
 	if invalidFare || invalidCommission {
 		return SettlementSnapshot{}, ErrInvalidSettlement
 	}
-	if commissionBPS != 0 && fareCentavos > math.MaxInt64/commissionBPS {
+	if commissionBPS != 0 && fareAmount > math.MaxInt64/commissionBPS {
 		return SettlementSnapshot{}, ErrInvalidSettlement
 	}
 
-	commissionCentavos := fareCentavos * commissionBPS / 10_000
+	commissionAmount := fareAmount * commissionBPS / 10_000
 	return SettlementSnapshot{
-		FareCentavos:         fareCentavos,
-		CommissionBPS:        commissionBPS,
-		CommissionCentavos:   commissionCentavos,
-		DriverPayoutCentavos: fareCentavos - commissionCentavos,
+		FareAmount:         fareAmount,
+		CommissionBPS:      commissionBPS,
+		CommissionAmount:   commissionAmount,
+		DriverPayoutAmount: fareAmount - commissionAmount,
 	}, nil
 }

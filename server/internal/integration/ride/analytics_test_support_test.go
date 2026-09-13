@@ -17,14 +17,6 @@ func (analyticsRepository) CreateRide(context.Context, domain.Ride) (domain.Ride
 	return domain.Ride{}, nil
 }
 
-func (analyticsRepository) CreateBid(context.Context, domain.Bid) (domain.Bid, error) {
-	return domain.Bid{}, nil
-}
-
-func (analyticsRepository) AcceptBid(context.Context, int, int) (domain.Bid, domain.Ride, error) {
-	return domain.Bid{}, domain.Ride{}, nil
-}
-
 func (analyticsRepository) Get(context.Context, int) (domain.Ride, error) {
 	return domain.Ride{}, nil
 }
@@ -40,7 +32,7 @@ func (analyticsRepository) DriverStats(context.Context, int, time.Time, time.Tim
 }
 
 func (analyticsRepository) DriverEarnings(context.Context, int, time.Time, time.Time) ([]domain.DriverEarning, error) {
-	return []domain.DriverEarning{{CompletedAt: time.Now(), PayoutCentavos: 2817}}, nil
+	return []domain.DriverEarning{{CompletedAt: time.Now(), PayoutAmount: 2817}}, nil
 }
 
 func (analyticsRepository) DriverTrips(context.Context, int, domain.TripHistoryQuery) ([]domain.Ride, error) {
@@ -57,7 +49,7 @@ func (analyticsRepository) PassengerActivitySummary(
 	time.Time,
 	time.Time,
 ) (domain.PassengerActivitySummary, error) {
-	return domain.PassengerActivitySummary{ThisWeekFareCentavos: 2817, ThisWeekCompletedRides: 1}, nil
+	return domain.PassengerActivitySummary{ThisWeekFareAmount: 2817, ThisWeekCompletedRides: 1}, nil
 }
 
 func (analyticsRepository) DriverReviews(context.Context, int, int, int) ([]domain.Review, error) {

@@ -528,7 +528,7 @@ void main() {
               vehicleType: '',
               plateNumber: '',
               status: 'pending',
-              proposedFareCentavos: 2970,
+              proposedFareAmount: 2970,
             ),
           ]);
         });
@@ -536,7 +536,7 @@ void main() {
           () => bookingRepository.acceptOffer(sessionId: '26', offerId: '25'),
         ).thenAnswer(
           (_) async =>
-              const Right(AcceptedBooking(rideId: '24', fareCentavos: 2970)),
+              const Right(AcceptedBooking(rideId: '24', fareAmount: 2970)),
         );
         when(() => secureSessionService.saveActiveRideId('24'))
             .thenAnswer((_) async {});

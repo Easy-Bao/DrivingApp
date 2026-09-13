@@ -6,19 +6,19 @@ import (
 )
 
 type DriverEarning struct {
-	CompletedAt    time.Time
-	PayoutCentavos int64
+	CompletedAt  time.Time
+	PayoutAmount int64
 }
 
 type EarningsPeriod struct {
-	EarningsCentavos int64 `json:"earnings_centavos"`
-	CompletedTrips   int   `json:"completed_trips"`
+	EarningsAmount int64 `json:"earnings_amount"`
+	CompletedTrips int   `json:"completed_trips"`
 }
 
 type EarningsBucket struct {
-	StartDate        string `json:"start_date"`
-	EarningsCentavos int64  `json:"earnings_centavos"`
-	CompletedTrips   int    `json:"completed_trips"`
+	StartDate      string `json:"start_date"`
+	EarningsAmount int64  `json:"earnings_amount"`
+	CompletedTrips int    `json:"completed_trips"`
 }
 
 type DriverEarningsSummary struct {
@@ -30,8 +30,6 @@ type DriverEarningsSummary struct {
 	MonthWeeks []EarningsBucket `json:"month_weeks"`
 }
 
-// DriverEarningsReader supplies reporting data without exposing ride command
-// persistence.
 type DriverEarningsReader interface {
 	DriverEarnings(ctx context.Context, driverID int, monthStart, monthEnd time.Time) ([]DriverEarning, error)
 }

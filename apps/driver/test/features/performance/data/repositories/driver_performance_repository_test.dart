@@ -22,11 +22,11 @@ void main() {
   test('normalizes the complete driver statistics contract', () async {
     when(() => dataSource.fetchStats('42')).thenAnswer(
       (_) async => <String, dynamic>{
-        'today_earnings_centavos': '2817',
+        'today_earnings_amount': '2817',
         'today_completed_trips': 1,
         'total_trips': 6,
         'completed_trips': 5,
-        'total_earnings_centavos': 14085,
+        'total_earnings_amount': 14085,
         'average_rating': '4.8',
       },
     );
@@ -37,11 +37,11 @@ void main() {
       result,
       const Right<Failure, DriverPerformanceStats>(
         DriverPerformanceStats(
-          todayEarningsCentavos: 2817,
+          todayEarningsAmount: 2817,
           todayCompletedTrips: 1,
           totalTrips: 6,
           completedTrips: 5,
-          totalEarningsCentavos: 14085,
+          totalEarningsAmount: 14085,
           averageRating: 4.8,
         ),
       ),
@@ -51,11 +51,11 @@ void main() {
   test('rejects fractional trip counts instead of truncating them', () async {
     when(() => dataSource.fetchStats('42')).thenAnswer(
       (_) async => <String, dynamic>{
-        'today_earnings_centavos': 2817,
+        'today_earnings_amount': 2817,
         'today_completed_trips': 1.5,
         'total_trips': 6,
         'completed_trips': 5,
-        'total_earnings_centavos': 14085,
+        'total_earnings_amount': 14085,
         'average_rating': 4.8,
       },
     );

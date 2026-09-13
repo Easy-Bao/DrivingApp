@@ -30,8 +30,7 @@ func (q *Queries) DeleteNotification(ctx context.Context, arg DeleteNotification
 }
 
 const getDriverProfileByUserIDFull = `-- name: GetDriverProfileByUserIDFull :one
-SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online,
-    wallet_balance_centavos
+SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online
 FROM driver_profiles
 WHERE user_id = $1
 LIMIT 1
@@ -48,7 +47,6 @@ func (q *Queries) GetDriverProfileByUserIDFull(ctx context.Context, userID int32
 		&i.PlateNumber,
 		&i.Rating,
 		&i.IsOnline,
-		&i.WalletBalanceCentavos,
 	)
 	return i, err
 }
@@ -123,8 +121,7 @@ const updateDriverProfile = `-- name: UpdateDriverProfile :one
 UPDATE driver_profiles
 SET name = $2, vehicle_type = $3, plate_number = $4, is_online = $5
 WHERE id = $1
-RETURNING id, user_id, name, vehicle_type, plate_number, rating, is_online,
-    wallet_balance_centavos
+RETURNING id, user_id, name, vehicle_type, plate_number, rating, is_online
 `
 
 type UpdateDriverProfileParams struct {
@@ -152,7 +149,6 @@ func (q *Queries) UpdateDriverProfile(ctx context.Context, arg UpdateDriverProfi
 		&i.PlateNumber,
 		&i.Rating,
 		&i.IsOnline,
-		&i.WalletBalanceCentavos,
 	)
 	return i, err
 }

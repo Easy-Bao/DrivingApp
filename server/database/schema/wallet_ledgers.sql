@@ -2,8 +2,8 @@ CREATE TABLE wallet_ledgers (
     id serial PRIMARY KEY,
     driver_id integer NOT NULL,
     ride_id integer NOT NULL,
-    amount_centavos bigint NOT NULL,
-    commission_centavos bigint NOT NULL,
+    amount bigint NOT NULL,
+    commission_amount bigint NOT NULL,
     kind text NOT NULL DEFAULT 'cash_trip',
     created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

@@ -61,9 +61,9 @@ func fromPostgresDriverStats(driverID int, row databasepostgres.GetDriverStatsRo
 		TotalTrips:          totalTrips,
 		CompletedTrips:      completedTrips,
 		ActiveTrips:         activeTrips,
-		TotalEarnings:       row.TotalEarningsCentavos,
+		TotalEarnings:       row.TotalEarningsAmount,
 		TodayCompletedTrips: todayCompletedTrips,
-		TodayEarnings:       row.TodayEarningsCentavos,
+		TodayEarnings:       row.TodayEarningsAmount,
 		AverageRating:       row.AverageRating,
 	}, nil
 }

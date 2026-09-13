@@ -18,8 +18,8 @@ SELECT
     COUNT(*) FILTER (
         WHERE r.status IN ('requested', 'assigned', 'accepted', 'arrived', 'in_transit')
     )::bigint AS active_trips,
-    COALESCE(SUM(r.driver_payout_centavos) FILTER (WHERE r.status = 'completed'), 0)::bigint
-        AS total_earnings_centavos,
+    COALESCE(SUM(r.driver_payout_amount) FILTER (WHERE r.status = 'completed'), 0)::bigint
+        AS total_earnings_amount,
     COUNT(*) FILTER (
         WHERE r.status = 'completed'
           AND (
@@ -31,7 +31,7 @@ SELECT
               )
           )
     )::bigint AS today_completed_trips,
-    COALESCE(SUM(r.driver_payout_centavos) FILTER (
+    COALESCE(SUM(r.driver_payout_amount) FILTER (
         WHERE r.status = 'completed'
           AND (
               (r.completed_at >= $1 AND r.completed_at < $2)
@@ -41,7 +41,7 @@ SELECT
                   AND r.created_at < $2
               )
           )
-    ), 0)::bigint AS today_earnings_centavos,
+    ), 0)::bigint AS today_earnings_amount,
     COALESCE((
         SELECT AVG(review.rating)
         FROM reviews AS review
@@ -58,13 +58,13 @@ type GetDriverStatsParams struct {
 }
 
 type GetDriverStatsRow struct {
-	TotalTrips            int64   `db:"total_trips"`
-	CompletedTrips        int64   `db:"completed_trips"`
-	ActiveTrips           int64   `db:"active_trips"`
-	TotalEarningsCentavos int64   `db:"total_earnings_centavos"`
-	TodayCompletedTrips   int64   `db:"today_completed_trips"`
-	TodayEarningsCentavos int64   `db:"today_earnings_centavos"`
-	AverageRating         float64 `db:"average_rating"`
+	TotalTrips          int64   `db:"total_trips"`
+	CompletedTrips      int64   `db:"completed_trips"`
+	ActiveTrips         int64   `db:"active_trips"`
+	TotalEarningsAmount int64   `db:"total_earnings_amount"`
+	TodayCompletedTrips int64   `db:"today_completed_trips"`
+	TodayEarningsAmount int64   `db:"today_earnings_amount"`
+	AverageRating       float64 `db:"average_rating"`
 }
 
 func (q *Queries) GetDriverStats(ctx context.Context, arg GetDriverStatsParams) (GetDriverStatsRow, error) {
@@ -74,9 +74,9 @@ func (q *Queries) GetDriverStats(ctx context.Context, arg GetDriverStatsParams) 
 		&i.TotalTrips,
 		&i.CompletedTrips,
 		&i.ActiveTrips,
-		&i.TotalEarningsCentavos,
+		&i.TotalEarningsAmount,
 		&i.TodayCompletedTrips,
-		&i.TodayEarningsCentavos,
+		&i.TodayEarningsAmount,
 		&i.AverageRating,
 	)
 	return i, err
@@ -84,7 +84,7 @@ func (q *Queries) GetDriverStats(ctx context.Context, arg GetDriverStatsParams) 
 
 const getPassengerActivitySummary = `-- name: GetPassengerActivitySummary :one
 SELECT
-    COALESCE(SUM(r.fare_centavos) FILTER (
+    COALESCE(SUM(r.fare_amount) FILTER (
         WHERE r.status = 'completed'
           AND (
               (r.completed_at >= $1 AND r.completed_at < $2)
@@ -94,7 +94,7 @@ SELECT
                   AND r.created_at < $2
               )
           )
-    ), 0)::bigint AS this_week_fare_centavos,
+    ), 0)::bigint AS this_week_fare_amount,
     COUNT(*) FILTER (
         WHERE r.status = 'completed'
           AND (
@@ -117,19 +117,19 @@ type GetPassengerActivitySummaryParams struct {
 }
 
 type GetPassengerActivitySummaryRow struct {
-	ThisWeekFareCentavos   int64 `db:"this_week_fare_centavos"`
+	ThisWeekFareAmount     int64 `db:"this_week_fare_amount"`
 	ThisWeekCompletedRides int64 `db:"this_week_completed_rides"`
 }
 
 func (q *Queries) GetPassengerActivitySummary(ctx context.Context, arg GetPassengerActivitySummaryParams) (GetPassengerActivitySummaryRow, error) {
 	row := q.db.QueryRow(ctx, getPassengerActivitySummary, arg.WeekStart, arg.WeekEnd, arg.PassengerID)
 	var i GetPassengerActivitySummaryRow
-	err := row.Scan(&i.ThisWeekFareCentavos, &i.ThisWeekCompletedRides)
+	err := row.Scan(&i.ThisWeekFareAmount, &i.ThisWeekCompletedRides)
 	return i, err
 }
 
 const listDriverEarnings = `-- name: ListDriverEarnings :many
-SELECT created_at, completed_at, driver_payout_centavos
+SELECT created_at, completed_at, driver_payout_amount
 FROM rides
 WHERE driver_id = $1
   AND status = 'completed'
@@ -154,9 +154,9 @@ type ListDriverEarningsParams struct {
 }
 
 type ListDriverEarningsRow struct {
-	CreatedAt            pgtype.Timestamptz `db:"created_at"`
-	CompletedAt          pgtype.Timestamptz `db:"completed_at"`
-	DriverPayoutCentavos int64              `db:"driver_payout_centavos"`
+	CreatedAt          pgtype.Timestamptz `db:"created_at"`
+	CompletedAt        pgtype.Timestamptz `db:"completed_at"`
+	DriverPayoutAmount int64              `db:"driver_payout_amount"`
 }
 
 func (q *Queries) ListDriverEarnings(ctx context.Context, arg ListDriverEarningsParams) ([]ListDriverEarningsRow, error) {
@@ -168,7 +168,7 @@ func (q *Queries) ListDriverEarnings(ctx context.Context, arg ListDriverEarnings
 	items := []ListDriverEarningsRow{}
 	for rows.Next() {
 		var i ListDriverEarningsRow
-		if err := rows.Scan(&i.CreatedAt, &i.CompletedAt, &i.DriverPayoutCentavos); err != nil {
+		if err := rows.Scan(&i.CreatedAt, &i.CompletedAt, &i.DriverPayoutAmount); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

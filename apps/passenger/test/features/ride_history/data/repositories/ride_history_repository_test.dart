@@ -73,7 +73,7 @@ void main() {
   });
 
   test(
-    'maps centavo fares and alternate driver fields from ride history',
+    'maps fare amounts and alternate driver fields from ride history',
     () async {
       when(
         () => remoteDataSource.fetchRideHistory(
@@ -90,7 +90,7 @@ void main() {
               'dropoff_name': 'Destination, City',
               'created_at': '2026-08-18T08:00:00Z',
               'completed_at': '2026-08-18T09:30:00Z',
-              'fare_centavos': 2817,
+              'fare_amount': 2817,
               'status': 'completed',
               'driver_id': 2,
               'driverName': 'Demo Driver',
@@ -132,7 +132,7 @@ void main() {
     );
     when(() => remoteDataSource.fetchSummary('passenger-1')).thenAnswer(
       (_) async => const {
-        'this_week_fare_centavos': 21426,
+        'this_week_fare_amount': 21426,
         'this_week_completed_rides': 6,
       },
     );
@@ -140,7 +140,7 @@ void main() {
     final result = await repository.fetchRideHistoryOverview('passenger-1');
 
     result.fold((_) => fail('Expected activity overview to load.'), (overview) {
-      expect(overview.weeklyFareCentavos, 21426);
+      expect(overview.weeklyFareAmount, 21426);
       expect(overview.weeklyRideCount, 6);
       expect(overview.rides.items, isEmpty);
     });

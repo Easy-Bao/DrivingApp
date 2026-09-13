@@ -10,14 +10,12 @@ type DriverStats struct {
 	TotalTrips          int     `json:"total_trips"`
 	CompletedTrips      int     `json:"completed_trips"`
 	ActiveTrips         int     `json:"active_trips"`
-	TotalEarnings       int64   `json:"total_earnings_centavos"`
+	TotalEarnings       int64   `json:"total_earnings_amount"`
 	TodayCompletedTrips int     `json:"today_completed_trips"`
-	TodayEarnings       int64   `json:"today_earnings_centavos"`
+	TodayEarnings       int64   `json:"today_earnings_amount"`
 	AverageRating       float64 `json:"average_rating"`
 }
 
-// DriverStatisticsReader supplies the driver dashboard read model without
-// exposing ride command persistence.
 type DriverStatisticsReader interface {
 	DriverStats(ctx context.Context, driverID int, dayStart, dayEnd time.Time) (DriverStats, error)
 }

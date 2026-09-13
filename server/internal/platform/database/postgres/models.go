@@ -19,45 +19,37 @@ type AuditEvent struct {
 	CreatedAt  pgtype.Timestamptz `db:"created_at"`
 }
 
-type Bid struct {
-	ID                  int32  `db:"id"`
-	RideID              int32  `db:"ride_id"`
-	DriverID            int32  `db:"driver_id"`
-	OfferedFareCentavos int64  `db:"offered_fare_centavos"`
-	Status              string `db:"status"`
-}
-
 type BidOffer struct {
-	ID                   int32              `db:"id"`
-	SessionID            int32              `db:"session_id"`
-	DriverID             int32              `db:"driver_id"`
-	DriverName           pgtype.Text        `db:"driver_name"`
-	PlateNumber          pgtype.Text        `db:"plate_number"`
-	VehicleType          pgtype.Text        `db:"vehicle_type"`
-	ProposedFareCentavos int64              `db:"proposed_fare_centavos"`
-	Status               string             `db:"status"`
-	CreatedAt            pgtype.Timestamptz `db:"created_at"`
+	ID           int32              `db:"id"`
+	SessionID    int32              `db:"session_id"`
+	DriverID     int32              `db:"driver_id"`
+	DriverName   pgtype.Text        `db:"driver_name"`
+	PlateNumber  pgtype.Text        `db:"plate_number"`
+	VehicleType  pgtype.Text        `db:"vehicle_type"`
+	ProposedFare int64              `db:"proposed_fare"`
+	Status       string             `db:"status"`
+	CreatedAt    pgtype.Timestamptz `db:"created_at"`
 }
 
 type BidSession struct {
-	ID                  int32              `db:"id"`
-	PassengerID         int32              `db:"passenger_id"`
-	RideType            string             `db:"ride_type"`
-	PickupLatitude      float64            `db:"pickup_latitude"`
-	PickupLongitude     float64            `db:"pickup_longitude"`
-	PickupName          string             `db:"pickup_name"`
-	DropoffLatitude     float64            `db:"dropoff_latitude"`
-	DropoffLongitude    float64            `db:"dropoff_longitude"`
-	DropoffName         string             `db:"dropoff_name"`
-	PassengerNote       pgtype.Text        `db:"passenger_note"`
-	DistanceKm          float64            `db:"distance_km"`
-	DurationMinutes     float64            `db:"duration_minutes"`
-	OfferedFareCentavos int64              `db:"offered_fare_centavos"`
-	Status              string             `db:"status"`
-	TargetDriverID      pgtype.Int4        `db:"target_driver_id"`
-	AcceptedDriverID    pgtype.Int4        `db:"accepted_driver_id"`
-	ExpiresAt           pgtype.Timestamptz `db:"expires_at"`
-	CreatedAt           pgtype.Timestamptz `db:"created_at"`
+	ID               int32              `db:"id"`
+	PassengerID      int32              `db:"passenger_id"`
+	RideType         string             `db:"ride_type"`
+	PickupLatitude   float64            `db:"pickup_latitude"`
+	PickupLongitude  float64            `db:"pickup_longitude"`
+	PickupName       string             `db:"pickup_name"`
+	DropoffLatitude  float64            `db:"dropoff_latitude"`
+	DropoffLongitude float64            `db:"dropoff_longitude"`
+	DropoffName      string             `db:"dropoff_name"`
+	PassengerNote    pgtype.Text        `db:"passenger_note"`
+	DistanceKm       float64            `db:"distance_km"`
+	DurationMinutes  float64            `db:"duration_minutes"`
+	OfferedFare      int64              `db:"offered_fare"`
+	Status           string             `db:"status"`
+	TargetDriverID   pgtype.Int4        `db:"target_driver_id"`
+	AcceptedDriverID pgtype.Int4        `db:"accepted_driver_id"`
+	ExpiresAt        pgtype.Timestamptz `db:"expires_at"`
+	CreatedAt        pgtype.Timestamptz `db:"created_at"`
 }
 
 type DriverDocument struct {
@@ -75,22 +67,21 @@ type DriverDocument struct {
 }
 
 type DriverProfile struct {
-	ID                    int32   `db:"id"`
-	UserID                int32   `db:"user_id"`
-	Name                  string  `db:"name"`
-	VehicleType           string  `db:"vehicle_type"`
-	PlateNumber           string  `db:"plate_number"`
-	Rating                float64 `db:"rating"`
-	IsOnline              bool    `db:"is_online"`
-	WalletBalanceCentavos int64   `db:"wallet_balance_centavos"`
+	ID          int32   `db:"id"`
+	UserID      int32   `db:"user_id"`
+	Name        string  `db:"name"`
+	VehicleType string  `db:"vehicle_type"`
+	PlateNumber string  `db:"plate_number"`
+	Rating      float64 `db:"rating"`
+	IsOnline    bool    `db:"is_online"`
 }
 
 type DriverWalletAccount struct {
-	ID              int32              `db:"id"`
-	DriverID        int32              `db:"driver_id"`
-	BalanceCentavos int64              `db:"balance_centavos"`
-	Version         int64              `db:"version"`
-	UpdatedAt       pgtype.Timestamptz `db:"updated_at"`
+	ID        int32              `db:"id"`
+	DriverID  int32              `db:"driver_id"`
+	Balance   int64              `db:"balance"`
+	Version   int64              `db:"version"`
+	UpdatedAt pgtype.Timestamptz `db:"updated_at"`
 }
 
 type Notification struct {
@@ -156,45 +147,45 @@ type Review struct {
 }
 
 type Ride struct {
-	ID                   int32              `db:"id"`
-	PassengerID          int32              `db:"passenger_id"`
-	DriverID             pgtype.Int4        `db:"driver_id"`
-	Status               string             `db:"status"`
-	FareCentavos         int64              `db:"fare_centavos"`
-	RideType             string             `db:"ride_type"`
-	PickupLatitude       pgtype.Float8      `db:"pickup_latitude"`
-	PickupLongitude      pgtype.Float8      `db:"pickup_longitude"`
-	PickupName           pgtype.Text        `db:"pickup_name"`
-	DropoffLatitude      pgtype.Float8      `db:"dropoff_latitude"`
-	DropoffLongitude     pgtype.Float8      `db:"dropoff_longitude"`
-	DropoffName          pgtype.Text        `db:"dropoff_name"`
-	DistanceKm           pgtype.Float8      `db:"distance_km"`
-	DurationMinutes      pgtype.Float8      `db:"duration_minutes"`
-	DriverName           pgtype.Text        `db:"driver_name"`
-	VehicleType          pgtype.Text        `db:"vehicle_type"`
-	PlateNumber          pgtype.Text        `db:"plate_number"`
-	DriverRating         pgtype.Float8      `db:"driver_rating"`
-	CreatedAt            pgtype.Timestamptz `db:"created_at"`
-	CompletedAt          pgtype.Timestamptz `db:"completed_at"`
-	PaymentStatus        string             `db:"payment_status"`
-	CashReceivedAt       pgtype.Timestamptz `db:"cash_received_at"`
-	CommissionBps        pgtype.Int8        `db:"commission_bps"`
-	CommissionCentavos   int64              `db:"commission_centavos"`
-	DriverPayoutCentavos int64              `db:"driver_payout_centavos"`
+	ID                 int32              `db:"id"`
+	PassengerID        int32              `db:"passenger_id"`
+	DriverID           pgtype.Int4        `db:"driver_id"`
+	Status             string             `db:"status"`
+	FareAmount         int64              `db:"fare_amount"`
+	RideType           string             `db:"ride_type"`
+	PickupLatitude     pgtype.Float8      `db:"pickup_latitude"`
+	PickupLongitude    pgtype.Float8      `db:"pickup_longitude"`
+	PickupName         pgtype.Text        `db:"pickup_name"`
+	DropoffLatitude    pgtype.Float8      `db:"dropoff_latitude"`
+	DropoffLongitude   pgtype.Float8      `db:"dropoff_longitude"`
+	DropoffName        pgtype.Text        `db:"dropoff_name"`
+	DistanceKm         pgtype.Float8      `db:"distance_km"`
+	DurationMinutes    pgtype.Float8      `db:"duration_minutes"`
+	DriverName         pgtype.Text        `db:"driver_name"`
+	VehicleType        pgtype.Text        `db:"vehicle_type"`
+	PlateNumber        pgtype.Text        `db:"plate_number"`
+	DriverRating       pgtype.Float8      `db:"driver_rating"`
+	CreatedAt          pgtype.Timestamptz `db:"created_at"`
+	CompletedAt        pgtype.Timestamptz `db:"completed_at"`
+	PaymentStatus      string             `db:"payment_status"`
+	CashReceivedAt     pgtype.Timestamptz `db:"cash_received_at"`
+	CommissionBps      pgtype.Int4        `db:"commission_bps"`
+	CommissionAmount   int64              `db:"commission_amount"`
+	DriverPayoutAmount int64              `db:"driver_payout_amount"`
 }
 
 type RideSettlement struct {
-	ID                   int32              `db:"id"`
-	RideID               int32              `db:"ride_id"`
-	GrossFareCentavos    int64              `db:"gross_fare_centavos"`
-	CommissionBps        pgtype.Int8        `db:"commission_bps"`
-	CommissionCentavos   int64              `db:"commission_centavos"`
-	DriverPayoutCentavos int64              `db:"driver_payout_centavos"`
-	PaymentStatus        string             `db:"payment_status"`
-	CashReceivedAt       pgtype.Timestamptz `db:"cash_received_at"`
-	SettledAt            pgtype.Timestamptz `db:"settled_at"`
-	CreatedAt            pgtype.Timestamptz `db:"created_at"`
-	UpdatedAt            pgtype.Timestamptz `db:"updated_at"`
+	ID                 int32              `db:"id"`
+	RideID             int32              `db:"ride_id"`
+	GrossFare          int64              `db:"gross_fare"`
+	CommissionBps      pgtype.Int4        `db:"commission_bps"`
+	CommissionAmount   int64              `db:"commission_amount"`
+	DriverPayoutAmount int64              `db:"driver_payout_amount"`
+	PaymentStatus      string             `db:"payment_status"`
+	CashReceivedAt     pgtype.Timestamptz `db:"cash_received_at"`
+	SettledAt          pgtype.Timestamptz `db:"settled_at"`
+	CreatedAt          pgtype.Timestamptz `db:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `db:"updated_at"`
 }
 
 type User struct {
@@ -208,11 +199,11 @@ type User struct {
 }
 
 type WalletLedger struct {
-	ID                 int32              `db:"id"`
-	DriverID           int32              `db:"driver_id"`
-	RideID             int32              `db:"ride_id"`
-	AmountCentavos     int64              `db:"amount_centavos"`
-	CommissionCentavos int64              `db:"commission_centavos"`
-	Kind               string             `db:"kind"`
-	CreatedAt          pgtype.Timestamptz `db:"created_at"`
+	ID               int32              `db:"id"`
+	DriverID         int32              `db:"driver_id"`
+	RideID           int32              `db:"ride_id"`
+	Amount           int64              `db:"amount"`
+	CommissionAmount int64              `db:"commission_amount"`
+	Kind             string             `db:"kind"`
+	CreatedAt        pgtype.Timestamptz `db:"created_at"`
 }

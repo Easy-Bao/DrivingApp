@@ -164,9 +164,7 @@ class const _PerformanceMetrics({required this.stats}) extends StatelessWidget {
               width: constraints.maxWidth,
               icon: LucideIcons.wallet_cards,
               label: 'Lifetime earnings',
-              value: formatPesoAmount(
-                (stats?.totalEarningsCentavos ?? 0) / 100,
-              ),
+              value: formatPesoAmount((stats?.totalEarningsAmount ?? 0) / 100),
             ),
           ],
         );

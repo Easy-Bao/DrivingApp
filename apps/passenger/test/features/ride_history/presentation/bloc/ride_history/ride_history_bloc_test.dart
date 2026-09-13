@@ -75,7 +75,7 @@ void main() {
                 hasMore: false,
                 nextOffset: null,
               ),
-              weeklyFareCentavos: 8500,
+              weeklyFareAmount: 8500,
               weeklyRideCount: 1,
             ),
           ),
@@ -133,7 +133,7 @@ void main() {
           (_) async => const Right(
             RideHistoryOverview(
               rides: OffsetPage(items: [], hasMore: false, nextOffset: null),
-              weeklyFareCentavos: 0,
+              weeklyFareAmount: 0,
               weeklyRideCount: 0,
             ),
           ),
@@ -164,7 +164,7 @@ void main() {
           (_) async => const Right(
             RideHistoryOverview(
               rides: OffsetPage(items: [], hasMore: false, nextOffset: null),
-              weeklyFareCentavos: 0,
+              weeklyFareAmount: 0,
               weeklyRideCount: 0,
             ),
           ),
@@ -250,7 +250,7 @@ void main() {
           (_) async => const Right(
             RideHistoryOverview(
               rides: OffsetPage(items: [], hasMore: false, nextOffset: null),
-              weeklyFareCentavos: 0,
+              weeklyFareAmount: 0,
               weeklyRideCount: 0,
             ),
           ),

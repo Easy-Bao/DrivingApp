@@ -85,8 +85,8 @@ func (repository *RideRepository) AcceptOffer(
 	if err != nil {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, fmt.Errorf("count active driver rides: %w", err)
 	}
-	if activeDriverRides >= 5 {
-		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, domain.ErrDriverAtCapacity
+	if activeDriverRides > 0 {
+		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, domain.ErrDriverHasActiveRide
 	}
 	activePassengerRide, err := transactionQueries.HasActivePassengerRide(ctx, session.PassengerID)
 	if err != nil {
@@ -147,34 +147,37 @@ func (repository *RideRepository) AcceptOffer(
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, err
 	}
 	createdRide, err := transactionQueries.CreateAcceptedRide(ctx, databasepostgres.CreateAcceptedRideParams{
-		PassengerID:          session.PassengerID,
-		DriverID:             pgtype.Int4{Int32: dbAcceptedDriverID, Valid: true},
-		FareCentavos:         acceptedRide.FareCentavos,
-		RideType:             acceptedRide.RideType,
-		PickupLatitude:       rideFloat(acceptedRide.PickupLatitude),
-		PickupLongitude:      rideFloat(acceptedRide.PickupLongitude),
-		PickupName:           rideText(acceptedRide.PickupName),
-		DropoffLatitude:      rideFloat(acceptedRide.DropoffLatitude),
-		DropoffLongitude:     rideFloat(acceptedRide.DropoffLongitude),
-		DropoffName:          rideText(acceptedRide.DropoffName),
-		DistanceKm:           rideFloat(acceptedRide.DistanceKm),
-		DurationMinutes:      rideFloat(acceptedRide.DurationMinutes),
-		DriverName:           rideText(acceptedRide.DriverName),
-		VehicleType:          rideText(acceptedRide.VehicleType),
-		PlateNumber:          rideText(acceptedRide.PlateNumber),
-		CommissionBps:        pgtype.Int8{Int64: *acceptedRide.CommissionBPS, Valid: true},
-		CommissionCentavos:   acceptedRide.CommissionCentavos,
-		DriverPayoutCentavos: acceptedRide.DriverPayoutCentavos,
+		PassengerID:        session.PassengerID,
+		DriverID:           pgtype.Int4{Int32: dbAcceptedDriverID, Valid: true},
+		FareAmount:         acceptedRide.FareAmount,
+		RideType:           acceptedRide.RideType,
+		PickupLatitude:     rideFloat(acceptedRide.PickupLatitude),
+		PickupLongitude:    rideFloat(acceptedRide.PickupLongitude),
+		PickupName:         rideText(acceptedRide.PickupName),
+		DropoffLatitude:    rideFloat(acceptedRide.DropoffLatitude),
+		DropoffLongitude:   rideFloat(acceptedRide.DropoffLongitude),
+		DropoffName:        rideText(acceptedRide.DropoffName),
+		DistanceKm:         rideFloat(acceptedRide.DistanceKm),
+		DurationMinutes:    rideFloat(acceptedRide.DurationMinutes),
+		DriverName:         rideText(acceptedRide.DriverName),
+		VehicleType:        rideText(acceptedRide.VehicleType),
+		PlateNumber:        rideText(acceptedRide.PlateNumber),
+		CommissionBps:      pgtype.Int4{Int32: int32(*acceptedRide.CommissionBPS), Valid: true},
+		CommissionAmount:   acceptedRide.CommissionAmount,
+		DriverPayoutAmount: acceptedRide.DriverPayoutAmount,
 	})
 	if err != nil {
-		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, fmt.Errorf("create accepted ride: %w", err)
+		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, driverActiveRideConflictError(
+			"create accepted ride",
+			err,
+		)
 	}
 	if err := transactionQueries.CreateRideSettlement(ctx, databasepostgres.CreateRideSettlementParams{
-		RideID:               createdRide.ID,
-		GrossFareCentavos:    acceptedRide.FareCentavos,
-		CommissionBps:        pgtype.Int8{Int64: *acceptedRide.CommissionBPS, Valid: true},
-		CommissionCentavos:   acceptedRide.CommissionCentavos,
-		DriverPayoutCentavos: acceptedRide.DriverPayoutCentavos,
+		RideID:             createdRide.ID,
+		GrossFare:          acceptedRide.FareAmount,
+		CommissionBps:      pgtype.Int4{Int32: int32(*acceptedRide.CommissionBPS), Valid: true},
+		CommissionAmount:   acceptedRide.CommissionAmount,
+		DriverPayoutAmount: acceptedRide.DriverPayoutAmount,
 	}); err != nil {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, fmt.Errorf("create ride settlement: %w", err)
 	}

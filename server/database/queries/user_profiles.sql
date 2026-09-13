@@ -1,6 +1,5 @@
 -- name: GetDriverProfileByUserIDFull :one
-SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online,
-    wallet_balance_centavos
+SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online
 FROM driver_profiles
 WHERE user_id = $1
 LIMIT 1;
@@ -22,8 +21,7 @@ RETURNING id, name, phone, email, password_hash, role, is_verified;
 UPDATE driver_profiles
 SET name = $2, vehicle_type = $3, plate_number = $4, is_online = $5
 WHERE id = $1
-RETURNING id, user_id, name, vehicle_type, plate_number, rating, is_online,
-    wallet_balance_centavos;
+RETURNING id, user_id, name, vehicle_type, plate_number, rating, is_online;
 
 -- name: UpdatePassengerProfile :one
 UPDATE passenger_profiles

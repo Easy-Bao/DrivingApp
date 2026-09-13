@@ -35,29 +35,29 @@ func summarizeDriverEarnings(
 		if completedAt.Before(monthStart) || !completedAt.Before(monthStart.AddDate(0, 1, 0)) {
 			continue
 		}
-		addEarnings(&summary.ThisMonth, entry.PayoutCentavos)
+		addEarnings(&summary.ThisMonth, entry.PayoutAmount)
 		monthWeek := (completedAt.Day() - 1) / 7
-		addEarningsBucket(&summary.MonthWeeks[monthWeek], entry.PayoutCentavos)
+		addEarningsBucket(&summary.MonthWeeks[monthWeek], entry.PayoutAmount)
 
 		if !completedAt.Before(weekStart) && completedAt.Before(weekStart.AddDate(0, 0, 7)) {
-			addEarnings(&summary.ThisWeek, entry.PayoutCentavos)
+			addEarnings(&summary.ThisWeek, entry.PayoutAmount)
 			weekday := (int(completedAt.Weekday()) + 6) % 7
-			addEarningsBucket(&summary.Weekdays[weekday], entry.PayoutCentavos)
+			addEarningsBucket(&summary.Weekdays[weekday], entry.PayoutAmount)
 		}
 		if sameLocalDay(completedAt, today) {
-			addEarnings(&summary.Today, entry.PayoutCentavos)
+			addEarnings(&summary.Today, entry.PayoutAmount)
 		}
 	}
 	return summary
 }
 
-func addEarnings(period *domain.EarningsPeriod, centavos int64) {
-	period.EarningsCentavos += centavos
+func addEarnings(period *domain.EarningsPeriod, amount int64) {
+	period.EarningsAmount += amount
 	period.CompletedTrips++
 }
 
-func addEarningsBucket(bucket *domain.EarningsBucket, centavos int64) {
-	bucket.EarningsCentavos += centavos
+func addEarningsBucket(bucket *domain.EarningsBucket, amount int64) {
+	bucket.EarningsAmount += amount
 	bucket.CompletedTrips++
 }
 

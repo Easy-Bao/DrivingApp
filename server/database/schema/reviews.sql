@@ -6,7 +6,8 @@ CREATE TABLE reviews (
     passenger_name text,
     rating double precision NOT NULL,
     comment text,
-    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT reviews_rating_check CHECK (rating BETWEEN 0 AND 5)
 );
 
 CREATE UNIQUE INDEX review_ride_id
@@ -23,7 +24,8 @@ CREATE TABLE passenger_reviews (
     passenger_id integer NOT NULL,
     rating double precision NOT NULL,
     comment text,
-    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT passenger_reviews_rating_check CHECK (rating BETWEEN 0 AND 5)
 );
 
 CREATE UNIQUE INDEX passengerreview_ride_id

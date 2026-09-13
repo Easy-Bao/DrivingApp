@@ -1,4 +1,3 @@
-// Package booking owns the ride-creation use cases.
 package booking
 
 import (
@@ -19,14 +18,11 @@ var errUnavailable = errors.New("ride booking persistence is unavailable")
 // mapping adapter and of the ride facade kept for compatibility.
 type RouteResolver = ports.RouteResolver
 
-// FareCalculator keeps pricing policy injectable at the application boundary.
 type FareCalculator func(distanceKm, durationMinutes float64) int64
 
 // RideEventPublisher routes a ride event only after persistence succeeds.
 type RideEventPublisher func(ctx context.Context, eventType event.Type, ride domain.Ride, payload map[string]any)
 
-// Dependencies collects the policies and ports that keep booking independent
-// of concrete adapters.
 type Dependencies struct {
 	Writer           ports.RideWriter
 	ResolveRoute     RouteResolver
@@ -35,7 +31,6 @@ type Dependencies struct {
 	HasRouteProvider bool
 }
 
-// Service keeps ride creation behind focused outbound ports.
 type Service struct {
 	writer           ports.RideWriter
 	resolveRoute     RouteResolver
@@ -54,19 +49,18 @@ func NewService(dependencies Dependencies) *Service {
 	}
 }
 
-// Create is the minimal ride-creation path for callers without route details.
-func (service *Service) Create(ctx context.Context, passengerID int, fareCentavos int64) (domain.Ride, error) {
-	if passengerID <= 0 || fareCentavos <= 0 {
+func (service *Service) Create(ctx context.Context, passengerID int, fareAmount int64) (domain.Ride, error) {
+	if passengerID <= 0 || fareAmount <= 0 {
 		return domain.Ride{}, domain.ErrInvalidTrip
 	}
 	if service.writer == nil {
 		return domain.Ride{}, errUnavailable
 	}
 	ride, err := service.writer.CreateRide(ctx, domain.Ride{
-		PassengerID:  passengerID,
-		Status:       string(domain.RideRequested),
-		FareCentavos: fareCentavos,
-		RideType:     "Solo Ride",
+		PassengerID: passengerID,
+		Status:      string(domain.RideRequested),
+		FareAmount:  fareAmount,
+		RideType:    "Solo Ride",
 	})
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("create ride: %w", err)
@@ -112,7 +106,7 @@ func (service *Service) CreateWithDetails(ctx context.Context, ride domain.Ride)
 	}
 	ride.DistanceKm = metrics.DistanceKm
 	ride.DurationMinutes = metrics.DurationMinutes
-	ride.FareCentavos = service.calculateFare(metrics.DistanceKm, metrics.DurationMinutes)
+	ride.FareAmount = service.calculateFare(metrics.DistanceKm, metrics.DurationMinutes)
 	ride.Status = string(domain.RideRequested)
 	if ride.RideType == "" {
 		ride.RideType = "solo"

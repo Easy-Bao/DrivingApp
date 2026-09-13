@@ -66,7 +66,7 @@ class RideHistoryBloc({required this._repository})
         emit(
           _loadedState(
             overview.rides,
-            weeklyFareCentavos: overview.weeklyFareCentavos,
+            weeklyFareAmount: overview.weeklyFareAmount,
             weeklyRideCount: overview.weeklyRideCount,
           ),
         );
@@ -107,7 +107,7 @@ class RideHistoryBloc({required this._repository})
           _loadedState(
             page,
             rides: ridesById.values.toList(),
-            weeklyFareCentavos: current.weeklyFareCentavos,
+            weeklyFareAmount: current.weeklyFareAmount,
             weeklyRideCount: current.weeklyRideCount,
           ),
         );
@@ -118,7 +118,7 @@ class RideHistoryBloc({required this._repository})
   RideHistoryLoaded _loadedState(
     OffsetPage<RideHistory> page, {
     List<RideHistory>? rides,
-    required int weeklyFareCentavos,
+    required int weeklyFareAmount,
     required int weeklyRideCount,
   }) {
     final allRides = rides ?? page.items;
@@ -135,7 +135,7 @@ class RideHistoryBloc({required this._repository})
       upcoming: upcoming,
       hasMore: page.hasMore,
       nextOffset: page.nextOffset,
-      weeklyFareCentavos: weeklyFareCentavos,
+      weeklyFareAmount: weeklyFareAmount,
       weeklyRideCount: weeklyRideCount,
     );
   }

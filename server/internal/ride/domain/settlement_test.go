@@ -10,7 +10,7 @@ func TestNewSettlementSnapshotFreezesBookingEconomics(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewSettlementSnapshot() error = %v", err)
 	}
-	if snapshot.CommissionCentavos != 480 || snapshot.DriverPayoutCentavos != 2720 {
+	if snapshot.CommissionAmount != 480 || snapshot.DriverPayoutAmount != 2720 {
 		t.Fatalf("snapshot = %#v", snapshot)
 	}
 }

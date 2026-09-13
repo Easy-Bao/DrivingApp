@@ -29,7 +29,7 @@ void main() {
     ]);
   });
 
-  test('sends the canonical centavo fare field to the bid endpoint', () async {
+  test('sends the canonical fare field to the bid endpoint', () async {
     final dio = MockDio();
     final dataSource = RideOfferRemoteDataSourceImpl(dio);
     when(
@@ -54,7 +54,7 @@ void main() {
     verify(
       () => dio.post<Map<String, dynamic>>(
         '/api/v1/bids/101/offer',
-        data: <String, dynamic>{'proposed_fare_centavos': 12550},
+        data: <String, dynamic>{'proposed_fare': 12550},
       ),
     ).called(1);
   });

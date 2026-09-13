@@ -156,7 +156,7 @@ final class _EmptyRideHistoryRepository implements RideHistoryRepository {
           hasMore: false,
           nextOffset: null,
         ),
-        weeklyFareCentavos: 0,
+        weeklyFareAmount: 0,
         weeklyRideCount: 0,
       ),
     );
@@ -186,7 +186,7 @@ final class _PendingRideHistoryRepository implements RideHistoryRepository {
             hasMore: false,
             nextOffset: null,
           ),
-          weeklyFareCentavos: 0,
+          weeklyFareAmount: 0,
           weeklyRideCount: 0,
         ),
       ),

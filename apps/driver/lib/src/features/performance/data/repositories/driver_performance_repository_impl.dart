@@ -18,9 +18,9 @@ final class DriverPerformanceRepositoryImpl({required this._dataSource})
       final values = await _dataSource.fetchStats(driverId);
       return Right(
         DriverPerformanceStats(
-          todayEarningsCentavos: _readNonNegativeInt(
+          todayEarningsAmount: _readNonNegativeInt(
             values,
-            'today_earnings_centavos',
+            'today_earnings_amount',
           ),
           todayCompletedTrips: _readNonNegativeInt(
             values,
@@ -28,9 +28,9 @@ final class DriverPerformanceRepositoryImpl({required this._dataSource})
           ),
           totalTrips: _readNonNegativeInt(values, 'total_trips'),
           completedTrips: _readNonNegativeInt(values, 'completed_trips'),
-          totalEarningsCentavos: _readNonNegativeInt(
+          totalEarningsAmount: _readNonNegativeInt(
             values,
-            'total_earnings_centavos',
+            'total_earnings_amount',
           ),
           averageRating: _readNonNegativeDouble(values, 'average_rating'),
         ),

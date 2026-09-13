@@ -19,28 +19,28 @@ SET status = 'accepted',
     vehicle_type = $4,
     plate_number = $5,
     commission_bps = $6,
-    commission_centavos = $7,
-    driver_payout_centavos = $8
+    commission_amount = $7,
+    driver_payout_amount = $8
 WHERE id = $1
   AND status = 'requested'
-RETURNING id, passenger_id, driver_id, status, fare_centavos, ride_type,
+RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
     pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name,
     distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
     driver_rating, created_at, completed_at, payment_status,
-    cash_received_at, commission_bps, commission_centavos,
-    driver_payout_centavos
+    cash_received_at, commission_bps, commission_amount,
+    driver_payout_amount
 `
 
 type AcceptRideFromRequestParams struct {
-	ID                   int32       `db:"id"`
-	DriverID             pgtype.Int4 `db:"driver_id"`
-	DriverName           pgtype.Text `db:"driver_name"`
-	VehicleType          pgtype.Text `db:"vehicle_type"`
-	PlateNumber          pgtype.Text `db:"plate_number"`
-	CommissionBps        pgtype.Int8 `db:"commission_bps"`
-	CommissionCentavos   int64       `db:"commission_centavos"`
-	DriverPayoutCentavos int64       `db:"driver_payout_centavos"`
+	ID                 int32       `db:"id"`
+	DriverID           pgtype.Int4 `db:"driver_id"`
+	DriverName         pgtype.Text `db:"driver_name"`
+	VehicleType        pgtype.Text `db:"vehicle_type"`
+	PlateNumber        pgtype.Text `db:"plate_number"`
+	CommissionBps      pgtype.Int4 `db:"commission_bps"`
+	CommissionAmount   int64       `db:"commission_amount"`
+	DriverPayoutAmount int64       `db:"driver_payout_amount"`
 }
 
 func (q *Queries) AcceptRideFromRequest(ctx context.Context, arg AcceptRideFromRequestParams) (Ride, error) {
@@ -51,8 +51,8 @@ func (q *Queries) AcceptRideFromRequest(ctx context.Context, arg AcceptRideFromR
 		arg.VehicleType,
 		arg.PlateNumber,
 		arg.CommissionBps,
-		arg.CommissionCentavos,
-		arg.DriverPayoutCentavos,
+		arg.CommissionAmount,
+		arg.DriverPayoutAmount,
 	)
 	var i Ride
 	err := row.Scan(
@@ -60,7 +60,7 @@ func (q *Queries) AcceptRideFromRequest(ctx context.Context, arg AcceptRideFromR
 		&i.PassengerID,
 		&i.DriverID,
 		&i.Status,
-		&i.FareCentavos,
+		&i.FareAmount,
 		&i.RideType,
 		&i.PickupLatitude,
 		&i.PickupLongitude,
@@ -79,8 +79,8 @@ func (q *Queries) AcceptRideFromRequest(ctx context.Context, arg AcceptRideFromR
 		&i.PaymentStatus,
 		&i.CashReceivedAt,
 		&i.CommissionBps,
-		&i.CommissionCentavos,
-		&i.DriverPayoutCentavos,
+		&i.CommissionAmount,
+		&i.DriverPayoutAmount,
 	)
 	return i, err
 }
@@ -93,28 +93,28 @@ SET status = 'assigned',
     vehicle_type = $4,
     plate_number = $5,
     commission_bps = $6,
-    commission_centavos = $7,
-    driver_payout_centavos = $8
+    commission_amount = $7,
+    driver_payout_amount = $8
 WHERE id = $1
   AND status = 'requested'
-RETURNING id, passenger_id, driver_id, status, fare_centavos, ride_type,
+RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
     pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name,
     distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
     driver_rating, created_at, completed_at, payment_status,
-    cash_received_at, commission_bps, commission_centavos,
-    driver_payout_centavos
+    cash_received_at, commission_bps, commission_amount,
+    driver_payout_amount
 `
 
 type AssignRideFromAcceptanceParams struct {
-	ID                   int32       `db:"id"`
-	DriverID             pgtype.Int4 `db:"driver_id"`
-	DriverName           pgtype.Text `db:"driver_name"`
-	VehicleType          pgtype.Text `db:"vehicle_type"`
-	PlateNumber          pgtype.Text `db:"plate_number"`
-	CommissionBps        pgtype.Int8 `db:"commission_bps"`
-	CommissionCentavos   int64       `db:"commission_centavos"`
-	DriverPayoutCentavos int64       `db:"driver_payout_centavos"`
+	ID                 int32       `db:"id"`
+	DriverID           pgtype.Int4 `db:"driver_id"`
+	DriverName         pgtype.Text `db:"driver_name"`
+	VehicleType        pgtype.Text `db:"vehicle_type"`
+	PlateNumber        pgtype.Text `db:"plate_number"`
+	CommissionBps      pgtype.Int4 `db:"commission_bps"`
+	CommissionAmount   int64       `db:"commission_amount"`
+	DriverPayoutAmount int64       `db:"driver_payout_amount"`
 }
 
 func (q *Queries) AssignRideFromAcceptance(ctx context.Context, arg AssignRideFromAcceptanceParams) (Ride, error) {
@@ -125,8 +125,8 @@ func (q *Queries) AssignRideFromAcceptance(ctx context.Context, arg AssignRideFr
 		arg.VehicleType,
 		arg.PlateNumber,
 		arg.CommissionBps,
-		arg.CommissionCentavos,
-		arg.DriverPayoutCentavos,
+		arg.CommissionAmount,
+		arg.DriverPayoutAmount,
 	)
 	var i Ride
 	err := row.Scan(
@@ -134,7 +134,7 @@ func (q *Queries) AssignRideFromAcceptance(ctx context.Context, arg AssignRideFr
 		&i.PassengerID,
 		&i.DriverID,
 		&i.Status,
-		&i.FareCentavos,
+		&i.FareAmount,
 		&i.RideType,
 		&i.PickupLatitude,
 		&i.PickupLongitude,
@@ -153,8 +153,8 @@ func (q *Queries) AssignRideFromAcceptance(ctx context.Context, arg AssignRideFr
 		&i.PaymentStatus,
 		&i.CashReceivedAt,
 		&i.CommissionBps,
-		&i.CommissionCentavos,
-		&i.DriverPayoutCentavos,
+		&i.CommissionAmount,
+		&i.DriverPayoutAmount,
 	)
 	return i, err
 }
@@ -175,51 +175,51 @@ func (q *Queries) CountActiveRidesForAcceptance(ctx context.Context, driverID pg
 
 const createAcceptedRide = `-- name: CreateAcceptedRide :one
 INSERT INTO rides (
-    passenger_id, driver_id, status, fare_centavos, ride_type,
+    passenger_id, driver_id, status, fare_amount, ride_type,
     pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name,
     distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
-    commission_bps, commission_centavos, driver_payout_centavos
+    commission_bps, commission_amount, driver_payout_amount
 )
 VALUES (
     $1, $2, 'accepted', $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
     $13, $14, $15, $16, $17, $18
 )
-RETURNING id, passenger_id, driver_id, status, fare_centavos, ride_type,
+RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
     pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name,
     distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
     driver_rating, created_at, completed_at, payment_status,
-    cash_received_at, commission_bps, commission_centavos,
-    driver_payout_centavos
+    cash_received_at, commission_bps, commission_amount,
+    driver_payout_amount
 `
 
 type CreateAcceptedRideParams struct {
-	PassengerID          int32         `db:"passenger_id"`
-	DriverID             pgtype.Int4   `db:"driver_id"`
-	FareCentavos         int64         `db:"fare_centavos"`
-	RideType             string        `db:"ride_type"`
-	PickupLatitude       pgtype.Float8 `db:"pickup_latitude"`
-	PickupLongitude      pgtype.Float8 `db:"pickup_longitude"`
-	PickupName           pgtype.Text   `db:"pickup_name"`
-	DropoffLatitude      pgtype.Float8 `db:"dropoff_latitude"`
-	DropoffLongitude     pgtype.Float8 `db:"dropoff_longitude"`
-	DropoffName          pgtype.Text   `db:"dropoff_name"`
-	DistanceKm           pgtype.Float8 `db:"distance_km"`
-	DurationMinutes      pgtype.Float8 `db:"duration_minutes"`
-	DriverName           pgtype.Text   `db:"driver_name"`
-	VehicleType          pgtype.Text   `db:"vehicle_type"`
-	PlateNumber          pgtype.Text   `db:"plate_number"`
-	CommissionBps        pgtype.Int8   `db:"commission_bps"`
-	CommissionCentavos   int64         `db:"commission_centavos"`
-	DriverPayoutCentavos int64         `db:"driver_payout_centavos"`
+	PassengerID        int32         `db:"passenger_id"`
+	DriverID           pgtype.Int4   `db:"driver_id"`
+	FareAmount         int64         `db:"fare_amount"`
+	RideType           string        `db:"ride_type"`
+	PickupLatitude     pgtype.Float8 `db:"pickup_latitude"`
+	PickupLongitude    pgtype.Float8 `db:"pickup_longitude"`
+	PickupName         pgtype.Text   `db:"pickup_name"`
+	DropoffLatitude    pgtype.Float8 `db:"dropoff_latitude"`
+	DropoffLongitude   pgtype.Float8 `db:"dropoff_longitude"`
+	DropoffName        pgtype.Text   `db:"dropoff_name"`
+	DistanceKm         pgtype.Float8 `db:"distance_km"`
+	DurationMinutes    pgtype.Float8 `db:"duration_minutes"`
+	DriverName         pgtype.Text   `db:"driver_name"`
+	VehicleType        pgtype.Text   `db:"vehicle_type"`
+	PlateNumber        pgtype.Text   `db:"plate_number"`
+	CommissionBps      pgtype.Int4   `db:"commission_bps"`
+	CommissionAmount   int64         `db:"commission_amount"`
+	DriverPayoutAmount int64         `db:"driver_payout_amount"`
 }
 
 func (q *Queries) CreateAcceptedRide(ctx context.Context, arg CreateAcceptedRideParams) (Ride, error) {
 	row := q.db.QueryRow(ctx, createAcceptedRide,
 		arg.PassengerID,
 		arg.DriverID,
-		arg.FareCentavos,
+		arg.FareAmount,
 		arg.RideType,
 		arg.PickupLatitude,
 		arg.PickupLongitude,
@@ -233,8 +233,8 @@ func (q *Queries) CreateAcceptedRide(ctx context.Context, arg CreateAcceptedRide
 		arg.VehicleType,
 		arg.PlateNumber,
 		arg.CommissionBps,
-		arg.CommissionCentavos,
-		arg.DriverPayoutCentavos,
+		arg.CommissionAmount,
+		arg.DriverPayoutAmount,
 	)
 	var i Ride
 	err := row.Scan(
@@ -242,7 +242,7 @@ func (q *Queries) CreateAcceptedRide(ctx context.Context, arg CreateAcceptedRide
 		&i.PassengerID,
 		&i.DriverID,
 		&i.Status,
-		&i.FareCentavos,
+		&i.FareAmount,
 		&i.RideType,
 		&i.PickupLatitude,
 		&i.PickupLongitude,
@@ -261,70 +261,42 @@ func (q *Queries) CreateAcceptedRide(ctx context.Context, arg CreateAcceptedRide
 		&i.PaymentStatus,
 		&i.CashReceivedAt,
 		&i.CommissionBps,
-		&i.CommissionCentavos,
-		&i.DriverPayoutCentavos,
+		&i.CommissionAmount,
+		&i.DriverPayoutAmount,
 	)
 	return i, err
 }
 
 const createRideSettlement = `-- name: CreateRideSettlement :exec
 INSERT INTO ride_settlements (
-    ride_id, gross_fare_centavos, commission_bps, commission_centavos,
-    driver_payout_centavos, payment_status
+    ride_id, gross_fare, commission_bps, commission_amount,
+    driver_payout_amount, payment_status
 )
 VALUES ($1, $2, $3, $4, $5, 'unpaid')
 `
 
 type CreateRideSettlementParams struct {
-	RideID               int32       `db:"ride_id"`
-	GrossFareCentavos    int64       `db:"gross_fare_centavos"`
-	CommissionBps        pgtype.Int8 `db:"commission_bps"`
-	CommissionCentavos   int64       `db:"commission_centavos"`
-	DriverPayoutCentavos int64       `db:"driver_payout_centavos"`
+	RideID             int32       `db:"ride_id"`
+	GrossFare          int64       `db:"gross_fare"`
+	CommissionBps      pgtype.Int4 `db:"commission_bps"`
+	CommissionAmount   int64       `db:"commission_amount"`
+	DriverPayoutAmount int64       `db:"driver_payout_amount"`
 }
 
 func (q *Queries) CreateRideSettlement(ctx context.Context, arg CreateRideSettlementParams) error {
 	_, err := q.db.Exec(ctx, createRideSettlement,
 		arg.RideID,
-		arg.GrossFareCentavos,
+		arg.GrossFare,
 		arg.CommissionBps,
-		arg.CommissionCentavos,
-		arg.DriverPayoutCentavos,
+		arg.CommissionAmount,
+		arg.DriverPayoutAmount,
 	)
 	return err
 }
 
-const lockPendingBidForAcceptance = `-- name: LockPendingBidForAcceptance :one
-SELECT id, ride_id, driver_id, offered_fare_centavos, status
-FROM bids
-WHERE id = $1
-  AND driver_id = $2
-  AND status = 'pending'
-LIMIT 1
-FOR UPDATE
-`
-
-type LockPendingBidForAcceptanceParams struct {
-	ID       int32 `db:"id"`
-	DriverID int32 `db:"driver_id"`
-}
-
-func (q *Queries) LockPendingBidForAcceptance(ctx context.Context, arg LockPendingBidForAcceptanceParams) (Bid, error) {
-	row := q.db.QueryRow(ctx, lockPendingBidForAcceptance, arg.ID, arg.DriverID)
-	var i Bid
-	err := row.Scan(
-		&i.ID,
-		&i.RideID,
-		&i.DriverID,
-		&i.OfferedFareCentavos,
-		&i.Status,
-	)
-	return i, err
-}
-
 const lockPendingBidOfferForAcceptance = `-- name: LockPendingBidOfferForAcceptance :one
 SELECT id, session_id, driver_id, driver_name, plate_number, vehicle_type,
-    proposed_fare_centavos, status, created_at
+    proposed_fare, status, created_at
 FROM bid_offers
 WHERE id = $1
   AND session_id = $2
@@ -348,7 +320,7 @@ func (q *Queries) LockPendingBidOfferForAcceptance(ctx context.Context, arg Lock
 		&i.DriverName,
 		&i.PlateNumber,
 		&i.VehicleType,
-		&i.ProposedFareCentavos,
+		&i.ProposedFare,
 		&i.Status,
 		&i.CreatedAt,
 	)
@@ -356,13 +328,13 @@ func (q *Queries) LockPendingBidOfferForAcceptance(ctx context.Context, arg Lock
 }
 
 const lockRequestedRideForAcceptance = `-- name: LockRequestedRideForAcceptance :one
-SELECT id, passenger_id, driver_id, status, fare_centavos, ride_type,
+SELECT id, passenger_id, driver_id, status, fare_amount, ride_type,
     pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name,
     distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
     driver_rating, created_at, completed_at, payment_status,
-    cash_received_at, commission_bps, commission_centavos,
-    driver_payout_centavos
+    cash_received_at, commission_bps, commission_amount,
+    driver_payout_amount
 FROM rides
 WHERE id = $1
   AND status = 'requested'
@@ -378,7 +350,7 @@ func (q *Queries) LockRequestedRideForAcceptance(ctx context.Context, id int32) 
 		&i.PassengerID,
 		&i.DriverID,
 		&i.Status,
-		&i.FareCentavos,
+		&i.FareAmount,
 		&i.RideType,
 		&i.PickupLatitude,
 		&i.PickupLongitude,
@@ -397,29 +369,8 @@ func (q *Queries) LockRequestedRideForAcceptance(ctx context.Context, id int32) 
 		&i.PaymentStatus,
 		&i.CashReceivedAt,
 		&i.CommissionBps,
-		&i.CommissionCentavos,
-		&i.DriverPayoutCentavos,
-	)
-	return i, err
-}
-
-const markBidAccepted = `-- name: MarkBidAccepted :one
-UPDATE bids
-SET status = 'accepted'
-WHERE id = $1
-  AND status = 'pending'
-RETURNING id, ride_id, driver_id, offered_fare_centavos, status
-`
-
-func (q *Queries) MarkBidAccepted(ctx context.Context, id int32) (Bid, error) {
-	row := q.db.QueryRow(ctx, markBidAccepted, id)
-	var i Bid
-	err := row.Scan(
-		&i.ID,
-		&i.RideID,
-		&i.DriverID,
-		&i.OfferedFareCentavos,
-		&i.Status,
+		&i.CommissionAmount,
+		&i.DriverPayoutAmount,
 	)
 	return i, err
 }
@@ -430,7 +381,7 @@ SET status = 'accepted'
 WHERE id = $1
   AND status = 'pending'
 RETURNING id, session_id, driver_id, driver_name, plate_number, vehicle_type,
-    proposed_fare_centavos, status, created_at
+    proposed_fare, status, created_at
 `
 
 func (q *Queries) MarkBidOfferAccepted(ctx context.Context, id int32) (BidOffer, error) {
@@ -443,7 +394,7 @@ func (q *Queries) MarkBidOfferAccepted(ctx context.Context, id int32) (BidOffer,
 		&i.DriverName,
 		&i.PlateNumber,
 		&i.VehicleType,
-		&i.ProposedFareCentavos,
+		&i.ProposedFare,
 		&i.Status,
 		&i.CreatedAt,
 	)
@@ -458,7 +409,7 @@ WHERE id = $1
   AND status = 'open'
 RETURNING id, passenger_id, ride_type, pickup_latitude, pickup_longitude,
     pickup_name, dropoff_latitude, dropoff_longitude, dropoff_name,
-    passenger_note, distance_km, duration_minutes, offered_fare_centavos,
+    passenger_note, distance_km, duration_minutes, offered_fare,
     status, target_driver_id, accepted_driver_id, expires_at, created_at
 `
 
@@ -483,7 +434,7 @@ func (q *Queries) MarkBidSessionAccepted(ctx context.Context, arg MarkBidSession
 		&i.PassengerNote,
 		&i.DistanceKm,
 		&i.DurationMinutes,
-		&i.OfferedFareCentavos,
+		&i.OfferedFare,
 		&i.Status,
 		&i.TargetDriverID,
 		&i.AcceptedDriverID,

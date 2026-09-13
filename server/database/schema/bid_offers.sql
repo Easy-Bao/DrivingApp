@@ -5,9 +5,10 @@ CREATE TABLE bid_offers (
     driver_name text,
     plate_number text,
     vehicle_type text,
-    proposed_fare_centavos bigint NOT NULL,
+    proposed_fare bigint NOT NULL,
     status text NOT NULL DEFAULT 'pending',
-    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT bid_offers_fare_check CHECK (proposed_fare >= 0)
 );
 
 CREATE INDEX bidoffer_session_id_created_at
