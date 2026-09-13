@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger/src/features/auth/domain/repositories/passenger_auth_repository.dart';
@@ -16,8 +17,11 @@ class VerifyOtpBloc(this._authRepository)
   this : super(const VerifyOtpInitial()) {
     on<VerifyOtpTimerStarted>(_onVerifyOtpTimerStarted);
     on<VerifyOtpTimerTicked>(_onVerifyOtpTimerTicked);
-    on<VerifyOtpSubmitted>(_onVerifyOtpSubmitted);
-    on<VerifyOtpResendRequested>(_onVerifyOtpResendRequested);
+    on<VerifyOtpSubmitted>(_onVerifyOtpSubmitted, transformer: droppable());
+    on<VerifyOtpResendRequested>(
+      _onVerifyOtpResendRequested,
+      transformer: droppable(),
+    );
   }
 
   void _onVerifyOtpTimerStarted(

@@ -1,3 +1,4 @@
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger/src/features/auth/domain/repositories/passenger_auth_repository.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/forgot_password/forgot_password_event.dart';
@@ -13,7 +14,10 @@ class ForgotPasswordBloc(this._authRepository)
   final PassengerAuthRepository _authRepository;
 
   this : super(const ForgotPasswordInitial()) {
-    on<ForgotPasswordSubmitted>(_onForgotPasswordSubmitted);
+    on<ForgotPasswordSubmitted>(
+      _onForgotPasswordSubmitted,
+      transformer: droppable(),
+    );
   }
 
   Future<void> _onForgotPasswordSubmitted(

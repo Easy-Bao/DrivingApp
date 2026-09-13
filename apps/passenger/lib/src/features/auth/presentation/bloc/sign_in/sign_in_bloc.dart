@@ -1,3 +1,4 @@
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger/src/features/auth/domain/entities/auth_credentials.dart';
@@ -14,7 +15,7 @@ class SignInBloc(this._authRepository) extends Bloc<SignInEvent, SignInState> {
   final PassengerAuthRepository _authRepository;
 
   this : super(const SignInInitial()) {
-    on<SignInSubmitted>(_onSignInSubmitted);
+    on<SignInSubmitted>(_onSignInSubmitted, transformer: droppable());
   }
 
   Future<void> _onSignInSubmitted(

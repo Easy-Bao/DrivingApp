@@ -1,3 +1,4 @@
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:driver/src/features/auth/domain/entities/auth_credentials.dart';
 import 'package:driver/src/features/auth/domain/repositories/driver_auth_repository.dart';
 import 'package:driver/src/features/auth/presentation/bloc/sign_in/sign_in_event.dart';
@@ -13,7 +14,7 @@ class SignInBloc(this._authRepository) extends Bloc<SignInEvent, SignInState> {
   final DriverAuthRepository _authRepository;
 
   this : super(const SignInInitial()) {
-    on<SignInSubmitted>(_onSignInSubmitted);
+    on<SignInSubmitted>(_onSignInSubmitted, transformer: droppable());
   }
 
   Future<void> _onSignInSubmitted(

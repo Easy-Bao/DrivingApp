@@ -1,3 +1,4 @@
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:driver/src/features/auth/domain/repositories/driver_auth_repository.dart';
 import 'package:driver/src/features/auth/presentation/bloc/forgot_password/forgot_password_event.dart';
 import 'package:driver/src/features/auth/presentation/bloc/forgot_password/forgot_password_state.dart';
@@ -12,7 +13,10 @@ class ForgotPasswordBloc(this._authRepository)
   final DriverAuthRepository _authRepository;
 
   this : super(const ForgotPasswordInitial()) {
-    on<ForgotPasswordSubmitted>(_onForgotPasswordSubmitted);
+    on<ForgotPasswordSubmitted>(
+      _onForgotPasswordSubmitted,
+      transformer: droppable(),
+    );
   }
 
   Future<void> _onForgotPasswordSubmitted(

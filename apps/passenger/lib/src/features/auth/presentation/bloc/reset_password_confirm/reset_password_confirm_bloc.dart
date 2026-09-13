@@ -1,3 +1,4 @@
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger/src/features/auth/domain/repositories/passenger_auth_repository.dart';
@@ -12,7 +13,10 @@ class ResetPasswordConfirmBloc(this._authRepository)
   final PassengerAuthRepository _authRepository;
 
   this : super(const ResetPasswordConfirmInitial()) {
-    on<ResetPasswordConfirmSubmitted>(_onResetPasswordConfirmSubmitted);
+    on<ResetPasswordConfirmSubmitted>(
+      _onResetPasswordConfirmSubmitted,
+      transformer: droppable(),
+    );
   }
 
   Future<void> _onResetPasswordConfirmSubmitted(
