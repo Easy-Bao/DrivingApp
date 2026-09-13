@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:driver/src/infrastructure/network/driver_auth_interceptor.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:foundation/foundation.dart';
+import 'package:sentry_dio/sentry_dio.dart';
 
 class DriverApiClient._() {
   static Dio create({
@@ -51,6 +52,7 @@ class DriverApiClient._() {
       dio.interceptors.add(NetworkAvailabilityInterceptor(networkAvailability));
     }
     dio.interceptors.add(RetryInterceptor(dio));
+    dio.addSentry();
 
     return dio;
   }

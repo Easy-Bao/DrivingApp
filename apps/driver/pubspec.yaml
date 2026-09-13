@@ -36,6 +36,8 @@ dependencies:
 
   fpdart: ^1.2.0
   dio: ^5.10.0
+  sentry_flutter: ^9.30.0
+  sentry_dio: ^9.30.0
   rxdart: ^0.28.0
   flutter_secure_storage: ^10.3.1
   flutter_background_service: ^5.1.0

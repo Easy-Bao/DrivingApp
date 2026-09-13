@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/infrastructure/network/passenger_auth_interceptor.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
+import 'package:sentry_dio/sentry_dio.dart';
 
 class PassengerApiClient._() {
   static Dio create({
@@ -55,6 +56,7 @@ class PassengerApiClient._() {
       dio.interceptors.add(NetworkAvailabilityInterceptor(networkAvailability));
     }
     dio.interceptors.add(RetryInterceptor(dio));
+    dio.addSentry();
 
     return dio;
   }

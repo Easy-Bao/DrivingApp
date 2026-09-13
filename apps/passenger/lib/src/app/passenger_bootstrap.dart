@@ -11,6 +11,7 @@ import 'package:passenger/src/app/theme/easy_ride_app_theme.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/infrastructure/config/passenger_env_config.dart';
 import 'package:passenger/src/infrastructure/telemetry/passenger_background_telemetry.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> bootstrapPassengerApp() async {
@@ -23,31 +24,45 @@ Future<void> bootstrapPassengerApp() async {
 
     await dotenv.load(fileName: '.env', isOptional: true);
 
-    final nativeService = MapNativeService(
-      placeServiceBaseUri: PassengerEnvConfig.apiBaseUri,
-    );
-    LocationService.nativeService = nativeService;
-    final mapboxToken = PassengerEnvConfig.mapboxPublicToken;
-    if (mapboxToken == null) {
-      debugPrint('Mapbox is disabled because MAPBOX_PUBLIC_TOKEN is missing.');
-    }
-    await MapProvider.initialize(
-      token: mapboxToken,
-      nativeService: nativeService,
-    );
+    await SentryFlutter.init(
+      (options) {
+        options.dsn = PassengerEnvConfig.sentryDsn;
+        options.tracesSampleRate = 0.1;
+        options.environment = const String.fromEnvironment(
+          'APP_ENV',
+          defaultValue: 'development',
+        );
+      },
+      appRunner: () async {
+        final nativeService = MapNativeService(
+          placeServiceBaseUri: PassengerEnvConfig.apiBaseUri,
+        );
+        LocationService.nativeService = nativeService;
+        final mapboxToken = PassengerEnvConfig.mapboxPublicToken;
+        if (mapboxToken == null) {
+          debugPrint(
+            'Mapbox is disabled because MAPBOX_PUBLIC_TOKEN is missing.',
+          );
+        }
+        await MapProvider.initialize(
+          token: mapboxToken,
+          nativeService: nativeService,
+        );
 
-    AppTransitions.configure();
+        AppTransitions.configure();
 
-    await Modular.configure(
-      appModule: PassengerDependencies(prefs: prefs),
-      initialRoute: HomeRoutes.fullHomePath,
-      debugLogDiagnostics: true,
-      debugLogDiagnosticsGoRouter: true,
-      debugLogEventBus: true,
-      observers: [passengerNavigationObserver],
+        await Modular.configure(
+          appModule: PassengerDependencies(prefs: prefs),
+          initialRoute: HomeRoutes.fullHomePath,
+          debugLogDiagnostics: true,
+          debugLogDiagnosticsGoRouter: true,
+          debugLogEventBus: true,
+          observers: [passengerNavigationObserver],
+        );
+
+        runApp(const PassengerApp());
+      },
     );
-
-    runApp(const PassengerApp());
   } catch (error, stackTrace) {
     runApp(
       SafeClientErrorApp(

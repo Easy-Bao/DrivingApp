@@ -12,6 +12,7 @@ import 'package:driver/src/features/dashboard/dashboard_routes.dart';
 import 'package:driver/src/infrastructure/config/driver_env_config.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver/src/infrastructure/telemetry/driver_background_telemetry.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> bootstrapDriverApp() async {
@@ -26,33 +27,47 @@ Future<void> bootstrapDriverApp() async {
 
     await dotenv.load(fileName: '.env', isOptional: true);
 
-    final nativeService = MapNativeService(
-      placeServiceBaseUri: DriverEnvConfig.apiBaseUri,
-    );
-    LocationService.nativeService = nativeService;
-    final mapboxToken = DriverEnvConfig.mapboxPublicToken;
-    if (mapboxToken == null) {
-      debugPrint('Mapbox is disabled because MAPBOX_PUBLIC_TOKEN is missing.');
-    }
-    await MapProvider.initialize(
-      token: mapboxToken,
-      nativeService: nativeService,
-    );
+    await SentryFlutter.init(
+      (options) {
+        options.dsn = DriverEnvConfig.sentryDsn;
+        options.tracesSampleRate = 0.1;
+        options.environment = const String.fromEnvironment(
+          'APP_ENV',
+          defaultValue: 'development',
+        );
+      },
+      appRunner: () async {
+        final nativeService = MapNativeService(
+          placeServiceBaseUri: DriverEnvConfig.apiBaseUri,
+        );
+        LocationService.nativeService = nativeService;
+        final mapboxToken = DriverEnvConfig.mapboxPublicToken;
+        if (mapboxToken == null) {
+          debugPrint(
+            'Mapbox is disabled because MAPBOX_PUBLIC_TOKEN is missing.',
+          );
+        }
+        await MapProvider.initialize(
+          token: mapboxToken,
+          nativeService: nativeService,
+        );
 
-    await Modular.configure(
-      appModule: DriverDependencies(
-        prefs: prefs,
-        sessionService: sessionService,
-      ),
-      initialRoute: hasDriverSession
-          ? DashboardRoutes.fullDashboardPath
-          : AuthRoutes.signinPath,
-      debugLogDiagnostics: true,
-      debugLogDiagnosticsGoRouter: true,
-      debugLogEventBus: true,
-    );
+        await Modular.configure(
+          appModule: DriverDependencies(
+            prefs: prefs,
+            sessionService: sessionService,
+          ),
+          initialRoute: hasDriverSession
+              ? DashboardRoutes.fullDashboardPath
+              : AuthRoutes.signinPath,
+          debugLogDiagnostics: true,
+          debugLogDiagnosticsGoRouter: true,
+          debugLogEventBus: true,
+        );
 
-    runApp(const DriverApp());
+        runApp(const DriverApp());
+      },
+    );
   } catch (error, stackTrace) {
     runApp(
       SafeClientErrorApp(

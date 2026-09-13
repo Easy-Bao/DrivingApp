@@ -9,6 +9,7 @@ class DriverEnvConfig._() {
   static const _mapboxPublicToken = String.fromEnvironment(
     'MAPBOX_PUBLIC_TOKEN',
   );
+  static const _sentryDsn = String.fromEnvironment('SENTRY_DSN');
   static const _physicalDevice = String.fromEnvironment('PHYSICAL_DEVICE');
   static const _usesAdbReverse = String.fromEnvironment(
     'ANDROID_USE_ADB_REVERSE',
@@ -24,6 +25,8 @@ class DriverEnvConfig._() {
     final token = _value('MAPBOX_PUBLIC_TOKEN', _mapboxPublicToken)?.trim();
     return token == null || token.isEmpty ? null : token;
   }
+
+  static String get sentryDsn => _value('SENTRY_DSN', _sentryDsn) ?? '';
 
   static bool get backgroundTelemetryEnabled =>
       _flag('ENABLE_DRIVER_BACKGROUND_TELEMETRY', _backgroundTelemetry);
