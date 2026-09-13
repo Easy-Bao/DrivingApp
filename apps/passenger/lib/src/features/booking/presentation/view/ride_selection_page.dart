@@ -15,6 +15,7 @@ import 'package:passenger/src/features/booking/domain/entities/booking_draft.dar
 import 'package:passenger/src/features/booking/domain/repositories/fare_repository.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
+import 'package:passenger/src/features/booking/presentation/bloc/fare_estimate/fare_estimate_cubit.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/booking_auth_bottom_sheet_widget.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_options_panel_widget.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_tip_selector_widget.dart';
@@ -67,7 +68,7 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
   Widget? _cachedMapView;
   Route? _route;
   Future<Route?>? _routeRequest;
-  Future<void>? _fareQuoteRequest;
+  late final FareEstimateCubit _fareEstimateCubit;
   bool _isResolvingPickup = true;
   bool _isPanelExpanded = false;
   ({double lat, double lng})? _resolvedPickup;
@@ -129,6 +130,7 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
   @override
   void initState() {
     super.initState();
+    _fareEstimateCubit = FareEstimateCubit(repository: widget.fareRepository);
     _panelController = DraggableScrollableController()
       ..addListener(_onPanelExtentChanged);
     _selectedTipAmount =
@@ -249,89 +251,16 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
     required double distanceKm,
     required double durationMinutes,
   }) async {
-    final activeRequest = _fareQuoteRequest;
-    if (activeRequest != null) {
-      await activeRequest;
-      return;
-    }
-
-    final request = _requestServerFareQuote(
+    final pickup = _pickupCoordinate;
+    if (pickup == null) return;
+    await _fareEstimateCubit.estimate(
       distanceKm: distanceKm,
       durationMinutes: durationMinutes,
+      originLatitude: pickup.lat,
+      originLongitude: pickup.lng,
+      destinationLatitude: widget.destination.latitude,
+      destinationLongitude: widget.destination.longitude,
     );
-    _fareQuoteRequest = request;
-
-    try {
-      await request;
-    } finally {
-      if (identical(_fareQuoteRequest, request)) {
-        _fareQuoteRequest = null;
-      }
-    }
-  }
-
-  Future<void> _requestServerFareQuote({
-    required double distanceKm,
-    required double durationMinutes,
-  }) async {
-    if (mounted) {
-      setState(() {
-        _isLoadingFare = true;
-        _fareError = null;
-        _customFareError = null;
-      });
-    }
-
-    try {
-      final pickup = _pickupCoordinate;
-      if (pickup == null) {
-        throw StateError('Pickup location is unavailable.');
-      }
-      final result = await widget.fareRepository.estimateFareResult(
-        distanceKm: distanceKm,
-        durationMinutes: durationMinutes,
-        originLatitude: pickup.lat,
-        originLongitude: pickup.lng,
-        destinationLatitude: widget.destination.latitude,
-        destinationLongitude: widget.destination.longitude,
-      );
-      switch (result) {
-        case Ok<FareEstimate, DomainFailure>(value: final fareResult):
-          if (mounted) {
-            setState(() {
-              _fareResult = fareResult;
-              _customFareController.text = fareResult.totalFare.toStringAsFixed(
-                2,
-              );
-              _fareError = null;
-              _customFareError = null;
-            });
-          }
-        case Err<FareEstimate, DomainFailure>():
-          if (mounted) {
-            setState(() {
-              _isLoadingFare = false;
-              _fareError = 'We couldn’t calculate a fare for this route. Please try again.';
-              _fareResult = null;
-              _customFareController.clear();
-            });
-          }
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _isLoadingFare = false;
-          _fareError =
-              'We couldn’t calculate a fare for this route. Please try again.';
-          _fareResult = null;
-          _customFareController.clear();
-        });
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoadingFare = false);
-      }
-    }
   }
 
   void _retryFareCalculation() {
@@ -456,6 +385,7 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
 
   @override
   void dispose() {
+    unawaited(_fareEstimateCubit.close());
     _panelController.dispose();
     _customFareController.dispose();
     _notesController.dispose();
@@ -576,95 +506,127 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
       },
     );
 
-    return Scaffold(
-      backgroundColor: context.colorScheme.surface,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Container(
-              color: context.colorScheme.surfaceContainerHighest,
-              child: SizedBox.expand(
-                child: _buildMapView(defaultLat, defaultLng),
+    return BlocListener<FareEstimateCubit, FareEstimateState>(
+      bloc: _fareEstimateCubit,
+      listener: (context, state) {
+        switch (state) {
+          case FareEstimateInitial():
+            break;
+          case FareEstimateLoading():
+            setState(() {
+              _isLoadingFare = true;
+              _fareError = null;
+              _customFareError = null;
+            });
+          case FareEstimateLoaded(value: final fareResult):
+            setState(() {
+              _fareResult = fareResult;
+              _customFareController.text = fareResult.totalFare.toStringAsFixed(
+                2,
+              );
+              _isLoadingFare = false;
+              _fareError = null;
+              _customFareError = null;
+            });
+          case FareEstimateFailure(message: final message):
+            setState(() {
+              _isLoadingFare = false;
+              _fareError = message;
+              _fareResult = null;
+              _customFareController.clear();
+            });
+        }
+      },
+      child: Scaffold(
+        backgroundColor: context.colorScheme.surface,
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: Container(
+                color: context.colorScheme.surfaceContainerHighest,
+                child: SizedBox.expand(
+                  child: _buildMapView(defaultLat, defaultLng),
+                ),
               ),
             ),
-          ),
 
-          AnimatedOpacity(
-            opacity: _isPanelExpanded ? 0 : 1,
-            duration: _panelAnimationDuration,
-            curve: Curves.easeOutCubic,
-            child: IgnorePointer(
-              ignoring: _isPanelExpanded,
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: EasyRideDesignTokens.pageHorizontalPadding,
-                    vertical: 8,
-                  ),
-                  child: HeroMode(
-                    enabled: !_isPanelExpanded,
-                    child: Hero(
-                      tag: 'ride-selection-back-button',
-                      child: _buildMapBackButton(context),
+            AnimatedOpacity(
+              opacity: _isPanelExpanded ? 0 : 1,
+              duration: _panelAnimationDuration,
+              curve: Curves.easeOutCubic,
+              child: IgnorePointer(
+                ignoring: _isPanelExpanded,
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: EasyRideDesignTokens.pageHorizontalPadding,
+                      vertical: 8,
+                    ),
+                    child: HeroMode(
+                      enabled: !_isPanelExpanded,
+                      child: Hero(
+                        tag: 'ride-selection-back-button',
+                        child: _buildMapBackButton(context),
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
 
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: LayoutBuilder(
-              builder: (ctx, constraints) {
-                final isWide = constraints.maxWidth > 600.0;
-                return SizedBox(
-                  width: isWide ? 600.0 : constraints.maxWidth,
-                  height: constraints.maxHeight,
-                  child: DraggableScrollableSheet(
-                    controller: _panelController,
-                    expand: false,
-                    initialChildSize: _panelInitialSize,
-                    minChildSize: _panelMinSize,
-                    maxChildSize: _panelMaxSize,
-                    snap: true,
-                    snapSizes: const [
-                      _panelMinSize,
-                      _panelInitialSize,
-                      _panelMaxSize,
-                    ],
-                    snapAnimationDuration: _panelAnimationDuration,
-                    shouldCloseOnMinExtent: false,
-                    builder: (context, scrollController) {
-                      return RideOptionsPanelWidget(
-                        passengerName: passengerName,
-                        pickupLabel: _pickupLabel,
-                        destinationName: widget.destination.name,
-                        destinationAddress: widget.destination.fullAddress,
-                        fareResult: _fareResult,
-                        customFareController: _customFareController,
-                        customFareError: _customFareError,
-                        isLoadingFare: _isLoadingFare,
-                        fareError: _fareError,
-                        onRetryFare: _retryFareCalculation,
-                        onCustomFareChanged: _onCustomFareChanged,
-                        notesController: _notesController,
-                        onNotesChanged: _onNotesChanged,
-                        selectedTipAmount: _selectedTipAmount,
-                        onTipSelected: _onTipSelected,
-                        totalFare: _totalFare,
-                        isExpanded: _isPanelExpanded,
-                        scrollController: scrollController,
-                        onPageBackPressed: () => context.pop(),
-                        onBookPressed: () => unawaited(_handleBookPressed()),
-                      );
-                    },
-                  ),
-                );
-              },
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: LayoutBuilder(
+                builder: (ctx, constraints) {
+                  final isWide = constraints.maxWidth > 600.0;
+                  return SizedBox(
+                    width: isWide ? 600.0 : constraints.maxWidth,
+                    height: constraints.maxHeight,
+                    child: DraggableScrollableSheet(
+                      controller: _panelController,
+                      expand: false,
+                      initialChildSize: _panelInitialSize,
+                      minChildSize: _panelMinSize,
+                      maxChildSize: _panelMaxSize,
+                      snap: true,
+                      snapSizes: const [
+                        _panelMinSize,
+                        _panelInitialSize,
+                        _panelMaxSize,
+                      ],
+                      snapAnimationDuration: _panelAnimationDuration,
+                      shouldCloseOnMinExtent: false,
+                      builder: (context, scrollController) {
+                        return RideOptionsPanelWidget(
+                          passengerName: passengerName,
+                          pickupLabel: _pickupLabel,
+                          destinationName: widget.destination.name,
+                          destinationAddress: widget.destination.fullAddress,
+                          fareResult: _fareResult,
+                          customFareController: _customFareController,
+                          customFareError: _customFareError,
+                          isLoadingFare: _isLoadingFare,
+                          fareError: _fareError,
+                          onRetryFare: _retryFareCalculation,
+                          onCustomFareChanged: _onCustomFareChanged,
+                          notesController: _notesController,
+                          onNotesChanged: _onNotesChanged,
+                          selectedTipAmount: _selectedTipAmount,
+                          onTipSelected: _onTipSelected,
+                          totalFare: _totalFare,
+                          isExpanded: _isPanelExpanded,
+                          scrollController: scrollController,
+                          onPageBackPressed: () => context.pop(),
+                          onBookPressed: () => unawaited(_handleBookPressed()),
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
