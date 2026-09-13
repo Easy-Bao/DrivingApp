@@ -30,8 +30,6 @@ class const AppFloatingTabBar({
   required this.indicatorKey,
   this.pagePosition,
   this.iconBuilder,
-  this.activeIndicatorBuilder,
-  this.transparentSurface = false,
 }) extends StatelessWidget {
   static const animationDuration = Duration(milliseconds: 280);
   static const height = EasyRideDesignTokens.navigationBarHeight;
@@ -41,8 +39,6 @@ class const AppFloatingTabBar({
   final ValueChanged<int> onDestinationSelected;
   final ValueListenable<double>? pagePosition;
   final AppTabIconBuilder? iconBuilder;
-  final AppTabIndicatorBuilder? activeIndicatorBuilder;
-  final bool transparentSurface;
   final String itemKeyPrefix;
   final String indicatorKey;
 
@@ -87,20 +83,16 @@ class const AppFloatingTabBar({
       height: height,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: transparentSurface ? Colors.transparent : colorScheme.surface,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(EasyRideDesignTokens.pillRadius),
-        border: transparentSurface
-            ? null
-            : Border.all(color: colorScheme.outlineVariant),
-        boxShadow: transparentSurface
-            ? null
-            : [
-                BoxShadow(
-                  color: colorScheme.shadow.withValues(alpha: 0.08),
-                  blurRadius: 20,
-                  offset: const Offset(0, 6),
-                ),
-              ],
+        border: Border.all(color: colorScheme.outlineVariant),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Material(
         type: MaterialType.transparency,
@@ -111,13 +103,8 @@ class const AppFloatingTabBar({
                 key: ValueKey<String>(indicatorKey),
                 pagePosition: visualPagePosition,
                 itemCount: destinations.length,
-                color: transparentSurface
-                    ? colorScheme.surface.withValues(alpha: 0.18)
-                    : colorScheme.surfaceContainerHighest,
+                color: colorScheme.surfaceContainerHighest,
                 capsuleKeyPrefix: indicatorKey,
-                capsuleBuilder: transparentSurface
-                    ? activeIndicatorBuilder
-                    : null,
               ),
             ),
             Row(
