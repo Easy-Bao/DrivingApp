@@ -9,6 +9,7 @@ import 'package:maps/maps.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/chat/chat_routes.dart';
+import 'package:passenger/src/features/ride_history/presentation/bloc/ride_details/ride_details_cubit.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -17,17 +18,21 @@ class const RideDetailsPage({
   super.key,
   required this.trackRepository,
   required this.sessionService,
+  this.detailsCubit,
   this.ride,
 }) extends StatefulWidget {
   final RideHistory? ride;
   final TrackRepository trackRepository;
   final PassengerSessionStore sessionService;
+  final RideDetailsCubit? detailsCubit;
 
   @override
   State<RideDetailsPage> createState() => _RideDetailsPageState();
 }
 
 class _RideDetailsPageState extends State<RideDetailsPage> {
+  late final RideDetailsCubit _detailsCubit;
+  StreamSubscription<RideDetailsState>? _detailsSubscription;
   RideSnapshot? _detailedRideData;
   RideCounterparty? _counterpartyData;
   bool _showLostFoundChat = false;
@@ -36,34 +41,33 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
   @override
   void initState() {
     super.initState();
-    unawaited(_loadDetailedRideInfo());
+    _detailsCubit =
+        widget.detailsCubit ??
+        RideDetailsCubit(
+          repository: widget.trackRepository,
+          sessionService: widget.sessionService,
+        );
+    _syncDetailsState(_detailsCubit.state);
+    _detailsSubscription = _detailsCubit.stream.listen((state) {
+      if (!mounted) return;
+      setState(() => _syncDetailsState(state));
+    });
+    final rideId = widget.ride?.id;
+    if (rideId != null) unawaited(_detailsCubit.load(rideId));
   }
 
-  Future<void> _loadDetailedRideInfo() async {
-    final ride = widget.ride;
-    if (ride == null) return;
+  void _syncDetailsState(RideDetailsState state) {
+    _passengerId = state.passengerId;
+    _detailedRideData = state.ride;
+    _counterpartyData = state.counterparty;
+    _showLostFoundChat = state.canContactCounterparty;
+  }
 
-    final passengerId = await widget.sessionService.readPassengerId() ?? '';
-
-    final rideFuture = widget.trackRepository.fetchRideResult(ride.id);
-    final counterpartyFuture = widget.trackRepository.fetchCounterpartyResult(
-      ride.id,
-    );
-    RideSnapshot? retrievedRideData;
-    RideCounterparty? counterparty;
-    (await rideFuture).fold((_) {}, (value) => retrievedRideData = value);
-    (await counterpartyFuture).fold((_) {}, (value) => counterparty = value);
-
-    if (mounted) {
-      setState(() {
-        _passengerId = passengerId;
-        _detailedRideData = retrievedRideData;
-        _counterpartyData = counterparty;
-        _showLostFoundChat =
-            counterparty?.contactAllowed == true &&
-            counterparty?.userId.isNotEmpty == true;
-      });
-    }
+  @override
+  void dispose() {
+    unawaited(_detailsSubscription?.cancel());
+    unawaited(_detailsCubit.close());
+    super.dispose();
   }
 
   Future<void> _initiateLostFoundChat() async {
@@ -102,10 +106,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
     if (ride == null) return;
     try {
       RideCounterparty? driverProfile = _counterpartyData;
-      if (driverProfile == null) {
-        (await widget.trackRepository.fetchCounterpartyResult(ride.id))
-            .fold((_) {}, (value) => driverProfile = value);
-      }
+      driverProfile ??= await _detailsCubit.loadCounterpartyIfNeeded(ride.id);
       final phone = driverProfile?.phone ?? '';
       if (phone.isNotEmpty) {
         final uri = Uri.parse('tel:$phone');

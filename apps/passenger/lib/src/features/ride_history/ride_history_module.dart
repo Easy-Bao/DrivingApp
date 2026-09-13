@@ -8,6 +8,7 @@ import 'package:passenger/src/features/driver_profile/domain/repositories/driver
 import 'package:passenger/src/features/ride_history/data/data_sources/passenger_ride_history_remote_data_source.dart';
 import 'package:passenger/src/features/ride_history/data/repositories/ride_history_repository_impl.dart';
 import 'package:passenger/src/features/ride_history/domain/repositories/ride_history_repository.dart';
+import 'package:passenger/src/features/ride_history/presentation/bloc/ride_details/ride_details_cubit.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
 import 'package:passenger/src/features/ride_history/presentation/view/passenger_payment_page.dart';
 import 'package:passenger/src/features/ride_history/presentation/view/passenger_rating_page.dart';
@@ -31,6 +32,12 @@ class RideHistoryModule._() {
       )
       ..addFactory<RideHistoryBloc>(
         (i) => RideHistoryBloc(repository: i.get<RideHistoryRepository>()),
+      )
+      ..addFactory<RideDetailsCubit>(
+        (i) => RideDetailsCubit(
+          repository: i.get<TrackRepository>(),
+          sessionService: i.get<PassengerSessionStore>(),
+        ),
       );
   }
 
@@ -56,6 +63,7 @@ class RideHistoryModule._() {
           ride: ride,
           trackRepository: Modular.get<TrackRepository>(),
           sessionService: Modular.get<PassengerSessionStore>(),
+          detailsCubit: Modular.get<RideDetailsCubit>(),
         );
       },
       transition: AppTransitions.push.toLeft,
