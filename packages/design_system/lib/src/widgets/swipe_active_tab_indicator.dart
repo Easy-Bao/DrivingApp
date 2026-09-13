@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+typedef AppTabIndicatorBuilder = Widget Function(
+  BuildContext context,
+  Widget child,
+);
+
 /// Draws one scaled active capsule per tab according to a continuous page
 /// position.
 ///
@@ -17,6 +22,7 @@ class const SwipeActiveTabIndicator({
   this.horizontalInset = defaultHorizontalInset,
   this.verticalInset = defaultVerticalInset,
   this.capsuleKeyPrefix,
+  this.capsuleBuilder,
 }) extends StatelessWidget {
   static const defaultHorizontalInset = 3.0;
   static const defaultVerticalInset = 3.0;
@@ -29,6 +35,7 @@ class const SwipeActiveTabIndicator({
   final double horizontalInset;
   final double verticalInset;
   final String? capsuleKeyPrefix;
+  final AppTabIndicatorBuilder? capsuleBuilder;
 
   this : assert(itemCount > 0);
 
@@ -53,7 +60,7 @@ class const SwipeActiveTabIndicator({
           fit: StackFit.expand,
           children: [
             for (var index = 0; index < itemCount; index++)
-              _buildCapsule(destinationWidth, safePagePosition, index),
+              _buildCapsule(context, destinationWidth, safePagePosition, index),
           ],
         );
       },
@@ -61,6 +68,7 @@ class const SwipeActiveTabIndicator({
   }
 
   Widget _buildCapsule(
+    BuildContext context,
     double destinationWidth,
     double safePagePosition,
     int index,
@@ -71,6 +79,12 @@ class const SwipeActiveTabIndicator({
 
     final scale = minimumScale + (1 - minimumScale) * progress;
     final start = destinationWidth * index + horizontalInset;
+    final capsule = DecoratedBox(
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: color.a * progress),
+        borderRadius: borderRadius,
+      ),
+    );
     return PositionedDirectional(
       start: start,
       top: verticalInset,
@@ -83,12 +97,7 @@ class const SwipeActiveTabIndicator({
         scale: scale,
         alignment: Alignment.center,
         child: IgnorePointer(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: color.a * progress),
-              borderRadius: borderRadius,
-            ),
-          ),
+          child: capsuleBuilder?.call(context, capsule) ?? capsule,
         ),
       ),
     );

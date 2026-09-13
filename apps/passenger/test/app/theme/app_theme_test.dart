@@ -104,9 +104,13 @@ void main() {
       ),
     );
     final decoration = tabContainer.decoration! as BoxDecoration;
+    final indicator = tester.widget<SwipeActiveTabIndicator>(
+      find.byType(SwipeActiveTabIndicator),
+    );
 
     expect(decoration.color, Colors.transparent);
     expect(decoration.borderRadius, isNotNull);
+    expect(indicator.color.a, closeTo(0.18, 0.01));
   });
 }
 
