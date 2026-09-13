@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:oc_liquid_glass/oc_liquid_glass.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_state.dart';
 
@@ -30,11 +31,43 @@ class const PassengerFloatingTabBar({
 
   @override
   Widget build(BuildContext context) {
+    if (!_supportsLiquidGlass) return _buildTabBar(context);
+
+    return OCLiquidGlassGroup(
+      settings: const OCLiquidGlassSettings(
+        refractStrength: -0.04,
+        blurRadiusPx: 1.2,
+        specStrength: 12,
+        lightbandStrength: 0.65,
+      ),
+      child: OCLiquidGlass(
+        width: double.infinity,
+        height: height,
+        borderRadius: EasyRideDesignTokens.pillRadius,
+        color: context.colorScheme.surface.withValues(alpha: 0.62),
+        shadow: BoxShadow(
+          color: context.colorScheme.shadow.withValues(alpha: 0.12),
+          blurRadius: 20,
+          offset: const Offset(0, 6),
+        ),
+        child: _buildTabBar(context, transparentSurface: true),
+      ),
+    );
+  }
+
+  bool get _supportsLiquidGlass =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.macOS);
+
+  Widget _buildTabBar(BuildContext context, {bool transparentSurface = false}) {
     return AppFloatingTabBar(
       selectedIndex: selectedIndex,
       onDestinationSelected: onDestinationSelected,
       pagePosition: pagePosition,
       destinations: destinations,
+      transparentSurface: transparentSurface,
       itemKeyPrefix: 'passenger-floating-tab-item',
       indicatorKey: 'passenger-floating-tab-indicator',
       iconBuilder: (context, index, destination, color) => index == 2

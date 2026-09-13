@@ -30,6 +30,7 @@ class const AppFloatingTabBar({
   required this.indicatorKey,
   this.pagePosition,
   this.iconBuilder,
+  this.transparentSurface = false,
 }) extends StatelessWidget {
   static const animationDuration = Duration(milliseconds: 280);
   static const height = EasyRideDesignTokens.navigationBarHeight;
@@ -39,6 +40,7 @@ class const AppFloatingTabBar({
   final ValueChanged<int> onDestinationSelected;
   final ValueListenable<double>? pagePosition;
   final AppTabIconBuilder? iconBuilder;
+  final bool transparentSurface;
   final String itemKeyPrefix;
   final String indicatorKey;
 
@@ -82,18 +84,22 @@ class const AppFloatingTabBar({
     return Container(
       height: height,
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideDesignTokens.pillRadius),
-        border: Border.all(color: colorScheme.outlineVariant),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
+      decoration: transparentSurface
+          ? null
+          : BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.circular(
+                EasyRideDesignTokens.pillRadius,
+              ),
+              border: Border.all(color: colorScheme.outlineVariant),
+              boxShadow: [
+                BoxShadow(
+                  color: colorScheme.shadow.withValues(alpha: 0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
       child: Material(
         type: MaterialType.transparency,
         child: Stack(
