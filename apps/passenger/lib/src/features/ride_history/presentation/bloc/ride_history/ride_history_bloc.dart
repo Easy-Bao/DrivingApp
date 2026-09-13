@@ -26,7 +26,7 @@ class RideHistoryBloc({required this._repository})
 
   this : super(const RideHistoryInitial()) {
     on<LoadRideHistoryEvent>(_onLoad);
-    on<RefreshRideHistoryEvent>(_onRefresh);
+    on<RefreshRideHistoryEvent>(_onRefresh, transformer: restartable());
     on<LoadMoreRideHistoryEvent>(_onLoadMore, transformer: droppable());
   }
 
