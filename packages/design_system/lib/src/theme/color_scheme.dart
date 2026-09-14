@@ -5,13 +5,13 @@ import 'package:flutter/material.dart';
 abstract final class EasyRideColorScheme {
   static const main = ColorScheme(
     brightness: Brightness.light,
-    primary: EasyRidePalette.blue,
+    primary: EasyRidePalette.navy,
     onPrimary: EasyRidePalette.white,
-    primaryContainer: Color(0xFFDDEAF5),
+    primaryContainer: Color(0xFFE3EAF2),
     onPrimaryContainer: EasyRidePalette.navy,
-    secondary: EasyRidePalette.navy,
+    secondary: EasyRidePalette.blue,
     onSecondary: EasyRidePalette.white,
-    secondaryContainer: Color(0xFFE3EAF2),
+    secondaryContainer: Color(0xFFDDEAF5),
     onSecondaryContainer: EasyRidePalette.navy,
     tertiary: EasyRidePalette.amber,
     onTertiary: EasyRidePalette.gray900,
@@ -38,6 +38,6 @@ abstract final class EasyRideColorScheme {
     inverseSurface: EasyRidePalette.gray900,
     onInverseSurface: EasyRidePalette.gray50,
     inversePrimary: Color(0xFF8EB5DA),
-    surfaceTint: EasyRidePalette.blue,
+    surfaceTint: EasyRidePalette.navy,
   );
 }
