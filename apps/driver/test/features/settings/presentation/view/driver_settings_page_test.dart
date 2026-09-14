@@ -1,4 +1,4 @@
-import 'package:driver/src/app/theme/easy_ride_app_theme.dart';
+import 'package:design_system/design_system.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_state.dart';
@@ -28,7 +28,7 @@ void main() {
           BlocProvider<DriverLocationAccessCubit>.value(value: locationCubit),
         ],
         child: MaterialApp(
-          theme: EasyRideAppTheme.data,
+          theme: EasyRideTheme.main,
           home: DriverSettingsPage(
             onBack: () => backTaps++,
             onLocationTap: () => destinationTaps.add('location'),

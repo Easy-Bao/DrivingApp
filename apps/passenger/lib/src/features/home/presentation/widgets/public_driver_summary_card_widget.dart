@@ -13,14 +13,14 @@ class const PublicDriverSummaryCardWidget({super.key, required this.summaries})
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(
-        EasyRideDesignTokens.cardPadding,
-        EasyRideDesignTokens.cardPadding,
-        EasyRideDesignTokens.cardPadding,
+        EasyRideSpacing.lg,
+        EasyRideSpacing.lg,
+        EasyRideSpacing.lg,
         12,
       ),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
+        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(

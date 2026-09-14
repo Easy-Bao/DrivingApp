@@ -1,6 +1,6 @@
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:passenger/src/app/theme/easy_ride_app_theme.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/booking_auth_bottom_sheet_widget.dart';
 
 void main() {
@@ -10,7 +10,7 @@ void main() {
     late BuildContext pageContext;
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideAppTheme.data,
+        theme: EasyRideTheme.main,
         home: Builder(
           builder: (context) {
             pageContext = context;

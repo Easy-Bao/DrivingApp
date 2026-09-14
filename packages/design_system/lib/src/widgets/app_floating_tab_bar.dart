@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:design_system/src/theme/easy_ride_design_tokens.dart';
 import 'package:design_system/src/theme/design_system_context.dart';
+import 'package:design_system/src/tokens/radius.dart';
+import 'package:design_system/src/tokens/size.dart';
+import 'package:design_system/src/tokens/spacing.dart';
 import 'package:design_system/src/widgets/swipe_active_tab_indicator.dart';
 
 typedef AppTabIconBuilder = Widget Function(
@@ -32,7 +34,7 @@ class const AppFloatingTabBar({
   this.iconBuilder,
 }) extends StatelessWidget {
   static const animationDuration = Duration(milliseconds: 280);
-  static const height = EasyRideDesignTokens.navigationBarHeight;
+  static const height = EasyRideSize.navigationBarHeight;
 
   final List<AppTabDestination> destinations;
   final int selectedIndex;
@@ -84,7 +86,7 @@ class const AppFloatingTabBar({
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideDesignTokens.pillRadius),
+        borderRadius: BorderRadius.circular(EasyRideRadius.pill),
         border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
@@ -172,7 +174,7 @@ class const _AppFloatingTabItem({
         message: destination.label,
         child: InkWell(
           key: ValueKey<String>('$itemKeyPrefix-$index'),
-          borderRadius: BorderRadius.circular(EasyRideDesignTokens.pillRadius),
+          borderRadius: BorderRadius.circular(EasyRideRadius.pill),
           splashFactory: NoSplash.splashFactory,
           overlayColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.pressed)) {
@@ -194,10 +196,10 @@ class const _AppFloatingTabItem({
                 iconBuilder?.call(context, index, destination, targetColor) ??
                     Icon(
                       destination.icon,
-                      size: EasyRideDesignTokens.navigationIconSize,
+                      size: EasyRideSize.navigationIcon,
                       color: targetColor,
                     ),
-                const SizedBox(height: EasyRideDesignTokens.compactGap / 2),
+                const SizedBox(height: EasyRideSpacing.sm / 2),
                 Text(
                   destination.label,
                   maxLines: 1,
@@ -205,7 +207,6 @@ class const _AppFloatingTabItem({
                   softWrap: false,
                   style: labelStyle.copyWith(
                     color: targetColor,
-                    fontSize: EasyRideDesignTokens.navigationLabelSize,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

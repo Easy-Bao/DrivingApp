@@ -50,7 +50,7 @@ class FindingDriverStatusSheet extends StatelessWidget {
       key: const ValueKey<String>('finding-driver-status-sheet'),
       color: colorScheme.surface,
       borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(EasyRideDesignTokens.sheetRadius),
+        top: Radius.circular(EasyRideRadius.sheet),
       ),
       clipBehavior: Clip.antiAlias,
       elevation: 10,
@@ -142,7 +142,7 @@ class FindingDriverStatusSheet extends StatelessWidget {
       height: 60,
       decoration: BoxDecoration(
         color: statusColor.withValues(alpha: 0.13),
-        borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
+        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
       ),
       alignment: Alignment.center,
       child: Icon(statusIcon, color: statusColor, size: 27),
@@ -216,7 +216,7 @@ class FindingDriverStatusSheet extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
+        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Row(
@@ -226,9 +226,7 @@ class FindingDriverStatusSheet extends StatelessWidget {
             height: 36,
             decoration: BoxDecoration(
               color: colorScheme.surface,
-              borderRadius: BorderRadius.circular(
-                EasyRideDesignTokens.smallRadius,
-              ),
+              borderRadius: BorderRadius.circular(EasyRideRadius.md),
             ),
             child: Icon(
               LucideIcons.map_pin,

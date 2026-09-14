@@ -17,9 +17,9 @@ class const GuestActionBarWidget({
       top: false,
       child: Container(
         padding: const EdgeInsets.fromLTRB(
-          EasyRideDesignTokens.pageHorizontalPaddingWide,
+          EasyRideLayout.pagePaddingWide,
           14,
-          EasyRideDesignTokens.pageHorizontalPaddingWide,
+          EasyRideLayout.pagePaddingWide,
           12,
         ),
         decoration: BoxDecoration(
@@ -38,33 +38,29 @@ class const GuestActionBarWidget({
                     onPressed: onSignUp,
                     style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(
-                        EasyRideDesignTokens.controlHeight,
+                        EasyRideSize.controlHeight,
                       ),
                       backgroundColor: context.colorScheme.secondaryContainer,
                       foregroundColor: context.colorScheme.onSecondaryContainer,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          EasyRideDesignTokens.controlRadius,
-                        ),
+                        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
                       ),
                     ),
                     child: const Text('Sign Up'),
                   ),
                 ),
-                const SizedBox(width: EasyRideDesignTokens.sectionGap),
+                const SizedBox(width: EasyRideSpacing.xxl),
                 Expanded(
                   child: FilledButton(
                     onPressed: onSignIn,
                     style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(
-                        EasyRideDesignTokens.controlHeight,
+                        EasyRideSize.controlHeight,
                       ),
                       backgroundColor: context.colorScheme.onSurface,
                       foregroundColor: context.colorScheme.onPrimary,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          EasyRideDesignTokens.controlRadius,
-                        ),
+                        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
                       ),
                     ),
                     child: const Text('Log In'),
@@ -72,7 +68,7 @@ class const GuestActionBarWidget({
                 ),
               ],
             ),
-            const SizedBox(height: EasyRideDesignTokens.compactGap),
+            const SizedBox(height: EasyRideSpacing.sm),
             TextButton(
               onPressed: onHelp,
               style: TextButton.styleFrom(

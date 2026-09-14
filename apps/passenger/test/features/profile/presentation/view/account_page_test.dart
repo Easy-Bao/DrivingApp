@@ -1,9 +1,9 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger/src/app/theme/easy_ride_app_theme.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/profile/presentation/bloc/profile/profile_cubit.dart';
 import 'package:passenger/src/features/profile/presentation/view/account_page.dart';
@@ -35,7 +35,7 @@ void main() {
 
   Widget buildSubject({VoidCallback? onLogout}) {
     return MaterialApp(
-      theme: EasyRideAppTheme.data,
+      theme: EasyRideTheme.main,
       home: MultiBlocProvider(
         providers: [
           BlocProvider<ProfileCubit>.value(value: profileCubit),
@@ -85,9 +85,9 @@ void main() {
 
     expect(
       scaffold.backgroundColor,
-      EasyRideAppTheme.data.scaffoldBackgroundColor,
+      EasyRideTheme.main.scaffoldBackgroundColor,
     );
-    expect(title.style?.color, EasyRideAppTheme.data.colorScheme.onSurface);
+    expect(title.style?.color, EasyRideTheme.main.colorScheme.onSurface);
     expect(tester.takeException(), isNull);
   });
 

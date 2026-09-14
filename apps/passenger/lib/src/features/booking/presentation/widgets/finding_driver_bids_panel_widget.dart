@@ -28,7 +28,7 @@ class const FindingDriverBidsPanelWidget({
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(EasyRideDesignTokens.sheetRadius),
+          top: Radius.circular(EasyRideRadius.sheet),
         ),
         boxShadow: [
           BoxShadow(
@@ -80,9 +80,7 @@ class const FindingDriverBidsPanelWidget({
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: context.colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(
-                      EasyRideDesignTokens.cardRadius,
-                    ),
+                    borderRadius: BorderRadius.circular(EasyRideRadius.lg),
                     border: Border.all(
                       color: context.colorScheme.outlineVariant,
                     ),
@@ -169,7 +167,7 @@ class const FindingDriverBidsPanelWidget({
                               ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(
-                                  EasyRideDesignTokens.controlRadius,
+                                  EasyRideRadius.lg,
                                 ),
                               ),
                             ),
@@ -212,9 +210,7 @@ class const FindingDriverBidsPanelWidget({
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
                 color: context.colorScheme.error.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(
-                  EasyRideDesignTokens.sheetRadius,
-                ),
+                borderRadius: BorderRadius.circular(EasyRideRadius.sheet),
               ),
               child: isCanceling
                   ? SizedBox(

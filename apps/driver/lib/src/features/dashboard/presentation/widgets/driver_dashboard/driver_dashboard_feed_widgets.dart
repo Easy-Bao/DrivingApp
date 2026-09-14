@@ -44,10 +44,10 @@ class const DriverActiveTripCard({
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(EasyRideDesignTokens.cardPadding),
+      padding: const EdgeInsets.all(EasyRideSpacing.lg),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
+        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         border: Border.all(
           color: context.colorScheme.onSurface.withValues(alpha: 0.12),
         ),
@@ -70,9 +70,7 @@ class const DriverActiveTripCard({
                 ),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(
-                    EasyRideDesignTokens.smallRadius,
-                  ),
+                  borderRadius: BorderRadius.circular(EasyRideRadius.md),
                 ),
                 child: Text(
                   statusLabel,
@@ -257,10 +255,10 @@ class const DriverPoolBidCard({
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(EasyRideDesignTokens.cardPadding),
+      padding: const EdgeInsets.all(EasyRideSpacing.lg),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
+        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
@@ -291,9 +289,7 @@ class const DriverPoolBidCard({
                 ),
                 decoration: BoxDecoration(
                   color: context.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(
-                    EasyRideDesignTokens.controlRadius,
-                  ),
+                  borderRadius: BorderRadius.circular(EasyRideRadius.lg),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -325,9 +321,7 @@ class const DriverPoolBidCard({
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
               decoration: BoxDecoration(
                 color: context.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(
-                  EasyRideDesignTokens.smallRadius,
-                ),
+                borderRadius: BorderRadius.circular(EasyRideRadius.md),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,

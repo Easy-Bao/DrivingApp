@@ -1,5 +1,8 @@
-import 'package:design_system/src/theme/easy_ride_design_tokens.dart';
 import 'package:design_system/src/theme/design_system_context.dart';
+import 'package:design_system/src/tokens/layout.dart';
+import 'package:design_system/src/tokens/radius.dart';
+import 'package:design_system/src/tokens/size.dart';
+import 'package:design_system/src/tokens/spacing.dart';
 import 'package:design_system/src/widgets/app_floating_tab_bar.dart';
 import 'package:flutter/material.dart';
 
@@ -36,7 +39,7 @@ class const EasyRidePageHeader({
         children: [
           if (leading != null) ...[
             leading!,
-            const SizedBox(width: EasyRideDesignTokens.compactGap),
+            const SizedBox(width: EasyRideSpacing.sm),
           ],
           Expanded(
             child: Column(
@@ -44,7 +47,7 @@ class const EasyRidePageHeader({
               children: [
                 Text(title, style: titleStyle),
                 if (subtitle != null) ...[
-                  const SizedBox(height: EasyRideDesignTokens.compactGap / 2),
+                  const SizedBox(height: EasyRideSpacing.sm / 2),
                   Text(
                     subtitle!,
                     style: context.textStyles.bodyMedium?.copyWith(
@@ -56,7 +59,7 @@ class const EasyRidePageHeader({
             ),
           ),
           if (trailing != null) ...[
-            const SizedBox(width: EasyRideDesignTokens.compactGap),
+            const SizedBox(width: EasyRideSpacing.sm),
             trailing!,
           ],
         ],
@@ -70,7 +73,7 @@ class const EasyRidePageFrame({
   super.key,
   required this.child,
   this.padding,
-  this.maxWidth = EasyRideDesignTokens.pageMaxWidth,
+  this.maxWidth = EasyRideLayout.pageMaxWidth,
 }) extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -81,16 +84,16 @@ class const EasyRidePageFrame({
     return LayoutBuilder(
       builder: (context, constraints) {
         final horizontalPadding =
-            constraints.maxWidth >= EasyRideDesignTokens.wideLayoutBreakpoint
-            ? EasyRideDesignTokens.pageHorizontalPaddingWide
-            : EasyRideDesignTokens.pageHorizontalPadding;
+            constraints.maxWidth >= EasyRideLayout.wideBreakpoint
+            ? EasyRideLayout.pagePaddingWide
+            : EasyRideLayout.pagePadding;
         final contentPadding =
             padding ??
             EdgeInsets.fromLTRB(
               horizontalPadding,
-              EasyRideDesignTokens.pageTopPadding,
+              EasyRideLayout.pagePadding,
               horizontalPadding,
-              EasyRideDesignTokens.pageTopPadding,
+              EasyRideLayout.pagePadding,
             );
 
         return Align(
@@ -109,9 +112,9 @@ class const EasyRidePageFrame({
 class const EasyRideSurfaceCard({
   super.key,
   required this.child,
-  this.padding = const EdgeInsets.all(EasyRideDesignTokens.cardPadding),
+  this.padding = const EdgeInsets.all(EasyRideSpacing.lg),
   this.color,
-  this.radius = EasyRideDesignTokens.cardRadius,
+  this.radius = EasyRideRadius.lg,
   this.showBorder = true,
 }) extends StatelessWidget {
   final Widget child;
@@ -194,10 +197,6 @@ class const EasyRideNavigationRail({
     Color color,
   ) {
     return iconBuilder?.call(context, index, destination, color) ??
-        Icon(
-          destination.icon,
-          size: EasyRideDesignTokens.navigationIconSize,
-          color: color,
-        );
+        Icon(destination.icon, size: EasyRideSize.navigationIcon, color: color);
   }
 }

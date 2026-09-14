@@ -37,14 +37,14 @@ class const DriverPerformancePage({super.key, this.onBack, this.onRefresh})
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
               constraints: const BoxConstraints(
-                maxWidth: EasyRideDesignTokens.pageMaxWidth,
+                maxWidth: EasyRideLayout.pageMaxWidth,
               ),
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(
-                  EasyRideDesignTokens.pageHorizontalPadding,
-                  EasyRideDesignTokens.pageTopPadding,
-                  EasyRideDesignTokens.pageHorizontalPadding,
+                  EasyRideLayout.pagePadding,
+                  EasyRideLayout.pagePadding,
+                  EasyRideLayout.pagePadding,
                   48,
                 ),
                 children: [
@@ -87,10 +87,10 @@ class const _PerformanceSummary({required this.stats}) extends StatelessWidget {
         : (completedTrips / totalTrips * 100).round();
 
     return Container(
-      padding: const EdgeInsets.all(EasyRideDesignTokens.cardPadding),
+      padding: const EdgeInsets.all(EasyRideSpacing.lg),
       decoration: BoxDecoration(
         color: context.colorScheme.primary,
-        borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
+        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
       ),
       child: Column(
         children: [
@@ -117,9 +117,7 @@ class const _PerformanceSummary({required this.stats}) extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
             decoration: BoxDecoration(
               color: context.colorScheme.onPrimary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(
-                EasyRideDesignTokens.pillRadius,
-              ),
+              borderRadius: BorderRadius.circular(EasyRideRadius.pill),
             ),
             child: Text(
               '$completionRate% trip completion',
@@ -189,10 +187,10 @@ class const _PerformanceMetricCard({
     return Container(
       width: width,
       constraints: const BoxConstraints(minHeight: 124),
-      padding: const EdgeInsets.all(EasyRideDesignTokens.cardPadding),
+      padding: const EdgeInsets.all(EasyRideSpacing.lg),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
+        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(

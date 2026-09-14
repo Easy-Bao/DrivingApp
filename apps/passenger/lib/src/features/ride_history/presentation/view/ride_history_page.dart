@@ -218,9 +218,9 @@ class const _RideHistoryProgressView({
       slivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(
-            EasyRideDesignTokens.pageHorizontalPadding,
+            EasyRideLayout.pagePadding,
             8,
-            EasyRideDesignTokens.pageHorizontalPadding,
+            EasyRideLayout.pagePadding,
             18,
           ),
           sliver: SliverToBoxAdapter(
@@ -284,9 +284,9 @@ class const _RideHistoryMessageView({
       slivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(
-            EasyRideDesignTokens.pageHorizontalPadding,
+            EasyRideLayout.pagePadding,
             8,
-            EasyRideDesignTokens.pageHorizontalPadding,
+            EasyRideLayout.pagePadding,
             18,
           ),
           sliver: SliverToBoxAdapter(
@@ -372,9 +372,9 @@ class const _RideHistoryLoadingView({
       slivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(
-            EasyRideDesignTokens.pageHorizontalPadding,
+            EasyRideLayout.pagePadding,
             8,
-            EasyRideDesignTokens.pageHorizontalPadding,
+            EasyRideLayout.pagePadding,
             18,
           ),
           sliver: SliverToBoxAdapter(
@@ -387,7 +387,7 @@ class const _RideHistoryLoadingView({
         ),
         SliverPadding(
           padding: const EdgeInsets.symmetric(
-            horizontal: EasyRideDesignTokens.pageHorizontalPadding,
+            horizontal: EasyRideLayout.pagePadding,
           ),
           sliver: Skeletonizer.sliver(
             key: const ValueKey<String>('activity-loading-skeleton'),
@@ -441,7 +441,7 @@ class const _ActivitySkeletonSummaryCard({required this.valueWidth})
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: context.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(EasyRideDesignTokens.controlRadius),
+        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -464,25 +464,19 @@ class const _ActivitySkeletonFilters() extends StatelessWidget {
         Bone.button(
           width: 48,
           height: 38,
-          borderRadius: BorderRadius.all(
-            Radius.circular(EasyRideDesignTokens.controlRadius),
-          ),
+          borderRadius: BorderRadius.all(Radius.circular(EasyRideRadius.lg)),
         ),
         SizedBox(width: 8),
         Bone.button(
           width: 88,
           height: 38,
-          borderRadius: BorderRadius.all(
-            Radius.circular(EasyRideDesignTokens.controlRadius),
-          ),
+          borderRadius: BorderRadius.all(Radius.circular(EasyRideRadius.lg)),
         ),
         SizedBox(width: 8),
         Bone.button(
           width: 84,
           height: 38,
-          borderRadius: BorderRadius.all(
-            Radius.circular(EasyRideDesignTokens.controlRadius),
-          ),
+          borderRadius: BorderRadius.all(Radius.circular(EasyRideRadius.lg)),
         ),
       ],
     );
@@ -496,7 +490,7 @@ class const _ActivitySkeletonRideCard() extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideDesignTokens.controlRadius),
+        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: const Row(

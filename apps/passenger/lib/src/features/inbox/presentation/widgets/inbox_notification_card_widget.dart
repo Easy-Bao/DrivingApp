@@ -63,7 +63,7 @@ class const InboxNotificationCardWidget({
 
     if (isDriverChat) {
       bgCircleColor = context.colorScheme.secondaryContainer;
-      iconColor = context.semanticColors.warmAccent;
+      iconColor = context.colorScheme.tertiary;
       icon = LucideIcons.user;
     } else if (isReceipt) {
       bgCircleColor = context.colorScheme.onSurface;

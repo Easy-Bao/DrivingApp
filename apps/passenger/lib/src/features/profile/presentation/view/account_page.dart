@@ -30,19 +30,19 @@ class const AccountPage({super.key, this.onLogout}) extends StatelessWidget {
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(
-                  maxWidth: EasyRideDesignTokens.pageMaxWidth,
+                  maxWidth: EasyRideLayout.pageMaxWidth,
                 ),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final horizontalPadding = constraints.maxWidth < 360
                         ? 20.0
-                        : EasyRideDesignTokens.pageHorizontalPaddingWide;
+                        : EasyRideLayout.pagePaddingWide;
                     return SingleChildScrollView(
                       key: const ValueKey<String>('passenger-account-scroll'),
                       physics: const ClampingScrollPhysics(),
                       padding: EdgeInsets.fromLTRB(
                         horizontalPadding,
-                        EasyRideDesignTokens.pageTopPadding,
+                        EasyRideLayout.pagePadding,
                         horizontalPadding,
                         AppFloatingTabBar.height + 10,
                       ),
@@ -50,9 +50,7 @@ class const AccountPage({super.key, this.onLogout}) extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           const EasyRidePageHeader(title: 'Account'),
-                          const SizedBox(
-                            height: EasyRideDesignTokens.sectionGap,
-                          ),
+                          const SizedBox(height: EasyRideSpacing.xxl),
                           _buildProfileSummary(context, visibleState),
                           const SizedBox(height: 28),
                           _buildSectionTitle(context, 'Personal information'),
@@ -229,11 +227,11 @@ class const AccountPage({super.key, this.onLogout}) extends StatelessWidget {
       onTap: item.onTap,
       child: ConstrainedBox(
         constraints: const BoxConstraints(
-          minHeight: EasyRideDesignTokens.minimumTouchTarget + 28,
+          minHeight: EasyRideSize.minimumTouchTarget + 28,
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: EasyRideDesignTokens.cardPadding,
+            horizontal: EasyRideSpacing.lg,
             vertical: 12,
           ),
           child: Row(
@@ -252,13 +250,13 @@ class const AccountPage({super.key, this.onLogout}) extends StatelessWidget {
                   color: context.colorScheme.onPrimaryContainer,
                 ),
               ),
-              const SizedBox(width: EasyRideDesignTokens.cardPadding),
+              const SizedBox(width: EasyRideSpacing.lg),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(item.title, style: context.textStyles.titleMedium),
-                    const SizedBox(height: EasyRideDesignTokens.compactGap / 2),
+                    const SizedBox(height: EasyRideSpacing.sm / 2),
                     Text(
                       item.subtitle,
                       maxLines: 2,
@@ -268,11 +266,11 @@ class const AccountPage({super.key, this.onLogout}) extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: EasyRideDesignTokens.compactGap),
+              const SizedBox(width: EasyRideSpacing.sm),
               Icon(
                 LucideIcons.chevron_right,
                 color: context.colorScheme.onSurfaceVariant,
-                size: EasyRideDesignTokens.navigationIconSize,
+                size: EasyRideSize.navigationIcon,
               ),
             ],
           ),

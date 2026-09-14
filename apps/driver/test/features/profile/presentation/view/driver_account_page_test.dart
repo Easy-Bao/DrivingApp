@@ -1,4 +1,4 @@
-import 'package:driver/src/app/theme/easy_ride_app_theme.dart';
+import 'package:design_system/design_system.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver/src/features/profile/presentation/bloc/account/account_cubit.dart';
 import 'package:driver/src/features/profile/presentation/view/driver_account_page.dart';
@@ -77,7 +77,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideAppTheme.data,
+        theme: EasyRideTheme.main,
         home: BlocProvider(
           create: (_) => DriverAccountCubit(repository: repository)..load(),
           child: const DriverAccountPage(onLogout: _noopLogout),
@@ -115,7 +115,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideAppTheme.data,
+        theme: EasyRideTheme.main,
         home: BlocProvider(
           create: (_) => DriverAccountCubit(repository: repository)..load(),
           child: const DriverAccountPage(onLogout: _noopLogout),
@@ -129,9 +129,9 @@ void main() {
 
     expect(
       scaffold.backgroundColor,
-      EasyRideAppTheme.data.scaffoldBackgroundColor,
+      EasyRideTheme.main.scaffoldBackgroundColor,
     );
-    expect(title.style?.color, EasyRideAppTheme.data.colorScheme.onSurface);
+    expect(title.style?.color, EasyRideTheme.main.colorScheme.onSurface);
     expect(tester.takeException(), isNull);
   });
 }

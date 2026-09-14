@@ -54,9 +54,9 @@ class _InboxPageState extends State<InboxPage> {
       slivers: [
         const SliverPadding(
           padding: EdgeInsets.fromLTRB(
-            EasyRideDesignTokens.pageHorizontalPadding,
+            EasyRideLayout.pagePadding,
             0,
-            EasyRideDesignTokens.pageHorizontalPadding,
+            EasyRideLayout.pagePadding,
             16,
           ),
           sliver: SliverToBoxAdapter(
@@ -142,9 +142,9 @@ class _InboxPageState extends State<InboxPage> {
       slivers: [
         SliverPadding(
           padding: EdgeInsets.fromLTRB(
-            EasyRideDesignTokens.pageHorizontalPadding,
+            EasyRideLayout.pagePadding,
             0,
-            EasyRideDesignTokens.pageHorizontalPadding,
+            EasyRideLayout.pagePadding,
             16,
           ),
           sliver: SliverToBoxAdapter(
@@ -178,9 +178,9 @@ class _InboxPageState extends State<InboxPage> {
       slivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(
-            EasyRideDesignTokens.pageHorizontalPadding,
+            EasyRideLayout.pagePadding,
             0,
-            EasyRideDesignTokens.pageHorizontalPadding,
+            EasyRideLayout.pagePadding,
             16,
           ),
           sliver: SliverList(
@@ -189,7 +189,7 @@ class _InboxPageState extends State<InboxPage> {
                 title: 'Inbox',
                 subtitle: 'Messages and receipts',
               ),
-              const SizedBox(height: EasyRideDesignTokens.compactGap * 2),
+              const SizedBox(height: EasyRideSpacing.sm * 2),
             ]),
           ),
         ),
@@ -201,7 +201,7 @@ class _InboxPageState extends State<InboxPage> {
         else
           SliverPadding(
             padding: const EdgeInsets.symmetric(
-              horizontal: EasyRideDesignTokens.pageHorizontalPadding,
+              horizontal: EasyRideLayout.pagePadding,
             ),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate((context, index) {

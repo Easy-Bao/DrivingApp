@@ -26,7 +26,7 @@ class const RecentRideHistoryPreviewWidget({
 
         return InkWell(
           onTap: () => onRideTap(ride),
-          borderRadius: BorderRadius.circular(EasyRideDesignTokens.smallRadius),
+          borderRadius: BorderRadius.circular(EasyRideRadius.md),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Row(
@@ -36,9 +36,7 @@ class const RecentRideHistoryPreviewWidget({
                   height: 44,
                   decoration: BoxDecoration(
                     color: context.colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(
-                      EasyRideDesignTokens.smallRadius,
-                    ),
+                    borderRadius: BorderRadius.circular(EasyRideRadius.md),
                   ),
                   child: Icon(
                     LucideIcons.map_pin,

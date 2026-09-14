@@ -1,11 +1,11 @@
 export 'package:design_system/src/navigation/tab_navigation_coordinator.dart';
 export 'package:design_system/src/router/safe_route_extra.dart';
-export 'package:design_system/src/theme/easy_ride_design_tokens.dart';
-export 'package:design_system/src/theme/easy_ride_theme.dart';
+export 'package:design_system/src/tokens/layout.dart';
+export 'package:design_system/src/tokens/radius.dart';
+export 'package:design_system/src/tokens/size.dart';
+export 'package:design_system/src/tokens/spacing.dart';
+export 'package:design_system/src/theme/easyride_theme.dart';
 export 'package:design_system/src/theme/easy_ride_semantic_colors.dart';
-// Deprecated package-root aliases retained for existing clients.
-export 'package:design_system/src/theme/app_design_tokens.dart'
-    show AppDesignTokens;
 export 'package:design_system/src/theme/design_system_context.dart';
 export 'package:design_system/src/transitions/app_transitions.dart';
 export 'package:design_system/src/transitions/custom_page_transition.dart';

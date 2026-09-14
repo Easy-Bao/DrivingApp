@@ -1,6 +1,6 @@
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:passenger/src/app/theme/easy_ride_app_theme.dart';
 import 'package:passenger/src/features/ride_history/presentation/widgets/ride_history_widget.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
 
@@ -190,7 +190,7 @@ Future<void> _pumpHistory(
 }) {
   return tester.pumpWidget(
     MaterialApp(
-      theme: EasyRideAppTheme.data,
+      theme: EasyRideTheme.main,
       home: Scaffold(
         body: RideHistoryWidget(
           activeRides: activeRides,

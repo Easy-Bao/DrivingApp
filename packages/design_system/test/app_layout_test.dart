@@ -6,7 +6,7 @@ void main() {
   testWidgets('page header uses the shared hierarchy', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.data,
+        theme: EasyRideTheme.main,
         home: const Scaffold(
           body: EasyRidePageHeader(
             title: 'Activity',
@@ -21,10 +21,10 @@ void main() {
 
     expect(title.style?.fontSize, 32);
     expect(title.style?.fontWeight, FontWeight.w800);
-    expect(title.style?.color, EasyRideTheme.data.colorScheme.onSurface);
+    expect(title.style?.color, EasyRideTheme.main.colorScheme.onSurface);
     expect(
       subtitle.style?.color,
-      EasyRideTheme.data.colorScheme.onSurfaceVariant,
+      EasyRideTheme.main.colorScheme.onSurfaceVariant,
     );
   });
 
@@ -34,7 +34,7 @@ void main() {
     var selectedIndex = 0;
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideTheme.data,
+        theme: EasyRideTheme.main,
         home: StatefulBuilder(
           builder: (context, setState) => Scaffold(
             body: EasyRideNavigationRail(

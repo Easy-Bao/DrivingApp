@@ -194,16 +194,14 @@ class const WaitingPassengerPanelWidget({
         : context.colorScheme.onSurface;
     return Material(
       color: background,
-      borderRadius: BorderRadius.circular(EasyRideDesignTokens.controlRadius),
+      borderRadius: BorderRadius.circular(EasyRideRadius.lg),
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(EasyRideDesignTokens.controlRadius),
+        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         child: Container(
           height: 44,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(
-              EasyRideDesignTokens.controlRadius,
-            ),
+            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
             border: filled
                 ? null
                 : Border.all(color: context.colorScheme.outlineVariant),

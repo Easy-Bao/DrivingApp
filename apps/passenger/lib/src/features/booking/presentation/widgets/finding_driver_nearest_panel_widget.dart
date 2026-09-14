@@ -30,7 +30,7 @@ class const FindingDriverNearestPanelWidget({
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(EasyRideDesignTokens.sheetRadius),
+          top: Radius.circular(EasyRideRadius.sheet),
         ),
         boxShadow: [
           BoxShadow(

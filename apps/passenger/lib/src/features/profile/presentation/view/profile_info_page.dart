@@ -257,8 +257,8 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final horizontalPadding = constraints.maxWidth < 360
-                    ? EasyRideDesignTokens.pageHorizontalPadding
-                    : EasyRideDesignTokens.pageHorizontalPaddingWide;
+                    ? EasyRideLayout.pagePadding
+                    : EasyRideLayout.pagePaddingWide;
                 return SingleChildScrollView(
                   key: const ValueKey<String>('passenger-profile-info-scroll'),
                   physics: const ClampingScrollPhysics(),
@@ -275,9 +275,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _buildProfileHeader(),
-                          const SizedBox(
-                            height: EasyRideDesignTokens.sectionGap * 1.5,
-                          ),
+                          const SizedBox(height: EasyRideSpacing.xxl * 1.5),
                           _buildDetailsSection(),
                         ],
                       ),
@@ -342,9 +340,9 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
           errorText: _nameError,
           textInputAction: TextInputAction.next,
         ),
-        const SizedBox(height: EasyRideDesignTokens.sectionGap),
+        const SizedBox(height: EasyRideSpacing.xxl),
         _buildPhoneField(),
-        const SizedBox(height: EasyRideDesignTokens.sectionGap),
+        const SizedBox(height: EasyRideSpacing.xxl),
         _buildTextField(
           label: 'Email',
           controller: _emailController,
@@ -352,7 +350,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
           errorText: _emailError,
           textInputAction: TextInputAction.done,
         ),
-        const SizedBox(height: EasyRideDesignTokens.sectionGap),
+        const SizedBox(height: EasyRideSpacing.xxl),
         _buildGenderField(),
       ],
     );
@@ -406,9 +404,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
               width: 94,
               decoration: BoxDecoration(
                 color: context.canvasColor,
-                borderRadius: BorderRadius.circular(
-                  EasyRideDesignTokens.fieldRadius,
-                ),
+                borderRadius: BorderRadius.circular(EasyRideRadius.lg),
                 border: Border.all(color: context.colorScheme.outlineVariant),
               ),
               alignment: Alignment.center,
@@ -479,7 +475,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     IconData? prefixIcon,
   }) {
     final border = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(EasyRideDesignTokens.fieldRadius),
+      borderRadius: BorderRadius.circular(EasyRideRadius.lg),
       borderSide: BorderSide(color: context.colorScheme.outlineVariant),
     );
     return InputDecoration(
@@ -489,7 +485,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
       filled: true,
       fillColor: context.canvasColor,
       contentPadding: const EdgeInsets.symmetric(
-        horizontal: EasyRideDesignTokens.pageHorizontalPadding,
+        horizontal: EasyRideLayout.pagePadding,
         vertical: 14,
       ),
       border: border,

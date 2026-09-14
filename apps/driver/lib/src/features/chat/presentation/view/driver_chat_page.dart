@@ -241,9 +241,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
                     height: 36,
                     decoration: BoxDecoration(
                       color: context.colorScheme.secondaryContainer,
-                      borderRadius: BorderRadius.circular(
-                        EasyRideDesignTokens.smallRadius,
-                      ),
+                      borderRadius: BorderRadius.circular(EasyRideRadius.md),
                     ),
                     child: Icon(
                       LucideIcons.user,
@@ -338,7 +336,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
                           decoration: BoxDecoration(
                             color: context.colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(
-                              EasyRideDesignTokens.cardRadius,
+                              EasyRideRadius.lg,
                             ),
                             border: Border.all(
                               color: context.colorScheme.outlineVariant,
@@ -380,7 +378,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
                               color:
                                   context.colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(
-                                EasyRideDesignTokens.cardRadius,
+                                EasyRideRadius.lg,
                               ),
                               border: Border.all(
                                 color: context.colorScheme.outlineVariant,
@@ -471,7 +469,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(EasyRideDesignTokens.smallRadius),
+        borderRadius: BorderRadius.circular(EasyRideRadius.md),
         border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Row(
@@ -525,12 +523,8 @@ class _DriverChatPageState extends State<DriverChatPage> {
                     ? context.colorScheme.primary
                     : context.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(
-                    EasyRideDesignTokens.cardRadius,
-                  ),
-                  topRight: const Radius.circular(
-                    EasyRideDesignTokens.cardRadius,
-                  ),
+                  topLeft: const Radius.circular(EasyRideRadius.lg),
+                  topRight: const Radius.circular(EasyRideRadius.lg),
                   bottomLeft: Radius.circular(isMe ? 20 : 4),
                   bottomRight: Radius.circular(isMe ? 4 : 20),
                 ),

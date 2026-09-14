@@ -366,7 +366,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
       builder: (ctx) => AlertDialog(
         backgroundColor: context.colorScheme.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
+          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         ),
         title: Text(
           'Cancel Trip?',

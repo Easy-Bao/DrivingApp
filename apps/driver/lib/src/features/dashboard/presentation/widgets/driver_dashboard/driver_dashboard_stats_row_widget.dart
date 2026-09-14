@@ -36,7 +36,7 @@ class const DriverDashboardStatsRowWidget({
       enabled: isLoadingStats && hasExistingStats,
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: EasyRideDesignTokens.pageHorizontalPadding,
+          horizontal: EasyRideLayout.pagePadding,
         ),
         child: Row(
           children: [
@@ -48,7 +48,7 @@ class const DriverDashboardStatsRowWidget({
                 skeletonWidth: 84,
               ),
             ),
-            const SizedBox(width: EasyRideDesignTokens.compactGap),
+            const SizedBox(width: EasyRideSpacing.sm),
             Expanded(
               child: _buildStatCard(
                 context,
@@ -70,10 +70,10 @@ class const DriverDashboardStatsRowWidget({
     required double skeletonWidth,
   }) {
     return Container(
-      padding: const EdgeInsets.all(EasyRideDesignTokens.cardPadding),
+      padding: const EdgeInsets.all(EasyRideSpacing.lg),
       decoration: BoxDecoration(
         color: context.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
+        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(
@@ -108,17 +108,17 @@ class const DriverDashboardStatsRowWidget({
     return Padding(
       key: const ValueKey<String>('driver-dashboard-stats-loading'),
       padding: const EdgeInsets.symmetric(
-        horizontal: EasyRideDesignTokens.pageHorizontalPadding,
+        horizontal: EasyRideLayout.pagePadding,
       ),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(
-          horizontal: EasyRideDesignTokens.cardPadding,
+          horizontal: EasyRideSpacing.lg,
           vertical: 15,
         ),
         decoration: BoxDecoration(
           color: context.colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
+          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
           border: Border.all(color: context.colorScheme.outlineVariant),
         ),
         child: Row(

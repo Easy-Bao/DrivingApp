@@ -266,9 +266,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
               ],
             ),
             Padding(
-              padding: const EdgeInsets.all(
-                EasyRideDesignTokens.pageHorizontalPaddingWide,
-              ),
+              padding: const EdgeInsets.all(EasyRideLayout.pagePaddingWide),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -282,9 +280,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                     ),
                     decoration: BoxDecoration(
                       color: context.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(
-                        EasyRideDesignTokens.controlRadius,
-                      ),
+                      borderRadius: BorderRadius.circular(EasyRideRadius.lg),
                       border: Border.all(
                         color: context.colorScheme.outlineVariant,
                       ),
@@ -316,21 +312,17 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                       filled: true,
                       fillColor: context.colorScheme.surfaceContainerHighest,
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: EasyRideDesignTokens.pageHorizontalPadding,
+                        horizontal: EasyRideLayout.pagePadding,
                         vertical: 16,
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                          EasyRideDesignTokens.controlRadius,
-                        ),
+                        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
                         borderSide: BorderSide(
                           color: context.colorScheme.outlineVariant,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                          EasyRideDesignTokens.controlRadius,
-                        ),
+                        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
                         borderSide: BorderSide(
                           color: context.colorScheme.onSurface,
                         ),
@@ -375,7 +367,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                                           .colorScheme
                                           .surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(
-                                  EasyRideDesignTokens.controlRadius,
+                                  EasyRideRadius.lg,
                                 ),
                                 border: Border.all(
                                   color: isSelected

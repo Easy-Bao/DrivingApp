@@ -1,22 +1,21 @@
 import 'package:design_system/design_system.dart';
-import 'package:driver/src/app/theme/easy_ride_app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('exposes the approved default semantic palette', () {
-    final theme = EasyRideAppTheme.data;
+    final theme = EasyRideTheme.main;
     final scheme = theme.colorScheme;
     final semantic = theme.extension<EasyRideSemanticColors>();
 
     expect(theme.brightness, Brightness.light);
-    expect(theme.scaffoldBackgroundColor, const Color(0xFFF8F9FA));
+    expect(theme.scaffoldBackgroundColor, const Color(0xFFF8FAFC));
     expect(scheme.surface, const Color(0xFFFFFFFF));
-    expect(scheme.primary, const Color(0xFF100E11));
-    expect(scheme.onSurface, const Color(0xFF100E11));
-    expect(scheme.secondary, const Color(0xFF8A4F35));
-    expect(scheme.onSurfaceVariant, const Color(0xFF5F6670));
-    expect(scheme.error, const Color(0xFFB3261E));
+    expect(scheme.primary, const Color(0xFF315E8A));
+    expect(scheme.onSurface, const Color(0xFF1E293B));
+    expect(scheme.secondary, const Color(0xFF23395B));
+    expect(scheme.onSurfaceVariant, const Color(0xFF64748B));
+    expect(scheme.error, const Color(0xFFD64545));
     expect(semantic, EasyRideSemanticColors.defaults);
     expect(_contrast(scheme.onSurface, scheme.surface), greaterThan(4.5));
     expect(
@@ -26,9 +25,9 @@ void main() {
   });
 
   test('exposes the balanced type scale', () {
-    final theme = EasyRideAppTheme.data;
-    expect(theme.textTheme.headlineLarge?.fontSize, 28);
-    expect(theme.textTheme.headlineLarge?.fontWeight, FontWeight.w800);
+    final theme = EasyRideTheme.main;
+    expect(theme.textTheme.headlineLarge?.fontSize, 32);
+    expect(theme.textTheme.headlineLarge?.fontWeight, FontWeight.w700);
     expect(theme.textTheme.titleLarge?.fontSize, 20);
     expect(theme.textTheme.titleMedium?.fontSize, 16);
     expect(theme.textTheme.titleMedium?.fontWeight, FontWeight.w600);
@@ -42,7 +41,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideAppTheme.data,
+        theme: EasyRideTheme.main,
         home: Scaffold(
           body: Align(
             alignment: Alignment.bottomCenter,
@@ -62,7 +61,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final scheme = EasyRideAppTheme.data.colorScheme;
+    final scheme = EasyRideTheme.main.colorScheme;
     final tabBar = find.byType(AppFloatingTabBar);
     final tabContainer = tester.widget<Container>(
       find.descendant(of: tabBar, matching: find.byType(Container)),
@@ -74,7 +73,7 @@ void main() {
 
     expect(tabColor, scheme.surface);
     expect(indicator.color, scheme.surfaceContainerHighest);
-    expect(indicator.color, EasyRideDesignTokens.neutral);
+    expect(indicator.color, const Color(0xFFF1F5F9));
     expect(indicator.color, isNot(tabColor));
   });
 }

@@ -290,9 +290,7 @@ class _InTransitPageState extends State<InTransitPage> {
                       decoration: BoxDecoration(
                         color: context.colorScheme.surface,
                         borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(
-                            EasyRideDesignTokens.sheetRadius,
-                          ),
+                          top: Radius.circular(EasyRideRadius.sheet),
                         ),
                         boxShadow: [
                           BoxShadow(
@@ -305,10 +303,10 @@ class _InTransitPageState extends State<InTransitPage> {
                         ],
                       ),
                       padding: const EdgeInsets.fromLTRB(
-                        EasyRideDesignTokens.cardPadding,
+                        EasyRideSpacing.lg,
                         10,
-                        EasyRideDesignTokens.cardPadding,
-                        EasyRideDesignTokens.cardPadding,
+                        EasyRideSpacing.lg,
+                        EasyRideSpacing.lg,
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,

@@ -1,6 +1,6 @@
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:passenger/src/app/theme/easy_ride_app_theme.dart';
 import 'package:passenger/src/features/profile/presentation/view/help_center_page.dart';
 
 void main() {
@@ -10,7 +10,7 @@ void main() {
     var backCount = 0;
     await tester.pumpWidget(
       MaterialApp(
-        theme: EasyRideAppTheme.data,
+        theme: EasyRideTheme.main,
         home: HelpCenterPage(onBack: () => backCount++),
       ),
     );

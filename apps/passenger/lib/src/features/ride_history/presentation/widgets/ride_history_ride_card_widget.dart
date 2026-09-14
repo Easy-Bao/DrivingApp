@@ -33,7 +33,7 @@ class const PassengerActiveRideCardWidget({
       child: Material(
         color: context.colorScheme.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
+          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
           side: BorderSide(color: context.colorScheme.outlineVariant),
         ),
         clipBehavior: Clip.antiAlias,
@@ -145,9 +145,7 @@ class const PassengerPastRideCardWidget({
       child: Material(
         color: context.colorScheme.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(
-            EasyRideDesignTokens.controlRadius,
-          ),
+          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
           side: BorderSide(color: context.colorScheme.outlineVariant),
         ),
         clipBehavior: Clip.antiAlias,

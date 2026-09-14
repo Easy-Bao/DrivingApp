@@ -9,7 +9,6 @@ import 'package:fpdart/fpdart.dart';
 import 'package:go_router/go_router.dart';
 import 'package:passenger/src/app/navigation/passenger_floating_tab_bar.dart';
 import 'package:passenger/src/app/navigation/passenger_navigation_shell.dart';
-import 'package:passenger/src/app/theme/easy_ride_app_theme.dart';
 import 'package:passenger/src/features/auth/domain/entities/passenger_session.dart';
 import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
@@ -54,7 +53,7 @@ void main() {
       BlocProvider<SessionBloc>.value(
         value: sessionBloc,
         child: MaterialApp.router(
-          theme: EasyRideAppTheme.data,
+          theme: EasyRideTheme.main,
           routerConfig: router,
         ),
       ),
@@ -112,7 +111,7 @@ void main() {
       BlocProvider<SessionBloc>.value(
         value: sessionBloc,
         child: MaterialApp.router(
-          theme: EasyRideAppTheme.data,
+          theme: EasyRideTheme.main,
           routerConfig: router,
         ),
       ),
@@ -139,18 +138,18 @@ void main() {
       final inkWell = tester.widget<InkWell>(item);
       expect(
         labelWidget.style?.fontSize,
-        EasyRideDesignTokens.navigationLabelSize,
+        EasyRideTheme.main.textTheme.labelMedium?.fontSize,
       );
       expect(labelWidget.style?.fontWeight, FontWeight.w500);
-      expect(iconWidget.size, EasyRideDesignTokens.navigationIconSize);
+      expect(iconWidget.size, EasyRideSize.navigationIcon);
       expect(inkWell.splashFactory, NoSplash.splashFactory);
       expect(
         inkWell.overlayColor?.resolve({WidgetState.pressed}),
-        EasyRideAppTheme.data.colorScheme.primary.withValues(alpha: 0.12),
+        EasyRideTheme.main.colorScheme.primary.withValues(alpha: 0.12),
       );
       expect(
         inkWell.overlayColor?.resolve({WidgetState.hovered}),
-        EasyRideAppTheme.data.colorScheme.primary.withValues(alpha: 0.08),
+        EasyRideTheme.main.colorScheme.primary.withValues(alpha: 0.08),
       );
     }
 
@@ -290,7 +289,7 @@ void main() {
       BlocProvider<SessionBloc>.value(
         value: sessionBloc,
         child: MaterialApp.router(
-          theme: EasyRideAppTheme.data,
+          theme: EasyRideTheme.main,
           routerConfig: router,
         ),
       ),
@@ -344,7 +343,7 @@ void main() {
       BlocProvider<SessionBloc>.value(
         value: sessionBloc,
         child: MaterialApp.router(
-          theme: EasyRideAppTheme.data,
+          theme: EasyRideTheme.main,
           routerConfig: router,
         ),
       ),

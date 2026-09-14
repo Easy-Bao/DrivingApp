@@ -254,14 +254,14 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
             constraints: const BoxConstraints(maxWidth: 560),
             child: ListView(
               padding: const EdgeInsets.fromLTRB(
-                EasyRideDesignTokens.pageHorizontalPaddingWide,
-                EasyRideDesignTokens.pageTopPadding,
-                EasyRideDesignTokens.pageHorizontalPaddingWide,
-                EasyRideDesignTokens.sectionGap * 2,
+                EasyRideLayout.pagePaddingWide,
+                EasyRideLayout.pagePadding,
+                EasyRideLayout.pagePaddingWide,
+                EasyRideSpacing.xxl * 2,
               ),
               children: [
                 _buildHeader(),
-                const SizedBox(height: EasyRideDesignTokens.sectionGap),
+                const SizedBox(height: EasyRideSpacing.xxl),
                 EasyRideSurfaceCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -372,9 +372,7 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
               width: 88,
               decoration: BoxDecoration(
                 color: context.colorScheme.surface,
-                borderRadius: BorderRadius.circular(
-                  EasyRideDesignTokens.fieldRadius,
-                ),
+                borderRadius: BorderRadius.circular(EasyRideRadius.lg),
                 border: Border.all(color: context.colorScheme.outlineVariant),
               ),
               alignment: Alignment.center,
@@ -465,7 +463,7 @@ InputDecoration _fieldDecoration(
   String? errorText,
 }) {
   final border = OutlineInputBorder(
-    borderRadius: BorderRadius.circular(EasyRideDesignTokens.fieldRadius),
+    borderRadius: BorderRadius.circular(EasyRideRadius.lg),
     borderSide: BorderSide(color: context.colorScheme.outlineVariant),
   );
   return InputDecoration(
@@ -474,7 +472,7 @@ InputDecoration _fieldDecoration(
     filled: true,
     fillColor: context.colorScheme.surface,
     contentPadding: const EdgeInsets.symmetric(
-      horizontal: EasyRideDesignTokens.pageHorizontalPadding,
+      horizontal: EasyRideLayout.pagePadding,
       vertical: 16,
     ),
     border: border,

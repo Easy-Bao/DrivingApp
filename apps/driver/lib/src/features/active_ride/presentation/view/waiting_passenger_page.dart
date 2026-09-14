@@ -218,7 +218,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: EasyRideDesignTokens.pageHorizontalPadding,
+                    horizontal: EasyRideLayout.pagePadding,
                   ),
                   child: Column(
                     children: [
@@ -350,7 +350,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: context.colorScheme.error.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(EasyRideDesignTokens.smallRadius),
+        borderRadius: BorderRadius.circular(EasyRideRadius.md),
       ),
       child: Text(
         _errorMessage!,

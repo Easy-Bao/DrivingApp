@@ -167,7 +167,7 @@ class _ForgotPasswordPageContentState
                                     filled: false,
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        EasyRideDesignTokens.fieldRadius,
+                                        EasyRideRadius.lg,
                                       ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.onSurface
@@ -176,7 +176,7 @@ class _ForgotPasswordPageContentState
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
-                                        EasyRideDesignTokens.fieldRadius,
+                                        EasyRideRadius.lg,
                                       ),
                                       borderSide: BorderSide(
                                         color: context.colorScheme.onSurface,
@@ -208,7 +208,7 @@ class _ForgotPasswordPageContentState
                                   minimumSize: const Size.fromHeight(60),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(
-                                      EasyRideDesignTokens.controlRadius,
+                                      EasyRideRadius.lg,
                                     ),
                                   ),
                                   elevation: 0,

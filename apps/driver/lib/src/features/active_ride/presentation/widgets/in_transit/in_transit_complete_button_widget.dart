@@ -18,9 +18,7 @@ class const InTransitCompleteButtonWidget({
         height: 52,
         decoration: BoxDecoration(
           color: context.semanticColors.success,
-          borderRadius: BorderRadius.circular(
-            EasyRideDesignTokens.controlRadius,
-          ),
+          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         ),
         child: Center(
           child: isCompletingTrip

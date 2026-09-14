@@ -559,7 +559,7 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
                 child: SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: EasyRideDesignTokens.pageHorizontalPadding,
+                      horizontal: EasyRideLayout.pagePadding,
                       vertical: 8,
                     ),
                     child: HeroMode(

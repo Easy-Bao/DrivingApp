@@ -242,7 +242,7 @@ class _MapPinPageState()
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(
-                horizontal: EasyRideDesignTokens.pageHorizontalPadding,
+                horizontal: EasyRideLayout.pagePadding,
                 vertical: 10,
               ),
               child: SizedBox(
@@ -259,15 +259,15 @@ class _MapPinPageState()
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(
-                EasyRideDesignTokens.pageHorizontalPadding,
+                EasyRideLayout.pagePadding,
                 14,
-                EasyRideDesignTokens.pageHorizontalPadding,
-                EasyRideDesignTokens.sectionGap,
+                EasyRideLayout.pagePadding,
+                EasyRideSpacing.xxl,
               ),
               decoration: BoxDecoration(
                 color: context.colorScheme.surface,
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(EasyRideDesignTokens.sheetRadius),
+                  top: Radius.circular(EasyRideRadius.sheet),
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -305,7 +305,7 @@ class _MapPinPageState()
                         decoration: BoxDecoration(
                           color: context.colorScheme.secondaryContainer,
                           borderRadius: BorderRadius.circular(
-                            EasyRideDesignTokens.smallRadius,
+                            EasyRideRadius.md,
                           ),
                         ),
                         child: Center(
@@ -352,7 +352,7 @@ class _MapPinPageState()
                   const SizedBox(height: 18),
                   SizedBox(
                     width: double.infinity,
-                    height: EasyRideDesignTokens.controlHeight,
+                    height: EasyRideSize.controlHeight,
                     child: ElevatedButton(
                       onPressed: _isGeocoding ? null : _confirmLocation,
                       style: ElevatedButton.styleFrom(

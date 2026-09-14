@@ -274,7 +274,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     return DecoratedBox(
       decoration: BoxDecoration(
         color: context.colorScheme.primary,
-        borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
+        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         boxShadow: [
           BoxShadow(
             color: context.colorScheme.primary.withValues(alpha: 0.16),
@@ -285,9 +285,9 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
-          EasyRideDesignTokens.cardPadding,
-          EasyRideDesignTokens.cardPadding,
-          EasyRideDesignTokens.cardPadding,
+          EasyRideSpacing.lg,
+          EasyRideSpacing.lg,
+          EasyRideSpacing.lg,
           14,
         ),
         child: Column(

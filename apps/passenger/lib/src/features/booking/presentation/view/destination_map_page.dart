@@ -179,15 +179,15 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
             alignment: Alignment.bottomCenter,
             child: Container(
               padding: const EdgeInsets.fromLTRB(
-                EasyRideDesignTokens.pageHorizontalPaddingWide,
-                EasyRideDesignTokens.sectionGap,
-                EasyRideDesignTokens.pageHorizontalPaddingWide,
-                EasyRideDesignTokens.sectionGap,
+                EasyRideLayout.pagePaddingWide,
+                EasyRideSpacing.xxl,
+                EasyRideLayout.pagePaddingWide,
+                EasyRideSpacing.xxl,
               ),
               decoration: BoxDecoration(
                 color: context.colorScheme.surface,
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(EasyRideDesignTokens.sheetRadius),
+                  top: Radius.circular(EasyRideRadius.sheet),
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -221,7 +221,7 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
                         decoration: BoxDecoration(
                           color: context.colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(
-                            EasyRideDesignTokens.controlRadius,
+                            EasyRideRadius.lg,
                           ),
                         ),
                         child: Icon(
@@ -269,7 +269,7 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
-                    height: EasyRideDesignTokens.controlHeight,
+                    height: EasyRideSize.controlHeight,
                     child: ElevatedButton(
                       onPressed: () {
                         final place = Place(

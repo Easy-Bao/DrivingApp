@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:design_system/src/theme/easy_ride_design_tokens.dart';
 import 'package:design_system/src/theme/design_system_context.dart';
+import 'package:design_system/src/tokens/layout.dart';
+import 'package:design_system/src/tokens/radius.dart';
+import 'package:design_system/src/tokens/spacing.dart';
 
 /// A centered settings page shell shared by both EasyRide clients.
 class const AppSettingsScaffold({
@@ -35,13 +37,13 @@ class const AppSettingsScaffold({
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
           constraints: const BoxConstraints(
-            maxWidth: EasyRideDesignTokens.pageMaxWidth,
+            maxWidth: EasyRideLayout.pageMaxWidth,
           ),
           child: ListView(
             padding: const EdgeInsets.fromLTRB(
-              EasyRideDesignTokens.pageHorizontalPadding,
-              EasyRideDesignTokens.pageTopPadding,
-              EasyRideDesignTokens.pageHorizontalPadding,
+              EasyRideLayout.pagePadding,
+              EasyRideLayout.pagePadding,
+              EasyRideLayout.pagePadding,
               40,
             ),
             children: [
@@ -52,7 +54,7 @@ class const AppSettingsScaffold({
                 style: Theme.of(context).textTheme.bodyMedium
                     ?.copyWith(color: context.colorScheme.onSurfaceVariant),
               ),
-              const SizedBox(height: EasyRideDesignTokens.sectionGap),
+              const SizedBox(height: EasyRideSpacing.xxl),
               ...children,
             ],
           ),
@@ -85,9 +87,7 @@ class const AppSettingsSection({
         Material(
           color: context.colorScheme.surface,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(
-              EasyRideDesignTokens.cardRadius,
-            ),
+            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
             side: BorderSide(color: context.colorScheme.outlineVariant),
           ),
           clipBehavior: Clip.antiAlias,

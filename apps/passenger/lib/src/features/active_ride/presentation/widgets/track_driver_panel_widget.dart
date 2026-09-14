@@ -44,7 +44,7 @@ class const TrackDriverPanelWidget({
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(EasyRideDesignTokens.sheetRadius),
+          top: Radius.circular(EasyRideRadius.sheet),
         ),
         border: Border.all(color: context.colorScheme.outlineVariant),
         boxShadow: [
@@ -56,9 +56,9 @@ class const TrackDriverPanelWidget({
         ],
       ),
       padding: const EdgeInsets.fromLTRB(
-        EasyRideDesignTokens.cardPadding,
+        EasyRideSpacing.lg,
         10,
-        EasyRideDesignTokens.cardPadding,
+        EasyRideSpacing.lg,
         14,
       ),
       child: Column(
@@ -130,9 +130,7 @@ class const TrackDriverPanelWidget({
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
               color: context.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(
-                EasyRideDesignTokens.controlRadius,
-              ),
+              borderRadius: BorderRadius.circular(EasyRideRadius.lg),
               border: Border.all(color: context.colorScheme.outlineVariant),
             ),
             child: Row(
@@ -272,16 +270,14 @@ class const _ActionButton({
         : context.colorScheme.onSurface;
     return Material(
       color: background,
-      borderRadius: BorderRadius.circular(EasyRideDesignTokens.controlRadius),
+      borderRadius: BorderRadius.circular(EasyRideRadius.lg),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(EasyRideDesignTokens.controlRadius),
+        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         child: Container(
           height: 44,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(
-              EasyRideDesignTokens.controlRadius,
-            ),
+            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
             border: filled
                 ? null
                 : Border.all(color: context.colorScheme.outlineVariant),

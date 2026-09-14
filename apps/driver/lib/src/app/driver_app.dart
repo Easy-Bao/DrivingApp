@@ -4,7 +4,6 @@ import 'package:driver/src/infrastructure/telemetry/driver_background_telemetry.
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:maps/maps.dart';
 import 'package:driver/src/app/navigation/app_routes.dart';
-import 'package:driver/src/app/theme/easy_ride_app_theme.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_state.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
@@ -97,7 +96,7 @@ class _DriverAppState extends State<DriverApp> with WidgetsBindingObserver {
         ),
       ],
       child: ModularApp.router(
-        theme: EasyRideAppTheme.data,
+        theme: EasyRideTheme.main,
         debugShowCheckedModeBanner: false,
         title: 'EasyRide Driver',
         builder: (context, child) =>

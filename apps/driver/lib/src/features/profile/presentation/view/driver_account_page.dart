@@ -35,18 +35,18 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
               constraints: const BoxConstraints(
-                maxWidth: EasyRideDesignTokens.pageMaxWidth,
+                maxWidth: EasyRideLayout.pageMaxWidth,
               ),
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final horizontalPadding = constraints.maxWidth < 360
                       ? 20.0
-                      : EasyRideDesignTokens.pageHorizontalPaddingWide;
+                      : EasyRideLayout.pagePaddingWide;
                   return SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
                     padding: EdgeInsets.fromLTRB(
                       horizontalPadding,
-                      EasyRideDesignTokens.pageTopPadding,
+                      EasyRideLayout.pagePadding,
                       horizontalPadding,
                       MediaQuery.paddingOf(context).bottom + 98,
                     ),
@@ -54,7 +54,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const EasyRidePageHeader(title: 'Account'),
-                        const SizedBox(height: EasyRideDesignTokens.sectionGap),
+                        const SizedBox(height: EasyRideSpacing.xxl),
                         _buildProfileSummary(context, state.account),
                         if (state.isLoading) ...[
                           const SizedBox(height: 20),
@@ -70,7 +70,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                             ),
                           ),
                         ],
-                        const SizedBox(height: EasyRideDesignTokens.sectionGap),
+                        const SizedBox(height: EasyRideSpacing.xxl),
                         _buildSectionTitle(context, 'Driver Details'),
                         const SizedBox(height: 12),
                         _buildMenuGroup(context, [
@@ -146,7 +146,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
       color: Colors.transparent,
       child: InkWell(
         key: const ValueKey<String>('driver-profile-summary'),
-        borderRadius: BorderRadius.circular(EasyRideDesignTokens.cardRadius),
+        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         onTap: () => unawaited(
           _openEditableDestination(context, ProfileRoutes.personalDetails),
         ),
@@ -275,7 +275,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
         constraints: const BoxConstraints(minHeight: 76),
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: EasyRideDesignTokens.cardPadding,
+            horizontal: EasyRideSpacing.lg,
             vertical: 12,
           ),
           child: Row(
@@ -294,7 +294,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                   color: context.colorScheme.onPrimaryContainer,
                 ),
               ),
-              const SizedBox(width: EasyRideDesignTokens.cardPadding),
+              const SizedBox(width: EasyRideSpacing.lg),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -304,7 +304,7 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                       item.title,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    const SizedBox(height: EasyRideDesignTokens.compactGap / 2),
+                    const SizedBox(height: EasyRideSpacing.sm / 2),
                     Text(
                       item.subtitle,
                       maxLines: 2,
@@ -316,11 +316,11 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                   ],
                 ),
               ),
-              const SizedBox(width: EasyRideDesignTokens.compactGap),
+              const SizedBox(width: EasyRideSpacing.sm),
               Icon(
                 LucideIcons.chevron_right,
                 color: context.colorScheme.onSurfaceVariant,
-                size: EasyRideDesignTokens.navigationIconSize,
+                size: EasyRideSize.navigationIcon,
               ),
             ],
           ),

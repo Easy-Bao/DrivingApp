@@ -173,8 +173,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
       (bloc) => bloc.state.isAuthenticated,
     );
     final isWide =
-        MediaQuery.sizeOf(context).width >=
-        EasyRideDesignTokens.wideLayoutBreakpoint;
+        MediaQuery.sizeOf(context).width >= EasyRideLayout.wideBreakpoint;
     return BlocListener<SessionBloc, SessionState>(
       listenWhen: (_, current) =>
           current is AuthenticatedSession ||

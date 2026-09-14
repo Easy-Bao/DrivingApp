@@ -71,9 +71,9 @@ class _RideHistoryWidgetState extends State<RideHistoryWidget> {
       slivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(
-            EasyRideDesignTokens.pageHorizontalPadding,
+            EasyRideLayout.pagePadding,
             8,
-            EasyRideDesignTokens.pageHorizontalPadding,
+            EasyRideLayout.pagePadding,
             18,
           ),
           sliver: SliverToBoxAdapter(
@@ -90,7 +90,7 @@ class _RideHistoryWidgetState extends State<RideHistoryWidget> {
         if (widget.showSummary)
           SliverPadding(
             padding: const EdgeInsets.symmetric(
-              horizontal: EasyRideDesignTokens.pageHorizontalPadding,
+              horizontal: EasyRideLayout.pagePadding,
             ),
             sliver: SliverToBoxAdapter(
               child: RideHistorySummaryWidget(
@@ -103,9 +103,9 @@ class _RideHistoryWidgetState extends State<RideHistoryWidget> {
         if (widget.showFilters)
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(
-              EasyRideDesignTokens.pageHorizontalPadding,
+              EasyRideLayout.pagePadding,
               12,
-              EasyRideDesignTokens.pageHorizontalPadding,
+              EasyRideLayout.pagePadding,
               18,
             ),
             sliver: SliverToBoxAdapter(
@@ -126,9 +126,9 @@ class _RideHistoryWidgetState extends State<RideHistoryWidget> {
             (widget.hasMore || widget.loadMoreError != null))
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(
-              EasyRideDesignTokens.pageHorizontalPadding,
+              EasyRideLayout.pagePadding,
               10,
-              EasyRideDesignTokens.pageHorizontalPadding,
+              EasyRideLayout.pagePadding,
               0,
             ),
             sliver: SliverToBoxAdapter(child: _buildLoadMore()),
@@ -208,9 +208,9 @@ class _RideHistoryWidgetState extends State<RideHistoryWidget> {
     return [
       const SliverPadding(
         padding: EdgeInsets.fromLTRB(
-          EasyRideDesignTokens.pageHorizontalPadding,
+          EasyRideLayout.pagePadding,
           0,
-          EasyRideDesignTokens.pageHorizontalPadding,
+          EasyRideLayout.pagePadding,
           8,
         ),
         sliver: SliverToBoxAdapter(
@@ -219,7 +219,7 @@ class _RideHistoryWidgetState extends State<RideHistoryWidget> {
       ),
       SliverPadding(
         padding: const EdgeInsets.symmetric(
-          horizontal: EasyRideDesignTokens.pageHorizontalPadding,
+          horizontal: EasyRideLayout.pagePadding,
         ),
         sliver: SliverList.builder(
           itemCount: widget.activeRides.length,
@@ -250,9 +250,9 @@ class _RideHistoryWidgetState extends State<RideHistoryWidget> {
         ..add(
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(
-              EasyRideDesignTokens.pageHorizontalPadding,
+              EasyRideLayout.pagePadding,
               0,
-              EasyRideDesignTokens.pageHorizontalPadding,
+              EasyRideLayout.pagePadding,
               8,
             ),
             sliver: SliverToBoxAdapter(
@@ -263,7 +263,7 @@ class _RideHistoryWidgetState extends State<RideHistoryWidget> {
         ..add(
           SliverPadding(
             padding: const EdgeInsets.symmetric(
-              horizontal: EasyRideDesignTokens.pageHorizontalPadding,
+              horizontal: EasyRideLayout.pagePadding,
             ),
             sliver: SliverList.builder(
               itemCount: entry.value.length,

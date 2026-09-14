@@ -75,13 +75,13 @@ class _HomePageState extends State<HomePage> {
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(
-                maxWidth: EasyRideDesignTokens.pageMaxWidth,
+                maxWidth: EasyRideLayout.pageMaxWidth,
               ),
               child: Stack(
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: EasyRideDesignTokens.pageHorizontalPadding,
+                      horizontal: EasyRideLayout.pagePadding,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -474,12 +474,10 @@ class _HomePageState extends State<HomePage> {
           child: Material(
             color: context.colorScheme.surface.withValues(alpha: 0),
             child: Container(
-              padding: const EdgeInsets.all(EasyRideDesignTokens.cardPadding),
+              padding: const EdgeInsets.all(EasyRideSpacing.lg),
               decoration: BoxDecoration(
                 color: context.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(
-                  EasyRideDesignTokens.controlRadius,
-                ),
+                borderRadius: BorderRadius.circular(EasyRideRadius.lg),
                 border: Border.all(color: context.colorScheme.outlineVariant),
               ),
               child: Row(
