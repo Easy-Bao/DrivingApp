@@ -193,36 +193,10 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
       statusSubtitle = 'Trip is in progress';
     }
 
-    return Scaffold(
-      backgroundColor: context.colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: Center(
-          child: IconButton(
-            onPressed: () => context.pop(),
-            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-            padding: EdgeInsets.zero,
-            style: IconButton.styleFrom(shape: const CircleBorder()),
-            icon: Icon(
-              LucideIcons.arrow_left,
-              color: context.colorScheme.onSurface,
-              size: 20,
-            ),
-          ),
-        ),
-        title: Text(
-          'Ride details',
-          style: TextStyle(
-            color: context.colorScheme.onSurface,
-            fontWeight: FontWeight.w800,
-            fontSize: 18,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
+    return EasyRideSecondaryPage(
+      title: 'Ride details',
+      onBack: () => context.pop(),
+      child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
         child: Column(
