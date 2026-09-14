@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:design_system/src/theme/design_system_context.dart';
+import 'package:design_system/src/tokens/radius.dart';
+import 'package:design_system/src/tokens/size.dart';
+import 'package:design_system/src/tokens/spacing.dart';
 
 /// The small set of access states that the app-root location prompt renders.
 enum LocationAccessOverlayState {
@@ -40,13 +43,12 @@ class const LocationAccessOverlay({
         children: [
           ModalBarrier(
             dismissible: false,
-            color: colorScheme.scrim.withValues(alpha: 0.42),
+            color: colorScheme.scrim.withValues(alpha: 0.36),
           ),
           Align(
             alignment: Alignment.bottomCenter,
-            child: FractionallySizedBox(
-              widthFactor: 1,
-              heightFactor: 0.5,
+            child: SizedBox(
+              width: double.infinity,
               child: TweenAnimationBuilder<double>(
                 tween: Tween<double>(begin: 1, end: 0),
                 duration: const Duration(milliseconds: 360),
@@ -97,15 +99,21 @@ class const _LocationAccessSheet({
     return Material(
       key: const ValueKey<String>('location-access-overlay-sheet'),
       color: colorScheme.surface,
-      elevation: 12,
-      shadowColor: colorScheme.scrim.withValues(alpha: 0.28),
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      elevation: 0,
+      borderRadius: const BorderRadius.vertical(
+        top: Radius.circular(EasyRideRadius.sheet),
+      ),
       clipBehavior: Clip.antiAlias,
       child: SafeArea(
         top: false,
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
+          padding: const EdgeInsets.fromLTRB(
+            EasyRideSpacing.lg,
+            EasyRideSpacing.sm,
+            EasyRideSpacing.lg,
+            EasyRideSpacing.lg,
+          ),
           child: Align(
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
@@ -126,13 +134,13 @@ class const _LocationAccessSheet({
                       ),
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: EasyRideSpacing.sm),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        width: 48,
-                        height: 48,
+                        width: EasyRideSize.controlHeight,
+                        height: EasyRideSize.controlHeight,
                         decoration: BoxDecoration(
                           color: presentation
                               .color(colorScheme)
@@ -154,7 +162,7 @@ class const _LocationAccessSheet({
                                 color: presentation.color(colorScheme),
                               ),
                       ),
-                      const SizedBox(width: 14),
+                      const SizedBox(width: EasyRideSpacing.md),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,11 +190,15 @@ class const _LocationAccessSheet({
                     ],
                   ),
                   if (primaryAction != null) ...[
-                    const SizedBox(height: 16),
+                    const SizedBox(height: EasyRideSpacing.md),
                     SizedBox(
-                      height: 50,
+                      height: EasyRideSize.controlHeight,
                       child: FilledButton.icon(
                         onPressed: primaryAction.callback,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: colorScheme.primary,
+                          foregroundColor: colorScheme.onPrimary,
+                        ),
                         icon: Icon(
                           primaryAction.label.contains('Settings')
                               ? LucideIcons.settings
@@ -200,9 +212,9 @@ class const _LocationAccessSheet({
                   if (onTryAgain != null &&
                       state != LocationAccessOverlayState.permissionDenied &&
                       state != LocationAccessOverlayState.checking) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(height: EasyRideSpacing.xs),
                     SizedBox(
-                      height: 48,
+                      height: EasyRideSize.minimumTouchTarget,
                       child: TextButton.icon(
                         onPressed: onTryAgain,
                         icon: const Icon(LucideIcons.refresh_cw, size: 16),

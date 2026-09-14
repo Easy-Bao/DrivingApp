@@ -37,12 +37,11 @@ void main() {
     expect(find.text('Current route'), findsOneWidget);
     expect(find.text('Open Location Settings'), findsOneWidget);
     expect(find.text('Try Again'), findsOneWidget);
-    expect(
-      tester.getSize(
-        find.byKey(const ValueKey<String>('location-access-overlay-sheet')),
-      ),
-      const Size(320, 320),
+    final sheetSize = tester.getSize(
+      find.byKey(const ValueKey<String>('location-access-overlay-sheet')),
     );
+    expect(sheetSize.width, 320);
+    expect(sheetSize.height, lessThan(320));
 
     await tester.tap(find.text('Open Location Settings'));
     await tester.tap(find.text('Try Again'));
