@@ -528,16 +528,6 @@ class _DriverChatPageState extends State<DriverChatPage> {
                   bottomLeft: Radius.circular(isMe ? 20 : 4),
                   bottomRight: Radius.circular(isMe ? 4 : 20),
                 ),
-                boxShadow: [
-                  if (isMe)
-                    BoxShadow(
-                      color: context.colorScheme.onSurface.withValues(
-                        alpha: 0.15,
-                      ),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                ],
               ),
               child: Text(
                 msg.text,
