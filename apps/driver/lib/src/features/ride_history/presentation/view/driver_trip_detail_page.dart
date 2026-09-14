@@ -137,139 +137,118 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
         driverValueAsString(widget.trip['created_at']) ??
         '';
 
-    return Scaffold(
-      backgroundColor: context.canvasColor,
-      appBar: AppBar(
-        backgroundColor: context.canvasColor,
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          tooltip: 'Back',
-          style: IconButton.styleFrom(shape: const CircleBorder()),
-          icon: Icon(
-            LucideIcons.arrow_left,
-            color: context.colorScheme.onSurface,
-          ),
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('Trip details'),
-        centerTitle: true,
-      ),
-      body: SafeArea(
-        top: false,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final horizontalPadding = constraints.maxWidth < 360
-                ? EasyRideLayout.pagePadding
-                : EasyRideLayout.pagePaddingWide;
-            return SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(
-                horizontalPadding,
-                12,
-                horizontalPadding,
-                EasyRideSpacing.xxl * 2,
-              ),
-              physics: const BouncingScrollPhysics(),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 720),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+    return EasyRideSecondaryPage(
+      title: 'Trip details',
+      onBack: () => context.pop(),
+      maxWidth: 720,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final horizontalPadding = constraints.maxWidth < 360
+              ? EasyRideLayout.pagePadding
+              : EasyRideLayout.pagePaddingWide;
+          return SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              12,
+              horizontalPadding,
+              EasyRideSpacing.xxl * 2,
+            ),
+            physics: const BouncingScrollPhysics(),
+            child: Center(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Past trip',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: context.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                                const SizedBox(height: 3),
-                                Text(
-                                  _formatDate(dateValue),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: context.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Past trip',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: context.colorScheme.onSurfaceVariant,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          _buildStatusChip(statusLabel, statusColor),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      _buildTripSummaryCard(
-                        fromName: fromName,
-                        toName: toName,
-                        rideType: rideType,
-                        fare: fare,
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        'Passenger profile',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: context.colorScheme.onSurfaceVariant,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      _buildPassengerCard(),
-                      if (_chatFeedbackMessage != null) ...[
-                        const SizedBox(height: 12),
-                        _buildChatFeedback(),
-                      ],
-                      const SizedBox(height: 16),
-                      FilledButton.icon(
-                        onPressed: _isContactingPassenger
-                            ? null
-                            : _contactPassenger,
-                        icon: _isContactingPassenger
-                            ? SizedBox.square(
-                                dimension: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: context.colorScheme.onPrimary,
-                                ),
-                              )
-                            : const Icon(LucideIcons.message_square, size: 18),
-                        label: Text(
-                          _isContactingPassenger
-                              ? 'Opening Chat...'
-                              : 'Contact Passenger',
-                        ),
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size.fromHeight(50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              EasyRideRadius.lg,
+                            const SizedBox(height: 3),
+                            Text(
+                              _formatDate(dateValue),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: context.colorScheme.onSurfaceVariant,
+                              ),
                             ),
-                          ),
-                          textStyle: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                          ),
+                          ],
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      _buildStatusChip(statusLabel, statusColor),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  _buildTripSummaryCard(
+                    fromName: fromName,
+                    toName: toName,
+                    rideType: rideType,
+                    fare: fare,
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Passenger profile',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: context.colorScheme.onSurfaceVariant,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildPassengerCard(),
+                  if (_chatFeedbackMessage != null) ...[
+                    const SizedBox(height: 12),
+                    _buildChatFeedback(),
+                  ],
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    onPressed: _isContactingPassenger
+                        ? null
+                        : _contactPassenger,
+                    icon: _isContactingPassenger
+                        ? SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: context.colorScheme.onPrimary,
+                            ),
+                          )
+                        : const Icon(LucideIcons.message_square, size: 18),
+                    label: Text(
+                      _isContactingPassenger
+                          ? 'Opening Chat...'
+                          : 'Contact Passenger',
+                    ),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }

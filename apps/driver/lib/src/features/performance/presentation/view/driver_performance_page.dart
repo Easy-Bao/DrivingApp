@@ -17,54 +17,38 @@ class const DriverPerformancePage({super.key, this.onBack, this.onRefresh})
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: context.canvasColor,
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-          onPressed: onBack ?? () => context.pop(),
-          icon: const Icon(LucideIcons.arrow_left),
-        ),
-        title: const Text('Performance'),
-        centerTitle: true,
-      ),
-      body: BlocBuilder<DriverPerformanceCubit, DriverPerformanceState>(
+    return EasyRideSecondaryPage(
+      title: 'Performance',
+      onBack: onBack ?? () => context.pop(),
+      child: BlocBuilder<DriverPerformanceCubit, DriverPerformanceState>(
         builder: (context, state) => RefreshIndicator(
           onRefresh:
               onRefresh ??
               () => BlocProvider.of<DriverPerformanceCubit>(context).load(),
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: EasyRideLayout.pageMaxWidth,
-              ),
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(
-                  EasyRideLayout.pagePadding,
-                  EasyRideLayout.pagePadding,
-                  EasyRideLayout.pagePadding,
-                  48,
-                ),
-                children: [
-                  if (state.isLoading) const LinearProgressIndicator(),
-                  if (state.isLoading) const SizedBox(height: 18),
-                  _PerformanceSummary(stats: state.stats),
-                  const SizedBox(height: 20),
-                  _PerformanceMetrics(stats: state.stats),
-                  if (state.errorMessage != null) ...[
-                    const SizedBox(height: 20),
-                    AppErrorBanner(
-                      message: state.errorMessage!,
-                      onRetry: () => unawaited(
-                        BlocProvider.of<DriverPerformanceCubit>(context).load(),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(
+              EasyRideLayout.pagePadding,
+              EasyRideLayout.pagePadding,
+              EasyRideLayout.pagePadding,
+              48,
             ),
+            children: [
+              if (state.isLoading) const LinearProgressIndicator(),
+              if (state.isLoading) const SizedBox(height: 18),
+              _PerformanceSummary(stats: state.stats),
+              const SizedBox(height: 20),
+              _PerformanceMetrics(stats: state.stats),
+              if (state.errorMessage != null) ...[
+                const SizedBox(height: 20),
+                AppErrorBanner(
+                  message: state.errorMessage!,
+                  onRetry: () => unawaited(
+                    BlocProvider.of<DriverPerformanceCubit>(context).load(),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ),
