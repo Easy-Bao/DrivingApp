@@ -207,8 +207,8 @@ class const PickupNavigationPanelWidget({
     bool filled = false,
   }) {
     final background = filled
-        ? context.colorScheme.onSurface
-        : context.colorScheme.surfaceContainerHighest;
+        ? context.colorScheme.primary
+        : context.colorScheme.surface;
     final foreground = filled
         ? context.colorScheme.onPrimary
         : context.colorScheme.onSurface;
@@ -219,7 +219,7 @@ class const PickupNavigationPanelWidget({
         onTap: onPressed,
         borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         child: Container(
-          height: 44,
+          height: 46,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(EasyRideRadius.lg),
             border: filled
@@ -230,12 +230,11 @@ class const PickupNavigationPanelWidget({
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, size: 16, color: foreground),
-              const SizedBox(width: 7),
+              const SizedBox(width: 8),
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
+                style: context.textStyles.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
                   color: foreground,
                 ),
               ),
@@ -245,6 +244,7 @@ class const PickupNavigationPanelWidget({
       ),
     );
   }
+
 
   Widget _arrivalSlider() {
     return LayoutBuilder(

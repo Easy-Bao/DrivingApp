@@ -187,8 +187,8 @@ class const WaitingPassengerPanelWidget({
     bool filled = false,
   }) {
     final background = filled
-        ? context.colorScheme.onSurface
-        : context.colorScheme.surfaceContainerHighest;
+        ? context.colorScheme.primary
+        : context.colorScheme.surface;
     final foreground = filled
         ? context.colorScheme.onPrimary
         : context.colorScheme.onSurface;
@@ -199,7 +199,7 @@ class const WaitingPassengerPanelWidget({
         onTap: onPressed,
         borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         child: Container(
-          height: 44,
+          height: 46,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(EasyRideRadius.lg),
             border: filled
@@ -210,12 +210,11 @@ class const WaitingPassengerPanelWidget({
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, color: foreground, size: 16),
-              const SizedBox(width: 7),
+              const SizedBox(width: 8),
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
+                style: context.textStyles.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
                   color: foreground,
                 ),
               ),
@@ -224,6 +223,7 @@ class const WaitingPassengerPanelWidget({
         ),
       ),
     );
+
   }
 }
 

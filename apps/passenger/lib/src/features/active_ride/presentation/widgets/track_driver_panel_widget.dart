@@ -258,7 +258,7 @@ class const _ActionButton({
   @override
   Widget build(BuildContext context) {
     final background = filled
-        ? context.colorScheme.onSurface
+        ? context.colorScheme.primary
         : context.colorScheme.surfaceContainerHighest;
     final foreground = filled
         ? context.colorScheme.onPrimary

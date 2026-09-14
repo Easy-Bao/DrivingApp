@@ -279,13 +279,13 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                     width: 50,
                     height: 50,
                     decoration: BoxDecoration(
-                      color: context.colorScheme.secondaryContainer,
+                      color: context.colorScheme.primary,
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
                     child: Icon(
                       LucideIcons.user,
-                      color: context.colorScheme.tertiary,
+                      color: context.colorScheme.onPrimary,
                       size: 22,
                     ),
                   ),

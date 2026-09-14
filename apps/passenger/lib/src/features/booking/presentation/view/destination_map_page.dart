@@ -293,9 +293,13 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: context.colorScheme.onSurface,
+                        backgroundColor: context.colorScheme.primary,
                         foregroundColor: context.colorScheme.onPrimary,
-                        shape: const StadiumBorder(),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            EasyRideRadius.lg,
+                          ),
+                        ),
                         elevation: 0,
                       ),
                       child: const Text(

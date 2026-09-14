@@ -46,6 +46,7 @@ class const DriverDashboardStatsRowWidget({
                 label: "Today's Net Earnings",
                 value: formatPesoAmount(earnings),
                 skeletonWidth: 84,
+                icon: LucideIcons.wallet,
               ),
             ),
             const SizedBox(width: EasyRideSpacing.sm),
@@ -55,6 +56,7 @@ class const DriverDashboardStatsRowWidget({
                 label: 'Trips Today',
                 value: '$completedTrips',
                 skeletonWidth: 32,
+                icon: LucideIcons.car,
               ),
             ),
           ],
@@ -68,35 +70,53 @@ class const DriverDashboardStatsRowWidget({
     required String label,
     required String value,
     required double skeletonWidth,
+    required IconData icon,
   }) {
     return Container(
       padding: const EdgeInsets.all(EasyRideSpacing.lg),
       decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainerHighest,
+        color: context.colorScheme.surface,
         borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: context.colorScheme.onSurfaceVariant,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: context.textStyles.labelSmall?.copyWith(
+                  letterSpacing: 0.5,
+                  fontWeight: FontWeight.w600,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: context.colorScheme.surfaceContainerHighest,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  size: 14,
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 10),
           if (isLoadingStats && hasExistingStats)
-            Bone.text(width: skeletonWidth, fontSize: 22)
+            Bone.text(width: skeletonWidth, fontSize: 24)
           else
             Text(
               value,
-              style: TextStyle(
-                fontSize: 22,
+              style: context.textStyles.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w800,
                 color: context.colorScheme.onSurface,
+                letterSpacing: -0.5,
               ),
             ),
         ],
@@ -112,12 +132,9 @@ class const DriverDashboardStatsRowWidget({
       ),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(
-          horizontal: EasyRideSpacing.lg,
-          vertical: 15,
-        ),
+        padding: const EdgeInsets.all(EasyRideSpacing.lg),
         decoration: BoxDecoration(
-          color: context.colorScheme.surfaceContainerHighest,
+          color: context.colorScheme.surface,
           borderRadius: BorderRadius.circular(EasyRideRadius.lg),
           border: Border.all(color: context.colorScheme.outlineVariant),
         ),
@@ -126,29 +143,27 @@ class const DriverDashboardStatsRowWidget({
             SizedBox.square(
               dimension: 20,
               child: CircularProgressIndicator(
-                strokeWidth: 2.2,
-                color: context.colorScheme.onSurface,
+                strokeWidth: 2,
+                color: context.colorScheme.primary,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     "Loading today's activity",
-                    style: TextStyle(
+                    style: context.textStyles.labelMedium?.copyWith(
                       color: context.colorScheme.onSurface,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     'Your earnings and trips will appear here shortly.',
-                    style: TextStyle(
+                    style: context.textStyles.bodySmall?.copyWith(
                       color: context.colorScheme.onSurfaceVariant,
-                      fontSize: 12,
                     ),
                   ),
                 ],
@@ -159,6 +174,7 @@ class const DriverDashboardStatsRowWidget({
       ),
     );
   }
+
 }
 
 class const DriverDashboardErrorCard({

@@ -184,14 +184,12 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                             width: 56,
                             height: 56,
                             decoration: BoxDecoration(
-                              color: context.colorScheme.secondaryContainer,
-                              borderRadius: BorderRadius.circular(
-                                EasyRideRadius.lg,
-                              ),
+                              color: context.colorScheme.primary,
+                              shape: BoxShape.circle,
                             ),
                             child: Icon(
                               LucideIcons.user,
-                              color: context.colorScheme.onSurface,
+                              color: context.colorScheme.onPrimary,
                               size: 26,
                             ),
                           ),
@@ -312,7 +310,7 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                 child: ElevatedButton(
                   onPressed: _goToTracking,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: context.colorScheme.onSurface,
+                    backgroundColor: context.colorScheme.primary,
                     foregroundColor: context.colorScheme.onPrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(EasyRideRadius.lg),

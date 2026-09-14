@@ -271,54 +271,96 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
   }
 
   Widget _buildSummaryCard(_EarningsSummary summary) {
-    return DecoratedBox(
+    return Container(
       decoration: BoxDecoration(
-        color: context.colorScheme.primaryContainer,
+        color: context.colorScheme.primary,
         borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        boxShadow: [
+          BoxShadow(
+            color: context.colorScheme.primary.withValues(alpha: 0.16),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          EasyRideSpacing.lg,
-          EasyRideSpacing.lg,
-          EasyRideSpacing.lg,
-          14,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _periodTitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: context.colorScheme.onPrimaryContainer,
-                letterSpacing: 1.4,
+      padding: const EdgeInsets.fromLTRB(
+        EasyRideSpacing.lg,
+        EasyRideSpacing.md,
+        EasyRideSpacing.lg,
+        12,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                _periodTitle.toUpperCase(),
+                style: context.textStyles.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: context.colorScheme.onPrimary.withValues(alpha: 0.7),
+                  letterSpacing: 1.2,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              formatPesoAmount(summary.total),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 36,
-                fontWeight: FontWeight.w800,
-                color: context.colorScheme.onPrimaryContainer,
-                letterSpacing: -1.2,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: context.semanticColors.success.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 5,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: context.semanticColors.success,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Live',
+                      style: context.textStyles.labelSmall?.copyWith(
+                        color: context.semanticColors.success,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
               ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            formatPesoAmount(summary.total),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.textStyles.headlineLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: context.colorScheme.onPrimary,
+              letterSpacing: -1.0,
             ),
-            Text(
-              'Earnings from your completed rides',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: context.colorScheme.onPrimaryContainer,
-              ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Earnings from your completed rides',
+            style: context.textStyles.bodySmall?.copyWith(
+              color: context.colorScheme.onPrimary.withValues(alpha: 0.7),
+              fontSize: 11,
             ),
-            const SizedBox(height: 12),
-            Row(
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            decoration: BoxDecoration(
+              color: context.colorScheme.onPrimary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(EasyRideRadius.md),
+            ),
+            child: Row(
               children: [
                 Expanded(
                   child: _miniStat('${summary.tripsCount}', 'Completed trips'),
@@ -332,8 +374,8 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -341,9 +383,9 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
   Widget _summaryDivider() {
     return Container(
       width: 1,
-      height: 28,
-      color: context.colorScheme.onPrimaryContainer.withValues(alpha: 0.24),
-      margin: const EdgeInsets.symmetric(horizontal: 12),
+      height: 24,
+      color: context.colorScheme.onPrimary.withValues(alpha: 0.15),
+      margin: const EdgeInsets.symmetric(horizontal: 10),
     );
   }
 
@@ -355,20 +397,19 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
           value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 16,
+          style: context.textStyles.titleSmall?.copyWith(
             fontWeight: FontWeight.w800,
-            color: context.colorScheme.onPrimaryContainer,
+            color: context.colorScheme.onPrimary,
           ),
         ),
+        const SizedBox(height: 1),
         Text(
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            color: context.colorScheme.onPrimaryContainer,
+          style: context.textStyles.bodySmall?.copyWith(
+            fontSize: 10,
+            color: context.colorScheme.onPrimary.withValues(alpha: 0.7),
           ),
         ),
       ],
@@ -381,22 +422,20 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
       child: TabBar(
         controller: _tabCtrl,
         onTap: _selectPeriod,
-        indicator: UnderlineTabIndicator(
-          borderSide: BorderSide(
-            color: context.colorScheme.onSurface,
-            width: 2,
-          ),
+        indicator: BoxDecoration(
+          color: context.colorScheme.primary,
+          borderRadius: BorderRadius.circular(EasyRideRadius.pill),
         ),
-        indicatorPadding: const EdgeInsets.symmetric(horizontal: 18),
-        labelColor: context.colorScheme.onSurface,
+        labelColor: context.colorScheme.onPrimary,
         unselectedLabelColor: context.colorScheme.onSurfaceVariant,
-        labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
-        unselectedLabelStyle: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
+        labelStyle: context.textStyles.labelSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+        unselectedLabelStyle: context.textStyles.labelSmall?.copyWith(
+          fontWeight: FontWeight.w500,
         ),
         indicatorSize: TabBarIndicatorSize.tab,
-        dividerColor: context.colorScheme.surface.withValues(alpha: 0),
+        dividerColor: Colors.transparent,
         tabs: const [
           Tab(text: 'Daily'),
           Tab(text: 'Weekly'),
@@ -407,53 +446,56 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
   }
 
   Widget _buildBarChart(List<_EarnDay> dailyData) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final chartHeight = constraints.maxWidth < 360 ? 150.0 : 166.0;
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _breakdownTitle,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: context.colorScheme.onSurface,
-                  ),
+    return Container(
+      decoration: BoxDecoration(
+        color: context.colorScheme.surface,
+        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        border: Border.all(color: context.colorScheme.outlineVariant),
+      ),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final chartHeight = constraints.maxWidth < 360 ? 120.0 : 150.0;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _breakdownTitle,
+                style: context.textStyles.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: context.colorScheme.onSurface,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  _breakdownDescription,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: context.colorScheme.onSurfaceVariant,
-                  ),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                _breakdownDescription,
+                style: context.textStyles.bodySmall?.copyWith(
+                  fontSize: 10,
+                  color: context.colorScheme.onSurfaceVariant,
                 ),
-                const SizedBox(height: 6),
-                _buildPeriodTabs(),
-                const SizedBox(height: 4),
-                SizedBox(
-                  height: chartHeight,
-                  child: LayoutBuilder(
-                    builder: (context, chartConstraints) {
-                      return BarChart(
-                        _barChartData(chartConstraints.maxWidth, dailyData),
-                        duration: const Duration(milliseconds: 600),
-                        curve: Curves.easeOutCubic,
-                      );
-                    },
-                  ),
+              ),
+              const SizedBox(height: 6),
+              _buildPeriodTabs(),
+              const SizedBox(height: 6),
+              SizedBox(
+                height: chartHeight,
+                child: LayoutBuilder(
+                  builder: (context, chartConstraints) {
+                    return BarChart(
+                      _barChartData(chartConstraints.maxWidth, dailyData),
+                      duration: const Duration(milliseconds: 600),
+                      curve: Curves.easeOutCubic,
+                    );
+                  },
                 ),
-              ],
-            );
-          },
-        ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
+
 
   BarChartData _barChartData(double availableWidth, List<_EarnDay> dailyData) {
     final chartDays = dailyData.isEmpty ? const [_EarnDay('—', 0)] : dailyData;
@@ -480,7 +522,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
         drawVerticalLine: false,
         horizontalInterval: maxY / 4,
         getDrawingHorizontalLine: (value) => FlLine(
-          color: context.colorScheme.outlineVariant.withValues(alpha: 0.72),
+          color: context.colorScheme.outlineVariant.withValues(alpha: 0.6),
           strokeWidth: 1,
         ),
       ),
@@ -507,9 +549,8 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                   day.day,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
+                  style: context.textStyles.labelSmall?.copyWith(
+                    fontWeight: day.isCurrent ? FontWeight.w800 : FontWeight.w600,
                     color: day.isCurrent
                         ? context.colorScheme.onSurface
                         : context.colorScheme.onSurfaceVariant,
@@ -550,18 +591,18 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
           toY: barValue,
           width: barWidth,
           color: day.isCurrent
-              ? context.colorScheme.onSurface
-              : context.colorScheme.onSurface.withValues(alpha: 0.16),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+              ? context.colorScheme.primary
+              : context.colorScheme.primary.withValues(alpha: 0.2),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
           label: BarChartRodLabel(
             show: true,
             text: '₱${day.amount.toInt()}',
-            style: TextStyle(
+            style: context.textStyles.labelSmall?.copyWith(
               color: day.isCurrent
-                  ? context.colorScheme.onSurface
+                  ? context.colorScheme.primary
                   : context.colorScheme.onSurfaceVariant,
-              fontSize: 11,
               fontWeight: FontWeight.w700,
+              fontSize: 10,
             ),
             offset: const Offset(0, 6),
           ),
@@ -574,6 +615,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
       ],
     );
   }
+
 }
 
 class const _EarningsSummary({

@@ -269,7 +269,9 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
                             disabledForegroundColor: context.colorScheme.surface
                                 .withValues(alpha: 0.5),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(36),
+                              borderRadius: BorderRadius.circular(
+                                EasyRideRadius.lg,
+                              ),
                             ),
                             elevation: 0,
                           ),

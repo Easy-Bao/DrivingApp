@@ -159,18 +159,19 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                 width: 76,
                 height: 76,
                 decoration: BoxDecoration(
-                  color: context.colorScheme.secondaryContainer,
+                  color: context.colorScheme.primary,
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
                 child: Text(
                   _getInitials(displayName),
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: context.colorScheme.onSecondaryContainer,
+                  style: context.textStyles.titleLarge?.copyWith(
+                    color: context.colorScheme.onPrimary,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
-              const SizedBox(width: 18),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,8 +180,12 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                       displayName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleLarge,
+                      style: context.textStyles.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: context.colorScheme.onSurface,
+                      ),
                     ),
+
                     const SizedBox(height: 7),
                     Text(
                       account.phone.isEmpty
@@ -261,10 +266,11 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
 
   Widget _buildSectionTitle(BuildContext context, String title) {
     return Text(
-      title.toUpperCase(),
+      title,
       style: Theme.of(context).textTheme.labelMedium?.copyWith(
         color: context.colorScheme.onSurfaceVariant,
-        letterSpacing: 0.8,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.5,
       ),
     );
   }

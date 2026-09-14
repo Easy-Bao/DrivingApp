@@ -163,7 +163,7 @@ class const _AppFloatingTabItem({
           selectionProgress,
         ) ??
         colorScheme.onSurfaceVariant;
-    final labelStyle = Theme.of(context).textTheme.labelSmall!;
+    final labelStyle = Theme.of(context).textTheme.labelMedium!;
 
     return Semantics(
       button: true,

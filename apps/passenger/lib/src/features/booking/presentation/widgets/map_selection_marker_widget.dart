@@ -1,11 +1,10 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
-import 'package:maps/maps.dart';
 
 class const MapSelectionMarkerWidget({super.key}) extends StatelessWidget {
   static const double width = 32;
   static const double height = 38;
-  static const Color markerColor = TripMapMarkerStyle.tripLocation;
+  static const Color markerColor = EasyRideStatusColors.success;
 
   @override
   Widget build(BuildContext context) {

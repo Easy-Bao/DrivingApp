@@ -900,85 +900,89 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       padding: const EdgeInsets.symmetric(
         horizontal: EasyRideLayout.pagePadding,
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) => AnimatedBuilder(
-          animation: _availabilityCtrl,
-          builder: (context, _) {
-            final fillWidth = constraints.maxWidth * _availabilityCtrl.value;
-            return ClipRRect(
-              borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: context.colorScheme.surfaceContainerHighest,
-                  border: isOnline
-                      ? null
-                      : Border.all(color: context.colorScheme.outlineVariant),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
+        decoration: BoxDecoration(
+          color: isOnline
+              ? context.colorScheme.primary
+              : context.colorScheme.surface,
+          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+          border: Border.all(
+            color: isOnline
+                ? context.colorScheme.primary
+                : context.colorScheme.outlineVariant,
+          ),
+          boxShadow: isOnline
+              ? [
+                  BoxShadow(
+                    color: context.colorScheme.primary.withValues(alpha: 0.18),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ]
+              : null,
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: EasyRideSpacing.lg,
+          vertical: EasyRideSpacing.lg,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: isOnline
+                        ? context.semanticColors.success
+                        : context.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                    shape: BoxShape.circle,
+                  ),
                 ),
-                child: Stack(
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Positioned(
-                      top: 0,
-                      bottom: 0,
-                      left: isOnline ? 0 : null,
-                      right: isOnline ? null : 0,
-                      width: fillWidth,
-                      child: ColoredBox(color: context.colorScheme.primary),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: EasyRideSpacing.lg,
-                        vertical: EasyRideSpacing.lg,
+                    Text(
+                      isOnline ? "You're Online" : "You're Offline",
+                      style: context.textStyles.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: isOnline
+                            ? context.colorScheme.onPrimary
+                            : context.colorScheme.onSurface,
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                isOnline ? "You're online" : "You're offline",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  color: isOnline
-                                      ? context.colorScheme.onPrimary
-                                      : context.colorScheme.onSurface,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                isOnline
-                                    ? 'Looking for rides nearby'
-                                    : 'Go online to receive rides',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: isOnline
-                                      ? context.colorScheme.onPrimary
-                                      : context.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
-                          ),
-                          _buildAvailabilitySwitch(
-                            context,
-                            isOnline,
-                            _availabilityCtrl.value,
-                            locationReady,
-                          ),
-                        ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      isOnline
+                          ? 'Available for ride requests nearby'
+                          : 'Switch online to start receiving rides',
+                      style: context.textStyles.bodySmall?.copyWith(
+                        color: isOnline
+                            ? context.colorScheme.onPrimary.withValues(alpha: 0.8)
+                            : context.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
                 ),
-              ),
-            );
-          },
+              ],
+            ),
+            _buildAvailabilitySwitch(
+              context,
+              isOnline,
+              _availabilityCtrl.value,
+              locationReady,
+            ),
+          ],
         ),
       ),
     );
   }
+
 
   Widget _buildAvailabilitySwitch(
     BuildContext context,
@@ -1059,36 +1063,63 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         child: AnimatedBuilder(
           animation: _pulseCtrl,
           builder: (_, _) {
-            final pulseOpacity = 0.4 + _pulseCtrl.value * 0.6;
-            final accentColor = context.colorScheme.primary.withValues(
-              alpha: context.colorScheme.primary.a * pulseOpacity,
-            );
+            final pulseOpacity = 0.3 + _pulseCtrl.value * 0.7;
             return Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    color: context.colorScheme.secondaryContainer.withValues(
-                      alpha: 0.22 * pulseOpacity,
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      width: 88,
+                      height: 88,
+                      decoration: BoxDecoration(
+                        color: context.colorScheme.primary.withValues(
+                          alpha: 0.08 * pulseOpacity,
+                        ),
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Icon(
-                      LucideIcons.radar,
-                      size: 32,
-                      color: accentColor,
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: context.colorScheme.primary.withValues(
+                          alpha: 0.15 * pulseOpacity,
+                        ),
+                        shape: BoxShape.circle,
+                      ),
                     ),
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: context.colorScheme.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Icon(
+                          LucideIcons.radar,
+                          size: 20,
+                          color: context.colorScheme.onPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  'Looking for rides nearby...',
+                  style: context.textStyles.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: context.colorScheme.onSurface,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 4),
                 Text(
-                  'Looking for rides...',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: accentColor,
+                  'Stay in high-demand areas to get trips faster',
+                  style: context.textStyles.bodySmall?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -1099,40 +1130,41 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     }
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 72,
-          height: 72,
+          width: 64,
+          height: 64,
           decoration: BoxDecoration(
-            color: context.colorScheme.onSurface.withValues(alpha: 0.08),
+            color: context.colorScheme.surfaceContainerHighest,
             shape: BoxShape.circle,
+            border: Border.all(color: context.colorScheme.outlineVariant),
           ),
           child: Center(
             child: Icon(
               LucideIcons.moon,
-              size: 32,
-              color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+              size: 24,
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
         ),
         const SizedBox(height: 16),
         Text(
-          "You're offline",
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
+          "You're currently offline",
+          style: context.textStyles.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
             color: context.colorScheme.onSurface,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Text(
-          'Go online to start receiving rides.',
-          style: TextStyle(
-            fontSize: 14,
+          'Toggle the switch above to start receiving ride requests',
+          style: context.textStyles.bodySmall?.copyWith(
             color: context.colorScheme.onSurfaceVariant,
           ),
         ),
       ],
     );
   }
+
 }

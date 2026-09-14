@@ -71,46 +71,61 @@ class const _PerformanceSummary({required this.stats}) extends StatelessWidget {
         : (completedTrips / totalTrips * 100).round();
 
     return Container(
-      padding: const EdgeInsets.all(EasyRideSpacing.lg),
+      padding: const EdgeInsets.all(EasyRideSpacing.xl),
       decoration: BoxDecoration(
-        color: context.colorScheme.primaryContainer,
+        color: context.colorScheme.primary,
         borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        boxShadow: [
+          BoxShadow(
+            color: context.colorScheme.primary.withValues(alpha: 0.16),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Icon(
-            LucideIcons.star,
-            size: 28,
-            color: context.semanticColors.rating,
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: context.semanticColors.rating.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              LucideIcons.star,
+              size: 28,
+              color: context.semanticColors.rating,
+            ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
             rating,
-            style: Theme.of(context).textTheme.displaySmall
-                ?.copyWith(color: context.colorScheme.onPrimaryContainer),
+            style: context.textStyles.displayMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: context.colorScheme.onPrimary,
+              letterSpacing: -1.0,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
-            'Driver rating',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: context.colorScheme.onPrimaryContainer.withValues(
-                alpha: 0.76,
-              ),
+            'Driver Rating',
+            style: context.textStyles.bodyMedium?.copyWith(
+              color: context.colorScheme.onPrimary.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 18),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: context.colorScheme.onPrimaryContainer.withValues(
-                alpha: 0.12,
-              ),
+              color: context.colorScheme.onPrimary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(EasyRideRadius.pill),
             ),
             child: Text(
               '$completionRate% trip completion',
-              style: Theme.of(context).textTheme.labelLarge
-                  ?.copyWith(color: context.colorScheme.onPrimaryContainer),
+              style: context.textStyles.labelMedium?.copyWith(
+                color: context.colorScheme.onPrimary,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -118,6 +133,7 @@ class const _PerformanceSummary({required this.stats}) extends StatelessWidget {
     );
   }
 }
+
 
 class const _PerformanceMetrics({required this.stats}) extends StatelessWidget {
   final DriverPerformanceStats? stats;
