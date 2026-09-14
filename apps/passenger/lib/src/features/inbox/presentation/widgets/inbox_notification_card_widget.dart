@@ -62,16 +62,16 @@ class const InboxNotificationCardWidget({
     final IconData icon;
 
     if (isDriverChat) {
-      bgCircleColor = context.colorScheme.secondaryContainer;
-      iconColor = context.colorScheme.tertiary;
+      bgCircleColor = context.colorScheme.primaryContainer;
+      iconColor = context.colorScheme.primary;
       icon = LucideIcons.user;
     } else if (isReceipt) {
-      bgCircleColor = context.colorScheme.onSurface;
-      iconColor = context.colorScheme.surface;
+      bgCircleColor = context.colorScheme.tertiaryContainer;
+      iconColor = context.colorScheme.onTertiaryContainer;
       icon = LucideIcons.receipt;
     } else {
       bgCircleColor = context.colorScheme.surfaceContainerHighest;
-      iconColor = context.colorScheme.onSurface;
+      iconColor = context.colorScheme.onSurfaceVariant;
       icon = LucideIcons.bell;
     }
 
@@ -80,31 +80,26 @@ class const InboxNotificationCardWidget({
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(EasyRideSpacing.lg),
           decoration: BoxDecoration(
-            color: context.colorScheme.surfaceContainerHighest.withValues(
-              alpha: 0.25,
-            ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: context.colorScheme.outlineVariant.withValues(alpha: 0.2),
-              width: 1.0,
-            ),
+            color: context.colorScheme.surface,
+            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+            border: Border.all(color: context.colorScheme.outlineVariant),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: EasyRideSize.minimumTouchTarget,
+                height: EasyRideSize.minimumTouchTarget,
                 decoration: BoxDecoration(
                   color: bgCircleColor,
-                  shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(EasyRideRadius.md),
                 ),
                 alignment: Alignment.center,
                 child: Icon(icon, color: iconColor, size: 20),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: EasyRideSpacing.lg),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,22 +107,12 @@ class const InboxNotificationCardWidget({
                   children: [
                     Text(
                       notification.title,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: context.colorScheme.onSurface,
-                      ),
+                      style: context.textStyles.titleMedium,
                     ),
                     const SizedBox(height: 4),
                     Text(
                       notification.message,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: context.colorScheme.onSurface.withValues(
-                          alpha: 0.6,
-                        ),
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: context.textStyles.bodySmall,
                     ),
                   ],
                 ),
@@ -151,7 +136,7 @@ class const InboxNotificationCardWidget({
                       width: 8,
                       height: 8,
                       decoration: BoxDecoration(
-                        color: context.colorScheme.error,
+                        color: context.colorScheme.primary,
                         shape: BoxShape.circle,
                       ),
                     ),

@@ -89,7 +89,7 @@ class const _PerformanceSummary({required this.stats}) extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(EasyRideSpacing.lg),
       decoration: BoxDecoration(
-        color: context.colorScheme.primary,
+        color: context.colorScheme.primaryContainer,
         borderRadius: BorderRadius.circular(EasyRideRadius.lg),
       ),
       child: Column(
@@ -97,32 +97,36 @@ class const _PerformanceSummary({required this.stats}) extends StatelessWidget {
           Icon(
             LucideIcons.star,
             size: 28,
-            color: context.colorScheme.onPrimary,
+            color: context.semanticColors.rating,
           ),
           const SizedBox(height: 10),
           Text(
             rating,
             style: Theme.of(context).textTheme.displaySmall
-                ?.copyWith(color: context.colorScheme.onPrimary),
+                ?.copyWith(color: context.colorScheme.onPrimaryContainer),
           ),
           const SizedBox(height: 4),
           Text(
             'Driver rating',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: context.colorScheme.onPrimary.withValues(alpha: 0.76),
+              color: context.colorScheme.onPrimaryContainer.withValues(
+                alpha: 0.76,
+              ),
             ),
           ),
           const SizedBox(height: 18),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
             decoration: BoxDecoration(
-              color: context.colorScheme.onPrimary.withValues(alpha: 0.12),
+              color: context.colorScheme.onPrimaryContainer.withValues(
+                alpha: 0.12,
+              ),
               borderRadius: BorderRadius.circular(EasyRideRadius.pill),
             ),
             child: Text(
               '$completionRate% trip completion',
               style: Theme.of(context).textTheme.labelLarge
-                  ?.copyWith(color: context.colorScheme.onPrimary),
+                  ?.copyWith(color: context.colorScheme.onPrimaryContainer),
             ),
           ),
         ],

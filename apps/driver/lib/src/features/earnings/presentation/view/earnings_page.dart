@@ -273,15 +273,8 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
   Widget _buildSummaryCard(_EarningsSummary summary) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: context.colorScheme.primary,
+        color: context.colorScheme.primaryContainer,
         borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-        boxShadow: [
-          BoxShadow(
-            color: context.colorScheme.primary.withValues(alpha: 0.16),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
@@ -300,7 +293,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w800,
-                color: context.colorScheme.onPrimary,
+                color: context.colorScheme.onPrimaryContainer,
                 letterSpacing: 1.4,
               ),
             ),
@@ -312,7 +305,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
               style: TextStyle(
                 fontSize: 36,
                 fontWeight: FontWeight.w800,
-                color: context.colorScheme.onPrimary,
+                color: context.colorScheme.onPrimaryContainer,
                 letterSpacing: -1.2,
               ),
             ),
@@ -321,7 +314,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
-                color: context.colorScheme.onPrimary,
+                color: context.colorScheme.onPrimaryContainer,
               ),
             ),
             const SizedBox(height: 12),
@@ -349,7 +342,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     return Container(
       width: 1,
       height: 28,
-      color: context.colorScheme.onPrimary.withValues(alpha: 0.24),
+      color: context.colorScheme.onPrimaryContainer.withValues(alpha: 0.24),
       margin: const EdgeInsets.symmetric(horizontal: 12),
     );
   }
@@ -365,7 +358,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w800,
-            color: context.colorScheme.onPrimary,
+            color: context.colorScheme.onPrimaryContainer,
           ),
         ),
         Text(
@@ -375,7 +368,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w500,
-            color: context.colorScheme.onPrimary,
+            color: context.colorScheme.onPrimaryContainer,
           ),
         ),
       ],
