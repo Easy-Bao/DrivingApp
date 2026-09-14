@@ -152,7 +152,15 @@ func (provider *MapboxProvider) Nearby(
 	}
 	categories := provider.nearbyCategories
 	if len(categories) == 0 {
-		categories = defaultNearbyCategories
+		result := provider.nearbyCategory(
+			ctx,
+			origin,
+			strings.Join(defaultNearbyCategories, ","),
+		)
+		if result.err != nil {
+			return nil, result.err
+		}
+		return paginateNearbyPlaces(result.places, page), nil
 	}
 
 	results := make(chan categoryResult, len(categories))
@@ -188,15 +196,19 @@ func (provider *MapboxProvider) Nearby(
 		return cmp.Compare(left.Name, right.Name)
 	})
 
+	return paginateNearbyPlaces(places, page), nil
+}
+
+func paginateNearbyPlaces(places []domain.Place, page int) []domain.Place {
 	start := (page - 1) * nearbyPageSize
 	if start >= len(places) {
-		return []domain.Place{}, nil
+		return []domain.Place{}
 	}
 	end := start + nearbyPageSize
 	if end > len(places) {
 		end = len(places)
 	}
-	return places[start:end], nil
+	return places[start:end]
 }
 
 func (provider *MapboxProvider) nearbyCategory(

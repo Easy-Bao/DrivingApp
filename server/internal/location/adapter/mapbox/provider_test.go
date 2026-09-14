@@ -72,6 +72,42 @@ func TestNearbyUsesCategorySearchAndParsesMapboxCategories(t *testing.T) {
 	}
 }
 
+func TestNearbyUsesOneRequestForDefaultCategories(t *testing.T) {
+	requestCount := 0
+	provider := NewMapboxProvider("test-token")
+	provider.client = &http.Client{
+		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+			requestCount++
+			if !strings.Contains(request.URL.Path, "/category/") {
+				t.Fatalf("nearby used an invalid endpoint: %s", request.URL.Path)
+			}
+			for _, category := range defaultNearbyCategories {
+				if !strings.Contains(request.URL.Path, category) {
+					t.Fatalf("nearby omitted category %q from %s", category, request.URL.Path)
+				}
+			}
+			return responseWithBody(request, `{"features":[
+				{"id":"food-1","properties":{"name":"Food Place"},"geometry":{"coordinates":[123.4361,7.8282]}}
+			]}`), nil
+		}),
+	}
+
+	places, err := provider.Nearby(
+		context.Background(),
+		domain.Coordinates{Latitude: 7.8282, Longitude: 123.4361},
+		1,
+	)
+	if err != nil {
+		t.Fatalf("nearby failed: %v", err)
+	}
+	if len(places) != 1 {
+		t.Fatalf("expected one nearby place, got %d", len(places))
+	}
+	if requestCount != 1 {
+		t.Fatalf("expected one default nearby request, got %d", requestCount)
+	}
+}
+
 func TestNearbyPaginatesMergedResults(t *testing.T) {
 	provider := NewMapboxProvider("test-token")
 	provider.nearbyCategories = []string{"hospital"}
