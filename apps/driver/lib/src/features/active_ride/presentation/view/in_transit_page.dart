@@ -292,15 +292,6 @@ class _InTransitPageState extends State<InTransitPage> {
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(EasyRideRadius.sheet),
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: context.colorScheme.onSurface.withValues(
-                              alpha: 0.12,
-                            ),
-                            blurRadius: 22,
-                            offset: const Offset(0, -5),
-                          ),
-                        ],
                       ),
                       padding: const EdgeInsets.fromLTRB(
                         EasyRideSpacing.lg,

@@ -117,14 +117,6 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                       decoration: BoxDecoration(
                         color: context.semanticColors.success,
                         shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: context.semanticColors.success.withValues(
-                              alpha: 0.3,
-                            ),
-                            blurRadius: 20,
-                          ),
-                        ],
                       ),
                       child: Icon(
                         LucideIcons.check,
@@ -322,7 +314,9 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                   style: ElevatedButton.styleFrom(
                     backgroundColor: context.colorScheme.onSurface,
                     foregroundColor: context.colorScheme.onPrimary,
-                    shape: const StadiumBorder(),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                    ),
                     elevation: 0,
                   ),
                   child: const Text(

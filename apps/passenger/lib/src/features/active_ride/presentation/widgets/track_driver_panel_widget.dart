@@ -47,13 +47,6 @@ class const TrackDriverPanelWidget({
           top: Radius.circular(EasyRideRadius.sheet),
         ),
         border: Border.all(color: context.colorScheme.outlineVariant),
-        boxShadow: [
-          BoxShadow(
-            color: context.colorScheme.onSurface.withValues(alpha: 0.12),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
-          ),
-        ],
       ),
       padding: const EdgeInsets.fromLTRB(
         EasyRideSpacing.lg,
@@ -228,7 +221,9 @@ class const TrackDriverPanelWidget({
                 onPressed: isCancellingTrip ? null : onCancelTripPressed,
                 style: TextButton.styleFrom(
                   foregroundColor: context.colorScheme.error,
-                  shape: const StadiumBorder(),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                  ),
                 ),
                 child: isCancellingTrip
                     ? SizedBox(

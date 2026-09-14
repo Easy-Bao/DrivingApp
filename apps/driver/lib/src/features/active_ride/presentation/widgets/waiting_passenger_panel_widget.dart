@@ -242,7 +242,11 @@ class const WaitingPassengerStartTripButton({
       height: 52,
       child: ElevatedButton(
         onPressed: isStartingTrip ? null : onPressed,
-        style: ElevatedButton.styleFrom(shape: const StadiumBorder()),
+        style: ElevatedButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+          ),
+        ),
         child: isStartingTrip
             ? SizedBox(
                 width: 20,

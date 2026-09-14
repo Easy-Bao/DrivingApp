@@ -136,7 +136,11 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: context.semanticColors.success,
                         foregroundColor: context.semanticColors.onSuccess,
-                        shape: const StadiumBorder(),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            EasyRideRadius.lg,
+                          ),
+                        ),
                       ),
                     ),
                   ),

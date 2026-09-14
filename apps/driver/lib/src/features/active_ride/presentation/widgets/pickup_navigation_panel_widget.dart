@@ -39,13 +39,6 @@ class const PickupNavigationPanelWidget({
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(EasyRideRadius.sheet),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: context.colorScheme.onSurface.withValues(alpha: 0.14),
-            blurRadius: 24,
-            offset: const Offset(0, -6),
-          ),
-        ],
       ),
       padding: const EdgeInsets.fromLTRB(
         EasyRideSpacing.lg,
