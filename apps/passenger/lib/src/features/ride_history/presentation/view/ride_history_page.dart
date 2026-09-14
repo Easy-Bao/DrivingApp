@@ -19,12 +19,16 @@ import 'package:skeletonizer/skeletonizer.dart';
 class const RideHistoryPage({
   this.title = 'Activity',
   this.subtitle = 'Tap a ride to see details',
+  this.showBackButton = false,
+  this.showHeaderSubtitle = true,
   this.showSummary = true,
   this.showFilters = true,
   super.key,
 }) extends StatefulWidget {
   final String title;
   final String subtitle;
+  final bool showBackButton;
+  final bool showHeaderSubtitle;
   final bool showSummary;
   final bool showFilters;
 
@@ -63,12 +67,16 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                 SessionLoading() => _RideHistoryProgressView(
                   title: widget.title,
                   subtitle: 'Checking your account',
+                  showBackButton: widget.showBackButton,
+                  showSubtitle: widget.showHeaderSubtitle,
                 ),
                 GuestSession() || SessionFailure() => _RideHistoryMessageView(
                   headerTitle: widget.title,
                   subtitle: 'Sign in to view your ride history',
                   title: 'Guest mode',
                   message: 'Sign in to see your recent trips.',
+                  showBackButton: widget.showBackButton,
+                  showSubtitle: widget.showHeaderSubtitle,
                 ),
                 AuthenticatedSession() =>
                   BlocBuilder<RideHistoryBloc, RideHistoryState>(
@@ -76,12 +84,16 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                       RideHistoryInitial() => _RideHistoryProgressView(
                         title: widget.title,
                         subtitle: 'Preparing your activity',
+                        showBackButton: widget.showBackButton,
+                        showSubtitle: widget.showHeaderSubtitle,
                       ),
                       RideHistoryLoading(:final existingRideCount)
                           when existingRideCount > 0 =>
                         _RideHistoryLoadingView(
                           title: widget.title,
                           subtitle: widget.subtitle,
+                          showBackButton: widget.showBackButton,
+                          showSubtitle: widget.showHeaderSubtitle,
                           itemCount: existingRideCount
                               .clamp(
                                 _defaultSkeletonCount,
@@ -92,6 +104,8 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                       RideHistoryLoading() => _RideHistoryProgressView(
                         title: widget.title,
                         subtitle: 'Loading your activity',
+                        showBackButton: widget.showBackButton,
+                        showSubtitle: widget.showHeaderSubtitle,
                       ),
                       RideHistoryError(:final message) =>
                         _RideHistoryMessageView(
@@ -102,6 +116,8 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                           icon: LucideIcons.wifi_off,
                           actionLabel: 'Retry',
                           onAction: _loadRideHistory,
+                          showBackButton: widget.showBackButton,
+                          showSubtitle: widget.showHeaderSubtitle,
                         ),
                       RideHistoryLoaded(:final past, :final upcoming)
                           when past.isEmpty && upcoming.isEmpty =>
@@ -110,6 +126,8 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                           subtitle: widget.subtitle,
                           title: 'No rides yet',
                           message: 'Your completed and cancelled rides will appear here.',
+                          showBackButton: widget.showBackButton,
+                          showSubtitle: widget.showHeaderSubtitle,
                         ),
                       RideHistoryLoaded(
                         :final past,
@@ -123,6 +141,8 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                         RideHistoryWidget(
                           headerTitle: widget.title,
                           headerSubtitle: widget.subtitle,
+                          showBackButton: widget.showBackButton,
+                          showHeaderSubtitle: widget.showHeaderSubtitle,
                           showSummary: widget.showSummary,
                           showFilters: widget.showFilters,
                           activeRides: upcoming,
@@ -182,9 +202,13 @@ double _rideHistoryBottomClearance(BuildContext context) {
 
 class const _RideHistoryProgressView({
   required this.subtitle,
+  this.showBackButton = false,
+  this.showSubtitle = true,
   this.title = 'Activity',
 }) extends StatelessWidget {
   final String subtitle;
+  final bool showBackButton;
+  final bool showSubtitle;
   final String title;
 
   @override
@@ -200,7 +224,11 @@ class const _RideHistoryProgressView({
             18,
           ),
           sliver: SliverToBoxAdapter(
-            child: RideHistoryHeaderWidget(title: title, subtitle: subtitle),
+            child: RideHistoryHeaderWidget(
+              title: title,
+              subtitle: showSubtitle ? subtitle : null,
+              showBackButton: showBackButton,
+            ),
           ),
         ),
         SliverFillRemaining(
@@ -233,6 +261,8 @@ class const _RideHistoryMessageView({
   required this.title,
   required this.message,
   this.headerTitle = 'Activity',
+  this.showBackButton = false,
+  this.showSubtitle = true,
   this.icon = LucideIcons.route,
   this.actionLabel,
   this.onAction,
@@ -241,6 +271,8 @@ class const _RideHistoryMessageView({
   final String title;
   final String message;
   final String headerTitle;
+  final bool showBackButton;
+  final bool showSubtitle;
   final IconData icon;
   final String? actionLabel;
   final Future<void> Function()? onAction;
@@ -260,7 +292,8 @@ class const _RideHistoryMessageView({
           sliver: SliverToBoxAdapter(
             child: RideHistoryHeaderWidget(
               title: headerTitle,
-              subtitle: subtitle,
+              subtitle: showSubtitle ? subtitle : null,
+              showBackButton: showBackButton,
             ),
           ),
         ),
@@ -323,10 +356,14 @@ class const _RideHistoryLoadingView({
   required this.itemCount,
   this.title = 'Activity',
   this.subtitle = 'Tap a ride to see details',
+  this.showBackButton = false,
+  this.showSubtitle = true,
 }) extends StatelessWidget {
   final int itemCount;
   final String title;
   final String subtitle;
+  final bool showBackButton;
+  final bool showSubtitle;
 
   @override
   Widget build(BuildContext context) {
@@ -341,7 +378,11 @@ class const _RideHistoryLoadingView({
             18,
           ),
           sliver: SliverToBoxAdapter(
-            child: RideHistoryHeaderWidget(title: title, subtitle: subtitle),
+            child: RideHistoryHeaderWidget(
+              title: title,
+              subtitle: showSubtitle ? subtitle : null,
+              showBackButton: showBackButton,
+            ),
           ),
         ),
         SliverPadding(

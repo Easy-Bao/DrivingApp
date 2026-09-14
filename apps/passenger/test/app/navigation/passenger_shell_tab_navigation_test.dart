@@ -313,6 +313,56 @@ void main() {
     expect(navigationCoordinator.selectedIndex, 0);
     expect(find.byKey(const ValueKey<String>('home-page')), findsOneWidget);
   });
+
+  testWidgets('View all activity can be popped back to Home', (tester) async {
+    final sessionBloc = SessionBloc(sessionRepository: _SessionRepositoryStub())
+      ..add(const SessionAuthenticatedRequested(passengerId: 'passenger-1'));
+    final inboxCubit = InboxCubit(inboxRepository: _InboxRepositoryStub());
+    final realtimeClient = RealtimeWebSocketClient(
+      uri: Uri.parse('ws://localhost/realtime'),
+      tokenProvider: () async => 'test-token',
+      connector: _RealtimeSocketConnectorStub(),
+    );
+    final navigationCoordinator = PassengerTabNavigationCoordinator();
+    final lifecycleCoordinator = AppLifecycleCoordinator();
+    final router = _createRouter(
+      inboxCubit,
+      realtimeClient,
+      navigationCoordinator,
+      lifecycleCoordinator,
+    );
+    addTearDown(() async {
+      router.dispose();
+      await sessionBloc.close();
+      await inboxCubit.close();
+      await realtimeClient.dispose();
+      navigationCoordinator.dispose();
+      await lifecycleCoordinator.dispose();
+    });
+
+    await tester.pumpWidget(
+      BlocProvider<SessionBloc>.value(
+        value: sessionBloc,
+        child: MaterialApp.router(
+          theme: EasyRideAppTheme.data,
+          routerConfig: router,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('home-view-all-activity')),
+    );
+    await tester.pumpAndSettle();
+    expect(router.state.uri.path, RideHistoryRoutes.fullRecentActivityPath);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    expect(router.state.uri.path, HomeRoutes.fullHomePath);
+    expect(find.byKey(const ValueKey<String>('home-page')), findsOneWidget);
+  });
 }
 
 GoRouter _createRouter(

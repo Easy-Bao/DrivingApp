@@ -21,6 +21,8 @@ class const RideHistoryWidget({
   this.weeklyRideCount,
   this.headerTitle = 'Activity',
   this.headerSubtitle = 'Tap a ride to see details',
+  this.showBackButton = false,
+  this.showHeaderSubtitle = true,
   this.showSummary = true,
   this.showFilters = true,
   super.key,
@@ -37,6 +39,8 @@ class const RideHistoryWidget({
   final int? weeklyRideCount;
   final String headerTitle;
   final String headerSubtitle;
+  final bool showBackButton;
+  final bool showHeaderSubtitle;
   final bool showSummary;
   final bool showFilters;
 
@@ -75,7 +79,10 @@ class _RideHistoryWidgetState extends State<RideHistoryWidget> {
           sliver: SliverToBoxAdapter(
             child: RideHistoryHeaderWidget(
               title: widget.headerTitle,
-              subtitle: widget.headerSubtitle,
+              subtitle: widget.showHeaderSubtitle
+                  ? widget.headerSubtitle
+                  : null,
+              showBackButton: widget.showBackButton,
             ),
           ),
         ),

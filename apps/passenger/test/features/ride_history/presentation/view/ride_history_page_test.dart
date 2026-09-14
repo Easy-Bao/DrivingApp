@@ -124,8 +124,15 @@ void main() {
       find.byType(RideHistoryPage),
     );
     expect(recentPage.title, 'Recent Activity');
+    expect(recentPage.showBackButton, isTrue);
+    expect(recentPage.showHeaderSubtitle, isFalse);
     expect(recentPage.showSummary, isFalse);
     expect(recentPage.showFilters, isFalse);
+    expect(
+      find.byKey(const ValueKey<String>('recent-activity-back-button')),
+      findsOneWidget,
+    );
+    expect(find.text('Your latest rides'), findsNothing);
   });
 }
 
