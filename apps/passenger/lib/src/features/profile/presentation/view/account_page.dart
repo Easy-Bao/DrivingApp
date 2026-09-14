@@ -239,15 +239,11 @@ class const AccountPage({super.key, this.onLogout}) extends StatelessWidget {
               Container(
                 width: 36,
                 height: 36,
-                decoration: BoxDecoration(
-                  color: context.colorScheme.primaryContainer,
-                  shape: BoxShape.circle,
-                ),
                 alignment: Alignment.center,
                 child: Icon(
                   item.icon,
                   size: 18,
-                  color: context.colorScheme.onPrimaryContainer,
+                  color: context.colorScheme.primary,
                 ),
               ),
               const SizedBox(width: EasyRideSpacing.lg),
@@ -281,13 +277,10 @@ class const AccountPage({super.key, this.onLogout}) extends StatelessWidget {
 
   Widget _buildSectionTitle(BuildContext context, String title) {
     return Text(
-      title,
-      style: TextStyle(
-        fontSize: 13,
-        height: 1.2,
-        fontWeight: FontWeight.w800,
+      title.toUpperCase(),
+      style: context.textStyles.labelMedium?.copyWith(
         color: context.colorScheme.onSurfaceVariant,
-        letterSpacing: 0.7,
+        letterSpacing: 0.8,
       ),
     );
   }
@@ -305,7 +298,9 @@ class const AccountPage({super.key, this.onLogout}) extends StatelessWidget {
             color: context.colorScheme.error.withValues(alpha: 0.35),
           ),
           backgroundColor: context.colorScheme.error.withValues(alpha: 0.04),
-          shape: const StadiumBorder(),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+          ),
         ),
         child: const Text('Log Out'),
       ),

@@ -261,9 +261,11 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
 
   Widget _buildSectionTitle(BuildContext context, String title) {
     return Text(
-      title,
-      style: Theme.of(context).textTheme.titleSmall
-          ?.copyWith(color: context.colorScheme.onSurfaceVariant),
+      title.toUpperCase(),
+      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+        color: context.colorScheme.onSurfaceVariant,
+        letterSpacing: 0.8,
+      ),
     );
   }
 
@@ -283,15 +285,11 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
               Container(
                 width: 36,
                 height: 36,
-                decoration: BoxDecoration(
-                  color: context.colorScheme.primaryContainer,
-                  shape: BoxShape.circle,
-                ),
                 alignment: Alignment.center,
                 child: Icon(
                   item.icon,
                   size: 18,
-                  color: context.colorScheme.onPrimaryContainer,
+                  color: context.colorScheme.primary,
                 ),
               ),
               const SizedBox(width: EasyRideSpacing.lg),
@@ -342,7 +340,9 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
             color: context.colorScheme.error.withValues(alpha: 0.35),
           ),
           backgroundColor: context.colorScheme.error.withValues(alpha: 0.04),
-          shape: const StadiumBorder(),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+          ),
         ),
         child: _isLoggingOut
             ? SizedBox(
