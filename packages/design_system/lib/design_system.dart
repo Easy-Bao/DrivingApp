@@ -16,6 +16,7 @@ export 'package:design_system/src/widgets/app_floating_tab_bar.dart';
 export 'package:design_system/src/widgets/app_help_center_page.dart';
 export 'package:design_system/src/widgets/app_location_access_status_page.dart';
 export 'package:design_system/src/widgets/easy_ride_layout.dart';
+export 'package:design_system/src/widgets/easy_ride_auth_brand.dart';
 export 'package:design_system/src/widgets/app_layout.dart'
     show AppPageHeader, AppPageFrame, AppSurfaceCard, AppNavigationRail;
 export 'package:design_system/src/widgets/app_network_image_widget.dart';

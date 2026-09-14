@@ -62,12 +62,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
           ),
         ),
         centerTitle: true,
-        title: Image.asset(
-          'assets/logo/applogo.png',
-          package: 'design_system',
-          height: 150,
-          fit: BoxFit.cover,
-        ),
+        title: const EasyRideAuthBrand(),
       ),
       body: SafeArea(
         child: BlocConsumer<SignInBloc, SignInState>(

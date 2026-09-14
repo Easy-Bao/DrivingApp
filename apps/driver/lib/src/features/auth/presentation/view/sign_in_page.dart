@@ -97,12 +97,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
         backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
         elevation: 0,
         centerTitle: true,
-        title: Image.asset(
-          'assets/logo/applogo.png',
-          package: 'design_system',
-          height: 150,
-          fit: BoxFit.cover,
-        ),
+        title: const EasyRideAuthBrand(),
       ),
       body: SafeArea(
         child: BlocConsumer<SignInBloc, SignInState>(
