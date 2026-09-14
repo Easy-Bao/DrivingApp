@@ -154,7 +154,9 @@ class const PassengerPaymentPage({super.key, required this.ride})
                     ),
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size.fromHeight(54),
-                      shape: const StadiumBorder(),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                      ),
                     ),
                     child: const Text(
                       'I Paid in Cash — Rate Driver',

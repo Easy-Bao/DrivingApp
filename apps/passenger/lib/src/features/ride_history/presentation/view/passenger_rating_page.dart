@@ -226,7 +226,7 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                                 isSelected ? Icons.star : Icons.star_border,
                                 size: 30,
                                 color: isSelected
-                                    ? context.colorScheme.onSurface
+                                    ? context.semanticColors.rating
                                     : context.colorScheme.outlineVariant,
                               ),
                             ),
@@ -299,7 +299,11 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                 height: 52,
                 child: ElevatedButton(
                   onPressed: _isSubmitting ? null : _submitRating,
-                  style: ElevatedButton.styleFrom(shape: const StadiumBorder()),
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                    ),
+                  ),
                   child: _isSubmitting
                       ? SizedBox(
                           width: 20,
