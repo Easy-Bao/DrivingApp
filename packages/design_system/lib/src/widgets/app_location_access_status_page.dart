@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:design_system/src/theme/design_system_context.dart';
+import 'package:design_system/src/tokens/radius.dart';
+import 'package:design_system/src/widgets/easy_ride_layout.dart';
 
 enum AppLocationAccessTone { neutral, success, warning, error }
 
@@ -35,95 +37,81 @@ class const AppLocationAccessStatusPage({
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: context.canvasColor,
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-          onPressed: onBack,
-          icon: const Icon(LucideIcons.arrow_left),
-        ),
-        title: const Text('Location access'),
-        centerTitle: true,
-      ),
-      body: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
-            children: [
-              Container(
-                padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(
-                  color: context.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: context.colorScheme.outlineVariant),
+    return EasyRideSecondaryPage(
+      title: 'Location access',
+      onBack: onBack,
+      maxWidth: 600,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              color: context.colorScheme.surface,
+              borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+              border: Border.all(color: context.colorScheme.outlineVariant),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: _toneColor(context).withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    presentation.icon,
+                    size: 30,
+                    color: _toneColor(context),
+                  ),
                 ),
-                child: Column(
-                  children: [
-                    Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: _toneColor(context).withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
-                      ),
-                      alignment: Alignment.center,
-                      child: Icon(
-                        presentation.icon,
-                        size: 30,
-                        color: _toneColor(context),
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    Text(
-                      presentation.title,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      presentation.message,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: context.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 18),
+                Text(
+                  presentation.title,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
-              ),
-              if (primaryActionLabel != null && onPrimaryAction != null) ...[
-                const SizedBox(height: 20),
-                FilledButton(
-                  onPressed: onPrimaryAction,
-                  child: Text(primaryActionLabel!),
-                ),
-              ],
-              if (onRetry != null) ...[
                 const SizedBox(height: 8),
-                TextButton(onPressed: onRetry, child: const Text('Try again')),
+                Text(
+                  presentation.message,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium
+                      ?.copyWith(color: context.colorScheme.onSurfaceVariant),
+                ),
               ],
-              const SizedBox(height: 20),
-              Text(
-                'Why EasyRide needs location',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 12),
-              const _LocationReason(
-                icon: LucideIcons.map_pin,
-                title: 'Accurate pickup points',
-                message: 'Place pickups where passengers and drivers can meet.',
-              ),
-              const SizedBox(height: 10),
-              _LocationReason(
-                icon: LucideIcons.navigation,
-                title: 'Live trip progress',
-                message: 'Keep $audience useful and up to date.',
-              ),
-            ],
+            ),
           ),
-        ),
+          if (primaryActionLabel != null && onPrimaryAction != null) ...[
+            const SizedBox(height: 20),
+            FilledButton(
+              onPressed: onPrimaryAction,
+              child: Text(primaryActionLabel!),
+            ),
+          ],
+          if (onRetry != null) ...[
+            const SizedBox(height: 8),
+            TextButton(onPressed: onRetry, child: const Text('Try again')),
+          ],
+          const SizedBox(height: 20),
+          Text(
+            'Why EasyRide needs location',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 12),
+          const _LocationReason(
+            icon: LucideIcons.map_pin,
+            title: 'Accurate pickup points',
+            message: 'Place pickups where passengers and drivers can meet.',
+          ),
+          const SizedBox(height: 10),
+          _LocationReason(
+            icon: LucideIcons.navigation,
+            title: 'Live trip progress',
+            message: 'Keep $audience useful and up to date.',
+          ),
+        ],
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:design_system/src/theme/design_system_context.dart';
+import 'package:design_system/src/widgets/easy_ride_layout.dart';
 
 class const AppHelpTopic({
   required this.category,
@@ -64,114 +65,97 @@ class _AppHelpCenterPageState extends State<AppHelpCenterPage> {
   @override
   Widget build(BuildContext context) {
     final visibleTopics = _visibleTopics;
-    return Scaffold(
-      backgroundColor: context.canvasColor,
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-          onPressed: widget.onBack,
-          icon: const Icon(LucideIcons.arrow_left),
-        ),
-        title: const Text('Help Center'),
-        centerTitle: true,
-      ),
-      body: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(24, 18, 24, 48),
-            children: [
-              Text(
-                'How can we help?',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                widget.description,
-                style: Theme.of(context).textTheme.bodyMedium
-                    ?.copyWith(color: context.colorScheme.onSurfaceVariant),
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                key: const ValueKey<String>('help-center-search'),
-                controller: _searchController,
-                onChanged: (value) => setState(() => _query = value),
-                textInputAction: TextInputAction.search,
-                decoration: const InputDecoration(
-                  hintText: 'Search help topics',
-                  prefixIcon: Icon(LucideIcons.search),
-                ),
-              ),
-              const SizedBox(height: 18),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _CategoryChip(
-                      label: 'All',
-                      isSelected: _selectedCategory == null,
-                      onSelected: () =>
-                          setState(() => _selectedCategory = null),
-                    ),
-                    for (final category in _categories) ...[
-                      const SizedBox(width: 8),
-                      _CategoryChip(
-                        label: category,
-                        isSelected: _selectedCategory == category,
-                        onSelected: () =>
-                            setState(() => _selectedCategory = category),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              if (visibleTopics.isEmpty)
-                const _EmptyHelpSearch()
-              else
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    border: Border(
-                      top: BorderSide(
-                        color: context.colorScheme.outlineVariant,
-                      ),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      for (final topic in visibleTopics)
-                        _HelpTopicRow(topic: topic),
-                    ],
-                  ),
-                ),
-              if (widget.onEmailSupport != null ||
-                  widget.onCallSupport != null) ...[
-                const SizedBox(height: 30),
-                Text(
-                  'Still need help?',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 10),
-                if (widget.onEmailSupport != null)
-                  OutlinedButton.icon(
-                    onPressed: widget.onEmailSupport,
-                    icon: const Icon(LucideIcons.mail),
-                    label: const Text('Email support'),
-                  ),
-                if (widget.onEmailSupport != null &&
-                    widget.onCallSupport != null)
-                  const SizedBox(height: 10),
-                if (widget.onCallSupport != null)
-                  OutlinedButton.icon(
-                    onPressed: widget.onCallSupport,
-                    icon: const Icon(LucideIcons.phone),
-                    label: const Text('Call support'),
-                  ),
-              ],
-            ],
+    return EasyRideSecondaryPage(
+      title: 'Help Center',
+      onBack: widget.onBack,
+      maxWidth: 600,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(24, 18, 24, 48),
+        children: [
+          Text(
+            'How can we help?',
+            style: Theme.of(context).textTheme.headlineSmall,
           ),
-        ),
+          const SizedBox(height: 6),
+          Text(
+            widget.description,
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(color: context.colorScheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: 20),
+          TextField(
+            key: const ValueKey<String>('help-center-search'),
+            controller: _searchController,
+            onChanged: (value) => setState(() => _query = value),
+            textInputAction: TextInputAction.search,
+            decoration: const InputDecoration(
+              hintText: 'Search help topics',
+              prefixIcon: Icon(LucideIcons.search),
+            ),
+          ),
+          const SizedBox(height: 18),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _CategoryChip(
+                  label: 'All',
+                  isSelected: _selectedCategory == null,
+                  onSelected: () => setState(() => _selectedCategory = null),
+                ),
+                for (final category in _categories) ...[
+                  const SizedBox(width: 8),
+                  _CategoryChip(
+                    label: category,
+                    isSelected: _selectedCategory == category,
+                    onSelected: () =>
+                        setState(() => _selectedCategory = category),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          if (visibleTopics.isEmpty)
+            const _EmptyHelpSearch()
+          else
+            DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: context.colorScheme.outlineVariant),
+                ),
+              ),
+              child: Column(
+                children: [
+                  for (final topic in visibleTopics)
+                    _HelpTopicRow(topic: topic),
+                ],
+              ),
+            ),
+          if (widget.onEmailSupport != null ||
+              widget.onCallSupport != null) ...[
+            const SizedBox(height: 30),
+            Text(
+              'Still need help?',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 10),
+            if (widget.onEmailSupport != null)
+              OutlinedButton.icon(
+                onPressed: widget.onEmailSupport,
+                icon: const Icon(LucideIcons.mail),
+                label: const Text('Email support'),
+              ),
+            if (widget.onEmailSupport != null && widget.onCallSupport != null)
+              const SizedBox(height: 10),
+            if (widget.onCallSupport != null)
+              OutlinedButton.icon(
+                onPressed: widget.onCallSupport,
+                icon: const Icon(LucideIcons.phone),
+                label: const Text('Call support'),
+              ),
+          ],
+        ],
       ),
     );
   }

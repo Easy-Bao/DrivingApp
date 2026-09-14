@@ -4,6 +4,7 @@ import 'package:design_system/src/theme/design_system_context.dart';
 import 'package:design_system/src/tokens/layout.dart';
 import 'package:design_system/src/tokens/radius.dart';
 import 'package:design_system/src/tokens/spacing.dart';
+import 'package:design_system/src/widgets/easy_ride_layout.dart';
 
 /// A centered settings page shell shared by both EasyRide clients.
 class const AppSettingsScaffold({
@@ -22,43 +23,27 @@ class const AppSettingsScaffold({
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: context.canvasColor,
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-          onPressed: onBack,
-          icon: const Icon(LucideIcons.arrow_left),
+    return EasyRideSecondaryPage(
+      title: title,
+      onBack: onBack,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(
+          EasyRideLayout.pagePadding,
+          EasyRideLayout.pagePadding,
+          EasyRideLayout.pagePadding,
+          40,
         ),
-        title: Text(title),
-        centerTitle: true,
-      ),
-      body: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: EasyRideLayout.pageMaxWidth,
+        children: [
+          Text(heading, style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 6),
+          Text(
+            description,
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(color: context.colorScheme.onSurfaceVariant),
           ),
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(
-              EasyRideLayout.pagePadding,
-              EasyRideLayout.pagePadding,
-              EasyRideLayout.pagePadding,
-              40,
-            ),
-            children: [
-              Text(heading, style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 6),
-              Text(
-                description,
-                style: Theme.of(context).textTheme.bodyMedium
-                    ?.copyWith(color: context.colorScheme.onSurfaceVariant),
-              ),
-              const SizedBox(height: EasyRideSpacing.xxl),
-              ...children,
-            ],
-          ),
-        ),
+          const SizedBox(height: EasyRideSpacing.xxl),
+          ...children,
+        ],
       ),
     );
   }

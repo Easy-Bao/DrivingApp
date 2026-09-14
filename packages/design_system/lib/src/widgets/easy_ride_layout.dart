@@ -5,6 +5,7 @@ import 'package:design_system/src/tokens/size.dart';
 import 'package:design_system/src/tokens/spacing.dart';
 import 'package:design_system/src/widgets/app_floating_tab_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 
 /// A consistent page heading for primary destinations and secondary flows.
 ///
@@ -104,6 +105,49 @@ class const EasyRidePageFrame({
           ),
         );
       },
+    );
+  }
+}
+
+/// A predictable shell for secondary destinations across both client apps.
+///
+/// Feature pages own their body layout while this shell keeps navigation
+/// chrome, back behavior, and readable content width consistent.
+class const EasyRideSecondaryPage({
+  super.key,
+  required this.title,
+  required this.onBack,
+  required this.child,
+  this.maxWidth = EasyRideLayout.pageMaxWidth,
+}) extends StatelessWidget {
+  final String title;
+  final VoidCallback onBack;
+  final Widget child;
+  final double maxWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: context.canvasColor,
+      appBar: AppBar(
+        leading: IconButton(
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          onPressed: onBack,
+          icon: const Icon(LucideIcons.arrow_left),
+        ),
+        title: Text(title),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        top: false,
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: child,
+          ),
+        ),
+      ),
     );
   }
 }
