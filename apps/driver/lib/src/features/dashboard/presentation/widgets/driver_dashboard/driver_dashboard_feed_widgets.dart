@@ -51,13 +51,6 @@ class const DriverActiveTripCard({
         border: Border.all(
           color: context.colorScheme.onSurface.withValues(alpha: 0.12),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: context.colorScheme.onSurface.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         children: [
@@ -146,7 +139,11 @@ class const DriverActiveTripCard({
                       style: ElevatedButton.styleFrom(
                         backgroundColor: context.colorScheme.primary,
                         foregroundColor: context.colorScheme.onPrimary,
-                        shape: const StadiumBorder(),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            EasyRideRadius.lg,
+                          ),
+                        ),
                         elevation: 0,
                       ),
                       child: const Text(
@@ -168,7 +165,11 @@ class const DriverActiveTripCard({
                       style: ElevatedButton.styleFrom(
                         backgroundColor: context.semanticColors.success,
                         foregroundColor: context.semanticColors.onSuccess,
-                        shape: const StadiumBorder(),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            EasyRideRadius.lg,
+                          ),
+                        ),
                         elevation: 0,
                       ),
                       child: isCompleting
@@ -201,7 +202,9 @@ class const DriverActiveTripCard({
                 style: ElevatedButton.styleFrom(
                   backgroundColor: context.colorScheme.primary,
                   foregroundColor: context.colorScheme.onPrimary,
-                  shape: const StadiumBorder(),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                  ),
                   elevation: 0,
                 ),
                 child: const Text(
@@ -260,13 +263,6 @@ class const DriverPoolBidCard({
         color: context.colorScheme.surface,
         borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
-        boxShadow: [
-          BoxShadow(
-            color: context.colorScheme.onSurface.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,7 +371,9 @@ class const DriverPoolBidCard({
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     side: BorderSide(color: context.colorScheme.outlineVariant),
-                    shape: const StadiumBorder(),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                    ),
                   ),
                   child: Text(
                     'Decline',
@@ -398,7 +396,9 @@ class const DriverPoolBidCard({
                     foregroundColor: context.colorScheme.onPrimary,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: const StadiumBorder(),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                    ),
                   ),
                   child: isSubmitting
                       ? SizedBox(
