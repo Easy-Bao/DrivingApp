@@ -128,10 +128,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(
-      find.text('Unable to find your pickup location. Tap to retry.'),
-      findsOneWidget,
-    );
     expect(homeRequestCount, 1);
 
     sessionBloc.add(
@@ -140,11 +136,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(homeRequestCount, 2);
-    expect(find.text('Mountain View'), findsOneWidget);
-    expect(
-      find.text('Unable to find your pickup location. Tap to retry.'),
-      findsNothing,
-    );
+    expect(find.text('Mountain View'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

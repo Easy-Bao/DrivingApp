@@ -24,6 +24,7 @@ import 'package:passenger/src/features/booking/presentation/view/ride_selection_
 import 'package:passenger/src/features/booking/presentation/view/search_destination_page.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
+import 'package:passenger/src/features/profile/domain/repositories/passenger_profile_repository.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger/src/infrastructure/telemetry/passenger_background_telemetry.dart';
 
@@ -144,6 +145,7 @@ class BookingModule._() {
             pickupLongitude: data.doubleValue('pickupLng'),
             pickupAddress: data.string('pickupAddress'),
             fareRepository: Modular.get<FareRepository>(),
+            profileRepository: Modular.get<PassengerProfileRepository>(),
           ),
         );
       },

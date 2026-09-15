@@ -19,6 +19,7 @@ import 'package:passenger/src/features/booking/presentation/bloc/fare_estimate/f
 import 'package:passenger/src/features/booking/presentation/widgets/booking_auth_bottom_sheet_widget.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_options_panel_widget.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_tip_selector_widget.dart';
+import 'package:passenger/src/features/profile/domain/repositories/passenger_profile_repository.dart';
 
 class const RideSelectionPage({
   super.key,
@@ -33,6 +34,7 @@ class const RideSelectionPage({
   this.initialTipAmount = 0,
   this.initialNotes = '',
   required this.fareRepository,
+  required this.profileRepository,
 }) extends StatefulWidget {
   final Place destination;
   final String? distance;
@@ -45,6 +47,7 @@ class const RideSelectionPage({
   final int initialTipAmount;
   final String initialNotes;
   final FareRepository fareRepository;
+  final PassengerProfileRepository profileRepository;
 
   @override
   State<RideSelectionPage> createState() => _RideSelectionPageState();
@@ -72,6 +75,7 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
   bool _isResolvingPickup = true;
   bool _isPanelExpanded = false;
   ({double lat, double lng})? _resolvedPickup;
+  String _profilePassengerName = '';
 
   ({double lat, double lng})? get _pickupCoordinate {
     final latitude = widget.pickupLatitude;
@@ -138,12 +142,28 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
         ? widget.initialTipAmount
         : 0;
     _notesController.text = widget.initialNotes;
+    _profilePassengerName = widget.profileRepository
+        .getCachedProfile()
+        .name
+        .trim();
+    if (BlocProvider.of<SessionBloc>(context).state is AuthenticatedSession) {
+      unawaited(_refreshPassengerProfile());
+    }
     if (_pickupCoordinate != null) {
       _isResolvingPickup = false;
       unawaited(_initializeTripDetails());
     } else {
       unawaited(_resolvePickupLocation());
     }
+  }
+
+  Future<void> _refreshPassengerProfile() async {
+    final result = await widget.profileRepository.refreshProfile();
+    if (!mounted) return;
+    result.fold((_) {}, (profile) {
+      final name = profile.name.trim();
+      if (name.isNotEmpty) setState(() => _profilePassengerName = name);
+    });
   }
 
   void _onPanelExtentChanged() {
@@ -499,12 +519,15 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
     }
     final defaultLat = pickup.lat;
     final defaultLng = pickup.lng;
-    final passengerName = context.select<SessionBloc, String>(
+    final sessionPassengerName = context.select<SessionBloc, String>(
       (bloc) => switch (bloc.state) {
         AuthenticatedSession(:final passengerName) => passengerName,
         _ => '',
       },
     );
+    final passengerName = _profilePassengerName.isNotEmpty
+        ? _profilePassengerName
+        : sessionPassengerName;
 
     return BlocListener<FareEstimateCubit, FareEstimateState>(
       bloc: _fareEstimateCubit,

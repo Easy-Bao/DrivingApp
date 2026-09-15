@@ -227,29 +227,60 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
               icon: Icon(
                 LucideIcons.arrow_left,
                 color: context.colorScheme.onSurface,
-                size: 23,
+                size: 22,
               ),
             ),
-            title: Text('Profile Info', style: context.textStyles.titleLarge),
+            title: Text(
+              'Profile Info',
+              style: context.textStyles.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.3,
+              ),
+            ),
             centerTitle: true,
             actions: [
               if (_isDirty)
-                TextButton(
-                  key: const ValueKey<String>('passenger-profile-save'),
-                  onPressed: _isSaving ? null : _saveProfile,
-                  child: _isSaving
-                      ? SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.4,
-                            color: context.colorScheme.onSurface,
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: Center(
+                    child: SizedBox(
+                      height: 36,
+                      child: FilledButton(
+                        key: const ValueKey<String>('passenger-profile-save'),
+                        onPressed: _isSaving ? null : _saveProfile,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: context.colorScheme.primary,
+                          foregroundColor: context.colorScheme.onPrimary,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              EasyRideRadius.pill,
+                            ),
                           ),
-                        )
-                      : Text('Save', style: context.textStyles.labelLarge),
+                        ),
+                        child: _isSaving
+                            ? SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: context.colorScheme.onPrimary,
+                                ),
+                              )
+                            : const Text(
+                                'Save',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ),
                 )
               else
-                const SizedBox(width: 24),
+                const SizedBox(width: 48),
             ],
           ),
           body: SafeArea(
@@ -340,9 +371,9 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
           errorText: _nameError,
           textInputAction: TextInputAction.next,
         ),
-        const SizedBox(height: EasyRideSpacing.xxl),
+        const SizedBox(height: 20),
         _buildPhoneField(),
-        const SizedBox(height: EasyRideSpacing.xxl),
+        const SizedBox(height: 20),
         _buildTextField(
           label: 'Email',
           controller: _emailController,
@@ -350,7 +381,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
           errorText: _emailError,
           textInputAction: TextInputAction.done,
         ),
-        const SizedBox(height: EasyRideSpacing.xxl),
+        const SizedBox(height: 20),
         _buildGenderField(),
       ],
     );
@@ -367,7 +398,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildFieldLabel(label),
-        const SizedBox(height: 9),
+        const SizedBox(height: 8),
         TextField(
           key: ValueKey<String>('passenger-profile-field-$label'),
           controller: controller,
@@ -395,22 +426,31 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildFieldLabel('Mobile Number'),
-        const SizedBox(height: 9),
+        const SizedBox(height: 8),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              height: 62,
-              width: 94,
+              height: 52,
+              width: 76,
               decoration: BoxDecoration(
-                color: context.canvasColor,
+                color: context.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-                border: Border.all(color: context.colorScheme.outlineVariant),
+                border: Border.all(
+                  color: context.colorScheme.outlineVariant,
+                  width: 0.8,
+                ),
               ),
               alignment: Alignment.center,
-              child: Text(_phonePrefix, style: context.textStyles.titleMedium),
+              child: Text(
+                _phonePrefix,
+                style: context.textStyles.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: context.colorScheme.onSurface,
+                ),
+              ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: TextField(
                 key: const ValueKey<String>('passenger-profile-phone-number'),
@@ -439,18 +479,19 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildFieldLabel('Gender'),
-        const SizedBox(height: 9),
+        const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           key: const ValueKey<String>('passenger-profile-gender'),
           initialValue: _gender,
           isExpanded: true,
           icon: Icon(
             LucideIcons.chevron_down,
-            size: 21,
+            size: 20,
             color: context.colorScheme.onSurface,
           ),
           style: context.textStyles.bodyLarge?.copyWith(
             fontWeight: FontWeight.w600,
+            color: context.colorScheme.onSurface,
           ),
           decoration: _fieldDecoration(prefixIcon: LucideIcons.venus_and_mars),
           items: [
@@ -476,14 +517,23 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   }) {
     final border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-      borderSide: BorderSide(color: context.colorScheme.outlineVariant),
+      borderSide: BorderSide(
+        color: context.colorScheme.outlineVariant,
+        width: 0.8,
+      ),
     );
     return InputDecoration(
       hintText: hintText,
       errorText: errorText,
-      prefixIcon: prefixIcon == null ? null : Icon(prefixIcon, size: 20),
+      prefixIcon: prefixIcon == null
+          ? null
+          : Icon(
+              prefixIcon,
+              size: 19,
+              color: context.colorScheme.onSurfaceVariant,
+            ),
       filled: true,
-      fillColor: context.canvasColor,
+      fillColor: context.colorScheme.surfaceContainerHighest,
       contentPadding: const EdgeInsets.symmetric(
         horizontal: EasyRideLayout.pagePadding,
         vertical: 14,
@@ -492,7 +542,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
       enabledBorder: border,
       focusedBorder: border.copyWith(
         borderSide: BorderSide(
-          color: context.colorScheme.onSurface,
+          color: context.colorScheme.primary,
           width: 1.5,
         ),
       ),
@@ -507,10 +557,12 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
 
   Widget _buildFieldLabel(String label) {
     return Text(
-      label,
-      style: context.textStyles.labelMedium?.copyWith(
+      label.toUpperCase(),
+      style: TextStyle(
+        fontSize: 11,
         fontWeight: FontWeight.w700,
-        letterSpacing: 0.35,
+        letterSpacing: 0.8,
+        color: context.colorScheme.onSurfaceVariant,
       ),
     );
   }

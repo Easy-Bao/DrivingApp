@@ -367,11 +367,14 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
         borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: context.colorScheme.surface,
+            color: context.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-            border: Border.all(color: context.colorScheme.outlineVariant),
+            border: Border.all(
+              color: context.colorScheme.outlineVariant,
+              width: 0.8,
+            ),
           ),
           child: Row(
             children: [
@@ -379,8 +382,12 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: context.colorScheme.surfaceContainerHighest,
+                  color: context.colorScheme.surface,
                   borderRadius: BorderRadius.circular(EasyRideRadius.md),
+                  border: Border.all(
+                    color: context.colorScheme.outlineVariant,
+                    width: 0.6,
+                  ),
                 ),
                 child: Icon(
                   icon,
@@ -388,7 +395,7 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
                   size: 19,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -398,7 +405,8 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
                       style: TextStyle(
                         color: context.colorScheme.onSurface,
                         fontSize: 14,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.2,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -418,7 +426,7 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
               Icon(
                 LucideIcons.chevron_right,
                 color: context.colorScheme.onSurfaceVariant,
-                size: 19,
+                size: 18,
               ),
             ],
           ),
@@ -438,11 +446,14 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
         borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           decoration: BoxDecoration(
             color: context.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-            border: Border.all(color: context.colorScheme.outlineVariant),
+            border: Border.all(
+              color: context.colorScheme.outlineVariant,
+              width: 0.8,
+            ),
           ),
           child: Row(
             children: [
@@ -455,7 +466,7 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
                       style: TextStyle(
                         color: context.colorScheme.onSurface,
                         fontSize: 15,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -473,12 +484,17 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
                 _currency(widget.totalFare),
                 style: TextStyle(
                   color: context.colorScheme.onSurface,
-                  fontSize: 20,
+                  fontSize: 22,
                   fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
                 ),
               ),
-              const SizedBox(width: 4),
-              const Icon(LucideIcons.chevron_right, size: 18),
+              const SizedBox(width: 6),
+              Icon(
+                LucideIcons.chevron_right,
+                color: context.colorScheme.onSurfaceVariant,
+                size: 18,
+              ),
             ],
           ),
         ),
@@ -493,7 +509,27 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
   }) {
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton(key: key, onPressed: onPressed, child: Text(label)),
+      height: 50,
+      child: FilledButton(
+        key: key,
+        onPressed: onPressed,
+        style: FilledButton.styleFrom(
+          backgroundColor: context.colorScheme.onSurface,
+          foregroundColor: context.colorScheme.surface,
+          disabledBackgroundColor: context.colorScheme.surfaceContainerHighest,
+          disabledForegroundColor: context.colorScheme.onSurfaceVariant
+              .withValues(alpha: 0.45),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
+          ),
+        ),
+        child: Text(label),
+      ),
     );
   }
 
@@ -807,6 +843,54 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
                   errorText: widget.customFareError,
                 ),
               ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  for (final increment in const [10, 20, 50]) ...[
+                    InkWell(
+                      onTap: () {
+                        final current =
+                            double.tryParse(widget.customFareController.text) ??
+                            minimumFare;
+                        final next = current + increment;
+                        widget.customFareController.text = next.toStringAsFixed(
+                          2,
+                        );
+                        widget.onCustomFareChanged(
+                          widget.customFareController.text,
+                        );
+                        setState(() {});
+                      },
+                      borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: context.colorScheme.surface,
+                          borderRadius: BorderRadius.circular(
+                            EasyRideRadius.pill,
+                          ),
+                          border: Border.all(
+                            color: context.colorScheme.outlineVariant,
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Text(
+                          '+₱$increment',
+                          style: TextStyle(
+                            color: context.colorScheme.onSurface,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                ],
+              ),
             ],
           ),
         ),
@@ -904,6 +988,56 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
                     fontSize: 11,
                   ),
                 ),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final preset in const [
+                    'Wait at lobby',
+                    'Near entrance',
+                    'Have luggage',
+                    'Call on arrival',
+                  ])
+                    InkWell(
+                      onTap: () {
+                        final current = widget.notesController.text.trim();
+                        if (current.isEmpty) {
+                          widget.notesController.text = preset;
+                        } else if (!current.contains(preset)) {
+                          widget.notesController.text = '$current. $preset';
+                        }
+                        widget.onNotesChanged(widget.notesController.text);
+                        setState(() {});
+                      },
+                      borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: context.colorScheme.surface,
+                          borderRadius: BorderRadius.circular(
+                            EasyRideRadius.pill,
+                          ),
+                          border: Border.all(
+                            color: context.colorScheme.outlineVariant,
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Text(
+                          preset,
+                          style: TextStyle(
+                            color: context.colorScheme.onSurfaceVariant,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ],
           ),

@@ -39,6 +39,7 @@ class const RideTipSelectorWidget({
         const SizedBox(height: 8),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
           child: Row(
             children: [
               for (final amount in tipOptions) ...[
@@ -47,23 +48,30 @@ class const RideTipSelectorWidget({
                   selected: selectedTipAmount == amount,
                   onSelected: (_) => onTipSelected(amount),
                   selectedColor: context.colorScheme.onSurface,
-                  backgroundColor: context.colorScheme.surface,
+                  backgroundColor: context.colorScheme.surfaceContainerHighest,
                   side: BorderSide(
                     color: selectedTipAmount == amount
                         ? context.colorScheme.onSurface
                         : context.colorScheme.outlineVariant,
+                    width: selectedTipAmount == amount ? 1.2 : 0.8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(EasyRideRadius.pill),
                   ),
                   labelStyle: TextStyle(
                     color: selectedTipAmount == amount
                         ? context.colorScheme.surface
                         : context.colorScheme.onSurface,
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),
                   showCheckmark: false,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 6,
+                  ),
                 ),
-                if (amount != tipOptions.last) const SizedBox(width: 6),
+                if (amount != tipOptions.last) const SizedBox(width: 8),
               ],
             ],
           ),

@@ -39,14 +39,28 @@ class const ProfileAvatarWidget({
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          ClipOval(child: SizedBox.expand(child: avatar)),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: context.colorScheme.outlineVariant,
+                width: 2,
+              ),
+            ),
+            child: ClipOval(child: SizedBox.expand(child: avatar)),
+          ),
           if (onCameraTap != null)
             Positioned(
               right: -4,
               bottom: -4,
               child: Material(
-                color: context.colorScheme.onSurface,
-                shape: const CircleBorder(),
+                color: context.colorScheme.primary,
+                shape: CircleBorder(
+                  side: BorderSide(
+                    color: context.colorScheme.surface,
+                    width: 2.5,
+                  ),
+                ),
                 child: InkWell(
                   key: const ValueKey<String>('passenger-profile-camera'),
                   onTap: onCameraTap,
@@ -57,7 +71,7 @@ class const ProfileAvatarWidget({
                     child: Icon(
                       LucideIcons.camera,
                       size: cameraIconSize,
-                      color: context.colorScheme.surface,
+                      color: context.colorScheme.onPrimary,
                     ),
                   ),
                 ),

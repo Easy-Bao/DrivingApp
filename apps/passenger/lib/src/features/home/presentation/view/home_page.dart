@@ -14,11 +14,9 @@ import 'package:passenger/src/features/booking/presentation/bloc/booking/booking
 import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/home/presentation/bloc/home/home_cubit.dart';
-import 'package:passenger/src/features/home/presentation/bloc/home/home_state.dart';
 import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_cubit.dart';
 import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_state.dart';
 import 'package:passenger/src/features/home/presentation/widgets/home_destination_search_hint_widget.dart';
-import 'package:passenger/src/features/home/presentation/widgets/home_location_row_widget.dart';
 import 'package:passenger/src/features/home/presentation/widgets/pending_booking_banner_widget.dart';
 import 'package:passenger/src/features/home/presentation/widgets/public_driver_summary_card_widget.dart';
 import 'package:passenger/src/features/home/presentation/widgets/recent_ride_history_empty_state_widget.dart';
@@ -87,9 +85,7 @@ class _HomePageState extends State<HomePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildHeader(),
-                        const SizedBox(height: 12),
-                        _buildLocationRow(),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 20),
                         _buildSearchBar(),
                         _buildPendingBookingBanner(),
                         _buildPublicDriverSummary(),
@@ -288,36 +284,6 @@ class _HomePageState extends State<HomePage> {
       title: 'EasyRide',
       subtitle: 'Ready to ride today?',
     );
-  }
-
-  Widget _buildLocationRow() {
-    return BlocBuilder<LocationAccessCubit, LocationAccessViewState>(
-      builder: (context, accessState) {
-        return BlocBuilder<HomeCubit, HomeState>(
-          buildWhen: (prev, curr) =>
-              prev.currentAddress != curr.currentAddress ||
-              prev.isLoading != curr.isLoading ||
-              prev.locationErrorMessage != curr.locationErrorMessage,
-          builder: (context, homeState) {
-            return HomeLocationRowWidget(
-              isAccessChecking: accessState is LocationAccessChecking,
-              hasLocationAccess: accessState is LocationAccessReady,
-              isAddressLoading: homeState.isLoading,
-              currentAddress: homeState.currentAddress,
-              locationErrorMessage: homeState.locationErrorMessage,
-              onRequestLocation: _showLocationPrompt,
-              onRetryAddress: () => unawaited(
-                BlocProvider.of<HomeCubit>(context).refreshCurrentLocation(),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _showLocationPrompt() {
-    unawaited(BlocProvider.of<LocationAccessCubit>(context).enable());
   }
 
   Widget _buildRecentRideHistoryHeader() {

@@ -309,38 +309,65 @@ class const _RideHistoryMessageView({
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  icon,
-                  size: 38,
-                  color: context.colorScheme.onSurfaceVariant.withValues(
-                    alpha: 0.45,
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: context.colorScheme.surfaceContainerHighest,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: context.colorScheme.outlineVariant,
+                      width: 1,
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    icon,
+                    size: 30,
+                    color: context.colorScheme.onSurface,
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 20),
                 Text(
                   title,
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  style: context.textStyles.titleLarge?.copyWith(
                     color: context.colorScheme.onSurface,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  message,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium
-                      ?.copyWith(color: context.colorScheme.onSurfaceVariant),
+                const SizedBox(height: 8),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 280),
+                  child: Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: context.textStyles.bodyMedium?.copyWith(
+                      color: context.colorScheme.onSurfaceVariant,
+                      height: 1.4,
+                    ),
+                  ),
                 ),
                 if (actionLabel != null && onAction != null) ...[
-                  const SizedBox(height: 16),
-                  TextButton.icon(
+                  const SizedBox(height: 20),
+                  FilledButton.icon(
                     onPressed: onAction,
-                    style: TextButton.styleFrom(
-                      foregroundColor: context.colorScheme.onSurface,
-                    ),
                     icon: const Icon(LucideIcons.refresh_cw, size: 16),
                     label: Text(actionLabel!),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: context.colorScheme.onSurface,
+                      foregroundColor: context.colorScheme.surface,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          EasyRideRadius.pill,
+                        ),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                    ),
                   ),
                 ],
               ],

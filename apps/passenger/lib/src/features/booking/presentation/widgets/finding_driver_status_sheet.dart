@@ -53,54 +53,57 @@ class FindingDriverStatusSheet extends StatelessWidget {
         top: Radius.circular(EasyRideRadius.sheet),
       ),
       clipBehavior: Clip.antiAlias,
-      elevation: 10,
-      shadowColor: colorScheme.onSurface.withValues(alpha: 0.14),
+      elevation: 12,
+      shadowColor: colorScheme.onSurface.withValues(alpha: 0.12),
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 18),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Center(
                 child: Container(
-                  width: 40,
+                  width: 36,
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 14),
                   decoration: BoxDecoration(
                     color: colorScheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(99),
+                    borderRadius: BorderRadius.circular(EasyRideRadius.pill),
                   ),
                 ),
               ),
               _buildStatusVisual(),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Text(
                 eyebrow.toUpperCase(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: colorScheme.onSurfaceVariant,
                   fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.1,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
                 ),
               ),
               const SizedBox(height: 4),
               _buildTitle(colorScheme),
               const SizedBox(height: 6),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: colorScheme.onSurfaceVariant,
-                  fontSize: 13,
-                  height: 1.35,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               _buildTripContext(colorScheme),
               if (hasPrimaryAction) ...[
                 const SizedBox(height: 14),
@@ -109,24 +112,54 @@ class FindingDriverStatusSheet extends StatelessWidget {
                   child: FilledButton.icon(
                     onPressed: isCanceling ? null : primaryAction,
                     icon: Icon(primaryActionIcon, size: 18),
-                    label: Text(primaryActionLabel!),
+                    label: Text(
+                      primaryActionLabel!,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: colorScheme.onPrimary,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(EasyRideRadius.md),
+                      ),
+                    ),
                   ),
                 ),
               ],
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               SizedBox(
                 height: 48,
                 child: OutlinedButton(
                   onPressed: isCanceling ? null : onCancelPressed,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: colorScheme.onSurface,
+                    side: BorderSide(
+                      color: colorScheme.outlineVariant,
+                      width: 1,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(EasyRideRadius.md),
+                    ),
+                  ),
                   child: isCanceling
                       ? SizedBox.square(
                           dimension: 18,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: colorScheme.onSurfaceVariant,
+                            color: colorScheme.onSurface,
                           ),
                         )
-                      : const Text('Cancel search'),
+                      : const Text(
+                          'Cancel search',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -137,43 +170,85 @@ class FindingDriverStatusSheet extends StatelessWidget {
   }
 
   Widget _buildStatusVisual() {
-    final iconTile = Container(
+    final animation = statusAnimation;
+    final isScanning = animation != null;
+
+    final iconBadge = Container(
       width: 60,
       height: 60,
       decoration: BoxDecoration(
-        color: statusColor.withValues(alpha: 0.13),
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-      ),
-      alignment: Alignment.center,
-      child: Icon(statusIcon, color: statusColor, size: 27),
-    );
-
-    final animation = statusAnimation;
-    if (animation == null) {
-      return Center(child: iconTile);
-    }
-
-    return AnimatedBuilder(
-      animation: animation,
-      builder: (context, child) => SizedBox.square(
-        dimension: 72,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            SizedBox.square(
-              dimension: 72,
-              child: CircularProgressIndicator(
-                value: animation.value,
-                strokeWidth: 2.5,
-                color: statusColor.withValues(alpha: 0.38),
-                backgroundColor: statusColor.withValues(alpha: 0.08),
-              ),
-            ),
-            child!,
-          ],
+        color: statusColor.withValues(alpha: 0.12),
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: statusColor.withValues(alpha: 0.22),
+          width: 1.2,
         ),
       ),
-      child: iconTile,
+      alignment: Alignment.center,
+      child: Icon(statusIcon, color: statusColor, size: 26),
+    );
+
+    if (!isScanning) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: iconBadge,
+        ),
+      );
+    }
+
+    return Center(
+      child: SizedBox.square(
+        dimension: 88,
+        child: AnimatedBuilder(
+          animation: animation,
+          builder: (context, child) {
+            final t = animation.value;
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                // Outer expanding radar pulse
+                Transform.scale(
+                  scale: 1.0 + (t * 0.36),
+                  child: Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: statusColor.withValues(
+                          alpha: (1.0 - t).clamp(0.0, 1.0) * 0.4,
+                        ),
+                        width: 1.2,
+                      ),
+                    ),
+                  ),
+                ),
+                // Inner expanding radar pulse
+                Transform.scale(
+                  scale: 1.0 + (((t + 0.5) % 1.0) * 0.24),
+                  child: Container(
+                    width: 62,
+                    height: 62,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: statusColor.withValues(
+                          alpha: (1.0 - ((t + 0.5) % 1.0)).clamp(0.0, 1.0) *
+                              0.3,
+                        ),
+                        width: 1.0,
+                      ),
+                    ),
+                  ),
+                ),
+                child!,
+              ],
+            );
+          },
+          child: iconBadge,
+        ),
+      ),
     );
   }
 
@@ -185,7 +260,7 @@ class FindingDriverStatusSheet extends StatelessWidget {
         textAlign: TextAlign.center,
         style: TextStyle(
           color: colorScheme.onSurface,
-          fontSize: 21,
+          fontSize: 20,
           fontWeight: FontWeight.w800,
           letterSpacing: -0.3,
         ),
@@ -201,7 +276,7 @@ class FindingDriverStatusSheet extends StatelessWidget {
           textAlign: TextAlign.center,
           style: TextStyle(
             color: colorScheme.onSurface,
-            fontSize: 21,
+            fontSize: 20,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.3,
           ),
@@ -213,38 +288,42 @@ class FindingDriverStatusSheet extends StatelessWidget {
   Widget _buildTripContext(ColorScheme colorScheme) {
     return Container(
       key: const ValueKey<String>('finding-driver-trip-context'),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-        border: Border.all(color: colorScheme.outlineVariant),
+        border: Border.all(
+          color: colorScheme.outlineVariant,
+          width: 0.8,
+        ),
       ),
       child: Row(
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
-              color: colorScheme.surface,
-              borderRadius: BorderRadius.circular(EasyRideRadius.md),
+              color: colorScheme.primary,
+              shape: BoxShape.circle,
             ),
             child: Icon(
               LucideIcons.map_pin,
               size: 18,
-              color: colorScheme.onSurface,
+              color: colorScheme.onPrimary,
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Going to',
+                  'GOING TO',
                   style: TextStyle(
                     color: colorScheme.onSurfaceVariant,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -255,7 +334,7 @@ class FindingDriverStatusSheet extends StatelessWidget {
                   style: TextStyle(
                     color: colorScheme.onSurface,
                     fontSize: 14,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
@@ -266,11 +345,12 @@ class FindingDriverStatusSheet extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                'Estimate',
+                'ESTIMATE',
                 style: TextStyle(
                   color: colorScheme.onSurfaceVariant,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
                 ),
               ),
               const SizedBox(height: 2),
@@ -280,6 +360,7 @@ class FindingDriverStatusSheet extends StatelessWidget {
                   color: colorScheme.onSurface,
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
+                  letterSpacing: -0.3,
                 ),
               ),
             ],
