@@ -1,0 +1,60 @@
+import 'package:design_system/design_system.dart';
+import 'package:flutter/material.dart';
+
+enum ActiveTripExitAction { keepTracking, minimize, cancel }
+
+class const ActiveTripExitDialog({required this.driverName, super.key})
+    extends StatelessWidget {
+  final String driverName;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+      ),
+      title: Text(
+        'Trip In Progress',
+        style: TextStyle(
+          fontWeight: FontWeight.w800,
+          color: context.colorScheme.onSurface,
+        ),
+      ),
+      content: Text(
+        'You have an ongoing ride with $driverName.\n\nWhat would you like to do?',
+        style: TextStyle(
+          color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+          fontSize: 14,
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, ActiveTripExitAction.cancel),
+          child: Text(
+            'Cancel Trip',
+            style: TextStyle(
+              color: context.colorScheme.error,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        TextButton(
+          onPressed: () =>
+              Navigator.pop(context, ActiveTripExitAction.minimize),
+          child: Text(
+            'Minimize to Home',
+            style: TextStyle(
+              color: context.colorScheme.primary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        FilledButton(
+          onPressed: () =>
+              Navigator.pop(context, ActiveTripExitAction.keepTracking),
+          child: const Text('Keep Tracking'),
+        ),
+      ],
+    );
+  }
+}

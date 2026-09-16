@@ -15,6 +15,7 @@ import 'package:passenger/src/features/active_ride/domain/repositories/track_rep
 import 'package:passenger/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_state.dart';
+import 'package:passenger/src/features/active_ride/presentation/widgets/active_trip_exit_dialog.dart';
 import 'package:passenger/src/features/active_ride/presentation/widgets/track_driver_panel_widget.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/chat/chat.dart';
@@ -414,6 +415,12 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
     );
     if (shouldCancel != true || !mounted) return;
 
+    await _cancelTripRequest();
+  }
+
+  Future<void> _cancelTripRequest() async {
+    if (_isCancellingTrip || !mounted) return;
+
     setState(() => _isCancellingTrip = true);
     try {
       final canceled = await BlocProvider.of<TrackDriverCubit>(context)
@@ -441,60 +448,19 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
         ? cubit.state.activeDriverName
         : widget.ride.displayDriverName;
 
-    final action = await showDialog<String>(
+    final action = await showDialog<ActiveTripExitAction>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-        ),
-        title: Text(
-          'Trip In Progress',
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            color: ctx.colorScheme.onSurface,
-          ),
-        ),
-        content: Text(
-          'You have an ongoing ride with $driverName.\n\nWhat would you like to do?',
-          style: TextStyle(
-            color: ctx.colorScheme.onSurface.withValues(alpha: 0.7),
-            fontSize: 14,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, 'cancel'),
-            child: Text(
-              'Cancel Trip',
-              style: TextStyle(
-                color: ctx.colorScheme.error,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, 'minimize'),
-            child: Text(
-              'Minimize to Home',
-              style: TextStyle(
-                color: ctx.colorScheme.primary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, 'stay'),
-            child: const Text('Keep Tracking'),
-          ),
-        ],
-      ),
+      builder: (_) => ActiveTripExitDialog(driverName: driverName),
     );
 
-    if (!mounted || action == null || action == 'stay') return;
-    if (action == 'cancel') {
-      await _handleCancelTrip();
-    } else if (action == 'minimize') {
-      context.goNamed(HomeRoutes.home);
+    if (!mounted || action == null) return;
+    switch (action) {
+      case ActiveTripExitAction.keepTracking:
+        return;
+      case ActiveTripExitAction.cancel:
+        await _cancelTripRequest();
+      case ActiveTripExitAction.minimize:
+        context.goNamed(HomeRoutes.home);
     }
   }
 
