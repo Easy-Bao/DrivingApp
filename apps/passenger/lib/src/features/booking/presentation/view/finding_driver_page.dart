@@ -522,46 +522,14 @@ class _FindingDriverPageContentState()
                                           padding: const EdgeInsets.only(
                                             right: 8.0,
                                           ),
-                                          child: ChoiceChip(
-                                            avatar: Icon(
-                                              LucideIcons.map_pin,
-                                              size: 14.0,
-                                              color: isSelected
-                                                  ? context.colorScheme.surface
-                                                  : context
-                                                        .colorScheme
-                                                        .onSurface,
-                                            ),
-                                            label: Text(
-                                              '${driver.displayName} (${DistanceFormatter.fromKilometers(driver.distanceKm)})',
-                                              style: TextStyle(
-                                                fontSize: 12.0,
-                                                fontWeight: isSelected
-                                                    ? FontWeight.bold
-                                                    : FontWeight.w500,
-                                                color: isSelected
-                                                    ? context
-                                                          .colorScheme
-                                                          .surface
-                                                    : context
-                                                          .colorScheme
-                                                          .onSurface,
-                                              ),
-                                            ),
-                                            selected: isSelected,
-                                            selectedColor:
-                                                context.colorScheme.onSurface,
-                                            backgroundColor:
-                                                context.colorScheme.surface,
-                                            elevation: 2,
-                                            onSelected: (selected) {
-                                              if (selected) {
-                                                setState(() {
-                                                  _selectedDriver = driver;
-                                                  _isViewingDriverProfile =
-                                                      false;
-                                                });
-                                              }
+                                          child: _NearbyDriverSelectionChip(
+                                            driver: driver,
+                                            isSelected: isSelected,
+                                            onTap: () {
+                                              setState(() {
+                                                _selectedDriver = driver;
+                                                _isViewingDriverProfile = false;
+                                              });
                                             },
                                           ),
                                         );
@@ -715,6 +683,114 @@ class _FindingDriverPageContentState()
                 ],
               );
             },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class const _NearbyDriverSelectionChip({
+  required this.driver,
+  required this.isSelected,
+  required this.onTap,
+}) extends StatelessWidget {
+  final DriverModel driver;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  IconData get _vehicleIcon {
+    final vehicleType = driver.vehicleType.toLowerCase();
+    if (vehicleType.contains('suv') || vehicleType.contains('sedan')) {
+      return LucideIcons.car_front;
+    }
+    return LucideIcons.car;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = context.colorScheme;
+    final radius = BorderRadius.circular(EasyRideRadius.pill);
+    final foregroundColor = isSelected ? scheme.onPrimary : scheme.onSurface;
+    final distance = DistanceFormatter.fromKilometers(driver.distanceKm);
+
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label:
+          '${driver.displayName}, ${driver.vehicleType}, rating ${driver.rating.toStringAsFixed(1)}, $distance away',
+      child: Material(
+        color: isSelected ? scheme.primary : scheme.surfaceContainerHighest,
+        elevation: isSelected ? 3 : 0,
+        shadowColor: scheme.shadow.withValues(alpha: 0.18),
+        borderRadius: radius,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: radius,
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 48),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: isSelected ? scheme.primary : scheme.outlineVariant,
+              ),
+              borderRadius: radius,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(_vehicleIcon, size: 18, color: foregroundColor),
+                const SizedBox(width: 8),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      driver.displayName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: foregroundColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          LucideIcons.star,
+                          size: 12,
+                          color: isSelected
+                              ? scheme.onPrimary
+                              : context.semanticColors.warning,
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          driver.rating.toStringAsFixed(1),
+                          style: TextStyle(
+                            color: foregroundColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(width: 7),
+                        Text(
+                          distance,
+                          style: TextStyle(
+                            color: foregroundColor.withValues(alpha: 0.78),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -18,31 +18,56 @@ class const RideTripSummaryWidget({
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(EasyRideSpacing.md),
       decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainerHighest,
+        color: context.colorScheme.surface,
         borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
+        boxShadow: [
+          BoxShadow(
+            color: context.colorScheme.shadow.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Trip Details',
-            style: TextStyle(
-              color: context.colorScheme.onSurfaceVariant,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.1,
-            ),
+          Row(
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: context.colorScheme.primary,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Trip Details',
+                style: TextStyle(
+                  color: context.colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           _TripLocationTimeline(
             children: [
-              const _LocationIcon(icon: LucideIcons.locate_fixed),
+              const _LocationIcon(
+                isDestination: false,
+                icon: LucideIcons.circle_dot,
+              ),
               _LocationDetails(label: 'Pickup', value: pickupLabel),
               const _DashedRouteConnector(),
-              const _LocationIcon(icon: LucideIcons.map_pin),
+              const _LocationIcon(
+                isDestination: true,
+                icon: LucideIcons.map_pin,
+              ),
               _LocationDetails(label: 'Destination', value: destinationName),
             ],
           ),
@@ -159,15 +184,40 @@ class _TripLocationTimelineRenderObject({required this.routeGap})
   }
 }
 
-class const _LocationIcon({required this.icon}) extends StatelessWidget {
+class const _LocationIcon({required this.icon, this.isDestination = false})
+    extends StatelessWidget {
   final IconData icon;
+  final bool isDestination;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    if (isDestination) {
+      return Container(
+        width: 18,
+        height: 18,
+        decoration: BoxDecoration(
+          color: context.colorScheme.primary,
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: Icon(icon, size: 11, color: context.colorScheme.onPrimary),
+        ),
+      );
+    }
+
+    return Container(
       width: 18,
       height: 18,
-      child: Icon(icon, size: 18, color: context.colorScheme.onSurface),
+      alignment: Alignment.center,
+      child: Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(
+          color: context.colorScheme.surface,
+          shape: BoxShape.circle,
+          border: Border.all(color: context.semanticColors.success, width: 2.0),
+        ),
+      ),
     );
   }
 }
@@ -183,11 +233,11 @@ class const _LocationDetails({required this.label, required this.value})
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label,
-          style: TextStyle(
+          label.toUpperCase(),
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
             color: context.colorScheme.onSurfaceVariant,
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.2,
           ),
         ),
         const SizedBox(height: 2),
@@ -195,10 +245,9 @@ class const _LocationDetails({required this.label, required this.value})
           value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: context.colorScheme.onSurface,
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ],
@@ -211,9 +260,7 @@ class const _DashedRouteConnector() extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomPaint(
       key: const ValueKey('trip-route-dashes'),
-      painter: _DashedRoutePainter(
-        context.colorScheme.onSurfaceVariant.withValues(alpha: 0.68),
-      ),
+      painter: _DashedRoutePainter(context.colorScheme.outlineVariant),
     );
   }
 }

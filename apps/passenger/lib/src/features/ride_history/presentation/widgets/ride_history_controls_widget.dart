@@ -21,9 +21,6 @@ class const RideHistorySummaryWidget({
           child: _SummaryCard(
             label: 'This week',
             value: formatPesoAmount(weeklyFare),
-            backgroundColor: context.colorScheme.secondaryContainer.withValues(
-              alpha: 0.55,
-            ),
             valueKey: const ValueKey<String>('activity-weekly-fare'),
           ),
         ),
@@ -32,7 +29,6 @@ class const RideHistorySummaryWidget({
           child: _SummaryCard(
             label: 'Rides taken',
             value: weeklyRideCount.toString(),
-            backgroundColor: context.colorScheme.surfaceContainerHighest,
             valueKey: const ValueKey<String>('activity-weekly-ride-count'),
           ),
         ),
@@ -123,12 +119,10 @@ class const RideHistoryFilteredEmptyWidget({required this.filter, super.key})
 class const _SummaryCard({
   required this.label,
   required this.value,
-  required this.backgroundColor,
   required this.valueKey,
 }) extends StatelessWidget {
   final String label;
   final String value;
-  final Color backgroundColor;
   final Key valueKey;
 
   @override
@@ -139,8 +133,16 @@ class const _SummaryCard({
       height: 88,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: backgroundColor,
+        color: context.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        border: Border.all(color: context.colorScheme.outlineVariant),
+        boxShadow: [
+          BoxShadow(
+            color: context.colorScheme.shadow.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,7 +191,7 @@ class const _RideHistoryFilterChip({
 
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(EasyRideRadius.lg);
+    final radius = BorderRadius.circular(EasyRideRadius.pill);
 
     return Semantics(
       button: true,
@@ -200,18 +202,21 @@ class const _RideHistoryFilterChip({
           key: ValueKey<String>('activity-filter-${filter.name}'),
           onTap: onTap,
           borderRadius: radius,
+          splashColor: context.colorScheme.primary.withValues(alpha: 0.12),
+          highlightColor: context.colorScheme.primary.withValues(alpha: 0.06),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
             curve: Curves.easeOutCubic,
+            constraints: const BoxConstraints(minHeight: 44),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               color: isSelected
-                  ? context.colorScheme.onSurface
-                  : context.colorScheme.surface,
+                  ? context.colorScheme.primary
+                  : context.colorScheme.surfaceContainerHighest,
               borderRadius: radius,
               border: Border.all(
                 color: isSelected
-                    ? context.colorScheme.onSurface
+                    ? context.colorScheme.primary
                     : context.colorScheme.outlineVariant,
               ),
             ),
@@ -219,9 +224,9 @@ class const _RideHistoryFilterChip({
               _label,
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
                 color: isSelected
-                    ? context.colorScheme.surface
+                    ? context.colorScheme.onPrimary
                     : context.colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w700,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
           ),

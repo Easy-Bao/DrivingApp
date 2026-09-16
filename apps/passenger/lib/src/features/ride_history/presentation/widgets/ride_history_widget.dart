@@ -48,7 +48,7 @@ class const RideHistoryWidget({
   State<RideHistoryWidget> createState() => _RideHistoryWidgetState();
 }
 
-class _RideHistoryWidgetState extends State<RideHistoryWidget> {
+class _RideHistoryWidgetState() extends State<RideHistoryWidget> {
   RideHistoryFilter _selectedFilter = RideHistoryFilter.all;
 
   @override

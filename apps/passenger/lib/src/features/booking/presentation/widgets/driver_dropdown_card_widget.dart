@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/driver_profile/domain/entities/driver_review.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
@@ -94,6 +93,14 @@ class _DriverDropdownCardWidgetState()
           : visibleReviews;
       _isLoadingFeedback = false;
     });
+  }
+
+  String get _reviewCountLabel {
+    if (_isLoadingFeedback) return 'Reviews';
+    if (_recentReviews.isEmpty) return '0 reviews';
+    return _recentReviews.length == 6
+        ? '6+ reviews'
+        : '${_recentReviews.length} reviews';
   }
 
   Widget _buildRecentFeedbackList() {
@@ -244,18 +251,16 @@ class _DriverDropdownCardWidgetState()
               ),
               decoration: BoxDecoration(
                 color: context.colorScheme.surface,
-                borderRadius: BorderRadius.circular(24.0),
+                borderRadius: BorderRadius.circular(EasyRideRadius.sheet),
                 border: Border.all(
-                  color: context.colorScheme.onSurface.withValues(alpha: 0.12),
-                  width: 1.5,
+                  color: context.colorScheme.outlineVariant,
+                  width: 1.0,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: context.colorScheme.onSurface.withValues(
-                      alpha: 0.14,
-                    ),
-                    blurRadius: 24.0,
-                    offset: const Offset(0, 8),
+                    color: context.colorScheme.shadow.withValues(alpha: 0.08),
+                    blurRadius: 20.0,
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
@@ -384,14 +389,17 @@ class _DriverDropdownCardWidgetState()
                                           ],
                                         ),
                                         const SizedBox(height: 4.0),
-                                        Text(
-                                          widget.driver.vehicleSummary,
-                                          style: TextStyle(
-                                            fontSize: 11.0,
-                                            fontWeight: FontWeight.w600,
-                                            color: context.colorScheme.onSurface
-                                                .withValues(alpha: 0.6),
-                                          ),
+                                        Row(
+                                          children: [
+                                            _DriverVehicleBadge(
+                                              driver: widget.driver,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            _DriverLicensePlateBadge(
+                                              plateNumber:
+                                                  widget.driver.plateNumber,
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
@@ -463,32 +471,56 @@ class _DriverDropdownCardWidgetState()
                                     ),
                                   ),
                                   const Spacer(),
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.star_rounded,
-                                        color: context.semanticColors.warning,
-                                        size: 16.0,
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 9,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: context
+                                          .colorScheme
+                                          .surfaceContainerHighest,
+                                      borderRadius: BorderRadius.circular(
+                                        EasyRideRadius.pill,
                                       ),
-                                      const SizedBox(width: 4.0),
-                                      Text(
-                                        widget.driver.rating.toStringAsFixed(1),
-                                        style: TextStyle(
-                                          fontSize: 13.0,
-                                          fontWeight: FontWeight.bold,
-                                          color: context.colorScheme.onSurface,
+                                      border: Border.all(
+                                        color:
+                                            context.colorScheme.outlineVariant,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          LucideIcons.star,
+                                          color: context.semanticColors.warning,
+                                          size: 14.0,
                                         ),
-                                      ),
-                                      const SizedBox(width: 8.0),
-                                      Text(
-                                        '${DistanceFormatter.fromKilometers(widget.driver.distanceKm)} away',
-                                        style: TextStyle(
-                                          fontSize: 12.0,
-                                          color: context.colorScheme.onSurface
-                                              .withValues(alpha: 0.5),
+                                        const SizedBox(width: 4.0),
+                                        Text(
+                                          widget.driver.rating.toStringAsFixed(
+                                            1,
+                                          ),
+                                          style: TextStyle(
+                                            fontSize: 12.0,
+                                            fontWeight: FontWeight.w800,
+                                            color:
+                                                context.colorScheme.onSurface,
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(width: 5.0),
+                                        Text(
+                                          _reviewCountLabel,
+                                          style: TextStyle(
+                                            fontSize: 11.0,
+                                            fontWeight: FontWeight.w600,
+                                            color: context
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
@@ -506,61 +538,56 @@ class _DriverDropdownCardWidgetState()
                               const SizedBox(height: 6),
                               _buildRecentFeedbackList(),
                               const SizedBox(height: 12.0),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: SizedBox(
-                                      height: 44.0,
-                                      child: OutlinedButton(
-                                        onPressed:
-                                            widget.onViewFullProfilePressed,
-                                        style: OutlinedButton.styleFrom(
-                                          foregroundColor:
-                                              context.colorScheme.onSurface,
-                                          side: BorderSide(
-                                            color:
-                                                context.colorScheme.onSurface,
-                                            width: 1.5,
-                                          ),
-                                          padding: EdgeInsets.zero,
-                                          shape: const StadiumBorder(),
-                                        ),
-                                        child: const Text(
-                                          'View Full Profile',
-                                          style: TextStyle(
-                                            fontSize: 13.0,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 44,
+                                child: OutlinedButton(
+                                  onPressed: widget.onViewFullProfilePressed,
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor:
+                                        context.colorScheme.primary,
+                                    side: BorderSide(
+                                      color: context.colorScheme.outlineVariant,
+                                      width: 1.2,
+                                    ),
+                                    padding: EdgeInsets.zero,
+                                    shape: const StadiumBorder(),
+                                  ),
+                                  child: const Text(
+                                    'View Full Profile',
+                                    style: TextStyle(
+                                      fontSize: 13.0,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
-                                  const SizedBox(width: 12.0),
-                                  Expanded(
-                                    child: SizedBox(
-                                      height: 44.0,
-                                      child: ElevatedButton(
-                                        onPressed: widget.onSelectDriverPressed,
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              context.colorScheme.onSurface,
-                                          foregroundColor:
-                                              context.colorScheme.onPrimary,
-                                          elevation: 0,
-                                          padding: EdgeInsets.zero,
-                                          shape: const StadiumBorder(),
-                                        ),
-                                        child: const Text(
-                                          'Select Driver',
-                                          style: TextStyle(
-                                            fontSize: 13.0,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 48,
+                                child: FilledButton(
+                                  onPressed: widget.onSelectDriverPressed,
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor:
+                                        context.colorScheme.primary,
+                                    foregroundColor:
+                                        context.colorScheme.onPrimary,
+                                    minimumSize: const Size(
+                                      double.infinity,
+                                      48,
+                                    ),
+                                    padding: EdgeInsets.zero,
+                                    shape: const StadiumBorder(),
+                                  ),
+                                  child: const Text(
+                                    'Book This Driver',
+                                    style: TextStyle(
+                                      fontSize: 13.0,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
-                                ],
+                                ),
                               ),
                             ],
                           ),
@@ -569,6 +596,80 @@ class _DriverDropdownCardWidgetState()
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class const _DriverVehicleBadge({required this.driver})
+    extends StatelessWidget {
+  final DriverModel driver;
+
+  IconData get _icon {
+    final vehicleType = driver.vehicleType.toLowerCase();
+    if (vehicleType.contains('suv') || vehicleType.contains('sedan')) {
+      return LucideIcons.car_front;
+    }
+    return LucideIcons.car;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final label = driver.vehicleType.trim().isEmpty
+        ? 'Vehicle'
+        : driver.vehicleType.trim();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: context.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+        border: Border.all(color: context.colorScheme.outlineVariant),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(_icon, size: 14, color: context.colorScheme.onSurface),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: context.colorScheme.onSurface,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class const _DriverLicensePlateBadge({required this.plateNumber})
+    extends StatelessWidget {
+  final String plateNumber;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = plateNumber.trim().isEmpty ? '—' : plateNumber.trim();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: context.colorScheme.surface,
+        borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+        border: Border.all(color: context.colorScheme.outlineVariant),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          color: context.colorScheme.onSurface,
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.6,
         ),
       ),
     );
