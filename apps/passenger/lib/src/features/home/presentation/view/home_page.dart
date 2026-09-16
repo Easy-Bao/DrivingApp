@@ -8,6 +8,9 @@ import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger/src/app/navigation/passenger_navigation_observer.dart';
+import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
+import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_cubit.dart';
+import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_state.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
@@ -86,6 +89,7 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         _buildHeader(),
                         const SizedBox(height: 20),
+                        _buildActiveRideBanner(),
                         _buildSearchBar(),
                         _buildPendingBookingBanner(),
                         _buildPublicDriverSummary(),
@@ -396,6 +400,196 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  TrackDriverCubit? _getTrackDriverCubit() {
+    try {
+      return BlocProvider.of<TrackDriverCubit>(context);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Widget _buildActiveRideBanner() {
+    final cubit = _getTrackDriverCubit();
+    if (cubit == null) return const SizedBox.shrink();
+
+    return BlocBuilder<TrackDriverCubit, TrackDriverState>(
+      bloc: cubit,
+      builder: (context, state) {
+        if (!state.isTracking) return const SizedBox.shrink();
+
+        final driverName = state.activeDriverName.isNotEmpty
+            ? state.activeDriverName
+            : 'Driver';
+        final vehicleInfo = [state.activeVehicleType, state.activeVehiclePlate]
+            .where((s) => s.trim().isNotEmpty)
+            .join(' • ');
+        final statusText = state.isInTransit
+            ? 'Heading to Destination'
+            : state.hasArrived
+            ? 'Driver Has Arrived'
+            : 'Driver is Picking You Up';
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Material(
+            color: context.colorScheme.primary,
+            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+            elevation: 2,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+              onTap: _resumeActiveRide,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: EasyRideSpacing.md,
+                  vertical: EasyRideSpacing.sm + 2,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: context.colorScheme.onPrimary.withValues(
+                          alpha: 0.15,
+                        ),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        LucideIcons.car,
+                        color: context.colorScheme.onPrimary,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF22C55E),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                statusText,
+                                style: context.textStyles.labelMedium?.copyWith(
+                                  color: context.colorScheme.onPrimary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            driverName +
+                                (vehicleInfo.isNotEmpty
+                                    ? ' • $vehicleInfo'
+                                    : ''),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: context.textStyles.bodySmall?.copyWith(
+                              color: context.colorScheme.onPrimary.withValues(
+                                alpha: 0.8,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: _resumeActiveRide,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: context.colorScheme.onPrimary,
+                        foregroundColor: context.colorScheme.primary,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 6,
+                        ),
+                        minimumSize: const Size(0, 36),
+                      ),
+                      child: const Text('Resume'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _resumeActiveRide() {
+    final trackDriverCubit = _getTrackDriverCubit();
+    final ride = trackDriverCubit?.currentRide;
+    if (ride != null) {
+      unawaited(context.pushNamed(ActiveRideRoutes.trackDriver, extra: ride));
+      return;
+    }
+
+    final historyState = BlocProvider.of<RideHistoryBloc>(context).state;
+    if (historyState is RideHistoryLoaded && historyState.upcoming.isNotEmpty) {
+      unawaited(
+        context.pushNamed(
+          ActiveRideRoutes.trackDriver,
+          extra: historyState.upcoming.first,
+        ),
+      );
+      return;
+    }
+  }
+
+  Future<void> _showActiveRideBlockedDialog() async {
+    final trackDriverCubit = _getTrackDriverCubit();
+    final driverName = (trackDriverCubit != null &&
+            trackDriverCubit.state.activeDriverName.isNotEmpty)
+        ? trackDriverCubit.state.activeDriverName
+        : 'your driver';
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        ),
+        title: Text(
+          'Active Ride in Progress',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: ctx.colorScheme.onSurface,
+          ),
+        ),
+        content: Text(
+          'You already have an active trip with $driverName. Please complete or cancel your ongoing ride before booking another.',
+          style: TextStyle(
+            color: ctx.colorScheme.onSurface.withValues(alpha: 0.7),
+            fontSize: 14,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Dismiss'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _resumeActiveRide();
+            },
+            child: const Text('Resume Trip'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSearchBar() {
     return Semantics(
       button: true,
@@ -404,6 +598,11 @@ class _HomePageState extends State<HomePage> {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {
+          final trackDriverCubit = _getTrackDriverCubit();
+          if (trackDriverCubit != null && trackDriverCubit.state.isTracking) {
+            unawaited(_showActiveRideBlockedDialog());
+            return;
+          }
           final activeSearch = _bookingBloc.activeDriverSearch;
           if (activeSearch != null) {
             final trip = activeSearch.trip;

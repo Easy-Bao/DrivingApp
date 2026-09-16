@@ -43,7 +43,7 @@ func (repository *RideRepository) CreateRide(ctx context.Context, value domain.R
 		DurationMinutes:  rideFloat(value.DurationMinutes),
 	})
 	if err != nil {
-		return domain.Ride{}, fmt.Errorf("create ride: %w", err)
+		return domain.Ride{}, passengerActiveRideConflictError("create ride", err)
 	}
 	ride, err := fromPostgresRide(item)
 	if err != nil {

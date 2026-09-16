@@ -99,6 +99,10 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
     );
     unawaited(_initializeChatRepository());
     _chatMessagesPollingTask.start();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      BlocProvider.of<TrackDriverCubit>(context).currentRide = widget.ride;
+    });
   }
 
   Future<void> _initializeChatRepository() async {
@@ -426,6 +430,74 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
     }
   }
 
+  Future<void> _handleBackNavigation() async {
+    final cubit = BlocProvider.of<TrackDriverCubit>(context);
+    if (!cubit.state.isTracking) {
+      if (mounted) context.goNamed(HomeRoutes.home);
+      return;
+    }
+
+    final driverName = cubit.state.activeDriverName.isNotEmpty
+        ? cubit.state.activeDriverName
+        : widget.ride.displayDriverName;
+
+    final action = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        ),
+        title: Text(
+          'Trip In Progress',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: ctx.colorScheme.onSurface,
+          ),
+        ),
+        content: Text(
+          'You have an ongoing ride with $driverName.\n\nWhat would you like to do?',
+          style: TextStyle(
+            color: ctx.colorScheme.onSurface.withValues(alpha: 0.7),
+            fontSize: 14,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, 'cancel'),
+            child: Text(
+              'Cancel Trip',
+              style: TextStyle(
+                color: ctx.colorScheme.error,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, 'minimize'),
+            child: Text(
+              'Minimize to Home',
+              style: TextStyle(
+                color: ctx.colorScheme.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, 'stay'),
+            child: const Text('Keep Tracking'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted || action == null || action == 'stay') return;
+    if (action == 'cancel') {
+      await _handleCancelTrip();
+    } else if (action == 'minimize') {
+      context.goNamed(HomeRoutes.home);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final passengerLat = widget.ride.pickupLat;
@@ -479,160 +551,164 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
             return;
         }
       },
-      child: Scaffold(
-        backgroundColor: context.colorScheme.surface,
-        body: Stack(
-          children: [
-            Positioned.fill(
-              child: Container(
-                color: context.colorScheme.surfaceContainerHighest,
-                child: SizedBox.expand(
-                  child: MapProvider.buildMapView(
-                    latitude: passengerLat,
-                    longitude: passengerLng,
-                    zoom: 14.5,
-                    interactive: true,
-                    onMapCreated: _onMapCreated,
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (didPop) return;
+          unawaited(_handleBackNavigation());
+        },
+        child: Scaffold(
+          backgroundColor: context.colorScheme.surface,
+          body: Stack(
+            children: [
+              Positioned.fill(
+                child: Container(
+                  color: context.colorScheme.surfaceContainerHighest,
+                  child: SizedBox.expand(
+                    child: MapProvider.buildMapView(
+                      latitude: passengerLat,
+                      longitude: passengerLng,
+                      zoom: 14.5,
+                      interactive: true,
+                      onMapCreated: _onMapCreated,
+                    ),
                   ),
                 ),
               ),
-            ),
 
-            SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildTripBackButton(
-                      context,
-                      () => context.goNamed(HomeRoutes.home),
-                    ),
-                  ],
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildTripBackButton(
+                        context,
+                        () => unawaited(_handleBackNavigation()),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: SafeArea(
-                top: false,
-                child: BlocBuilder<TrackDriverCubit, TrackDriverState>(
-                  builder: (context, state) {
-                    final isInTransit = state.isInTransit;
-                    final hasArrived = state.hasArrived;
-                    final statusTitle = isInTransit
-                        ? 'Heading To Your Destination'
-                        : hasArrived
-                        ? 'Driver Has Arrived'
-                        : state.isTracking
-                        ? 'Driver Is Picking You Up'
-                        : 'Driver Assigned';
-                    final statusSubtitle = isInTransit
-                        ? 'Heading To ${widget.ride.destination}'
-                        : hasArrived
-                        ? 'Meet Your Driver At Pickup'
-                        : state.isTracking
-                        ? 'Your Driver Is On The Way To Pickup'
-                        : 'Your Driver Is Preparing For Pickup';
-                    final etaText = switch (state) {
-                      DriverEnRoute(:final status) =>
-                        status == RideStatus.arrived
-                            ? 'Driver Arrived'
-                            : 'To Pickup',
-                      TripInProgress() => 'To Drop Off',
-                      Idle() ||
-                      SearchingDriver() ||
-                      TripCompleted() ||
-                      RideFailed() => 'To Pickup',
-                    };
-                    final driverName = state.isTracking
-                        ? state.activeDriverName
-                        : null;
-                    final vehicleSummary = state.isTracking
-                        ? [state.activeVehicleType, state.activeVehiclePlate]
-                              .where((value) => value.trim().isNotEmpty)
-                              .join(' • ')
-                        : null;
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: SafeArea(
+                  top: false,
+                  child: BlocBuilder<TrackDriverCubit, TrackDriverState>(
+                    builder: (context, state) {
+                      final isInTransit = state.isInTransit;
+                      final hasArrived = state.hasArrived;
+                      final statusTitle = isInTransit
+                          ? 'Heading To Your Destination'
+                          : hasArrived
+                          ? 'Driver Has Arrived'
+                          : state.isTracking
+                          ? 'Driver Is Picking You Up'
+                          : 'Driver Assigned';
+                      final statusSubtitle = isInTransit
+                          ? 'Heading To ${widget.ride.destination}'
+                          : hasArrived
+                          ? 'Driver is waiting at pickup location'
+                          : state.isTracking
+                          ? 'Driver is heading to pickup'
+                          : 'Driver assigned to your trip';
+                      final etaText = switch (state) {
+                        DriverEnRoute(:final eta) => eta,
+                        TripInProgress(:final eta) => eta,
+                        Idle() ||
+                        SearchingDriver() ||
+                        TripCompleted() ||
+                        RideFailed() => 'To Pickup',
+                      };
+                      final driverName = state.isTracking
+                          ? state.activeDriverName
+                          : null;
+                      final vehicleSummary = state.isTracking
+                          ? [state.activeVehicleType, state.activeVehiclePlate]
+                                .where((value) => value.trim().isNotEmpty)
+                                .join(' • ')
+                          : null;
 
-                    return LayoutBuilder(
-                      builder: (ctx, constraints) {
-                        final isWide = constraints.maxWidth > 600.0;
-                        return ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: isWide ? 600.0 : double.infinity,
-                          ),
-                          child: TrackDriverPanelWidget(
-                            ride: widget.ride,
-                            statusTitle: statusTitle,
-                            statusSubtitle: statusSubtitle,
-                            etaText: etaText,
-                            driverName: driverName,
-                            vehicleSummary: vehicleSummary,
-                            unreadChatMessagesCount: _unreadChatMessagesCount,
-                            showContactActions: !isInTransit,
-                            isCancellingTrip: _isCancellingTrip,
-                            onCallDriverPressed: () async {
-                              try {
-                                final rideId = widget.ride.id.trim();
-                                if (rideId.isNotEmpty) {
-                                  String phone = '';
-                                  (await widget.trackRepository
-                                          .fetchCounterpartyResult(rideId))
-                                      .fold(
-                                        (_) {},
-                                        (driver) => phone = driver.phone,
-                                      );
+                      return LayoutBuilder(
+                        builder: (ctx, constraints) {
+                          final isWide = constraints.maxWidth > 600.0;
+                          return ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: isWide ? 600.0 : double.infinity,
+                            ),
+                            child: TrackDriverPanelWidget(
+                              ride: widget.ride,
+                              statusTitle: statusTitle,
+                              statusSubtitle: statusSubtitle,
+                              etaText: etaText,
+                              driverName: driverName,
+                              vehicleSummary: vehicleSummary,
+                              unreadChatMessagesCount: _unreadChatMessagesCount,
+                              showContactActions: !isInTransit,
+                              isCancellingTrip: _isCancellingTrip,
+                              onCallDriverPressed: () async {
+                                try {
+                                  final rideId = widget.ride.id.trim();
+                                  if (rideId.isNotEmpty) {
+                                    String phone = '';
+                                    (await widget.trackRepository
+                                            .fetchCounterpartyResult(rideId))
+                                        .fold(
+                                          (_) {},
+                                          (driver) => phone = driver.phone,
+                                        );
 
-                                  if (phone.isNotEmpty) {
-                                    final uri = Uri.parse('tel:$phone');
-                                    if (await canLaunchUrl(uri)) {
-                                      await launchUrl(uri);
+                                    if (phone.isNotEmpty) {
+                                      final uri = Uri.parse('tel:$phone');
+                                      if (await canLaunchUrl(uri)) {
+                                        await launchUrl(uri);
+                                      }
                                     }
                                   }
+                                } catch (_) {}
+                              },
+                              onChatDriverPressed: () async {
+                                final passengerId =
+                                    await widget.sessionService
+                                        .readPassengerId() ??
+                                    '';
+                                final dName = state.activeDriverName.isNotEmpty
+                                    ? state.activeDriverName
+                                    : widget.ride.displayDriverName;
+                                if (context.mounted) {
+                                  setState(() {
+                                    _viewedDriverMessagesCount +=
+                                        _unreadChatMessagesCount;
+                                    _unreadChatMessagesCount = 0;
+                                    _isInitialChatMessagesCountFetched = true;
+                                  });
+                                  await context.pushNamed(
+                                    ChatRoutes.driverChat,
+                                    extra: {
+                                      'roomId': widget.ride.id,
+                                      'userId': passengerId,
+                                      'peerId': widget.ride.driverId,
+                                      'peerName': dName,
+                                    },
+                                  );
+                                  await _updateUnreadMessagesCount();
                                 }
-                              } catch (_) {}
-                            },
-                            onChatDriverPressed: () async {
-                              final passengerId =
-                                  await widget.sessionService
-                                      .readPassengerId() ??
-                                  '';
-                              final dName = state.activeDriverName.isNotEmpty
-                                  ? state.activeDriverName
-                                  : widget.ride.displayDriverName;
-                              if (context.mounted) {
-                                setState(() {
-                                  _viewedDriverMessagesCount +=
-                                      _unreadChatMessagesCount;
-                                  _unreadChatMessagesCount = 0;
-                                  _isInitialChatMessagesCountFetched = true;
-                                });
-                                await context.pushNamed(
-                                  ChatRoutes.driverChat,
-                                  extra: {
-                                    'roomId': widget.ride.id,
-                                    'userId': passengerId,
-                                    'peerId': widget.ride.driverId,
-                                    'peerName': dName,
-                                  },
-                                );
-                                await _updateUnreadMessagesCount();
-                              }
-                            },
-                            onCancelTripPressed: _handleCancelTrip,
-                          ),
-                        );
-                      },
-                    );
-                  },
+                              },
+                              onCancelTripPressed: _handleCancelTrip,
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -296,6 +296,7 @@ class _FindingDriverPageContentState()
 
   void _returnHome() {
     if (!mounted) return;
+    _handleCancel();
     context.goNamed(HomeRoutes.home);
   }
 

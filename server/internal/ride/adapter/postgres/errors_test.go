@@ -22,3 +22,18 @@ func TestDriverActiveRideConflictError(t *testing.T) {
 		t.Fatal("unexpectedly mapped another unique violation to the active ride error")
 	}
 }
+
+func TestPassengerActiveRideConflictError(t *testing.T) {
+	err := &pgconn.PgError{
+		Code:           "23505",
+		ConstraintName: "ride_passenger_id",
+	}
+	if !errors.Is(passengerActiveRideConflictError("create ride", err), domain.ErrActiveBooking) {
+		t.Fatal("expected passenger active ride conflict to map to domain.ErrActiveBooking")
+	}
+
+	other := &pgconn.PgError{Code: "23505", ConstraintName: "another_unique_index"}
+	if errors.Is(passengerActiveRideConflictError("create ride", other), domain.ErrActiveBooking) {
+		t.Fatal("unexpectedly mapped another unique violation to the active ride error")
+	}
+}

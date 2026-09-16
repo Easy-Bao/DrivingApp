@@ -6,6 +6,7 @@ import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_state.dart';
+import 'package:passenger/src/features/ride_history/domain/entities/ride_history.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger/src/infrastructure/telemetry/passenger_background_telemetry.dart';
 
@@ -23,6 +24,7 @@ class TrackDriverCubit({
   Future<void> Function()? _activeTripResync;
   bool _isSyncing = false;
   bool _isCancellingTrip = false;
+  RideHistory? currentRide;
 
   this : super(const TrackDriverInitial());
 
@@ -95,6 +97,7 @@ class TrackDriverCubit({
               );
               await session.saveActiveRideId('');
               await _stopBackgroundTelemetry();
+              currentRide = null;
               return;
             }
 
@@ -288,6 +291,7 @@ class TrackDriverCubit({
       _trackingTask = null;
       _activeTripResync = null;
       await _stopBackgroundTelemetry();
+      currentRide = null;
       if (!isClosed) emit(const TrackDriverCanceled());
       return true;
     } catch (error) {

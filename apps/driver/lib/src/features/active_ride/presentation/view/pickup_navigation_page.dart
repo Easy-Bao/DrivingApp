@@ -317,122 +317,125 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
             );
           }
 
-          return Scaffold(
-            backgroundColor: context.colorScheme.surface,
-            body: Stack(
-              children: [
-                Positioned.fill(
-                  child: SizedBox.expand(
-                    child: MapProvider.buildMapView(
-                      latitude: defaultLat,
-                      longitude: defaultLng,
-                      zoom: 15.0,
-                      onMapCreated: _onMapCreated,
+          return PopScope(
+            canPop: false,
+            child: Scaffold(
+              backgroundColor: context.colorScheme.surface,
+              body: Stack(
+                children: [
+                  Positioned.fill(
+                    child: SizedBox.expand(
+                      child: MapProvider.buildMapView(
+                        latitude: defaultLat,
+                        longitude: defaultLng,
+                        zoom: 15.0,
+                        onMapCreated: _onMapCreated,
+                      ),
                     ),
                   ),
-                ),
-                SafeArea(child: _buildHeader(context)),
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: SafeArea(
-                    top: false,
-                    child: LayoutBuilder(
-                      builder: (ctx, constraints) {
-                        final isWide = constraints.maxWidth > 600.0;
-                        final rideState = BlocProvider.of<RideFlowCubit>(
-                          context,
-                        ).state;
-                        final passengerName = rideState.passengerNameOr(
-                          'Passenger',
-                        );
+                  SafeArea(child: _buildHeader(context)),
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: SafeArea(
+                      top: false,
+                      child: LayoutBuilder(
+                        builder: (ctx, constraints) {
+                          final isWide = constraints.maxWidth > 600.0;
+                          final rideState = BlocProvider.of<RideFlowCubit>(
+                            context,
+                          ).state;
+                          final passengerName = rideState.passengerNameOr(
+                            'Passenger',
+                          );
 
-                        return ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: isWide ? 600.0 : double.infinity,
-                          ),
-                          child: PickupNavigationPanelWidget(
-                            pickup: widget.pickup,
-                            dropoff: widget.dropoff,
-                            passengerName: passengerName,
-                            distance: widget.distance,
-                            fare: widget.fare,
-                            sliderValue: _sliderVal,
-                            isConfirmingArrival: _isConfirmingArrival,
-                            unreadChatMessagesCount: _unreadChatMessagesCount,
-                            onSliderChanged: (val) {
-                              setState(() {
-                                _sliderVal = val;
-                              });
-                            },
-                            onSliderCompleted: () => _confirmArrival(context),
-                            onCallPressed: () async {
-                              try {
-                                final rideCubit =
-                                    BlocProvider.of<RideFlowCubit>(context);
-                                final rideId = rideCubit.activeRideId ?? '';
-                                if (rideId.isNotEmpty) {
-                                  String? phone;
-                                  (await widget.rideRepository
-                                          .fetchCounterpartyResult(rideId))
-                                      .fold(
-                                        (_) {},
-                                        (passenger) => phone = passenger.phone,
+                          return ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: isWide ? 600.0 : double.infinity,
+                            ),
+                            child: PickupNavigationPanelWidget(
+                              pickup: widget.pickup,
+                              dropoff: widget.dropoff,
+                              passengerName: passengerName,
+                              distance: widget.distance,
+                              fare: widget.fare,
+                              sliderValue: _sliderVal,
+                              isConfirmingArrival: _isConfirmingArrival,
+                              unreadChatMessagesCount: _unreadChatMessagesCount,
+                              onSliderChanged: (val) {
+                                setState(() {
+                                  _sliderVal = val;
+                                });
+                              },
+                              onSliderCompleted: () => _confirmArrival(context),
+                              onCallPressed: () async {
+                                try {
+                                  final rideCubit =
+                                      BlocProvider.of<RideFlowCubit>(context);
+                                  final rideId = rideCubit.activeRideId ?? '';
+                                  if (rideId.isNotEmpty) {
+                                    String? phone;
+                                    (await widget.rideRepository
+                                            .fetchCounterpartyResult(rideId))
+                                        .fold(
+                                          (_) {},
+                                          (passenger) => phone = passenger.phone,
+                                        );
+                                    final passengerPhone = phone;
+                                    if (passengerPhone != null &&
+                                        passengerPhone.isNotEmpty) {
+                                      final uri = Uri.parse(
+                                        'tel:$passengerPhone',
                                       );
-                                  final passengerPhone = phone;
-                                  if (passengerPhone != null &&
-                                      passengerPhone.isNotEmpty) {
-                                    final uri = Uri.parse(
-                                      'tel:$passengerPhone',
-                                    );
-                                    if (await canLaunchUrl(uri)) {
-                                      await launchUrl(uri);
+                                      if (await canLaunchUrl(uri)) {
+                                        await launchUrl(uri);
+                                      }
                                     }
                                   }
-                                }
-                              } catch (_) {}
-                            },
-                            onChatPressed: () async {
-                              final rideId =
-                                  BlocProvider.of<RideFlowCubit>(context)
-                                      .activeRideId ??
-                                  '';
-                              final state = BlocProvider.of<RideFlowCubit>(
-                                context,
-                              ).state;
-                              final pName = state.passengerNameOr('Passenger');
-                              final driverId =
-                                  await widget.sessionService.readDriverId() ??
-                                  '';
-                              if (!context.mounted) return;
-                              setState(() {
-                                _viewedPassengerMessagesCount +=
-                                    _unreadChatMessagesCount;
-                                _unreadChatMessagesCount = 0;
-                                _isInitialChatMessagesCountFetched = true;
-                              });
-                              await context.pushNamed(
-                                ChatRoutes.chat,
-                                extra: {
-                                  'roomId': rideId,
-                                  'userId': driverId,
-                                  'peerId': BlocProvider.of<RideFlowCubit>(
-                                    context,
-                                  ).activePassengerId,
-                                  'peerName': pName,
-                                },
-                              );
-                              if (!context.mounted) return;
-                              await _updateUnreadMessagesCount(
-                                BlocProvider.of<RideFlowCubit>(context),
-                              );
-                            },
-                          ),
-                        );
-                      },
+                                } catch (_) {}
+                              },
+                              onChatPressed: () async {
+                                final rideId =
+                                    BlocProvider.of<RideFlowCubit>(context)
+                                        .activeRideId ??
+                                    '';
+                                final state = BlocProvider.of<RideFlowCubit>(
+                                  context,
+                                ).state;
+                                final pName = state.passengerNameOr('Passenger');
+                                final driverId =
+                                    await widget.sessionService.readDriverId() ??
+                                    '';
+                                if (!context.mounted) return;
+                                setState(() {
+                                  _viewedPassengerMessagesCount +=
+                                      _unreadChatMessagesCount;
+                                  _unreadChatMessagesCount = 0;
+                                  _isInitialChatMessagesCountFetched = true;
+                                });
+                                await context.pushNamed(
+                                  ChatRoutes.chat,
+                                  extra: {
+                                    'roomId': rideId,
+                                    'userId': driverId,
+                                    'peerId': BlocProvider.of<RideFlowCubit>(
+                                      context,
+                                    ).activePassengerId,
+                                    'peerName': pName,
+                                  },
+                                );
+                                if (!context.mounted) return;
+                                await _updateUnreadMessagesCount(
+                                  BlocProvider.of<RideFlowCubit>(context),
+                                );
+                              },
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         },
