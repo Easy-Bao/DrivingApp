@@ -85,14 +85,19 @@ class const DriverDashboardStatsRowWidget({
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                label,
-                style: context.textStyles.labelSmall?.copyWith(
-                  letterSpacing: 0.5,
-                  fontWeight: FontWeight.w600,
-                  color: context.colorScheme.onSurfaceVariant,
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textStyles.labelSmall?.copyWith(
+                    letterSpacing: 0.5,
+                    fontWeight: FontWeight.w600,
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
+              const SizedBox(width: EasyRideSpacing.xs),
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
@@ -113,6 +118,8 @@ class const DriverDashboardStatsRowWidget({
           else
             Text(
               value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: context.textStyles.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w800,
                 color: context.colorScheme.onSurface,

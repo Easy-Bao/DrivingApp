@@ -4,9 +4,44 @@ import 'package:design_system/src/tokens/spacing.dart';
 import 'package:flutter/material.dart';
 
 abstract final class EasyRideComponentThemes {
-  static FilledButtonThemeData filledButton(TextTheme textTheme) {
+  static ElevatedButtonThemeData elevatedButton(
+    ColorScheme colors,
+    TextTheme textTheme,
+  ) {
+    return ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: colors.primary,
+        foregroundColor: colors.onPrimary,
+        disabledBackgroundColor: colors.surfaceContainerHighest,
+        disabledForegroundColor: colors.onSurfaceVariant.withValues(alpha: 0.38),
+        elevation: 0,
+        shadowColor: Colors.transparent,
+        minimumSize: const Size(
+          EasyRideSize.minimumTouchTarget,
+          EasyRideSize.controlHeight,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        ),
+        textStyle: textTheme.labelLarge?.copyWith(
+          fontWeight: FontWeight.w700,
+          fontSize: 15,
+        ),
+      ),
+    );
+  }
+
+  static FilledButtonThemeData filledButton(
+    ColorScheme colors,
+    TextTheme textTheme,
+  ) {
     return FilledButtonThemeData(
       style: FilledButton.styleFrom(
+        backgroundColor: colors.primary,
+        foregroundColor: colors.onPrimary,
+        disabledBackgroundColor: colors.surfaceContainerHighest,
+        disabledForegroundColor: colors.onSurfaceVariant.withValues(alpha: 0.38),
+        elevation: 0,
         minimumSize: const Size(
           EasyRideSize.minimumTouchTarget,
           EasyRideSize.controlHeight,
@@ -14,14 +49,23 @@ abstract final class EasyRideComponentThemes {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         ),
-        textStyle: textTheme.labelLarge,
+        textStyle: textTheme.labelLarge?.copyWith(
+          fontWeight: FontWeight.w700,
+          fontSize: 15,
+        ),
       ),
     );
   }
 
-  static OutlinedButtonThemeData outlinedButton(TextTheme textTheme) {
+  static OutlinedButtonThemeData outlinedButton(
+    ColorScheme colors,
+    TextTheme textTheme,
+  ) {
     return OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
+        foregroundColor: colors.onSurface,
+        disabledForegroundColor: colors.onSurfaceVariant.withValues(alpha: 0.38),
+        side: BorderSide(color: colors.outlineVariant, width: 1.5),
         minimumSize: const Size(
           EasyRideSize.minimumTouchTarget,
           EasyRideSize.controlHeight,
@@ -29,19 +73,29 @@ abstract final class EasyRideComponentThemes {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         ),
-        textStyle: textTheme.labelLarge,
+        textStyle: textTheme.labelLarge?.copyWith(
+          fontWeight: FontWeight.w700,
+          fontSize: 15,
+        ),
       ),
     );
   }
 
-  static TextButtonThemeData textButton(TextTheme textTheme) {
+  static TextButtonThemeData textButton(
+    ColorScheme colors,
+    TextTheme textTheme,
+  ) {
     return TextButtonThemeData(
       style: TextButton.styleFrom(
+        foregroundColor: colors.onSurfaceVariant,
+        disabledForegroundColor: colors.onSurfaceVariant.withValues(alpha: 0.38),
         minimumSize: const Size(
           EasyRideSize.minimumTouchTarget,
           EasyRideSize.minimumTouchTarget,
         ),
-        textStyle: textTheme.labelLarge,
+        textStyle: textTheme.labelLarge?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

@@ -74,4 +74,28 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('renders stats row on narrow 360px screen without overflow', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(360, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: DriverDashboardStatsRowWidget(
+            isLoadingStats: false,
+            hasExistingStats: true,
+            earnings: 12500.5,
+            completedTrips: 18,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text("Today's Net Earnings"), findsOneWidget);
+    expect(find.text('Trips Today'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

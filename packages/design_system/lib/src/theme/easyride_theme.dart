@@ -76,9 +76,12 @@ abstract final class EasyRideTheme {
         selectionColor: colors.primary.withValues(alpha: 0.25),
         selectionHandleColor: colors.primary,
       ),
-      filledButtonTheme: EasyRideComponentThemes.filledButton(textTheme),
-      outlinedButtonTheme: EasyRideComponentThemes.outlinedButton(textTheme),
-      textButtonTheme: EasyRideComponentThemes.textButton(textTheme),
+      filledButtonTheme: EasyRideComponentThemes.filledButton(colors, textTheme),
+      outlinedButtonTheme: EasyRideComponentThemes.outlinedButton(
+        colors,
+        textTheme,
+      ),
+      textButtonTheme: EasyRideComponentThemes.textButton(colors, textTheme),
       chipTheme: ChipThemeData(
         backgroundColor: colors.surface,
         selectedColor: colors.primaryContainer,
@@ -91,17 +94,9 @@ abstract final class EasyRideTheme {
         secondaryLabelStyle: textTheme.labelLarge,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: FilledButton.styleFrom(
-          minimumSize: const Size(
-            EasyRideSize.minimumTouchTarget,
-            EasyRideSize.controlHeight,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-          ),
-          textStyle: textTheme.labelLarge,
-        ),
+      elevatedButtonTheme: EasyRideComponentThemes.elevatedButton(
+        colors,
+        textTheme,
       ),
       navigationRailTheme: NavigationRailThemeData(
         backgroundColor: colors.surface,

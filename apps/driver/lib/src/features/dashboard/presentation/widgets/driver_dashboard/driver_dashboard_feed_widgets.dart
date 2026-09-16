@@ -112,12 +112,16 @@ class const DriverActiveTripCard({
                 color: context.colorScheme.onSurface,
               ),
               const SizedBox(width: 8),
-              Text(
-                dashboardValueAsString(trip['passenger_name']) ?? '—',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: context.colorScheme.onSurface,
+              Expanded(
+                child: Text(
+                  dashboardValueAsString(trip['passenger_name']) ?? '—',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: context.colorScheme.onSurface,
+                  ),
                 ),
               ),
             ],
@@ -342,16 +346,21 @@ class const DriverPoolBidCard({
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                distance == null
-                    ? 'Distance unavailable'
-                    : '${DistanceFormatter.fromKilometers(distance)} away',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: context.colorScheme.onSurfaceVariant,
+              Expanded(
+                child: Text(
+                  distance == null
+                      ? 'Distance unavailable'
+                      : '${DistanceFormatter.fromKilometers(distance)} away',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
+              const SizedBox(width: EasyRideSpacing.sm),
               Text(
                 fare == null ? '—' : formatPesoAmount(fare),
                 style: TextStyle(

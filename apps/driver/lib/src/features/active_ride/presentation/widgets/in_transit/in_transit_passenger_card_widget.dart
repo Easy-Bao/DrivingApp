@@ -41,6 +41,8 @@ class const InTransitPassengerCardWidget({super.key}) extends StatelessWidget {
               children: [
                 Text(
                   passengerName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,

@@ -243,8 +243,15 @@ class const WaitingPassengerStartTripButton({
       child: ElevatedButton(
         onPressed: isStartingTrip ? null : onPressed,
         style: ElevatedButton.styleFrom(
+          backgroundColor: context.colorScheme.primary,
+          foregroundColor: context.colorScheme.onPrimary,
+          elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+          ),
+          textStyle: context.textStyles.labelLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
           ),
         ),
         child: isStartingTrip

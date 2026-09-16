@@ -11,9 +11,9 @@ void main() {
     expect(theme.brightness, Brightness.light);
     expect(theme.scaffoldBackgroundColor, const Color(0xFFF8FAFC));
     expect(scheme.surface, const Color(0xFFFFFFFF));
-    expect(scheme.primary, const Color(0xFF1E293B));
-    expect(scheme.onSurface, const Color(0xFF1E293B));
-    expect(scheme.secondary, const Color(0xFF315E8A));
+    expect(scheme.primary, const Color(0xFF090D16));
+    expect(scheme.onSurface, const Color(0xFF090D16));
+    expect(scheme.secondary, const Color(0xFF1E293B));
     expect(scheme.onSurfaceVariant, const Color(0xFF64748B));
     expect(scheme.error, const Color(0xFFD64545));
     expect(semantic, EasyRideSemanticColors.defaults);

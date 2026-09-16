@@ -300,8 +300,15 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                 child: ElevatedButton(
                   onPressed: _isSubmitting ? null : _submitRating,
                   style: ElevatedButton.styleFrom(
+                    backgroundColor: context.colorScheme.primary,
+                    foregroundColor: context.colorScheme.onPrimary,
+                    elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   child: _isSubmitting
@@ -310,7 +317,7 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: context.colorScheme.surface,
+                            color: context.colorScheme.onPrimary,
                           ),
                         )
                       : const Text('Submit Rating'),

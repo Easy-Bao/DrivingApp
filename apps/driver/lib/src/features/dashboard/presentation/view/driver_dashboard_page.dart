@@ -930,47 +930,56 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: isOnline
-                        ? context.semanticColors.success
-                        : context.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                    shape: BoxShape.circle,
+            Expanded(
+              child: Row(
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: isOnline
+                          ? context.semanticColors.success
+                          : context.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                      shape: BoxShape.circle,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      isOnline ? "You're Online" : "You're Offline",
-                      style: context.textStyles.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: isOnline
-                            ? context.colorScheme.onPrimary
-                            : context.colorScheme.onSurface,
-                      ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          isOnline ? "You're Online" : "You're Offline",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.textStyles.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: isOnline
+                                ? context.colorScheme.onPrimary
+                                : context.colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          isOnline
+                              ? 'Available for ride requests nearby'
+                              : 'Switch online to start receiving rides',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.textStyles.bodySmall?.copyWith(
+                            color: isOnline
+                                ? context.colorScheme.onPrimary.withValues(alpha: 0.8)
+                                : context.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      isOnline
-                          ? 'Available for ride requests nearby'
-                          : 'Switch online to start receiving rides',
-                      style: context.textStyles.bodySmall?.copyWith(
-                        color: isOnline
-                            ? context.colorScheme.onPrimary.withValues(alpha: 0.8)
-                            : context.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(width: EasyRideSpacing.sm),
             _buildAvailabilitySwitch(
               context,
               isOnline,

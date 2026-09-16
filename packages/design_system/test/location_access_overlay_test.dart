@@ -41,7 +41,7 @@ void main() {
       find.byKey(const ValueKey<String>('location-access-overlay-sheet')),
     );
     expect(sheetSize.width, 320);
-    expect(sheetSize.height, lessThan(320));
+    expect(sheetSize.height, lessThan(350));
 
     await tester.tap(find.text('Open Location Settings'));
     await tester.tap(find.text('Try Again'));

@@ -250,17 +250,20 @@ class _DriverChatPageState extends State<DriverChatPage> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.peerName ?? 'Passenger',
-                        style: TextStyle(
-                          color: context.colorScheme.onSurface,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.peerName ?? 'Passenger',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: context.colorScheme.onSurface,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                          ),
                         ),
-                      ),
                       Row(
                         children: [
                           Container(
@@ -286,8 +289,9 @@ class _DriverChatPageState extends State<DriverChatPage> {
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
+            ),
             ),
             body: Column(
               children: [

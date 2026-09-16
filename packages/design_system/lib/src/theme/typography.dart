@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 abstract final class EasyRideTypography {
   static const textTheme = TextTheme(
-    displayLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w700),
+    displayLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w800),
     displayMedium: TextStyle(fontSize: 32, fontWeight: FontWeight.w700),
     displaySmall: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
     headlineLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w700),

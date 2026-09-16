@@ -173,6 +173,9 @@ class const FindingDriverNearestPanelWidget({
                 child: ElevatedButton(
                   onPressed: onBookDirectPressed,
                   style: ElevatedButton.styleFrom(
+                    backgroundColor: context.colorScheme.primary,
+                    foregroundColor: context.colorScheme.onPrimary,
+                    elevation: 0,
                     shape: const StadiumBorder(),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
