@@ -36,3 +36,16 @@ func passengerActiveRideConflictError(operation string, err error) error {
 	}
 	return fmt.Errorf("%s: %w", operation, err)
 }
+
+func acceptedRideConflictError(operation string, err error) error {
+	var databaseError *pgconn.PgError
+	if errors.As(err, &databaseError) && databaseError.Code == "23505" {
+		switch databaseError.ConstraintName {
+		case "ride_passenger_id", "rides_one_active_ride_per_passenger_idx":
+			return domain.ErrActiveBooking
+		case "rides_one_active_ride_per_driver_idx":
+			return domain.ErrDriverHasActiveRide
+		}
+	}
+	return fmt.Errorf("%s: %w", operation, err)
+}

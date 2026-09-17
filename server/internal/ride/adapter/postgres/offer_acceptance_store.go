@@ -167,7 +167,7 @@ func (repository *RideRepository) AcceptOffer(
 		DriverPayoutAmount: acceptedRide.DriverPayoutAmount,
 	})
 	if err != nil {
-		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, driverActiveRideConflictError(
+		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, acceptedRideConflictError(
 			"create accepted ride",
 			err,
 		)
