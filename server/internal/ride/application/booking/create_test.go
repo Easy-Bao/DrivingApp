@@ -112,4 +112,87 @@ func TestServiceEstimateFareValidatesRouteInputs(t *testing.T) {
 	}
 }
 
+type activeRideCheckerStub struct {
+	hasActive bool
+	err       error
+	checkedID int
+}
+
+func (stub *activeRideCheckerStub) HasActivePassengerRide(_ context.Context, passengerID int) (bool, error) {
+	stub.checkedID = passengerID
+	return stub.hasActive, stub.err
+}
+
+func TestServiceCreateWithDetailsRejectsPassengerWithActiveRide(t *testing.T) {
+	checker := &activeRideCheckerStub{hasActive: true}
+	writer := &rideWriterStub{}
+	routeResolved := false
+	fareCalculated := false
+
+	service := booking.NewService(booking.Dependencies{
+		Writer:            writer,
+		ActiveRideChecker: checker,
+		ResolveRoute: func(
+			context.Context,
+			float64,
+			float64,
+			float64,
+			float64,
+			float64,
+			float64,
+		) (ports.RouteMetrics, error) {
+			routeResolved = true
+			return ports.RouteMetrics{DistanceKm: 5, DurationMinutes: 15}, nil
+		},
+		CalculateFare: func(float64, float64) int64 {
+			fareCalculated = true
+			return 3000
+		},
+	})
+
+	_, err := service.CreateWithDetails(context.Background(), domain.Ride{
+		PassengerID:      101,
+		PickupLatitude:   14.5,
+		PickupLongitude:  121.0,
+		DropoffLatitude:  14.6,
+		DropoffLongitude: 121.1,
+	})
+	if !errors.Is(err, domain.ErrActiveBooking) {
+		t.Fatalf("CreateWithDetails error = %v, want %v", err, domain.ErrActiveBooking)
+	}
+	if checker.checkedID != 101 {
+		t.Fatalf("checked passenger ID = %d, want 101", checker.checkedID)
+	}
+	if routeResolved {
+		t.Fatal("expected route resolution NOT to run when passenger has an active ride")
+	}
+	if fareCalculated {
+		t.Fatal("expected fare calculation NOT to run when passenger has an active ride")
+	}
+	if writer.created.ID != 0 {
+		t.Fatal("expected ride writer NOT to be invoked when passenger has an active ride")
+	}
+}
+
+func TestServiceCreateRejectsPassengerWithActiveRide(t *testing.T) {
+	checker := &activeRideCheckerStub{hasActive: true}
+	writer := &rideWriterStub{}
+
+	service := booking.NewService(booking.Dependencies{
+		Writer:            writer,
+		ActiveRideChecker: checker,
+	})
+
+	_, err := service.Create(context.Background(), 102, 2500)
+	if !errors.Is(err, domain.ErrActiveBooking) {
+		t.Fatalf("Create error = %v, want %v", err, domain.ErrActiveBooking)
+	}
+	if checker.checkedID != 102 {
+		t.Fatalf("checked passenger ID = %d, want 102", checker.checkedID)
+	}
+	if writer.created.ID != 0 {
+		t.Fatal("expected ride writer NOT to be invoked when passenger has an active ride")
+	}
+}
+
 func floatPointer(value float64) *float64 { return &value }

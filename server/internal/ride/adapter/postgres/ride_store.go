@@ -23,7 +23,8 @@ type RideRepository struct {
 }
 
 var (
-	_ ports.RideStore = (*RideRepository)(nil)
+	_ ports.RideStore                  = (*RideRepository)(nil)
+	_ ports.PassengerActiveRideChecker = (*RideRepository)(nil)
 	_ interface {
 		ActiveRidesForDriver(context.Context, int) ([]domain.Ride, error)
 	} = (*RideRepository)(nil)
@@ -111,6 +112,17 @@ func (repository *RideRepository) ActiveRidesForDriver(ctx context.Context, driv
 		result = append(result, ride)
 	}
 	return result, nil
+}
+
+func (repository *RideRepository) HasActivePassengerRide(ctx context.Context, passengerID int) (bool, error) {
+	if err := repository.validateNativeReadRepository(); err != nil {
+		return false, err
+	}
+	dbPassengerID, err := toPostgresRideID(passengerID, "passenger id")
+	if err != nil {
+		return false, err
+	}
+	return repository.queries.HasActivePassengerRide(ctx, dbPassengerID)
 }
 
 func (repository *RideRepository) validateNativeReadRepository() error {

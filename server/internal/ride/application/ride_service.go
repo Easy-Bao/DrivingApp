@@ -47,12 +47,14 @@ func NewRideService(
 		reportingLocation: defaultReportingLocation,
 		logger:            slog.Default(),
 	}
+	activeRideChecker, _ := repository.(ports.PassengerActiveRideChecker)
 	service.bookingService = booking.NewService(booking.Dependencies{
-		Writer:           repository,
-		ResolveRoute:     service.authoritativeRoute,
-		CalculateFare:    pricingConfig.FareAmount,
-		PublishRide:      service.publishRide,
-		HasRouteProvider: false,
+		Writer:            repository,
+		ActiveRideChecker: activeRideChecker,
+		ResolveRoute:      service.authoritativeRoute,
+		CalculateFare:     pricingConfig.FareAmount,
+		PublishRide:       service.publishRide,
+		HasRouteProvider:  false,
 	})
 	service.biddingService = newBiddingService(service)
 	lifecycleStore, _ := repository.(ports.RideLifecycleStore)
@@ -82,12 +84,14 @@ func NewRideServiceWithRouteCalculator(
 		reportingLocation: defaultReportingLocation,
 		logger:            slog.Default(),
 	}
+	activeRideChecker, _ := repository.(ports.PassengerActiveRideChecker)
 	service.bookingService = booking.NewService(booking.Dependencies{
-		Writer:           repository,
-		ResolveRoute:     service.authoritativeRoute,
-		CalculateFare:    pricingConfig.FareAmount,
-		PublishRide:      service.publishRide,
-		HasRouteProvider: calculator != nil,
+		Writer:            repository,
+		ActiveRideChecker: activeRideChecker,
+		ResolveRoute:      service.authoritativeRoute,
+		CalculateFare:     pricingConfig.FareAmount,
+		PublishRide:       service.publishRide,
+		HasRouteProvider:  calculator != nil,
 	})
 	service.biddingService = newBiddingService(service)
 	lifecycleStore, _ := repository.(ports.RideLifecycleStore)

@@ -18,6 +18,12 @@ type RideWriter interface {
 	CreateRide(ctx context.Context, ride domain.Ride) (domain.Ride, error)
 }
 
+// PassengerActiveRideChecker verifies whether a passenger currently has an
+// active ride in progress.
+type PassengerActiveRideChecker interface {
+	HasActivePassengerRide(ctx context.Context, passengerID int) (bool, error)
+}
+
 // RideStore is the command-side persistence port used by the ride service.
 // The more focused ports above remain available for use cases that need only
 // one capability.
@@ -25,3 +31,4 @@ type RideStore interface {
 	RideReader
 	RideWriter
 }
+

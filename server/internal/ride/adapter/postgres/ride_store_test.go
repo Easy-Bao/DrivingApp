@@ -123,3 +123,18 @@ func TestToPostgresRideIDRequiresPositiveInt32(t *testing.T) {
 		}
 	}
 }
+
+func TestRideRepositoryHasActivePassengerRideValidations(t *testing.T) {
+	var repo *RideRepository
+	if _, err := repo.HasActivePassengerRide(t.Context(), 1); err == nil {
+		t.Fatal("expected uninitialized repository to return error")
+	}
+
+	initializedRepo := &RideRepository{}
+	if _, err := initializedRepo.HasActivePassengerRide(t.Context(), 1); err == nil {
+		t.Fatal("expected repository without pool/queries to return error")
+	}
+
+	// When repository is valid, invalid passenger ID should return error before query
+	// (we can verify toPostgresRideID check with uninitialized queries)
+}

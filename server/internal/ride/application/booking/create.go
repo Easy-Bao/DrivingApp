@@ -24,28 +24,37 @@ type FareCalculator func(distanceKm, durationMinutes float64) int64
 type RideEventPublisher func(ctx context.Context, eventType event.Type, ride domain.Ride, payload map[string]any)
 
 type Dependencies struct {
-	Writer           ports.RideWriter
-	ResolveRoute     RouteResolver
-	CalculateFare    FareCalculator
-	PublishRide      RideEventPublisher
-	HasRouteProvider bool
+	Writer            ports.RideWriter
+	ActiveRideChecker ports.PassengerActiveRideChecker
+	ResolveRoute      RouteResolver
+	CalculateFare     FareCalculator
+	PublishRide       RideEventPublisher
+	HasRouteProvider  bool
 }
 
 type Service struct {
-	writer           ports.RideWriter
-	resolveRoute     RouteResolver
-	calculateFare    FareCalculator
-	publishRide      RideEventPublisher
-	hasRouteProvider bool
+	writer            ports.RideWriter
+	activeRideChecker ports.PassengerActiveRideChecker
+	resolveRoute      RouteResolver
+	calculateFare     FareCalculator
+	publishRide       RideEventPublisher
+	hasRouteProvider  bool
 }
 
 func NewService(dependencies Dependencies) *Service {
+	activeRideChecker := dependencies.ActiveRideChecker
+	if activeRideChecker == nil {
+		if checker, ok := dependencies.Writer.(ports.PassengerActiveRideChecker); ok {
+			activeRideChecker = checker
+		}
+	}
 	return &Service{
-		writer:           dependencies.Writer,
-		resolveRoute:     dependencies.ResolveRoute,
-		calculateFare:    dependencies.CalculateFare,
-		publishRide:      dependencies.PublishRide,
-		hasRouteProvider: dependencies.HasRouteProvider,
+		writer:            dependencies.Writer,
+		activeRideChecker: activeRideChecker,
+		resolveRoute:      dependencies.ResolveRoute,
+		calculateFare:     dependencies.CalculateFare,
+		publishRide:       dependencies.PublishRide,
+		hasRouteProvider:  dependencies.HasRouteProvider,
 	}
 }
 
@@ -55,6 +64,15 @@ func (service *Service) Create(ctx context.Context, passengerID int, fareAmount 
 	}
 	if service.writer == nil {
 		return domain.Ride{}, errUnavailable
+	}
+	if service.activeRideChecker != nil {
+		hasActive, err := service.activeRideChecker.HasActivePassengerRide(ctx, passengerID)
+		if err != nil {
+			return domain.Ride{}, fmt.Errorf("check active passenger ride: %w", err)
+		}
+		if hasActive {
+			return domain.Ride{}, domain.ErrActiveBooking
+		}
 	}
 	ride, err := service.writer.CreateRide(ctx, domain.Ride{
 		PassengerID: passengerID,
@@ -91,6 +109,15 @@ func (service *Service) CreateWithDetails(ctx context.Context, ride domain.Ride)
 	missingWriter := service.writer == nil
 	if missingRouteResolver || missingFareCalculator || missingWriter {
 		return domain.Ride{}, errUnavailable
+	}
+	if service.activeRideChecker != nil {
+		hasActive, err := service.activeRideChecker.HasActivePassengerRide(ctx, ride.PassengerID)
+		if err != nil {
+			return domain.Ride{}, fmt.Errorf("check active passenger ride: %w", err)
+		}
+		if hasActive {
+			return domain.Ride{}, domain.ErrActiveBooking
+		}
 	}
 	metrics, err := service.resolveRoute(
 		ctx,
