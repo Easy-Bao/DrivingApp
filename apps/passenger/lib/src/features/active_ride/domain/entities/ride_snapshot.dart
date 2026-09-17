@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:foundation/foundation.dart';
+import 'package:passenger/src/features/ride_history/domain/entities/ride_history.dart';
 
 final class const RideSnapshot({
   required final String id,
@@ -69,6 +70,28 @@ final class const RideSnapshot({
 
   bool get isTerminal =>
       const {'completed', 'canceled', 'cancelled'}.contains(status);
+
+  RideHistory toRideHistory() {
+    final fare =
+        fareAmount == null ? '0.00' : formatPesoAmount(fareAmount! / 100);
+    return RideHistory(
+      id: id,
+      pickup: pickupName,
+      destination: dropoffName,
+      pickupLat: pickupLatitude ?? 0.0,
+      pickupLng: pickupLongitude ?? 0.0,
+      destLat: dropoffLatitude ?? 0.0,
+      destLng: dropoffLongitude ?? 0.0,
+      date: '',
+      price: fare,
+      status: status,
+      driverId: driverId ?? '',
+      driverName: driverName ?? '',
+      vehiclePlate: plateNumber ?? '',
+      vehicleType: vehicleType ?? '',
+      driverRating: null,
+    );
+  }
 
   @override
   List<Object?> get props => [

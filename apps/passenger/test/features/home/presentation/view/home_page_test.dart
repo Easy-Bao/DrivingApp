@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:passenger/src/features/active_ride/active_ride.dart';
+import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
@@ -24,6 +26,7 @@ import 'package:passenger/src/features/ride_history/presentation/bloc/ride_histo
 import 'package:passenger/src/features/ride_history/ride_history.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places/saved_places_cubit.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places/saved_places_state.dart';
+import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 
 class _MockCurrentLocationRepository extends Mock
     implements CurrentLocationRepository {}
@@ -46,6 +49,11 @@ class _MockSavedPlacesCubit extends MockCubit<SavedPlacesState>
     implements SavedPlacesCubit {}
 
 class _MockSessionRepository extends Mock implements SessionRepository {}
+
+class _MockPassengerSessionStore extends Mock
+    implements PassengerSessionStore {}
+
+class _MockTrackRepository extends Mock implements TrackRepository {}
 
 void main() {
   testWidgets('syncs pickup location after session restoration completes', (
@@ -247,4 +255,103 @@ void main() {
     expect(find.text('Resume Trip'), findsNWidgets(2));
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'checks activeRideId in session store and queries active ride on launch',
+    (tester) async {
+      final currentLocationRepository = _MockCurrentLocationRepository();
+      final homeRepository = _MockHomeRepository();
+      final homeCubit = HomeCubit(
+        repository: homeRepository,
+        currentLocationRepository: currentLocationRepository,
+      );
+      final sessionBloc = SessionBloc(
+        sessionRepository: _MockSessionRepository(),
+      );
+      final locationAccessCubit = _MockLocationAccessCubit();
+      final bookingBloc = _MockBookingBloc();
+      final publicDriverSummaryCubit = _MockPublicDriverSummaryCubit();
+      final rideHistoryBloc = _MockRideHistoryBloc();
+      final savedPlacesCubit = _MockSavedPlacesCubit();
+      final bookingDraftCubit = BookingDraftCubit();
+      final lifecycleCoordinator = AppLifecycleCoordinator();
+      final sessionStore = _MockPassengerSessionStore();
+      final trackRepository = _MockTrackRepository();
+
+      when(() => currentLocationRepository.getCurrentLocation()).thenAnswer(
+        (_) async => const Right(
+          CurrentLocation(latitude: 37.3861, longitude: -122.0839),
+        ),
+      );
+      when(() => currentLocationRepository.watchCurrentLocation())
+          .thenAnswer((_) => const Stream.empty());
+      when(
+        () => homeRepository.loadHomeData(
+          lat: any(named: 'lat'),
+          lng: any(named: 'lng'),
+        ),
+      ).thenAnswer(
+        (_) async => const Right(
+          HomeData(currentAddress: 'Mountain View', recentLocations: []),
+        ),
+      );
+      when(() => locationAccessCubit.state)
+          .thenReturn(const LocationAccessReady());
+      when(() => bookingBloc.activeDriverSearch).thenReturn(null);
+      when(() => publicDriverSummaryCubit.state)
+          .thenReturn(const PublicDriverSummaryState());
+      when(() => rideHistoryBloc.state).thenReturn(const RideHistoryInitial());
+      when(() => savedPlacesCubit.state).thenReturn(const SavedPlacesState());
+      when(savedPlacesCubit.loadPlaces).thenAnswer((_) async {});
+      when(sessionStore.readActiveRideId).thenAnswer((_) async => 'active-trip-99');
+      when(() => trackRepository.fetchRideResult('active-trip-99')).thenAnswer(
+        (_) async => const Ok(
+          RideSnapshot(
+            id: 'active-trip-99',
+            status: 'accepted',
+            pickupName: 'Origin St',
+            dropoffName: 'Dest Ave',
+          ),
+        ),
+      );
+
+      addTearDown(() async {
+        await homeCubit.close();
+        await sessionBloc.close();
+        await bookingDraftCubit.close();
+        await lifecycleCoordinator.dispose();
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: EasyRideTheme.main,
+          home: MultiBlocProvider(
+            providers: [
+              BlocProvider<SessionBloc>.value(value: sessionBloc),
+              BlocProvider<LocationAccessCubit>.value(
+                value: locationAccessCubit,
+              ),
+              BlocProvider<HomeCubit>.value(value: homeCubit),
+              BlocProvider<BookingDraftCubit>.value(value: bookingDraftCubit),
+              BlocProvider<PublicDriverSummaryCubit>.value(
+                value: publicDriverSummaryCubit,
+              ),
+              BlocProvider<RideHistoryBloc>.value(value: rideHistoryBloc),
+              BlocProvider<SavedPlacesCubit>.value(value: savedPlacesCubit),
+            ],
+            child: HomePage(
+              bookingBloc: bookingBloc,
+              lifecycleCoordinator: lifecycleCoordinator,
+              sessionService: sessionStore,
+              trackRepository: trackRepository,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      verify(sessionStore.readActiveRideId).called(1);
+      verify(() => trackRepository.fetchRideResult('active-trip-99')).called(1);
+    },
+  );
 }

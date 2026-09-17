@@ -12,6 +12,7 @@ import 'package:passenger/src/features/active_ride/presentation/bloc/live_map/li
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger/src/features/active_ride/presentation/view/driver_matched_page.dart';
 import 'package:passenger/src/features/active_ride/presentation/view/track_driver_page.dart';
+import 'package:passenger/src/features/active_ride/presentation/view/track_driver_page_loader.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
@@ -90,8 +91,14 @@ class ActiveRideModule._() {
             ? state.extra as RideHistory
             : null;
         if (ride == null) {
-          return const Scaffold(
-            body: Center(child: Text('Trip tracking data not available.')),
+          return TrackDriverPageLoader(
+            trackRepository: Modular.get<TrackRepository>(),
+            chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
+            sessionService: Modular.get<PassengerSessionStore>(),
+            lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
+            liveMapBloc: Modular.get<LiveMapBloc>(),
+            bookingBloc: Modular.get<BookingBloc>(),
+            realtimeClient: Modular.get<RealtimeWebSocketClient>(),
           );
         }
         return TrackDriverPage(

@@ -10,6 +10,7 @@ import 'package:maps/maps.dart';
 import 'package:passenger/src/app/navigation/passenger_navigation_observer.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
+import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_state.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
@@ -35,15 +36,20 @@ import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
 import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places/saved_places_cubit.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places/saved_places_state.dart';
+import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class const HomePage({
   super.key,
   required this.bookingBloc,
   required this.lifecycleCoordinator,
+  this.sessionService,
+  this.trackRepository,
 }) extends StatefulWidget {
   final BookingBloc bookingBloc;
   final AppLifecycleCoordinator lifecycleCoordinator;
+  final PassengerSessionStore? sessionService;
+  final TrackRepository? trackRepository;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -133,12 +139,67 @@ class _HomePageState extends State<HomePage> {
       if (!mounted) return;
       unawaited(_loadSavedPlaces());
       _loadRecentRideHistory();
+      unawaited(_restoreActiveRideOnLaunch());
       if (!mounted) return;
       if (BlocProvider.of<LocationAccessCubit>(context).state
           is LocationAccessReady) {
         unawaited(_homeCubit.startLocationTracking());
       }
     });
+  }
+
+  Future<void> _restoreActiveRideOnLaunch() async {
+    try {
+      PassengerSessionStore? session = widget.sessionService;
+      if (session == null) {
+        try {
+          session = Modular.get<PassengerSessionStore>();
+        } catch (_) {
+          return;
+        }
+      }
+      final activeRideId = await session.readActiveRideId();
+      if (activeRideId == null || activeRideId.trim().isEmpty) return;
+
+      TrackRepository? trackRepo = widget.trackRepository;
+      if (trackRepo == null) {
+        try {
+          trackRepo = Modular.get<TrackRepository>();
+        } catch (_) {
+          return;
+        }
+      }
+      final result = await trackRepo.fetchRideResult(activeRideId.trim());
+      await result.fold(
+        (failure) async {
+          final msg = failure.message.toLowerCase();
+          if ((failure is ServerFailure && failure.statusCode == 404) ||
+              msg.contains('not found') ||
+              msg.contains('incomplete')) {
+            await session?.saveActiveRideId('');
+          }
+        },
+        (snapshot) async {
+          if (!mounted) return;
+          if (snapshot.isTerminal) {
+            await session?.saveActiveRideId('');
+            return;
+          }
+          final ride = snapshot.toRideHistory();
+          final trackDriverCubit = _getTrackDriverCubit();
+          if (trackDriverCubit != null) {
+            trackDriverCubit.currentRide = ride;
+          }
+          if (mounted) {
+            unawaited(
+              context.pushNamed(ActiveRideRoutes.trackDriver, extra: ride),
+            );
+          }
+        },
+      );
+    } catch (_) {
+      // Best-effort active trip restoration on app launch.
+    }
   }
 
   @override
