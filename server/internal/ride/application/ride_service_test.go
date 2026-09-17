@@ -12,8 +12,9 @@ type ridesRepositoryStub struct {
 	ride       domain.Ride
 	created    domain.Ride
 	updated    domain.Ride
-	session    domain.BidSession
-	updateNext string
+	session       domain.BidSession
+	updateNext    string
+	hasActiveRide bool
 }
 
 func testPricingConfig(t *testing.T) PricingConfig {
@@ -33,6 +34,10 @@ func (stub *ridesRepositoryStub) CreateRide(_ context.Context, ride domain.Ride)
 
 func (stub *ridesRepositoryStub) Get(context.Context, int) (domain.Ride, error) {
 	return stub.ride, nil
+}
+
+func (stub *ridesRepositoryStub) HasActivePassengerRide(_ context.Context, _ int) (bool, error) {
+	return stub.hasActiveRide, nil
 }
 
 func (stub *ridesRepositoryStub) AcceptRide(context.Context, int, int) (domain.Ride, error) {
@@ -246,6 +251,59 @@ func TestCreateSessionRejectsOfferBelowCalculatedMinimum(t *testing.T) {
 	})
 	if !errors.Is(err, domain.ErrInvalidFareOffer) {
 		t.Fatalf("expected ErrInvalidFareOffer, got %v", err)
+	}
+}
+
+func TestCreateSessionRejectsPassengerWithActiveRide(t *testing.T) {
+	stub := &ridesRepositoryStub{hasActiveRide: true}
+	service := NewRideService(stub, testPricingConfig(t), nil)
+	_, err := service.CreateSession(context.Background(), domain.BidSession{
+		PassengerID:      7,
+		PickupLatitude:   6.7,
+		PickupLongitude:  122.1,
+		DropoffLatitude:  6.71,
+		DropoffLongitude: 122.11,
+		DistanceKm:       2,
+		DurationMinutes:  10,
+	})
+	if !errors.Is(err, domain.ErrActiveBooking) {
+		t.Fatalf("CreateSession error = %v, want %v", err, domain.ErrActiveBooking)
+	}
+	if stub.session.PassengerID != 0 {
+		t.Fatal("expected bid session NOT to be persisted when passenger has an active ride")
+	}
+}
+
+func TestCreateSessionRejectsPassengerWithActiveRideBeforeRouteCalculation(t *testing.T) {
+	stub := &ridesRepositoryStub{hasActiveRide: true}
+	routeResolved := false
+	service := NewRideServiceWithRouteCalculator(
+		stub,
+		RouteCalculatorFunc(func(
+			context.Context,
+			float64,
+			float64,
+			float64,
+			float64,
+		) (RouteMetrics, error) {
+			routeResolved = true
+			return RouteMetrics{DistanceKm: 4, DurationMinutes: 20}, nil
+		}),
+		testPricingConfig(t),
+		nil,
+	)
+	_, err := service.CreateSession(context.Background(), domain.BidSession{
+		PassengerID:      7,
+		PickupLatitude:   6.7,
+		PickupLongitude:  122.1,
+		DropoffLatitude:  6.71,
+		DropoffLongitude: 122.11,
+	})
+	if !errors.Is(err, domain.ErrActiveBooking) {
+		t.Fatalf("CreateSession error = %v, want %v", err, domain.ErrActiveBooking)
+	}
+	if routeResolved {
+		t.Fatal("expected route calculator NOT to be called when passenger has an active ride")
 	}
 }
 

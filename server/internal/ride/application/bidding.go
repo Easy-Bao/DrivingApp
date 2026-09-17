@@ -14,8 +14,10 @@ var ErrBiddingPersistenceUnavailable = biddingapplication.ErrPersistenceUnavaila
 
 func newBiddingService(service *RideService) *biddingapplication.Service {
 	store, _ := service.repository.(ports.BiddingStore)
+	activeRideChecker, _ := service.repository.(ports.PassengerActiveRideChecker)
 	return biddingapplication.NewService(biddingapplication.Dependencies{
 		Store:              store,
+		ActiveRideChecker:  activeRideChecker,
 		ResolveRoute:       service.authoritativeRoute,
 		CalculateFare:      service.pricingConfig.FareAmount,
 		PublishRide:        service.publishRide,

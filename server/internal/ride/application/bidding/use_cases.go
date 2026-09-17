@@ -32,6 +32,7 @@ type DriverOfferPublisher func(ctx context.Context, offer domain.BidOffer, paylo
 
 type Dependencies struct {
 	Store              ports.BiddingStore
+	ActiveRideChecker  ports.PassengerActiveRideChecker
 	ResolveRoute       ports.RouteResolver
 	CalculateFare      FareCalculator
 	PublishRide        RideEventPublisher
@@ -41,6 +42,7 @@ type Dependencies struct {
 
 type Service struct {
 	store              ports.BiddingStore
+	activeRideChecker  ports.PassengerActiveRideChecker
 	resolveRoute       ports.RouteResolver
 	calculateFare      FareCalculator
 	publishRide        RideEventPublisher
@@ -50,8 +52,15 @@ type Service struct {
 }
 
 func NewService(dependencies Dependencies) *Service {
+	activeRideChecker := dependencies.ActiveRideChecker
+	if activeRideChecker == nil {
+		if checker, ok := dependencies.Store.(ports.PassengerActiveRideChecker); ok {
+			activeRideChecker = checker
+		}
+	}
 	return &Service{
 		store:              dependencies.Store,
+		activeRideChecker:  activeRideChecker,
 		resolveRoute:       dependencies.ResolveRoute,
 		calculateFare:      dependencies.CalculateFare,
 		publishRide:        dependencies.PublishRide,
@@ -69,6 +78,15 @@ func (service *Service) CreateSession(ctx context.Context, session domain.BidSes
 	}
 	if service.resolveRoute == nil || service.calculateFare == nil {
 		return domain.BidSession{}, ErrPersistenceUnavailable
+	}
+	if service.activeRideChecker != nil {
+		hasActive, err := service.activeRideChecker.HasActivePassengerRide(ctx, session.PassengerID)
+		if err != nil {
+			return domain.BidSession{}, fmt.Errorf("check active passenger ride: %w", err)
+		}
+		if hasActive {
+			return domain.BidSession{}, domain.ErrActiveBooking
+		}
 	}
 	metrics, err := service.resolveRoute(
 		ctx,
