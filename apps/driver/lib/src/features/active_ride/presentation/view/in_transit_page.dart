@@ -257,15 +257,22 @@ class _InTransitPageState extends State<InTransitPage> {
               rideCubitState.destinationLongitude ??
               _destLng;
           if (defaultLat == null || defaultLng == null) {
-            return const Scaffold(
-              body: Center(child: Text('Destination location is unavailable.')),
+            return const PopScope(
+              canPop: false,
+              child: Scaffold(
+                body: Center(
+                  child: Text('Destination location is unavailable.'),
+                ),
+              ),
             );
           }
 
-          return Scaffold(
-            backgroundColor: context.colorScheme.surface,
-            body: Stack(
-              children: [
+          return PopScope(
+            canPop: false,
+            child: Scaffold(
+              backgroundColor: context.colorScheme.surface,
+              body: Stack(
+                children: [
                 Positioned.fill(
                   child: SizedBox.expand(
                     child: MapProvider.buildMapView(
@@ -329,7 +336,8 @@ class _InTransitPageState extends State<InTransitPage> {
                     ),
                   ),
                 ),
-              ],
+                ],
+              ),
             ),
           );
         },

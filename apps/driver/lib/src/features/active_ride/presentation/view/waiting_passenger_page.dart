@@ -205,23 +205,25 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
           );
         });
 
-    return Scaffold(
-      backgroundColor: context.canvasColor,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (ctx, constraints) {
-            final isWide = constraints.maxWidth > 600.0;
-            return Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: isWide ? 600.0 : double.infinity,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: EasyRideLayout.pagePadding,
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: context.canvasColor,
+        body: SafeArea(
+          child: LayoutBuilder(
+            builder: (ctx, constraints) {
+              final isWide = constraints.maxWidth > 600.0;
+              return Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: isWide ? 600.0 : double.infinity,
                   ),
-                  child: Column(
-                    children: [
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: EasyRideLayout.pagePadding,
+                    ),
+                    child: Column(
+                      children: [
                       const SizedBox(height: 12),
                       Row(
                         children: [
@@ -333,12 +335,13 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                           ),
                         ),
                       ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );
