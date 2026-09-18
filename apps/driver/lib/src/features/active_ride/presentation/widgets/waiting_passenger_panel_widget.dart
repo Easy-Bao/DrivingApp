@@ -223,7 +223,6 @@ class const WaitingPassengerPanelWidget({
         ),
       ),
     );
-
   }
 }
 

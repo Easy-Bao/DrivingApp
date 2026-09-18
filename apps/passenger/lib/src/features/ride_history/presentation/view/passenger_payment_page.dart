@@ -24,7 +24,9 @@ class const PassengerPaymentPage({super.key, required this.ride})
                 return SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
                     child: IntrinsicHeight(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
@@ -35,9 +37,8 @@ class const PassengerPaymentPage({super.key, required this.ride})
                               width: 60,
                               height: 60,
                               decoration: BoxDecoration(
-                                color: context.semanticColors.success.withValues(
-                                  alpha: 0.12,
-                                ),
+                                color: context.semanticColors.success
+                                    .withValues(alpha: 0.12),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
@@ -74,7 +75,9 @@ class const PassengerPaymentPage({super.key, required this.ride})
                               ),
                               decoration: BoxDecoration(
                                 color: context.colorScheme.surface,
-                                borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                                borderRadius: BorderRadius.circular(
+                                  EasyRideRadius.lg,
+                                ),
                                 border: Border.all(
                                   color: context.colorScheme.outlineVariant,
                                 ),
@@ -86,7 +89,8 @@ class const PassengerPaymentPage({super.key, required this.ride})
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
-                                      color: context.colorScheme.onSurfaceVariant,
+                                      color:
+                                          context.colorScheme.onSurfaceVariant,
                                     ),
                                   ),
                                   const SizedBox(height: 6),
@@ -106,7 +110,9 @@ class const PassengerPaymentPage({super.key, required this.ride})
                                       vertical: 9,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: context.colorScheme.surfaceContainerHighest,
+                                      color: context
+                                          .colorScheme
+                                          .surfaceContainerHighest,
                                       borderRadius: BorderRadius.circular(
                                         EasyRideRadius.lg,
                                       ),
@@ -118,7 +124,9 @@ class const PassengerPaymentPage({super.key, required this.ride})
                                         SizedBox(width: 8),
                                         Text(
                                           'Cash Payment',
-                                          style: TextStyle(fontWeight: FontWeight.w700),
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -140,7 +148,8 @@ class const PassengerPaymentPage({super.key, required this.ride})
                                   child: Text(
                                     'After paying, continue to share feedback about your driver.',
                                     style: TextStyle(
-                                      color: context.colorScheme.onSurfaceVariant,
+                                      color:
+                                          context.colorScheme.onSurfaceVariant,
                                       fontSize: 13,
                                       height: 1.35,
                                     ),
@@ -151,7 +160,9 @@ class const PassengerPaymentPage({super.key, required this.ride})
                             const Spacer(),
                             const SizedBox(height: 24),
                             ElevatedButton(
-                              key: const ValueKey('confirm-cash-payment-button'),
+                              key: const ValueKey(
+                                'confirm-cash-payment-button',
+                              ),
                               onPressed: () => context.goNamed(
                                 RideHistoryRoutes.passengerRating,
                                 queryParameters: {
@@ -166,7 +177,9 @@ class const PassengerPaymentPage({super.key, required this.ride})
                                 elevation: 0,
                                 minimumSize: const Size.fromHeight(54),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                                  borderRadius: BorderRadius.circular(
+                                    EasyRideRadius.lg,
+                                  ),
                                 ),
                               ),
                               child: const Text(

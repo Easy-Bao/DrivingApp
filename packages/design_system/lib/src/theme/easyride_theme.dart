@@ -76,7 +76,10 @@ abstract final class EasyRideTheme {
         selectionColor: colors.primary.withValues(alpha: 0.25),
         selectionHandleColor: colors.primary,
       ),
-      filledButtonTheme: EasyRideComponentThemes.filledButton(colors, textTheme),
+      filledButtonTheme: EasyRideComponentThemes.filledButton(
+        colors,
+        textTheme,
+      ),
       outlinedButtonTheme: EasyRideComponentThemes.outlinedButton(
         colors,
         textTheme,

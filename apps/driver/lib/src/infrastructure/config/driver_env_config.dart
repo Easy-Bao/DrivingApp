@@ -28,8 +28,11 @@ class DriverEnvConfig._() {
 
   static String get sentryDsn => _value('SENTRY_DSN', _sentryDsn) ?? '';
 
-  static bool get backgroundTelemetryEnabled =>
-      _flag('ENABLE_DRIVER_BACKGROUND_TELEMETRY', _backgroundTelemetry);
+  static bool get backgroundTelemetryEnabled => _optionalFlag(
+    'ENABLE_DRIVER_BACKGROUND_TELEMETRY',
+    _backgroundTelemetry,
+    defaultValue: true,
+  );
 
   static Uri get apiBaseUri {
     final rawUrl = _value('API_BASE_URL', _apiBaseUrl);
@@ -63,6 +66,16 @@ class DriverEnvConfig._() {
 
   static bool _flag(String key, String dartDefineValue) =>
       _value(key, dartDefineValue)?.toLowerCase() == 'true';
+
+  static bool _optionalFlag(
+    String key,
+    String dartDefineValue, {
+    required bool defaultValue,
+  }) {
+    final value = _value(key, dartDefineValue);
+    if (value == null || value.trim().isEmpty) return defaultValue;
+    return value.toLowerCase() == 'true';
+  }
 
   static String? _value(String key, String dartDefineValue) {
     if (dartDefineValue.trim().isNotEmpty) return dartDefineValue;

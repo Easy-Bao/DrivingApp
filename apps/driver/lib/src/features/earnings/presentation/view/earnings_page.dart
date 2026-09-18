@@ -496,7 +496,6 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     );
   }
 
-
   BarChartData _barChartData(double availableWidth, List<_EarnDay> dailyData) {
     final chartDays = dailyData.isEmpty ? const [_EarnDay('—', 0)] : dailyData;
     final maxAmount = chartDays.fold<double>(0, (max, item) {
@@ -550,7 +549,9 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: context.textStyles.labelSmall?.copyWith(
-                    fontWeight: day.isCurrent ? FontWeight.w800 : FontWeight.w600,
+                    fontWeight: day.isCurrent
+                        ? FontWeight.w800
+                        : FontWeight.w600,
                     color: day.isCurrent
                         ? context.colorScheme.onSurface
                         : context.colorScheme.onSurfaceVariant,
@@ -615,7 +616,6 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
       ],
     );
   }
-
 }
 
 class const _EarningsSummary({

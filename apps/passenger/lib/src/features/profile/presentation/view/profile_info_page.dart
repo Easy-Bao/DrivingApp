@@ -541,10 +541,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
       border: border,
       enabledBorder: border,
       focusedBorder: border.copyWith(
-        borderSide: BorderSide(
-          color: context.colorScheme.primary,
-          width: 1.5,
-        ),
+        borderSide: BorderSide(color: context.colorScheme.primary, width: 1.5),
       ),
       errorBorder: border.copyWith(
         borderSide: BorderSide(color: context.colorScheme.error),

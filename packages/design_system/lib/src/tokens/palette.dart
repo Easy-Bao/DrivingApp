@@ -18,4 +18,3 @@ abstract final class EasyRidePalette {
   static const gray950 = Color(0xFF020617);
   static const obsidian = Color(0xFF090D16);
 }
-

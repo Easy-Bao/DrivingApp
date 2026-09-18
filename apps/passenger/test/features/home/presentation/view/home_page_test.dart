@@ -303,7 +303,8 @@ void main() {
       when(() => rideHistoryBloc.state).thenReturn(const RideHistoryInitial());
       when(() => savedPlacesCubit.state).thenReturn(const SavedPlacesState());
       when(savedPlacesCubit.loadPlaces).thenAnswer((_) async {});
-      when(sessionStore.readActiveRideId).thenAnswer((_) async => 'active-trip-99');
+      when(sessionStore.readActiveRideId)
+          .thenAnswer((_) async => 'active-trip-99');
       when(() => trackRepository.fetchRideResult('active-trip-99')).thenAnswer(
         (_) async => const Ok(
           RideSnapshot(

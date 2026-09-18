@@ -234,8 +234,8 @@ class FindingDriverStatusSheet extends StatelessWidget {
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: statusColor.withValues(
-                          alpha: (1.0 - ((t + 0.5) % 1.0)).clamp(0.0, 1.0) *
-                              0.3,
+                          alpha:
+                              (1.0 - ((t + 0.5) % 1.0)).clamp(0.0, 1.0) * 0.3,
                         ),
                         width: 1.0,
                       ),
@@ -292,10 +292,7 @@ class FindingDriverStatusSheet extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-        border: Border.all(
-          color: colorScheme.outlineVariant,
-          width: 0.8,
-        ),
+        border: Border.all(color: colorScheme.outlineVariant, width: 0.8),
       ),
       child: Row(
         children: [

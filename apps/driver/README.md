@@ -9,9 +9,11 @@ gateway port. Release builds require HTTPS. Local Android emulators rewrite a
 loopback origin through `ANDROID_EMULATOR_LOOPBACK_HOST` unless adb reverse is
 enabled; physical devices must use an API host reachable from that device.
 
-`ENABLE_DRIVER_BACKGROUND_TELEMETRY` is disabled by default and should be
-enabled only for builds that intentionally provide foreground location service
-behavior while a driver is online.
+`ENABLE_DRIVER_BACKGROUND_TELEMETRY` is enabled by default so the driver keeps
+an Android foreground location service and sticky notification while online,
+including when a third-party navigation app is in the foreground. Set it to
+`false` only for builds that intentionally opt out of background location
+sharing.
 
 Values in this file are bundled with the application and are not secrets.
 Server credentials, signing material, and private access tokens belong only in

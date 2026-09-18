@@ -381,7 +381,8 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
                                             .fetchCounterpartyResult(rideId))
                                         .fold(
                                           (_) {},
-                                          (passenger) => phone = passenger.phone,
+                                          (passenger) =>
+                                              phone = passenger.phone,
                                         );
                                     final passengerPhone = phone;
                                     if (passengerPhone != null &&
@@ -404,9 +405,12 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
                                 final state = BlocProvider.of<RideFlowCubit>(
                                   context,
                                 ).state;
-                                final pName = state.passengerNameOr('Passenger');
+                                final pName = state.passengerNameOr(
+                                  'Passenger',
+                                );
                                 final driverId =
-                                    await widget.sessionService.readDriverId() ??
+                                    await widget.sessionService
+                                        .readDriverId() ??
                                     '';
                                 if (!context.mounted) return;
                                 setState(() {

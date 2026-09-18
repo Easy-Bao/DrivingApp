@@ -130,7 +130,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2]
+        shard: [0, 1]
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -174,7 +174,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2]
+        shard: [0, 1]
     steps:
       - name: Check out repository
         uses: actions/checkout@v6

@@ -41,4 +41,3 @@ abstract final class EasyRideColorScheme {
     surfaceTint: EasyRidePalette.gray900,
   );
 }
-

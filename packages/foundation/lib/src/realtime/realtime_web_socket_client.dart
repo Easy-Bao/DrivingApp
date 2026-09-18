@@ -27,8 +27,7 @@ abstract interface class RealtimeSocketConnector {
 
 final class const IoRealtimeSocketConnector({
   this.pingInterval = realtimeHeartbeatInterval,
-})
-    implements RealtimeSocketConnector {
+}) implements RealtimeSocketConnector {
   final Duration pingInterval;
 
   @override

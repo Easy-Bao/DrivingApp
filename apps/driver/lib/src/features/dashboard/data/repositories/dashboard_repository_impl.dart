@@ -235,15 +235,7 @@ final class DashboardRepositoryImpl({
         isOnline: true,
       );
 
-      try {
-        await _backgroundTelemetryService?.start();
-      } catch (error) {
-        // Foreground telemetry is already active, so an optional background
-        // service must never invalidate a live driver's availability.
-        dev.log(
-          'Optional background telemetry was unavailable; foreground telemetry remains active: $error',
-        );
-      }
+      await _backgroundTelemetryService?.start();
 
       try {
         await _sessionService.saveDriverOnlineStatus(true);

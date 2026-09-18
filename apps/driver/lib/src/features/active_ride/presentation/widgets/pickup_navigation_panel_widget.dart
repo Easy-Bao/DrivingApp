@@ -245,7 +245,6 @@ class const PickupNavigationPanelWidget({
     );
   }
 
-
   Widget _arrivalSlider() {
     return LayoutBuilder(
       builder: (context, constraints) {

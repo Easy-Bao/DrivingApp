@@ -251,7 +251,7 @@ void main() {
   );
 
   test(
-    'keeps the driver online when optional background telemetry cannot start',
+    'does not keep the driver online when background telemetry cannot start',
     () async {
       final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
       final sessionService = MockSecureSessionService();
@@ -288,16 +288,17 @@ void main() {
         lng: 123.434,
       );
 
-      expect(result, const Right<Failure, void>(null));
+      expect(result.isLeft(), isTrue);
       verify(() => backgroundService.start()).called(1);
-      verifyNever(
+      verify(
         () => availabilityDataSource.updateOnlineStatus(
           driverId: 'driver-42',
           isOnline: false,
         ),
-      );
-      verifyNever(() => _rideRepository.clearDriverLocation());
-      verify(() => sessionService.saveDriverOnlineStatus(true)).called(1);
+      ).called(1);
+      verify(() => _rideRepository.clearDriverLocation()).called(1);
+      verify(() => sessionService.saveDriverOnlineStatus(false)).called(1);
+      verifyNever(() => sessionService.saveDriverOnlineStatus(true));
     },
   );
 

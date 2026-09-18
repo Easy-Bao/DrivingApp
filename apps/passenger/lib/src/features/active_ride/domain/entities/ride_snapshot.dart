@@ -72,8 +72,9 @@ final class const RideSnapshot({
       const {'completed', 'canceled', 'cancelled'}.contains(status);
 
   RideHistory toRideHistory() {
-    final fare =
-        fareAmount == null ? '0.00' : formatPesoAmount(fareAmount! / 100);
+    final fare = fareAmount == null
+        ? '0.00'
+        : formatPesoAmount(fareAmount! / 100);
     return RideHistory(
       id: id,
       pickup: pickupName,

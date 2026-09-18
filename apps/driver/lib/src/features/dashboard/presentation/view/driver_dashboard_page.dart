@@ -414,7 +414,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   void _handleRideStatusChanged(RideStatusChangedEvent event) {
     final rawRide = event.envelope.payload['ride'];
     final ride = rawRide is Map ? Map<String, dynamic>.from(rawRide) : null;
-    final status = dashboardValueAsString(ride?['status']) ??
+    final status =
+        dashboardValueAsString(ride?['status']) ??
         dashboardValueAsString(event.envelope.payload['status']);
     if (status != 'canceled' && status != 'cancelled') return;
 
@@ -995,7 +996,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                     decoration: BoxDecoration(
                       color: isOnline
                           ? context.semanticColors.success
-                          : context.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                          : context.colorScheme.onSurfaceVariant.withValues(
+                              alpha: 0.4,
+                            ),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -1025,7 +1028,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                           overflow: TextOverflow.ellipsis,
                           style: context.textStyles.bodySmall?.copyWith(
                             color: isOnline
-                                ? context.colorScheme.onPrimary.withValues(alpha: 0.8)
+                                ? context.colorScheme.onPrimary.withValues(
+                                    alpha: 0.8,
+                                  )
                                 : context.colorScheme.onSurfaceVariant,
                           ),
                         ),
@@ -1047,7 +1052,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       ),
     );
   }
-
 
   Widget _buildAvailabilitySwitch(
     BuildContext context,
@@ -1231,5 +1235,4 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       ],
     );
   }
-
 }

@@ -13,7 +13,9 @@ abstract final class EasyRideComponentThemes {
         backgroundColor: colors.primary,
         foregroundColor: colors.onPrimary,
         disabledBackgroundColor: colors.surfaceContainerHighest,
-        disabledForegroundColor: colors.onSurfaceVariant.withValues(alpha: 0.38),
+        disabledForegroundColor: colors.onSurfaceVariant.withValues(
+          alpha: 0.38,
+        ),
         elevation: 0,
         shadowColor: Colors.transparent,
         minimumSize: const Size(
@@ -40,7 +42,9 @@ abstract final class EasyRideComponentThemes {
         backgroundColor: colors.primary,
         foregroundColor: colors.onPrimary,
         disabledBackgroundColor: colors.surfaceContainerHighest,
-        disabledForegroundColor: colors.onSurfaceVariant.withValues(alpha: 0.38),
+        disabledForegroundColor: colors.onSurfaceVariant.withValues(
+          alpha: 0.38,
+        ),
         elevation: 0,
         minimumSize: const Size(
           EasyRideSize.minimumTouchTarget,
@@ -64,7 +68,9 @@ abstract final class EasyRideComponentThemes {
     return OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: colors.onSurface,
-        disabledForegroundColor: colors.onSurfaceVariant.withValues(alpha: 0.38),
+        disabledForegroundColor: colors.onSurfaceVariant.withValues(
+          alpha: 0.38,
+        ),
         side: BorderSide(color: colors.outlineVariant, width: 1.5),
         minimumSize: const Size(
           EasyRideSize.minimumTouchTarget,
@@ -88,14 +94,14 @@ abstract final class EasyRideComponentThemes {
     return TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: colors.onSurfaceVariant,
-        disabledForegroundColor: colors.onSurfaceVariant.withValues(alpha: 0.38),
+        disabledForegroundColor: colors.onSurfaceVariant.withValues(
+          alpha: 0.38,
+        ),
         minimumSize: const Size(
           EasyRideSize.minimumTouchTarget,
           EasyRideSize.minimumTouchTarget,
         ),
-        textStyle: textTheme.labelLarge?.copyWith(
-          fontWeight: FontWeight.w600,
-        ),
+        textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
       ),
     );
   }

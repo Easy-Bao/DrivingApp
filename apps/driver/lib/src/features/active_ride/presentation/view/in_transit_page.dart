@@ -273,69 +273,70 @@ class _InTransitPageState extends State<InTransitPage> {
               backgroundColor: context.colorScheme.surface,
               body: Stack(
                 children: [
-                Positioned.fill(
-                  child: SizedBox.expand(
-                    child: MapProvider.buildMapView(
-                      latitude: defaultLat,
-                      longitude: defaultLng,
-                      zoom: 15.0,
-                      onMapCreated: _onMapCreated,
+                  Positioned.fill(
+                    child: SizedBox.expand(
+                      child: MapProvider.buildMapView(
+                        latitude: defaultLat,
+                        longitude: defaultLng,
+                        zoom: 15.0,
+                        onMapCreated: _onMapCreated,
+                      ),
                     ),
                   ),
-                ),
-                SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                    child: _buildTripBackButton(context, () => context.pop()),
+                  SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                      child: _buildTripBackButton(context, () => context.pop()),
+                    ),
                   ),
-                ),
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: SafeArea(
-                    top: false,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: context.colorScheme.surface,
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(EasyRideRadius.sheet),
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: SafeArea(
+                      top: false,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: context.colorScheme.surface,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(EasyRideRadius.sheet),
+                          ),
+                        ),
+                        padding: const EdgeInsets.fromLTRB(
+                          EasyRideSpacing.lg,
+                          10,
+                          EasyRideSpacing.lg,
+                          EasyRideSpacing.lg,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 32,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: context.colorScheme.outlineVariant,
+                                borderRadius: BorderRadius.circular(99),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            CompactRouteTimelineWidget(
+                              pickup: widget.pickup,
+                              dropoff: widget.dropoff,
+                              pickupLabel: 'Pickup',
+                              dropoffLabel: 'Drop Off',
+                            ),
+                            const SizedBox(height: 8),
+                            const InTransitPassengerCardWidget(),
+                            const SizedBox(height: 12),
+                            InTransitCompleteButtonWidget(
+                              isCompletingTrip: _isCompletingTrip,
+                              onCompleteTripPressed: () =>
+                                  _completeTrip(context),
+                            ),
+                          ],
                         ),
                       ),
-                      padding: const EdgeInsets.fromLTRB(
-                        EasyRideSpacing.lg,
-                        10,
-                        EasyRideSpacing.lg,
-                        EasyRideSpacing.lg,
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 32,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: context.colorScheme.outlineVariant,
-                              borderRadius: BorderRadius.circular(99),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          CompactRouteTimelineWidget(
-                            pickup: widget.pickup,
-                            dropoff: widget.dropoff,
-                            pickupLabel: 'Pickup',
-                            dropoffLabel: 'Drop Off',
-                          ),
-                          const SizedBox(height: 8),
-                          const InTransitPassengerCardWidget(),
-                          const SizedBox(height: 12),
-                          InTransitCompleteButtonWidget(
-                            isCompletingTrip: _isCompletingTrip,
-                            onCompleteTripPressed: () => _completeTrip(context),
-                          ),
-                        ],
-                      ),
                     ),
                   ),
-                ),
                 ],
               ),
             ),

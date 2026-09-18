@@ -53,8 +53,9 @@ class _TrackDriverPageLoaderState extends State<TrackDriverPageLoader> {
       return;
     }
 
-    final result =
-        await widget.trackRepository.fetchRideResult(activeRideId.trim());
+    final result = await widget.trackRepository.fetchRideResult(
+      activeRideId.trim(),
+    );
     if (!mounted) return;
 
     result.fold(

@@ -134,7 +134,6 @@ class const _PerformanceSummary({required this.stats}) extends StatelessWidget {
   }
 }
 
-
 class const _PerformanceMetrics({required this.stats}) extends StatelessWidget {
   final DriverPerformanceStats? stats;
 

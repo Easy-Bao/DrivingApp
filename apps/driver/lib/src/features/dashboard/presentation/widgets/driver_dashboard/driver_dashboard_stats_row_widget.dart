@@ -181,7 +181,6 @@ class const DriverDashboardStatsRowWidget({
       ),
     );
   }
-
 }
 
 class const DriverDashboardErrorCard({
