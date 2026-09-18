@@ -4,6 +4,7 @@ import 'package:driver/src/app/navigation/app_routes.dart';
 import 'package:driver/src/infrastructure/config/driver_env_config.dart';
 import 'package:driver/src/infrastructure/network/driver_api_client.dart';
 import 'package:driver/src/infrastructure/telemetry/driver_background_telemetry.dart';
+import 'package:driver/src/infrastructure/telemetry/driver_location_spool.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver/src/features/auth/auth_module.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
@@ -71,6 +72,7 @@ class DriverDependencies({
           enabled: DriverEnvConfig.backgroundTelemetryEnabled,
         ),
       )
+      ..addLazySingleton<DriverLocationSpool>((_) => DriverLocationSpool())
       ..addLazySingleton<RealtimeWebSocketClient>(
         (i) => RealtimeWebSocketClient(
           uri: DriverEnvConfig.webSocketBaseUri.replace(
@@ -104,6 +106,7 @@ class DriverDependencies({
           rideDataSource: i.get<RideRemoteDataSource>(),
           counterpartyDataSource: i.get<RideCounterpartyRemoteDataSource>(),
           telemetryDataSource: i.get<TelemetryRemoteDataSource>(),
+          locationSpool: i.get<DriverLocationSpool>(),
         ),
       );
   }

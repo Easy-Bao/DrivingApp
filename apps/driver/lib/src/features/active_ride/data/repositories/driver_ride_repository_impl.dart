@@ -7,15 +7,18 @@ import 'package:driver/src/features/active_ride/data/data_sources/telemetry_remo
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:foundation/foundation.dart';
+import 'package:driver/src/infrastructure/telemetry/driver_location_spool.dart';
 
 final class DriverRideRepositoryImpl({
   required this._rideDataSource,
   required this._counterpartyDataSource,
   required this._telemetryDataSource,
+  this._locationSpool,
 }) implements DriverRideRepository {
   final RideRemoteDataSource _rideDataSource;
   final RideCounterpartyRemoteDataSource _counterpartyDataSource;
   final TelemetryRemoteDataSource _telemetryDataSource;
+  final DriverLocationSpool? _locationSpool;
 
   @override
   Future<Either<Failure, void>> acceptRide({
@@ -120,16 +123,42 @@ final class DriverRideRepositoryImpl({
     double? speed,
   }) async {
     try {
-      final sent = await _telemetryDataSource.sendLocationUpdate(
-        lat: latitude,
-        lng: longitude,
-        heading: heading,
-        speed: speed,
+      final spool = _locationSpool;
+      if (spool == null) {
+        final sent = await _telemetryDataSource.sendLocationUpdate(
+          lat: latitude,
+          lng: longitude,
+          heading: heading,
+          speed: speed,
+        );
+        return sent
+            ? const Right(null)
+            : const Left(NetworkFailure('Driver location was not accepted.'));
+      }
+      await spool.enqueue(
+        DriverLocationPoint(
+          latitude: latitude,
+          longitude: longitude,
+          observedAt: DateTime.now().toUtc(),
+          heading: heading,
+          speed: speed,
+        ),
       );
-      return sent
-          ? const Right(null)
-          : const Left(NetworkFailure('Driver location was not accepted.'));
+      await spool.flush(
+        (point) => _telemetryDataSource.sendLocationUpdate(
+          lat: point.latitude,
+          lng: point.longitude,
+          observedAt: point.observedAt,
+          heading: point.heading,
+          speed: point.speed,
+        ),
+      );
+      return const Right(null);
     } catch (error) {
+      if (error is DioException &&
+          NetworkAvailabilityCoordinator.isNetworkFailure(error)) {
+        return const Right(null);
+      }
       return Left(_mapFailure(error, action: 'share driver location'));
     }
   }

@@ -4,6 +4,7 @@ abstract class TelemetryRemoteDataSource {
   Future<bool> sendLocationUpdate({
     required double lat,
     required double lng,
+    DateTime? observedAt,
     double? heading,
     double? speed,
   });
@@ -19,6 +20,7 @@ class TelemetryRemoteDataSourceImpl(this._dio)
   Future<bool> sendLocationUpdate({
     required double lat,
     required double lng,
+    DateTime? observedAt,
     double? heading,
     double? speed,
   }) async {
@@ -29,7 +31,7 @@ class TelemetryRemoteDataSourceImpl(this._dio)
         'longitude': lng,
         'heading': ?heading,
         'speed': ?speed,
-        'observed_at': DateTime.now().toUtc().toIso8601String(),
+        'observed_at': (observedAt ?? DateTime.now()).toUtc().toIso8601String(),
       },
     );
     return response.statusCode == 200 ||

@@ -7,6 +7,7 @@ import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
+import 'package:driver/src/infrastructure/telemetry/driver_location_spool.dart';
 import 'package:foundation/foundation.dart';
 
 const _backgroundTelemetryInterval = Duration(seconds: 10);
@@ -197,6 +198,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
   StreamSubscription<Map<String, dynamic>?>? visibilitySubscription;
   StreamSubscription<Map<String, dynamic>?>? stopSubscription;
   var isStopping = false;
+  final locationSpool = DriverLocationSpool();
 
   Future<void> shutdown() async {
     if (isStopping) return;
@@ -291,21 +293,42 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
           distanceFilter: 10,
         ),
       );
-      await client.post<void>(
-        '/api/v1/telemetry/location',
-        data: {
-          'latitude': position.latitude,
-          'longitude': position.longitude,
-          'observed_at': DateTime.now().toUtc().toIso8601String(),
-          'heading': position.heading.isFinite && position.heading >= 0
+      await locationSpool.enqueue(
+        DriverLocationPoint(
+          latitude: position.latitude,
+          longitude: position.longitude,
+          observedAt: DateTime.now().toUtc(),
+          heading: position.heading.isFinite && position.heading >= 0
               ? position.heading.clamp(0, 360)
               : 0,
-          'speed': position.speed.isFinite && position.speed >= 0
+          speed: position.speed.isFinite && position.speed >= 0
               ? position.speed.clamp(0, 200)
               : 0,
-        },
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
+        ),
       );
+      await locationSpool.flush((point) async {
+        try {
+          final response = await client.post<void>(
+            '/api/v1/telemetry/location',
+            data: {
+              'latitude': point.latitude,
+              'longitude': point.longitude,
+              'observed_at': point.observedAt.toUtc().toIso8601String(),
+              'heading': point.heading,
+              'speed': point.speed,
+            },
+            options: Options(headers: {'Authorization': 'Bearer $token'}),
+          );
+          return response.statusCode == 200 ||
+              response.statusCode == 201 ||
+              response.statusCode == 202;
+        } on DioException catch (error) {
+          dev.log(
+            'Driver telemetry request failed: ${error.type.name}/${error.response?.statusCode ?? 'network'}',
+          );
+          return false;
+        }
+      });
     } on DioException catch (error) {
       dev.log(
         'Driver telemetry request failed: ${error.type.name}/${error.response?.statusCode ?? 'network'}',
