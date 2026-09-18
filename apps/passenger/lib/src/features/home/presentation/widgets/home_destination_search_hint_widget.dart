@@ -104,7 +104,7 @@ class _HomeDestinationSearchHintWidgetState
         TextStyle(
           fontSize: 16,
           height: 1.25,
-          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
           fontWeight: FontWeight.w500,
         );
 

@@ -14,6 +14,22 @@ void main() {
     expect(find.text('Search Robinsons'), findsOneWidget);
   });
 
+  testWidgets('uses the dark theme secondary foreground for contrast', (
+    tester,
+  ) async {
+    final theme = ThemeData.dark(useMaterial3: true);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: theme,
+        home: const Scaffold(body: HomeDestinationSearchHintWidget()),
+      ),
+    );
+
+    final label = tester.widget<Text>(find.text('Search Robinsons'));
+    expect(label.style?.color, theme.colorScheme.onSurfaceVariant);
+  });
+
   testWidgets('moves the next phrase from top to bottom in sync', (
     tester,
   ) async {
