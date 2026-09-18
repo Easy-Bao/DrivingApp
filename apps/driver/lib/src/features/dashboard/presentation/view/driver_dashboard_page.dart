@@ -15,6 +15,7 @@ import 'package:driver/src/features/location/presentation/bloc/location_access/d
 import 'package:driver/src/features/profile/profile_routes.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
+import 'package:driver/src/features/dashboard/dashboard_routes.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -70,6 +71,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   bool _isCheckingLocationAccess = false;
   bool _isForcingOfflineForLocationLoss = false;
   bool _isForeground = true;
+  bool _isHandlingPassengerCancellation = false;
 
   static const _locationAccessPollInterval = Duration(seconds: 5);
   static const _locationAccessFailureThreshold = 2;
@@ -376,6 +378,11 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     if (!mounted || !_isForeground) return;
     if (!BlocProvider.of<DashboardCubit>(context).state.isOnline) return;
 
+    if (event is RideStatusChangedEvent) {
+      _handleRideStatusChanged(event);
+      return;
+    }
+
     // Direct requests already carry the target driver's topic. Refresh the
     // authoritative offers immediately instead of waiting for the fallback
     // polling interval.
@@ -402,6 +409,55 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     ride['status'] = status;
 
     BlocProvider.of<DashboardCubit>(context).mergeActiveTrip(ride);
+  }
+
+  void _handleRideStatusChanged(RideStatusChangedEvent event) {
+    final rawRide = event.envelope.payload['ride'];
+    final ride = rawRide is Map ? Map<String, dynamic>.from(rawRide) : null;
+    final status = dashboardValueAsString(ride?['status']) ??
+        dashboardValueAsString(event.envelope.payload['status']);
+    if (status != 'canceled' && status != 'cancelled') return;
+
+    final rideId =
+        event.envelope.scope.rideId ?? dashboardValueAsString(ride?['id']);
+    final rideFlowCubit = BlocProvider.of<RideFlowCubit>(context);
+    if (rideId == null ||
+        (rideFlowCubit.activeRideId != null &&
+            rideFlowCubit.activeRideId != rideId)) {
+      return;
+    }
+
+    final dashboardCubit = BlocProvider.of<DashboardCubit>(context);
+    dashboardCubit.removeActiveTrip(rideId);
+    rideFlowCubit.reset();
+    if (_isHandlingPassengerCancellation) return;
+    _isHandlingPassengerCancellation = true;
+    unawaited(_showPassengerCancellationDialog());
+  }
+
+  Future<void> _showPassengerCancellationDialog() async {
+    try {
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Trip canceled'),
+          content: const Text(
+            'The passenger canceled this trip. You are back in the dispatch queue.',
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Back to dispatch'),
+            ),
+          ],
+        ),
+      );
+      if (mounted) context.goNamed(DashboardRoutes.dashboard);
+    } finally {
+      _isHandlingPassengerCancellation = false;
+    }
   }
 
   Future<void> _pollRideData(int pollGeneration) async {

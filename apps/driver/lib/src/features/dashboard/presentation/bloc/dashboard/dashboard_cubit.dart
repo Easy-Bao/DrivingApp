@@ -218,6 +218,15 @@ class DashboardCubit({
     emit(state.copyWith(activeTrips: _sortedActiveTrips(updatedTrips)));
   }
 
+  void removeActiveTrip(String? rideId) {
+    if (rideId == null || rideId.isEmpty) return;
+    final remaining = state.activeTrips
+        .where((trip) => _stringValue(trip['id']) != rideId)
+        .toList(growable: false);
+    if (remaining.length == state.activeTrips.length) return;
+    emit(state.copyWith(activeTrips: remaining));
+  }
+
   void removeActiveBid(String? bidId) {
     if (bidId == null) return;
     final remaining = state.activeBids

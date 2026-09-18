@@ -276,6 +276,19 @@ void main() {
       expect(() => cubit.state.activeTrips.add({}), throwsUnsupportedError);
       await cubit.close();
     });
+
+    test('removes a canceled realtime trip from dispatch state', () async {
+      final cubit = _makeCubit(repo);
+      cubit.mergeActiveTrip(const {'id': 'trip-1', 'status': 'accepted'});
+      cubit.mergeActiveTrip(const {'id': 'trip-2', 'status': 'arrived'});
+
+      cubit.removeActiveTrip('trip-1');
+
+      expect(cubit.state.activeTrips, [
+        const {'id': 'trip-2', 'status': 'arrived'},
+      ]);
+      await cubit.close();
+    });
   });
 
   group('DashboardCubit — toggleOnline()', () {
