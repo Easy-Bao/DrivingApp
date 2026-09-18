@@ -65,12 +65,10 @@ class _DriverChatPageState extends State<DriverChatPage> {
     await _chatCubit.resolveChatRoom(chatRoomId);
   }
 
-  final _quickReplies = [
-    "I'm here",
-    'On my way',
-    '5 minutes',
-    'Wait please',
-    'Thank you!',
+  static const _quickReplies = [
+    'I have arrived',
+    'In traffic',
+    'At pickup point',
   ];
 
   @override
