@@ -3,12 +3,15 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"time"
 
 	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const rideAcceptanceStatementTimeout = 3 * time.Second
 
 func (repository *RideRepository) AcceptRide(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
@@ -30,6 +33,13 @@ func (repository *RideRepository) AcceptRide(ctx context.Context, rideID, driver
 	defer func() {
 		platformdatabase.Rollback(ctx, transaction)
 	}()
+	if _, err := transaction.Exec(
+		ctx,
+		"SELECT set_config('statement_timeout', $1, true)",
+		rideAcceptanceStatementTimeout.String(),
+	); err != nil {
+		return domain.Ride{}, fmt.Errorf("configure ride acceptance statement timeout: %w", err)
+	}
 
 	transactionQueries := repository.queries.WithTx(transaction)
 	profile, err := transactionQueries.LockOnlineDriverProfileForBidding(ctx, dbDriverID)
