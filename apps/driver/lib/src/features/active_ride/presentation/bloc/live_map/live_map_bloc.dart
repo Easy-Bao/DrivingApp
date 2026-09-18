@@ -15,6 +15,23 @@ import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_
 part 'live_map_event.dart';
 part 'live_map_state.dart';
 
+const driverRouteRefreshDeviationMeters = 50.0;
+
+bool hasExceededRouteDeviation({
+  required double originLat,
+  required double originLng,
+  required double currentLat,
+  required double currentLng,
+}) {
+  final distanceKm = MapNativeService.calculateHaversine(
+    originLat,
+    originLng,
+    currentLat,
+    currentLng,
+  );
+  return distanceKm * 1000 > driverRouteRefreshDeviationMeters;
+}
+
 class LiveMapBloc({required this._rideRepository})
     extends Bloc<LiveMapEvent, LiveMapState> {
   final DriverRideRepository _rideRepository;
@@ -26,7 +43,8 @@ class LiveMapBloc({required this._rideRepository})
   mapbox.PolylineAnnotationManager? _routePolylineManager;
   UpdateLocationsAndDrawRouteEvent? _pendingRouteUpdate;
   String? _routeTargetKey;
-  DateTime? _lastRouteUpdateAt;
+  double? _routeOriginLat;
+  double? _routeOriginLng;
   DateTime? _lastCameraFitAt;
   bool _hasFittedCamera = false;
   Color _routeColor = TripMapMarkerStyle.ownLocation;
@@ -79,7 +97,8 @@ class LiveMapBloc({required this._rideRepository})
     if (!identical(_mapController, event.controller)) {
       await _clearAllAnnotations();
       _routeTargetKey = null;
-      _lastRouteUpdateAt = null;
+      _routeOriginLat = null;
+      _routeOriginLng = null;
       _lastCameraFitAt = null;
       _hasFittedCamera = false;
     }
@@ -162,11 +181,15 @@ class LiveMapBloc({required this._rideRepository})
       }
 
       final targetKey = '$targetLat:$targetLng';
-      final lastRouteUpdateAt = _lastRouteUpdateAt;
       final shouldRefreshRoute =
           _routeTargetKey != targetKey ||
-          lastRouteUpdateAt == null ||
-          now.difference(lastRouteUpdateAt) >= const Duration(seconds: 6);
+          _routeOriginLat == null ||
+          hasExceededRouteDeviation(
+            originLat: _routeOriginLat!,
+            originLng: _routeOriginLng!,
+            currentLat: event.driverLat,
+            currentLng: event.driverLng,
+          );
       if (shouldRefreshRoute) {
         final route = await MapProvider.getRoute(
           event.driverLat,
@@ -186,7 +209,8 @@ class LiveMapBloc({required this._rideRepository})
           _routePolylineManager = null;
         }
         _routeTargetKey = targetKey;
-        _lastRouteUpdateAt = DateTime.now();
+        _routeOriginLat = event.driverLat;
+        _routeOriginLng = event.driverLng;
       }
 
       if (!isClosed) {
@@ -214,7 +238,8 @@ class LiveMapBloc({required this._rideRepository})
   ) async {
     await _clearAllAnnotations();
     _routeTargetKey = null;
-    _lastRouteUpdateAt = null;
+    _routeOriginLat = null;
+    _routeOriginLng = null;
     _lastCameraFitAt = null;
     _hasFittedCamera = false;
   }
