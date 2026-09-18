@@ -15,6 +15,8 @@ class const SearchDestinationPage({
   this.preselectedRideType,
   this.pickupAddress,
 }) extends StatefulWidget {
+  static const searchDebounceDuration = Duration(milliseconds: 300);
+
   final String? preselectedRideType;
   final String? pickupAddress;
 
@@ -261,7 +263,7 @@ class _SearchDestinationPageState()
     unawaited(_expandController.forward());
     setState(() => _isSearching = true);
     _debounce = Timer(
-      const Duration(milliseconds: 350),
+      SearchDestinationPage.searchDebounceDuration,
       () => _performSearch(),
     );
   }
