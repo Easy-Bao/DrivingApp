@@ -369,7 +369,7 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
         context: context,
         backgroundColor: context.colorScheme.surface,
         isScrollControlled: true,
-        isDismissible: true,
+        isDismissible: false,
         enableDrag: true,
         barrierColor: context.colorScheme.onSurface.withValues(alpha: 0.54),
         useSafeArea: true,
