@@ -304,10 +304,10 @@ final class RealtimeWebSocketClient({
     }
     _attempt += 1;
     final baseDelay = _reconnectDelay(_attempt);
-    final jitterMilliseconds = _random.nextInt(
-      max(1, baseDelay.inMilliseconds ~/ 4),
+    final maximumDelayMilliseconds = max(0, baseDelay.inMilliseconds);
+    final delay = Duration(
+      milliseconds: _random.nextInt(maximumDelayMilliseconds + 1),
     );
-    final delay = baseDelay + Duration(milliseconds: jitterMilliseconds);
     _emitState(RealtimeDisconnected(reconnectIn: delay));
     _reconnectTimer = Timer(delay, () {
       _reconnectTimer = null;

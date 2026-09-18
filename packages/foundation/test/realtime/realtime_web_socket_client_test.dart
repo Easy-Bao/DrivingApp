@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
@@ -46,6 +47,31 @@ void main() {
 
     expect(socket.wasClosed, isTrue);
     expect(client.isConnected, isFalse);
+    await client.dispose();
+  });
+
+  test('uses full jitter within the exponential reconnect cap', () async {
+    final states = <RealtimeConnectionState>[];
+    final client = RealtimeWebSocketClient(
+      uri: Uri.parse('ws://example.test/api/v1/realtime/ws'),
+      tokenProvider: () => 'access-token',
+      connector: _AlwaysFailConnector(),
+      reconnectDelay: (_) => const Duration(seconds: 10),
+      random: Random(1),
+    );
+    final subscription = client.states.listen(states.add);
+
+    await client.start();
+    await Future<void>.delayed(Duration.zero);
+
+    final disconnected = states.whereType<RealtimeDisconnected>().last;
+    expect(
+      disconnected.reconnectIn,
+      lessThanOrEqualTo(const Duration(seconds: 10)),
+    );
+    expect(disconnected.reconnectIn, greaterThanOrEqualTo(Duration.zero));
+
+    await subscription.cancel();
     await client.dispose();
   });
 
@@ -253,5 +279,15 @@ final class _FailThenConnectConnector(this._connected)
     }
     if (!_connected.isCompleted) _connected.complete();
     return _Socket();
+  }
+}
+
+final class _AlwaysFailConnector implements RealtimeSocketConnector {
+  @override
+  Future<RealtimeSocket> connect(
+    Uri _, {
+    required Map<String, String> headers,
+  }) async {
+    throw StateError('connection rejected');
   }
 }
