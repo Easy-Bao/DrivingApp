@@ -91,6 +91,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
     }
 
     _chatCubit = ChatCubit(
+      currentUserId: currentUserId,
       chatRepository: widget.chatRepositoryFactory.create(
         currentUserId: currentUserId,
       ),
@@ -205,7 +206,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
           final statusColor = state.isRoomLocked || state.isConnected
               ? context.semanticColors.success
               : context.colorScheme.error;
-          final canSendMessage = state.isConnected && !state.isRoomLocked;
+          final canSendMessage = !state.isRoomLocked;
 
           return Scaffold(
             backgroundColor: context.colorScheme.surface,

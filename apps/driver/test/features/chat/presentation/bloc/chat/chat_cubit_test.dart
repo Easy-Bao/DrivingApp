@@ -11,6 +11,26 @@ import 'package:foundation/foundation.dart';
 class MockChatRepository extends Mock implements ChatRepository {}
 
 void main() {
+  test('keeps a message pending while the connection is offline', () async {
+    final repository = MockChatRepository();
+    when(() => repository.sendChatMessage('I have arrived'))
+        .thenAnswer((_) async => const Right(null));
+    when(() => repository.terminateChatConnection())
+        .thenAnswer((_) async => const Right(null));
+    when(() => repository.dispose()).thenAnswer((_) async {});
+
+    final cubit = ChatCubit(chatRepository: repository, currentUserId: '7');
+
+    expect(await cubit.sendMessage('I have arrived'), isTrue);
+    expect(cubit.state.messages.single.text, 'I have arrived');
+    expect(
+      cubit.state.messages.single.deliveryStatus,
+      ChatMessageDeliveryStatus.sending,
+    );
+
+    await cubit.close();
+  });
+
   test(
     'shows a resolved state when room initialization returns resolved',
     () async {

@@ -99,10 +99,6 @@ final class ChatRepositoryImpl({
 
   @override
   Future<Either<Failure, void>> sendChatMessage(String text) async {
-    if (!isSessionConnected) {
-      return const Left(NetworkFailure('Chat session is disconnected.'));
-    }
-
     final trimmed = text.trim();
     if (trimmed.isEmpty) {
       return const Left(ValidationFailure('Message cannot be empty.'));

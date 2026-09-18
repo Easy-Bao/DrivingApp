@@ -7,10 +7,12 @@ import 'package:passenger/src/features/chat/presentation/bloc/chat/chat_state.da
 
 export 'package:passenger/src/features/chat/presentation/bloc/chat/chat_state.dart';
 
-class ChatCubit({required this._chatRepository}) extends Cubit<ChatState> {
+class ChatCubit({required this._chatRepository, this.currentUserId})
+    extends Cubit<ChatState> {
   static const _peerTypingTimeout = Duration(seconds: 3);
 
   final ChatRepository _chatRepository;
+  final String? currentUserId;
   StreamSubscription? _chatSubscription;
   StreamSubscription<ChatConnectionState>? _connectionStateSubscription;
   Timer? _peerTypingTimer;
@@ -109,7 +111,7 @@ class ChatCubit({required this._chatRepository}) extends Cubit<ChatState> {
       ),
       (messages) => emit(
         state.copyWith(
-          messages: _mergeMessages(state.messages, messages),
+          messages: _mergeIncomingMessages(state.messages, messages),
           errorMessage: null,
         ),
       ),
@@ -135,7 +137,10 @@ class ChatCubit({required this._chatRepository}) extends Cubit<ChatState> {
             if (chatEvent is ChatHistoryReceived) {
               emit(
                 state.copyWith(
-                  messages: _mergeMessages(state.messages, chatEvent.messages),
+                  messages: _mergeIncomingMessages(
+                    state.messages,
+                    chatEvent.messages,
+                  ),
                   isPeerTyping: false,
                 ),
               );
@@ -143,7 +148,10 @@ class ChatCubit({required this._chatRepository}) extends Cubit<ChatState> {
               _peerTypingTimer?.cancel();
               emit(
                 state.copyWith(
-                  messages: _mergeMessages(state.messages, [chatEvent.message]),
+                  messages: _mergeMessages(
+                    _removePendingEcho(state.messages, chatEvent.message),
+                    [chatEvent.message],
+                  ),
                   isPeerTyping: false,
                   lastDeliveredMessage: chatEvent.message,
                 ),
@@ -179,12 +187,31 @@ class ChatCubit({required this._chatRepository}) extends Cubit<ChatState> {
   Future<bool> sendMessage(String text) async {
     if (state.isRoomLocked || text.trim().isEmpty) return false;
 
-    if (!_chatRepository.isSessionConnected) return false;
+    final trimmed = text.trim();
+    final pendingMessage = ChatMessage(
+      id: 'pending:${DateTime.now().microsecondsSinceEpoch}',
+      text: trimmed,
+      senderId: currentUserId ?? '',
+      isFromPeer: false,
+      createdAt: DateTime.now(),
+      deliveryStatus: ChatMessageDeliveryStatus.sending,
+    );
+    emit(
+      state.copyWith(
+        messages: _mergeMessages(state.messages, [pendingMessage]),
+      ),
+    );
     final result = await _chatRepository.sendChatMessageResult(text);
     return result.fold((failure) {
       if (!isClosed) {
         emit(
           state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)),
+        );
+        _replacePendingMessage(
+          pendingMessage,
+          pendingMessage.copyWith(
+            deliveryStatus: ChatMessageDeliveryStatus.failed,
+          ),
         );
       }
       return false;
@@ -259,6 +286,48 @@ class ChatCubit({required this._chatRepository}) extends Cubit<ChatState> {
     final messages = messagesByKey.values.toList();
     messages.sort((left, right) => left.createdAt.compareTo(right.createdAt));
     return messages;
+  }
+
+  List<ChatMessage> _removePendingEcho(
+    List<ChatMessage> current,
+    ChatMessage delivered,
+  ) {
+    if (delivered.isFromPeer) return current;
+    final index = current.indexWhere(
+      (message) =>
+          !message.isFromPeer &&
+          message.deliveryStatus != ChatMessageDeliveryStatus.delivered &&
+          message.text == delivered.text,
+    );
+    if (index < 0) return current;
+    return [...current]..removeAt(index);
+  }
+
+  List<ChatMessage> _removePendingEchoes(
+    List<ChatMessage> current,
+    Iterable<ChatMessage> incoming,
+  ) {
+    var result = current;
+    for (final message in incoming) {
+      result = _removePendingEcho(result, message);
+    }
+    return result;
+  }
+
+  List<ChatMessage> _mergeIncomingMessages(
+    List<ChatMessage> current,
+    List<ChatMessage> incoming,
+  ) {
+    return _mergeMessages(_removePendingEchoes(current, incoming), incoming);
+  }
+
+  void _replacePendingMessage(ChatMessage previous, ChatMessage replacement) {
+    if (isClosed) return;
+    final messages = [...state.messages];
+    final index = messages.indexWhere((message) => message.id == previous.id);
+    if (index < 0) return;
+    messages[index] = replacement;
+    emit(state.copyWith(messages: _mergeMessages(const [], messages)));
   }
 
   String _messageKey(ChatMessage message) {

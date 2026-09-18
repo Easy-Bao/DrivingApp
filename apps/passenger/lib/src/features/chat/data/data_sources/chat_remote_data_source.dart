@@ -46,6 +46,7 @@ class WebSocketChatRemoteDataSource({
   int _connectionVersion = 0;
   int _reconnectAttempt = 0;
   Timer? _reconnectTimer;
+  final List<String> _pendingChatMessages = <String>[];
   // Cancellation is owned by terminate and the disconnect path so a new
   // connection never leaves the previous listener attached.
   // ignore: cancel_subscriptions
@@ -84,11 +85,19 @@ class WebSocketChatRemoteDataSource({
 
   @override
   void sendWebSocketChatMessage(String messagePayload) {
-    final socket = _chatWebSocket;
-    if (socket == null || socket.readyState != WebSocket.open) {
+    if (_disposed) {
       throw StateError('Chat connection is unavailable.');
     }
-    socket.add(messagePayload);
+    final socket = _chatWebSocket;
+    if (socket == null || socket.readyState != WebSocket.open) {
+      _pendingChatMessages.add(messagePayload);
+      return;
+    }
+    try {
+      socket.add(messagePayload);
+    } catch (_) {
+      _pendingChatMessages.add(messagePayload);
+    }
   }
 
   @override
@@ -112,6 +121,7 @@ class WebSocketChatRemoteDataSource({
     _chatWebSocket = null;
     await _cancelSocketSubscription(subscription);
     await socket?.close();
+    _pendingChatMessages.clear();
     _emitConnectionState(const ChatDisconnected());
   }
 
@@ -167,6 +177,7 @@ class WebSocketChatRemoteDataSource({
         },
         onDone: () => _handleSocketDisconnect(socket),
       );
+      _flushPendingChatMessages();
     } catch (error, stackTrace) {
       if (connectionVersion != _connectionVersion || !_shouldReconnect) {
         return;
@@ -220,6 +231,20 @@ class WebSocketChatRemoteDataSource({
       _reconnectTimer = null;
       unawaited(_openConnection(reportFailure: false));
     });
+  }
+
+  void _flushPendingChatMessages() {
+    final socket = _chatWebSocket;
+    if (socket == null || socket.readyState != WebSocket.open) return;
+    while (_pendingChatMessages.isNotEmpty) {
+      final payload = _pendingChatMessages.first;
+      try {
+        socket.add(payload);
+        _pendingChatMessages.removeAt(0);
+      } catch (_) {
+        return;
+      }
+    }
   }
 
   void _emitConnectionState(ChatConnectionState state) {

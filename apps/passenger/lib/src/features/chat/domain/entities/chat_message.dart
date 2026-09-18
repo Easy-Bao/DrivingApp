@@ -17,6 +17,17 @@ class const ChatMessage({
   final DateTime createdAt;
   final ChatMessageDeliveryStatus deliveryStatus;
 
+  ChatMessage copyWith({ChatMessageDeliveryStatus? deliveryStatus}) {
+    return ChatMessage(
+      id: id,
+      text: text,
+      senderId: senderId,
+      isFromPeer: isFromPeer,
+      createdAt: createdAt,
+      deliveryStatus: deliveryStatus ?? this.deliveryStatus,
+    );
+  }
+
   String get identityKey => id.isNotEmpty
       ? 'id:$id'
       : 'legacy:$senderId:${createdAt.toUtc().toIso8601String()}:$text';
