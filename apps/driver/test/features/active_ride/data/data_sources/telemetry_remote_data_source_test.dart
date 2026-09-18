@@ -33,12 +33,11 @@ void main() {
     );
 
     expect(sent, isTrue);
-    expect(payload, {
-      'latitude': 7.828,
-      'longitude': 123.434,
-      'heading': 90.0,
-      'speed': 12.0,
-    });
+    expect(payload?['latitude'], 7.828);
+    expect(payload?['longitude'], 123.434);
+    expect(payload?['heading'], 90.0);
+    expect(payload?['speed'], 12.0);
+    expect(DateTime.tryParse(payload?['observed_at'] as String), isNotNull);
     expect(payload, isNot(contains('driver_id')));
   });
 

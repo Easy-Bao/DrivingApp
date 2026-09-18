@@ -1,18 +1,23 @@
 package domain
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 var (
 	ErrInvalidLocation           = errors.New("invalid location")
 	ErrLocationNotFound          = errors.New("location not found")
+	ErrStaleLocation             = errors.New("location timestamp is older than the latest point")
 	ErrRideAccessDenied          = errors.New("ride location access denied")
 	ErrRideAssignmentUnavailable = errors.New("ride location authorization is unavailable")
 )
 
 type DriverPoint struct {
-	DriverID  string  `json:"driver_id"`
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
-	Heading   float64 `json:"heading,omitempty"`
-	Speed     float64 `json:"speed,omitempty"`
+	DriverID   string    `json:"driver_id"`
+	Latitude   float64   `json:"latitude"`
+	Longitude  float64   `json:"longitude"`
+	Heading    float64   `json:"heading,omitempty"`
+	Speed      float64   `json:"speed,omitempty"`
+	ObservedAt time.Time `json:"observed_at"`
 }

@@ -14,10 +14,14 @@ type locationRepositoryStub struct {
 	driverPoint    domain.DriverPoint
 	passengerPoint domain.DriverPoint
 	upsertCalls    int
+	upsertErr      error
 }
 
 func (stub *locationRepositoryStub) Upsert(_ context.Context, point domain.DriverPoint) error {
 	stub.upsertCalls++
+	if stub.upsertErr != nil {
+		return stub.upsertErr
+	}
 	stub.driverPoint = point
 	return nil
 }
@@ -140,6 +144,26 @@ func TestIngestPublishesAnActiveRideLocationToBothParticipants(t *testing.T) {
 	invalidPassengerID := published.Scope.PassengerID != "passenger-2"
 	if invalidRideID || invalidDriverID || invalidPassengerID {
 		t.Fatalf("event scope = %#v", published.Scope)
+	}
+}
+
+func TestIngestIgnoresAStaleDriverLocation(t *testing.T) {
+	repository := &locationRepositoryStub{upsertErr: domain.ErrStaleLocation}
+	publisher := &locationEventPublisherStub{}
+	service := NewLocationTrackingService(
+		repository,
+		WithEventPublisher(publisher),
+	)
+
+	err := service.Ingest(
+		context.Background(),
+		domain.DriverPoint{DriverID: "driver-1", Latitude: 6.7, Longitude: 122.1},
+	)
+	if err != nil {
+		t.Fatalf("Ingest() error = %v, want nil for a stale point", err)
+	}
+	if len(publisher.envelopes) != 0 {
+		t.Fatalf("published event count = %d, want 0", len(publisher.envelopes))
 	}
 }
 

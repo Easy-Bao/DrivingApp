@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/domain"
@@ -40,7 +41,10 @@ func (handler *Handler) UpdateDriverLocation(writer http.ResponseWriter, request
 	}
 	point := domain.DriverPoint{
 		DriverID: identity.Subject, Latitude: input.Latitude, Longitude: input.Longitude,
-		Heading: input.Heading, Speed: input.Speed,
+		Heading: input.Heading, Speed: input.Speed, ObservedAt: input.ObservedAt,
+	}
+	if point.ObservedAt.IsZero() {
+		point.ObservedAt = time.Now().UTC()
 	}
 
 	if err := handler.service.Ingest(request.Context(), point); err != nil {

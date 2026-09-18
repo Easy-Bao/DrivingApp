@@ -29,6 +29,7 @@ class TelemetryRemoteDataSourceImpl(this._dio)
         'longitude': lng,
         'heading': ?heading,
         'speed': ?speed,
+        'observed_at': DateTime.now().toUtc().toIso8601String(),
       },
     );
     return response.statusCode == 200 ||

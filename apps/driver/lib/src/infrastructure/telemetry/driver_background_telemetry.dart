@@ -296,6 +296,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
         data: {
           'latitude': position.latitude,
           'longitude': position.longitude,
+          'observed_at': DateTime.now().toUtc().toIso8601String(),
           'heading': position.heading.isFinite && position.heading >= 0
               ? position.heading.clamp(0, 360)
               : 0,

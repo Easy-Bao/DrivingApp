@@ -14,12 +14,13 @@ import (
 )
 
 const (
-	driverLocationsKey       = "drivers:locations"
-	driverLocationExpiryKey  = "drivers:locations:expiry"
-	driverLocationKeyPrefix  = "driver:location:"
-	driverLocationTTL        = 45 * time.Second
-	passengerLocationTTL     = 45 * time.Second
-	locationCleanupBatchSize = 100
+	driverLocationsKey             = "drivers:locations"
+	driverLocationExpiryKey        = "drivers:locations:expiry"
+	driverLocationKeyPrefix        = "driver:location:"
+	driverLocationObservedAtPrefix = "driver:location:observed-at:"
+	driverLocationTTL              = 45 * time.Second
+	passengerLocationTTL           = 45 * time.Second
+	locationCleanupBatchSize       = 100
 )
 
 const cleanupExpiredDriversScript = `
@@ -28,8 +29,21 @@ for _, driver_id in ipairs(expired) do
   redis.call('ZREM', KEYS[1], driver_id)
   redis.call('ZREM', KEYS[2], driver_id)
   redis.call('DEL', ARGV[3] .. driver_id)
+  redis.call('DEL', ARGV[4] .. driver_id)
 end
 return #expired
+`
+
+const upsertDriverLocationScript = `
+local latest = redis.call('GET', KEYS[4])
+if latest and tonumber(latest) >= tonumber(ARGV[7]) then
+  return 0
+end
+redis.call('GEOADD', KEYS[1], ARGV[1], ARGV[2], ARGV[3])
+redis.call('SET', KEYS[2], ARGV[4], 'PX', ARGV[5])
+redis.call('ZADD', KEYS[3], ARGV[6], ARGV[3])
+redis.call('SET', KEYS[4], ARGV[7], 'PX', ARGV[5])
+return 1
 `
 
 type DriverLocationStore struct {
@@ -66,23 +80,28 @@ func (repository *DriverLocationStore) Upsert(ctx context.Context, point domain.
 		return fmt.Errorf("marshal driver location: %w", err)
 	}
 	expiresAt := time.Now().Add(driverLocationTTL).UnixMilli()
-	_, err = repository.client.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
-		pipe.GeoAdd(ctx, driverLocationsKey, &redis.GeoLocation{
-			Longitude: point.Longitude,
-			Latitude:  point.Latitude,
-			Name:      point.DriverID,
-		})
-		pipe.Set(
-			ctx,
+	result, err := repository.client.Eval(
+		ctx,
+		upsertDriverLocationScript,
+		[]string{
+			driverLocationsKey,
 			driverLocationKey(point.DriverID),
-			payload,
-			driverLocationTTL,
-		)
-		pipe.ZAdd(ctx, driverLocationExpiryKey, redis.Z{Score: float64(expiresAt), Member: point.DriverID})
-		return nil
-	})
+			driverLocationExpiryKey,
+			driverLocationObservedAtKey(point.DriverID),
+		},
+		point.Longitude,
+		point.Latitude,
+		point.DriverID,
+		payload,
+		driverLocationTTL.Milliseconds(),
+		expiresAt,
+		point.ObservedAt.UnixMilli(),
+	).Int()
 	if err != nil {
-		return fmt.Errorf("persist driver location transaction: %w", err)
+		return fmt.Errorf("persist driver location script: %w", err)
+	}
+	if result == 0 {
+		return domain.ErrStaleLocation
 	}
 	return nil
 }
@@ -98,6 +117,7 @@ func (repository *DriverLocationStore) Remove(ctx context.Context, driverID stri
 		pipe.ZRem(ctx, driverLocationsKey, driverID)
 		pipe.ZRem(ctx, driverLocationExpiryKey, driverID)
 		pipe.Del(ctx, driverLocationKey(driverID))
+		pipe.Del(ctx, driverLocationObservedAtKey(driverID))
 		return nil
 	})
 	if err != nil {
@@ -195,6 +215,7 @@ func (repository *DriverLocationStore) cleanupExpiredDrivers(ctx context.Context
 		time.Now().UnixMilli(),
 		locationCleanupBatchSize,
 		driverLocationKeyPrefix,
+		driverLocationObservedAtPrefix,
 	).Err(); err != nil {
 		return fmt.Errorf("clean up expired driver locations: %w", err)
 	}
@@ -262,4 +283,8 @@ func (repository *DriverLocationStore) validate() error {
 
 func driverLocationKey(driverID string) string {
 	return driverLocationKeyPrefix + driverID
+}
+
+func driverLocationObservedAtKey(driverID string) string {
+	return driverLocationObservedAtPrefix + driverID
 }

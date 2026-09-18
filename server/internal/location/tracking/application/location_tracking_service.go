@@ -57,6 +57,9 @@ func (service *LocationTrackingService) Ingest(ctx context.Context, point domain
 	if service.repository == nil {
 		return ErrPersistenceUnavailable
 	}
+	if point.ObservedAt.IsZero() {
+		point.ObservedAt = time.Now().UTC()
+	}
 	invalidCoordinates := !validCoordinates(point.Latitude, point.Longitude)
 	invalidMotion := !validMotion(point.Heading, point.Speed)
 	missingDriverID := point.DriverID == ""
@@ -64,6 +67,9 @@ func (service *LocationTrackingService) Ingest(ctx context.Context, point domain
 		return domain.ErrInvalidLocation
 	}
 	if err := service.repository.Upsert(ctx, point); err != nil {
+		if errors.Is(err, domain.ErrStaleLocation) {
+			return nil
+		}
 		return fmt.Errorf("persist driver location: %w", err)
 	}
 	if err := contextError(ctx); err != nil {
