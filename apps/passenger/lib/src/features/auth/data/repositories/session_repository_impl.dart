@@ -48,7 +48,7 @@ final class SessionRepositoryImpl({
   Future<Either<Failure, PassengerSession>> clearSession() async {
     try {
       await Future.wait([
-        _secureSessionService.clearSession(),
+        _secureSessionService.clearAll(),
         for (final key in _profileCacheKeys) _preferences.remove(key),
       ]);
       return const Right(PassengerSession.guest());

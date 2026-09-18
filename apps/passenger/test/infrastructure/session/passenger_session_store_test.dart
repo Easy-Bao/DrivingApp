@@ -17,7 +17,7 @@ void main() {
   });
 
   test('clears only passenger-owned session keys', () async {
-    await sessionStore.clearSession();
+    await sessionStore.clearAll();
 
     for (final key in const [
       PassengerStorageKeys.jwtToken,
@@ -29,6 +29,13 @@ void main() {
       verify(() => storage.delete(key: key)).called(1);
     }
     verifyNever(() => storage.deleteAll());
+  });
+
+  test('keeps the active ride out of a later account session', () async {
+    await sessionStore.clearAll();
+
+    verify(() => storage.delete(key: PassengerStorageKeys.activeRideId))
+        .called(1);
   });
 
   test('keeps granular token deletion behavior', () async {

@@ -82,7 +82,7 @@ class PassengerSessionStore({FlutterSecureStorage? storage}) {
     return DateTime.tryParse(rawValue)?.toUtc();
   }
 
-  Future<void> clearSession() async {
+  Future<void> clearAll() async {
     await _deleteKeys(const [
       PassengerStorageKeys.jwtToken,
       PassengerStorageKeys.refreshToken,
@@ -91,6 +91,8 @@ class PassengerSessionStore({FlutterSecureStorage? storage}) {
       PassengerStorageKeys.activeRideId,
     ]);
   }
+
+  Future<void> clearSession() => clearAll();
 
   Future<void> _deleteKeys(Iterable<String> keys) async {
     await Future.wait(keys.map((key) => _storage.delete(key: key)));
