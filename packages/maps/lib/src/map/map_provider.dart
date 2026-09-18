@@ -405,6 +405,7 @@ class MapProvider._() {
     String? label,
     bool isOrigin = false,
     Color? color,
+    double? bearing,
     VoidCallback? onTap,
   }) => MapAnnotationService.addMarker(
     controller,
@@ -413,6 +414,7 @@ class MapProvider._() {
     label: label,
     isOrigin: isOrigin,
     color: color,
+    bearing: bearing,
     onTap: onTap,
   );
 
@@ -423,6 +425,7 @@ class MapProvider._() {
     String? label,
     bool isOrigin = false,
     Color? color,
+    double? bearing,
     bool animate = false,
   }) => MapAnnotationService.replaceMarker(
     annotationManager,
@@ -431,6 +434,7 @@ class MapProvider._() {
     label: label,
     isOrigin: isOrigin,
     color: color,
+    bearing: bearing,
     animate: animate,
   );
 

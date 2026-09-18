@@ -14,4 +14,20 @@ void main() {
       const Color(0xFF198754),
     );
   });
+
+  test('marker motion follows the shortest bearing arc', () {
+    expect(
+      MapMarkerMotion.interpolateBearing(350, 10, 0.5),
+      closeTo(0, 0.0001),
+    );
+    expect(
+      MapMarkerMotion.bearingBetween(
+        startLat: 7.8,
+        startLng: 123.4,
+        targetLat: 7.8,
+        targetLng: 123.5,
+      ),
+      closeTo(89.99, 0.5),
+    );
+  });
 }
