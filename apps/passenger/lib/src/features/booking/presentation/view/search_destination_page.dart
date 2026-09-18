@@ -891,27 +891,32 @@ class _SearchDestinationPageState()
                                               Navigator.pop(context);
                                             }
                                           },
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(6),
-                                            child: AnimatedSwitcher(
-                                              duration: const Duration(
-                                                milliseconds: 200,
-                                              ),
-                                              transitionBuilder:
-                                                  (child, animation) =>
-                                                      ScaleTransition(
-                                                        scale: animation,
-                                                        child: child,
-                                                      ),
-                                              child: Icon(
-                                                t > 0.4
-                                                    ? LucideIcons.arrow_left
-                                                    : LucideIcons.search,
-                                                key: ValueKey(t > 0.4),
-                                                color: context
-                                                    .colorScheme
-                                                    .onSurface,
-                                                size: 20,
+                                          child: SizedBox(
+                                            width:
+                                                EasyRideSize.minimumTouchTarget,
+                                            height:
+                                                EasyRideSize.minimumTouchTarget,
+                                            child: Center(
+                                              child: AnimatedSwitcher(
+                                                duration: const Duration(
+                                                  milliseconds: 200,
+                                                ),
+                                                transitionBuilder:
+                                                    (child, animation) =>
+                                                        ScaleTransition(
+                                                          scale: animation,
+                                                          child: child,
+                                                        ),
+                                                child: Icon(
+                                                  t > 0.4
+                                                      ? LucideIcons.arrow_left
+                                                      : LucideIcons.search,
+                                                  key: ValueKey(t > 0.4),
+                                                  color: context
+                                                      .colorScheme
+                                                      .onSurface,
+                                                  size: 20,
+                                                ),
                                               ),
                                             ),
                                           ),
@@ -954,15 +959,20 @@ class _SearchDestinationPageState()
                                           GestureDetector(
                                             onTap: () =>
                                                 _searchController.clear(),
-                                            child: Padding(
-                                              padding: const EdgeInsets.all(6),
-                                              child: Icon(
-                                                LucideIcons.x,
-                                                size: 18,
-                                                color: context
-                                                    .colorScheme
-                                                    .onSurface
-                                                    .withValues(alpha: 0.5),
+                                            child: SizedBox(
+                                              width: EasyRideSize
+                                                  .minimumTouchTarget,
+                                              height: EasyRideSize
+                                                  .minimumTouchTarget,
+                                              child: Center(
+                                                child: Icon(
+                                                  LucideIcons.x,
+                                                  size: 18,
+                                                  color: context
+                                                      .colorScheme
+                                                      .onSurface
+                                                      .withValues(alpha: 0.5),
+                                                ),
                                               ),
                                             ),
                                           ),
@@ -981,22 +991,29 @@ class _SearchDestinationPageState()
                                                       .colorScheme
                                                       .surface
                                                       .withValues(alpha: 0),
-                                                  child: Container(
-                                                    width: 36,
-                                                    height: 36,
-                                                    decoration: BoxDecoration(
-                                                      color: context
-                                                          .colorScheme
-                                                          .surfaceContainerHighest,
-                                                      shape: BoxShape.circle,
-                                                    ),
+                                                  child: SizedBox(
+                                                    width: EasyRideSize
+                                                        .minimumTouchTarget,
+                                                    height: EasyRideSize
+                                                        .minimumTouchTarget,
                                                     child: Center(
-                                                      child: Icon(
-                                                        LucideIcons.map_pin,
-                                                        color: context
-                                                            .colorScheme
-                                                            .onSurface,
-                                                        size: 18,
+                                                      child: Container(
+                                                        width: 36,
+                                                        height: 36,
+                                                        decoration: BoxDecoration(
+                                                          color: context
+                                                              .colorScheme
+                                                              .surfaceContainerHighest,
+                                                          shape:
+                                                              BoxShape.circle,
+                                                        ),
+                                                        child: Icon(
+                                                          LucideIcons.map_pin,
+                                                          color: context
+                                                              .colorScheme
+                                                              .onSurface,
+                                                          size: 18,
+                                                        ),
                                                       ),
                                                     ),
                                                   ),
@@ -1028,8 +1045,8 @@ class _SearchDestinationPageState()
                                       }
                                     },
                                     child: Container(
-                                      width: 46,
-                                      height: 46,
+                                      width: EasyRideSize.minimumTouchTarget,
+                                      height: EasyRideSize.minimumTouchTarget,
                                       decoration: BoxDecoration(
                                         color: context.colorScheme.surface,
                                         shape: BoxShape.circle,
@@ -1064,8 +1081,8 @@ class _SearchDestinationPageState()
                                 child: GestureDetector(
                                   onTap: _openMapPin,
                                   child: SizedBox(
-                                    width: 46,
-                                    height: 46,
+                                    width: EasyRideSize.minimumTouchTarget,
+                                    height: EasyRideSize.minimumTouchTarget,
                                     child: Hero(
                                       tag: 'map_pin_button',
                                       child: FittedBox(
@@ -1073,8 +1090,10 @@ class _SearchDestinationPageState()
                                           color: context.colorScheme.surface
                                               .withValues(alpha: 0),
                                           child: Container(
-                                            width: 46,
-                                            height: 46,
+                                            width:
+                                                EasyRideSize.minimumTouchTarget,
+                                            height:
+                                                EasyRideSize.minimumTouchTarget,
                                             decoration: BoxDecoration(
                                               color:
                                                   context.colorScheme.surface,
@@ -1140,8 +1159,8 @@ Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
         onTap: onPressed,
         customBorder: const CircleBorder(),
         child: SizedBox(
-          width: 46,
-          height: 46,
+          width: EasyRideSize.minimumTouchTarget,
+          height: EasyRideSize.minimumTouchTarget,
           child: Center(
             child: Icon(
               LucideIcons.arrow_left,
