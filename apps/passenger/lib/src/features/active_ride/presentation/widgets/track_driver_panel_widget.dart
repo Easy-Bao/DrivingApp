@@ -16,6 +16,7 @@ class const TrackDriverPanelWidget({
   this.isCancellingTrip = false,
   required this.onCallDriverPressed,
   required this.onChatDriverPressed,
+  required this.onEmergencyPressed,
   required this.onCancelTripPressed,
 }) extends StatelessWidget {
   final RideHistory ride;
@@ -29,6 +30,7 @@ class const TrackDriverPanelWidget({
   final bool isCancellingTrip;
   final VoidCallback onCallDriverPressed;
   final VoidCallback onChatDriverPressed;
+  final VoidCallback onEmergencyPressed;
   final VoidCallback onCancelTripPressed;
 
   @override
@@ -212,6 +214,23 @@ class const TrackDriverPanelWidget({
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              height: EasyRideSize.minimumTouchTarget,
+              child: OutlinedButton.icon(
+                onPressed: onEmergencyPressed,
+                icon: const Icon(Icons.emergency_outlined),
+                label: const Text('Emergency SOS'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: context.colorScheme.error,
+                  side: BorderSide(color: context.colorScheme.error),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 8),
             SizedBox(

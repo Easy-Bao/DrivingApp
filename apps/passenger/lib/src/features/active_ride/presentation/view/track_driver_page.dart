@@ -40,6 +40,8 @@ class const _MapUpdateRequest({
   final String driverName;
 }
 
+const _emergencyContactNumber = '911';
+
 class const TrackDriverPage({
   super.key,
   required this.ride,
@@ -431,6 +433,34 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
     await _cancelTripRequest();
   }
 
+  Future<void> _handleEmergencyPressed() async {
+    final emergencyUri = Uri(scheme: 'tel', path: _emergencyContactNumber);
+    var launched = false;
+    try {
+      launched =
+          await canLaunchUrl(emergencyUri) && await launchUrl(emergencyUri);
+    } catch (_) {
+      launched = false;
+    }
+    if (launched || !mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Emergency contacts'),
+        content: const Text(
+          'Your device cannot open the phone dialer. Call emergency services at 911.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _cancelTripRequest() async {
     if (_isCancellingTrip || !mounted) return;
 
@@ -673,6 +703,8 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                                   await _updateUnreadMessagesCount();
                                 }
                               },
+                              onEmergencyPressed: () =>
+                                  unawaited(_handleEmergencyPressed()),
                               onCancelTripPressed: _handleCancelTrip,
                             ),
                           );
