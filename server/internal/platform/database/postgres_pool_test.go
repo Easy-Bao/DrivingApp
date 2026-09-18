@@ -20,6 +20,14 @@ func TestOpenPostgresPoolWithContextStopsBeforeOpeningWhenCanceled(t *testing.T)
 	}
 }
 
+func TestDefaultPostgresNativePoolConfigRecyclesConnectionsWithinThirtyMinutes(t *testing.T) {
+	config := DefaultPostgresNativePoolConfig()
+
+	if config.ConnectionMaxLifetime != 30*time.Minute {
+		t.Fatalf("connection max lifetime = %s, want 30m", config.ConnectionMaxLifetime)
+	}
+}
+
 func TestOpenPostgresPoolRejectsInvalidConfigBeforeConnecting(t *testing.T) {
 	config := DefaultPostgresNativePoolConfig()
 	config.MinIdleConnections = config.MaxConnections + 1
