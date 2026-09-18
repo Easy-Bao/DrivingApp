@@ -109,6 +109,8 @@ class _MapPinPageState()
   }
 
   void _onCameraChanged(AppMapController controller) {
+    if (_isProgrammaticCameraMove) return;
+    _hasUserPannedMap = true;
     unawaited(_pinAnimationController.forward());
   }
 
