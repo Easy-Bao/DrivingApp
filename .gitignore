@@ -80,3 +80,6 @@ app.*.map.json
 .direnv/
 
 skills-lock.json
+
+# Local architecture visual diagrams
+/architecture/
