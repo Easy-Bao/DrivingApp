@@ -14,7 +14,7 @@ void main() {
             body: Stack(
               children: [
                 SizedBox.expand(),
-                AppNetworkStatusBanner(isVisible: true),
+                AppNetworkStatusBanner(isVisible: true, isActiveTracking: true),
               ],
             ),
           ),
@@ -27,8 +27,34 @@ void main() {
       );
       expect(find.byType(Semantics), findsWidgets);
       expect(find.byType(TextButton), findsNothing);
+      expect(
+        tester.widget<Material>(find.byType(Material).last).color,
+        Theme.of(tester.element(find.byType(Material).last))
+            .colorScheme
+            .tertiaryContainer,
+      );
     } finally {
       semantics.dispose();
     }
+  });
+
+  testWidgets('stays hidden outside active tracking', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: Stack(
+            children: [
+              SizedBox.expand(),
+              AppNetworkStatusBanner(isVisible: true, isActiveTracking: false),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      find.text('Connection unavailable. Retrying automatically.'),
+      findsNothing,
+    );
   });
 }

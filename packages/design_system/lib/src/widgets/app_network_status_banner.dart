@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 
-/// Shows the quiet, app-wide transport status when the shared circuit opens.
+/// Shows the quiet transport status while an active trip loses connectivity.
 ///
 /// This is intentionally a status surface without a retry action. Page loads
 /// own their retry controls, while background work can report one shared state
 /// without adding a second failure toast or page banner.
-class const AppNetworkStatusBanner({super.key, required this.isVisible})
-    extends StatelessWidget {
+class const AppNetworkStatusBanner({
+  super.key,
+  required this.isVisible,
+  this.isActiveTracking = true,
+}) extends StatelessWidget {
   final bool isVisible;
+  final bool isActiveTracking;
 
   @override
   Widget build(BuildContext context) {
-    if (!isVisible) return const SizedBox.shrink();
+    if (!isVisible || !isActiveTracking) return const SizedBox.shrink();
 
     final scheme = Theme.of(context).colorScheme;
     return Positioned(
@@ -26,7 +30,7 @@ class const AppNetworkStatusBanner({super.key, required this.isVisible})
             liveRegion: true,
             label: 'Connection unavailable. Retrying automatically.',
             child: Material(
-              color: scheme.surfaceContainerHighest,
+              color: scheme.tertiaryContainer,
               elevation: 2,
               child: Padding(
                 padding: const EdgeInsets.symmetric(
@@ -39,7 +43,7 @@ class const AppNetworkStatusBanner({super.key, required this.isVisible})
                     Icon(
                       Icons.cloud_off_outlined,
                       size: 18,
-                      color: scheme.onSurfaceVariant,
+                      color: scheme.onTertiaryContainer,
                     ),
                     const SizedBox(width: 8),
                     Flexible(
@@ -47,7 +51,7 @@ class const AppNetworkStatusBanner({super.key, required this.isVisible})
                         'Connection unavailable. Retrying automatically.',
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodySmall
-                            ?.copyWith(color: scheme.onSurfaceVariant),
+                            ?.copyWith(color: scheme.onTertiaryContainer),
                       ),
                     ),
                   ],

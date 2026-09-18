@@ -7,6 +7,7 @@ import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger/src/app/navigation/app_routes.dart';
+import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
@@ -80,12 +81,21 @@ class _PassengerAppState extends State<PassengerApp>
                           isVisible:
                               snapshot.data ==
                               NetworkAvailabilityStatus.unavailable,
+                          isActiveTracking: _isActiveTrackingRoute,
                         ),
                       ],
                     ),
                   ),
             ),
       ),
+    );
+  }
+
+  bool get _isActiveTrackingRoute {
+    final currentPath =
+        Modular.routerConfig.routerDelegate.currentConfiguration.uri.path;
+    return currentPath.startsWith(
+      '${AppRoutes.passengerModulePath}${ActiveRideRoutes.trackDriverPath}',
     );
   }
 

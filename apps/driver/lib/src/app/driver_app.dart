@@ -7,6 +7,7 @@ import 'package:driver/src/app/navigation/app_routes.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_state.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
+import 'package:driver/src/features/active_ride/active_ride_routes.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -120,12 +121,25 @@ class _DriverAppState extends State<DriverApp> with WidgetsBindingObserver {
                           isVisible:
                               snapshot.data ==
                               NetworkAvailabilityStatus.unavailable,
+                          isActiveTracking: _isActiveTrackingRoute,
                         ),
                       ],
                     ),
                   ),
             ),
       ),
+    );
+  }
+
+  bool get _isActiveTrackingRoute {
+    final currentPath =
+        Modular.routerConfig.routerDelegate.currentConfiguration.uri.path;
+    return <String>[
+      ActiveRideRoutes.pickupNavigationPath,
+      ActiveRideRoutes.waitingPassengerPath,
+      ActiveRideRoutes.inTransitPath,
+    ].any(
+      (path) => currentPath.startsWith('${AppRoutes.driverModulePath}$path'),
     );
   }
 
