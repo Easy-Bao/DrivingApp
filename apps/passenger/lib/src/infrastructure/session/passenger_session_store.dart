@@ -63,6 +63,25 @@ class PassengerSessionStore({FlutterSecureStorage? storage}) {
     await _deleteKeys(const [PassengerStorageKeys.activeRideId]);
   }
 
+  Future<void> saveChatReadAt(String rideId, DateTime readAt) async {
+    final normalizedRideId = rideId.trim();
+    if (normalizedRideId.isEmpty) return;
+    await _storage.write(
+      key: PassengerStorageKeys.chatReadAt(normalizedRideId),
+      value: readAt.toUtc().toIso8601String(),
+    );
+  }
+
+  Future<DateTime?> readChatReadAt(String rideId) async {
+    final normalizedRideId = rideId.trim();
+    if (normalizedRideId.isEmpty) return null;
+    final rawValue = await _storage.read(
+      key: PassengerStorageKeys.chatReadAt(normalizedRideId),
+    );
+    if (rawValue == null || rawValue.trim().isEmpty) return null;
+    return DateTime.tryParse(rawValue)?.toUtc();
+  }
+
   Future<void> clearSession() async {
     await _deleteKeys(const [
       PassengerStorageKeys.jwtToken,

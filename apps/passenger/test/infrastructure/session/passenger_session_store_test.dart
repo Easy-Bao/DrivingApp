@@ -36,4 +36,21 @@ void main() {
 
     verify(() => storage.delete(key: PassengerStorageKeys.jwtToken)).called(1);
   });
+
+  test('persists and restores a chat read timestamp per ride', () async {
+    final readAt = DateTime.utc(2026, 9, 18, 12, 30);
+    when(
+      () => storage.write(
+        key: PassengerStorageKeys.chatReadAt('ride-7'),
+        value: readAt.toIso8601String(),
+      ),
+    ).thenAnswer((_) async {});
+    when(() => storage.read(key: PassengerStorageKeys.chatReadAt('ride-7')))
+        .thenAnswer((_) async => readAt.toIso8601String());
+
+    await sessionStore.saveChatReadAt('ride-7', readAt);
+    final restored = await sessionStore.readChatReadAt('ride-7');
+
+    expect(restored, readAt);
+  });
 }

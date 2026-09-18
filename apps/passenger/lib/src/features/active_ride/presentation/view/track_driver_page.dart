@@ -79,8 +79,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
   LiveMapBloc? _liveMapBloc;
 
   int _unreadChatMessagesCount = 0;
-  int _viewedDriverMessagesCount = 0;
-  bool _isInitialChatMessagesCountFetched = false;
+  DateTime? _chatReadAt;
   late final AppLifecyclePeriodicTask _chatMessagesPollingTask;
   ChatRepository? _chatRepository;
   String _passengerIdentifier = '';
@@ -111,6 +110,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
         await widget.sessionService.readPassengerId() ?? '';
     if (!mounted || passengerIdentifier.isEmpty) return;
     _passengerIdentifier = passengerIdentifier;
+    _chatReadAt = await widget.sessionService.readChatReadAt(widget.ride.id);
     _chatRepository = widget.chatRepositoryFactory.create(
       currentUserId: passengerIdentifier,
     );
@@ -153,20 +153,14 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
         final driverChatMessagesList = messages
             .where((m) => m.senderId != passengerIdentifier)
             .toList();
-        final currentDriverMessagesCount = driverChatMessagesList.length;
-
         if (!mounted) return;
-        if (!_isInitialChatMessagesCountFetched) {
-          // Messages already in the room were not necessarily read by the
-          // passenger. Start from zero so the chat action exposes them.
-          _viewedDriverMessagesCount = 0;
-          _isInitialChatMessagesCountFetched = true;
-        }
-
-        final unreadMessagesCount =
-            (currentDriverMessagesCount - _viewedDriverMessagesCount)
-                .clamp(0, currentDriverMessagesCount)
-                .toInt();
+        final readAt = _chatReadAt;
+        final unreadMessagesCount = driverChatMessagesList
+            .where(
+              (message) =>
+                  readAt == null || message.createdAt.toUtc().isAfter(readAt),
+            )
+            .length;
         if (unreadMessagesCount != _unreadChatMessagesCount) {
           setState(() => _unreadChatMessagesCount = unreadMessagesCount);
         }
@@ -176,6 +170,25 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
     } finally {
       _isPollingChat = false;
     }
+  }
+
+  Future<void> _markChatMessagesRead() async {
+    final chatRepository = _chatRepository;
+    if (chatRepository == null) return;
+
+    var readAt = DateTime.now().toUtc();
+    final result = await chatRepository.fetchRoomMessages(widget.ride.id);
+    result.fold((_) {}, (messages) {
+      for (final message in messages) {
+        if (message.senderId == _passengerIdentifier) continue;
+        final createdAt = message.createdAt.toUtc();
+        if (createdAt.isAfter(readAt)) readAt = createdAt;
+      }
+    });
+    _chatReadAt = readAt;
+    await widget.sessionService.saveChatReadAt(widget.ride.id, readAt);
+    if (!mounted) return;
+    setState(() => _unreadChatMessagesCount = 0);
   }
 
   void _onMapCreated(AppMapController controller) {
@@ -646,12 +659,8 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                                     ? state.activeDriverName
                                     : widget.ride.displayDriverName;
                                 if (context.mounted) {
-                                  setState(() {
-                                    _viewedDriverMessagesCount +=
-                                        _unreadChatMessagesCount;
-                                    _unreadChatMessagesCount = 0;
-                                    _isInitialChatMessagesCountFetched = true;
-                                  });
+                                  await _markChatMessagesRead();
+                                  if (!context.mounted) return;
                                   await context.pushNamed(
                                     ChatRoutes.driverChat,
                                     extra: {
