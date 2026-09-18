@@ -26,7 +26,7 @@ type RideService struct {
 	repository        ports.RideStore
 	routeCalculator   RouteCalculator
 	pricingConfig     PricingConfig
-	eventPublisher    EventPublisher
+	eventPublisher    ports.EventPublisher
 	bookingService    *booking.Service
 	biddingService    *biddingapplication.Service
 	lifecycleService  *lifecycleapplication.Service
@@ -38,7 +38,7 @@ type RideService struct {
 func NewRideService(
 	repository ports.RideStore,
 	pricingConfig PricingConfig,
-	publisher EventPublisher,
+	publisher ports.EventPublisher,
 ) *RideService {
 	service := &RideService{
 		repository:        repository,
@@ -74,7 +74,7 @@ func NewRideServiceWithRouteCalculator(
 	repository ports.RideStore,
 	calculator RouteCalculator,
 	pricingConfig PricingConfig,
-	publisher EventPublisher,
+	publisher ports.EventPublisher,
 ) *RideService {
 	service := &RideService{
 		repository:        repository,

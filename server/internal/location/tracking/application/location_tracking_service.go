@@ -18,7 +18,7 @@ import (
 type LocationTrackingService struct {
 	repository     trackingports.LocationStore
 	assignments    assignmentports.Lookup
-	eventPublisher EventPublisher
+	eventPublisher trackingports.EventPublisher
 	logger         *slog.Logger
 }
 
@@ -30,7 +30,7 @@ func WithRideAssignments(assignments assignmentports.Lookup) Option {
 	return func(service *LocationTrackingService) { service.assignments = assignments }
 }
 
-func WithEventPublisher(publisher EventPublisher) Option {
+func WithEventPublisher(publisher trackingports.EventPublisher) Option {
 	return func(service *LocationTrackingService) { service.eventPublisher = publisher }
 }
 

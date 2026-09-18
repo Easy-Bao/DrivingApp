@@ -15,7 +15,7 @@ import (
 	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/auth/transport/http"
 	chatadapter "github.com/Easy-Bao/DrivingApp/server/internal/chat/adapter"
 	chatapplication "github.com/Easy-Bao/DrivingApp/server/internal/chat/application"
-	chath "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/http"
+	chathttp "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/http"
 	chatws "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/ws"
 	assignmentadapter "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment/adapter"
 	assignmentapplication "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment/application"
@@ -198,7 +198,7 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 	)
 	router.Handle(api.V1Prefix+"/realtime/ws", websockethub.NewHandler(eventHub, verifier, config.Security.AllowedOrigins))
 	trackinghttp.NewRouter(trackingService, verifier).RegisterRoutes(router)
-	chath.NewRouter(chatService, verifier).RegisterRoutes(router)
+	chathttp.NewRouter(chatService, verifier).RegisterRoutes(router)
 	registerHealthRoutes(router, redisClient, postgresPool)
 
 	return router, eventHub

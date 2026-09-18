@@ -58,10 +58,9 @@ The current module ownership is:
 
 There is no generic `realtime` business module. Chat and tracking own their
 business behavior; the process-local event publisher and WebSocket hub belong
-to `internal/platform`. `domain/legacy_ports.go` files are compatibility
-contracts for the migration boundary only. New code must import the relevant
-feature `ports` package, and no domain or application package may depend on
-generated sqlc types, pgx pools, or Redis clients.
+to `internal/platform`. All modules import the relevant feature `ports` package,
+and no domain or application package may depend on generated sqlc types,
+pgx pools, or Redis clients.
 
 ## Native local development (default)
 
