@@ -18,6 +18,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 class const PickupNavigationPage({
   super.key,
@@ -65,6 +66,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
   @override
   void initState() {
     super.initState();
+    unawaited(WakelockPlus.enable());
     _liveMapBloc = widget.liveMapBloc;
     final cubit = BlocProvider.of<RideFlowCubit>(context);
     _routeTrackingTask = AppLifecyclePeriodicTask(
@@ -89,6 +91,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
 
   @override
   void dispose() {
+    unawaited(WakelockPlus.disable());
     unawaited(_routeTrackingTask.dispose());
     unawaited(_chatRepository?.dispose());
     unawaited(_liveMapBloc.close());

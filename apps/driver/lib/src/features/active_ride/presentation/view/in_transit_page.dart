@@ -15,6 +15,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 class const InTransitPage({
   super.key,
@@ -54,6 +55,7 @@ class _InTransitPageState extends State<InTransitPage> {
   @override
   void initState() {
     super.initState();
+    unawaited(WakelockPlus.enable());
     _liveMapBloc = widget.liveMapBloc;
     _trackingTask = AppLifecyclePeriodicTask(
       lifecycleCoordinator: widget.lifecycleCoordinator,
@@ -66,6 +68,7 @@ class _InTransitPageState extends State<InTransitPage> {
 
   @override
   void dispose() {
+    unawaited(WakelockPlus.disable());
     unawaited(_trackingTask.dispose());
     unawaited(_liveMapBloc.close());
     super.dispose();
