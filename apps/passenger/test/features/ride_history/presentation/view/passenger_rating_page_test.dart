@@ -45,6 +45,10 @@ void main() {
     );
 
     expect(find.text('Demo Driver'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('passenger-rating-scroll-view')),
+      findsOneWidget,
+    );
     expect(find.byIcon(Icons.star_border), findsNWidgets(5));
 
     await tester.tap(find.byIcon(Icons.star_border).first);
