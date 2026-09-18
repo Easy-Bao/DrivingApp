@@ -146,6 +146,19 @@ func (repository *RideRepository) ActiveSessions(ctx context.Context, driverID *
 		if activeRides > 0 {
 			return []domain.BidSession{}, nil
 		}
+		overdueSettlement, overdueErr := repository.queries.HasOverdueCashSettlementForDriver(
+			ctx,
+			databasepostgres.HasOverdueCashSettlementForDriverParams{
+				DriverID:    pgtype.Int4{Int32: dbDriverID, Valid: true},
+				CompletedAt: bidTimestamp(time.Now().UTC().Add(-15 * time.Minute)),
+			},
+		)
+		if overdueErr != nil {
+			return nil, fmt.Errorf("check overdue cash settlement: %w", overdueErr)
+		}
+		if overdueSettlement {
+			return []domain.BidSession{}, nil
+		}
 		items, err = repository.queries.ListTargetedActiveBidSessions(
 			ctx,
 			databasepostgres.ListTargetedActiveBidSessionsParams{
@@ -239,6 +252,19 @@ func (repository *RideRepository) PlaceOffer(ctx context.Context, value domain.B
 	}
 	if activeRides > 0 {
 		return domain.BidOffer{}, domain.ErrDriverHasActiveRide
+	}
+	overdueSettlement, err := transactionQueries.HasOverdueCashSettlementForDriver(
+		ctx,
+		databasepostgres.HasOverdueCashSettlementForDriverParams{
+			DriverID:    pgtype.Int4{Int32: profile.UserID, Valid: true},
+			CompletedAt: bidTimestamp(time.Now().UTC().Add(-15 * time.Minute)),
+		},
+	)
+	if err != nil {
+		return domain.BidOffer{}, fmt.Errorf("check overdue cash settlement: %w", err)
+	}
+	if overdueSettlement {
+		return domain.BidOffer{}, domain.ErrDriverSettlementOverdue
 	}
 	existing, err := transactionQueries.HasPendingBidOffer(ctx, databasepostgres.HasPendingBidOfferParams{
 		SessionID: sessionID,

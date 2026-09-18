@@ -65,6 +65,17 @@ FROM rides
 WHERE driver_id = $1
   AND status IN ('assigned', 'accepted', 'arrived', 'in_transit');
 
+-- name: HasOverdueCashSettlementForDriver :one
+SELECT EXISTS (
+    SELECT 1
+    FROM rides
+    WHERE driver_id = $1
+      AND status = 'completed'
+      AND payment_status = 'unpaid'
+      AND completed_at IS NOT NULL
+      AND completed_at <= $2
+);
+
 -- name: ListActiveBidSessions :many
 SELECT sessions.id, sessions.passenger_id, sessions.ride_type,
     sessions.pickup_latitude, sessions.pickup_longitude, sessions.pickup_name,

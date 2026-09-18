@@ -7,6 +7,7 @@ var (
 	ErrRouteUnavailable        = errors.New("route calculation is unavailable")
 	ErrActiveBooking           = errors.New("passenger already has an active booking")
 	ErrDriverHasActiveRide     = errors.New("driver already has an active ride")
+	ErrDriverSettlementOverdue = errors.New("driver has an overdue cash settlement")
 	ErrUnauthorizedRide        = errors.New("you are not a participant in this ride")
 	ErrCounterpartyUnavailable = errors.New("ride counterparty is unavailable")
 	ErrUnauthorizedSession     = errors.New("you are not a participant in this booking")

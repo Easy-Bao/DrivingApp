@@ -68,6 +68,30 @@ func (q *Queries) CountActiveRidesForDriver(ctx context.Context, driverID pgtype
 	return count, err
 }
 
+const hasOverdueCashSettlementForDriver = `-- name: HasOverdueCashSettlementForDriver :one
+SELECT EXISTS (
+    SELECT 1
+    FROM rides
+    WHERE driver_id = $1
+      AND status = 'completed'
+      AND payment_status = 'unpaid'
+      AND completed_at IS NOT NULL
+      AND completed_at <= $2
+)
+`
+
+type HasOverdueCashSettlementForDriverParams struct {
+	DriverID    pgtype.Int4        `db:"driver_id"`
+	CompletedAt pgtype.Timestamptz `db:"completed_at"`
+}
+
+func (q *Queries) HasOverdueCashSettlementForDriver(ctx context.Context, arg HasOverdueCashSettlementForDriverParams) (bool, error) {
+	row := q.db.QueryRow(ctx, hasOverdueCashSettlementForDriver, arg.DriverID, arg.CompletedAt)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const createBidOffer = `-- name: CreateBidOffer :one
 INSERT INTO bid_offers (
     session_id, driver_id, driver_name, plate_number, vehicle_type,

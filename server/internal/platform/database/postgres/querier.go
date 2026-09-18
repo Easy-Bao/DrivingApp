@@ -60,6 +60,7 @@ type Querier interface {
 	GetUserByID(ctx context.Context, id int32) (User, error)
 	HasActiveBidSession(ctx context.Context, arg HasActiveBidSessionParams) (bool, error)
 	HasActivePassengerRide(ctx context.Context, passengerID int32) (bool, error)
+	HasOverdueCashSettlementForDriver(ctx context.Context, arg HasOverdueCashSettlementForDriverParams) (bool, error)
 	HasPassengerReviewForRide(ctx context.Context, rideID int32) (bool, error)
 	HasPendingBidOffer(ctx context.Context, arg HasPendingBidOfferParams) (bool, error)
 	HasReviewForRide(ctx context.Context, rideID pgtype.Int4) (bool, error)
