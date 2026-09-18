@@ -39,6 +39,14 @@ CREATE TABLE rides (
         AND (pickup_longitude IS NULL OR pickup_longitude BETWEEN -180 AND 180)
         AND (dropoff_latitude IS NULL OR dropoff_latitude BETWEEN -90 AND 90)
         AND (dropoff_longitude IS NULL OR dropoff_longitude BETWEEN -180 AND 180)
+    ),
+    CONSTRAINT rides_pickup_dropoff_different_check CHECK (
+        pickup_latitude IS NULL
+        OR pickup_longitude IS NULL
+        OR dropoff_latitude IS NULL
+        OR dropoff_longitude IS NULL
+        OR pickup_latitude <> dropoff_latitude
+        OR pickup_longitude <> dropoff_longitude
     )
 );
 
