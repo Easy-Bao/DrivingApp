@@ -53,6 +53,8 @@ class const SavedPlaceQuickActionsWidget({
 
 class const _SavedPlaceChip({required this.place, required this.isActive})
     extends StatelessWidget {
+  static const _maximumLabelWidth = 180.0;
+
   final SavedPlace place;
   final bool isActive;
 
@@ -88,14 +90,19 @@ class const _SavedPlaceChip({required this.place, required this.isActive})
                 : context.colorScheme.onSurface,
           ),
           const SizedBox(width: 8),
-          Text(
-            place.label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: showActiveStyle
-                  ? context.colorScheme.onPrimary
-                  : context.colorScheme.onSurface,
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: _maximumLabelWidth),
+            child: Text(
+              place.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: showActiveStyle
+                    ? context.colorScheme.onPrimary
+                    : context.colorScheme.onSurface,
+              ),
             ),
           ),
         ],

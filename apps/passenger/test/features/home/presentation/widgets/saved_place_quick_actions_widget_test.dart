@@ -113,4 +113,32 @@ void main() {
     expect(firstDecoration.color, EasyRideTheme.main.colorScheme.primary);
     expect(secondDecoration.color, EasyRideTheme.main.colorScheme.surface);
   });
+
+  testWidgets('ellipsizes long saved place labels within a bounded chip', (
+    tester,
+  ) async {
+    const label =
+        'A saved destination with a label that is too long for one chip';
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: EasyRideTheme.main,
+        home: Scaffold(
+          body: SavedPlaceQuickActionsWidget(
+            places: const [SavedPlace(label: label, iconName: 'map_pin')],
+            onPlaceTap: (_) {},
+            onAddPlace: () {},
+          ),
+        ),
+      ),
+    );
+
+    final labelText = tester.widget<Text>(find.text(label));
+    expect(labelText.maxLines, 1);
+    expect(labelText.overflow, TextOverflow.ellipsis);
+    expect(
+      tester.getSize(find.byType(AnimatedContainer).first).width,
+      lessThan(240),
+    );
+  });
 }
