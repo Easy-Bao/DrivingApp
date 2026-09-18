@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 )
 
@@ -16,8 +17,9 @@ type testRefreshSessionStore struct {
 }
 
 type testRefreshSession struct {
-	session   domain.RefreshSession
-	revokedAt *time.Time
+	session            domain.RefreshSession
+	revokedAt          *time.Time
+	rotationGraceUntil *time.Time
 }
 
 func newTestRefreshSessionStore() *testRefreshSessionStore {
@@ -42,7 +44,9 @@ func (store *testRefreshSessionStore) FindActive(
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	item, exists := store.sessions[tokenHash]
-	if !exists || item.revokedAt != nil || !item.session.ExpiresAt.After(now) {
+	graceExpired := item.revokedAt != nil &&
+		(item.rotationGraceUntil == nil || now.After(*item.rotationGraceUntil))
+	if !exists || graceExpired || !item.session.ExpiresAt.After(now) {
 		return domain.RefreshSession{}, domain.ErrInvalidRefreshToken
 	}
 	return item.session, nil
@@ -61,7 +65,9 @@ func (store *testRefreshSessionStore) Rotate(
 	revoked := item.revokedAt != nil
 	expired := !item.session.ExpiresAt.After(now)
 	wrongUser := item.session.UserID != replacement.UserID
-	if missingSession || revoked || expired || wrongUser {
+	graceExpired := revoked &&
+		(item.rotationGraceUntil == nil || now.After(*item.rotationGraceUntil))
+	if missingSession || graceExpired || expired || wrongUser {
 		return domain.ErrInvalidRefreshToken
 	}
 	if _, exists := store.sessions[replacement.TokenHash]; exists {
@@ -69,6 +75,10 @@ func (store *testRefreshSessionStore) Rotate(
 	}
 	revokedAt := now
 	item.revokedAt = &revokedAt
+	if item.rotationGraceUntil == nil {
+		graceUntil := now.Add(application.RefreshTokenRotationGracePeriod)
+		item.rotationGraceUntil = &graceUntil
+	}
 	store.sessions[tokenHash] = item
 	store.sessions[replacement.TokenHash] = testRefreshSession{session: replacement}
 	return nil
@@ -78,11 +88,14 @@ func (store *testRefreshSessionStore) Revoke(_ context.Context, tokenHash string
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	item, exists := store.sessions[tokenHash]
-	if !exists || item.revokedAt != nil {
+	graceActive := item.revokedAt != nil && item.rotationGraceUntil != nil &&
+		now.Before(*item.rotationGraceUntil)
+	if !exists || (item.revokedAt != nil && !graceActive) {
 		return nil
 	}
 	revokedAt := now
 	item.revokedAt = &revokedAt
+	item.rotationGraceUntil = nil
 	store.sessions[tokenHash] = item
 	return nil
 }
@@ -91,11 +104,14 @@ func (store *testRefreshSessionStore) RevokeAll(_ context.Context, userID int, n
 	store.mu.Lock()
 	defer store.mu.Unlock()
 	for tokenHash, item := range store.sessions {
-		if item.session.UserID != userID || item.revokedAt != nil {
+		graceActive := item.revokedAt != nil && item.rotationGraceUntil != nil &&
+			now.Before(*item.rotationGraceUntil)
+		if item.session.UserID != userID || (item.revokedAt != nil && !graceActive) {
 			continue
 		}
 		revokedAt := now
 		item.revokedAt = &revokedAt
+		item.rotationGraceUntil = nil
 		store.sessions[tokenHash] = item
 	}
 	return nil

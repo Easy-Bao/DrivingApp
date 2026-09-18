@@ -31,7 +31,7 @@ const getActiveRefreshSession = `-- name: GetActiveRefreshSession :one
 SELECT id, user_id, token_hash, expires_at
 FROM refresh_sessions
 WHERE token_hash = $1
-  AND revoked_at IS NULL
+  AND (revoked_at IS NULL OR rotation_grace_until > $2)
   AND expires_at > $2
 LIMIT 1
 `
@@ -64,7 +64,7 @@ const getActiveRefreshSessionForUpdate = `-- name: GetActiveRefreshSessionForUpd
 SELECT id, user_id, token_hash, expires_at
 FROM refresh_sessions
 WHERE token_hash = $1
-  AND revoked_at IS NULL
+  AND (revoked_at IS NULL OR rotation_grace_until > $2)
   AND expires_at > $2
 LIMIT 1
 FOR UPDATE
@@ -96,9 +96,10 @@ func (q *Queries) GetActiveRefreshSessionForUpdate(ctx context.Context, arg GetA
 
 const revokeRefreshSession = `-- name: RevokeRefreshSession :exec
 UPDATE refresh_sessions
-SET revoked_at = $2
+SET revoked_at = $2,
+    rotation_grace_until = NULL
 WHERE token_hash = $1
-  AND revoked_at IS NULL
+  AND (revoked_at IS NULL OR rotation_grace_until > $2)
 `
 
 type RevokeRefreshSessionParams struct {
@@ -113,9 +114,14 @@ func (q *Queries) RevokeRefreshSession(ctx context.Context, arg RevokeRefreshSes
 
 const revokeRefreshSessionByID = `-- name: RevokeRefreshSessionByID :execrows
 UPDATE refresh_sessions
-SET revoked_at = $2, last_used_at = $2
+SET revoked_at = $2,
+    last_used_at = $2,
+    rotation_grace_until = COALESCE(
+        rotation_grace_until,
+        $2 + INTERVAL '30 seconds'
+    )
 WHERE id = $1
-  AND revoked_at IS NULL
+  AND (revoked_at IS NULL OR rotation_grace_until > $2)
 `
 
 type RevokeRefreshSessionByIDParams struct {
@@ -133,9 +139,10 @@ func (q *Queries) RevokeRefreshSessionByID(ctx context.Context, arg RevokeRefres
 
 const revokeUserRefreshSessions = `-- name: RevokeUserRefreshSessions :exec
 UPDATE refresh_sessions
-SET revoked_at = $2
+SET revoked_at = $2,
+    rotation_grace_until = NULL
 WHERE user_id = $1
-  AND revoked_at IS NULL
+  AND (revoked_at IS NULL OR rotation_grace_until > $2)
 `
 
 type RevokeUserRefreshSessionsParams struct {

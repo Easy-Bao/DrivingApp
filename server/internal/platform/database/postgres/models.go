@@ -126,13 +126,14 @@ type PrivateObject struct {
 }
 
 type RefreshSession struct {
-	ID         int32              `db:"id"`
-	UserID     int32              `db:"user_id"`
-	TokenHash  string             `db:"token_hash"`
-	ExpiresAt  pgtype.Timestamptz `db:"expires_at"`
-	CreatedAt  pgtype.Timestamptz `db:"created_at"`
-	LastUsedAt pgtype.Timestamptz `db:"last_used_at"`
-	RevokedAt  pgtype.Timestamptz `db:"revoked_at"`
+	ID                 int32              `db:"id"`
+	UserID             int32              `db:"user_id"`
+	TokenHash          string             `db:"token_hash"`
+	ExpiresAt          pgtype.Timestamptz `db:"expires_at"`
+	CreatedAt          pgtype.Timestamptz `db:"created_at"`
+	LastUsedAt         pgtype.Timestamptz `db:"last_used_at"`
+	RevokedAt          pgtype.Timestamptz `db:"revoked_at"`
+	RotationGraceUntil pgtype.Timestamptz `db:"rotation_grace_until"`
 }
 
 type Review struct {

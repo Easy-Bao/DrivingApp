@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
@@ -36,8 +37,8 @@ func TestRefreshSessionsAreOpaqueAndRotateOnce(t *testing.T) {
 		t.Fatalf("rotate session: %v", err)
 	}
 	_, err = service.Refresh(context.Background(), first.RefreshToken)
-	if !errors.Is(err, domain.ErrInvalidRefreshToken) {
-		t.Fatalf("old refresh token error = %v, want invalid refresh token", err)
+	if err != nil {
+		t.Fatalf("parallel refresh grace request: %v", err)
 	}
 
 	rotated, err := service.Refresh(context.Background(), second.RefreshToken)
@@ -74,5 +75,58 @@ func TestLogoutRevokesRefreshSession(t *testing.T) {
 	)
 	if !errors.Is(err, domain.ErrInvalidRefreshToken) {
 		t.Fatalf("revoked refresh token error = %v, want invalid refresh token", err)
+	}
+}
+
+func TestRefreshAllowsParallelRequestsDuringRotationGrace(t *testing.T) {
+	repository := &repository{users: map[string]domain.User{
+		"passenger@example.test": {
+			ID:           9,
+			Email:        "passenger@example.test",
+			Role:         domain.Passenger,
+			PasswordHash: testPasswordHash(t, "secret-9"),
+		},
+	}}
+	sessions := newTestRefreshSessionStore()
+	service := application.NewAuthenticateService(
+		repository,
+		security.NewTokenManager("parallel-refresh-test-secret"),
+		sessions,
+	)
+
+	_, issued, err := service.ExecuteSession(
+		context.Background(),
+		"passenger@example.test",
+		"secret-9",
+	)
+	if err != nil {
+		t.Fatalf("issue session: %v", err)
+	}
+
+	start := make(chan struct{})
+	results := make([]application.SessionTokens, 2)
+	errorsByRequest := make([]error, 2)
+	var waitGroup sync.WaitGroup
+	for index := range results {
+		waitGroup.Add(1)
+		go func(index int) {
+			defer waitGroup.Done()
+			<-start
+			results[index], errorsByRequest[index] = service.Refresh(
+				context.Background(),
+				issued.RefreshToken,
+			)
+		}(index)
+	}
+	close(start)
+	waitGroup.Wait()
+
+	for index, refreshErr := range errorsByRequest {
+		if refreshErr != nil {
+			t.Fatalf("parallel refresh %d: %v", index, refreshErr)
+		}
+		if results[index].AccessToken == "" || results[index].RefreshToken == "" {
+			t.Fatalf("parallel refresh %d returned incomplete tokens: %#v", index, results[index])
+		}
 	}
 }

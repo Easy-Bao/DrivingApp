@@ -187,7 +187,8 @@ CREATE TABLE IF NOT EXISTS refresh_sessions (
     expires_at timestamptz NOT NULL,
     created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_used_at timestamptz,
-    revoked_at timestamptz
+    revoked_at timestamptz,
+    rotation_grace_until timestamptz
 );
 
 CREATE TABLE IF NOT EXISTS private_objects (

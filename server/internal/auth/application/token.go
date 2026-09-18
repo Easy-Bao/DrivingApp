@@ -18,6 +18,10 @@ import (
 
 const refreshTokenBytes = 32
 
+// RefreshTokenRotationGracePeriod lets parallel requests finish a refresh
+// that began just before another request rotated the same session.
+const RefreshTokenRotationGracePeriod = 30 * time.Second
+
 type roleTokenIssuer interface {
 	IssueWithRole(subject, role string) (string, error)
 }

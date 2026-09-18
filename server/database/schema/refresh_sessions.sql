@@ -5,7 +5,8 @@ CREATE TABLE refresh_sessions (
     expires_at timestamptz NOT NULL,
     created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_used_at timestamptz,
-    revoked_at timestamptz
+    revoked_at timestamptz,
+    rotation_grace_until timestamptz
 );
 
 CREATE INDEX refreshsession_user_id_expires_at
