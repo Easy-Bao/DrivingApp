@@ -294,9 +294,18 @@ class _FindingDriverPageContentState()
     BlocProvider.of<BookingBloc>(context).add(const CancelBookingEvent());
   }
 
+  void _cancelBiddingSessionOnPop() {
+    if (_isLeaving || _acceptingOfferId != null) return;
+    final bookingBloc = BlocProvider.of<BookingBloc>(context);
+    if (!bookingBloc.hasActiveDriverSearch) return;
+
+    setState(() => _isLeaving = true);
+    bookingBloc.add(const CancelBookingEvent());
+  }
+
   void _returnHome() {
     if (!mounted) return;
-    _handleCancel();
+    _cancelBiddingSessionOnPop();
     context.goNamed(HomeRoutes.home);
   }
 
