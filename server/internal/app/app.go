@@ -103,6 +103,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create ride store: %w", err)
 	}
+	rateCounterStore := middleware.NewRedisCounterStore(redisClient)
 	router, eventHub := newHTTPRouter(httpRouterDependencies{
 		config:             config,
 		postgresPool:       postgresPool,
@@ -115,6 +116,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 		statsReader:        statsReader,
 		documentStore:      documentStore,
 		privateObjectStore: privateObjectStore,
+		otpAttemptStore:    rateCounterStore,
 	})
 	idempotency := middleware.NewIdempotency(
 		middleware.NewRedisIdempotencyStore(redisClient),
@@ -123,7 +125,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	secureHandler := middleware.SecureHTTPWithIdempotency(
 		router,
 		config.Security,
-		middleware.NewRateLimiterFromEnv(middleware.NewRedisCounterStore(redisClient)),
+		middleware.NewRateLimiterFromEnv(rateCounterStore),
 		idempotency,
 	)
 	handler := proxyTrust.Middleware(middleware.Logging(applicationLogger)(secureHandler))

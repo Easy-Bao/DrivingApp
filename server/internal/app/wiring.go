@@ -35,6 +35,7 @@ import (
 	passengerridecontexthttp "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	eventadapter "github.com/Easy-Bao/DrivingApp/server/internal/platform/events/adapter"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	platformstorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage"
 	websockethub "github.com/Easy-Bao/DrivingApp/server/internal/platform/websocket"
@@ -67,6 +68,7 @@ type httpRouterDependencies struct {
 	statsReader        adminports.StatsReader
 	documentStore      documentports.DocumentStore
 	privateObjectStore platformstorage.ObjectStore
+	otpAttemptStore    middleware.CounterStore
 }
 
 func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub.Hub) {
@@ -100,7 +102,12 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 		registerService,
 		sessionStore,
 	).WithLogger(applicationLogger)
-	authRouter := authhttp.NewRouter(registerService, authenticateService, otpService)
+	authRouter := authhttp.NewRouter(
+		registerService,
+		authenticateService,
+		otpService,
+		dependencies.otpAttemptStore,
+	)
 
 	usersRouter := userhttp.NewRouter(userapplication.NewProfileService(profileStore), verifier)
 	documentRouter := documenthttp.NewRouter(

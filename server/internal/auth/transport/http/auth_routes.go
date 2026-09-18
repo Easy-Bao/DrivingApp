@@ -1,19 +1,33 @@
 package http
 
 import (
+	"net/http"
+
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/go-chi/chi/v5"
 )
 
-type Router struct{ handler *Handler }
+type Router struct {
+	handler              *Handler
+	otpVerificationLimit *OTPVerificationRateLimiter
+}
 
 func NewRouter(
 	register *application.RegisterService,
 	authenticate *application.AuthenticateService,
 	otp *application.OTPService,
+	otpAttemptStores ...middleware.CounterStore,
 ) *Router {
-	return &Router{handler: NewHandler(register, authenticate, otp)}
+	var otpVerificationLimit *OTPVerificationRateLimiter
+	if len(otpAttemptStores) > 0 {
+		otpVerificationLimit = NewOTPVerificationRateLimiter(otpAttemptStores[0])
+	}
+	return &Router{
+		handler:              NewHandler(register, authenticate, otp),
+		otpVerificationLimit: otpVerificationLimit,
+	}
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {
@@ -26,7 +40,11 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 	mux.Post(api.V1Prefix+"/auth/refresh", router.handler.RefreshToken)
 	mux.Post(api.V1Prefix+"/auth/logout", router.handler.Logout)
 	mux.Post(api.V1Prefix+"/auth/passenger/otp", router.handler.RequestOTP)
-	mux.Post(api.V1Prefix+"/auth/passenger/verify-otp", router.handler.VerifyOTP)
+	verificationHandler := http.Handler(http.HandlerFunc(router.handler.VerifyOTP))
+	if router.otpVerificationLimit != nil {
+		verificationHandler = router.otpVerificationLimit.Middleware(verificationHandler)
+	}
+	mux.Method(http.MethodPost, api.V1Prefix+"/auth/passenger/verify-otp", verificationHandler)
 	mux.Post(api.V1Prefix+"/auth/passenger/forgot-password", router.handler.ForgotPassword)
 	mux.Post(api.V1Prefix+"/auth/passenger/reset-password", router.handler.ResetPassword)
 	mux.Post(api.V1Prefix+"/auth/driver/forgot-password", router.handler.DriverForgotPassword)
