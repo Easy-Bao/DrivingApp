@@ -89,6 +89,12 @@ func (hub *Hub) Publish(envelope event.Envelope) {
 	}
 }
 
+func (hub *Hub) topicSubscriberCount(topic string) int {
+	hub.mu.RLock()
+	defer hub.mu.RUnlock()
+	return len(hub.topics[topic])
+}
+
 func (subscription *Subscription) Events() <-chan event.Envelope {
 	return subscription.events
 }

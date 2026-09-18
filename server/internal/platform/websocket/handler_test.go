@@ -140,3 +140,39 @@ func TestHandlerRejectsUnauthenticatedOrUnsupportedRoles(t *testing.T) {
 		t.Fatalf("unsupported role status = %d, want %d", response.Code, http.StatusForbidden)
 	}
 }
+
+func TestHandlerScavengesSubscriptionAfterAbruptSocketDisconnect(t *testing.T) {
+	hub := NewHub()
+	handler := NewHandler(
+		hub,
+		authenticatorStub{identity: security.Identity{Subject: "7", Role: "driver"}},
+		nil,
+	)
+	server := newIPv4TestServer(t, handler)
+	defer server.Close()
+
+	url := "ws" + strings.TrimPrefix(server.URL, "http")
+	connection, _, err := websocket.DefaultDialer.Dial(
+		url,
+		http.Header{"Authorization": []string{"Bearer valid"}},
+	)
+	if err != nil {
+		t.Fatalf("Dial() error = %v", err)
+	}
+
+	if got := hub.topicSubscriberCount("driver:7"); got != 1 {
+		t.Fatalf("subscriber count after dial = %d, want 1", got)
+	}
+	if err := connection.UnderlyingConn().Close(); err != nil {
+		t.Fatalf("close underlying connection: %v", err)
+	}
+
+	deadline := time.Now().Add(time.Second)
+	for time.Now().Before(deadline) {
+		if hub.topicSubscriberCount("driver:7") == 0 {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	t.Fatalf("subscription remained after abrupt disconnect")
+}

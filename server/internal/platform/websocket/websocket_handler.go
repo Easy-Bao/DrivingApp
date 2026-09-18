@@ -86,9 +86,20 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 	stopWriter := make(chan struct{})
 	writerDone := make(chan struct{})
 	go handler.writePump(connection, subscription.Events(), stopWriter, writerDone, closeConnection)
-	handler.readPump(connection)
+	readDone := make(chan struct{})
+	go func() {
+		handler.readPump(connection)
+		close(readDone)
+	}()
+	select {
+	case <-readDone:
+	case <-writerDone:
+		// A failed write is the first signal for a half-open socket. Stop
+		// waiting on the reader so the subscription is scavenged immediately.
+	}
 	close(stopWriter)
 	closeConnection()
+	<-readDone
 	<-writerDone
 }
 
