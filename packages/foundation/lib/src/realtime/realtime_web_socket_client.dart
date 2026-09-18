@@ -10,6 +10,8 @@ typedef RealtimeTokenRefresher = Future<String?> Function();
 typedef ReconnectDelay = Duration Function(int attempt);
 typedef RealtimeActiveTripResync = Future<void> Function();
 
+const realtimeHeartbeatInterval = Duration(seconds: 54);
+
 abstract interface class RealtimeSocket {
   Stream<Object?> get messages;
 
@@ -23,15 +25,21 @@ abstract interface class RealtimeSocketConnector {
   });
 }
 
-final class const IoRealtimeSocketConnector()
+final class const IoRealtimeSocketConnector({
+  this.pingInterval = realtimeHeartbeatInterval,
+})
     implements RealtimeSocketConnector {
+  final Duration pingInterval;
+
   @override
   Future<RealtimeSocket> connect(
     Uri uri, {
     required Map<String, String> headers,
-  }) async => _IoRealtimeSocket(
-    await WebSocket.connect(uri.toString(), headers: headers),
-  );
+  }) async {
+    final socket = await WebSocket.connect(uri.toString(), headers: headers);
+    socket.pingInterval = pingInterval;
+    return _IoRealtimeSocket(socket);
+  }
 }
 
 final class const _IoRealtimeSocket(this._socket) implements RealtimeSocket {

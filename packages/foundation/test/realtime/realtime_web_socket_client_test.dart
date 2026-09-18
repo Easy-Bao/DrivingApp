@@ -5,6 +5,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 
 void main() {
+  test('uses the server-compatible heartbeat interval', () {
+    expect(realtimeHeartbeatInterval, const Duration(seconds: 54));
+  });
+
   test(
     'forwards each valid event once with authenticated transport headers',
     () async {
