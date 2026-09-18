@@ -312,8 +312,11 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
           final defaultLng =
               position?.longitude ?? rideCubitState.pickupLongitude;
           if (defaultLat == null || defaultLng == null) {
-            return const Scaffold(
-              body: Center(child: Text('Pickup location is unavailable.')),
+            return const PopScope(
+              canPop: false,
+              child: Scaffold(
+                body: Center(child: Text('Pickup location is unavailable.')),
+              ),
             );
           }
 
