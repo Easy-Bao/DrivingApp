@@ -19,12 +19,9 @@ import 'package:passenger/src/features/booking/presentation/bloc/booking/booking
 import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/home/presentation/bloc/home/home_cubit.dart';
-import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_cubit.dart';
-import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_state.dart';
 import 'package:passenger/src/features/home/presentation/widgets/active_ride_banner_widget.dart';
 import 'package:passenger/src/features/home/presentation/widgets/home_destination_search_hint_widget.dart';
 import 'package:passenger/src/features/home/presentation/widgets/pending_booking_banner_widget.dart';
-import 'package:passenger/src/features/home/presentation/widgets/public_driver_summary_card_widget.dart';
 import 'package:passenger/src/features/home/presentation/widgets/recent_ride_history_empty_state_widget.dart';
 import 'package:passenger/src/features/home/presentation/widgets/recent_ride_history_preview_widget.dart';
 import 'package:passenger/src/features/home/presentation/widgets/saved_place_quick_actions_widget.dart';
@@ -101,7 +98,6 @@ class _HomePageState extends State<HomePage> {
                         _buildActiveRideBanner(),
                         _buildSearchBar(),
                         _buildPendingBookingBanner(),
-                        _buildPublicDriverSummary(),
                         const SizedBox(height: 16),
                         _buildChipRow(),
                         const SizedBox(height: 24),
@@ -325,23 +321,6 @@ class _HomePageState extends State<HomePage> {
             onDismiss: () =>
                 BlocProvider.of<BookingDraftCubit>(context).clear(),
           ),
-        );
-      },
-    );
-  }
-
-  Widget _buildPublicDriverSummary() {
-    return BlocBuilder<PublicDriverSummaryCubit, PublicDriverSummaryState>(
-      buildWhen: (previous, current) =>
-          previous.status != current.status ||
-          previous.summaries != current.summaries,
-      builder: (context, state) {
-        if (state.summaries.isEmpty || state.isLoading) {
-          return const SizedBox.shrink();
-        }
-        return Padding(
-          padding: const EdgeInsets.only(top: 12),
-          child: PublicDriverSummaryCardWidget(summaries: state.summaries),
         );
       },
     );

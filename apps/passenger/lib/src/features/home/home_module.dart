@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:design_system/design_system.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -92,13 +90,6 @@ class HomeModule._() {
         providers: [
           BlocProvider(create: (_) => Modular.get<HomeCubit>()),
           BlocProvider(create: (_) => Modular.get<RideHistoryBloc>()),
-          BlocProvider(
-            create: (_) {
-              final cubit = Modular.get<PublicDriverSummaryCubit>();
-              unawaited(cubit.load());
-              return cubit;
-            },
-          ),
           // The cubit is a module singleton shared by Home and Profile.
           // Passing it by value keeps route disposal from closing the
           // singleton while a saved-place flow is still in progress.
