@@ -127,9 +127,15 @@ bool _validCoordinate(double latitude, double longitude) {
 Failure _mapFailure(Object error) {
   if (error is DioException) {
     final statusCode = error.response?.statusCode;
-    if (statusCode == 401 || statusCode == 403) {
+    if (statusCode == 401) {
       return const AuthFailure(
         'Your passenger session has ended. Sign in again.',
+      );
+    }
+    if (statusCode == 403) {
+      return const ServerFailure.withStatusCode(
+        'You do not have permission to manage this booking.',
+        403,
       );
     }
     if (statusCode == 400 || statusCode == 409 || statusCode == 422) {

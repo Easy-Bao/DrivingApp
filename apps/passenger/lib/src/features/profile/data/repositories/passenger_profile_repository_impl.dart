@@ -185,9 +185,15 @@ final class PassengerProfileRepositoryImpl({
 Failure _mapFailure(Object error) {
   if (error is DioException) {
     final statusCode = error.response?.statusCode;
-    if (statusCode == 401 || statusCode == 403) {
+    if (statusCode == 401) {
       return const AuthFailure(
         'Your passenger session has ended. Sign in again.',
+      );
+    }
+    if (statusCode == 403) {
+      return const ServerFailure.withStatusCode(
+        'You do not have permission to view or update your profile.',
+        403,
       );
     }
     if (statusCode == 413) {
@@ -220,9 +226,15 @@ Failure _mapFailure(Object error) {
     );
   }
   if (error is ServerException) {
-    if (error.statusCode == 401 || error.statusCode == 403) {
+    if (error.statusCode == 401) {
       return const AuthFailure(
         'Your passenger session has ended. Sign in again.',
+      );
+    }
+    if (error.statusCode == 403) {
+      return const ServerFailure.withStatusCode(
+        'You do not have permission to view or update your profile.',
+        403,
       );
     }
     if (error.statusCode == 400 || error.statusCode == 422) {

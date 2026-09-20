@@ -20,9 +20,15 @@ final class DriverRepositoryImpl({
   Failure _mapExceptionToFailure(Object error) {
     if (error is DioException) {
       final statusCode = error.response?.statusCode;
-      if (statusCode == 401 || statusCode == 403) {
+      if (statusCode == 401) {
         return const AuthFailure(
           'Session expired or unauthorized. Please sign in again.',
+        );
+      }
+      if (statusCode == 403) {
+        return const ServerFailure.withStatusCode(
+          'You do not have permission to view nearby drivers.',
+          403,
         );
       }
       if (statusCode == null) {
@@ -44,9 +50,15 @@ final class DriverRepositoryImpl({
       );
     }
     if (error is ServerException) {
-      if (error.statusCode == 401 || error.statusCode == 403) {
+      if (error.statusCode == 401) {
         return const AuthFailure(
           'Session expired or unauthorized. Please sign in again.',
+        );
+      }
+      if (error.statusCode == 403) {
+        return const ServerFailure.withStatusCode(
+          'You do not have permission to view nearby drivers.',
+          403,
         );
       }
       if (error.statusCode == 400 || error.statusCode == 422) {

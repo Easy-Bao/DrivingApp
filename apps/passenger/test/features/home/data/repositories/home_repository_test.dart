@@ -1,5 +1,8 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/home/data/data_sources/home_remote_data_source.dart';
 import 'package:passenger/src/features/home/data/repositories/home_repository_impl.dart';
 import 'package:passenger/src/features/home/domain/entities/home_data.dart';
@@ -58,4 +61,33 @@ void main() {
           .called(1);
     },
   );
+
+  test('keeps forbidden home responses separate from session expiry', () async {
+    final remoteDataSource = MockHomeRemoteDataSource();
+    final request = RequestOptions(path: '/api/v1/home');
+    when(
+      () => remoteDataSource.fetchHomeData(
+        lat: any(named: 'lat'),
+        lng: any(named: 'lng'),
+      ),
+    ).thenThrow(
+      DioException(
+        requestOptions: request,
+        response: Response<Object?>(requestOptions: request, statusCode: 403),
+        type: DioExceptionType.badResponse,
+      ),
+    );
+
+    final repository = HomeRepositoryImpl(
+      homeRemoteDataSource: remoteDataSource,
+    );
+    final result = await repository.loadHomeData(lat: 7.8, lng: 123.4);
+
+    result.fold((failure) {
+      expect(failure, isA<ServerFailure>());
+      expect(failure, isNot(isA<AuthFailure>()));
+      expect(failure.message, 'You do not have permission to view home data.');
+      expect((failure as ServerFailure).statusCode, 403);
+    }, (_) => fail('Expected a permission failure.'));
+  });
 }

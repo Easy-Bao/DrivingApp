@@ -1,7 +1,10 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/profile/data/data_sources/passenger_profile_remote_data_source.dart';
 import 'package:passenger/src/features/profile/data/repositories/passenger_profile_repository_impl.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
@@ -81,4 +84,54 @@ void main() {
       ),
     ).called(1);
   });
+
+  test(
+    'keeps forbidden profile responses separate from session expiry',
+    () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      final preferences = await SharedPreferences.getInstance();
+      final remoteDataSource = MockPassengerProfileRemoteDataSource();
+      final sessionService = MockSecureSessionService();
+      final request = RequestOptions(path: '/api/v1/passengers/42');
+
+      when(() => sessionService.readPassengerId())
+          .thenAnswer((_) async => '42');
+      when(
+        () => remoteDataSource.updateProfile(
+          passengerId: '42',
+          data: any<Map<String, dynamic>>(named: 'data'),
+        ),
+      ).thenThrow(
+        DioException(
+          requestOptions: request,
+          response: Response<Object?>(requestOptions: request, statusCode: 403),
+          type: DioExceptionType.badResponse,
+        ),
+      );
+
+      final repository = PassengerProfileRepositoryImpl(
+        remoteDataSource: remoteDataSource,
+        sessionService: sessionService,
+        preferences: preferences,
+      );
+      final result = await repository.updateProfile(
+        name: 'Passenger',
+        phone: '+639170000001',
+        email: 'passenger@example.com',
+        address: '',
+        gender: 'Female',
+        avatarPath: '',
+      );
+
+      result.fold((failure) {
+        expect(failure, isA<ServerFailure>());
+        expect(failure, isNot(isA<AuthFailure>()));
+        expect(
+          failure.message,
+          'You do not have permission to view or update your profile.',
+        );
+        expect((failure as ServerFailure).statusCode, 403);
+      }, (_) => fail('Expected a permission failure.'));
+    },
+  );
 }

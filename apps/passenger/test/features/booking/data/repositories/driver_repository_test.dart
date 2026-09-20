@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:maps/maps.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/data/data_sources/driver_discovery_remote_data_source.dart';
 import 'package:passenger/src/features/booking/data/repositories/driver_repository_impl.dart';
@@ -150,6 +152,48 @@ void main() {
           longitude: longitude,
         ),
       ).called(1);
+    },
+  );
+
+  test(
+    'keeps forbidden driver discovery responses separate from session expiry',
+    () async {
+      const latitude = 7.828;
+      const longitude = 123.434;
+      final dataSource = MockDriverDiscoveryRemoteDataSource();
+      final locationRepository = MockLocationRepository();
+      final request = RequestOptions(path: '/api/v1/telemetry/location/nearby');
+      when(
+        () => dataSource.fetchNearbyDrivers(
+          latitude: latitude,
+          longitude: longitude,
+        ),
+      ).thenThrow(
+        DioException(
+          requestOptions: request,
+          response: Response<Object?>(requestOptions: request, statusCode: 403),
+          type: DioExceptionType.badResponse,
+        ),
+      );
+
+      final repository = DriverRepositoryImpl(
+        discoveryDataSource: dataSource,
+        locationRepository: locationRepository,
+      );
+      final result = await repository.getNearbyDrivers(
+        lat: latitude,
+        lng: longitude,
+      );
+
+      result.fold((failure) {
+        expect(failure, isA<ServerFailure>());
+        expect(failure, isNot(isA<AuthFailure>()));
+        expect(
+          failure.message,
+          'You do not have permission to view nearby drivers.',
+        );
+        expect((failure as ServerFailure).statusCode, 403);
+      }, (_) => fail('Expected a permission failure.'));
     },
   );
 }

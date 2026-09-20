@@ -1,7 +1,9 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/booking/data/data_sources/booking_remote_data_source.dart';
 import 'package:passenger/src/features/booking/data/repositories/booking_repository_impl.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_session_request.dart';
@@ -78,6 +80,46 @@ void main() {
     expect(result, isA<Ok<String, DomainFailure>>());
     expect(result.fold((failure) => failure, (value) => value), '77');
   });
+
+  test(
+    'keeps forbidden booking responses separate from session expiry',
+    () async {
+      final request = RequestOptions(path: '/api/v1/bids');
+      when(() => dataSource.createSession(any())).thenThrow(
+        DioException(
+          requestOptions: request,
+          response: Response<Object?>(requestOptions: request, statusCode: 403),
+          type: DioExceptionType.badResponse,
+        ),
+      );
+
+      final result = await repository.createSession(
+        const BookingSessionRequest(
+          rideType: 'solo',
+          pickupLatitude: 7.828,
+          pickupLongitude: 123.434,
+          pickupName: 'Mountain View',
+          dropoffLatitude: 7.85,
+          dropoffLongitude: 123.45,
+          dropoffName: 'Vista Slope',
+          distanceKm: 3.2,
+          durationMinutes: 8,
+          customFareAmount: 2764,
+          passengerNote: '',
+        ),
+      );
+
+      result.fold((failure) {
+        expect(failure, isA<ServerFailure>());
+        expect(failure, isNot(isA<AuthFailure>()));
+        expect(
+          failure.message,
+          'You do not have permission to manage this booking.',
+        );
+        expect((failure as ServerFailure).statusCode, 403);
+      }, (_) => fail('Expected a permission failure.'));
+    },
+  );
 
   test('normalizes numeric accepted ride IDs and minor-unit fare', () async {
     when(
