@@ -51,6 +51,35 @@ void main() {
     },
   );
 
+  test('keeps forbidden responses separate from session expiry', () async {
+    final request = RequestOptions(path: '/api/v1/passengers/private-id/rides');
+    when(
+      () => remoteDataSource.fetchRideHistory(
+        'private-id',
+        limit: any(named: 'limit'),
+        offset: any(named: 'offset'),
+      ),
+    ).thenThrow(
+      DioException(
+        requestOptions: request,
+        response: Response<Object?>(requestOptions: request, statusCode: 403),
+        type: DioExceptionType.badResponse,
+      ),
+    );
+
+    final result = await repository.fetchRideHistory('private-id');
+
+    result.fold((failure) {
+      expect(failure, isA<ServerFailure>());
+      expect(failure, isNot(isA<AuthFailure>()));
+      expect(
+        failure.message,
+        'You do not have permission to view this activity.',
+      );
+      expect((failure as ServerFailure).statusCode, 403);
+    }, (_) => fail('Expected a permission failure.'));
+  });
+
   test('does not expose unexpected exception diagnostics', () async {
     when(
       () => remoteDataSource.fetchRideHistory(

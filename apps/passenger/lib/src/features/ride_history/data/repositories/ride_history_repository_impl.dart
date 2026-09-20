@@ -37,9 +37,15 @@ final class RideHistoryRepositoryImpl({required this._remoteDataSource})
   Failure _mapExceptionToFailure(Object error) {
     if (error is DioException) {
       final statusCode = error.response?.statusCode;
-      if (statusCode == 401 || statusCode == 403) {
+      if (statusCode == 401) {
         return const AuthFailure(
           'Your session has ended. Sign in again to view activity.',
+        );
+      }
+      if (statusCode == 403) {
+        return const ServerFailure.withStatusCode(
+          'You do not have permission to view this activity.',
+          403,
         );
       }
       return switch (error.type) {
@@ -59,9 +65,15 @@ final class RideHistoryRepositoryImpl({required this._remoteDataSource})
       };
     }
     if (error is ServerException) {
-      if (error.statusCode == 401 || error.statusCode == 403) {
+      if (error.statusCode == 401) {
         return const AuthFailure(
           'Session expired or unauthorized. Please sign in again.',
+        );
+      }
+      if (error.statusCode == 403) {
+        return const ServerFailure.withStatusCode(
+          'You do not have permission to view this activity.',
+          403,
         );
       }
       if (error.statusCode == 400 || error.statusCode == 422) {
