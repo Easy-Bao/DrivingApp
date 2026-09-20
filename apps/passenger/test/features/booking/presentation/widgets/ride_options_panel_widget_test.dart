@@ -1,5 +1,6 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_options_panel_widget.dart';
@@ -341,6 +342,8 @@ void main() {
     expect(find.text('Silicon Valley Corporate Catering'), findsOneWidget);
     expect(find.text(longAddress), findsNothing);
     expect(find.byKey(const ValueKey('trip-route-dashes')), findsOneWidget);
+    expect(find.byIcon(LucideIcons.map_pin), findsOneWidget);
+    expect(find.byIcon(LucideIcons.navigation), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

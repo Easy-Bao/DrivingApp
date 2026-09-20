@@ -60,13 +60,13 @@ class const RideTripSummaryWidget({
             children: [
               const _LocationIcon(
                 isDestination: false,
-                icon: LucideIcons.circle_dot,
+                icon: LucideIcons.map_pin,
               ),
               _LocationDetails(label: 'Pickup', value: pickupLabel),
               const _DashedRouteConnector(),
               const _LocationIcon(
                 isDestination: true,
-                icon: LucideIcons.map_pin,
+                icon: LucideIcons.navigation,
               ),
               _LocationDetails(label: 'Destination', value: destinationName),
             ],
@@ -205,18 +205,13 @@ class const _LocationIcon({required this.icon, this.isDestination = false})
       );
     }
 
-    return Container(
+    return SizedBox(
       width: 18,
       height: 18,
-      alignment: Alignment.center,
-      child: Container(
-        width: 10,
-        height: 10,
-        decoration: BoxDecoration(
-          color: context.colorScheme.surface,
-          shape: BoxShape.circle,
-          border: Border.all(color: context.semanticColors.success, width: 2.0),
-        ),
+      child: Icon(
+        icon,
+        size: 18,
+        color: context.semanticColors.success,
       ),
     );
   }

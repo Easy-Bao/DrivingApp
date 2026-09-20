@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 
 class const CompactRouteTimelineWidget({
   super.key,
@@ -37,8 +38,8 @@ class const CompactRouteTimelineWidget({
                   alignment: Alignment.topCenter,
                   child: Padding(
                     padding: const EdgeInsets.only(top: 2),
-                    child: _StopNode(
-                      isPickup: true,
+                    child: _StopIcon(
+                      icon: LucideIcons.map_pin,
                       color: colors.primary,
                     ),
                   ),
@@ -47,8 +48,8 @@ class const CompactRouteTimelineWidget({
                   alignment: Alignment.bottomCenter,
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 2),
-                    child: _StopNode(
-                      isPickup: false,
+                    child: _StopIcon(
+                      icon: LucideIcons.navigation,
                       color: colors.tertiary,
                     ),
                   ),
@@ -73,45 +74,17 @@ class const CompactRouteTimelineWidget({
   }
 }
 
-class const _StopNode({required this.isPickup, required this.color})
+class const _StopIcon({required this.icon, required this.color})
     extends StatelessWidget {
-  final bool isPickup;
+  final IconData icon;
   final Color color;
 
   @override
   Widget build(BuildContext context) {
-    if (isPickup) {
-      return Container(
-        width: 13,
-        height: 13,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.28),
-              blurRadius: 4,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      width: 13,
-      height: 13,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(3.5),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.28),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
+    return Icon(
+      icon,
+      size: 18,
+      color: color,
     );
   }
 }
