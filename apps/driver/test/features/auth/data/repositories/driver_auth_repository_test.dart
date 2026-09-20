@@ -92,6 +92,7 @@ void main() {
       ).thenAnswer(
         (_) async => <String, dynamic>{
           'token': 'jwt-token',
+          'refreshToken': 'refresh-jwt-token',
           'driver': <String, dynamic>{
             'id': 7,
             'userId': 42,
@@ -131,6 +132,38 @@ void main() {
 
     expect(result.isLeft(), isTrue);
     verifyNever(() => secureSessionService.saveToken(any()));
+    verifyNever(() => secureSessionService.saveRefreshToken(any()));
     verifyNever(() => secureSessionService.saveDriverId(any()));
   });
+
+  test(
+    'rejects a session without a refresh token before persistence',
+    () async {
+      when(
+        () => remoteDataSource.postData(
+          DriverAuthEndpoints.login,
+          requestBody: any(named: 'requestBody'),
+        ),
+      ).thenAnswer(
+        (_) async => <String, dynamic>{
+          'token': 'jwt-token',
+          'user': <String, dynamic>{
+            'id': 42,
+            'name': 'Test Driver',
+            'email': 'driver@example.com',
+          },
+        },
+      );
+
+      final result = await repository.authenticate(
+        email: 'driver@example.com',
+        password: 'secret-password',
+      );
+
+      expect(result.isLeft(), isTrue);
+      verifyNever(() => secureSessionService.saveToken(any()));
+      verifyNever(() => secureSessionService.saveRefreshToken(any()));
+      verifyNever(() => secureSessionService.saveDriverId(any()));
+    },
+  );
 }

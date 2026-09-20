@@ -60,12 +60,15 @@ final class DriverAuthRepositoryImpl({
           : _stringValue(driver['plateNumber']);
       final rating = (driver['rating'] as num?)?.toDouble() ?? 0.0;
 
-      if (token.isEmpty || driverId.isEmpty) {
-        throw const FormatException('Authentication response is incomplete');
+      final refreshToken = _stringValue(authenticationData['refreshToken']);
+      if (token.isEmpty || driverId.isEmpty || refreshToken.isEmpty) {
+        throw DataParsingException(
+          message:
+              'Authentication response did not contain a complete session.',
+        );
       }
 
       await _secureSessionService.saveToken(token);
-      final refreshToken = _stringValue(authenticationData['refreshToken']);
       await _secureSessionService.saveRefreshToken(refreshToken);
       await _secureSessionService.saveDriverId(driverId);
 
