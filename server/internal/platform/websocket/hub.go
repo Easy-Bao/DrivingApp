@@ -81,8 +81,19 @@ func (hub *Hub) Publish(envelope event.Envelope) {
 				continue
 			}
 			delivered[subscription] = struct{}{}
+			enqueueDropOldest(subscription.events, envelope)
+		}
+	}
+}
+
+func enqueueDropOldest(queue chan event.Envelope, envelope event.Envelope) {
+	for {
+		select {
+		case queue <- envelope:
+			return
+		default:
 			select {
-			case subscription.events <- envelope:
+			case <-queue:
 			default:
 			}
 		}
