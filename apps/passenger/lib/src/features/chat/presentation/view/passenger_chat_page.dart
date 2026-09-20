@@ -476,6 +476,10 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                               LucideIcons.send_horizontal,
                               size: 20,
                             ),
+                            constraints: const BoxConstraints(
+                              minWidth: EasyRideSize.minimumTouchTarget,
+                              minHeight: EasyRideSize.minimumTouchTarget,
+                            ),
                             color: !canSendMessage
                                 ? context.colorScheme.onSurfaceVariant
                                 : context.colorScheme.onPrimary,
@@ -710,6 +714,7 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                       fontSize: 11,
                       color: context.colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w600,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
                   if (isMe) ...[

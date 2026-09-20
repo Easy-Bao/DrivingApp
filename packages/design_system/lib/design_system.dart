@@ -7,6 +7,7 @@ export 'package:design_system/src/tokens/spacing.dart';
 export 'package:design_system/src/tokens/status_colors.dart';
 export 'package:design_system/src/theme/easyride_theme.dart';
 export 'package:design_system/src/theme/easy_ride_semantic_colors.dart';
+export 'package:design_system/src/theme/typography.dart';
 export 'package:design_system/src/theme/design_system_context.dart';
 export 'package:design_system/src/transitions/app_transitions.dart';
 export 'package:design_system/src/transitions/custom_page_transition.dart';

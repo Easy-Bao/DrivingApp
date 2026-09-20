@@ -30,6 +30,9 @@ class const ActiveTripExitDialog({required this.driverName, super.key})
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, ActiveTripExitAction.cancel),
+          style: TextButton.styleFrom(
+            minimumSize: const Size(0, EasyRideSize.minimumTouchTarget),
+          ),
           child: Text(
             'Cancel ride',
             style: TextStyle(
@@ -41,6 +44,9 @@ class const ActiveTripExitDialog({required this.driverName, super.key})
         TextButton(
           onPressed: () =>
               Navigator.pop(context, ActiveTripExitAction.minimize),
+          style: TextButton.styleFrom(
+            minimumSize: const Size(0, EasyRideSize.minimumTouchTarget),
+          ),
           child: Text(
             'Go to home',
             style: TextStyle(
@@ -52,6 +58,9 @@ class const ActiveTripExitDialog({required this.driverName, super.key})
         FilledButton(
           onPressed: () =>
               Navigator.pop(context, ActiveTripExitAction.keepTracking),
+          style: FilledButton.styleFrom(
+            minimumSize: const Size(0, EasyRideSize.minimumTouchTarget),
+          ),
           child: const Text('Keep tracking'),
         ),
       ],

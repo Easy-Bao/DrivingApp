@@ -44,6 +44,7 @@ class const RideFareDetailsWidget({
       color: context.colorScheme.onSurface,
       fontSize: emphasize ? 14 : 13,
       fontWeight: emphasize ? FontWeight.w800 : FontWeight.w600,
+      fontFeatures: const [FontFeature.tabularFigures()],
     );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 7),
@@ -92,8 +93,8 @@ class const RideFareDetailsWidget({
                   onTap: onBackPressed,
                   borderRadius: BorderRadius.circular(EasyRideRadius.pill),
                   child: Container(
-                    width: 38,
-                    height: 38,
+                    width: EasyRideSize.minimumTouchTarget,
+                    height: EasyRideSize.minimumTouchTarget,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
@@ -261,6 +262,7 @@ class const RideFareDetailsWidget({
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.5,
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
               ],

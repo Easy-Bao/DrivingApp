@@ -278,7 +278,7 @@ class const _FilterOption({
         borderRadius: BorderRadius.circular(18),
         onTap: () => Navigator.of(context).pop(filter),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
           child: Row(
             children: [
               Icon(icon, size: 18, color: foreground),

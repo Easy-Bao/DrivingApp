@@ -41,7 +41,15 @@ class const AppErrorBanner({
               ),
             ),
             const SizedBox(width: 8),
-            TextButton(onPressed: onRetry, child: const Text('Retry')),
+            TextButton(
+              onPressed: onRetry,
+              style: TextButton.styleFrom(
+                minimumSize: const Size(48, 48),
+                foregroundColor: scheme.onErrorContainer,
+                textStyle: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              child: const Text('Retry'),
+            ),
           ],
         ),
       ),

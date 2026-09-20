@@ -113,6 +113,7 @@ class const FindingDriverNearestPanelWidget({
                       fontSize: 17,
                       fontWeight: FontWeight.w800,
                       color: context.colorScheme.onSurface,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
                   Text(
@@ -163,6 +164,7 @@ class const FindingDriverNearestPanelWidget({
                   onPressed: onViewFullProfilePressed,
                   style: OutlinedButton.styleFrom(
                     shape: const StadiumBorder(),
+                    minimumSize: const Size(0, EasyRideSize.minimumTouchTarget),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   child: const Text('View Profile'),
@@ -177,6 +179,7 @@ class const FindingDriverNearestPanelWidget({
                     foregroundColor: context.colorScheme.onPrimary,
                     elevation: 0,
                     shape: const StadiumBorder(),
+                    minimumSize: const Size(0, EasyRideSize.minimumTouchTarget),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   child: const Text('Choose Driver'),
@@ -190,12 +193,18 @@ class const FindingDriverNearestPanelWidget({
               Expanded(
                 child: TextButton(
                   onPressed: onSearchAllDriversPressed,
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(0, EasyRideSize.minimumTouchTarget),
+                  ),
                   child: const Text('Compare All Drivers'),
                 ),
               ),
               Expanded(
                 child: TextButton(
                   onPressed: isCanceling ? null : onCancelRidePressed,
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(0, EasyRideSize.minimumTouchTarget),
+                  ),
                   child: isCanceling
                       ? SizedBox(
                           width: 17,

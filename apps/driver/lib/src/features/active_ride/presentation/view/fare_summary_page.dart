@@ -160,7 +160,10 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
           onPressed: () => context.goNamed(DashboardRoutes.dashboard),
           tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           padding: EdgeInsets.zero,
-          style: IconButton.styleFrom(shape: const CircleBorder()),
+          style: IconButton.styleFrom(
+            minimumSize: const Size(48, 48),
+            shape: const CircleBorder(),
+          ),
           icon: Icon(
             LucideIcons.arrow_left,
             size: 21,
@@ -238,6 +241,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
                     fontSize: 30,
                     fontWeight: FontWeight.w800,
                     color: context.colorScheme.onPrimary,
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
               ],
@@ -386,6 +390,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
                   color: context.colorScheme.onSurface,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
             ),

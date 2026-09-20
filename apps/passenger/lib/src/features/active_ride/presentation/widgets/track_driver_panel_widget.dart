@@ -115,6 +115,7 @@ class const TrackDriverPanelWidget({
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
                     color: context.colorScheme.onSurface,
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
               ),
@@ -208,6 +209,10 @@ class const TrackDriverPanelWidget({
                       child: IconButton(
                         tooltip: 'Chat with driver',
                         onPressed: onChatDriverPressed,
+                        constraints: const BoxConstraints(
+                          minWidth: EasyRideSize.minimumTouchTarget,
+                          minHeight: EasyRideSize.minimumTouchTarget,
+                        ),
                         icon: const Icon(LucideIcons.message_circle),
                       ),
                     ),
@@ -235,7 +240,7 @@ class const TrackDriverPanelWidget({
             const SizedBox(height: 8),
             SizedBox(
               width: double.infinity,
-              height: 42,
+              height: EasyRideSize.minimumTouchTarget,
               child: TextButton(
                 onPressed: isCancellingTrip ? null : onCancelTripPressed,
                 style: TextButton.styleFrom(
@@ -289,7 +294,7 @@ class const _ActionButton({
         onTap: onTap,
         borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         child: Container(
-          height: 44,
+          height: EasyRideSize.minimumTouchTarget,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(EasyRideRadius.lg),
             border: filled

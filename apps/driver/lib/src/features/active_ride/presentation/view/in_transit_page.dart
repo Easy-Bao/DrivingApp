@@ -363,8 +363,8 @@ Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
         onTap: onPressed,
         customBorder: const CircleBorder(),
         child: SizedBox(
-          width: 46,
-          height: 46,
+          width: EasyRideSize.minimumTouchTarget,
+          height: EasyRideSize.minimumTouchTarget,
           child: Center(
             child: Icon(
               LucideIcons.arrow_left,

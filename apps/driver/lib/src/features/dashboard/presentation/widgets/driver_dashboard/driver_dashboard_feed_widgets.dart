@@ -85,6 +85,7 @@ class const DriverActiveTripCard({
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
                   color: context.colorScheme.onSurface,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
             ],
@@ -137,7 +138,7 @@ class const DriverActiveTripCard({
               children: [
                 Expanded(
                   child: SizedBox(
-                    height: 44,
+                    height: EasyRideSize.minimumTouchTarget,
                     child: ElevatedButton(
                       onPressed: onResume,
                       style: ElevatedButton.styleFrom(
@@ -163,7 +164,7 @@ class const DriverActiveTripCard({
                 const SizedBox(width: 12),
                 Expanded(
                   child: SizedBox(
-                    height: 44,
+                    height: EasyRideSize.minimumTouchTarget,
                     child: ElevatedButton(
                       onPressed: isCompleting ? null : onComplete,
                       style: ElevatedButton.styleFrom(
@@ -200,7 +201,7 @@ class const DriverActiveTripCard({
           else
             SizedBox(
               width: double.infinity,
-              height: 44,
+              height: EasyRideSize.minimumTouchTarget,
               child: ElevatedButton(
                 onPressed: isQueued ? null : onResume,
                 style: ElevatedButton.styleFrom(
@@ -305,6 +306,7 @@ class const DriverPoolBidCard({
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
                         color: context.colorScheme.onSurface,
+                        fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
                   ],
@@ -367,6 +369,7 @@ class const DriverPoolBidCard({
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
                   color: context.colorScheme.onSurface,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
             ],
@@ -378,6 +381,7 @@ class const DriverPoolBidCard({
                 child: OutlinedButton(
                   onPressed: submittingBidId != null ? null : onDecline,
                   style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, EasyRideSize.minimumTouchTarget),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     side: BorderSide(color: context.colorScheme.outlineVariant),
                     shape: RoundedRectangleBorder(
@@ -404,6 +408,7 @@ class const DriverPoolBidCard({
                     backgroundColor: context.colorScheme.primary,
                     foregroundColor: context.colorScheme.onPrimary,
                     elevation: 0,
+                    minimumSize: const Size(0, EasyRideSize.minimumTouchTarget),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(EasyRideRadius.lg),
@@ -458,6 +463,7 @@ class const DriverDashboardSectionLabel({
           fontWeight: FontWeight.w800,
           color: context.colorScheme.onSurfaceVariant,
           letterSpacing: 1.2,
+          fontFeatures: const [FontFeature.tabularFigures()],
         ),
       ),
     );

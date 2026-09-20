@@ -79,6 +79,7 @@ class const PassengerActiveRideCardWidget({
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: context.colorScheme.onSurface,
                         fontWeight: FontWeight.w800,
+                        fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -210,6 +211,7 @@ class const PassengerPastRideCardWidget({
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       color: context.colorScheme.onSurface,
                       fontWeight: FontWeight.w800,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
                 ),

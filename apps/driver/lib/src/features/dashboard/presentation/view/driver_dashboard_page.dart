@@ -850,6 +850,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                 Padding(
                   padding: const EdgeInsets.only(right: 16),
                   child: IconButton(
+                    constraints: const BoxConstraints(
+                      minWidth: EasyRideSize.minimumTouchTarget,
+                      minHeight: EasyRideSize.minimumTouchTarget,
+                    ),
                     tooltip: 'Account',
                     onPressed: () => context.pushNamed(ProfileRoutes.account),
                     icon: const Icon(LucideIcons.user_round),

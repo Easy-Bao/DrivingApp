@@ -13,7 +13,7 @@ class const SwipeActiveTabIndicator({
   required this.pagePosition,
   required this.itemCount,
   required this.color,
-  this.borderRadius = const BorderRadius.all(Radius.circular(27)),
+  this.borderRadius = const BorderRadius.all(Radius.circular(25)),
   this.horizontalInset = defaultHorizontalInset,
   this.verticalInset = defaultVerticalInset,
   this.capsuleKeyPrefix,

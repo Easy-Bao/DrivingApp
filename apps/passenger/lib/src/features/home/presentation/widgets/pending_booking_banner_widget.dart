@@ -58,10 +58,21 @@ class const PendingBookingBannerWidget({
               ],
             ),
           ),
-          TextButton(onPressed: onContinue, child: const Text('Continue')),
+          TextButton(
+            onPressed: onContinue,
+            style: TextButton.styleFrom(
+              minimumSize: const Size(48, EasyRideSize.minimumTouchTarget),
+              textStyle: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            child: const Text('Continue'),
+          ),
           IconButton(
             tooltip: 'Dismiss booking draft',
             onPressed: onDismiss,
+            constraints: const BoxConstraints(
+              minWidth: EasyRideSize.minimumTouchTarget,
+              minHeight: EasyRideSize.minimumTouchTarget,
+            ),
             icon: const Icon(LucideIcons.x, size: 18),
           ),
         ],

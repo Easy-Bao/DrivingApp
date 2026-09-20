@@ -18,6 +18,10 @@ abstract final class EasyRideComponentThemes {
         ),
         elevation: 0,
         shadowColor: Colors.transparent,
+        padding: const EdgeInsets.symmetric(
+          horizontal: EasyRideSpacing.xxl,
+          vertical: EasyRideSpacing.md,
+        ),
         minimumSize: const Size(
           EasyRideSize.minimumTouchTarget,
           EasyRideSize.controlHeight,
@@ -46,6 +50,10 @@ abstract final class EasyRideComponentThemes {
           alpha: 0.38,
         ),
         elevation: 0,
+        padding: const EdgeInsets.symmetric(
+          horizontal: EasyRideSpacing.xxl,
+          vertical: EasyRideSpacing.md,
+        ),
         minimumSize: const Size(
           EasyRideSize.minimumTouchTarget,
           EasyRideSize.controlHeight,
@@ -72,6 +80,10 @@ abstract final class EasyRideComponentThemes {
           alpha: 0.38,
         ),
         side: BorderSide(color: colors.outlineVariant, width: 1.5),
+        padding: const EdgeInsets.symmetric(
+          horizontal: EasyRideSpacing.xxl,
+          vertical: EasyRideSpacing.md,
+        ),
         minimumSize: const Size(
           EasyRideSize.minimumTouchTarget,
           EasyRideSize.controlHeight,

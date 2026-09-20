@@ -27,10 +27,10 @@ class const CompactRouteTimelineWidget({
               alignment: Alignment.center,
               children: [
                 Positioned(
-                  top: 14,
-                  bottom: 14,
+                  top: 18,
+                  bottom: 18,
                   child: CustomPaint(
-                    size: const Size(1, 48),
+                    size: const Size(1, 44),
                     painter: _DashedLinePainter(color: colors.outlineVariant),
                   ),
                 ),
@@ -117,6 +117,7 @@ class const _RouteStopText({required this.label, required this.value})
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurface,
               fontWeight: FontWeight.w700,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
         ],

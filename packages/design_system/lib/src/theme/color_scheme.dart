@@ -31,7 +31,7 @@ abstract final class EasyRideColorScheme {
     surfaceContainerHighest: Color(0xFFF1F5F9),
     onSurface: EasyRidePalette.obsidian,
     onSurfaceVariant: EasyRidePalette.gray600,
-    outline: EasyRidePalette.gray400,
+    outline: EasyRidePalette.gray500,
     outlineVariant: EasyRidePalette.gray200,
     shadow: Color(0x0D000000),
     scrim: Color(0x66000000),

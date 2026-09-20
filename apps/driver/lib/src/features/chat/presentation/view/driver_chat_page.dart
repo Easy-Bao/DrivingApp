@@ -445,6 +445,10 @@ class _DriverChatPageState extends State<DriverChatPage> {
                             shape: BoxShape.circle,
                           ),
                           child: IconButton(
+                            constraints: const BoxConstraints(
+                              minWidth: EasyRideSize.minimumTouchTarget,
+                              minHeight: EasyRideSize.minimumTouchTarget,
+                            ),
                             icon: const Icon(
                               LucideIcons.send_horizontal,
                               size: 20,
@@ -566,6 +570,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
                       fontSize: 11,
                       color: context.colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w600,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
                   if (isMe) ...[

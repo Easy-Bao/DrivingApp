@@ -472,6 +472,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                 style: context.textStyles.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: context.colorScheme.onSurface,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
             ),
@@ -485,6 +486,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 style: context.textStyles.bodyLarge?.copyWith(
                   fontWeight: FontWeight.w600,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
                 decoration: _fieldDecoration(
                   hintText: '917 000 0001',

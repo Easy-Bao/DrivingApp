@@ -21,8 +21,10 @@ class const ProfileAvatarWidget({
 
   @override
   Widget build(BuildContext context) {
-    final cameraButtonSize = size * 0.32 < 44 ? 44.0 : size * 0.32;
-    final cameraIconSize = size * 0.16 < 16 ? 16.0 : size * 0.16;
+    final cameraButtonSize = size * 0.32 < EasyRideSize.minimumTouchTarget
+        ? EasyRideSize.minimumTouchTarget
+        : size * 0.32;
+    final cameraIconSize = size * 0.16 < 18 ? 18.0 : size * 0.16;
     final imagePath = this.imagePath;
     final fallbackImage = _buildImageData(context);
     final avatar = imagePath == null || imagePath.isEmpty

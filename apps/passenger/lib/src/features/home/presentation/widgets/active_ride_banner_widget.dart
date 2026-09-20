@@ -100,8 +100,11 @@ class const ActiveRideBannerWidget({
                   style: FilledButton.styleFrom(
                     backgroundColor: context.colorScheme.onPrimary,
                     foregroundColor: context.colorScheme.primary,
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    minimumSize: const Size(0, 44),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    minimumSize: const Size(0, EasyRideSize.minimumTouchTarget),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+                    ),
                   ),
                   child: const Text('Resume Trip'),
                 ),

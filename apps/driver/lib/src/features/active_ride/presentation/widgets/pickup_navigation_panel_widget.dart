@@ -68,6 +68,7 @@ class const PickupNavigationPanelWidget({
                   fontSize: 19,
                   fontWeight: FontWeight.w800,
                   color: context.colorScheme.onSurface,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
             ],
@@ -107,6 +108,10 @@ class const PickupNavigationPanelWidget({
                     child: IconButton(
                       tooltip: 'Chat with passenger',
                       onPressed: onChatPressed,
+                      constraints: const BoxConstraints(
+                        minWidth: EasyRideSize.minimumTouchTarget,
+                        minHeight: EasyRideSize.minimumTouchTarget,
+                      ),
                       icon: const Icon(LucideIcons.message_circle),
                     ),
                   ),
@@ -192,6 +197,7 @@ class const PickupNavigationPanelWidget({
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: context.colorScheme.onSurfaceVariant,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
         ],
@@ -219,7 +225,7 @@ class const PickupNavigationPanelWidget({
         onTap: onPressed,
         borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         child: Container(
-          height: 46,
+          height: EasyRideSize.minimumTouchTarget,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(EasyRideRadius.lg),
             border: filled

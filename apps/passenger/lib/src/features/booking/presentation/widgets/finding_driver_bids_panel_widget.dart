@@ -137,6 +137,9 @@ class const FindingDriverBidsPanelWidget({
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                     color: context.colorScheme.onSurface,
+                                    fontFeatures: const [
+                                      FontFeature.tabularFigures(),
+                                    ],
                                   ),
                                 ),
                               ],
@@ -153,6 +156,9 @@ class const FindingDriverBidsPanelWidget({
                               fontWeight: FontWeight.w800,
                               fontSize: 16,
                               color: context.colorScheme.onSurface,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -161,13 +167,17 @@ class const FindingDriverBidsPanelWidget({
                               backgroundColor: context.colorScheme.onSurface,
                               foregroundColor: context.colorScheme.onPrimary,
                               elevation: 0,
+                              minimumSize: const Size(
+                                0,
+                                EasyRideSize.minimumTouchTarget,
+                              ),
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
                                 vertical: 8,
                               ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(
-                                  EasyRideRadius.lg,
+                                  EasyRideRadius.pill,
                                 ),
                               ),
                             ),

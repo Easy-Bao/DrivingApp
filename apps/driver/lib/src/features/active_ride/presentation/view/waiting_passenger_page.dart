@@ -374,6 +374,10 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
 
 Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
   return IconButton(
+    constraints: const BoxConstraints(
+      minWidth: EasyRideSize.minimumTouchTarget,
+      minHeight: EasyRideSize.minimumTouchTarget,
+    ),
     tooltip: MaterialLocalizations.of(context).backButtonTooltip,
     onPressed: onPressed,
     color: context.colorScheme.onSurface,

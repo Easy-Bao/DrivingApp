@@ -227,6 +227,10 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                   child: Icon(LucideIcons.lock, size: 20),
                                 ),
                                 suffixIcon: IconButton(
+                                  constraints: const BoxConstraints(
+                                    minWidth: EasyRideSize.minimumTouchTarget,
+                                    minHeight: EasyRideSize.minimumTouchTarget,
+                                  ),
                                   icon: Icon(
                                     _isPasswordVisible
                                         ? LucideIcons.eye
@@ -283,24 +287,38 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                Checkbox(
-                                  value: _rememberMeChecked,
-                                  activeColor: context.colorScheme.onSurface,
-                                  onChanged: (bool? val) {
-                                    setState(() {
-                                      _rememberMeChecked = val ?? false;
-                                    });
-                                  },
-                                ),
-                                const Text(
-                                  'Remember me',
-                                  style: TextStyle(fontSize: 14),
-                                ),
-                              ],
+                            GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                setState(() {
+                                  _rememberMeChecked = !_rememberMeChecked;
+                                });
+                              },
+                              child: Row(
+                                children: [
+                                  Checkbox(
+                                    value: _rememberMeChecked,
+                                    activeColor: context.colorScheme.onSurface,
+                                    onChanged: (bool? val) {
+                                      setState(() {
+                                        _rememberMeChecked = val ?? false;
+                                      });
+                                    },
+                                  ),
+                                  const Text(
+                                    'Remember me',
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                ],
+                              ),
                             ),
                             TextButton(
+                              style: TextButton.styleFrom(
+                                minimumSize: const Size(
+                                  EasyRideSize.minimumTouchTarget,
+                                  EasyRideSize.minimumTouchTarget,
+                                ),
+                              ),
                               onPressed: () {
                                 unawaited(
                                   context.pushNamed(AuthRoutes.forgotPassword),

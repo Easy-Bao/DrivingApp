@@ -54,6 +54,10 @@ class _ForgotPasswordPageContentState
         backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
         elevation: 0,
         leading: IconButton(
+          constraints: const BoxConstraints(
+            minWidth: EasyRideSize.minimumTouchTarget,
+            minHeight: EasyRideSize.minimumTouchTarget,
+          ),
           style: IconButton.styleFrom(shape: const CircleBorder()),
           icon: Icon(
             LucideIcons.arrow_left,
@@ -240,6 +244,12 @@ class _ForgotPasswordPageContentState
                           ),
                           const SizedBox(height: 10),
                           TextButton(
+                            style: TextButton.styleFrom(
+                              minimumSize: const Size(
+                                EasyRideSize.minimumTouchTarget,
+                                EasyRideSize.minimumTouchTarget,
+                              ),
+                            ),
                             onPressed: () => context.pop(),
                             child: Text(
                               'Back to sign in',

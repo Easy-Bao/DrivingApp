@@ -4,6 +4,7 @@ import 'package:design_system/src/theme/design_system_context.dart';
 import 'package:design_system/src/tokens/radius.dart';
 import 'package:design_system/src/tokens/size.dart';
 import 'package:design_system/src/tokens/spacing.dart';
+import 'package:design_system/src/tokens/status_colors.dart';
 
 /// The small set of access states that the app-root location prompt renders.
 enum LocationAccessOverlayState {
@@ -310,7 +311,7 @@ class const _LocationAccessPresentation({
     return switch (tone) {
       _LocationAccessTone.neutral => colorScheme.onSurfaceVariant,
       _LocationAccessTone.primary => colorScheme.primary,
-      _LocationAccessTone.warning => colorScheme.tertiary,
+      _LocationAccessTone.warning => EasyRideStatusColors.warning,
       _LocationAccessTone.error => colorScheme.error,
     };
   }

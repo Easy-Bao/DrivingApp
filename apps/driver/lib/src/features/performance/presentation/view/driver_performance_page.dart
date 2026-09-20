@@ -104,6 +104,7 @@ class const _PerformanceSummary({required this.stats}) extends StatelessWidget {
               fontWeight: FontWeight.w800,
               color: context.colorScheme.onPrimary,
               letterSpacing: -1.0,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
           const SizedBox(height: 4),
@@ -125,6 +126,7 @@ class const _PerformanceSummary({required this.stats}) extends StatelessWidget {
               style: context.textStyles.labelMedium?.copyWith(
                 color: context.colorScheme.onPrimary,
                 fontWeight: FontWeight.w700,
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
           ),
@@ -201,7 +203,12 @@ class const _PerformanceMetricCard({
         children: [
           Icon(icon, size: 21, color: context.colorScheme.onSurfaceVariant),
           const SizedBox(height: 16),
-          Text(value, style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
           const SizedBox(height: 3),
           Text(
             label,

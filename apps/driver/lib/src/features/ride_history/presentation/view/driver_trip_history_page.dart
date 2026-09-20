@@ -429,6 +429,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: context.colorScheme.onSurfaceVariant,
+                        fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
                     Container(
@@ -532,6 +533,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
               fontSize: 12,
               fontWeight: FontWeight.w800,
               color: context.colorScheme.onSurface,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
         ],

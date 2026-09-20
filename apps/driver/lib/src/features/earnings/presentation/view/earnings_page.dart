@@ -343,6 +343,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
               fontWeight: FontWeight.w800,
               color: context.colorScheme.onPrimary,
               letterSpacing: -1.0,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
           const SizedBox(height: 2),
@@ -400,6 +401,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
           style: context.textStyles.titleSmall?.copyWith(
             fontWeight: FontWeight.w800,
             color: context.colorScheme.onPrimary,
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
         ),
         const SizedBox(height: 1),
@@ -418,7 +420,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
 
   Widget _buildPeriodTabs() {
     return SizedBox(
-      height: 32,
+      height: 44,
       child: TabBar(
         controller: _tabCtrl,
         onTap: _selectPeriod,
@@ -604,6 +606,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                   : context.colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w700,
               fontSize: 10,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
             offset: const Offset(0, 6),
           ),

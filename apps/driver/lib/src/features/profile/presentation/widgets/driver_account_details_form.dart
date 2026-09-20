@@ -235,6 +235,12 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
                     previous.isSaving != current.isSaving,
                 builder: (context, state) => TextButton(
                   key: const ValueKey<String>('driver-account-details-save'),
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(
+                      EasyRideSize.minimumTouchTarget,
+                      EasyRideSize.minimumTouchTarget,
+                    ),
+                  ),
                   onPressed: state.isSaving ? null : _save,
                   child: state.isSaving
                       ? const SizedBox.square(
@@ -378,7 +384,9 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
               alignment: Alignment.center,
               child: Text(
                 _phonePrefix,
-                style: Theme.of(context).textTheme.titleMedium,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
               ),
             ),
             const SizedBox(width: 12),
@@ -387,6 +395,9 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
                 key: const ValueKey<String>('driver-personal-phone-number'),
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
                 textInputAction: TextInputAction.next,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: _fieldDecoration(

@@ -124,6 +124,7 @@ class const DriverDashboardStatsRowWidget({
                 fontWeight: FontWeight.w800,
                 color: context.colorScheme.onSurface,
                 letterSpacing: -0.5,
+                fontFeatures: const [FontFeature.tabularFigures()],
               ),
             ),
         ],

@@ -214,6 +214,9 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
                               color: context.colorScheme.onSurface,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
                             ),
                           ),
                         );
@@ -314,9 +317,11 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
                               )
                             : null,
                         style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 6),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          minimumSize: const Size(
+                            48,
+                            EasyRideSize.minimumTouchTarget,
+                          ),
                         ),
                         child: Text(
                           isResending
@@ -329,6 +334,7 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
                                 ? context.colorScheme.onSurface
                                 : context.colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.bold,
+                            fontFeatures: const [FontFeature.tabularFigures()],
                           ),
                         ),
                       ),

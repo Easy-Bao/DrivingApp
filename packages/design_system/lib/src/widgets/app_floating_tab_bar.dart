@@ -88,11 +88,16 @@ class const AppFloatingTabBar({
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(EasyRideRadius.pill),
         border: Border.all(color: colorScheme.outlineVariant),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.08),
+            color: Color(0x0A000000),
+            blurRadius: 6,
+            offset: Offset(0, 2),
+          ),
+          BoxShadow(
+            color: Color(0x12000000),
             blurRadius: 20,
-            offset: const Offset(0, 6),
+            offset: Offset(0, 6),
           ),
         ],
       ),

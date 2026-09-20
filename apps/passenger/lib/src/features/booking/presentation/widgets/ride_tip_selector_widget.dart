@@ -58,17 +58,19 @@ class const RideTipSelectorWidget({
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(EasyRideRadius.pill),
                   ),
+                  materialTapTargetSize: MaterialTapTargetSize.padded,
                   labelStyle: TextStyle(
                     color: selectedTipAmount == amount
                         ? context.colorScheme.surface
                         : context.colorScheme.onSurface,
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
+                    fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                   showCheckmark: false,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 6,
+                    horizontal: 10,
+                    vertical: 8,
                   ),
                 ),
                 if (amount != tipOptions.last) const SizedBox(width: 8),
