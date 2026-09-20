@@ -278,6 +278,34 @@ void main() {
         ),
       ],
     );
+
+    test('invalidateAndReload forces fresh load from repository', () async {
+      when(() => mockRepository.loadPlaces()).thenAnswer(
+        (_) async => const [SavedPlace(label: 'Home', iconName: 'house', savedAddress: '123 Main St')],
+      );
+      when(() => mockRepository.savePlaces(any())).thenAnswer((_) async {});
+      final cubit = SavedPlacesCubit(repository: mockRepository);
+      await cubit.loadPlaces();
+      expect(cubit.state.places.single.savedAddress, '123 Main St');
+
+      when(() => mockRepository.loadPlaces()).thenAnswer(
+        (_) async => const [SavedPlace(label: 'Home', iconName: 'house', savedAddress: '456 Elm St')],
+      );
+      await cubit.invalidateAndReload();
+      expect(cubit.state.places.single.savedAddress, '456 Elm St');
+      await cubit.close();
+    });
+
+    test('syncHomeAddress updates existing Home place address', () async {
+      when(() => mockRepository.savePlaces(any())).thenAnswer((_) async {});
+      final cubit = SavedPlacesCubit(repository: mockRepository);
+      await cubit.addPlace(const SavedPlace(label: 'Home', iconName: 'house', savedAddress: 'Old Address'));
+      expect(cubit.state.places.single.savedAddress, 'Old Address');
+
+      await cubit.syncHomeAddress('New Address');
+      expect(cubit.state.places.single.savedAddress, 'New Address');
+      await cubit.close();
+    });
   });
 
   test(

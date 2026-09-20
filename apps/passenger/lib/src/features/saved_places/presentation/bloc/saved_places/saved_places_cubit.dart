@@ -29,6 +29,31 @@ class SavedPlacesCubit({required this._repository})
     await request;
   }
 
+  Future<void> invalidateAndReload() async {
+    _loadInFlight = null;
+    await _loadOnce();
+  }
+
+  Future<void> syncHomeAddress(String newAddress) async {
+    final trimmed = newAddress.trim();
+    final homeIndex = state.places.indexWhere(
+      (p) => p.label.toLowerCase() == 'home',
+    );
+    if (homeIndex != -1) {
+      final currentHome = state.places[homeIndex];
+      final updated = currentHome.copyWith(savedAddress: trimmed);
+      await replacePlace(homeIndex, updated);
+    } else if (trimmed.isNotEmpty) {
+      await addPlace(
+        SavedPlace(
+          label: 'Home',
+          iconName: 'house',
+          savedAddress: trimmed,
+        ),
+      );
+    }
+  }
+
   Future<void> _loadOnce() async {
     if (isClosed) return;
     emit(state.copyWith(isLoading: true, clearErrorMessage: true));

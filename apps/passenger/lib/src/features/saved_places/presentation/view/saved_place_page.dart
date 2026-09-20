@@ -27,7 +27,9 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        unawaited(BlocProvider.of<SavedPlacesCubit>(context).loadPlaces());
+        unawaited(
+          BlocProvider.of<SavedPlacesCubit>(context).invalidateAndReload(),
+        );
       }
     });
   }
@@ -67,6 +69,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
       } else {
         await cubit.replacePlace(existingIndex, configuredPlace);
       }
+      await cubit.invalidateAndReload();
       final error = cubit.state.errorMessage;
       if (mounted &&
           error != null &&

@@ -732,6 +732,7 @@ class _HomePageState extends State<HomePage> {
         } else {
           await cubit.addPlace(updatedPlace);
         }
+        await cubit.invalidateAndReload();
         final error = cubit.state.errorMessage;
         if (mounted && error != null) {
           CustomToast.show(context, error, isError: true);
