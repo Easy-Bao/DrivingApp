@@ -277,45 +277,65 @@ class const PickupNavigationPanelWidget({
               Positioned(
                 left: travel * sliderValue,
                 top: 0,
-                child: GestureDetector(
-                  onHorizontalDragUpdate: isConfirmingArrival || travel == 0
+                child: Semantics(
+                  label: 'Confirm arrival',
+                  value: '${(sliderValue * 100).round()} percent',
+                  hint: 'Swipe right to confirm arrival',
+                  enabled: !isConfirmingArrival,
+                  onIncrease: isConfirmingArrival || travel == 0
                       ? null
-                      : (details) => onSliderChanged(
-                          (sliderValue + details.delta.dx / travel)
+                      : () {
+                          final nextValue = (sliderValue + 0.1)
                               .clamp(0.0, 1.0)
-                              .toDouble(),
-                        ),
-                  onHorizontalDragEnd: isConfirmingArrival
-                      ? null
-                      : (_) {
-                          if (sliderValue >= 0.85) {
-                            onSliderCompleted();
-                          } else {
-                            onSliderChanged(0);
-                          }
+                              .toDouble();
+                          onSliderChanged(nextValue);
+                          if (nextValue >= 0.85) onSliderCompleted();
                         },
-                  child: Container(
-                    width: thumbSize,
-                    height: thumbSize,
-                    decoration: BoxDecoration(
-                      color: context.semanticColors.success,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: isConfirmingArrival
-                          ? SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
+                  onDecrease: isConfirmingArrival || travel == 0
+                      ? null
+                      : () => onSliderChanged(
+                          (sliderValue - 0.1).clamp(0.0, 1.0).toDouble(),
+                        ),
+                  child: GestureDetector(
+                    onHorizontalDragUpdate: isConfirmingArrival || travel == 0
+                        ? null
+                        : (details) => onSliderChanged(
+                            (sliderValue + details.delta.dx / travel)
+                                .clamp(0.0, 1.0)
+                                .toDouble(),
+                          ),
+                    onHorizontalDragEnd: isConfirmingArrival
+                        ? null
+                        : (_) {
+                            if (sliderValue >= 0.85) {
+                              onSliderCompleted();
+                            } else {
+                              onSliderChanged(0);
+                            }
+                          },
+                    child: Container(
+                      width: thumbSize,
+                      height: thumbSize,
+                      decoration: BoxDecoration(
+                        color: context.semanticColors.success,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: isConfirmingArrival
+                            ? SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: context.semanticColors.onSuccess,
+                                ),
+                              )
+                            : Icon(
+                                LucideIcons.chevron_right,
                                 color: context.semanticColors.onSuccess,
+                                size: 22,
                               ),
-                            )
-                          : Icon(
-                              LucideIcons.chevron_right,
-                              color: context.semanticColors.onSuccess,
-                              size: 22,
-                            ),
+                      ),
                     ),
                   ),
                 ),

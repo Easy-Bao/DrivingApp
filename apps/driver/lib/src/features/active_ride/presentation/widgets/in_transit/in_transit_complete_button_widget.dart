@@ -11,33 +11,39 @@ class const InTransitCompleteButtonWidget({
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: isCompletingTrip ? null : onCompleteTripPressed,
-      child: Container(
-        width: double.infinity,
-        height: 52,
-        decoration: BoxDecoration(
-          color: context.semanticColors.success,
+    return Semantics(
+      button: true,
+      enabled: !isCompletingTrip,
+      label: 'Complete trip',
+      child: Material(
+        color: context.semanticColors.success,
+        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        child: InkWell(
+          onTap: isCompletingTrip ? null : onCompleteTripPressed,
           borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-        ),
-        child: Center(
-          child: isCompletingTrip
-              ? SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: context.semanticColors.onSuccess,
-                  ),
-                )
-              : Text(
-                  'Complete Trip',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: context.semanticColors.onSuccess,
-                  ),
-                ),
+          child: SizedBox(
+            width: double.infinity,
+            height: EasyRideSize.controlHeight,
+            child: Center(
+              child: isCompletingTrip
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: context.semanticColors.onSuccess,
+                      ),
+                    )
+                  : Text(
+                      'Complete Trip',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: context.semanticColors.onSuccess,
+                      ),
+                    ),
+            ),
+          ),
         ),
       ),
     );

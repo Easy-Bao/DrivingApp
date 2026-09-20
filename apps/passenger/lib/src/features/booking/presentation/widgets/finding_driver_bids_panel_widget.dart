@@ -200,35 +200,40 @@ class const FindingDriverBidsPanelWidget({
             ),
           ),
           const SizedBox(height: 16),
-          GestureDetector(
-            onTap: isCanceling || acceptingOfferId != null
-                ? null
-                : onCancelPressed,
-            child: Container(
-              width: double.infinity,
-              alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              decoration: BoxDecoration(
-                color: context.colorScheme.error.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(EasyRideRadius.sheet),
+          Semantics(
+            button: true,
+            enabled: !isCanceling && acceptingOfferId == null,
+            label: 'Cancel ride request',
+            child: GestureDetector(
+              onTap: isCanceling || acceptingOfferId != null
+                  ? null
+                  : onCancelPressed,
+              child: Container(
+                width: double.infinity,
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: context.colorScheme.error.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(EasyRideRadius.sheet),
+                ),
+                child: isCanceling
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: context.colorScheme.error,
+                        ),
+                      )
+                    : Text(
+                        'Cancel Ride Request',
+                        style: TextStyle(
+                          color: context.colorScheme.error,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
               ),
-              child: isCanceling
-                  ? SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: context.colorScheme.error,
-                      ),
-                    )
-                  : Text(
-                      'Cancel Ride Request',
-                      style: TextStyle(
-                        color: context.colorScheme.error,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
-                      ),
-                    ),
             ),
           ),
         ],

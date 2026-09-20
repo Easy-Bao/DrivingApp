@@ -32,14 +32,26 @@ class const SavedPlaceQuickActionsWidget({
       child: Row(
         children: [
           for (var index = 0; index < orderedPlaces.length; index++) ...[
-            GestureDetector(
-              onTap: () => onPlaceTap(orderedPlaces[index]),
-              onLongPress: onPlaceLongPress == null
-                  ? null
-                  : () => onPlaceLongPress!(orderedPlaces[index]),
-              child: _SavedPlaceChip(
-                place: orderedPlaces[index],
-                isActive: index == 0 && defaultIndex >= 0,
+            Semantics(
+              button: true,
+              selected: index == 0 && defaultIndex >= 0,
+              label: 'Saved place ${orderedPlaces[index].label}',
+              hint: onPlaceLongPress == null
+                  ? 'Sets this as your destination'
+                  : 'Sets this as your destination. Long press for options',
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+                  onTap: () => onPlaceTap(orderedPlaces[index]),
+                  onLongPress: onPlaceLongPress == null
+                      ? null
+                      : () => onPlaceLongPress!(orderedPlaces[index]),
+                  child: _SavedPlaceChip(
+                    place: orderedPlaces[index],
+                    isActive: index == 0 && defaultIndex >= 0,
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 10),
@@ -116,38 +128,46 @@ class const _AddPlaceChip({required this.onTap}) extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        constraints: const BoxConstraints(
-          minHeight: EasyRideSize.minimumTouchTarget,
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: context.colorScheme.surface.withValues(alpha: 0),
-          border: Border.all(
-            color: context.colorScheme.onSurface.withValues(alpha: 0.25),
-          ),
+    return Semantics(
+      button: true,
+      label: 'Add saved place',
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
           borderRadius: BorderRadius.circular(EasyRideRadius.pill),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              LucideIcons.plus,
-              size: 16,
-              color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+          onTap: onTap,
+          child: Container(
+            constraints: const BoxConstraints(
+              minHeight: EasyRideSize.minimumTouchTarget,
             ),
-            const SizedBox(width: 6),
-            Text(
-              'Add place',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: context.colorScheme.surface.withValues(alpha: 0),
+              border: Border.all(
+                color: context.colorScheme.onSurface.withValues(alpha: 0.25),
               ),
+              borderRadius: BorderRadius.circular(EasyRideRadius.pill),
             ),
-          ],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  LucideIcons.plus,
+                  size: 16,
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Add place',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: context.colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

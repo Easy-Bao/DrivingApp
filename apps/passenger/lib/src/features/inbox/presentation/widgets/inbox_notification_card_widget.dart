@@ -75,75 +75,86 @@ class const InboxNotificationCardWidget({
       icon = LucideIcons.bell;
     }
 
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+      side: BorderSide(color: context.colorScheme.outlineVariant),
+    );
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(EasyRideSpacing.lg),
-          decoration: BoxDecoration(
-            color: context.colorScheme.surface,
+      child: Semantics(
+        button: true,
+        label: '${notification.title}. ${notification.message}',
+        hint: 'Opens notification',
+        child: Material(
+          color: context.colorScheme.surface,
+          shape: shape,
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
             borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-            border: Border.all(color: context.colorScheme.outlineVariant),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: EasyRideSize.minimumTouchTarget,
-                height: EasyRideSize.minimumTouchTarget,
-                decoration: BoxDecoration(
-                  color: bgCircleColor,
-                  borderRadius: BorderRadius.circular(EasyRideRadius.md),
-                ),
-                alignment: Alignment.center,
-                child: Icon(icon, color: iconColor, size: 20),
-              ),
-              const SizedBox(width: EasyRideSpacing.lg),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      notification.title,
-                      style: context.textStyles.titleMedium,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      notification.message,
-                      style: context.textStyles.bodySmall,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisSize: MainAxisSize.min,
+            child: Padding(
+              padding: const EdgeInsets.all(EasyRideSpacing.lg),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(
-                    _formatTimestamp(notification.timestamp),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: context.colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
+                  Container(
+                    width: EasyRideSize.minimumTouchTarget,
+                    height: EasyRideSize.minimumTouchTarget,
+                    decoration: BoxDecoration(
+                      color: bgCircleColor,
+                      borderRadius: BorderRadius.circular(EasyRideRadius.md),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(icon, color: iconColor, size: 20),
+                  ),
+                  const SizedBox(width: EasyRideSpacing.lg),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          notification.title,
+                          style: context.textStyles.titleMedium,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          notification.message,
+                          style: context.textStyles.bodySmall,
+                        ),
+                      ],
                     ),
                   ),
-                  if (!notification.isRead) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: context.colorScheme.primary,
-                        shape: BoxShape.circle,
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _formatTimestamp(notification.timestamp),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: context.colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  ],
+                      if (!notification.isRead) ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: context.colorScheme.primary,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ],
               ),
-            ],
+            ),
           ),
         ),
       ),

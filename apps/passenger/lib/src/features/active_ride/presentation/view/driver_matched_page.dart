@@ -146,120 +146,125 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
               ),
               const SizedBox(height: 36),
 
-              GestureDetector(
-                onTap: () {
-                  unawaited(
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: context.colorScheme.surface.withValues(
-                        alpha: 0,
+              Semantics(
+                button: true,
+                label: 'View driver details',
+                hint: 'Opens the driver profile',
+                child: GestureDetector(
+                  onTap: () {
+                    unawaited(
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: context.colorScheme.surface.withValues(
+                          alpha: 0,
+                        ),
+                        builder: (BuildContext sheetContext) =>
+                            DriverProfileDetailsSheet(
+                              driverId: widget.driverId ?? '',
+                              driverName: widget.driverName ?? '—',
+                              vehicleType: widget.vehicleType ?? '—',
+                              plateNumber: widget.plateNumber ?? '—',
+                              rating: widget.driverRating ?? '—',
+                              repository: widget.profileRepository,
+                            ),
                       ),
-                      builder: (BuildContext sheetContext) =>
-                          DriverProfileDetailsSheet(
-                            driverId: widget.driverId ?? '',
-                            driverName: widget.driverName ?? '—',
-                            vehicleType: widget.vehicleType ?? '—',
-                            plateNumber: widget.plateNumber ?? '—',
-                            rating: widget.driverRating ?? '—',
-                            repository: widget.profileRepository,
-                          ),
-                    ),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(EasyRideSpacing.lg),
-                  decoration: BoxDecoration(
-                    color: context.colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-                    border: Border.all(
-                      color: context.colorScheme.outlineVariant,
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 56,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              color: context.colorScheme.primary,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              LucideIcons.user,
-                              color: context.colorScheme.onPrimary,
-                              size: 26,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  widget.driverName ?? '—',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w800,
-                                    color: context.colorScheme.onSurface,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.star_rounded,
-                                      size: 16,
-                                      color: context.semanticColors.rating,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      widget.driverRating ?? '—',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w700,
-                                        color: context.colorScheme.onSurface,
-                                      ),
-                                    ),
-                                    Text(
-                                      '  •  Server match',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: context.colorScheme.onSurface
-                                            .withValues(alpha: 0.5),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Divider(
-                        height: 1,
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(EasyRideSpacing.lg),
+                    decoration: BoxDecoration(
+                      color: context.colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                      border: Border.all(
                         color: context.colorScheme.outlineVariant,
                       ),
-                      const SizedBox(height: 16),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        alignment: WrapAlignment.center,
-                        children: [
-                          _infoChip(
-                            LucideIcons.bike,
-                            widget.vehicleType ?? '—',
-                          ),
-                          _infoChip(
-                            LucideIcons.hash,
-                            widget.plateNumber ?? '—',
-                          ),
-                        ],
-                      ),
-                    ],
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 56,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                color: context.colorScheme.primary,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                LucideIcons.user,
+                                color: context.colorScheme.onPrimary,
+                                size: 26,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    widget.driverName ?? '—',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      color: context.colorScheme.onSurface,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.star_rounded,
+                                        size: 16,
+                                        color: context.semanticColors.rating,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        widget.driverRating ?? '—',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                          color: context.colorScheme.onSurface,
+                                        ),
+                                      ),
+                                      Text(
+                                        '  •  Server match',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: context.colorScheme.onSurface
+                                              .withValues(alpha: 0.5),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Divider(
+                          height: 1,
+                          color: context.colorScheme.outlineVariant,
+                        ),
+                        const SizedBox(height: 16),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          alignment: WrapAlignment.center,
+                          children: [
+                            _infoChip(
+                              LucideIcons.bike,
+                              widget.vehicleType ?? '—',
+                            ),
+                            _infoChip(
+                              LucideIcons.hash,
+                              widget.plateNumber ?? '—',
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
