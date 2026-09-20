@@ -52,9 +52,7 @@ void main() {
     expect(find.text('No trip history found'), findsNothing);
     expect(find.text('backend query details must stay internal'), findsNothing);
     expect(
-      find.text(
-        'We encountered an unexpected issue while processing your request. Please try again in a few moments.',
-      ),
+      find.text('Something went wrong. Try again.'),
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);

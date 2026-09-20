@@ -161,7 +161,7 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
                   Text(
                     widget.isForgotPassword
                         ? 'We sent a 6-digit code to ${widget.email}. Enter it to continue resetting your password.'
-                        : 'We sent a 6-digit OTP to ${widget.email}. Please enter it below to verify your account.',
+                        : 'We sent a 6-digit code to ${widget.email}. Enter it below to verify your account.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 15,

@@ -99,7 +99,7 @@ void main() {
           .having(
             (state) => state.errorMessage,
             'safe error message',
-            'We encountered an unexpected issue while processing your request. Please try again in a few moments.',
+            'Something went wrong. Try again.',
           ),
     ],
   );
@@ -152,7 +152,7 @@ void main() {
           .having(
             (state) => state.errorMessage,
             'safe refresh error',
-            'We encountered an unexpected issue while processing your request. Please try again in a few moments.',
+            'Something went wrong. Try again.',
           ),
     ],
   );

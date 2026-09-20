@@ -43,19 +43,19 @@ final class PassengerAuthRepositoryImpl({
       return Left(
         FailureMapper.fromException(
           error,
-          serverMessage: 'Unable to sign in right now. Please try again.',
+          serverMessage: "Couldn't sign in. Try again.",
         ),
       );
     } on DataParsingException catch (error) {
       return Left(
         FailureMapper.fromException(
           error,
-          serverMessage: 'Unable to sign in right now. Please try again.',
+          serverMessage: "Couldn't sign in. Try again.",
         ),
       );
     } catch (_) {
       return const Left(
-        ServerFailure('Unable to sign in right now. Please try again.'),
+        ServerFailure("Couldn't sign in. Try again."),
       );
     }
   }
@@ -96,12 +96,12 @@ final class PassengerAuthRepositoryImpl({
         return Left(
           FailureMapper.fromException(
             error,
-            validationMessage: 'Please verify your registration details.',
+            validationMessage: 'Check your registration details and try again.',
           ),
         );
       }
       return const Left(
-        ServerFailure('Registration failed. Please try again.'),
+        ServerFailure("Couldn't create your account. Try again."),
       );
     }
   }
@@ -127,12 +127,12 @@ final class PassengerAuthRepositoryImpl({
         return Left(
           FailureMapper.fromException(
             error,
-            validationMessage: 'Please verify the code and try again.',
+            validationMessage: 'Invalid verification code. Try again.',
           ),
         );
       }
       return const Left(
-        ServerFailure('Verification failed. Please try again.'),
+        ServerFailure("Couldn't verify your code. Try again."),
       );
     }
   }
@@ -198,7 +198,7 @@ final class PassengerAuthRepositoryImpl({
       final success = responseBody['success'] == true;
       if (!success) {
         return const Left(
-          ServerFailure('Failed to send a new verification code.'),
+          ServerFailure("Couldn't send a new code. Try again."),
         );
       }
       return const Right(null);
@@ -207,7 +207,7 @@ final class PassengerAuthRepositoryImpl({
         FailureMapper.fromException(
           error,
           validationMessage:
-              'Unable to send a new verification code. Please try again.',
+              'Couldn\'t send a new code. Try again.',
         ),
       );
     } catch (_) {
@@ -227,13 +227,13 @@ final class PassengerAuthRepositoryImpl({
       final success = responseBody['success'] == true;
       if (!success) {
         return const Left(
-          ServerFailure('Failed to send reset link. Please check email.'),
+          ServerFailure("Couldn't send the reset link. Check your email and try again."),
         );
       }
       return const Right(null);
     } catch (error) {
       return const Left(
-        ServerFailure('Failed to send reset link. Please try again.'),
+        ServerFailure("Couldn't send the reset link. Try again."),
       );
     }
   }
@@ -252,7 +252,7 @@ final class PassengerAuthRepositoryImpl({
       final success = responseBody['success'] == true;
       if (!success) {
         return const Left(
-          ServerFailure('Password reset failed. Please try again.'),
+          ServerFailure("Couldn't reset your password. Try again."),
         );
       }
       return const Right(null);

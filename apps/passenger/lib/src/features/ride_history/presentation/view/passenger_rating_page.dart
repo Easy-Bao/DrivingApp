@@ -321,7 +321,7 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                             color: context.colorScheme.onPrimary,
                           ),
                         )
-                      : const Text('Submit Rating'),
+                      : const Text('Submit rating'),
                 ),
               ),
               const SizedBox(height: 4),
@@ -329,7 +329,7 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                 onPressed: _isSubmitting
                     ? null
                     : () => context.goNamed(HomeRoutes.home),
-                child: const Text('Skip for Now'),
+                child: const Text('Skip for now'),
               ),
             ],
           ),

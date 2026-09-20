@@ -14,7 +14,7 @@ class const ActiveTripExitDialog({required this.driverName, super.key})
         borderRadius: BorderRadius.circular(EasyRideRadius.lg),
       ),
       title: Text(
-        'Trip In Progress',
+        'Trip in progress',
         style: TextStyle(
           fontWeight: FontWeight.w800,
           color: context.colorScheme.onSurface,
@@ -31,7 +31,7 @@ class const ActiveTripExitDialog({required this.driverName, super.key})
         TextButton(
           onPressed: () => Navigator.pop(context, ActiveTripExitAction.cancel),
           child: Text(
-            'Cancel Trip',
+            'Cancel ride',
             style: TextStyle(
               color: context.colorScheme.error,
               fontWeight: FontWeight.w700,
@@ -42,7 +42,7 @@ class const ActiveTripExitDialog({required this.driverName, super.key})
           onPressed: () =>
               Navigator.pop(context, ActiveTripExitAction.minimize),
           child: Text(
-            'Minimize to Home',
+            'Go to home',
             style: TextStyle(
               color: context.colorScheme.primary,
               fontWeight: FontWeight.w700,
@@ -52,7 +52,7 @@ class const ActiveTripExitDialog({required this.driverName, super.key})
         FilledButton(
           onPressed: () =>
               Navigator.pop(context, ActiveTripExitAction.keepTracking),
-          child: const Text('Keep Tracking'),
+          child: const Text('Keep tracking'),
         ),
       ],
     );

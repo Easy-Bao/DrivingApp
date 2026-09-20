@@ -137,12 +137,12 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
     final label = _controller.text.trim();
 
     if (label.isEmpty) {
-      _showFailureSnackBar('Please enter a name for your shortcut.');
+      _showFailureSnackBar('Enter a name for this place.');
       return;
     }
 
     if (!_isLocationPinned) {
-      _showFailureSnackBar('Please pin a location on the map before saving.');
+      _showFailureSnackBar('Pin a location on the map before saving.');
       return;
     }
 

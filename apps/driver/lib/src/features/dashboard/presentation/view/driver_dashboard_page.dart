@@ -649,7 +649,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
       if (mounted) {
         if (!success && cubit.state.errorMessage == null) {
-          CustomToast.show(context, 'Failed to submit offer.', isError: true);
+          CustomToast.show(context, "Couldn't submit your offer. Try again.", isError: true);
         }
       }
     } catch (error) {

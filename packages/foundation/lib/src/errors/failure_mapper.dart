@@ -6,15 +6,15 @@ import 'package:foundation/src/errors/exceptions.dart';
 import 'package:foundation/src/errors/failures.dart';
 
 const _defaultServerMessage =
-    'Unable to complete your request. Please try again.';
+    'Something went wrong. Try again.';
 const _defaultValidationMessage =
-    'Please verify your input and correct the highlighted fields.';
+    'Check the highlighted fields.';
 const _defaultNetworkMessage =
-    'You are currently offline. Please check your Wi-Fi or mobile data.';
+    "Couldn't connect. Check your internet connection and try again.";
 const _defaultTimeoutMessage =
-    'The server took too long to respond. Please check your connection and retry.';
+    'The request took too long. Try again.';
 const _defaultCacheMessage =
-    'Saved information is unavailable right now. Please try again.';
+    'Saved information is unavailable. Try again.';
 
 /// Converts transport and storage exceptions into safe domain failures.
 ///
@@ -89,20 +89,20 @@ class FailureMapper._() {
 
     return switch (statusCode) {
       401 => const ServerFailure.withStatusCode(
-        'Your session has expired. Please sign in again to continue.',
+        'Your session has expired. Sign in again.',
         401,
       ),
       403 => const ServerFailure.withStatusCode(
-        'You do not have permission to view or edit this resource.',
+        "You don't have permission to do that.",
         403,
       ),
       400 || 422 => ValidationFailure(validationMessage),
       429 => const ServerFailure.withStatusCode(
-        'You are making requests too quickly. Please wait a moment before trying again.',
+        'Too many requests. Wait a moment and try again.',
         429,
       ),
       503 => const ServerFailure.withStatusCode(
-        'We are currently improving our services. We will be back online shortly.',
+        'The service is unavailable. Try again later.',
         503,
       ),
       504 => ServerFailure.withStatusCode(timeoutMessage, 504),

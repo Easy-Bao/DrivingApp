@@ -337,7 +337,7 @@ class _HomePageState extends State<HomePage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text('Recent Activity', style: context.textStyles.titleLarge),
+        Text('Recent activity', style: context.textStyles.titleLarge),
         if (context.select<SessionBloc, bool>(
           (bloc) => bloc.state.isAuthenticated,
         ))

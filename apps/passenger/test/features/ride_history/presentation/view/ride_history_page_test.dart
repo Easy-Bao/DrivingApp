@@ -123,7 +123,7 @@ void main() {
     final recentPage = tester.widget<RideHistoryPage>(
       find.byType(RideHistoryPage),
     );
-    expect(recentPage.title, 'Recent Activity');
+    expect(recentPage.title, 'Recent activity');
     expect(recentPage.showBackButton, isTrue);
     expect(recentPage.showHeaderSubtitle, isFalse);
     expect(recentPage.showSummary, isFalse);

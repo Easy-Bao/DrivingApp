@@ -111,7 +111,7 @@ class _ResetPasswordConfirmPageContentState
             BlocConsumer<ResetPasswordConfirmBloc, ResetPasswordConfirmState>(
               listener: (context, state) {
                 if (state is ResetPasswordConfirmSuccess) {
-                  CustomToast.show(context, 'Password updated successfully!');
+                  CustomToast.show(context, 'Password updated');
                   context.goNamed(AuthRoutes.signin);
                 } else if (state is ResetPasswordConfirmFailure) {
                   setState(() => _submissionError = state.errorMessage);
@@ -148,7 +148,7 @@ class _ResetPasswordConfirmPageContentState
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  'Your new password must be different from previous passwords.',
+                                  'Choose a password you haven\'t used before.',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: 15,

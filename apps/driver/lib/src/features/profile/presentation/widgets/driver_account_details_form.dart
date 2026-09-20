@@ -131,38 +131,38 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
     if (!didUpdate) {
       _showMessage(
         accountCubit.state.errorMessage ??
-            'We could not update your details. Please try again.',
+            "Couldn't update your details. Try again.",
       );
       return;
     }
 
     _applyAccount(accountCubit.state.account);
     setState(() {});
-    _showMessage('$_pageTitle updated successfully.');
+    _showMessage('$_pageTitle updated.');
   }
 
   bool _validate() {
     switch (widget.section) {
       case DriverAccountDetailsSection.personal:
         if (_nameController.text.trim().isEmpty) {
-          _nameError = 'Name is required';
+          _nameError = 'Enter your name.';
         }
         if (_phoneController.text.replaceAll(RegExp(r'[^0-9]'), '').length <
             10) {
-          _phoneError = 'Enter a valid mobile number';
+          _phoneError = 'Enter a valid phone number.';
         }
         final email = _emailController.text.trim();
         if (email.isEmpty) {
-          _emailError = 'Email is required';
+          _emailError = 'Enter your email address.';
         } else if (!email.contains('@')) {
-          _emailError = 'Please enter a valid email';
+          _emailError = 'Enter a valid email address.';
         }
       case DriverAccountDetailsSection.vehicle:
         if (_vehicleTypeController.text.trim().isEmpty) {
-          _vehicleTypeError = 'Vehicle type is required';
+          _vehicleTypeError = 'Enter your vehicle type.';
         }
         if (_plateNumberController.text.trim().isEmpty) {
-          _plateNumberError = 'Plate number is required';
+          _plateNumberError = 'Enter your plate number.';
         }
     }
     return [

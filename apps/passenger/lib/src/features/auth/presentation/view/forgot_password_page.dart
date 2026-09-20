@@ -116,7 +116,7 @@ class _ForgotPasswordPageContentState
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          "No worries, we'll send you reset instructions. Please enter the email address linked to your account.",
+                          "Enter the email linked to your account and we'll send you reset instructions.",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 15,

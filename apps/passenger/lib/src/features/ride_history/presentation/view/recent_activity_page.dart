@@ -5,7 +5,7 @@ class const RecentActivityPage({super.key}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const RideHistoryPage(
-      title: 'Recent Activity',
+      title: 'Recent activity',
       showBackButton: true,
       showHeaderSubtitle: false,
       showSummary: false,

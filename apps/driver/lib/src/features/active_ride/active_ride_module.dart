@@ -158,6 +158,6 @@ class const _DriverTripRouteData({
 
 Widget _tripDataUnavailable() => const Scaffold(
   body: Center(
-    child: Text('Trip details are unavailable. Please return and try again.'),
+    child: Text("Trip details aren't available. Go back and try again."),
   ),
 );

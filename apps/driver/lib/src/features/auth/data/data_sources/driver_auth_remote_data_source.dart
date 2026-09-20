@@ -65,7 +65,7 @@ final class DriverAuthRemoteDataSourceImpl(this._dio)
     return switch (statusCode) {
       400 ||
       422 => 'The request could not be completed. Please check your details.',
-      401 || 403 => 'Invalid email or password.',
+      401 || 403 => 'Incorrect email or password.',
       404 => 'The requested authentication action is unavailable.',
       409 => 'This email is already registered.',
       _ => 'Authentication request failed. Please try again.',

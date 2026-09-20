@@ -391,14 +391,14 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
           borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         ),
         title: Text(
-          'Cancel Trip?',
+          'Cancel ride?',
           style: TextStyle(
             fontWeight: FontWeight.w800,
             color: context.colorScheme.onSurface,
           ),
         ),
         content: Text(
-          'Are you sure you want to cancel this trip? A cancellation fee may apply.',
+          'Are you sure you want to cancel this ride? A cancellation fee may apply.',
           style: TextStyle(
             color: context.colorScheme.onSurface.withValues(alpha: 0.6),
             fontSize: 14,
@@ -408,7 +408,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(
-              'Keep Ride',
+              'Keep ride',
               style: TextStyle(
                 color: context.colorScheme.onSurface,
                 fontWeight: FontWeight.w700,
@@ -420,7 +420,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
               Navigator.pop(ctx, true);
             },
             child: Text(
-              'Cancel Trip',
+              'Cancel ride',
               style: TextStyle(
                 color: context.colorScheme.error,
                 fontWeight: FontWeight.w700,
@@ -473,7 +473,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
       if (mounted && !canceled) {
         CustomToast.show(
           context,
-          'The trip could not be canceled. Please try again.',
+          "Couldn't cancel the ride. Try again.",
           isError: true,
         );
       }

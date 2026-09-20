@@ -118,7 +118,7 @@ void main() {
         isA<RideHistoryError>().having(
           (s) => s.message,
           'error message',
-          'We encountered an unexpected issue while processing your request. Please try again in a few moments.',
+          'Something went wrong. Try again.',
         ),
       ],
     );

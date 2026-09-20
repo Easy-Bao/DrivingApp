@@ -93,11 +93,11 @@ class _TrackDriverPageLoaderState extends State<TrackDriverPageLoader> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Trip tracking data not available.'),
+              const Text('Ride details aren\'t available.'),
               const SizedBox(height: 16),
               TextButton(
                 onPressed: () => context.goNamed(HomeRoutes.home),
-                child: const Text('Return to Home'),
+                child: const Text('Return to home'),
               ),
             ],
           ),

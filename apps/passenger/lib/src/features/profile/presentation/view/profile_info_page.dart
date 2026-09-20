@@ -117,18 +117,18 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     var hasError = false;
 
     if (name.isEmpty) {
-      _nameError = 'Name is required';
+      _nameError = 'Enter your name.';
       hasError = true;
     }
     if (phoneNumber.length < 7) {
-      _phoneError = 'Enter a valid mobile number';
+      _phoneError = 'Enter a valid phone number.';
       hasError = true;
     }
     if (email.isEmpty) {
-      _emailError = 'Email is required';
+      _emailError = 'Enter your email address.';
       hasError = true;
     } else if (!email.contains('@')) {
-      _emailError = 'Please enter a valid email';
+      _emailError = 'Enter a valid email address.';
       hasError = true;
     }
     if (hasError) {
@@ -152,7 +152,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     if (!didUpdate) {
       CustomToast.show(
         context,
-        'We could not update your profile. Please try again.',
+        "Couldn't update your profile. Try again.",
         isError: true,
       );
       return;
@@ -160,7 +160,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
 
     _applyProfile(BlocProvider.of<ProfileCubit>(context).state);
     setState(() {});
-    CustomToast.show(context, 'Profile updated successfully!');
+    CustomToast.show(context, 'Profile updated.');
   }
 
   void _clearErrors() {

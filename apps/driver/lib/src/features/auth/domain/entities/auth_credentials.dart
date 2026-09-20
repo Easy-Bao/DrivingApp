@@ -20,11 +20,11 @@ final class const DriverAuthCredentials({
       ),
       vehicleType: SafeParse.toStringValue(
         json['vehicleType'],
-        'Vehicle type unavailable',
+        'Unknown vehicle',
       ),
       plateNumber: SafeParse.toStringValue(
         json['plateNumber'],
-        'Vehicle plate unavailable',
+        'No plate number',
       ),
       rating: SafeParse.toDouble(json['rating']),
       token: SafeParse.toStringValue(json['token']),

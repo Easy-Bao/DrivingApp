@@ -81,7 +81,7 @@ void main() {
         const DashboardState(isLoadingStats: true),
         const DashboardState(
           isLoadingStats: false,
-          statsErrorMessage: 'We encountered an unexpected issue while processing your request. Please try again in a few moments.',
+          statsErrorMessage: 'Something went wrong. Try again.',
         ),
       ],
     );
@@ -358,7 +358,7 @@ void main() {
       expect: () => [
         const DashboardState(isOnline: true),
         const DashboardState(
-          errorMessage: 'You are currently offline. Please check your Wi-Fi or mobile data.',
+          errorMessage: "Couldn't connect. Check your internet connection and try again.",
         ),
       ],
     );
@@ -379,7 +379,7 @@ void main() {
         const DashboardState(isOnline: false),
         const DashboardState(
           isOnline: true,
-          errorMessage: 'You are currently offline. Please check your Wi-Fi or mobile data.',
+          errorMessage: "Couldn't connect. Check your internet connection and try again.",
         ),
       ],
     );
@@ -410,7 +410,7 @@ void main() {
       expect: () => [
         const DashboardState(
           isOnline: true,
-          errorMessage: 'You are currently offline. Please check your Wi-Fi or mobile data.',
+          errorMessage: "Couldn't connect. Check your internet connection and try again.",
         ),
       ],
     );

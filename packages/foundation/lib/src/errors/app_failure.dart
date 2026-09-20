@@ -54,8 +54,8 @@ class const AppFailure({
 
     if (_isRequestTimeout(error)) {
       return createFailure(
-        title: 'Request Timed Out',
-        userMessage: 'The server took too long to respond. Please check your connection and retry.',
+        title: 'Request timed out',
+        userMessage: 'The request took too long. Try again.',
         actionText: 'Retry',
         type: ErrorType.server,
       );
@@ -63,44 +63,43 @@ class const AppFailure({
 
     if (_isOffline(error)) {
       return createFailure(
-        title: 'No Connection',
-        userMessage: 'You are currently offline. Please check your Wi-Fi or mobile data.',
-        actionText: 'Reconnect',
+        title: 'No connection',
+        userMessage: "Couldn't connect. Check your internet connection and try again.",
+        actionText: 'Retry',
         type: ErrorType.network,
       );
     }
 
     if (_isSocketDisconnected(error)) {
       return createFailure(
-        title: 'Connection Interrupted',
-        userMessage: 'Connection lost while communicating with the server. Reconnecting automatically...',
+        title: 'Connection interrupted',
+        userMessage: "Couldn't connect. Check your internet connection and try again.",
+        actionText: 'Retry',
         type: ErrorType.network,
       );
     }
 
     if (error is ValidationFailure) {
       return createFailure(
-        userMessage:
-            'Please verify your input and correct the highlighted fields.',
-        actionText: 'Highlight field',
+        userMessage: 'Check the highlighted fields.',
+        actionText: 'Review',
         type: ErrorType.validation,
       );
     }
 
     if (error is NetworkFailure) {
       return createFailure(
-        title: 'No Connection',
-        userMessage: 'You are currently offline. Please check your Wi-Fi or mobile data.',
-        actionText: 'Reconnect',
+        title: 'No connection',
+        userMessage: "Couldn't connect. Check your internet connection and try again.",
+        actionText: 'Retry',
         type: ErrorType.network,
       );
     }
 
     if (error is CacheFailure) {
       return createFailure(
-        title: 'Saved Information Unavailable',
-        userMessage:
-            'Saved information is unavailable right now. Please try again.',
+        title: 'Saved information unavailable',
+        userMessage: 'Saved information is unavailable. Try again.',
         actionText: 'Retry',
         type: ErrorType.unknown,
       );
@@ -108,9 +107,9 @@ class const AppFailure({
 
     if (error is ServerFailure || error is DataParsingException) {
       return createFailure(
-        title: 'Something went wrong on our end',
-        userMessage: 'We encountered an unexpected issue while processing your request. Please try again in a few moments.',
-        actionText: 'Try Again',
+        title: 'Something went wrong',
+        userMessage: 'Something went wrong. Try again.',
+        actionText: 'Retry',
         type: ErrorType.server,
       );
     }
@@ -120,8 +119,8 @@ class const AppFailure({
     }
 
     return createFailure(
-      userMessage: 'Unable to complete your request. Please try again.',
-      actionText: 'Close',
+      userMessage: 'Something went wrong. Try again.',
+      actionText: 'Retry',
       type: ErrorType.unknown,
     );
   }
@@ -138,51 +137,48 @@ class const AppFailure({
   ) {
     return switch (statusCode) {
       401 => createFailure(
-        title: 'Session Expired',
-        userMessage:
-            'Your session has expired. Please sign in again to continue.',
-        actionText: 'Sign In',
+        title: 'Session expired',
+        userMessage: 'Your session has expired. Sign in again.',
+        actionText: 'Sign in',
         type: ErrorType.unauthorized,
       ),
       403 => createFailure(
-        title: 'Access Restricted',
-        userMessage:
-            'You do not have permission to view or edit this resource.',
-        actionText: 'Go Back',
+        title: 'Access restricted',
+        userMessage: "You don't have permission to do that.",
+        actionText: 'Go back',
         type: ErrorType.unauthorized,
       ),
       400 || 422 => createFailure(
-        userMessage:
-            'Please verify your input and correct the highlighted fields.',
-        actionText: 'Highlight field',
+        userMessage: 'Check the highlighted fields.',
+        actionText: 'Review',
         type: ErrorType.validation,
       ),
       429 => createFailure(
-        title: 'Too Many Requests',
-        userMessage: 'You are making requests too quickly. Please wait a moment before trying again.',
+        title: 'Too many requests',
+        userMessage: 'Too many requests. Wait a moment and try again.',
         type: ErrorType.server,
       ),
       503 => createFailure(
-        title: 'Under Maintenance',
-        userMessage: 'We are currently improving our services. We will be back online shortly.',
-        actionText: 'Refresh',
+        title: 'Service unavailable',
+        userMessage: 'The service is unavailable. Try again later.',
+        actionText: 'Retry',
         type: ErrorType.server,
       ),
       504 => createFailure(
-        title: 'Request Timed Out',
-        userMessage: 'The server took too long to respond. Please check your connection and retry.',
+        title: 'Request timed out',
+        userMessage: 'The request took too long. Try again.',
         actionText: 'Retry',
         type: ErrorType.server,
       ),
       >= 500 => createFailure(
-        title: 'Something went wrong on our end',
-        userMessage: 'We encountered an unexpected issue while processing your request. Please try again in a few moments.',
-        actionText: 'Try Again',
+        title: 'Something went wrong',
+        userMessage: 'Something went wrong. Try again.',
+        actionText: 'Retry',
         type: ErrorType.server,
       ),
       _ => createFailure(
-        userMessage: 'Unable to complete your request. Please try again.',
-        actionText: 'Close',
+        userMessage: 'Something went wrong. Try again.',
+        actionText: 'Retry',
         type: ErrorType.unknown,
       ),
     };

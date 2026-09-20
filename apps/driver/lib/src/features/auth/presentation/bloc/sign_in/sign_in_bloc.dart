@@ -25,15 +25,15 @@ class SignInBloc(this._authRepository) extends Bloc<SignInEvent, SignInState> {
     final password = event.password;
 
     if (normalizedEmail.isEmpty) {
-      emit(const SignInFailure('Please enter email'));
+      emit(const SignInFailure('Enter your email address.'));
       return;
     }
     if (!normalizedEmail.contains('@')) {
-      emit(const SignInFailure('Please enter a valid email'));
+      emit(const SignInFailure('Enter a valid email address.'));
       return;
     }
     if (password.isEmpty) {
-      emit(const SignInFailure('Please enter password'));
+      emit(const SignInFailure('Enter your password.'));
       return;
     }
 

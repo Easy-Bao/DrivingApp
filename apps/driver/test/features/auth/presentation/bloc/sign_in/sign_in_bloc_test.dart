@@ -34,7 +34,7 @@ void main() {
     ),
     expect: () => const <SignInState>[
       SignInLoading(),
-      SignInFailure('The email or password is incorrect.'),
+      SignInFailure('Incorrect email or password.'),
     ],
     verify: (_) {
       verify(

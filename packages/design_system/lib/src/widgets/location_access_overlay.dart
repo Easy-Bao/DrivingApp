@@ -218,7 +218,7 @@ class const _LocationAccessSheet({
                       child: TextButton.icon(
                         onPressed: onTryAgain,
                         icon: const Icon(LucideIcons.refresh_cw, size: 16),
-                        label: const Text('Try Again'),
+                        label: const Text('Try again'),
                       ),
                     ),
                   ],
@@ -274,7 +274,7 @@ class const _LocationAccessSheet({
       LocationAccessOverlayState.permissionDenied =>
         onTryAgain == null
             ? null
-            : _LocationAccessAction(label: 'Try Again', callback: onTryAgain!),
+            : _LocationAccessAction(label: 'Try again', callback: onTryAgain!),
       LocationAccessOverlayState.serviceDisabled =>
         onOpenLocationSettings == null
             ? null

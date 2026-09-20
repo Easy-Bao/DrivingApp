@@ -6,18 +6,18 @@ abstract class const Failure(this.message) implements Exception {
 }
 
 class const NetworkFailure([
-  super.message = 'No internet connection or server timeout.',
+  super.message = "Couldn't connect. Check your internet connection and try again.",
 ]) extends Failure {}
 
-class const ValidationFailure([super.message = 'Invalid input parameters.'])
+class const ValidationFailure([super.message = 'Check the highlighted fields.'])
     extends Failure {}
 
 class const CacheFailure([
-  super.message = 'Failed to load local storage cache.',
+  super.message = 'Saved information is unavailable. Try again.',
 ]) extends Failure {}
 
 class const ServerFailure([
-  super.message = 'An unexpected server error occurred.',
+  super.message = 'Something went wrong. Try again.',
   final int? statusCode,
 ]) extends Failure {
   const factory withStatusCode(String message, int statusCode) = ServerFailure;

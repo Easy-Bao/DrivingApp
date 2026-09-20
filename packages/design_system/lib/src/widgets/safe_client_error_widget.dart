@@ -47,7 +47,7 @@ class const SafeClientErrorApp({
 }
 
 class const SafeClientErrorWidget({
-  this.message = 'Something went wrong. Please try again.',
+  this.message = 'Something went wrong. Try again.',
   super.key,
 }) extends StatelessWidget {
   final String message;

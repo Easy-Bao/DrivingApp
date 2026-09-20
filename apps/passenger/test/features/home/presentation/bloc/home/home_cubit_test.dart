@@ -100,7 +100,7 @@ void main() {
         const HomeState(isLoading: true),
         const HomeState(
           isLoading: false,
-          locationErrorMessage: 'We encountered an unexpected issue while processing your request. Please try again in a few moments.',
+          locationErrorMessage: 'Something went wrong. Try again.',
         ),
       ],
     );

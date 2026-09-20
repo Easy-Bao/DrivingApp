@@ -36,7 +36,7 @@ void main() {
 
     expect(find.text('Current route'), findsOneWidget);
     expect(find.text('Open Location Settings'), findsOneWidget);
-    expect(find.text('Try Again'), findsOneWidget);
+    expect(find.text('Try again'), findsOneWidget);
     final sheetSize = tester.getSize(
       find.byKey(const ValueKey<String>('location-access-overlay-sheet')),
     );
@@ -44,7 +44,7 @@ void main() {
     expect(sheetSize.height, lessThan(350));
 
     await tester.tap(find.text('Open Location Settings'));
-    await tester.tap(find.text('Try Again'));
+    await tester.tap(find.text('Try again'));
 
     expect(locationSettingsOpened, isTrue);
     expect(retried, isTrue);
@@ -67,10 +67,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Try Again'), findsOneWidget);
+    expect(find.text('Try again'), findsOneWidget);
     expect(find.text('Open Location Settings'), findsNothing);
     expect(find.text('Open App Settings'), findsNothing);
-    await tester.tap(find.text('Try Again'));
+    await tester.tap(find.text('Try again'));
     expect(retried, isTrue);
   });
 
@@ -91,7 +91,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Open App Settings'), findsOneWidget);
-    expect(find.text('Try Again'), findsOneWidget);
+    expect(find.text('Try again'), findsOneWidget);
     expect(find.text('Open Location Settings'), findsNothing);
   });
 }

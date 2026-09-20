@@ -25,7 +25,7 @@ class ForgotPasswordBloc(this._authRepository)
   ) async {
     final normalizedEmail = event.email.trim();
     if (normalizedEmail.isEmpty || !normalizedEmail.contains('@')) {
-      emit(const ForgotPasswordFailure('Please enter a valid email address.'));
+      emit(const ForgotPasswordFailure('Enter a valid email address.'));
       return;
     }
 

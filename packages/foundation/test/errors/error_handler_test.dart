@@ -13,7 +13,7 @@ void main() {
 
     expect(
       message,
-      'We encountered an unexpected issue while processing your request. Please try again in a few moments.',
+      'Something went wrong. Try again.',
     );
     expect(message, isNot(contains('database')));
   });
@@ -23,32 +23,32 @@ void main() {
       ErrorHandler.getErrorMessage(
         const CacheFailure('sqlite table passenger_saved_places is missing'),
       ),
-      'Saved information is unavailable right now. Please try again.',
+      'Saved information is unavailable. Try again.',
     );
     expect(
       ErrorHandler.getErrorMessage(
         const NetworkFailure('SocketException: connection refused'),
       ),
-      'You are currently offline. Please check your Wi-Fi or mobile data.',
+      "Couldn't connect. Check your internet connection and try again.",
     );
     expect(
       ErrorHandler.getErrorMessage(
         const ValidationFailure('unexpected field passenger_internal_id'),
       ),
-      'Please verify your input and correct the highlighted fields.',
+      'Check the highlighted fields.',
     );
   });
 
   test('maps HTTP statuses to the official safe message dictionary', () {
     final expectedMessages = <int, String>{
-      401: 'Your session has expired. Please sign in again to continue.',
-      403: 'You do not have permission to view or edit this resource.',
-      400: 'Please verify your input and correct the highlighted fields.',
-      422: 'Please verify your input and correct the highlighted fields.',
-      429: 'You are making requests too quickly. Please wait a moment before trying again.',
-      503: 'We are currently improving our services. We will be back online shortly.',
-      504: 'The server took too long to respond. Please check your connection and retry.',
-      500: 'We encountered an unexpected issue while processing your request. Please try again in a few moments.',
+      401: 'Your session has expired. Sign in again.',
+      403: "You don't have permission to do that.",
+      400: 'Check the highlighted fields.',
+      422: 'Check the highlighted fields.',
+      429: 'Too many requests. Wait a moment and try again.',
+      503: 'The service is unavailable. Try again later.',
+      504: 'The request took too long. Try again.',
+      500: 'Something went wrong. Try again.',
     };
 
     for (final entry in expectedMessages.entries) {
@@ -70,9 +70,9 @@ void main() {
 
     final failure = ErrorHandler.getAppFailure(technicalError);
 
-    expect(failure.title, 'Under Maintenance');
-    expect(failure.userMessage, contains('improving our services'));
-    expect(failure.actionText, 'Refresh');
+    expect(failure.title, 'Service unavailable');
+    expect(failure.userMessage, contains('service is unavailable'));
+    expect(failure.actionText, 'Retry');
     expect(failure.type, ErrorType.server);
     expect(failure.technicalLog, same(technicalError));
     expect(failure.userMessage, isNot(contains('database')));
@@ -81,11 +81,11 @@ void main() {
   test('maps connection and timeout failures safely', () {
     expect(
       ErrorHandler.getErrorMessage(const SocketException('connection refused')),
-      'You are currently offline. Please check your Wi-Fi or mobile data.',
+      "Couldn't connect. Check your internet connection and try again.",
     );
     expect(
       ErrorHandler.getErrorMessage(TimeoutException('internal timeout')),
-      'The server took too long to respond. Please check your connection and retry.',
+      'The request took too long. Try again.',
     );
   });
 }

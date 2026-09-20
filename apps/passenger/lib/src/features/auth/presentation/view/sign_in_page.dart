@@ -362,7 +362,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                   );
                                 },
                                 child: Text(
-                                  'Forgot Password?',
+                                  'Forgot password?',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: context.colorScheme.onSurface,

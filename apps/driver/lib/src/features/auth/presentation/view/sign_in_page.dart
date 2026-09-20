@@ -71,13 +71,13 @@ class _SigninPageContentState extends State<_SigninPageContent> {
 
     setState(() {
       if (email.isEmpty) {
-        _emailError = 'Please enter your email';
+        _emailError = 'Enter your email address.';
       } else if (!_emailRegex.hasMatch(email)) {
-        _emailError = 'Please enter a valid email address';
+        _emailError = 'Enter a valid email address.';
       } else {
         _emailError = null;
       }
-      _passwordError = password.isEmpty ? 'Please enter your password' : null;
+      _passwordError = password.isEmpty ? 'Enter your password.' : null;
     });
 
     if (_emailError != null || _passwordError != null) {
@@ -307,7 +307,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                 );
                               },
                               child: Text(
-                                'Forgot Password?',
+                                'Forgot password?',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: context.colorScheme.onSurface,

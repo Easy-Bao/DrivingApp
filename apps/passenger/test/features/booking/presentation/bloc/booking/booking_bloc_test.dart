@@ -309,7 +309,7 @@ void main() {
             .having(
               (state) => state.message,
               'message',
-              'You are currently offline. Please check your Wi-Fi or mobile data.',
+              "Couldn't connect. Check your internet connection and try again.",
             )
             .having(
               (state) => state.isNoDriverFound,

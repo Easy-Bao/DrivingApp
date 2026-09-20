@@ -253,7 +253,7 @@ class const TrackDriverPanelWidget({
                           color: context.colorScheme.error,
                         ),
                       )
-                    : const Text('Cancel Trip'),
+                    : const Text('Cancel ride'),
               ),
             ),
           ],

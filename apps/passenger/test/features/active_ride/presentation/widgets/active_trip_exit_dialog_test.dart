@@ -30,12 +30,12 @@ void main() {
     await tester.tap(find.text('Open'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Trip In Progress'), findsOneWidget);
-    expect(find.text('Keep Tracking'), findsOneWidget);
-    expect(find.text('Minimize to Home'), findsOneWidget);
-    expect(find.text('Cancel Trip'), findsOneWidget);
+    expect(find.text('Trip in progress'), findsOneWidget);
+    expect(find.text('Keep tracking'), findsOneWidget);
+    expect(find.text('Go to home'), findsOneWidget);
+    expect(find.text('Cancel ride'), findsOneWidget);
 
-    await tester.tap(find.text('Cancel Trip'));
+    await tester.tap(find.text('Cancel ride'));
     await tester.pumpAndSettle();
 
     expect(selectedAction, ActiveTripExitAction.cancel);

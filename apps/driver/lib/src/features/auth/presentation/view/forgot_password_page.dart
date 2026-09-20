@@ -38,7 +38,7 @@ class _ForgotPasswordPageContentState
     FocusScope.of(context).unfocus();
     final email = _emailController.text.trim();
     if (email.isEmpty) {
-      CustomToast.show(context, 'Please enter your email');
+      CustomToast.show(context, 'Enter your email address.');
       return;
     }
 
@@ -242,7 +242,7 @@ class _ForgotPasswordPageContentState
                           TextButton(
                             onPressed: () => context.pop(),
                             child: Text(
-                              'Back to Login',
+                              'Back to sign in',
                               style: TextStyle(
                                 color: context.colorScheme.onSurface,
                                 fontWeight: FontWeight.bold,

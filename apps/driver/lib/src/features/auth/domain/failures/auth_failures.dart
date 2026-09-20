@@ -1,11 +1,11 @@
 import 'package:foundation/foundation.dart';
 
 class const AuthFailure([
-  super.message = 'Your session has expired. Please sign in again to continue.',
+  super.message = 'Your session has expired. Sign in again.',
 ]) extends Failure {}
 
 class const InvalidCredentialsFailure() extends Failure {
-  this : super('The email or password is incorrect.');
+  this : super('Incorrect email or password.');
 }
 
 class const EmailAlreadyRegisteredFailure() extends Failure {
