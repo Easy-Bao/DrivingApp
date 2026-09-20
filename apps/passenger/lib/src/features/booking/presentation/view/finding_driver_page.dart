@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
@@ -438,6 +439,7 @@ class _FindingDriverPageContentState()
                 ),
               );
             } else if (state is BookingDriverMatched) {
+              unawaited(HapticFeedback.lightImpact());
               final match = state.matchResult;
               final navExtra = <String, dynamic>{
                 'rideType': widget.rideType,

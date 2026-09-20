@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart' hide Route;
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
@@ -385,6 +386,7 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
     }
 
     BlocProvider.of<BookingDraftCubit>(context).clear();
+    unawaited(HapticFeedback.lightImpact());
     unawaited(
       context.pushNamed(
         BookingRoutes.findingDriver,
