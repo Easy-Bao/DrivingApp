@@ -25,6 +25,13 @@ class const RideFareDetailsWidget({
     return adjustment > 0 ? adjustment : 0;
   }
 
+  double get _surgeMultiplier {
+    final subtotal =
+        fareResult.baseFare + fareResult.distanceCharge + fareResult.timeCharge;
+    if (subtotal <= 0) return 1.0;
+    return (subtotal + fareResult.surgeCharge) / subtotal;
+  }
+
   String _currency(double amount) => formatPesoAmount(amount);
 
   Widget _amountRow(
@@ -180,7 +187,7 @@ class const RideFareDetailsWidget({
                 if (fareResult.surgeCharge > 0)
                   _amountRow(
                     context,
-                    'Surge',
+                    'Dynamic surge (${_surgeMultiplier.toStringAsFixed(1)}x)',
                     _currency(fareResult.surgeCharge),
                   ),
                 Divider(
