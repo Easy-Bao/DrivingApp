@@ -184,4 +184,22 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('filters non-numeric characters from phone number input', (
+    tester,
+  ) async {
+    await tester.pumpWidget(buildSubject());
+
+    final phoneFinder = find.byKey(
+      const ValueKey<String>('passenger-profile-phone-number'),
+    );
+    expect(phoneFinder, findsOneWidget);
+
+    await tester.enterText(phoneFinder, '');
+    await tester.enterText(phoneFinder, '+1 (555) 123-4567');
+    await tester.pump();
+
+    final textField = tester.widget<TextField>(phoneFinder);
+    expect(textField.controller?.text, '15551234567');
+  });
 }
