@@ -207,18 +207,32 @@ class const _RideHistoryFilterChip({
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
             curve: Curves.easeOutCubic,
-            constraints: const BoxConstraints(minHeight: 44),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            constraints: const BoxConstraints(minHeight: 38, minWidth: 64),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+            alignment: Alignment.center,
             decoration: BoxDecoration(
               color: isSelected
                   ? context.colorScheme.primary
-                  : context.colorScheme.surfaceContainerHighest,
+                  : context.colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.35),
               borderRadius: radius,
               border: Border.all(
                 color: isSelected
                     ? context.colorScheme.primary
-                    : context.colorScheme.outlineVariant,
+                    : context.colorScheme.outlineVariant
+                        .withValues(alpha: 0.6),
+                width: 1.0,
               ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: context.colorScheme.primary
+                            .withValues(alpha: 0.2),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                  : null,
             ),
             child: Text(
               _label,
@@ -226,7 +240,7 @@ class const _RideHistoryFilterChip({
                 color: isSelected
                     ? context.colorScheme.onPrimary
                     : context.colorScheme.onSurfaceVariant,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
               ),
             ),
           ),

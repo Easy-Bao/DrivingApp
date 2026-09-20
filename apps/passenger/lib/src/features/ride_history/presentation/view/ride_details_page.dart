@@ -1,7 +1,8 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:design_system/design_system.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Route;
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -37,10 +38,20 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
   RideCounterparty? _counterpartyData;
   bool _showLostFoundChat = false;
   String _passengerId = '';
+  Future<Route?>? _routeFuture;
 
   @override
   void initState() {
     super.initState();
+    final ride = widget.ride;
+    if (ride != null) {
+      _routeFuture = MapProvider.getRoute(
+        ride.pickupLat,
+        ride.pickupLng,
+        ride.destLat,
+        ride.destLng,
+      );
+    }
     _detailsCubit =
         widget.detailsCubit ??
         RideDetailsCubit(
@@ -117,44 +128,79 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
     } catch (_) {}
   }
 
+  String _driverInitials(String? name) {
+    if (name == null || name.trim().isEmpty) return 'D';
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return parts[0][0].toUpperCase();
+  }
+
   Future<void> _onMapCreated(AppMapController controller) async {
     final ride = widget.ride;
     if (ride == null) return;
-    final routeColor = context.colorScheme.onSurface;
+    final routeColor = context.colorScheme.primary;
 
     try {
-      await MapProvider.addMarker(
-        controller,
-        ride.pickupLat,
-        ride.pickupLng,
-        isOrigin: true,
-      );
-      await MapProvider.addMarker(
-        controller,
-        ride.destLat,
-        ride.destLng,
-        isOrigin: false,
+      unawaited(
+        MapProvider.fitBounds(
+          controller,
+          [
+            LatLng(ride.pickupLat, ride.pickupLng),
+            LatLng(ride.destLat, ride.destLng),
+          ],
+          padding: 44.0,
+        ),
       );
 
-      final route = await MapProvider.getRoute(
+      unawaited(
+        Future.wait([
+          MapProvider.addMarker(
+            controller,
+            ride.pickupLat,
+            ride.pickupLng,
+            isOrigin: true,
+          ),
+          MapProvider.addMarker(
+            controller,
+            ride.destLat,
+            ride.destLng,
+            isOrigin: false,
+          ),
+        ]),
+      );
+
+      final initialBuffer = Float64List.fromList([
         ride.pickupLat,
         ride.pickupLng,
         ride.destLat,
         ride.destLng,
+      ]);
+      await MapProvider.addPolylineBuffer(
+        controller,
+        initialBuffer,
+        color: routeColor.withValues(alpha: 0.35),
+        width: 3.5,
       );
+
+      final route = await (_routeFuture ??
+          MapProvider.getRoute(
+            ride.pickupLat,
+            ride.pickupLng,
+            ride.destLat,
+            ride.destLng,
+          ));
+
+      if (!mounted) return;
       if (route != null && route.hasGeometry) {
         await MapProvider.addPolylineBuffer(
           controller,
           route.coordinateBuffer,
           color: routeColor,
-          width: 4.0,
+          width: 4.5,
         );
       }
-
-      await MapProvider.fitBounds(controller, [
-        LatLng(ride.pickupLat, ride.pickupLng),
-        LatLng(ride.destLat, ride.destLng),
-      ], padding: 40.0);
     } catch (error) {
       debugPrint('RideDetailsPage._onMapCreated failed: $error');
     }
@@ -202,58 +248,26 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
         child: Column(
           children: [
             Container(
-              height: 180,
+              height: 200,
               width: double.infinity,
               decoration: BoxDecoration(
                 color: context.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(EasyRideRadius.lg),
                 border: Border.all(
                   color: context.colorScheme.outlineVariant.withValues(
-                    alpha: 0.2,
+                    alpha: 0.25,
                   ),
                   width: 1.0,
                 ),
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(23),
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: MapProvider.buildMapView(
-                        latitude: centerLat,
-                        longitude: centerLng,
-                        zoom: 13.0,
-                        interactive: false,
-                        onMapCreated: _onMapCreated,
-                      ),
-                    ),
-                    Positioned(
-                      top: 12,
-                      right: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: context.colorScheme.onSurface.withValues(
-                            alpha: 0.8,
-                          ),
-                          borderRadius: BorderRadius.circular(
-                            EasyRideRadius.md,
-                          ),
-                        ),
-                        child: Text(
-                          'Map preview',
-                          style: TextStyle(
-                            color: context.colorScheme.surface,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                borderRadius: BorderRadius.circular(EasyRideRadius.lg - 1),
+                child: MapProvider.buildMapView(
+                  latitude: centerLat,
+                  longitude: centerLng,
+                  zoom: 13.0,
+                  interactive: false,
+                  onMapCreated: _onMapCreated,
                 ),
               ),
             ),
@@ -268,7 +282,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                 borderRadius: BorderRadius.circular(EasyRideRadius.lg),
                 border: Border.all(
                   color: context.colorScheme.outlineVariant.withValues(
-                    alpha: 0.2,
+                    alpha: 0.25,
                   ),
                   width: 1.0,
                 ),
@@ -276,17 +290,20 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
               child: Row(
                 children: [
                   Container(
-                    width: 50,
-                    height: 50,
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
-                      color: context.colorScheme.primary,
+                      color: context.colorScheme.primaryContainer,
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
-                    child: Icon(
-                      LucideIcons.user,
-                      color: context.colorScheme.onPrimary,
-                      size: 22,
+                    child: Text(
+                      _driverInitials(ride?.displayDriverName),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: context.colorScheme.onPrimaryContainer,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -316,50 +333,52 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: _makeDriverCall,
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: context.colorScheme.surface,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: context.colorScheme.outlineVariant.withValues(
-                            alpha: 0.3,
-                          ),
-                          width: 1.0,
+                  Material(
+                    color: context.colorScheme.surface,
+                    shape: CircleBorder(
+                      side: BorderSide(
+                        color: context.colorScheme.outlineVariant.withValues(
+                          alpha: 0.4,
                         ),
+                        width: 1.0,
                       ),
-                      alignment: Alignment.center,
-                      child: Icon(
-                        LucideIcons.phone,
-                        color: context.colorScheme.onSurface,
-                        size: 16,
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      onTap: _makeDriverCall,
+                      child: SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: Icon(
+                          LucideIcons.phone,
+                          color: context.colorScheme.onSurface,
+                          size: 16,
+                        ),
                       ),
                     ),
                   ),
                   if (status != 'completed' || _showLostFoundChat) ...[
                     const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: _initiateLostFoundChat,
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: context.colorScheme.surface,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: context.colorScheme.outlineVariant
-                                .withValues(alpha: 0.3),
-                            width: 1.0,
-                          ),
+                    Material(
+                      color: context.colorScheme.surface,
+                      shape: CircleBorder(
+                        side: BorderSide(
+                          color: context.colorScheme.outlineVariant
+                              .withValues(alpha: 0.4),
+                          width: 1.0,
                         ),
-                        alignment: Alignment.center,
-                        child: Icon(
-                          LucideIcons.message_square,
-                          color: context.colorScheme.onSurface,
-                          size: 16,
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: InkWell(
+                        onTap: _initiateLostFoundChat,
+                        child: SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: Icon(
+                            LucideIcons.message_square,
+                            color: context.colorScheme.onSurface,
+                            size: 16,
+                          ),
                         ),
                       ),
                     ),
@@ -378,7 +397,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                 borderRadius: BorderRadius.circular(EasyRideRadius.lg),
                 border: Border.all(
                   color: context.colorScheme.outlineVariant.withValues(
-                    alpha: 0.2,
+                    alpha: 0.25,
                   ),
                   width: 1.0,
                 ),
@@ -389,20 +408,32 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        statusLabel,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: statusColor,
-                          letterSpacing: 0.5,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: statusColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(
+                            EasyRideRadius.pill,
+                          ),
+                        ),
+                        child: Text(
+                          statusLabel,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: statusColor,
+                            letterSpacing: 0.3,
+                          ),
                         ),
                       ),
                       Text(
                         statusSubtitle,
                         style: TextStyle(
                           fontSize: 12,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w600,
                           color: context.colorScheme.onSurfaceVariant,
                         ),
                       ),

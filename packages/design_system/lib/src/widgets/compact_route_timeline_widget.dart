@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 
 class const CompactRouteTimelineWidget({
   super.key,
@@ -22,36 +21,42 @@ class const CompactRouteTimelineWidget({
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(
-            width: 28,
+            width: 20,
             child: Stack(
               alignment: Alignment.center,
               children: [
                 Positioned(
-                  top: 20,
-                  bottom: 20,
+                  top: 14,
+                  bottom: 14,
                   child: CustomPaint(
-                    size: const Size(1, 42),
+                    size: const Size(1, 48),
                     painter: _DashedLinePainter(color: colors.outlineVariant),
                   ),
                 ),
                 Align(
                   alignment: Alignment.topCenter,
-                  child: _StopIcon(
-                    icon: LucideIcons.map_pin,
-                    color: colors.primary,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: _StopNode(
+                      isPickup: true,
+                      color: colors.primary,
+                    ),
                   ),
                 ),
                 Align(
                   alignment: Alignment.bottomCenter,
-                  child: _StopIcon(
-                    icon: LucideIcons.navigation,
-                    color: colors.tertiary,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: _StopNode(
+                      isPickup: false,
+                      color: colors.tertiary,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -68,19 +73,44 @@ class const CompactRouteTimelineWidget({
   }
 }
 
-class const _StopIcon({required this.icon, required this.color})
+class const _StopNode({required this.isPickup, required this.color})
     extends StatelessWidget {
-  final IconData icon;
+  final bool isPickup;
   final Color color;
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
-      color: Theme.of(context).colorScheme.surface,
-      child: SizedBox(
-        width: 28,
-        height: 28,
-        child: Icon(icon, size: 17, color: color),
+    if (isPickup) {
+      return Container(
+        width: 13,
+        height: 13,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.28),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      width: 13,
+      height: 13,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(3.5),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.28),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
     );
   }
