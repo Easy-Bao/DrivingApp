@@ -158,13 +158,19 @@ final class PassengerAuthRepositoryImpl({
     }
 
     final passengerEmail = _stringValue(passenger['email']);
+    final refreshToken = _stringValue(responseData['refreshToken']);
+    if (refreshToken.isEmpty) {
+      throw DataParsingException(
+        message: 'Authentication response did not contain a refresh token.',
+      );
+    }
     return PassengerAuthCredentials(
       passengerId: passengerId,
       passengerName: _stringValue(passenger['name']),
       passengerEmail: passengerEmail.isEmpty ? fallbackEmail : passengerEmail,
       passengerPhone: _stringValue(passenger['phone']),
       token: token,
-      refreshToken: _stringValue(responseData['refreshToken']),
+      refreshToken: refreshToken,
       needsVerification: responseData['needsVerification'] == true,
     );
   }

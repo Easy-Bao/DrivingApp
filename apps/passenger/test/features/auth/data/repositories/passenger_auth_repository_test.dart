@@ -153,6 +153,7 @@ void main() {
       ).thenAnswer(
         (_) async => <String, dynamic>{
           'token': 'verified-jwt',
+          'refreshToken': 'verified-refresh-token',
           'user': <String, dynamic>{
             'id': 42,
             'name': 'Test Passenger',
@@ -174,8 +175,11 @@ void main() {
       );
       expect(credentials.passengerId, '42');
       expect(credentials.token, 'verified-jwt');
+      expect(credentials.refreshToken, 'verified-refresh-token');
       verify(() => secureSessionService.saveToken('verified-jwt')).called(1);
-      verify(() => secureSessionService.saveRefreshToken('')).called(1);
+      verify(
+        () => secureSessionService.saveRefreshToken('verified-refresh-token'),
+      ).called(1);
       verify(() => secureSessionService.savePassengerId('42')).called(1);
       verifyNever(
         () => remoteDataSource.postData(
@@ -186,40 +190,64 @@ void main() {
     },
   );
 
-  test('registerPassenger persists an immediately usable session', () async {
-    when(
-      () => remoteDataSource.postData(
-        PassengerAuthEndpoints.register,
-        requestBody: {
-          'name': 'Test Passenger',
+  test(
+    'registerPassenger leaves pending verification outside the session',
+    () async {
+      when(
+        () => remoteDataSource.postData(
+          PassengerAuthEndpoints.register,
+          requestBody: {
+            'name': 'Test Passenger',
+            'email': 'passenger@example.com',
+            'phone': '+639170000001',
+            'password': 'secret-password',
+          },
+        ),
+      ).thenAnswer(
+        (_) async => <String, dynamic>{
           'email': 'passenger@example.com',
-          'phone': '+639170000001',
-          'password': 'secret-password',
+          'needsVerification': true,
         },
-      ),
-    ).thenAnswer(
-      (_) async => <String, dynamic>{
-        'token': 'registered-jwt',
-        'user': <String, dynamic>{
-          'id': 42,
-          'name': 'Test Passenger',
-          'email': 'passenger@example.com',
-          'phone': '+639170000001',
+      );
+
+      final result = await repository.registerPassenger(
+        name: 'Test Passenger',
+        email: 'passenger@example.com',
+        phone: '+639170000001',
+        password: 'secret-password',
+      );
+
+      expect(result.isRight(), isTrue);
+      verifyNever(() => secureSessionService.saveToken(any()));
+      verifyNever(() => secureSessionService.saveRefreshToken(any()));
+      verifyNever(() => secureSessionService.savePassengerId(any()));
+    },
+  );
+
+  test(
+    'verifyOtp rejects a completed session without a refresh token',
+    () async {
+      when(
+        () => remoteDataSource.postData(
+          PassengerAuthEndpoints.verifyOtp,
+          requestBody: {'email': 'passenger@example.com', 'code': '123456'},
+        ),
+      ).thenAnswer(
+        (_) async => <String, dynamic>{
+          'token': 'verified-jwt',
+          'user': <String, dynamic>{'id': 42},
         },
-        'needsVerification': false,
-      },
-    );
+      );
 
-    final result = await repository.registerPassenger(
-      name: 'Test Passenger',
-      email: 'passenger@example.com',
-      phone: '+639170000001',
-      password: 'secret-password',
-    );
+      final result = await repository.verifyOtp(
+        email: 'passenger@example.com',
+        code: '123456',
+      );
 
-    expect(result.isRight(), isTrue);
-    verify(() => secureSessionService.saveToken('registered-jwt')).called(1);
-    verify(() => secureSessionService.saveRefreshToken('')).called(1);
-    verify(() => secureSessionService.savePassengerId('42')).called(1);
-  });
+      expect(result.isLeft(), isTrue);
+      verifyNever(() => secureSessionService.saveToken(any()));
+      verifyNever(() => secureSessionService.saveRefreshToken(any()));
+      verifyNever(() => secureSessionService.savePassengerId(any()));
+    },
+  );
 }
