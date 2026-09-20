@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:driver/src/app/driver_router.dart';
 import 'package:driver/src/app/navigation/app_routes.dart';
@@ -7,6 +9,7 @@ import 'package:driver/src/infrastructure/telemetry/driver_background_telemetry.
 import 'package:driver/src/infrastructure/telemetry/driver_location_spool.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver/src/features/auth/auth_module.dart';
+import 'package:driver/src/features/auth/auth_routes.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver/src/features/location/data/repositories/driver_location_access_repository_impl.dart';
 import 'package:driver/src/features/location/domain/repositories/driver_location_access_repository.dart';
@@ -63,6 +66,7 @@ class DriverDependencies({
               sendTimeout: const Duration(seconds: 15),
             ),
           ),
+          onSessionExpired: _navigateToDriverSignIn,
         );
       })
       ..addLazySingleton<DriverBackgroundTelemetry>(
@@ -116,4 +120,13 @@ class DriverDependencies({
     ModuleRoute(AppRoutes.authModulePath, module: AuthModule()),
     ModuleRoute(AppRoutes.driverModulePath, module: DriverRouter()),
   ];
+}
+
+Future<void> _navigateToDriverSignIn() async {
+  final router = Modular.routerConfig;
+  if (router.routerDelegate.currentConfiguration.uri.path ==
+      AuthRoutes.signinPath) {
+    return;
+  }
+  router.goNamed(AuthRoutes.signin);
 }
