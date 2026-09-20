@@ -40,6 +40,16 @@ abstract final class EasyRideTheme {
       ),
       inputDecorationTheme: EasyRideComponentThemes.input(colors, textTheme),
       iconTheme: IconThemeData(color: colors.onSurface, size: 20),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          minimumSize: const Size.square(EasyRideSize.minimumTouchTarget),
+          tapTargetSize: MaterialTapTargetSize.padded,
+          foregroundColor: colors.onSurface,
+          disabledForegroundColor: colors.onSurfaceVariant.withValues(
+            alpha: 0.38,
+          ),
+        ),
+      ),
       cardTheme: EasyRideComponentThemes.card(colors),
       dividerTheme: EasyRideComponentThemes.divider(colors),
       navigationBarTheme: EasyRideComponentThemes.navigationBar(

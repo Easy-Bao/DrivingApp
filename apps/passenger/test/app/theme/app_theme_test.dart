@@ -36,6 +36,13 @@ void main() {
     expect(theme.textTheme.labelLarge?.fontSize, 14);
   });
 
+  test('keeps icon controls at the shared touch target', () {
+    final style = EasyRideTheme.main.iconButtonTheme.style!;
+
+    expect(style.minimumSize?.resolve({}), const Size.square(48));
+    expect(style.tapTargetSize, MaterialTapTargetSize.padded);
+  });
+
   testWidgets('keeps the active tab capsule visible in default mode', (
     tester,
   ) async {

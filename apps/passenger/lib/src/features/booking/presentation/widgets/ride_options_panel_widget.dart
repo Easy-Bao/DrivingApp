@@ -651,7 +651,10 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
           key: key,
           onPressed: onPressed,
           tooltip: tooltip,
-          constraints: const BoxConstraints.tightFor(width: 40, height: 40),
+          constraints: const BoxConstraints.tightFor(
+            width: EasyRideSize.minimumTouchTarget,
+            height: EasyRideSize.minimumTouchTarget,
+          ),
           padding: EdgeInsets.zero,
           style: IconButton.styleFrom(shape: const CircleBorder()),
           icon: Icon(
