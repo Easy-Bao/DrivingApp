@@ -87,6 +87,36 @@ void main() {
     expect(await provider.refreshAccessToken(), isNull);
     expect(clearCount, 1);
   });
+
+  test('backs off after refresh is rate limited', () async {
+    var refreshRequests = 0;
+    var clearCount = 0;
+    final refreshClient = Dio(BaseOptions(baseUrl: 'https://api.example.test'))
+      ..httpClientAdapter = _ResponseAdapter((_) {
+        refreshRequests++;
+        return ResponseBody.fromString(
+          'Too many requests',
+          429,
+          headers: {
+            'retry-after': ['60'],
+          },
+        );
+      });
+
+    final provider = RefreshableTokenProvider(
+      readAccessToken: () async => 'expired-token',
+      readRefreshToken: () async => 'refresh-1',
+      saveAccessToken: (_) async {},
+      saveRefreshToken: (_) async {},
+      clearSession: () async => clearCount++,
+      refreshClient: refreshClient,
+    );
+
+    expect(await provider.refreshAccessToken(), isNull);
+    expect(await provider.refreshAccessToken(), isNull);
+    expect(refreshRequests, 1);
+    expect(clearCount, 0);
+  });
 }
 
 String _jwt(DateTime expiresAt) {

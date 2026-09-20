@@ -41,6 +41,7 @@ func TestRateLimiterRejectsReadRequestsAfterTheirLimit(t *testing.T) {
 func TestRateLimiterUsesSeparateAuthenticationLimit(t *testing.T) {
 	config := DefaultRateLimitConfig()
 	config.Authentication = 1
+	config.Refresh = 1
 	config.Mutation = 10
 	handler := NewRateLimiter(NewMemoryCounterStore(), config).Middleware(noContentHandler())
 
@@ -51,6 +52,15 @@ func TestRateLimiterUsesSeparateAuthenticationLimit(t *testing.T) {
 	second := serveRateLimitedRequest(handler, http.MethodPost, "/api/v1/auth/login", "192.0.2.11:1234")
 	if second.Code != http.StatusTooManyRequests {
 		t.Fatalf("second auth status = %d, want %d", second.Code, http.StatusTooManyRequests)
+	}
+
+	refresh := serveRateLimitedRequest(handler, http.MethodPost, "/api/v1/auth/refresh", "192.0.2.11:1234")
+	if refresh.Code != http.StatusNoContent {
+		t.Fatalf("first refresh status = %d, want %d", refresh.Code, http.StatusNoContent)
+	}
+	secondRefresh := serveRateLimitedRequest(handler, http.MethodPost, "/api/v1/auth/refresh", "192.0.2.11:1234")
+	if secondRefresh.Code != http.StatusTooManyRequests {
+		t.Fatalf("second refresh status = %d, want %d", secondRefresh.Code, http.StatusTooManyRequests)
 	}
 
 	mutation := serveRateLimitedRequest(handler, http.MethodPost, "/api/v1/rides", "192.0.2.11:1234")
@@ -117,6 +127,7 @@ func TestRateLimiterKeepsTelemetrySeparateFromMutations(t *testing.T) {
 func TestRateLimiterClassifiesEveryWorkload(t *testing.T) {
 	config := RateLimitConfig{
 		Authentication: 11,
+		Refresh:        12,
 		Location:       22,
 		Fare:           33,
 		Connection:     44,
@@ -133,6 +144,7 @@ func TestRateLimiterClassifiesEveryWorkload(t *testing.T) {
 		limit  string
 	}{
 		{name: "authentication", method: http.MethodPost, path: "/api/v1/auth/login", limit: "11"},
+		{name: "refresh", method: http.MethodPost, path: "/api/v1/auth/refresh", limit: "12"},
 		{name: "location", method: http.MethodGet, path: "/api/v1/location/search", limit: "22"},
 		{name: "fare", method: http.MethodPost, path: "/api/v1/fares/estimate", limit: "33"},
 		{name: "connection", method: http.MethodGet, path: "/api/v1/realtime/ws", limit: "44"},
@@ -242,6 +254,13 @@ func TestMemoryCounterStoreHonorsCancelledContext(t *testing.T) {
 
 	if _, err := store.Increment(ctx, "cancelled", time.Minute); !errors.Is(err, context.Canceled) {
 		t.Fatalf("increment error = %v, want context canceled", err)
+	}
+}
+
+func TestRetryAfterSecondsReportsCurrentWindowRemainder(t *testing.T) {
+	got := retryAfterSeconds(time.Unix(125, 0), time.Minute)
+	if got != 55 {
+		t.Fatalf("retry-after seconds = %d, want 55", got)
 	}
 }
 

@@ -3,6 +3,8 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
+import 'auth_endpoints.dart';
+
 /// Supplies the current access token to HTTP and long-lived transports.
 ///
 /// Access tokens are intentionally decoded only to read their expiry. The
@@ -18,9 +20,8 @@ final class RefreshableTokenProvider({
   Dio? refreshClient,
   FutureOr<void> Function()? onSessionExpired,
   Duration refreshSkew = const Duration(seconds: 30),
+  Duration refreshFailureCooldown = const Duration(seconds: 5),
 }) {
-  static const _refreshTokenPath = '/api/v1/auth/refresh';
-
   final Future<String?> Function() _readAccessToken = readAccessToken;
   final Future<String?> Function() _readRefreshToken = readRefreshToken;
   final Future<void> Function(String token) _saveAccessToken = saveAccessToken;
@@ -30,8 +31,10 @@ final class RefreshableTokenProvider({
   final Dio? _refreshClient = refreshClient;
   final FutureOr<void> Function()? _onSessionExpired = onSessionExpired;
   final Duration _refreshSkew = refreshSkew;
+  final Duration _refreshFailureCooldown = refreshFailureCooldown;
 
   Future<String?>? _refreshInFlight;
+  DateTime? _refreshBlockedUntil;
   bool _sessionExpiryNotified = false;
 
   /// Returns a usable token, refreshing it before it expires when possible.
@@ -56,6 +59,10 @@ final class RefreshableTokenProvider({
   Future<String?> refreshAccessToken() {
     final pending = _refreshInFlight;
     if (pending != null) return pending;
+    final blockedUntil = _refreshBlockedUntil;
+    if (blockedUntil != null && DateTime.now().toUtc().isBefore(blockedUntil)) {
+      return Future<String?>.value(null);
+    }
 
     late final Future<String?> trackedRefresh;
     trackedRefresh = _performRefresh().whenComplete(() {
@@ -79,7 +86,7 @@ final class RefreshableTokenProvider({
 
     try {
       final response = await refreshClient.post<Object?>(
-        _refreshTokenPath,
+        AuthEndpoints.refresh,
         data: {'refreshToken': refreshToken},
         options: Options(
           extra: {'skipAuthToken': true, 'skipAuthRefresh': true},
@@ -97,11 +104,14 @@ final class RefreshableTokenProvider({
       await _saveRefreshToken(
         rotatedRefreshToken.isEmpty ? refreshToken : rotatedRefreshToken,
       );
+      _refreshBlockedUntil = null;
       _sessionExpiryNotified = false;
       return accessToken;
     } on DioException catch (error) {
-      if (error.response?.statusCode == 401 ||
-          error.response?.statusCode == 403) {
+      final statusCode = error.response?.statusCode;
+      if (statusCode == 429) {
+        _refreshBlockedUntil = DateTime.now().toUtc().add(_retryAfter(error));
+      } else if (statusCode == 401 || statusCode == 403) {
         await _expireSession();
       }
       return null;
@@ -132,6 +142,15 @@ final class RefreshableTokenProvider({
     } catch (_) {
       // The session is already treated as expired by the caller.
     }
+  }
+
+  Duration _retryAfter(DioException error) {
+    final rawValue = error.response?.headers.value('retry-after');
+    final seconds = int.tryParse(rawValue?.trim() ?? '');
+    if (seconds != null && seconds > 0) {
+      return Duration(seconds: seconds);
+    }
+    return _refreshFailureCooldown;
   }
 
   DateTime? _readExpiry(String token) {

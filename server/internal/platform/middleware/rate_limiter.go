@@ -123,6 +123,7 @@ type RateLimiter struct {
 
 type RateLimitConfig struct {
 	Authentication int64
+	Refresh        int64
 	Location       int64
 	Fare           int64
 	Connection     int64
@@ -135,6 +136,7 @@ type RateLimitConfig struct {
 func DefaultRateLimitConfig() RateLimitConfig {
 	return RateLimitConfig{
 		Authentication: 10,
+		Refresh:        10,
 		Location:       60,
 		Fare:           30,
 		Connection:     30,
@@ -153,6 +155,7 @@ func NewRateLimiterFromEnv(store CounterStore) *RateLimiter {
 	defaults := DefaultRateLimitConfig()
 	return NewRateLimiter(store, RateLimitConfig{
 		Authentication: positiveInt64EnvValue("AUTH_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Authentication),
+		Refresh:        positiveInt64EnvValue("REFRESH_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Refresh),
 		Location:       positiveInt64EnvValue("LOCATION_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Location),
 		Fare:           positiveInt64EnvValue("FARE_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Fare),
 		Connection:     positiveInt64EnvValue("CONNECTION_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Connection),
@@ -194,7 +197,10 @@ func (limiter *RateLimiter) Middleware(next http.Handler) http.Handler {
 		writer.Header().Set("X-RateLimit-Limit", strconv.FormatInt(policy.limit, 10))
 		writer.Header().Set("X-RateLimit-Remaining", strconv.FormatInt(maxInt64(0, policy.limit-count), 10))
 		if count > policy.limit {
-			writer.Header().Set("Retry-After", strconv.FormatInt(retryAfterSeconds(limiter.config.Window), 10))
+			writer.Header().Set(
+				"Retry-After",
+				strconv.FormatInt(retryAfterSeconds(time.Now(), limiter.config.Window), 10),
+			)
 			writeSecurityError(writer, http.StatusTooManyRequests, "too many requests")
 			return
 		}
@@ -217,6 +223,8 @@ func (limiter *RateLimiter) policy(request *http.Request) (rateLimitPolicy, bool
 		return rateLimitPolicy{}, false
 	case endpointAuthentication:
 		return rateLimitPolicy{scope: "authentication", limit: limiter.config.Authentication, failClosed: true}, true
+	case endpointRefresh:
+		return rateLimitPolicy{scope: "refresh", limit: limiter.config.Refresh, failClosed: true}, true
 	case endpointLocationQuery:
 		return rateLimitPolicy{scope: "location", limit: limiter.config.Location, failClosed: true}, true
 	case endpointFareQuery:
@@ -236,6 +244,9 @@ func normalizedRateLimitConfig(config RateLimitConfig) RateLimitConfig {
 	defaults := DefaultRateLimitConfig()
 	if config.Authentication <= 0 {
 		config.Authentication = defaults.Authentication
+	}
+	if config.Refresh <= 0 {
+		config.Refresh = defaults.Refresh
 	}
 	if config.Location <= 0 {
 		config.Location = defaults.Location
@@ -269,9 +280,14 @@ func windowKey(now time.Time, window time.Duration) int64 {
 	return now.UnixNano() / windowNanoseconds
 }
 
-func retryAfterSeconds(window time.Duration) int64 {
-	seconds := int64(window / time.Second)
-	if window%time.Second != 0 {
+func retryAfterSeconds(now time.Time, window time.Duration) int64 {
+	windowNanoseconds := window.Nanoseconds()
+	if windowNanoseconds <= 0 {
+		return 1
+	}
+	remainingNanoseconds := windowNanoseconds - now.UnixNano()%windowNanoseconds
+	seconds := remainingNanoseconds / time.Second.Nanoseconds()
+	if remainingNanoseconds%time.Second.Nanoseconds() != 0 {
 		seconds++
 	}
 	return maxInt64(1, seconds)

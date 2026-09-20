@@ -108,7 +108,8 @@ startup still requires `just db-migrate` to be run explicitly.
 ### Runtime protection and connection pools
 
 Request limits use independent one-minute buckets so polling cannot consume an
-active trip's telemetry allowance. Authentication defaults to 10 requests,
+active trip's telemetry allowance. Authentication defaults to 10 requests and
+refresh-token exchange has its own 10-request bucket,
 external location queries to 60, fare queries to 30, WebSocket connection
 attempts to 30, telemetry to 600, other mutations to 120, and reads to 300.
 Health checks and CORS preflight requests bypass the limiter. Public auth,

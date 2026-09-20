@@ -11,6 +11,7 @@ const (
 	endpointRead endpointKind = iota
 	endpointHealth
 	endpointAuthentication
+	endpointRefresh
 	endpointRealtimeConnection
 	endpointTelemetry
 	endpointLocationQuery
@@ -30,6 +31,9 @@ func classifyEndpoint(request *http.Request) endpointKind {
 	}
 	if path == "/api/v1/chat/ws" || path == "/api/v1/realtime/ws" {
 		return endpointRealtimeConnection
+	}
+	if path == "/api/v1/auth/refresh" {
+		return endpointRefresh
 	}
 	if hasPathPrefix(path, "/api/v1/auth") {
 		return endpointAuthentication

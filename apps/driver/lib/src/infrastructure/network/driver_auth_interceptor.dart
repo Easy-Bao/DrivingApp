@@ -14,7 +14,6 @@ class DriverAuthInterceptor(
   static const String _authRetryAttemptKey = 'authRetryAttempt';
   static const String _skipAuthRefreshKey = 'skipAuthRefresh';
   static const String _skipAuthTokenKey = 'skipAuthToken';
-  static const String _refreshTokenPath = '/api/v1/auth/refresh';
 
   final Dio? _dio = dio;
   final Uri? _allowedBaseUri = allowedBaseUri;
@@ -89,7 +88,7 @@ class DriverAuthInterceptor(
         !_isAllowedOrigin(requestOptions.uri) ||
         requestOptions.extra[_authRetryAttemptKey] == true ||
         requestOptions.extra[_skipAuthRefreshKey] == true ||
-        requestOptions.path.endsWith(_refreshTokenPath)) {
+        requestOptions.path.endsWith(AuthEndpoints.refresh)) {
       return false;
     }
     return true;
