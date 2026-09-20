@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
@@ -137,6 +139,32 @@ void main() {
       find.byKey(const ValueKey<String>('passenger-profile-save')),
       findsOneWidget,
     );
+  });
+
+  testWidgets('rejects photo uploads exceeding 5MB', (tester) async {
+    await tester.pumpWidget(
+      buildSubject(
+        pickPhoto: () async => XFile.fromData(
+          Uint8List(6 * 1024 * 1024),
+          path: '',
+        ),
+      ),
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('passenger-profile-camera')),
+    );
+    await tester.pump();
+
+    expect(
+      find.text('Selected photo exceeds 5MB limit. Please choose a smaller image.'),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('passenger-profile-save')),
+      findsNothing,
+    );
+    await tester.pump(const Duration(seconds: 4));
   });
 
   testWidgets('keeps the redesigned profile form inside a narrow viewport', (

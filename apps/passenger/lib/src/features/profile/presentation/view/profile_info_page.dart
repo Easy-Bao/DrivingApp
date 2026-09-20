@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'dart:io';
 
 import 'package:design_system/design_system.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -177,6 +179,29 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
               imageQuality: 86,
             );
       if (!mounted || picked == null) return;
+      try {
+        int? fileSize;
+        if (!kIsWeb && picked.path.isNotEmpty) {
+          final file = File(picked.path);
+          if (file.existsSync()) {
+            fileSize = file.lengthSync();
+          }
+        }
+        if (fileSize == null && (kIsWeb || picked.path.isEmpty)) {
+          fileSize = await picked.length();
+        }
+        if (fileSize != null && fileSize > 5 * 1024 * 1024) {
+          if (!mounted) return;
+          CustomToast.show(
+            context,
+            'Selected photo exceeds 5MB limit. Please choose a smaller image.',
+            isError: true,
+          );
+          return;
+        }
+      } catch (_) {
+        // If file size check cannot be completed, allow proceeding.
+      }
       setState(() {
         _avatarPath = picked.path;
         _isDirty = _draftHasChanges;
