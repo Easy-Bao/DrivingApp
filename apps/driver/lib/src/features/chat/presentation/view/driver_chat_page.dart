@@ -322,35 +322,46 @@ class _DriverChatPageState extends State<DriverChatPage> {
                 ),
                 if (canSendMessage)
                   SizedBox(
-                    height: 44,
+                    height: EasyRideSize.minimumTouchTarget,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       physics: const BouncingScrollPhysics(),
                       itemCount: _quickReplies.length,
                       separatorBuilder: (_, _) => const SizedBox(width: 8),
-                      itemBuilder: (context, itemIndex) => GestureDetector(
-                        onTap: () => _send(_quickReplies[itemIndex]),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: context.colorScheme.surfaceContainerHighest,
+                      itemBuilder: (context, itemIndex) => Semantics(
+                        button: true,
+                        label: 'Send quick reply ${_quickReplies[itemIndex]}',
+                        child: Material(
+                          type: MaterialType.transparency,
+                          child: InkWell(
                             borderRadius: BorderRadius.circular(
                               EasyRideRadius.lg,
                             ),
-                            border: Border.all(
-                              color: context.colorScheme.outlineVariant,
-                            ),
-                          ),
-                          child: Text(
-                            _quickReplies[itemIndex],
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: context.colorScheme.onSurface,
+                            onTap: () => _send(_quickReplies[itemIndex]),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color:
+                                    context.colorScheme.surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(
+                                  EasyRideRadius.lg,
+                                ),
+                                border: Border.all(
+                                  color: context.colorScheme.outlineVariant,
+                                ),
+                              ),
+                              child: Text(
+                                _quickReplies[itemIndex],
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: context.colorScheme.onSurface,
+                                ),
+                              ),
                             ),
                           ),
                         ),
