@@ -4,6 +4,8 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
+export 'driver_incoming_request_dialog.dart';
+
 double? _distanceInKm(Map<String, dynamic> value) {
   final distance = value['distance_km'] ?? value['distance'];
   return distance is num && distance >= 0 ? distance.toDouble() : null;
