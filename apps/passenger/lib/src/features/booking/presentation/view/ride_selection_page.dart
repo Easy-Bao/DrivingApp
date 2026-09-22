@@ -142,7 +142,9 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
         RideTipSelectorWidget.tipOptions.contains(widget.initialTipAmount)
         ? widget.initialTipAmount
         : 0;
-    _notesController.text = widget.initialNotes;
+    _notesController.text = widget.initialNotes.length > 160
+        ? widget.initialNotes.substring(0, 160)
+        : widget.initialNotes;
     _profilePassengerName = widget.profileRepository
         .getCachedProfile()
         .name
@@ -399,7 +401,9 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
           'pickupAddress': widget.pickupAddress,
           'pickupLat': _pickupCoordinate?.lat,
           'pickupLng': _pickupCoordinate?.lng,
-          'passengerNote': _notesController.text.trim(),
+          'passengerNote': _notesController.text.trim().length > 160
+              ? _notesController.text.trim().substring(0, 160)
+              : _notesController.text.trim(),
         },
       ),
     );

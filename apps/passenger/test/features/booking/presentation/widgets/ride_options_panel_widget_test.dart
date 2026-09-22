@@ -27,11 +27,12 @@ void main() {
     bool isExpanded = false,
     VoidCallback? onPageBackPressed,
     DraggableScrollableController? sheetController,
+    TextEditingController? notesController,
   }) {
     final customFareController = TextEditingController(
       text: offeredFare ?? result?.totalFare.toStringAsFixed(2) ?? '',
     );
-    final notesController = TextEditingController();
+    final effectiveNotesController = notesController ?? TextEditingController();
 
     RideOptionsPanelWidget buildPanelWidget(
       ScrollController? scrollController,
@@ -49,7 +50,7 @@ void main() {
         fareError: fareError,
         onRetryFare: onRetryFare,
         onCustomFareChanged: (_) {},
-        notesController: notesController,
+        notesController: effectiveNotesController,
         onNotesChanged: (_) {},
         selectedTipAmount: 0,
         onTipSelected: onTipSelected ?? (_) {},
@@ -212,6 +213,29 @@ void main() {
     expect(find.byKey(const ValueKey('trip-note-input')), findsNothing);
     expect(find.text('Note added'), findsOneWidget);
   });
+
+  testWidgets(
+    'enforces 160 character limit on pickup note input and clamps preset additions',
+    (tester) async {
+      final controller = TextEditingController();
+      await tester.pumpWidget(buildPanel(notesController: controller));
+
+      await tester.tap(find.byKey(const ValueKey('trip-note-trigger')));
+      await tester.pumpAndSettle();
+
+      final noteInput = find.byKey(const ValueKey('trip-note-input'));
+      final longNote = 'A' * 200;
+      await tester.enterText(noteInput, longNote);
+      await tester.pumpAndSettle();
+
+      expect(controller.text.length, 160);
+
+      await tester.tap(find.text('Wait at lobby'));
+      await tester.pumpAndSettle();
+
+      expect(controller.text.length, 160);
+    },
+  );
 
   testWidgets('shows a dynamic passenger and transparent fare calculation', (
     tester,

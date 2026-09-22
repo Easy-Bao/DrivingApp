@@ -978,6 +978,10 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
                 minLines: 4,
                 maxLines: 5,
                 maxLength: 160,
+                maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(160),
+                ],
                 textCapitalization: TextCapitalization.sentences,
                 textInputAction: TextInputAction.newline,
                 onChanged: (value) {
@@ -1008,11 +1012,15 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
                     InkWell(
                       onTap: () {
                         final current = widget.notesController.text.trim();
-                        if (current.isEmpty) {
-                          widget.notesController.text = preset;
-                        } else if (!current.contains(preset)) {
-                          widget.notesController.text = '$current. $preset';
-                        }
+                        final next = current.isEmpty
+                            ? preset
+                            : current.contains(preset)
+                                ? current
+                                : '$current. $preset';
+                        final clamped = next.length > 160
+                            ? next.substring(0, 160)
+                            : next;
+                        widget.notesController.text = clamped;
                         widget.onNotesChanged(widget.notesController.text);
                         setState(() {});
                       },
