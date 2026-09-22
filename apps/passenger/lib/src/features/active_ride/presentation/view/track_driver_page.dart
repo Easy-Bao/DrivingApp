@@ -18,6 +18,7 @@ import 'package:passenger/src/features/active_ride/presentation/bloc/track_drive
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_state.dart';
 import 'package:passenger/src/features/active_ride/presentation/widgets/active_trip_exit_dialog.dart';
 import 'package:passenger/src/features/active_ride/presentation/widgets/track_driver_panel_widget.dart';
+import 'package:passenger/src/features/active_ride/presentation/widgets/trip_cancellation_dialog.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/chat/chat_routes.dart';
@@ -385,50 +386,8 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
     if (_isCancellingTrip) return;
     final shouldCancel = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: context.colorScheme.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-        ),
-        title: Text(
-          'Cancel ride?',
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            color: context.colorScheme.onSurface,
-          ),
-        ),
-        content: Text(
-          'Are you sure you want to cancel this ride? A cancellation fee may apply.',
-          style: TextStyle(
-            color: context.colorScheme.onSurface.withValues(alpha: 0.6),
-            fontSize: 14,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(
-              'Keep ride',
-              style: TextStyle(
-                color: context.colorScheme.onSurface,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx, true);
-            },
-            child: Text(
-              'Cancel ride',
-              style: TextStyle(
-                color: context.colorScheme.error,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
+      barrierDismissible: true,
+      builder: (_) => const TripCancellationDialog(),
     );
     if (shouldCancel != true || !mounted) return;
 
