@@ -109,4 +109,62 @@ void main() {
       expect(tester.takeException(), isNull, reason: '$period layout failed');
     }
   });
+
+  testWidgets('formats negative adjustments and fee deductions with distinct cues', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: EasyRideTheme.main,
+        home: BlocProvider(
+          create: (_) => DriverEarningsCubit(
+            repository: _FakeNegativeEarningsRepository(),
+            sessionService: sessionService,
+          )..load(),
+          child: const DriverEarningsPage(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('-₱50'), findsWidgets);
+    expect(find.text('Adjustment'), findsOneWidget);
+    expect(
+      find.text('Fee deductions or dispute adjustments applied'),
+      findsOneWidget,
+    );
+
+    final barChart = tester.widget<BarChart>(find.byType(BarChart));
+    final firstRod = barChart.data.barGroups.first.barRods.first;
+    expect(firstRod.label.text, '-₱50');
+  });
+}
+
+class _FakeNegativeEarningsRepository implements DriverEarningsRepository {
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> fetchEarningsSummary(
+    String driverId,
+  ) async {
+    return const Right({
+      'today': {'earnings_amount': -5000, 'completed_trips': 1},
+      'this_week': {'earnings_amount': -5000, 'completed_trips': 1},
+      'this_month': {'earnings_amount': -5000, 'completed_trips': 1},
+      'weekdays': [
+        {'start_date': '2026-08-17', 'earnings_amount': -5000},
+        {'start_date': '2026-08-18', 'earnings_amount': 0},
+        {'start_date': '2026-08-19', 'earnings_amount': 0},
+        {'start_date': '2026-08-20', 'earnings_amount': 0},
+        {'start_date': '2026-08-21', 'earnings_amount': 0},
+        {'start_date': '2026-08-22', 'earnings_amount': 0},
+        {'start_date': '2026-08-23', 'earnings_amount': 0},
+      ],
+      'month_weeks': [
+        {'start_date': '2026-08-01', 'earnings_amount': -5000},
+        {'start_date': '2026-08-08', 'earnings_amount': 0},
+        {'start_date': '2026-08-15', 'earnings_amount': 0},
+        {'start_date': '2026-08-22', 'earnings_amount': 0},
+        {'start_date': '2026-08-29', 'earnings_amount': 0},
+      ],
+    });
+  }
 }

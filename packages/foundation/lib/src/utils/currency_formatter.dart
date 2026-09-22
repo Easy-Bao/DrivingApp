@@ -4,5 +4,9 @@
 /// this formatter only controls the compact whole-peso presentation.
 String formatPesoAmount(num amount) {
   if (!amount.isFinite) return '₱—';
-  return '₱${amount.round()}';
+  final rounded = amount.round();
+  if (rounded < 0) {
+    return '-₱${rounded.abs()}';
+  }
+  return '₱$rounded';
 }

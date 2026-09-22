@@ -271,13 +271,21 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
   }
 
   Widget _buildSummaryCard(_EarningsSummary summary) {
+    final isNegative = summary.total < 0;
+    final cardBgColor = isNegative
+        ? context.colorScheme.error
+        : context.colorScheme.primary;
+    final onCardColor = isNegative
+        ? context.colorScheme.onError
+        : context.colorScheme.onPrimary;
+
     return Container(
       decoration: BoxDecoration(
-        color: context.colorScheme.primary,
+        color: cardBgColor,
         borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         boxShadow: [
           BoxShadow(
-            color: context.colorScheme.primary.withValues(alpha: 0.16),
+            color: cardBgColor.withValues(alpha: 0.16),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -299,14 +307,17 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                 _periodTitle.toUpperCase(),
                 style: context.textStyles.labelSmall?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: context.colorScheme.onPrimary.withValues(alpha: 0.7),
+                  color: onCardColor.withValues(alpha: 0.7),
                   letterSpacing: 1.2,
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
-                  color: context.semanticColors.success.withValues(alpha: 0.2),
+                  color: (isNegative
+                          ? context.colorScheme.onError
+                          : context.semanticColors.success)
+                      .withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(EasyRideRadius.pill),
                 ),
                 child: Row(
@@ -316,15 +327,19 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                       width: 5,
                       height: 5,
                       decoration: BoxDecoration(
-                        color: context.semanticColors.success,
+                        color: isNegative
+                            ? context.colorScheme.onError
+                            : context.semanticColors.success,
                         shape: BoxShape.circle,
                       ),
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'Live',
+                      isNegative ? 'Adjustment' : 'Live',
                       style: context.textStyles.labelSmall?.copyWith(
-                        color: context.semanticColors.success,
+                        color: isNegative
+                            ? context.colorScheme.onError
+                            : context.semanticColors.success,
                         fontWeight: FontWeight.w700,
                         fontSize: 10,
                       ),
@@ -341,16 +356,18 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
             overflow: TextOverflow.ellipsis,
             style: context.textStyles.headlineLarge?.copyWith(
               fontWeight: FontWeight.w800,
-              color: context.colorScheme.onPrimary,
+              color: onCardColor,
               letterSpacing: -1.0,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
           const SizedBox(height: 2),
           Text(
-            'Earnings from your completed rides',
+            isNegative
+                ? 'Fee deductions or dispute adjustments applied'
+                : 'Earnings from your completed rides',
             style: context.textStyles.bodySmall?.copyWith(
-              color: context.colorScheme.onPrimary.withValues(alpha: 0.7),
+              color: onCardColor.withValues(alpha: 0.7),
               fontSize: 11,
             ),
           ),
@@ -358,19 +375,26 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
           Container(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
             decoration: BoxDecoration(
-              color: context.colorScheme.onPrimary.withValues(alpha: 0.08),
+              color: onCardColor.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(EasyRideRadius.md),
             ),
             child: Row(
               children: [
                 Expanded(
-                  child: _miniStat('${summary.tripsCount}', 'Completed trips'),
+                  child: _miniStat(
+                    '${summary.tripsCount}',
+                    'Completed trips',
+                    textColor: onCardColor,
+                  ),
                 ),
-                _summaryDivider(),
+                _summaryDivider(
+                  color: onCardColor.withValues(alpha: 0.15),
+                ),
                 Expanded(
                   child: _miniStat(
                     _averageFareLabel(summary),
                     'Average per trip',
+                    textColor: onCardColor,
                   ),
                 ),
               ],
@@ -381,16 +405,17 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     );
   }
 
-  Widget _summaryDivider() {
+  Widget _summaryDivider({Color? color}) {
     return Container(
       width: 1,
       height: 24,
-      color: context.colorScheme.onPrimary.withValues(alpha: 0.15),
+      color: color ?? context.colorScheme.onPrimary.withValues(alpha: 0.15),
       margin: const EdgeInsets.symmetric(horizontal: 10),
     );
   }
 
-  Widget _miniStat(String value, String label) {
+  Widget _miniStat(String value, String label, {Color? textColor}) {
+    final effectiveColor = textColor ?? context.colorScheme.onPrimary;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -400,7 +425,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
           overflow: TextOverflow.ellipsis,
           style: context.textStyles.titleSmall?.copyWith(
             fontWeight: FontWeight.w800,
-            color: context.colorScheme.onPrimary,
+            color: effectiveColor,
             fontFeatures: const [FontFeature.tabularFigures()],
           ),
         ),
@@ -411,7 +436,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
           overflow: TextOverflow.ellipsis,
           style: context.textStyles.bodySmall?.copyWith(
             fontSize: 10,
-            color: context.colorScheme.onPrimary.withValues(alpha: 0.7),
+            color: effectiveColor.withValues(alpha: 0.7),
           ),
         ),
       ],
@@ -501,7 +526,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
   BarChartData _barChartData(double availableWidth, List<_EarnDay> dailyData) {
     final chartDays = dailyData.isEmpty ? const [_EarnDay('—', 0)] : dailyData;
     final maxAmount = chartDays.fold<double>(0, (max, item) {
-      final amount = item.amount;
+      final amount = item.amount.abs();
       if (!amount.isFinite || amount <= max) return max;
       return amount;
     });
@@ -585,25 +610,37 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     double placeholderHeight,
     double barWidth,
   ) {
-    final amount = day.amount.isFinite && day.amount > 0 ? day.amount : 0.0;
-    final barValue = amount > 0 ? amount : placeholderHeight;
+    final isNegative = day.amount < 0;
+    final amount = day.amount.isFinite && !isNegative ? day.amount : 0.0;
+    final barValue = isNegative
+        ? (day.amount.abs() > 0 ? day.amount.abs() : placeholderHeight)
+        : (amount > 0 ? amount : placeholderHeight);
+    final rodColor = isNegative
+        ? (day.isCurrent
+            ? context.colorScheme.error
+            : context.colorScheme.error.withValues(alpha: 0.5))
+        : (day.isCurrent
+            ? context.colorScheme.primary
+            : context.colorScheme.primary.withValues(alpha: 0.2));
+    final labelColor = isNegative
+        ? context.colorScheme.error
+        : (day.isCurrent
+            ? context.colorScheme.primary
+            : context.colorScheme.onSurfaceVariant);
+
     return BarChartGroupData(
       x: index,
       barRods: [
         BarChartRodData(
           toY: barValue,
           width: barWidth,
-          color: day.isCurrent
-              ? context.colorScheme.primary
-              : context.colorScheme.primary.withValues(alpha: 0.2),
+          color: rodColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
           label: BarChartRodLabel(
             show: true,
-            text: '₱${day.amount.toInt()}',
+            text: formatPesoAmount(day.amount),
             style: context.textStyles.labelSmall?.copyWith(
-              color: day.isCurrent
-                  ? context.colorScheme.primary
-                  : context.colorScheme.onSurfaceVariant,
+              color: labelColor,
               fontWeight: FontWeight.w700,
               fontSize: 10,
               fontFeatures: const [FontFeature.tabularFigures()],
