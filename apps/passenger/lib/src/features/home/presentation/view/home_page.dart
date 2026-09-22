@@ -389,9 +389,17 @@ class _HomePageState extends State<HomePage> {
         if (state is! RideHistoryLoaded) {
           return RecentRideHistoryEmptyStateWidget(isGuest: isGuest);
         }
-        final recentRides = state.past
-            .take(_recentRideHistoryPreviewLimit)
-            .toList(growable: false);
+        final seenDestinations = <String>{};
+        final recentRides = <RideHistory>[];
+        for (final ride in state.past) {
+          final destinationKey = ride.destination.trim().toLowerCase();
+          if (destinationKey.isEmpty || seenDestinations.add(destinationKey)) {
+            recentRides.add(ride);
+          }
+          if (recentRides.length >= _recentRideHistoryPreviewLimit) {
+            break;
+          }
+        }
         if (recentRides.isEmpty) {
           return RecentRideHistoryEmptyStateWidget(isGuest: isGuest);
         }

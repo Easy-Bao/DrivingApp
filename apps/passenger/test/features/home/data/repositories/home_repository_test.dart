@@ -90,4 +90,51 @@ void main() {
       expect((failure as ServerFailure).statusCode, 403);
     }, (_) => fail('Expected a permission failure.'));
   });
+
+  test('deduplicates recent locations by normalized title', () async {
+    final remoteDataSource = MockHomeRemoteDataSource();
+    when(
+      () => remoteDataSource.fetchHomeData(
+        lat: any(named: 'lat'),
+        lng: any(named: 'lng'),
+      ),
+    ).thenAnswer(
+      (_) async => {
+        'current_address': 'Pagadian City',
+        'recent_locations': [
+          {
+            'title': 'City Plaza',
+            'subtitle': 'First visit',
+            'lat': 7.8282,
+            'lng': 123.4361,
+          },
+          {
+            'title': 'city plaza',
+            'subtitle': 'Second visit',
+            'lat': 7.8283,
+            'lng': 123.4362,
+          },
+          {
+            'title': 'Central Mall',
+            'subtitle': 'Third visit',
+            'lat': 7.8290,
+            'lng': 123.4370,
+          },
+        ],
+      },
+    );
+
+    final repository = HomeRepositoryImpl(
+      homeRemoteDataSource: remoteDataSource,
+    );
+    final result = await repository.loadHomeData(lat: 7.8, lng: 123.4);
+
+    expect(result.isRight(), isTrue);
+    final homeData = result.getOrElse(
+      (_) => const HomeData(currentAddress: '', recentLocations: []),
+    );
+    expect(homeData.recentLocations.length, 2);
+    expect(homeData.recentLocations[0].title, 'City Plaza');
+    expect(homeData.recentLocations[1].title, 'Central Mall');
+  });
 }

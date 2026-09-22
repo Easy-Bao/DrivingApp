@@ -46,12 +46,14 @@ final class HomeRepositoryImpl({required this._homeRemoteDataSource})
     }
 
     final locations = <RecentLocation>[];
+    final seenTitles = <String>{};
     for (final rawLocation in rawLocations) {
       if (rawLocation is! Map) continue;
       final title = rawLocation['title']?.toString().trim() ?? '';
       final latitude = SafeParse.toNullableDouble(rawLocation['lat']);
       final longitude = SafeParse.toNullableDouble(rawLocation['lng']);
       if (title.isEmpty || latitude == null || longitude == null) continue;
+      if (!seenTitles.add(title.toLowerCase())) continue;
       locations.add(
         RecentLocation(
           title: title,

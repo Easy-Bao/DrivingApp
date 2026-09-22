@@ -138,7 +138,8 @@ func recentLocations(destinations []ridecontextdomain.RecentDestination) []ridec
 		if title == "" {
 			continue
 		}
-		key := strings.ToLower(title)
+		shortTitle := shortenAddress(title)
+		key := strings.ToLower(shortTitle)
 		if _, seen := seenDestinations[key]; seen {
 			continue
 		}
@@ -149,7 +150,7 @@ func recentLocations(destinations []ridecontextdomain.RecentDestination) []ridec
 			subtitle = "Previous Trip"
 		}
 		locations = append(locations, ridecontextdomain.RecentLocation{
-			Title:     shortenAddress(title),
+			Title:     shortTitle,
 			Subtitle:  shortenAddress(subtitle),
 			Latitude:  destination.Latitude,
 			Longitude: destination.Longitude,

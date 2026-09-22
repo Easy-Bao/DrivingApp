@@ -20,6 +20,7 @@ import 'package:passenger/src/features/home/presentation/bloc/home/home_cubit.da
 import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_cubit.dart';
 import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_state.dart';
 import 'package:passenger/src/features/home/presentation/view/home_page.dart';
+import 'package:passenger/src/features/home/presentation/widgets/recent_ride_history_preview_widget.dart';
 import 'package:passenger/src/features/location/presentation/bloc/location_access/location_access_cubit.dart';
 import 'package:passenger/src/features/location/presentation/bloc/location_access/location_access_state.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
@@ -353,6 +354,163 @@ void main() {
 
       verify(sessionStore.readActiveRideId).called(1);
       verify(() => trackRepository.fetchRideResult('active-trip-99')).called(1);
+    },
+  );
+
+  testWidgets(
+    'deduplicates recent ride history entries with identical destinations',
+    (tester) async {
+      final currentLocationRepository = _MockCurrentLocationRepository();
+      final homeRepository = _MockHomeRepository();
+      final homeCubit = HomeCubit(
+        repository: homeRepository,
+        currentLocationRepository: currentLocationRepository,
+      );
+      final sessionBloc = SessionBloc(
+        sessionRepository: _MockSessionRepository(),
+      );
+      final locationAccessCubit = _MockLocationAccessCubit();
+      final bookingBloc = _MockBookingBloc();
+      final publicDriverSummaryCubit = _MockPublicDriverSummaryCubit();
+      final rideHistoryBloc = _MockRideHistoryBloc();
+      final savedPlacesCubit = _MockSavedPlacesCubit();
+      final bookingDraftCubit = BookingDraftCubit();
+      final lifecycleCoordinator = AppLifecycleCoordinator();
+      final sessionStore = _MockPassengerSessionStore();
+      final trackRepository = _MockTrackRepository();
+
+      when(() => currentLocationRepository.getCurrentLocation()).thenAnswer(
+        (_) async => const Right(
+          CurrentLocation(latitude: 37.3861, longitude: -122.0839),
+        ),
+      );
+      when(() => currentLocationRepository.watchCurrentLocation())
+          .thenAnswer((_) => const Stream.empty());
+      when(
+        () => homeRepository.loadHomeData(
+          lat: any(named: 'lat'),
+          lng: any(named: 'lng'),
+        ),
+      ).thenAnswer(
+        (_) async => const Right(
+          HomeData(currentAddress: 'Mountain View', recentLocations: []),
+        ),
+      );
+      when(() => locationAccessCubit.state)
+          .thenReturn(const LocationAccessReady());
+      when(() => locationAccessCubit.stream).thenAnswer((_) => const Stream.empty());
+      when(() => bookingBloc.state).thenReturn(BookingInitial());
+      when(() => bookingBloc.stream).thenAnswer((_) => const Stream.empty());
+      when(() => bookingBloc.hasActiveDriverSearch).thenReturn(false);
+      when(() => bookingBloc.activeDriverSearch).thenReturn(null);
+      when(() => publicDriverSummaryCubit.state)
+          .thenReturn(const PublicDriverSummaryState());
+      when(() => publicDriverSummaryCubit.stream)
+          .thenAnswer((_) => const Stream.empty());
+      when(() => savedPlacesCubit.state).thenReturn(const SavedPlacesState());
+      when(() => savedPlacesCubit.stream).thenAnswer((_) => const Stream.empty());
+      when(savedPlacesCubit.loadPlaces).thenAnswer((_) async {});
+      when(() => sessionStore.readActiveRideId()).thenAnswer((_) async => null);
+
+      final duplicateRides = [
+        const RideHistory(
+          id: 'ride-1',
+          pickup: 'Origin 1',
+          destination: 'SM City',
+          pickupLat: 7.82,
+          pickupLng: 123.43,
+          destLat: 7.83,
+          destLng: 123.44,
+          date: '2026-09-20',
+          price: '₱100',
+          status: 'completed',
+          driverId: 'driver-1',
+          driverName: 'Driver One',
+          vehiclePlate: 'ABC 123',
+          vehicleType: 'Car',
+        ),
+        const RideHistory(
+          id: 'ride-2',
+          pickup: 'Origin 2',
+          destination: 'sm city',
+          pickupLat: 7.82,
+          pickupLng: 123.43,
+          destLat: 7.83,
+          destLng: 123.44,
+          date: '2026-09-19',
+          price: '₱100',
+          status: 'completed',
+          driverId: 'driver-2',
+          driverName: 'Driver Two',
+          vehiclePlate: 'DEF 456',
+          vehicleType: 'Car',
+        ),
+        const RideHistory(
+          id: 'ride-3',
+          pickup: 'Origin 3',
+          destination: 'City Hall',
+          pickupLat: 7.82,
+          pickupLng: 123.43,
+          destLat: 7.84,
+          destLng: 123.45,
+          date: '2026-09-18',
+          price: '₱120',
+          status: 'completed',
+          driverId: 'driver-3',
+          driverName: 'Driver Three',
+          vehiclePlate: 'GHI 789',
+          vehicleType: 'Car',
+        ),
+      ];
+
+      when(() => rideHistoryBloc.state).thenReturn(
+        RideHistoryLoaded(past: duplicateRides, upcoming: const []),
+      );
+      when(() => rideHistoryBloc.stream)
+          .thenAnswer((_) => const Stream.empty());
+
+      addTearDown(() async {
+        await homeCubit.close();
+        await sessionBloc.close();
+        await bookingDraftCubit.close();
+        await lifecycleCoordinator.dispose();
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: EasyRideTheme.main,
+          home: MultiBlocProvider(
+            providers: [
+              BlocProvider<SessionBloc>.value(value: sessionBloc),
+              BlocProvider<LocationAccessCubit>.value(
+                value: locationAccessCubit,
+              ),
+              BlocProvider<HomeCubit>.value(value: homeCubit),
+              BlocProvider<BookingDraftCubit>.value(value: bookingDraftCubit),
+              BlocProvider<PublicDriverSummaryCubit>.value(
+                value: publicDriverSummaryCubit,
+              ),
+              BlocProvider<RideHistoryBloc>.value(value: rideHistoryBloc),
+              BlocProvider<SavedPlacesCubit>.value(value: savedPlacesCubit),
+            ],
+            child: HomePage(
+              bookingBloc: bookingBloc,
+              lifecycleCoordinator: lifecycleCoordinator,
+              sessionService: sessionStore,
+              trackRepository: trackRepository,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('SM City'), findsOneWidget);
+      expect(find.text('City Hall'), findsOneWidget);
+      expect(find.byType(RecentRideHistoryPreviewWidget), findsOneWidget);
+      final previewWidget = tester.widget<RecentRideHistoryPreviewWidget>(
+        find.byType(RecentRideHistoryPreviewWidget),
+      );
+      expect(previewWidget.rides.length, 2);
     },
   );
 }
