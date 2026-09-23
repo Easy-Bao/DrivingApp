@@ -29,9 +29,7 @@ import (
 	locationdomain "github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
 	tracking "github.com/Easy-Bao/DrivingApp/server/internal/location/tracking"
 	locationhttp "github.com/Easy-Bao/DrivingApp/server/internal/location/transport/http"
-	passengerridecontextadapter "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/adapter"
-	passengerridecontextapplication "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/application"
-	passengerridecontexthttp "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/transport/http"
+	passengerridecontext "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	eventadapter "github.com/Easy-Bao/DrivingApp/server/internal/platform/events/adapter"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
@@ -168,9 +166,9 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 		mapboxProvider,
 		locationredis.NewCache(redisClient),
 	).WithLogger(applicationLogger)
-	passengerRideContextQuery := passengerridecontextapplication.NewQueryService(
-		passengerridecontextadapter.NewRidesReader(ridesService),
-		passengerridecontextadapter.NewLocationResolver(locationService),
+	passengerRideContextQuery := passengerridecontext.NewQueryService(
+		passengerridecontext.NewRidesReader(ridesService),
+		passengerridecontext.NewLocationResolver(locationService),
 	).WithLogger(applicationLogger)
 
 	router := chi.NewRouter()
@@ -180,7 +178,7 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 	ridesRouter.RegisterRoutes(router)
 	adminRouter.RegisterRoutes(router)
 	locationhttp.NewRouter(locationService).RegisterRoutes(router)
-	passengerridecontexthttp.NewRouter(passengerRideContextQuery, verifier).RegisterRoutes(router)
+	passengerridecontext.NewRouter(passengerRideContextQuery, verifier).RegisterRoutes(router)
 
 	chatRoomStore := chatadapter.NewChatHistoryStore(redisClient)
 	chatService := chatapplication.NewChatService(chatRoomStore).

@@ -1,4 +1,4 @@
-package application
+package ridecontext
 
 import (
 	"context"
@@ -9,9 +9,29 @@ import (
 	"sync"
 	"time"
 
-	ridecontextdomain "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/domain"
-	ridecontextports "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/ports"
+	"github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/domain"
 )
+
+type Coordinates = domain.Coordinates
+type RecentDestination = domain.RecentDestination
+type RecentLocation = domain.RecentLocation
+type RideContextSnapshot = domain.RideContextSnapshot
+
+// RecentDestinationReader and AddressResolver are the small consumer-side
+// contracts needed by this query feature.
+type RecentDestinationReader interface {
+	ReadRecentDestinations(ctx context.Context, passengerID, limit int) ([]RecentDestination, error)
+}
+
+type AddressResolver interface {
+	ResolveAddress(ctx context.Context, coordinates Coordinates) (string, error)
+}
+
+type RideContextQuery interface {
+	Load(ctx context.Context, passengerID *int, coordinates *Coordinates) (RideContextSnapshot, error)
+}
+
+type Query = RideContextQuery
 
 const (
 	recentDestinationLimit = 25
@@ -25,20 +45,29 @@ var (
 )
 
 type RideContextQueryService struct {
-	recentDestinations ridecontextports.RecentDestinationReader
-	addressResolver    ridecontextports.AddressResolver
+	recentDestinations RecentDestinationReader
+	addressResolver    AddressResolver
 	logger             *slog.Logger
 }
 
 func NewQueryService(
-	recentDestinations ridecontextports.RecentDestinationReader,
-	addressResolver ridecontextports.AddressResolver,
+	recentDestinations RecentDestinationReader,
+	addressResolver AddressResolver,
 ) *RideContextQueryService {
 	return &RideContextQueryService{
 		recentDestinations: recentDestinations,
 		addressResolver:    addressResolver,
 		logger:             slog.Default(),
 	}
+}
+
+// NewRideContextQueryService preserves the feature's established constructor
+// name for callers while the implementation remains local to this slice.
+func NewRideContextQueryService(
+	recentDestinations RecentDestinationReader,
+	addressResolver AddressResolver,
+) *RideContextQueryService {
+	return NewQueryService(recentDestinations, addressResolver)
 }
 
 func (service *RideContextQueryService) WithLogger(logger *slog.Logger) *RideContextQueryService {
@@ -51,15 +80,15 @@ func (service *RideContextQueryService) WithLogger(logger *slog.Logger) *RideCon
 func (service *RideContextQueryService) Load(
 	ctx context.Context,
 	passengerID *int,
-	coordinates *ridecontextdomain.Coordinates,
-) (ridecontextdomain.RideContextSnapshot, error) {
-	snapshot := ridecontextdomain.RideContextSnapshot{
-		RecentLocations: make([]ridecontextdomain.RecentLocation, 0, 5),
+	coordinates *Coordinates,
+) (RideContextSnapshot, error) {
+	snapshot := RideContextSnapshot{
+		RecentLocations: make([]RecentLocation, 0, 5),
 	}
 
 	if coordinates != nil {
 		if !coordinates.Valid() {
-			return ridecontextdomain.RideContextSnapshot{}, ErrInvalidCoordinates
+			return RideContextSnapshot{}, ErrInvalidCoordinates
 		}
 	}
 
@@ -75,10 +104,10 @@ func (service *RideContextQueryService) Load(
 		return snapshot, nil
 	}
 	if *passengerID <= 0 {
-		return ridecontextdomain.RideContextSnapshot{}, ErrInvalidPassengerID
+		return RideContextSnapshot{}, ErrInvalidPassengerID
 	}
 	if service.recentDestinations == nil {
-		return ridecontextdomain.RideContextSnapshot{}, ErrQueryUnavailable
+		return RideContextSnapshot{}, ErrQueryUnavailable
 	}
 
 	var (
@@ -99,7 +128,7 @@ func (service *RideContextQueryService) Load(
 	)
 	waitGroup.Wait()
 	if err != nil {
-		return ridecontextdomain.RideContextSnapshot{}, fmt.Errorf("load recent destinations: %w", err)
+		return RideContextSnapshot{}, fmt.Errorf("load recent destinations: %w", err)
 	}
 	if addressError == nil {
 		snapshot.CurrentAddress = strings.TrimSpace(address)
@@ -119,16 +148,16 @@ func (service *RideContextQueryService) log() *slog.Logger {
 
 func resolveAddress(
 	ctx context.Context,
-	resolver ridecontextports.AddressResolver,
-	coordinates ridecontextdomain.Coordinates,
+	resolver AddressResolver,
+	coordinates Coordinates,
 ) (string, error) {
 	addressContext, cancel := context.WithTimeout(ctx, currentAddressTimeout)
 	defer cancel()
 	return resolver.ResolveAddress(addressContext, coordinates)
 }
 
-func recentLocations(destinations []ridecontextdomain.RecentDestination) []ridecontextdomain.RecentLocation {
-	locations := make([]ridecontextdomain.RecentLocation, 0, 5)
+func recentLocations(destinations []RecentDestination) []RecentLocation {
+	locations := make([]RecentLocation, 0, 5)
 	seenDestinations := make(map[string]struct{}, 5)
 	for _, destination := range destinations {
 		if strings.ToLower(strings.TrimSpace(destination.Status)) != "completed" {
@@ -149,7 +178,7 @@ func recentLocations(destinations []ridecontextdomain.RecentDestination) []ridec
 		if subtitle == "" {
 			subtitle = "Previous Trip"
 		}
-		locations = append(locations, ridecontextdomain.RecentLocation{
+		locations = append(locations, RecentLocation{
 			Title:     shortTitle,
 			Subtitle:  shortenAddress(subtitle),
 			Latitude:  destination.Latitude,

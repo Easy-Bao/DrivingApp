@@ -12,7 +12,6 @@ import (
 	"time"
 
 	ridecontext "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext"
-	ridecontexthttp "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
@@ -344,6 +343,6 @@ func newRouter(
 	router := chi.NewRouter()
 	verifier := security.NewTokenManager("test-secret")
 	query := ridecontext.NewRideContextQueryService(destinations, resolver)
-	ridecontexthttp.NewRouter(query, verifier).RegisterRoutes(router)
+	ridecontext.NewRouter(query, verifier).RegisterRoutes(router)
 	return router
 }

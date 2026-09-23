@@ -1,4 +1,4 @@
-package http
+package ridecontext
 
 import (
 	"net/http"
@@ -6,18 +6,17 @@ import (
 	"strings"
 
 	ridecontextdomain "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/domain"
-	ridecontextports "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/ports"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 )
 
 type Handler struct {
-	query    ridecontextports.Query
+	query    Query
 	verifier *security.TokenManager
 }
 
-func NewHandler(query ridecontextports.Query, verifier *security.TokenManager) *Handler {
+func NewHandler(query Query, verifier *security.TokenManager) *Handler {
 	return &Handler{query: query, verifier: verifier}
 }
 

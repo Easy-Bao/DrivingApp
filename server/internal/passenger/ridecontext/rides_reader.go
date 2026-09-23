@@ -1,4 +1,4 @@
-package adapter
+package ridecontext
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	ridecontextdomain "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/domain"
-	ridecontextports "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/ports"
 	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
 )
 
@@ -14,7 +13,7 @@ type RidesReader struct {
 	service *rideapplication.RideService
 }
 
-var _ ridecontextports.RecentDestinationReader = (*RidesReader)(nil)
+var _ RecentDestinationReader = (*RidesReader)(nil)
 
 func NewRidesReader(service *rideapplication.RideService) *RidesReader {
 	return &RidesReader{service: service}

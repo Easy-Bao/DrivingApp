@@ -1,4 +1,4 @@
-package adapter
+package ridecontext
 
 import (
 	"context"
@@ -9,14 +9,13 @@ import (
 	locationapplication "github.com/Easy-Bao/DrivingApp/server/internal/location/application"
 	locationdomain "github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
 	ridecontextdomain "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/domain"
-	ridecontextports "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/ports"
 )
 
 type LocationResolver struct {
 	service *locationapplication.LocationService
 }
 
-var _ ridecontextports.AddressResolver = (*LocationResolver)(nil)
+var _ AddressResolver = (*LocationResolver)(nil)
 
 func NewLocationResolver(service *locationapplication.LocationService) *LocationResolver {
 	return &LocationResolver{service: service}
@@ -58,10 +57,10 @@ func formatAddress(place *locationdomain.Place) string {
 	if name := strings.TrimSpace(place.Name); name != "" {
 		return name
 	}
-	return shortenAddress(place.Address)
+	return shortenPlaceAddress(place.Address)
 }
 
-func shortenAddress(address string) string {
+func shortenPlaceAddress(address string) string {
 	address = strings.TrimSpace(address)
 	parts := strings.Split(address, ",")
 	for index := range parts {
