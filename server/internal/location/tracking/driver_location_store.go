@@ -1,4 +1,4 @@
-package adapter
+package tracking
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/domain"
-	trackingports "github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/ports"
 	redis "github.com/redis/go-redis/v9"
 )
 
@@ -51,7 +50,7 @@ type DriverLocationStore struct {
 	logger *slog.Logger
 }
 
-var _ trackingports.LocationStore = (*DriverLocationStore)(nil)
+var _ LocationStore = (*DriverLocationStore)(nil)
 
 func NewDriverLocationStore(client *redis.Client) *DriverLocationStore {
 	return &DriverLocationStore{client: client, logger: slog.Default()}

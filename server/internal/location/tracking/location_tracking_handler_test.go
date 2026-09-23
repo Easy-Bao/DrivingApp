@@ -1,4 +1,4 @@
-package http
+package tracking
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/domain"
 )
 
@@ -49,7 +48,7 @@ func TestNearbyDriversClampsThePublicRadiusBoundary(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			store := &nearbyLocationStore{}
-			service := application.NewLocationTrackingService(store)
+			service := NewLocationTrackingService(store)
 			handler := NewHandler(service, nil)
 			request := httptest.NewRequest(
 				http.MethodGet,

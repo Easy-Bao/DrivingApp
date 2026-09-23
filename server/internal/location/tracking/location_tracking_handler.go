@@ -1,4 +1,4 @@
-package http
+package tracking
 
 import (
 	"errors"
@@ -6,9 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/transport/http/dto"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
@@ -17,19 +15,19 @@ import (
 )
 
 type Handler struct {
-	service *application.LocationTrackingService
+	service *LocationTrackingService
 	auth    *security.TokenManager
 }
 
 func NewHandler(
-	service *application.LocationTrackingService,
+	service *LocationTrackingService,
 	auth *security.TokenManager,
 ) *Handler {
 	return &Handler{service: service, auth: auth}
 }
 
 func (handler *Handler) UpdateDriverLocation(writer http.ResponseWriter, request *http.Request) {
-	var input dto.LocationUpdate
+	var input LocationUpdate
 	if sharedrequest.DecodeJSONV2(writer, request, &input, 8<<10) != nil {
 		response.Error(writer, http.StatusBadRequest, "invalid location")
 		return
@@ -121,7 +119,7 @@ func (handler *Handler) UpdatePassengerLocation(writer http.ResponseWriter, requ
 		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	var input dto.PassengerLocationUpdate
+	var input PassengerLocationUpdate
 	if sharedrequest.DecodeJSONV2(writer, request, &input, 8<<10) != nil {
 		response.Error(writer, http.StatusBadRequest, "invalid location")
 		return

@@ -26,9 +26,7 @@ import (
 	locationredis "github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/redis"
 	locationapplication "github.com/Easy-Bao/DrivingApp/server/internal/location/application"
 	locationdomain "github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
-	trackingadapter "github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/adapter"
-	trackingapplication "github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/application"
-	trackinghttp "github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/transport/http"
+	tracking "github.com/Easy-Bao/DrivingApp/server/internal/location/tracking"
 	locationhttp "github.com/Easy-Bao/DrivingApp/server/internal/location/transport/http"
 	passengerridecontextadapter "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/adapter"
 	passengerridecontextapplication "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/application"
@@ -159,11 +157,11 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 
 	ridesRouter := ridehttp.NewRouter(ridesService, verifier)
 	adminRouter := adminhttp.NewRouter(adminapplication.NewStatsService(statsReader), verifier, adminAuthorizer)
-	trackingService := trackingapplication.NewLocationTrackingService(
-		trackingadapter.NewDriverLocationStore(redisClient).WithLogger(applicationLogger),
-		trackingapplication.WithRideAssignments(rideAssignments),
-		trackingapplication.WithEventPublisher(eventPublisher),
-		trackingapplication.WithLogger(applicationLogger),
+	trackingService := tracking.NewLocationTrackingService(
+		tracking.NewDriverLocationStore(redisClient).WithLogger(applicationLogger),
+		tracking.WithRideAssignments(rideAssignments),
+		tracking.WithEventPublisher(eventPublisher),
+		tracking.WithLogger(applicationLogger),
 	)
 	locationService := locationapplication.NewLocationServiceWithCache(
 		mapboxProvider,
@@ -199,7 +197,7 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 			WithAllowedOrigins(config.Security.AllowedOrigins),
 	)
 	router.Handle(api.V1Prefix+"/realtime/ws", websockethub.NewHandler(eventHub, verifier, config.Security.AllowedOrigins))
-	trackinghttp.NewRouter(trackingService, verifier).RegisterRoutes(router)
+	tracking.NewRouter(trackingService, verifier).RegisterRoutes(router)
 	chathttp.NewRouter(chatService, verifier).RegisterRoutes(router)
 	registerHealthRoutes(router, redisClient, postgresPool)
 

@@ -1,4 +1,4 @@
-package application
+package tracking
 
 import (
 	"context"
@@ -11,14 +11,13 @@ import (
 	assignmentdomain "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment/domain"
 	assignmentports "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment/ports"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/domain"
-	trackingports "github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/ports"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
 type LocationTrackingService struct {
-	repository     trackingports.LocationStore
+	repository     LocationStore
 	assignments    assignmentports.Lookup
-	eventPublisher trackingports.EventPublisher
+	eventPublisher EventPublisher
 	logger         *slog.Logger
 }
 
@@ -30,7 +29,7 @@ func WithRideAssignments(assignments assignmentports.Lookup) Option {
 	return func(service *LocationTrackingService) { service.assignments = assignments }
 }
 
-func WithEventPublisher(publisher trackingports.EventPublisher) Option {
+func WithEventPublisher(publisher EventPublisher) Option {
 	return func(service *LocationTrackingService) { service.eventPublisher = publisher }
 }
 
@@ -42,7 +41,7 @@ func WithLogger(logger *slog.Logger) Option {
 	}
 }
 
-func NewLocationTrackingService(repository trackingports.LocationStore, options ...Option) *LocationTrackingService {
+func NewLocationTrackingService(repository LocationStore, options ...Option) *LocationTrackingService {
 	service := &LocationTrackingService{repository: repository, logger: slog.Default()}
 	for _, option := range options {
 		option(service)

@@ -1,7 +1,6 @@
-package http
+package tracking
 
 import (
-	"github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
@@ -14,7 +13,7 @@ type Router struct {
 }
 
 func NewRouter(
-	service *application.LocationTrackingService,
+	service *LocationTrackingService,
 	auth *security.TokenManager,
 ) *Router {
 	return &Router{handler: NewHandler(service, auth), auth: auth}
