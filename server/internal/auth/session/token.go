@@ -1,4 +1,4 @@
-package application
+package session
 
 import (
 	"context"
@@ -31,7 +31,7 @@ type SessionTokens struct {
 	RefreshToken string
 }
 
-func issueToken(issuer authports.TokenIssuer, subject string, role domain.Role) (string, error) {
+func IssueToken(issuer authports.TokenIssuer, subject string, role domain.Role) (string, error) {
 	if issuer == nil {
 		return "", errors.New("token issuer is nil")
 	}
@@ -49,18 +49,18 @@ func issueToken(issuer authports.TokenIssuer, subject string, role domain.Role) 
 	return token, nil
 }
 
-func issueSessionTokens(
+func IssueSessionTokens(
 	ctx context.Context,
 	sessions authports.SessionStore,
 	issuer authports.TokenIssuer,
 	subject string,
 	role domain.Role,
 ) (SessionTokens, error) {
-	accessToken, err := issueToken(issuer, subject, role)
+	accessToken, err := IssueToken(issuer, subject, role)
 	if err != nil {
 		return SessionTokens{}, fmt.Errorf("issue access token: %w", err)
 	}
-	refreshToken, err := issueRefreshToken(
+	refreshToken, err := IssueRefreshToken(
 		ctx,
 		sessions,
 		subject,
@@ -72,7 +72,7 @@ func issueSessionTokens(
 	return SessionTokens{AccessToken: accessToken, RefreshToken: refreshToken}, nil
 }
 
-func issueRefreshToken(
+func IssueRefreshToken(
 	ctx context.Context,
 	sessions authports.SessionStore,
 	subject string,
@@ -96,12 +96,12 @@ func issueRefreshToken(
 		TokenHash: tokenHash,
 		ExpiresAt: now.Add(refreshTokenLifetime()),
 	}); err != nil {
-		return "", unavailableSessionError(err)
+		return "", UnavailableError(err)
 	}
 	return refreshToken, nil
 }
 
-func replacementRefreshSession(userID int, now time.Time) (string, domain.RefreshSession, error) {
+func ReplacementRefreshSession(userID int, now time.Time) (string, domain.RefreshSession, error) {
 	refreshToken, tokenHash, err := newRefreshToken()
 	if err != nil {
 		return "", domain.RefreshSession{}, fmt.Errorf("generate replacement refresh token: %w", err)
@@ -119,10 +119,10 @@ func newRefreshToken() (string, string, error) {
 		return "", "", fmt.Errorf("read refresh token randomness: %w", err)
 	}
 	token := base64.RawURLEncoding.EncodeToString(bytes)
-	return token, hashRefreshToken(token), nil
+	return token, HashRefreshToken(token), nil
 }
 
-func validRefreshToken(token string) bool {
+func ValidRefreshToken(token string) bool {
 	if len(token) != base64.RawURLEncoding.EncodedLen(refreshTokenBytes) {
 		return false
 	}
@@ -130,7 +130,7 @@ func validRefreshToken(token string) bool {
 	return err == nil && len(decoded) == refreshTokenBytes
 }
 
-func hashRefreshToken(token string) string {
+func HashRefreshToken(token string) string {
 	digest := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(digest[:])
 }
@@ -147,7 +147,7 @@ func refreshTokenLifetime() time.Duration {
 	return security.RefreshTokenLifetime
 }
 
-func unavailableSessionError(err error) error {
+func UnavailableError(err error) error {
 	if err == nil {
 		return domain.ErrRefreshSessionUnavailable
 	}

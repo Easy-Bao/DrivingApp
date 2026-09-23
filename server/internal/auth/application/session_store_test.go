@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/session"
 )
 
 type testRefreshSessionStore struct {
@@ -76,7 +76,7 @@ func (store *testRefreshSessionStore) Rotate(
 	revokedAt := now
 	item.revokedAt = &revokedAt
 	if item.rotationGraceUntil == nil {
-		graceUntil := now.Add(application.RefreshTokenRotationGracePeriod)
+		graceUntil := now.Add(session.RefreshTokenRotationGracePeriod)
 		item.rotationGraceUntil = &graceUntil
 	}
 	store.sessions[tokenHash] = item

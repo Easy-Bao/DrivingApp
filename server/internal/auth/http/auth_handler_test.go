@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/session"
 )
 
 func TestAuthSessionResponseVerificationState(t *testing.T) {
@@ -24,7 +24,7 @@ func TestAuthSessionResponseVerificationState(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			payload := authSessionResponse(
 				account,
-				application.SessionTokens{AccessToken: "access", RefreshToken: "refresh"},
+				session.SessionTokens{AccessToken: "access", RefreshToken: "refresh"},
 				!test.verified,
 				test.verified,
 			)

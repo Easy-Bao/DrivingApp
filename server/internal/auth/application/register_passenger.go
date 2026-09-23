@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"net/mail"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
+	authpassword "github.com/Easy-Bao/DrivingApp/server/internal/auth/password"
 	authports "github.com/Easy-Bao/DrivingApp/server/internal/auth/ports"
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/session"
 )
 
 type RegisterInput struct {
@@ -49,10 +52,10 @@ func (service *RegisterService) IssueRefreshToken(ctx context.Context, account d
 	if service == nil {
 		return "", ErrRegistrationUnavailable
 	}
-	return issueRefreshToken(
+	return session.IssueRefreshToken(
 		ctx,
 		service.sessions,
-		intSubject(account.ID),
+		strconv.Itoa(account.ID),
 		account.Role,
 	)
 }
@@ -180,7 +183,7 @@ func normalizeInput(input RegisterInput, role domain.Role) (normalizedRegistrati
 	if role == domain.Driver && (invalidVehicleType || invalidPlateNumber) {
 		return normalizedRegistration{}, domain.ErrInvalidCredentials
 	}
-	passwordHash, err := HashPasswordWithError(input.Password)
+	passwordHash, err := authpassword.Hash(input.Password)
 	if err != nil {
 		return normalizedRegistration{}, fmt.Errorf("hash registration password: %w", err)
 	}
@@ -204,7 +207,7 @@ func (service *RegisterService) create(ctx context.Context, account domain.User)
 	if err != nil {
 		return domain.User{}, "", fmt.Errorf("create account: %w", err)
 	}
-	token, err := issueToken(service.tokens, intSubject(created.ID), created.Role)
+	token, err := session.IssueToken(service.tokens, strconv.Itoa(created.ID), created.Role)
 	if err != nil {
 		return domain.User{}, "", fmt.Errorf("issue account token: %w", err)
 	}

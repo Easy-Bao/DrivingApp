@@ -11,7 +11,9 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
+	authpassword "github.com/Easy-Bao/DrivingApp/server/internal/auth/password"
 	authports "github.com/Easy-Bao/DrivingApp/server/internal/auth/ports"
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/session"
 )
 
 const otpLifetime = 10 * time.Minute
@@ -168,7 +170,7 @@ func (service *OTPService) VerifyPassenger(ctx context.Context, email, code stri
 			return domain.User{}, "", fmt.Errorf("mark passenger verified: %w", err)
 		}
 		account.IsVerified = true
-		token, err := issueToken(service.tokens, strconv.Itoa(account.ID), account.Role)
+		token, err := session.IssueToken(service.tokens, strconv.Itoa(account.ID), account.Role)
 		if err != nil {
 			return domain.User{}, "", fmt.Errorf("issue verified passenger token: %w", err)
 		}
@@ -206,7 +208,7 @@ func (service *OTPService) IssueRefreshToken(ctx context.Context, account domain
 	if service == nil {
 		return "", domain.ErrOTPUnavailable
 	}
-	return issueRefreshToken(
+	return session.IssueRefreshToken(
 		ctx,
 		service.sessions,
 		strconv.Itoa(account.ID),
@@ -270,9 +272,9 @@ func (service *OTPService) ResetPasswordForRole(
 		return domain.ErrRefreshSessionUnavailable
 	}
 	if err := service.sessions.RevokeAll(ctx, account.ID, time.Now().UTC()); err != nil {
-		return unavailableSessionError(err)
+		return session.UnavailableError(err)
 	}
-	passwordHash, err := HashPasswordWithError(password)
+	passwordHash, err := authpassword.Hash(password)
 	if err != nil {
 		return fmt.Errorf("hash reset password: %w", err)
 	}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/session"
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
 )
@@ -98,7 +99,7 @@ func (handler *Handler) registerDecoded(
 	}
 	response.JSON(w, http.StatusCreated, authSessionResponse(
 		account,
-		application.SessionTokens{AccessToken: token, RefreshToken: refreshToken},
+		session.SessionTokens{AccessToken: token, RefreshToken: refreshToken},
 		!account.IsVerified,
 		false,
 	))
@@ -211,7 +212,7 @@ func (handler *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	}
 	response.JSON(w, http.StatusOK, authSessionResponse(
 		account,
-		application.SessionTokens{AccessToken: token, RefreshToken: refreshToken},
+		session.SessionTokens{AccessToken: token, RefreshToken: refreshToken},
 		false,
 		true,
 	))
@@ -340,7 +341,7 @@ func otpErrorStatus(err error) int {
 
 func authSessionResponse(
 	account domain.User,
-	tokens application.SessionTokens,
+	tokens session.SessionTokens,
 	needsVerification bool,
 	verified bool,
 ) SessionResponse {

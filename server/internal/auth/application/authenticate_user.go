@@ -10,7 +10,9 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
+	authpassword "github.com/Easy-Bao/DrivingApp/server/internal/auth/password"
 	authports "github.com/Easy-Bao/DrivingApp/server/internal/auth/ports"
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/session"
 )
 
 type AuthenticateService struct {
@@ -59,7 +61,7 @@ func (service *AuthenticateService) ExecuteSession(
 	ctx context.Context,
 	email string,
 	password string,
-) (domain.User, SessionTokens, error) {
+) (domain.User, session.SessionTokens, error) {
 	return service.execute(ctx, email, password, "")
 }
 
@@ -68,7 +70,7 @@ func (service *AuthenticateService) ExecuteSessionAs(
 	email string,
 	password string,
 	role domain.Role,
-) (domain.User, SessionTokens, error) {
+) (domain.User, session.SessionTokens, error) {
 	return service.execute(ctx, email, password, role)
 }
 
@@ -77,9 +79,9 @@ func (service *AuthenticateService) execute(
 	email string,
 	password string,
 	role domain.Role,
-) (domain.User, SessionTokens, error) {
+) (domain.User, session.SessionTokens, error) {
 	if service == nil || service.repository == nil {
-		return domain.User{}, SessionTokens{}, domain.ErrInvalidCredentials
+		return domain.User{}, session.SessionTokens{}, domain.ErrInvalidCredentials
 	}
 	email = strings.ToLower(strings.TrimSpace(email))
 	account, err := service.repository.FindByEmail(ctx, email)
@@ -87,23 +89,23 @@ func (service *AuthenticateService) execute(
 		if !errors.Is(err, domain.ErrUserNotFound) {
 			service.log().WarnContext(ctx, "find account for authentication failed", "error", err)
 		}
-		return domain.User{}, SessionTokens{}, domain.ErrInvalidCredentials
+		return domain.User{}, session.SessionTokens{}, domain.ErrInvalidCredentials
 	}
-	if !VerifyPassword(account.PasswordHash, password) {
-		return domain.User{}, SessionTokens{}, domain.ErrInvalidCredentials
+	if !authpassword.Verify(account.PasswordHash, password) {
+		return domain.User{}, session.SessionTokens{}, domain.ErrInvalidCredentials
 	}
 	if role != "" && account.Role != role {
-		return domain.User{}, SessionTokens{}, domain.ErrInvalidCredentials
+		return domain.User{}, session.SessionTokens{}, domain.ErrInvalidCredentials
 	}
-	if IsLegacyPasswordHash(account.PasswordHash) {
-		upgradedHash, hashErr := HashPasswordWithError(password)
+	if authpassword.IsLegacyHash(account.PasswordHash) {
+		upgradedHash, hashErr := authpassword.Hash(password)
 		if hashErr != nil {
 			service.log().WarnContext(ctx, "upgrade legacy password hash failed", "error", hashErr)
 		} else if err := service.repository.UpdatePassword(ctx, account.ID, upgradedHash); err != nil {
 			service.log().WarnContext(ctx, "persist upgraded password hash failed", "error", err)
 		}
 	}
-	tokens, err := issueSessionTokens(
+	tokens, err := session.IssueSessionTokens(
 		ctx,
 		service.sessions,
 		service.tokens,
@@ -111,42 +113,42 @@ func (service *AuthenticateService) execute(
 		account.Role,
 	)
 	if err != nil {
-		return domain.User{}, SessionTokens{}, fmt.Errorf("issue authentication session: %w", err)
+		return domain.User{}, session.SessionTokens{}, fmt.Errorf("issue authentication session: %w", err)
 	}
 	return account, tokens, nil
 }
 
-func (service *AuthenticateService) Refresh(ctx context.Context, rawToken string) (SessionTokens, error) {
+func (service *AuthenticateService) Refresh(ctx context.Context, rawToken string) (session.SessionTokens, error) {
 	if service == nil || service.sessions == nil || service.repository == nil {
-		return SessionTokens{}, domain.ErrRefreshSessionUnavailable
+		return session.SessionTokens{}, domain.ErrRefreshSessionUnavailable
 	}
 	rawToken = strings.TrimSpace(rawToken)
-	if !validRefreshToken(rawToken) {
-		return SessionTokens{}, domain.ErrInvalidRefreshToken
+	if !session.ValidRefreshToken(rawToken) {
+		return session.SessionTokens{}, domain.ErrInvalidRefreshToken
 	}
 	now := time.Now().UTC()
-	current, err := service.sessions.FindActive(ctx, hashRefreshToken(rawToken), now)
+	current, err := service.sessions.FindActive(ctx, session.HashRefreshToken(rawToken), now)
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidRefreshToken) {
-			return SessionTokens{}, domain.ErrInvalidRefreshToken
+			return session.SessionTokens{}, domain.ErrInvalidRefreshToken
 		}
-		return SessionTokens{}, unavailableSessionError(err)
+		return session.SessionTokens{}, session.UnavailableError(err)
 	}
 	account, err := service.repository.FindByID(ctx, current.UserID)
 	if err != nil {
-		return SessionTokens{}, unavailableSessionError(err)
+		return session.SessionTokens{}, session.UnavailableError(err)
 	}
 	if account.ID != current.UserID {
-		return SessionTokens{}, domain.ErrInvalidRefreshToken
+		return session.SessionTokens{}, domain.ErrInvalidRefreshToken
 	}
 
-	accessToken, err := issueToken(service.tokens, strconv.Itoa(account.ID), account.Role)
+	accessToken, err := session.IssueToken(service.tokens, strconv.Itoa(account.ID), account.Role)
 	if err != nil {
-		return SessionTokens{}, fmt.Errorf("issue refreshed access token: %w", err)
+		return session.SessionTokens{}, fmt.Errorf("issue refreshed access token: %w", err)
 	}
-	replacementToken, replacement, err := replacementRefreshSession(account.ID, now)
+	replacementToken, replacement, err := session.ReplacementRefreshSession(account.ID, now)
 	if err != nil {
-		return SessionTokens{}, fmt.Errorf("create replacement refresh session: %w", err)
+		return session.SessionTokens{}, fmt.Errorf("create replacement refresh session: %w", err)
 	}
 	if err := service.sessions.Rotate(
 		ctx,
@@ -155,11 +157,11 @@ func (service *AuthenticateService) Refresh(ctx context.Context, rawToken string
 		now,
 	); err != nil {
 		if errors.Is(err, domain.ErrInvalidRefreshToken) {
-			return SessionTokens{}, domain.ErrInvalidRefreshToken
+			return session.SessionTokens{}, domain.ErrInvalidRefreshToken
 		}
-		return SessionTokens{}, unavailableSessionError(err)
+		return session.SessionTokens{}, session.UnavailableError(err)
 	}
-	return SessionTokens{AccessToken: accessToken, RefreshToken: replacementToken}, nil
+	return session.SessionTokens{AccessToken: accessToken, RefreshToken: replacementToken}, nil
 }
 
 func (service *AuthenticateService) Logout(ctx context.Context, rawToken string) error {
@@ -167,11 +169,11 @@ func (service *AuthenticateService) Logout(ctx context.Context, rawToken string)
 		return domain.ErrRefreshSessionUnavailable
 	}
 	rawToken = strings.TrimSpace(rawToken)
-	if !validRefreshToken(rawToken) {
+	if !session.ValidRefreshToken(rawToken) {
 		return domain.ErrInvalidRefreshToken
 	}
-	if err := service.sessions.Revoke(ctx, hashRefreshToken(rawToken), time.Now().UTC()); err != nil {
-		return unavailableSessionError(err)
+	if err := service.sessions.Revoke(ctx, session.HashRefreshToken(rawToken), time.Now().UTC()); err != nil {
+		return session.UnavailableError(err)
 	}
 	return nil
 }

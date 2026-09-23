@@ -9,6 +9,7 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/session"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 )
 
@@ -120,7 +121,7 @@ func TestRefreshAllowsParallelRequestsDuringRotationGrace(t *testing.T) {
 	}
 
 	start := make(chan struct{})
-	results := make([]application.SessionTokens, 2)
+	results := make([]session.SessionTokens, 2)
 	errorsByRequest := make([]error, 2)
 	var waitGroup sync.WaitGroup
 	for index := range results {
