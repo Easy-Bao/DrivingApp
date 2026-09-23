@@ -11,8 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	documentapplication "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/application"
-	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/transport/http"
+	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )
@@ -29,14 +28,14 @@ func TestDocumentAdministrationRequiresConfiguredAdministrator(t *testing.T) {
 	}
 	repository := newDocumentRepositoryFake()
 	storage := newDocumentStorageFake()
-	service := documentapplication.NewDocumentService(repository, storage, 1024)
+	service := documents.NewDocumentService(repository, storage, 1024)
 	document, err := service.Upload(t.Context(), 7, "driver_license", "application/pdf", validPDF)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	router := chi.NewRouter()
-	documenthttp.NewRouter(service, tokenManager, security.NewAdminAuthorizer("42")).RegisterRoutes(router)
+	documents.NewRouter(service, tokenManager, security.NewAdminAuthorizer("42")).RegisterRoutes(router)
 
 	for _, test := range []struct {
 		name   string
@@ -71,13 +70,13 @@ func TestPrivateDocumentContentIsOwnerOrAdminOnly(t *testing.T) {
 	adminToken, _ := tokenManager.IssueWithRole("42", security.RolePassenger)
 	repository := newDocumentRepositoryFake()
 	storage := newDocumentStorageFake()
-	service := documentapplication.NewDocumentService(repository, storage, 1024)
+	service := documents.NewDocumentService(repository, storage, 1024)
 	document, err := service.Upload(t.Context(), 7, "driver_license", "application/pdf", validPDF)
 	if err != nil {
 		t.Fatal(err)
 	}
 	router := chi.NewRouter()
-	documenthttp.NewRouter(service, tokenManager, security.NewAdminAuthorizer("42")).RegisterRoutes(router)
+	documents.NewRouter(service, tokenManager, security.NewAdminAuthorizer("42")).RegisterRoutes(router)
 
 	for _, test := range []struct {
 		name   string
@@ -131,8 +130,8 @@ func TestDocumentUploadRequiresCanonicalTypeAndMatchingSignature(t *testing.T) {
 	repository := newDocumentRepositoryFake()
 	storage := newDocumentStorageFake()
 	router := chi.NewRouter()
-	documenthttp.NewRouter(
-		documentapplication.NewDocumentService(repository, storage, 1024),
+	documents.NewRouter(
+		documents.NewDocumentService(repository, storage, 1024),
 		tokenManager,
 		security.NewAdminAuthorizer("42"),
 	).RegisterRoutes(router)

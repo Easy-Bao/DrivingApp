@@ -1,4 +1,4 @@
-package application
+package documents
 
 import (
 	"context"
@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/domain"
-	documentports "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/ports"
 )
 
 var allowedContentTypes = map[string]struct{}{
@@ -21,16 +20,16 @@ var allowedContentTypes = map[string]struct{}{
 }
 
 type DocumentService struct {
-	repository       documentports.DocumentStore
-	storage          documentports.ObjectStore
+	repository       DocumentStore
+	storage          ObjectStore
 	maxDocumentBytes int64
 }
 
 var ErrServiceUnavailable = errors.New("driver document service is unavailable")
 
 func NewDocumentService(
-	repository documentports.DocumentStore,
-	storage documentports.ObjectStore,
+	repository DocumentStore,
+	storage ObjectStore,
 	maxDocumentBytes int64,
 ) *DocumentService {
 	return &DocumentService{

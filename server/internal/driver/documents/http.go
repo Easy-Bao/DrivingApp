@@ -1,4 +1,4 @@
-package http
+package documents
 
 import (
 	"errors"
@@ -8,9 +8,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/transport/http/dto"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
@@ -20,10 +18,10 @@ import (
 const maxReviewPayloadBytes int64 = 1 << 10
 
 type Handler struct {
-	service *application.DocumentService
+	service *DocumentService
 }
 
-func NewHandler(service *application.DocumentService) *Handler {
+func NewHandler(service *DocumentService) *Handler {
 	return &Handler{service: service}
 }
 
@@ -126,7 +124,7 @@ func (handler *Handler) Review(writer http.ResponseWriter, request *http.Request
 		response.Error(writer, http.StatusBadRequest, "invalid document id")
 		return
 	}
-	var payload dto.ReviewRequest
+	var payload ReviewRequest
 	if sharedrequest.DecodeJSON(writer, request, &payload, maxReviewPayloadBytes) != nil {
 		response.Error(writer, http.StatusBadRequest, "invalid review payload")
 		return

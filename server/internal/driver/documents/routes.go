@@ -1,7 +1,6 @@
-package http
+package documents
 
 import (
-	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
@@ -15,7 +14,7 @@ type Router struct {
 }
 
 func NewRouter(
-	service *application.DocumentService,
+	service *DocumentService,
 	verifier *security.TokenManager,
 	authorizer *security.AdminAuthorizer,
 ) *Router {

@@ -20,9 +20,7 @@ import (
 	chathttp "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/http"
 	chatws "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/ws"
 	assignment "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment"
-	documentapplication "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/application"
-	documentports "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/ports"
-	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/transport/http"
+	documents "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/mapbox"
 	locationredis "github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/redis"
 	locationapplication "github.com/Easy-Bao/DrivingApp/server/internal/location/application"
@@ -63,7 +61,7 @@ type httpRouterDependencies struct {
 	rideStore          rideRuntimeStore
 	profileStore       userports.ProfileStore
 	statsReader        adminports.StatsReader
-	documentStore      documentports.DocumentStore
+	documentStore      documents.DocumentStore
 	privateObjectStore platformstorage.ObjectStore
 	otpAttemptStore    middleware.CounterStore
 }
@@ -107,8 +105,8 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 	)
 
 	usersRouter := userhttp.NewRouter(userapplication.NewProfileService(profileStore), verifier)
-	documentRouter := documenthttp.NewRouter(
-		documentapplication.NewDocumentService(
+	documentRouter := documents.NewRouter(
+		documents.NewDocumentService(
 			documentStore,
 			privateObjectStore,
 			config.Security.UploadBodyLimit,

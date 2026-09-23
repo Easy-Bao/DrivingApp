@@ -1,4 +1,4 @@
-package postgres
+package documents
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/domain"
-	documentports "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/ports"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -21,7 +20,7 @@ type DocumentRepository struct {
 	queries *databasepostgres.Queries
 }
 
-var _ documentports.DocumentStore = (*DocumentRepository)(nil)
+var _ DocumentStore = (*DocumentRepository)(nil)
 
 func NewDocumentRepository(pool *pgxpool.Pool) (*DocumentRepository, error) {
 	if pool == nil {
@@ -33,11 +32,9 @@ func NewDocumentRepository(pool *pgxpool.Pool) (*DocumentRepository, error) {
 	}, nil
 }
 
-// DocumentStore is the canonical adapter name used by the document
-// composition root. The repository constructor remains for existing callers.
-type DocumentStore = DocumentRepository
-
-func NewDocumentStore(pool *pgxpool.Pool) (*DocumentStore, error) {
+// NewDocumentStore is the composition-root constructor for the PostgreSQL
+// implementation of the feature-local DocumentStore contract.
+func NewDocumentStore(pool *pgxpool.Pool) (*DocumentRepository, error) {
 	return NewDocumentRepository(pool)
 }
 
