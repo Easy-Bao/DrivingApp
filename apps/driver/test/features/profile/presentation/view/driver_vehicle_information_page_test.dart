@@ -90,4 +90,42 @@ void main() {
     expect(repository.account.name, 'Bao Driver');
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('rejects a blank plate number before saving', (tester) async {
+    final repository = _FakeDriverProfileRepository(
+      const DriverAccountSnapshot(
+        name: 'Bao Driver',
+        phone: '+639170000001',
+        email: 'bao@example.com',
+        vehicleType: 'Sedan',
+        plateNumber: 'ABC-1234',
+      ),
+    );
+    final cubit = DriverAccountCubit(repository: repository)
+      ..emit(DriverAccountState(account: repository.account));
+    addTearDown(cubit.close);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: EasyRideTheme.main,
+        home: BlocProvider<DriverAccountCubit>.value(
+          value: cubit,
+          child: DriverVehicleInformationPage(onBack: () {}),
+        ),
+      ),
+    );
+
+    await tester.enterText(
+      find.byKey(const ValueKey<String>('driver-account-field-Plate Number')),
+      '   ',
+    );
+    await tester.pump();
+    await tester.tap(
+      find.byKey(const ValueKey<String>('driver-account-details-save')),
+    );
+    await tester.pump();
+
+    expect(find.text('Enter your plate number.'), findsOneWidget);
+    expect(repository.account.plateNumber, 'ABC-1234');
+  });
 }
