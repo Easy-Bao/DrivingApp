@@ -3,6 +3,7 @@ class DriverStorageKeys {
   static const String refreshToken = 'refresh_token';
   static const String driverId = 'driver_id';
   static const String driverOnlineStatus = 'driver_online_status';
+  static const String driverOnlineSince = 'driver_online_since';
   static const String passengerId = 'passenger_id';
   static const String activeRideId = 'active_ride_id';
 }

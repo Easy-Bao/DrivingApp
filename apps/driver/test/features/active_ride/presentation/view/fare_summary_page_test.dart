@@ -14,6 +14,10 @@ class const _NoOpDashboardRepository() implements DashboardRepository {
       const Ok(false);
 
   @override
+  Future<Result<DateTime?, Failure>> getPersistedOnlineSince() async =>
+      const Ok(null);
+
+  @override
   Future<Result<void, Failure>> updateOnlineStatus({
     required bool isOnline,
     required double lat,

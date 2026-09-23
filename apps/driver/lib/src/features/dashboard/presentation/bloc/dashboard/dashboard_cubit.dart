@@ -19,8 +19,11 @@ class DashboardCubit({
   Future<void>? _initialization;
   Future<void>? _statsRequestInFlight;
   DateTime? _silentDispatchRetryAfter;
+  DateTime? _onlineSince;
 
   this : _now = now ?? DateTime.now, super(const DashboardState());
+
+  DateTime? get onlineSince => _onlineSince;
 
   Future<void> initialize() async {
     final existingInitialization = _initialization;
@@ -48,7 +51,10 @@ class DashboardCubit({
         (failure) => dev.log(
           'Unable to restore driver online status: ${failure.message}',
         ),
-        (isOnline) => emit(state.copyWith(isOnline: isOnline)),
+        (isOnline) {
+          emit(state.copyWith(isOnline: isOnline));
+          if (!isOnline) _onlineSince = null;
+        },
       );
     } catch (error, stackTrace) {
       dev.log(
@@ -57,6 +63,15 @@ class DashboardCubit({
         stackTrace: stackTrace,
       );
     }
+    final onlineSinceResult = await _repository.getPersistedOnlineSinceResult();
+    onlineSinceResult.fold(
+      (failure) => dev.log(
+        'Unable to restore the driver shift timer: ${failure.message}',
+      ),
+      (value) {
+        _onlineSince = state.isOnline ? value ?? _now() : null;
+      },
+    );
     await loadStats();
   }
 
@@ -311,6 +326,8 @@ class DashboardCubit({
   }) async {
     final goingOnline = requestedOnline ?? !state.isOnline;
     final previousOnline = state.isOnline;
+    final previousOnlineSince = _onlineSince;
+    _onlineSince = goingOnline ? (_onlineSince ?? _now()) : null;
     emit(state.copyWith(isOnline: goingOnline, errorMessage: null));
 
     try {
@@ -342,6 +359,9 @@ class DashboardCubit({
         ),
       );
     }
+    if (state.isOnline == previousOnline && state.errorMessage != null) {
+      _onlineSince = previousOnlineSince;
+    }
   }
 
   Future<void> forceOffline({required double lat, required double lng}) async {
@@ -360,6 +380,7 @@ class DashboardCubit({
       ),
       (_) => emit(state.copyWith(isOnline: false, errorMessage: null)),
     );
+    _onlineSince = null;
   }
 
   Future<bool> refreshOnlinePresence({

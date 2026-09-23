@@ -161,6 +161,10 @@ void main() {
     ).thenAnswer((_) async => const Ok(null));
     when(() => sessionService.saveDriverOnlineStatus(true))
         .thenAnswer((_) async {});
+    when(() => sessionService.readDriverOnlineSince())
+        .thenAnswer((_) async => null);
+    when(() => sessionService.saveDriverOnlineSince(any()))
+        .thenAnswer((_) async {});
 
     final repository = _buildRepository(
       availabilityDataSource: availabilityDataSource,
@@ -180,6 +184,7 @@ void main() {
         longitude: 123.434,
       ),
     ).called(1);
+    verify(() => sessionService.saveDriverOnlineSince(any())).called(1);
   });
 
   test(

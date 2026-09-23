@@ -6,6 +6,8 @@ import 'package:driver/src/features/dashboard/domain/entities/driver_dispatch_sn
 abstract interface class DashboardRepository {
   Future<Result<bool, Failure>> getPersistedOnlineStatus();
 
+  Future<Result<DateTime?, Failure>> getPersistedOnlineSince();
+
   Future<Result<void, Failure>> updateOnlineStatus({
     required bool isOnline,
     required double lat,
@@ -32,6 +34,13 @@ extension DashboardRepositoryResultApi on DashboardRepository {
     return _captureDashboardResult(
       getPersistedOnlineStatus,
       message: 'Unable to restore driver availability right now.',
+    );
+  }
+
+  Future<Result<DateTime?, DomainFailure>> getPersistedOnlineSinceResult() {
+    return _captureDashboardResult(
+      getPersistedOnlineSince,
+      message: 'Unable to restore the driver shift timer right now.',
     );
   }
 

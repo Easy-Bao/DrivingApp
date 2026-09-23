@@ -134,6 +134,27 @@ void main() {
       },
     );
 
+    test('restores the persisted shift start with the online choice', () async {
+      final startedAt = DateTime.utc(2026, 9, 23, 8);
+      when(() => repo.getPersistedOnlineStatus())
+          .thenAnswer((_) async => const Ok(true));
+      when(() => repo.getPersistedOnlineSince())
+          .thenAnswer((_) async => Ok(startedAt));
+      when(() => repo.getDashboardStats()).thenAnswer(
+        (_) async =>
+            const Ok(DriverDashboardStats(earnings: 0, completedTrips: 0)),
+      );
+
+      final cubit = DashboardCubit(
+        repository: repo,
+        now: () => startedAt.add(const Duration(minutes: 5)),
+      );
+      await cubit.initialize();
+
+      expect(cubit.onlineSince, startedAt);
+      await cubit.close();
+    });
+
     test('coalesces concurrent initialization requests', () async {
       when(() => repo.getPersistedOnlineStatus()).thenAnswer((_) async {
         await Future<void>.delayed(const Duration(milliseconds: 10));

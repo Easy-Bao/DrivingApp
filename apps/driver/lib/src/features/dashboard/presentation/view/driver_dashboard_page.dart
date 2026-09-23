@@ -10,6 +10,7 @@ import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashbo
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_state.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/driver_dashboard/driver_dashboard_stats_row_widget.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/driver_dashboard/driver_dashboard_feed_widgets.dart';
+import 'package:driver/src/features/dashboard/presentation/widgets/driver_dashboard/driver_shift_duration_banner.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_state.dart';
 import 'package:driver/src/features/profile/profile_routes.dart';
@@ -56,6 +57,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   Timer? _presenceHeartbeatTimer;
   Timer? _locationAccessPoller;
   Timer? _requestCountdownTimer;
+  Timer? _shiftDurationTimer;
   StreamSubscription<Position>? _locationSubscription;
   StreamSubscription<RealtimeEvent>? _realtimeEventsSubscription;
   late final StreamSubscription<AppLifecycleStatus> _lifecycleSubscription;
@@ -73,6 +75,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   bool _isForcingOfflineForLocationLoss = false;
   bool _isForeground = true;
   bool _isHandlingPassengerCancellation = false;
+  Duration _shiftDuration = Duration.zero;
+  bool _breakAlertShown = false;
 
   static const _locationAccessPollInterval = Duration(seconds: 5);
   static const _locationAccessFailureThreshold = 2;
@@ -107,6 +111,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         _startLocationAccessMonitoring();
         unawaited(_loadActiveTrips());
         if (s.isOnline) {
+          _startShiftDurationTimer();
           unawaited(_resumeOnlineTelemetry());
         }
       }
@@ -124,6 +129,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _presenceHeartbeatTimer?.cancel();
     _locationAccessPoller?.cancel();
     _requestCountdownTimer?.cancel();
+    _shiftDurationTimer?.cancel();
     _cancelLocationSubscription();
     unawaited(_realtimeEventsSubscription?.cancel());
     _realtimeEventsSubscription = null;
@@ -151,6 +157,43 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _isForeground = true;
     _startRequestCountdownTimer();
     unawaited(_resumeForegroundWork());
+  }
+
+  void _startShiftDurationTimer() {
+    _shiftDurationTimer?.cancel();
+    _breakAlertShown = false;
+    _updateShiftDuration();
+    _shiftDurationTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _updateShiftDuration(),
+    );
+  }
+
+  void _stopShiftDurationTimer() {
+    _shiftDurationTimer?.cancel();
+    _shiftDurationTimer = null;
+    if (mounted) setState(() => _shiftDuration = Duration.zero);
+  }
+
+  void _updateShiftDuration() {
+    if (!mounted) return;
+    final cubit = BlocProvider.of<DashboardCubit>(context);
+    final onlineSince = cubit.onlineSince;
+    final duration = onlineSince == null
+        ? Duration.zero
+        : DateTime.now().toUtc().difference(onlineSince).isNegative
+        ? Duration.zero
+        : DateTime.now().toUtc().difference(onlineSince);
+    if (duration >= DriverShiftDurationBanner.breakThreshold &&
+        !_breakAlertShown) {
+      _breakAlertShown = true;
+      CustomToast.show(
+        context,
+        'You have been online for 8 hours. Take a break before continuing.',
+        isError: true,
+      );
+    }
+    setState(() => _shiftDuration = duration);
   }
 
   Future<void> _resumeForegroundWork() async {
@@ -798,6 +841,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
               previous.isOnline != current.isOnline,
           listener: (context, state) {
             if (state.isOnline) {
+              _startShiftDurationTimer();
               _availabilityCtrl.forward();
               // A user-triggered transition already establishes telemetry and
               // starts the background service in the repository. Re-running
@@ -809,6 +853,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                 unawaited(_resumeOnlineTelemetry());
               }
             } else {
+              _stopShiftDurationTimer();
               _availabilityCtrl.reverse();
               _stopPolling();
             }
@@ -893,6 +938,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                       ],
                       const SizedBox(height: 16),
                       _buildStatsRow(state),
+                      if (state.isOnline) ...[
+                        const SizedBox(height: 16),
+                        DriverShiftDurationBanner(duration: _shiftDuration),
+                      ],
                       const SizedBox(height: 16),
                       if (showFeed)
                         Expanded(
