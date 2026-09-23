@@ -20,6 +20,7 @@ type Querier interface {
 	CountRides(ctx context.Context) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
 	CreateAcceptedRide(ctx context.Context, arg CreateAcceptedRideParams) (Ride, error)
+	CreateAuditEvent(ctx context.Context, arg CreateAuditEventParams) (AuditEvent, error)
 	CreateBidOffer(ctx context.Context, arg CreateBidOfferParams) (BidOffer, error)
 	CreateBidSession(ctx context.Context, arg CreateBidSessionParams) (BidSession, error)
 	CreateDriverDocument(ctx context.Context, arg CreateDriverDocumentParams) (DriverDocument, error)

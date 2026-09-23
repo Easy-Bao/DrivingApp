@@ -94,6 +94,30 @@ func (handler *Handler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, 200, item)
 }
 
+func (handler *Handler) CancelRide(w http.ResponseWriter, r *http.Request) {
+	actorID, ok := handler.identity(r)
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid ride id")
+		return
+	}
+	ride, err := handler.service.UpdateStatus(
+		r.Context(),
+		rideID,
+		actorID,
+		"cancelled",
+	)
+	if err != nil {
+		response.Error(w, http.StatusConflict, safeRideError(err))
+		return
+	}
+	response.JSON(w, http.StatusOK, ride)
+}
+
 func (handler *Handler) SettleCash(w http.ResponseWriter, r *http.Request) {
 	driverID, ok := handler.identity(r)
 	if !ok {
