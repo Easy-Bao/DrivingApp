@@ -1,4 +1,4 @@
-package application_test
+package authentication_test
 
 import (
 	"context"
