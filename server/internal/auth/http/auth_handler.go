@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/authentication"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/registration"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/session"
@@ -14,13 +15,13 @@ import (
 
 type Handler struct {
 	register     *registration.RegisterService
-	authenticate *application.AuthenticateService
+	authenticate *authentication.AuthenticateService
 	otp          *application.OTPService
 }
 
 func NewHandler(
 	register *registration.RegisterService,
-	authenticate *application.AuthenticateService,
+	authenticate *authentication.AuthenticateService,
 	otp *application.OTPService,
 ) *Handler {
 	return &Handler{register: register, authenticate: authenticate, otp: otp}

@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/authentication"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/auth/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
@@ -31,7 +31,7 @@ func TestRoleSpecificLoginRoutes(t *testing.T) {
 			PasswordHash: testPasswordHash(t, "secret"),
 		},
 	}}
-	authenticate := application.NewAuthenticateService(repository, issuer{}, newTestRefreshSessionStore())
+	authenticate := authentication.NewAuthenticateService(repository, issuer{}, newTestRefreshSessionStore())
 	mux := chi.NewRouter()
 	authhttp.NewRouter(nil, authenticate, nil).RegisterRoutes(mux)
 
@@ -90,7 +90,7 @@ func TestLoginAndRefreshIssueRotatingSessionTokens(t *testing.T) {
 		},
 	}}
 	manager := security.NewTokenManager("refresh-http-test-secret")
-	authenticate := application.NewAuthenticateService(repository, manager, newTestRefreshSessionStore())
+	authenticate := authentication.NewAuthenticateService(repository, manager, newTestRefreshSessionStore())
 	mux := chi.NewRouter()
 	authhttp.NewRouter(nil, authenticate, nil).RegisterRoutes(mux)
 
@@ -154,7 +154,7 @@ func TestLoginRejectsFieldsOutsideTheRequestContract(t *testing.T) {
 	mux := chi.NewRouter()
 	authhttp.NewRouter(
 		nil,
-		application.NewAuthenticateService(repository, issuer{}, newTestRefreshSessionStore()),
+		authentication.NewAuthenticateService(repository, issuer{}, newTestRefreshSessionStore()),
 		nil,
 	).RegisterRoutes(mux)
 

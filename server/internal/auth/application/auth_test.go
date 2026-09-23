@@ -7,7 +7,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/authentication"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 	authregistration "github.com/Easy-Bao/DrivingApp/server/internal/auth/registration"
 )
@@ -92,7 +92,7 @@ func TestAuthenticationRejectsWrongPassword(t *testing.T) {
 			Password: "secret-8",
 		},
 	)
-	authenticate := application.NewAuthenticateService(repository, issuer{}, sessions)
+	authenticate := authentication.NewAuthenticateService(repository, issuer{}, sessions)
 	_, _, err := authenticate.Execute(
 		context.Background(),
 		"user@example.test",
@@ -131,7 +131,7 @@ func TestAuthenticationNormalizesEmailBeforeLookup(t *testing.T) {
 			PasswordHash: testPasswordHash(t, "secret-8"),
 		},
 	}}
-	authenticate := application.NewAuthenticateService(repository, issuer{}, newTestRefreshSessionStore())
+	authenticate := authentication.NewAuthenticateService(repository, issuer{}, newTestRefreshSessionStore())
 
 	if _, _, err := authenticate.Execute(context.Background(), " PASSENGER@EXAMPLE.TEST ", "secret-8"); err != nil {
 		t.Fatalf("normalized login returned error: %v", err)
@@ -149,7 +149,7 @@ func TestAuthenticationUpgradesLegacyPasswordHashAfterSuccessfulLogin(t *testing
 			PasswordHash: legacyHash,
 		},
 	}}
-	authenticate := application.NewAuthenticateService(repository, issuer{}, newTestRefreshSessionStore())
+	authenticate := authentication.NewAuthenticateService(repository, issuer{}, newTestRefreshSessionStore())
 	if _, _, err := authenticate.Execute(context.Background(), "legacy@example.test", "legacy-8"); err != nil {
 		t.Fatalf("legacy authentication returned error: %v", err)
 	}
