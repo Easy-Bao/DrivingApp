@@ -207,7 +207,6 @@ class FindingDriverStatusSheet extends StatelessWidget {
             return Stack(
               alignment: Alignment.center,
               children: [
-                // Outer expanding radar pulse
                 Transform.scale(
                   scale: 1.0 + (t * 0.36),
                   child: Container(
@@ -224,7 +223,6 @@ class FindingDriverStatusSheet extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Inner expanding radar pulse
                 Transform.scale(
                   scale: 1.0 + (((t + 0.5) % 1.0) * 0.24),
                   child: Container(

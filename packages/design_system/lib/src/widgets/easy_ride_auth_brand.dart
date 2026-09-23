@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Compact brand mark for authentication toolbars.
 class const EasyRideAuthBrand({super.key, this.size = 40})
     extends StatelessWidget {
   final double size;

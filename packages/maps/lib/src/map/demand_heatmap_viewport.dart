@@ -2,7 +2,6 @@ typedef DemandHeatmapTileLoader<T> = Future<List<T>> Function(
   MapViewportBounds bounds,
 );
 
-/// The portion of the map for which demand cells are currently visible.
 class const MapViewportBounds({
   required this.minLatitude,
   required this.minLongitude,
