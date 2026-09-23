@@ -2,8 +2,12 @@ import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
 
-final class RideHistoryPresenter(DateTime referenceTime) {
+final class RideHistoryPresenter(
+  DateTime referenceTime, {
+  this.alwaysUse24HourFormat = false,
+}) {
   final DateTime referenceTime;
+  final bool alwaysUse24HourFormat;
 
   this : referenceTime = referenceTime.toLocal();
 
@@ -147,6 +151,9 @@ final class RideHistoryPresenter(DateTime referenceTime) {
   }
 
   String _formatClockTime(DateTime date) {
+    if (alwaysUse24HourFormat) {
+      return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    }
     final hour = date.hour % 12 == 0 ? 12 : date.hour % 12;
     final minute = date.minute.toString().padLeft(2, '0');
     final period = date.hour < 12 ? 'AM' : 'PM';

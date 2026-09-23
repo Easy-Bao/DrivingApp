@@ -56,6 +56,18 @@ void main() {
     },
   );
 
+  testWidgets('respects the system 24-hour time preference', (tester) async {
+    await _pumpHistory(
+      tester,
+      rides: [rides.first],
+      referenceTime: referenceTime,
+      alwaysUse24HourFormat: true,
+    );
+
+    expect(find.text('14:57 · Solo ride'), findsOneWidget);
+    expect(find.text('2:57 PM · Solo ride'), findsNothing);
+  });
+
   testWidgets(
     'filters history inline while keeping the weekly summary stable',
     (tester) async {
@@ -187,16 +199,20 @@ Future<void> _pumpHistory(
   required DateTime referenceTime,
   List<RideHistory> activeRides = const [],
   ValueChanged<RideHistory>? onRideTap,
+  bool alwaysUse24HourFormat = false,
 }) {
   return tester.pumpWidget(
-    MaterialApp(
-      theme: EasyRideTheme.main,
-      home: Scaffold(
-        body: RideHistoryWidget(
-          activeRides: activeRides,
-          pastRides: rides,
-          referenceTime: referenceTime,
-          onRideTap: onRideTap ?? (_) {},
+    MediaQuery(
+      data: MediaQueryData(alwaysUse24HourFormat: alwaysUse24HourFormat),
+      child: MaterialApp(
+        theme: EasyRideTheme.main,
+        home: Scaffold(
+          body: RideHistoryWidget(
+            activeRides: activeRides,
+            pastRides: rides,
+            referenceTime: referenceTime,
+            onRideTap: onRideTap ?? (_) {},
+          ),
         ),
       ),
     ),

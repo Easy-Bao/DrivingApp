@@ -424,7 +424,11 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      _formatTripTime(trip),
+                      _formatTripTime(
+                        trip,
+                        alwaysUse24HourFormat:
+                            MediaQuery.of(context).alwaysUse24HourFormat,
+                      ),
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -489,13 +493,19 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
     );
   }
 
-  String _formatTripTime(dynamic trip) {
+  String _formatTripTime(
+    dynamic trip, {
+    required bool alwaysUse24HourFormat,
+  }) {
     final rawDate =
         driverValueAsString(trip['completed_at']) ??
         driverValueAsString(trip['created_at']);
     if (rawDate == null) return 'Past trip';
     try {
       final date = DateTime.parse(rawDate).toLocal();
+      if (alwaysUse24HourFormat) {
+        return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+      }
       final hour = date.hour == 0
           ? 12
           : date.hour > 12

@@ -53,7 +53,10 @@ class _RideHistoryWidgetState() extends State<RideHistoryWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final presenter = RideHistoryPresenter(widget.referenceTime);
+    final presenter = RideHistoryPresenter(
+      widget.referenceTime,
+      alwaysUse24HourFormat: MediaQuery.of(context).alwaysUse24HourFormat,
+    );
     final sortedPastRides = presenter.sortPastRides(widget.pastRides);
     final filteredRides = _filterRides(sortedPastRides);
     final groupedRides = presenter.groupRides(filteredRides);
