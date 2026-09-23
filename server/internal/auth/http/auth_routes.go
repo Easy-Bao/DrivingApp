@@ -3,9 +3,9 @@ package http
 import (
 	"net/http"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/authentication"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/registration"
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/verification"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/go-chi/chi/v5"
@@ -19,7 +19,7 @@ type Router struct {
 func NewRouter(
 	register *registration.RegisterService,
 	authenticate *authentication.AuthenticateService,
-	otp *application.OTPService,
+	otp *verification.OTPService,
 	otpAttemptStores ...middleware.CounterStore,
 ) *Router {
 	var otpVerificationLimit *OTPVerificationRateLimiter

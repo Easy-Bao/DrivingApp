@@ -10,11 +10,11 @@ import (
 	adminhttp "github.com/Easy-Bao/DrivingApp/server/internal/admin/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/email"
 	authredis "github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/redis"
-	authapplication "github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
 	authauthentication "github.com/Easy-Bao/DrivingApp/server/internal/auth/authentication"
 	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/auth/http"
 	authports "github.com/Easy-Bao/DrivingApp/server/internal/auth/ports"
 	authregistration "github.com/Easy-Bao/DrivingApp/server/internal/auth/registration"
+	authverification "github.com/Easy-Bao/DrivingApp/server/internal/auth/verification"
 	chatadapter "github.com/Easy-Bao/DrivingApp/server/internal/chat/adapter"
 	chatapplication "github.com/Easy-Bao/DrivingApp/server/internal/chat/application"
 	chathttp "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/http"
@@ -93,7 +93,7 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 		verifier,
 		sessionStore,
 	).WithLogger(applicationLogger)
-	otpService := authapplication.NewOTPServiceWithPending(
+	otpService := authverification.NewOTPServiceWithPending(
 		authStore,
 		authredis.NewOTPStore(redisClient),
 		email.NewGoMailGatewayFromEnv(),

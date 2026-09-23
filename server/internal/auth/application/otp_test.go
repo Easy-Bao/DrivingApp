@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/verification"
 )
 
 type otpRepository struct {
@@ -61,7 +61,7 @@ func TestPassengerOTPVerifiesAndConsumesCode(t *testing.T) {
 	repository := &otpRepository{account: domain.User{ID: 7, Email: "passenger@example.test", Role: domain.Passenger}}
 	store := &otpMemoryStore{values: map[string]string{}}
 	gateway := &otpGateway{}
-	service := application.NewOTPService(repository, store, gateway, otpIssuer{}, newTestRefreshSessionStore())
+	service := verification.NewOTPService(repository, store, gateway, otpIssuer{}, newTestRefreshSessionStore())
 
 	if err := service.RequestVerification(context.Background(), repository.account.Email); err != nil {
 		t.Fatalf("request verification: %v", err)
@@ -82,7 +82,7 @@ func TestPassengerOTPVerifiesAndConsumesCode(t *testing.T) {
 
 func TestDriverCannotUsePassengerVerificationOTP(t *testing.T) {
 	repository := &otpRepository{account: domain.User{ID: 8, Email: "driver@example.test", Role: domain.Driver}}
-	service := application.NewOTPService(
+	service := verification.NewOTPService(
 		repository,
 		&otpMemoryStore{values: map[string]string{}},
 		&otpGateway{},
@@ -102,7 +102,7 @@ func TestDriverCannotUsePassengerVerificationOTP(t *testing.T) {
 func TestPasswordResetIsScopedToTheAccountRole(t *testing.T) {
 	repository := &otpRepository{account: domain.User{ID: 8, Email: "driver@example.test", Role: domain.Driver}}
 	store := &otpMemoryStore{values: map[string]string{}}
-	service := application.NewOTPService(repository, store, &otpGateway{}, otpIssuer{}, newTestRefreshSessionStore())
+	service := verification.NewOTPService(repository, store, &otpGateway{}, otpIssuer{}, newTestRefreshSessionStore())
 
 	err := service.RequestPasswordReset(
 		context.Background(),

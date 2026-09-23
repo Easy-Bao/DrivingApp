@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 	authregistration "github.com/Easy-Bao/DrivingApp/server/internal/auth/registration"
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/verification"
 )
 
 func TestPassengerRegistrationCreatesAccountOnlyAfterOTP(t *testing.T) {
@@ -17,7 +17,7 @@ func TestPassengerRegistrationCreatesAccountOnlyAfterOTP(t *testing.T) {
 	gateway := &otpGateway{}
 	sessions := newTestRefreshSessionStore()
 	register := authregistration.NewRegisterService(repository, otpIssuer{}, sessions)
-	service := application.NewOTPServiceWithPending(
+	service := verification.NewOTPServiceWithPending(
 		repository,
 		&otpMemoryStore{values: map[string]string{}},
 		gateway,
@@ -62,7 +62,7 @@ func TestRetryingUnverifiedPassengerRegistrationReplacesPendingData(t *testing.T
 	gateway := &otpGateway{}
 	sessions := newTestRefreshSessionStore()
 	register := authregistration.NewRegisterService(repository, otpIssuer{}, sessions)
-	service := application.NewOTPServiceWithPending(
+	service := verification.NewOTPServiceWithPending(
 		repository,
 		&otpMemoryStore{values: map[string]string{}},
 		gateway,
@@ -103,7 +103,7 @@ func TestPassengerVerificationSucceedsWhenPendingCleanupFails(t *testing.T) {
 	gateway := &otpGateway{}
 	sessions := newTestRefreshSessionStore()
 	register := authregistration.NewRegisterService(repository, otpIssuer{}, sessions)
-	service := application.NewOTPServiceWithPending(
+	service := verification.NewOTPServiceWithPending(
 		repository,
 		&otpMemoryStore{values: map[string]string{}},
 		gateway,
@@ -137,7 +137,7 @@ func TestPassengerRegistrationRejectsVerifiedEmail(t *testing.T) {
 	pending := &pendingRegistrationStore{}
 	sessions := newTestRefreshSessionStore()
 	register := authregistration.NewRegisterService(repository, otpIssuer{}, sessions)
-	service := application.NewOTPServiceWithPending(
+	service := verification.NewOTPServiceWithPending(
 		repository,
 		&otpMemoryStore{values: map[string]string{}},
 		&otpGateway{},
