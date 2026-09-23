@@ -55,14 +55,15 @@ void main() {
       );
 
       expect(result.isOk, isTrue);
-      result.fold((failure) => fail('Expected Right but got Left: $failure'), (
-        places,
-      ) {
-        expect(places.length, equals(1));
-        expect(places.first.name, equals('Mendero General Hospital'));
-        expect(places.first.latitude, equals(7.8282));
-        expect(places.first.longitude, equals(123.4361));
-      });
+      result.fold(
+        (failure) => fail('Expected success but got failure: $failure'),
+        (places) {
+          expect(places.length, equals(1));
+          expect(places.first.name, equals('Mendero General Hospital'));
+          expect(places.first.latitude, equals(7.8282));
+          expect(places.first.longitude, equals(123.4361));
+        },
+      );
     });
 
     test('searchPlaces parses places JSON response correctly', () async {
@@ -94,12 +95,13 @@ void main() {
       final result = await service.searchPlaces(query: 'Ben Sagun');
 
       expect(result.isOk, isTrue);
-      result.fold((failure) => fail('Expected Right but got Left: $failure'), (
-        places,
-      ) {
-        expect(places.length, equals(1));
-        expect(places.first.name, equals('Ben Sagun Elementary School'));
-      });
+      result.fold(
+        (failure) => fail('Expected success but got failure: $failure'),
+        (places) {
+          expect(places.length, equals(1));
+          expect(places.first.name, equals('Ben Sagun Elementary School'));
+        },
+      );
     });
 
     test('searchPlaces skips malformed non-object items safely', () async {
@@ -170,7 +172,7 @@ void main() {
       expect(result.isErr, isTrue);
       result.fold((failure) {
         expect(failure, isA<PlaceNetworkError>());
-      }, (_) => fail('Expected Left but got Right'));
+      }, (_) => fail('Expected failure but got success'));
     });
 
     test('reverseGeocode preserves Mapbox proximity metadata', () async {
@@ -236,11 +238,12 @@ void main() {
       );
 
       expect(result.isOk, isTrue);
-      result.fold((failure) => fail('Expected Right but got Left: $failure'), (
-        distances,
-      ) {
-        expect(distances, equals([1.25, 3.5]));
-      });
+      result.fold(
+        (failure) => fail('Expected success but got failure: $failure'),
+        (distances) {
+          expect(distances, equals([1.25, 3.5]));
+        },
+      );
     });
 
     test(

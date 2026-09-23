@@ -5,7 +5,7 @@ sealed class const ForgotPasswordEvent() extends Equatable {
   List<Object?> get props => [];
 }
 
-class const ForgotPasswordSubmitted({required this.email})
+final class const ForgotPasswordSubmitted({required this.email})
     extends ForgotPasswordEvent {
   final String email;
 

@@ -74,7 +74,7 @@ class MapProvider._() {
 
     try {
       return await _searchCache.getOrLoad(key, () async {
-        final either = await nativeService.searchPlaces(
+        final result = await nativeService.searchPlaces(
           query: query,
           proximityLat: lat,
           proximityLng: lng,
@@ -82,7 +82,7 @@ class MapProvider._() {
           userLng: userLng,
         );
 
-        return either.fold(
+        return result.fold(
           (failure) {
             debugPrint(
               'MapProvider.searchPlaces failure: ${failure.runtimeType}',
@@ -112,8 +112,8 @@ class MapProvider._() {
     }
 
     try {
-      final either = await nativeService.reverseGeocode(lat: lat, lng: lng);
-      return await either.fold((failure) {
+      final result = await nativeService.reverseGeocode(lat: lat, lng: lng);
+      return await result.fold((failure) {
         debugPrint(
           'MapProvider.getPlaceFromCoordinates failure: ${failure.runtimeType}',
         );
@@ -177,7 +177,7 @@ class MapProvider._() {
   }) async {
     for (var attempt = 0; attempt < 2; attempt++) {
       try {
-        final either = await nativeService.getRoute(
+        final result = await nativeService.getRoute(
           originLat: originLat,
           originLng: originLng,
           destLat: destLat,
@@ -188,7 +188,7 @@ class MapProvider._() {
         );
         Route? route;
         var retryable = false;
-        either.fold((failure) {
+        result.fold((failure) {
           debugPrint('MapProvider.getRoute failure: ${failure.runtimeType}');
           retryable = failure is PlaceNetworkError;
         }, (value) => route = value);
@@ -216,12 +216,12 @@ class MapProvider._() {
     final key = _drivingDistanceRequestKey(originLat, originLng, destinations);
     try {
       return await _drivingDistanceCache.getOrLoad(key, () async {
-        final either = await nativeService.getDrivingDistances(
+        final result = await nativeService.getDrivingDistances(
           originLat: originLat,
           originLng: originLng,
           destinations: destinations,
         );
-        return either.fold((failure) {
+        return result.fold((failure) {
           debugPrint(
             'MapProvider.getDrivingDistances failure: ${failure.runtimeType}',
           );
@@ -247,12 +247,12 @@ class MapProvider._() {
     final key = _nearbyRequestKey(lat, lng, page);
     try {
       return await _nearbyCache.getOrLoad(key, () async {
-        final either = await nativeService.getNearbyPois(
+        final result = await nativeService.getNearbyPois(
           lat: lat,
           lng: lng,
           page: page,
         );
-        return either.fold(
+        return result.fold(
           (failure) {
             debugPrint(
               'MapProvider.getNearbyPOIs failure: ${failure.runtimeType}',

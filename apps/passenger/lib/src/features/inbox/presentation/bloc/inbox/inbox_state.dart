@@ -6,11 +6,11 @@ sealed class const InboxState() extends Equatable {
   List<Object?> get props => [];
 }
 
-class const InboxInitialState() extends InboxState {}
+final class const InboxInitialState() extends InboxState {}
 
-class const InboxLoadingState() extends InboxState {}
+final class const InboxLoadingState() extends InboxState {}
 
-class const InboxLoadedState(
+final class const InboxLoadedState(
   this.notifications, {
   this.hasMore = false,
   this.nextOffset,
@@ -52,7 +52,7 @@ class const InboxLoadedState(
   ];
 }
 
-class const InboxErrorState(this.message) extends InboxState {
+final class const InboxErrorState(this.message) extends InboxState {
   final String message;
 
   @override

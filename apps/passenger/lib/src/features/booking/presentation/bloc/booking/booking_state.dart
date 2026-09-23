@@ -1,10 +1,10 @@
 part of 'booking_bloc.dart';
 
-abstract class const BookingState();
+sealed class const BookingState();
 
-class BookingInitial() extends BookingState {}
+final class const BookingInitial() extends BookingState {}
 
-class const ActiveDriverSearch({
+final class const ActiveDriverSearch({
   required this.trip,
   required this.pickupLat,
   required this.pickupLng,
@@ -14,7 +14,7 @@ class const ActiveDriverSearch({
   final double pickupLng;
 }
 
-class const FindingNearestDriver({
+final class const FindingNearestDriver({
   required this.trip,
   required this.pickupLat,
   required this.pickupLng,
@@ -24,7 +24,7 @@ class const FindingNearestDriver({
   final double pickupLng;
 }
 
-class const NearestDriverFound({
+final class const NearestDriverFound({
   required this.driver,
   this.nearbyDrivers = const [],
   required this.totalTrips,
@@ -44,13 +44,13 @@ class const NearestDriverFound({
   final double pickupLng;
 }
 
-class const BookingSearching({required this.isDirect, this.targetDriver})
+final class const BookingSearching({required this.isDirect, this.targetDriver})
     extends BookingState {
   final bool isDirect;
   final DriverModel? targetDriver;
 }
 
-class const BookingOffersReceived({
+final class const BookingOffersReceived({
   required this.offers,
   required this.isDirect,
   this.targetDriver,
@@ -60,7 +60,7 @@ class const BookingOffersReceived({
   final DriverModel? targetDriver;
 }
 
-class const DriverMatchResult({
+final class const DriverMatchResult({
   required this.driverId,
   required this.driverName,
   required this.vehicleType,
@@ -76,16 +76,18 @@ class const DriverMatchResult({
   final String? driverRating;
 }
 
-class const BookingDriverMatched({required this.matchResult, this.createdRide})
-    extends BookingState {
+final class const BookingDriverMatched({
+  required this.matchResult,
+  this.createdRide,
+}) extends BookingState {
   final DriverMatchResult matchResult;
 
   final RideHistory? createdRide;
 }
 
-class BookingCanceled() extends BookingState {}
+final class const BookingCanceled() extends BookingState {}
 
-class const BookingFailure(this.message, {this.isNoDriverFound = false})
+final class const BookingFailure(this.message, {this.isNoDriverFound = false})
     extends BookingState {
   final String message;
   final bool isNoDriverFound;

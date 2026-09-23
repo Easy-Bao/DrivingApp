@@ -75,7 +75,7 @@ class BookingBloc({
       assert(offerRefreshInterval > Duration.zero),
       _nearestDriverMaxAttempts = nearestDriverMaxAttempts,
       _offerRefreshInterval = offerRefreshInterval,
-      super(BookingInitial()) {
+      super(const BookingInitial()) {
     on<LocateNearestDriverEvent>(
       _onLocateNearestDriver,
       transformer: droppable(),
@@ -701,7 +701,7 @@ class BookingBloc({
     } catch (error) {
       dev.log('Unable to confirm booking cancellation: $error');
     }
-    emit(BookingCanceled());
+    emit(const BookingCanceled());
     _activeBidSessionId = null;
     _activeTrip = null;
   }
@@ -721,7 +721,7 @@ class BookingBloc({
     _reviews = [];
     _isLoadingReviews = false;
     _isAutoAcceptingOffer = false;
-    emit(BookingInitial());
+    emit(const BookingInitial());
   }
 
   void _cleanupSubscriptions() {

@@ -1,6 +1,6 @@
 part of 'live_map_bloc.dart';
 
-abstract class const LiveMapEvent() {}
+sealed class const LiveMapEvent() {}
 
 final class const InitializeMapEvent({
   required final AppMapController controller,

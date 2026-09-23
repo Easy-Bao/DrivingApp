@@ -5,9 +5,9 @@ sealed class const VerifyOtpEvent() extends Equatable {
   List<Object?> get props => [];
 }
 
-class const VerifyOtpTimerStarted() extends VerifyOtpEvent {}
+final class const VerifyOtpTimerStarted() extends VerifyOtpEvent {}
 
-class const VerifyOtpTimerTicked({required this.secondsRemaining})
+final class const VerifyOtpTimerTicked({required this.secondsRemaining})
     extends VerifyOtpEvent {
   final int secondsRemaining;
 
@@ -15,7 +15,7 @@ class const VerifyOtpTimerTicked({required this.secondsRemaining})
   List<Object?> get props => [secondsRemaining];
 }
 
-class const VerifyOtpSubmitted({required this.email, required this.code})
+final class const VerifyOtpSubmitted({required this.email, required this.code})
     extends VerifyOtpEvent {
   final String email;
   final String code;
@@ -24,7 +24,7 @@ class const VerifyOtpSubmitted({required this.email, required this.code})
   List<Object?> get props => [email, code];
 }
 
-class const VerifyOtpResendRequested({required this.email})
+final class const VerifyOtpResendRequested({required this.email})
     extends VerifyOtpEvent {
   final String email;
 

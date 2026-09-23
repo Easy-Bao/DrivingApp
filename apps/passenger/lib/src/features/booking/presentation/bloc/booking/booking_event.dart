@@ -1,8 +1,8 @@
 part of 'booking_bloc.dart';
 
-abstract class const BookingEvent();
+sealed class const BookingEvent();
 
-class const LocateNearestDriverEvent({
+final class const LocateNearestDriverEvent({
   required this.pickupLat,
   required this.pickupLng,
   required this.trip,
@@ -12,7 +12,7 @@ class const LocateNearestDriverEvent({
   final BidSessionTrip trip;
 }
 
-class const StartDirectBookingEvent({
+final class const StartDirectBookingEvent({
   required this.targetDriver,
   required this.trip,
   required this.pickupLat,
@@ -28,7 +28,7 @@ class const StartDirectBookingEvent({
   final double durationMinutes;
 }
 
-class const StartOpenBookingEvent({
+final class const StartOpenBookingEvent({
   required this.trip,
   required this.pickupLat,
   required this.pickupLng,
@@ -42,7 +42,7 @@ class const StartOpenBookingEvent({
   final double durationMinutes;
 }
 
-class const AcceptBidOfferEvent({
+final class const AcceptBidOfferEvent({
   required this.offerId,
   required this.driverId,
   required this.driverName,
@@ -60,14 +60,14 @@ class const AcceptBidOfferEvent({
   final String? driverRating;
 }
 
-class const CancelBookingEvent() extends BookingEvent;
+final class const CancelBookingEvent() extends BookingEvent;
 
-class const ResetBookingEvent() extends BookingEvent;
+final class const ResetBookingEvent() extends BookingEvent;
 
-class const UpdateOffersEvent(this.offers) extends BookingEvent {
+final class const UpdateOffersEvent(this.offers) extends BookingEvent {
   final List<BookingOffer> offers;
 }
 
-class const DriverMatchedEvent(this.matchResult) extends BookingEvent {
+final class const DriverMatchedEvent(this.matchResult) extends BookingEvent {
   final DriverMatchResult matchResult;
 }

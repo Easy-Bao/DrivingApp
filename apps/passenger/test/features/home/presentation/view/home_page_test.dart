@@ -396,7 +396,7 @@ void main() {
           .thenReturn(const LocationAccessReady());
       when(() => locationAccessCubit.stream)
           .thenAnswer((_) => const Stream.empty());
-      when(() => bookingBloc.state).thenReturn(BookingInitial());
+      when(() => bookingBloc.state).thenReturn(const BookingInitial());
       when(() => bookingBloc.stream).thenAnswer((_) => const Stream.empty());
       when(() => bookingBloc.hasActiveDriverSearch).thenReturn(false);
       when(() => bookingBloc.activeDriverSearch).thenReturn(null);

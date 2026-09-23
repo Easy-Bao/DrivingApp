@@ -5,7 +5,7 @@ sealed class const ResetPasswordConfirmEvent() extends Equatable {
   List<Object?> get props => [];
 }
 
-class const ResetPasswordConfirmSubmitted({
+final class const ResetPasswordConfirmSubmitted({
   required this.email,
   required this.code,
   required this.newPassword,
