@@ -25,23 +25,10 @@ class const RideHistoryHeaderWidget({
               tooltip: 'Back',
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-              icon: Container(
-                width: 40,
-                height: 40,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: context.colorScheme.surfaceContainerHighest,
-                  border: Border.all(
-                    color: context.colorScheme.outlineVariant,
-                    width: 0.8,
-                  ),
-                ),
-                child: Icon(
-                  LucideIcons.arrow_left,
-                  size: 19,
-                  color: context.colorScheme.onSurface,
-                ),
+              icon: Icon(
+                LucideIcons.arrow_left,
+                size: 19,
+                color: context.colorScheme.onSurface,
               ),
             ),
             Expanded(
