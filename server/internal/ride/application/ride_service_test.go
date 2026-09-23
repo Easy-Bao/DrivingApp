@@ -9,9 +9,9 @@ import (
 )
 
 type ridesRepositoryStub struct {
-	ride       domain.Ride
-	created    domain.Ride
-	updated    domain.Ride
+	ride          domain.Ride
+	created       domain.Ride
+	updated       domain.Ride
 	session       domain.BidSession
 	updateNext    string
 	hasActiveRide bool
@@ -338,6 +338,20 @@ func TestUpdateStatusAllowsLegacyAssignedRideToReachPickup(t *testing.T) {
 	}
 	if stub.updateNext != "arrived" {
 		t.Fatalf("expected persisted arrived status, got %q", stub.updateNext)
+	}
+}
+
+func TestUpdateStatusRejectsCancellationAfterRideCompletion(t *testing.T) {
+	stub := &ridesRepositoryStub{
+		ride: domain.Ride{ID: 11, PassengerID: 7, DriverID: intPointer(11), Status: "completed"},
+	}
+	service := NewRideService(stub, testPricingConfig(t), nil)
+
+	if _, err := service.UpdateStatus(context.Background(), 11, 11, "cancelled"); !errors.Is(err, domain.ErrInvalidStatusTransition) {
+		t.Fatalf("expected completed ride cancellation to be rejected, got %v", err)
+	}
+	if stub.updateNext != "" {
+		t.Fatalf("expected completed ride not to be persisted as cancelled, got %q", stub.updateNext)
 	}
 }
 
