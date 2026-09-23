@@ -13,6 +13,7 @@ import (
 	authapplication "github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
 	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/auth/http"
 	authports "github.com/Easy-Bao/DrivingApp/server/internal/auth/ports"
+	authregistration "github.com/Easy-Bao/DrivingApp/server/internal/auth/registration"
 	chatadapter "github.com/Easy-Bao/DrivingApp/server/internal/chat/adapter"
 	chatapplication "github.com/Easy-Bao/DrivingApp/server/internal/chat/application"
 	chathttp "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/http"
@@ -85,7 +86,7 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 	verifier := security.NewTokenManager(config.JWTSecret)
 	adminAuthorizer := security.NewAdminAuthorizer(config.AdminUserIDs)
 
-	registerService := authapplication.NewRegisterService(authStore, verifier, sessionStore)
+	registerService := authregistration.NewRegisterService(authStore, verifier, sessionStore)
 	authenticateService := authapplication.NewAuthenticateService(
 		authStore,
 		verifier,

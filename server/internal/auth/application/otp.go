@@ -13,6 +13,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 	authpassword "github.com/Easy-Bao/DrivingApp/server/internal/auth/password"
 	authports "github.com/Easy-Bao/DrivingApp/server/internal/auth/ports"
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/registration"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/session"
 )
 
@@ -25,7 +26,7 @@ type OTPService struct {
 	tokens        authports.TokenIssuer
 	sessions      authports.SessionStore
 	pending       authports.PendingRegistrationStore
-	registrations *RegisterService
+	registrations *registration.RegisterService
 	logger        *slog.Logger
 }
 
@@ -52,7 +53,7 @@ func NewOTPServiceWithPending(
 	gateway authports.OTPSender,
 	tokens authports.TokenIssuer,
 	pending authports.PendingRegistrationStore,
-	registrations *RegisterService,
+	registrations *registration.RegisterService,
 	sessions authports.SessionStore,
 ) *OTPService {
 	return &OTPService{
@@ -76,7 +77,7 @@ func (service *OTPService) WithLogger(logger *slog.Logger) *OTPService {
 
 func (service *OTPService) RegisterPassenger(
 	ctx context.Context,
-	input RegisterInput,
+	input registration.RegisterInput,
 ) (domain.PendingRegistration, error) {
 	if service == nil || service.pending == nil || service.registrations == nil {
 		return domain.PendingRegistration{}, domain.ErrOTPUnavailable

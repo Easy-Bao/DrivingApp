@@ -6,19 +6,20 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/registration"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/session"
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
 )
 
 type Handler struct {
-	register     *application.RegisterService
+	register     *registration.RegisterService
 	authenticate *application.AuthenticateService
 	otp          *application.OTPService
 }
 
 func NewHandler(
-	register *application.RegisterService,
+	register *registration.RegisterService,
 	authenticate *application.AuthenticateService,
 	otp *application.OTPService,
 ) *Handler {
@@ -272,8 +273,8 @@ func (handler *Handler) resetPasswordForRole(w http.ResponseWriter, r *http.Requ
 	response.JSON(w, http.StatusOK, map[string]any{"success": true, "message": "password reset successful"})
 }
 
-func toRegisterInput(input RegistrationRequest) application.RegisterInput {
-	return application.RegisterInput{
+func toRegisterInput(input RegistrationRequest) registration.RegisterInput {
+	return registration.RegisterInput{
 		Email:       input.Email,
 		Phone:       input.Phone,
 		Name:        input.Name,
@@ -312,7 +313,7 @@ func safeAuthError(err error) string {
 		return "Your session has expired. Please sign in again."
 	case errors.Is(err, domain.ErrRefreshSessionUnavailable):
 		return "Authentication is temporarily unavailable. Please try again."
-	case errors.Is(err, application.ErrRegistrationUnavailable):
+	case errors.Is(err, registration.ErrRegistrationUnavailable):
 		return "Registration is temporarily unavailable. Please try again."
 	default:
 		return "We could not complete that request. Please try again."
@@ -325,7 +326,7 @@ func registrationErrorStatus(err error) int {
 		return http.StatusConflict
 	case errors.Is(err, domain.ErrOTPUnavailable):
 		return http.StatusServiceUnavailable
-	case errors.Is(err, application.ErrRegistrationUnavailable):
+	case errors.Is(err, registration.ErrRegistrationUnavailable):
 		return http.StatusServiceUnavailable
 	default:
 		return http.StatusBadRequest

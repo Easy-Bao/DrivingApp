@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/registration"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/go-chi/chi/v5"
@@ -15,7 +16,7 @@ type Router struct {
 }
 
 func NewRouter(
-	register *application.RegisterService,
+	register *registration.RegisterService,
 	authenticate *application.AuthenticateService,
 	otp *application.OTPService,
 	otpAttemptStores ...middleware.CounterStore,

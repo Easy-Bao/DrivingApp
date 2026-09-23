@@ -8,6 +8,7 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
+	authregistration "github.com/Easy-Bao/DrivingApp/server/internal/auth/registration"
 )
 
 func TestPassengerRegistrationCreatesAccountOnlyAfterOTP(t *testing.T) {
@@ -15,7 +16,7 @@ func TestPassengerRegistrationCreatesAccountOnlyAfterOTP(t *testing.T) {
 	pending := &pendingRegistrationStore{}
 	gateway := &otpGateway{}
 	sessions := newTestRefreshSessionStore()
-	register := application.NewRegisterService(repository, otpIssuer{}, sessions)
+	register := authregistration.NewRegisterService(repository, otpIssuer{}, sessions)
 	service := application.NewOTPServiceWithPending(
 		repository,
 		&otpMemoryStore{values: map[string]string{}},
@@ -26,7 +27,7 @@ func TestPassengerRegistrationCreatesAccountOnlyAfterOTP(t *testing.T) {
 		sessions,
 	)
 
-	registration, err := service.RegisterPassenger(context.Background(), application.RegisterInput{
+	registration, err := service.RegisterPassenger(context.Background(), authregistration.RegisterInput{
 		Email: "passenger@example.test", Phone: "+639171234511", Name: "Passenger", Password: "secret-8",
 	})
 	if err != nil {
@@ -60,7 +61,7 @@ func TestRetryingUnverifiedPassengerRegistrationReplacesPendingData(t *testing.T
 	pending := &pendingRegistrationStore{}
 	gateway := &otpGateway{}
 	sessions := newTestRefreshSessionStore()
-	register := application.NewRegisterService(repository, otpIssuer{}, sessions)
+	register := authregistration.NewRegisterService(repository, otpIssuer{}, sessions)
 	service := application.NewOTPServiceWithPending(
 		repository,
 		&otpMemoryStore{values: map[string]string{}},
@@ -71,13 +72,13 @@ func TestRetryingUnverifiedPassengerRegistrationReplacesPendingData(t *testing.T
 		sessions,
 	)
 
-	_, err := service.RegisterPassenger(context.Background(), application.RegisterInput{
+	_, err := service.RegisterPassenger(context.Background(), authregistration.RegisterInput{
 		Email: "passenger@example.test", Phone: "+639171234512", Name: "First", Password: "first-password",
 	})
 	if err != nil {
 		t.Fatalf("first registration: %v", err)
 	}
-	_, err = service.RegisterPassenger(context.Background(), application.RegisterInput{
+	_, err = service.RegisterPassenger(context.Background(), authregistration.RegisterInput{
 		Email: " PASSENGER@example.test ", Phone: "+639171234512", Name: "Second", Password: "second-password",
 	})
 	if err != nil {
@@ -101,7 +102,7 @@ func TestPassengerVerificationSucceedsWhenPendingCleanupFails(t *testing.T) {
 	pending := &pendingRegistrationStore{deleteErr: errors.New("temporary cleanup failure")}
 	gateway := &otpGateway{}
 	sessions := newTestRefreshSessionStore()
-	register := application.NewRegisterService(repository, otpIssuer{}, sessions)
+	register := authregistration.NewRegisterService(repository, otpIssuer{}, sessions)
 	service := application.NewOTPServiceWithPending(
 		repository,
 		&otpMemoryStore{values: map[string]string{}},
@@ -112,7 +113,7 @@ func TestPassengerVerificationSucceedsWhenPendingCleanupFails(t *testing.T) {
 		sessions,
 	)
 
-	registration, err := service.RegisterPassenger(context.Background(), application.RegisterInput{
+	registration, err := service.RegisterPassenger(context.Background(), authregistration.RegisterInput{
 		Email: "cleanup@example.test", Phone: "+639171234512", Name: "Passenger", Password: "secret-8",
 	})
 	if err != nil {
@@ -135,7 +136,7 @@ func TestPassengerRegistrationRejectsVerifiedEmail(t *testing.T) {
 	}
 	pending := &pendingRegistrationStore{}
 	sessions := newTestRefreshSessionStore()
-	register := application.NewRegisterService(repository, otpIssuer{}, sessions)
+	register := authregistration.NewRegisterService(repository, otpIssuer{}, sessions)
 	service := application.NewOTPServiceWithPending(
 		repository,
 		&otpMemoryStore{values: map[string]string{}},
@@ -146,7 +147,7 @@ func TestPassengerRegistrationRejectsVerifiedEmail(t *testing.T) {
 		sessions,
 	)
 
-	if _, err := service.RegisterPassenger(context.Background(), application.RegisterInput{
+	if _, err := service.RegisterPassenger(context.Background(), authregistration.RegisterInput{
 		Email: "passenger@example.test", Phone: "+639171234513", Name: "Passenger", Password: "secret-8",
 	}); !errors.Is(err, domain.ErrEmailTaken) {
 		t.Fatalf("expected verified email conflict, got %v", err)

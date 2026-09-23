@@ -9,6 +9,7 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
+	authregistration "github.com/Easy-Bao/DrivingApp/server/internal/auth/registration"
 )
 
 type repository struct {
@@ -49,10 +50,10 @@ func (issuer) Issue(subject string) (string, error) { return "token:" + subject,
 
 func TestPassengerAndDriverRegistrationUseCases(t *testing.T) {
 	repository := &repository{users: map[string]domain.User{}}
-	service := application.NewRegisterService(repository, issuer{}, newTestRefreshSessionStore())
+	service := authregistration.NewRegisterService(repository, issuer{}, newTestRefreshSessionStore())
 	passenger, passengerToken, err := service.Passenger(
 		context.Background(),
-		application.RegisterInput{
+		authregistration.RegisterInput{
 			Email:    "passenger@example.test",
 			Phone:    "+639171234501",
 			Name:     "Passenger",
@@ -64,7 +65,7 @@ func TestPassengerAndDriverRegistrationUseCases(t *testing.T) {
 	}
 	driver, driverToken, err := service.Driver(
 		context.Background(),
-		application.RegisterInput{
+		authregistration.RegisterInput{
 			Email:       "driver@example.test",
 			Phone:       "+639171234502",
 			Name:        "Driver",
@@ -81,10 +82,10 @@ func TestPassengerAndDriverRegistrationUseCases(t *testing.T) {
 func TestAuthenticationRejectsWrongPassword(t *testing.T) {
 	repository := &repository{users: map[string]domain.User{}}
 	sessions := newTestRefreshSessionStore()
-	register := application.NewRegisterService(repository, issuer{}, sessions)
+	register := authregistration.NewRegisterService(repository, issuer{}, sessions)
 	_, _, _ = register.Passenger(
 		context.Background(),
-		application.RegisterInput{
+		authregistration.RegisterInput{
 			Email:    "user@example.test",
 			Phone:    "+639171234503",
 			Name:     "User",
@@ -103,18 +104,18 @@ func TestAuthenticationRejectsWrongPassword(t *testing.T) {
 }
 
 func TestRegistrationRejectsIncompleteRoleContracts(t *testing.T) {
-	service := application.NewRegisterService(
+	service := authregistration.NewRegisterService(
 		&repository{users: map[string]domain.User{}},
 		issuer{},
 		newTestRefreshSessionStore(),
 	)
 
-	if _, _, err := service.Passenger(context.Background(), application.RegisterInput{
+	if _, _, err := service.Passenger(context.Background(), authregistration.RegisterInput{
 		Email: "passenger@example.test", Name: "Passenger", Password: "secret-8",
 	}); !errors.Is(err, domain.ErrInvalidCredentials) {
 		t.Fatalf("missing passenger phone error = %v", err)
 	}
-	if _, _, err := service.Driver(context.Background(), application.RegisterInput{
+	if _, _, err := service.Driver(context.Background(), authregistration.RegisterInput{
 		Email: "driver@example.test", Phone: "+639171234504", Name: "Driver", Password: "secret-8",
 	}); !errors.Is(err, domain.ErrInvalidCredentials) {
 		t.Fatalf("missing vehicle contract error = %v", err)
