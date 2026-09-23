@@ -8,12 +8,12 @@ import (
 	"math"
 	"time"
 
-	settlementapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application/settlement"
 	biddingapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/bidding"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/booking"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	lifecycleapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/lifecycle"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
+	settlementapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/settlement"
 )
 
 type RouteMetrics = ports.RouteMetrics
