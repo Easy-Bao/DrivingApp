@@ -27,6 +27,7 @@ void main() {
         'completed_trips': 5,
         'total_earnings_amount': 14085,
         'average_rating': '4.8',
+        'rating_distribution': [1, 0, 1, 2, 2],
       },
     );
 
@@ -42,6 +43,7 @@ void main() {
           completedTrips: 5,
           totalEarningsAmount: 14085,
           averageRating: 4.8,
+          ratingDistribution: [1, 0, 1, 2, 2],
         ),
       ),
     );

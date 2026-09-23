@@ -47,6 +47,41 @@ SELECT
         FROM reviews AS review
         WHERE review.driver_id = $3
     ), 0)::double precision AS average_rating
+    ,(
+        SELECT COUNT(*)::bigint
+        FROM reviews AS review
+        WHERE review.driver_id = $3
+          AND review.rating >= 1
+          AND review.rating < 2
+    ) AS one_star_count
+    ,(
+        SELECT COUNT(*)::bigint
+        FROM reviews AS review
+        WHERE review.driver_id = $3
+          AND review.rating >= 2
+          AND review.rating < 3
+    ) AS two_star_count
+    ,(
+        SELECT COUNT(*)::bigint
+        FROM reviews AS review
+        WHERE review.driver_id = $3
+          AND review.rating >= 3
+          AND review.rating < 4
+    ) AS three_star_count
+    ,(
+        SELECT COUNT(*)::bigint
+        FROM reviews AS review
+        WHERE review.driver_id = $3
+          AND review.rating >= 4
+          AND review.rating < 5
+    ) AS four_star_count
+    ,(
+        SELECT COUNT(*)::bigint
+        FROM reviews AS review
+        WHERE review.driver_id = $3
+          AND review.rating >= 5
+          AND review.rating <= 5
+    ) AS five_star_count
 FROM rides AS r
 WHERE r.driver_id = $3
 `
@@ -65,6 +100,11 @@ type GetDriverStatsRow struct {
 	TodayCompletedTrips int64   `db:"today_completed_trips"`
 	TodayEarningsAmount int64   `db:"today_earnings_amount"`
 	AverageRating       float64 `db:"average_rating"`
+	OneStarCount        int64   `db:"one_star_count"`
+	TwoStarCount        int64   `db:"two_star_count"`
+	ThreeStarCount      int64   `db:"three_star_count"`
+	FourStarCount       int64   `db:"four_star_count"`
+	FiveStarCount       int64   `db:"five_star_count"`
 }
 
 func (q *Queries) GetDriverStats(ctx context.Context, arg GetDriverStatsParams) (GetDriverStatsRow, error) {
@@ -78,6 +118,11 @@ func (q *Queries) GetDriverStats(ctx context.Context, arg GetDriverStatsParams) 
 		&i.TodayCompletedTrips,
 		&i.TodayEarningsAmount,
 		&i.AverageRating,
+		&i.OneStarCount,
+		&i.TwoStarCount,
+		&i.ThreeStarCount,
+		&i.FourStarCount,
+		&i.FiveStarCount,
 	)
 	return i, err
 }

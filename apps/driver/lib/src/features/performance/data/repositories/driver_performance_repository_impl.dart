@@ -32,6 +32,7 @@ final class DriverPerformanceRepositoryImpl({required this._dataSource})
             'total_earnings_amount',
           ),
           averageRating: _readNonNegativeDouble(values, 'average_rating'),
+          ratingDistribution: _readRatingDistribution(values),
         ),
       );
     } catch (error) {
@@ -97,6 +98,29 @@ final class DriverPerformanceRepositoryImpl({required this._dataSource})
     DioExceptionType.receiveTimeout => true,
     _ => false,
   };
+}
+
+List<int> _readRatingDistribution(Map<String, dynamic> values) {
+  final raw = values['rating_distribution'];
+  if (raw == null) return const [0, 0, 0, 0, 0];
+  if (raw is! List || raw.length != 5) {
+    throw DataParsingException(
+      message: 'Driver rating distribution is invalid.',
+    );
+  }
+
+  return [for (final value in raw) _readRatingCount(value)];
+}
+
+int _readRatingCount(Object? value) {
+  final parsed = SafeParse.toNullableDouble(value);
+  if (parsed == null ||
+      !parsed.isFinite ||
+      parsed < 0 ||
+      parsed != parsed.roundToDouble()) {
+    throw DataParsingException(message: 'Driver rating count is invalid.');
+  }
+  return parsed.toInt();
 }
 
 int _readNonNegativeInt(Map<String, dynamic> values, String key) {

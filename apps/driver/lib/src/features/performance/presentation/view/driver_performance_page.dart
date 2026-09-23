@@ -39,6 +39,8 @@ class const DriverPerformancePage({super.key, this.onBack, this.onRefresh})
               _PerformanceSummary(stats: state.stats),
               const SizedBox(height: 20),
               _PerformanceMetrics(stats: state.stats),
+              const SizedBox(height: 20),
+              _RatingDistribution(stats: state.stats),
               if (state.errorMessage != null) ...[
                 const SizedBox(height: 20),
                 AppErrorBanner(
@@ -136,6 +138,87 @@ class const _PerformanceSummary({required this.stats}) extends StatelessWidget {
   }
 }
 
+class const _RatingDistribution({required this.stats}) extends StatelessWidget {
+  final DriverPerformanceStats? stats;
+
+  @override
+  Widget build(BuildContext context) {
+    final distribution = stats?.ratingDistribution;
+    if (distribution == null) return const SizedBox.shrink();
+    final total = distribution.fold<int>(0, (sum, count) => sum + count);
+
+    return Container(
+      padding: const EdgeInsets.all(EasyRideSpacing.lg),
+      decoration: BoxDecoration(
+        color: context.colorScheme.surface,
+        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        border: Border.all(color: context.colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Rating breakdown', style: context.textStyles.titleMedium),
+          const SizedBox(height: 14),
+          for (var index = distribution.length - 1; index >= 0; index--)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 9),
+              child: _RatingDistributionRow(
+                stars: index + 1,
+                count: distribution[index],
+                fraction: total == 0 ? 0 : distribution[index] / total,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class const _RatingDistributionRow({
+  required this.stars,
+  required this.count,
+  required this.fraction,
+}) extends StatelessWidget {
+  final int stars;
+  final int count;
+  final double fraction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 42,
+          child: Text('$stars star', style: context.textStyles.labelMedium),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+            child: LinearProgressIndicator(
+              value: fraction,
+              minHeight: 8,
+              backgroundColor: context.colorScheme.surfaceContainerHighest,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                context.semanticColors.rating,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        SizedBox(
+          width: 28,
+          child: Text(
+            '$count',
+            textAlign: TextAlign.end,
+            style: context.textStyles.labelMedium,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class const _PerformanceMetrics({required this.stats}) extends StatelessWidget {
   final DriverPerformanceStats? stats;
 
@@ -205,9 +288,8 @@ class const _PerformanceMetricCard({
           const SizedBox(height: 16),
           Text(
             value,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
+            style: Theme.of(context).textTheme.titleLarge
+                ?.copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
           ),
           const SizedBox(height: 3),
           Text(

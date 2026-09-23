@@ -34,6 +34,41 @@ SELECT
         FROM reviews AS review
         WHERE review.driver_id = sqlc.arg('driver_id')
     ), 0)::double precision AS average_rating
+    ,(
+        SELECT COUNT(*)::bigint
+        FROM reviews AS review
+        WHERE review.driver_id = sqlc.arg('driver_id')
+          AND review.rating >= 1
+          AND review.rating < 2
+    ) AS one_star_count
+    ,(
+        SELECT COUNT(*)::bigint
+        FROM reviews AS review
+        WHERE review.driver_id = sqlc.arg('driver_id')
+          AND review.rating >= 2
+          AND review.rating < 3
+    ) AS two_star_count
+    ,(
+        SELECT COUNT(*)::bigint
+        FROM reviews AS review
+        WHERE review.driver_id = sqlc.arg('driver_id')
+          AND review.rating >= 3
+          AND review.rating < 4
+    ) AS three_star_count
+    ,(
+        SELECT COUNT(*)::bigint
+        FROM reviews AS review
+        WHERE review.driver_id = sqlc.arg('driver_id')
+          AND review.rating >= 4
+          AND review.rating < 5
+    ) AS four_star_count
+    ,(
+        SELECT COUNT(*)::bigint
+        FROM reviews AS review
+        WHERE review.driver_id = sqlc.arg('driver_id')
+          AND review.rating >= 5
+          AND review.rating <= 5
+    ) AS five_star_count
 FROM rides AS r
 WHERE r.driver_id = sqlc.arg('driver_id');
 

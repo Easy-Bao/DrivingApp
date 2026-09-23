@@ -14,6 +14,7 @@ type DriverStats struct {
 	TodayCompletedTrips int     `json:"today_completed_trips"`
 	TodayEarnings       int64   `json:"today_earnings_amount"`
 	AverageRating       float64 `json:"average_rating"`
+	RatingDistribution  [5]int  `json:"rating_distribution"`
 }
 
 type DriverStatisticsReader interface {

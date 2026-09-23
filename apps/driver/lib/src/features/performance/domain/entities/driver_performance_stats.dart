@@ -7,6 +7,7 @@ class const DriverPerformanceStats({
   required this.completedTrips,
   required this.totalEarningsAmount,
   required this.averageRating,
+  this.ratingDistribution = const [0, 0, 0, 0, 0],
 }) extends Equatable {
   final int todayEarningsAmount;
   final int todayCompletedTrips;
@@ -14,6 +15,7 @@ class const DriverPerformanceStats({
   final int completedTrips;
   final int totalEarningsAmount;
   final double averageRating;
+  final List<int> ratingDistribution;
 
   @override
   List<Object> get props => [
@@ -23,5 +25,6 @@ class const DriverPerformanceStats({
     completedTrips,
     totalEarningsAmount,
     averageRating,
+    ratingDistribution,
   ];
 }

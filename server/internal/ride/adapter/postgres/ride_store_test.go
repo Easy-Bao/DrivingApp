@@ -67,13 +67,18 @@ func TestFromPostgresDriverStatsMapsMetrics(t *testing.T) {
 		TodayCompletedTrips: 3,
 		TodayEarningsAmount: 15_000,
 		AverageRating:       4.75,
+		OneStarCount:        1,
+		TwoStarCount:        2,
+		ThreeStarCount:      3,
+		FourStarCount:       4,
+		FiveStarCount:       5,
 	})
 	if err != nil {
 		t.Fatalf("fromPostgresDriverStats() error = %v", err)
 	}
 	if stats.DriverID != 7 || stats.TotalTrips != 12 || stats.CompletedTrips != 8 || stats.ActiveTrips != 2 ||
 		stats.TotalEarnings != 48_000 || stats.TodayCompletedTrips != 3 || stats.TodayEarnings != 15_000 ||
-		stats.AverageRating != 4.75 {
+		stats.AverageRating != 4.75 || stats.RatingDistribution != [5]int{1, 2, 3, 4, 5} {
 		t.Fatalf("mapped driver stats = %+v", stats)
 	}
 }

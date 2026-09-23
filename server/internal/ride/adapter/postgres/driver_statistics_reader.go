@@ -56,6 +56,10 @@ func fromPostgresDriverStats(driverID int, row databasepostgres.GetDriverStatsRo
 	if err != nil {
 		return domain.DriverStats{}, fmt.Errorf("map today completed trips: %w", err)
 	}
+	ratingDistribution, err := mapRatingDistribution(row)
+	if err != nil {
+		return domain.DriverStats{}, fmt.Errorf("map rating distribution: %w", err)
+	}
 	return domain.DriverStats{
 		DriverID:            driverID,
 		TotalTrips:          totalTrips,
@@ -65,7 +69,27 @@ func fromPostgresDriverStats(driverID int, row databasepostgres.GetDriverStatsRo
 		TodayCompletedTrips: todayCompletedTrips,
 		TodayEarnings:       row.TodayEarningsAmount,
 		AverageRating:       row.AverageRating,
+		RatingDistribution:  ratingDistribution,
 	}, nil
+}
+
+func mapRatingDistribution(row databasepostgres.GetDriverStatsRow) ([5]int, error) {
+	values := [5]int64{
+		row.OneStarCount,
+		row.TwoStarCount,
+		row.ThreeStarCount,
+		row.FourStarCount,
+		row.FiveStarCount,
+	}
+	result := [5]int{}
+	for index, value := range values {
+		count, err := toNativeRideCount(value, "rating count")
+		if err != nil {
+			return [5]int{}, fmt.Errorf("rating index %d: %w", index, err)
+		}
+		result[index] = count
+	}
+	return result, nil
 }
 
 func toNativeRideCount(value int64, field string) (int, error) {
