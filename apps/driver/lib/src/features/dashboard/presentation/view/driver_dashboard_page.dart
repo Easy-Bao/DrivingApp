@@ -13,6 +13,7 @@ import 'package:driver/src/features/dashboard/presentation/widgets/driver_dashbo
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_state.dart';
 import 'package:driver/src/features/profile/profile_routes.dart';
+import 'package:driver/src/infrastructure/notifications/driver_incoming_request_alert.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver/src/features/dashboard/dashboard_routes.dart';
@@ -386,7 +387,12 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     // Direct requests already carry the target driver's topic. Refresh the
     // authoritative offers immediately instead of waiting for the fallback
     // polling interval.
-    if (event is RideOfferCreatedEvent || event is RideOfferUpdatedEvent) {
+    if (event is RideOfferCreatedEvent) {
+      unawaited(DriverIncomingRequestAlert.play());
+      unawaited(_pollRideData(_pollGeneration));
+      return;
+    }
+    if (event is RideOfferUpdatedEvent) {
       unawaited(_pollRideData(_pollGeneration));
       return;
     }
@@ -649,7 +655,11 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
       if (mounted) {
         if (!success && cubit.state.errorMessage == null) {
-          CustomToast.show(context, "Couldn't submit your offer. Try again.", isError: true);
+          CustomToast.show(
+            context,
+            "Couldn't submit your offer. Try again.",
+            isError: true,
+          );
         }
       }
     } catch (error) {
