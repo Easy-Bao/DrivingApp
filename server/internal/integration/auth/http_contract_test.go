@@ -11,7 +11,7 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
-	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/auth/transport/http"
+	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/auth/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )

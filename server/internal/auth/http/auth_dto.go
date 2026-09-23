@@ -1,4 +1,4 @@
-package dto
+package http
 
 import "github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 

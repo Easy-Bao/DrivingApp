@@ -6,7 +6,6 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/transport/http/dto"
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
 )
@@ -31,7 +30,7 @@ func (handler *Handler) DriverRegister(w http.ResponseWriter, r *http.Request) {
 	handler.registerAccount(w, r, domain.Driver)
 }
 func (handler *Handler) registerAccount(w http.ResponseWriter, r *http.Request, role domain.Role) {
-	var input dto.RegistrationRequest
+	var input RegistrationRequest
 	if !decode(w, r, &input) {
 		return
 	}
@@ -39,7 +38,7 @@ func (handler *Handler) registerAccount(w http.ResponseWriter, r *http.Request, 
 }
 
 func (handler *Handler) GenericRegister(w http.ResponseWriter, r *http.Request) {
-	var input dto.GenericRegistrationRequest
+	var input GenericRegistrationRequest
 	if !decode(w, r, &input) {
 		return
 	}
@@ -58,7 +57,7 @@ func (handler *Handler) GenericRegister(w http.ResponseWriter, r *http.Request) 
 func (handler *Handler) registerDecoded(
 	w http.ResponseWriter,
 	r *http.Request,
-	input dto.RegistrationRequest,
+	input RegistrationRequest,
 	role domain.Role,
 ) {
 	if role != domain.Passenger && role != domain.Driver {
@@ -117,7 +116,7 @@ func (handler *Handler) DriverLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
-	var input dto.RefreshToken
+	var input RefreshToken
 	if !decode(w, r, &input) {
 		return
 	}
@@ -140,7 +139,7 @@ func (handler *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) Logout(w http.ResponseWriter, r *http.Request) {
-	var input dto.RefreshToken
+	var input RefreshToken
 	if !decode(w, r, &input) {
 		return
 	}
@@ -156,7 +155,7 @@ func (handler *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) login(w http.ResponseWriter, r *http.Request, role domain.Role) {
-	var input dto.LoginRequest
+	var input LoginRequest
 	if !decode(w, r, &input) {
 		return
 	}
@@ -178,7 +177,7 @@ func (handler *Handler) RequestOTP(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusServiceUnavailable, "otp delivery is unavailable")
 		return
 	}
-	var input dto.OTPRequest
+	var input OTPRequest
 	if !decode(w, r, &input) {
 		return
 	}
@@ -194,7 +193,7 @@ func (handler *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusServiceUnavailable, "otp delivery is unavailable")
 		return
 	}
-	var input dto.OTPVerification
+	var input OTPVerification
 	if !decode(w, r, &input) {
 		return
 	}
@@ -231,7 +230,7 @@ func (handler *Handler) forgotPasswordForRole(w http.ResponseWriter, r *http.Req
 		response.Error(w, http.StatusServiceUnavailable, "otp delivery is unavailable")
 		return
 	}
-	var input dto.OTPRequest
+	var input OTPRequest
 	if !decode(w, r, &input) {
 		return
 	}
@@ -255,7 +254,7 @@ func (handler *Handler) resetPasswordForRole(w http.ResponseWriter, r *http.Requ
 		response.Error(w, http.StatusServiceUnavailable, "otp delivery is unavailable")
 		return
 	}
-	var input dto.PasswordReset
+	var input PasswordReset
 	if !decode(w, r, &input) {
 		return
 	}
@@ -272,7 +271,7 @@ func (handler *Handler) resetPasswordForRole(w http.ResponseWriter, r *http.Requ
 	response.JSON(w, http.StatusOK, map[string]any{"success": true, "message": "password reset successful"})
 }
 
-func toRegisterInput(input dto.RegistrationRequest) application.RegisterInput {
+func toRegisterInput(input RegistrationRequest) application.RegisterInput {
 	return application.RegisterInput{
 		Email:       input.Email,
 		Phone:       input.Phone,
@@ -344,11 +343,11 @@ func authSessionResponse(
 	tokens application.SessionTokens,
 	needsVerification bool,
 	verified bool,
-) dto.SessionResponse {
-	return dto.SessionResponse{
+) SessionResponse {
+	return SessionResponse{
 		Success: true,
-		Data: dto.SessionData{
-			User:              dto.NewAccountResponse(account),
+		Data: SessionData{
+			User:              NewAccountResponse(account),
 			Token:             tokens.AccessToken,
 			RefreshToken:      tokens.RefreshToken,
 			NeedsVerification: needsVerification,
