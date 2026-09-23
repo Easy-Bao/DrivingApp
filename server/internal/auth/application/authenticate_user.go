@@ -121,7 +121,7 @@ func (service *AuthenticateService) Refresh(ctx context.Context, rawToken string
 		return SessionTokens{}, domain.ErrRefreshSessionUnavailable
 	}
 	rawToken = strings.TrimSpace(rawToken)
-	if rawToken == "" {
+	if !validRefreshToken(rawToken) {
 		return SessionTokens{}, domain.ErrInvalidRefreshToken
 	}
 	now := time.Now().UTC()
@@ -167,7 +167,7 @@ func (service *AuthenticateService) Logout(ctx context.Context, rawToken string)
 		return domain.ErrRefreshSessionUnavailable
 	}
 	rawToken = strings.TrimSpace(rawToken)
-	if rawToken == "" {
+	if !validRefreshToken(rawToken) {
 		return domain.ErrInvalidRefreshToken
 	}
 	if err := service.sessions.Revoke(ctx, hashRefreshToken(rawToken), time.Now().UTC()); err != nil {

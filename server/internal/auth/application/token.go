@@ -122,6 +122,14 @@ func newRefreshToken() (string, string, error) {
 	return token, hashRefreshToken(token), nil
 }
 
+func validRefreshToken(token string) bool {
+	if len(token) != base64.RawURLEncoding.EncodedLen(refreshTokenBytes) {
+		return false
+	}
+	decoded, err := base64.RawURLEncoding.DecodeString(token)
+	return err == nil && len(decoded) == refreshTokenBytes
+}
+
 func hashRefreshToken(token string) string {
 	digest := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(digest[:])

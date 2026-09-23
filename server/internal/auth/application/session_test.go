@@ -78,6 +78,22 @@ func TestLogoutRevokesRefreshSession(t *testing.T) {
 	}
 }
 
+func TestLogoutRejectsMalformedRefreshToken(t *testing.T) {
+	service := application.NewAuthenticateService(
+		nil,
+		nil,
+		newTestRefreshSessionStore(),
+	)
+
+	for _, token := range []string{"", "not-a-refresh-token", "short-token"} {
+		t.Run(token, func(t *testing.T) {
+			if err := service.Logout(context.Background(), token); !errors.Is(err, domain.ErrInvalidRefreshToken) {
+				t.Fatalf("Logout(%q) error = %v, want invalid refresh token", token, err)
+			}
+		})
+	}
+}
+
 func TestRefreshAllowsParallelRequestsDuringRotationGrace(t *testing.T) {
 	repository := &repository{users: map[string]domain.User{
 		"passenger@example.test": {
