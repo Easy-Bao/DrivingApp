@@ -28,6 +28,14 @@ func TestDefaultPostgresNativePoolConfigRecyclesConnectionsWithinThirtyMinutes(t
 	}
 }
 
+func TestDefaultPostgresNativePoolConfigPrunesStaleIdleConnections(t *testing.T) {
+	config := DefaultPostgresNativePoolConfig()
+
+	if config.ConnectionMaxIdleTime != 5*time.Minute {
+		t.Fatalf("connection max idle time = %s, want 5m", config.ConnectionMaxIdleTime)
+	}
+}
+
 func TestOpenPostgresPoolRejectsInvalidConfigBeforeConnecting(t *testing.T) {
 	config := DefaultPostgresNativePoolConfig()
 	config.MinIdleConnections = config.MaxConnections + 1
