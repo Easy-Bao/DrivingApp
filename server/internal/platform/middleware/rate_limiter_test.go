@@ -144,6 +144,7 @@ func TestRateLimiterClassifiesEveryWorkload(t *testing.T) {
 		limit  string
 	}{
 		{name: "authentication", method: http.MethodPost, path: "/api/v1/auth/login", limit: "11"},
+		{name: "password reset request", method: http.MethodPost, path: "/api/v1/auth/passenger/forgot-password", limit: "11"},
 		{name: "refresh", method: http.MethodPost, path: "/api/v1/auth/refresh", limit: "12"},
 		{name: "location", method: http.MethodGet, path: "/api/v1/location/search", limit: "22"},
 		{name: "fare", method: http.MethodPost, path: "/api/v1/fares/estimate", limit: "33"},
