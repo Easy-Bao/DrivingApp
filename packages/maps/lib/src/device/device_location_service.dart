@@ -15,15 +15,23 @@ class LocationService._() {
   static Position? get lastPosition => _lastPosition;
 
   static Future<bool> isServiceEnabled() async {
-    return Geolocator.isLocationServiceEnabled();
+    try {
+      return await Geolocator.isLocationServiceEnabled();
+    } catch (_) {
+      return false;
+    }
   }
 
   static Future<LocationAccessState> getAccessState() async {
-    if (!await isServiceEnabled()) {
-      return LocationAccessState.serviceDisabled;
-    }
+    try {
+      if (!await isServiceEnabled()) {
+        return LocationAccessState.serviceDisabled;
+      }
 
-    return _stateForPermission(await Geolocator.checkPermission());
+      return _stateForPermission(await Geolocator.checkPermission());
+    } catch (_) {
+      return LocationAccessState.denied;
+    }
   }
 
   static Future<LocationAccessState> refresh() => getAccessState();
@@ -34,23 +42,35 @@ class LocationService._() {
           .distinct();
 
   static Future<bool> requestPermission() async {
-    if (!await isServiceEnabled()) return false;
-    final state = _stateForPermission(await Geolocator.requestPermission());
-    return state == LocationAccessState.ready;
+    try {
+      if (!await isServiceEnabled()) return false;
+      final state = _stateForPermission(await Geolocator.requestPermission());
+      return state == LocationAccessState.ready;
+    } catch (_) {
+      return false;
+    }
   }
 
-  static Future<bool> openLocationSettings() {
-    return Geolocator.openLocationSettings();
+  static Future<bool> openLocationSettings() async {
+    try {
+      return await Geolocator.openLocationSettings();
+    } catch (_) {
+      return false;
+    }
   }
 
-  static Future<bool> openAppSettings() {
-    return Geolocator.openAppSettings();
+  static Future<bool> openAppSettings() async {
+    try {
+      return await Geolocator.openAppSettings();
+    } catch (_) {
+      return false;
+    }
   }
 
   static Future<Position?> getCurrentPosition() async {
-    if (await getAccessState() != LocationAccessState.ready) return null;
-
     try {
+      if (await getAccessState() != LocationAccessState.ready) return null;
+
       _lastPosition = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
@@ -64,15 +84,21 @@ class LocationService._() {
   }
 
   static Stream<Position> getPositionStream() {
-    return Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 5,
-      ),
-    ).map((pos) {
-      _lastPosition = pos;
-      return pos;
-    });
+    try {
+      return Geolocator.getPositionStream(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.high,
+              distanceFilter: 5,
+            ),
+          )
+          .map((pos) {
+            _lastPosition = pos;
+            return pos;
+          })
+          .handleError((Object _) {});
+    } catch (_) {
+      return const Stream<Position>.empty();
+    }
   }
 
   static LocationAccessState _stateForPermission(
