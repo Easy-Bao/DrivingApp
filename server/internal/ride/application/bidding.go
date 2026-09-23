@@ -3,7 +3,7 @@ package application
 import (
 	"context"
 
-	biddingapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application/bidding"
+	biddingapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/bidding"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
 )

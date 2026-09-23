@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/ride/application/bidding"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/bidding"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
 )
