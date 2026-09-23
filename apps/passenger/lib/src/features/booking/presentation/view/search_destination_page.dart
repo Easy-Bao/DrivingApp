@@ -354,6 +354,7 @@ class _SearchDestinationPageState()
   }
 
   void _onPlaceSelected(Place place) {
+    _clearSearchAfterSelection();
     final queryParams = <String, String>{};
     if (widget.preselectedRideType != null) {
       queryParams['rideType'] = widget.preselectedRideType!;
@@ -372,6 +373,15 @@ class _SearchDestinationPageState()
         queryParameters: queryParams,
       ),
     );
+  }
+
+  void _clearSearchAfterSelection() {
+    _searchRequestId++;
+    _debounce?.cancel();
+    _debounce = null;
+    _searchController.clear();
+    _results = [];
+    _isSearching = false;
   }
 
   Future<void> _openMapPin() async {
