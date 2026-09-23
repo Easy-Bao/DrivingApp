@@ -2,7 +2,7 @@ import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
 
-class RideHistoryPresenter(DateTime referenceTime) {
+final class RideHistoryPresenter(DateTime referenceTime) {
   final DateTime referenceTime;
 
   this : referenceTime = referenceTime.toLocal();
