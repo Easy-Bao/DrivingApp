@@ -226,6 +226,8 @@ func TestRateLimiterBypassesHealthAndPreflight(t *testing.T) {
 		path   string
 	}{
 		{method: http.MethodGet, path: "/health"},
+		{method: http.MethodGet, path: "/healthz"},
+		{method: http.MethodGet, path: "/readyz"},
 		{method: http.MethodOptions, path: "/api/v1/auth/login"},
 	} {
 		response := serveRateLimitedRequest(handler, request.method, request.path, "192.0.2.17:1234")

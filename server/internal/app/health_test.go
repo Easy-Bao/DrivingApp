@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func TestWriteReadinessResponse(t *testing.T) {
@@ -37,5 +39,18 @@ func TestWriteReadinessResponse(t *testing.T) {
 				t.Fatalf("service body = %q, want %q", body["service"], serviceName)
 			}
 		})
+	}
+}
+
+func TestHealthzReportsUnavailableWithoutDependencies(t *testing.T) {
+	router := chi.NewRouter()
+	registerHealthRoutes(router, nil, nil)
+
+	request := httptest.NewRequest(http.MethodGet, "/healthz", nil)
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusServiceUnavailable {
+		t.Fatalf("healthz status = %d, want %d", response.Code, http.StatusServiceUnavailable)
 	}
 }

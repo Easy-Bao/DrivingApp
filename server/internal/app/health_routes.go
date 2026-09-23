@@ -18,7 +18,7 @@ func registerHealthRoutes(router chi.Router, redisClient *redisclient.Client, po
 			"service": serviceName,
 		})
 	})
-	router.Get("/readyz", func(writer http.ResponseWriter, request *http.Request) {
+	readinessHandler := func(writer http.ResponseWriter, request *http.Request) {
 		checkContext, cancel := context.WithTimeout(request.Context(), 2*time.Second)
 		defer cancel()
 		if postgresPool == nil || postgresPool.Ping(checkContext) != nil {
@@ -30,7 +30,9 @@ func registerHealthRoutes(router chi.Router, redisClient *redisclient.Client, po
 			return
 		}
 		writeReadinessResponse(writer, http.StatusOK, true)
-	})
+	}
+	router.Get("/healthz", readinessHandler)
+	router.Get("/readyz", readinessHandler)
 }
 
 func writeReadinessResponse(writer http.ResponseWriter, status int, ready bool) {

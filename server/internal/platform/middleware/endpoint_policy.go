@@ -26,7 +26,7 @@ func classifyEndpoint(request *http.Request) endpointKind {
 		return endpointRead
 	}
 	path := request.URL.Path
-	if path == "/health" {
+	if path == "/health" || path == "/healthz" || path == "/readyz" {
 		return endpointHealth
 	}
 	if path == "/api/v1/chat/ws" || path == "/api/v1/realtime/ws" {
