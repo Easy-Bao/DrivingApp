@@ -1,23 +1,20 @@
-package application
+package assignment
 
 import (
 	"context"
 	"fmt"
 	"log/slog"
-
-	assignmentdomain "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment/domain"
-	assignmentports "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment/ports"
 )
 
 // Resolver uses the lifecycle projection for hot-path reads and consults the
 // ride store when the projection has not observed the assignment yet.
 type Resolver struct {
-	routing   assignmentports.Lookup
-	authority assignmentports.Lookup
+	routing   Lookup
+	authority Lookup
 	logger    *slog.Logger
 }
 
-func NewResolver(routing, authority assignmentports.Lookup) *Resolver {
+func NewResolver(routing, authority Lookup) *Resolver {
 	return &Resolver{routing: routing, authority: authority, logger: slog.Default()}
 }
 
@@ -28,12 +25,12 @@ func (resolver *Resolver) WithLogger(logger *slog.Logger) *Resolver {
 	return resolver
 }
 
-func (resolver *Resolver) ForRide(ctx context.Context, rideID string) (assignmentdomain.Assignment, bool, error) {
+func (resolver *Resolver) ForRide(ctx context.Context, rideID string) (Assignment, bool, error) {
 	if resolver == nil {
-		return assignmentdomain.Assignment{}, false, nil
+		return Assignment{}, false, nil
 	}
 	if err := contextError(ctx); err != nil {
-		return assignmentdomain.Assignment{}, false, err
+		return Assignment{}, false, err
 	}
 	if resolver.routing != nil {
 		value, found, err := resolver.routing.ForRide(ctx, rideID)
@@ -41,37 +38,37 @@ func (resolver *Resolver) ForRide(ctx context.Context, rideID string) (assignmen
 			return value, true, nil
 		}
 		if contextErr := contextError(ctx); contextErr != nil {
-			return assignmentdomain.Assignment{}, false, contextErr
+			return Assignment{}, false, contextErr
 		}
 		if err != nil {
 			if resolver.authority == nil {
-				return assignmentdomain.Assignment{}, false, fmt.Errorf("load routing ride assignment: %w", err)
+				return Assignment{}, false, fmt.Errorf("load routing ride assignment: %w", err)
 			}
 			resolver.log().DebugContext(ctx, "routing ride assignment lookup failed; using authority", "error", err)
 		}
 	}
 	if err := contextError(ctx); err != nil {
-		return assignmentdomain.Assignment{}, false, err
+		return Assignment{}, false, err
 	}
 	if resolver.authority == nil {
-		return assignmentdomain.Assignment{}, false, nil
+		return Assignment{}, false, nil
 	}
 	value, found, err := resolver.authority.ForRide(ctx, rideID)
 	if err != nil {
-		return assignmentdomain.Assignment{}, false, fmt.Errorf("load authoritative ride assignment: %w", err)
+		return Assignment{}, false, fmt.Errorf("load authoritative ride assignment: %w", err)
 	}
 	if err := contextError(ctx); err != nil {
-		return assignmentdomain.Assignment{}, false, err
+		return Assignment{}, false, err
 	}
 	if found {
-		resolver.remember(value.DriverID, []assignmentdomain.Assignment{value})
+		resolver.remember(value.DriverID, []Assignment{value})
 	}
 	return value, found, nil
 }
 
-func (resolver *Resolver) ForDriver(ctx context.Context, driverID string) ([]assignmentdomain.Assignment, error) {
+func (resolver *Resolver) ForDriver(ctx context.Context, driverID string) ([]Assignment, error) {
 	if resolver == nil {
-		return []assignmentdomain.Assignment{}, nil
+		return []Assignment{}, nil
 	}
 	if err := contextError(ctx); err != nil {
 		return nil, err
@@ -107,14 +104,14 @@ func (resolver *Resolver) ForDriver(ctx context.Context, driverID string) ([]ass
 		}
 		return assignments, nil
 	}
-	return []assignmentdomain.Assignment{}, nil
+	return []Assignment{}, nil
 }
 
-func (resolver *Resolver) remember(driverID string, assignments []assignmentdomain.Assignment) {
+func (resolver *Resolver) remember(driverID string, assignments []Assignment) {
 	if resolver == nil || resolver.routing == nil {
 		return
 	}
-	projection, ok := resolver.routing.(assignmentports.Projection)
+	projection, ok := resolver.routing.(Projection)
 	if ok {
 		projection.Remember(driverID, assignments)
 	}

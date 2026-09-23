@@ -10,8 +10,7 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/chat/domain"
 	chatports "github.com/Easy-Bao/DrivingApp/server/internal/chat/ports"
-	assignmentdomain "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment/domain"
-	assignmentports "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment/ports"
+	assignment "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
@@ -24,7 +23,7 @@ const (
 type ChatService struct {
 	history     chatports.RoomStore
 	events      chatports.EventPublisher
-	assignments assignmentports.Lookup
+	assignments assignment.Lookup
 	logger      *slog.Logger
 }
 
@@ -40,7 +39,7 @@ func (service *ChatService) WithEventPublisher(publisher EventPublisher) *ChatSe
 }
 
 func (service *ChatService) WithRideAssignmentLookup(
-	lookup assignmentports.Lookup,
+	lookup assignment.Lookup,
 ) *ChatService {
 	service.assignments = lookup
 	return service
@@ -171,19 +170,19 @@ func (service *ChatService) communicationAssignment(
 	ctx context.Context,
 	rideID string,
 	actorID string,
-) (assignmentdomain.Assignment, error) {
+) (assignment.Assignment, error) {
 	if service.assignments == nil {
-		return assignmentdomain.Assignment{}, domain.ErrRoomUnavailable
+		return assignment.Assignment{}, domain.ErrRoomUnavailable
 	}
 	rideAssignment, found, err := service.assignments.ForRide(ctx, rideID)
 	if err != nil {
 		service.log().WarnContext(ctx, "load ride assignment for chat authorization failed", "error", err)
-		return assignmentdomain.Assignment{}, domain.ErrRoomUnavailable
+		return assignment.Assignment{}, domain.ErrRoomUnavailable
 	}
 	communicationNotAllowed := !rideAssignment.AllowsCommunication()
 	actorIsNotParticipant := actorID != rideAssignment.PassengerID && actorID != rideAssignment.DriverID
 	if !found || communicationNotAllowed || actorIsNotParticipant {
-		return assignmentdomain.Assignment{}, domain.ErrForbidden
+		return assignment.Assignment{}, domain.ErrForbidden
 	}
 	return rideAssignment, nil
 }

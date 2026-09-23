@@ -1,11 +1,10 @@
-package adapter
+package assignment
 
 import (
 	"context"
 	"testing"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
@@ -42,10 +41,10 @@ func TestMemoryProjectionTracksActiveRideAssignments(t *testing.T) {
 
 func TestMemoryProjectionRememberRefreshesOneDriver(t *testing.T) {
 	projection := NewMemoryProjection()
-	projection.Remember("driver-1", []assignment.Assignment{
+	projection.Remember("driver-1", []Assignment{
 		{RideID: "stale", DriverID: "driver-1", PassengerID: "passenger-1", Status: "assigned"},
 	})
-	projection.Remember("driver-1", []assignment.Assignment{
+	projection.Remember("driver-1", []Assignment{
 		{RideID: "current", DriverID: "driver-1", PassengerID: "passenger-2", Status: "arrived"},
 	})
 

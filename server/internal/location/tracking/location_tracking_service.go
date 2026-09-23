@@ -8,15 +8,14 @@ import (
 	"math"
 	"time"
 
-	assignmentdomain "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment/domain"
-	assignmentports "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment/ports"
+	assignment "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
 type LocationTrackingService struct {
 	repository     LocationStore
-	assignments    assignmentports.Lookup
+	assignments    assignment.Lookup
 	eventPublisher EventPublisher
 	logger         *slog.Logger
 }
@@ -25,7 +24,7 @@ var ErrPersistenceUnavailable = errors.New("location persistence is unavailable"
 
 type Option func(*LocationTrackingService)
 
-func WithRideAssignments(assignments assignmentports.Lookup) Option {
+func WithRideAssignments(assignments assignment.Lookup) Option {
 	return func(service *LocationTrackingService) { service.assignments = assignments }
 }
 
@@ -275,12 +274,12 @@ func (service *LocationTrackingService) GetDriverForRide(
 func (service *LocationTrackingService) activeRidesForDriver(
 	ctx context.Context,
 	driverID string,
-) ([]assignmentdomain.Assignment, error) {
+) ([]assignment.Assignment, error) {
 	if err := contextError(ctx); err != nil {
 		return nil, err
 	}
 	if service.assignments == nil {
-		return []assignmentdomain.Assignment{}, nil
+		return []assignment.Assignment{}, nil
 	}
 	assignments, err := service.assignments.ForDriver(ctx, driverID)
 	if err != nil {
@@ -289,7 +288,7 @@ func (service *LocationTrackingService) activeRidesForDriver(
 	if err := contextError(ctx); err != nil {
 		return nil, err
 	}
-	active := make([]assignmentdomain.Assignment, 0, len(assignments))
+	active := make([]assignment.Assignment, 0, len(assignments))
 	for _, rideAssignment := range assignments {
 		if rideAssignment.Active() {
 			active = append(active, rideAssignment)
@@ -301,22 +300,22 @@ func (service *LocationTrackingService) activeRidesForDriver(
 func (service *LocationTrackingService) assignmentForRide(
 	ctx context.Context,
 	rideID string,
-) (assignmentdomain.Assignment, error) {
+) (assignment.Assignment, error) {
 	if err := contextError(ctx); err != nil {
-		return assignmentdomain.Assignment{}, err
+		return assignment.Assignment{}, err
 	}
 	if service.assignments == nil {
-		return assignmentdomain.Assignment{}, domain.ErrRideAssignmentUnavailable
+		return assignment.Assignment{}, domain.ErrRideAssignmentUnavailable
 	}
 	rideAssignment, found, err := service.assignments.ForRide(ctx, rideID)
 	if err != nil {
-		return assignmentdomain.Assignment{}, fmt.Errorf("load ride assignment: %w", err)
+		return assignment.Assignment{}, fmt.Errorf("load ride assignment: %w", err)
 	}
 	if err := contextError(ctx); err != nil {
-		return assignmentdomain.Assignment{}, err
+		return assignment.Assignment{}, err
 	}
 	if !found || !rideAssignment.Active() {
-		return assignmentdomain.Assignment{}, domain.ErrRideAccessDenied
+		return assignment.Assignment{}, domain.ErrRideAccessDenied
 	}
 	return rideAssignment, nil
 }

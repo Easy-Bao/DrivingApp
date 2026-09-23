@@ -1,4 +1,4 @@
-package ports
+package assignment
 
 import (
 	"context"
@@ -6,16 +6,20 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment/domain"
 )
 
+// Assignment is the dispatch view shared by authorization, telemetry, and
+// communication consumers. Its business behavior remains in domain.
+type Assignment = domain.Assignment
+
 // Lookup reads ride assignments for authorization and active telemetry
 // routing. Implementations may be backed by a projection or an authority.
 type Lookup interface {
-	ForRide(ctx context.Context, rideID string) (domain.Assignment, bool, error)
-	ForDriver(ctx context.Context, driverID string) ([]domain.Assignment, error)
+	ForRide(ctx context.Context, rideID string) (Assignment, bool, error)
+	ForDriver(ctx context.Context, driverID string) ([]Assignment, error)
 }
 
 // Projection is an optional routing index refreshed from the authoritative
 // assignment query after a cache miss or process restart.
 type Projection interface {
 	Lookup
-	Remember(driverID string, values []domain.Assignment)
+	Remember(driverID string, values []Assignment)
 }

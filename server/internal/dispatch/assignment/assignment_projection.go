@@ -1,4 +1,4 @@
-package adapter
+package assignment
 
 import (
 	"context"
@@ -7,8 +7,6 @@ import (
 	"strings"
 	"sync"
 
-	assignmentdomain "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment/domain"
-	assignmentports "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment/ports"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
@@ -17,15 +15,15 @@ import (
 // continues to use the PostgreSQL-backed authority in assignment.Resolver.
 type MemoryProjection struct {
 	mu       sync.RWMutex
-	byRide   map[string]assignmentdomain.Assignment
+	byRide   map[string]Assignment
 	byDriver map[string]map[string]struct{}
 }
 
-var _ assignmentports.Projection = (*MemoryProjection)(nil)
+var _ Projection = (*MemoryProjection)(nil)
 
 func NewMemoryProjection() *MemoryProjection {
 	return &MemoryProjection{
-		byRide:   make(map[string]assignmentdomain.Assignment),
+		byRide:   make(map[string]Assignment),
 		byDriver: make(map[string]map[string]struct{}),
 	}
 }
@@ -58,7 +56,7 @@ func (projection *MemoryProjection) Publish(envelope event.Envelope) {
 func (projection *MemoryProjection) ForRide(
 	_ context.Context,
 	rideID string,
-) (assignmentdomain.Assignment, bool, error) {
+) (Assignment, bool, error) {
 	projection.mu.RLock()
 	defer projection.mu.RUnlock()
 	value, found := projection.byRide[rideID]
@@ -68,7 +66,7 @@ func (projection *MemoryProjection) ForRide(
 func (projection *MemoryProjection) ForDriver(
 	_ context.Context,
 	driverID string,
-) ([]assignmentdomain.Assignment, error) {
+) ([]Assignment, error) {
 	projection.mu.RLock()
 	defer projection.mu.RUnlock()
 
@@ -77,7 +75,7 @@ func (projection *MemoryProjection) ForDriver(
 		rideIDs = append(rideIDs, rideID)
 	}
 	sort.Strings(rideIDs)
-	values := make([]assignmentdomain.Assignment, 0, len(rideIDs))
+	values := make([]Assignment, 0, len(rideIDs))
 	for _, rideID := range rideIDs {
 		values = append(values, projection.byRide[rideID])
 	}
@@ -87,7 +85,7 @@ func (projection *MemoryProjection) ForDriver(
 // Remember refreshes one driver's routing slice from the authoritative ride
 // query. Clearing that slice first prevents a stale in-memory assignment from
 // surviving a cache miss or process restart recovery.
-func (projection *MemoryProjection) Remember(driverID string, values []assignmentdomain.Assignment) {
+func (projection *MemoryProjection) Remember(driverID string, values []Assignment) {
 	if projection == nil || driverID == "" {
 		return
 	}
@@ -117,7 +115,7 @@ func (projection *MemoryProjection) upsert(scope event.Scope, status string) {
 	if missingRideID || missingDriverID || missingPassengerID {
 		return
 	}
-	value := assignmentdomain.Assignment{
+	value := Assignment{
 		RideID:      scope.RideID,
 		DriverID:    scope.DriverID,
 		PassengerID: scope.PassengerID,
@@ -129,7 +127,7 @@ func (projection *MemoryProjection) upsert(scope event.Scope, status string) {
 	projection.upsertLocked(value)
 }
 
-func (projection *MemoryProjection) upsertLocked(value assignmentdomain.Assignment) {
+func (projection *MemoryProjection) upsertLocked(value Assignment) {
 	if previous, found := projection.byRide[value.RideID]; found && previous.DriverID != value.DriverID {
 		projection.removeDriverAssignment(previous.DriverID, value.RideID)
 	}

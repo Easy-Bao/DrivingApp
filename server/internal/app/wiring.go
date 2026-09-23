@@ -19,8 +19,7 @@ import (
 	chatapplication "github.com/Easy-Bao/DrivingApp/server/internal/chat/application"
 	chathttp "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/http"
 	chatws "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/ws"
-	assignmentadapter "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment/adapter"
-	assignmentapplication "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment/application"
+	assignment "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment"
 	documentapplication "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/application"
 	documentports "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/ports"
 	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/transport/http"
@@ -144,7 +143,7 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 		},
 	)
 	eventHub := websockethub.NewHub()
-	assignmentProjection := assignmentadapter.NewMemoryProjection()
+	assignmentProjection := assignment.NewMemoryProjection()
 	eventPublisher := eventadapter.NewMemoryPublisher(assignmentProjection, eventHub)
 	ridesService := rideapplication.NewRideServiceWithRouteCalculator(
 		rideStore,
@@ -152,9 +151,9 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 		config.Pricing,
 		eventPublisher,
 	).WithReportingLocation(config.ReportingLocation).WithLogger(applicationLogger)
-	rideAssignments := assignmentapplication.NewResolver(
+	rideAssignments := assignment.NewResolver(
 		assignmentProjection,
-		assignmentadapter.NewRideLookup(rideStore),
+		assignment.NewRideLookup(rideStore),
 	)
 
 	ridesRouter := ridehttp.NewRouter(ridesService, verifier)

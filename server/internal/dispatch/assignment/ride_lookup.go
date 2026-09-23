@@ -1,4 +1,4 @@
-package adapter
+package assignment
 
 import (
 	"context"
@@ -8,19 +8,17 @@ import (
 	"strings"
 	"time"
 
-	assignmentdomain "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment/domain"
-	assignmentports "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment/ports"
 	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/jackc/pgx/v5"
 )
 
-type RideRepository = assignmentports.RideAuthority
+type RideRepository = RideAuthority
 
 type RideRepositoryLookup struct {
-	repository assignmentports.RideAuthority
+	repository RideAuthority
 }
 
-var _ assignmentports.Lookup = (*RideRepositoryLookup)(nil)
+var _ Lookup = (*RideRepositoryLookup)(nil)
 
 func NewRideRepositoryLookup(repository RideRepository) *RideRepositoryLookup {
 	return &RideRepositoryLookup{repository: repository}
@@ -30,27 +28,27 @@ func NewRideRepositoryLookup(repository RideRepository) *RideRepositoryLookup {
 // type and constructor remain available for existing internal callers.
 type RideLookup = RideRepositoryLookup
 
-func NewRideLookup(source assignmentports.RideAuthority) *RideLookup {
+func NewRideLookup(source RideAuthority) *RideLookup {
 	return NewRideRepositoryLookup(source)
 }
 
 func (lookup *RideRepositoryLookup) ForRide(
 	ctx context.Context,
 	rideID string,
-) (assignmentdomain.Assignment, bool, error) {
+) (Assignment, bool, error) {
 	if lookup == nil || lookup.repository == nil {
-		return assignmentdomain.Assignment{}, false, fmt.Errorf("ride authority is unavailable")
+		return Assignment{}, false, fmt.Errorf("ride authority is unavailable")
 	}
 	id, err := parseID(rideID)
 	if err != nil {
-		return assignmentdomain.Assignment{}, false, nil
+		return Assignment{}, false, nil
 	}
 	ride, err := lookup.repository.Get(ctx, id)
 	if err != nil {
 		if isRideNotFound(err) {
-			return assignmentdomain.Assignment{}, false, nil
+			return Assignment{}, false, nil
 		}
-		return assignmentdomain.Assignment{}, false, fmt.Errorf("load ride assignment: %w", err)
+		return Assignment{}, false, fmt.Errorf("load ride assignment: %w", err)
 	}
 	value, ok := fromRide(ride)
 	return value, ok, nil
@@ -63,19 +61,19 @@ func isRideNotFound(err error) bool {
 func (lookup *RideRepositoryLookup) ForDriver(
 	ctx context.Context,
 	driverID string,
-) ([]assignmentdomain.Assignment, error) {
+) ([]Assignment, error) {
 	if lookup == nil || lookup.repository == nil {
 		return nil, fmt.Errorf("ride authority is unavailable")
 	}
 	id, err := parseID(driverID)
 	if err != nil {
-		return []assignmentdomain.Assignment{}, nil
+		return []Assignment{}, nil
 	}
 	rides, err := lookup.repository.ActiveRidesForDriver(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("load driver ride assignments: %w", err)
 	}
-	result := make([]assignmentdomain.Assignment, 0, len(rides))
+	result := make([]Assignment, 0, len(rides))
 	for _, ride := range rides {
 		if value, ok := fromRide(ride); ok {
 			result = append(result, value)
@@ -84,14 +82,14 @@ func (lookup *RideRepositoryLookup) ForDriver(
 	return result, nil
 }
 
-func fromRide(ride ridedomain.Ride) (assignmentdomain.Assignment, bool) {
+func fromRide(ride ridedomain.Ride) (Assignment, bool) {
 	invalidRideID := ride.ID <= 0
 	invalidPassengerID := ride.PassengerID <= 0
 	invalidDriverID := ride.DriverID == nil || *ride.DriverID <= 0
 	if invalidRideID || invalidPassengerID || invalidDriverID {
-		return assignmentdomain.Assignment{}, false
+		return Assignment{}, false
 	}
-	value := assignmentdomain.Assignment{
+	value := Assignment{
 		RideID:      strconv.Itoa(ride.ID),
 		PassengerID: strconv.Itoa(ride.PassengerID),
 		DriverID:    strconv.Itoa(*ride.DriverID),
