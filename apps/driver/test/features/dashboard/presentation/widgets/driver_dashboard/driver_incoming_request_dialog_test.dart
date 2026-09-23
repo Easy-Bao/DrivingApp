@@ -11,7 +11,9 @@ void main() {
     'fare_amount': 25000,
     'distance_km': 3.5,
     'passenger_note': 'Waiting near the main entrance',
-    'expires_at': DateTime.now().add(const Duration(seconds: 30)).toIso8601String(),
+    'expires_at': DateTime.now()
+        .add(const Duration(seconds: 30))
+        .toIso8601String(),
   };
 
   testWidgets('renders incoming ride request details', (tester) async {
@@ -35,11 +37,24 @@ void main() {
     expect(find.text('₱250'), findsOneWidget);
     expect(find.text('3.5 km away'), findsOneWidget);
     expect(find.text('Waiting near the main entrance'), findsOneWidget);
-    expect(find.byKey(const ValueKey('incoming-request-countdown-progress')), findsOneWidget);
-    expect(find.byKey(const ValueKey('incoming-request-linear-progress')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('incoming-request-countdown-progress')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('incoming-request-linear-progress')),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('interpolates countdown progress smoothly via animation controller', (tester) async {
+  testWidgets('keeps actions reachable in landscape viewports', (tester) async {
+    tester.view.physicalSize = const Size(800, 400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
     await tester.pumpWidget(
       MaterialApp(
         theme: EasyRideTheme.main,
@@ -49,30 +64,67 @@ void main() {
             submittingBidId: null,
             onDecline: () {},
             onAccept: () {},
-            totalDuration: const Duration(seconds: 30),
           ),
         ),
       ),
     );
 
-    final initialProgress = tester.widget<CircularProgressIndicator>(
-      find.byKey(const ValueKey('incoming-request-countdown-progress')),
+    expect(
+      find.byKey(const ValueKey('incoming-request-scroll-view')),
+      findsOneWidget,
     );
-    expect(initialProgress.value, isNotNull);
-    final startVal = initialProgress.value!;
-
-    await tester.pump(const Duration(milliseconds: 250));
-    final quarterSecondProgress = tester.widget<CircularProgressIndicator>(
-      find.byKey(const ValueKey('incoming-request-countdown-progress')),
+    expect(
+      find.byKey(const ValueKey('incoming-request-decline-button')),
+      findsOneWidget,
     );
-    expect(quarterSecondProgress.value, lessThan(startVal));
-
-    await tester.pump(const Duration(milliseconds: 500));
-    final threeQuarterSecondProgress = tester.widget<CircularProgressIndicator>(
-      find.byKey(const ValueKey('incoming-request-countdown-progress')),
+    expect(
+      find.byKey(const ValueKey('incoming-request-accept-button')),
+      findsOneWidget,
     );
-    expect(threeQuarterSecondProgress.value, lessThan(quarterSecondProgress.value!));
+    expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'interpolates countdown progress smoothly via animation controller',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: EasyRideTheme.main,
+          home: Scaffold(
+            body: DriverIncomingRequestDialog(
+              bid: testBid,
+              submittingBidId: null,
+              onDecline: () {},
+              onAccept: () {},
+              totalDuration: const Duration(seconds: 30),
+            ),
+          ),
+        ),
+      );
+
+      final initialProgress = tester.widget<CircularProgressIndicator>(
+        find.byKey(const ValueKey('incoming-request-countdown-progress')),
+      );
+      expect(initialProgress.value, isNotNull);
+      final startVal = initialProgress.value!;
+
+      await tester.pump(const Duration(milliseconds: 250));
+      final quarterSecondProgress = tester.widget<CircularProgressIndicator>(
+        find.byKey(const ValueKey('incoming-request-countdown-progress')),
+      );
+      expect(quarterSecondProgress.value, lessThan(startVal));
+
+      await tester.pump(const Duration(milliseconds: 500));
+      final threeQuarterSecondProgress = tester
+          .widget<CircularProgressIndicator>(
+            find.byKey(const ValueKey('incoming-request-countdown-progress')),
+          );
+      expect(
+        threeQuarterSecondProgress.value,
+        lessThan(quarterSecondProgress.value!),
+      );
+    },
+  );
 
   testWidgets('triggers onDecline and onAccept callbacks', (tester) async {
     var declined = false;
@@ -92,10 +144,14 @@ void main() {
       ),
     );
 
-    await tester.tap(find.byKey(const ValueKey('incoming-request-decline-button')));
+    await tester.tap(
+      find.byKey(const ValueKey('incoming-request-decline-button')),
+    );
     expect(declined, isTrue);
 
-    await tester.tap(find.byKey(const ValueKey('incoming-request-accept-button')));
+    await tester.tap(
+      find.byKey(const ValueKey('incoming-request-accept-button')),
+    );
     expect(accepted, isTrue);
   });
 
@@ -109,7 +165,9 @@ void main() {
           body: DriverIncomingRequestDialog(
             bid: {
               ...testBid,
-              'expires_at': DateTime.now().add(const Duration(seconds: 2)).toIso8601String(),
+              'expires_at': DateTime.now()
+                  .add(const Duration(seconds: 2))
+                  .toIso8601String(),
             },
             submittingBidId: null,
             onDecline: () {},

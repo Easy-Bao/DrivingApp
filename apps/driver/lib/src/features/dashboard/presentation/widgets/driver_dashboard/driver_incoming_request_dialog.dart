@@ -66,7 +66,8 @@ class DriverIncomingRequestDialog extends StatefulWidget {
       _DriverIncomingRequestDialogState();
 }
 
-class _DriverIncomingRequestDialogState extends State<DriverIncomingRequestDialog>
+class _DriverIncomingRequestDialogState
+    extends State<DriverIncomingRequestDialog>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final bool _isInternalController;
@@ -76,18 +77,16 @@ class _DriverIncomingRequestDialogState extends State<DriverIncomingRequestDialo
     super.initState();
     _isInternalController = widget.controller == null;
     final remainingDuration = _calculateRemainingDuration();
-    final effectiveController = widget.controller ??
-        AnimationController(
-          vsync: this,
-          duration: widget.totalDuration,
-        );
+    final effectiveController =
+        widget.controller ??
+        AnimationController(vsync: this, duration: widget.totalDuration);
     _controller = effectiveController;
 
     if (_isInternalController) {
       final initialFraction = widget.totalDuration.inMilliseconds > 0
           ? (remainingDuration.inMilliseconds /
-                  widget.totalDuration.inMilliseconds)
-              .clamp(0.0, 1.0)
+                    widget.totalDuration.inMilliseconds)
+                .clamp(0.0, 1.0)
           : 0.0;
       _controller.value = initialFraction;
       if (initialFraction > 0.0) {
@@ -108,7 +107,8 @@ class _DriverIncomingRequestDialogState extends State<DriverIncomingRequestDialo
 
   void _onAnimationStatusChanged(AnimationStatus status) {
     if ((status == AnimationStatus.dismissed ||
-            (status == AnimationStatus.completed && _controller.value == 0.0)) &&
+            (status == AnimationStatus.completed &&
+                _controller.value == 0.0)) &&
         mounted) {
       widget.onTimeout?.call();
     }
@@ -125,6 +125,11 @@ class _DriverIncomingRequestDialogState extends State<DriverIncomingRequestDialo
 
   @override
   Widget build(BuildContext context) {
+    final viewport = MediaQuery.sizeOf(context);
+    final isLandscape = viewport.width > viewport.height;
+    final maxDialogHeight = isLandscape
+        ? viewport.height * 0.7
+        : viewport.height - 48;
     final pickup = widget.bid['pickup_name']?.toString() ?? '—';
     final dropoff = widget.bid['dropoff_name']?.toString() ?? '—';
     final fare = dashboardFareInPesos(widget.bid);
@@ -137,7 +142,7 @@ class _DriverIncomingRequestDialogState extends State<DriverIncomingRequestDialo
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Container(
-        constraints: const BoxConstraints(maxWidth: 420),
+        constraints: BoxConstraints(maxWidth: 420, maxHeight: maxDialogHeight),
         decoration: BoxDecoration(
           color: context.colorScheme.surface,
           borderRadius: BorderRadius.circular(EasyRideRadius.xl),
@@ -152,270 +157,281 @@ class _DriverIncomingRequestDialogState extends State<DriverIncomingRequestDialo
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(EasyRideRadius.xl),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              AnimatedBuilder(
-                animation: _controller,
-                builder: (context, _) => LinearProgressIndicator(
-                  key: const ValueKey('incoming-request-linear-progress'),
-                  value: _controller.value,
-                  minHeight: 4,
-                  backgroundColor:
-                      context.colorScheme.outlineVariant.withValues(alpha: 0.2),
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    _controller.value < 0.25
-                        ? context.colorScheme.error
-                        : context.colorScheme.primary,
+          child: SingleChildScrollView(
+            key: const ValueKey('incoming-request-scroll-view'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, _) => LinearProgressIndicator(
+                    key: const ValueKey('incoming-request-linear-progress'),
+                    value: _controller.value,
+                    minHeight: 4,
+                    backgroundColor: context.colorScheme.outlineVariant
+                        .withValues(alpha: 0.2),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      _controller.value < 0.25
+                          ? context.colorScheme.error
+                          : context.colorScheme.primary,
+                    ),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(EasyRideSpacing.xl),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
+                Padding(
+                  padding: const EdgeInsets.all(EasyRideSpacing.xl),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Ride Request',
+                                  style: TextStyle(
+                                    fontSize: 19,
+                                    fontWeight: FontWeight.w800,
+                                    color: context.colorScheme.onSurface,
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Accept before timer expires',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: context.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          AnimatedBuilder(
+                            animation: _controller,
+                            builder: (context, _) {
+                              final remainingSeconds =
+                                  (_controller.value *
+                                          widget.totalDuration.inSeconds)
+                                      .ceil();
+                              final isUrgent = _controller.value < 0.25;
+                              return SizedBox(
+                                width: 52,
+                                height: 52,
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    CircularProgressIndicator(
+                                      key: const ValueKey(
+                                        'incoming-request-countdown-progress',
+                                      ),
+                                      value: _controller.value,
+                                      strokeWidth: 4,
+                                      backgroundColor: context
+                                          .colorScheme
+                                          .outlineVariant
+                                          .withValues(alpha: 0.25),
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        isUrgent
+                                            ? context.colorScheme.error
+                                            : context.colorScheme.primary,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${remainingSeconds}s',
+                                      key: const ValueKey(
+                                        'incoming-request-countdown-text',
+                                      ),
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w800,
+                                        color: isUrgent
+                                            ? context.colorScheme.error
+                                            : context.colorScheme.onSurface,
+                                        fontFeatures: const [
+                                          FontFeature.tabularFigures(),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      CompactRouteTimelineWidget(
+                        pickup: pickup,
+                        dropoff: dropoff,
+                      ),
+                      if (passengerNote != null) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 9,
+                          ),
+                          decoration: BoxDecoration(
+                            color: context.colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(
+                              EasyRideRadius.md,
+                            ),
+                          ),
+                          child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Ride Request',
-                                style: TextStyle(
-                                  fontSize: 19,
-                                  fontWeight: FontWeight.w800,
-                                  color: context.colorScheme.onSurface,
-                                  letterSpacing: -0.3,
-                                ),
+                              const Icon(
+                                LucideIcons.message_square_text,
+                                size: 16,
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Accept before timer expires',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: context.colorScheme.onSurfaceVariant,
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  passengerNote,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    height: 1.3,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        AnimatedBuilder(
-                          animation: _controller,
-                          builder: (context, _) {
-                            final remainingSeconds =
-                                (_controller.value * widget.totalDuration.inSeconds)
-                                    .ceil();
-                            final isUrgent = _controller.value < 0.25;
-                            return SizedBox(
-                              width: 52,
-                              height: 52,
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  CircularProgressIndicator(
-                                    key: const ValueKey(
-                                      'incoming-request-countdown-progress',
-                                    ),
-                                    value: _controller.value,
-                                    strokeWidth: 4,
-                                    backgroundColor: context
-                                        .colorScheme.outlineVariant
-                                        .withValues(alpha: 0.25),
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      isUrgent
-                                          ? context.colorScheme.error
-                                          : context.colorScheme.primary,
-                                    ),
-                                  ),
-                                  Text(
-                                    '${remainingSeconds}s',
-                                    key: const ValueKey(
-                                      'incoming-request-countdown-text',
-                                    ),
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w800,
-                                      color: isUrgent
-                                          ? context.colorScheme.error
-                                          : context.colorScheme.onSurface,
-                                      fontFeatures: const [
-                                        FontFeature.tabularFigures(),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
                       ],
-                    ),
-                    const SizedBox(height: 18),
-                    CompactRouteTimelineWidget(
-                      pickup: pickup,
-                      dropoff: dropoff,
-                    ),
-                    if (passengerNote != null) ...[
-                      const SizedBox(height: 12),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 9,
-                        ),
-                        decoration: BoxDecoration(
-                          color: context.colorScheme.surfaceContainerHighest,
-                          borderRadius:
-                              BorderRadius.circular(EasyRideRadius.md),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Icon(
-                              LucideIcons.message_square_text,
-                              size: 16,
+                      const SizedBox(height: 16),
+                      Divider(
+                        height: 1,
+                        color: context.colorScheme.outlineVariant,
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              distance == null
+                                  ? 'Distance unavailable'
+                                  : '${DistanceFormatter.fromKilometers(distance)} away',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: context.colorScheme.onSurfaceVariant,
+                              ),
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
+                          ),
+                          const SizedBox(width: EasyRideSpacing.sm),
+                          Text(
+                            fare == null ? '—' : formatPesoAmount(fare),
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              color: context.colorScheme.onSurface,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              key: const ValueKey(
+                                'incoming-request-decline-button',
+                              ),
+                              onPressed: widget.submittingBidId != null
+                                  ? null
+                                  : widget.onDecline,
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size(
+                                  0,
+                                  EasyRideSize.minimumTouchTarget,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                side: BorderSide(
+                                  color: context.colorScheme.outlineVariant,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    EasyRideRadius.lg,
+                                  ),
+                                ),
+                              ),
                               child: Text(
-                                passengerNote,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  height: 1.3,
+                                'Decline',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: context.colorScheme.onSurface,
                                 ),
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              key: const ValueKey(
+                                'incoming-request-accept-button',
+                              ),
+                              onPressed:
+                                  fare == null || widget.submittingBidId != null
+                                  ? null
+                                  : widget.onAccept,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: context.colorScheme.primary,
+                                foregroundColor: context.colorScheme.onPrimary,
+                                elevation: 0,
+                                minimumSize: const Size(
+                                  0,
+                                  EasyRideSize.minimumTouchTarget,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    EasyRideRadius.lg,
+                                  ),
+                                ),
+                              ),
+                              child: isSubmitting
+                                  ? SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: context.colorScheme.onPrimary,
+                                      ),
+                                    )
+                                  : Text(
+                                      'Accept',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                        color: context.colorScheme.onPrimary,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
-                    const SizedBox(height: 16),
-                    Divider(
-                      height: 1,
-                      color: context.colorScheme.outlineVariant,
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            distance == null
-                                ? 'Distance unavailable'
-                                : '${DistanceFormatter.fromKilometers(distance)} away',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: context.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: EasyRideSpacing.sm),
-                        Text(
-                          fare == null ? '—' : formatPesoAmount(fare),
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            color: context.colorScheme.onSurface,
-                            fontFeatures: const [FontFeature.tabularFigures()],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            key: const ValueKey(
-                              'incoming-request-decline-button',
-                            ),
-                            onPressed: widget.submittingBidId != null
-                                ? null
-                                : widget.onDecline,
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size(
-                                0,
-                                EasyRideSize.minimumTouchTarget,
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              side: BorderSide(
-                                color: context.colorScheme.outlineVariant,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  EasyRideRadius.lg,
-                                ),
-                              ),
-                            ),
-                            child: Text(
-                              'Decline',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: context.colorScheme.onSurface,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            key: const ValueKey(
-                              'incoming-request-accept-button',
-                            ),
-                            onPressed: fare == null ||
-                                    widget.submittingBidId != null
-                                ? null
-                                : widget.onAccept,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: context.colorScheme.primary,
-                              foregroundColor: context.colorScheme.onPrimary,
-                              elevation: 0,
-                              minimumSize: const Size(
-                                0,
-                                EasyRideSize.minimumTouchTarget,
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  EasyRideRadius.lg,
-                                ),
-                              ),
-                            ),
-                            child: isSubmitting
-                                ? SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: context.colorScheme.onPrimary,
-                                    ),
-                                  )
-                                : Text(
-                                    'Accept',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w700,
-                                      color: context.colorScheme.onPrimary,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
