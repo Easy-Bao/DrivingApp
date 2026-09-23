@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:foundation/src/network/network_availability_coordinator.dart';
 import 'package:foundation/src/realtime/realtime_event.dart';
 
 typedef RealtimeTokenProvider = FutureOr<String?> Function();
@@ -79,6 +80,7 @@ final class RealtimeWebSocketClient({
   RealtimeSocketConnector connector = const IoRealtimeSocketConnector(),
   ReconnectDelay? reconnectDelay,
   Random? random,
+  NetworkAvailabilityCoordinator? networkAvailability,
 }) {
   this
     : _uri = uri,
@@ -87,7 +89,8 @@ final class RealtimeWebSocketClient({
       _onResyncActiveTrip = onResyncActiveTrip,
       _connector = connector,
       _reconnectDelay = reconnectDelay ?? _defaultReconnectDelay,
-      _random = random ?? Random();
+      _random = random ?? Random(),
+      _networkAvailability = networkAvailability;
 
   static const _maximumDuplicateIds = 256;
 
@@ -98,6 +101,7 @@ final class RealtimeWebSocketClient({
   final RealtimeSocketConnector _connector;
   final ReconnectDelay _reconnectDelay;
   final Random _random;
+  final NetworkAvailabilityCoordinator? _networkAvailability;
   final _events = StreamController<RealtimeEvent>.broadcast();
   final _states = StreamController<RealtimeConnectionState>.broadcast();
   final _seenIds = <String>{};
@@ -113,6 +117,8 @@ final class RealtimeWebSocketClient({
   bool _disposed = false;
   bool _hasEstablishedConnection = false;
   Future<void>? _resyncing;
+  StreamSubscription<NetworkAvailabilityStatus>? _networkSubscription;
+  Future<void>? _reconnecting;
   int _attempt = 0;
 
   Stream<RealtimeEvent> get events => _events.stream;
@@ -153,6 +159,7 @@ final class RealtimeWebSocketClient({
       throw StateError('RealtimeWebSocketClient has been disposed.');
     }
     _wanted = true;
+    _ensureNetworkMonitoring();
     final stopping = _stopping;
     if (stopping != null) await stopping;
     if (!_wanted || _disposed) return;
@@ -190,8 +197,68 @@ final class RealtimeWebSocketClient({
     }
     _disposed = true;
     await stop();
+    await _networkSubscription?.cancel();
+    _networkSubscription = null;
     await _events.close();
     await _states.close();
+  }
+
+  /// Replaces a stale transport immediately after the process detects a
+  /// network transition. Concurrent network callbacks share one reconnect.
+  Future<void> reconnectNow() {
+    if (_disposed || !_wanted) return Future<void>.value();
+
+    final active = _reconnecting;
+    if (active != null) return active;
+
+    late final Future<void> reconnecting;
+    reconnecting = _reconnectNow().whenComplete(() {
+      if (identical(_reconnecting, reconnecting)) {
+        _reconnecting = null;
+      }
+    });
+    _reconnecting = reconnecting;
+    return reconnecting;
+  }
+
+  Future<void> _reconnectNow() async {
+    if (_disposed || !_wanted) return;
+
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+
+    final connecting = _connecting;
+    if (connecting != null) {
+      try {
+        await connecting;
+      } catch (_) {}
+    }
+    if (_disposed || !_wanted) return;
+
+    final subscription = _socketSubscription;
+    _socketSubscription = null;
+    final socket = _socket;
+    _socket = null;
+    await _cancelSocketSubscription(subscription);
+    try {
+      await socket?.close();
+    } catch (_) {}
+
+    _attempt = 0;
+    _emitState(const RealtimeDisconnected(reconnectIn: Duration.zero));
+    await _connect();
+  }
+
+  void _ensureNetworkMonitoring() {
+    if (_networkSubscription != null) return;
+    final networkAvailability = _networkAvailability;
+    if (networkAvailability == null) return;
+
+    _networkSubscription = networkAvailability.changes.listen((status) {
+      if (status == NetworkAvailabilityStatus.unavailable) {
+        unawaited(reconnectNow());
+      }
+    });
   }
 
   Future<void> _connect() {

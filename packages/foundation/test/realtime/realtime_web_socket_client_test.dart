@@ -54,6 +54,30 @@ void main() {
     await client.dispose();
   });
 
+  test('reconnects immediately when network availability drops', () async {
+    final firstSocket = _Socket();
+    final secondSocket = _Socket();
+    final connector = _SequenceConnector([firstSocket, secondSocket]);
+    final network = NetworkAvailabilityCoordinator(failureThreshold: 1);
+    final client = RealtimeWebSocketClient(
+      uri: Uri.parse('ws://example.test/api/v1/realtime/ws'),
+      tokenProvider: () => 'access-token',
+      connector: connector,
+      networkAvailability: network,
+      reconnectDelay: (_) => const Duration(days: 1),
+    );
+
+    await client.start();
+    network.recordFailure();
+    await client.reconnectNow();
+    await connector.secondConnection.future.timeout(const Duration(seconds: 1));
+
+    expect(firstSocket.wasClosed, isTrue);
+    expect(client.isConnected, isTrue);
+    await client.dispose();
+    await network.dispose();
+  });
+
   test('uses full jitter within the exponential reconnect cap', () async {
     final states = <RealtimeConnectionState>[];
     final client = RealtimeWebSocketClient(

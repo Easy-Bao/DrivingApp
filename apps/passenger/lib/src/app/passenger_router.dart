@@ -86,6 +86,7 @@ class PassengerRouter extends Module {
           ),
           tokenProvider: i.get<RefreshableTokenProvider>().getToken,
           refreshToken: i.get<RefreshableTokenProvider>().refreshAccessToken,
+          networkAvailability: i.get<NetworkAvailabilityCoordinator>(),
         ),
       );
   }
