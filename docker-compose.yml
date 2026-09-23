@@ -25,7 +25,14 @@ services:
     restart: always
     environment:
       REDIS_PORT: ${REDIS_PORT}
-    command: ["redis-server", "--port", "${REDIS_PORT}"]
+    command:
+      - redis-server
+      - --port
+      - "${REDIS_PORT}"
+      - --maxmemory
+      - "${REDIS_MAX_MEMORY:-256mb}"
+      - --maxmemory-policy
+      - allkeys-lru
     ports:
       - "127.0.0.1:${REDIS_HOST_PORT}:${REDIS_PORT}"
     healthcheck:
