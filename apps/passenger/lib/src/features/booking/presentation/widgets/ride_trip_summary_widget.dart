@@ -238,7 +238,7 @@ class const _LocationDetails({required this.label, required this.value})
         const SizedBox(height: 2),
         Text(
           value,
-          maxLines: 1,
+          maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: context.colorScheme.onSurface,

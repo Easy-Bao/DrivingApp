@@ -370,4 +370,33 @@ void main() {
     expect(find.byIcon(LucideIcons.navigation), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('allows long trip-summary labels to wrap before truncating', (
+    tester,
+  ) async {
+    const longDestination =
+        'International Convention Center and Passenger Terminal';
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: EasyRideTheme.main,
+        home: const Scaffold(
+          body: SizedBox(
+            width: 320,
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: RideTripSummaryWidget(
+                pickupLabel: 'Pickup at the North Entrance',
+                destinationName: longDestination,
+                destinationAddress: 'Long address',
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final destination = tester.widget<Text>(find.text(longDestination));
+    expect(tester.getSize(find.byWidget(destination)).height, greaterThan(20));
+    expect(tester.takeException(), isNull);
+  });
 }
