@@ -141,6 +141,31 @@ func TestHandlerRejectsUnauthenticatedOrUnsupportedRoles(t *testing.T) {
 	}
 }
 
+func TestHandlerClosesConnectionForOversizedClientMessage(t *testing.T) {
+	hub := NewHub()
+	handler := NewHandler(hub, authenticatorStub{identity: security.Identity{Subject: "7", Role: "driver"}}, nil)
+	server := newIPv4TestServer(t, handler)
+	defer server.Close()
+
+	url := "ws" + strings.TrimPrefix(server.URL, "http")
+	connection, _, err := websocket.DefaultDialer.Dial(url, http.Header{"Authorization": []string{"Bearer valid"}})
+	if err != nil {
+		t.Fatalf("Dial() error = %v", err)
+	}
+	defer connection.Close()
+
+	oversizedMessage := strings.Repeat("x", maximumMessageSize+1)
+	if err := connection.WriteMessage(websocket.TextMessage, []byte(oversizedMessage)); err != nil {
+		t.Fatalf("WriteMessage() error = %v", err)
+	}
+	if err := connection.SetReadDeadline(time.Now().Add(time.Second)); err != nil {
+		t.Fatalf("SetReadDeadline() error = %v", err)
+	}
+	if _, _, err := connection.ReadMessage(); err == nil {
+		t.Fatal("ReadMessage() succeeded after an oversized client frame")
+	}
+}
+
 func TestHandlerScavengesSubscriptionAfterAbruptSocketDisconnect(t *testing.T) {
 	hub := NewHub()
 	handler := NewHandler(
