@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
-	"github.com/Easy-Bao/DrivingApp/server/internal/ride/application/booking"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/booking"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
 )

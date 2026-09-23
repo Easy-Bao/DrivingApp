@@ -9,9 +9,9 @@ import (
 	"time"
 
 	biddingapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application/bidding"
-	"github.com/Easy-Bao/DrivingApp/server/internal/ride/application/booking"
 	lifecycleapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application/lifecycle"
 	settlementapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application/settlement"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/booking"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
 )
