@@ -7,6 +7,7 @@ import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
+import 'package:driver/src/infrastructure/telemetry/driver_battery_optimization.dart';
 import 'package:driver/src/infrastructure/telemetry/driver_location_spool.dart';
 import 'package:foundation/foundation.dart';
 
@@ -74,6 +75,8 @@ class DriverBackgroundTelemetry({
     await initialize();
     await _waitForResumedActivity();
     await _ensureLocationAccess();
+    final batteryOptimizationWarning =
+        await DriverBatteryOptimization.isOptimizationEnabled();
     var serviceWasStarted = false;
     if (!await _service.isRunning()) {
       final started = await _service.startService();
@@ -82,13 +85,20 @@ class DriverBackgroundTelemetry({
       }
       serviceWasStarted = true;
     }
-    await _configureService(serviceWasStarted: serviceWasStarted);
+    await _configureService(
+      serviceWasStarted: serviceWasStarted,
+      batteryOptimizationWarning: batteryOptimizationWarning,
+    );
   }
 
-  Future<void> _configureService({required bool serviceWasStarted}) async {
+  Future<void> _configureService({
+    required bool serviceWasStarted,
+    required bool batteryOptimizationWarning,
+  }) async {
     final configuration = <String, dynamic>{
       'baseUrl': _apiBaseUri.toString(),
       'appVisible': _lifecycleCoordinator.isForeground,
+      'batteryOptimizationWarning': batteryOptimizationWarning,
     };
     _service.invoke('configure', configuration);
     if (!serviceWasStarted) return;
@@ -190,6 +200,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
   var sending = false;
   var pollingRideRequests = false;
   var appIsVisible = false;
+  var batteryOptimizationWarning = false;
   var isConfigured = false;
   var activeRequestIds = <String>{};
   Timer? locationTimer;
@@ -232,9 +243,23 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     }
   }
 
+  Future<void> updateNotification(String content) async {
+    if (service is! AndroidServiceInstance) return;
+    try {
+      if (!await service.isForegroundService()) return;
+      await service.setForegroundNotificationInfo(
+        title: 'EasyRide Driver',
+        content: content,
+      );
+    } catch (error) {
+      dev.log('Unable to update telemetry notification: $error');
+    }
+  }
+
   configureSubscription = service.on('configure').listen((event) {
     if (isStopping) return;
     appIsVisible = event?['appVisible'] == true;
+    batteryOptimizationWarning = event?['batteryOptimizationWarning'] == true;
     final baseUrl = event?['baseUrl'] as String?;
     final parsed = Uri.tryParse(baseUrl ?? '');
     if (parsed == null || !_isValidTelemetryBaseUri(parsed)) {
@@ -244,6 +269,13 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
       tokenProvider = null;
       return;
     }
+    unawaited(
+      updateNotification(
+        batteryOptimizationWarning
+            ? 'Battery saver may delay location updates. Allow unrestricted battery use.'
+            : 'Sharing location while you are online.',
+      ),
+    );
     telemetryClient?.close(force: true);
     final client = Dio(
       BaseOptions(
@@ -340,19 +372,6 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     }
   }
 
-  Future<void> updateNotification(String content) async {
-    if (service is! AndroidServiceInstance) return;
-    try {
-      if (!await service.isForegroundService()) return;
-      await service.setForegroundNotificationInfo(
-        title: 'EasyRide Driver',
-        content: content,
-      );
-    } catch (error) {
-      dev.log('Unable to update telemetry notification: $error');
-    }
-  }
-
   Future<void> pollRideRequests() async {
     final client = telemetryClient;
     final provider = tokenProvider;
@@ -389,9 +408,17 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
       final hasNewRequest = requestIds.difference(activeRequestIds).isNotEmpty;
       activeRequestIds = requestIds;
       if (hasNewRequest) {
-        await updateNotification('New ride request available.');
+        await updateNotification(
+          batteryOptimizationWarning
+              ? 'New ride request available. Battery saver may delay location updates.'
+              : 'New ride request available.',
+        );
       } else if (requestIds.isEmpty) {
-        await updateNotification('Sharing location while you are online.');
+        await updateNotification(
+          batteryOptimizationWarning
+              ? 'Battery saver may delay location updates. Allow unrestricted battery use.'
+              : 'Sharing location while you are online.',
+        );
       }
     } on DioException catch (error) {
       dev.log(
