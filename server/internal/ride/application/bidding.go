@@ -8,10 +8,6 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
 )
 
-// ErrBiddingPersistenceUnavailable is retained for callers of the legacy ride
-// facade. The bidding module owns the underlying error value.
-var ErrBiddingPersistenceUnavailable = biddingapplication.ErrPersistenceUnavailable
-
 func newBiddingService(service *RideService) *biddingapplication.Service {
 	store, _ := service.repository.(ports.BiddingStore)
 	activeRideChecker, _ := service.repository.(ports.PassengerActiveRideChecker)

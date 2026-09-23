@@ -18,9 +18,3 @@ type PassengerActivityReader interface {
 		weekEnd time.Time,
 	) (PassengerActivitySummary, error)
 }
-
-// PassengerActivitySummaryRepository is the legacy name for
-// PassengerActivityReader.
-//
-// Deprecated: use PassengerActivityReader instead.
-type PassengerActivitySummaryRepository = PassengerActivityReader

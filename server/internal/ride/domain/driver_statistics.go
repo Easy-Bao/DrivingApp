@@ -20,8 +20,3 @@ type DriverStats struct {
 type DriverStatisticsReader interface {
 	DriverStats(ctx context.Context, driverID int, dayStart, dayEnd time.Time) (DriverStats, error)
 }
-
-// DriverStatisticsRepository is the legacy name for DriverStatisticsReader.
-//
-// Deprecated: use DriverStatisticsReader instead.
-type DriverStatisticsRepository = DriverStatisticsReader

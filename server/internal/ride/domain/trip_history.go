@@ -16,14 +16,3 @@ type RideHistoryReader interface {
 type RecentPassengerRidesReader interface {
 	PassengerRecentRides(ctx context.Context, passengerID, limit int) ([]Ride, error)
 }
-
-// TripHistoryRepository is the legacy name for RideHistoryReader.
-//
-// Deprecated: use RideHistoryReader instead.
-type TripHistoryRepository = RideHistoryReader
-
-// RecentPassengerRidesRepository is the legacy name for
-// RecentPassengerRidesReader.
-//
-// Deprecated: use RecentPassengerRidesReader instead.
-type RecentPassengerRidesRepository = RecentPassengerRidesReader

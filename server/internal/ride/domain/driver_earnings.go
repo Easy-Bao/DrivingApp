@@ -33,8 +33,3 @@ type DriverEarningsSummary struct {
 type DriverEarningsReader interface {
 	DriverEarnings(ctx context.Context, driverID int, monthStart, monthEnd time.Time) ([]DriverEarning, error)
 }
-
-// DriverEarningsRepository is the legacy name for DriverEarningsReader.
-//
-// Deprecated: use DriverEarningsReader instead.
-type DriverEarningsRepository = DriverEarningsReader
