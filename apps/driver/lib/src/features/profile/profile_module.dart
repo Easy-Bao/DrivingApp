@@ -5,12 +5,17 @@ import 'package:driver/src/features/auth/domain/services/driver_logout_coordinat
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver/src/features/profile/presentation/bloc/account/account_cubit.dart';
 import 'package:driver/src/features/profile/data/data_sources/driver_profile_remote_data_source.dart';
+import 'package:driver/src/features/profile/data/data_sources/driver_document_remote_data_source.dart';
+import 'package:driver/src/features/profile/data/repositories/driver_document_repository_impl.dart';
 import 'package:driver/src/features/profile/data/repositories/driver_profile_repository_impl.dart';
+import 'package:driver/src/features/profile/domain/repositories/driver_document_repository.dart';
 import 'package:driver/src/features/profile/domain/repositories/driver_profile_repository.dart';
 import 'package:driver/src/features/profile/profile_routes.dart';
 import 'package:driver/src/features/profile/presentation/view/driver_account_page.dart';
 import 'package:driver/src/features/profile/presentation/view/driver_personal_details_page.dart';
 import 'package:driver/src/features/profile/presentation/view/driver_vehicle_information_page.dart';
+import 'package:driver/src/features/profile/presentation/bloc/document_upload/driver_document_upload_cubit.dart';
+import 'package:driver/src/features/profile/presentation/view/driver_document_upload_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,6 +26,14 @@ class ProfileModule._() {
     i
       ..addLazySingleton<DriverProfileRemoteDataSource>(
         (i) => DriverProfileRemoteDataSourceImpl(i.get<Dio>()),
+      )
+      ..addLazySingleton<DriverDocumentRemoteDataSource>(
+        (i) => DriverDocumentRemoteDataSourceImpl(i.get<Dio>()),
+      )
+      ..addLazySingleton<DriverDocumentRepository>(
+        (i) => DriverDocumentRepositoryImpl(
+          i.get<DriverDocumentRemoteDataSource>(),
+        ),
       )
       ..addLazySingleton<DriverProfileRepository>(
         (i) => DriverProfileRepositoryImpl(
@@ -59,6 +72,17 @@ class ProfileModule._() {
           return cubit;
         },
         child: const DriverVehicleInformationPage(),
+      ),
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
+    ),
+    ChildRoute(
+      name: ProfileRoutes.documents,
+      ProfileRoutes.documentsPath,
+      child: (context, GoRouterState state) => BlocProvider(
+        create: (_) =>
+            DriverDocumentUploadCubit(Modular.get<DriverDocumentRepository>()),
+        child: const DriverDocumentUploadPage(),
       ),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,

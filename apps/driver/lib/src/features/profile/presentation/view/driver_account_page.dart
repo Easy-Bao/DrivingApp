@@ -86,6 +86,13 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                             ),
                           ),
                           _DriverAccountMenuItem(
+                            icon: LucideIcons.file_check,
+                            title: 'Driver Documents',
+                            subtitle: 'Submit license and vehicle records',
+                            onTap: () =>
+                                context.pushNamed(ProfileRoutes.documents),
+                          ),
+                          _DriverAccountMenuItem(
                             icon: LucideIcons.wallet_cards,
                             title: 'Performance',
                             subtitle: 'Ratings, trips, and earnings',
