@@ -10,6 +10,7 @@ export 'src/domain/failures/place_failure.dart';
 export 'src/domain/repositories/location_repository.dart';
 export 'src/map/map_annotation_service.dart';
 export 'src/map/map_camera_service.dart';
+export 'src/map/demand_heatmap_viewport.dart';
 export 'src/map/map_native_service.dart';
 export 'src/map/map_provider.dart';
 export 'src/support/access_state_monitor.dart';
