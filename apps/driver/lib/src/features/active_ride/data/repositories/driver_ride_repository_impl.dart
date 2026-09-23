@@ -5,7 +5,6 @@ import 'package:driver/src/features/active_ride/data/data_sources/ride_counterpa
 import 'package:driver/src/features/active_ride/data/data_sources/ride_remote_data_source.dart';
 import 'package:driver/src/features/active_ride/data/data_sources/telemetry_remote_data_source.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:foundation/foundation.dart';
 import 'package:driver/src/infrastructure/telemetry/driver_location_spool.dart';
 
@@ -21,7 +20,7 @@ final class DriverRideRepositoryImpl({
   final DriverLocationSpool? _locationSpool;
 
   @override
-  Future<Either<Failure, void>> acceptRide({
+  Future<Result<void, Failure>> acceptRide({
     required String rideId,
     required String driverId,
   }) async {
@@ -31,15 +30,15 @@ final class DriverRideRepositoryImpl({
         driverId: driverId,
       );
       return accepted
-          ? const Right(null)
-          : const Left(ServerFailure('The ride could not be accepted.'));
+          ? const Ok(null)
+          : const Err(ServerFailure('The ride could not be accepted.'));
     } catch (error) {
-      return Left(_mapFailure(error, action: 'accept this ride'));
+      return Err(_mapFailure(error, action: 'accept this ride'));
     }
   }
 
   @override
-  Future<Either<Failure, void>> updateRideStatus({
+  Future<Result<void, Failure>> updateRideStatus({
     required String rideId,
     required RideStatus status,
   }) async {
@@ -49,74 +48,72 @@ final class DriverRideRepositoryImpl({
         status: status.value,
       );
       return updated
-          ? const Right(null)
-          : const Left(ServerFailure('The ride status was not updated.'));
+          ? const Ok(null)
+          : const Err(ServerFailure('The ride status was not updated.'));
     } catch (error) {
-      return Left(_mapFailure(error, action: 'update this ride'));
+      return Err(_mapFailure(error, action: 'update this ride'));
     }
   }
 
   @override
-  Future<Either<Failure, RideSnapshot>> fetchRide(String rideId) async {
+  Future<Result<RideSnapshot, Failure>> fetchRide(String rideId) async {
     try {
       final data = await _rideDataSource.getRideStatus(rideId);
       final ride = RideDto.fromJson(data, fallbackId: rideId).toDomain();
       if (ride.id.isEmpty || ride.status.isEmpty) {
-        return const Left(
-          ValidationFailure('The ride response is incomplete.'),
-        );
+        return const Err(ValidationFailure('The ride response is incomplete.'));
       }
-      return Right(ride);
+      return Ok(ride);
     } catch (error) {
-      return Left(_mapFailure(error, action: 'load this ride'));
+      return Err(_mapFailure(error, action: 'load this ride'));
     }
   }
 
   @override
-  Future<Either<Failure, int>> settleCash(String rideId) async {
+  Future<Result<int, Failure>> settleCash(String rideId) async {
     try {
       final data = await _rideDataSource.settleCash(rideId);
       final fareAmount = SafeParse.toNullableDouble(data['fare_amount']);
       if (fareAmount == null || fareAmount <= 0) {
-        return const Left(
+        return const Err(
           ValidationFailure('The settled ride has no payable fare.'),
         );
       }
-      return Right(fareAmount.round());
+      return Ok(fareAmount.round());
     } catch (error) {
-      return Left(_mapFailure(error, action: 'settle this cash ride'));
+      return Err(_mapFailure(error, action: 'settle this cash ride'));
     }
   }
 
   @override
-  Future<Either<Failure, RideCounterparty>> fetchCounterparty(
+  Future<Result<RideCounterparty, Failure>> fetchCounterparty(
     String rideId,
   ) async {
     try {
-      return Right(
+      return Ok(
         RideCounterparty.fromJson(await _counterpartyDataSource.fetch(rideId)),
       );
     } catch (error) {
-      return Left(_mapFailure(error, action: 'load passenger contact details'));
+      return Err(_mapFailure(error, action: 'load passenger contact details'));
     }
   }
 
   @override
-  Future<Either<Failure, (double latitude, double longitude)?>>
+  Future<Result<(double latitude, double longitude)?, Failure>>
   fetchPassengerLocation(String rideId) async {
     try {
       final data = await _telemetryDataSource.fetchPassengerLocation(rideId);
       final latitude = SafeParse.toNullableDouble(data['lat']);
       final longitude = SafeParse.toNullableDouble(data['lng']);
-      if (latitude == null || longitude == null) return const Right(null);
-      return Right((latitude, longitude));
+      if (latitude == null || longitude == null) return const Ok(null);
+      return Ok((latitude, longitude));
     } catch (error) {
-      return Left(_mapFailure(error, action: 'load passenger location'));
+      return Err(_mapFailure(error, action: 'load passenger location'));
     }
   }
 
   @override
-  Future<Either<Failure, void>> publishDriverLocation({
+  Future<Result<void, Failure>> publishDriverLocation({
     required double latitude,
     required double longitude,
     double? heading,
@@ -132,8 +129,8 @@ final class DriverRideRepositoryImpl({
           speed: speed,
         );
         return sent
-            ? const Right(null)
-            : const Left(NetworkFailure('Driver location was not accepted.'));
+            ? const Ok(null)
+            : const Err(NetworkFailure('Driver location was not accepted.'));
       }
       await spool.enqueue(
         DriverLocationPoint(
@@ -153,25 +150,25 @@ final class DriverRideRepositoryImpl({
           speed: point.speed,
         ),
       );
-      return const Right(null);
+      return const Ok(null);
     } catch (error) {
       if (error is DioException &&
           NetworkAvailabilityCoordinator.isNetworkFailure(error)) {
-        return const Right(null);
+        return const Ok(null);
       }
-      return Left(_mapFailure(error, action: 'share driver location'));
+      return Err(_mapFailure(error, action: 'share driver location'));
     }
   }
 
   @override
-  Future<Either<Failure, void>> clearDriverLocation() async {
+  Future<Result<void, Failure>> clearDriverLocation() async {
     try {
       final removed = await _telemetryDataSource.removeLocation();
       return removed
-          ? const Right(null)
-          : const Left(ServerFailure('Driver location was not removed.'));
+          ? const Ok(null)
+          : const Err(ServerFailure('Driver location was not removed.'));
     } catch (error) {
-      return Left(_mapFailure(error, action: 'remove driver location'));
+      return Err(_mapFailure(error, action: 'remove driver location'));
     }
   }
 }

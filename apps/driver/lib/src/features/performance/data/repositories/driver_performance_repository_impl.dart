@@ -3,7 +3,6 @@ import 'package:driver/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:driver/src/features/performance/data/data_sources/driver_performance_remote_data_source.dart';
 import 'package:driver/src/features/performance/domain/entities/driver_performance_stats.dart';
 import 'package:driver/src/features/performance/domain/repositories/driver_performance_repository.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:foundation/foundation.dart';
 
 final class DriverPerformanceRepositoryImpl({required this._dataSource})
@@ -11,12 +10,12 @@ final class DriverPerformanceRepositoryImpl({required this._dataSource})
   final DriverPerformanceRemoteDataSource _dataSource;
 
   @override
-  Future<Either<Failure, DriverPerformanceStats>> fetchStats(
+  Future<Result<DriverPerformanceStats, Failure>> fetchStats(
     String driverId,
   ) async {
     try {
       final values = await _dataSource.fetchStats(driverId);
-      return Right(
+      return Ok(
         DriverPerformanceStats(
           todayEarningsAmount: _readNonNegativeInt(
             values,
@@ -36,7 +35,7 @@ final class DriverPerformanceRepositoryImpl({required this._dataSource})
         ),
       );
     } catch (error) {
-      return Left(_mapExceptionToFailure(error));
+      return Err(_mapExceptionToFailure(error));
     }
   }
 

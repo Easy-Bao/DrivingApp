@@ -1,5 +1,4 @@
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/auth/domain/entities/passenger_session.dart';
 import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
@@ -21,7 +20,7 @@ final class SessionRepositoryImpl({
   ];
 
   @override
-  Future<Either<Failure, PassengerSession>> restoreSession() async {
+  Future<Result<PassengerSession, Failure>> restoreSession() async {
     try {
       final token = await _secureSessionService.readToken();
       final passengerId = await _secureSessionService.readPassengerId();
@@ -29,31 +28,31 @@ final class SessionRepositoryImpl({
           token.isEmpty ||
           passengerId == null ||
           passengerId.isEmpty) {
-        return const Right(PassengerSession.guest());
+        return const Ok(PassengerSession.guest());
       }
-      return Right(
+      return Ok(
         PassengerSession.authenticated(
           passengerId: passengerId,
           passengerName: _preferences.getString('passenger_name') ?? '',
         ),
       );
     } catch (_) {
-      return const Left(
+      return const Err(
         CacheFailure('Unable to restore the passenger session.'),
       );
     }
   }
 
   @override
-  Future<Either<Failure, PassengerSession>> clearSession() async {
+  Future<Result<PassengerSession, Failure>> clearSession() async {
     try {
       await Future.wait([
         _secureSessionService.clearAll(),
         for (final key in _profileCacheKeys) _preferences.remove(key),
       ]);
-      return const Right(PassengerSession.guest());
+      return const Ok(PassengerSession.guest());
     } catch (_) {
-      return const Left(CacheFailure('Unable to clear the passenger session.'));
+      return const Err(CacheFailure('Unable to clear the passenger session.'));
     }
   }
 }

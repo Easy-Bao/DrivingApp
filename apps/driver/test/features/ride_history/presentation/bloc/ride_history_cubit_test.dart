@@ -5,7 +5,6 @@ import 'package:driver/src/features/ride_history/presentation/bloc/trip_history_
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockRideHistoryRepository extends Mock
@@ -29,7 +28,7 @@ void main() {
     build: () {
       when(() => repository.fetchTripHistory('driver-1', limit: 25, offset: 0))
           .thenAnswer(
-            (_) async => const Right(
+            (_) async => const Ok(
               OffsetPage(
                 items: [
                   {'id': 1, 'status': 'completed'},
@@ -41,7 +40,7 @@ void main() {
           );
       when(() => repository.fetchTripHistory('driver-1', limit: 25, offset: 25))
           .thenAnswer(
-            (_) async => const Right(
+            (_) async => const Ok(
               OffsetPage(
                 items: [
                   {'id': 1, 'status': 'completed'},
@@ -80,12 +79,11 @@ void main() {
   blocTest<DriverTripHistoryCubit, DriverTripHistoryState>(
     'keeps request failures separate from an empty history',
     build: () {
-      when(
-        () => repository.fetchTripHistory('driver-1', limit: 25, offset: 0),
-      ).thenAnswer(
-        (_) async =>
-            const Left(ServerFailure('pq: relation "rides" does not exist')),
-      );
+      when(() => repository.fetchTripHistory('driver-1', limit: 25, offset: 0))
+          .thenAnswer(
+            (_) async =>
+                const Err(ServerFailure('pq: relation "rides" does not exist')),
+          );
       return DriverTripHistoryCubit(
         repository: repository,
         sessionService: sessionService,
@@ -112,7 +110,7 @@ void main() {
           .thenAnswer((_) async {
             requestCount++;
             if (requestCount == 1) {
-              return const Right(
+              return const Ok(
                 OffsetPage(
                   items: [
                     {'id': 1, 'status': 'completed'},
@@ -122,7 +120,7 @@ void main() {
                 ),
               );
             }
-            return const Left(ServerFailure('database connection refused'));
+            return const Err(ServerFailure('database connection refused'));
           });
       return DriverTripHistoryCubit(
         repository: repository,

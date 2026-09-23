@@ -4,30 +4,29 @@ import 'package:driver/src/features/chat/domain/entities/chat_connection_state.d
 import 'package:driver/src/features/chat/domain/entities/chat_event.dart';
 import 'package:driver/src/features/chat/domain/entities/chat_message.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 
 abstract interface class ChatRepository {
-  Future<Either<Failure, void>> establishChatConnection({
+  Future<Result<void, Failure>> establishChatConnection({
     required String roomId,
     required Uri chatUri,
     String? token,
   });
 
-  Future<Either<Failure, void>> terminateChatConnection();
+  Future<Result<void, Failure>> terminateChatConnection();
 
-  Future<Either<Failure, void>> initializeChatRoom({required String roomId});
+  Future<Result<void, Failure>> initializeChatRoom({required String roomId});
 
-  Future<Either<Failure, void>> sendChatMessage(String text);
+  Future<Result<void, Failure>> sendChatMessage(String text);
 
-  Future<Either<Failure, void>> sendTypingStatus(bool isTyping);
+  Future<Result<void, Failure>> sendTypingStatus(bool isTyping);
 
-  Future<Either<Failure, List<ChatMessage>>> fetchRoomMessages(String roomId);
+  Future<Result<List<ChatMessage>, Failure>> fetchRoomMessages(String roomId);
 
-  Future<Either<Failure, void>> resolveChatRoom(String roomId);
+  Future<Result<void, Failure>> resolveChatRoom(String roomId);
 
   Future<void> dispose();
 
-  Stream<Either<Failure, ChatEvent>> get chatEventsStream;
+  Stream<Result<ChatEvent, Failure>> get chatEventsStream;
 
   Stream<ChatConnectionState> get connectionStateStream;
 
@@ -99,7 +98,7 @@ extension ChatRepositoryResultApi on ChatRepository {
   Stream<Result<ChatEvent, DomainFailure>> get chatEventsResultStream {
     return chatEventsStream.transform(
       StreamTransformer<
-        Either<Failure, ChatEvent>,
+        Result<ChatEvent, Failure>,
         Result<ChatEvent, DomainFailure>
       >.fromHandlers(
         handleData: (event, sink) => sink.add(_toChatResult(event)),
@@ -117,7 +116,7 @@ extension ChatRepositoryResultApi on ChatRepository {
 }
 
 Future<Result<T, DomainFailure>> _captureChatResult<T>(
-  Future<Either<Failure, T>> Function() operation, {
+  Future<Result<T, Failure>> Function() operation, {
   required String message,
 }) async {
   try {
@@ -129,7 +128,7 @@ Future<Result<T, DomainFailure>> _captureChatResult<T>(
   }
 }
 
-Result<T, DomainFailure> _toChatResult<T>(Either<Failure, T> result) {
+Result<T, DomainFailure> _toChatResult<T>(Result<T, Failure> result) {
   return result.fold<Result<T, DomainFailure>>(
     (failure) => Err<T, DomainFailure>(failure),
     (value) => Ok<T, DomainFailure>(value),

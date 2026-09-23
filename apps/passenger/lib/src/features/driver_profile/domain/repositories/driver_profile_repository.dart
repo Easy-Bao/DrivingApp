@@ -1,18 +1,17 @@
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/driver_profile/domain/entities/driver_profile_stats.dart';
 import 'package:passenger/src/features/driver_profile/domain/entities/driver_review.dart';
 
 abstract interface class DriverProfileRepository {
-  Future<Either<Failure, DriverProfileStats>> fetchStats(String driverId);
+  Future<Result<DriverProfileStats, Failure>> fetchStats(String driverId);
 
-  Future<Either<Failure, List<DriverReview>>> fetchReviews(
+  Future<Result<List<DriverReview>, Failure>> fetchReviews(
     String driverId, {
     int page = 1,
     int limit = 20,
   });
 
-  Future<Either<Failure, void>> submitReview({
+  Future<Result<void, Failure>> submitReview({
     required String driverId,
     required String rideId,
     required double rating,
@@ -60,7 +59,7 @@ extension DriverProfileRepositoryResultApi on DriverProfileRepository {
 }
 
 Future<Result<T, DomainFailure>> _captureDriverProfileResult<T>(
-  Future<Either<Failure, T>> Function() operation, {
+  Future<Result<T, Failure>> Function() operation, {
   required String message,
 }) async {
   try {

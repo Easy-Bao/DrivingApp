@@ -1,7 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/auth/domain/entities/passenger_session.dart';
 import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
@@ -20,7 +19,7 @@ void main() {
     'restores an authenticated session from encrypted storage',
     setUp: () {
       when(() => sessionRepository.restoreSession()).thenAnswer(
-        (_) async => const Right<Failure, PassengerSession>(
+        (_) async => const Ok<PassengerSession, Failure>(
           PassengerSession.authenticated(
             passengerId: '42',
             passengerName: 'Avery Cruz',
@@ -44,7 +43,7 @@ void main() {
     setUp: () {
       when(() => sessionRepository.restoreSession()).thenAnswer(
         (_) async =>
-            const Right<Failure, PassengerSession>(PassengerSession.guest()),
+            const Ok<PassengerSession, Failure>(PassengerSession.guest()),
       );
     },
     build: () => SessionBloc(sessionRepository: sessionRepository),
@@ -57,7 +56,7 @@ void main() {
     setUp: () {
       when(() => sessionRepository.clearSession()).thenAnswer(
         (_) async =>
-            const Right<Failure, PassengerSession>(PassengerSession.guest()),
+            const Ok<PassengerSession, Failure>(PassengerSession.guest()),
       );
     },
     build: () => SessionBloc(sessionRepository: sessionRepository),

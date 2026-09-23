@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/booking/booking.dart';
@@ -14,7 +13,7 @@ final class DriverRepositoryImpl({
   final DriverDiscoveryRemoteDataSource _discoveryDataSource;
   final LocationRepository _locationRepository;
 
-  Future<Either<Failure, List<DriverModel>>>? _activeNearbyLookup;
+  Future<Result<List<DriverModel>, Failure>>? _activeNearbyLookup;
   ({double lat, double lng})? _activeNearbyCoordinates;
 
   Failure _mapExceptionToFailure(Object error) {
@@ -84,12 +83,12 @@ final class DriverRepositoryImpl({
   }
 
   @override
-  Future<Either<Failure, List<DriverModel>>> getNearbyDrivers({
+  Future<Result<List<DriverModel>, Failure>> getNearbyDrivers({
     required double lat,
     required double lng,
   }) async {
     if (!_isValidCoordinate(lat, lng)) {
-      return const Left(ValidationFailure('Pickup location is invalid.'));
+      return const Err(ValidationFailure('Pickup location is invalid.'));
     }
 
     final activeLookup = _activeNearbyLookup;
@@ -106,7 +105,7 @@ final class DriverRepositoryImpl({
     try {
       return await lookup;
     } catch (error) {
-      return Left(_mapExceptionToFailure(error));
+      return Err(_mapExceptionToFailure(error));
     } finally {
       if (identical(_activeNearbyLookup, lookup)) {
         _activeNearbyLookup = null;
@@ -115,7 +114,7 @@ final class DriverRepositoryImpl({
     }
   }
 
-  Future<Either<Failure, List<DriverModel>>> _loadNearbyDrivers({
+  Future<Result<List<DriverModel>, Failure>> _loadNearbyDrivers({
     required double lat,
     required double lng,
   }) async {
@@ -147,7 +146,7 @@ final class DriverRepositoryImpl({
           'lng': pointLng,
         });
       }
-      if (validPoints.isEmpty) return const Right([]);
+      if (validPoints.isEmpty) return const Ok([]);
       if (validPoints.length > 10) {
         validPoints.removeRange(10, validPoints.length);
       }
@@ -177,9 +176,9 @@ final class DriverRepositoryImpl({
           })
           .whereType<Map<String, dynamic>>()
           .toList(growable: false);
-      return Right(_processNearbyDrivers(rawList, lat, lng));
+      return Ok(_processNearbyDrivers(rawList, lat, lng));
     } catch (error) {
-      return Left(_mapExceptionToFailure(error));
+      return Err(_mapExceptionToFailure(error));
     }
   }
 

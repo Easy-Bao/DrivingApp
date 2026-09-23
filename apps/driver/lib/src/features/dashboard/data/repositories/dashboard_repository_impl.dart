@@ -14,7 +14,6 @@ import 'package:driver/src/features/dashboard/domain/repositories/dashboard_repo
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:driver/src/features/performance/domain/repositories/driver_performance_repository.dart';
 import 'package:driver/src/features/ride_history/domain/repositories/driver_ride_history_repository.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -138,12 +137,12 @@ final class DashboardRepositoryImpl({
   }
 
   @override
-  Future<Either<Failure, bool>> getPersistedOnlineStatus() async {
+  Future<Result<bool, Failure>> getPersistedOnlineStatus() async {
     try {
       final isOnline = await _sessionService.readDriverOnlineStatus() ?? false;
-      return Right(isOnline);
+      return Ok(isOnline);
     } catch (error) {
-      return Left(_mapExceptionToFailure(error));
+      return Err(_mapExceptionToFailure(error));
     }
   }
 
@@ -186,7 +185,7 @@ final class DashboardRepositoryImpl({
   }
 
   @override
-  Future<Either<Failure, void>> updateOnlineStatus({
+  Future<Result<void, Failure>> updateOnlineStatus({
     required bool isOnline,
     required double lat,
     required double lng,
@@ -195,10 +194,10 @@ final class DashboardRepositoryImpl({
     try {
       driverId = await _getDriverId();
     } catch (error) {
-      return Left(_mapExceptionToFailure(error));
+      return Err(_mapExceptionToFailure(error));
     }
     if (driverId.isEmpty) {
-      return const Left(
+      return const Err(
         AuthFailure('Driver session is unavailable. Please sign in again.'),
       );
     }
@@ -215,8 +214,8 @@ final class DashboardRepositoryImpl({
       }
       await _clearOnlinePresence(driverId: driverId, markServerOffline: false);
       return statusError == null
-          ? const Right(null)
-          : Left(_mapExceptionToFailure(statusError));
+          ? const Ok(null)
+          : Err(_mapExceptionToFailure(statusError));
     }
 
     try {
@@ -227,7 +226,7 @@ final class DashboardRepositoryImpl({
       )).fold((failure) => locationFailure = failure, (_) {});
       if (locationFailure != null) {
         await _clearOnlinePresence(driverId: driverId, markServerOffline: true);
-        return Left(locationFailure!);
+        return Err(locationFailure!);
       }
 
       await _availabilityDataSource.updateOnlineStatus(
@@ -242,19 +241,19 @@ final class DashboardRepositoryImpl({
       } catch (error) {
         dev.log('Unable to persist driver online status: $error');
       }
-      return const Right(null);
+      return const Ok(null);
     } catch (error) {
       await _clearOnlinePresence(driverId: driverId, markServerOffline: true);
-      return Left(_mapExceptionToFailure(error));
+      return Err(_mapExceptionToFailure(error));
     }
   }
 
   @override
-  Future<Either<Failure, DriverDashboardStats>> getDashboardStats() async {
+  Future<Result<DriverDashboardStats, Failure>> getDashboardStats() async {
     try {
       final driverId = await _getDriverId();
       if (driverId.isEmpty) {
-        return const Left(
+        return const Err(
           AuthFailure('Driver session is unavailable. Please sign in again.'),
         );
       }
@@ -265,19 +264,19 @@ final class DashboardRepositoryImpl({
         ),
       );
     } catch (error) {
-      return Left(_mapExceptionToFailure(error));
+      return Err(_mapExceptionToFailure(error));
     }
   }
 
   @override
-  Future<Either<Failure, DriverDispatchSnapshot>> getDispatchSnapshot({
+  Future<Result<DriverDispatchSnapshot, Failure>> getDispatchSnapshot({
     bool includeOffers = true,
     int limit = 10,
   }) async {
     try {
       final driverId = await _getDriverId();
       if (driverId.isEmpty) {
-        return const Left(
+        return const Err(
           AuthFailure('Driver session is unavailable. Please sign in again.'),
         );
       }
@@ -292,23 +291,23 @@ final class DashboardRepositoryImpl({
       final tripResult = await tripsFuture;
       final offers = await offersFuture;
       return await tripResult.fold(
-        Left.new,
-        (page) => Right(
+        Err.new,
+        (page) => Ok(
           DriverDispatchSnapshot(activeTrips: page.items, rideOffers: offers),
         ),
       );
     } catch (error) {
-      return Left(_mapExceptionToFailure(error));
+      return Err(_mapExceptionToFailure(error));
     }
   }
 
   @override
-  Future<Either<Failure, void>> submitRideOffer({
+  Future<Result<void, Failure>> submitRideOffer({
     required String sessionId,
     required double farePesos,
   }) async {
     if (sessionId.trim().isEmpty || !farePesos.isFinite || farePesos <= 0) {
-      return const Left(ValidationFailure('The ride offer is invalid.'));
+      return const Err(ValidationFailure('The ride offer is invalid.'));
     }
     try {
       final accepted = await _rideOfferDataSource.placeBid(
@@ -319,15 +318,15 @@ final class DashboardRepositoryImpl({
         offerPrice: farePesos,
       );
       return accepted
-          ? const Right(null)
-          : const Left(ServerFailure('The ride offer was not accepted.'));
+          ? const Ok(null)
+          : const Err(ServerFailure('The ride offer was not accepted.'));
     } catch (error) {
-      return Left(_mapExceptionToFailure(error));
+      return Err(_mapExceptionToFailure(error));
     }
   }
 
   @override
-  Future<Either<Failure, RideSnapshot>> fetchRide(String rideId) {
+  Future<Result<RideSnapshot, Failure>> fetchRide(String rideId) {
     return _rideRepository.fetchRide(rideId);
   }
 }

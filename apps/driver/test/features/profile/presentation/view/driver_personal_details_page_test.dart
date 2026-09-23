@@ -5,7 +5,6 @@ import 'package:driver/src/features/profile/domain/entities/driver_account_snaps
 import 'package:driver/src/features/profile/presentation/view/driver_personal_details_page.dart';
 import 'package:driver/src/features/profile/domain/repositories/driver_profile_repository.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -18,12 +17,12 @@ class _FakeDriverProfileRepository(this.account)
   DriverAccountSnapshot getCachedAccount() => account;
 
   @override
-  Future<Either<Failure, DriverAccountSnapshot>> refreshAccount() async {
-    return Right(account);
+  Future<Result<DriverAccountSnapshot, Failure>> refreshAccount() async {
+    return Ok(account);
   }
 
   @override
-  Future<Either<Failure, DriverAccountSnapshot>> updateAccount({
+  Future<Result<DriverAccountSnapshot, Failure>> updateAccount({
     required DriverAccountSnapshot currentAccount,
     required String name,
     required String phone,
@@ -43,7 +42,7 @@ class _FakeDriverProfileRepository(this.account)
       lifetimeEarnings: currentAccount.lifetimeEarnings,
       averageRating: currentAccount.averageRating,
     );
-    return Right(account);
+    return Ok(account);
   }
 }
 

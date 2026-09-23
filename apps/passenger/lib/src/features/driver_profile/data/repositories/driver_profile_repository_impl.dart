@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/driver_profile/data/data_sources/driver_profile_remote_data_source.dart';
 import 'package:passenger/src/features/driver_profile/domain/entities/driver_profile_stats.dart';
@@ -12,7 +11,7 @@ final class DriverProfileRepositoryImpl({required this._dataSource})
   final DriverProfileRemoteDataSource _dataSource;
 
   @override
-  Future<Either<Failure, DriverProfileStats>> fetchStats(
+  Future<Result<DriverProfileStats, Failure>> fetchStats(
     String driverId,
   ) async {
     try {
@@ -28,18 +27,18 @@ final class DriverProfileRepositoryImpl({required this._dataSource})
             stats['totalTrips'],
       );
       if (completedTrips == null || completedTrips < 0) {
-        return const Left(
+        return const Err(
           ValidationFailure('Driver statistics are incomplete.'),
         );
       }
-      return Right(DriverProfileStats(completedTrips: completedTrips.toInt()));
+      return Ok(DriverProfileStats(completedTrips: completedTrips.toInt()));
     } catch (error) {
-      return Left(_mapFailure(error));
+      return Err(_mapFailure(error));
     }
   }
 
   @override
-  Future<Either<Failure, List<DriverReview>>> fetchReviews(
+  Future<Result<List<DriverReview>, Failure>> fetchReviews(
     String driverId, {
     int page = 1,
     int limit = 20,
@@ -50,26 +49,26 @@ final class DriverProfileRepositoryImpl({required this._dataSource})
         page: page,
         limit: limit,
       );
-      return Right(
+      return Ok(
         raw
             .map(DriverReview.fromJson)
             .where((review) => review.rating > 0 && review.rating <= 5)
             .toList(growable: false),
       );
     } catch (error) {
-      return Left(_mapFailure(error));
+      return Err(_mapFailure(error));
     }
   }
 
   @override
-  Future<Either<Failure, void>> submitReview({
+  Future<Result<void, Failure>> submitReview({
     required String driverId,
     required String rideId,
     required double rating,
     required String comment,
   }) async {
     if (!rating.isFinite || rating < 1 || rating > 5) {
-      return const Left(ValidationFailure('Rating must be between 1 and 5.'));
+      return const Err(ValidationFailure('Rating must be between 1 and 5.'));
     }
     try {
       final submitted = await _dataSource.submitReview(
@@ -79,10 +78,10 @@ final class DriverProfileRepositoryImpl({required this._dataSource})
         comment: comment.trim(),
       );
       return submitted
-          ? const Right(null)
-          : const Left(ServerFailure('The rating was not accepted.'));
+          ? const Ok(null)
+          : const Err(ServerFailure('The rating was not accepted.'));
     } catch (error) {
-      return Left(_mapFailure(error));
+      return Err(_mapFailure(error));
     }
   }
 }

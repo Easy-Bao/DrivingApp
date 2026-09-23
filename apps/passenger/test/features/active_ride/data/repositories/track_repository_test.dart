@@ -33,7 +33,7 @@ void main() {
 
       final result = await repository.getRideStatusUpdate('303');
 
-      expect(result.isRight(), isTrue);
+      expect(result.isOk, isTrue);
       final update = result.getOrElse(
         (_) => const RideUpdate(status: RideStatus.unknown),
       );
@@ -49,7 +49,7 @@ void main() {
 
     final result = await repository.fetchDriverLocation('303');
 
-    expect(result.isRight(), isTrue);
+    expect(result.isOk, isTrue);
     expect(result.getOrElse((_) => (0.0, 0.0)), (7.828, 123.434));
   });
 

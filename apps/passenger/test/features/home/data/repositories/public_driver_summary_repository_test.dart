@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/home/data/data_sources/public_driver_remote_data_source.dart';
 import 'package:passenger/src/features/home/data/repositories/public_driver_summary_repository_impl.dart';
@@ -30,7 +29,7 @@ void main() {
       remoteDataSource: dataSource,
     ).fetchSummaries();
 
-    expect(result, isA<Right<Failure, List<PublicDriverSummary>>>());
+    expect(result, isA<Ok<List<PublicDriverSummary>, Failure>>());
     final summaries = result.getOrElse((_) => const []);
     expect(summaries, hasLength(1));
     expect(summaries.single.id, '42');

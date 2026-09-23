@@ -107,7 +107,7 @@ void main() {
         password: 'secret-password',
       );
 
-      expect(result.isRight(), isTrue);
+      expect(result.isOk, isTrue);
       verify(() => secureSessionService.saveDriverId('42')).called(1);
     },
   );
@@ -130,7 +130,7 @@ void main() {
       password: 'secret-password',
     );
 
-    expect(result.isLeft(), isTrue);
+    expect(result.isErr, isTrue);
     verifyNever(() => secureSessionService.saveToken(any()));
     verifyNever(() => secureSessionService.saveRefreshToken(any()));
     verifyNever(() => secureSessionService.saveDriverId(any()));
@@ -160,7 +160,7 @@ void main() {
         password: 'secret-password',
       );
 
-      expect(result.isLeft(), isTrue);
+      expect(result.isErr, isTrue);
       verifyNever(() => secureSessionService.saveToken(any()));
       verifyNever(() => secureSessionService.saveRefreshToken(any()));
       verifyNever(() => secureSessionService.saveDriverId(any()));

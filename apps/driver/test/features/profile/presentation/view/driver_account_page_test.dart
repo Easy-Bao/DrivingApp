@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:go_router_modular/testing.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -47,7 +46,7 @@ void main() {
       ),
     );
     when(() => repository.refreshAccount()).thenAnswer(
-      (_) async => const Left(
+      (_) async => const Err(
         NetworkFailure('Account refresh is unavailable in this widget test.'),
       ),
     );

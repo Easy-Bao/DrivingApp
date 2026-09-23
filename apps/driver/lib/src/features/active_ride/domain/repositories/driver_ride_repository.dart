@@ -1,35 +1,34 @@
 import 'package:driver/src/features/active_ride/active_ride.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:foundation/foundation.dart';
 
 abstract interface class DriverRideRepository {
-  Future<Either<Failure, void>> acceptRide({
+  Future<Result<void, Failure>> acceptRide({
     required String rideId,
     required String driverId,
   });
 
-  Future<Either<Failure, void>> updateRideStatus({
+  Future<Result<void, Failure>> updateRideStatus({
     required String rideId,
     required RideStatus status,
   });
 
-  Future<Either<Failure, RideSnapshot>> fetchRide(String rideId);
+  Future<Result<RideSnapshot, Failure>> fetchRide(String rideId);
 
-  Future<Either<Failure, int>> settleCash(String rideId);
+  Future<Result<int, Failure>> settleCash(String rideId);
 
-  Future<Either<Failure, RideCounterparty>> fetchCounterparty(String rideId);
+  Future<Result<RideCounterparty, Failure>> fetchCounterparty(String rideId);
 
-  Future<Either<Failure, (double latitude, double longitude)?>>
+  Future<Result<(double latitude, double longitude)?, Failure>>
   fetchPassengerLocation(String rideId);
 
-  Future<Either<Failure, void>> publishDriverLocation({
+  Future<Result<void, Failure>> publishDriverLocation({
     required double latitude,
     required double longitude,
     double? heading,
     double? speed,
   });
 
-  Future<Either<Failure, void>> clearDriverLocation();
+  Future<Result<void, Failure>> clearDriverLocation();
 }
 
 extension DriverRideRepositoryResultAdapters on DriverRideRepository {
@@ -110,7 +109,7 @@ extension DriverRideRepositoryResultAdapters on DriverRideRepository {
 }
 
 Future<Result<T, DomainFailure>> _captureResult<T>(
-  Future<Either<Failure, T>> Function() operation, {
+  Future<Result<T, Failure>> Function() operation, {
   required String message,
 }) async {
   try {

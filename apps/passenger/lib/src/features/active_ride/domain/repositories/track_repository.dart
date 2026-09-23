@@ -1,5 +1,4 @@
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
 
 abstract interface class TrackRepository {
@@ -10,21 +9,21 @@ abstract interface class TrackRepository {
     required double endLng,
   });
 
-  Future<Either<Failure, RideUpdate>> getRideStatusUpdate(String rideId);
+  Future<Result<RideUpdate, Failure>> getRideStatusUpdate(String rideId);
 
-  Future<Either<Failure, RideSnapshot>> fetchRide(String rideId);
+  Future<Result<RideSnapshot, Failure>> fetchRide(String rideId);
 
-  Future<Either<Failure, RideCounterparty>> fetchCounterparty(String rideId);
+  Future<Result<RideCounterparty, Failure>> fetchCounterparty(String rideId);
 
-  Future<Either<Failure, (double latitude, double longitude)>>
+  Future<Result<(double latitude, double longitude), Failure>>
   fetchDriverLocation(String rideId);
 
-  Future<Either<Failure, void>> updateRideStatus(
+  Future<Result<void, Failure>> updateRideStatus(
     String rideId,
     RideStatus status,
   );
 
-  Future<Either<Failure, void>> publishPassengerLocation({
+  Future<Result<void, Failure>> publishPassengerLocation({
     required String rideId,
     required double latitude,
     required double longitude,

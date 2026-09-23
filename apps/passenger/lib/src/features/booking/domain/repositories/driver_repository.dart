@@ -1,9 +1,8 @@
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 
 abstract interface class DriverRepository() {
-  Future<Either<Failure, List<DriverModel>>> getNearbyDrivers({
+  Future<Result<List<DriverModel>, Failure>> getNearbyDrivers({
     required double lat,
     required double lng,
   });
@@ -17,7 +16,7 @@ extension DriverRepositoryResultApi on DriverRepository {
 }
 
 Future<Result<T, DomainFailure>> _captureDriverResult<T>(
-  Future<Either<Failure, T>> Function() operation,
+  Future<Result<T, Failure>> Function() operation,
 ) async {
   try {
     final result = await operation();

@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/home/domain/entities/current_location.dart';
 import 'package:passenger/src/features/home/domain/entities/home_data.dart';
@@ -64,7 +63,7 @@ void main() {
             lng: any(named: 'lng'),
           ),
         ).thenAnswer(
-          (_) async => const Right(
+          (_) async => const Ok(
             HomeData(
               currentAddress: resolvedAddress,
               recentLocations: mockLocations,
@@ -92,7 +91,7 @@ void main() {
             lat: any(named: 'lat'),
             lng: any(named: 'lng'),
           ),
-        ).thenAnswer((_) async => const Left(ServerFailure('network error')));
+        ).thenAnswer((_) async => const Err(ServerFailure('network error')));
         return _makeCubit(repo, currentLocationRepo);
       },
       act: (cubit) => cubit.loadHomeData(lat: 7.828282, lng: 123.434343),
@@ -115,7 +114,7 @@ void main() {
           ),
         ).thenAnswer(
           (_) async =>
-              const Right(HomeData(currentAddress: '', recentLocations: [])),
+              const Ok(HomeData(currentAddress: '', recentLocations: [])),
         );
         return _makeCubit(repo, currentLocationRepo);
       },
@@ -140,7 +139,7 @@ void main() {
           ),
         ).thenAnswer((_) async {
           requestCount++;
-          return Right(
+          return Ok(
             HomeData(
               currentAddress: requestCount == 1 ? 'Tuburan, Pagadian' : '',
               recentLocations: const [],
@@ -183,10 +182,10 @@ void main() {
       'uses the position stream when the immediate GPS fix is unavailable',
       setUp: () {
         when(() => currentLocationRepo.getCurrentLocation())
-            .thenAnswer((_) async => const Left(CurrentLocationFailure()));
+            .thenAnswer((_) async => const Err(CurrentLocationFailure()));
         when(() => currentLocationRepo.watchCurrentLocation()).thenAnswer(
           (_) => Stream.value(
-            const Right(
+            const Ok(
               CurrentLocation(latitude: 7.828282, longitude: 123.434343),
             ),
           ),
@@ -197,7 +196,7 @@ void main() {
             lng: any(named: 'lng'),
           ),
         ).thenAnswer(
-          (_) async => const Right(
+          (_) async => const Ok(
             HomeData(currentAddress: 'Tuburan, Pagadian', recentLocations: []),
           ),
         );
@@ -218,7 +217,7 @@ void main() {
       'reports an immediate GPS failure even while the location stream is open',
       setUp: () {
         when(() => currentLocationRepo.getCurrentLocation())
-            .thenAnswer((_) async => const Left(CurrentLocationFailure()));
+            .thenAnswer((_) async => const Err(CurrentLocationFailure()));
         when(() => currentLocationRepo.watchCurrentLocation())
             .thenAnswer((_) => const Stream.empty());
       },
@@ -234,7 +233,7 @@ void main() {
 
     test('refreshes an already active location tracking session', () async {
       when(() => currentLocationRepo.getCurrentLocation())
-          .thenAnswer((_) async => const Left(CurrentLocationFailure()));
+          .thenAnswer((_) async => const Err(CurrentLocationFailure()));
       when(() => currentLocationRepo.watchCurrentLocation())
           .thenAnswer((_) => const Stream.empty());
 
@@ -249,7 +248,7 @@ void main() {
     test(
       'ignores an in-flight GPS fix after location access is lost',
       () async {
-        final locationCompleter = Completer<Either<Failure, CurrentLocation>>();
+        final locationCompleter = Completer<Result<CurrentLocation, Failure>>();
         when(() => currentLocationRepo.watchCurrentLocation())
             .thenAnswer((_) => const Stream.empty());
         when(() => currentLocationRepo.getCurrentLocation())
@@ -262,9 +261,7 @@ void main() {
 
         await cubit.stopLocationTracking(clearAddress: true);
         locationCompleter.complete(
-          const Right(
-            CurrentLocation(latitude: 7.828282, longitude: 123.434343),
-          ),
+          const Ok(CurrentLocation(latitude: 7.828282, longitude: 123.434343)),
         );
         await start;
 
@@ -281,8 +278,8 @@ void main() {
 
     test('coalesces GPS updates behind one in-flight home request', () async {
       final locationStream =
-          StreamController<Either<Failure, CurrentLocation>>();
-      final firstRequest = Completer<Either<Failure, HomeData>>();
+          StreamController<Result<CurrentLocation, Failure>>();
+      final firstRequest = Completer<Result<HomeData, Failure>>();
       final secondRequestStarted = Completer<void>();
       final requestedLatitudes = <double>[];
       var requestCount = 0;
@@ -290,7 +287,7 @@ void main() {
       when(() => currentLocationRepo.watchCurrentLocation())
           .thenAnswer((_) => locationStream.stream);
       when(() => currentLocationRepo.getCurrentLocation())
-          .thenAnswer((_) async => const Left(CurrentLocationFailure()));
+          .thenAnswer((_) async => const Err(CurrentLocationFailure()));
       when(
         () => repo.loadHomeData(
           lat: any(named: 'lat'),
@@ -304,7 +301,7 @@ void main() {
           secondRequestStarted.complete();
         }
         return Future.value(
-          const Right(
+          const Ok(
             HomeData(currentAddress: 'Latest pickup', recentLocations: []),
           ),
         );
@@ -314,21 +311,19 @@ void main() {
       await cubit.startLocationTracking();
 
       locationStream.add(
-        const Right(CurrentLocation(latitude: 7.8000, longitude: 123.4000)),
+        const Ok(CurrentLocation(latitude: 7.8000, longitude: 123.4000)),
       );
       await Future<void>.delayed(Duration.zero);
       locationStream.add(
-        const Right(CurrentLocation(latitude: 7.8100, longitude: 123.4100)),
+        const Ok(CurrentLocation(latitude: 7.8100, longitude: 123.4100)),
       );
       locationStream.add(
-        const Right(CurrentLocation(latitude: 7.8200, longitude: 123.4200)),
+        const Ok(CurrentLocation(latitude: 7.8200, longitude: 123.4200)),
       );
       await Future<void>.delayed(Duration.zero);
 
       firstRequest.complete(
-        const Right(
-          HomeData(currentAddress: 'First pickup', recentLocations: []),
-        ),
+        const Ok(HomeData(currentAddress: 'First pickup', recentLocations: [])),
       );
       await secondRequestStarted.future.timeout(const Duration(seconds: 1));
       await Future<void>.delayed(Duration.zero);

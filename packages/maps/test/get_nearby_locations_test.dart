@@ -22,7 +22,7 @@ void main() {
           lng: 123.4350,
         );
 
-        expect(result.isRight(), isTrue);
+        expect(result.isOk, isTrue);
         result.fold((failure) => fail('Should not fail'), (places) {
           expect(places, isNotEmpty);
         });

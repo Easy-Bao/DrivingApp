@@ -1,9 +1,8 @@
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 
 abstract interface class FareRepository() {
-  Future<Either<Failure, FareEstimate>> estimateFare({
+  Future<Result<FareEstimate, Failure>> estimateFare({
     required double distanceKm,
     required double durationMinutes,
     required double originLatitude,
@@ -34,7 +33,7 @@ extension FareRepositoryResultApi on FareRepository {
 }
 
 Future<Result<T, DomainFailure>> _captureFareResult<T>(
-  Future<Either<Failure, T>> Function() operation,
+  Future<Result<T, Failure>> Function() operation,
 ) async {
   try {
     final result = await operation();

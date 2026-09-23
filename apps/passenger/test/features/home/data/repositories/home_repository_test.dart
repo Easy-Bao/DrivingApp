@@ -40,7 +40,7 @@ void main() {
 
       final result = await repository.loadHomeData(lat: 7.8, lng: 123.4);
 
-      expect(result.isRight(), isTrue);
+      expect(result.isOk, isTrue);
       expect(
         result.getOrElse(
           (_) => const HomeData(currentAddress: '', recentLocations: []),
@@ -129,7 +129,7 @@ void main() {
     );
     final result = await repository.loadHomeData(lat: 7.8, lng: 123.4);
 
-    expect(result.isRight(), isTrue);
+    expect(result.isOk, isTrue);
     final homeData = result.getOrElse(
       (_) => const HomeData(currentAddress: '', recentLocations: []),
     );

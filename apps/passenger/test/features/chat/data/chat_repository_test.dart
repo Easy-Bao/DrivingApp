@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/chat/chat.dart';
 
 class FakeChatRemoteDataSource implements ChatRemoteDataSource {
@@ -75,7 +74,7 @@ void main() {
 
     final result = await repository.initializeChatRoom(roomId: '303');
 
-    expect(result.isRight(), isTrue);
+    expect(result.isOk, isTrue);
     expect(capturedRequest?.path, '/api/v1/chat/rooms');
     expect(capturedRequest?.data, {'ride_id': '303'});
   });
@@ -94,7 +93,7 @@ void main() {
       chatUri: Uri.parse('ws://localhost/chat'),
     );
 
-    expect(result.isRight(), isTrue);
+    expect(result.isOk, isTrue);
     expect(remoteDataSource.connectionToken, 'session-token');
   });
 
@@ -109,8 +108,8 @@ void main() {
     final empty = await repository.sendChatMessage('  ');
     final oversized = await repository.sendChatMessage('x' * 4097);
 
-    expect(empty, isA<Left<Failure, void>>());
-    expect(oversized, isA<Left<Failure, void>>());
+    expect(empty, isA<Err<void, Failure>>());
+    expect(oversized, isA<Err<void, Failure>>());
     expect(remoteDataSource.sent, isFalse);
   });
 
@@ -124,7 +123,7 @@ void main() {
 
     final result = await repository.sendChatMessage('On my way');
 
-    expect(result.isRight(), isTrue);
+    expect(result.isOk, isTrue);
     expect(jsonDecode(remoteDataSource.sentPayload!), {
       'type': 'message',
       'text': 'On my way',
@@ -141,7 +140,7 @@ void main() {
 
     final result = await repository.sendTypingStatus(true);
 
-    expect(result.isRight(), isTrue);
+    expect(result.isOk, isTrue);
     expect(jsonDecode(remoteDataSource.typingPayload!), {
       'type': 'typing',
       'is_typing': true,

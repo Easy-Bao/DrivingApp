@@ -2,30 +2,29 @@ import 'package:driver/src/features/active_ride/active_ride.dart';
 import 'package:foundation/foundation.dart';
 import 'package:driver/src/features/dashboard/domain/entities/driver_dashboard_stats.dart';
 import 'package:driver/src/features/dashboard/domain/entities/driver_dispatch_snapshot.dart';
-import 'package:fpdart/fpdart.dart';
 
 abstract interface class DashboardRepository {
-  Future<Either<Failure, bool>> getPersistedOnlineStatus();
+  Future<Result<bool, Failure>> getPersistedOnlineStatus();
 
-  Future<Either<Failure, void>> updateOnlineStatus({
+  Future<Result<void, Failure>> updateOnlineStatus({
     required bool isOnline,
     required double lat,
     required double lng,
   });
 
-  Future<Either<Failure, DriverDashboardStats>> getDashboardStats();
+  Future<Result<DriverDashboardStats, Failure>> getDashboardStats();
 
-  Future<Either<Failure, DriverDispatchSnapshot>> getDispatchSnapshot({
+  Future<Result<DriverDispatchSnapshot, Failure>> getDispatchSnapshot({
     bool includeOffers = true,
     int limit = 10,
   });
 
-  Future<Either<Failure, void>> submitRideOffer({
+  Future<Result<void, Failure>> submitRideOffer({
     required String sessionId,
     required double farePesos,
   });
 
-  Future<Either<Failure, RideSnapshot>> fetchRide(String rideId);
+  Future<Result<RideSnapshot, Failure>> fetchRide(String rideId);
 }
 
 extension DashboardRepositoryResultApi on DashboardRepository {
@@ -82,7 +81,7 @@ extension DashboardRepositoryResultApi on DashboardRepository {
 }
 
 Future<Result<T, DomainFailure>> _captureDashboardResult<T>(
-  Future<Either<Failure, T>> Function() operation, {
+  Future<Result<T, Failure>> Function() operation, {
   required String message,
 }) async {
   try {

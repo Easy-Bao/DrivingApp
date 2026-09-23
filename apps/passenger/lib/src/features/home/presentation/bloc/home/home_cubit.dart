@@ -3,7 +3,6 @@ import 'dart:developer' as dev;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/home/domain/entities/current_location.dart';
 import 'package:passenger/src/features/home/domain/repositories/current_location_repository.dart';
 import 'package:passenger/src/features/home/domain/repositories/home_repository.dart';
@@ -20,7 +19,7 @@ class HomeCubit({
   final HomeRepository _repository;
   final CurrentLocationRepository _currentLocationRepository;
 
-  StreamSubscription<Either<Failure, CurrentLocation>>? _locationSubscription;
+  StreamSubscription<Result<CurrentLocation, Failure>>? _locationSubscription;
   CurrentLocation? _pendingTrackedLocation;
   int? _trackedLocationLoadRevision;
   bool _isLoadingTrackedLocation = false;

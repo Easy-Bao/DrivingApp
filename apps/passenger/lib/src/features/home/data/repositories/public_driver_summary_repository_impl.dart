@@ -1,5 +1,4 @@
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/home/data/data_sources/public_driver_remote_data_source.dart';
 import 'package:passenger/src/features/home/domain/entities/public_driver_summary.dart';
 import 'package:passenger/src/features/home/domain/repositories/public_driver_summary_repository.dart';
@@ -9,16 +8,16 @@ final class PublicDriverSummaryRepositoryImpl({required this._remoteDataSource})
   final PublicDriverRemoteDataSource _remoteDataSource;
 
   @override
-  Future<Either<Failure, List<PublicDriverSummary>>> fetchSummaries() async {
+  Future<Result<List<PublicDriverSummary>, Failure>> fetchSummaries() async {
     try {
       final rawItems = await _remoteDataSource.fetchSummaries();
       final summaries = rawItems
           .map(_mapSummary)
           .where((summary) => summary.id.isNotEmpty)
           .toList(growable: false);
-      return Right(summaries);
+      return Ok(summaries);
     } catch (error) {
-      return Left(_mapExceptionToFailure(error));
+      return Err(_mapExceptionToFailure(error));
     }
   }
 

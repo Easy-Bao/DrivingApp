@@ -54,7 +54,7 @@ void main() {
         page: 1,
       );
 
-      expect(result.isRight(), isTrue);
+      expect(result.isOk, isTrue);
       result.fold((failure) => fail('Expected Right but got Left: $failure'), (
         places,
       ) {
@@ -93,7 +93,7 @@ void main() {
 
       final result = await service.searchPlaces(query: 'Ben Sagun');
 
-      expect(result.isRight(), isTrue);
+      expect(result.isOk, isTrue);
       result.fold((failure) => fail('Expected Right but got Left: $failure'), (
         places,
       ) {
@@ -129,7 +129,7 @@ void main() {
 
       final result = await service.searchPlaces(query: 'Valid');
 
-      expect(result.isRight(), isTrue);
+      expect(result.isOk, isTrue);
       result.fold((failure) => fail('Expected valid place: $failure'), (
         places,
       ) {
@@ -153,7 +153,7 @@ void main() {
 
       final result = await service.searchPlaces(query: 'Central');
 
-      expect(result.isLeft(), isTrue);
+      expect(result.isErr, isTrue);
       result.fold(
         (failure) => expect(failure, isA<PlaceParseError>()),
         (_) => fail('Expected malformed place data to be rejected.'),
@@ -167,7 +167,7 @@ void main() {
 
       final result = await service.reverseGeocode(lat: 0.0, lng: 0.0);
 
-      expect(result.isLeft(), isTrue);
+      expect(result.isErr, isTrue);
       result.fold((failure) {
         expect(failure, isA<PlaceNetworkError>());
       }, (_) => fail('Expected Left but got Right'));
@@ -199,7 +199,7 @@ void main() {
 
       final result = await service.reverseGeocode(lat: 7.8282, lng: 123.4361);
 
-      expect(result.isRight(), isTrue);
+      expect(result.isOk, isTrue);
       result.fold((failure) => fail('Expected a place: $failure'), (place) {
         expect(place.matchType, equals('road'));
         expect(place.distanceMeters, equals(24.5));
@@ -235,7 +235,7 @@ void main() {
         ],
       );
 
-      expect(result.isRight(), isTrue);
+      expect(result.isOk, isTrue);
       result.fold((failure) => fail('Expected Right but got Left: $failure'), (
         distances,
       ) {
@@ -275,7 +275,7 @@ void main() {
           destLng: 123.44,
         );
 
-        expect(result.isRight(), isTrue);
+        expect(result.isOk, isTrue);
         result.fold((failure) => fail('Expected a route: $failure'), (route) {
           expect(route.polylinePoints, hasLength(2));
           expect(route.distanceKm, equals(1.8));

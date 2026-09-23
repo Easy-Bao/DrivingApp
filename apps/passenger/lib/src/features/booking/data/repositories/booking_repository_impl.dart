@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/active_ride/domain/entities/accepted_booking.dart';
 import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/booking/data/data_sources/booking_remote_data_source.dart';
@@ -13,11 +12,11 @@ final class BookingRepositoryImpl({required this._dataSource})
   final BookingRemoteDataSource _dataSource;
 
   @override
-  Future<Either<Failure, String>> createSession(
+  Future<Result<String, Failure>> createSession(
     BookingSessionRequest request,
   ) async {
     if (!_validRequest(request)) {
-      return const Left(ValidationFailure('The booking request is invalid.'));
+      return const Err(ValidationFailure('The booking request is invalid.'));
     }
     try {
       final response = await _dataSource.createSession({
@@ -36,35 +35,35 @@ final class BookingRepositoryImpl({required this._dataSource})
       });
       final sessionId = SafeParse.toStringValue(response['id']).trim();
       if (sessionId.isEmpty) {
-        return const Left(
+        return const Err(
           ValidationFailure('The booking response has no session ID.'),
         );
       }
-      return Right(sessionId);
+      return Ok(sessionId);
     } catch (error) {
-      return Left(_mapFailure(error));
+      return Err(_mapFailure(error));
     }
   }
 
   @override
-  Future<Either<Failure, List<BookingOffer>>> fetchOffers(
+  Future<Result<List<BookingOffer>, Failure>> fetchOffers(
     String sessionId,
   ) async {
     try {
       final rawOffers = await _dataSource.fetchOffers(sessionId);
-      return Right(
+      return Ok(
         rawOffers
             .map(BookingOffer.tryParse)
             .whereType<BookingOffer>()
             .toList(growable: false),
       );
     } catch (error) {
-      return Left(_mapFailure(error));
+      return Err(_mapFailure(error));
     }
   }
 
   @override
-  Future<Either<Failure, AcceptedBooking>> acceptOffer({
+  Future<Result<AcceptedBooking, Failure>> acceptOffer({
     required String sessionId,
     required String offerId,
   }) async {
@@ -80,26 +79,26 @@ final class BookingRepositoryImpl({required this._dataSource})
       final rideId = SafeParse.toStringValue(response['ride_id'] ?? ride['id'])
           .trim();
       if (rideId.isEmpty) {
-        return const Left(
+        return const Err(
           ValidationFailure('The accepted offer has no ride ID.'),
         );
       }
       final fare = SafeParse.toNullableDouble(ride['fare_amount']);
-      return Right(AcceptedBooking(rideId: rideId, fareAmount: fare?.round()));
+      return Ok(AcceptedBooking(rideId: rideId, fareAmount: fare?.round()));
     } catch (error) {
-      return Left(_mapFailure(error));
+      return Err(_mapFailure(error));
     }
   }
 
   @override
-  Future<Either<Failure, void>> cancelSession(String sessionId) async {
+  Future<Result<void, Failure>> cancelSession(String sessionId) async {
     try {
       final canceled = await _dataSource.cancelSession(sessionId);
       return canceled
-          ? const Right(null)
-          : const Left(ServerFailure('The booking was not canceled.'));
+          ? const Ok(null)
+          : const Err(ServerFailure('The booking was not canceled.'));
     } catch (error) {
-      return Left(_mapFailure(error));
+      return Err(_mapFailure(error));
     }
   }
 }

@@ -2,7 +2,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:driver/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:driver/src/features/auth/domain/repositories/driver_auth_repository.dart';
 import 'package:driver/src/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
-import 'package:fpdart/fpdart.dart';
+import 'package:foundation/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -23,7 +23,7 @@ void main() {
           email: any(named: 'email'),
           password: any(named: 'password'),
         ),
-      ).thenAnswer((_) async => const Left(InvalidCredentialsFailure()));
+      ).thenAnswer((_) async => const Err(InvalidCredentialsFailure()));
     },
     build: () => SignInBloc(authRepository),
     act: (bloc) => bloc.add(

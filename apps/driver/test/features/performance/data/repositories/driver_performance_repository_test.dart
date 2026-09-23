@@ -3,7 +3,6 @@ import 'package:driver/src/features/performance/data/data_sources/driver_perform
 import 'package:driver/src/features/performance/data/repositories/driver_performance_repository_impl.dart';
 import 'package:driver/src/features/performance/domain/entities/driver_performance_stats.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:foundation/foundation.dart';
 
@@ -35,7 +34,7 @@ void main() {
 
     expect(
       result,
-      const Right<Failure, DriverPerformanceStats>(
+      const Ok<DriverPerformanceStats, Failure>(
         DriverPerformanceStats(
           todayEarningsAmount: 2817,
           todayCompletedTrips: 1,
@@ -62,7 +61,7 @@ void main() {
 
     final result = await repository.fetchStats('42');
 
-    expect(result.isLeft(), isTrue);
+    expect(result.isErr, isTrue);
     result.fold(
       (failure) => expect(failure, isA<ValidationFailure>()),
       (_) => fail('Expected an invalid statistics response.'),
@@ -79,7 +78,7 @@ void main() {
 
     final result = await repository.fetchStats('42');
 
-    expect(result.isLeft(), isTrue);
+    expect(result.isErr, isTrue);
     result.fold(
       (failure) => expect(failure, isA<NetworkFailure>()),
       (_) => fail('Expected a network failure.'),

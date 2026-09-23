@@ -1,5 +1,4 @@
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/data/data_sources/ride_remote_data_source.dart';
@@ -33,15 +32,15 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
   }
 
   @override
-  Future<Either<Failure, RideUpdate>> getRideStatusUpdate(String rideId) async {
+  Future<Result<RideUpdate, Failure>> getRideStatusUpdate(String rideId) async {
     try {
       final data = await _remoteDataSource.fetchRide(rideId);
       if (data != null) {
-        return Right(RideUpdateDto.fromJson(data).toDomain());
+        return Ok(RideUpdateDto.fromJson(data).toDomain());
       }
-      return const Left(ServerFailure('No status data returned from server.'));
+      return const Err(ServerFailure('No status data returned from server.'));
     } on ServerException catch (e) {
-      return Left(
+      return Err(
         FailureMapper.fromException(
           e,
           serverMessage:
@@ -49,7 +48,7 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
         ),
       );
     } catch (_) {
-      return const Left(
+      return const Err(
         ServerFailure(
           'Ride status is temporarily unavailable. Please try again.',
         ),
@@ -58,59 +57,57 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
   }
 
   @override
-  Future<Either<Failure, RideSnapshot>> fetchRide(String rideId) async {
+  Future<Result<RideSnapshot, Failure>> fetchRide(String rideId) async {
     try {
       final data = await _remoteDataSource.fetchRide(rideId);
       if (data == null) {
-        return const Left(ServerFailure('No ride data returned from server.'));
+        return const Err(ServerFailure('No ride data returned from server.'));
       }
       final ride = RideDto.fromJson(data, fallbackId: rideId).toDomain();
       if (ride.id.isEmpty || ride.status.isEmpty) {
-        return const Left(
-          ValidationFailure('The ride response is incomplete.'),
-        );
+        return const Err(ValidationFailure('The ride response is incomplete.'));
       }
-      return Right(ride);
+      return Ok(ride);
     } on ServerException catch (error) {
-      return Left(
+      return Err(
         FailureMapper.fromException(
           error,
           serverMessage: 'Ride details are temporarily unavailable.',
         ),
       );
     } catch (_) {
-      return const Left(
+      return const Err(
         ServerFailure('Ride details are temporarily unavailable.'),
       );
     }
   }
 
   @override
-  Future<Either<Failure, RideCounterparty>> fetchCounterparty(
+  Future<Result<RideCounterparty, Failure>> fetchCounterparty(
     String rideId,
   ) async {
     try {
-      return Right(
+      return Ok(
         RideCounterparty.fromJson(
           await _remoteDataSource.fetchCounterparty(rideId),
         ),
       );
     } on ServerException catch (error) {
-      return Left(
+      return Err(
         FailureMapper.fromException(
           error,
           serverMessage: 'Driver contact details are temporarily unavailable.',
         ),
       );
     } catch (_) {
-      return const Left(
+      return const Err(
         ServerFailure('Driver contact details are temporarily unavailable.'),
       );
     }
   }
 
   @override
-  Future<Either<Failure, (double latitude, double longitude)>>
+  Future<Result<(double latitude, double longitude), Failure>>
   fetchDriverLocation(String rideId) async {
     try {
       final locData = await _remoteDataSource.fetchDriverLocation(rideId);
@@ -121,13 +118,13 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
         locData?['longitude'] ?? locData?['lng'],
       );
       if (latitude != null && longitude != null) {
-        return Right((latitude.toDouble(), longitude.toDouble()));
+        return Ok((latitude.toDouble(), longitude.toDouble()));
       }
-      return const Left(
+      return const Err(
         ServerFailure('Driver location coordinates unavailable.'),
       );
     } on ServerException catch (e) {
-      return Left(
+      return Err(
         FailureMapper.fromException(
           e,
           serverMessage:
@@ -135,7 +132,7 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
         ),
       );
     } catch (_) {
-      return const Left(
+      return const Err(
         ServerFailure(
           'Driver location is temporarily unavailable. Please try again.',
         ),
@@ -144,7 +141,7 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
   }
 
   @override
-  Future<Either<Failure, void>> updateRideStatus(
+  Future<Result<void, Failure>> updateRideStatus(
     String rideId,
     RideStatus status,
   ) async {
@@ -154,13 +151,13 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
         status.value,
       );
       if (success) {
-        return const Right(null);
+        return const Ok(null);
       }
-      return const Left(
+      return const Err(
         ServerFailure('Failed to update ride status on server.'),
       );
     } on ServerException catch (e) {
-      return Left(
+      return Err(
         FailureMapper.fromException(
           e,
           serverMessage:
@@ -168,7 +165,7 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
         ),
       );
     } catch (_) {
-      return const Left(
+      return const Err(
         ServerFailure(
           'The ride status could not be updated. Please try again.',
         ),
@@ -177,7 +174,7 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
   }
 
   @override
-  Future<Either<Failure, void>> publishPassengerLocation({
+  Future<Result<void, Failure>> publishPassengerLocation({
     required String rideId,
     required double latitude,
     required double longitude,
@@ -189,17 +186,17 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
         longitude: longitude,
       );
       return sent
-          ? const Right(null)
-          : const Left(NetworkFailure('Passenger location was not accepted.'));
+          ? const Ok(null)
+          : const Err(NetworkFailure('Passenger location was not accepted.'));
     } on ServerException catch (error) {
-      return Left(
+      return Err(
         FailureMapper.fromException(
           error,
           serverMessage: 'Unable to share your current trip location.',
         ),
       );
     } catch (_) {
-      return const Left(
+      return const Err(
         NetworkFailure('Unable to share your current trip location.'),
       );
     }

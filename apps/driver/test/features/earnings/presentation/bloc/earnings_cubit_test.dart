@@ -6,7 +6,6 @@ import 'package:driver/src/features/earnings/presentation/bloc/earnings_cubit.da
 import 'package:driver/src/features/earnings/presentation/bloc/earnings_state.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:foundation/foundation.dart';
 
@@ -30,7 +29,7 @@ void main() {
     'loads earnings through the repository boundary',
     build: () {
       when(() => repository.fetchEarningsSummary('driver-1'))
-          .thenAnswer((_) async => const Right({'this_week': {}}));
+          .thenAnswer((_) async => const Ok({'this_week': {}}));
       return DriverEarningsCubit(
         repository: repository,
         sessionService: sessionService,
@@ -48,7 +47,7 @@ void main() {
   test(
     'ignores an overlapping load while the first request is active',
     () async {
-      final response = Completer<Either<Failure, Map<String, dynamic>>>();
+      final response = Completer<Result<Map<String, dynamic>, Failure>>();
       when(() => repository.fetchEarningsSummary('driver-1'))
           .thenAnswer((_) => response.future);
       final cubit = DriverEarningsCubit(
@@ -59,7 +58,7 @@ void main() {
       final first = cubit.load();
       await Future<void>.delayed(Duration.zero);
       final second = cubit.load();
-      response.complete(const Right({'this_week': {}}));
+      response.complete(const Ok({'this_week': {}}));
       await Future.wait([first, second]);
 
       verify(() => repository.fetchEarningsSummary('driver-1')).called(1);

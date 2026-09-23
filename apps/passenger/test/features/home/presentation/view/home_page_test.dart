@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
@@ -80,7 +79,7 @@ void main() {
 
     when(() => currentLocationRepository.getCurrentLocation()).thenAnswer(
       (_) async =>
-          const Right(CurrentLocation(latitude: 37.3861, longitude: -122.0839)),
+          const Ok(CurrentLocation(latitude: 37.3861, longitude: -122.0839)),
     );
     when(() => currentLocationRepository.watchCurrentLocation())
         .thenAnswer((_) => const Stream.empty());
@@ -91,7 +90,7 @@ void main() {
       ),
     ).thenAnswer((_) async {
       homeRequestCount++;
-      return Right(
+      return Ok(
         HomeData(
           currentAddress: homeRequestCount == 1 ? '' : 'Mountain View',
           recentLocations: const [],
@@ -172,7 +171,7 @@ void main() {
 
     when(() => currentLocationRepository.getCurrentLocation()).thenAnswer(
       (_) async =>
-          const Right(CurrentLocation(latitude: 37.3861, longitude: -122.0839)),
+          const Ok(CurrentLocation(latitude: 37.3861, longitude: -122.0839)),
     );
     when(() => currentLocationRepository.watchCurrentLocation())
         .thenAnswer((_) => const Stream.empty());
@@ -182,8 +181,7 @@ void main() {
         lng: any(named: 'lng'),
       ),
     ).thenAnswer(
-      (_) async =>
-          const Right(HomeData(currentAddress: '', recentLocations: [])),
+      (_) async => const Ok(HomeData(currentAddress: '', recentLocations: [])),
     );
     when(() => locationAccessCubit.state)
         .thenReturn(const LocationAccessReady());
@@ -280,9 +278,8 @@ void main() {
       final trackRepository = _MockTrackRepository();
 
       when(() => currentLocationRepository.getCurrentLocation()).thenAnswer(
-        (_) async => const Right(
-          CurrentLocation(latitude: 37.3861, longitude: -122.0839),
-        ),
+        (_) async =>
+            const Ok(CurrentLocation(latitude: 37.3861, longitude: -122.0839)),
       );
       when(() => currentLocationRepository.watchCurrentLocation())
           .thenAnswer((_) => const Stream.empty());
@@ -292,7 +289,7 @@ void main() {
           lng: any(named: 'lng'),
         ),
       ).thenAnswer(
-        (_) async => const Right(
+        (_) async => const Ok(
           HomeData(currentAddress: 'Mountain View', recentLocations: []),
         ),
       );
@@ -380,9 +377,8 @@ void main() {
       final trackRepository = _MockTrackRepository();
 
       when(() => currentLocationRepository.getCurrentLocation()).thenAnswer(
-        (_) async => const Right(
-          CurrentLocation(latitude: 37.3861, longitude: -122.0839),
-        ),
+        (_) async =>
+            const Ok(CurrentLocation(latitude: 37.3861, longitude: -122.0839)),
       );
       when(() => currentLocationRepository.watchCurrentLocation())
           .thenAnswer((_) => const Stream.empty());
@@ -392,13 +388,14 @@ void main() {
           lng: any(named: 'lng'),
         ),
       ).thenAnswer(
-        (_) async => const Right(
+        (_) async => const Ok(
           HomeData(currentAddress: 'Mountain View', recentLocations: []),
         ),
       );
       when(() => locationAccessCubit.state)
           .thenReturn(const LocationAccessReady());
-      when(() => locationAccessCubit.stream).thenAnswer((_) => const Stream.empty());
+      when(() => locationAccessCubit.stream)
+          .thenAnswer((_) => const Stream.empty());
       when(() => bookingBloc.state).thenReturn(BookingInitial());
       when(() => bookingBloc.stream).thenAnswer((_) => const Stream.empty());
       when(() => bookingBloc.hasActiveDriverSearch).thenReturn(false);
@@ -408,7 +405,8 @@ void main() {
       when(() => publicDriverSummaryCubit.stream)
           .thenAnswer((_) => const Stream.empty());
       when(() => savedPlacesCubit.state).thenReturn(const SavedPlacesState());
-      when(() => savedPlacesCubit.stream).thenAnswer((_) => const Stream.empty());
+      when(() => savedPlacesCubit.stream)
+          .thenAnswer((_) => const Stream.empty());
       when(savedPlacesCubit.loadPlaces).thenAnswer((_) async {});
       when(() => sessionStore.readActiveRideId()).thenAnswer((_) async => null);
 
@@ -463,9 +461,9 @@ void main() {
         ),
       ];
 
-      when(() => rideHistoryBloc.state).thenReturn(
-        RideHistoryLoaded(past: duplicateRides, upcoming: const []),
-      );
+      when(
+        () => rideHistoryBloc.state,
+      ).thenReturn(RideHistoryLoaded(past: duplicateRides, upcoming: const []));
       when(() => rideHistoryBloc.stream)
           .thenAnswer((_) => const Stream.empty());
 

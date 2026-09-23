@@ -3,7 +3,6 @@ import 'dart:math' as math;
 
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 
 import 'package:maps/src/data/data_sources/location_remote_data_source.dart';
 import 'package:maps/src/domain/entities/place.dart';
@@ -67,7 +66,7 @@ class MapNativeService({
     return calculateHaversine(lat1, lng1, lat2, lng2);
   }
 
-  Future<Either<PlaceFailure, List<Place>>> searchPlaces({
+  Future<Result<List<Place>, PlaceFailure>> searchPlaces({
     required String query,
     double? proximityLat,
     double? proximityLng,
@@ -76,10 +75,10 @@ class MapNativeService({
   }) async {
     final trimmed = query.trim();
     if (trimmed.isEmpty) {
-      return right([]);
+      return Ok([]);
     }
     if (trimmed.length > _maxSearchQueryLength) {
-      return left(const PlaceParseError(message: 'Search query is too long.'));
+      return Err(const PlaceParseError(message: 'Search query is too long.'));
     }
 
     try {
@@ -89,39 +88,39 @@ class MapNativeService({
         userLng: userLng ?? proximityLng,
       );
 
-      return right(_parsePlaces(responseData));
+      return Ok(_parsePlaces(responseData));
     } on DioException catch (e) {
       dev.log(
         'searchPlaces network failure: ${e.type.name}',
         name: 'MapNativeService',
       );
-      return left(const PlaceNetworkError());
+      return Err(const PlaceNetworkError());
     } catch (_) {
       dev.log('searchPlaces parse error', name: 'MapNativeService');
-      return left(const PlaceParseError());
+      return Err(const PlaceParseError());
     }
   }
 
-  Future<Either<PlaceFailure, Place>> reverseGeocode({
+  Future<Result<Place, PlaceFailure>> reverseGeocode({
     required double lat,
     required double lng,
   }) async {
     try {
       final place = await _apiClient.reverseGeocode(lat: lat, lng: lng);
-      return right(place);
+      return Ok(place);
     } on DioException catch (e) {
       dev.log(
         'reverseGeocode network failure: ${e.type.name}',
         name: 'MapNativeService',
       );
-      return left(const PlaceNetworkError());
+      return Err(const PlaceNetworkError());
     } catch (_) {
       dev.log('reverseGeocode parse error', name: 'MapNativeService');
-      return left(const PlaceParseError());
+      return Err(const PlaceParseError());
     }
   }
 
-  Future<Either<PlaceFailure, Route>> getRoute({
+  Future<Result<Route, PlaceFailure>> getRoute({
     required double originLat,
     required double originLng,
     required double destLat,
@@ -145,20 +144,20 @@ class MapNativeService({
             .toList();
       }
       final route = await _apiClient.getRoute(body: body);
-      return right(route);
+      return Ok(route);
     } on DioException catch (e) {
       dev.log(
         'getRoute network failure: ${e.type.name}',
         name: 'MapNativeService',
       );
-      return left(const PlaceNetworkError());
+      return Err(const PlaceNetworkError());
     } catch (_) {
       dev.log('getRoute parse error', name: 'MapNativeService');
-      return left(const PlaceParseError());
+      return Err(const PlaceParseError());
     }
   }
 
-  Future<Either<PlaceFailure, List<double>>> getDrivingDistances({
+  Future<Result<List<double>, PlaceFailure>> getDrivingDistances({
     required double originLat,
     required double originLng,
     required List<({double lat, double lng})> destinations,
@@ -174,11 +173,11 @@ class MapNativeService({
       );
       final values = response['distances_km'];
       if (values is! List) {
-        return left(
+        return Err(
           const PlaceParseError(message: 'Invalid travel matrix response.'),
         );
       }
-      return right(
+      return Ok(
         values.whereType<num>().map((value) => value.toDouble()).toList(),
       );
     } on DioException catch (e) {
@@ -186,14 +185,14 @@ class MapNativeService({
         'getDrivingDistances network failure: ${e.type.name}',
         name: 'MapNativeService',
       );
-      return left(const PlaceNetworkError());
+      return Err(const PlaceNetworkError());
     } catch (_) {
       dev.log('getDrivingDistances parse error', name: 'MapNativeService');
-      return left(const PlaceParseError());
+      return Err(const PlaceParseError());
     }
   }
 
-  Future<Either<PlaceFailure, List<Place>>> getNearbyPois({
+  Future<Result<List<Place>, PlaceFailure>> getNearbyPois({
     required double lat,
     required double lng,
     int page = 1,
@@ -205,16 +204,16 @@ class MapNativeService({
         page: page,
       );
 
-      return right(_parsePlaces(responseData));
+      return Ok(_parsePlaces(responseData));
     } on DioException catch (e) {
       dev.log(
         'getNearbyPois network failure: ${e.type.name}',
         name: 'MapNativeService',
       );
-      return left(const PlaceNetworkError());
+      return Err(const PlaceNetworkError());
     } catch (_) {
       dev.log('getNearbyPois parse error', name: 'MapNativeService');
-      return left(const PlaceParseError());
+      return Err(const PlaceParseError());
     }
   }
 

@@ -5,7 +5,6 @@ import 'package:driver/src/features/active_ride/data/data_sources/telemetry_remo
 import 'package:driver/src/features/active_ride/data/repositories/driver_ride_repository_impl.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:foundation/foundation.dart';
 
@@ -52,7 +51,7 @@ void main() {
 
     expect(
       result,
-      const Right<Failure, RideSnapshot>(
+      const Ok<RideSnapshot, Failure>(
         RideSnapshot(
           id: '7',
           status: 'in_transit',
@@ -80,7 +79,7 @@ void main() {
       status: RideStatus.inTransit,
     );
 
-    expect(result, const Right<Failure, void>(null));
+    expect(result, const Ok<void, Failure>(null));
     verify(
       () => rideDataSource.updateRideStatus(
         tripId: 'ride-7',

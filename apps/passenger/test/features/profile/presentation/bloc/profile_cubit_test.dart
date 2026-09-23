@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/profile/domain/entities/profile_model.dart';
 import 'package:passenger/src/features/profile/domain/repositories/passenger_profile_repository.dart';
 import 'package:passenger/src/features/profile/presentation/bloc/profile/profile_cubit.dart';
@@ -25,13 +24,13 @@ class _FakeProfileRepository implements PassengerProfileRepository {
   ProfileModel getCachedProfile() => cached;
 
   @override
-  Future<Either<Failure, ProfileModel>> refreshProfile() async {
+  Future<Result<ProfileModel, Failure>> refreshProfile() async {
     cached = remote;
-    return Right(remote);
+    return Ok(remote);
   }
 
   @override
-  Future<Either<Failure, ProfileModel>> updateProfile({
+  Future<Result<ProfileModel, Failure>> updateProfile({
     required String name,
     required String phone,
     required String email,
@@ -47,7 +46,7 @@ class _FakeProfileRepository implements PassengerProfileRepository {
       gender: gender,
       avatarPath: avatarPath,
     );
-    return Right(cached);
+    return Ok(cached);
   }
 }
 

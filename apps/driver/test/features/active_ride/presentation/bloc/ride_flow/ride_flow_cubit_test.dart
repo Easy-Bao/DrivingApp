@@ -1,7 +1,7 @@
 import 'package:driver/src/features/active_ride/active_ride.dart';
 import 'package:bloc_test/bloc_test.dart';
+import 'package:foundation/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
@@ -38,14 +38,14 @@ void main() {
         rideId: any(named: 'rideId'),
         driverId: any(named: 'driverId'),
       ),
-    ).thenAnswer((_) async => const Right(null));
+    ).thenAnswer((_) async => const Ok(null));
 
     when(
       () => mockRideRepository.updateRideStatus(
         rideId: any(named: 'rideId'),
         status: any(named: 'status'),
       ),
-    ).thenAnswer((_) async => const Right(null));
+    ).thenAnswer((_) async => const Ok(null));
   });
 
   group('RideFlowCubit — initial state', () {
@@ -115,7 +115,7 @@ void main() {
       'recovers missing destination coordinates from the active ride',
       () async {
         when(() => mockRideRepository.fetchRide('test-ride-id')).thenAnswer(
-          (_) async => const Right(
+          (_) async => const Ok(
             RideSnapshot(
               id: 'test-ride-id',
               status: 'arrived',

@@ -1,5 +1,4 @@
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/home/data/data_sources/current_location_data_source.dart';
 import 'package:passenger/src/features/home/domain/entities/current_location.dart';
 import 'package:passenger/src/features/home/domain/failures/current_location_failure.dart';
@@ -10,28 +9,28 @@ final class const CurrentLocationRepositoryImpl({required this._dataSource})
   final CurrentLocationDataSource _dataSource;
 
   @override
-  Future<Either<Failure, CurrentLocation>> getCurrentLocation() async {
+  Future<Result<CurrentLocation, Failure>> getCurrentLocation() async {
     try {
       final position = await _dataSource.getCurrentPosition();
       if (position == null) {
-        return const Left(CurrentLocationFailure());
+        return const Err(CurrentLocationFailure());
       }
-      return Right(
+      return Ok(
         CurrentLocation(
           latitude: position.latitude,
           longitude: position.longitude,
         ),
       );
     } catch (_) {
-      return const Left(CurrentLocationFailure());
+      return const Err(CurrentLocationFailure());
     }
   }
 
   @override
-  Stream<Either<Failure, CurrentLocation>> watchCurrentLocation() async* {
+  Stream<Result<CurrentLocation, Failure>> watchCurrentLocation() async* {
     try {
       await for (final position in _dataSource.watchCurrentPosition()) {
-        yield Right(
+        yield Ok(
           CurrentLocation(
             latitude: position.latitude,
             longitude: position.longitude,
@@ -39,7 +38,7 @@ final class const CurrentLocationRepositoryImpl({required this._dataSource})
         );
       }
     } catch (_) {
-      yield const Left(CurrentLocationFailure());
+      yield const Err(CurrentLocationFailure());
     }
   }
 }

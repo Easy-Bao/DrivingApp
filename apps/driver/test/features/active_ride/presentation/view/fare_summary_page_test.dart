@@ -6,41 +6,39 @@ import 'package:driver/src/features/dashboard/domain/entities/driver_dispatch_sn
 import 'package:driver/src/features/active_ride/active_ride.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:foundation/foundation.dart';
 
 class const _NoOpDashboardRepository() implements DashboardRepository {
   @override
-  Future<Either<Failure, bool>> getPersistedOnlineStatus() async =>
-      const Right(false);
+  Future<Result<bool, Failure>> getPersistedOnlineStatus() async =>
+      const Ok(false);
 
   @override
-  Future<Either<Failure, void>> updateOnlineStatus({
+  Future<Result<void, Failure>> updateOnlineStatus({
     required bool isOnline,
     required double lat,
     required double lng,
-  }) async => const Right(null);
+  }) async => const Ok(null);
 
   @override
-  Future<Either<Failure, DriverDashboardStats>> getDashboardStats() async =>
-      const Right(DriverDashboardStats(earnings: 0, completedTrips: 0));
+  Future<Result<DriverDashboardStats, Failure>> getDashboardStats() async =>
+      const Ok(DriverDashboardStats(earnings: 0, completedTrips: 0));
 
   @override
-  Future<Either<Failure, DriverDispatchSnapshot>> getDispatchSnapshot({
+  Future<Result<DriverDispatchSnapshot, Failure>> getDispatchSnapshot({
     bool includeOffers = true,
     int limit = 10,
-  }) async =>
-      const Right(DriverDispatchSnapshot(activeTrips: [], rideOffers: []));
+  }) async => const Ok(DriverDispatchSnapshot(activeTrips: [], rideOffers: []));
 
   @override
-  Future<Either<Failure, void>> submitRideOffer({
+  Future<Result<void, Failure>> submitRideOffer({
     required String sessionId,
     required double farePesos,
-  }) async => const Right(null);
+  }) async => const Ok(null);
 
   @override
-  Future<Either<Failure, RideSnapshot>> fetchRide(String rideId) async =>
-      const Left(ServerFailure());
+  Future<Result<RideSnapshot, Failure>> fetchRide(String rideId) async =>
+      const Err(ServerFailure());
 }
 
 void main() {

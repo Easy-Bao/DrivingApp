@@ -139,8 +139,8 @@ void main() {
 
       final results = await Future.wait([firstLookup, secondLookup]);
 
-      expect(results[0].isRight(), isTrue);
-      expect(results[1].isRight(), isTrue);
+      expect(results[0].isOk, isTrue);
+      expect(results[1].isOk, isTrue);
       final drivers = results[0].getOrElse((_) => const []);
       expect(drivers.single.id, '42');
       expect(drivers.single.rating, 4.8);

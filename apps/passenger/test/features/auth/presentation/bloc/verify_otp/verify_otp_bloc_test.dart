@@ -1,7 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/auth/domain/repositories/passenger_auth_repository.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/verify_otp/verify_otp_bloc.dart';
@@ -23,7 +22,7 @@ void main() {
         () => authRepository.requestVerificationCode(
           email: 'passenger@example.com',
         ),
-      ).thenAnswer((_) async => const Right(null));
+      ).thenAnswer((_) async => const Ok(null));
       return VerifyOtpBloc(authRepository);
     },
     act: (bloc) => bloc.add(
@@ -54,7 +53,7 @@ void main() {
         () =>
             authRepository.requestVerificationCode(email: any(named: 'email')),
       ).thenAnswer(
-        (_) async => const Left(ServerFailure('Mail service unavailable.')),
+        (_) async => const Err(ServerFailure('Mail service unavailable.')),
       );
       return VerifyOtpBloc(authRepository);
     },

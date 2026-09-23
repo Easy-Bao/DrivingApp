@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/home/data/data_sources/home_remote_data_source.dart';
 import 'package:passenger/src/features/home/domain/entities/home_data.dart';
@@ -12,7 +11,7 @@ final class HomeRepositoryImpl({required this._homeRemoteDataSource})
   final HomeRemoteDataSource _homeRemoteDataSource;
 
   @override
-  Future<Either<Failure, HomeData>> loadHomeData({
+  Future<Result<HomeData, Failure>> loadHomeData({
     required double lat,
     required double lng,
   }) async {
@@ -27,14 +26,14 @@ final class HomeRepositoryImpl({required this._homeRemoteDataSource})
           message: 'Passenger home address has an invalid format.',
         );
       }
-      return Right(
+      return Ok(
         HomeData.fromList(
           currentAddress: rawAddress as String? ?? '',
           recentLocations: _parseRecentLocations(response['recent_locations']),
         ),
       );
     } catch (error) {
-      return Left(_mapExceptionToFailure(error));
+      return Err(_mapExceptionToFailure(error));
     }
   }
 

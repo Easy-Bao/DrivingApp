@@ -34,7 +34,6 @@ dependencies:
   design_system:
     path: ../../packages/design_system
 
-  fpdart: ^1.2.0
   dio: ^5.10.0
   sentry_flutter: ^9.30.0
   sentry_dio: ^9.30.0

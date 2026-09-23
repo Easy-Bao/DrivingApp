@@ -1,6 +1,6 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fpdart/fpdart.dart';
+import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/auth/data/repositories/session_repository_impl.dart';
 import 'package:passenger/src/features/auth/domain/entities/passenger_session.dart';
@@ -29,7 +29,7 @@ void main() {
 
     final result = await repository.clearSession();
 
-    expect(result, const Right(PassengerSession.guest()));
+    expect(result, const Ok(PassengerSession.guest()));
     for (final key in const [
       'passenger_name',
       'passenger_email',

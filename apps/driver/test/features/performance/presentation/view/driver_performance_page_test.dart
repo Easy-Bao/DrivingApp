@@ -7,7 +7,7 @@ import 'package:driver/src/features/performance/presentation/view/driver_perform
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fpdart/fpdart.dart';
+import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockPerformanceRepository extends Mock
@@ -27,7 +27,7 @@ void main() {
     when(() => sessionService.readDriverId())
         .thenAnswer((_) async => 'driver-1');
     when(() => repository.fetchStats('driver-1')).thenAnswer(
-      (_) async => const Right(
+      (_) async => const Ok(
         DriverPerformanceStats(
           todayEarningsAmount: 1245050,
           todayCompletedTrips: 18,

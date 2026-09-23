@@ -1,7 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:maps/maps.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/active_ride/domain/entities/accepted_booking.dart';
@@ -73,9 +72,9 @@ void main() {
     when(() => secureSessionService.readPassengerId())
         .thenAnswer((_) async => 'pass-001');
     when(() => bookingRepository.cancelSession(any()))
-        .thenAnswer((_) async => const Right(null));
+        .thenAnswer((_) async => const Ok(null));
     when(() => bookingRepository.fetchOffers(any()))
-        .thenAnswer((_) async => const Right([]));
+        .thenAnswer((_) async => const Ok([]));
   });
 
   const testDriver = DriverModel(
@@ -154,7 +153,7 @@ void main() {
             lat: any(named: 'lat'),
             lng: any(named: 'lng'),
           ),
-        ).thenAnswer((_) async => const Right([]));
+        ).thenAnswer((_) async => const Ok([]));
         final inboxCubit = InboxCubit(inboxRepository: inboxRepository);
         final bloc = _makeBookingBloc(
           driverRepo: driverRepo,
@@ -196,12 +195,12 @@ void main() {
             lat: any(named: 'lat'),
             lng: any(named: 'lng'),
           ),
-        ).thenAnswer((_) async => const Right([testDriver]));
+        ).thenAnswer((_) async => const Ok([testDriver]));
         when(() => driverProfileRepository.fetchStats(any())).thenAnswer(
-          (_) async => const Right(DriverProfileStats(completedTrips: 42)),
+          (_) async => const Ok(DriverProfileStats(completedTrips: 42)),
         );
         when(() => driverProfileRepository.fetchReviews(any()))
-            .thenAnswer((_) async => const Right([]));
+            .thenAnswer((_) async => const Ok([]));
         final bloc = _makeBookingBloc(
           driverRepo: driverRepo,
           bookingRepository: bookingRepository,
@@ -243,13 +242,13 @@ void main() {
             lat: any(named: 'lat'),
             lng: any(named: 'lng'),
           ),
-        ).thenAnswer((_) async => const Right([testDriver]));
+        ).thenAnswer((_) async => const Ok([testDriver]));
 
         when(() => driverProfileRepository.fetchStats(any())).thenAnswer(
-          (_) async => const Right(DriverProfileStats(completedTrips: 42)),
+          (_) async => const Ok(DriverProfileStats(completedTrips: 42)),
         );
         when(() => driverProfileRepository.fetchReviews(any()))
-            .thenAnswer((_) async => const Right([]));
+            .thenAnswer((_) async => const Ok([]));
         return _makeBookingBloc(
           driverRepo: driverRepo,
           bookingRepository: bookingRepository,
@@ -285,7 +284,7 @@ void main() {
           ),
         ).thenAnswer(
           (_) async =>
-              const Left(NetworkFailure('Unable to check nearby drivers.')),
+              const Err(NetworkFailure('Unable to check nearby drivers.')),
         );
         return _makeBookingBloc(
           driverRepo: driverRepo,
@@ -331,12 +330,12 @@ void main() {
             lat: any(named: 'lat'),
             lng: any(named: 'lng'),
           ),
-        ).thenAnswer((_) async => const Right([testDriver]));
+        ).thenAnswer((_) async => const Ok([testDriver]));
         when(() => driverProfileRepository.fetchStats(any())).thenAnswer(
-          (_) async => const Right(DriverProfileStats(completedTrips: 42)),
+          (_) async => const Ok(DriverProfileStats(completedTrips: 42)),
         );
         when(() => driverProfileRepository.fetchReviews(any()))
-            .thenAnswer((_) async => const Right([]));
+            .thenAnswer((_) async => const Ok([]));
         return _makeBookingBloc(
           driverRepo: driverRepo,
           bookingRepository: bookingRepository,
@@ -416,14 +415,14 @@ void main() {
             lat: any(named: 'lat'),
             lng: any(named: 'lng'),
           ),
-        ).thenAnswer((_) async => const Right([numericDriver, selectedDriver]));
+        ).thenAnswer((_) async => const Ok([numericDriver, selectedDriver]));
         when(() => driverProfileRepository.fetchStats(any())).thenAnswer(
-          (_) async => const Right(DriverProfileStats(completedTrips: 1)),
+          (_) async => const Ok(DriverProfileStats(completedTrips: 1)),
         );
         when(() => driverProfileRepository.fetchReviews(any()))
-            .thenAnswer((_) async => const Right([]));
+            .thenAnswer((_) async => const Ok([]));
         when(() => bookingRepository.createSession(any()))
-            .thenAnswer((_) async => const Right('101'));
+            .thenAnswer((_) async => const Ok('101'));
         return _makeBookingBloc(
           driverRepo: driverRepo,
           bookingRepository: bookingRepository,
@@ -481,7 +480,7 @@ void main() {
       'accepts a numeric session ID returned by the server',
       build: () {
         when(() => bookingRepository.createSession(any()))
-            .thenAnswer((_) async => const Right('202'));
+            .thenAnswer((_) async => const Ok('202'));
         return _makeBookingBloc(
           driverRepo: driverRepo,
           bookingRepository: bookingRepository,
@@ -515,11 +514,11 @@ void main() {
       () async {
         var fetchCount = 0;
         when(() => bookingRepository.createSession(any()))
-            .thenAnswer((_) async => const Right('26'));
+            .thenAnswer((_) async => const Ok('26'));
         when(() => bookingRepository.fetchOffers('26')).thenAnswer((_) async {
           fetchCount++;
-          if (fetchCount == 1) return const Right([]);
-          return const Right([
+          if (fetchCount == 1) return const Ok([]);
+          return const Ok([
             BookingOffer(
               offerId: '25',
               sessionId: '26',
@@ -536,7 +535,7 @@ void main() {
           () => bookingRepository.acceptOffer(sessionId: '26', offerId: '25'),
         ).thenAnswer(
           (_) async =>
-              const Right(AcceptedBooking(rideId: '24', fareAmount: 2970)),
+              const Ok(AcceptedBooking(rideId: '24', fareAmount: 2970)),
         );
         when(() => secureSessionService.saveActiveRideId('24'))
             .thenAnswer((_) async {});
@@ -608,7 +607,7 @@ void main() {
         );
         when(() => bookingRepository.createSession(any())).thenAnswer(
           (_) async =>
-              const Left(ValidationFailure('Booking session was not created.')),
+              const Err(ValidationFailure('Booking session was not created.')),
         );
 
         final searchState = expectLater(

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger/src/features/inbox/domain/repositories/inbox_repository.dart';
@@ -46,7 +45,7 @@ void main() {
     'discards a notification response that completes after logout',
     () async {
       final repository = MockInboxRepository();
-      final response = Completer<Either<Failure, List<InboxNotification>>>();
+      final response = Completer<Result<List<InboxNotification>, Failure>>();
       when(() => repository.fetchPassengerNotifications('passenger-1'))
           .thenAnswer((_) => response.future);
       final cubit = InboxCubit(inboxRepository: repository);
@@ -55,7 +54,7 @@ void main() {
       expect(cubit.state, const InboxLoadingState());
 
       cubit.clearSessionData();
-      response.complete(Right([notification]));
+      response.complete(Ok([notification]));
       await pendingLoad;
 
       expect(cubit.state, const InboxInitialState());
@@ -65,14 +64,14 @@ void main() {
 
   test('coalesces concurrent loads for the same passenger', () async {
     final repository = MockInboxRepository();
-    final response = Completer<Either<Failure, List<InboxNotification>>>();
+    final response = Completer<Result<List<InboxNotification>, Failure>>();
     when(() => repository.fetchPassengerNotifications('passenger-1'))
         .thenAnswer((_) => response.future);
     final cubit = InboxCubit(inboxRepository: repository);
 
     final firstLoad = cubit.loadNotifications('passenger-1');
     final secondLoad = cubit.loadNotifications('passenger-1');
-    response.complete(Right([notification]));
+    response.complete(Ok([notification]));
     await Future.wait([firstLoad, secondLoad]);
 
     verify(() => repository.fetchPassengerNotifications('passenger-1'))
@@ -89,9 +88,8 @@ void main() {
         offset: 0,
       ),
     ).thenAnswer(
-      (_) async => Right(
-        OffsetPage(items: [notification], hasMore: true, nextOffset: 50),
-      ),
+      (_) async =>
+          Ok(OffsetPage(items: [notification], hasMore: true, nextOffset: 50)),
     );
     final older = notification.copyWith(isRead: true);
     when(
@@ -102,7 +100,7 @@ void main() {
       ),
     ).thenAnswer(
       (_) async =>
-          Right(OffsetPage(items: [older], hasMore: false, nextOffset: null)),
+          Ok(OffsetPage(items: [older], hasMore: false, nextOffset: null)),
     );
     final cubit = InboxCubit(inboxRepository: repository);
 
@@ -129,7 +127,7 @@ void main() {
         'expires_at': '2026-01-02T00:00:00Z',
       });
       when(() => repository.fetchPassengerNotifications('passenger-1'))
-          .thenAnswer((_) async => Right([legacyNotification]));
+          .thenAnswer((_) async => Ok([legacyNotification]));
       final cubit = InboxCubit(inboxRepository: repository);
 
       await cubit.loadNotifications('passenger-1');
@@ -150,7 +148,7 @@ void main() {
         offset: 0,
       ),
     ).thenAnswer(
-      (_) async => Right(
+      (_) async => Ok(
         OffsetPage(
           items: [remoteNotification],
           hasMore: false,
@@ -159,7 +157,7 @@ void main() {
       ),
     );
     when(() => repository.deletePassengerNotification('passenger-1', '7'))
-        .thenAnswer((_) async => const Right(null));
+        .thenAnswer((_) async => const Ok(null));
     final cubit = InboxCubit(inboxRepository: repository);
 
     await cubit.loadNotifications('passenger-1');

@@ -3,7 +3,6 @@ import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver/src/features/profile/data/data_sources/driver_profile_remote_data_source.dart';
 import 'package:driver/src/features/profile/domain/entities/driver_account_snapshot.dart';
 import 'package:driver/src/features/profile/domain/repositories/driver_profile_repository.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -29,11 +28,11 @@ final class DriverProfileRepositoryImpl({
   }
 
   @override
-  Future<Either<Failure, DriverAccountSnapshot>> refreshAccount() async {
+  Future<Result<DriverAccountSnapshot, Failure>> refreshAccount() async {
     try {
       final driverId = await _sessionService.readDriverId() ?? '';
       if (driverId.isEmpty) {
-        return const Left(CacheFailure('Driver ID is not registered.'));
+        return const Err(CacheFailure('Driver ID is not registered.'));
       }
       final profileValues = await _profileDataSource.fetchProfile(driverId);
       final cached = getCachedAccount();
@@ -58,14 +57,14 @@ final class DriverProfileRepositoryImpl({
         averageRating: cached.averageRating,
       );
       await _cacheAccount(snapshot);
-      return Right(snapshot);
+      return Ok(snapshot);
     } catch (error) {
-      return Left(_mapFailure(error));
+      return Err(_mapFailure(error));
     }
   }
 
   @override
-  Future<Either<Failure, DriverAccountSnapshot>> updateAccount({
+  Future<Result<DriverAccountSnapshot, Failure>> updateAccount({
     required DriverAccountSnapshot currentAccount,
     required String name,
     required String phone,
@@ -86,9 +85,7 @@ final class DriverProfileRepositoryImpl({
         !normalizedEmail.contains('@') ||
         normalizedVehicleType.isEmpty ||
         normalizedPlateNumber.isEmpty) {
-      return const Left(
-        ValidationFailure('Please verify your driver details.'),
-      );
+      return const Err(ValidationFailure('Please verify your driver details.'));
     }
 
     try {
@@ -119,9 +116,9 @@ final class DriverProfileRepositoryImpl({
         averageRating: currentAccount.averageRating,
       );
       await _cacheAccount(updated);
-      return Right(updated);
+      return Ok(updated);
     } catch (error) {
-      return Left(_mapFailure(error));
+      return Err(_mapFailure(error));
     }
   }
 

@@ -18,7 +18,7 @@ void main() {
         destLng: 123.4400,
       );
 
-      expect(result.isRight(), isTrue);
+      expect(result.isOk, isTrue);
       result.fold((failure) => fail('Should not fail'), (route) {
         expect(route.polylinePoints, isNotEmpty);
         expect(route.distanceKm, greaterThan(0));

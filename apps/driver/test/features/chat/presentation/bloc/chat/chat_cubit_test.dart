@@ -4,7 +4,6 @@ import 'dart:async';
 
 import 'package:driver/src/features/chat/presentation/bloc/chat/chat_cubit.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:foundation/foundation.dart';
 
@@ -14,9 +13,9 @@ void main() {
   test('keeps a message pending while the connection is offline', () async {
     final repository = MockChatRepository();
     when(() => repository.sendChatMessage('I have arrived'))
-        .thenAnswer((_) async => const Right(null));
+        .thenAnswer((_) async => const Ok(null));
     when(() => repository.terminateChatConnection())
-        .thenAnswer((_) async => const Right(null));
+        .thenAnswer((_) async => const Ok(null));
     when(() => repository.dispose()).thenAnswer((_) async {});
 
     final cubit = ChatCubit(chatRepository: repository, currentUserId: '7');
@@ -38,10 +37,10 @@ void main() {
       when(() => repository.connectionStateStream)
           .thenAnswer((_) => const Stream<ChatConnectionState>.empty());
       when(() => repository.terminateChatConnection())
-          .thenAnswer((_) async => const Right(null));
+          .thenAnswer((_) async => const Ok(null));
       when(() => repository.dispose()).thenAnswer((_) async {});
       when(() => repository.initializeChatRoom(roomId: 'ride-1'))
-          .thenAnswer((_) async => const Left(ChatRoomLockedFailure()));
+          .thenAnswer((_) async => const Err(ChatRoomLockedFailure()));
 
       final cubit = ChatCubit(chatRepository: repository);
 
@@ -72,18 +71,18 @@ void main() {
           chatUri: Uri.parse('wss://example.test/chat/ride-1'),
           token: any(named: 'token'),
         ),
-      ).thenAnswer((_) async => const Right(null));
+      ).thenAnswer((_) async => const Ok(null));
       when(() => repository.chatEventsStream).thenAnswer(
         (_) => Stream.value(
-          const Right<Failure, ChatEvent>(
+          const Ok<ChatEvent, Failure>(
             ChatRoomLocked('pq: relation chat_rooms is missing'),
           ),
         ),
       );
       when(() => repository.fetchRoomMessages('ride-1'))
-          .thenAnswer((_) async => const Right(<ChatMessage>[]));
+          .thenAnswer((_) async => const Ok(<ChatMessage>[]));
       when(() => repository.terminateChatConnection())
-          .thenAnswer((_) async => const Right(null));
+          .thenAnswer((_) async => const Ok(null));
       when(() => repository.dispose()).thenAnswer((_) async {});
 
       final cubit = ChatCubit(chatRepository: repository);
@@ -107,7 +106,7 @@ void main() {
 
   test('tracks peer typing and clears it when the peer stops', () async {
     final repository = MockChatRepository();
-    final events = StreamController<Either<Failure, ChatEvent>>();
+    final events = StreamController<Result<ChatEvent, Failure>>();
     final connectionStates = StreamController<ChatConnectionState>.broadcast();
     when(() => repository.connectionStateStream)
         .thenAnswer((_) => connectionStates.stream);
@@ -117,12 +116,12 @@ void main() {
         chatUri: Uri.parse('wss://example.test/chat/ride-1'),
         token: any(named: 'token'),
       ),
-    ).thenAnswer((_) async => const Right(null));
+    ).thenAnswer((_) async => const Ok(null));
     when(() => repository.chatEventsStream).thenAnswer((_) => events.stream);
     when(() => repository.fetchRoomMessages('ride-1'))
-        .thenAnswer((_) async => const Right(<ChatMessage>[]));
+        .thenAnswer((_) async => const Ok(<ChatMessage>[]));
     when(() => repository.terminateChatConnection())
-        .thenAnswer((_) async => const Right(null));
+        .thenAnswer((_) async => const Ok(null));
     when(() => repository.dispose()).thenAnswer((_) async {});
 
     final cubit = ChatCubit(chatRepository: repository);
@@ -142,7 +141,7 @@ void main() {
       isFromPeer: true,
       createdAt: DateTime.utc(2026, 8, 27, 10),
     );
-    events.add(Right<Failure, ChatEvent>(ChatMessageReceived(message)));
+    events.add(Ok<ChatEvent, Failure>(ChatMessageReceived(message)));
     await Future<void>.delayed(Duration.zero);
     connectionStates.add(
       const ChatDisconnected(reconnectIn: Duration(seconds: 1)),
@@ -159,7 +158,7 @@ void main() {
     expect(cubit.state.isConnected, isTrue);
     expect(cubit.state.messages, contains(message));
     events.add(
-      const Right<Failure, ChatEvent>(
+      const Ok<ChatEvent, Failure>(
         ChatTypingChanged(isTyping: true, isFromPeer: true),
       ),
     );
@@ -167,7 +166,7 @@ void main() {
     expect(cubit.state.isPeerTyping, isTrue);
 
     events.add(
-      const Right<Failure, ChatEvent>(
+      const Ok<ChatEvent, Failure>(
         ChatTypingChanged(isTyping: false, isFromPeer: true),
       ),
     );

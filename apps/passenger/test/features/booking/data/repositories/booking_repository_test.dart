@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/booking/data/data_sources/booking_remote_data_source.dart';
@@ -49,7 +48,7 @@ void main() {
       ),
     );
 
-    expect(result, const Right<Failure, String>('77'));
+    expect(result, const Ok<String, Failure>('77'));
     expect(sentBody?['target_driver_id'], 42);
     expect(sentBody?['custom_fare'], 2764);
     expect(sentBody?['dropoff_latitude'], 7.85);
@@ -136,7 +135,7 @@ void main() {
       offerId: 'offer-2',
     );
 
-    expect(result.isRight(), isTrue);
+    expect(result.isOk, isTrue);
     final booking = result.getOrElse(
       (_) => throw StateError('Expected an accepted booking.'),
     );
@@ -164,7 +163,7 @@ void main() {
 
       final result = await repository.fetchOffers('26');
 
-      expect(result.isRight(), isTrue);
+      expect(result.isOk, isTrue);
       final offers = result.getOrElse(
         (_) => throw StateError('Expected the pending offer to be retained.'),
       );

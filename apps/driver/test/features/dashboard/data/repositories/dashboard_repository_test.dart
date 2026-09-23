@@ -11,7 +11,6 @@ import 'package:driver/src/features/dashboard/domain/entities/driver_dashboard_s
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:driver/src/features/ride_history/domain/repositories/driver_ride_history_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -88,7 +87,7 @@ void main() {
       when(() => sessionService.readDriverId())
           .thenAnswer((_) async => 'driver-42');
       when(() => _performanceRepository.fetchStats('driver-42')).thenAnswer(
-        (_) async => const Right(
+        (_) async => const Ok(
           DriverPerformanceStats(
             todayEarningsAmount: 2817,
             todayCompletedTrips: 1,
@@ -109,7 +108,7 @@ void main() {
 
       expect(
         result,
-        const Right<Failure, DriverDashboardStats>(
+        const Ok<DriverDashboardStats, Failure>(
           DriverDashboardStats(earnings: 28.17, completedTrips: 1),
         ),
       );
@@ -134,7 +133,7 @@ void main() {
 
       expect(
         result,
-        const Left<Failure, DriverDashboardStats>(
+        const Err<DriverDashboardStats, Failure>(
           AuthFailure('Driver session is unavailable. Please sign in again.'),
         ),
       );
@@ -159,7 +158,7 @@ void main() {
         latitude: 7.828,
         longitude: 123.434,
       ),
-    ).thenAnswer((_) async => const Right(null));
+    ).thenAnswer((_) async => const Ok(null));
     when(() => sessionService.saveDriverOnlineStatus(true))
         .thenAnswer((_) async {});
 
@@ -174,7 +173,7 @@ void main() {
       lng: 123.434,
     );
 
-    expect(result, const Right<Failure, void>(null));
+    expect(result, const Ok<void, Failure>(null));
     verify(
       () => _rideRepository.publishDriverLocation(
         latitude: 7.828,
@@ -197,7 +196,7 @@ void main() {
           longitude: 123.434,
         ),
       ).thenAnswer(
-        (_) async => const Left(
+        (_) async => const Err(
           NetworkFailure(
             'Unable to share your location. You are not online yet.',
           ),
@@ -210,7 +209,7 @@ void main() {
         ),
       ).thenAnswer((_) async {});
       when(() => _rideRepository.clearDriverLocation())
-          .thenAnswer((_) async => const Right(null));
+          .thenAnswer((_) async => const Ok(null));
       when(() => sessionService.saveDriverOnlineStatus(false))
           .thenAnswer((_) async {});
 
@@ -227,7 +226,7 @@ void main() {
 
       expect(
         result,
-        const Left<Failure, void>(
+        const Err<void, Failure>(
           NetworkFailure(
             'Unable to share your location. You are not online yet.',
           ),
@@ -264,7 +263,7 @@ void main() {
           latitude: 7.828,
           longitude: 123.434,
         ),
-      ).thenAnswer((_) async => const Right(null));
+      ).thenAnswer((_) async => const Ok(null));
       when(
         () => availabilityDataSource.updateOnlineStatus(
           driverId: 'driver-42',
@@ -288,7 +287,7 @@ void main() {
         lng: 123.434,
       );
 
-      expect(result.isLeft(), isTrue);
+      expect(result.isErr, isTrue);
       verify(() => backgroundService.start()).called(1);
       verify(
         () => availabilityDataSource.updateOnlineStatus(
@@ -315,7 +314,7 @@ void main() {
       ),
     ).thenAnswer((_) async {});
     when(() => _rideRepository.clearDriverLocation())
-        .thenAnswer((_) async => const Right(null));
+        .thenAnswer((_) async => const Ok(null));
     when(() => sessionService.saveDriverOnlineStatus(false))
         .thenAnswer((_) async {});
 
@@ -330,7 +329,7 @@ void main() {
       lng: 123.434,
     );
 
-    expect(result, const Right<Failure, void>(null));
+    expect(result, const Ok<void, Failure>(null));
     verify(() => _rideRepository.clearDriverLocation()).called(1);
   });
 
@@ -347,7 +346,7 @@ void main() {
           latitude: 7.828,
           longitude: 123.434,
         ),
-      ).thenAnswer((_) async => const Right(null));
+      ).thenAnswer((_) async => const Ok(null));
       when(
         () => availabilityDataSource.updateOnlineStatus(
           driverId: 'driver-42',
@@ -366,7 +365,7 @@ void main() {
         ),
       ).thenAnswer((_) async {});
       when(() => _rideRepository.clearDriverLocation())
-          .thenAnswer((_) async => const Right(null));
+          .thenAnswer((_) async => const Ok(null));
       when(() => sessionService.saveDriverOnlineStatus(false))
           .thenAnswer((_) async {});
 
@@ -381,7 +380,7 @@ void main() {
         lng: 123.434,
       );
 
-      expect(result.isLeft(), isTrue);
+      expect(result.isErr, isTrue);
       result.fold((failure) {
         expect(failure, isA<ValidationFailure>());
         expect(

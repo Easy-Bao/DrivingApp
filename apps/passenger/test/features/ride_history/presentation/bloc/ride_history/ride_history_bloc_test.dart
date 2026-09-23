@@ -1,7 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/ride_history/domain/entities/ride_history_overview.dart';
 import 'package:passenger/src/features/ride_history/domain/repositories/ride_history_repository.dart';
@@ -68,7 +67,7 @@ void main() {
           () =>
               repo.fetchRideHistoryOverview(any(), limit: any(named: 'limit')),
         ).thenAnswer(
-          (_) async => const Right(
+          (_) async => const Ok(
             RideHistoryOverview(
               rides: OffsetPage(
                 items: [completedRide, requestedRide],
@@ -104,7 +103,7 @@ void main() {
         when(
           () =>
               repo.fetchRideHistoryOverview(any(), limit: any(named: 'limit')),
-        ).thenAnswer((_) async => const Left(ServerFailure('network error')));
+        ).thenAnswer((_) async => const Err(ServerFailure('network error')));
         return _makeCubit(repo);
       },
       act: (bloc) =>
@@ -130,7 +129,7 @@ void main() {
           () =>
               repo.fetchRideHistoryOverview(any(), limit: any(named: 'limit')),
         ).thenAnswer(
-          (_) async => const Right(
+          (_) async => const Ok(
             RideHistoryOverview(
               rides: OffsetPage(items: [], hasMore: false, nextOffset: null),
               weeklyFareAmount: 0,
@@ -161,7 +160,7 @@ void main() {
           () =>
               repo.fetchRideHistoryOverview(any(), limit: any(named: 'limit')),
         ).thenAnswer(
-          (_) async => const Right(
+          (_) async => const Ok(
             RideHistoryOverview(
               rides: OffsetPage(items: [], hasMore: false, nextOffset: null),
               weeklyFareAmount: 0,
@@ -199,7 +198,7 @@ void main() {
             offset: any(named: 'offset'),
           ),
         ).thenAnswer(
-          (_) async => const Right(
+          (_) async => const Ok(
             OffsetPage(
               items: [requestedRide],
               hasMore: false,
@@ -247,7 +246,7 @@ void main() {
           () =>
               repo.fetchRideHistoryOverview(any(), limit: any(named: 'limit')),
         ).thenAnswer(
-          (_) async => const Right(
+          (_) async => const Ok(
             RideHistoryOverview(
               rides: OffsetPage(items: [], hasMore: false, nextOffset: null),
               weeklyFareAmount: 0,

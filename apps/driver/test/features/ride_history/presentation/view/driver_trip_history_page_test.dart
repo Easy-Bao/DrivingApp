@@ -6,7 +6,6 @@ import 'package:driver/src/features/ride_history/presentation/view/driver_trip_h
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:foundation/foundation.dart';
 
@@ -27,7 +26,7 @@ void main() {
       () => repository.fetchTripHistory('driver-1', limit: 25, offset: 0),
     ).thenAnswer(
       (_) async =>
-          const Left(ServerFailure('backend query details must stay internal')),
+          const Err(ServerFailure('backend query details must stay internal')),
     );
 
     final cubit = DriverTripHistoryCubit(
@@ -51,10 +50,7 @@ void main() {
     expect(find.text('Try again'), findsOneWidget);
     expect(find.text('No trip history found'), findsNothing);
     expect(find.text('backend query details must stay internal'), findsNothing);
-    expect(
-      find.text('Something went wrong. Try again.'),
-      findsOneWidget,
-    );
+    expect(find.text('Something went wrong. Try again.'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await cubit.close();

@@ -1,5 +1,4 @@
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:driver/src/features/auth/data/driver_auth_endpoints.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver/src/features/auth/data/data_sources/driver_auth_remote_data_source.dart';
@@ -16,7 +15,7 @@ final class DriverAuthRepositoryImpl({
   final DriverSessionStore _secureSessionService;
 
   @override
-  Future<Either<Failure, DriverAuthCredentials>> authenticate({
+  Future<Result<DriverAuthCredentials, Failure>> authenticate({
     required String email,
     required String password,
   }) async {
@@ -92,29 +91,29 @@ final class DriverAuthRepositoryImpl({
         refreshToken: refreshToken,
       );
 
-      return Right(credentials);
+      return Ok(credentials);
     } on ServerException catch (error) {
       if (error.statusCode == 401 || error.statusCode == 403) {
-        return const Left(InvalidCredentialsFailure());
+        return const Err(InvalidCredentialsFailure());
       }
       if (error.statusCode == 0) {
-        return const Left(NetworkFailure());
+        return const Err(NetworkFailure());
       }
-      return Left(
+      return Err(
         FailureMapper.fromException(
           error,
           serverMessage: 'Unable to sign in right now. Please try again.',
         ),
       );
     } on DataParsingException catch (error) {
-      return Left(
+      return Err(
         FailureMapper.fromException(
           error,
           serverMessage: 'Unable to sign in right now. Please try again.',
         ),
       );
     } catch (_) {
-      return const Left(
+      return const Err(
         ServerFailure('Unable to sign in right now. Please try again.'),
       );
     }
@@ -131,15 +130,15 @@ final class DriverAuthRepositoryImpl({
   }
 
   @override
-  Future<Either<Failure, void>> resetPassword({required String email}) async {
+  Future<Result<void, Failure>> resetPassword({required String email}) async {
     try {
       await _remoteDataSource.postJson(
         DriverAuthEndpoints.forgotPassword,
         requestBody: {'email': email},
       );
-      return const Right(null);
+      return const Ok(null);
     } catch (error) {
-      return const Left(
+      return const Err(
         ServerFailure('Failed to send reset link. Please try again.'),
       );
     }

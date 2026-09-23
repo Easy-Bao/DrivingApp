@@ -1,13 +1,12 @@
 import 'package:driver/src/features/profile/domain/entities/driver_account_snapshot.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:foundation/foundation.dart';
 
 abstract interface class DriverProfileRepository {
   DriverAccountSnapshot getCachedAccount();
 
-  Future<Either<Failure, DriverAccountSnapshot>> refreshAccount();
+  Future<Result<DriverAccountSnapshot, Failure>> refreshAccount();
 
-  Future<Either<Failure, DriverAccountSnapshot>> updateAccount({
+  Future<Result<DriverAccountSnapshot, Failure>> updateAccount({
     required DriverAccountSnapshot currentAccount,
     required String name,
     required String phone,

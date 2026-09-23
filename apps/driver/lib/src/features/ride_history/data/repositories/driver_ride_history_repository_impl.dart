@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:driver/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:driver/src/features/ride_history/data/data_sources/driver_ride_history_remote_data_source.dart';
 import 'package:driver/src/features/ride_history/domain/repositories/driver_ride_history_repository.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:foundation/foundation.dart';
 
 final class DriverRideHistoryRepositoryImpl({required this._dataSource})
@@ -10,14 +9,14 @@ final class DriverRideHistoryRepositoryImpl({required this._dataSource})
   final DriverRideHistoryRemoteDataSource _dataSource;
 
   @override
-  Future<Either<Failure, OffsetPage<Map<String, dynamic>>>> fetchTripHistory(
+  Future<Result<OffsetPage<Map<String, dynamic>>, Failure>> fetchTripHistory(
     String driverId, {
     int limit = 25,
     int offset = 0,
     bool activeOnly = false,
   }) async {
     try {
-      return Right(
+      return Ok(
         await _dataSource.fetchTripHistory(
           driverId,
           limit: limit,
@@ -26,7 +25,7 @@ final class DriverRideHistoryRepositoryImpl({required this._dataSource})
         ),
       );
     } catch (error) {
-      return Left(_mapExceptionToFailure(error));
+      return Err(_mapExceptionToFailure(error));
     }
   }
 

@@ -3,7 +3,6 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/chat/data/data_sources/chat_remote_data_source.dart';
 import 'package:passenger/src/features/chat/data/dto/chat_message_dto.dart';
 import 'package:passenger/src/features/chat/domain/entities/chat_connection_state.dart';
@@ -32,7 +31,7 @@ final class ChatRepositoryImpl({
       remoteDataSource.connectionStateStream;
 
   @override
-  Future<Either<Failure, void>> establishChatConnection({
+  Future<Result<void, Failure>> establishChatConnection({
     required String roomId,
     required Uri chatUri,
     String? token,
@@ -45,29 +44,29 @@ final class ChatRepositoryImpl({
         chatUri,
         token: resolvedToken,
       );
-      return const Right(null);
+      return const Ok(null);
     } catch (error) {
-      return Left(_mapChatFailure(error, 'Unable to connect to chat server.'));
+      return Err(_mapChatFailure(error, 'Unable to connect to chat server.'));
     }
   }
 
   @override
-  Future<Either<Failure, void>> terminateChatConnection() async {
+  Future<Result<void, Failure>> terminateChatConnection() async {
     try {
       await remoteDataSource.terminateWebSocketConnection();
-      return const Right(null);
+      return const Ok(null);
     } catch (error) {
-      return const Left(NetworkFailure('Unable to disconnect chat session.'));
+      return const Err(NetworkFailure('Unable to disconnect chat session.'));
     }
   }
 
   @override
-  Future<Either<Failure, void>> initializeChatRoom({
+  Future<Result<void, Failure>> initializeChatRoom({
     required String roomId,
   }) async {
     final rideId = roomId.trim();
     if (rideId.isEmpty) {
-      return const Left(ValidationFailure('Ride ID is required.'));
+      return const Err(ValidationFailure('Ride ID is required.'));
     }
 
     try {
@@ -76,12 +75,12 @@ final class ChatRepositoryImpl({
         data: {'ride_id': rideId},
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return const Right(null);
+        return const Ok(null);
       }
       if (response.statusCode == 423) {
-        return const Left(ChatRoomLockedFailure());
+        return const Err(ChatRoomLockedFailure());
       }
-      return Left(
+      return Err(
         ServerFailure.withStatusCode(
           'Unable to initialize chat room.',
           response.statusCode ?? 500,
@@ -89,50 +88,50 @@ final class ChatRepositoryImpl({
       );
     } on DioException catch (error) {
       if (error.response?.statusCode == 423) {
-        return const Left(ChatRoomLockedFailure());
+        return const Err(ChatRoomLockedFailure());
       }
-      return Left(_mapChatFailure(error, 'Unable to initialize chat room.'));
+      return Err(_mapChatFailure(error, 'Unable to initialize chat room.'));
     } catch (error) {
-      return Left(_mapChatFailure(error, 'Unable to initialize chat room.'));
+      return Err(_mapChatFailure(error, 'Unable to initialize chat room.'));
     }
   }
 
   @override
-  Future<Either<Failure, void>> sendChatMessage(String text) async {
+  Future<Result<void, Failure>> sendChatMessage(String text) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty) {
-      return const Left(ValidationFailure('Message cannot be empty.'));
+      return const Err(ValidationFailure('Message cannot be empty.'));
     }
     if (utf8.encode(trimmed).length > _maxMessageBytes) {
-      return const Left(ValidationFailure('Message is too long.'));
+      return const Err(ValidationFailure('Message is too long.'));
     }
 
     try {
       final payload = jsonEncode({'type': 'message', 'text': trimmed});
 
       remoteDataSource.sendWebSocketChatMessage(payload);
-      return const Right(null);
+      return const Ok(null);
     } catch (error) {
-      return Left(_mapChatFailure(error, 'Unable to send chat message.'));
+      return Err(_mapChatFailure(error, 'Unable to send chat message.'));
     }
   }
 
   @override
-  Future<Either<Failure, void>> sendTypingStatus(bool isTyping) async {
+  Future<Result<void, Failure>> sendTypingStatus(bool isTyping) async {
     if (!isSessionConnected) {
-      return const Left(NetworkFailure('Chat session is disconnected.'));
+      return const Err(NetworkFailure('Chat session is disconnected.'));
     }
 
     try {
       remoteDataSource.sendWebSocketTypingStatus(isTyping);
-      return const Right(null);
+      return const Ok(null);
     } catch (error) {
-      return Left(_mapChatFailure(error, 'Unable to update chat status.'));
+      return Err(_mapChatFailure(error, 'Unable to update chat status.'));
     }
   }
 
   @override
-  Future<Either<Failure, List<ChatMessage>>> fetchRoomMessages(
+  Future<Result<List<ChatMessage>, Failure>> fetchRoomMessages(
     String roomId,
   ) async {
     try {
@@ -140,30 +139,30 @@ final class ChatRepositoryImpl({
         '/api/v1/chat/rooms/${Uri.encodeComponent(roomId)}/messages',
       );
 
-      if (response.statusCode != 200) return const Right([]);
+      if (response.statusCode != 200) return const Ok([]);
       final dataMap = decodeObjectMap(response.data);
       final rawMessages = dataMap['messages'] ?? dataMap['data'] ?? const [];
-      return Right(_decodeMessages(rawMessages));
+      return Ok(_decodeMessages(rawMessages));
     } catch (error) {
-      return Left(_mapChatFailure(error, 'Unable to load chat history.'));
+      return Err(_mapChatFailure(error, 'Unable to load chat history.'));
     }
   }
 
   @override
-  Future<Either<Failure, void>> resolveChatRoom(String roomId) async {
+  Future<Result<void, Failure>> resolveChatRoom(String roomId) async {
     try {
       final response = await clientDio.post<void>(
         '/api/v1/chat/rooms/${Uri.encodeComponent(roomId)}/resolve',
       );
-      if (response.statusCode == 200) return const Right(null);
-      return Left(
+      if (response.statusCode == 200) return const Ok(null);
+      return Err(
         ServerFailure.withStatusCode(
           'Unable to resolve chat room.',
           response.statusCode ?? 500,
         ),
       );
     } catch (error) {
-      return Left(_mapChatFailure(error, 'Unable to resolve chat room.'));
+      return Err(_mapChatFailure(error, 'Unable to resolve chat room.'));
     }
   }
 
@@ -171,33 +170,33 @@ final class ChatRepositoryImpl({
   Future<void> dispose() => remoteDataSource.dispose();
 
   @override
-  Stream<Either<Failure, ChatEvent>> get chatEventsStream {
+  Stream<Result<ChatEvent, Failure>> get chatEventsStream {
     return remoteDataSource.webSocketEventStream.map((rawString) {
       try {
         final decoded = decodeObjectMap(jsonDecode(rawString));
         final type = decoded['type'];
         if (type is! String) {
-          return const Left(ServerFailure('Unable to read chat event.'));
+          return const Err(ServerFailure('Unable to read chat event.'));
         }
 
         return switch (type) {
-          'history' when decoded['messages'] is List => Right(
+          'history' when decoded['messages'] is List => Ok(
             ChatHistoryReceived(_decodeMessages(decoded['messages'])),
           ),
-          'message' => Right(
+          'message' => Ok(
             ChatMessageReceived(
               ChatMessageDto.fromJson(decoded)
                   .toEntity(currentUserId: currentUserId),
             ),
           ),
           'typing' => _decodeTypingEvent(decoded),
-          'room_locked' || 'locked' => Right(
+          'room_locked' || 'locked' => Ok(
             ChatRoomLocked(_stringValueOr(decoded['reason'], 'Trip completed')),
           ),
-          _ => const Left(ServerFailure('Unable to read chat event.')),
+          _ => const Err(ServerFailure('Unable to read chat event.')),
         };
       } catch (error) {
-        return const Left(ServerFailure('Unable to read chat message.'));
+        return const Err(ServerFailure('Unable to read chat message.'));
       }
     });
   }
@@ -220,7 +219,7 @@ final class ChatRepositoryImpl({
     _ => fallback,
   };
 
-  Either<Failure, ChatEvent> _decodeTypingEvent(Map<String, dynamic> decoded) {
+  Result<ChatEvent, Failure> _decodeTypingEvent(Map<String, dynamic> decoded) {
     final senderId = switch (decoded['sender_id']) {
       final String value => value,
       _ => switch (decoded['senderId']) {
@@ -236,9 +235,9 @@ final class ChatRepositoryImpl({
       },
     };
     if (senderId.isEmpty || isTyping == null) {
-      return const Left(ServerFailure('Unable to read chat status.'));
+      return const Err(ServerFailure('Unable to read chat status.'));
     }
-    return Right(
+    return Ok(
       ChatTypingChanged(
         isTyping: isTyping,
         isFromPeer: senderId != currentUserId,

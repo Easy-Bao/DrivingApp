@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/auth/domain/entities/passenger_session.dart';
 import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
@@ -138,25 +137,23 @@ void main() {
 
 final class _AuthenticatedSessionRepository implements SessionRepository {
   @override
-  Future<Either<Failure, PassengerSession>> restoreSession() async {
-    return const Right(
-      PassengerSession.authenticated(passengerId: 'passenger-1'),
-    );
+  Future<Result<PassengerSession, Failure>> restoreSession() async {
+    return const Ok(PassengerSession.authenticated(passengerId: 'passenger-1'));
   }
 
   @override
-  Future<Either<Failure, PassengerSession>> clearSession() async {
-    return const Right(PassengerSession.guest());
+  Future<Result<PassengerSession, Failure>> clearSession() async {
+    return const Ok(PassengerSession.guest());
   }
 }
 
 final class _EmptyRideHistoryRepository implements RideHistoryRepository {
   @override
-  Future<Either<Failure, RideHistoryOverview>> fetchRideHistoryOverview(
+  Future<Result<RideHistoryOverview, Failure>> fetchRideHistoryOverview(
     String passengerId, {
     int limit = 25,
   }) async {
-    return const Right(
+    return const Ok(
       RideHistoryOverview(
         rides: OffsetPage<RideHistory>(
           items: [],
@@ -170,23 +167,23 @@ final class _EmptyRideHistoryRepository implements RideHistoryRepository {
   }
 
   @override
-  Future<Either<Failure, OffsetPage<RideHistory>>> fetchRideHistory(
+  Future<Result<OffsetPage<RideHistory>, Failure>> fetchRideHistory(
     String passengerId, {
     int limit = 25,
     int offset = 0,
   }) async {
-    return const Right(
+    return const Ok(
       OffsetPage<RideHistory>(items: [], hasMore: false, nextOffset: null),
     );
   }
 }
 
 final class _PendingRideHistoryRepository implements RideHistoryRepository {
-  final completer = Completer<Either<Failure, RideHistoryOverview>>();
+  final completer = Completer<Result<RideHistoryOverview, Failure>>();
 
   void complete() {
     completer.complete(
-      const Right(
+      const Ok(
         RideHistoryOverview(
           rides: OffsetPage<RideHistory>(
             items: [],
@@ -201,17 +198,17 @@ final class _PendingRideHistoryRepository implements RideHistoryRepository {
   }
 
   @override
-  Future<Either<Failure, RideHistoryOverview>> fetchRideHistoryOverview(
+  Future<Result<RideHistoryOverview, Failure>> fetchRideHistoryOverview(
     String passengerId, {
     int limit = 25,
   }) => completer.future;
 
   @override
-  Future<Either<Failure, OffsetPage<RideHistory>>> fetchRideHistory(
+  Future<Result<OffsetPage<RideHistory>, Failure>> fetchRideHistory(
     String passengerId, {
     int limit = 25,
     int offset = 0,
-  }) async => const Right(
+  }) async => const Ok(
     OffsetPage<RideHistory>(items: [], hasMore: false, nextOffset: null),
   );
 }

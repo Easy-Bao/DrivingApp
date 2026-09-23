@@ -117,7 +117,7 @@ void main() {
           password: 'secret-password',
         );
 
-        expect(result.isLeft(), isTrue);
+        expect(result.isErr, isTrue);
         verifyNever(() => secureSessionService.saveToken(any()));
         verifyNever(() => secureSessionService.savePassengerId(any()));
       },
@@ -136,7 +136,7 @@ void main() {
         password: 'secret-password',
       );
 
-      expect(result.isLeft(), isTrue);
+      expect(result.isErr, isTrue);
       verifyNever(() => secureSessionService.saveToken(any()));
       verifyNever(() => secureSessionService.savePassengerId(any()));
     });
@@ -217,7 +217,7 @@ void main() {
         password: 'secret-password',
       );
 
-      expect(result.isRight(), isTrue);
+      expect(result.isOk, isTrue);
       verifyNever(() => secureSessionService.saveToken(any()));
       verifyNever(() => secureSessionService.saveRefreshToken(any()));
       verifyNever(() => secureSessionService.savePassengerId(any()));
@@ -244,7 +244,7 @@ void main() {
         code: '123456',
       );
 
-      expect(result.isLeft(), isTrue);
+      expect(result.isErr, isTrue);
       verifyNever(() => secureSessionService.saveToken(any()));
       verifyNever(() => secureSessionService.saveRefreshToken(any()));
       verifyNever(() => secureSessionService.savePassengerId(any()));

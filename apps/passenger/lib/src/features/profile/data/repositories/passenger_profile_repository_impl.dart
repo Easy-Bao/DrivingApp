@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/profile/data/data_sources/passenger_profile_remote_data_source.dart';
 import 'package:passenger/src/features/profile/domain/entities/profile_model.dart';
@@ -35,7 +34,7 @@ final class PassengerProfileRepositoryImpl({
   }
 
   @override
-  Future<Either<Failure, ProfileModel>> refreshProfile() async {
+  Future<Result<ProfileModel, Failure>> refreshProfile() async {
     try {
       final passengerId = await _passengerId();
       final cached = getCachedProfile();
@@ -69,14 +68,14 @@ final class PassengerProfileRepositoryImpl({
         preferredRideType: remote.preferredRideType,
       );
       await _cache(profile);
-      return Right(profile);
+      return Ok(profile);
     } catch (error) {
-      return Left(_mapFailure(error));
+      return Err(_mapFailure(error));
     }
   }
 
   @override
-  Future<Either<Failure, ProfileModel>> updateProfile({
+  Future<Result<ProfileModel, Failure>> updateProfile({
     required String name,
     required String phone,
     required String email,
@@ -91,7 +90,7 @@ final class PassengerProfileRepositoryImpl({
         normalizedPhone.isEmpty ||
         normalizedEmail.isEmpty ||
         !normalizedEmail.contains('@')) {
-      return const Left(ValidationFailure('Profile values are invalid.'));
+      return const Err(ValidationFailure('Profile values are invalid.'));
     }
     try {
       final passengerId = await _passengerId();
@@ -102,7 +101,7 @@ final class PassengerProfileRepositoryImpl({
           normalizedAvatarPath != cached.avatarPath) {
         final bytes = await File(normalizedAvatarPath).readAsBytes();
         if (bytes.isEmpty || bytes.length > (2 << 20)) {
-          return const Left(
+          return const Err(
             ValidationFailure('Choose a profile photo under 2 MB.'),
           );
         }
@@ -151,9 +150,9 @@ final class PassengerProfileRepositoryImpl({
         preferredRideType: remote.preferredRideType,
       );
       await _cache(profile);
-      return Right(profile);
+      return Ok(profile);
     } catch (error) {
-      return Left(_mapFailure(error));
+      return Err(_mapFailure(error));
     }
   }
 

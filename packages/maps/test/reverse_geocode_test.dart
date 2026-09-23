@@ -16,7 +16,7 @@ void main() {
         lng: 123.4350,
       );
 
-      expect(result.isRight(), isTrue);
+      expect(result.isOk, isTrue);
       result.fold((failure) => fail('Should not fail'), (place) {
         expect(place.name, isNotEmpty);
         expect(place.name, isNot(equals('Unknown location')));

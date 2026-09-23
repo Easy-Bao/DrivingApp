@@ -1,16 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/booking/domain/entities/fare_estimate.dart';
 import 'package:passenger/src/features/booking/domain/repositories/fare_repository.dart';
 
 final class _FakeFareRepository implements FareRepository {
   _FakeFareRepository(this._result);
 
-  final Either<Failure, FareEstimate> _result;
+  final Result<FareEstimate, Failure> _result;
 
   @override
-  Future<Either<Failure, FareEstimate>> estimateFare({
+  Future<Result<FareEstimate, Failure>> estimateFare({
     required double distanceKm,
     required double durationMinutes,
     required double originLatitude,
@@ -32,9 +31,7 @@ void main() {
   test(
     'converts the legacy fare contract into a strict success result',
     () async {
-      final FareRepository repository = _FakeFareRepository(
-        const Right(estimate),
-      );
+      final FareRepository repository = _FakeFareRepository(const Ok(estimate));
 
       final result = await repository.estimateFareResult(
         distanceKm: 3,
@@ -75,7 +72,7 @@ void main() {
 
 final class _ThrowingFareRepository implements FareRepository {
   @override
-  Future<Either<Failure, FareEstimate>> estimateFare({
+  Future<Result<FareEstimate, Failure>> estimateFare({
     required double distanceKm,
     required double durationMinutes,
     required double originLatitude,

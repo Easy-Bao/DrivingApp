@@ -1,15 +1,14 @@
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 
 abstract interface class InboxRepository {
-  Future<Either<Failure, List<InboxNotification>>> fetchPassengerNotifications(
+  Future<Result<List<InboxNotification>, Failure>> fetchPassengerNotifications(
     String passengerId,
   );
 }
 
 abstract interface class PaginatedInboxRepository {
-  Future<Either<Failure, OffsetPage<InboxNotification>>>
+  Future<Result<OffsetPage<InboxNotification>, Failure>>
   fetchPassengerNotificationsPage(
     String passengerId, {
     int limit = 50,
@@ -18,7 +17,7 @@ abstract interface class PaginatedInboxRepository {
 }
 
 abstract interface class DismissibleInboxRepository {
-  Future<Either<Failure, void>> deletePassengerNotification(
+  Future<Result<void, Failure>> deletePassengerNotification(
     String passengerId,
     String notificationId,
   );

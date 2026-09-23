@@ -1,7 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:driver/src/features/dashboard/domain/entities/driver_dashboard_stats.dart';
 import 'package:driver/src/features/dashboard/domain/entities/driver_dispatch_snapshot.dart';
@@ -39,9 +38,9 @@ void main() {
             lat: any(named: 'lat'),
             lng: any(named: 'lng'),
           ),
-        ).thenAnswer((_) async => const Right(null));
+        ).thenAnswer((_) async => const Ok(null));
         when(() => repo.getDashboardStats()).thenAnswer(
-          (_) async => const Right(
+          (_) async => const Ok(
             DriverDashboardStats(earnings: 385.50, completedTrips: 7),
           ),
         );
@@ -71,9 +70,9 @@ void main() {
             lat: any(named: 'lat'),
             lng: any(named: 'lng'),
           ),
-        ).thenAnswer((_) async => const Right(null));
+        ).thenAnswer((_) async => const Ok(null));
         when(() => repo.getDashboardStats())
-            .thenAnswer((_) async => const Left(ServerFailure('network')));
+            .thenAnswer((_) async => const Err(ServerFailure('network')));
         return _makeCubit(repo);
       },
       act: (cubit) => cubit.loadStats(),
@@ -91,7 +90,7 @@ void main() {
       build: () {
         when(() => repo.getDashboardStats()).thenAnswer((_) async {
           await Future<void>.delayed(const Duration(milliseconds: 10));
-          return const Right(
+          return const Ok(
             DriverDashboardStats(earnings: 12.50, completedTrips: 1),
           );
         });
@@ -120,10 +119,10 @@ void main() {
       'restores the persisted online choice before loading statistics',
       () async {
         when(() => repo.getPersistedOnlineStatus())
-            .thenAnswer((_) async => const Right(true));
+            .thenAnswer((_) async => const Ok(true));
         when(() => repo.getDashboardStats()).thenAnswer(
           (_) async =>
-              const Right(DriverDashboardStats(earnings: 0, completedTrips: 0)),
+              const Ok(DriverDashboardStats(earnings: 0, completedTrips: 0)),
         );
 
         final cubit = _makeCubit(repo);
@@ -138,11 +137,11 @@ void main() {
     test('coalesces concurrent initialization requests', () async {
       when(() => repo.getPersistedOnlineStatus()).thenAnswer((_) async {
         await Future<void>.delayed(const Duration(milliseconds: 10));
-        return const Right(false);
+        return const Ok(false);
       });
       when(() => repo.getDashboardStats()).thenAnswer(
         (_) async =>
-            const Right(DriverDashboardStats(earnings: 0, completedTrips: 0)),
+            const Ok(DriverDashboardStats(earnings: 0, completedTrips: 0)),
       );
 
       final cubit = _makeCubit(repo);
@@ -161,9 +160,9 @@ void main() {
           .thenAnswer((_) async {
             requestCount++;
             if (requestCount == 1) {
-              return const Left(NetworkFailure('service unavailable'));
+              return const Err(NetworkFailure('service unavailable'));
             }
-            return const Right(
+            return const Ok(
               DriverDispatchSnapshot(
                 activeTrips: [
                   {'id': 'trip-1', 'status': 'in_transit'},
@@ -190,7 +189,7 @@ void main() {
       () async {
         var now = DateTime.utc(2026, 8, 28, 8);
         when(() => repo.getDispatchSnapshot(includeOffers: true)).thenAnswer(
-          (_) async => const Left(NetworkFailure('service unavailable')),
+          (_) async => const Err(NetworkFailure('service unavailable')),
         );
         final cubit = DashboardCubit(repository: repo, now: () => now);
 
@@ -209,7 +208,7 @@ void main() {
       'loads and sorts active trips while keeping offers in cubit state',
       build: () {
         when(() => repo.getDispatchSnapshot(includeOffers: true)).thenAnswer(
-          (_) async => const Right(
+          (_) async => const Ok(
             DriverDispatchSnapshot(
               activeTrips: [
                 {
@@ -256,7 +255,7 @@ void main() {
 
     test('merges realtime trips without mutating existing state', () async {
       when(() => repo.getDispatchSnapshot(includeOffers: true)).thenAnswer(
-        (_) async => const Right(
+        (_) async => const Ok(
           DriverDispatchSnapshot(
             activeTrips: [
               {'id': 'trip-1', 'status': 'accepted'},
@@ -304,7 +303,7 @@ void main() {
             lat: any(named: 'lat'),
             lng: any(named: 'lng'),
           ),
-        ).thenAnswer((_) async => const Right(null));
+        ).thenAnswer((_) async => const Ok(null));
         return _makeCubit(repo);
       },
       act: (cubit) => cubit.toggleOnline(lat: lat, lng: lng),
@@ -320,7 +319,7 @@ void main() {
             lat: any(named: 'lat'),
             lng: any(named: 'lng'),
           ),
-        ).thenAnswer((_) async => const Right(null));
+        ).thenAnswer((_) async => const Ok(null));
         return _makeCubit(repo);
       },
       seed: () => const DashboardState(isOnline: true),
@@ -332,7 +331,7 @@ void main() {
       'honors the switch value instead of inferring it from stale state',
       build: () {
         when(() => repo.updateOnlineStatus(isOnline: false, lat: lat, lng: lng))
-            .thenAnswer((_) async => const Right(null));
+            .thenAnswer((_) async => const Ok(null));
         return _makeCubit(repo);
       },
       act: (cubit) =>
@@ -350,7 +349,7 @@ void main() {
       build: () {
         when(() => repo.updateOnlineStatus(isOnline: true, lat: lat, lng: lng))
             .thenAnswer(
-              (_) async => const Left(NetworkFailure('location unavailable')),
+              (_) async => const Err(NetworkFailure('location unavailable')),
             );
         return _makeCubit(repo);
       },
@@ -358,7 +357,8 @@ void main() {
       expect: () => [
         const DashboardState(isOnline: true),
         const DashboardState(
-          errorMessage: "Couldn't connect. Check your internet connection and try again.",
+          errorMessage:
+              "Couldn't connect. Check your internet connection and try again.",
         ),
       ],
     );
@@ -368,7 +368,7 @@ void main() {
       build: () {
         when(() => repo.updateOnlineStatus(isOnline: false, lat: lat, lng: lng))
             .thenAnswer(
-              (_) async => const Left(NetworkFailure('offline update failed')),
+              (_) async => const Err(NetworkFailure('offline update failed')),
             );
         return _makeCubit(repo);
       },
@@ -379,7 +379,8 @@ void main() {
         const DashboardState(isOnline: false),
         const DashboardState(
           isOnline: true,
-          errorMessage: "Couldn't connect. Check your internet connection and try again.",
+          errorMessage:
+              "Couldn't connect. Check your internet connection and try again.",
         ),
       ],
     );
@@ -388,7 +389,7 @@ void main() {
       'forces the driver offline when location access is lost',
       build: () {
         when(() => repo.updateOnlineStatus(isOnline: false, lat: lat, lng: lng))
-            .thenAnswer((_) async => const Right(null));
+            .thenAnswer((_) async => const Ok(null));
         return _makeCubit(repo);
       },
       seed: () => const DashboardState(isOnline: true),
@@ -401,7 +402,7 @@ void main() {
       build: () {
         when(() => repo.updateOnlineStatus(isOnline: true, lat: lat, lng: lng))
             .thenAnswer(
-              (_) async => const Left(NetworkFailure('presence unavailable')),
+              (_) async => const Err(NetworkFailure('presence unavailable')),
             );
         return _makeCubit(repo);
       },
@@ -410,7 +411,8 @@ void main() {
       expect: () => [
         const DashboardState(
           isOnline: true,
-          errorMessage: "Couldn't connect. Check your internet connection and try again.",
+          errorMessage:
+              "Couldn't connect. Check your internet connection and try again.",
         ),
       ],
     );
@@ -419,7 +421,7 @@ void main() {
       'forceOffline reconciles the server even from local offline state',
       () async {
         when(() => repo.updateOnlineStatus(isOnline: false, lat: lat, lng: lng))
-            .thenAnswer((_) async => const Right(null));
+            .thenAnswer((_) async => const Ok(null));
         final cubit = _makeCubit(repo);
 
         await cubit.forceOffline(lat: lat, lng: lng);

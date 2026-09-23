@@ -8,18 +8,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fpdart/fpdart.dart';
-import 'package:mocktail/mocktail.dart';
 import 'package:foundation/foundation.dart';
+import 'package:mocktail/mocktail.dart';
 
 class _MockSecureStorage extends Mock implements FlutterSecureStorage {}
 
 class _FakeEarningsRepository implements DriverEarningsRepository {
   @override
-  Future<Either<Failure, Map<String, dynamic>>> fetchEarningsSummary(
+  Future<Result<Map<String, dynamic>, Failure>> fetchEarningsSummary(
     String driverId,
   ) async {
-    return const Right({
+    return const Ok({
       'today': {'earnings_amount': 2973, 'completed_trips': 1},
       'this_week': {'earnings_amount': 2973, 'completed_trips': 1},
       'this_month': {'earnings_amount': 2973, 'completed_trips': 1},
@@ -110,42 +109,43 @@ void main() {
     }
   });
 
-  testWidgets('formats negative adjustments and fee deductions with distinct cues', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: EasyRideTheme.main,
-        home: BlocProvider(
-          create: (_) => DriverEarningsCubit(
-            repository: _FakeNegativeEarningsRepository(),
-            sessionService: sessionService,
-          )..load(),
-          child: const DriverEarningsPage(),
+  testWidgets(
+    'formats negative adjustments and fee deductions with distinct cues',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: EasyRideTheme.main,
+          home: BlocProvider(
+            create: (_) => DriverEarningsCubit(
+              repository: _FakeNegativeEarningsRepository(),
+              sessionService: sessionService,
+            )..load(),
+            child: const DriverEarningsPage(),
+          ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('-₱50'), findsWidgets);
-    expect(find.text('Adjustment'), findsOneWidget);
-    expect(
-      find.text('Fee deductions or dispute adjustments applied'),
-      findsOneWidget,
-    );
+      expect(find.text('-₱50'), findsWidgets);
+      expect(find.text('Adjustment'), findsOneWidget);
+      expect(
+        find.text('Fee deductions or dispute adjustments applied'),
+        findsOneWidget,
+      );
 
-    final barChart = tester.widget<BarChart>(find.byType(BarChart));
-    final firstRod = barChart.data.barGroups.first.barRods.first;
-    expect(firstRod.label.text, '-₱50');
-  });
+      final barChart = tester.widget<BarChart>(find.byType(BarChart));
+      final firstRod = barChart.data.barGroups.first.barRods.first;
+      expect(firstRod.label.text, '-₱50');
+    },
+  );
 }
 
 class _FakeNegativeEarningsRepository implements DriverEarningsRepository {
   @override
-  Future<Either<Failure, Map<String, dynamic>>> fetchEarningsSummary(
+  Future<Result<Map<String, dynamic>, Failure>> fetchEarningsSummary(
     String driverId,
   ) async {
-    return const Right({
+    return const Ok({
       'today': {'earnings_amount': -5000, 'completed_trips': 1},
       'this_week': {'earnings_amount': -5000, 'completed_trips': 1},
       'this_month': {'earnings_amount': -5000, 'completed_trips': 1},

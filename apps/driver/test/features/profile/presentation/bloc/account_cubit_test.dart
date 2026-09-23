@@ -2,7 +2,6 @@ import 'package:driver/src/features/profile/presentation/bloc/account/account_cu
 import 'package:driver/src/features/profile/domain/entities/driver_account_snapshot.dart';
 import 'package:driver/src/features/profile/domain/repositories/driver_profile_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:foundation/foundation.dart';
 
 class const _FakeDriverProfileRepository() implements DriverProfileRepository {
@@ -13,8 +12,8 @@ class const _FakeDriverProfileRepository() implements DriverProfileRepository {
   );
 
   @override
-  Future<Either<Failure, DriverAccountSnapshot>> refreshAccount() async {
-    return const Right(
+  Future<Result<DriverAccountSnapshot, Failure>> refreshAccount() async {
+    return const Ok(
       DriverAccountSnapshot(
         name: 'Remote Driver',
         email: 'remote@example.com',
@@ -24,7 +23,7 @@ class const _FakeDriverProfileRepository() implements DriverProfileRepository {
   }
 
   @override
-  Future<Either<Failure, DriverAccountSnapshot>> updateAccount({
+  Future<Result<DriverAccountSnapshot, Failure>> updateAccount({
     required DriverAccountSnapshot currentAccount,
     required String name,
     required String phone,
@@ -32,7 +31,7 @@ class const _FakeDriverProfileRepository() implements DriverProfileRepository {
     required String vehicleType,
     required String plateNumber,
   }) async {
-    return Right(
+    return Ok(
       DriverAccountSnapshot(
         name: name,
         phone: phone,

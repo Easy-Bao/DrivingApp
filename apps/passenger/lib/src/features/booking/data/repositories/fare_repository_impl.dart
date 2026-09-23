@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/data/data_sources/fare_remote_data_source.dart';
 import 'package:passenger/src/features/booking/domain/repositories/fare_repository.dart';
@@ -10,7 +9,7 @@ final class FareRepositoryImpl({required this._remoteDataSource})
   final FareRemoteDataSource _remoteDataSource;
 
   @override
-  Future<Either<Failure, FareEstimate>> estimateFare({
+  Future<Result<FareEstimate, Failure>> estimateFare({
     required double distanceKm,
     required double durationMinutes,
     required double originLatitude,
@@ -24,7 +23,7 @@ final class FareRepositoryImpl({required this._remoteDataSource})
         distanceKm <= 0 ||
         !durationMinutes.isFinite ||
         durationMinutes <= 0) {
-      return const Left(ValidationFailure('The trip route is invalid.'));
+      return const Err(ValidationFailure('The trip route is invalid.'));
     }
     try {
       final fare = await _remoteDataSource.fetchEstimate(
@@ -36,27 +35,27 @@ final class FareRepositoryImpl({required this._remoteDataSource})
         destinationLongitude: destinationLongitude,
       );
       if (!fare.totalFare.isFinite || fare.totalFare <= 0) {
-        return const Left(ValidationFailure('The fare response is invalid.'));
+        return const Err(ValidationFailure('The fare response is invalid.'));
       }
-      return Right(fare);
+      return Ok(fare);
     } on DioException catch (error) {
       final statusCode = error.response?.statusCode;
       if (statusCode == null) {
         if (error.type == DioExceptionType.connectionTimeout ||
             error.type == DioExceptionType.sendTimeout ||
             error.type == DioExceptionType.receiveTimeout) {
-          return const Left(
+          return const Err(
             ServerFailure.withStatusCode('Fare request timed out.', 504),
           );
         }
-        return const Left(
+        return const Err(
           NetworkFailure('Unable to calculate fare. Check your connection.'),
         );
       }
       if (statusCode == 400 || statusCode == 422) {
-        return const Left(RouteCalculationFailure());
+        return const Err(RouteCalculationFailure());
       }
-      return Left(
+      return Err(
         ServerFailure.withStatusCode(
           'Fare calculation is unavailable.',
           statusCode,
@@ -64,16 +63,16 @@ final class FareRepositoryImpl({required this._remoteDataSource})
       );
     } on ServerException catch (error) {
       if (error.statusCode == 400 || error.statusCode == 422) {
-        return const Left(RouteCalculationFailure());
+        return const Err(RouteCalculationFailure());
       }
-      return Left(
+      return Err(
         FailureMapper.fromException(
           error,
           serverMessage: 'Fare calculation is unavailable.',
         ),
       );
     } catch (_) {
-      return const Left(ServerFailure('Fare calculation is unavailable.'));
+      return const Err(ServerFailure('Fare calculation is unavailable.'));
     }
   }
 }

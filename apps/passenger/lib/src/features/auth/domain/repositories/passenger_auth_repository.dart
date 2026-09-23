@@ -1,32 +1,31 @@
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/auth/domain/entities/auth_credentials.dart';
 
 abstract interface class PassengerAuthRepository {
-  Future<Either<Failure, PassengerAuthCredentials>> authenticate({
+  Future<Result<PassengerAuthCredentials, Failure>> authenticate({
     required String email,
     required String password,
   });
 
-  Future<Either<Failure, Map<String, dynamic>>> registerPassenger({
+  Future<Result<Map<String, dynamic>, Failure>> registerPassenger({
     required String name,
     required String email,
     required String phone,
     required String password,
   });
 
-  Future<Either<Failure, PassengerAuthCredentials>> verifyOtp({
+  Future<Result<PassengerAuthCredentials, Failure>> verifyOtp({
     required String email,
     required String code,
   });
 
-  Future<Either<Failure, void>> requestVerificationCode({
+  Future<Result<void, Failure>> requestVerificationCode({
     required String email,
   });
 
-  Future<Either<Failure, void>> resetPassword({required String email});
+  Future<Result<void, Failure>> resetPassword({required String email});
 
-  Future<Either<Failure, void>> confirmResetPassword({
+  Future<Result<void, Failure>> confirmResetPassword({
     required String email,
     required String code,
     required String newPassword,

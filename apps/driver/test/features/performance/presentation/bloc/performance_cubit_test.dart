@@ -7,7 +7,6 @@ import 'package:driver/src/features/performance/presentation/bloc/driver_perform
 import 'package:driver/src/features/performance/presentation/bloc/driver_performance_state.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -31,7 +30,7 @@ void main() {
     'loads performance statistics independently from profile data',
     build: () {
       when(() => repository.fetchStats('driver-1')).thenAnswer(
-        (_) async => const Right(
+        (_) async => const Ok(
           DriverPerformanceStats(
             todayEarningsAmount: 2817,
             todayCompletedTrips: 1,
@@ -59,7 +58,7 @@ void main() {
   test(
     'ignores an overlapping load while the first request is active',
     () async {
-      final response = Completer<Either<Failure, DriverPerformanceStats>>();
+      final response = Completer<Result<DriverPerformanceStats, Failure>>();
       when(() => repository.fetchStats('driver-1'))
           .thenAnswer((_) => response.future);
       final cubit = DriverPerformanceCubit(
@@ -71,7 +70,7 @@ void main() {
       await Future<void>.delayed(Duration.zero);
       final second = cubit.load();
       response.complete(
-        const Right(
+        const Ok(
           DriverPerformanceStats(
             todayEarningsAmount: 100,
             todayCompletedTrips: 1,

@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/inbox/data/data_sources/inbox_remote_data_source.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger/src/features/inbox/domain/repositories/inbox_repository.dart';
@@ -13,7 +12,7 @@ final class InboxRepositoryImpl({required this.remoteDataSource})
   final InboxRemoteDataSource remoteDataSource;
 
   @override
-  Future<Either<Failure, List<InboxNotification>>> fetchPassengerNotifications(
+  Future<Result<List<InboxNotification>, Failure>> fetchPassengerNotifications(
     String passengerId,
   ) async {
     final result = await fetchPassengerNotificationsPage(passengerId);
@@ -21,7 +20,7 @@ final class InboxRepositoryImpl({required this.remoteDataSource})
   }
 
   @override
-  Future<Either<Failure, OffsetPage<InboxNotification>>>
+  Future<Result<OffsetPage<InboxNotification>, Failure>>
   fetchPassengerNotificationsPage(
     String passengerId, {
     int limit = 50,
@@ -64,7 +63,7 @@ final class InboxRepositoryImpl({required this.remoteDataSource})
       }
 
       list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-      return Right(
+      return Ok(
         OffsetPage<InboxNotification>(
           items: list,
           hasMore: notificationPage.hasMore,
@@ -72,29 +71,29 @@ final class InboxRepositoryImpl({required this.remoteDataSource})
         ),
       );
     } catch (error) {
-      return const Left(
+      return const Err(
         ServerFailure('Notifications are temporarily unavailable.'),
       );
     }
   }
 
   @override
-  Future<Either<Failure, void>> deletePassengerNotification(
+  Future<Result<void, Failure>> deletePassengerNotification(
     String passengerId,
     String notificationId,
   ) async {
     try {
       await remoteDataSource.deleteNotification(passengerId, notificationId);
-      return const Right(null);
+      return const Ok(null);
     } on DioException catch (error) {
-      return Left(
+      return Err(
         ServerFailure.withStatusCode(
           'The message could not be deleted.',
           error.response?.statusCode ?? 500,
         ),
       );
     } catch (_) {
-      return const Left(ServerFailure('The message could not be deleted.'));
+      return const Err(ServerFailure('The message could not be deleted.'));
     }
   }
 

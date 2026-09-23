@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:go_router/go_router.dart';
 import 'package:passenger/src/app/navigation/passenger_floating_tab_bar.dart';
 import 'package:passenger/src/app/navigation/passenger_navigation_shell.dart';
@@ -474,24 +473,22 @@ GoRouter _createRouter(
 
 class _SessionRepositoryStub implements SessionRepository {
   @override
-  Future<Either<Failure, PassengerSession>> clearSession() async {
-    return const Right(PassengerSession.guest());
+  Future<Result<PassengerSession, Failure>> clearSession() async {
+    return const Ok(PassengerSession.guest());
   }
 
   @override
-  Future<Either<Failure, PassengerSession>> restoreSession() async {
-    return const Right(
-      PassengerSession.authenticated(passengerId: 'passenger-1'),
-    );
+  Future<Result<PassengerSession, Failure>> restoreSession() async {
+    return const Ok(PassengerSession.authenticated(passengerId: 'passenger-1'));
   }
 }
 
 class _InboxRepositoryStub implements InboxRepository {
   @override
-  Future<Either<Failure, List<InboxNotification>>> fetchPassengerNotifications(
+  Future<Result<List<InboxNotification>, Failure>> fetchPassengerNotifications(
     String passengerId,
   ) async {
-    return const Right(<InboxNotification>[]);
+    return const Ok(<InboxNotification>[]);
   }
 }
 

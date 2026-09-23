@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:driver/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:driver/src/features/earnings/data/data_sources/driver_earnings_remote_data_source.dart';
 import 'package:driver/src/features/earnings/domain/repositories/driver_earnings_repository.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:foundation/foundation.dart';
 
 final class DriverEarningsRepositoryImpl({required this._dataSource})
@@ -10,13 +9,13 @@ final class DriverEarningsRepositoryImpl({required this._dataSource})
   final DriverEarningsRemoteDataSource _dataSource;
 
   @override
-  Future<Either<Failure, Map<String, dynamic>>> fetchEarningsSummary(
+  Future<Result<Map<String, dynamic>, Failure>> fetchEarningsSummary(
     String driverId,
   ) async {
     try {
-      return Right(await _dataSource.fetchEarningsSummary(driverId));
+      return Ok(await _dataSource.fetchEarningsSummary(driverId));
     } catch (error) {
-      return Left(_mapExceptionToFailure(error));
+      return Err(_mapExceptionToFailure(error));
     }
   }
 

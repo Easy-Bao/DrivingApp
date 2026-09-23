@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/ride_history/data/data_sources/passenger_ride_history_remote_data_source.dart';
 import 'package:passenger/src/features/ride_history/domain/entities/ride_history_overview.dart';
@@ -96,7 +95,7 @@ final class RideHistoryRepositoryImpl({required this._remoteDataSource})
   }
 
   @override
-  Future<Either<Failure, RideHistoryOverview>> fetchRideHistoryOverview(
+  Future<Result<RideHistoryOverview, Failure>> fetchRideHistoryOverview(
     String passengerId, {
     int limit = 25,
   }) async {
@@ -109,7 +108,7 @@ final class RideHistoryRepositoryImpl({required this._remoteDataSource})
       final summaryFuture = _remoteDataSource.fetchSummary(passengerId);
       final rawPage = await pageFuture;
       final summary = await summaryFuture;
-      return Right(
+      return Ok(
         RideHistoryOverview(
           rides: _mapPage(rawPage),
           weeklyFareAmount: SafeParse.toInt(summary['this_week_fare_amount']),
@@ -119,12 +118,12 @@ final class RideHistoryRepositoryImpl({required this._remoteDataSource})
         ),
       );
     } catch (error) {
-      return Left(_mapExceptionToFailure(error));
+      return Err(_mapExceptionToFailure(error));
     }
   }
 
   @override
-  Future<Either<Failure, OffsetPage<RideHistory>>> fetchRideHistory(
+  Future<Result<OffsetPage<RideHistory>, Failure>> fetchRideHistory(
     String passengerId, {
     int limit = 25,
     int offset = 0,
@@ -135,9 +134,9 @@ final class RideHistoryRepositoryImpl({required this._remoteDataSource})
         limit: limit,
         offset: offset,
       );
-      return Right(_mapPage(rawPage));
+      return Ok(_mapPage(rawPage));
     } catch (error) {
-      return Left(_mapExceptionToFailure(error));
+      return Err(_mapExceptionToFailure(error));
     }
   }
 

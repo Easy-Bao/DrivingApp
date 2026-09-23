@@ -1,7 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
@@ -58,7 +57,7 @@ void main() {
         when(() => session.readActiveRideId())
             .thenAnswer((_) async => 'ride-42');
         when(() => repo.updateRideStatus(any(), any()))
-            .thenAnswer((_) async => const Right(null));
+            .thenAnswer((_) async => const Ok(null));
         return _makeCubit(repo, session);
       },
       act: (cubit) => cubit.cancelTrip(),
@@ -74,9 +73,9 @@ void main() {
       () async {
         when(() => session.readActiveRideId())
             .thenAnswer((_) async => 'ride-42');
-        when(() => repo.updateRideStatus(any(), any())).thenAnswer(
-          (_) async => const Left(NetworkFailure('cancel rejected')),
-        );
+        when(
+          () => repo.updateRideStatus(any(), any()),
+        ).thenAnswer((_) async => const Err(NetworkFailure('cancel rejected')));
         final cubit = _makeCubit(repo, session);
 
         expect(await cubit.cancelTripRequest(), isFalse);
@@ -101,7 +100,7 @@ void main() {
           ),
         ).thenAnswer((_) async => null);
         when(() => repo.getRideStatusUpdate('ride-1')).thenAnswer(
-          (_) async => const Right(
+          (_) async => const Ok(
             RideUpdate(
               status: RideStatus.accepted,
               driverId: 'drv-1',
@@ -112,7 +111,7 @@ void main() {
           ),
         );
         when(() => repo.fetchDriverLocation('ride-1'))
-            .thenAnswer((_) async => const Right((7.828, 123.434)));
+            .thenAnswer((_) async => const Ok((7.828, 123.434)));
         when(() => session.readActiveRideId())
             .thenAnswer((_) async => 'ride-1');
         final cubit = _makeCubit(repo, session);
@@ -153,7 +152,7 @@ void main() {
           ],
         );
         when(() => repo.getRideStatusUpdate(any())).thenAnswer(
-          (_) async => const Right(
+          (_) async => const Ok(
             RideUpdate(
               status: RideStatus.accepted,
               driverId: 'drv-1',
@@ -164,7 +163,7 @@ void main() {
           ),
         );
         when(() => repo.fetchDriverLocation('ride-1'))
-            .thenAnswer((_) async => const Right((7.828, 123.434)));
+            .thenAnswer((_) async => const Ok((7.828, 123.434)));
         when(() => session.readActiveRideId())
             .thenAnswer((_) async => 'ride-1');
         return _makeCubit(repo, session);
@@ -199,7 +198,7 @@ void main() {
           ),
         ).thenAnswer((_) async => null);
         when(() => repo.getRideStatusUpdate(any())).thenAnswer(
-          (_) async => const Right(
+          (_) async => const Ok(
             RideUpdate(
               status: RideStatus.accepted,
               driverId: 'drv-1',
@@ -210,7 +209,7 @@ void main() {
           ),
         );
         when(() => repo.fetchDriverLocation('ride-1'))
-            .thenAnswer((_) async => const Right((7.828, 123.434)));
+            .thenAnswer((_) async => const Ok((7.828, 123.434)));
         when(() => session.readActiveRideId())
             .thenAnswer((_) async => 'ride-1');
         return _makeCubit(repo, session);
@@ -237,7 +236,7 @@ void main() {
       'keeps an arrived status when driver location is temporarily unavailable',
       build: () {
         when(() => repo.getRideStatusUpdate(any())).thenAnswer(
-          (_) async => const Right(
+          (_) async => const Ok(
             RideUpdate(
               status: RideStatus.arrived,
               driverId: 'drv-1',
@@ -248,7 +247,7 @@ void main() {
           ),
         );
         when(() => repo.fetchDriverLocation('ride-1'))
-            .thenAnswer((_) async => const Left(NetworkFailure('offline')));
+            .thenAnswer((_) async => const Err(NetworkFailure('offline')));
         when(() => session.readActiveRideId())
             .thenAnswer((_) async => 'ride-1');
         return _makeCubit(repo, session);
@@ -289,7 +288,7 @@ void main() {
         when(() => session.readActiveRideId())
             .thenAnswer((_) async => 'ride-1');
         when(() => repo.getRideStatusUpdate('ride-1')).thenAnswer(
-          (_) async => const Right(
+          (_) async => const Ok(
             RideUpdate(
               status: RideStatus.completed,
               driverId: 'drv-1',

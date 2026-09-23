@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
@@ -25,9 +24,9 @@ void main() {
   });
 
   test('coalesces repeated detail loads for the same ride', () async {
-    final rideCompleter = Completer<Either<Failure, RideSnapshot>>();
+    final rideCompleter = Completer<Result<RideSnapshot, Failure>>();
     final counterpartyCompleter =
-        Completer<Either<Failure, RideCounterparty>>();
+        Completer<Result<RideCounterparty, Failure>>();
     const ride = RideSnapshot(
       id: '303',
       status: 'completed',
@@ -55,8 +54,8 @@ void main() {
     verify(() => repository.fetchRide('303')).called(1);
     verify(() => repository.fetchCounterparty('303')).called(1);
 
-    rideCompleter.complete(const Right(ride));
-    counterpartyCompleter.complete(const Right(counterparty));
+    rideCompleter.complete(const Ok(ride));
+    counterpartyCompleter.complete(const Ok(counterparty));
     await Future.wait([firstLoad, secondLoad]);
 
     expect(cubit.state.ride, ride);

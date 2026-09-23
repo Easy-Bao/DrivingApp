@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/home/domain/entities/public_driver_summary.dart';
 import 'package:passenger/src/features/home/domain/repositories/public_driver_summary_repository.dart';
@@ -26,7 +25,7 @@ void main() {
     build: () {
       final repository = MockPublicDriverSummaryRepository();
       when(() => repository.fetchSummaries()).thenAnswer(
-        (_) async => const Right<Failure, List<PublicDriverSummary>>([summary]),
+        (_) async => const Ok<List<PublicDriverSummary>, Failure>([summary]),
       );
       return PublicDriverSummaryCubit(repository: repository);
     },
@@ -47,7 +46,7 @@ void main() {
     final repository = MockPublicDriverSummaryRepository();
     when(() => repository.fetchSummaries()).thenAnswer(
       (_) async =>
-          const Left<Failure, List<PublicDriverSummary>>(NetworkFailure()),
+          const Err<List<PublicDriverSummary>, Failure>(NetworkFailure()),
     );
     final cubit = PublicDriverSummaryCubit(repository: repository);
 
@@ -55,7 +54,7 @@ void main() {
     verify(() => repository.fetchSummaries()).called(1);
 
     when(() => repository.fetchSummaries()).thenAnswer(
-      (_) async => const Right<Failure, List<PublicDriverSummary>>([summary]),
+      (_) async => const Ok<List<PublicDriverSummary>, Failure>([summary]),
     );
     await cubit.load();
 
@@ -67,7 +66,7 @@ void main() {
 
   test('shares one in-flight request between concurrent callers', () async {
     final repository = MockPublicDriverSummaryRepository();
-    final response = Completer<Either<Failure, List<PublicDriverSummary>>>();
+    final response = Completer<Result<List<PublicDriverSummary>, Failure>>();
     when(() => repository.fetchSummaries()).thenAnswer((_) => response.future);
     final cubit = PublicDriverSummaryCubit(repository: repository);
 
@@ -76,9 +75,7 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     verify(() => repository.fetchSummaries()).called(1);
 
-    response.complete(
-      const Right<Failure, List<PublicDriverSummary>>([summary]),
-    );
+    response.complete(const Ok<List<PublicDriverSummary>, Failure>([summary]));
     await Future.wait([first, second]);
     expect(cubit.state.status, PublicDriverSummaryStatus.success);
     await cubit.close();

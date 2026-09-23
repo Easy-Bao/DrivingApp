@@ -1,5 +1,4 @@
 import 'package:foundation/foundation.dart';
-import 'package:fpdart/fpdart.dart';
 import 'package:passenger/src/features/auth/data/data_sources/passenger_auth_remote_data_source.dart';
 import 'package:passenger/src/features/auth/data/passenger_auth_endpoints.dart';
 import 'package:passenger/src/features/auth/domain/entities/auth_credentials.dart';
@@ -18,7 +17,7 @@ final class PassengerAuthRepositoryImpl({
   final SharedPreferences _preferences;
 
   @override
-  Future<Either<Failure, PassengerAuthCredentials>> authenticate({
+  Future<Result<PassengerAuthCredentials, Failure>> authenticate({
     required String email,
     required String password,
   }) async {
@@ -32,36 +31,34 @@ final class PassengerAuthRepositoryImpl({
         fallbackEmail: email,
       );
       await _persistSession(credentials);
-      return Right(credentials);
+      return Ok(credentials);
     } on ServerException catch (error) {
       if (error.statusCode == 401 || error.statusCode == 403) {
-        return const Left(InvalidCredentialsFailure());
+        return const Err(InvalidCredentialsFailure());
       }
       if (error.statusCode == 0) {
-        return const Left(NetworkFailure());
+        return const Err(NetworkFailure());
       }
-      return Left(
+      return Err(
         FailureMapper.fromException(
           error,
           serverMessage: "Couldn't sign in. Try again.",
         ),
       );
     } on DataParsingException catch (error) {
-      return Left(
+      return Err(
         FailureMapper.fromException(
           error,
           serverMessage: "Couldn't sign in. Try again.",
         ),
       );
     } catch (_) {
-      return const Left(
-        ServerFailure("Couldn't sign in. Try again."),
-      );
+      return const Err(ServerFailure("Couldn't sign in. Try again."));
     }
   }
 
   @override
-  Future<Either<Failure, Map<String, dynamic>>> registerPassenger({
+  Future<Result<Map<String, dynamic>, Failure>> registerPassenger({
     required String name,
     required String email,
     required String phone,
@@ -84,30 +81,30 @@ final class PassengerAuthRepositoryImpl({
         );
         await _persistSession(credentials);
       }
-      return Right(responseData);
+      return Ok(responseData);
     } catch (error) {
       if (error is ServerException) {
         if (error.statusCode == 409) {
-          return const Left(EmailAlreadyRegisteredFailure());
+          return const Err(EmailAlreadyRegisteredFailure());
         }
         if (error.statusCode == 0) {
-          return const Left(NetworkFailure());
+          return const Err(NetworkFailure());
         }
-        return Left(
+        return Err(
           FailureMapper.fromException(
             error,
             validationMessage: 'Check your registration details and try again.',
           ),
         );
       }
-      return const Left(
+      return const Err(
         ServerFailure("Couldn't create your account. Try again."),
       );
     }
   }
 
   @override
-  Future<Either<Failure, PassengerAuthCredentials>> verifyOtp({
+  Future<Result<PassengerAuthCredentials, Failure>> verifyOtp({
     required String email,
     required String code,
   }) async {
@@ -121,19 +118,17 @@ final class PassengerAuthRepositoryImpl({
         fallbackEmail: email,
       );
       await _persistSession(credentials);
-      return Right(credentials);
+      return Ok(credentials);
     } catch (error) {
       if (error is ServerException) {
-        return Left(
+        return Err(
           FailureMapper.fromException(
             error,
             validationMessage: 'Invalid verification code. Try again.',
           ),
         );
       }
-      return const Left(
-        ServerFailure("Couldn't verify your code. Try again."),
-      );
+      return const Err(ServerFailure("Couldn't verify your code. Try again."));
     }
   }
 
@@ -187,7 +182,7 @@ final class PassengerAuthRepositoryImpl({
   String _stringValue(Object? value) => value?.toString() ?? '';
 
   @override
-  Future<Either<Failure, void>> requestVerificationCode({
+  Future<Result<void, Failure>> requestVerificationCode({
     required String email,
   }) async {
     try {
@@ -197,28 +192,25 @@ final class PassengerAuthRepositoryImpl({
       );
       final success = responseBody['success'] == true;
       if (!success) {
-        return const Left(
-          ServerFailure("Couldn't send a new code. Try again."),
-        );
+        return const Err(ServerFailure("Couldn't send a new code. Try again."));
       }
-      return const Right(null);
+      return const Ok(null);
     } on ServerException catch (error) {
-      return Left(
+      return Err(
         FailureMapper.fromException(
           error,
-          validationMessage:
-              'Couldn\'t send a new code. Try again.',
+          validationMessage: 'Couldn\'t send a new code. Try again.',
         ),
       );
     } catch (_) {
-      return const Left(
+      return const Err(
         ServerFailure('Failed to send a new verification code.'),
       );
     }
   }
 
   @override
-  Future<Either<Failure, void>> resetPassword({required String email}) async {
+  Future<Result<void, Failure>> resetPassword({required String email}) async {
     try {
       final responseBody = await _remoteDataSource.postJson(
         PassengerAuthEndpoints.forgotPassword,
@@ -226,20 +218,22 @@ final class PassengerAuthRepositoryImpl({
       );
       final success = responseBody['success'] == true;
       if (!success) {
-        return const Left(
-          ServerFailure("Couldn't send the reset link. Check your email and try again."),
+        return const Err(
+          ServerFailure(
+            "Couldn't send the reset link. Check your email and try again.",
+          ),
         );
       }
-      return const Right(null);
+      return const Ok(null);
     } catch (error) {
-      return const Left(
+      return const Err(
         ServerFailure("Couldn't send the reset link. Try again."),
       );
     }
   }
 
   @override
-  Future<Either<Failure, void>> confirmResetPassword({
+  Future<Result<void, Failure>> confirmResetPassword({
     required String email,
     required String code,
     required String newPassword,
@@ -251,13 +245,13 @@ final class PassengerAuthRepositoryImpl({
       );
       final success = responseBody['success'] == true;
       if (!success) {
-        return const Left(
+        return const Err(
           ServerFailure("Couldn't reset your password. Try again."),
         );
       }
-      return const Right(null);
+      return const Ok(null);
     } catch (error) {
-      return const Left(
+      return const Err(
         ServerFailure('Password reset failed. Please try again.'),
       );
     }
