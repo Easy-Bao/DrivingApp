@@ -155,6 +155,34 @@ void main() {
     expect(accepted, isTrue);
   });
 
+  testWidgets('latches the accept action against rapid double taps', (
+    tester,
+  ) async {
+    var accepted = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: EasyRideTheme.main,
+        home: Scaffold(
+          body: DriverIncomingRequestDialog(
+            bid: testBid,
+            submittingBidId: null,
+            onDecline: () {},
+            onAccept: () => accepted++,
+          ),
+        ),
+      ),
+    );
+
+    final acceptButton = find.byKey(
+      const ValueKey('incoming-request-accept-button'),
+    );
+    await tester.tap(acceptButton);
+    await tester.tap(acceptButton);
+
+    expect(accepted, 1);
+  });
+
   testWidgets('triggers onTimeout when countdown expires', (tester) async {
     var timedOut = false;
 

@@ -71,6 +71,7 @@ class _DriverIncomingRequestDialogState
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final bool _isInternalController;
+  bool _isAccepting = false;
 
   @override
   void initState() {
@@ -115,6 +116,21 @@ class _DriverIncomingRequestDialogState
   }
 
   @override
+  void didUpdateWidget(covariant DriverIncomingRequestDialog oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.submittingBidId != widget.submittingBidId &&
+        widget.submittingBidId == null) {
+      _isAccepting = false;
+    }
+  }
+
+  void _handleAccept() {
+    if (_isAccepting || widget.submittingBidId != null) return;
+    setState(() => _isAccepting = true);
+    widget.onAccept();
+  }
+
+  @override
   void dispose() {
     _controller.removeStatusListener(_onAnimationStatusChanged);
     if (_isInternalController) {
@@ -135,7 +151,8 @@ class _DriverIncomingRequestDialogState
     final fare = dashboardFareInPesos(widget.bid);
     final distance = _extractDistanceInKm(widget.bid);
     final bidId = dashboardValueAsString(widget.bid['id']);
-    final isSubmitting = bidId != null && widget.submittingBidId == bidId;
+    final isSubmitting =
+        _isAccepting || (bidId != null && widget.submittingBidId == bidId);
     final passengerNote = dashboardValueAsString(widget.bid['passenger_note']);
 
     return Dialog(
@@ -349,7 +366,8 @@ class _DriverIncomingRequestDialogState
                               key: const ValueKey(
                                 'incoming-request-decline-button',
                               ),
-                              onPressed: widget.submittingBidId != null
+                              onPressed:
+                                  widget.submittingBidId != null || _isAccepting
                                   ? null
                                   : widget.onDecline,
                               style: OutlinedButton.styleFrom(
@@ -386,9 +404,11 @@ class _DriverIncomingRequestDialogState
                                 'incoming-request-accept-button',
                               ),
                               onPressed:
-                                  fare == null || widget.submittingBidId != null
+                                  fare == null ||
+                                      widget.submittingBidId != null ||
+                                      _isAccepting
                                   ? null
-                                  : widget.onAccept,
+                                  : _handleAccept,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: context.colorScheme.primary,
                                 foregroundColor: context.colorScheme.onPrimary,
