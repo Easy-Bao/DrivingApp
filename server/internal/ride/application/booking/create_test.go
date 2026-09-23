@@ -112,6 +112,47 @@ func TestServiceEstimateFareValidatesRouteInputs(t *testing.T) {
 	}
 }
 
+func TestServiceEstimateFareCachesAuthoritativeTrafficMetrics(t *testing.T) {
+	routeCalls := 0
+	service := booking.NewService(booking.Dependencies{
+		CalculateFare:    func(float64, float64) int64 { return 2500 },
+		HasRouteProvider: true,
+		ResolveRoute: func(
+			context.Context,
+			float64,
+			float64,
+			float64,
+			float64,
+			float64,
+			float64,
+		) (ports.RouteMetrics, error) {
+			routeCalls++
+			return ports.RouteMetrics{DistanceKm: 2.4, DurationMinutes: 13}, nil
+		},
+	})
+
+	for range 2 {
+		metrics, fare, err := service.EstimateFare(
+			context.Background(),
+			floatPointer(1),
+			floatPointer(2),
+			floatPointer(3),
+			floatPointer(4),
+			0,
+			0,
+		)
+		if err != nil {
+			t.Fatalf("EstimateFare returned error: %v", err)
+		}
+		if metrics.DistanceKm != 2.4 || metrics.DurationMinutes != 13 || fare != 2500 {
+			t.Fatalf("fare result = %#v, %d", metrics, fare)
+		}
+	}
+	if routeCalls != 1 {
+		t.Fatalf("route calls = %d, want one cached traffic calculation", routeCalls)
+	}
+}
+
 type activeRideCheckerStub struct {
 	hasActive bool
 	err       error

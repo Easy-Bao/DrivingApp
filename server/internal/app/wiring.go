@@ -133,7 +133,9 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 				ctx,
 				locationdomain.Coordinates{Latitude: originLat, Longitude: originLng},
 				locationdomain.Coordinates{Latitude: destinationLat, Longitude: destinationLng},
-				locationdomain.RouteOptions{},
+				locationdomain.RouteOptions{
+					Profile: locationdomain.RouteProfileDrivingTraffic,
+				},
 			)
 			if err != nil {
 				return rideapplication.RouteMetrics{}, fmt.Errorf("calculate route metrics: %w", err)

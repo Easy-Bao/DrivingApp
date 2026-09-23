@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"sync"
+	"time"
 
 	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
@@ -12,6 +14,22 @@ import (
 )
 
 var errUnavailable = errors.New("ride booking persistence is unavailable")
+
+const (
+	fareRouteCacheTTL        = 15 * time.Second
+	fareRouteCacheMaxEntries = 128
+)
+
+type fareRouteCacheEntry struct {
+	metrics   ports.RouteMetrics
+	createdAt time.Time
+}
+
+type fareRouteFlight struct {
+	done    chan struct{}
+	metrics ports.RouteMetrics
+	err     error
+}
 
 // RouteResolver is the application policy used to obtain authoritative route
 // metrics. Keeping it as a function lets booking remain independent of the
@@ -39,6 +57,9 @@ type Service struct {
 	calculateFare     FareCalculator
 	publishRide       RideEventPublisher
 	hasRouteProvider  bool
+	fareRouteCacheMu  sync.Mutex
+	fareRouteCache    map[string]fareRouteCacheEntry
+	fareRouteFlights  map[string]*fareRouteFlight
 }
 
 func NewService(dependencies Dependencies) *Service {
@@ -55,6 +76,8 @@ func NewService(dependencies Dependencies) *Service {
 		calculateFare:     dependencies.CalculateFare,
 		publishRide:       dependencies.PublishRide,
 		hasRouteProvider:  dependencies.HasRouteProvider,
+		fareRouteCache:    make(map[string]fareRouteCacheEntry),
+		fareRouteFlights:  make(map[string]*fareRouteFlight),
 	}
 }
 
@@ -119,7 +142,7 @@ func (service *Service) CreateWithDetails(ctx context.Context, ride domain.Ride)
 			return domain.Ride{}, domain.ErrActiveBooking
 		}
 	}
-	metrics, err := service.resolveRoute(
+	metrics, err := service.resolveRouteMetrics(
 		ctx,
 		ride.PickupLatitude,
 		ride.PickupLongitude,
@@ -170,7 +193,7 @@ func (service *Service) EstimateFare(
 		if service.resolveRoute == nil {
 			return ports.RouteMetrics{}, 0, errUnavailable
 		}
-		metrics, err := service.resolveRoute(
+		metrics, err := service.resolveRouteMetrics(
 			ctx,
 			*originLatitude,
 			*originLongitude,
@@ -196,6 +219,101 @@ func (service *Service) EstimateFare(
 	}
 	metrics := ports.RouteMetrics{DistanceKm: distanceKm, DurationMinutes: durationMinutes}
 	return metrics, service.calculateFare(distanceKm, durationMinutes), nil
+}
+
+func (service *Service) resolveRouteMetrics(
+	ctx context.Context,
+	originLatitude, originLongitude, destinationLatitude, destinationLongitude float64,
+	distanceKm, durationMinutes float64,
+) (ports.RouteMetrics, error) {
+	if !service.hasRouteProvider {
+		return service.resolveRoute(
+			ctx,
+			originLatitude,
+			originLongitude,
+			destinationLatitude,
+			destinationLongitude,
+			distanceKm,
+			durationMinutes,
+		)
+	}
+	key := fareRouteCacheKey(
+		originLatitude,
+		originLongitude,
+		destinationLatitude,
+		destinationLongitude,
+	)
+	service.fareRouteCacheMu.Lock()
+	if entry, ok := service.fareRouteCache[key]; ok {
+		if time.Since(entry.createdAt) < fareRouteCacheTTL {
+			service.fareRouteCacheMu.Unlock()
+			return entry.metrics, nil
+		}
+		delete(service.fareRouteCache, key)
+	}
+	if flight, ok := service.fareRouteFlights[key]; ok {
+		service.fareRouteCacheMu.Unlock()
+		select {
+		case <-flight.done:
+			return flight.metrics, flight.err
+		case <-ctx.Done():
+			return ports.RouteMetrics{}, ctx.Err()
+		}
+	}
+	flight := &fareRouteFlight{done: make(chan struct{})}
+	service.fareRouteFlights[key] = flight
+	service.fareRouteCacheMu.Unlock()
+
+	metrics, err := service.resolveRoute(
+		ctx,
+		originLatitude,
+		originLongitude,
+		destinationLatitude,
+		destinationLongitude,
+		distanceKm,
+		durationMinutes,
+	)
+
+	service.fareRouteCacheMu.Lock()
+	delete(service.fareRouteFlights, key)
+	flight.metrics = metrics
+	flight.err = err
+	if err == nil {
+		service.storeFareRouteLocked(key, metrics)
+	}
+	close(flight.done)
+	service.fareRouteCacheMu.Unlock()
+	return metrics, err
+}
+
+func (service *Service) storeFareRouteLocked(key string, metrics ports.RouteMetrics) {
+	if len(service.fareRouteCache) >= fareRouteCacheMaxEntries {
+		oldestKey := ""
+		var oldest time.Time
+		for candidateKey, candidate := range service.fareRouteCache {
+			if oldestKey == "" || candidate.createdAt.Before(oldest) {
+				oldestKey = candidateKey
+				oldest = candidate.createdAt
+			}
+		}
+		delete(service.fareRouteCache, oldestKey)
+	}
+	service.fareRouteCache[key] = fareRouteCacheEntry{
+		metrics:   metrics,
+		createdAt: time.Now(),
+	}
+}
+
+func fareRouteCacheKey(
+	originLatitude, originLongitude, destinationLatitude, destinationLongitude float64,
+) string {
+	return fmt.Sprintf(
+		"fare-route:%.6f:%.6f:%.6f:%.6f",
+		originLatitude,
+		originLongitude,
+		destinationLatitude,
+		destinationLongitude,
+	)
 }
 
 func (service *Service) publish(
