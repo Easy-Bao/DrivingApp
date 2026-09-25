@@ -107,8 +107,6 @@ final class RealtimeWebSocketClient({
   final _seenIds = <String>{};
 
   RealtimeSocket? _socket;
-  // Cancellation is owned by stop and dispose so a reconnect can replace it.
-  // ignore: cancel_subscriptions
   StreamSubscription<Object?>? _socketSubscription;
   Timer? _reconnectTimer;
   Future<void>? _connecting;
@@ -197,6 +195,8 @@ final class RealtimeWebSocketClient({
     }
     _disposed = true;
     await stop();
+    await _socketSubscription?.cancel();
+    _socketSubscription = null;
     await _networkSubscription?.cancel();
     _networkSubscription = null;
     await _events.close();
@@ -297,7 +297,6 @@ final class RealtimeWebSocketClient({
       _hasEstablishedConnection = true;
       _socket = socket;
       _attempt = 0;
-      // ignore: cancel_subscriptions
       _socketSubscription = socket.messages.listen(
         _onMessage,
         onError: (Object error, StackTrace stackTrace) => _onDisconnect(socket),

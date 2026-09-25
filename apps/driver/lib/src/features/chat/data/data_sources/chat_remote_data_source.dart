@@ -47,9 +47,6 @@ class WebSocketChatRemoteDataSource({
   int _reconnectAttempt = 0;
   Timer? _reconnectTimer;
   final List<String> _pendingChatMessages = <String>[];
-  // Cancellation is owned by terminate and the disconnect path so a new
-  // connection never leaves the previous listener attached.
-  // ignore: cancel_subscriptions
   StreamSubscription<dynamic>? _socketSubscription;
   final StreamController<String> _chatEventStreamController =
       StreamController<String>.broadcast();
@@ -128,6 +125,8 @@ class WebSocketChatRemoteDataSource({
   @override
   Future<void> dispose() async {
     _disposed = true;
+    await _socketSubscription?.cancel();
+    _socketSubscription = null;
     await terminateWebSocketConnection();
     await _chatEventStreamController.close();
     await _connectionStateController.close();

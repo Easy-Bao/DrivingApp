@@ -1,5 +1,4 @@
-// ignore: avoid_classes_with_only_static_members
-abstract final class PassengerStorageKeys {
+extension type const PassengerStorageKeys._(int _) {
   static const String jwtToken = 'jwt_token';
   static const String refreshToken = 'refresh_token';
   static const String driverId = 'driver_id';

@@ -132,11 +132,7 @@ class PassengerBackgroundTelemetry({
 void backgroundTelemetryOnStart(ServiceInstance service) {
   DartPluginRegistrant.ensureInitialized();
 
-  final storage = const FlutterSecureStorage(
-    // Keep the Android storage mode explicit for existing encrypted entries.
-    // ignore: deprecated_member_use
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-  );
+  final storage = const FlutterSecureStorage();
   final sessionStore = PassengerSessionStore(storage: storage);
   Dio? telemetryClient;
   RefreshableTokenProvider? tokenProvider;

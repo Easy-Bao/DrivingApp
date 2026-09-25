@@ -2,11 +2,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:passenger/src/infrastructure/session/passenger_storage_keys.dart';
 
 class PassengerSessionStore({FlutterSecureStorage? storage}) {
-  static const _defaultStorage = FlutterSecureStorage(
-    // Keep the Android storage mode explicit for existing encrypted entries.
-    // ignore: deprecated_member_use
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-  );
+  static const _defaultStorage = FlutterSecureStorage();
 
   final FlutterSecureStorage _storage;
 
