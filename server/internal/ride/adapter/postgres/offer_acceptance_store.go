@@ -53,6 +53,33 @@ func (repository *RideRepository) AcceptOffer(
 		},
 	)
 	if err != nil {
+		existingSession, getErr := transactionQueries.GetBidSessionByID(ctx, dbSessionID)
+		if getErr == nil && existingSession.Status == "accepted" && existingSession.PassengerID == dbPassengerID {
+			offers, listErr := transactionQueries.ListBidOffersBySession(ctx, dbSessionID)
+			if listErr == nil {
+				for _, candidateOffer := range offers {
+					if candidateOffer.ID == dbOfferID && candidateOffer.Status == "accepted" &&
+						existingSession.AcceptedDriverID.Valid && existingSession.AcceptedDriverID.Int32 == candidateOffer.DriverID {
+						activeRides, ridesErr := transactionQueries.ListActiveRidesForDriver(ctx, pgtype.Int4{
+							Int32: candidateOffer.DriverID,
+							Valid: true,
+						})
+						if ridesErr == nil {
+							for _, candidateRide := range activeRides {
+								if candidateRide.PassengerID == dbPassengerID {
+									sessionVal, sErr := fromPostgresBidSession(existingSession)
+									offerVal, oErr := fromPostgresBidOffer(candidateOffer)
+									rideVal, rErr := fromPostgresRide(candidateRide)
+									if sErr == nil && oErr == nil && rErr == nil {
+										return sessionVal, offerVal, rideVal, nil
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, fmt.Errorf("find active bid session: %w", err)
 	}
 	if session.PassengerID != dbPassengerID {

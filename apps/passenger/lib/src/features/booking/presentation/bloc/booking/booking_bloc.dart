@@ -341,6 +341,7 @@ class BookingBloc({
       )).fold((value) => failure = value, (value) => sessionId = value);
       if (sessionId == null) throw failure!;
       _activeBidSessionId = sessionId;
+      unawaited(_secureSessionService.saveActiveBidSessionId(sessionId!));
       _subscribeToSession(sessionId!);
     } catch (error) {
       _activeTrip = null;
@@ -383,6 +384,7 @@ class BookingBloc({
       )).fold((value) => failure = value, (value) => sessionId = value);
       if (sessionId == null) throw failure!;
       _activeBidSessionId = sessionId;
+      unawaited(_secureSessionService.saveActiveBidSessionId(sessionId!));
       _subscribeToSession(sessionId!);
     } catch (error) {
       _activeTrip = null;
@@ -605,6 +607,8 @@ class BookingBloc({
     _nearestSearchCancelled = true;
     _cleanupSubscriptions();
     _activeTrip = null;
+    _activeBidSessionId = null;
+    unawaited(_secureSessionService.deleteActiveBidSessionId());
 
     emit(BookingDriverMatched(matchResult: event.matchResult));
   }
@@ -642,6 +646,8 @@ class BookingBloc({
       final fareAmount =
           acceptedBooking!.fareAmount ?? (event.proposedFare * 100).round();
       await _secureSessionService.saveActiveRideId(rideId);
+      await _secureSessionService.deleteActiveBidSessionId();
+      _activeBidSessionId = null;
       _cleanupSubscriptions();
       _activeTrip = null;
       emit(
@@ -704,12 +710,14 @@ class BookingBloc({
     emit(const BookingCanceled());
     _activeBidSessionId = null;
     _activeTrip = null;
+    unawaited(_secureSessionService.deleteActiveBidSessionId());
   }
 
   void _onResetBooking(ResetBookingEvent event, Emitter<BookingState> emit) {
     _nearestSearchCancelled = true;
     _cleanupSubscriptions();
     _activeBidSessionId = null;
+    unawaited(_secureSessionService.deleteActiveBidSessionId());
     _activeTrip = null;
     _pickupLat = null;
     _pickupLng = null;

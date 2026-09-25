@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/bidding"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
@@ -107,3 +108,23 @@ func TestCreateSessionRejectsPassengerWithActiveRide(t *testing.T) {
 		t.Fatal("expected session NOT to be persisted when passenger has an active ride")
 	}
 }
+
+func TestAcceptOfferPublishesRideMatchedEvent(t *testing.T) {
+	store := &biddingStoreStub{}
+	var publishedType string
+	service := bidding.NewService(bidding.Dependencies{
+		Store: store,
+		PublishRide: func(_ context.Context, eventType event.Type, _ domain.Ride, _ map[string]any) {
+			publishedType = string(eventType)
+		},
+	})
+
+	_, _, _, err := service.AcceptOffer(context.Background(), 10, 20, 101)
+	if err != nil {
+		t.Fatalf("AcceptOffer error = %v", err)
+	}
+	if publishedType != string(event.RideMatched) {
+		t.Fatalf("published event = %q, want %q", publishedType, event.RideMatched)
+	}
+}
+

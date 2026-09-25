@@ -220,6 +220,32 @@ void main() {
       await client.dispose();
     },
   );
+
+  test('reconnects when network availability recovers', () async {
+    final firstSocket = _Socket();
+    final secondSocket = _Socket();
+    final connector = _SequenceConnector([firstSocket, secondSocket]);
+    final availability = NetworkAvailabilityCoordinator(failureThreshold: 1);
+    final client = RealtimeWebSocketClient(
+      uri: Uri.parse('ws://example.test/api/v1/realtime/ws'),
+      tokenProvider: () => 'access-token',
+      connector: connector,
+      networkAvailability: availability,
+      reconnectDelay: (_) => const Duration(hours: 1),
+    );
+
+    await client.start();
+    final reconnectedState = client.states.firstWhere(
+      (state) => state is RealtimeConnected,
+    );
+    availability.recordFailure();
+    availability.recordSuccess();
+
+    await reconnectedState.timeout(const Duration(seconds: 1));
+    expect(client.isConnected, isTrue);
+    await client.dispose();
+    await availability.dispose();
+  });
 }
 
 String _eventJson(String id) =>

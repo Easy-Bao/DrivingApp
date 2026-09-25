@@ -255,7 +255,7 @@ final class RealtimeWebSocketClient({
     if (networkAvailability == null) return;
 
     _networkSubscription = networkAvailability.changes.listen((status) {
-      if (status == NetworkAvailabilityStatus.unavailable) {
+      if (status == NetworkAvailabilityStatus.available) {
         unawaited(reconnectNow());
       }
     });

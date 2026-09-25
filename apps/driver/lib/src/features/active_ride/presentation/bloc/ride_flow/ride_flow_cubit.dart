@@ -22,6 +22,7 @@ class RideFlowCubit({
   String? _activePassengerName;
   Timer? _waitTimer;
   int _elapsedWaitTime = 0;
+  bool _isActionInFlight = false;
 
   this : super(const RideFlowInitial());
 
@@ -86,11 +87,14 @@ class RideFlowCubit({
     double? destLat,
     double? destLng,
   }) async {
+    if (_isActionInFlight) return;
+    _isActionInFlight = true;
     _activeRideId = rideId;
     _activePassengerName = passengerName;
 
     final driverId = await _sessionService.readDriverId();
     if (driverId == null || driverId.isEmpty) {
+      _isActionInFlight = false;
       emit(RideFlowError(ErrorHandler.getErrorMessage(const AuthFailure())));
       return;
     }
@@ -118,6 +122,8 @@ class RideFlowCubit({
     } catch (error) {
       dev.log('Error accepting ride on backend: $error');
       emit(RideFlowError(ErrorHandler.getErrorMessage(error)));
+    } finally {
+      _isActionInFlight = false;
     }
   }
 
@@ -128,11 +134,13 @@ class RideFlowCubit({
     double? destLat,
     double? destLng,
   }) async {
+    if (_isActionInFlight) return;
+    _isActionInFlight = true;
     _waitTimer?.cancel();
     _elapsedWaitTime = 0;
 
-    if (_activeRideId != null) {
-      try {
+    try {
+      if (_activeRideId != null) {
         final result = await _rideRepository.updateRideStatusResult(
           rideId: _activeRideId!,
           status: RideStatus.arrived,
@@ -142,37 +150,38 @@ class RideFlowCubit({
           emit(RideFlowError(ErrorHandler.getErrorMessage(failure)));
           return;
         }
-      } catch (error) {
-        dev.log('Error updating status to arrived: $error');
-        emit(RideFlowError(ErrorHandler.getErrorMessage(error)));
-        return;
       }
-    }
 
-    emit(
-      RideFlowWaitingPassenger(
-        passengerName: passengerName,
-        waitTimeSeconds: 0,
-        pickupLat: pickupLat,
-        pickupLng: pickupLng,
-        destLat: destLat,
-        destLng: destLng,
-      ),
-    );
-    _waitTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (isClosed) return;
-      _elapsedWaitTime++;
       emit(
         RideFlowWaitingPassenger(
           passengerName: passengerName,
-          waitTimeSeconds: _elapsedWaitTime,
+          waitTimeSeconds: 0,
           pickupLat: pickupLat,
           pickupLng: pickupLng,
           destLat: destLat,
           destLng: destLng,
         ),
       );
-    });
+      _waitTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (isClosed) return;
+        _elapsedWaitTime++;
+        emit(
+          RideFlowWaitingPassenger(
+            passengerName: passengerName,
+            waitTimeSeconds: _elapsedWaitTime,
+            pickupLat: pickupLat,
+            pickupLng: pickupLng,
+            destLat: destLat,
+            destLng: destLng,
+          ),
+        );
+      });
+    } catch (error) {
+      dev.log('Error updating status to arrived: $error');
+      emit(RideFlowError(ErrorHandler.getErrorMessage(error)));
+    } finally {
+      _isActionInFlight = false;
+    }
   }
 
   Future<bool> startRide({
@@ -183,27 +192,29 @@ class RideFlowCubit({
     double? passengerLat,
     double? passengerLng,
   }) async {
+    if (_isActionInFlight) return false;
+    _isActionInFlight = true;
     _waitTimer?.cancel();
 
-    var resolvedDestLat = destLat;
-    var resolvedDestLng = destLng;
-    if (resolvedDestLat == null || resolvedDestLng == null) {
-      final recoveredDestination = await _loadActiveRideDestination();
-      resolvedDestLat = recoveredDestination?.$1;
-      resolvedDestLng = recoveredDestination?.$2;
-    }
+    try {
+      var resolvedDestLat = destLat;
+      var resolvedDestLng = destLng;
+      if (resolvedDestLat == null || resolvedDestLng == null) {
+        final recoveredDestination = await _loadActiveRideDestination();
+        resolvedDestLat = recoveredDestination?.$1;
+        resolvedDestLng = recoveredDestination?.$2;
+      }
 
-    if (!_isValidCoordinatePair(resolvedDestLat, resolvedDestLng)) {
-      emit(
-        RideFlowError(
-          ErrorHandler.getErrorMessage(const RouteCalculationFailure()),
-        ),
-      );
-      return false;
-    }
+      if (!_isValidCoordinatePair(resolvedDestLat, resolvedDestLng)) {
+        emit(
+          RideFlowError(
+            ErrorHandler.getErrorMessage(const RouteCalculationFailure()),
+          ),
+        );
+        return false;
+      }
 
-    if (_activeRideId != null) {
-      try {
+      if (_activeRideId != null) {
         final result = await _rideRepository.updateRideStatusResult(
           rideId: _activeRideId!,
           status: RideStatus.inTransit,
@@ -213,26 +224,28 @@ class RideFlowCubit({
           emit(RideFlowError(ErrorHandler.getErrorMessage(failure)));
           return false;
         }
-      } catch (error) {
-        dev.log('Error updating status to in_transit: $error');
-        emit(
-          RideFlowError(ErrorHandler.getErrorMessage(const ServerFailure())),
-        );
-        return false;
       }
-    }
 
-    emit(
-      RideFlowInTransit(
-        passengerName: passengerName,
-        destLat: resolvedDestLat,
-        destLng: resolvedDestLng,
-        distanceKm: distanceKm,
-        passengerLat: passengerLat,
-        passengerLng: passengerLng,
-      ),
-    );
-    return true;
+      emit(
+        RideFlowInTransit(
+          passengerName: passengerName,
+          destLat: resolvedDestLat,
+          destLng: resolvedDestLng,
+          distanceKm: distanceKm,
+          passengerLat: passengerLat,
+          passengerLng: passengerLng,
+        ),
+      );
+      return true;
+    } catch (error) {
+      dev.log('Error updating status to in_transit: $error');
+      emit(
+        RideFlowError(ErrorHandler.getErrorMessage(const ServerFailure())),
+      );
+      return false;
+    } finally {
+      _isActionInFlight = false;
+    }
   }
 
   Future<(double, double)?> _loadActiveRideDestination() async {
@@ -270,10 +283,13 @@ class RideFlowCubit({
   }
 
   Future<RideSnapshot?> _loadCompletedRide() async {
+    if (_isActionInFlight) return null;
+    _isActionInFlight = true;
     _waitTimer?.cancel();
 
     final rideId = _activeRideId;
     if (rideId == null || rideId.isEmpty) {
+      _isActionInFlight = false;
       emit(const RideFlowError('This trip is no longer active.'));
       return null;
     }
@@ -313,6 +329,8 @@ class RideFlowCubit({
       dev.log('Error completing ride on backend: $error');
       emit(RideFlowError(ErrorHandler.getErrorMessage(error)));
       return null;
+    } finally {
+      _isActionInFlight = false;
     }
   }
 
@@ -329,8 +347,12 @@ class RideFlowCubit({
   }
 
   Future<double?> confirmCashPayment() async {
+    if (_isActionInFlight) return null;
+    _isActionInFlight = true;
+
     final rideId = _activeRideId;
     if (rideId == null || rideId.isEmpty) {
+      _isActionInFlight = false;
       emit(const RideFlowError('This trip is no longer active.'));
       return null;
     }
@@ -360,6 +382,8 @@ class RideFlowCubit({
       dev.log('Error settling cash trip: $error');
       emit(RideFlowError(ErrorHandler.getErrorMessage(error)));
       return null;
+    } finally {
+      _isActionInFlight = false;
     }
   }
 
@@ -374,6 +398,7 @@ class RideFlowCubit({
     _activeRideId = null;
     _activePassengerId = null;
     _activePassengerName = null;
+    _isActionInFlight = false;
     emit(const RideFlowInitial());
   }
 

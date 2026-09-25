@@ -68,8 +68,13 @@ func (service *Service) UpdateStatus(ctx context.Context, rideID, actorID int, n
 	nextStatus, nextOK := domain.NormalizeRideStatus(next)
 	invalidCurrentStatus := !currentOK
 	invalidNextStatus := !nextOK
-	invalidTransition := !domain.CanTransition(string(currentStatus), string(nextStatus))
-	if invalidCurrentStatus || invalidNextStatus || invalidTransition {
+	if invalidCurrentStatus || invalidNextStatus {
+		return domain.Ride{}, domain.ErrInvalidStatusTransition
+	}
+	if currentStatus == nextStatus {
+		return current, nil
+	}
+	if !domain.CanTransition(string(currentStatus), string(nextStatus)) {
 		return domain.Ride{}, domain.ErrInvalidStatusTransition
 	}
 	if current.PassengerID == actorID && nextStatus != domain.RideCancelled {

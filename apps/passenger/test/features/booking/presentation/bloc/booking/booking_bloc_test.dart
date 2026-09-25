@@ -71,6 +71,12 @@ void main() {
     inboxRepository = MockInboxRepository();
     when(() => secureSessionService.readPassengerId())
         .thenAnswer((_) async => 'pass-001');
+    when(() => secureSessionService.saveActiveBidSessionId(any()))
+        .thenAnswer((_) async {});
+    when(() => secureSessionService.deleteActiveBidSessionId())
+        .thenAnswer((_) async {});
+    when(() => secureSessionService.saveActiveRideId(any()))
+        .thenAnswer((_) async {});
     when(() => bookingRepository.cancelSession(any()))
         .thenAnswer((_) async => const Ok(null));
     when(() => bookingRepository.fetchOffers(any()))

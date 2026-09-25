@@ -63,6 +63,21 @@ class PassengerSessionStore({FlutterSecureStorage? storage}) {
     await _deleteKeys(const [PassengerStorageKeys.activeRideId]);
   }
 
+  Future<void> saveActiveBidSessionId(String sessionId) async {
+    await _storage.write(
+      key: PassengerStorageKeys.activeBidSessionId,
+      value: sessionId,
+    );
+  }
+
+  Future<String?> readActiveBidSessionId() async {
+    return _storage.read(key: PassengerStorageKeys.activeBidSessionId);
+  }
+
+  Future<void> deleteActiveBidSessionId() async {
+    await _deleteKeys(const [PassengerStorageKeys.activeBidSessionId]);
+  }
+
   Future<void> saveChatReadAt(String rideId, DateTime readAt) async {
     final normalizedRideId = rideId.trim();
     if (normalizedRideId.isEmpty) return;
@@ -89,6 +104,7 @@ class PassengerSessionStore({FlutterSecureStorage? storage}) {
       PassengerStorageKeys.driverId,
       PassengerStorageKeys.passengerId,
       PassengerStorageKeys.activeRideId,
+      PassengerStorageKeys.activeBidSessionId,
     ]);
   }
 
