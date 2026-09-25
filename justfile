@@ -76,9 +76,19 @@ docker-db-migrate: infra-up
 test-services:
     cd server && go test ./...
 
+# Run the native API with no action. Docker Compose lifecycle is available
+# through `just server --start` and `just server --stop`.
+server action="":
+    @case "{{ action }}" in \
+        "") exec just native-server ;; \
+        "--start") exec ./scripts/script.sh --start ;; \
+        "--stop") exec ./scripts/script.sh --stop ;; \
+        *) echo "Usage: just server [--start|--stop]" >&2; exit 2 ;; \
+    esac
+
 # Start the single API application natively. PostgreSQL and Redis must already
 # be running on the host; this recipe never enables or starts them.
-server:
+native-server:
     @port="{{ api-port }}"; \
     port_in_use() { \
         if command -v lsof >/dev/null 2>&1 && lsof -nP -t -iTCP:"$$1" -sTCP:LISTEN >/dev/null 2>&1; then return 0; fi; \
@@ -111,10 +121,8 @@ server:
     fi
     cd server && go run ./internal/cmd/api
 
-native-server: server
-
 # Backward-compatible local startup alias.
-start-all: server
+start-all: native-server
 
 # Start every application and dependency through Docker Compose explicitly.
 docker-start-all: services-up

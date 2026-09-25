@@ -58,10 +58,17 @@ run:
 just server
 ```
 
+To start or stop the containerized API stack instead, use:
+
+```bash
+just server --start
+just server --stop
+```
+
 All clients use the Go API through the one `API_BASE_URL` configured in each
 app's `.env`. The API bind host and service ports are configured in the root
-`.env`; Docker Compose remains available through the explicit `just
-services-up` or `just docker-up` recipes.
+`.env`; the explicit `just services-up` and `just docker-up` recipes remain
+available as aliases.
 
 ---
 

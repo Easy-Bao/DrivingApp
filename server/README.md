@@ -203,7 +203,8 @@ Metadata responses never expose private object keys or checksums.
 ## Optional Docker Compose workflow
 
 Docker Compose remains available for contributors who need the containerized
-environment. It is not used by `just server` or `just start-all`.
+environment. `just server` without an action remains the native workflow;
+`just server --start` and `just server --stop` manage the Compose API stack.
 
 ### Run on Windows with Docker Desktop
 
