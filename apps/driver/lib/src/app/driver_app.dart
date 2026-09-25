@@ -63,6 +63,7 @@ class _DriverAppState extends State<DriverApp> with WidgetsBindingObserver {
       _setBackgroundTelemetryVisibility(state == AppLifecycleState.resumed),
     );
     if (state == AppLifecycleState.resumed) {
+      MapProvider.clearLookupCaches();
       _ensureLocationMonitoring();
       unawaited(_locationAccessCubit.refresh());
     }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:maps/maps.dart';
@@ -52,6 +53,7 @@ class _SearchDestinationPageState()
   int _searchRequestId = 0;
   double? _userLat = LocationService.lastPosition?.latitude;
   double? _userLng = LocationService.lastPosition?.longitude;
+  late final StreamSubscription<AppLifecycleStatus> _lifecycleSubscription;
 
   @override
   void initState() {
@@ -75,12 +77,15 @@ class _SearchDestinationPageState()
     _focusNode.addListener(_onFocusChanged);
     _searchController.addListener(_onSearchChanged);
     _scrollController.addListener(_onScroll);
+    _lifecycleSubscription = Modular.get<AppLifecycleCoordinator>().changes
+        .listen(_onLifecycleChanged);
     unawaited(_initLocation());
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
+    unawaited(_lifecycleSubscription.cancel());
     unawaited(MapProvider.clearAnnotations(_currentLocationMarker));
     _focusNode.removeListener(_onFocusChanged);
     _focusNode.dispose();
@@ -90,6 +95,25 @@ class _SearchDestinationPageState()
     _scrollController.dispose();
     _expandController.dispose();
     super.dispose();
+  }
+
+  void _onLifecycleChanged(AppLifecycleStatus status) {
+    if (status != AppLifecycleStatus.foreground || !mounted) return;
+    unawaited(_reloadAfterForeground());
+  }
+
+  Future<void> _reloadAfterForeground() async {
+    if (!mounted) return;
+    if (_searchController.text.trim().isEmpty) {
+      if (_userLat == null || _userLng == null) {
+        await _initLocation();
+        return;
+      }
+      setState(() => _isLoadingNearby = true);
+      await _loadNearbyPlaces();
+      return;
+    }
+    await _performSearch();
   }
 
   void _onScroll() {
@@ -489,10 +513,8 @@ class _SearchDestinationPageState()
           MediaQuery.paddingOf(context).bottom + 16,
         ),
         itemCount: 8,
-        separatorBuilder: (_, _) => Divider(
-          height: 1,
-          color: context.colorScheme.outlineVariant,
-        ),
+        separatorBuilder: (_, _) =>
+            Divider(height: 1, color: context.colorScheme.outlineVariant),
         itemBuilder: (_, _) => const ListTile(
           contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           leading: Bone.circle(size: 44),
@@ -538,6 +560,11 @@ class _SearchDestinationPageState()
     final displayList = hasQuery
         ? _results
         : _allNearbyPlaces.take(_displayedCount).toList();
+    final isNetworkUnavailable = AppNetworkStatusScope.isUnavailableOf(context);
+    final shouldShowLoading =
+        _isSearching ||
+        (_isLoadingNearby && !hasQuery) ||
+        (isNetworkUnavailable && displayList.isEmpty);
     final screenSize = MediaQuery.of(context).size;
     final topPadding = MediaQuery.of(context).padding.top;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
@@ -626,9 +653,7 @@ class _SearchDestinationPageState()
                                     child: Material(
                                       color: context.colorScheme.surface
                                           .withValues(alpha: 0),
-                                      child:
-                                          (_isSearching ||
-                                              (_isLoadingNearby && !hasQuery))
+                                      child: shouldShowLoading
                                           ? displayList.isEmpty
                                                 ? _buildResultsLoadingState()
                                                 : Skeletonizer.zone(

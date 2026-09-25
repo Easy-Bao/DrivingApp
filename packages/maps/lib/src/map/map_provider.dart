@@ -46,14 +46,21 @@ class MapProvider._() {
   }) async {
     if (_initialized) return;
     _nativeService = nativeService;
-    _searchCache.clear();
-    _nearbyCache.clear();
-    _drivingDistanceCache.clear();
-    _routeCache.clear();
+    clearLookupCaches();
     if (token != null && token.isNotEmpty) {
       mapbox.MapboxOptions.setAccessToken(token);
     }
     _initialized = true;
+  }
+
+  /// Drops values that may have been resolved before a background network
+  /// transition. The next visible feature request must reach the server
+  /// instead of reusing a stale empty or route response.
+  static void clearLookupCaches() {
+    _searchCache.clear();
+    _nearbyCache.clear();
+    _drivingDistanceCache.clear();
+    _routeCache.clear();
   }
 
   static Future<List<Place>> searchPlaces(

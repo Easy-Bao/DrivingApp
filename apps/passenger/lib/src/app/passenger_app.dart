@@ -92,6 +92,7 @@ class _PassengerAppState extends State<PassengerApp>
       isForeground: state == AppLifecycleState.resumed,
     );
     if (state == .resumed) {
+      MapProvider.clearLookupCaches();
       unawaited(_locationAccessCubit.refresh());
     }
   }

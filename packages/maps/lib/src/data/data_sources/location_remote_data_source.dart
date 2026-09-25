@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:foundation/foundation.dart';
 
 import 'package:maps/src/data/dto/place_dto.dart';
 import 'package:maps/src/data/dto/route_dto.dart';
@@ -8,6 +9,10 @@ import 'package:maps/src/domain/repositories/location_repository.dart';
 
 class LocationRemoteDataSource(this._dio) implements LocationRepository {
   final Dio _dio;
+
+  static final _transientReadOptions = Options(
+    extra: {requestRetryPolicyExtraKey: RequestRetryPolicy.transientRead},
+  );
 
   @override
   Future<Map<String, dynamic>> searchPlaces({
@@ -22,6 +27,7 @@ class LocationRemoteDataSource(this._dio) implements LocationRepository {
         'userLat': ?userLat,
         'userLng': ?userLng,
       },
+      options: _transientReadOptions,
     );
     return response.data ?? {};
   }
@@ -34,6 +40,7 @@ class LocationRemoteDataSource(this._dio) implements LocationRepository {
     final response = await _dio.get<Map<String, dynamic>>(
       '/api/v1/location/reverse',
       queryParameters: {'lat': lat, 'lng': lng},
+      options: _transientReadOptions,
     );
     return PlaceDto.fromJson(response.data ?? {}).toDomain();
   }
@@ -47,6 +54,7 @@ class LocationRemoteDataSource(this._dio) implements LocationRepository {
     final response = await _dio.get<Map<String, dynamic>>(
       '/api/v1/location/nearby',
       queryParameters: {'lat': lat, 'lng': lng, 'page': page},
+      options: _transientReadOptions,
     );
     return response.data ?? {};
   }
@@ -56,6 +64,7 @@ class LocationRemoteDataSource(this._dio) implements LocationRepository {
     final response = await _dio.post<Map<String, dynamic>>(
       '/api/v1/location/route',
       data: body,
+      options: _transientReadOptions,
     );
     return RouteDto.fromJson(response.data ?? {}).toDomain();
   }
@@ -67,6 +76,7 @@ class LocationRemoteDataSource(this._dio) implements LocationRepository {
     final response = await _dio.post<Map<String, dynamic>>(
       '/api/v1/location/matrix',
       data: body,
+      options: _transientReadOptions,
     );
     return response.data ?? {};
   }

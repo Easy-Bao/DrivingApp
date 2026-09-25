@@ -55,7 +55,7 @@ class PassengerApiClient._() {
     if (networkAvailability != null) {
       dio.interceptors.add(NetworkAvailabilityInterceptor(networkAvailability));
     }
-    dio.interceptors.add(RetryInterceptor(dio));
+    dio.interceptors.add(RetryInterceptor(dio, retrySafeReadsByDefault: true));
     dio.addSentry();
 
     return dio;

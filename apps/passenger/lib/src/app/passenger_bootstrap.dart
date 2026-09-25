@@ -1,4 +1,5 @@
 import 'package:design_system/design_system.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:foundation/foundation.dart';
@@ -33,8 +34,20 @@ Future<void> bootstrapPassengerApp() async {
         );
       },
       appRunner: () async {
+        AppTransitions.configure();
+
+        await Modular.configure(
+          appModule: PassengerDependencies(prefs: prefs),
+          initialRoute: HomeRoutes.fullHomePath,
+          debugLogDiagnostics: true,
+          debugLogDiagnosticsGoRouter: true,
+          debugLogEventBus: true,
+          observers: [passengerNavigationObserver],
+        );
+
         final nativeService = MapNativeService(
           placeServiceBaseUri: PassengerEnvConfig.apiBaseUri,
+          dio: Modular.get<Dio>(),
         );
         LocationService.nativeService = nativeService;
         final mapboxToken = PassengerEnvConfig.mapboxPublicToken;
@@ -46,17 +59,6 @@ Future<void> bootstrapPassengerApp() async {
         await MapProvider.initialize(
           token: mapboxToken,
           nativeService: nativeService,
-        );
-
-        AppTransitions.configure();
-
-        await Modular.configure(
-          appModule: PassengerDependencies(prefs: prefs),
-          initialRoute: HomeRoutes.fullHomePath,
-          debugLogDiagnostics: true,
-          debugLogDiagnosticsGoRouter: true,
-          debugLogEventBus: true,
-          observers: [passengerNavigationObserver],
         );
 
         runApp(const PassengerApp());

@@ -37,6 +37,16 @@ void main() {
     expect(apiClient.nearbyCallCount, 1);
   });
 
+  test('clears lookup caches for a foreground refresh', () async {
+    const lat = 10.123456;
+    const lng = 20.654321;
+
+    MapProvider.clearLookupCaches();
+    await MapProvider.getNearbyPOIs(lat: lat, lng: lng);
+
+    expect(apiClient.nearbyCallCount, 2);
+  });
+
   test('coalesces and reuses travel matrix lookups', () async {
     const originLat = 11.123456;
     const originLng = 21.654321;

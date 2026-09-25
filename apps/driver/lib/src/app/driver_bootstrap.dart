@@ -1,4 +1,5 @@
 import 'package:design_system/design_system.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:foundation/foundation.dart';
@@ -36,21 +37,6 @@ Future<void> bootstrapDriverApp() async {
         );
       },
       appRunner: () async {
-        final nativeService = MapNativeService(
-          placeServiceBaseUri: DriverEnvConfig.apiBaseUri,
-        );
-        LocationService.nativeService = nativeService;
-        final mapboxToken = DriverEnvConfig.mapboxPublicToken;
-        if (mapboxToken == null) {
-          debugPrint(
-            'Mapbox is disabled because MAPBOX_PUBLIC_TOKEN is missing.',
-          );
-        }
-        await MapProvider.initialize(
-          token: mapboxToken,
-          nativeService: nativeService,
-        );
-
         await Modular.configure(
           appModule: DriverDependencies(
             prefs: prefs,
@@ -62,6 +48,22 @@ Future<void> bootstrapDriverApp() async {
           debugLogDiagnostics: true,
           debugLogDiagnosticsGoRouter: true,
           debugLogEventBus: true,
+        );
+
+        final nativeService = MapNativeService(
+          placeServiceBaseUri: DriverEnvConfig.apiBaseUri,
+          dio: Modular.get<Dio>(),
+        );
+        LocationService.nativeService = nativeService;
+        final mapboxToken = DriverEnvConfig.mapboxPublicToken;
+        if (mapboxToken == null) {
+          debugPrint(
+            'Mapbox is disabled because MAPBOX_PUBLIC_TOKEN is missing.',
+          );
+        }
+        await MapProvider.initialize(
+          token: mapboxToken,
+          nativeService: nativeService,
         );
 
         runApp(const DriverApp());

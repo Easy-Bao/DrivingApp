@@ -9,11 +9,18 @@ const requestRetryPolicyExtraKey = 'requestRetryPolicy';
 
 typedef RetryDelay = Duration Function(int retryAttempt);
 
-class RetryInterceptor(this.dio, {RetryDelay? retryDelay}) extends Interceptor {
+class RetryInterceptor(
+  this.dio, {
+  RetryDelay? retryDelay,
+  bool retrySafeReadsByDefault = false,
+}) extends Interceptor {
   final Dio dio;
+  final bool _retrySafeReadsByDefault;
   final RetryDelay _retryDelay;
 
-  this : _retryDelay = retryDelay ?? _defaultRetryDelay;
+  this
+    : _retrySafeReadsByDefault = retrySafeReadsByDefault,
+      _retryDelay = retryDelay ?? _defaultRetryDelay;
 
   @override
   Future<void> onError(
@@ -21,20 +28,27 @@ class RetryInterceptor(this.dio, {RetryDelay? retryDelay}) extends Interceptor {
     ErrorInterceptorHandler handler,
   ) async {
     final requestOptions = err.requestOptions;
-    final isRetryableMethod = switch (requestOptions.method.toUpperCase()) {
+    final retryPolicy =
+        requestOptions.extra[requestRetryPolicyExtraKey] as RequestRetryPolicy?;
+    final method = requestOptions.method.toUpperCase();
+    final isSafeReadMethod = switch (method) {
       'GET' || 'HEAD' || 'OPTIONS' => true,
       _ => false,
     };
+    final isRetryableMethod =
+        isSafeReadMethod ||
+        (method == 'POST' && retryPolicy == RequestRetryPolicy.transientRead);
     final isNetworkError =
         err.type == DioExceptionType.connectionError ||
         err.type == DioExceptionType.connectionTimeout ||
         err.type == DioExceptionType.receiveTimeout ||
         err.error is SocketException;
     final retryAttempt = requestOptions.extra['retryAttempt'] as int? ?? 0;
-    final retryPolicy =
-        requestOptions.extra[requestRetryPolicyExtraKey] as RequestRetryPolicy?;
 
-    if (retryPolicy == RequestRetryPolicy.transientRead &&
+    final shouldRetry =
+        retryPolicy == RequestRetryPolicy.transientRead ||
+        (_retrySafeReadsByDefault && isSafeReadMethod);
+    if (shouldRetry &&
         isRetryableMethod &&
         isNetworkError &&
         retryAttempt < 2) {
