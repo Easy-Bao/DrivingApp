@@ -19,7 +19,7 @@ class MockInboxRepository extends Mock implements InboxRepository {}
 class MockPassengerSessionStore extends Mock implements PassengerSessionStore {}
 
 void main() {
-  testWidgets('does not show notification skeleton while session is pending', (
+  testWidgets('shows notification skeleton while session is pending', (
     tester,
   ) async {
     final sessionBloc = MockSessionBloc();
@@ -45,7 +45,11 @@ void main() {
     );
 
     expect(find.text('Inbox'), findsOneWidget);
-    expect(find.byType(Bone), findsNothing);
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('inbox-loading-skeleton')),
+      findsOneWidget,
+    );
+    expect(find.byType(Bone), findsWidgets);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
   });
 }

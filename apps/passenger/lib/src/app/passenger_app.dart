@@ -62,31 +62,22 @@ class _PassengerAppState extends State<PassengerApp>
                           NetworkAvailabilityStatus.unavailable;
                       return AppNetworkStatusScope(
                         isUnavailable: isNetworkUnavailable,
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            MultiBlocListener(
-                              listeners: [
-                                BlocListener<SessionBloc, SessionState>(
-                                  listenWhen: (_, current) =>
-                                      current is GuestSession ||
-                                      current is SessionFailure,
-                                  listener: (context, _) =>
-                                      BlocProvider.of<BookingDraftCubit>(
-                                        context,
-                                      ).clear(),
-                                ),
-                              ],
-                              child: _buildRouteWithLocationOverlay(
-                                context,
-                                child,
-                                locationState,
-                              ),
-                            ),
-                            AppNetworkStatusBanner(
-                              isVisible: isNetworkUnavailable,
+                        child: MultiBlocListener(
+                          listeners: [
+                            BlocListener<SessionBloc, SessionState>(
+                              listenWhen: (_, current) =>
+                                  current is GuestSession ||
+                                  current is SessionFailure,
+                              listener: (context, _) =>
+                                  BlocProvider.of<BookingDraftCubit>(context)
+                                      .clear(),
                             ),
                           ],
+                          child: _buildRouteWithLocationOverlay(
+                            context,
+                            child,
+                            locationState,
+                          ),
                         ),
                       );
                     },

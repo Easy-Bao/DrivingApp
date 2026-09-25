@@ -55,9 +55,7 @@ void main() {
     },
   );
 
-  testWidgets('uses progress instead of a skeleton before the first result', (
-    tester,
-  ) async {
+  testWidgets('uses a skeleton before the first result', (tester) async {
     final sessionBloc = SessionBloc(
       sessionRepository: _AuthenticatedSessionRepository(),
     );
@@ -85,7 +83,7 @@ void main() {
 
     expect(
       find.byKey(const ValueKey<String>('activity-loading-skeleton')),
-      findsNothing,
+      findsOneWidget,
     );
     expect(find.text('Loading your activity'), findsOneWidget);
 

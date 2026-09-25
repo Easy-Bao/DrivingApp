@@ -13,6 +13,7 @@ import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_state
 import 'package:passenger/src/features/inbox/presentation/widgets/inbox_empty_state_widget.dart';
 import 'package:passenger/src/features/inbox/presentation/widgets/inbox_notification_card_widget.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class const InboxPage({
   super.key,
@@ -66,32 +67,11 @@ class _InboxPageState extends State<InboxPage> {
             ),
           ),
         ),
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox.square(
-                  dimension: 28,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    color: context.colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  'Loading your inbox',
-                  style: context.textStyles.titleMedium,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Messages and receipts will appear here.',
-                  style: context.textStyles.bodySmall,
-                ),
-              ],
-            ),
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: EasyRideLayout.pagePadding,
           ),
+          sliver: _buildSkeletonNotifications(),
         ),
       ],
     );
@@ -137,10 +117,10 @@ class _InboxPageState extends State<InboxPage> {
   }
 
   Widget _buildSessionLoadingState() {
-    return const CustomScrollView(
+    return CustomScrollView(
       physics: AlwaysScrollableScrollPhysics(),
       slivers: [
-        SliverPadding(
+        const SliverPadding(
           padding: EdgeInsets.fromLTRB(
             EasyRideLayout.pagePadding,
             0,
@@ -154,16 +134,49 @@ class _InboxPageState extends State<InboxPage> {
             ),
           ),
         ),
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: Center(
-            child: SizedBox.square(
-              dimension: 24,
-              child: CircularProgressIndicator(strokeWidth: 2.5),
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: EasyRideLayout.pagePadding,
+          ),
+          sliver: _buildSkeletonNotifications(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSkeletonNotifications() {
+    return Skeletonizer.sliver(
+      key: const ValueKey<String>('inbox-loading-skeleton'),
+      child: SliverList.builder(
+        itemCount: 6,
+        itemBuilder: (context, index) => Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: context.colorScheme.surface,
+              borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+              border: Border.all(color: context.colorScheme.outlineVariant),
+            ),
+            child: const Row(
+              children: [
+                Bone.circle(size: 42),
+                SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Bone.text(width: 150, fontSize: 14),
+                      SizedBox(height: 6),
+                      Bone.multiText(lines: 2, fontSize: 12),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 

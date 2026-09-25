@@ -479,36 +479,27 @@ class _SearchDestinationPageState()
     }
   }
 
-  Widget _buildResultsLoadingState({required bool hasQuery}) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox.square(
-            dimension: 26,
-            child: CircularProgressIndicator(
-              strokeWidth: 2.4,
-              color: context.colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            hasQuery ? 'Searching places…' : 'Finding nearby places…',
-            style: TextStyle(
-              color: context.colorScheme.onSurface,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'This should only take a moment.',
-            style: TextStyle(
-              color: context.colorScheme.onSurfaceVariant,
-              fontSize: 12,
-            ),
-          ),
-        ],
+  Widget _buildResultsLoadingState() {
+    return Skeletonizer.zone(
+      child: ListView.separated(
+        padding: EdgeInsets.fromLTRB(
+          16,
+          4,
+          16,
+          MediaQuery.paddingOf(context).bottom + 16,
+        ),
+        itemCount: 8,
+        separatorBuilder: (_, _) => Divider(
+          height: 1,
+          color: context.colorScheme.outlineVariant,
+        ),
+        itemBuilder: (_, _) => const ListTile(
+          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          leading: Bone.circle(size: 44),
+          title: Bone.text(width: 130, fontSize: 15),
+          subtitle: Bone.text(width: 90, fontSize: 13),
+          trailing: Bone.icon(size: 18),
+        ),
       ),
     );
   }
@@ -525,9 +516,18 @@ class _SearchDestinationPageState()
             child: _buildTripBackButton(context, () => context.pop()),
           ),
         ),
-        body: Center(
-          child: CircularProgressIndicator(
-            color: context.colorScheme.onSurface,
+        body: Skeletonizer.zone(
+          child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            itemCount: 6,
+            separatorBuilder: (_, _) => const SizedBox(height: 8),
+            itemBuilder: (_, _) => const ListTile(
+              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              leading: Bone.circle(size: 44),
+              title: Bone.text(width: 150, fontSize: 15),
+              subtitle: Bone.text(width: 100, fontSize: 13),
+              trailing: Bone.icon(size: 18),
+            ),
           ),
         ),
       );
@@ -630,9 +630,7 @@ class _SearchDestinationPageState()
                                           (_isSearching ||
                                               (_isLoadingNearby && !hasQuery))
                                           ? displayList.isEmpty
-                                                ? _buildResultsLoadingState(
-                                                    hasQuery: hasQuery,
-                                                  )
+                                                ? _buildResultsLoadingState()
                                                 : Skeletonizer.zone(
                                                     child: ListView.separated(
                                                       padding:

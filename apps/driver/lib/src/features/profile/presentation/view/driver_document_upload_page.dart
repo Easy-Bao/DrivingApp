@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class const DriverDocumentUploadPage({super.key, this.pickPhoto, this.onBack})
     extends StatefulWidget {
@@ -203,9 +204,23 @@ class _DriverDocumentUploadPageState extends State<DriverDocumentUploadPage> {
       future: draft.readAsBytes(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return const SizedBox(
-            height: 220,
-            child: Center(child: CircularProgressIndicator()),
+          return Skeletonizer.zone(
+            key: const ValueKey('driver-document-photo-loading-skeleton'),
+            child: Container(
+              height: 220,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: context.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                border: Border.all(color: context.colorScheme.outlineVariant),
+              ),
+              child: const Bone.square(
+                size: 150,
+                borderRadius: BorderRadius.all(
+                  Radius.circular(EasyRideRadius.md),
+                ),
+              ),
+            ),
           );
         }
         return ClipRRect(

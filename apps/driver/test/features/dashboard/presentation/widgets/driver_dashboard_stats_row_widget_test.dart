@@ -24,7 +24,7 @@ void main() {
     expect(find.text('Try again'), findsNothing);
   });
 
-  testWidgets('shows a progress status before stats exist', (tester) async {
+  testWidgets('shows skeleton stats before data exists', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
@@ -39,8 +39,33 @@ void main() {
 
     expect(find.text('stale error'), findsNothing);
     expect(find.text("Today's Net Earnings"), findsNothing);
-    expect(find.byType(Bone), findsNothing);
-    expect(find.text("Loading today's activity"), findsOneWidget);
+    expect(find.byType(Bone), findsWidgets);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+  });
+
+  testWidgets('keeps the initial skeleton inside narrow stat cards', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(360, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: DriverDashboardStatsRowWidget(
+            isLoadingStats: true,
+            earnings: 0,
+            completedTrips: 0,
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      find.byKey(const ValueKey<String>('driver-dashboard-stats-loading')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('keeps the stats skeleton during a refresh with existing data', (

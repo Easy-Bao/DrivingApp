@@ -137,11 +137,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
         ],
       ),
       body: state.isLoading && state.trips.isEmpty
-          ? Center(
-              child: CircularProgressIndicator(
-                color: context.colorScheme.onSurface,
-              ),
-            )
+          ? _buildInitialLoadingState()
           : state.errorMessage != null && !hasTrips
           ? _buildMessageState(
               title: 'Couldn’t load trips',
@@ -216,6 +212,50 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildInitialLoadingState() {
+    return Skeletonizer.zone(
+      child: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(
+          EasyRideLayout.pagePadding,
+          12,
+          EasyRideLayout.pagePadding,
+          AppFloatingTabBar.height + EasyRideSpacing.xxl,
+        ),
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
+        ),
+        itemCount: 4,
+        separatorBuilder: (_, _) => const SizedBox(height: 10),
+        itemBuilder: (_, _) => Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: context.colorScheme.surface,
+            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+            border: Border.all(color: context.colorScheme.outlineVariant),
+          ),
+          child: const Row(
+            children: [
+              Bone.circle(size: 42),
+              SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Bone.text(width: 150, fontSize: 15),
+                    SizedBox(height: 6),
+                    Bone.text(width: 104, fontSize: 12),
+                  ],
+                ),
+              ),
+              SizedBox(width: 12),
+              Bone.text(width: 54, fontSize: 14),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

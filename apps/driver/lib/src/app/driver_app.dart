@@ -114,18 +114,10 @@ class _DriverAppState extends State<DriverApp> with WidgetsBindingObserver {
                           NetworkAvailabilityStatus.unavailable;
                       return AppNetworkStatusScope(
                         isUnavailable: isNetworkUnavailable,
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            _buildRouteWithLocationOverlay(
-                              context,
-                              child,
-                              locationState,
-                            ),
-                            AppNetworkStatusBanner(
-                              isVisible: isNetworkUnavailable,
-                            ),
-                          ],
+                        child: _buildRouteWithLocationOverlay(
+                          context,
+                          child,
+                          locationState,
                         ),
                       );
                     },

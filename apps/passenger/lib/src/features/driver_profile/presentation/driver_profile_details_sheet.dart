@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger/src/features/driver_profile/domain/entities/driver_review.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class const DriverProfileDetailsSheet({
   super.key,
@@ -298,27 +299,38 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
 
   Widget _buildReviews() {
     if (_isLoadingStats) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox.square(
-              dimension: 22,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.2,
-                color: context.colorScheme.onSurface,
-              ),
+      return Skeletonizer.zone(
+        key: const ValueKey<String>('driver-profile-reviews-loading-skeleton'),
+        child: ListView.builder(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.zero,
+          itemCount: 3,
+          itemBuilder: (_, _) => Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: context.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: context.colorScheme.outlineVariant),
             ),
-            const SizedBox(height: 10),
-            Text(
-              'Loading passenger reviews…',
-              style: TextStyle(
-                color: context.colorScheme.onSurfaceVariant,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Bone.circle(size: 32),
+                    SizedBox(width: 10),
+                    Expanded(child: Bone.text(width: 110, fontSize: 14)),
+                    Bone.text(width: 42, fontSize: 11),
+                  ],
+                ),
+                SizedBox(height: 8),
+                Bone.text(width: 96, fontSize: 12),
+                SizedBox(height: 6),
+                Bone.multiText(lines: 2, fontSize: 12),
+              ],
             ),
-          ],
+          ),
         ),
       );
     }

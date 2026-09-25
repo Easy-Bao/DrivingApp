@@ -64,11 +64,12 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
             listener: (_, _) => unawaited(_loadRideHistory()),
             child: BlocBuilder<SessionBloc, SessionState>(
               builder: (context, sessionState) => switch (sessionState) {
-                SessionLoading() => _RideHistoryProgressView(
+                SessionLoading() => _RideHistoryLoadingView(
                   title: widget.title,
                   subtitle: 'Checking your account',
                   showBackButton: widget.showBackButton,
                   showSubtitle: widget.showHeaderSubtitle,
+                  itemCount: _defaultSkeletonCount,
                 ),
                 GuestSession() || SessionFailure() => _RideHistoryMessageView(
                   headerTitle: widget.title,
@@ -81,11 +82,12 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                 AuthenticatedSession() =>
                   BlocBuilder<RideHistoryBloc, RideHistoryState>(
                     builder: (context, state) => switch (state) {
-                      RideHistoryInitial() => _RideHistoryProgressView(
+                      RideHistoryInitial() => _RideHistoryLoadingView(
                         title: widget.title,
                         subtitle: 'Preparing your activity',
                         showBackButton: widget.showBackButton,
                         showSubtitle: widget.showHeaderSubtitle,
+                        itemCount: _defaultSkeletonCount,
                       ),
                       RideHistoryLoading(:final existingRideCount)
                           when existingRideCount > 0 =>
@@ -101,11 +103,12 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                               )
                               .toInt(),
                         ),
-                      RideHistoryLoading() => _RideHistoryProgressView(
+                      RideHistoryLoading() => _RideHistoryLoadingView(
                         title: widget.title,
                         subtitle: 'Loading your activity',
                         showBackButton: widget.showBackButton,
                         showSubtitle: widget.showHeaderSubtitle,
+                        itemCount: _defaultSkeletonCount,
                       ),
                       RideHistoryError(:final message) =>
                         _RideHistoryMessageView(
@@ -198,62 +201,6 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
 
 double _rideHistoryBottomClearance(BuildContext context) {
   return AppFloatingTabBar.height + MediaQuery.paddingOf(context).bottom + 10;
-}
-
-class const _RideHistoryProgressView({
-  required this.subtitle,
-  this.showBackButton = false,
-  this.showSubtitle = true,
-  this.title = 'Activity',
-}) extends StatelessWidget {
-  final String subtitle;
-  final bool showBackButton;
-  final bool showSubtitle;
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(
-            EasyRideLayout.pagePadding,
-            8,
-            EasyRideLayout.pagePadding,
-            18,
-          ),
-          sliver: SliverToBoxAdapter(
-            child: RideHistoryHeaderWidget(
-              title: title,
-              subtitle: showSubtitle ? subtitle : null,
-              showBackButton: showBackButton,
-            ),
-          ),
-        ),
-        SliverFillRemaining(
-          hasScrollBody: false,
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: 32,
-              top: 24,
-              right: 32,
-              bottom: _rideHistoryBottomClearance(context),
-            ),
-            child: Center(
-              child: SizedBox.square(
-                dimension: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  color: context.colorScheme.onSurface,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 class const _RideHistoryMessageView({

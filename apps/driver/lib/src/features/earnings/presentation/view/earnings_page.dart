@@ -182,11 +182,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
         child: summary == null
             ? state.errorMessage != null
                   ? _buildErrorState(context)
-                  : Center(
-                      child: CircularProgressIndicator(
-                        color: context.colorScheme.onSurface,
-                      ),
-                    )
+                  : _buildLoadingState(context)
             : LayoutBuilder(
                 builder: (context, constraints) {
                   final horizontalPadding = constraints.maxWidth < 360
@@ -225,6 +221,75 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                 },
               ),
       ),
+    );
+  }
+
+  Widget _buildLoadingState(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final horizontalPadding = constraints.maxWidth < 360 ? 16.0 : 24.0;
+        return ListView(
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            12,
+            horizontalPadding,
+            16,
+          ),
+          physics: const BouncingScrollPhysics(),
+          children: [
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 720),
+                child: Skeletonizer(
+                  key: const ValueKey<String>('driver-earnings-loading-skeleton'),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildSummaryCard(
+                        const _EarningsSummary(
+                          total: 0,
+                          tripsCount: 0,
+                          days: [],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: context.colorScheme.surface,
+                          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                          border: Border.all(
+                            color: context.colorScheme.outlineVariant,
+                          ),
+                        ),
+                        padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Bone.text(width: 110, fontSize: 15),
+                            const SizedBox(height: 4),
+                            const Bone.text(width: 220, fontSize: 10),
+                            const SizedBox(height: 8),
+                            _buildPeriodTabs(),
+                            const SizedBox(height: 10),
+                            const Center(
+                              child: Bone.square(
+                                size: 150,
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(EasyRideRadius.md),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

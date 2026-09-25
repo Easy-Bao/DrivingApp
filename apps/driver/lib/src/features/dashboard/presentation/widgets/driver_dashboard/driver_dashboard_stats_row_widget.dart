@@ -124,12 +124,44 @@ class const DriverDashboardStatsRowWidget({
   }
 
   Widget _buildInitialLoadingState(BuildContext context) {
-    return Padding(
+    return Skeletonizer.zone(
       key: const ValueKey<String>('driver-dashboard-stats-loading'),
-      padding: const EdgeInsets.symmetric(
-        horizontal: EasyRideLayout.pagePadding,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: EasyRideLayout.pagePadding,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: _buildInitialSkeletonCard(
+                context,
+                labelWidth: 94,
+                valueWidth: 76,
+                icon: LucideIcons.wallet,
+              ),
+            ),
+            const SizedBox(width: EasyRideSpacing.sm),
+            Expanded(
+              child: _buildInitialSkeletonCard(
+                context,
+                labelWidth: 64,
+                valueWidth: 32,
+                icon: LucideIcons.car,
+              ),
+            ),
+          ],
+        ),
       ),
-      child: Container(
+    );
+  }
+
+  Widget _buildInitialSkeletonCard(
+    BuildContext context, {
+    required double labelWidth,
+    required double valueWidth,
+    required IconData icon,
+  }) {
+    return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(EasyRideSpacing.lg),
         decoration: BoxDecoration(
@@ -137,39 +169,18 @@ class const DriverDashboardStatsRowWidget({
           borderRadius: BorderRadius.circular(EasyRideRadius.lg),
           border: Border.all(color: context.colorScheme.outlineVariant),
         ),
-        child: Row(
-          children: [
-            SizedBox.square(
-              dimension: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: context.colorScheme.primary,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Loading today's activity",
-                    style: context.textStyles.labelMedium?.copyWith(
-                      color: context.colorScheme.onSurface,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Your earnings and trips will appear here shortly.',
-                    style: context.textStyles.bodySmall?.copyWith(
-                      color: context.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(child: Bone.text(width: labelWidth, fontSize: 11)),
+              Bone.icon(size: 20),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Bone.text(width: valueWidth, fontSize: 24),
+        ],
       ),
     );
   }
