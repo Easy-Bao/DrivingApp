@@ -23,6 +23,12 @@ SET name = $2, vehicle_type = $3, plate_number = $4, is_online = $5
 WHERE id = $1
 RETURNING id, user_id, name, vehicle_type, plate_number, rating, is_online;
 
+-- name: UpdateDriverOnlineStatus :one
+UPDATE driver_profiles
+SET is_online = $2
+WHERE user_id = $1 AND (user_id = $3 OR id = $3)
+RETURNING id, user_id, name, vehicle_type, plate_number, rating, is_online;
+
 -- name: UpdatePassengerProfile :one
 UPDATE passenger_profiles
 SET name = $2, address = $3, gender = $4, preferred_ride_type = $5

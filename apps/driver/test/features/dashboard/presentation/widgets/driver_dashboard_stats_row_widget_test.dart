@@ -4,12 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 void main() {
-  testWidgets('renders one inline dashboard error with one retry action', (
+  testWidgets('keeps dashboard stats in place without an inline error card', (
     tester,
   ) async {
-    var retryCount = 0;
-    const message = 'Unable to reach driver activity services.';
-
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -17,19 +14,14 @@ void main() {
             isLoadingStats: false,
             earnings: 0,
             completedTrips: 0,
-            errorMessage: message,
-            onRetry: () => retryCount++,
           ),
         ),
       ),
     );
 
-    expect(find.text(message), findsOneWidget);
-    expect(find.text('Try again'), findsOneWidget);
-
-    await tester.tap(find.text('Try again'));
-
-    expect(retryCount, 1);
+    expect(find.text("Today's Net Earnings"), findsOneWidget);
+    expect(find.text('Trips Today'), findsOneWidget);
+    expect(find.text('Try again'), findsNothing);
   });
 
   testWidgets('shows a progress status before stats exist', (tester) async {
@@ -40,7 +32,6 @@ void main() {
             isLoadingStats: true,
             earnings: 0,
             completedTrips: 0,
-            errorMessage: 'stale error',
           ),
         ),
       ),

@@ -41,6 +41,27 @@ func (service *ProfileService) Update(ctx context.Context, profile domain.Profil
 	return updated, nil
 }
 
+func (service *ProfileService) UpdateOnlineStatus(
+	ctx context.Context,
+	userID int,
+	targetID int,
+	isOnline bool,
+) (domain.Profile, error) {
+	if service.repository == nil {
+		return domain.Profile{}, ErrProfileUnavailable
+	}
+	updated, err := service.repository.UpdateOnlineStatus(
+		ctx,
+		userID,
+		targetID,
+		isOnline,
+	)
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("update online status: %w", err)
+	}
+	return updated, nil
+}
+
 func (service *ProfileService) MaxAvatarBytes() int64 {
 	return domain.MaxAvatarBytes
 }

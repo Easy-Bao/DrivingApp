@@ -141,7 +141,7 @@ void main() {
     },
   );
 
-  test('publishes the initial driver location when going online', () async {
+  test('confirms availability without blocking on initial telemetry', () async {
     final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
     final sessionService = MockSecureSessionService();
 
@@ -178,6 +178,7 @@ void main() {
     );
 
     expect(result, const Ok<void, Failure>(null));
+    await Future<void>.delayed(Duration.zero);
     verify(
       () => _rideRepository.publishDriverLocation(
         latitude: 7.828,
@@ -188,7 +189,7 @@ void main() {
   });
 
   test(
-    'does not mark the driver online when initial location publishing fails',
+    'keeps the driver online when initial telemetry fails so it can retry',
     () async {
       final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
       final sessionService = MockSecureSessionService();
@@ -229,82 +230,70 @@ void main() {
         lng: 123.434,
       );
 
-      expect(
-        result,
-        const Err<void, Failure>(
-          NetworkFailure(
-            'Unable to share your location. You are not online yet.',
-          ),
-        ),
-      );
+      expect(result, const Ok<void, Failure>(null));
+      await Future<void>.delayed(Duration.zero);
       verify(
         () => availabilityDataSource.updateOnlineStatus(
           driverId: 'driver-42',
-          isOnline: false,
+          isOnline: true,
         ),
       ).called(1);
       verifyNever(
         () => availabilityDataSource.updateOnlineStatus(
           driverId: 'driver-42',
-          isOnline: true,
-        ),
-      );
-      verify(() => _rideRepository.clearDriverLocation()).called(1);
-      verify(() => sessionService.saveDriverOnlineStatus(false)).called(1);
-    },
-  );
-
-  test(
-    'does not keep the driver online when background telemetry cannot start',
-    () async {
-      final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
-      final sessionService = MockSecureSessionService();
-      final backgroundService = MockBackgroundTelemetryService();
-
-      when(() => sessionService.readDriverId())
-          .thenAnswer((_) async => 'driver-42');
-      when(
-        () => _rideRepository.publishDriverLocation(
-          latitude: 7.828,
-          longitude: 123.434,
-        ),
-      ).thenAnswer((_) async => const Ok(null));
-      when(
-        () => availabilityDataSource.updateOnlineStatus(
-          driverId: 'driver-42',
-          isOnline: true,
-        ),
-      ).thenAnswer((_) async {});
-      when(() => sessionService.saveDriverOnlineStatus(true))
-          .thenAnswer((_) async {});
-      when(() => backgroundService.start())
-          .thenThrow(StateError('not configured'));
-
-      final repository = _buildRepository(
-        availabilityDataSource: availabilityDataSource,
-        sessionService: sessionService,
-        backgroundTelemetryService: backgroundService,
-      );
-
-      final result = await repository.updateOnlineStatus(
-        isOnline: true,
-        lat: 7.828,
-        lng: 123.434,
-      );
-
-      expect(result.isErr, isTrue);
-      verify(() => backgroundService.start()).called(1);
-      verify(
-        () => availabilityDataSource.updateOnlineStatus(
-          driverId: 'driver-42',
           isOnline: false,
         ),
-      ).called(1);
-      verify(() => _rideRepository.clearDriverLocation()).called(1);
-      verify(() => sessionService.saveDriverOnlineStatus(false)).called(1);
-      verifyNever(() => sessionService.saveDriverOnlineStatus(true));
+      );
     },
   );
+
+  test('does not make native telemetry startup block going online', () async {
+    final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
+    final sessionService = MockSecureSessionService();
+    final backgroundService = MockBackgroundTelemetryService();
+
+    when(() => sessionService.readDriverId())
+        .thenAnswer((_) async => 'driver-42');
+    when(
+      () => _rideRepository.publishDriverLocation(
+        latitude: 7.828,
+        longitude: 123.434,
+      ),
+    ).thenAnswer((_) async => const Ok(null));
+    when(
+      () => availabilityDataSource.updateOnlineStatus(
+        driverId: 'driver-42',
+        isOnline: true,
+      ),
+    ).thenAnswer((_) async {});
+    when(() => sessionService.saveDriverOnlineStatus(true))
+        .thenAnswer((_) async {});
+    when(() => backgroundService.start())
+        .thenThrow(StateError('not configured'));
+
+    final repository = _buildRepository(
+      availabilityDataSource: availabilityDataSource,
+      sessionService: sessionService,
+      backgroundTelemetryService: backgroundService,
+    );
+
+    final result = await repository.updateOnlineStatus(
+      isOnline: true,
+      lat: 7.828,
+      lng: 123.434,
+    );
+
+    expect(result, const Ok<void, Failure>(null));
+    await Future<void>.delayed(Duration.zero);
+    verify(() => backgroundService.start()).called(1);
+    verifyNever(
+      () => availabilityDataSource.updateOnlineStatus(
+        driverId: 'driver-42',
+        isOnline: false,
+      ),
+    );
+    verify(() => sessionService.saveDriverOnlineStatus(true)).called(1);
+  });
 
   test('removes the driver location when going offline', () async {
     final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();

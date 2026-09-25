@@ -42,6 +42,18 @@ func (repository *avatarRepository) Save(_ context.Context, profile domain.Profi
 	return profile, nil
 }
 
+func (repository *avatarRepository) UpdateOnlineStatus(
+	_ context.Context,
+	userID int,
+	targetID int,
+	isOnline bool,
+) (domain.Profile, error) {
+	repository.profile.UserID = userID
+	repository.profile.ID = targetID
+	repository.profile.IsOnline = isOnline
+	return repository.profile, nil
+}
+
 func (repository *avatarRepository) SaveAvatar(
 	_ context.Context,
 	_ int,
@@ -68,6 +80,23 @@ func (repository *onlineRepository) Get(context.Context, int) (domain.Profile, e
 func (repository *onlineRepository) Save(_ context.Context, profile domain.Profile) (domain.Profile, error) {
 	repository.saved = profile
 	return profile, nil
+}
+
+func (repository *onlineRepository) UpdateOnlineStatus(
+	_ context.Context,
+	userID int,
+	targetID int,
+	isOnline bool,
+) (domain.Profile, error) {
+	if repository.getErr != nil {
+		return domain.Profile{}, repository.getErr
+	}
+	if targetID != userID && targetID != repository.profile.ID {
+		return domain.Profile{}, errors.New("forbidden")
+	}
+	repository.profile.IsOnline = isOnline
+	repository.saved = repository.profile
+	return repository.profile, nil
 }
 
 func TestOnlineUpdatesTheExistingDriverProfileForTheAuthenticatedUser(t *testing.T) {

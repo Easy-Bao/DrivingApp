@@ -38,6 +38,37 @@ void main() {
     }
   });
 
+  testWidgets('renders an actionable error across the top system edge', (
+    tester,
+  ) async {
+    var retryCount = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Stack(
+            children: [
+              const SizedBox.expand(),
+              AppStatusBanner(
+                isVisible: true,
+                message: "Couldn't connect. Try again.",
+                tone: AppStatusBannerTone.error,
+                actionLabel: 'Try again',
+                onAction: () => retryCount++,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text("Couldn't connect. Try again."), findsOneWidget);
+    expect(find.text('Try again'), findsOneWidget);
+    expect(find.byType(TextButton), findsOneWidget);
+
+    await tester.tap(find.text('Try again'));
+    expect(retryCount, 1);
+  });
+
   testWidgets('stays hidden outside active tracking', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
@@ -56,5 +87,26 @@ void main() {
       find.text('Connection unavailable. Retrying automatically.'),
       findsNothing,
     );
+  });
+
+  testWidgets('shares unavailable state with route-level surfaces', (
+    tester,
+  ) async {
+    bool? isUnavailable;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AppNetworkStatusScope(
+          isUnavailable: true,
+          child: Builder(
+            builder: (context) {
+              isUnavailable = AppNetworkStatusScope.isUnavailableOf(context);
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      ),
+    );
+
+    expect(isUnavailable, isTrue);
   });
 }

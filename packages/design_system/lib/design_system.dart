@@ -23,6 +23,8 @@ export 'package:design_system/src/widgets/app_layout.dart'
     show AppPageHeader, AppPageFrame, AppSurfaceCard, AppNavigationRail;
 export 'package:design_system/src/widgets/app_network_image_widget.dart';
 export 'package:design_system/src/widgets/app_network_status_banner.dart';
+export 'package:design_system/src/widgets/app_network_status_scope.dart';
+export 'package:design_system/src/widgets/app_status_banner.dart';
 export 'package:design_system/src/widgets/app_settings_navigation.dart';
 export 'package:design_system/src/widgets/app_tab_branch_container.dart';
 export 'package:design_system/src/widgets/app_terms_of_service_page.dart';

@@ -75,6 +75,7 @@ class LocationService._() {
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
           distanceFilter: 10,
+          timeLimit: Duration(seconds: 5),
         ),
       );
       return _lastPosition;

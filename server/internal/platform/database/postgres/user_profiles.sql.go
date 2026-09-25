@@ -153,6 +153,41 @@ func (q *Queries) UpdateDriverProfile(ctx context.Context, arg UpdateDriverProfi
 	return i, err
 }
 
+const updateDriverOnlineStatus = `-- name: UpdateDriverOnlineStatus :one
+UPDATE driver_profiles
+SET is_online = $2
+WHERE user_id = $1 AND (user_id = $3 OR id = $3)
+RETURNING id, user_id, name, vehicle_type, plate_number, rating, is_online
+`
+
+type UpdateDriverOnlineStatusParams struct {
+	UserID   int32 `db:"user_id"`
+	IsOnline bool  `db:"is_online"`
+	TargetID int32 `db:"target_id"`
+}
+
+func (q *Queries) UpdateDriverOnlineStatus(
+	ctx context.Context,
+	arg UpdateDriverOnlineStatusParams,
+) (DriverProfile, error) {
+	row := q.db.QueryRow(ctx, updateDriverOnlineStatus,
+		arg.UserID,
+		arg.IsOnline,
+		arg.TargetID,
+	)
+	var i DriverProfile
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Name,
+		&i.VehicleType,
+		&i.PlateNumber,
+		&i.Rating,
+		&i.IsOnline,
+	)
+	return i, err
+}
+
 const updatePassengerAvatar = `-- name: UpdatePassengerAvatar :execrows
 UPDATE passenger_profiles
 SET avatar_storage_key = $2, avatar_content_type = $3

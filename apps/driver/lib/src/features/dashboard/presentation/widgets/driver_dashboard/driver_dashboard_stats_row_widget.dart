@@ -10,23 +10,14 @@ class const DriverDashboardStatsRowWidget({
   required this.earnings,
   required this.completedTrips,
   this.hasExistingStats = false,
-  this.errorMessage,
-  this.onRetry,
 }) extends StatelessWidget {
   final bool isLoadingStats;
   final double earnings;
   final int completedTrips;
   final bool hasExistingStats;
-  final String? errorMessage;
-  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
-    final errorMessage = this.errorMessage;
-    if (errorMessage != null && !isLoadingStats) {
-      return DriverDashboardErrorCard(message: errorMessage, onRetry: onRetry);
-    }
-
     if (isLoadingStats && !hasExistingStats) {
       return _buildInitialLoadingState(context);
     }
@@ -177,57 +168,6 @@ class const DriverDashboardStatsRowWidget({
                 ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class const DriverDashboardErrorCard({
-  super.key,
-  required this.message,
-  this.onRetry,
-}) extends StatelessWidget {
-  final String message;
-  final VoidCallback? onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: context.colorScheme.error.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: context.colorScheme.error.withValues(alpha: 0.24),
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              LucideIcons.circle_alert,
-              size: 20,
-              color: context.colorScheme.error,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                message,
-                style: TextStyle(
-                  fontSize: 12,
-                  height: 1.35,
-                  fontWeight: FontWeight.w600,
-                  color: context.colorScheme.error,
-                ),
-              ),
-            ),
-            if (onRetry != null) ...[
-              const SizedBox(width: 8),
-              TextButton(onPressed: onRetry, child: const Text('Try again')),
-            ],
           ],
         ),
       ),

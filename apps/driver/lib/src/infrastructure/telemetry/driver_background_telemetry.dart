@@ -323,6 +323,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
           distanceFilter: 10,
+          timeLimit: Duration(seconds: 5),
         ),
       );
       await locationSpool.enqueue(

@@ -309,26 +309,6 @@ func (handler *Handler) Online(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 403, "forbidden")
 		return
 	}
-	profile, err := handler.service.Get(r.Context(), actorID)
-	if err != nil {
-		if isProfileNotFound(err) {
-			response.Error(w, http.StatusForbidden, "driver profile required")
-			return
-		}
-		response.Error(w, http.StatusInternalServerError, "could not load driver profile")
-		return
-	}
-	// Older clients persisted the driver-profile ID instead of the account ID.
-	// The profile is still resolved from the verified account, so accepting that
-	// legacy path value does not broaden access to another driver's profile.
-	if targetID != actorID && targetID != profile.ID {
-		response.Error(w, 403, "forbidden")
-		return
-	}
-	if profile.Role != "driver" {
-		response.Error(w, 403, "driver profile required")
-		return
-	}
 	var input struct {
 		IsOnline       *bool `json:"is_online"`
 		LegacyIsOnline *bool `json:"isOnline"`
@@ -337,16 +317,28 @@ func (handler *Handler) Online(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 400, "invalid online status")
 		return
 	}
+	var isOnline bool
 	if input.IsOnline != nil {
-		profile.IsOnline = *input.IsOnline
+		isOnline = *input.IsOnline
 	} else if input.LegacyIsOnline != nil {
-		profile.IsOnline = *input.LegacyIsOnline
+		isOnline = *input.LegacyIsOnline
 	} else {
 		response.Error(w, 400, "is_online is required")
 		return
 	}
-	updated, err := handler.service.Update(r.Context(), profile)
+	// The verified account ID and the legacy profile-ID path are both accepted
+	// by one scoped update query, avoiding a full profile read/write cycle.
+	updated, err := handler.service.UpdateOnlineStatus(
+		r.Context(),
+		actorID,
+		targetID,
+		isOnline,
+	)
 	if err != nil {
+		if isProfileNotFound(err) {
+			response.Error(w, http.StatusForbidden, "forbidden")
+			return
+		}
 		response.Error(w, 500, "could not update online status")
 		return
 	}

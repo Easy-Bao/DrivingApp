@@ -108,21 +108,27 @@ class _DriverAppState extends State<DriverApp> with WidgetsBindingObserver {
                   StreamBuilder<NetworkAvailabilityStatus>(
                     stream: _networkAvailabilityCoordinator.changes,
                     initialData: _networkAvailabilityCoordinator.status,
-                    builder: (context, snapshot) => Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        _buildRouteWithLocationOverlay(
-                          context,
-                          child,
-                          locationState,
+                    builder: (context, snapshot) {
+                      final isNetworkUnavailable =
+                          snapshot.data ==
+                          NetworkAvailabilityStatus.unavailable;
+                      return AppNetworkStatusScope(
+                        isUnavailable: isNetworkUnavailable,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            _buildRouteWithLocationOverlay(
+                              context,
+                              child,
+                              locationState,
+                            ),
+                            AppNetworkStatusBanner(
+                              isVisible: isNetworkUnavailable,
+                            ),
+                          ],
                         ),
-                        AppNetworkStatusBanner(
-                          isVisible:
-                              snapshot.data ==
-                              NetworkAvailabilityStatus.unavailable,
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
             ),
       ),

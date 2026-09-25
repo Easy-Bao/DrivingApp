@@ -10,7 +10,6 @@ import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashbo
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_state.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/driver_dashboard/driver_dashboard_stats_row_widget.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/driver_dashboard/driver_dashboard_feed_widgets.dart';
-import 'package:driver/src/features/dashboard/presentation/widgets/driver_dashboard/driver_shift_duration_banner.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_state.dart';
 import 'package:driver/src/features/profile/profile_routes.dart';
@@ -75,11 +74,11 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   bool _isForcingOfflineForLocationLoss = false;
   bool _isForeground = true;
   bool _isHandlingPassengerCancellation = false;
-  Duration _shiftDuration = Duration.zero;
   bool _breakAlertShown = false;
 
   static const _locationAccessPollInterval = Duration(seconds: 5);
   static const _locationAccessFailureThreshold = 2;
+  static const _breakThreshold = Duration(hours: 8);
 
   @override
   void initState() {
@@ -172,7 +171,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   void _stopShiftDurationTimer() {
     _shiftDurationTimer?.cancel();
     _shiftDurationTimer = null;
-    if (mounted) setState(() => _shiftDuration = Duration.zero);
   }
 
   void _updateShiftDuration() {
@@ -184,8 +182,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         : DateTime.now().toUtc().difference(onlineSince).isNegative
         ? Duration.zero
         : DateTime.now().toUtc().difference(onlineSince);
-    if (duration >= DriverShiftDurationBanner.breakThreshold &&
-        !_breakAlertShown) {
+    if (duration >= _breakThreshold && !_breakAlertShown) {
       _breakAlertShown = true;
       CustomToast.show(
         context,
@@ -193,7 +190,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         isError: true,
       );
     }
-    setState(() => _shiftDuration = duration);
   }
 
   Future<void> _resumeForegroundWork() async {
@@ -366,6 +362,13 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         lng: position.longitude,
       ),
     );
+  }
+
+  Future<void> _requestAndPublishCurrentLocation() async {
+    final position = await LocationService.getCurrentPosition();
+    if (!mounted || position == null) return;
+    if (!BlocProvider.of<DashboardCubit>(context).state.isOnline) return;
+    _publishCurrentLocation();
   }
 
   void _startPolling() {
@@ -594,21 +597,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         return;
       }
 
-      var position = LocationService.lastPosition;
-      if (requestedOnline) {
-        position = await LocationService.getCurrentPosition() ?? position;
-      }
+      final position = LocationService.lastPosition;
 
       if (!context.mounted) return;
-
-      if (requestedOnline && position == null) {
-        CustomToast.show(
-          context,
-          'Your location is not ready yet. Try again in a moment.',
-          isError: true,
-        );
-        return;
-      }
 
       await BlocProvider.of<DashboardCubit>(context).toggleOnline(
         requestedOnline: requestedOnline,
@@ -623,8 +614,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         _pendingOnline = null;
         if (resolvedOnline) {
           _availabilityCtrl.forward();
-          _publishCurrentLocation();
           _startPolling();
+          if (LocationService.lastPosition == null) {
+            unawaited(_requestAndPublishCurrentLocation());
+          }
         } else {
           _availabilityCtrl.reverse();
         }
@@ -882,129 +875,152 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         builder: (context, state) {
           final activeTrips = state.activeTrips;
           final activeBids = state.activeBids;
+          final dashboardMessage =
+              state.errorMessage ?? state.statsErrorMessage;
+          final canRetryStats =
+              state.errorMessage == null && state.statsErrorMessage != null;
+          final showDashboardError =
+              dashboardMessage != null &&
+              !AppNetworkStatusScope.isUnavailableOf(context);
           final showFeed =
               activeTrips.isNotEmpty ||
               (state.isOnline && activeBids.isNotEmpty);
-          return Scaffold(
-            backgroundColor: context.canvasColor,
-            appBar: AppBar(
-              automaticallyImplyLeading: false,
-              backgroundColor: context.canvasColor,
-              titleSpacing: 20,
-              toolbarHeight: 76,
-              title: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('EasyRide', style: context.textStyles.titleLarge),
-                  const SizedBox(height: EasyRideSpacing.sm / 2),
-                  Text('Driver', style: context.textStyles.labelMedium),
-                ],
-              ),
-              actions: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 16),
-                  child: IconButton(
-                    constraints: const BoxConstraints(
-                      minWidth: EasyRideSize.minimumTouchTarget,
-                      minHeight: EasyRideSize.minimumTouchTarget,
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              Scaffold(
+                backgroundColor: context.canvasColor,
+                appBar: AppBar(
+                  automaticallyImplyLeading: false,
+                  backgroundColor: context.canvasColor,
+                  titleSpacing: 20,
+                  toolbarHeight: 76,
+                  title: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('EasyRide', style: context.textStyles.titleLarge),
+                      const SizedBox(height: EasyRideSpacing.sm / 2),
+                      Text('Driver', style: context.textStyles.labelMedium),
+                    ],
+                  ),
+                  actions: [
+                    Padding(
+                      padding: const EdgeInsets.only(right: 16),
+                      child: IconButton(
+                        constraints: const BoxConstraints(
+                          minWidth: EasyRideSize.minimumTouchTarget,
+                          minHeight: EasyRideSize.minimumTouchTarget,
+                        ),
+                        tooltip: 'Account',
+                        onPressed: () =>
+                            context.pushNamed(ProfileRoutes.account),
+                        icon: const Icon(LucideIcons.user_round),
+                        style: IconButton.styleFrom(
+                          backgroundColor: context.colorScheme.onSurface
+                              .withValues(alpha: 0.1),
+                        ),
+                      ),
                     ),
-                    tooltip: 'Account',
-                    onPressed: () => context.pushNamed(ProfileRoutes.account),
-                    icon: const Icon(LucideIcons.user_round),
-                    style: IconButton.styleFrom(
-                      backgroundColor: context.colorScheme.onSurface.withValues(
-                        alpha: 0.1,
+                  ],
+                ),
+                body: SafeArea(
+                  top: false,
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: EasyRideLayout.contentMaxWidth,
+                      ),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 8),
+                          _buildOnlineCardBanner(context, state),
+                          const SizedBox(height: 16),
+                          _buildStatsRow(state),
+                          const SizedBox(height: 16),
+                          if (showFeed)
+                            Expanded(
+                              child: ListView(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                ),
+                                physics: const BouncingScrollPhysics(),
+                                children: [
+                                  if (activeTrips.isNotEmpty) ...[
+                                    DriverDashboardSectionLabel.activeRides(
+                                      activeRideCount: activeTrips.length,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    ...activeTrips.asMap().entries.map(
+                                      (entry) => DriverActiveTripCard(
+                                        trip: entry.value,
+                                        queueIndex: entry.key,
+                                        hasCurrentTransitRide: activeTrips.any(
+                                          (activeTrip) =>
+                                              activeTrip['status'] ==
+                                              'in_transit',
+                                        ),
+                                        isCompletingTrip:
+                                            _completingTripId ==
+                                            dashboardValueAsString(
+                                              entry.value['id'],
+                                            ),
+                                        onResume: () =>
+                                            _resumeTrip(entry.value),
+                                        onComplete: () =>
+                                            _completeTripFromDashboard(
+                                              entry.value,
+                                            ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                  ],
+                                  if (activeBids.isNotEmpty) ...[
+                                    const DriverDashboardSectionLabel(
+                                      label: 'Incoming Requests',
+                                    ),
+                                    const SizedBox(height: 10),
+                                    ...activeBids.map(
+                                      (bid) => DriverPoolBidCard(
+                                        bid: bid,
+                                        submittingBidId: _submittingBidId,
+                                        onDecline: () =>
+                                            BlocProvider.of<DashboardCubit>(
+                                              context,
+                                            ).removeActiveBid(
+                                              dashboardValueAsString(bid['id']),
+                                            ),
+                                        onAccept: () => _acceptBid(bid),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            )
+                          else ...[
+                            const Spacer(),
+                            _buildStatusIndicator(state),
+                            const Spacer(),
+                          ],
+                        ],
                       ),
                     ),
                   ),
                 ),
-              ],
-            ),
-            body: SafeArea(
-              top: false,
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: EasyRideLayout.contentMaxWidth,
-                  ),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 8),
-                      _buildOnlineCardBanner(context, state),
-                      if (state.errorMessage != null) ...[
-                        const SizedBox(height: 16),
-                        DriverDashboardErrorCard(message: state.errorMessage!),
-                      ],
-                      const SizedBox(height: 16),
-                      _buildStatsRow(state),
-                      if (state.isOnline) ...[
-                        const SizedBox(height: 16),
-                        DriverShiftDurationBanner(duration: _shiftDuration),
-                      ],
-                      const SizedBox(height: 16),
-                      if (showFeed)
-                        Expanded(
-                          child: ListView(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            physics: const BouncingScrollPhysics(),
-                            children: [
-                              if (activeTrips.isNotEmpty) ...[
-                                DriverDashboardSectionLabel.activeRides(
-                                  activeRideCount: activeTrips.length,
-                                ),
-                                const SizedBox(height: 10),
-                                ...activeTrips.asMap().entries.map(
-                                  (entry) => DriverActiveTripCard(
-                                    trip: entry.value,
-                                    queueIndex: entry.key,
-                                    hasCurrentTransitRide: activeTrips.any(
-                                      (activeTrip) =>
-                                          activeTrip['status'] == 'in_transit',
-                                    ),
-                                    isCompletingTrip:
-                                        _completingTripId ==
-                                        dashboardValueAsString(
-                                          entry.value['id'],
-                                        ),
-                                    onResume: () => _resumeTrip(entry.value),
-                                    onComplete: () =>
-                                        _completeTripFromDashboard(entry.value),
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
-                              ],
-                              if (activeBids.isNotEmpty) ...[
-                                const DriverDashboardSectionLabel(
-                                  label: 'Incoming Requests',
-                                ),
-                                const SizedBox(height: 10),
-                                ...activeBids.map(
-                                  (bid) => DriverPoolBidCard(
-                                    bid: bid,
-                                    submittingBidId: _submittingBidId,
-                                    onDecline: () =>
-                                        BlocProvider.of<DashboardCubit>(context)
-                                            .removeActiveBid(
-                                              dashboardValueAsString(bid['id']),
-                                            ),
-                                    onAccept: () => _acceptBid(bid),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        )
-                      else ...[
-                        const Spacer(),
-                        _buildStatusIndicator(state),
-                        const Spacer(),
-                      ],
-                    ],
-                  ),
-                ),
               ),
-            ),
+              if (showDashboardError)
+                AppStatusBanner(
+                  isVisible: true,
+                  message: dashboardMessage,
+                  tone: AppStatusBannerTone.error,
+                  actionLabel: canRetryStats ? 'Try again' : null,
+                  onAction: canRetryStats
+                      ? () => unawaited(
+                          BlocProvider.of<DashboardCubit>(context).loadStats(),
+                        )
+                      : null,
+                ),
+            ],
           );
         },
       ),
@@ -1183,9 +1199,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       hasExistingStats: state.hasLoadedStats,
       earnings: state.earnings,
       completedTrips: state.completedTrips,
-      errorMessage: state.errorMessage == null ? state.statsErrorMessage : null,
-      onRetry: () =>
-          unawaited(BlocProvider.of<DashboardCubit>(context).loadStats()),
     );
   }
 

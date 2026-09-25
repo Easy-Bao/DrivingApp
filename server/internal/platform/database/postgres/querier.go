@@ -97,6 +97,7 @@ type Querier interface {
 	RevokeRefreshSessionByID(ctx context.Context, arg RevokeRefreshSessionByIDParams) (int64, error)
 	RevokeUserRefreshSessions(ctx context.Context, arg RevokeUserRefreshSessionsParams) error
 	UpdateDriverProfile(ctx context.Context, arg UpdateDriverProfileParams) (DriverProfile, error)
+	UpdateDriverOnlineStatus(ctx context.Context, arg UpdateDriverOnlineStatusParams) (DriverProfile, error)
 	UpdatePassengerAvatar(ctx context.Context, arg UpdatePassengerAvatarParams) (int64, error)
 	UpdatePassengerProfile(ctx context.Context, arg UpdatePassengerProfileParams) (PassengerProfile, error)
 	UpdateRideSettlementEconomics(ctx context.Context, arg UpdateRideSettlementEconomicsParams) (RideSettlement, error)

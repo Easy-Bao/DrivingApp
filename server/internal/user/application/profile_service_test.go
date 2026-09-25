@@ -14,6 +14,17 @@ func (r *repository) Save(_ context.Context, profile domain.Profile) (domain.Pro
 	r.profile = profile
 	return profile, nil
 }
+func (r *repository) UpdateOnlineStatus(
+	_ context.Context,
+	userID int,
+	targetID int,
+	isOnline bool,
+) (domain.Profile, error) {
+	r.profile.UserID = userID
+	r.profile.ID = targetID
+	r.profile.IsOnline = isOnline
+	return r.profile, nil
+}
 func TestProfileUpdateUsesTheDomainService(t *testing.T) {
 	service := application.NewProfileService(&repository{})
 	profile, err := service.Update(context.Background(), domain.Profile{UserID: 4, Role: "driver", Name: "Bao Bao Driver"})

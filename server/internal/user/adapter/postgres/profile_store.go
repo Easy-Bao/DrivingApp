@@ -176,6 +176,43 @@ func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Pr
 	return updated, nil
 }
 
+func (repository *ProfileRepository) UpdateOnlineStatus(
+	ctx context.Context,
+	userID int,
+	targetID int,
+	isOnline bool,
+) (domain.Profile, error) {
+	if err := repository.validate(); err != nil {
+		return domain.Profile{}, fmt.Errorf("validate profile repository: %w", err)
+	}
+	dbUserID, err := toPostgresProfileID(userID, "user id")
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("convert profile user id: %w", err)
+	}
+	dbTargetID, err := toPostgresProfileID(targetID, "target id")
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("convert profile target id: %w", err)
+	}
+
+	profile, err := repository.queries.UpdateDriverOnlineStatus(
+		ctx,
+		databasepostgres.UpdateDriverOnlineStatusParams{
+			UserID:   dbUserID,
+			IsOnline: isOnline,
+			TargetID: dbTargetID,
+		},
+	)
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("update driver online status: %w", err)
+	}
+	return domain.Profile{
+		ID:       int(profile.ID),
+		UserID:   int(profile.UserID),
+		Role:     "driver",
+		IsOnline: profile.IsOnline,
+	}, nil
+}
+
 func (repository *ProfileRepository) SaveAvatar(
 	ctx context.Context,
 	userID int,

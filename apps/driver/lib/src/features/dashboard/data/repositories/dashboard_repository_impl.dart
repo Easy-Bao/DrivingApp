@@ -1,6 +1,7 @@
 import 'package:driver/src/features/active_ride/active_ride.dart';
 import 'package:driver/src/features/auth/domain/failures/auth_failures.dart';
 
+import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:dio/dio.dart';
@@ -194,6 +195,58 @@ final class DashboardRepositoryImpl({
     }
   }
 
+  Future<void> _publishInitialLocation({
+    required double lat,
+    required double lng,
+  }) async {
+    if (lat == 0 && lng == 0) return;
+    try {
+      final result = await _rideRepository.publishDriverLocationResult(
+        latitude: lat,
+        longitude: lng,
+      );
+      result.fold(
+        (failure) => dev.log(
+          'Unable to publish initial driver location: ${failure.message}',
+        ),
+        (_) {},
+      );
+    } catch (error, stackTrace) {
+      dev.log(
+        'Unable to publish initial driver location.',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  Future<void> _startBackgroundTelemetry() async {
+    try {
+      await _backgroundTelemetryService?.start();
+    } catch (error, stackTrace) {
+      // Online presence is already confirmed by the API. The foreground
+      // heartbeat and the next background lifecycle event can retry service
+      // startup without making the switch wait for native plugin work.
+      dev.log(
+        'Unable to start background driver telemetry.',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  Future<void> _persistOnlineState() async {
+    try {
+      await _sessionService.saveDriverOnlineStatus(true);
+      final onlineSince = await _sessionService.readDriverOnlineSince();
+      if (onlineSince == null) {
+        await _sessionService.saveDriverOnlineSince(DateTime.now().toUtc());
+      }
+    } catch (error) {
+      dev.log('Unable to persist driver online status: $error');
+    }
+  }
+
   @override
   Future<Result<void, Failure>> updateOnlineStatus({
     required bool isOnline,
@@ -229,32 +282,17 @@ final class DashboardRepositoryImpl({
     }
 
     try {
-      Failure? locationFailure;
-      (await _rideRepository.publishDriverLocationResult(
-        latitude: lat,
-        longitude: lng,
-      )).fold((failure) => locationFailure = failure, (_) {});
-      if (locationFailure != null) {
-        await _clearOnlinePresence(driverId: driverId, markServerOffline: true);
-        return Err(locationFailure!);
-      }
-
       await _availabilityDataSource.updateOnlineStatus(
         driverId: driverId,
         isOnline: true,
       );
 
-      await _backgroundTelemetryService?.start();
-
-      try {
-        await _sessionService.saveDriverOnlineStatus(true);
-        final onlineSince = await _sessionService.readDriverOnlineSince();
-        if (onlineSince == null) {
-          await _sessionService.saveDriverOnlineSince(DateTime.now().toUtc());
-        }
-      } catch (error) {
-        dev.log('Unable to persist driver online status: $error');
-      }
+      // The availability response is the user-visible transition. Location
+      // delivery and native service startup are retryable telemetry work and
+      // must not serialize behind the switch.
+      unawaited(_publishInitialLocation(lat: lat, lng: lng));
+      unawaited(_startBackgroundTelemetry());
+      unawaited(_persistOnlineState());
       return const Ok(null);
     } catch (error) {
       await _clearOnlinePresence(driverId: driverId, markServerOffline: true);
