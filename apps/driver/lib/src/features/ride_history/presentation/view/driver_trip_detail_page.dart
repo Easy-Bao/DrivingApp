@@ -85,7 +85,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
   }
 
   void _showChatFeedback(String message) {
-    if (!mounted) return;
+    if (!mounted || AppNetworkStatusScope.isUnavailableOf(context)) return;
     setState(() => _chatFeedbackMessage = message);
   }
 
@@ -210,7 +210,8 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                   ),
                   const SizedBox(height: 8),
                   _buildPassengerCard(),
-                  if (_chatFeedbackMessage != null) ...[
+                  if (_chatFeedbackMessage != null &&
+                      !AppNetworkStatusScope.isUnavailableOf(context)) ...[
                     const SizedBox(height: 12),
                     _buildChatFeedback(),
                   ],

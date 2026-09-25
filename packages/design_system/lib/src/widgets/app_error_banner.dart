@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:design_system/src/theme/design_system_context.dart';
+import 'package:design_system/src/widgets/app_network_status_scope.dart';
 
 /// Presents one recoverable page or load failure with its retry action.
 class const AppErrorBanner({
@@ -13,6 +14,10 @@ class const AppErrorBanner({
 
   @override
   Widget build(BuildContext context) {
+    if (AppNetworkStatusScope.isUnavailableOf(context)) {
+      return const SizedBox.shrink();
+    }
+
     final scheme = context.colorScheme;
     return Semantics(
       container: true,

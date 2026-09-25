@@ -109,4 +109,31 @@ void main() {
 
     expect(isUnavailable, isTrue);
   });
+
+  testWidgets(
+    'hides page-owned error surfaces while transport is unavailable',
+    (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: AppNetworkStatusScope(
+            isUnavailable: true,
+            child: Column(
+              children: [
+                AppStatusBanner(
+                  isVisible: true,
+                  message: 'Connection failed',
+                  tone: AppStatusBannerTone.error,
+                ),
+                AppErrorBanner(message: 'Connection failed', onRetry: _noop),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Connection failed'), findsNothing);
+    },
+  );
 }
+
+void _noop() {}

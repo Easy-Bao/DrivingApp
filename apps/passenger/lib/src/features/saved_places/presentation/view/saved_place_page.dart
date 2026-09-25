@@ -256,6 +256,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
   }
 
   void _showFailureSnackBar(String message) {
+    if (AppNetworkStatusScope.isUnavailableOf(context)) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));

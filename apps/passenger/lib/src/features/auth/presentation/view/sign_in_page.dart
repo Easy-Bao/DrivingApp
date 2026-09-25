@@ -88,7 +88,11 @@ class _SigninPageContentState extends State<_SigninPageContent> {
           },
           builder: (context, state) {
             final isLoading = state is SignInLoading;
-            final effectiveEmailError = _emailError ?? _submissionError;
+            final isNetworkUnavailable = AppNetworkStatusScope.isUnavailableOf(
+              context,
+            );
+            final effectiveEmailError =
+                _emailError ?? (isNetworkUnavailable ? null : _submissionError);
             final effectivePasswordError = _passwordError;
 
             return LayoutBuilder(

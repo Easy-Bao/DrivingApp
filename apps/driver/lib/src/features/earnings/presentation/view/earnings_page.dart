@@ -169,6 +169,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
         ? const <_EarningsPeriod, _EarningsSummary>{}
         : _parseSummaries(state.data!);
     final summary = summaries[_selectedPeriod];
+    final isNetworkUnavailable = AppNetworkStatusScope.isUnavailableOf(context);
 
     return Scaffold(
       backgroundColor: context.canvasColor,
@@ -180,7 +181,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
       body: SafeArea(
         top: false,
         child: summary == null
-            ? state.errorMessage != null
+            ? state.errorMessage != null && !isNetworkUnavailable
                   ? _buildErrorState(context)
                   : _buildLoadingState(context)
             : LayoutBuilder(

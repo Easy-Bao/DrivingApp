@@ -118,7 +118,7 @@ class _InboxPageState extends State<InboxPage> {
 
   Widget _buildSessionLoadingState() {
     return CustomScrollView(
-      physics: AlwaysScrollableScrollPhysics(),
+      physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
         const SliverPadding(
           padding: EdgeInsets.fromLTRB(
@@ -267,11 +267,14 @@ class _InboxPageState extends State<InboxPage> {
         ),
       );
     }
-    if (state.hasMore || state.loadMoreError != null) {
+    final isNetworkUnavailable = AppNetworkStatusScope.isUnavailableOf(context);
+    final showLoadMoreError =
+        state.loadMoreError != null && !isNetworkUnavailable;
+    if (state.hasMore || showLoadMoreError) {
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (state.loadMoreError != null) ...[
+          if (showLoadMoreError) ...[
             Text(
               state.loadMoreError!,
               textAlign: TextAlign.center,
@@ -287,7 +290,9 @@ class _InboxPageState extends State<InboxPage> {
             onPressed: _inboxCubit.loadMoreNotifications,
             icon: const Icon(LucideIcons.chevron_down, size: 16),
             label: Text(
-              state.loadMoreError == null ? 'Load more messages' : 'Retry',
+              state.loadMoreError == null || isNetworkUnavailable
+                  ? 'Load more messages'
+                  : 'Retry',
             ),
           ),
         ],

@@ -295,7 +295,9 @@ class _DriverChatPageState extends State<DriverChatPage> {
             body: Column(
               children: [
                 Divider(height: 1, color: context.colorScheme.outlineVariant),
-                if (state.isRoomLocked || state.errorMessage != null)
+                if (state.isRoomLocked ||
+                    (state.errorMessage != null &&
+                        !AppNetworkStatusScope.isUnavailableOf(context)))
                   _buildChatStatusBanner(state),
                 Expanded(
                   child: ListView.builder(

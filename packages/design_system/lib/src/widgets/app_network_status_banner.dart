@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:design_system/src/widgets/app_status_banner.dart';
+import 'package:design_system/src/widgets/app_network_status_scope.dart';
 
 /// Shows the quiet transport status while an active trip loses connectivity.
 ///
@@ -17,7 +18,10 @@ class const AppNetworkStatusBanner({
   @override
   Widget build(BuildContext context) {
     return AppStatusBanner(
-      isVisible: isVisible && isActiveTracking,
+      isVisible:
+          isVisible &&
+          isActiveTracking &&
+          !AppNetworkStatusScope.isUnavailableOf(context),
       message: 'Connection unavailable. Retrying automatically.',
       tone: AppStatusBannerTone.warning,
     );

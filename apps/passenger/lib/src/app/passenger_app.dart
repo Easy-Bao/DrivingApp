@@ -57,11 +57,10 @@ class _PassengerAppState extends State<PassengerApp>
                     stream: _networkAvailabilityCoordinator.changes,
                     initialData: _networkAvailabilityCoordinator.status,
                     builder: (context, snapshot) {
-                      final isNetworkUnavailable =
-                          snapshot.data ==
-                          NetworkAvailabilityStatus.unavailable;
                       return AppNetworkStatusScope(
-                        isUnavailable: isNetworkUnavailable,
+                        isUnavailable:
+                            snapshot.data !=
+                            NetworkAvailabilityStatus.available,
                         child: MultiBlocListener(
                           listeners: [
                             BlocListener<SessionBloc, SessionState>(

@@ -81,7 +81,9 @@ class _ForgotPasswordPageContentState
           },
           builder: (context, state) {
             final isLoading = state is ForgotPasswordLoading;
-            final errorMessage = state is ForgotPasswordFailure
+            final errorMessage = AppNetworkStatusScope.isUnavailableOf(context)
+                ? null
+                : state is ForgotPasswordFailure
                 ? state.errorMessage
                 : null;
 

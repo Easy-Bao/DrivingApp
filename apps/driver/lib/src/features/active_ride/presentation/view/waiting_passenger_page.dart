@@ -231,7 +231,10 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        if (_errorMessage != null) ...[
+                        if (_errorMessage != null &&
+                            !AppNetworkStatusScope.isUnavailableOf(
+                              context,
+                            )) ...[
                           _buildErrorBanner(),
                           const SizedBox(height: 12),
                         ],

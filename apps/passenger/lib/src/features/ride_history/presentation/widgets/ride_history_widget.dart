@@ -126,7 +126,9 @@ class _RideHistoryWidgetState() extends State<RideHistoryWidget> {
         else
           ..._historySlivers(groupedRides, presenter),
         if (filteredRides.isNotEmpty &&
-            (widget.hasMore || widget.loadMoreError != null))
+            (widget.hasMore ||
+                (widget.loadMoreError != null &&
+                    !AppNetworkStatusScope.isUnavailableOf(context))))
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(
               EasyRideLayout.pagePadding,
@@ -156,7 +158,8 @@ class _RideHistoryWidgetState() extends State<RideHistoryWidget> {
     }
     return Column(
       children: [
-        if (widget.loadMoreError != null) ...[
+        if (widget.loadMoreError != null &&
+            !AppNetworkStatusScope.isUnavailableOf(context)) ...[
           Text(
             widget.loadMoreError!,
             textAlign: TextAlign.center,
@@ -175,7 +178,10 @@ class _RideHistoryWidgetState() extends State<RideHistoryWidget> {
           ),
           icon: const Icon(LucideIcons.chevron_down, size: 16),
           label: Text(
-            widget.loadMoreError == null ? 'Load more rides' : 'Retry',
+            widget.loadMoreError == null ||
+                    AppNetworkStatusScope.isUnavailableOf(context)
+                ? 'Load more rides'
+                : 'Retry',
           ),
         ),
       ],

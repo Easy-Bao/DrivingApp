@@ -607,7 +607,8 @@ class _FindingDriverPageContentState()
                               isCanceling: _isLeaving,
                             );
                           } else if (_driverSearchError != null &&
-                              state is BookingFailure) {
+                              state is BookingFailure &&
+                              !AppNetworkStatusScope.isUnavailableOf(context)) {
                             return FindingDriverAvailabilityErrorPanelWidget(
                               message: _driverSearchError!,
                               fare: widget.fare,

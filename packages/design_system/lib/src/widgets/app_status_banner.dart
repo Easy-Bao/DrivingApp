@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:design_system/src/widgets/app_network_status_scope.dart';
 
 enum AppStatusBannerTone { warning, error }
 
@@ -22,7 +23,9 @@ class const AppStatusBanner({
 
   @override
   Widget build(BuildContext context) {
-    if (!isVisible) return const SizedBox.shrink();
+    if (!isVisible || AppNetworkStatusScope.isUnavailableOf(context)) {
+      return const SizedBox.shrink();
+    }
 
     final scheme = Theme.of(context).colorScheme;
     final isError = tone == AppStatusBannerTone.error;

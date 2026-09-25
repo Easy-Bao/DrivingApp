@@ -108,7 +108,9 @@ class _SigninPageContentState extends State<_SigninPageContent> {
           },
           builder: (context, state) {
             final isLoading = state is SignInLoading;
-            final errorMessage = state is SignInFailure
+            final errorMessage = AppNetworkStatusScope.isUnavailableOf(context)
+                ? null
+                : state is SignInFailure
                 ? state.errorMessage
                 : null;
 

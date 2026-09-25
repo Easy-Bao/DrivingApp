@@ -139,7 +139,9 @@ class _SignupPageContentState extends State<_SignupPageContent> {
           },
           builder: (context, state) {
             final isLoading = state is SignUpLoading;
-            final errorMessage = _submissionError;
+            final errorMessage = AppNetworkStatusScope.isUnavailableOf(context)
+                ? null
+                : _submissionError;
 
             return Center(
               child: ConstrainedBox(

@@ -126,7 +126,9 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
           builder: (context, state) {
             final isLoading = state is VerifyOtpLoading;
             final isResending = state is VerifyOtpResending;
-            final errorMessage = state is VerifyOtpFailure
+            final errorMessage = AppNetworkStatusScope.isUnavailableOf(context)
+                ? null
+                : state is VerifyOtpFailure
                 ? state.errorMessage
                 : state is VerifyOtpResendFailure
                 ? state.errorMessage

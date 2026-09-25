@@ -110,9 +110,13 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
     final filteredTrips = _filteredTripsList(state.trips);
     final grouped = _groupByDate(filteredTrips);
     final hasTrips = state.trips.isNotEmpty;
-    final hasRefreshError = state.errorMessage != null && hasTrips;
+    final isNetworkUnavailable = AppNetworkStatusScope.isUnavailableOf(context);
+    final hasRefreshError =
+        state.errorMessage != null && hasTrips && !isNetworkUnavailable;
     final hasLoadMoreItem =
-        state.hasMore || state.isLoadingMore || state.loadMoreError != null;
+        state.hasMore ||
+        state.isLoadingMore ||
+        (state.loadMoreError != null && !isNetworkUnavailable);
 
     return Scaffold(
       backgroundColor: context.canvasColor,
@@ -138,7 +142,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
       ),
       body: state.isLoading && state.trips.isEmpty
           ? _buildInitialLoadingState()
-          : state.errorMessage != null && !hasTrips
+          : state.errorMessage != null && !hasTrips && !isNetworkUnavailable
           ? _buildMessageState(
               title: 'Couldn’t load trips',
               message: state.errorMessage!,
@@ -396,7 +400,8 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
       padding: const EdgeInsets.only(top: 6, bottom: 14),
       child: Column(
         children: [
-          if (state.loadMoreError != null) ...[
+          if (state.loadMoreError != null &&
+              !AppNetworkStatusScope.isUnavailableOf(context)) ...[
             Text(
               state.loadMoreError!,
               textAlign: TextAlign.center,
@@ -413,7 +418,10 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
                 BlocProvider.of<DriverTripHistoryCubit>(context).loadMore(),
             icon: const Icon(LucideIcons.chevron_down, size: 16),
             label: Text(
-              state.loadMoreError == null ? 'Load more trips' : 'Retry',
+              state.loadMoreError == null ||
+                      AppNetworkStatusScope.isUnavailableOf(context)
+                  ? 'Load more trips'
+                  : 'Retry',
             ),
           ),
         ],

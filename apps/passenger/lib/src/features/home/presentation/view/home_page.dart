@@ -414,6 +414,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildRecentRideHistoryError() {
+    if (AppNetworkStatusScope.isUnavailableOf(context)) {
+      return const SizedBox.shrink();
+    }
     return Center(
       child: TextButton.icon(
         onPressed: _loadRecentRideHistory,

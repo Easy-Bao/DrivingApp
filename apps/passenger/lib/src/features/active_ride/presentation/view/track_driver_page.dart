@@ -3,7 +3,6 @@ import 'dart:typed_data';
 
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
@@ -89,7 +88,6 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
   String _passengerIdentifier = '';
   bool _isCancellingTrip = false;
   bool _isPollingChat = false;
-  bool _hasTriggeredArrivalAlert = false;
 
   @override
   void initState() {
@@ -468,37 +466,6 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
     }
   }
 
-  void _checkArrivalAlert(
-    double driverLat,
-    double driverLng,
-    RideStatus status,
-  ) {
-    if (_hasTriggeredArrivalAlert) return;
-
-    final isArrived = status == RideStatus.arrived;
-    double? distance;
-    try {
-      distance = Geolocator.distanceBetween(
-        driverLat,
-        driverLng,
-        widget.ride.pickupLat,
-        widget.ride.pickupLng,
-      );
-    } catch (_) {}
-
-    if (isArrived || (distance != null && distance <= 100.0)) {
-      _hasTriggeredArrivalAlert = true;
-      unawaited(HapticFeedback.vibrate());
-      unawaited(SystemSound.play(SystemSoundType.alert));
-      CustomToast.show(
-        context,
-        isArrived
-            ? 'Your driver has arrived at the pickup location!'
-            : 'Your driver is arriving now (within 100m)!',
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final passengerLat = widget.ride.pickupLat;
@@ -514,7 +481,6 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
             :final status,
             :final driverName,
           ):
-            _checkArrivalAlert(driverLat, driverLng, status);
             unawaited(
               _updateMapElements(
                 driverLat,

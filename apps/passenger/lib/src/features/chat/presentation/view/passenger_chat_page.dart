@@ -317,6 +317,7 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                 Divider(height: 1, color: context.colorScheme.outlineVariant),
                 if (!state.isRoomLocked &&
                     state.errorMessage != null &&
+                    !AppNetworkStatusScope.isUnavailableOf(context) &&
                     chatHistoryMessages.isNotEmpty)
                   _buildErrorBanner(state),
                 if (state.isRoomLocked && chatHistoryMessages.isNotEmpty)
@@ -507,7 +508,8 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
     if (state.isConnecting) {
       return const Center(child: CircularProgressIndicator());
     }
-    if (state.errorMessage != null) {
+    if (state.errorMessage != null &&
+        !AppNetworkStatusScope.isUnavailableOf(context)) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -626,6 +628,9 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
   }
 
   Widget _buildErrorBanner(ChatState state) {
+    if (AppNetworkStatusScope.isUnavailableOf(context)) {
+      return const SizedBox.shrink();
+    }
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       padding: const EdgeInsets.all(12),

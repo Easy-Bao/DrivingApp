@@ -297,6 +297,9 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
 
   Widget _buildFareStatus() {
     final error = widget.fareError;
+    if (AppNetworkStatusScope.isUnavailableOf(context)) {
+      return _buildLoadingContent(showPrimaryAction: false);
+    }
     if (error == null) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 28),

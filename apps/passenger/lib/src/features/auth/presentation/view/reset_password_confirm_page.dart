@@ -119,6 +119,8 @@ class _ResetPasswordConfirmPageContentState
               },
               builder: (context, state) {
                 final isLoading = state is ResetPasswordConfirmLoading;
+                final isNetworkUnavailable =
+                    AppNetworkStatusScope.isUnavailableOf(context);
 
                 return SingleChildScrollView(
                   physics: const ClampingScrollPhysics(),
@@ -156,7 +158,8 @@ class _ResetPasswordConfirmPageContentState
                                     height: 1.5,
                                   ),
                                 ),
-                                if (_submissionError != null) ...[
+                                if (!isNetworkUnavailable &&
+                                    _submissionError != null) ...[
                                   const SizedBox(height: 16),
                                   Text(
                                     _submissionError!,

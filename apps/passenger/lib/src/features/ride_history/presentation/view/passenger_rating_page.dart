@@ -269,7 +269,8 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                         ),
                       ),
                     ),
-                    if (_error != null) ...[
+                    if (_error != null &&
+                        !AppNetworkStatusScope.isUnavailableOf(context)) ...[
                       const SizedBox(height: 10),
                       Text(
                         _error!,

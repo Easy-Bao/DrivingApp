@@ -110,6 +110,15 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                         showSubtitle: widget.showHeaderSubtitle,
                         itemCount: _defaultSkeletonCount,
                       ),
+                      RideHistoryError()
+                          when AppNetworkStatusScope.isUnavailableOf(context) =>
+                        _RideHistoryLoadingView(
+                          title: widget.title,
+                          subtitle: widget.subtitle,
+                          showBackButton: widget.showBackButton,
+                          showSubtitle: widget.showHeaderSubtitle,
+                          itemCount: _defaultSkeletonCount,
+                        ),
                       RideHistoryError(:final message) =>
                         _RideHistoryMessageView(
                           headerTitle: widget.title,

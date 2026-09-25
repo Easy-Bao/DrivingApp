@@ -65,4 +65,29 @@ void main() {
     CustomToast.dismiss();
     await tester.pump();
   });
+
+  testWidgets('does not show a toast while transport is unavailable', (
+    tester,
+  ) async {
+    late BuildContext toastContext;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AppNetworkStatusScope(
+          isUnavailable: true,
+          child: Builder(
+            builder: (context) {
+              toastContext = context;
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      ),
+    );
+
+    CustomToast.show(toastContext, 'offline toast');
+    await tester.pump();
+
+    expect(find.text('offline toast'), findsNothing);
+  });
 }
