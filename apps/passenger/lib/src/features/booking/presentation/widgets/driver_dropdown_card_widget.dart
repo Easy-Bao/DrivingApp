@@ -109,9 +109,9 @@ class _DriverDropdownCardWidgetState()
       width: double.infinity,
       height: _isLoadingFeedback || _recentReviews.isEmpty ? null : 190,
       child: _isLoadingFeedback
-          ? Skeletonizer.zone(
-              key: const ValueKey('driver-feedback-loading-skeleton'),
-              child: const Column(
+          ? const Skeletonizer.zone(
+              key: ValueKey('driver-feedback-loading-skeleton'),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Bone.multiText(lines: 2, fontSize: 12),

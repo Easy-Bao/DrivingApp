@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestOpenRedisWithContextStopsBeforeOpeningWhenCanceled(t *testing.T) {
+func TestOpenWithContextStopsBeforeOpeningWhenCanceled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 

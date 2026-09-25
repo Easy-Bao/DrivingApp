@@ -139,7 +139,4 @@ func TestRideRepositoryHasActivePassengerRideValidations(t *testing.T) {
 	if _, err := initializedRepo.HasActivePassengerRide(t.Context(), 1); err == nil {
 		t.Fatal("expected repository without pool/queries to return error")
 	}
-
-	// When repository is valid, invalid passenger ID should return error before query
-	// (we can verify toPostgresRideID check with uninitialized queries)
 }
