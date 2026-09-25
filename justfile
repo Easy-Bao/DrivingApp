@@ -60,8 +60,7 @@ db-up:
 db-down:
     docker compose stop postgres-db
 
-# Docker-only infrastructure helpers. Native dependencies are intentionally
-# not started by Just; start PostgreSQL and Redis separately.
+# Docker-only infrastructure helper for the native API workflow.
 infra-up:
     docker compose up -d --remove-orphans --wait --wait-timeout 60 postgres-db redis
 
@@ -86,9 +85,11 @@ server action="":
         *) echo "Usage: just server [--start|--stop]" >&2; exit 2 ;; \
     esac
 
-# Start the single API application natively. PostgreSQL and Redis must already
-# be running on the host; this recipe never enables or starts them.
+# Start the API natively while keeping the Compose API container out of the way.
+# PostgreSQL and Redis remain containerized dependencies for local development.
 native-server:
+    @docker compose stop api >/dev/null 2>&1 || true
+    @just infra-up
     @port="{{ api-port }}"; \
     port_in_use() { \
         if command -v lsof >/dev/null 2>&1 && lsof -nP -t -iTCP:"$$1" -sTCP:LISTEN >/dev/null 2>&1; then return 0; fi; \

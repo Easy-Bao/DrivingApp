@@ -64,13 +64,13 @@ pgx pools, or Redis clients.
 
 ## Native local development (default)
 
-The native workflow expects PostgreSQL and Redis to be installed and started
-separately. Just does not enable, start, or stop those services.
+The native workflow runs the API on the host and starts PostgreSQL and Redis in
+Docker. It stops only the Compose API container first, so the native API owns
+the configured HTTP port without competing with the containerized API.
 
-1. Copy `.env.example` to `.env` and set the native database credentials,
+1. Copy `.env.example` to `.env` and set the database credentials,
    `DATABASE_URL`, and a JWT secret.
-2. Start the configured native dependencies when you are ready to use them.
-3. Start the Go application:
+2. Start the API:
 
 ```sh
 just server
@@ -103,7 +103,8 @@ coordinates expire automatically after a short active-ride window.
 
 Docker Compose runs the migration binary after PostgreSQL is healthy and does
 not start the API until that migration process exits successfully. Native
-startup still requires `just db-migrate` to be run explicitly.
+startup still requires `just db-migrate` to be run explicitly when the schema
+has not already been migrated.
 
 ### Runtime protection and connection pools
 
