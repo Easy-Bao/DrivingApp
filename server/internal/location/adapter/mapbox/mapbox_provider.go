@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"net"
 	"net/http"
 	"net/url"
 	"slices"
@@ -30,6 +31,7 @@ const (
 	maxNearbyPage                  = 100
 	maxSearchQueryBytes            = 256
 	maxProviderResponseBytes int64 = 4 << 20
+	mapboxRequestTimeout           = 10 * time.Second
 	routeCacheTTL                  = 15 * time.Second
 	routeCacheMaxEntries           = 128
 )
@@ -62,9 +64,17 @@ type routeCacheEntry struct {
 }
 
 func NewMapboxProvider(token string) *MapboxProvider {
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	// The default resolver can select an unreachable IPv6 path locally, leaving
+	// Mapbox's HTTP/2 response waiting until the client timeout.
+	transport.ForceAttemptHTTP2 = true
+	dialer := &net.Dialer{Timeout: 5 * time.Second, KeepAlive: 30 * time.Second}
+	transport.DialContext = func(ctx context.Context, _, address string) (net.Conn, error) {
+		return dialer.DialContext(ctx, "tcp4", address)
+	}
 	return &MapboxProvider{
 		token:      token,
-		client:     &http.Client{Timeout: 5 * time.Second},
+		client:     &http.Client{Transport: transport, Timeout: mapboxRequestTimeout},
 		breaker:    resilience.NewCircuitBreaker(5, 30*time.Second),
 		routeCache: make(map[string]routeCacheEntry),
 	}

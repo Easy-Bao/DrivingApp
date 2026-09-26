@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
 )
@@ -105,6 +106,41 @@ func TestNearbyUsesOneRequestForDefaultCategories(t *testing.T) {
 	}
 	if requestCount != 1 {
 		t.Fatalf("expected one default nearby request, got %d", requestCount)
+	}
+}
+
+func TestNewMapboxProviderEnablesHTTP2(t *testing.T) {
+	provider := NewMapboxProvider("test-token")
+	transport, ok := provider.client.Transport.(*http.Transport)
+	if !ok {
+		t.Fatalf("expected a configured HTTP transport, got %T", provider.client.Transport)
+	}
+	if !transport.ForceAttemptHTTP2 {
+		t.Fatal("expected Mapbox requests to attempt HTTP/2")
+	}
+	if transport.DialContext == nil {
+		t.Fatal("expected Mapbox requests to use the configured IPv4 dialer")
+	}
+}
+
+func TestNearbyAllowsMapboxResponsesBeyondFiveSeconds(t *testing.T) {
+	provider := NewMapboxProvider("test-token")
+	provider.client.Transport = roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		select {
+		case <-time.After(5500 * time.Millisecond):
+			return responseWithBody(request, `{"features":[]}`), nil
+		case <-request.Context().Done():
+			return nil, request.Context().Err()
+		}
+	})
+
+	_, err := provider.Nearby(
+		context.Background(),
+		domain.Coordinates{Latitude: 14.5995, Longitude: 120.9842},
+		1,
+	)
+	if err != nil {
+		t.Fatalf("nearby should tolerate normal provider latency: %v", err)
 	}
 }
 
