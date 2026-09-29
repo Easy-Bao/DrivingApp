@@ -10,6 +10,7 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
+	rideconfig "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/config"
 	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
 )
 
@@ -49,7 +50,7 @@ func LoadConfig() (Config, error) {
 		return Config{}, fmt.Errorf("load API port: %w", err)
 	}
 
-	pricing, err := rideapplication.LoadPricingConfig()
+	pricing, err := rideconfig.LoadPricingConfig()
 	if err != nil {
 		return Config{}, fmt.Errorf("load pricing configuration: %w", err)
 	}

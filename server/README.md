@@ -45,7 +45,7 @@ envelopes, WebSocket hub, security, middleware, and resilience helpers.
 The current module ownership is:
 
 - `ride`: booking, bidding, lifecycle, settlement, ride reporting, and ride
-  transport; the use-case groups live under `ride/application/{booking,bidding,lifecycle,settlement}`.
+	  transport; the use-case groups live under `internal/ride/{booking,bidding,lifecycle,settlement}`.
 - `auth`, `user`, `admin`, and `driver/documents`: identity, profiles,
   administration, and driver-document workflows with feature-owned ports.
 - `location` and `location/tracking`: provider-backed location queries and

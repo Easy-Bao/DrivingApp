@@ -1,14 +1,9 @@
 package application
 
 import (
-	_ "embed"
-	"encoding/json"
 	"fmt"
 	"math"
 )
-
-//go:embed pricing_config.json
-var _pricingConfigJSON []byte
 
 type RatingPricingConfig struct {
 	MinimumRatingThreshold          float64 `json:"minimumRatingThreshold"`
@@ -23,17 +18,6 @@ type PricingConfig struct {
 	PerMinuteAmount       int64               `json:"perMinuteAmount"`
 	PlatformCommissionBPS int64               `json:"platformCommissionBPS"`
 	RatingPricingConfig   RatingPricingConfig `json:"ratingPricingConfig"`
-}
-
-func LoadPricingConfig() (PricingConfig, error) {
-	var config PricingConfig
-	if err := json.Unmarshal(_pricingConfigJSON, &config); err != nil {
-		return PricingConfig{}, fmt.Errorf("decode pricing configuration: %w", err)
-	}
-	if err := config.Validate(); err != nil {
-		return PricingConfig{}, err
-	}
-	return config, nil
 }
 
 func (config PricingConfig) Validate() error {

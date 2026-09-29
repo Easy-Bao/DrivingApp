@@ -13,6 +13,7 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
+	rideconfig "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/config"
 	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	ridehttp "github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/http"
@@ -96,7 +97,7 @@ func (repository *activeSessionsRepository) Session(_ context.Context, sessionID
 }
 
 func TestFareRoutesExposeEstimateAndFinalCalculation(t *testing.T) {
-	config, err := rideapplication.LoadPricingConfig()
+	config, err := rideconfig.LoadPricingConfig()
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
@@ -130,7 +131,7 @@ func TestFareRoutesExposeEstimateAndFinalCalculation(t *testing.T) {
 }
 
 func TestBookingMutationRoutesRejectTheWrongAccountRole(t *testing.T) {
-	config, err := rideapplication.LoadPricingConfig()
+	config, err := rideconfig.LoadPricingConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -180,7 +181,7 @@ func TestBookingMutationRoutesRejectTheWrongAccountRole(t *testing.T) {
 }
 
 func TestDriverAnalyticsAreLimitedToTheAuthenticatedDriver(t *testing.T) {
-	config, err := rideapplication.LoadPricingConfig()
+	config, err := rideconfig.LoadPricingConfig()
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
@@ -263,7 +264,7 @@ func TestDriverAnalyticsAreLimitedToTheAuthenticatedDriver(t *testing.T) {
 }
 
 func TestPassengerActivitySummaryUsesAnAuthoritativeAggregate(t *testing.T) {
-	config, err := rideapplication.LoadPricingConfig()
+	config, err := rideconfig.LoadPricingConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -297,7 +298,7 @@ func TestPassengerActivitySummaryUsesAnAuthoritativeAggregate(t *testing.T) {
 }
 
 func TestPublicDriverSummariesExposeRatingsWithoutSensitiveDriverData(t *testing.T) {
-	config, err := rideapplication.LoadPricingConfig()
+	config, err := rideconfig.LoadPricingConfig()
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
@@ -343,7 +344,7 @@ func TestPublicDriverSummariesExposeRatingsWithoutSensitiveDriverData(t *testing
 }
 
 func TestDriverAvailabilityHidesPersistenceErrors(t *testing.T) {
-	config, err := rideapplication.LoadPricingConfig()
+	config, err := rideconfig.LoadPricingConfig()
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
@@ -372,7 +373,7 @@ func TestDriverAvailabilityHidesPersistenceErrors(t *testing.T) {
 }
 
 func TestOnlineDriverReceivesPassengerBookingThroughActiveSessions(t *testing.T) {
-	config, err := rideapplication.LoadPricingConfig()
+	config, err := rideconfig.LoadPricingConfig()
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
@@ -406,7 +407,7 @@ func TestOnlineDriverReceivesPassengerBookingThroughActiveSessions(t *testing.T)
 }
 
 func TestSessionRoutesBindSessionAndOfferIdentifiers(t *testing.T) {
-	config, err := rideapplication.LoadPricingConfig()
+	config, err := rideconfig.LoadPricingConfig()
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}

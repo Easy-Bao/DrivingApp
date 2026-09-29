@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	rideconfig "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/config"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 )
@@ -77,7 +78,7 @@ func (passengerReviewRepository) CreatePassengerReview(
 }
 
 func TestAnalyticsUseCasesDelegateToTheRideAdapter(t *testing.T) {
-	config, err := application.LoadPricingConfig()
+	config, err := rideconfig.LoadPricingConfig()
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
@@ -101,7 +102,7 @@ func TestAnalyticsUseCasesDelegateToTheRideAdapter(t *testing.T) {
 }
 
 func TestPassengerReviewUseCaseValidatesRatingAndDelegates(t *testing.T) {
-	config, err := application.LoadPricingConfig()
+	config, err := rideconfig.LoadPricingConfig()
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}

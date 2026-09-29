@@ -27,11 +27,18 @@ var (
 
 func testPricingConfig(t *testing.T) PricingConfig {
 	t.Helper()
-	config, err := LoadPricingConfig()
-	if err != nil {
-		t.Fatalf("LoadPricingConfig returned error: %v", err)
+	return PricingConfig{
+		BaseFareAmount:        2500,
+		PerKilometerAmount:    100,
+		PerMinuteAmount:       50,
+		PlatformCommissionBPS: 1500,
+		RatingPricingConfig: RatingPricingConfig{
+			MinimumRatingThreshold:          4.5,
+			HighRatingBonusMultiplier:       1.05,
+			LowRatingSurgePenaltyMultiplier: 1,
+			BaseSurgeCap:                    2.5,
+		},
 	}
-	return config
 }
 
 func (stub *ridesRepositoryStub) CreateRide(_ context.Context, ride domain.Ride) (domain.Ride, error) {
