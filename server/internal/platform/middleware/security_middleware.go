@@ -25,6 +25,13 @@ type SecurityConfig struct {
 	UploadBodyLimit int64
 }
 
+type HSTSMode uint8
+
+const (
+	HSTSDisabled HSTSMode = iota + 1
+	HSTSEnabled
+)
+
 func SecurityConfigFromEnv() SecurityConfig {
 	return SecurityConfig{
 		AllowedOrigins:  parseOrigins(os.Getenv("CORS_ALLOWED_ORIGINS")),
@@ -61,7 +68,11 @@ func SecureHTTPWithIdempotency(
 	handler = RequestBodyLimit(config.JSONBodyLimit, config.UploadBodyLimit)(handler)
 	handler = RejectControlCharacters(handler)
 	handler = CORS(config.AllowedOrigins)(handler)
-	handler = SecurityHeaders(config.EnableHSTS)(handler)
+	hstsMode := HSTSDisabled
+	if config.EnableHSTS {
+		hstsMode = HSTSEnabled
+	}
+	handler = SecurityHeaders(hstsMode)(handler)
 	return RequestID(handler)
 }
 
@@ -120,7 +131,7 @@ func RejectControlCharacters(next http.Handler) http.Handler {
 	})
 }
 
-func SecurityHeaders(enableHSTS bool) func(http.Handler) http.Handler {
+func SecurityHeaders(mode HSTSMode) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			writer.Header().Set("X-Content-Type-Options", "nosniff")
@@ -128,6 +139,7 @@ func SecurityHeaders(enableHSTS bool) func(http.Handler) http.Handler {
 			writer.Header().Set("Referrer-Policy", "no-referrer")
 			writer.Header().Set("Permissions-Policy", "camera=(), geolocation=(), microphone=()")
 			writer.Header().Set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'")
+			enableHSTS := mode == HSTSEnabled
 			if enableHSTS || RequestSchemeFromRequest(request) == "https" {
 				writer.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 			}

@@ -168,19 +168,22 @@ func (provider *MapboxProvider) Nearby(
 		return paginateNearbyPlaces(result.places, page), nil
 	}
 
-	results := make(chan categoryResult, len(categories))
+	results := make([]categoryResult, 0, len(categories))
+	var resultsMu sync.Mutex
 	var waitGroup sync.WaitGroup
 	for _, category := range categories {
 		waitGroup.Go(func() {
-			results <- provider.nearbyCategory(ctx, origin, category)
+			result := provider.nearbyCategory(ctx, origin, category)
+			resultsMu.Lock()
+			results = append(results, result)
+			resultsMu.Unlock()
 		})
 	}
 	waitGroup.Wait()
-	close(results)
 
 	places := make([]domain.Place, 0)
 	var firstErr error
-	for result := range results {
+	for _, result := range results {
 		if result.err != nil {
 			if firstErr == nil {
 				firstErr = result.err

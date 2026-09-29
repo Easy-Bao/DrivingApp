@@ -13,17 +13,17 @@ func TestWriteReadinessResponse(t *testing.T) {
 	tests := []struct {
 		name   string
 		status int
-		ready  bool
+		state  readinessState
 		want   string
 	}{
-		{name: "ready", status: http.StatusOK, ready: true, want: "ready"},
+		{name: "ready", status: http.StatusOK, state: _readinessReady, want: "ready"},
 		{name: "not ready", status: http.StatusServiceUnavailable, want: "not_ready"},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			writer := httptest.NewRecorder()
-			writeReadinessResponse(writer, test.status, test.ready)
+			writeReadinessResponse(writer, test.status, test.state)
 
 			if writer.Code != test.status {
 				t.Fatalf("status = %d, want %d", writer.Code, test.status)

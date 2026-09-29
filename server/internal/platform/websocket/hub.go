@@ -7,7 +7,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
-const _outboundQueueSize = 32
+const _outboundQueueSize = 1
 
 // Hub owns local WebSocket queues. Dropping an overflowed event is safe because
 // realtime delivery is transient and the client resynchronizes from REST.

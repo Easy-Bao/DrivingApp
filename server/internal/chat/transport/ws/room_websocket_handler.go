@@ -141,7 +141,7 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 		return connection.SetReadDeadline(time.Now().Add(_chatPongWait))
 	})
 	outbound := handler.hub.Add(clientID, roomID)
-	serverMessages := make(chan []byte, 4)
+	serverMessages := make(chan []byte, 1)
 	writerDone := make(chan struct{})
 	go writePump(connection, outbound, serverMessages, writerDone, closeConnection)
 	defer func() {

@@ -114,7 +114,8 @@ func TestHubDropsOldestEventWhenSubscriptionQueueIsFull(t *testing.T) {
 		hub.Publish(envelope)
 	}
 
-	for expected := 8; expected < totalEvents; expected++ {
+	firstExpected := totalEvents - _outboundQueueSize
+	for expected := firstExpected; expected < totalEvents; expected++ {
 		select {
 		case received, ok := <-subscription.Events():
 			if !ok {

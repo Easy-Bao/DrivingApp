@@ -2,6 +2,8 @@ package ws
 
 import "sync"
 
+const _roomOutboundQueueSize = 1
+
 type RoomHub struct {
 	mu      sync.RWMutex
 	clients map[string]client
@@ -19,7 +21,7 @@ func NewRoomHub() *RoomHub {
 func (hub *RoomHub) Add(id, roomID string) chan []byte {
 	hub.mu.Lock()
 	defer hub.mu.Unlock()
-	channel := make(chan []byte, 16)
+	channel := make(chan []byte, _roomOutboundQueueSize)
 	if existing, ok := hub.clients[id]; ok {
 		close(existing.channel)
 	}

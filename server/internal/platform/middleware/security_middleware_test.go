@@ -73,7 +73,7 @@ func TestRejectControlCharactersRejectsRequestTarget(t *testing.T) {
 }
 
 func TestSecurityHeadersDoNotTrustRawForwardedProtocol(t *testing.T) {
-	handler := SecurityHeaders(false)(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+	handler := SecurityHeaders(HSTSDisabled)(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
 		writer.WriteHeader(http.StatusNoContent)
 	}))
 	request := httptest.NewRequest(http.MethodGet, "/health", nil)
@@ -91,7 +91,7 @@ func TestSecurityHeadersUseValidatedProxyProtocol(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	handler := trust.Middleware(SecurityHeaders(false)(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+	handler := trust.Middleware(SecurityHeaders(HSTSDisabled)(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
 		writer.WriteHeader(http.StatusNoContent)
 	})))
 	request := httptest.NewRequest(http.MethodGet, "/health", nil)

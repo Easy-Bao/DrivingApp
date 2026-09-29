@@ -19,6 +19,13 @@ const CurrentVersion = 1
 
 const _maxIdentifierLength = 128
 
+type identifierRequirement uint8
+
+const (
+	_identifierOptional identifierRequirement = iota + 1
+	_identifierRequired
+)
+
 // DriverPoolTopic fans out open ride offers to authenticated driver streams.
 const DriverPoolTopic = "driver-pool"
 
@@ -112,7 +119,7 @@ func (envelope Envelope) Encode() ([]byte, error) {
 }
 
 func (envelope Envelope) Validate() error {
-	if err := validateIdentifier("event id", envelope.ID, true); err != nil {
+	if err := validateIdentifier("event id", envelope.ID, _identifierRequired); err != nil {
 		return err
 	}
 	if envelope.Version != CurrentVersion {
@@ -150,7 +157,7 @@ func (scope Scope) Validate() error {
 			continue
 		}
 		hasScope = true
-		if err := validateIdentifier(identifier.name, identifier.value, false); err != nil {
+		if err := validateIdentifier(identifier.name, identifier.value, _identifierOptional); err != nil {
 			return err
 		}
 	}
@@ -183,14 +190,14 @@ func (envelope Envelope) Topics() []string {
 }
 
 func DriverTopic(driverID string) (string, error) {
-	if err := validateIdentifier("driver id", driverID, true); err != nil {
+	if err := validateIdentifier("driver id", driverID, _identifierRequired); err != nil {
 		return "", err
 	}
 	return "driver:" + driverID, nil
 }
 
 func PassengerTopic(passengerID string) (string, error) {
-	if err := validateIdentifier("passenger id", passengerID, true); err != nil {
+	if err := validateIdentifier("passenger id", passengerID, _identifierRequired); err != nil {
 		return "", err
 	}
 	return "passenger:" + passengerID, nil
@@ -212,10 +219,10 @@ func (eventType Type) valid() bool {
 	}
 }
 
-func validateIdentifier(name, value string, required bool) error {
+func validateIdentifier(name, value string, requirement identifierRequirement) error {
 	trimmed := strings.TrimSpace(value)
 	if trimmed == "" {
-		if required {
+		if requirement == _identifierRequired {
 			return fmt.Errorf("%s is required", name)
 		}
 		return nil
