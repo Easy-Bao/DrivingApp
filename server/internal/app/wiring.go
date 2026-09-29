@@ -185,8 +185,10 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 		locationapplication.WithCache(locationredis.NewCache(redisClient)),
 	).WithLogger(applicationLogger)
 	passengerRideContextQuery := passengerridecontext.NewQueryService(
-		passengerridecontext.NewRidesReader(ridesService),
-		passengerridecontext.NewLocationResolver(locationService),
+		passengerridecontext.QueryDependencies{
+			RecentDestinations: passengerridecontext.NewRidesReader(ridesService),
+			AddressResolver:    passengerridecontext.NewLocationResolver(locationService),
+		},
 	).WithLogger(applicationLogger)
 
 	router := chi.NewRouter()
@@ -218,7 +220,14 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 		).
 			WithAllowedOrigins(config.Security.AllowedOrigins),
 	)
-	router.Handle(api.V1Prefix+"/realtime/ws", websockethub.NewHandler(eventHub, verifier, config.Security.AllowedOrigins))
+	router.Handle(
+		api.V1Prefix+"/realtime/ws",
+		websockethub.NewHandler(
+			eventHub,
+			verifier,
+			websockethub.WithAllowedOrigins(config.Security.AllowedOrigins),
+		),
+	)
 	tracking.NewRouter(trackingService, verifier).RegisterRoutes(router)
 	chathttp.NewRouter(chatService, verifier).RegisterRoutes(router)
 	registerHealthRoutes(router, redisClient, postgresPool)

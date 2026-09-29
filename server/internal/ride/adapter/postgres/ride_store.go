@@ -22,6 +22,11 @@ type RideRepository struct {
 	platformCommissionBPS int64
 }
 
+type RideStoreConfig struct {
+	Pool                  *pgxpool.Pool
+	PlatformCommissionBPS int64
+}
+
 var (
 	_ ports.RideStore                  = (*RideRepository)(nil)
 	_ ports.PassengerActiveRideChecker = (*RideRepository)(nil)
@@ -30,17 +35,14 @@ var (
 	} = (*RideRepository)(nil)
 )
 
-func NewRideRepository(
-	pool *pgxpool.Pool,
-	platformCommissionBPS int64,
-) (*RideRepository, error) {
-	if pool == nil {
+func NewRideRepository(config RideStoreConfig) (*RideRepository, error) {
+	if config.Pool == nil {
 		return nil, errors.New("postgresql pool is required")
 	}
 	return &RideRepository{
-		pool:                  pool,
-		queries:               databasepostgres.New(pool),
-		platformCommissionBPS: platformCommissionBPS,
+		pool:                  config.Pool,
+		queries:               databasepostgres.New(config.Pool),
+		platformCommissionBPS: config.PlatformCommissionBPS,
 	}, nil
 }
 
@@ -48,8 +50,8 @@ func NewRideRepository(
 // The repository constructor remains for existing internal callers.
 type RideStore = RideRepository
 
-func NewRideStore(pool *pgxpool.Pool, platformCommissionBPS int64) (*RideStore, error) {
-	return NewRideRepository(pool, platformCommissionBPS)
+func NewRideStore(config RideStoreConfig) (*RideStore, error) {
+	return NewRideRepository(config)
 }
 
 func (repository *RideRepository) Get(ctx context.Context, rideID int) (domain.Ride, error) {

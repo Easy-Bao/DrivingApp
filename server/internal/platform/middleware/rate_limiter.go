@@ -125,6 +125,11 @@ type RateLimiter struct {
 	config RateLimitConfig
 }
 
+type RateLimiterDependencies struct {
+	Store  CounterStore
+	Config RateLimitConfig
+}
+
 type RateLimitConfig struct {
 	Authentication int64
 	Refresh        int64
@@ -151,22 +156,28 @@ func DefaultRateLimitConfig() RateLimitConfig {
 	}
 }
 
-func NewRateLimiter(store CounterStore, config RateLimitConfig) *RateLimiter {
-	return &RateLimiter{store: store, config: normalizedRateLimitConfig(config)}
+func NewRateLimiter(dependencies RateLimiterDependencies) *RateLimiter {
+	return &RateLimiter{
+		store:  dependencies.Store,
+		config: normalizedRateLimitConfig(dependencies.Config),
+	}
 }
 
 func NewRateLimiterFromEnv(store CounterStore) *RateLimiter {
 	defaults := DefaultRateLimitConfig()
-	return NewRateLimiter(store, RateLimitConfig{
-		Authentication: positiveInt64EnvValue("AUTH_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Authentication),
-		Refresh:        positiveInt64EnvValue("REFRESH_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Refresh),
-		Location:       positiveInt64EnvValue("LOCATION_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Location),
-		Fare:           positiveInt64EnvValue("FARE_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Fare),
-		Connection:     positiveInt64EnvValue("CONNECTION_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Connection),
-		Telemetry:      positiveInt64EnvValue("TELEMETRY_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Telemetry),
-		Mutation:       positiveInt64EnvValue("MUTATION_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Mutation),
-		Read:           positiveInt64EnvValue("READ_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Read),
-		Window:         time.Minute,
+	return NewRateLimiter(RateLimiterDependencies{
+		Store: store,
+		Config: RateLimitConfig{
+			Authentication: positiveInt64EnvValue("AUTH_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Authentication),
+			Refresh:        positiveInt64EnvValue("REFRESH_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Refresh),
+			Location:       positiveInt64EnvValue("LOCATION_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Location),
+			Fare:           positiveInt64EnvValue("FARE_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Fare),
+			Connection:     positiveInt64EnvValue("CONNECTION_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Connection),
+			Telemetry:      positiveInt64EnvValue("TELEMETRY_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Telemetry),
+			Mutation:       positiveInt64EnvValue("MUTATION_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Mutation),
+			Read:           positiveInt64EnvValue("READ_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Read),
+			Window:         time.Minute,
+		},
 	})
 }
 

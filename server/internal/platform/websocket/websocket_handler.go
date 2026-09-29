@@ -35,14 +35,29 @@ type Handler struct {
 
 var _ http.Handler = (*Handler)(nil)
 
-func NewHandler(hub *Hub, authenticator IdentityAuthenticator, allowedOrigins []string) *Handler {
-	origins := make(map[string]struct{}, len(allowedOrigins))
-	for _, origin := range allowedOrigins {
-		if trimmed := strings.TrimSpace(origin); trimmed != "" {
-			origins[trimmed] = struct{}{}
+type HandlerOption func(*Handler)
+
+func WithAllowedOrigins(origins []string) HandlerOption {
+	return func(handler *Handler) {
+		for _, origin := range origins {
+			if trimmed := strings.TrimSpace(origin); trimmed != "" {
+				handler.allowedOrigins[trimmed] = struct{}{}
+			}
 		}
 	}
-	handler := &Handler{hub: hub, authenticator: authenticator, allowedOrigins: origins}
+}
+
+func NewHandler(hub *Hub, authenticator IdentityAuthenticator, options ...HandlerOption) *Handler {
+	handler := &Handler{
+		hub:            hub,
+		authenticator:  authenticator,
+		allowedOrigins: make(map[string]struct{}),
+	}
+	for _, option := range options {
+		if option != nil {
+			option(handler)
+		}
+	}
 	handler.upgrader = websocket.Upgrader{CheckOrigin: handler.originAllowed}
 	return handler
 }

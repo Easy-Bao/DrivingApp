@@ -16,6 +16,10 @@ func (failingCounterStore) Increment(context.Context, string, time.Duration) (in
 	return 0, errors.New("counter store unavailable")
 }
 
+func newTestRateLimiter(store CounterStore, config RateLimitConfig) *RateLimiter {
+	return NewRateLimiter(RateLimiterDependencies{Store: store, Config: config})
+}
+
 func TestEndpointClassificationUsesNonZeroKinds(t *testing.T) {
 	requests := []*http.Request{
 		nil,
@@ -32,7 +36,7 @@ func TestEndpointClassificationUsesNonZeroKinds(t *testing.T) {
 func TestRateLimiterRejectsReadRequestsAfterTheirLimit(t *testing.T) {
 	config := DefaultRateLimitConfig()
 	config.Read = 2
-	limiter := NewRateLimiter(NewMemoryCounterStore(), config)
+	limiter := newTestRateLimiter(NewMemoryCounterStore(), config)
 	handler := limiter.Middleware(noContentHandler())
 
 	for index := 0; index < 2; index++ {
@@ -56,7 +60,7 @@ func TestRateLimiterUsesSeparateAuthenticationLimit(t *testing.T) {
 	config.Authentication = 1
 	config.Refresh = 1
 	config.Mutation = 10
-	handler := NewRateLimiter(NewMemoryCounterStore(), config).Middleware(noContentHandler())
+	handler := newTestRateLimiter(NewMemoryCounterStore(), config).Middleware(noContentHandler())
 
 	first := serveRateLimitedRequest(handler, http.MethodPost, "/api/v1/auth/login", "192.0.2.11:1234")
 	if first.Code != http.StatusNoContent {
@@ -85,7 +89,7 @@ func TestRateLimiterUsesSeparateAuthenticationLimit(t *testing.T) {
 func TestRateLimiterProtectsFareCalculationRequests(t *testing.T) {
 	config := DefaultRateLimitConfig()
 	config.Fare = 1
-	handler := NewRateLimiter(NewMemoryCounterStore(), config).Middleware(noContentHandler())
+	handler := newTestRateLimiter(NewMemoryCounterStore(), config).Middleware(noContentHandler())
 
 	first := serveRateLimitedRequest(handler, http.MethodPost, "/api/v1/bids/fare", "192.0.2.12:1234")
 	if first.Code != http.StatusNoContent {
@@ -105,7 +109,7 @@ func TestRateLimiterKeepsTelemetrySeparateFromMutations(t *testing.T) {
 	config := DefaultRateLimitConfig()
 	config.Telemetry = 1
 	config.Mutation = 1
-	handler := NewRateLimiter(NewMemoryCounterStore(), config).Middleware(noContentHandler())
+	handler := newTestRateLimiter(NewMemoryCounterStore(), config).Middleware(noContentHandler())
 	remoteAddr := "192.0.2.13:1234"
 
 	telemetryResponse := serveRateLimitedRequest(
@@ -149,7 +153,7 @@ func TestRateLimiterClassifiesEveryWorkload(t *testing.T) {
 		Read:           77,
 		Window:         time.Minute,
 	}
-	handler := NewRateLimiter(NewMemoryCounterStore(), config).Middleware(noContentHandler())
+	handler := newTestRateLimiter(NewMemoryCounterStore(), config).Middleware(noContentHandler())
 	for _, test := range []struct {
 		name   string
 		method string
@@ -178,7 +182,7 @@ func TestRateLimiterClassifiesEveryWorkload(t *testing.T) {
 func TestRateLimiterDoesNotTrustRawForwardedAddress(t *testing.T) {
 	config := DefaultRateLimitConfig()
 	config.Read = 1
-	handler := NewRateLimiter(NewMemoryCounterStore(), config).Middleware(noContentHandler())
+	handler := newTestRateLimiter(NewMemoryCounterStore(), config).Middleware(noContentHandler())
 
 	firstRequest := httptest.NewRequest(http.MethodGet, "/api/v1/rides/1", nil)
 	firstRequest.RemoteAddr = "192.0.2.14:1234"
@@ -198,7 +202,7 @@ func TestRateLimiterDoesNotTrustRawForwardedAddress(t *testing.T) {
 
 func TestRateLimiterFailsClosedForPublicProtection(t *testing.T) {
 	called := false
-	handler := NewRateLimiter(failingCounterStore{}, DefaultRateLimitConfig()).Middleware(
+	handler := newTestRateLimiter(failingCounterStore{}, DefaultRateLimitConfig()).Middleware(
 		http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
 			called = true
 		}),
@@ -223,7 +227,7 @@ func TestRateLimiterFailsOpenForAuthenticatedTraffic(t *testing.T) {
 		{name: "read", method: http.MethodGet, path: "/api/v1/rides/1"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			handler := NewRateLimiter(failingCounterStore{}, DefaultRateLimitConfig()).Middleware(noContentHandler())
+			handler := newTestRateLimiter(failingCounterStore{}, DefaultRateLimitConfig()).Middleware(noContentHandler())
 			response := serveRateLimitedRequest(handler, test.method, test.path, "192.0.2.16:1234")
 			if response.Code != http.StatusNoContent {
 				t.Fatalf("status = %d, want request to continue", response.Code)
@@ -233,7 +237,7 @@ func TestRateLimiterFailsOpenForAuthenticatedTraffic(t *testing.T) {
 }
 
 func TestRateLimiterBypassesHealthAndPreflight(t *testing.T) {
-	handler := NewRateLimiter(failingCounterStore{}, DefaultRateLimitConfig()).Middleware(noContentHandler())
+	handler := newTestRateLimiter(failingCounterStore{}, DefaultRateLimitConfig()).Middleware(noContentHandler())
 	for _, request := range []struct {
 		method string
 		path   string

@@ -50,13 +50,15 @@ type RideContextQueryService struct {
 	logger             *slog.Logger
 }
 
-func NewQueryService(
-	recentDestinations RecentDestinationReader,
-	addressResolver AddressResolver,
-) *RideContextQueryService {
+type QueryDependencies struct {
+	RecentDestinations RecentDestinationReader
+	AddressResolver    AddressResolver
+}
+
+func NewQueryService(dependencies QueryDependencies) *RideContextQueryService {
 	return &RideContextQueryService{
-		recentDestinations: recentDestinations,
-		addressResolver:    addressResolver,
+		recentDestinations: dependencies.RecentDestinations,
+		addressResolver:    dependencies.AddressResolver,
 		logger:             slog.Default(),
 	}
 }
@@ -64,10 +66,9 @@ func NewQueryService(
 // NewRideContextQueryService preserves the feature's established constructor
 // name for callers while the implementation remains local to this slice.
 func NewRideContextQueryService(
-	recentDestinations RecentDestinationReader,
-	addressResolver AddressResolver,
+	dependencies QueryDependencies,
 ) *RideContextQueryService {
-	return NewQueryService(recentDestinations, addressResolver)
+	return NewQueryService(dependencies)
 }
 
 func (service *RideContextQueryService) WithLogger(logger *slog.Logger) *RideContextQueryService {

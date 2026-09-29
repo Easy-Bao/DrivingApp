@@ -97,8 +97,10 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 		return nil, fmt.Errorf("create profile store: %w", err)
 	}
 	rideStore, err := ridepostgres.NewRideStore(
-		postgresPool,
-		config.Pricing.PlatformCommissionBPS,
+		ridepostgres.RideStoreConfig{
+			Pool:                  postgresPool,
+			PlatformCommissionBPS: config.Pricing.PlatformCommissionBPS,
+		},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("create ride store: %w", err)

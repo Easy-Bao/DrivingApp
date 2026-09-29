@@ -9,7 +9,7 @@ import (
 )
 
 func TestNewRideRepositoryRejectsMissingPool(t *testing.T) {
-	if _, err := NewRideRepository(nil, 1500); err == nil {
+	if _, err := NewRideRepository(RideStoreConfig{PlatformCommissionBPS: 1500}); err == nil {
 		t.Fatal("expected missing PostgreSQL pool to be rejected")
 	}
 }

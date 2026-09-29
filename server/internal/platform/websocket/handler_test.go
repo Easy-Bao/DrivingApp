@@ -49,9 +49,29 @@ func (stub authenticatorStub) VerifyIdentity(string) (security.Identity, error) 
 	return stub.identity, stub.err
 }
 
+func TestHandlerConfiguresAllowedOrigins(t *testing.T) {
+	handler := NewHandler(
+		NewHub(),
+		authenticatorStub{},
+		WithAllowedOrigins([]string{" https://app.example "}),
+	)
+
+	allowedRequest := httptest.NewRequest(http.MethodGet, "/api/v1/realtime/ws", nil)
+	allowedRequest.Header.Set("Origin", "https://app.example")
+	if !handler.originAllowed(allowedRequest) {
+		t.Fatal("configured origin was rejected")
+	}
+
+	untrustedRequest := httptest.NewRequest(http.MethodGet, "/api/v1/realtime/ws", nil)
+	untrustedRequest.Header.Set("Origin", "https://untrusted.example")
+	if handler.originAllowed(untrustedRequest) {
+		t.Fatal("untrusted origin was accepted")
+	}
+}
+
 func TestHandlerStreamsEventsOnlyToTheVerifiedIdentity(t *testing.T) {
 	hub := NewHub()
-	handler := NewHandler(hub, authenticatorStub{identity: security.Identity{Subject: "7", Role: "driver"}}, nil)
+	handler := NewHandler(hub, authenticatorStub{identity: security.Identity{Subject: "7", Role: "driver"}})
 	server := newIPv4TestServer(t, handler)
 	defer server.Close()
 
@@ -86,7 +106,7 @@ func TestHandlerStreamsEventsOnlyToTheVerifiedIdentity(t *testing.T) {
 
 func TestHandlerStreamsOpenOffersToVerifiedDrivers(t *testing.T) {
 	hub := NewHub()
-	handler := NewHandler(hub, authenticatorStub{identity: security.Identity{Subject: "7", Role: "driver"}}, nil)
+	handler := NewHandler(hub, authenticatorStub{identity: security.Identity{Subject: "7", Role: "driver"}})
 	server := newIPv4TestServer(t, handler)
 	defer server.Close()
 
@@ -122,7 +142,7 @@ func TestHandlerStreamsOpenOffersToVerifiedDrivers(t *testing.T) {
 func TestHandlerRejectsUnauthenticatedOrUnsupportedRoles(t *testing.T) {
 	hub := NewHub()
 
-	unauthenticated := NewHandler(hub, authenticatorStub{err: errors.New("invalid")}, nil)
+	unauthenticated := NewHandler(hub, authenticatorStub{err: errors.New("invalid")})
 	request := httptest.NewRequest(http.MethodGet, "/api/v1/realtime/ws", nil)
 	request.Header.Set("Authorization", "Bearer invalid")
 	response := httptest.NewRecorder()
@@ -131,7 +151,7 @@ func TestHandlerRejectsUnauthenticatedOrUnsupportedRoles(t *testing.T) {
 		t.Fatalf("unauthenticated status = %d, want %d", response.Code, http.StatusUnauthorized)
 	}
 
-	unsupportedRole := NewHandler(hub, authenticatorStub{identity: security.Identity{Subject: "7", Role: "admin"}}, nil)
+	unsupportedRole := NewHandler(hub, authenticatorStub{identity: security.Identity{Subject: "7", Role: "admin"}})
 	request = httptest.NewRequest(http.MethodGet, "/api/v1/realtime/ws", nil)
 	request.Header.Set("Authorization", "Bearer valid")
 	response = httptest.NewRecorder()
@@ -143,7 +163,7 @@ func TestHandlerRejectsUnauthenticatedOrUnsupportedRoles(t *testing.T) {
 
 func TestHandlerClosesConnectionForOversizedClientMessage(t *testing.T) {
 	hub := NewHub()
-	handler := NewHandler(hub, authenticatorStub{identity: security.Identity{Subject: "7", Role: "driver"}}, nil)
+	handler := NewHandler(hub, authenticatorStub{identity: security.Identity{Subject: "7", Role: "driver"}})
 	server := newIPv4TestServer(t, handler)
 	defer server.Close()
 
@@ -171,7 +191,6 @@ func TestHandlerScavengesSubscriptionAfterAbruptSocketDisconnect(t *testing.T) {
 	handler := NewHandler(
 		hub,
 		authenticatorStub{identity: security.Identity{Subject: "7", Role: "driver"}},
-		nil,
 	)
 	server := newIPv4TestServer(t, handler)
 	defer server.Close()
