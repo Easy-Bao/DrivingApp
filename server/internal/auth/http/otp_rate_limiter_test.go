@@ -10,6 +10,18 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 )
 
+func TestRouterOptionConfiguresOTPVerificationLimit(t *testing.T) {
+	router := NewRouter(
+		nil,
+		nil,
+		nil,
+		WithOTPAttemptStore(middleware.NewMemoryCounterStore()),
+	)
+	if router.otpVerificationLimit == nil {
+		t.Fatal("OTP verification rate limiter was not configured")
+	}
+}
+
 func TestOTPVerificationRateLimiterSeparatesEmailAndIPBuckets(t *testing.T) {
 	limiter := NewOTPVerificationRateLimiter(middleware.NewMemoryCounterStore())
 	handler := limiter.Middleware(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {

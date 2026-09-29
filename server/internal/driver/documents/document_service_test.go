@@ -15,6 +15,21 @@ import (
 
 var validPDF = []byte("%PDF-1.7\nprivate driver document")
 
+func testContentTypeDetector([]byte) string { return "application/pdf" }
+
+func TestDocumentUploadRequiresContentTypeDetector(t *testing.T) {
+	service := documents.NewDocumentService(
+		newDocumentRepositoryFake(),
+		newDocumentStorageFake(),
+		documents.WithMaxDocumentBytes(1024),
+	)
+
+	_, err := service.Upload(context.Background(), 3, "driver_license", "application/pdf", validPDF)
+	if !errors.Is(err, documents.ErrServiceUnavailable) {
+		t.Fatalf("error = %v, want unavailable service", err)
+	}
+}
+
 type documentRepositoryFake struct {
 	documents map[int]domain.Document
 	createErr error
@@ -137,6 +152,7 @@ func TestUploadCreatesAnImmutablePendingRevision(t *testing.T) {
 	service := documents.NewDocumentService(
 		repository,
 		storage,
+		documents.WithContentTypeDetector(testContentTypeDetector),
 		documents.WithMaxDocumentBytes(1024),
 	)
 
@@ -169,6 +185,7 @@ func TestUploadRejectsMismatchedContentBeforeStorage(t *testing.T) {
 	service := documents.NewDocumentService(
 		newDocumentRepositoryFake(),
 		storage,
+		documents.WithContentTypeDetector(testContentTypeDetector),
 		documents.WithMaxDocumentBytes(1024),
 	)
 
@@ -188,6 +205,7 @@ func TestUploadRemovesObjectWhenMetadataCreationFails(t *testing.T) {
 	service := documents.NewDocumentService(
 		repository,
 		storage,
+		documents.WithContentTypeDetector(testContentTypeDetector),
 		documents.WithMaxDocumentBytes(1024),
 	)
 
@@ -203,6 +221,7 @@ func TestDocumentContentEnforcesOwnershipAndIntegrity(t *testing.T) {
 	service := documents.NewDocumentService(
 		repository,
 		storage,
+		documents.WithContentTypeDetector(testContentTypeDetector),
 		documents.WithMaxDocumentBytes(1024),
 	)
 	document, err := service.Upload(context.Background(), 3, "driver_license", "application/pdf", validPDF)
@@ -225,6 +244,7 @@ func TestReviewCannotRewriteAFinalDecision(t *testing.T) {
 	service := documents.NewDocumentService(
 		repository,
 		storage,
+		documents.WithContentTypeDetector(testContentTypeDetector),
 		documents.WithMaxDocumentBytes(1024),
 	)
 	document, err := service.Upload(context.Background(), 3, "driver_license", "application/pdf", validPDF)

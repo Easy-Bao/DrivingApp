@@ -112,7 +112,7 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 		registerService,
 		authenticateService,
 		otpService,
-		dependencies.otpAttemptStore,
+		authhttp.WithOTPAttemptStore(dependencies.otpAttemptStore),
 	)
 
 	usersRouter := userhttp.NewRouter(
@@ -126,6 +126,7 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 		documents.NewDocumentService(
 			documentStore,
 			privateObjectStore,
+			documents.WithContentTypeDetector(http.DetectContentType),
 			documents.WithMaxDocumentBytes(config.Security.UploadBodyLimit),
 		),
 		verifier,
@@ -207,7 +208,12 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 	chatEventRouter.Register("typing", chatEventHandler)
 	router.Handle(
 		api.V1Prefix+"/chat/ws",
-		chatws.NewHandlerWithSink(chatws.NewRoomHub(), verifier, chatEventRouter, chatService).
+		chatws.NewHandler(
+			chatws.NewRoomHub(),
+			verifier,
+			chatws.WithEventSink(chatEventRouter),
+			chatws.WithRoomAuthorizer(chatService),
+		).
 			WithAllowedOrigins(config.Security.AllowedOrigins),
 	)
 	router.Handle(api.V1Prefix+"/realtime/ws", websockethub.NewHandler(eventHub, verifier, config.Security.AllowedOrigins))

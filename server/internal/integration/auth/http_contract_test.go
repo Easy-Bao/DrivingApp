@@ -12,6 +12,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/authentication"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/auth/http"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )
@@ -37,7 +38,12 @@ func TestRoleSpecificLoginRoutes(t *testing.T) {
 		Sessions:   newTestRefreshSessionStore(),
 	})
 	mux := chi.NewRouter()
-	authhttp.NewRouter(nil, authenticate, nil).RegisterRoutes(mux)
+	authhttp.NewRouter(
+		nil,
+		authenticate,
+		nil,
+		authhttp.WithOTPAttemptStore(middleware.NewMemoryCounterStore()),
+	).RegisterRoutes(mux)
 
 	tests := []struct {
 		name           string

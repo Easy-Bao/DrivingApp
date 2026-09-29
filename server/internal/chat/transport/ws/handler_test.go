@@ -122,11 +122,11 @@ func TestEnrichChatEventRejectsNonStringType(t *testing.T) {
 }
 
 func TestChatWebSocketDoesNotBroadcastRejectedMessages(t *testing.T) {
-	handler := NewHandlerWithSink(
+	handler := NewHandler(
 		NewRoomHub(),
 		authenticatorStub{},
-		rejectingSinkStub{},
-		roomAuthorizerStub{},
+		WithEventSink(rejectingSinkStub{}),
+		WithRoomAuthorizer(roomAuthorizerStub{}),
 	)
 	server := newIPv4TestServer(t, handler)
 	defer server.Close()

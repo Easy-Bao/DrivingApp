@@ -16,24 +16,35 @@ type Router struct {
 	otpVerificationLimit *OTPVerificationRateLimiter
 }
 
+type RouterOption func(*Router)
+
+func WithOTPAttemptStore(store middleware.CounterStore) RouterOption {
+	return func(router *Router) {
+		if store != nil {
+			router.otpVerificationLimit = NewOTPVerificationRateLimiter(store)
+		}
+	}
+}
+
 func NewRouter(
 	register *registration.RegisterService,
 	authenticate *authentication.AuthenticateService,
 	otp *verification.OTPService,
-	otpAttemptStores ...middleware.CounterStore,
+	options ...RouterOption,
 ) *Router {
-	var otpVerificationLimit *OTPVerificationRateLimiter
-	if len(otpAttemptStores) > 0 {
-		otpVerificationLimit = NewOTPVerificationRateLimiter(otpAttemptStores[0])
-	}
-	return &Router{
+	router := &Router{
 		handler: NewHandler(Dependencies{
 			Register:     register,
 			Authenticate: authenticate,
 			OTP:          otp,
 		}),
-		otpVerificationLimit: otpVerificationLimit,
 	}
+	for _, option := range options {
+		if option != nil {
+			option(router)
+		}
+	}
+	return router
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {

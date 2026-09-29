@@ -16,6 +16,19 @@ func (failingCounterStore) Increment(context.Context, string, time.Duration) (in
 	return 0, errors.New("counter store unavailable")
 }
 
+func TestEndpointClassificationUsesNonZeroKinds(t *testing.T) {
+	requests := []*http.Request{
+		nil,
+		httptest.NewRequest(http.MethodGet, "/api/v1/rides/1", nil),
+		httptest.NewRequest(http.MethodPost, "/api/v1/rides", nil),
+	}
+	for _, request := range requests {
+		if kind := classifyEndpoint(request); kind == 0 {
+			t.Fatalf("endpoint kind for %#v used the zero value", request)
+		}
+	}
+}
+
 func TestRateLimiterRejectsReadRequestsAfterTheirLimit(t *testing.T) {
 	config := DefaultRateLimitConfig()
 	config.Read = 2

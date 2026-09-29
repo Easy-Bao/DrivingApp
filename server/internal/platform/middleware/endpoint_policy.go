@@ -8,7 +8,7 @@ import (
 type endpointKind uint8
 
 const (
-	_endpointRead endpointKind = iota
+	_endpointRead endpointKind = iota + 1
 	_endpointHealth
 	_endpointAuthentication
 	_endpointRefresh

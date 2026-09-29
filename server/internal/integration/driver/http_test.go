@@ -31,6 +31,7 @@ func TestDocumentAdministrationRequiresConfiguredAdministrator(t *testing.T) {
 	service := documents.NewDocumentService(
 		repository,
 		storage,
+		documents.WithContentTypeDetector(http.DetectContentType),
 		documents.WithMaxDocumentBytes(1024),
 	)
 	document, err := service.Upload(t.Context(), 7, "driver_license", "application/pdf", validPDF)
@@ -77,6 +78,7 @@ func TestPrivateDocumentContentIsOwnerOrAdminOnly(t *testing.T) {
 	service := documents.NewDocumentService(
 		repository,
 		storage,
+		documents.WithContentTypeDetector(http.DetectContentType),
 		documents.WithMaxDocumentBytes(1024),
 	)
 	document, err := service.Upload(t.Context(), 7, "driver_license", "application/pdf", validPDF)
@@ -142,6 +144,7 @@ func TestDocumentUploadRequiresCanonicalTypeAndMatchingSignature(t *testing.T) {
 		documents.NewDocumentService(
 			repository,
 			storage,
+			documents.WithContentTypeDetector(http.DetectContentType),
 			documents.WithMaxDocumentBytes(1024),
 		),
 		tokenManager,

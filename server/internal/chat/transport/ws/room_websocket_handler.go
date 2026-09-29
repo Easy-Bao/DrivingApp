@@ -42,26 +42,36 @@ type RoomAuthorizer interface {
 	CanAccessRoom(ctx context.Context, roomID, userID string) (bool, error)
 }
 
+type HandlerOption func(*Handler)
+
 var (
 	_ http.Handler  = (*Handler)(nil)
 	_ Authenticator = (*security.TokenManager)(nil)
 )
 
-func NewHandler(hub *RoomHub, authenticate Authenticator) *Handler {
+func WithEventSink(sink EventSink) HandlerOption {
+	return func(handler *Handler) {
+		handler.sink = sink
+	}
+}
+
+func WithRoomAuthorizer(authorizer RoomAuthorizer) HandlerOption {
+	return func(handler *Handler) {
+		handler.rooms = authorizer
+	}
+}
+
+func NewHandler(hub *RoomHub, authenticate Authenticator, options ...HandlerOption) *Handler {
 	handler := &Handler{
 		hub:            hub,
 		authenticate:   authenticate,
 		allowedOrigins: make(map[string]struct{}),
 	}
 	handler.upgrader = websocket.Upgrader{CheckOrigin: handler.originAllowed}
-	return handler
-}
-
-func NewHandlerWithSink(hub *RoomHub, authenticate Authenticator, sink EventSink, rooms ...RoomAuthorizer) *Handler {
-	handler := NewHandler(hub, authenticate)
-	handler.sink = sink
-	if len(rooms) > 0 {
-		handler.rooms = rooms[0]
+	for _, option := range options {
+		if option != nil {
+			option(handler)
+		}
 	}
 	return handler
 }

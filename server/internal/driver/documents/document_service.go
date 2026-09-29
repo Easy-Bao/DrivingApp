@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"mime"
-	"net/http"
 	"slices"
 	"strings"
 
@@ -15,9 +14,10 @@ import (
 )
 
 type DocumentService struct {
-	repository       DocumentStore
-	storage          ObjectStore
-	maxDocumentBytes int64
+	repository        DocumentStore
+	storage           ObjectStore
+	detectContentType ContentTypeDetector
+	maxDocumentBytes  int64
 }
 
 var ErrServiceUnavailable = errors.New("driver document service is unavailable")
@@ -25,6 +25,16 @@ var ErrServiceUnavailable = errors.New("driver document service is unavailable")
 const _defaultMaxDocumentBytes int64 = 10 << 20
 
 type DocumentServiceOption func(*DocumentService)
+
+type ContentTypeDetector func([]byte) string
+
+func WithContentTypeDetector(detector ContentTypeDetector) DocumentServiceOption {
+	return func(service *DocumentService) {
+		if detector != nil {
+			service.detectContentType = detector
+		}
+	}
+}
 
 func WithMaxDocumentBytes(limit int64) DocumentServiceOption {
 	return func(service *DocumentService) {
@@ -71,11 +81,14 @@ func (service *DocumentService) Upload(
 	if service.repository == nil || service.storage == nil {
 		return domain.Document{}, ErrServiceUnavailable
 	}
+	if service.detectContentType == nil {
+		return domain.Document{}, ErrServiceUnavailable
+	}
 	documentType, err := domain.ParseType(rawType)
 	if err != nil {
 		return domain.Document{}, err
 	}
-	contentType, err := verifiedContentType(claimedContentType, content)
+	contentType, err := verifiedContentType(claimedContentType, content, service.detectContentType)
 	if err != nil {
 		return domain.Document{}, err
 	}
@@ -202,6 +215,9 @@ func (service *DocumentService) AdminContent(ctx context.Context, documentID int
 }
 
 func (service *DocumentService) readContent(ctx context.Context, document domain.Document) (domain.Content, error) {
+	if service.detectContentType == nil {
+		return domain.Content{}, ErrServiceUnavailable
+	}
 	content, err := service.storage.Read(ctx, document.StorageKey, service.maxDocumentBytes)
 	if err != nil {
 		return domain.Content{}, errors.Join(
@@ -212,12 +228,16 @@ func (service *DocumentService) readContent(ctx context.Context, document domain
 	if len(content) == 0 || int64(len(content)) > service.maxDocumentBytes {
 		return domain.Content{}, domain.ErrDocumentCorrupt
 	}
-	detectedType, err := verifiedContentType(document.ContentType, content)
+	detectedType, err := verifiedContentType(document.ContentType, content, service.detectContentType)
 	if err != nil {
 		if document.ContentType != "" && document.ContentType != "application/octet-stream" {
 			return domain.Content{}, domain.ErrDocumentCorrupt
 		}
-		detectedType, err = verifiedContentType(http.DetectContentType(content), content)
+		detectedType, err = verifiedContentType(
+			service.detectContentType(content),
+			content,
+			service.detectContentType,
+		)
 		if err != nil {
 			return domain.Content{}, domain.ErrDocumentCorrupt
 		}
@@ -236,12 +256,16 @@ func (service *DocumentService) readContent(ctx context.Context, document domain
 	return domain.Content{Document: document, Bytes: content}, nil
 }
 
-func verifiedContentType(claimed string, content []byte) (string, error) {
+func verifiedContentType(
+	claimed string,
+	content []byte,
+	detectContentType ContentTypeDetector,
+) (string, error) {
 	claimedType, _, err := mime.ParseMediaType(strings.TrimSpace(claimed))
 	if err != nil {
 		return "", domain.ErrUnsupportedContentType
 	}
-	detectedType := http.DetectContentType(content)
+	detectedType := detectContentType(content)
 	if !isAllowedContentType(detectedType) || claimedType != detectedType {
 		return "", domain.ErrUnsupportedContentType
 	}
