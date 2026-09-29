@@ -58,9 +58,9 @@ func TestMailConfigRejectsInvalidSecurityAndNumbers(t *testing.T) {
 func TestGoMailGatewayBuildsVerificationDelivery(t *testing.T) {
 	config := validMailConfig()
 	var gotRecipient, gotSubject, gotBody string
-	gateway := email.NewGoMailGatewayWithDelivery(
+	gateway := email.NewGoMailGateway(
 		config,
-		func(
+		email.WithDelivery(func(
 			_ context.Context,
 			_ email.Config,
 			recipient string,
@@ -69,7 +69,7 @@ func TestGoMailGatewayBuildsVerificationDelivery(t *testing.T) {
 		) error {
 			gotRecipient, gotSubject, gotBody = recipient, subject, body
 			return nil
-		},
+		}),
 	)
 
 	if err := gateway.Send(context.Background(), " passenger@example.test ", "123456"); err != nil {
@@ -85,9 +85,9 @@ func TestGoMailGatewayBuildsVerificationDelivery(t *testing.T) {
 
 func TestGoMailGatewayHonorsCanceledContext(t *testing.T) {
 	called := false
-	gateway := email.NewGoMailGatewayWithDelivery(
+	gateway := email.NewGoMailGateway(
 		validMailConfig(),
-		func(
+		email.WithDelivery(func(
 			context.Context,
 			email.Config,
 			string,
@@ -96,7 +96,7 @@ func TestGoMailGatewayHonorsCanceledContext(t *testing.T) {
 		) error {
 			called = true
 			return nil
-		},
+		}),
 	)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
@@ -111,9 +111,9 @@ func TestGoMailGatewayHonorsCanceledContext(t *testing.T) {
 }
 
 func TestGoMailGatewayRejectsEmptyRecipient(t *testing.T) {
-	gateway := email.NewGoMailGatewayWithDelivery(
+	gateway := email.NewGoMailGateway(
 		validMailConfig(),
-		func(
+		email.WithDelivery(func(
 			context.Context,
 			email.Config,
 			string,
@@ -122,7 +122,7 @@ func TestGoMailGatewayRejectsEmptyRecipient(t *testing.T) {
 		) error {
 			t.Fatal("delivery should not run for an empty recipient")
 			return nil
-		},
+		}),
 	)
 	if err := gateway.Send(context.Background(), " ", "123456"); !errors.Is(err, email.ErrInvalidConfig) {
 		t.Fatalf("expected ErrInvalidConfig, got %v", err)
@@ -131,9 +131,9 @@ func TestGoMailGatewayRejectsEmptyRecipient(t *testing.T) {
 
 func TestGoMailGatewayOpensCircuitAfterDeliveryFailures(t *testing.T) {
 	calls := 0
-	gateway := email.NewGoMailGatewayWithDelivery(
+	gateway := email.NewGoMailGateway(
 		validMailConfig(),
-		func(
+		email.WithDelivery(func(
 			context.Context,
 			email.Config,
 			string,
@@ -142,7 +142,7 @@ func TestGoMailGatewayOpensCircuitAfterDeliveryFailures(t *testing.T) {
 		) error {
 			calls++
 			return errors.New("mail provider unavailable")
-		},
+		}),
 	)
 	for index := 0; index < 3; index++ {
 		if err := gateway.Send(context.Background(), "passenger@example.test", "123456"); err == nil {

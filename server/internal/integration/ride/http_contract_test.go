@@ -16,6 +16,7 @@ import (
 	rideconfig "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/config"
 	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
 	ridehttp "github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/http"
 	"github.com/go-chi/chi/v5"
 )
@@ -30,6 +31,13 @@ type activeSessionsRepository struct {
 	requestedDriverID  *int
 	requestedSessionID int
 	requestedOfferID   int
+}
+
+func newRideService(repository ports.RideStore, config rideapplication.PricingConfig) *rideapplication.RideService {
+	return rideapplication.NewRideService(rideapplication.RideServiceDependencies{
+		Repository:    repository,
+		PricingConfig: config,
+	})
 }
 
 func (repository *activeSessionsRepository) CreateRide(context.Context, domain.Ride) (domain.Ride, error) {
@@ -101,7 +109,7 @@ func TestFareRoutesExposeEstimateAndFinalCalculation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
-	router := ridehttp.NewRouter(rideapplication.NewRideService(nil, config, nil), nil)
+	router := ridehttp.NewRouter(newRideService(nil, config), nil)
 	mux := chi.NewRouter()
 	router.RegisterRoutes(mux)
 
@@ -145,7 +153,7 @@ func TestBookingMutationRoutesRejectTheWrongAccountRole(t *testing.T) {
 		t.Fatal(err)
 	}
 	mux := chi.NewRouter()
-	ridehttp.NewRouter(rideapplication.NewRideService(nil, config, nil), verifier).RegisterRoutes(mux)
+	ridehttp.NewRouter(newRideService(nil, config), verifier).RegisterRoutes(mux)
 
 	for _, test := range []struct {
 		name   string
@@ -192,7 +200,7 @@ func TestDriverAnalyticsAreLimitedToTheAuthenticatedDriver(t *testing.T) {
 	}
 
 	mux := chi.NewRouter()
-	ridehttp.NewRouter(rideapplication.NewRideService(analyticsRepository{}, config, nil), verifier).RegisterRoutes(mux)
+	ridehttp.NewRouter(newRideService(analyticsRepository{}, config), verifier).RegisterRoutes(mux)
 
 	request := httptest.NewRequest(http.MethodGet, api.V1Prefix+"/drivers/8/stats", nil)
 	request.Header.Set("Authorization", "Bearer "+accessToken)
@@ -274,7 +282,7 @@ func TestPassengerActivitySummaryUsesAnAuthoritativeAggregate(t *testing.T) {
 		t.Fatal(err)
 	}
 	mux := chi.NewRouter()
-	ridehttp.NewRouter(rideapplication.NewRideService(analyticsRepository{}, config, nil), verifier).RegisterRoutes(mux)
+	ridehttp.NewRouter(newRideService(analyticsRepository{}, config), verifier).RegisterRoutes(mux)
 	request := httptest.NewRequest(
 		http.MethodGet,
 		api.V1Prefix+"/passengers/8/activity-summary",
@@ -303,7 +311,7 @@ func TestPublicDriverSummariesExposeRatingsWithoutSensitiveDriverData(t *testing
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
 	mux := chi.NewRouter()
-	ridehttp.NewRouter(rideapplication.NewRideService(analyticsRepository{}, config, nil), nil).RegisterRoutes(mux)
+	ridehttp.NewRouter(newRideService(analyticsRepository{}, config), nil).RegisterRoutes(mux)
 
 	request := httptest.NewRequest(
 		http.MethodGet,
@@ -356,7 +364,7 @@ func TestDriverAvailabilityHidesPersistenceErrors(t *testing.T) {
 
 	mux := chi.NewRouter()
 	ridehttp.NewRouter(
-		rideapplication.NewRideService(failingOnlineDriversRepository{}, config, nil),
+		newRideService(failingOnlineDriversRepository{}, config),
 		verifier,
 	).RegisterRoutes(mux)
 	request := httptest.NewRequest(http.MethodGet, api.V1Prefix+"/drivers/online?ids=7", nil)
@@ -385,7 +393,7 @@ func TestOnlineDriverReceivesPassengerBookingThroughActiveSessions(t *testing.T)
 	}
 
 	mux := chi.NewRouter()
-	ridehttp.NewRouter(rideapplication.NewRideService(repository, config, nil), verifier).RegisterRoutes(mux)
+	ridehttp.NewRouter(newRideService(repository, config), verifier).RegisterRoutes(mux)
 	request := httptest.NewRequest(http.MethodGet, api.V1Prefix+"/bids/active", nil)
 	request.Header.Set("Authorization", "Bearer "+driverToken)
 	response := httptest.NewRecorder()
@@ -422,7 +430,7 @@ func TestSessionRoutesBindSessionAndOfferIdentifiers(t *testing.T) {
 		t.Fatalf("Issue() returned error: %v", err)
 	}
 	mux := chi.NewRouter()
-	ridehttp.NewRouter(rideapplication.NewRideService(repository, config, nil), verifier).RegisterRoutes(mux)
+	ridehttp.NewRouter(newRideService(repository, config), verifier).RegisterRoutes(mux)
 
 	tests := []struct {
 		name            string

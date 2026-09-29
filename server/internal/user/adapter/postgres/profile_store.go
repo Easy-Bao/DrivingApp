@@ -35,17 +35,19 @@ var (
 	_ ports.NotificationStore = (*ProfileRepository)(nil)
 )
 
-func NewProfileRepository(
-	pool *pgxpool.Pool,
-	avatarStorage platformstorage.ObjectStore,
-) (*ProfileRepository, error) {
-	if pool == nil {
+type ProfileRepositoryDependencies struct {
+	Pool          *pgxpool.Pool
+	AvatarStorage platformstorage.ObjectStore
+}
+
+func NewProfileRepository(dependencies ProfileRepositoryDependencies) (*ProfileRepository, error) {
+	if dependencies.Pool == nil {
 		return nil, errors.New("postgresql pool is required")
 	}
 	return &ProfileRepository{
-		pool:          pool,
-		queries:       databasepostgres.New(pool),
-		avatarStorage: avatarStorage,
+		pool:          dependencies.Pool,
+		queries:       databasepostgres.New(dependencies.Pool),
+		avatarStorage: dependencies.AvatarStorage,
 		logger:        slog.Default(),
 	}, nil
 }
@@ -54,11 +56,8 @@ func NewProfileRepository(
 // root. The repository constructor remains for existing internal callers.
 type ProfileStore = ProfileRepository
 
-func NewProfileStore(
-	pool *pgxpool.Pool,
-	avatarStorage platformstorage.ObjectStore,
-) (*ProfileStore, error) {
-	return NewProfileRepository(pool, avatarStorage)
+func NewProfileStore(dependencies ProfileRepositoryDependencies) (*ProfileStore, error) {
+	return NewProfileRepository(dependencies)
 }
 
 func (repository *ProfileRepository) WithLogger(logger *slog.Logger) *ProfileRepository {

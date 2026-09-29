@@ -92,7 +92,10 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create private object store: %w", err)
 	}
-	profileStore, err := userpostgres.NewProfileStore(postgresPool, privateObjectStore)
+	profileStore, err := userpostgres.NewProfileStore(userpostgres.ProfileRepositoryDependencies{
+		Pool:          postgresPool,
+		AvatarStorage: privateObjectStore,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("create profile store: %w", err)
 	}

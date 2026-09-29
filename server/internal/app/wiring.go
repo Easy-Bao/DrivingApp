@@ -160,9 +160,11 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 	assignmentProjection := assignment.NewMemoryProjection()
 	eventPublisher := eventadapter.NewMemoryPublisher(assignmentProjection, eventHub)
 	ridesService := rideapplication.NewRideService(
-		rideStore,
-		config.Pricing,
-		eventPublisher,
+		rideapplication.RideServiceDependencies{
+			Repository:     rideStore,
+			PricingConfig:  config.Pricing,
+			EventPublisher: eventPublisher,
+		},
 		rideapplication.WithRouteCalculator(routeCalculator),
 	).WithReportingLocation(config.ReportingLocation).WithLogger(applicationLogger)
 	rideAssignments := assignment.NewResolver(

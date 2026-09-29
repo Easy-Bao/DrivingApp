@@ -8,6 +8,7 @@ import (
 	rideconfig "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/config"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
 )
 
 type analyticsRepository struct{}
@@ -18,6 +19,13 @@ type mutableAnalyticsRepository struct {
 	analyticsRepository
 	rides   []domain.Ride
 	drivers []domain.OnlineDriver
+}
+
+func newAnalyticsRideService(repository ports.RideStore, config application.PricingConfig) *application.RideService {
+	return application.NewRideService(application.RideServiceDependencies{
+		Repository:    repository,
+		PricingConfig: config,
+	})
 }
 
 func (analyticsRepository) CreateRide(context.Context, domain.Ride) (domain.Ride, error) {
@@ -103,7 +111,7 @@ func TestAnalyticsUseCasesDelegateToTheRideAdapter(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
-	service := application.NewRideService(analyticsRepository{}, config, nil)
+	service := newAnalyticsRideService(analyticsRepository{}, config)
 
 	stats, err := service.DriverStats(context.Background(), 7)
 	if err != nil || stats.TotalTrips != 3 {
@@ -127,7 +135,7 @@ func TestPassengerReviewUseCaseValidatesRatingAndDelegates(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
-	service := application.NewRideService(passengerReviewRepository{}, config, nil)
+	service := newAnalyticsRideService(passengerReviewRepository{}, config)
 	review, err := service.CreatePassengerReview(context.Background(), domain.PassengerReview{RideID: 9, Rating: 5})
 	if err != nil || review.ID != 1 {
 		t.Fatalf("passenger review = %#v, %v", review, err)
@@ -150,7 +158,7 @@ func TestAnalyticsReadsReturnCopiesAtTheApplicationBoundary(t *testing.T) {
 		rides:   []domain.Ride{{ID: 2}},
 		drivers: []domain.OnlineDriver{{ID: 7}},
 	}
-	service := application.NewRideService(repository, config, nil)
+	service := newAnalyticsRideService(repository, config)
 
 	rides, err := service.PassengerRides(context.Background(), 8, domain.TripHistoryQuery{Limit: 25})
 	if err != nil {

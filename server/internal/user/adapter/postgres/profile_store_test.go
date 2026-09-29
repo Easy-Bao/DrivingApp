@@ -10,7 +10,7 @@ import (
 )
 
 func TestNewProfileRepositoryRejectsNilPool(t *testing.T) {
-	if _, err := NewProfileRepository(nil, nil); err == nil {
+	if _, err := NewProfileRepository(ProfileRepositoryDependencies{}); err == nil {
 		t.Fatal("expected nil PostgreSQL pool to be rejected")
 	}
 }

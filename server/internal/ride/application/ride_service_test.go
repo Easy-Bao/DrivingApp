@@ -41,6 +41,22 @@ func testPricingConfig(t *testing.T) PricingConfig {
 	}
 }
 
+func newTestRideService(
+	repository ports.RideStore,
+	pricingConfig PricingConfig,
+	publisher ports.EventPublisher,
+	options ...RideServiceOption,
+) *RideService {
+	return NewRideService(
+		RideServiceDependencies{
+			Repository:     repository,
+			PricingConfig:  pricingConfig,
+			EventPublisher: publisher,
+		},
+		options...,
+	)
+}
+
 func (stub *ridesRepositoryStub) CreateRide(_ context.Context, ride domain.Ride) (domain.Ride, error) {
 	stub.created = ride
 	stub.created.ID = 12
@@ -118,7 +134,7 @@ func (stub *ridesRepositoryStub) Session(context.Context, int) (domain.BidSessio
 
 func TestCreateRideBuildsRequestedRide(t *testing.T) {
 	stub := &ridesRepositoryStub{}
-	service := NewRideService(stub, testPricingConfig(t), nil)
+	service := newTestRideService(stub, testPricingConfig(t), nil)
 
 	ride, err := service.CreateRide(context.Background(), 2, 2500)
 	if err != nil {
@@ -135,7 +151,7 @@ func TestCreateRideBuildsRequestedRide(t *testing.T) {
 
 func TestCreateSessionUsesServerMinimumAndAcceptsValidCustomFare(t *testing.T) {
 	stub := &ridesRepositoryStub{}
-	service := NewRideService(stub, testPricingConfig(t), nil)
+	service := newTestRideService(stub, testPricingConfig(t), nil)
 	custom := int64(5000)
 	session, err := service.CreateSession(context.Background(), domain.BidSession{
 		PassengerID:      7,
@@ -157,7 +173,7 @@ func TestCreateSessionUsesServerMinimumAndAcceptsValidCustomFare(t *testing.T) {
 
 func TestCreateSessionUsesAuthoritativeRouteMetrics(t *testing.T) {
 	stub := &ridesRepositoryStub{}
-	service := NewRideService(
+	service := newTestRideService(
 		stub,
 		testPricingConfig(t),
 		nil,
@@ -195,7 +211,7 @@ func TestCreateSessionUsesAuthoritativeRouteMetrics(t *testing.T) {
 
 func TestCreateSessionFailsWhenAuthoritativeRouteIsUnavailable(t *testing.T) {
 	stub := &ridesRepositoryStub{}
-	service := NewRideService(
+	service := newTestRideService(
 		stub,
 		testPricingConfig(t),
 		nil,
@@ -225,7 +241,7 @@ func TestCreateSessionPreservesRouteContextCancellation(t *testing.T) {
 	stub := &ridesRepositoryStub{}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	service := NewRideService(
+	service := newTestRideService(
 		stub,
 		testPricingConfig(t),
 		nil,
@@ -252,7 +268,7 @@ func TestCreateSessionPreservesRouteContextCancellation(t *testing.T) {
 
 func TestCreateSessionRejectsOfferBelowCalculatedMinimum(t *testing.T) {
 	stub := &ridesRepositoryStub{}
-	service := NewRideService(stub, testPricingConfig(t), nil)
+	service := newTestRideService(stub, testPricingConfig(t), nil)
 	custom := int64(1)
 	_, err := service.CreateSession(context.Background(), domain.BidSession{
 		PassengerID:      7,
@@ -271,7 +287,7 @@ func TestCreateSessionRejectsOfferBelowCalculatedMinimum(t *testing.T) {
 
 func TestCreateSessionRejectsPassengerWithActiveRide(t *testing.T) {
 	stub := &ridesRepositoryStub{hasActiveRide: true}
-	service := NewRideService(stub, testPricingConfig(t), nil)
+	service := newTestRideService(stub, testPricingConfig(t), nil)
 	_, err := service.CreateSession(context.Background(), domain.BidSession{
 		PassengerID:      7,
 		PickupLatitude:   6.7,
@@ -292,7 +308,7 @@ func TestCreateSessionRejectsPassengerWithActiveRide(t *testing.T) {
 func TestCreateSessionRejectsPassengerWithActiveRideBeforeRouteCalculation(t *testing.T) {
 	stub := &ridesRepositoryStub{hasActiveRide: true}
 	routeResolved := false
-	service := NewRideService(
+	service := newTestRideService(
 		stub,
 		testPricingConfig(t),
 		nil,
@@ -324,7 +340,7 @@ func TestCreateSessionRejectsPassengerWithActiveRideBeforeRouteCalculation(t *te
 
 func TestUpdateStatusRequiresRideParticipantAndCurrentState(t *testing.T) {
 	stub := &ridesRepositoryStub{ride: domain.Ride{ID: 9, PassengerID: 7, DriverID: intPointer(11), Status: "accepted"}}
-	service := NewRideService(stub, testPricingConfig(t), nil)
+	service := newTestRideService(stub, testPricingConfig(t), nil)
 	if _, err := service.UpdateStatus(
 		context.Background(),
 		9,
@@ -346,7 +362,7 @@ func TestUpdateStatusRequiresRideParticipantAndCurrentState(t *testing.T) {
 
 func TestUpdateStatusAllowsLegacyAssignedRideToReachPickup(t *testing.T) {
 	stub := &ridesRepositoryStub{ride: domain.Ride{ID: 10, PassengerID: 7, DriverID: intPointer(11), Status: "assigned"}}
-	service := NewRideService(stub, testPricingConfig(t), nil)
+	service := newTestRideService(stub, testPricingConfig(t), nil)
 
 	if _, err := service.UpdateStatus(context.Background(), 10, 11, "arrived"); err != nil {
 		t.Fatalf("expected legacy assigned ride to reach pickup, got %v", err)
@@ -360,7 +376,7 @@ func TestUpdateStatusRejectsCancellationAfterRideCompletion(t *testing.T) {
 	stub := &ridesRepositoryStub{
 		ride: domain.Ride{ID: 11, PassengerID: 7, DriverID: intPointer(11), Status: "completed"},
 	}
-	service := NewRideService(stub, testPricingConfig(t), nil)
+	service := newTestRideService(stub, testPricingConfig(t), nil)
 
 	if _, err := service.UpdateStatus(context.Background(), 11, 11, "cancelled"); !errors.Is(err, domain.ErrInvalidStatusTransition) {
 		t.Fatalf("expected completed ride cancellation to be rejected, got %v", err)
@@ -371,7 +387,7 @@ func TestUpdateStatusRejectsCancellationAfterRideCompletion(t *testing.T) {
 }
 
 func TestCalculateFareRejectsNonFiniteInput(t *testing.T) {
-	service := NewRideService(nil, testPricingConfig(t), nil)
+	service := newTestRideService(nil, testPricingConfig(t), nil)
 	if got := service.CalculateFare(-1, 2); got != 0 {
 		t.Fatalf("expected invalid fare to be zero, got %d", got)
 	}

@@ -44,17 +44,23 @@ type RideService struct {
 	logger            *slog.Logger
 }
 
+type RideServiceDependencies struct {
+	Repository     ports.RideStore
+	PricingConfig  PricingConfig
+	EventPublisher ports.EventPublisher
+}
+
 func NewRideService(
-	repository ports.RideStore,
-	pricingConfig PricingConfig,
-	publisher ports.EventPublisher,
+	dependencies RideServiceDependencies,
 	options ...RideServiceOption,
 ) *RideService {
+	repository := dependencies.Repository
+	pricingConfig := dependencies.PricingConfig
 	activeRideChecker, lifecycleStore, settlementStore := optionalRideCapabilities(repository)
 	service := &RideService{
 		repository:        repository,
 		pricingConfig:     pricingConfig,
-		eventPublisher:    publisher,
+		eventPublisher:    dependencies.EventPublisher,
 		reportingLocation: _defaultReportingLocation,
 		logger:            slog.Default(),
 	}

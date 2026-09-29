@@ -20,6 +20,8 @@ type Delivery func(
 	string,
 ) error
 
+type GoMailGatewayOption func(*GoMailGateway)
+
 type GoMailGateway struct {
 	config  Config
 	deliver Delivery
@@ -32,21 +34,28 @@ func NewGoMailGatewayFromEnv() *GoMailGateway {
 	return NewGoMailGateway(NewConfigFromEnv())
 }
 
-func NewGoMailGateway(config Config) *GoMailGateway {
-	return newGoMailGateway(config, deliverWithGoMail)
-}
-
-func NewGoMailGatewayWithDelivery(config Config, deliver Delivery) *GoMailGateway {
-	if deliver == nil {
-		return NewGoMailGateway(config)
+func NewGoMailGateway(config Config, options ...GoMailGatewayOption) *GoMailGateway {
+	gateway := newGoMailGateway(config)
+	for _, option := range options {
+		if option != nil {
+			option(gateway)
+		}
 	}
-	return newGoMailGateway(config, deliver)
+	return gateway
 }
 
-func newGoMailGateway(config Config, deliver Delivery) *GoMailGateway {
+func WithDelivery(deliver Delivery) GoMailGatewayOption {
+	return func(gateway *GoMailGateway) {
+		if deliver != nil {
+			gateway.deliver = deliver
+		}
+	}
+}
+
+func newGoMailGateway(config Config) *GoMailGateway {
 	return &GoMailGateway{
 		config:  config,
-		deliver: deliver,
+		deliver: deliverWithGoMail,
 		breaker: resilience.NewCircuitBreaker(resilience.CircuitBreakerConfig{
 			FailureThreshold: 3,
 			ResetAfter:       30 * time.Second,
