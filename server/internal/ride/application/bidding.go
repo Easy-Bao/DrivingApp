@@ -9,8 +9,11 @@ import (
 )
 
 func newBiddingService(service *RideService) *biddingapplication.Service {
-	store, _ := service.repository.(ports.BiddingStore)
-	activeRideChecker, _ := service.repository.(ports.PassengerActiveRideChecker)
+	var store ports.BiddingStore
+	if candidate, ok := service.repository.(ports.BiddingStore); ok {
+		store = candidate
+	}
+	activeRideChecker, _, _ := optionalRideCapabilities(service.repository)
 	return biddingapplication.NewService(biddingapplication.Dependencies{
 		Store:              store,
 		ActiveRideChecker:  activeRideChecker,

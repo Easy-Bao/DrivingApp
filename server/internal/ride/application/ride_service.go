@@ -40,6 +40,7 @@ func NewRideService(
 	pricingConfig PricingConfig,
 	publisher ports.EventPublisher,
 ) *RideService {
+	activeRideChecker, lifecycleStore, settlementStore := optionalRideCapabilities(repository)
 	service := &RideService{
 		repository:        repository,
 		pricingConfig:     pricingConfig,
@@ -47,7 +48,6 @@ func NewRideService(
 		reportingLocation: _defaultReportingLocation,
 		logger:            slog.Default(),
 	}
-	activeRideChecker, _ := repository.(ports.PassengerActiveRideChecker)
 	service.bookingService = booking.NewService(booking.Dependencies{
 		Writer:            repository,
 		ActiveRideChecker: activeRideChecker,
@@ -57,12 +57,10 @@ func NewRideService(
 		HasRouteProvider:  false,
 	})
 	service.biddingService = newBiddingService(service)
-	lifecycleStore, _ := repository.(ports.RideLifecycleStore)
 	service.lifecycleService = lifecycleapplication.NewService(lifecycleapplication.Dependencies{
 		Store:       lifecycleStore,
 		PublishRide: service.publishRide,
 	})
-	settlementStore, _ := repository.(ports.CashSettlementStore)
 	service.settlementService = settlementapplication.NewService(settlementapplication.Dependencies{
 		Store:       settlementStore,
 		PublishRide: service.publishRide,
@@ -76,6 +74,7 @@ func NewRideServiceWithRouteCalculator(
 	pricingConfig PricingConfig,
 	publisher ports.EventPublisher,
 ) *RideService {
+	activeRideChecker, lifecycleStore, settlementStore := optionalRideCapabilities(repository)
 	service := &RideService{
 		repository:        repository,
 		routeCalculator:   calculator,
@@ -84,7 +83,6 @@ func NewRideServiceWithRouteCalculator(
 		reportingLocation: _defaultReportingLocation,
 		logger:            slog.Default(),
 	}
-	activeRideChecker, _ := repository.(ports.PassengerActiveRideChecker)
 	service.bookingService = booking.NewService(booking.Dependencies{
 		Writer:            repository,
 		ActiveRideChecker: activeRideChecker,
@@ -94,17 +92,40 @@ func NewRideServiceWithRouteCalculator(
 		HasRouteProvider:  calculator != nil,
 	})
 	service.biddingService = newBiddingService(service)
-	lifecycleStore, _ := repository.(ports.RideLifecycleStore)
 	service.lifecycleService = lifecycleapplication.NewService(lifecycleapplication.Dependencies{
 		Store:       lifecycleStore,
 		PublishRide: service.publishRide,
 	})
-	settlementStore, _ := repository.(ports.CashSettlementStore)
 	service.settlementService = settlementapplication.NewService(settlementapplication.Dependencies{
 		Store:       settlementStore,
 		PublishRide: service.publishRide,
 	})
 	return service
+}
+
+func optionalRideCapabilities(
+	repository ports.RideStore,
+) (
+	ports.PassengerActiveRideChecker,
+	ports.RideLifecycleStore,
+	ports.CashSettlementStore,
+) {
+	var activeRideChecker ports.PassengerActiveRideChecker
+	if candidate, ok := repository.(ports.PassengerActiveRideChecker); ok {
+		activeRideChecker = candidate
+	}
+
+	var lifecycleStore ports.RideLifecycleStore
+	if candidate, ok := repository.(ports.RideLifecycleStore); ok {
+		lifecycleStore = candidate
+	}
+
+	var settlementStore ports.CashSettlementStore
+	if candidate, ok := repository.(ports.CashSettlementStore); ok {
+		settlementStore = candidate
+	}
+
+	return activeRideChecker, lifecycleStore, settlementStore
 }
 
 func (service *RideService) WithLogger(logger *slog.Logger) *RideService {

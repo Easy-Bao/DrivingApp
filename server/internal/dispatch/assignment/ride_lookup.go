@@ -67,7 +67,7 @@ func (lookup *RideRepositoryLookup) ForDriver(
 	}
 	id, err := parseID(driverID)
 	if err != nil {
-		return []Assignment{}, nil
+		return nil, nil
 	}
 	rides, err := lookup.repository.ActiveRidesForDriver(ctx, id)
 	if err != nil {

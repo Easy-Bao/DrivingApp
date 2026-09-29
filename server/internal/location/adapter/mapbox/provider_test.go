@@ -82,7 +82,7 @@ func TestNearbyUsesOneRequestForDefaultCategories(t *testing.T) {
 			if !strings.Contains(request.URL.Path, "/category/") {
 				t.Fatalf("nearby used an invalid endpoint: %s", request.URL.Path)
 			}
-			for _, category := range _defaultNearbyCategories {
+			for _, category := range strings.Split(_defaultNearbyCategoriesCSV, ",") {
 				if !strings.Contains(request.URL.Path, category) {
 					t.Fatalf("nearby omitted category %q from %s", category, request.URL.Path)
 				}
@@ -120,6 +120,23 @@ func TestNewMapboxProviderEnablesHTTP2(t *testing.T) {
 	}
 	if transport.DialContext == nil {
 		t.Fatal("expected Mapbox requests to use the configured IPv4 dialer")
+	}
+}
+
+func TestNewMapboxProviderUsesFreshTransportWhenDefaultTransportIsNotHTTP(t *testing.T) {
+	previous := http.DefaultTransport
+	http.DefaultTransport = roundTripFunc(func(*http.Request) (*http.Response, error) {
+		return nil, nil
+	})
+	t.Cleanup(func() { http.DefaultTransport = previous })
+
+	provider := NewMapboxProvider("test-token")
+	transport, ok := provider.client.Transport.(*http.Transport)
+	if !ok {
+		t.Fatalf("expected a fresh HTTP transport, got %T", provider.client.Transport)
+	}
+	if !transport.ForceAttemptHTTP2 {
+		t.Fatal("expected the fallback transport to attempt HTTP/2")
 	}
 }
 

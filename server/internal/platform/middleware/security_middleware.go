@@ -80,7 +80,10 @@ func RequestIDFromRequest(request *http.Request) string {
 	if request == nil {
 		return ""
 	}
-	requestID, _ := request.Context().Value(requestIDKey{}).(string)
+	requestID, ok := request.Context().Value(requestIDKey{}).(string)
+	if !ok {
+		return ""
+	}
 	return requestID
 }
 

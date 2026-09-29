@@ -27,11 +27,19 @@ func (cache *cacheStub) Get(_ context.Context, key string, target any) error {
 		return context.Canceled
 	}
 	if places, ok := target.(*[]domain.Place); ok {
-		*places = value.([]domain.Place)
+		placesValue, ok := value.([]domain.Place)
+		if !ok {
+			return context.Canceled
+		}
+		*places = placesValue
 		return nil
 	}
 	if place, ok := target.(*domain.Place); ok {
-		*place = *value.(*domain.Place)
+		placeValue, ok := value.(*domain.Place)
+		if !ok || placeValue == nil {
+			return context.Canceled
+		}
+		*place = *placeValue
 		return nil
 	}
 	return context.Canceled

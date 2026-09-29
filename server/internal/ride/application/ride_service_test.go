@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
 )
 
 type ridesRepositoryStub struct {
@@ -16,6 +17,13 @@ type ridesRepositoryStub struct {
 	updateNext    string
 	hasActiveRide bool
 }
+
+var (
+	_ ports.RideStore                  = (*ridesRepositoryStub)(nil)
+	_ ports.PassengerActiveRideChecker = (*ridesRepositoryStub)(nil)
+	_ ports.BiddingStore               = (*ridesRepositoryStub)(nil)
+	_ ports.RideLifecycleStore         = (*ridesRepositoryStub)(nil)
+)
 
 func testPricingConfig(t *testing.T) PricingConfig {
 	t.Helper()

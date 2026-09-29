@@ -36,16 +36,7 @@ const (
 	_routeCacheMaxEntries           = 128
 )
 
-var _defaultNearbyCategories = []string{
-	"food_and_drink",
-	"hotel",
-	"hospital",
-	"school",
-	"gas_station",
-	"bank",
-	"shopping_mall",
-	"park",
-}
+const _defaultNearbyCategoriesCSV = "food_and_drink,hotel,hospital,school,gas_station,bank,shopping_mall,park"
 
 type MapboxProvider struct {
 	token            string
@@ -64,7 +55,11 @@ type routeCacheEntry struct {
 }
 
 func NewMapboxProvider(token string) *MapboxProvider {
-	transport := http.DefaultTransport.(*http.Transport).Clone()
+	baseTransport, ok := http.DefaultTransport.(*http.Transport)
+	if !ok || baseTransport == nil {
+		baseTransport = &http.Transport{}
+	}
+	transport := baseTransport.Clone()
 	// The default resolver can select an unreachable IPv6 path locally, leaving
 	// Mapbox's HTTP/2 response waiting until the client timeout.
 	transport.ForceAttemptHTTP2 = true
@@ -165,7 +160,7 @@ func (provider *MapboxProvider) Nearby(
 		result := provider.nearbyCategory(
 			ctx,
 			origin,
-			strings.Join(_defaultNearbyCategories, ","),
+			_defaultNearbyCategoriesCSV,
 		)
 		if result.err != nil {
 			return nil, result.err

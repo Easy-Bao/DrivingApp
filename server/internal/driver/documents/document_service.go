@@ -13,12 +13,6 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/domain"
 )
 
-var _allowedContentTypes = map[string]struct{}{
-	"application/pdf": {},
-	"image/jpeg":      {},
-	"image/png":       {},
-}
-
 type DocumentService struct {
 	repository       DocumentStore
 	storage          ObjectStore
@@ -229,8 +223,17 @@ func verifiedContentType(claimed string, content []byte) (string, error) {
 		return "", domain.ErrUnsupportedContentType
 	}
 	detectedType := http.DetectContentType(content)
-	if _, allowed := _allowedContentTypes[detectedType]; !allowed || claimedType != detectedType {
+	if !isAllowedContentType(detectedType) || claimedType != detectedType {
 		return "", domain.ErrUnsupportedContentType
 	}
 	return detectedType, nil
+}
+
+func isAllowedContentType(contentType string) bool {
+	switch contentType {
+	case "application/pdf", "image/jpeg", "image/png":
+		return true
+	default:
+		return false
+	}
 }
