@@ -16,13 +16,19 @@ func TestPassengerRegistrationCreatesAccountOnlyAfterOTP(t *testing.T) {
 	pending := &pendingRegistrationStore{}
 	gateway := &otpGateway{}
 	sessions := newTestRefreshSessionStore()
-	register := authregistration.NewRegisterService(repository, otpIssuer{}, sessions)
+	register := authregistration.NewRegisterService(authregistration.Dependencies{
+		Repository: repository,
+		Tokens:     otpIssuer{},
+		Sessions:   sessions,
+	})
 	service := verification.NewOTPService(
-		repository,
-		&otpMemoryStore{values: map[string]string{}},
-		gateway,
-		otpIssuer{},
-		sessions,
+		verification.Dependencies{
+			Users:    repository,
+			Store:    &otpMemoryStore{values: map[string]string{}},
+			Gateway:  gateway,
+			Tokens:   otpIssuer{},
+			Sessions: sessions,
+		},
 		verification.WithPendingRegistration(pending, register),
 	)
 
@@ -60,13 +66,19 @@ func TestRetryingUnverifiedPassengerRegistrationReplacesPendingData(t *testing.T
 	pending := &pendingRegistrationStore{}
 	gateway := &otpGateway{}
 	sessions := newTestRefreshSessionStore()
-	register := authregistration.NewRegisterService(repository, otpIssuer{}, sessions)
+	register := authregistration.NewRegisterService(authregistration.Dependencies{
+		Repository: repository,
+		Tokens:     otpIssuer{},
+		Sessions:   sessions,
+	})
 	service := verification.NewOTPService(
-		repository,
-		&otpMemoryStore{values: map[string]string{}},
-		gateway,
-		otpIssuer{},
-		sessions,
+		verification.Dependencies{
+			Users:    repository,
+			Store:    &otpMemoryStore{values: map[string]string{}},
+			Gateway:  gateway,
+			Tokens:   otpIssuer{},
+			Sessions: sessions,
+		},
 		verification.WithPendingRegistration(pending, register),
 	)
 
@@ -100,13 +112,19 @@ func TestPassengerVerificationSucceedsWhenPendingCleanupFails(t *testing.T) {
 	pending := &pendingRegistrationStore{deleteErr: errors.New("temporary cleanup failure")}
 	gateway := &otpGateway{}
 	sessions := newTestRefreshSessionStore()
-	register := authregistration.NewRegisterService(repository, otpIssuer{}, sessions)
+	register := authregistration.NewRegisterService(authregistration.Dependencies{
+		Repository: repository,
+		Tokens:     otpIssuer{},
+		Sessions:   sessions,
+	})
 	service := verification.NewOTPService(
-		repository,
-		&otpMemoryStore{values: map[string]string{}},
-		gateway,
-		otpIssuer{},
-		sessions,
+		verification.Dependencies{
+			Users:    repository,
+			Store:    &otpMemoryStore{values: map[string]string{}},
+			Gateway:  gateway,
+			Tokens:   otpIssuer{},
+			Sessions: sessions,
+		},
 		verification.WithPendingRegistration(pending, register),
 	)
 
@@ -133,13 +151,19 @@ func TestPassengerRegistrationRejectsVerifiedEmail(t *testing.T) {
 	}
 	pending := &pendingRegistrationStore{}
 	sessions := newTestRefreshSessionStore()
-	register := authregistration.NewRegisterService(repository, otpIssuer{}, sessions)
+	register := authregistration.NewRegisterService(authregistration.Dependencies{
+		Repository: repository,
+		Tokens:     otpIssuer{},
+		Sessions:   sessions,
+	})
 	service := verification.NewOTPService(
-		repository,
-		&otpMemoryStore{values: map[string]string{}},
-		&otpGateway{},
-		otpIssuer{},
-		sessions,
+		verification.Dependencies{
+			Users:    repository,
+			Store:    &otpMemoryStore{values: map[string]string{}},
+			Gateway:  &otpGateway{},
+			Tokens:   otpIssuer{},
+			Sessions: sessions,
+		},
 		verification.WithPendingRegistration(pending, register),
 	)
 

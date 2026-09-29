@@ -22,15 +22,17 @@ type AuthenticateService struct {
 	logger     *slog.Logger
 }
 
-func NewAuthenticateService(
-	repository authports.UserStore,
-	tokens authports.TokenIssuer,
-	sessions authports.SessionStore,
-) *AuthenticateService {
+type Dependencies struct {
+	Repository authports.UserStore
+	Tokens     authports.TokenIssuer
+	Sessions   authports.SessionStore
+}
+
+func NewAuthenticateService(dependencies Dependencies) *AuthenticateService {
 	return &AuthenticateService{
-		repository: repository,
-		tokens:     tokens,
-		sessions:   sessions,
+		repository: dependencies.Repository,
+		tokens:     dependencies.Tokens,
+		sessions:   dependencies.Sessions,
 		logger:     slog.Default(),
 	}
 }

@@ -27,7 +27,11 @@ func NewRouter(
 		otpVerificationLimit = NewOTPVerificationRateLimiter(otpAttemptStores[0])
 	}
 	return &Router{
-		handler:              NewHandler(register, authenticate, otp),
+		handler: NewHandler(Dependencies{
+			Register:     register,
+			Authenticate: authenticate,
+			OTP:          otp,
+		}),
 		otpVerificationLimit: otpVerificationLimit,
 	}
 }

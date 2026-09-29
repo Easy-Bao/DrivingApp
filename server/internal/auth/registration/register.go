@@ -32,12 +32,18 @@ type RegisterService struct {
 
 var ErrRegistrationUnavailable = errors.New("registration is unavailable")
 
-func NewRegisterService(
-	repository authports.UserStore,
-	tokens authports.TokenIssuer,
-	sessions authports.SessionStore,
-) *RegisterService {
-	return &RegisterService{repository: repository, tokens: tokens, sessions: sessions}
+type Dependencies struct {
+	Repository authports.UserStore
+	Tokens     authports.TokenIssuer
+	Sessions   authports.SessionStore
+}
+
+func NewRegisterService(dependencies Dependencies) *RegisterService {
+	return &RegisterService{
+		repository: dependencies.Repository,
+		tokens:     dependencies.Tokens,
+		sessions:   dependencies.Sessions,
+	}
 }
 
 func (service *RegisterService) Passenger(ctx context.Context, input RegisterInput) (domain.User, string, error) {

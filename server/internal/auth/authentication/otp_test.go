@@ -61,7 +61,13 @@ func TestPassengerOTPVerifiesAndConsumesCode(t *testing.T) {
 	repository := &otpRepository{account: domain.User{ID: 7, Email: "passenger@example.test", Role: domain.Passenger}}
 	store := &otpMemoryStore{values: map[string]string{}}
 	gateway := &otpGateway{}
-	service := verification.NewOTPService(repository, store, gateway, otpIssuer{}, newTestRefreshSessionStore())
+	service := verification.NewOTPService(verification.Dependencies{
+		Users:    repository,
+		Store:    store,
+		Gateway:  gateway,
+		Tokens:   otpIssuer{},
+		Sessions: newTestRefreshSessionStore(),
+	})
 
 	if err := service.RequestVerification(context.Background(), repository.account.Email); err != nil {
 		t.Fatalf("request verification: %v", err)
@@ -82,13 +88,13 @@ func TestPassengerOTPVerifiesAndConsumesCode(t *testing.T) {
 
 func TestDriverCannotUsePassengerVerificationOTP(t *testing.T) {
 	repository := &otpRepository{account: domain.User{ID: 8, Email: "driver@example.test", Role: domain.Driver}}
-	service := verification.NewOTPService(
-		repository,
-		&otpMemoryStore{values: map[string]string{}},
-		&otpGateway{},
-		otpIssuer{},
-		newTestRefreshSessionStore(),
-	)
+	service := verification.NewOTPService(verification.Dependencies{
+		Users:    repository,
+		Store:    &otpMemoryStore{values: map[string]string{}},
+		Gateway:  &otpGateway{},
+		Tokens:   otpIssuer{},
+		Sessions: newTestRefreshSessionStore(),
+	})
 	_, _, err := service.VerifyPassenger(
 		context.Background(),
 		repository.account.Email,
@@ -102,7 +108,13 @@ func TestDriverCannotUsePassengerVerificationOTP(t *testing.T) {
 func TestPasswordResetIsScopedToTheAccountRole(t *testing.T) {
 	repository := &otpRepository{account: domain.User{ID: 8, Email: "driver@example.test", Role: domain.Driver}}
 	store := &otpMemoryStore{values: map[string]string{}}
-	service := verification.NewOTPService(repository, store, &otpGateway{}, otpIssuer{}, newTestRefreshSessionStore())
+	service := verification.NewOTPService(verification.Dependencies{
+		Users:    repository,
+		Store:    store,
+		Gateway:  &otpGateway{},
+		Tokens:   otpIssuer{},
+		Sessions: newTestRefreshSessionStore(),
+	})
 
 	err := service.RequestPasswordReset(
 		context.Background(),

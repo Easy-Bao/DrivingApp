@@ -31,7 +31,11 @@ func TestRoleSpecificLoginRoutes(t *testing.T) {
 			PasswordHash: testPasswordHash(t, "secret"),
 		},
 	}}
-	authenticate := authentication.NewAuthenticateService(repository, issuer{}, newTestRefreshSessionStore())
+	authenticate := authentication.NewAuthenticateService(authentication.Dependencies{
+		Repository: repository,
+		Tokens:     issuer{},
+		Sessions:   newTestRefreshSessionStore(),
+	})
 	mux := chi.NewRouter()
 	authhttp.NewRouter(nil, authenticate, nil).RegisterRoutes(mux)
 
@@ -90,7 +94,11 @@ func TestLoginAndRefreshIssueRotatingSessionTokens(t *testing.T) {
 		},
 	}}
 	manager := security.NewTokenManager("refresh-http-test-secret")
-	authenticate := authentication.NewAuthenticateService(repository, manager, newTestRefreshSessionStore())
+	authenticate := authentication.NewAuthenticateService(authentication.Dependencies{
+		Repository: repository,
+		Tokens:     manager,
+		Sessions:   newTestRefreshSessionStore(),
+	})
 	mux := chi.NewRouter()
 	authhttp.NewRouter(nil, authenticate, nil).RegisterRoutes(mux)
 
@@ -154,7 +162,11 @@ func TestLoginRejectsFieldsOutsideTheRequestContract(t *testing.T) {
 	mux := chi.NewRouter()
 	authhttp.NewRouter(
 		nil,
-		authentication.NewAuthenticateService(repository, issuer{}, newTestRefreshSessionStore()),
+		authentication.NewAuthenticateService(authentication.Dependencies{
+			Repository: repository,
+			Tokens:     issuer{},
+			Sessions:   newTestRefreshSessionStore(),
+		}),
 		nil,
 	).RegisterRoutes(mux)
 

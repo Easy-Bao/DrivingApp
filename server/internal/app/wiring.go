@@ -83,18 +83,26 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 	verifier := security.NewTokenManager(config.JWTSecret)
 	adminAuthorizer := security.NewAdminAuthorizer(config.AdminUserIDs)
 
-	registerService := authregistration.NewRegisterService(authStore, verifier, sessionStore)
+	registerService := authregistration.NewRegisterService(authregistration.Dependencies{
+		Repository: authStore,
+		Tokens:     verifier,
+		Sessions:   sessionStore,
+	})
 	authenticateService := authauthentication.NewAuthenticateService(
-		authStore,
-		verifier,
-		sessionStore,
+		authauthentication.Dependencies{
+			Repository: authStore,
+			Tokens:     verifier,
+			Sessions:   sessionStore,
+		},
 	).WithLogger(applicationLogger)
 	otpService := authverification.NewOTPService(
-		authStore,
-		authredis.NewOTPStore(redisClient),
-		email.NewGoMailGatewayFromEnv(),
-		verifier,
-		sessionStore,
+		authverification.Dependencies{
+			Users:    authStore,
+			Store:    authredis.NewOTPStore(redisClient),
+			Gateway:  email.NewGoMailGatewayFromEnv(),
+			Tokens:   verifier,
+			Sessions: sessionStore,
+		},
 		authverification.WithPendingRegistration(
 			authredis.NewPendingRegistrationStore(redisClient),
 			registerService,

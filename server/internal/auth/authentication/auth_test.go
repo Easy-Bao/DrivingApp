@@ -50,7 +50,11 @@ func (issuer) Issue(subject string) (string, error) { return "token:" + subject,
 
 func TestPassengerAndDriverRegistrationUseCases(t *testing.T) {
 	repository := &repository{users: map[string]domain.User{}}
-	service := authregistration.NewRegisterService(repository, issuer{}, newTestRefreshSessionStore())
+	service := authregistration.NewRegisterService(authregistration.Dependencies{
+		Repository: repository,
+		Tokens:     issuer{},
+		Sessions:   newTestRefreshSessionStore(),
+	})
 	passenger, passengerToken, err := service.Passenger(
 		context.Background(),
 		authregistration.RegisterInput{
@@ -82,7 +86,11 @@ func TestPassengerAndDriverRegistrationUseCases(t *testing.T) {
 func TestAuthenticationRejectsWrongPassword(t *testing.T) {
 	repository := &repository{users: map[string]domain.User{}}
 	sessions := newTestRefreshSessionStore()
-	register := authregistration.NewRegisterService(repository, issuer{}, sessions)
+	register := authregistration.NewRegisterService(authregistration.Dependencies{
+		Repository: repository,
+		Tokens:     issuer{},
+		Sessions:   sessions,
+	})
 	_, _, _ = register.Passenger(
 		context.Background(),
 		authregistration.RegisterInput{
@@ -92,7 +100,11 @@ func TestAuthenticationRejectsWrongPassword(t *testing.T) {
 			Password: "secret-8",
 		},
 	)
-	authenticate := authentication.NewAuthenticateService(repository, issuer{}, sessions)
+	authenticate := authentication.NewAuthenticateService(authentication.Dependencies{
+		Repository: repository,
+		Tokens:     issuer{},
+		Sessions:   sessions,
+	})
 	_, _, err := authenticate.Execute(
 		context.Background(),
 		"user@example.test",
@@ -104,11 +116,11 @@ func TestAuthenticationRejectsWrongPassword(t *testing.T) {
 }
 
 func TestRegistrationRejectsIncompleteRoleContracts(t *testing.T) {
-	service := authregistration.NewRegisterService(
-		&repository{users: map[string]domain.User{}},
-		issuer{},
-		newTestRefreshSessionStore(),
-	)
+	service := authregistration.NewRegisterService(authregistration.Dependencies{
+		Repository: &repository{users: map[string]domain.User{}},
+		Tokens:     issuer{},
+		Sessions:   newTestRefreshSessionStore(),
+	})
 
 	if _, _, err := service.Passenger(context.Background(), authregistration.RegisterInput{
 		Email: "passenger@example.test", Name: "Passenger", Password: "secret-8",
@@ -131,7 +143,11 @@ func TestAuthenticationNormalizesEmailBeforeLookup(t *testing.T) {
 			PasswordHash: testPasswordHash(t, "secret-8"),
 		},
 	}}
-	authenticate := authentication.NewAuthenticateService(repository, issuer{}, newTestRefreshSessionStore())
+	authenticate := authentication.NewAuthenticateService(authentication.Dependencies{
+		Repository: repository,
+		Tokens:     issuer{},
+		Sessions:   newTestRefreshSessionStore(),
+	})
 
 	if _, _, err := authenticate.Execute(context.Background(), " PASSENGER@EXAMPLE.TEST ", "secret-8"); err != nil {
 		t.Fatalf("normalized login returned error: %v", err)
@@ -149,7 +165,11 @@ func TestAuthenticationUpgradesLegacyPasswordHashAfterSuccessfulLogin(t *testing
 			PasswordHash: legacyHash,
 		},
 	}}
-	authenticate := authentication.NewAuthenticateService(repository, issuer{}, newTestRefreshSessionStore())
+	authenticate := authentication.NewAuthenticateService(authentication.Dependencies{
+		Repository: repository,
+		Tokens:     issuer{},
+		Sessions:   newTestRefreshSessionStore(),
+	})
 	if _, _, err := authenticate.Execute(context.Background(), "legacy@example.test", "legacy-8"); err != nil {
 		t.Fatalf("legacy authentication returned error: %v", err)
 	}

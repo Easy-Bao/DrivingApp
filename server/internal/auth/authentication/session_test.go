@@ -23,7 +23,11 @@ func TestRefreshSessionsAreOpaqueAndRotateOnce(t *testing.T) {
 		},
 	}}
 	sessions := newTestRefreshSessionStore()
-	service := authentication.NewAuthenticateService(repository, security.NewTokenManager("session-test-secret"), sessions)
+	service := authentication.NewAuthenticateService(authentication.Dependencies{
+		Repository: repository,
+		Tokens:     security.NewTokenManager("session-test-secret"),
+		Sessions:   sessions,
+	})
 
 	_, first, err := service.ExecuteSession(context.Background(), "passenger@example.test", "secret-8")
 	if err != nil {
@@ -61,7 +65,11 @@ func TestLogoutRevokesRefreshSession(t *testing.T) {
 		},
 	}}
 	sessions := newTestRefreshSessionStore()
-	service := authentication.NewAuthenticateService(repository, security.NewTokenManager("logout-test-secret"), sessions)
+	service := authentication.NewAuthenticateService(authentication.Dependencies{
+		Repository: repository,
+		Tokens:     security.NewTokenManager("logout-test-secret"),
+		Sessions:   sessions,
+	})
 
 	_, issued, err := service.ExecuteSession(context.Background(), "passenger@example.test", "secret-8")
 	if err != nil {
@@ -80,11 +88,9 @@ func TestLogoutRevokesRefreshSession(t *testing.T) {
 }
 
 func TestLogoutRejectsMalformedRefreshToken(t *testing.T) {
-	service := authentication.NewAuthenticateService(
-		nil,
-		nil,
-		newTestRefreshSessionStore(),
-	)
+	service := authentication.NewAuthenticateService(authentication.Dependencies{
+		Sessions: newTestRefreshSessionStore(),
+	})
 
 	for _, token := range []string{"", "not-a-refresh-token", "short-token"} {
 		t.Run(token, func(t *testing.T) {
@@ -105,11 +111,11 @@ func TestRefreshAllowsParallelRequestsDuringRotationGrace(t *testing.T) {
 		},
 	}}
 	sessions := newTestRefreshSessionStore()
-	service := authentication.NewAuthenticateService(
-		repository,
-		security.NewTokenManager("parallel-refresh-test-secret"),
-		sessions,
-	)
+	service := authentication.NewAuthenticateService(authentication.Dependencies{
+		Repository: repository,
+		Tokens:     security.NewTokenManager("parallel-refresh-test-secret"),
+		Sessions:   sessions,
+	})
 
 	_, issued, err := service.ExecuteSession(
 		context.Background(),

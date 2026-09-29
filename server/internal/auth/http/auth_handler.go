@@ -19,12 +19,18 @@ type Handler struct {
 	otp          *verification.OTPService
 }
 
-func NewHandler(
-	register *registration.RegisterService,
-	authenticate *authentication.AuthenticateService,
-	otp *verification.OTPService,
-) *Handler {
-	return &Handler{register: register, authenticate: authenticate, otp: otp}
+type Dependencies struct {
+	Register     *registration.RegisterService
+	Authenticate *authentication.AuthenticateService
+	OTP          *verification.OTPService
+}
+
+func NewHandler(dependencies Dependencies) *Handler {
+	return &Handler{
+		register:     dependencies.Register,
+		authenticate: dependencies.Authenticate,
+		otp:          dependencies.OTP,
+	}
 }
 func (handler *Handler) PassengerRegister(w http.ResponseWriter, r *http.Request) {
 	handler.registerAccount(w, r, domain.Passenger)
