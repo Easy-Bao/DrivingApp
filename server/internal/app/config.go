@@ -13,7 +13,7 @@ import (
 	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
 )
 
-const serviceName = "api"
+const _serviceName = "api"
 
 type Config struct {
 	JWTSecret         string

@@ -15,7 +15,7 @@ func registerHealthRoutes(router chi.Router, redisClient *redisclient.Client, po
 	router.Get("/health", func(writer http.ResponseWriter, _ *http.Request) {
 		response.JSON(writer, http.StatusOK, map[string]string{
 			"status":  "ok",
-			"service": serviceName,
+			"service": _serviceName,
 		})
 	})
 	readinessHandler := func(writer http.ResponseWriter, request *http.Request) {
@@ -42,6 +42,6 @@ func writeReadinessResponse(writer http.ResponseWriter, status int, ready bool) 
 	}
 	response.JSON(writer, status, map[string]string{
 		"status":  readiness,
-		"service": serviceName,
+		"service": _serviceName,
 	})
 }

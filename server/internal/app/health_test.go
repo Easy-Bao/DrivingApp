@@ -35,8 +35,8 @@ func TestWriteReadinessResponse(t *testing.T) {
 			if body["status"] != test.want {
 				t.Fatalf("status body = %q, want %q", body["status"], test.want)
 			}
-			if body["service"] != serviceName {
-				t.Fatalf("service body = %q, want %q", body["service"], serviceName)
+			if body["service"] != _serviceName {
+				t.Fatalf("service body = %q, want %q", body["service"], _serviceName)
 			}
 		})
 	}

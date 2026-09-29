@@ -71,7 +71,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 		}
 	}()
 
-	applicationLogger := logger.New(serviceName)
+	applicationLogger := logger.New(_serviceName)
 	authStore, err := authpostgres.NewUserStore(postgresPool)
 	if err != nil {
 		return nil, fmt.Errorf("create auth user store: %w", err)
