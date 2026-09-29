@@ -80,6 +80,10 @@ func TestResolverFallsBackToAuthorityWhenRoutingCacheMisses(t *testing.T) {
 	if len(values) != 2 {
 		t.Fatalf("ForDriver() returned %d assignments", len(values))
 	}
+	values[0].Status = "mutated"
+	if authoritative[0].Status != "assigned" {
+		t.Fatalf("authority assignments were mutated through resolver result: %#v", authoritative)
+	}
 }
 
 func TestResolverFallsBackAfterRoutingCacheFailure(t *testing.T) {

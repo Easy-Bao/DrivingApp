@@ -3,6 +3,7 @@ package domain
 import (
 	"fmt"
 	"math"
+	"slices"
 )
 
 // Coordinates identifies a point in decimal degrees. Callers should validate
@@ -51,6 +52,7 @@ type RouteOptions struct {
 // Normalize fills defaults and rejects unsupported route options or invalid
 // exclusion points.
 func (options RouteOptions) Normalize() (RouteOptions, error) {
+	options.ExcludePoints = slices.Clone(options.ExcludePoints)
 	if options.Preference == "" {
 		options.Preference = RoutePreferenceFastest
 	}

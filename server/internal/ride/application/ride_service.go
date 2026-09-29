@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"slices"
 	"time"
 
 	biddingapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/bidding"
@@ -370,7 +371,7 @@ func (service *RideService) DriverTrips(
 	if err != nil {
 		return nil, fmt.Errorf("load driver trips: %w", err)
 	}
-	return rides, nil
+	return slices.Clone(rides), nil
 }
 
 func (service *RideService) PassengerRides(
@@ -389,7 +390,7 @@ func (service *RideService) PassengerRides(
 	if err != nil {
 		return nil, fmt.Errorf("load passenger rides: %w", err)
 	}
-	return rides, nil
+	return slices.Clone(rides), nil
 }
 
 func (service *RideService) PassengerActivitySummary(
@@ -424,16 +425,16 @@ func (service *RideService) PassengerRecentRides(ctx context.Context, passengerI
 		if err != nil {
 			return nil, fmt.Errorf("load recent passenger rides: %w", err)
 		}
-		return rides, nil
+		return slices.Clone(rides), nil
 	}
 	rides, err := service.PassengerRides(ctx, passengerID, domain.TripHistoryQuery{Limit: limit, Offset: 0})
 	if err != nil {
 		return nil, fmt.Errorf("load recent passenger rides through trip history: %w", err)
 	}
 	if len(rides) > limit {
-		return rides[:limit], nil
+		return slices.Clone(rides[:limit]), nil
 	}
-	return rides, nil
+	return slices.Clone(rides), nil
 }
 
 func (service *RideService) DriverReviews(ctx context.Context, driverID, limit, offset int) ([]domain.Review, error) {
@@ -450,7 +451,7 @@ func (service *RideService) DriverReviews(ctx context.Context, driverID, limit, 
 	if err != nil {
 		return nil, fmt.Errorf("load driver reviews: %w", err)
 	}
-	return reviews, nil
+	return slices.Clone(reviews), nil
 }
 
 func (service *RideService) CreateReview(ctx context.Context, review domain.Review) (domain.Review, error) {
@@ -498,7 +499,7 @@ func (service *RideService) OnlineDrivers(ctx context.Context, driverIDs []int) 
 	if err != nil {
 		return nil, fmt.Errorf("load online drivers: %w", err)
 	}
-	return drivers, nil
+	return slices.Clone(drivers), nil
 }
 
 func (service *RideService) PublicDriverSummaries(
@@ -516,7 +517,7 @@ func (service *RideService) PublicDriverSummaries(
 	if err != nil {
 		return nil, fmt.Errorf("load public driver summaries: %w", err)
 	}
-	return drivers, nil
+	return slices.Clone(drivers), nil
 }
 
 func validateTripHistoryQuery(query domain.TripHistoryQuery) error {

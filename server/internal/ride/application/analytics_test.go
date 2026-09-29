@@ -14,6 +14,12 @@ type analyticsRepository struct{}
 
 type passengerReviewRepository struct{ analyticsRepository }
 
+type mutableAnalyticsRepository struct {
+	analyticsRepository
+	rides   []domain.Ride
+	drivers []domain.OnlineDriver
+}
+
 func (analyticsRepository) CreateRide(context.Context, domain.Ride) (domain.Ride, error) {
 	return domain.Ride{}, nil
 }
@@ -77,6 +83,21 @@ func (passengerReviewRepository) CreatePassengerReview(
 	return review, nil
 }
 
+func (repository *mutableAnalyticsRepository) PassengerRides(
+	context.Context,
+	int,
+	domain.TripHistoryQuery,
+) ([]domain.Ride, error) {
+	return repository.rides, nil
+}
+
+func (repository *mutableAnalyticsRepository) OnlineDrivers(
+	context.Context,
+	[]int,
+) ([]domain.OnlineDriver, error) {
+	return repository.drivers, nil
+}
+
 func TestAnalyticsUseCasesDelegateToTheRideAdapter(t *testing.T) {
 	config, err := rideconfig.LoadPricingConfig()
 	if err != nil {
@@ -117,5 +138,35 @@ func TestPassengerReviewUseCaseValidatesRatingAndDelegates(t *testing.T) {
 	)
 	if err == nil {
 		t.Fatal("expected out-of-range passenger rating to be rejected")
+	}
+}
+
+func TestAnalyticsReadsReturnCopiesAtTheApplicationBoundary(t *testing.T) {
+	config, err := rideconfig.LoadPricingConfig()
+	if err != nil {
+		t.Fatalf("LoadPricingConfig returned error: %v", err)
+	}
+	repository := &mutableAnalyticsRepository{
+		rides:   []domain.Ride{{ID: 2}},
+		drivers: []domain.OnlineDriver{{ID: 7}},
+	}
+	service := application.NewRideService(repository, config, nil)
+
+	rides, err := service.PassengerRides(context.Background(), 8, domain.TripHistoryQuery{Limit: 25})
+	if err != nil {
+		t.Fatalf("PassengerRides() error = %v", err)
+	}
+	rides[0].ID = 99
+	if repository.rides[0].ID != 2 {
+		t.Fatalf("repository rides were mutated through returned values: %#v", repository.rides)
+	}
+
+	drivers, err := service.OnlineDrivers(context.Background(), []int{7})
+	if err != nil {
+		t.Fatalf("OnlineDrivers() error = %v", err)
+	}
+	drivers[0].ID = 99
+	if repository.drivers[0].ID != 7 {
+		t.Fatalf("repository drivers were mutated through returned values: %#v", repository.drivers)
 	}
 }

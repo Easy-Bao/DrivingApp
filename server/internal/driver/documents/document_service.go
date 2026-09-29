@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"mime"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/domain"
@@ -98,7 +99,7 @@ func (service *DocumentService) Status(ctx context.Context, driverID int) ([]dom
 	if err != nil {
 		return nil, fmt.Errorf("load driver document status: %w", err)
 	}
-	return documents, nil
+	return slices.Clone(documents), nil
 }
 
 func (service *DocumentService) ReviewQueue(
@@ -128,7 +129,7 @@ func (service *DocumentService) ReviewQueue(
 	if err != nil {
 		return nil, fmt.Errorf("load driver document review queue: %w", err)
 	}
-	return documents, nil
+	return slices.Clone(documents), nil
 }
 
 func (service *DocumentService) Review(

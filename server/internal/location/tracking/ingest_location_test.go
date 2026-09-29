@@ -13,6 +13,7 @@ import (
 type locationRepositoryStub struct {
 	driverPoint    domain.DriverPoint
 	passengerPoint domain.DriverPoint
+	nearby         []domain.DriverPoint
 	upsertCalls    int
 	upsertErr      error
 }
@@ -26,8 +27,8 @@ func (stub *locationRepositoryStub) Upsert(_ context.Context, point domain.Drive
 	return nil
 }
 func (locationRepositoryStub) Remove(context.Context, string) error { return nil }
-func (locationRepositoryStub) Nearby(context.Context, float64, float64, float64) ([]domain.DriverPoint, error) {
-	return nil, nil
+func (stub *locationRepositoryStub) Nearby(context.Context, float64, float64, float64) ([]domain.DriverPoint, error) {
+	return stub.nearby, nil
 }
 func (stub *locationRepositoryStub) Get(context.Context, string) (domain.DriverPoint, error) {
 	return stub.driverPoint, nil
@@ -106,6 +107,22 @@ func TestNearbyRejectsUnboundedRadius(t *testing.T) {
 	}
 	if _, err := service.Nearby(context.Background(), 6.7, 122.1, 51); err == nil {
 		t.Fatal("expected oversized radius to be rejected")
+	}
+}
+
+func TestNearbyReturnsACopyOfRepositoryResults(t *testing.T) {
+	repository := &locationRepositoryStub{
+		nearby: []domain.DriverPoint{{DriverID: "driver-1", Latitude: 6.7, Longitude: 122.1}},
+	}
+	service := NewLocationTrackingService(repository)
+
+	points, err := service.Nearby(context.Background(), 6.7, 122.1, 5)
+	if err != nil {
+		t.Fatalf("Nearby() error = %v", err)
+	}
+	points[0].DriverID = "mutated"
+	if repository.nearby[0].DriverID != "driver-1" {
+		t.Fatalf("repository locations were mutated through returned points: %#v", repository.nearby)
 	}
 }
 

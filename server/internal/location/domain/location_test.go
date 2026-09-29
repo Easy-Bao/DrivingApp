@@ -42,3 +42,16 @@ func TestCoordinatesValid(t *testing.T) {
 		})
 	}
 }
+
+func TestRouteOptionsNormalizeCopiesExcludedPoints(t *testing.T) {
+	points := []Coordinates{{Latitude: 1, Longitude: 2}}
+	options, err := (RouteOptions{ExcludePoints: points}).Normalize()
+	if err != nil {
+		t.Fatalf("Normalize() error = %v", err)
+	}
+
+	points[0].Latitude = 99
+	if options.ExcludePoints[0].Latitude != 1 {
+		t.Fatalf("normalized options changed with caller input: %#v", options.ExcludePoints)
+	}
+}

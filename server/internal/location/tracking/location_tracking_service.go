@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"slices"
 	"time"
 
 	assignment "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment"
@@ -130,7 +131,7 @@ func (service *LocationTrackingService) Nearby(
 	if err := contextError(ctx); err != nil {
 		return nil, err
 	}
-	return points, nil
+	return slices.Clone(points), nil
 }
 
 func (service *LocationTrackingService) Remove(ctx context.Context, driverID string) error {

@@ -73,6 +73,45 @@ type routeProviderSpy struct {
 	calls   int
 }
 
+type mutableProvider struct {
+	places []domain.Place
+	place  *domain.Place
+	route  *domain.Route
+	matrix *domain.Matrix
+}
+
+func (provider *mutableProvider) Search(context.Context, string, domain.Coordinates) ([]domain.Place, error) {
+	return provider.places, nil
+}
+
+func (provider *mutableProvider) Nearby(context.Context, domain.Coordinates, int) ([]domain.Place, error) {
+	return provider.places, nil
+}
+
+func (provider *mutableProvider) ReverseGeocode(context.Context, domain.Coordinates) (*domain.Place, error) {
+	return provider.place, nil
+}
+
+func (provider *mutableProvider) Route(
+	context.Context,
+	domain.Coordinates,
+	domain.Coordinates,
+	domain.RouteOptions,
+) (*domain.Route, error) {
+	return provider.route, nil
+}
+
+func (provider *mutableProvider) Matrix(
+	_ context.Context,
+	_ domain.Coordinates,
+	destinations []domain.Coordinates,
+) (*domain.Matrix, error) {
+	if len(destinations) > 0 {
+		destinations[0].Latitude = 99
+	}
+	return provider.matrix, nil
+}
+
 func (provider *routeProviderSpy) Route(
 	_ context.Context,
 	_ domain.Coordinates,
@@ -157,5 +196,68 @@ func TestServiceOwnsRouteOptionValidationAndNormalization(t *testing.T) {
 	}
 	if provider.calls != 1 {
 		t.Fatalf("provider calls = %d, want 1", provider.calls)
+	}
+}
+
+func TestServiceCopiesProviderValuesAtTheApplicationBoundary(t *testing.T) {
+	provider := &mutableProvider{
+		places: []domain.Place{{Name: "City", Context: map[string]string{"kind": "city"}}},
+		place:  &domain.Place{Name: "Reverse", Context: map[string]string{"kind": "reverse"}},
+		route:  &domain.Route{Polyline: [][]float64{{1, 2}}},
+		matrix: &domain.Matrix{DistancesKm: []float64{1}, DurationsMin: []float64{2}},
+	}
+	service := application.NewLocationServiceWithCache(
+		provider,
+		&cacheStub{values: map[string]any{}},
+	)
+
+	places, err := service.Search(context.Background(), "City", domain.Coordinates{})
+	if err != nil {
+		t.Fatalf("Search() error = %v", err)
+	}
+	places[0].Context["kind"] = "caller"
+	places[0].Context["caller"] = "mutated"
+	cachedPlaces, err := service.Search(context.Background(), "City", domain.Coordinates{})
+	if err != nil {
+		t.Fatalf("cached Search() error = %v", err)
+	}
+	if cachedPlaces[0].Context["kind"] != "city" || cachedPlaces[0].Context["caller"] != "" {
+		t.Fatalf("cached place was mutated through caller data: %#v", cachedPlaces)
+	}
+
+	reverse, err := service.ReverseGeocode(context.Background(), domain.Coordinates{})
+	if err != nil {
+		t.Fatalf("ReverseGeocode() error = %v", err)
+	}
+	reverse.Context["kind"] = "caller"
+	if provider.place.Context["kind"] != "reverse" {
+		t.Fatalf("provider place was mutated through caller data: %#v", provider.place)
+	}
+
+	route, err := service.Route(
+		context.Background(),
+		domain.Coordinates{},
+		domain.Coordinates{},
+		domain.RouteOptions{},
+	)
+	if err != nil {
+		t.Fatalf("Route() error = %v", err)
+	}
+	route.Polyline[0][0] = 99
+	if provider.route.Polyline[0][0] != 1 {
+		t.Fatalf("provider route was mutated through caller data: %#v", provider.route)
+	}
+
+	destinations := []domain.Coordinates{{Latitude: 1, Longitude: 2}}
+	matrix, err := service.Matrix(context.Background(), domain.Coordinates{}, destinations)
+	if err != nil {
+		t.Fatalf("Matrix() error = %v", err)
+	}
+	matrix.DistancesKm[0] = 99
+	if provider.matrix.DistancesKm[0] != 1 {
+		t.Fatalf("provider matrix was mutated through caller data: %#v", provider.matrix)
+	}
+	if destinations[0].Latitude != 1 {
+		t.Fatalf("provider changed caller destinations: %#v", destinations)
 	}
 }

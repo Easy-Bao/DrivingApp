@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
@@ -69,14 +71,14 @@ func (service *LocationService) Search(
 	key := fmt.Sprintf("search:%s:%.4f:%.4f", query, origin.Latitude, origin.Longitude)
 	places := []domain.Place{}
 	if service.cacheHit(ctx, key, &places) {
-		return places, nil
+		return clonePlaces(places), nil
 	}
 	places, err := service.provider.Search(ctx, query, origin)
 	if err != nil {
 		return nil, fmt.Errorf("search locations: %w", err)
 	}
-	service.cacheSet(ctx, key, places)
-	return places, nil
+	service.cacheSet(ctx, key, clonePlaces(places))
+	return clonePlaces(places), nil
 }
 
 func (service *LocationService) Nearby(
@@ -96,14 +98,14 @@ func (service *LocationService) Nearby(
 	key := fmt.Sprintf("nearby:%.4f:%.4f:%d", origin.Latitude, origin.Longitude, page)
 	places := []domain.Place{}
 	if service.cacheHit(ctx, key, &places) {
-		return places, nil
+		return clonePlaces(places), nil
 	}
 	places, err := service.provider.Nearby(ctx, origin, page)
 	if err != nil {
 		return nil, fmt.Errorf("load nearby locations: %w", err)
 	}
-	service.cacheSet(ctx, key, places)
-	return places, nil
+	service.cacheSet(ctx, key, clonePlaces(places))
+	return clonePlaces(places), nil
 }
 
 func (service *LocationService) ReverseGeocode(
@@ -119,16 +121,16 @@ func (service *LocationService) ReverseGeocode(
 	key := fmt.Sprintf("reverse:%.4f:%.4f", coordinates.Latitude, coordinates.Longitude)
 	var place domain.Place
 	if service.cacheHit(ctx, key, &place) {
-		return &place, nil
+		return clonePlace(&place), nil
 	}
 	result, err := service.provider.ReverseGeocode(ctx, coordinates)
 	if err != nil {
 		return nil, fmt.Errorf("reverse geocode location: %w", err)
 	}
 	if result != nil {
-		service.cacheSet(ctx, key, result)
+		service.cacheSet(ctx, key, clonePlace(result))
 	}
-	return result, nil
+	return clonePlace(result), nil
 }
 
 func (service *LocationService) Route(
@@ -156,7 +158,7 @@ func (service *LocationService) Route(
 	if err != nil {
 		return nil, fmt.Errorf("calculate location route: %w", err)
 	}
-	return result, nil
+	return cloneRoute(result), nil
 }
 
 func (service *LocationService) Matrix(
@@ -180,14 +182,59 @@ func (service *LocationService) Matrix(
 	key := matrixCacheKey(origin, destinations)
 	var matrix domain.Matrix
 	if service.cacheHit(ctx, key, &matrix) {
-		return &matrix, nil
+		return cloneMatrix(&matrix), nil
 	}
-	result, err := service.provider.Matrix(ctx, origin, destinations)
+	result, err := service.provider.Matrix(ctx, origin, slices.Clone(destinations))
 	if err != nil {
 		return nil, fmt.Errorf("calculate location matrix: %w", err)
 	}
-	service.cacheSet(ctx, key, result)
-	return result, nil
+	service.cacheSet(ctx, key, cloneMatrix(result))
+	return cloneMatrix(result), nil
+}
+
+func clonePlaces(values []domain.Place) []domain.Place {
+	if values == nil {
+		return nil
+	}
+	cloned := make([]domain.Place, len(values))
+	for index, value := range values {
+		cloned[index] = value
+		cloned[index].Context = maps.Clone(value.Context)
+	}
+	return cloned
+}
+
+func clonePlace(value *domain.Place) *domain.Place {
+	if value == nil {
+		return nil
+	}
+	cloned := *value
+	cloned.Context = maps.Clone(value.Context)
+	return &cloned
+}
+
+func cloneRoute(value *domain.Route) *domain.Route {
+	if value == nil {
+		return nil
+	}
+	cloned := *value
+	if value.Polyline != nil {
+		cloned.Polyline = make([][]float64, len(value.Polyline))
+		for index, line := range value.Polyline {
+			cloned.Polyline[index] = slices.Clone(line)
+		}
+	}
+	return &cloned
+}
+
+func cloneMatrix(value *domain.Matrix) *domain.Matrix {
+	if value == nil {
+		return nil
+	}
+	cloned := *value
+	cloned.DistancesKm = slices.Clone(value.DistancesKm)
+	cloned.DurationsMin = slices.Clone(value.DurationsMin)
+	return &cloned
 }
 
 func (service *LocationService) cacheHit(ctx context.Context, key string, target any) bool {

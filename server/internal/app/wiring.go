@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 
 	adminapplication "github.com/Easy-Bao/DrivingApp/server/internal/admin/application"
 	adminports "github.com/Easy-Bao/DrivingApp/server/internal/admin/ports"
@@ -104,7 +105,13 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 		dependencies.otpAttemptStore,
 	)
 
-	usersRouter := userhttp.NewRouter(userapplication.NewProfileService(profileStore), verifier)
+	usersRouter := userhttp.NewRouter(
+		userapplication.NewProfileService(
+			profileStore,
+			userapplication.WithContentTypeDetector(http.DetectContentType),
+		),
+		verifier,
+	)
 	documentRouter := documents.NewRouter(
 		documents.NewDocumentService(
 			documentStore,

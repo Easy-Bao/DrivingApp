@@ -212,3 +212,17 @@ func TestChatRelayPublishesPassengerScopedNotification(t *testing.T) {
 		t.Fatalf("event payload = %#v", payload)
 	}
 }
+
+func TestChatMessagesReturnsACopy(t *testing.T) {
+	history := &chatHistory{messages: []domain.Message{{RoomID: "ride-1", Body: "original"}}}
+	service := application.NewChatService(history)
+
+	messages, err := service.Messages(context.Background(), "ride-1")
+	if err != nil {
+		t.Fatalf("Messages() error = %v", err)
+	}
+	messages[0].Body = "mutated"
+	if history.messages[0].Body != "original" {
+		t.Fatalf("history was mutated through returned messages: %#v", history.messages)
+	}
+}

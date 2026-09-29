@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 	"time"
 
@@ -198,7 +199,7 @@ func (service *ChatService) Messages(ctx context.Context, roomID string) ([]doma
 	if err != nil {
 		return nil, fmt.Errorf("load chat messages: %w", err)
 	}
-	return messages, nil
+	return slices.Clone(messages), nil
 }
 
 func (service *ChatService) Resolve(ctx context.Context, roomID string) error {

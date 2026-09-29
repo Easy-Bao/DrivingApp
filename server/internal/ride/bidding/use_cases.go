@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"time"
 
 	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
@@ -143,7 +144,7 @@ func (service *Service) ActiveSessions(ctx context.Context, driverID *int) ([]do
 	if err != nil {
 		return nil, fmt.Errorf("load active bid sessions: %w", err)
 	}
-	return sessions, nil
+	return slices.Clone(sessions), nil
 }
 
 func (service *Service) Offers(ctx context.Context, sessionID int) ([]domain.BidOffer, error) {
@@ -154,7 +155,7 @@ func (service *Service) Offers(ctx context.Context, sessionID int) ([]domain.Bid
 	if err != nil {
 		return nil, fmt.Errorf("load bid offers: %w", err)
 	}
-	return offers, nil
+	return slices.Clone(offers), nil
 }
 
 func (service *Service) PlaceOffer(ctx context.Context, offer domain.BidOffer) (domain.BidOffer, error) {
@@ -292,7 +293,7 @@ func (service *Service) Session(ctx context.Context, sessionID int) (domain.BidS
 	if err != nil {
 		return domain.BidSession{}, fmt.Errorf("load bid session offers: %w", err)
 	}
-	session.Offers = offers
+	session.Offers = slices.Clone(offers)
 	return session, nil
 }
 

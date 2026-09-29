@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 )
 
 // Resolver uses the lifecycle projection for hot-path reads and consults the
@@ -76,7 +77,7 @@ func (resolver *Resolver) ForDriver(ctx context.Context, driverID string) ([]Ass
 	if resolver.routing != nil {
 		assignments, err := resolver.routing.ForDriver(ctx, driverID)
 		if err == nil && len(assignments) > 0 {
-			return assignments, nil
+			return slices.Clone(assignments), nil
 		}
 		if contextErr := contextError(ctx); contextErr != nil {
 			return nil, contextErr
@@ -102,7 +103,7 @@ func (resolver *Resolver) ForDriver(ctx context.Context, driverID string) ([]Ass
 		if err != nil {
 			return nil, fmt.Errorf("load authoritative driver assignments: %w", err)
 		}
-		return assignments, nil
+		return slices.Clone(assignments), nil
 	}
 	return nil, nil
 }

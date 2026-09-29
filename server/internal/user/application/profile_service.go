@@ -4,21 +4,45 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
+	"slices"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/user/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/user/ports"
 )
 
-type ProfileService struct{ repository ports.ProfileStore }
+type ContentTypeDetector func([]byte) string
+
+type ProfileServiceOption func(*ProfileService)
+
+func WithContentTypeDetector(detector ContentTypeDetector) ProfileServiceOption {
+	return func(service *ProfileService) {
+		service.detectContentType = detector
+	}
+}
+
+type ProfileService struct {
+	repository        ports.ProfileStore
+	detectContentType ContentTypeDetector
+}
 
 var (
 	ErrProfileUnavailable      = errors.New("profile persistence is unavailable")
 	ErrNotificationUnavailable = errors.New("notification persistence is unavailable")
 )
 
-func NewProfileService(repository ports.ProfileStore) *ProfileService {
-	return &ProfileService{repository: repository}
+func NewProfileService(
+	repository ports.ProfileStore,
+	options ...ProfileServiceOption,
+) *ProfileService {
+	service := &ProfileService{
+		repository: repository,
+	}
+	for _, option := range options {
+		if option != nil {
+			option(service)
+		}
+	}
+	return service
 }
 func (service *ProfileService) Get(ctx context.Context, userID int) (domain.Profile, error) {
 	if service.repository == nil {
@@ -72,7 +96,10 @@ func (service *ProfileService) SaveAvatar(ctx context.Context, userID int, conte
 	if invalidUserID || invalidSize {
 		return domain.Profile{}, domain.ErrInvalidAvatar
 	}
-	contentType := http.DetectContentType(content)
+	if service.detectContentType == nil {
+		return domain.Profile{}, domain.ErrAvatarStorageUnavailable
+	}
+	contentType := service.detectContentType(content)
 	if contentType != "image/jpeg" && contentType != "image/png" {
 		return domain.Profile{}, domain.ErrInvalidAvatar
 	}
@@ -124,7 +151,7 @@ func (service *ProfileService) Notifications(
 	if err != nil {
 		return nil, fmt.Errorf("load notifications: %w", err)
 	}
-	return items, nil
+	return slices.Clone(items), nil
 }
 
 func (service *ProfileService) DeleteNotification(

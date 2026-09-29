@@ -13,6 +13,7 @@ import (
 
 type biddingStoreStub struct {
 	session domain.BidSession
+	offers  []domain.BidOffer
 }
 
 func (stub *biddingStoreStub) CreateSession(_ context.Context, session domain.BidSession) (domain.BidSession, error) {
@@ -24,7 +25,7 @@ func (stub *biddingStoreStub) ActiveSessions(context.Context, *int) ([]domain.Bi
 	return nil, nil
 }
 func (stub *biddingStoreStub) Offers(context.Context, int) ([]domain.BidOffer, error) {
-	return nil, nil
+	return stub.offers, nil
 }
 func (stub *biddingStoreStub) PlaceOffer(context.Context, domain.BidOffer) (domain.BidOffer, error) {
 	return domain.BidOffer{}, nil
@@ -125,5 +126,19 @@ func TestAcceptOfferPublishesRideMatchedEvent(t *testing.T) {
 	}
 	if publishedType != string(event.RideMatched) {
 		t.Fatalf("published event = %q, want %q", publishedType, event.RideMatched)
+	}
+}
+
+func TestSessionCopiesOffersAtTheApplicationBoundary(t *testing.T) {
+	store := &biddingStoreStub{offers: []domain.BidOffer{{ID: 7, Status: "pending"}}}
+	service := bidding.NewService(bidding.Dependencies{Store: store})
+
+	session, err := service.Session(context.Background(), 10)
+	if err != nil {
+		t.Fatalf("Session() error = %v", err)
+	}
+	session.Offers[0].Status = "mutated"
+	if store.offers[0].Status != "pending" {
+		t.Fatalf("store offers were mutated through returned session: %#v", store.offers)
 	}
 }
