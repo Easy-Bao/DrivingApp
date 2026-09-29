@@ -49,6 +49,7 @@ Future<void> bootstrapDriverApp() async {
           debugLogDiagnosticsGoRouter: true,
           debugLogEventBus: true,
         );
+        await Future<void>.delayed(Duration.zero);
 
         final nativeService = MapNativeService(
           placeServiceBaseUri: DriverEnvConfig.apiBaseUri,

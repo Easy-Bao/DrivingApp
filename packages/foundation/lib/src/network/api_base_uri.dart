@@ -1,3 +1,5 @@
+const _defaultAndroidEmulatorLoopbackHost = '10.0.2.2';
+
 /// Parses the one origin used by the mobile clients for HTTP and WebSocket
 /// traffic.
 ///
@@ -50,12 +52,11 @@ Uri resolveMobileApiBaseUri({
       (uri.host == 'localhost' || uri.host == '127.0.0.1');
   if (!needsEmulatorHost) return uri;
 
-  final loopbackHost = androidEmulatorLoopbackHost?.trim();
-  if (loopbackHost == null || loopbackHost.isEmpty) {
-    throw const FormatException(
-      'ANDROID_EMULATOR_LOOPBACK_HOST is required for local Android URLs.',
-    );
-  }
+  final configuredLoopbackHost = androidEmulatorLoopbackHost?.trim();
+  final loopbackHost =
+      configuredLoopbackHost == null || configuredLoopbackHost.isEmpty
+      ? _defaultAndroidEmulatorLoopbackHost
+      : configuredLoopbackHost;
 
   uri = parseApiBaseUri(
     uri.replace(host: loopbackHost).toString(),

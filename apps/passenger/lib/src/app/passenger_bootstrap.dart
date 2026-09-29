@@ -44,6 +44,7 @@ Future<void> bootstrapPassengerApp() async {
           debugLogEventBus: true,
           observers: [passengerNavigationObserver],
         );
+        await Future<void>.delayed(Duration.zero);
 
         final nativeService = MapNativeService(
           placeServiceBaseUri: PassengerEnvConfig.apiBaseUri,

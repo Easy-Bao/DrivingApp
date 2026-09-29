@@ -64,16 +64,15 @@ void main() {
     expect(adbReverseUri.toString(), 'http://127.0.0.1:8123');
   });
 
-  test('requires an explicit Android emulator loopback host', () {
-    expect(
-      () => resolveMobileApiBaseUri(
-        rawUrl: 'http://localhost:8123',
-        allowInsecureHttp: true,
-        isAndroid: true,
-        isPhysicalDevice: false,
-        usesAdbReverse: false,
-      ),
-      throwsA(isA<FormatException>()),
+  test('uses the standard Android emulator loopback host when unset', () {
+    final uri = resolveMobileApiBaseUri(
+      rawUrl: 'http://localhost:8123',
+      allowInsecureHttp: true,
+      isAndroid: true,
+      isPhysicalDevice: false,
+      usesAdbReverse: false,
     );
+
+    expect(uri.toString(), 'http://10.0.2.2:8123');
   });
 }
