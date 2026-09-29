@@ -127,4 +127,3 @@ func TestAcceptOfferPublishesRideMatchedEvent(t *testing.T) {
 		t.Fatalf("published event = %q, want %q", publishedType, event.RideMatched)
 	}
 }
-

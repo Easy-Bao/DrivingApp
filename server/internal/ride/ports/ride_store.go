@@ -31,4 +31,3 @@ type RideStore interface {
 	RideReader
 	RideWriter
 }
-
