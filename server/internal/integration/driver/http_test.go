@@ -28,7 +28,11 @@ func TestDocumentAdministrationRequiresConfiguredAdministrator(t *testing.T) {
 	}
 	repository := newDocumentRepositoryFake()
 	storage := newDocumentStorageFake()
-	service := documents.NewDocumentService(repository, storage, 1024)
+	service := documents.NewDocumentService(
+		repository,
+		storage,
+		documents.WithMaxDocumentBytes(1024),
+	)
 	document, err := service.Upload(t.Context(), 7, "driver_license", "application/pdf", validPDF)
 	if err != nil {
 		t.Fatal(err)
@@ -70,7 +74,11 @@ func TestPrivateDocumentContentIsOwnerOrAdminOnly(t *testing.T) {
 	adminToken, _ := tokenManager.IssueWithRole("42", security.RolePassenger)
 	repository := newDocumentRepositoryFake()
 	storage := newDocumentStorageFake()
-	service := documents.NewDocumentService(repository, storage, 1024)
+	service := documents.NewDocumentService(
+		repository,
+		storage,
+		documents.WithMaxDocumentBytes(1024),
+	)
 	document, err := service.Upload(t.Context(), 7, "driver_license", "application/pdf", validPDF)
 	if err != nil {
 		t.Fatal(err)
@@ -131,7 +139,11 @@ func TestDocumentUploadRequiresCanonicalTypeAndMatchingSignature(t *testing.T) {
 	storage := newDocumentStorageFake()
 	router := chi.NewRouter()
 	documents.NewRouter(
-		documents.NewDocumentService(repository, storage, 1024),
+		documents.NewDocumentService(
+			repository,
+			storage,
+			documents.WithMaxDocumentBytes(1024),
+		),
 		tokenManager,
 		security.NewAdminAuthorizer("42"),
 	).RegisterRoutes(router)

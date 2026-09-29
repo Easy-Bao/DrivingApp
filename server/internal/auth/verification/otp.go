@@ -30,14 +30,27 @@ type OTPService struct {
 	logger        *slog.Logger
 }
 
+type OTPServiceOption func(*OTPService)
+
+func WithPendingRegistration(
+	pending authports.PendingRegistrationStore,
+	registrations *registration.RegisterService,
+) OTPServiceOption {
+	return func(service *OTPService) {
+		service.pending = pending
+		service.registrations = registrations
+	}
+}
+
 func NewOTPService(
 	users authports.VerifiedUserStore,
 	store authports.OTPStore,
 	gateway authports.OTPSender,
 	tokens authports.TokenIssuer,
 	sessions authports.SessionStore,
+	options ...OTPServiceOption,
 ) *OTPService {
-	return &OTPService{
+	service := &OTPService{
 		users:    users,
 		store:    store,
 		gateway:  gateway,
@@ -45,27 +58,12 @@ func NewOTPService(
 		sessions: sessions,
 		logger:   slog.Default(),
 	}
-}
-
-func NewOTPServiceWithPending(
-	users authports.VerifiedUserStore,
-	store authports.OTPStore,
-	gateway authports.OTPSender,
-	tokens authports.TokenIssuer,
-	pending authports.PendingRegistrationStore,
-	registrations *registration.RegisterService,
-	sessions authports.SessionStore,
-) *OTPService {
-	return &OTPService{
-		users:         users,
-		store:         store,
-		gateway:       gateway,
-		tokens:        tokens,
-		sessions:      sessions,
-		pending:       pending,
-		registrations: registrations,
-		logger:        slog.Default(),
+	for _, option := range options {
+		if option != nil {
+			option(service)
+		}
 	}
+	return service
 }
 
 func (service *OTPService) WithLogger(logger *slog.Logger) *OTPService {

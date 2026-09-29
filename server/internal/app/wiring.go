@@ -89,14 +89,16 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 		verifier,
 		sessionStore,
 	).WithLogger(applicationLogger)
-	otpService := authverification.NewOTPServiceWithPending(
+	otpService := authverification.NewOTPService(
 		authStore,
 		authredis.NewOTPStore(redisClient),
 		email.NewGoMailGatewayFromEnv(),
 		verifier,
-		authredis.NewPendingRegistrationStore(redisClient),
-		registerService,
 		sessionStore,
+		authverification.WithPendingRegistration(
+			authredis.NewPendingRegistrationStore(redisClient),
+			registerService,
+		),
 	).WithLogger(applicationLogger)
 	authRouter := authhttp.NewRouter(
 		registerService,
@@ -116,7 +118,7 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 		documents.NewDocumentService(
 			documentStore,
 			privateObjectStore,
-			config.Security.UploadBodyLimit,
+			documents.WithMaxDocumentBytes(config.Security.UploadBodyLimit),
 		),
 		verifier,
 		adminAuthorizer,
@@ -148,11 +150,11 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 	eventHub := websockethub.NewHub()
 	assignmentProjection := assignment.NewMemoryProjection()
 	eventPublisher := eventadapter.NewMemoryPublisher(assignmentProjection, eventHub)
-	ridesService := rideapplication.NewRideServiceWithRouteCalculator(
+	ridesService := rideapplication.NewRideService(
 		rideStore,
-		routeCalculator,
 		config.Pricing,
 		eventPublisher,
+		rideapplication.WithRouteCalculator(routeCalculator),
 	).WithReportingLocation(config.ReportingLocation).WithLogger(applicationLogger)
 	rideAssignments := assignment.NewResolver(
 		assignmentProjection,
@@ -167,9 +169,9 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 		tracking.WithEventPublisher(eventPublisher),
 		tracking.WithLogger(applicationLogger),
 	)
-	locationService := locationapplication.NewLocationServiceWithCache(
+	locationService := locationapplication.NewLocationService(
 		mapboxProvider,
-		locationredis.NewCache(redisClient),
+		locationapplication.WithCache(locationredis.NewCache(redisClient)),
 	).WithLogger(applicationLogger)
 	passengerRideContextQuery := passengerridecontext.NewQueryService(
 		passengerridecontext.NewRidesReader(ridesService),

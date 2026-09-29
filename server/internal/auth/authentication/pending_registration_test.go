@@ -17,14 +17,13 @@ func TestPassengerRegistrationCreatesAccountOnlyAfterOTP(t *testing.T) {
 	gateway := &otpGateway{}
 	sessions := newTestRefreshSessionStore()
 	register := authregistration.NewRegisterService(repository, otpIssuer{}, sessions)
-	service := verification.NewOTPServiceWithPending(
+	service := verification.NewOTPService(
 		repository,
 		&otpMemoryStore{values: map[string]string{}},
 		gateway,
 		otpIssuer{},
-		pending,
-		register,
 		sessions,
+		verification.WithPendingRegistration(pending, register),
 	)
 
 	registration, err := service.RegisterPassenger(context.Background(), authregistration.RegisterInput{
@@ -62,14 +61,13 @@ func TestRetryingUnverifiedPassengerRegistrationReplacesPendingData(t *testing.T
 	gateway := &otpGateway{}
 	sessions := newTestRefreshSessionStore()
 	register := authregistration.NewRegisterService(repository, otpIssuer{}, sessions)
-	service := verification.NewOTPServiceWithPending(
+	service := verification.NewOTPService(
 		repository,
 		&otpMemoryStore{values: map[string]string{}},
 		gateway,
 		otpIssuer{},
-		pending,
-		register,
 		sessions,
+		verification.WithPendingRegistration(pending, register),
 	)
 
 	_, err := service.RegisterPassenger(context.Background(), authregistration.RegisterInput{
@@ -103,14 +101,13 @@ func TestPassengerVerificationSucceedsWhenPendingCleanupFails(t *testing.T) {
 	gateway := &otpGateway{}
 	sessions := newTestRefreshSessionStore()
 	register := authregistration.NewRegisterService(repository, otpIssuer{}, sessions)
-	service := verification.NewOTPServiceWithPending(
+	service := verification.NewOTPService(
 		repository,
 		&otpMemoryStore{values: map[string]string{}},
 		gateway,
 		otpIssuer{},
-		pending,
-		register,
 		sessions,
+		verification.WithPendingRegistration(pending, register),
 	)
 
 	registration, err := service.RegisterPassenger(context.Background(), authregistration.RegisterInput{
@@ -137,14 +134,13 @@ func TestPassengerRegistrationRejectsVerifiedEmail(t *testing.T) {
 	pending := &pendingRegistrationStore{}
 	sessions := newTestRefreshSessionStore()
 	register := authregistration.NewRegisterService(repository, otpIssuer{}, sessions)
-	service := verification.NewOTPServiceWithPending(
+	service := verification.NewOTPService(
 		repository,
 		&otpMemoryStore{values: map[string]string{}},
 		&otpGateway{},
 		otpIssuer{},
-		pending,
-		register,
 		sessions,
+		verification.WithPendingRegistration(pending, register),
 	)
 
 	if _, err := service.RegisterPassenger(context.Background(), authregistration.RegisterInput{

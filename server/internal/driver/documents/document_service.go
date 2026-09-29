@@ -22,16 +22,34 @@ type DocumentService struct {
 
 var ErrServiceUnavailable = errors.New("driver document service is unavailable")
 
+const _defaultMaxDocumentBytes int64 = 10 << 20
+
+type DocumentServiceOption func(*DocumentService)
+
+func WithMaxDocumentBytes(limit int64) DocumentServiceOption {
+	return func(service *DocumentService) {
+		if limit > 0 {
+			service.maxDocumentBytes = limit
+		}
+	}
+}
+
 func NewDocumentService(
 	repository DocumentStore,
 	storage ObjectStore,
-	maxDocumentBytes int64,
+	options ...DocumentServiceOption,
 ) *DocumentService {
-	return &DocumentService{
+	service := &DocumentService{
 		repository:       repository,
 		storage:          storage,
-		maxDocumentBytes: maxDocumentBytes,
+		maxDocumentBytes: _defaultMaxDocumentBytes,
 	}
+	for _, option := range options {
+		if option != nil {
+			option(service)
+		}
+	}
+	return service
 }
 
 func (service *DocumentService) MaxDocumentBytes() int64 {

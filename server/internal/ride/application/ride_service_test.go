@@ -157,9 +157,11 @@ func TestCreateSessionUsesServerMinimumAndAcceptsValidCustomFare(t *testing.T) {
 
 func TestCreateSessionUsesAuthoritativeRouteMetrics(t *testing.T) {
 	stub := &ridesRepositoryStub{}
-	service := NewRideServiceWithRouteCalculator(
+	service := NewRideService(
 		stub,
-		RouteCalculatorFunc(func(
+		testPricingConfig(t),
+		nil,
+		WithRouteCalculator(RouteCalculatorFunc(func(
 			context.Context,
 			float64,
 			float64,
@@ -167,9 +169,7 @@ func TestCreateSessionUsesAuthoritativeRouteMetrics(t *testing.T) {
 			float64,
 		) (RouteMetrics, error) {
 			return RouteMetrics{DistanceKm: 4, DurationMinutes: 20}, nil
-		}),
-		testPricingConfig(t),
-		nil,
+		})),
 	)
 	custom := int64(4000)
 	session, err := service.CreateSession(context.Background(), domain.BidSession{
@@ -195,9 +195,11 @@ func TestCreateSessionUsesAuthoritativeRouteMetrics(t *testing.T) {
 
 func TestCreateSessionFailsWhenAuthoritativeRouteIsUnavailable(t *testing.T) {
 	stub := &ridesRepositoryStub{}
-	service := NewRideServiceWithRouteCalculator(
+	service := NewRideService(
 		stub,
-		RouteCalculatorFunc(func(
+		testPricingConfig(t),
+		nil,
+		WithRouteCalculator(RouteCalculatorFunc(func(
 			context.Context,
 			float64,
 			float64,
@@ -205,9 +207,7 @@ func TestCreateSessionFailsWhenAuthoritativeRouteIsUnavailable(t *testing.T) {
 			float64,
 		) (RouteMetrics, error) {
 			return RouteMetrics{}, errors.New("mapbox timeout")
-		}),
-		testPricingConfig(t),
-		nil,
+		})),
 	)
 	_, err := service.CreateSession(context.Background(), domain.BidSession{
 		PassengerID:      7,
@@ -225,14 +225,14 @@ func TestCreateSessionPreservesRouteContextCancellation(t *testing.T) {
 	stub := &ridesRepositoryStub{}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	service := NewRideServiceWithRouteCalculator(
+	service := NewRideService(
 		stub,
-		RouteCalculatorFunc(func(context.Context, float64, float64, float64, float64) (RouteMetrics, error) {
-			cancel()
-			return RouteMetrics{DistanceKm: 4, DurationMinutes: 20}, nil
-		}),
 		testPricingConfig(t),
 		nil,
+		WithRouteCalculator(RouteCalculatorFunc(func(context.Context, float64, float64, float64, float64) (RouteMetrics, error) {
+			cancel()
+			return RouteMetrics{DistanceKm: 4, DurationMinutes: 20}, nil
+		})),
 	)
 
 	_, err := service.CreateSession(ctx, domain.BidSession{
@@ -292,9 +292,11 @@ func TestCreateSessionRejectsPassengerWithActiveRide(t *testing.T) {
 func TestCreateSessionRejectsPassengerWithActiveRideBeforeRouteCalculation(t *testing.T) {
 	stub := &ridesRepositoryStub{hasActiveRide: true}
 	routeResolved := false
-	service := NewRideServiceWithRouteCalculator(
+	service := NewRideService(
 		stub,
-		RouteCalculatorFunc(func(
+		testPricingConfig(t),
+		nil,
+		WithRouteCalculator(RouteCalculatorFunc(func(
 			context.Context,
 			float64,
 			float64,
@@ -303,9 +305,7 @@ func TestCreateSessionRejectsPassengerWithActiveRideBeforeRouteCalculation(t *te
 		) (RouteMetrics, error) {
 			routeResolved = true
 			return RouteMetrics{DistanceKm: 4, DurationMinutes: 20}, nil
-		}),
-		testPricingConfig(t),
-		nil,
+		})),
 	)
 	_, err := service.CreateSession(context.Background(), domain.BidSession{
 		PassengerID:      7,

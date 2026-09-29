@@ -35,12 +35,25 @@ type LocationService struct {
 	logger   *slog.Logger
 }
 
-func NewLocationService(provider locationports.Provider) *LocationService {
-	return NewLocationServiceWithCache(provider, nil)
+type LocationServiceOption func(*LocationService)
+
+func WithCache(cache locationports.Cache) LocationServiceOption {
+	return func(service *LocationService) {
+		service.cache = cache
+	}
 }
 
-func NewLocationServiceWithCache(provider locationports.Provider, cache locationports.Cache) *LocationService {
-	return &LocationService{provider: provider, cache: cache, logger: slog.Default()}
+func NewLocationService(
+	provider locationports.Provider,
+	options ...LocationServiceOption,
+) *LocationService {
+	service := &LocationService{provider: provider, logger: slog.Default()}
+	for _, option := range options {
+		if option != nil {
+			option(service)
+		}
+	}
+	return service
 }
 
 func (service *LocationService) WithLogger(logger *slog.Logger) *LocationService {

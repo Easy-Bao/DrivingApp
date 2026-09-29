@@ -134,7 +134,11 @@ func (storage *documentStorageFake) Delete(_ context.Context, key string) error 
 func TestUploadCreatesAnImmutablePendingRevision(t *testing.T) {
 	repository := newDocumentRepositoryFake()
 	storage := newDocumentStorageFake()
-	service := documents.NewDocumentService(repository, storage, 1024)
+	service := documents.NewDocumentService(
+		repository,
+		storage,
+		documents.WithMaxDocumentBytes(1024),
+	)
 
 	document, err := service.Upload(context.Background(), 3, "driver_license", "application/pdf", validPDF)
 	if err != nil {
@@ -162,7 +166,11 @@ func TestUploadCreatesAnImmutablePendingRevision(t *testing.T) {
 
 func TestUploadRejectsMismatchedContentBeforeStorage(t *testing.T) {
 	storage := newDocumentStorageFake()
-	service := documents.NewDocumentService(newDocumentRepositoryFake(), storage, 1024)
+	service := documents.NewDocumentService(
+		newDocumentRepositoryFake(),
+		storage,
+		documents.WithMaxDocumentBytes(1024),
+	)
 
 	_, err := service.Upload(context.Background(), 3, "driver_license", "image/png", validPDF)
 	if !errors.Is(err, domain.ErrUnsupportedContentType) {
@@ -177,7 +185,11 @@ func TestUploadRemovesObjectWhenMetadataCreationFails(t *testing.T) {
 	repository := newDocumentRepositoryFake()
 	repository.createErr = errors.New("database unavailable")
 	storage := newDocumentStorageFake()
-	service := documents.NewDocumentService(repository, storage, 1024)
+	service := documents.NewDocumentService(
+		repository,
+		storage,
+		documents.WithMaxDocumentBytes(1024),
+	)
 
 	_, err := service.Upload(context.Background(), 3, "driver_license", "application/pdf", validPDF)
 	if err == nil || len(storage.deleted) != 1 || len(storage.objects) != 0 {
@@ -188,7 +200,11 @@ func TestUploadRemovesObjectWhenMetadataCreationFails(t *testing.T) {
 func TestDocumentContentEnforcesOwnershipAndIntegrity(t *testing.T) {
 	repository := newDocumentRepositoryFake()
 	storage := newDocumentStorageFake()
-	service := documents.NewDocumentService(repository, storage, 1024)
+	service := documents.NewDocumentService(
+		repository,
+		storage,
+		documents.WithMaxDocumentBytes(1024),
+	)
 	document, err := service.Upload(context.Background(), 3, "driver_license", "application/pdf", validPDF)
 	if err != nil {
 		t.Fatal(err)
@@ -206,7 +222,11 @@ func TestDocumentContentEnforcesOwnershipAndIntegrity(t *testing.T) {
 func TestReviewCannotRewriteAFinalDecision(t *testing.T) {
 	repository := newDocumentRepositoryFake()
 	storage := newDocumentStorageFake()
-	service := documents.NewDocumentService(repository, storage, 1024)
+	service := documents.NewDocumentService(
+		repository,
+		storage,
+		documents.WithMaxDocumentBytes(1024),
+	)
 	document, err := service.Upload(context.Background(), 3, "driver_license", "application/pdf", validPDF)
 	if err != nil {
 		t.Fatal(err)

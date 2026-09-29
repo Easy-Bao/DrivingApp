@@ -144,7 +144,7 @@ func TestServiceDelegatesSearch(t *testing.T) {
 
 func TestServiceSupportsNearbyPlacesAndCaching(t *testing.T) {
 	cache := &cacheStub{values: map[string]any{}}
-	service := application.NewLocationServiceWithCache(providerStub{}, cache)
+	service := application.NewLocationService(providerStub{}, application.WithCache(cache))
 	places, err := service.Nearby(context.Background(), domain.Coordinates{Latitude: 7.8, Longitude: 123.4}, 1)
 	if err != nil || len(places) != 1 || places[0].Name != "Nearby Place" {
 		t.Fatalf("nearby places = %#v, %v", places, err)
@@ -206,9 +206,9 @@ func TestServiceCopiesProviderValuesAtTheApplicationBoundary(t *testing.T) {
 		route:  &domain.Route{Polyline: [][]float64{{1, 2}}},
 		matrix: &domain.Matrix{DistancesKm: []float64{1}, DurationsMin: []float64{2}},
 	}
-	service := application.NewLocationServiceWithCache(
+	service := application.NewLocationService(
 		provider,
-		&cacheStub{values: map[string]any{}},
+		application.WithCache(&cacheStub{values: map[string]any{}}),
 	)
 
 	places, err := service.Search(context.Background(), "City", domain.Coordinates{})

@@ -23,6 +23,14 @@ type RouteCalculatorFunc = ports.RouteProviderFunc
 
 var errRidePersistenceUnavailable = errors.New("ride persistence is unavailable")
 
+type RideServiceOption func(*RideService)
+
+func WithRouteCalculator(calculator RouteCalculator) RideServiceOption {
+	return func(service *RideService) {
+		service.routeCalculator = calculator
+	}
+}
+
 type RideService struct {
 	repository        ports.RideStore
 	routeCalculator   RouteCalculator
@@ -40,6 +48,7 @@ func NewRideService(
 	repository ports.RideStore,
 	pricingConfig PricingConfig,
 	publisher ports.EventPublisher,
+	options ...RideServiceOption,
 ) *RideService {
 	activeRideChecker, lifecycleStore, settlementStore := optionalRideCapabilities(repository)
 	service := &RideService{
@@ -49,40 +58,10 @@ func NewRideService(
 		reportingLocation: _defaultReportingLocation,
 		logger:            slog.Default(),
 	}
-	service.bookingService = booking.NewService(booking.Dependencies{
-		Writer:            repository,
-		ActiveRideChecker: activeRideChecker,
-		ResolveRoute:      service.authoritativeRoute,
-		CalculateFare:     pricingConfig.FareAmount,
-		PublishRide:       service.publishRide,
-		HasRouteProvider:  false,
-	})
-	service.biddingService = newBiddingService(service)
-	service.lifecycleService = lifecycleapplication.NewService(lifecycleapplication.Dependencies{
-		Store:       lifecycleStore,
-		PublishRide: service.publishRide,
-	})
-	service.settlementService = settlementapplication.NewService(settlementapplication.Dependencies{
-		Store:       settlementStore,
-		PublishRide: service.publishRide,
-	})
-	return service
-}
-
-func NewRideServiceWithRouteCalculator(
-	repository ports.RideStore,
-	calculator RouteCalculator,
-	pricingConfig PricingConfig,
-	publisher ports.EventPublisher,
-) *RideService {
-	activeRideChecker, lifecycleStore, settlementStore := optionalRideCapabilities(repository)
-	service := &RideService{
-		repository:        repository,
-		routeCalculator:   calculator,
-		pricingConfig:     pricingConfig,
-		eventPublisher:    publisher,
-		reportingLocation: _defaultReportingLocation,
-		logger:            slog.Default(),
+	for _, option := range options {
+		if option != nil {
+			option(service)
+		}
 	}
 	service.bookingService = booking.NewService(booking.Dependencies{
 		Writer:            repository,
@@ -90,7 +69,7 @@ func NewRideServiceWithRouteCalculator(
 		ResolveRoute:      service.authoritativeRoute,
 		CalculateFare:     pricingConfig.FareAmount,
 		PublishRide:       service.publishRide,
-		HasRouteProvider:  calculator != nil,
+		HasRouteProvider:  service.routeCalculator != nil,
 	})
 	service.biddingService = newBiddingService(service)
 	service.lifecycleService = lifecycleapplication.NewService(lifecycleapplication.Dependencies{
