@@ -166,8 +166,10 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 		rideapplication.WithRouteCalculator(routeCalculator),
 	).WithReportingLocation(config.ReportingLocation).WithLogger(applicationLogger)
 	rideAssignments := assignment.NewResolver(
-		assignmentProjection,
-		assignment.NewRideLookup(rideStore),
+		assignment.ResolverDependencies{
+			Routing:   assignmentProjection,
+			Authority: assignment.NewRideLookup(rideStore),
+		},
 	)
 
 	ridesRouter := ridehttp.NewRouter(ridesService, verifier)

@@ -15,6 +15,16 @@ var (
 	ErrCircuitOperationNil  = errors.New("circuit breaker operation is nil")
 )
 
+const (
+	_defaultFailureThreshold = 5
+	_defaultResetAfter       = 30 * time.Second
+)
+
+type CircuitBreakerConfig struct {
+	FailureThreshold int
+	ResetAfter       time.Duration
+}
+
 type CircuitBreaker struct {
 	mu               sync.Mutex
 	failureThreshold int
@@ -24,16 +34,16 @@ type CircuitBreaker struct {
 	halfOpen         bool
 }
 
-func NewCircuitBreaker(failureThreshold int, resetAfter time.Duration) *CircuitBreaker {
-	if failureThreshold <= 0 {
-		failureThreshold = 5
+func NewCircuitBreaker(config CircuitBreakerConfig) *CircuitBreaker {
+	if config.FailureThreshold <= 0 {
+		config.FailureThreshold = _defaultFailureThreshold
 	}
-	if resetAfter <= 0 {
-		resetAfter = 30 * time.Second
+	if config.ResetAfter <= 0 {
+		config.ResetAfter = _defaultResetAfter
 	}
 	return &CircuitBreaker{
-		failureThreshold: failureThreshold,
-		resetAfter:       resetAfter,
+		failureThreshold: config.FailureThreshold,
+		resetAfter:       config.ResetAfter,
 	}
 }
 

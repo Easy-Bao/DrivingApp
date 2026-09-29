@@ -8,8 +8,21 @@ import (
 	"time"
 )
 
+func TestCircuitBreakerUsesDefaultsForInvalidConfiguration(t *testing.T) {
+	breaker := NewCircuitBreaker(CircuitBreakerConfig{})
+	if breaker.failureThreshold != _defaultFailureThreshold {
+		t.Fatalf("failure threshold = %d, want %d", breaker.failureThreshold, _defaultFailureThreshold)
+	}
+	if breaker.resetAfter != _defaultResetAfter {
+		t.Fatalf("reset duration = %s, want %s", breaker.resetAfter, _defaultResetAfter)
+	}
+}
+
 func TestCircuitBreakerOpensAfterThreshold(t *testing.T) {
-	breaker := NewCircuitBreaker(2, time.Minute)
+	breaker := NewCircuitBreaker(CircuitBreakerConfig{
+		FailureThreshold: 2,
+		ResetAfter:       time.Minute,
+	})
 	failure := errors.New("downstream failed")
 	operation := func(context.Context) error { return failure }
 
@@ -26,7 +39,10 @@ func TestCircuitBreakerOpensAfterThreshold(t *testing.T) {
 
 func TestCircuitBreakerAllowsOneProbeAfterReset(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		breaker := NewCircuitBreaker(1, time.Millisecond)
+		breaker := NewCircuitBreaker(CircuitBreakerConfig{
+			FailureThreshold: 1,
+			ResetAfter:       time.Millisecond,
+		})
 		failure := errors.New("downstream failed")
 		if err := breaker.Do(context.Background(), func(context.Context) error { return failure }); err == nil {
 			t.Fatal("expected initial failure")
@@ -53,7 +69,10 @@ func TestCircuitBreakerRejectsMissingDependencies(t *testing.T) {
 		t.Fatalf("nil breaker error = %v, want %v", nilBreakerErr, ErrCircuitNotConfigured)
 	}
 
-	configured := NewCircuitBreaker(1, time.Minute)
+	configured := NewCircuitBreaker(CircuitBreakerConfig{
+		FailureThreshold: 1,
+		ResetAfter:       time.Minute,
+	})
 	if err := configured.Do(nil, func(context.Context) error { return nil }); !errors.Is(err, ErrCircuitContextNil) {
 		t.Fatalf("nil context error = %v, want %v", err, ErrCircuitContextNil)
 	}

@@ -15,8 +15,17 @@ type Resolver struct {
 	logger    *slog.Logger
 }
 
-func NewResolver(routing, authority Lookup) *Resolver {
-	return &Resolver{routing: routing, authority: authority, logger: slog.Default()}
+type ResolverDependencies struct {
+	Routing   Lookup
+	Authority Lookup
+}
+
+func NewResolver(dependencies ResolverDependencies) *Resolver {
+	return &Resolver{
+		routing:   dependencies.Routing,
+		authority: dependencies.Authority,
+		logger:    slog.Default(),
+	}
 }
 
 func (resolver *Resolver) WithLogger(logger *slog.Logger) *Resolver {

@@ -68,9 +68,12 @@ func NewMapboxProvider(token string) *MapboxProvider {
 		return dialer.DialContext(ctx, "tcp4", address)
 	}
 	return &MapboxProvider{
-		token:      token,
-		client:     &http.Client{Transport: transport, Timeout: _mapboxRequestTimeout},
-		breaker:    resilience.NewCircuitBreaker(5, 30*time.Second),
+		token:  token,
+		client: &http.Client{Transport: transport, Timeout: _mapboxRequestTimeout},
+		breaker: resilience.NewCircuitBreaker(resilience.CircuitBreakerConfig{
+			FailureThreshold: 5,
+			ResetAfter:       30 * time.Second,
+		}),
 		routeCache: make(map[string]routeCacheEntry),
 	}
 }

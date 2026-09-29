@@ -120,7 +120,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	})
 	idempotency := middleware.NewIdempotency(
 		middleware.NewRedisIdempotencyStore(redisClient),
-		10*time.Minute,
+		middleware.WithIdempotencyExpiration(10*time.Minute),
 	).WithLogger(applicationLogger)
 	secureHandler := middleware.SecureHTTPWithIdempotency(
 		router,

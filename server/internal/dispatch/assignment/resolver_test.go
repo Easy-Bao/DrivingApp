@@ -13,6 +13,10 @@ type lookupStub struct {
 	forRideCalls  *int
 }
 
+func newTestResolver(routing, authority Lookup) *Resolver {
+	return NewResolver(ResolverDependencies{Routing: routing, Authority: authority})
+}
+
 func (stub lookupStub) ForRide(context.Context, string) (Assignment, bool, error) {
 	if stub.forRideCalls != nil {
 		*stub.forRideCalls++
@@ -32,7 +36,7 @@ func TestResolverUsesRoutingProjectionForRideAuthorization(t *testing.T) {
 		forRideCalls: &authorityCalls,
 	}
 
-	value, found, err := NewResolver(routing, authority).ForRide(context.Background(), "303")
+	value, found, err := newTestResolver(routing, authority).ForRide(context.Background(), "303")
 
 	if err != nil || !found {
 		t.Fatalf("ForRide() found = %t, error = %v", found, err)
@@ -52,7 +56,7 @@ func TestResolverFallsBackToAuthorityWhenRideProjectionMisses(t *testing.T) {
 		forRideCalls: &authorityCalls,
 	}
 
-	value, found, err := NewResolver(lookupStub{}, authority).ForRide(context.Background(), "303")
+	value, found, err := newTestResolver(lookupStub{}, authority).ForRide(context.Background(), "303")
 
 	if err != nil || !found {
 		t.Fatalf("ForRide() found = %t, error = %v", found, err)
@@ -70,7 +74,7 @@ func TestResolverFallsBackToAuthorityWhenRoutingCacheMisses(t *testing.T) {
 		{RideID: "303", DriverID: "42", PassengerID: "99", Status: "assigned"},
 		{RideID: "304", DriverID: "42", PassengerID: "100", Status: "in_transit"},
 	}
-	resolver := NewResolver(lookupStub{}, lookupStub{ridesByDriver: authoritative})
+	resolver := newTestResolver(lookupStub{}, lookupStub{ridesByDriver: authoritative})
 
 	values, err := resolver.ForDriver(context.Background(), "42")
 
@@ -88,7 +92,7 @@ func TestResolverFallsBackToAuthorityWhenRoutingCacheMisses(t *testing.T) {
 
 func TestResolverFallsBackAfterRoutingCacheFailure(t *testing.T) {
 	authoritative := []Assignment{{RideID: "303", DriverID: "42"}}
-	resolver := NewResolver(
+	resolver := newTestResolver(
 		lookupStub{err: errors.New("cache unavailable")},
 		lookupStub{ridesByDriver: authoritative},
 	)
@@ -109,7 +113,7 @@ func TestResolverStopsFallbackWhenRideContextIsCanceled(t *testing.T) {
 		forRideCalls: &authorityCalls,
 	}
 
-	_, found, err := NewResolver(lookupStub{}, authority).ForRide(ctx, "303")
+	_, found, err := newTestResolver(lookupStub{}, authority).ForRide(ctx, "303")
 
 	if !errors.Is(err, context.Canceled) || found {
 		t.Fatalf("ForRide() found = %t, error = %v; want canceled", found, err)
@@ -124,7 +128,7 @@ func TestResolverStopsDriverFallbackWhenContextIsCanceled(t *testing.T) {
 	cancel()
 	authority := lookupStub{ridesByDriver: []Assignment{{RideID: "303"}}}
 
-	values, err := NewResolver(lookupStub{}, authority).ForDriver(ctx, "42")
+	values, err := newTestResolver(lookupStub{}, authority).ForDriver(ctx, "42")
 
 	if !errors.Is(err, context.Canceled) || values != nil {
 		t.Fatalf("ForDriver() = %#v, %v; want canceled", values, err)
@@ -140,7 +144,7 @@ func TestResolverStopsAfterRoutingCancellation(t *testing.T) {
 	}
 	routing := cancelingLookup{cancel: cancel}
 
-	_, found, err := NewResolver(routing, authority).ForRide(ctx, "303")
+	_, found, err := newTestResolver(routing, authority).ForRide(ctx, "303")
 
 	if !errors.Is(err, context.Canceled) || found {
 		t.Fatalf("ForRide() found = %t, error = %v; want canceled", found, err)

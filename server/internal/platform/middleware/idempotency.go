@@ -223,16 +223,31 @@ type Idempotency struct {
 
 const _maxIdempotencyBodyBytes int64 = 10 << 20
 
-func NewIdempotency(store IdempotencyStore, expiration time.Duration) *Idempotency {
-	if expiration <= 0 {
-		expiration = 10 * time.Minute
+const _defaultIdempotencyExpiration = 10 * time.Minute
+
+type IdempotencyOption func(*Idempotency)
+
+func WithIdempotencyExpiration(expiration time.Duration) IdempotencyOption {
+	return func(idempotency *Idempotency) {
+		if expiration > 0 {
+			idempotency.expiration = expiration
+		}
 	}
-	return &Idempotency{
+}
+
+func NewIdempotency(store IdempotencyStore, options ...IdempotencyOption) *Idempotency {
+	idempotency := &Idempotency{
 		store:       store,
-		expiration:  expiration,
+		expiration:  _defaultIdempotencyExpiration,
 		lockTimeout: time.Minute,
 		logger:      slog.Default(),
 	}
+	for _, option := range options {
+		if option != nil {
+			option(idempotency)
+		}
+	}
+	return idempotency
 }
 
 func (idempotency *Idempotency) WithLogger(logger *slog.Logger) *Idempotency {

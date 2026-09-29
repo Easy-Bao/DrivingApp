@@ -47,7 +47,10 @@ func newGoMailGateway(config Config, deliver Delivery) *GoMailGateway {
 	return &GoMailGateway{
 		config:  config,
 		deliver: deliver,
-		breaker: resilience.NewCircuitBreaker(3, 30*time.Second),
+		breaker: resilience.NewCircuitBreaker(resilience.CircuitBreakerConfig{
+			FailureThreshold: 3,
+			ResetAfter:       30 * time.Second,
+		}),
 	}
 }
 
