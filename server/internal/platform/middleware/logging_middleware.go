@@ -55,6 +55,8 @@ type statusWriter struct {
 	status int
 }
 
+var _ http.ResponseWriter = (*statusWriter)(nil)
+
 func (writer *statusWriter) WriteHeader(status int) {
 	if writer.status != 0 {
 		return

@@ -33,6 +33,8 @@ type Handler struct {
 	upgrader       websocket.Upgrader
 }
 
+var _ http.Handler = (*Handler)(nil)
+
 func NewHandler(hub *Hub, authenticator IdentityAuthenticator, allowedOrigins []string) *Handler {
 	origins := make(map[string]struct{}, len(allowedOrigins))
 	for _, origin := range allowedOrigins {

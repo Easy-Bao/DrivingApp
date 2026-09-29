@@ -18,6 +18,8 @@ type RouteProvider interface {
 // provider dependency.
 type RouteProviderFunc func(context.Context, float64, float64, float64, float64) (RouteMetrics, error)
 
+var _ RouteProvider = RouteProviderFunc(nil)
+
 func (provider RouteProviderFunc) CalculateRoute(
 	ctx context.Context,
 	originLat float64,

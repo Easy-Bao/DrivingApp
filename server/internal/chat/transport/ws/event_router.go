@@ -10,6 +10,8 @@ import (
 // receive only messages belonging to their bounded context.
 type EventRouter struct{ handlers map[string]EventSink }
 
+var _ EventSink = (*EventRouter)(nil)
+
 func NewEventRouter() *EventRouter { return &EventRouter{handlers: map[string]EventSink{}} }
 
 func (router *EventRouter) Register(eventType string, handler EventSink) {

@@ -30,6 +30,8 @@ type RedisIdempotencyStore struct {
 	client *redisclient.Client
 }
 
+var _ IdempotencyStore = (*RedisIdempotencyStore)(nil)
+
 func NewRedisIdempotencyStore(client *redisclient.Client) *RedisIdempotencyStore {
 	return &RedisIdempotencyStore{client: client}
 }
@@ -121,6 +123,8 @@ type MemoryIdempotencyStore struct {
 	mu      sync.Mutex
 	entries map[string]memoryIdempotencyEntry
 }
+
+var _ IdempotencyStore = (*MemoryIdempotencyStore)(nil)
 
 type memoryIdempotencyEntry struct {
 	value   []byte

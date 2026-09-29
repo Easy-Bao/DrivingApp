@@ -11,6 +11,8 @@ import (
 
 type EventHandler struct{ service *application.ChatService }
 
+var _ EventSink = (*EventHandler)(nil)
+
 func NewEventHandler(service *application.ChatService) *EventHandler {
 	return &EventHandler{service: service}
 }

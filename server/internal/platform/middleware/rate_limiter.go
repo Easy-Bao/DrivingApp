@@ -22,6 +22,8 @@ type RedisCounterStore struct {
 	client *redisclient.Client
 }
 
+var _ CounterStore = (*RedisCounterStore)(nil)
+
 const _atomicIncrementScript = `
 local count = redis.call('INCR', KEYS[1])
 if count == 1 then
@@ -68,6 +70,8 @@ type MemoryCounterStore struct {
 	entries    map[string]memoryCounter
 	operations uint64
 }
+
+var _ CounterStore = (*MemoryCounterStore)(nil)
 
 type memoryCounter struct {
 	count   int64

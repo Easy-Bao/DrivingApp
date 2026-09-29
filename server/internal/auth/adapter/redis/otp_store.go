@@ -8,10 +8,13 @@ import (
 	"time"
 
 	authdomain "github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
+	authports "github.com/Easy-Bao/DrivingApp/server/internal/auth/ports"
 	redisclient "github.com/redis/go-redis/v9"
 )
 
 type OTPStore struct{ client *redisclient.Client }
+
+var _ authports.OTPStore = (*OTPStore)(nil)
 
 func NewOTPStore(client *redisclient.Client) *OTPStore { return &OTPStore{client: client} }
 

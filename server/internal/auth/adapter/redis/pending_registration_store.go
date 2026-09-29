@@ -9,10 +9,13 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
+	authports "github.com/Easy-Bao/DrivingApp/server/internal/auth/ports"
 	redisclient "github.com/redis/go-redis/v9"
 )
 
 type PendingRegistrationStore struct{ client *redisclient.Client }
+
+var _ authports.PendingRegistrationStore = (*PendingRegistrationStore)(nil)
 
 func NewPendingRegistrationStore(client *redisclient.Client) *PendingRegistrationStore {
 	return &PendingRegistrationStore{client: client}

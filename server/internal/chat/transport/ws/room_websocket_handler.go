@@ -11,6 +11,7 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/gorilla/websocket"
 )
 
@@ -40,6 +41,11 @@ type EventSink interface {
 type RoomAuthorizer interface {
 	CanAccessRoom(ctx context.Context, roomID, userID string) (bool, error)
 }
+
+var (
+	_ http.Handler  = (*Handler)(nil)
+	_ Authenticator = (*security.TokenManager)(nil)
+)
 
 func NewHandler(hub *RoomHub, authenticate Authenticator) *Handler {
 	handler := &Handler{
