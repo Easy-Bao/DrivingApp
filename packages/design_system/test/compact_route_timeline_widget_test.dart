@@ -18,6 +18,6 @@ void main() {
     );
 
     expect(find.byIcon(LucideIcons.map_pin), findsOneWidget);
-    expect(find.byIcon(LucideIcons.navigation), findsOneWidget);
+    expect(find.byIcon(LucideIcons.navigation_2), findsOneWidget);
   });
 }

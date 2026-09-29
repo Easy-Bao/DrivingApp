@@ -49,7 +49,7 @@ class const CompactRouteTimelineWidget({
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 2),
                     child: _StopIcon(
-                      icon: LucideIcons.navigation,
+                      icon: LucideIcons.navigation_2,
                       color: colors.tertiary,
                     ),
                   ),
