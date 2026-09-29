@@ -99,7 +99,7 @@ func TestHubDropsOldestEventWhenSubscriptionQueueIsFull(t *testing.T) {
 	subscription := hub.Subscribe("driver:10")
 	defer subscription.Close()
 
-	totalEvents := outboundQueueSize + 8
+	totalEvents := _outboundQueueSize + 8
 	for i := 0; i < totalEvents; i++ {
 		envelope, err := event.New(
 			fmt.Sprintf("event-%d", i),

@@ -239,13 +239,13 @@ func TestRateLimiterBypassesHealthAndPreflight(t *testing.T) {
 
 func TestMemoryCounterStorePrunesExpiredEntries(t *testing.T) {
 	store := NewMemoryCounterStore()
-	for index := 0; index < memoryCounterCleanupInterval*2; index++ {
+	for index := 0; index < _memoryCounterCleanupInterval*2; index++ {
 		if _, err := store.Increment(context.Background(), fmt.Sprintf("client-%d", index), time.Nanosecond); err != nil {
 			t.Fatalf("increment %d: %v", index, err)
 		}
 	}
 
-	if len(store.entries) >= memoryCounterCleanupInterval*2 {
+	if len(store.entries) >= _memoryCounterCleanupInterval*2 {
 		t.Fatalf("expired counter entries were retained: %d", len(store.entries))
 	}
 }

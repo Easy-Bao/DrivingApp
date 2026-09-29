@@ -14,7 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-const maxPostgresRideID = 1<<31 - 1
+const _maxPostgresRideID = 1<<31 - 1
 
 type RideRepository struct {
 	pool                  *pgxpool.Pool
@@ -200,7 +200,7 @@ func rideFloatValue(value pgtype.Float8) float64 {
 }
 
 func toPostgresRideID(value int, field string) (int32, error) {
-	if value <= 0 || int64(value) > int64(maxPostgresRideID) {
+	if value <= 0 || int64(value) > int64(_maxPostgresRideID) {
 		return 0, fmt.Errorf("%s %d is outside PostgreSQL integer range", field, value)
 	}
 	return int32(value), nil

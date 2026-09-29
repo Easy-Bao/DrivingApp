@@ -13,7 +13,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/domain"
 )
 
-var allowedContentTypes = map[string]struct{}{
+var _allowedContentTypes = map[string]struct{}{
 	"application/pdf": {},
 	"image/jpeg":      {},
 	"image/png":       {},
@@ -229,7 +229,7 @@ func verifiedContentType(claimed string, content []byte) (string, error) {
 		return "", domain.ErrUnsupportedContentType
 	}
 	detectedType := http.DetectContentType(content)
-	if _, allowed := allowedContentTypes[detectedType]; !allowed || claimedType != detectedType {
+	if _, allowed := _allowedContentTypes[detectedType]; !allowed || claimedType != detectedType {
 		return "", domain.ErrUnsupportedContentType
 	}
 	return detectedType, nil

@@ -13,7 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-const maxPostgresDocumentID = 1<<31 - 1
+const _maxPostgresDocumentID = 1<<31 - 1
 
 type DocumentRepository struct {
 	pool    *pgxpool.Pool
@@ -254,14 +254,14 @@ func fromPostgresDocument(item databasepostgres.DriverDocument) (domain.Document
 }
 
 func toPostgresDocumentPageValue(value int, field string) (int32, error) {
-	if value < 0 || int64(value) > int64(maxPostgresDocumentID) {
+	if value < 0 || int64(value) > int64(_maxPostgresDocumentID) {
 		return 0, fmt.Errorf("%s %d is outside PostgreSQL integer range", field, value)
 	}
 	return int32(value), nil
 }
 
 func toPostgresDocumentID(value int, field string) (int32, error) {
-	if value <= 0 || int64(value) > int64(maxPostgresDocumentID) {
+	if value <= 0 || int64(value) > int64(_maxPostgresDocumentID) {
 		return 0, fmt.Errorf("%s %d is outside PostgreSQL integer range", field, value)
 	}
 	return int32(value), nil

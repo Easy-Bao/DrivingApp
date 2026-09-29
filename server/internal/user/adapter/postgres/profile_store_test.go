@@ -64,7 +64,7 @@ func TestPostgresProfileIDAndPageBounds(t *testing.T) {
 	if got, err := toPostgresProfileID(7, "user id"); err != nil || got != 7 {
 		t.Fatalf("toPostgresProfileID(7) = %d, %v", got, err)
 	}
-	for _, value := range []int{0, -1, maxPostgresProfileID + 1} {
+	for _, value := range []int{0, -1, _maxPostgresProfileID + 1} {
 		if _, err := toPostgresProfileID(value, "user id"); err == nil {
 			t.Errorf("toPostgresProfileID(%d) succeeded", value)
 		}
@@ -72,7 +72,7 @@ func TestPostgresProfileIDAndPageBounds(t *testing.T) {
 	if got, err := toPostgresProfilePageValue(0, "offset"); err != nil || got != 0 {
 		t.Fatalf("toPostgresProfilePageValue(0) = %d, %v", got, err)
 	}
-	for _, value := range []int{-1, maxPostgresProfileID + 1} {
+	for _, value := range []int{-1, _maxPostgresProfileID + 1} {
 		if _, err := toPostgresProfilePageValue(value, "offset"); err == nil {
 			t.Errorf("toPostgresProfilePageValue(%d) succeeded", value)
 		}

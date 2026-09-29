@@ -15,7 +15,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-const maxReviewPayloadBytes int64 = 1 << 10
+const _maxReviewPayloadBytes int64 = 1 << 10
 
 type Handler struct {
 	service *DocumentService
@@ -125,7 +125,7 @@ func (handler *Handler) Review(writer http.ResponseWriter, request *http.Request
 		return
 	}
 	var payload ReviewRequest
-	if sharedrequest.DecodeJSON(writer, request, &payload, maxReviewPayloadBytes) != nil {
+	if sharedrequest.DecodeJSON(writer, request, &payload, _maxReviewPayloadBytes) != nil {
 		response.Error(writer, http.StatusBadRequest, "invalid review payload")
 		return
 	}

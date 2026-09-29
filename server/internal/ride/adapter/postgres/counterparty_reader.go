@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-const rideContactWindow = 48 * time.Hour
+const _rideContactWindow = 48 * time.Hour
 
 var _ ports.CounterpartyReader = (*RideRepository)(nil)
 
@@ -93,7 +93,7 @@ func rideContactAvailabilityFromRide(ride domain.Ride) (bool, *string) {
 		if err != nil {
 			return false, nil
 		}
-		until := completedAt.Add(rideContactWindow)
+		until := completedAt.Add(_rideContactWindow)
 		formatted := until.UTC().Format(time.RFC3339)
 		return time.Now().Before(until), &formatted
 	default:

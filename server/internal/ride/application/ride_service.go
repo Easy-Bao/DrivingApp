@@ -44,7 +44,7 @@ func NewRideService(
 		repository:        repository,
 		pricingConfig:     pricingConfig,
 		eventPublisher:    publisher,
-		reportingLocation: defaultReportingLocation,
+		reportingLocation: _defaultReportingLocation,
 		logger:            slog.Default(),
 	}
 	activeRideChecker, _ := repository.(ports.PassengerActiveRideChecker)
@@ -81,7 +81,7 @@ func NewRideServiceWithRouteCalculator(
 		routeCalculator:   calculator,
 		pricingConfig:     pricingConfig,
 		eventPublisher:    publisher,
-		reportingLocation: defaultReportingLocation,
+		reportingLocation: _defaultReportingLocation,
 		logger:            slog.Default(),
 	}
 	activeRideChecker, _ := repository.(ports.PassengerActiveRideChecker)
@@ -316,7 +316,7 @@ func (service *RideService) DriverEarnings(ctx context.Context, driverID int) (d
 	}
 	location := service.reportingLocation
 	if location == nil {
-		location = defaultReportingLocation
+		location = _defaultReportingLocation
 	}
 	now := time.Now().In(location)
 	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, location)

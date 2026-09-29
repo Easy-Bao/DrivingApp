@@ -17,7 +17,7 @@ import (
 
 const CurrentVersion = 1
 
-const maxIdentifierLength = 128
+const _maxIdentifierLength = 128
 
 // DriverPoolTopic fans out open ride offers to authenticated driver streams.
 const DriverPoolTopic = "driver-pool"
@@ -223,8 +223,8 @@ func validateIdentifier(name, value string, required bool) error {
 	if value != trimmed {
 		return fmt.Errorf("%s must not contain leading or trailing whitespace", name)
 	}
-	if len(value) > maxIdentifierLength {
-		return fmt.Errorf("%s exceeds %d characters", name, maxIdentifierLength)
+	if len(value) > _maxIdentifierLength {
+		return fmt.Errorf("%s exceeds %d characters", name, _maxIdentifierLength)
 	}
 	return nil
 }

@@ -173,7 +173,7 @@ func normalizeInput(input RegisterInput, role domain.Role) (normalizedRegistrati
 	plateNumber := strings.TrimSpace(input.PlateNumber)
 	invalidEmail := !validEmail(email)
 	invalidName := name == "" || len([]rune(name)) > 100
-	invalidPhone := !e164Phone.MatchString(phone)
+	invalidPhone := !_e164Phone.MatchString(phone)
 	invalidPassword := len(input.Password) < 8 || len([]byte(input.Password)) > 72
 	if invalidEmail || invalidName || invalidPhone || invalidPassword {
 		return normalizedRegistration{}, domain.ErrInvalidCredentials
@@ -214,7 +214,7 @@ func (service *RegisterService) create(ctx context.Context, account domain.User)
 	return created, token, nil
 }
 
-var e164Phone = regexp.MustCompile(`^\+[1-9][0-9]{7,14}$`)
+var _e164Phone = regexp.MustCompile(`^\+[1-9][0-9]{7,14}$`)
 
 func validEmail(value string) bool {
 	if value == "" || len(value) > 254 {

@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	chatRoomTTL       = 48 * time.Hour
-	maxHistoryEntries = 100
+	_chatRoomTTL       = 48 * time.Hour
+	_maxHistoryEntries = 100
 )
 
 // ChatHistoryStore is the Redis adapter for the bounded chat-room history port.
@@ -49,7 +49,7 @@ func (repository *ChatHistoryStore) CreateRoom(ctx context.Context, roomID, pass
 			"locked":       "0",
 			"created_at":   createdAt,
 		})
-		pipe.Expire(ctx, roomKey(roomID), chatRoomTTL)
+		pipe.Expire(ctx, roomKey(roomID), _chatRoomTTL)
 		return nil
 	})
 	if err != nil {
@@ -85,11 +85,11 @@ func (repository *ChatHistoryStore) Append(ctx context.Context, message domain.M
 		return domain.ErrRoomUnavailable
 	}
 	if roomTTL < 0 {
-		roomTTL = chatRoomTTL
+		roomTTL = _chatRoomTTL
 	}
 	_, err = repository.client.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
 		pipe.RPush(ctx, messagesKey(message.RoomID), payload)
-		pipe.LTrim(ctx, messagesKey(message.RoomID), -maxHistoryEntries, -1)
+		pipe.LTrim(ctx, messagesKey(message.RoomID), -_maxHistoryEntries, -1)
 		// The list does not exist until RPush runs, so its TTL must be applied
 		// in the same transaction using the room's remaining lifetime.
 		pipe.Expire(ctx, messagesKey(message.RoomID), roomTTL)
@@ -107,7 +107,7 @@ func (repository *ChatHistoryStore) Messages(ctx context.Context, roomID string)
 	if err := repository.validate(); err != nil {
 		return nil, err
 	}
-	items, err := repository.client.LRange(ctx, messagesKey(roomID), -maxHistoryEntries, -1).Result()
+	items, err := repository.client.LRange(ctx, messagesKey(roomID), -_maxHistoryEntries, -1).Result()
 	if err != nil {
 		return nil, fmt.Errorf("load chat messages: %w", err)
 	}

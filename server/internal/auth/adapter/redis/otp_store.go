@@ -34,7 +34,7 @@ func (store *OTPStore) Consume(ctx context.Context, purpose, email, code string)
 	if store == nil || store.client == nil {
 		return errors.New("otp store is not configured")
 	}
-	result, err := consumeScript.Run(
+	result, err := _consumeScript.Run(
 		ctx,
 		store.client,
 		[]string{key(purpose, email)},
@@ -49,7 +49,7 @@ func (store *OTPStore) Consume(ctx context.Context, purpose, email, code string)
 	return nil
 }
 
-var consumeScript = redisclient.NewScript(`
+var _consumeScript = redisclient.NewScript(`
 local value = redis.call("GET", KEYS[1])
 if not value then return 0 end
 if value ~= ARGV[1] then return -1 end

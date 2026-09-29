@@ -22,9 +22,9 @@ var (
 )
 
 const (
-	maxSearchQueryBytes   = 256
-	maxNearbyPage         = 100
-	maxMatrixDestinations = 10
+	_maxSearchQueryBytes   = 256
+	_maxNearbyPage         = 100
+	_maxMatrixDestinations = 10
 )
 
 type LocationService struct {
@@ -57,7 +57,7 @@ func (service *LocationService) Search(
 	if query == "" {
 		return nil, ErrEmptySearch
 	}
-	if len(query) > maxSearchQueryBytes {
+	if len(query) > _maxSearchQueryBytes {
 		return nil, ErrSearchTooLong
 	}
 	if !origin.Valid() {
@@ -84,7 +84,7 @@ func (service *LocationService) Nearby(
 	origin domain.Coordinates,
 	page int,
 ) ([]domain.Place, error) {
-	if page < 1 || page > maxNearbyPage {
+	if page < 1 || page > _maxNearbyPage {
 		return nil, ErrInvalidNearbyPage
 	}
 	if !origin.Valid() {
@@ -165,7 +165,7 @@ func (service *LocationService) Matrix(
 	destinations []domain.Coordinates,
 ) (*domain.Matrix, error) {
 	invalidOrigin := !origin.Valid()
-	invalidDestinationCount := len(destinations) == 0 || len(destinations) > maxMatrixDestinations
+	invalidDestinationCount := len(destinations) == 0 || len(destinations) > _maxMatrixDestinations
 	if invalidOrigin || invalidDestinationCount {
 		return nil, ErrInvalidMatrix
 	}

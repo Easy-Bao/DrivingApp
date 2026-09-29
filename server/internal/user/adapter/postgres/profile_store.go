@@ -20,7 +20,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-const maxPostgresProfileID = 1<<31 - 1
+const _maxPostgresProfileID = 1<<31 - 1
 
 type ProfileRepository struct {
 	pool          *pgxpool.Pool
@@ -454,14 +454,14 @@ func fromPostgresNotification(item databasepostgres.Notification) (domain.Notifi
 }
 
 func toPostgresProfileID(value int, field string) (int32, error) {
-	if value <= 0 || int64(value) > int64(maxPostgresProfileID) {
+	if value <= 0 || int64(value) > int64(_maxPostgresProfileID) {
 		return 0, fmt.Errorf("%s %d is outside PostgreSQL integer range", field, value)
 	}
 	return int32(value), nil
 }
 
 func toPostgresProfilePageValue(value int, field string) (int32, error) {
-	if value < 0 || int64(value) > int64(maxPostgresProfileID) {
+	if value < 0 || int64(value) > int64(_maxPostgresProfileID) {
 		return 0, fmt.Errorf("%s %d is outside PostgreSQL integer range", field, value)
 	}
 	return int32(value), nil

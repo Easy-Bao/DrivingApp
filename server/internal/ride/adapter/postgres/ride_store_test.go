@@ -122,7 +122,7 @@ func TestToPostgresRideIDRequiresPositiveInt32(t *testing.T) {
 	if got, err := toPostgresRideID(7, "ride id"); err != nil || got != 7 {
 		t.Fatalf("toPostgresRideID(7) = %d, %v", got, err)
 	}
-	for _, value := range []int{0, -1, maxPostgresRideID + 1} {
+	for _, value := range []int{0, -1, _maxPostgresRideID + 1} {
 		if _, err := toPostgresRideID(value, "ride id"); err == nil {
 			t.Errorf("toPostgresRideID(%d) succeeded", value)
 		}

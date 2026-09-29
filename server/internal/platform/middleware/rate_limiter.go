@@ -22,7 +22,7 @@ type RedisCounterStore struct {
 	client *redisclient.Client
 }
 
-const atomicIncrementScript = `
+const _atomicIncrementScript = `
 local count = redis.call('INCR', KEYS[1])
 if count == 1 then
   redis.call('PEXPIRE', KEYS[1], ARGV[1])
@@ -53,7 +53,7 @@ func (store *RedisCounterStore) Increment(ctx context.Context, key string, windo
 	}
 	count, err := store.client.Eval(
 		ctx,
-		atomicIncrementScript,
+		_atomicIncrementScript,
 		[]string{key},
 		expirationMilliseconds,
 	).Int64()
@@ -74,7 +74,7 @@ type memoryCounter struct {
 	expires time.Time
 }
 
-const memoryCounterCleanupInterval = 128
+const _memoryCounterCleanupInterval = 128
 
 func NewMemoryCounterStore() *MemoryCounterStore {
 	return &MemoryCounterStore{entries: make(map[string]memoryCounter)}
@@ -100,7 +100,7 @@ func (store *MemoryCounterStore) Increment(ctx context.Context, key string, wind
 	}
 	now := time.Now()
 	store.operations++
-	if store.operations%memoryCounterCleanupInterval == 0 {
+	if store.operations%_memoryCounterCleanupInterval == 0 {
 		for entryKey, entry := range store.entries {
 			if !now.Before(entry.expires) {
 				delete(store.entries, entryKey)
@@ -219,21 +219,21 @@ func (limiter *RateLimiter) policy(request *http.Request) (rateLimitPolicy, bool
 		return rateLimitPolicy{}, false
 	}
 	switch classifyEndpoint(request) {
-	case endpointHealth:
+	case _endpointHealth:
 		return rateLimitPolicy{}, false
-	case endpointAuthentication:
+	case _endpointAuthentication:
 		return rateLimitPolicy{scope: "authentication", limit: limiter.config.Authentication, failClosed: true}, true
-	case endpointRefresh:
+	case _endpointRefresh:
 		return rateLimitPolicy{scope: "refresh", limit: limiter.config.Refresh, failClosed: true}, true
-	case endpointLocationQuery:
+	case _endpointLocationQuery:
 		return rateLimitPolicy{scope: "location", limit: limiter.config.Location, failClosed: true}, true
-	case endpointFareQuery:
+	case _endpointFareQuery:
 		return rateLimitPolicy{scope: "fare", limit: limiter.config.Fare, failClosed: true}, true
-	case endpointRealtimeConnection:
+	case _endpointRealtimeConnection:
 		return rateLimitPolicy{scope: "connection", limit: limiter.config.Connection, failClosed: true}, true
-	case endpointTelemetry:
+	case _endpointTelemetry:
 		return rateLimitPolicy{scope: "telemetry", limit: limiter.config.Telemetry}, true
-	case endpointCommand, endpointDocumentUpload, endpointOnlinePresence:
+	case _endpointCommand, _endpointDocumentUpload, _endpointOnlinePresence:
 		return rateLimitPolicy{scope: "mutation", limit: limiter.config.Mutation}, true
 	default:
 		return rateLimitPolicy{scope: "read", limit: limiter.config.Read}, true

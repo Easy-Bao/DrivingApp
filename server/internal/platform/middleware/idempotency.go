@@ -217,7 +217,7 @@ type Idempotency struct {
 	logger      *slog.Logger
 }
 
-const maxIdempotencyBodyBytes int64 = 10 << 20
+const _maxIdempotencyBodyBytes int64 = 10 << 20
 
 func NewIdempotency(store IdempotencyStore, expiration time.Duration) *Idempotency {
 	if expiration <= 0 {
@@ -260,7 +260,7 @@ func (idempotency *Idempotency) Middleware(next http.Handler) http.Handler {
 
 		var body []byte
 		if request.Body != nil {
-			request.Body = http.MaxBytesReader(writer, request.Body, maxIdempotencyBodyBytes)
+			request.Body = http.MaxBytesReader(writer, request.Body, _maxIdempotencyBodyBytes)
 			var err error
 			body, err = io.ReadAll(request.Body)
 			if err != nil {
@@ -423,7 +423,7 @@ func replayIdempotentResponse(writer http.ResponseWriter, encoded []byte, finger
 }
 
 func supportsIdempotency(request *http.Request) bool {
-	return classifyEndpoint(request) == endpointCommand
+	return classifyEndpoint(request) == _endpointCommand
 }
 
 func authorizationScope(request *http.Request) string {

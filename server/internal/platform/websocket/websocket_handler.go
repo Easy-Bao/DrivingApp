@@ -16,10 +16,10 @@ import (
 )
 
 const (
-	maximumMessageSize = 8 << 10
-	pongWait           = 60 * time.Second
-	pingPeriod         = 54 * time.Second
-	writeWait          = 10 * time.Second
+	_maximumMessageSize = 8 << 10
+	_pongWait           = 60 * time.Second
+	_pingPeriod         = 54 * time.Second
+	_writeWait          = 10 * time.Second
 )
 
 type IdentityAuthenticator interface {
@@ -122,12 +122,12 @@ func (handler *Handler) originAllowed(request *http.Request) bool {
 }
 
 func (handler *Handler) readPump(connection *websocket.Conn) {
-	connection.SetReadLimit(maximumMessageSize)
-	if err := connection.SetReadDeadline(time.Now().Add(pongWait)); err != nil {
+	connection.SetReadLimit(_maximumMessageSize)
+	if err := connection.SetReadDeadline(time.Now().Add(_pongWait)); err != nil {
 		return
 	}
 	connection.SetPongHandler(func(string) error {
-		return connection.SetReadDeadline(time.Now().Add(pongWait))
+		return connection.SetReadDeadline(time.Now().Add(_pongWait))
 	})
 	for {
 		if _, _, err := connection.ReadMessage(); err != nil {
@@ -146,7 +146,7 @@ func (handler *Handler) writePump(
 	defer close(done)
 	defer closeConnection()
 
-	ticker := time.NewTicker(pingPeriod)
+	ticker := time.NewTicker(_pingPeriod)
 	defer ticker.Stop()
 	for {
 		select {
@@ -156,14 +156,14 @@ func (handler *Handler) writePump(
 			if !ok {
 				return
 			}
-			if err := connection.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
+			if err := connection.SetWriteDeadline(time.Now().Add(_writeWait)); err != nil {
 				return
 			}
 			if err := connection.WriteJSON(envelope); err != nil {
 				return
 			}
 		case <-ticker.C:
-			if err := connection.SetWriteDeadline(time.Now().Add(writeWait)); err != nil {
+			if err := connection.SetWriteDeadline(time.Now().Add(_writeWait)); err != nil {
 				return
 			}
 			if err := connection.WriteMessage(websocket.PingMessage, nil); err != nil {

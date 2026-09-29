@@ -37,7 +37,7 @@ const (
 const (
 	AccessTokenLifetime  = 30 * time.Minute
 	RefreshTokenLifetime = 30 * 24 * time.Hour
-	accessTokenType      = "access"
+	_accessTokenType     = "access"
 )
 
 func NewTokenManager(secret string) *TokenManager {
@@ -52,7 +52,7 @@ func (manager *TokenManager) IssueWithRole(subject, role string) (string, error)
 	if manager == nil {
 		return "", fmt.Errorf("token secret is required")
 	}
-	return manager.issue(subject, role, accessTokenType, manager.lifetime)
+	return manager.issue(subject, role, _accessTokenType, manager.lifetime)
 }
 
 func (manager *TokenManager) issue(subject, role, tokenType string, lifetime time.Duration) (string, error) {
@@ -95,7 +95,7 @@ func (manager *TokenManager) VerifyIdentity(rawToken string) (Identity, error) {
 	if err != nil {
 		return Identity{}, err
 	}
-	if identity.TokenType != accessTokenType {
+	if identity.TokenType != _accessTokenType {
 		return Identity{}, ErrInvalidToken
 	}
 	return identity, nil

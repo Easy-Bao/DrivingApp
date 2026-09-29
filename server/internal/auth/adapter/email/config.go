@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	securityStartTLS = "starttls"
-	securitySSL      = "ssl"
-	securityNone     = "none"
+	_securityStartTLS = "starttls"
+	_securitySSL      = "ssl"
+	_securityNone     = "none"
 )
 
 var (
@@ -45,7 +45,7 @@ func configFromEnv(getenv func(string) string) Config {
 		From:     strings.TrimSpace(getenv("MAIL_FROM")),
 		FromName: strings.TrimSpace(defaultEnv(getenv, "MAIL_FROM_NAME", "DriveApp")),
 		Subject:  defaultEnv(getenv, "MAIL_SUBJECT", "DriveApp verification code"),
-		Security: strings.ToLower(defaultEnv(getenv, "MAIL_SECURITY", securityStartTLS)),
+		Security: strings.ToLower(defaultEnv(getenv, "MAIL_SECURITY", _securityStartTLS)),
 		Timeout:  durationEnv(getenv, "MAIL_TIMEOUT", 10*time.Second),
 	}
 }
@@ -77,7 +77,7 @@ func (config Config) Validate() error {
 		return fmt.Errorf("%w: MAIL_TIMEOUT must be positive", ErrInvalidConfig)
 	}
 	switch config.Security {
-	case securityStartTLS, securitySSL, securityNone:
+	case _securityStartTLS, _securitySSL, _securityNone:
 		return nil
 	default:
 		return fmt.Errorf("%w: MAIL_SECURITY must be starttls, ssl, or none", ErrInvalidConfig)

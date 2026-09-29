@@ -16,8 +16,8 @@ import (
 var errUnavailable = errors.New("ride booking persistence is unavailable")
 
 const (
-	fareRouteCacheTTL        = 15 * time.Second
-	fareRouteCacheMaxEntries = 128
+	_fareRouteCacheTTL        = 15 * time.Second
+	_fareRouteCacheMaxEntries = 128
 )
 
 type fareRouteCacheEntry struct {
@@ -245,7 +245,7 @@ func (service *Service) resolveRouteMetrics(
 	)
 	service.fareRouteCacheMu.Lock()
 	if entry, ok := service.fareRouteCache[key]; ok {
-		if time.Since(entry.createdAt) < fareRouteCacheTTL {
+		if time.Since(entry.createdAt) < _fareRouteCacheTTL {
 			service.fareRouteCacheMu.Unlock()
 			return entry.metrics, nil
 		}
@@ -287,7 +287,7 @@ func (service *Service) resolveRouteMetrics(
 }
 
 func (service *Service) storeFareRouteLocked(key string, metrics ports.RouteMetrics) {
-	if len(service.fareRouteCache) >= fareRouteCacheMaxEntries {
+	if len(service.fareRouteCache) >= _fareRouteCacheMaxEntries {
 		oldestKey := ""
 		var oldest time.Time
 		for candidateKey, candidate := range service.fareRouteCache {

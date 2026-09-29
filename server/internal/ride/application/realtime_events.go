@@ -10,10 +10,10 @@ import (
 )
 
 const (
-	rideCreatedEvent       = event.RideOfferCreated
-	rideOfferUpdatedEvent  = event.RideOfferUpdated
-	rideMatchedEvent       = event.RideMatched
-	rideStatusChangedEvent = event.RideStatusChanged
+	_rideCreatedEvent       = event.RideOfferCreated
+	_rideOfferUpdatedEvent  = event.RideOfferUpdated
+	_rideMatchedEvent       = event.RideMatched
+	_rideStatusChangedEvent = event.RideStatusChanged
 )
 
 func (service *RideService) publishRide(
@@ -66,7 +66,7 @@ func (service *RideService) publishSession(
 func (service *RideService) publishDriverOffer(ctx context.Context, offer domain.BidOffer, payload map[string]any) {
 	service.publish(
 		ctx,
-		rideOfferUpdatedEvent,
+		_rideOfferUpdatedEvent,
 		event.Scope{DriverID: positiveIdentifier(offer.DriverID)},
 		payload,
 	)

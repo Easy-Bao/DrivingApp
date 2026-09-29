@@ -14,9 +14,9 @@ import (
 )
 
 const (
-	postgresMigrationSourceName = "iofs"
-	postgresMigrationDriverName = "pgx5"
-	defaultMigrationTimeout     = 5 * time.Minute
+	_postgresMigrationSourceName = "iofs"
+	_postgresMigrationDriverName = "pgx5"
+	_defaultMigrationTimeout     = 5 * time.Minute
 )
 
 // PostgresMigratorConfig controls the PostgreSQL migration driver.
@@ -32,7 +32,7 @@ type PostgresMigratorConfig struct {
 func DefaultPostgresMigratorConfig() PostgresMigratorConfig {
 	return PostgresMigratorConfig{
 		MigrationsTable:       "app_schema_migrations",
-		StatementTimeout:      defaultMigrationTimeout,
+		StatementTimeout:      _defaultMigrationTimeout,
 		MultiStatementMaxSize: 10 * 1 << 20,
 	}
 }
@@ -81,9 +81,9 @@ func NewPostgresMigrator(
 	}
 
 	migrator, err := migrate.NewWithInstance(
-		postgresMigrationSourceName,
+		_postgresMigrationSourceName,
 		sourceDriver,
-		postgresMigrationDriverName,
+		_postgresMigrationDriverName,
 		databaseDriver,
 	)
 	if err != nil {

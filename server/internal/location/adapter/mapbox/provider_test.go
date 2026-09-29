@@ -82,7 +82,7 @@ func TestNearbyUsesOneRequestForDefaultCategories(t *testing.T) {
 			if !strings.Contains(request.URL.Path, "/category/") {
 				t.Fatalf("nearby used an invalid endpoint: %s", request.URL.Path)
 			}
-			for _, category := range defaultNearbyCategories {
+			for _, category := range _defaultNearbyCategories {
 				if !strings.Contains(request.URL.Path, category) {
 					t.Fatalf("nearby omitted category %q from %s", category, request.URL.Path)
 				}

@@ -8,7 +8,7 @@ import (
 )
 
 //go:embed pricing_config.json
-var pricingConfigJSON []byte
+var _pricingConfigJSON []byte
 
 type RatingPricingConfig struct {
 	MinimumRatingThreshold          float64 `json:"minimumRatingThreshold"`
@@ -27,7 +27,7 @@ type PricingConfig struct {
 
 func LoadPricingConfig() (PricingConfig, error) {
 	var config PricingConfig
-	if err := json.Unmarshal(pricingConfigJSON, &config); err != nil {
+	if err := json.Unmarshal(_pricingConfigJSON, &config); err != nil {
 		return PricingConfig{}, fmt.Errorf("decode pricing configuration: %w", err)
 	}
 	if err := config.Validate(); err != nil {

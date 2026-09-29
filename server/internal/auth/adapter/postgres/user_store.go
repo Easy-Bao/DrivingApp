@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	minInt32UserID = -1 << 31
-	maxInt32UserID = 1<<31 - 1
+	_minInt32UserID = -1 << 31
+	_maxInt32UserID = 1<<31 - 1
 )
 
 type UserRepository struct {
@@ -238,7 +238,7 @@ func validateUserRole(role domain.Role) error {
 
 func toPostgresUserID(userID int) (int32, error) {
 	userID64 := int64(userID)
-	if userID64 < minInt32UserID || userID64 > maxInt32UserID {
+	if userID64 < _minInt32UserID || userID64 > _maxInt32UserID {
 		return 0, fmt.Errorf("user id %d is outside PostgreSQL integer range", userID)
 	}
 	return int32(userID), nil

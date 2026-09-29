@@ -17,9 +17,9 @@ import (
 )
 
 const (
-	MaxObjectBytes  = 10 << 20
-	objectKeyBytes  = 32
-	objectKeyPrefix = "db/v1/"
+	MaxObjectBytes   = 10 << 20
+	_objectKeyBytes  = 32
+	_objectKeyPrefix = "db/v1/"
 )
 
 // ObjectStore stores private objects as PostgreSQL bytea values through the
@@ -142,24 +142,24 @@ func isPostgresObjectUniqueViolation(err error) bool {
 }
 
 func validateObjectKey(key string) error {
-	if !strings.HasPrefix(key, objectKeyPrefix) {
+	if !strings.HasPrefix(key, _objectKeyPrefix) {
 		return errors.New("invalid private object key")
 	}
-	encoded := strings.TrimPrefix(key, objectKeyPrefix)
-	if len(encoded) != objectKeyBytes*2 || encoded != strings.ToLower(encoded) {
+	encoded := strings.TrimPrefix(key, _objectKeyPrefix)
+	if len(encoded) != _objectKeyBytes*2 || encoded != strings.ToLower(encoded) {
 		return errors.New("invalid private object key")
 	}
 	decoded, err := hex.DecodeString(encoded)
-	if err != nil || len(decoded) != objectKeyBytes {
+	if err != nil || len(decoded) != _objectKeyBytes {
 		return errors.New("invalid private object key")
 	}
 	return nil
 }
 
 func newObjectKey() (string, error) {
-	random := make([]byte, objectKeyBytes)
+	random := make([]byte, _objectKeyBytes)
 	if _, err := rand.Read(random); err != nil {
 		return "", fmt.Errorf("generate private object key: %w", err)
 	}
-	return objectKeyPrefix + hex.EncodeToString(random), nil
+	return _objectKeyPrefix + hex.EncodeToString(random), nil
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
-const outboundQueueSize = 32
+const _outboundQueueSize = 32
 
 // Hub owns local WebSocket queues. Dropping an overflowed event is safe because
 // realtime delivery is transient and the client resynchronizes from REST.
@@ -32,7 +32,7 @@ func (hub *Hub) Subscribe(topics ...string) *Subscription {
 	subscription := &Subscription{
 		hub:    hub,
 		topics: uniqueTopics(topics),
-		events: make(chan event.Envelope, outboundQueueSize),
+		events: make(chan event.Envelope, _outboundQueueSize),
 	}
 
 	hub.mu.Lock()

@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const rideAcceptanceStatementTimeout = 3 * time.Second
+const _rideAcceptanceStatementTimeout = 3 * time.Second
 
 func (repository *RideRepository) AcceptRide(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
@@ -36,7 +36,7 @@ func (repository *RideRepository) AcceptRide(ctx context.Context, rideID, driver
 	if _, err := transaction.Exec(
 		ctx,
 		"SELECT set_config('statement_timeout', $1, true)",
-		rideAcceptanceStatementTimeout.String(),
+		_rideAcceptanceStatementTimeout.String(),
 	); err != nil {
 		return domain.Ride{}, fmt.Errorf("configure ride acceptance statement timeout: %w", err)
 	}

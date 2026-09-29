@@ -12,9 +12,9 @@ import (
 
 type contextKey string
 
-const identityKey contextKey = "authenticated_identity"
+const _identityKey contextKey = "authenticated_identity"
 
-const principalKey contextKey = "authenticated_principal"
+const _principalKey contextKey = "authenticated_principal"
 
 type Principal struct {
 	UserID int
@@ -34,8 +34,8 @@ func RequireAuth(tokenManager *security.TokenManager) func(http.Handler) http.Ha
 				response.Error(writer, http.StatusUnauthorized, "Your session has expired. Please sign in again to continue.")
 				return
 			}
-			contextValue := context.WithValue(request.Context(), identityKey, identity)
-			contextValue = context.WithValue(contextValue, principalKey, Principal{UserID: userID, Role: identity.Role})
+			contextValue := context.WithValue(request.Context(), _identityKey, identity)
+			contextValue = context.WithValue(contextValue, _principalKey, Principal{UserID: userID, Role: identity.Role})
 			next.ServeHTTP(writer, request.WithContext(contextValue))
 		})
 	}
@@ -130,7 +130,7 @@ func Identity(request *http.Request) (security.Identity, bool) {
 	if request == nil {
 		return security.Identity{}, false
 	}
-	identity, ok := request.Context().Value(identityKey).(security.Identity)
+	identity, ok := request.Context().Value(_identityKey).(security.Identity)
 	return identity, ok && identity.Subject != ""
 }
 
@@ -143,6 +143,6 @@ func PrincipalFromRequest(request *http.Request) (Principal, bool) {
 	if request == nil {
 		return Principal{}, false
 	}
-	principal, ok := request.Context().Value(principalKey).(Principal)
+	principal, ok := request.Context().Value(_principalKey).(Principal)
 	return principal, ok && principal.UserID > 0
 }

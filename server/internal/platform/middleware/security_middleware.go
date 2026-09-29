@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	defaultJSONBodyLimit   int64 = 16 << 10
-	defaultUploadBodyLimit int64 = 10 << 20
+	_defaultJSONBodyLimit   int64 = 16 << 10
+	_defaultUploadBodyLimit int64 = 10 << 20
 )
 
 type SecurityConfig struct {
@@ -29,8 +29,8 @@ func SecurityConfigFromEnv() SecurityConfig {
 	return SecurityConfig{
 		AllowedOrigins:  parseOrigins(os.Getenv("CORS_ALLOWED_ORIGINS")),
 		EnableHSTS:      strings.EqualFold(strings.TrimSpace(os.Getenv("ENABLE_HSTS")), "true"),
-		JSONBodyLimit:   positiveInt64Env("JSON_BODY_LIMIT_BYTES", defaultJSONBodyLimit),
-		UploadBodyLimit: positiveInt64Env("UPLOAD_BODY_LIMIT_BYTES", defaultUploadBodyLimit),
+		JSONBodyLimit:   positiveInt64Env("JSON_BODY_LIMIT_BYTES", _defaultJSONBodyLimit),
+		UploadBodyLimit: positiveInt64Env("UPLOAD_BODY_LIMIT_BYTES", _defaultUploadBodyLimit),
 	}
 }
 
@@ -45,10 +45,10 @@ func SecureHTTPWithIdempotency(
 	idempotency *Idempotency,
 ) http.Handler {
 	if config.JSONBodyLimit <= 0 {
-		config.JSONBodyLimit = defaultJSONBodyLimit
+		config.JSONBodyLimit = _defaultJSONBodyLimit
 	}
 	if config.UploadBodyLimit <= 0 {
-		config.UploadBodyLimit = defaultUploadBodyLimit
+		config.UploadBodyLimit = _defaultUploadBodyLimit
 	}
 
 	handler := next
@@ -94,7 +94,7 @@ func RequestBodyLimit(jsonLimit, uploadLimit int64) func(http.Handler) http.Hand
 
 			limit := jsonLimit
 			contentType := strings.ToLower(request.Header.Get("Content-Type"))
-			if strings.HasPrefix(contentType, "multipart/") || classifyEndpoint(request) == endpointDocumentUpload {
+			if strings.HasPrefix(contentType, "multipart/") || classifyEndpoint(request) == _endpointDocumentUpload {
 				limit = uploadLimit
 			}
 			if request.ContentLength > limit {

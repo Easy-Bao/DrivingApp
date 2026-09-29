@@ -15,9 +15,9 @@ import (
 )
 
 const (
-	chatPongWait  = 60 * time.Second
-	chatPingEvery = 54 * time.Second
-	chatWriteWait = 10 * time.Second
+	_chatPongWait  = 60 * time.Second
+	_chatPingEvery = 54 * time.Second
+	_chatWriteWait = 10 * time.Second
 )
 
 type Handler struct {
@@ -128,11 +128,11 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 	defer closeConnection()
 
 	connection.SetReadLimit(16 << 10)
-	if err := connection.SetReadDeadline(time.Now().Add(chatPongWait)); err != nil {
+	if err := connection.SetReadDeadline(time.Now().Add(_chatPongWait)); err != nil {
 		return
 	}
 	connection.SetPongHandler(func(string) error {
-		return connection.SetReadDeadline(time.Now().Add(chatPongWait))
+		return connection.SetReadDeadline(time.Now().Add(_chatPongWait))
 	})
 	outbound := handler.hub.Add(clientID, roomID)
 	serverMessages := make(chan []byte, 4)
@@ -186,7 +186,7 @@ func writePump(
 	defer close(done)
 	defer closeConnection()
 
-	ticker := time.NewTicker(chatPingEvery)
+	ticker := time.NewTicker(_chatPingEvery)
 	defer ticker.Stop()
 
 	for {
@@ -195,21 +195,21 @@ func writePump(
 			if !ok {
 				return
 			}
-			if err := connection.SetWriteDeadline(time.Now().Add(chatWriteWait)); err != nil {
+			if err := connection.SetWriteDeadline(time.Now().Add(_chatWriteWait)); err != nil {
 				return
 			}
 			if err := connection.WriteMessage(websocket.TextMessage, message); err != nil {
 				return
 			}
 		case message := <-serverMessages:
-			if err := connection.SetWriteDeadline(time.Now().Add(chatWriteWait)); err != nil {
+			if err := connection.SetWriteDeadline(time.Now().Add(_chatWriteWait)); err != nil {
 				return
 			}
 			if err := connection.WriteMessage(websocket.TextMessage, message); err != nil {
 				return
 			}
 		case <-ticker.C:
-			if err := connection.SetWriteDeadline(time.Now().Add(chatWriteWait)); err != nil {
+			if err := connection.SetWriteDeadline(time.Now().Add(_chatWriteWait)); err != nil {
 				return
 			}
 			if err := connection.WriteMessage(websocket.PingMessage, nil); err != nil {

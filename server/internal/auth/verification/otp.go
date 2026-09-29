@@ -17,7 +17,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/session"
 )
 
-const otpLifetime = 10 * time.Minute
+const _otpLifetime = 10 * time.Minute
 
 type OTPService struct {
 	users         authports.VerifiedUserStore
@@ -104,7 +104,7 @@ func (service *OTPService) RegisterPassenger(
 	if err != nil {
 		return domain.PendingRegistration{}, fmt.Errorf("prepare passenger registration: %w", err)
 	}
-	if err := service.pending.Put(ctx, registration, otpLifetime); err != nil {
+	if err := service.pending.Put(ctx, registration, _otpLifetime); err != nil {
 		service.log().WarnContext(ctx, "store pending passenger registration failed", "error", err)
 		return domain.PendingRegistration{}, fmt.Errorf(
 			"%w: store pending passenger registration: %w",
@@ -293,7 +293,7 @@ func (service *OTPService) requestCode(ctx context.Context, purpose, email strin
 	if err != nil {
 		return fmt.Errorf("generate otp: %w", err)
 	}
-	if err := service.store.Put(ctx, purpose, email, code, otpLifetime); err != nil {
+	if err := service.store.Put(ctx, purpose, email, code, _otpLifetime); err != nil {
 		service.log().WarnContext(ctx, "store otp failed", "error", err, "purpose", purpose)
 		return fmt.Errorf("%w: store otp: %w", domain.ErrOTPUnavailable, err)
 	}

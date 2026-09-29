@@ -16,7 +16,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 )
 
-const refreshTokenBytes = 32
+const _refreshTokenBytes = 32
 
 // RefreshTokenRotationGracePeriod lets parallel requests finish a refresh
 // that began just before another request rotated the same session.
@@ -114,7 +114,7 @@ func ReplacementRefreshSession(userID int, now time.Time) (string, domain.Refres
 }
 
 func newRefreshToken() (string, string, error) {
-	bytes := make([]byte, refreshTokenBytes)
+	bytes := make([]byte, _refreshTokenBytes)
 	if _, err := rand.Read(bytes); err != nil {
 		return "", "", fmt.Errorf("read refresh token randomness: %w", err)
 	}
@@ -123,11 +123,11 @@ func newRefreshToken() (string, string, error) {
 }
 
 func ValidRefreshToken(token string) bool {
-	if len(token) != base64.RawURLEncoding.EncodedLen(refreshTokenBytes) {
+	if len(token) != base64.RawURLEncoding.EncodedLen(_refreshTokenBytes) {
 		return false
 	}
 	decoded, err := base64.RawURLEncoding.DecodeString(token)
-	return err == nil && len(decoded) == refreshTokenBytes
+	return err == nil && len(decoded) == _refreshTokenBytes
 }
 
 func HashRefreshToken(token string) string {

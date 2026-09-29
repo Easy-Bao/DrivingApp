@@ -15,9 +15,9 @@ import (
 )
 
 const (
-	maxRoomIDBytes      = 128
-	maxParticipantBytes = 128
-	maxMessageBytes     = 4096
+	_maxRoomIDBytes      = 128
+	_maxParticipantBytes = 128
+	_maxMessageBytes     = 4096
 )
 
 type ChatService struct {
@@ -62,7 +62,7 @@ func (service *ChatService) log() *slog.Logger {
 func (service *ChatService) Relay(ctx context.Context, message domain.Message) error {
 	invalidRoomID := !validRoomID(message.RoomID)
 	invalidSenderID := !validParticipantID(message.SenderID)
-	invalidMessageLength := len(message.Body) == 0 || len(message.Body) > maxMessageBytes
+	invalidMessageLength := len(message.Body) == 0 || len(message.Body) > _maxMessageBytes
 	if invalidRoomID || invalidSenderID || invalidMessageLength {
 		return domain.ErrInvalidMessage
 	}
@@ -269,9 +269,9 @@ func (service *ChatService) ResolveForUser(ctx context.Context, roomID, userID s
 }
 
 func validRoomID(value string) bool {
-	return value != "" && len(value) <= maxRoomIDBytes && !strings.ContainsAny(value, "\r\n")
+	return value != "" && len(value) <= _maxRoomIDBytes && !strings.ContainsAny(value, "\r\n")
 }
 
 func validParticipantID(value string) bool {
-	return value != "" && len(value) <= maxParticipantBytes && !strings.ContainsAny(value, "\r\n")
+	return value != "" && len(value) <= _maxParticipantBytes && !strings.ContainsAny(value, "\r\n")
 }

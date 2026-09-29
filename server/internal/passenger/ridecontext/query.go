@@ -34,8 +34,8 @@ type RideContextQuery interface {
 type Query = RideContextQuery
 
 const (
-	recentDestinationLimit = 25
-	currentAddressTimeout  = 750 * time.Millisecond
+	_recentDestinationLimit = 25
+	_currentAddressTimeout  = 750 * time.Millisecond
 )
 
 var (
@@ -124,7 +124,7 @@ func (service *RideContextQueryService) Load(
 	destinations, err := service.recentDestinations.ReadRecentDestinations(
 		ctx,
 		*passengerID,
-		recentDestinationLimit,
+		_recentDestinationLimit,
 	)
 	waitGroup.Wait()
 	if err != nil {
@@ -151,7 +151,7 @@ func resolveAddress(
 	resolver AddressResolver,
 	coordinates Coordinates,
 ) (string, error) {
-	addressContext, cancel := context.WithTimeout(ctx, currentAddressTimeout)
+	addressContext, cancel := context.WithTimeout(ctx, _currentAddressTimeout)
 	defer cancel()
 	return resolver.ResolveAddress(addressContext, coordinates)
 }

@@ -154,7 +154,7 @@ func TestHandlerClosesConnectionForOversizedClientMessage(t *testing.T) {
 	}
 	defer connection.Close()
 
-	oversizedMessage := strings.Repeat("x", maximumMessageSize+1)
+	oversizedMessage := strings.Repeat("x", _maximumMessageSize+1)
 	if err := connection.WriteMessage(websocket.TextMessage, []byte(oversizedMessage)); err != nil {
 		t.Fatalf("WriteMessage() error = %v", err)
 	}

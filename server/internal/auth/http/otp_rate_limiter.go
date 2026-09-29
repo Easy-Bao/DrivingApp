@@ -16,9 +16,9 @@ import (
 )
 
 const (
-	maxOTPVerificationAttempts int64 = 5
-	otpVerificationWindow            = 15 * time.Minute
-	otpVerificationBodyLimit   int64 = 16 << 10
+	_maxOTPVerificationAttempts int64 = 5
+	_otpVerificationWindow            = 15 * time.Minute
+	_otpVerificationBodyLimit   int64 = 16 << 10
 )
 
 type OTPVerificationRateLimiter struct {
@@ -36,7 +36,7 @@ func (limiter *OTPVerificationRateLimiter) Middleware(next http.Handler) http.Ha
 			return
 		}
 
-		body, err := io.ReadAll(io.LimitReader(request.Body, otpVerificationBodyLimit))
+		body, err := io.ReadAll(io.LimitReader(request.Body, _otpVerificationBodyLimit))
 		if err != nil {
 			next.ServeHTTP(writer, request)
 			return
@@ -59,7 +59,7 @@ func (limiter *OTPVerificationRateLimiter) Middleware(next http.Handler) http.Ha
 			count, err := limiter.store.Increment(
 				request.Context(),
 				key,
-				otpVerificationWindow,
+				_otpVerificationWindow,
 			)
 			if err != nil {
 				writer.Header().Set("Retry-After", "1")
@@ -70,11 +70,11 @@ func (limiter *OTPVerificationRateLimiter) Middleware(next http.Handler) http.Ha
 				)
 				return
 			}
-			if count > maxOTPVerificationAttempts {
+			if count > _maxOTPVerificationAttempts {
 				writer.Header().Set("Retry-After", "900")
 				writer.Header().Set(
 					"X-RateLimit-Limit",
-					fmt.Sprintf("%d", maxOTPVerificationAttempts),
+					fmt.Sprintf("%d", _maxOTPVerificationAttempts),
 				)
 				response.Error(writer, http.StatusTooManyRequests, "too many verification attempts")
 				return

@@ -16,7 +16,7 @@ type Handler struct {
 	service *application.LocationService
 }
 
-const maxRoutePayloadBytes = 16 << 10
+const _maxRoutePayloadBytes = 16 << 10
 
 func NewHandler(service *application.LocationService) *Handler {
 	return &Handler{service: service}
@@ -104,7 +104,7 @@ func (handler *Handler) Route(writer http.ResponseWriter, request *http.Request)
 
 func (handler *Handler) Matrix(writer http.ResponseWriter, request *http.Request) {
 	var payload dto.MatrixRequest
-	if sharedrequest.DecodeJSON(writer, request, &payload, maxRoutePayloadBytes) != nil {
+	if sharedrequest.DecodeJSON(writer, request, &payload, _maxRoutePayloadBytes) != nil {
 		response.Error(writer, http.StatusBadRequest, "invalid matrix payload")
 		return
 	}
@@ -117,7 +117,7 @@ func (handler *Handler) Matrix(writer http.ResponseWriter, request *http.Request
 }
 
 func decodeRouteRequest(writer http.ResponseWriter, request *http.Request, payload *dto.RouteRequest) error {
-	return sharedrequest.DecodeJSON(writer, request, payload, maxRoutePayloadBytes)
+	return sharedrequest.DecodeJSON(writer, request, payload, _maxRoutePayloadBytes)
 }
 
 func writeServiceError(writer http.ResponseWriter, err error) {

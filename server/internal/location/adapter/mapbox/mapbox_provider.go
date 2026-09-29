@@ -23,20 +23,20 @@ import (
 )
 
 const (
-	searchURL                      = "https://api.mapbox.com/search/searchbox/v1"
-	geocodingURL                   = "https://api.mapbox.com/search/geocode/v6"
-	directionsURL                  = "https://api.mapbox.com/directions/v5/mapbox"
-	matrixURL                      = "https://api.mapbox.com/directions-matrix/v1/mapbox/driving"
-	nearbyPageSize                 = 10
-	maxNearbyPage                  = 100
-	maxSearchQueryBytes            = 256
-	maxProviderResponseBytes int64 = 4 << 20
-	mapboxRequestTimeout           = 10 * time.Second
-	routeCacheTTL                  = 15 * time.Second
-	routeCacheMaxEntries           = 128
+	_searchURL                      = "https://api.mapbox.com/search/searchbox/v1"
+	_geocodingURL                   = "https://api.mapbox.com/search/geocode/v6"
+	_directionsURL                  = "https://api.mapbox.com/directions/v5/mapbox"
+	_matrixURL                      = "https://api.mapbox.com/directions-matrix/v1/mapbox/driving"
+	_nearbyPageSize                 = 10
+	_maxNearbyPage                  = 100
+	_maxSearchQueryBytes            = 256
+	_maxProviderResponseBytes int64 = 4 << 20
+	_mapboxRequestTimeout           = 10 * time.Second
+	_routeCacheTTL                  = 15 * time.Second
+	_routeCacheMaxEntries           = 128
 )
 
-var defaultNearbyCategories = []string{
+var _defaultNearbyCategories = []string{
 	"food_and_drink",
 	"hotel",
 	"hospital",
@@ -74,7 +74,7 @@ func NewMapboxProvider(token string) *MapboxProvider {
 	}
 	return &MapboxProvider{
 		token:      token,
-		client:     &http.Client{Transport: transport, Timeout: mapboxRequestTimeout},
+		client:     &http.Client{Transport: transport, Timeout: _mapboxRequestTimeout},
 		breaker:    resilience.NewCircuitBreaker(5, 30*time.Second),
 		routeCache: make(map[string]routeCacheEntry),
 	}
@@ -125,7 +125,7 @@ func (provider *MapboxProvider) Search(
 	if err := provider.validate(); err != nil {
 		return nil, err
 	}
-	if len(query) > maxSearchQueryBytes || !origin.Valid() {
+	if len(query) > _maxSearchQueryBytes || !origin.Valid() {
 		return nil, fmt.Errorf("invalid location search")
 	}
 	queryParams := url.Values{
@@ -136,7 +136,7 @@ func (provider *MapboxProvider) Search(
 		"proximity":    {coordinate(origin.Longitude) + "," + coordinate(origin.Latitude)},
 	}
 	var response featureResponse
-	if err := provider.getJSON(ctx, searchURL+"/forward?"+queryParams.Encode(), &response); err != nil {
+	if err := provider.getJSON(ctx, _searchURL+"/forward?"+queryParams.Encode(), &response); err != nil {
 		return nil, fmt.Errorf("search location provider: %w", err)
 	}
 	places := make([]domain.Place, 0, len(response.Features))
@@ -156,7 +156,7 @@ func (provider *MapboxProvider) Nearby(
 	if err := provider.validate(); err != nil {
 		return nil, err
 	}
-	invalidPage := page < 1 || page > maxNearbyPage
+	invalidPage := page < 1 || page > _maxNearbyPage
 	if invalidPage || !origin.Valid() {
 		return nil, fmt.Errorf("invalid nearby page or coordinates")
 	}
@@ -165,7 +165,7 @@ func (provider *MapboxProvider) Nearby(
 		result := provider.nearbyCategory(
 			ctx,
 			origin,
-			strings.Join(defaultNearbyCategories, ","),
+			strings.Join(_defaultNearbyCategories, ","),
 		)
 		if result.err != nil {
 			return nil, result.err
@@ -210,11 +210,11 @@ func (provider *MapboxProvider) Nearby(
 }
 
 func paginateNearbyPlaces(places []domain.Place, page int) []domain.Place {
-	start := (page - 1) * nearbyPageSize
+	start := (page - 1) * _nearbyPageSize
 	if start >= len(places) {
 		return []domain.Place{}
 	}
-	end := start + nearbyPageSize
+	end := start + _nearbyPageSize
 	if end > len(places) {
 		end = len(places)
 	}
@@ -232,7 +232,7 @@ func (provider *MapboxProvider) nearbyCategory(
 		"proximity":    {coordinate(origin.Longitude) + "," + coordinate(origin.Latitude)},
 	}
 	var response featureResponse
-	endpoint := searchURL + "/category/" + url.PathEscape(category) + "?" + queryParams.Encode()
+	endpoint := _searchURL + "/category/" + url.PathEscape(category) + "?" + queryParams.Encode()
 	if err := provider.getJSON(ctx, endpoint, &response); err != nil {
 		return categoryResult{err: fmt.Errorf("search nearby category %q: %w", category, err)}
 	}
@@ -325,7 +325,7 @@ func (provider *MapboxProvider) ReverseGeocode(
 		"limit":        {"10"},
 	}
 	var response featureResponse
-	if err := provider.getJSON(ctx, searchURL+"/reverse?"+queryParams.Encode(), &response); err != nil {
+	if err := provider.getJSON(ctx, _searchURL+"/reverse?"+queryParams.Encode(), &response); err != nil {
 		return nil, fmt.Errorf("reverse geocode location: %w", err)
 	}
 	selected, match, ok := mostSpecificReverseFeature(response.Features, coordinates)
@@ -336,7 +336,7 @@ func (provider *MapboxProvider) ReverseGeocode(
 			"access_token": {provider.token},
 			"limit":        {"1"},
 		}
-		if err := provider.getJSON(ctx, geocodingURL+"/reverse?"+fallbackQuery.Encode(), &response); err != nil {
+		if err := provider.getJSON(ctx, _geocodingURL+"/reverse?"+fallbackQuery.Encode(), &response); err != nil {
 			return nil, fmt.Errorf("reverse geocode location fallback: %w", err)
 		}
 		selected, match, ok = mostSpecificReverseFeature(response.Features, coordinates)
@@ -606,7 +606,7 @@ func (provider *MapboxProvider) Route(
 		queryParams.Set("exclude", strings.Join(excludedPoints, ","))
 	}
 	var response directionsResponse
-	endpoint := directionsURL + "/" + string(normalizedOptions.Profile) + "/" + coordinates + "?" + queryParams.Encode()
+	endpoint := _directionsURL + "/" + string(normalizedOptions.Profile) + "/" + coordinates + "?" + queryParams.Encode()
 	if err := provider.getJSON(ctx, endpoint, &response); err != nil {
 		return nil, fmt.Errorf("calculate route: %w", err)
 	}
@@ -662,7 +662,7 @@ func (provider *MapboxProvider) cachedRoutes(key string) ([]mapboxRoute, bool) {
 	if !ok {
 		return nil, false
 	}
-	if time.Since(entry.createdAt) >= routeCacheTTL {
+	if time.Since(entry.createdAt) >= _routeCacheTTL {
 		delete(provider.routeCache, key)
 		return nil, false
 	}
@@ -679,7 +679,7 @@ func (provider *MapboxProvider) storeRoutes(key string, routes []mapboxRoute) {
 	if provider.routeCache == nil {
 		provider.routeCache = make(map[string]routeCacheEntry)
 	}
-	if _, exists := provider.routeCache[key]; !exists && len(provider.routeCache) >= routeCacheMaxEntries {
+	if _, exists := provider.routeCache[key]; !exists && len(provider.routeCache) >= _routeCacheMaxEntries {
 		oldestKey := ""
 		var oldest time.Time
 		for candidateKey, candidate := range provider.routeCache {
@@ -755,7 +755,7 @@ func (provider *MapboxProvider) Matrix(
 		"destinations": {strings.Join(destinationIndexes, ";")},
 	}
 	var response matrixResponse
-	endpoint := matrixURL + "/" + strings.Join(coordinates, ";") + "?" + queryParams.Encode()
+	endpoint := _matrixURL + "/" + strings.Join(coordinates, ";") + "?" + queryParams.Encode()
 	if err := provider.getJSON(ctx, endpoint, &response); err != nil {
 		return nil, fmt.Errorf("calculate travel matrix: %w", err)
 	}
@@ -855,12 +855,12 @@ func (provider *MapboxProvider) fetchJSON(ctx context.Context, endpoint string, 
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
 		return fmt.Errorf("location provider returned status %d", response.StatusCode)
 	}
-	body, err := io.ReadAll(io.LimitReader(response.Body, maxProviderResponseBytes+1))
+	body, err := io.ReadAll(io.LimitReader(response.Body, _maxProviderResponseBytes+1))
 	if err != nil {
 		return fmt.Errorf("read location provider response: %w", err)
 	}
-	if int64(len(body)) > maxProviderResponseBytes {
-		return fmt.Errorf("location provider response exceeds %d bytes", maxProviderResponseBytes)
+	if int64(len(body)) > _maxProviderResponseBytes {
+		return fmt.Errorf("location provider response exceeds %d bytes", _maxProviderResponseBytes)
 	}
 	if err := json.Unmarshal(body, target); err != nil {
 		return fmt.Errorf("decode location provider response: %w", err)

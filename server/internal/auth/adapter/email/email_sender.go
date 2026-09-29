@@ -124,9 +124,9 @@ func clientOptions(config Config) []mail.Option {
 		mail.WithPassword(config.Password),
 	}
 	switch config.Security {
-	case securitySSL:
+	case _securitySSL:
 		options = append(options, mail.WithSSL())
-	case securityNone:
+	case _securityNone:
 		options = append(options, mail.WithTLSPolicy(mail.NoTLS))
 	default:
 		options = append(options, mail.WithTLSPortPolicy(mail.TLSMandatory))
