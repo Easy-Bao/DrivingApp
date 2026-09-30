@@ -17,6 +17,14 @@ type authenticatorStub struct{}
 
 func (authenticatorStub) Verify(string) (string, error) { return "7", nil }
 
+func newTestHandler(
+	hub *RoomHub,
+	authenticator Authenticator,
+	options ...HandlerOption,
+) *Handler {
+	return NewHandler(HandlerDependencies{Hub: hub, Authenticator: authenticator}, options...)
+}
+
 type roomAuthorizerStub struct{}
 
 func (roomAuthorizerStub) CanAccessRoom(context.Context, string, string) (bool, error) {
@@ -56,7 +64,7 @@ func newIPv4TestServer(t *testing.T, handler http.Handler) *testHTTPServer {
 }
 
 func TestChatWebSocketOriginPolicy(t *testing.T) {
-	handler := NewHandler(NewRoomHub(), nil).WithAllowedOrigins([]string{"https://app.example"})
+	handler := newTestHandler(NewRoomHub(), nil).WithAllowedOrigins([]string{"https://app.example"})
 
 	nativeRequest := httptest.NewRequest("GET", "/api/v1/chat/ws", nil)
 	if !handler.originAllowed(nativeRequest) {
@@ -122,7 +130,7 @@ func TestEnrichChatEventRejectsNonStringType(t *testing.T) {
 }
 
 func TestChatWebSocketDoesNotBroadcastRejectedMessages(t *testing.T) {
-	handler := NewHandler(
+	handler := newTestHandler(
 		NewRoomHub(),
 		authenticatorStub{},
 		WithEventSink(rejectingSinkStub{}),

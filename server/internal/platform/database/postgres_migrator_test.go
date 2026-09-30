@@ -7,10 +7,11 @@ import (
 
 func TestNewPostgresMigratorRejectsInvalidSourcePath(t *testing.T) {
 	_, err := NewPostgresMigrator(
-		fstest.MapFS{},
-		"../migrations",
-		nil,
-		DefaultPostgresMigratorConfig(),
+		PostgresMigratorDependencies{
+			Migrations:    fstest.MapFS{},
+			MigrationPath: "../migrations",
+			Config:        DefaultPostgresMigratorConfig(),
+		},
 	)
 	if err == nil {
 		t.Fatal("expected invalid migration path to fail")
@@ -19,10 +20,11 @@ func TestNewPostgresMigratorRejectsInvalidSourcePath(t *testing.T) {
 
 func TestNewPostgresMigratorRequiresDatabase(t *testing.T) {
 	_, err := NewPostgresMigrator(
-		fstest.MapFS{},
-		".",
-		nil,
-		DefaultPostgresMigratorConfig(),
+		PostgresMigratorDependencies{
+			Migrations:    fstest.MapFS{},
+			MigrationPath: ".",
+			Config:        DefaultPostgresMigratorConfig(),
+		},
 	)
 	if err == nil {
 		t.Fatal("expected missing migration database to fail")

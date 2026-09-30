@@ -38,10 +38,12 @@ func run(ctx context.Context) error {
 		return fmt.Errorf("open migration database: %w", err)
 	}
 	migrator, err := database.NewPostgresMigrator(
-		migrations.FS,
-		".",
-		sqlDatabase,
-		database.DefaultPostgresMigratorConfig(),
+		database.PostgresMigratorDependencies{
+			Migrations:    migrations.FS,
+			MigrationPath: ".",
+			Database:      sqlDatabase,
+			Config:        database.DefaultPostgresMigratorConfig(),
+		},
 	)
 	if err != nil {
 		migratorErr := fmt.Errorf("create migrator: %w", err)

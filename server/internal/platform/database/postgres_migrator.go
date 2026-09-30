@@ -29,6 +29,13 @@ type PostgresMigratorConfig struct {
 	MultiStatementMaxSize int
 }
 
+type PostgresMigratorDependencies struct {
+	Migrations    fs.FS
+	MigrationPath string
+	Database      *sql.DB
+	Config        PostgresMigratorConfig
+}
+
 func DefaultPostgresMigratorConfig() PostgresMigratorConfig {
 	return PostgresMigratorConfig{
 		MigrationsTable:       "app_schema_migrations",
@@ -41,37 +48,32 @@ func DefaultPostgresMigratorConfig() PostgresMigratorConfig {
 // PostgreSQL migration driver. Ownership of database transfers to the returned
 // migrator; callers must close the migrator and must not reuse database after
 // that close.
-func NewPostgresMigrator(
-	migrations fs.FS,
-	migrationPath string,
-	database *sql.DB,
-	config PostgresMigratorConfig,
-) (*migrate.Migrate, error) {
-	if migrations == nil {
+func NewPostgresMigrator(dependencies PostgresMigratorDependencies) (*migrate.Migrate, error) {
+	if dependencies.Migrations == nil {
 		return nil, fmt.Errorf("migration filesystem is required")
 	}
-	if !fs.ValidPath(migrationPath) {
+	if !fs.ValidPath(dependencies.MigrationPath) {
 		return nil, fmt.Errorf("migration path must be a valid relative path")
 	}
-	if database == nil {
+	if dependencies.Database == nil {
 		return nil, fmt.Errorf("migration database is required")
 	}
-	if err := config.validate(); err != nil {
+	if err := dependencies.Config.validate(); err != nil {
 		return nil, err
 	}
 
-	sourceDriver, err := iofs.New(migrations, migrationPath)
+	sourceDriver, err := iofs.New(dependencies.Migrations, dependencies.MigrationPath)
 	if err != nil {
 		return nil, fmt.Errorf("open migration source: %w", err)
 	}
 
-	databaseDriver, err := pgxmigrate.WithInstance(database, &pgxmigrate.Config{
-		MigrationsTable:       config.MigrationsTable,
-		DatabaseName:          config.DatabaseName,
-		SchemaName:            config.SchemaName,
-		StatementTimeout:      config.StatementTimeout,
-		MultiStatementEnabled: config.MultiStatementEnabled,
-		MultiStatementMaxSize: config.MultiStatementMaxSize,
+	databaseDriver, err := pgxmigrate.WithInstance(dependencies.Database, &pgxmigrate.Config{
+		MigrationsTable:       dependencies.Config.MigrationsTable,
+		DatabaseName:          dependencies.Config.DatabaseName,
+		SchemaName:            dependencies.Config.SchemaName,
+		StatementTimeout:      dependencies.Config.StatementTimeout,
+		MultiStatementEnabled: dependencies.Config.MultiStatementEnabled,
+		MultiStatementMaxSize: dependencies.Config.MultiStatementMaxSize,
 	})
 	if err != nil {
 		return nil, errors.Join(

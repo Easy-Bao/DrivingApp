@@ -44,6 +44,11 @@ type RoomAuthorizer interface {
 
 type HandlerOption func(*Handler)
 
+type HandlerDependencies struct {
+	Hub           *RoomHub
+	Authenticator Authenticator
+}
+
 var (
 	_ http.Handler  = (*Handler)(nil)
 	_ Authenticator = (*security.TokenManager)(nil)
@@ -61,10 +66,10 @@ func WithRoomAuthorizer(authorizer RoomAuthorizer) HandlerOption {
 	}
 }
 
-func NewHandler(hub *RoomHub, authenticate Authenticator, options ...HandlerOption) *Handler {
+func NewHandler(dependencies HandlerDependencies, options ...HandlerOption) *Handler {
 	handler := &Handler{
-		hub:            hub,
-		authenticate:   authenticate,
+		hub:            dependencies.Hub,
+		authenticate:   dependencies.Authenticator,
 		allowedOrigins: make(map[string]struct{}),
 	}
 	handler.upgrader = websocket.Upgrader{CheckOrigin: handler.originAllowed}

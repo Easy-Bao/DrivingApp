@@ -25,8 +25,15 @@ func (failingIdempotencyStore) SetNX(context.Context, string, []byte, time.Durat
 }
 func (failingIdempotencyStore) DeleteIfValue(context.Context, string, []byte) error { return nil }
 
+func newTestIdempotency(
+	store IdempotencyStore,
+	options ...IdempotencyOption,
+) *Idempotency {
+	return NewIdempotency(IdempotencyDependencies{Store: store}, options...)
+}
+
 func TestIdempotencyUsesDefaultExpirationForInvalidOption(t *testing.T) {
-	idempotency := NewIdempotency(nil, WithIdempotencyExpiration(0))
+	idempotency := newTestIdempotency(nil, WithIdempotencyExpiration(0))
 	if idempotency.expiration != _defaultIdempotencyExpiration {
 		t.Fatalf("expiration = %s, want %s", idempotency.expiration, _defaultIdempotencyExpiration)
 	}
@@ -52,7 +59,7 @@ func TestMemoryIdempotencyStoreOnlyReleasesTheCurrentLockOwner(t *testing.T) {
 
 func TestIdempotencyReplaysSuccessfulResponse(t *testing.T) {
 	var calls atomic.Int32
-	handler := NewIdempotency(
+	handler := newTestIdempotency(
 		NewMemoryIdempotencyStore(),
 		WithIdempotencyExpiration(time.Minute),
 	).Middleware(
@@ -87,7 +94,7 @@ func TestIdempotencyReplaysSuccessfulResponse(t *testing.T) {
 
 func TestIdempotencyRejectsKeyReuseWithDifferentBody(t *testing.T) {
 	store := NewMemoryIdempotencyStore()
-	handler := NewIdempotency(store, WithIdempotencyExpiration(time.Minute)).Middleware(
+	handler := newTestIdempotency(store, WithIdempotencyExpiration(time.Minute)).Middleware(
 		http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
 			writer.WriteHeader(http.StatusCreated)
 		}),
@@ -108,7 +115,7 @@ func TestIdempotencyRejectsKeyReuseWithDifferentBody(t *testing.T) {
 
 func TestIdempotencyFailsClosedWhenStoreIsUnavailable(t *testing.T) {
 	called := false
-	handler := NewIdempotency(
+	handler := newTestIdempotency(
 		failingIdempotencyStore{},
 		WithIdempotencyExpiration(time.Minute),
 	).Middleware(
@@ -127,7 +134,7 @@ func TestIdempotencyFailsClosedWhenStoreIsUnavailable(t *testing.T) {
 
 func TestIdempotencySkipsHighThroughputTelemetryUpdates(t *testing.T) {
 	var calls atomic.Int32
-	handler := NewIdempotency(
+	handler := newTestIdempotency(
 		NewMemoryIdempotencyStore(),
 		WithIdempotencyExpiration(time.Minute),
 	).Middleware(
@@ -168,7 +175,7 @@ func TestIdempotencySkipsQueriesSensitiveAuthAndPresenceUpdates(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			var calls atomic.Int32
-			handler := NewIdempotency(
+			handler := newTestIdempotency(
 				NewMemoryIdempotencyStore(),
 				WithIdempotencyExpiration(time.Minute),
 			).Middleware(
@@ -191,7 +198,7 @@ func TestIdempotencySkipsQueriesSensitiveAuthAndPresenceUpdates(t *testing.T) {
 
 func TestIdempotencyScopesKeysToAuthorizationAndQuery(t *testing.T) {
 	var calls atomic.Int32
-	handler := NewIdempotency(
+	handler := newTestIdempotency(
 		NewMemoryIdempotencyStore(),
 		WithIdempotencyExpiration(time.Minute),
 	).Middleware(

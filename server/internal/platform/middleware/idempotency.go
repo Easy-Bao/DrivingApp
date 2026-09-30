@@ -227,6 +227,10 @@ const _defaultIdempotencyExpiration = 10 * time.Minute
 
 type IdempotencyOption func(*Idempotency)
 
+type IdempotencyDependencies struct {
+	Store IdempotencyStore
+}
+
 func WithIdempotencyExpiration(expiration time.Duration) IdempotencyOption {
 	return func(idempotency *Idempotency) {
 		if expiration > 0 {
@@ -235,9 +239,12 @@ func WithIdempotencyExpiration(expiration time.Duration) IdempotencyOption {
 	}
 }
 
-func NewIdempotency(store IdempotencyStore, options ...IdempotencyOption) *Idempotency {
+func NewIdempotency(
+	dependencies IdempotencyDependencies,
+	options ...IdempotencyOption,
+) *Idempotency {
 	idempotency := &Idempotency{
-		store:       store,
+		store:       dependencies.Store,
 		expiration:  _defaultIdempotencyExpiration,
 		lockTimeout: time.Minute,
 		logger:      slog.Default(),

@@ -124,7 +124,9 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 		otpAttemptStore:    rateCounterStore,
 	})
 	idempotency := middleware.NewIdempotency(
-		middleware.NewRedisIdempotencyStore(redisClient),
+		middleware.IdempotencyDependencies{
+			Store: middleware.NewRedisIdempotencyStore(redisClient),
+		},
 		middleware.WithIdempotencyExpiration(10*time.Minute),
 	).WithLogger(applicationLogger)
 	secureHandler := middleware.SecureHTTPWithIdempotency(

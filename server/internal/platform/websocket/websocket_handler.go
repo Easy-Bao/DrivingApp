@@ -37,6 +37,11 @@ var _ http.Handler = (*Handler)(nil)
 
 type HandlerOption func(*Handler)
 
+type HandlerDependencies struct {
+	Hub           *Hub
+	Authenticator IdentityAuthenticator
+}
+
 func WithAllowedOrigins(origins []string) HandlerOption {
 	return func(handler *Handler) {
 		for _, origin := range origins {
@@ -47,10 +52,10 @@ func WithAllowedOrigins(origins []string) HandlerOption {
 	}
 }
 
-func NewHandler(hub *Hub, authenticator IdentityAuthenticator, options ...HandlerOption) *Handler {
+func NewHandler(dependencies HandlerDependencies, options ...HandlerOption) *Handler {
 	handler := &Handler{
-		hub:            hub,
-		authenticator:  authenticator,
+		hub:            dependencies.Hub,
+		authenticator:  dependencies.Authenticator,
 		allowedOrigins: make(map[string]struct{}),
 	}
 	for _, option := range options {

@@ -233,8 +233,10 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 	router.Handle(
 		api.V1Prefix+"/chat/ws",
 		chatws.NewHandler(
-			chatws.NewRoomHub(),
-			verifier,
+			chatws.HandlerDependencies{
+				Hub:           chatws.NewRoomHub(),
+				Authenticator: verifier,
+			},
 			chatws.WithEventSink(chatEventRouter),
 			chatws.WithRoomAuthorizer(chatService),
 		).
@@ -243,8 +245,10 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 	router.Handle(
 		api.V1Prefix+"/realtime/ws",
 		websockethub.NewHandler(
-			eventHub,
-			verifier,
+			websockethub.HandlerDependencies{
+				Hub:           eventHub,
+				Authenticator: verifier,
+			},
 			websockethub.WithAllowedOrigins(config.Security.AllowedOrigins),
 		),
 	)
