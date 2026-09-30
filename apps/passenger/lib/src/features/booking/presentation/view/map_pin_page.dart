@@ -11,6 +11,18 @@ import 'package:passenger/src/features/booking/presentation/widgets/map_selectio
 
 enum MapPinFlow { pickup, savedPlace }
 
+extension MapPinFlowCopy on MapPinFlow {
+  String get locationLabel => switch (this) {
+    MapPinFlow.pickup => 'Pickup location',
+    MapPinFlow.savedPlace => 'Saved place location',
+  };
+
+  String get confirmationLabel => switch (this) {
+    MapPinFlow.pickup => 'Confirm pickup location',
+    MapPinFlow.savedPlace => 'Confirm saved place location',
+  };
+}
+
 class const MapPinPage({super.key, this.flow = MapPinFlow.pickup})
     extends StatefulWidget {
   final MapPinFlow flow;
@@ -389,7 +401,7 @@ class _MapPinPageState()
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Pickup location',
+                              widget.flow.locationLabel,
                               style: TextStyle(
                                 color: context.colorScheme.onSurface.withValues(
                                   alpha: 0.62,
@@ -475,7 +487,7 @@ class _MapPinPageState()
                       child: Text(
                         _isGeocoding
                             ? 'Locating...'
-                            : 'Confirm pickup location',
+                            : widget.flow.confirmationLabel,
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
