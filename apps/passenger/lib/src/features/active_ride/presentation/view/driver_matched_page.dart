@@ -145,7 +145,6 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                 ),
               ),
               const SizedBox(height: 36),
-
               Semantics(
                 button: true,
                 label: 'View driver details',
