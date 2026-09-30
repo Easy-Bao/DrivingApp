@@ -220,7 +220,7 @@ class _SearchDestinationPageState()
 
   void _handleSearchBackTap() {
     if (widget.returnToMapPin) {
-      Navigator.pop(context);
+      context.pop();
       return;
     }
     if (_focusNode.hasFocus) {
@@ -228,7 +228,7 @@ class _SearchDestinationPageState()
     } else if (_expandController.value > 0.5) {
       unawaited(_expandController.reverse());
     } else {
-      Navigator.pop(context);
+      context.pop();
     }
   }
 
@@ -936,6 +936,9 @@ class _SearchDestinationPageState()
                                     child: Row(
                                       children: [
                                         GestureDetector(
+                                          key: const ValueKey(
+                                            'search-destination-back',
+                                          ),
                                           onTap: () {
                                             _handleSearchBackTap();
                                           },
