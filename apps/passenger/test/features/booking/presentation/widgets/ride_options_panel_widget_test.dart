@@ -368,6 +368,28 @@ void main() {
     expect(find.byKey(const ValueKey('trip-route-dashes')), findsOneWidget);
     expect(find.byIcon(LucideIcons.map_pin), findsOneWidget);
     expect(find.byIcon(LucideIcons.navigation), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Container &&
+            widget.constraints ==
+                const BoxConstraints.tightFor(width: 6, height: 6),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Container &&
+            widget.constraints ==
+                const BoxConstraints.tightFor(width: 18, height: 18),
+      ),
+      findsNothing,
+    );
+    expect(
+      tester.widget<Icon>(find.byIcon(LucideIcons.navigation)).color,
+      EasyRideTheme.main.colorScheme.primary,
+    );
     expect(tester.takeException(), isNull);
   });
 

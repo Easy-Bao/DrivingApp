@@ -34,26 +34,13 @@ class const RideTripSummaryWidget({
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: context.colorScheme.primary,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'Trip Details',
-                style: TextStyle(
-                  color: context.colorScheme.onSurfaceVariant,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+          Text(
+            'Trip Details',
+            style: TextStyle(
+              color: context.colorScheme.onSurfaceVariant,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 12),
           _TripLocationTimeline(
@@ -191,27 +178,15 @@ class const _LocationIcon({required this.icon, this.isDestination = false})
 
   @override
   Widget build(BuildContext context) {
-    if (isDestination) {
-      return Container(
-        width: 18,
-        height: 18,
-        decoration: BoxDecoration(
-          color: context.colorScheme.primary,
-          shape: BoxShape.circle,
-        ),
-        child: Center(
-          child: Icon(icon, size: 11, color: context.colorScheme.onPrimary),
-        ),
-      );
-    }
-
     return SizedBox(
       width: 18,
       height: 18,
       child: Icon(
         icon,
         size: 18,
-        color: context.semanticColors.success,
+        color: isDestination
+            ? context.colorScheme.primary
+            : context.semanticColors.success,
       ),
     );
   }
