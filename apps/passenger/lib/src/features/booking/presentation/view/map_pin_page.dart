@@ -309,7 +309,7 @@ class _MapPinPageState()
                         children: [
                           Positioned.fill(
                             left: EasyRideSize.minimumTouchTarget + 8,
-                            right: EasyRideSize.minimumTouchTarget + 8,
+                            right: 0,
                             child: _buildDestinationSearchField(context),
                           ),
                           Positioned(
