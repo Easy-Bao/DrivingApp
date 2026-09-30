@@ -543,7 +543,6 @@ class _DriverDropdownCardWidgetState()
                                       width: 1.2,
                                     ),
                                     padding: EdgeInsets.zero,
-                                    shape: const StadiumBorder(),
                                   ),
                                   child: const Text(
                                     'View Full Profile',
@@ -570,7 +569,6 @@ class _DriverDropdownCardWidgetState()
                                       48,
                                     ),
                                     padding: EdgeInsets.zero,
-                                    shape: const StadiumBorder(),
                                   ),
                                   child: const Text(
                                     'Book This Driver',

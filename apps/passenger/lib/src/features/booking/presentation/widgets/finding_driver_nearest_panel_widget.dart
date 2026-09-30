@@ -163,7 +163,6 @@ class const FindingDriverNearestPanelWidget({
                 child: OutlinedButton(
                   onPressed: onViewFullProfilePressed,
                   style: OutlinedButton.styleFrom(
-                    shape: const StadiumBorder(),
                     minimumSize: const Size(0, EasyRideSize.minimumTouchTarget),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
@@ -178,7 +177,6 @@ class const FindingDriverNearestPanelWidget({
                     backgroundColor: context.colorScheme.primary,
                     foregroundColor: context.colorScheme.onPrimary,
                     elevation: 0,
-                    shape: const StadiumBorder(),
                     minimumSize: const Size(0, EasyRideSize.minimumTouchTarget),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),

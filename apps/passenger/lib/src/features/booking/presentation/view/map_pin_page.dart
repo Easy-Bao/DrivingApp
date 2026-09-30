@@ -470,7 +470,6 @@ class _MapPinPageState()
                             .withValues(alpha: 0.45),
                         disabledForegroundColor: context.colorScheme.onPrimary
                             .withValues(alpha: 0.7),
-                        shape: const StadiumBorder(),
                         padding: EdgeInsets.zero,
                       ),
                       child: Text(
