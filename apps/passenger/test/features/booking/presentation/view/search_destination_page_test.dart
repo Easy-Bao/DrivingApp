@@ -38,6 +38,9 @@ class _FakeGeolocatorPlatform extends GeolocatorPlatform {
 }
 
 class _FakeLocationRepository implements maps.LocationRepository {
+  List<maps.Place> nearbyPlaces = [];
+  Completer<Map<String, dynamic>>? nearbyPlacesCompleter;
+
   @override
   Future<Map<String, dynamic>> searchPlaces({
     required String query,
@@ -58,7 +61,13 @@ class _FakeLocationRepository implements maps.LocationRepository {
     required double lat,
     required double lng,
     int page = 1,
-  }) async => {};
+  }) {
+    final completer = nearbyPlacesCompleter;
+    if (completer != null) return completer.future;
+    return Future.value({
+      'places': [for (final place in nearbyPlaces) place.toJson()],
+    });
+  }
 
   @override
   Future<maps.Route> getRoute({required Map<String, dynamic> body}) {
@@ -73,6 +82,7 @@ class _FakeLocationRepository implements maps.LocationRepository {
 
 void main() {
   late ModularTestScope scope;
+  final locationRepository = _FakeLocationRepository();
   final originalGeolocatorPlatform = GeolocatorPlatform.instance;
 
   setUp(() async {
@@ -82,9 +92,12 @@ void main() {
     await maps.MapProvider.initialize(
       nativeService: maps.MapNativeService(
         placeServiceBaseUri: Uri.parse('http://test.local'),
-        apiClient: _FakeLocationRepository(),
+        apiClient: locationRepository,
       ),
     );
+    maps.MapProvider.clearLookupCaches();
+    locationRepository.nearbyPlaces = [];
+    locationRepository.nearbyPlacesCompleter = null;
     await maps.LocationService.getCurrentPosition();
   });
 
@@ -150,4 +163,45 @@ void main() {
 
     router.dispose();
   });
+
+  testWidgets(
+    'keeps nearby places visible while refreshing without an active search',
+    (tester) async {
+      final nearbyPlace = const maps.Place(
+        id: 'charleston-park',
+        name: 'Charleston Park',
+        fullAddress: 'Charleston Park, Mountain View',
+        latitude: 37.3862,
+        longitude: -122.0838,
+        distanceMeters: 195,
+      );
+      locationRepository.nearbyPlaces = [nearbyPlace];
+
+      final lifecycleCoordinator = scope.get<AppLifecycleCoordinator>();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: EasyRideTheme.main,
+          home: const SearchDestinationPage(autofocusSearch: true),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.text('Nearby Places'), findsOneWidget);
+      expect(find.text('Charleston Park'), findsOneWidget);
+
+      locationRepository.nearbyPlacesCompleter =
+          Completer<Map<String, dynamic>>();
+      maps.MapProvider.clearLookupCaches();
+      lifecycleCoordinator.update(isForeground: false);
+      lifecycleCoordinator.update(isForeground: true);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.text('Charleston Park'), findsOneWidget);
+
+      locationRepository.nearbyPlacesCompleter!.complete(const {'places': []});
+      await tester.pumpAndSettle();
+    },
+  );
 }

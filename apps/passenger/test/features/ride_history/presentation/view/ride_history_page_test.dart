@@ -63,7 +63,6 @@ void main() {
     final rideHistoryBloc = RideHistoryBloc(repository: repository);
     addTearDown(sessionBloc.close);
     addTearDown(rideHistoryBloc.close);
-
     await tester.pumpWidget(
       MaterialApp(
         theme: EasyRideTheme.main,
@@ -90,6 +89,40 @@ void main() {
     repository.complete();
     await tester.pumpAndSettle();
     expect(find.text('No rides yet'), findsOneWidget);
+  });
+
+  testWidgets('Recent Activity skeleton matches its compact loaded layout', (
+    tester,
+  ) async {
+    final sessionBloc = SessionBloc(
+      sessionRepository: _AuthenticatedSessionRepository(),
+    );
+    addTearDown(sessionBloc.close);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: EasyRideTheme.main,
+        home: MultiBlocProvider(
+          providers: [BlocProvider<SessionBloc>.value(value: sessionBloc)],
+          child: const RecentActivityPage(),
+        ),
+      ),
+    );
+
+    await tester.pump();
+
+    expect(
+      find.byKey(const ValueKey<String>('activity-loading-skeleton')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('activity-loading-summary')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('activity-loading-filters')),
+      findsNothing,
+    );
   });
 
   testWidgets('keeps Recent Activity separate from the Activity tab', (

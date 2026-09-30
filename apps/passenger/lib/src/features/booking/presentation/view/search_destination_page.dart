@@ -584,9 +584,11 @@ class _SearchDestinationPageState()
         ? _results
         : _allNearbyPlaces.take(_displayedCount).toList();
     final isNetworkUnavailable = AppNetworkStatusScope.isUnavailableOf(context);
+    final isInitialNearbyLoad =
+        !hasQuery && _isLoadingNearby && displayList.isEmpty;
     final shouldShowLoading =
         _isSearching ||
-        (_isLoadingNearby && !hasQuery) ||
+        isInitialNearbyLoad ||
         (isNetworkUnavailable && displayList.isEmpty);
     final screenSize = MediaQuery.of(context).size;
     final topPadding = MediaQuery.of(context).padding.top;

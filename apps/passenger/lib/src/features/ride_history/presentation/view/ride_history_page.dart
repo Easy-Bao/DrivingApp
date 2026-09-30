@@ -69,6 +69,8 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                   subtitle: 'Checking your account',
                   showBackButton: widget.showBackButton,
                   showSubtitle: widget.showHeaderSubtitle,
+                  showSummary: widget.showSummary,
+                  showFilters: widget.showFilters,
                   itemCount: _defaultSkeletonCount,
                 ),
                 GuestSession() || SessionFailure() => _RideHistoryMessageView(
@@ -87,6 +89,8 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                         subtitle: 'Preparing your activity',
                         showBackButton: widget.showBackButton,
                         showSubtitle: widget.showHeaderSubtitle,
+                        showSummary: widget.showSummary,
+                        showFilters: widget.showFilters,
                         itemCount: _defaultSkeletonCount,
                       ),
                       RideHistoryLoading(:final existingRideCount)
@@ -96,6 +100,8 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                           subtitle: widget.subtitle,
                           showBackButton: widget.showBackButton,
                           showSubtitle: widget.showHeaderSubtitle,
+                          showSummary: widget.showSummary,
+                          showFilters: widget.showFilters,
                           itemCount: existingRideCount
                               .clamp(
                                 _defaultSkeletonCount,
@@ -108,6 +114,8 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                         subtitle: 'Loading your activity',
                         showBackButton: widget.showBackButton,
                         showSubtitle: widget.showHeaderSubtitle,
+                        showSummary: widget.showSummary,
+                        showFilters: widget.showFilters,
                         itemCount: _defaultSkeletonCount,
                       ),
                       RideHistoryError()
@@ -117,6 +125,8 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                           subtitle: widget.subtitle,
                           showBackButton: widget.showBackButton,
                           showSubtitle: widget.showHeaderSubtitle,
+                          showSummary: widget.showSummary,
+                          showFilters: widget.showFilters,
                           itemCount: _defaultSkeletonCount,
                         ),
                       RideHistoryError(:final message) =>
@@ -341,12 +351,16 @@ class const _RideHistoryLoadingView({
   this.subtitle = 'Tap a ride to see details',
   this.showBackButton = false,
   this.showSubtitle = true,
+  this.showSummary = true,
+  this.showFilters = true,
 }) extends StatelessWidget {
   final int itemCount;
   final String title;
   final String subtitle;
   final bool showBackButton;
   final bool showSubtitle;
+  final bool showSummary;
+  final bool showFilters;
 
   @override
   Widget build(BuildContext context) {
@@ -376,10 +390,20 @@ class const _RideHistoryLoadingView({
             key: const ValueKey<String>('activity-loading-skeleton'),
             child: SliverList(
               delegate: SliverChildListDelegate([
-                const _ActivitySkeletonSummary(),
-                const SizedBox(height: 14),
-                const _ActivitySkeletonFilters(),
-                const SizedBox(height: 18),
+                if (showSummary) ...[
+                  const KeyedSubtree(
+                    key: ValueKey<String>('activity-loading-summary'),
+                    child: _ActivitySkeletonSummary(),
+                  ),
+                  const SizedBox(height: 14),
+                ],
+                if (showFilters) ...[
+                  const KeyedSubtree(
+                    key: ValueKey<String>('activity-loading-filters'),
+                    child: _ActivitySkeletonFilters(),
+                  ),
+                  const SizedBox(height: 18),
+                ],
                 for (var index = 0; index < itemCount; index++) ...[
                   if (index == 0) ...[
                     const Bone.text(width: 92, fontSize: 12),
