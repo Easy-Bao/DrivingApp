@@ -14,12 +14,18 @@ type Router struct {
 	authorizer *security.AdminAuthorizer
 }
 
-func NewRouter(
-	service *application.StatsService,
-	verifier *security.TokenManager,
-	authorizer *security.AdminAuthorizer,
-) *Router {
-	return &Router{handler: NewHandler(service), verifier: verifier, authorizer: authorizer}
+type RouterDependencies struct {
+	Service    *application.StatsService
+	Verifier   *security.TokenManager
+	Authorizer *security.AdminAuthorizer
+}
+
+func NewRouter(dependencies RouterDependencies) *Router {
+	return &Router{
+		handler:    NewHandler(dependencies.Service),
+		verifier:   dependencies.Verifier,
+		authorizer: dependencies.Authorizer,
+	}
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {

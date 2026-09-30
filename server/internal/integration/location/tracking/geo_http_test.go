@@ -21,6 +21,13 @@ type locationRepository struct{ point domain.DriverPoint }
 
 type locationAssignmentLookup struct{ value assignment.Assignment }
 
+func newTrackingRouter(
+	service *tracking.LocationTrackingService,
+	auth *security.TokenManager,
+) *tracking.Router {
+	return tracking.NewRouter(tracking.Dependencies{Service: service, Auth: auth})
+}
+
 func (lookup locationAssignmentLookup) ForDriver(context.Context, string) ([]assignment.Assignment, error) {
 	return []assignment.Assignment{lookup.value}, nil
 }
@@ -71,7 +78,7 @@ func TestTelemetryUsesTheVerifiedSubjectAsDriverID(t *testing.T) {
 	}
 	router := chi.NewRouter()
 	trackingService := tracking.NewLocationTrackingService(repository)
-	tracking.NewRouter(trackingService, security.NewTokenManager("secret")).RegisterRoutes(router)
+	newTrackingRouter(trackingService, security.NewTokenManager("secret")).RegisterRoutes(router)
 	payload := `{"latitude":14.1,"longitude":120.9,"heading":90,"speed":12}`
 	request := httptest.NewRequest(
 		http.MethodPost,
@@ -100,7 +107,7 @@ func TestTelemetryRejectsClientSuppliedDriverID(t *testing.T) {
 		t.Fatal(err)
 	}
 	router := chi.NewRouter()
-	tracking.NewRouter(tracking.NewLocationTrackingService(&locationRepository{}), tokenManager).RegisterRoutes(router)
+	newTrackingRouter(tracking.NewLocationTrackingService(&locationRepository{}), tokenManager).RegisterRoutes(router)
 	request := httptest.NewRequest(
 		http.MethodPost,
 		"/api/v1/telemetry/location",
@@ -128,7 +135,7 @@ func TestDriverLocationIsVisibleToPassengerAtTheSameCoordinates(t *testing.T) {
 	}
 
 	router := chi.NewRouter()
-	tracking.NewRouter(tracking.NewLocationTrackingService(repository), tokenManager).RegisterRoutes(router)
+	newTrackingRouter(tracking.NewLocationTrackingService(repository), tokenManager).RegisterRoutes(router)
 
 	locationRequest := httptest.NewRequest(
 		http.MethodPost,
@@ -178,7 +185,7 @@ func TestPassengerReadsDriverLocationThroughItsRide(t *testing.T) {
 		RideID: "303", DriverID: "42", PassengerID: "99", Status: "assigned",
 	}}
 	router := chi.NewRouter()
-	tracking.NewRouter(
+	newTrackingRouter(
 		tracking.NewLocationTrackingService(repository, tracking.WithRideAssignments(assignments)),
 		tokenManager,
 	).RegisterRoutes(router)
@@ -203,7 +210,7 @@ func TestPassengerReadsDriverLocationThroughItsRide(t *testing.T) {
 func TestExactTelemetryReadsRequireAuthentication(t *testing.T) {
 	router := chi.NewRouter()
 	trackingService := tracking.NewLocationTrackingService(&locationRepository{})
-	tracking.NewRouter(trackingService, security.NewTokenManager("secret")).RegisterRoutes(router)
+	newTrackingRouter(trackingService, security.NewTokenManager("secret")).RegisterRoutes(router)
 
 	for _, path := range []string{
 		"/api/v1/telemetry/location/42",
@@ -226,7 +233,7 @@ func TestPassengerTokenCannotPublishDriverTelemetry(t *testing.T) {
 		t.Fatal(err)
 	}
 	router := chi.NewRouter()
-	tracking.NewRouter(tracking.NewLocationTrackingService(&locationRepository{}), tokenManager).RegisterRoutes(router)
+	newTrackingRouter(tracking.NewLocationTrackingService(&locationRepository{}), tokenManager).RegisterRoutes(router)
 
 	payload := `{"latitude":7.828,"longitude":123.434}`
 	request := httptest.NewRequest(
@@ -250,7 +257,7 @@ func TestDriverCanRemoveItsOwnTelemetry(t *testing.T) {
 		t.Fatal(err)
 	}
 	router := chi.NewRouter()
-	tracking.NewRouter(tracking.NewLocationTrackingService(repository), tokenManager).RegisterRoutes(router)
+	newTrackingRouter(tracking.NewLocationTrackingService(repository), tokenManager).RegisterRoutes(router)
 
 	request := httptest.NewRequest(http.MethodDelete, "/api/v1/telemetry/location", nil)
 	request.Header.Set("Authorization", "Bearer "+driverToken)

@@ -40,7 +40,11 @@ func TestDocumentAdministrationRequiresConfiguredAdministrator(t *testing.T) {
 	}
 
 	router := chi.NewRouter()
-	documents.NewRouter(service, tokenManager, security.NewAdminAuthorizer("42")).RegisterRoutes(router)
+	documents.NewRouter(documents.RouterDependencies{
+		Service:    service,
+		Verifier:   tokenManager,
+		Authorizer: security.NewAdminAuthorizer("42"),
+	}).RegisterRoutes(router)
 
 	for _, test := range []struct {
 		name   string
@@ -86,7 +90,11 @@ func TestPrivateDocumentContentIsOwnerOrAdminOnly(t *testing.T) {
 		t.Fatal(err)
 	}
 	router := chi.NewRouter()
-	documents.NewRouter(service, tokenManager, security.NewAdminAuthorizer("42")).RegisterRoutes(router)
+	documents.NewRouter(documents.RouterDependencies{
+		Service:    service,
+		Verifier:   tokenManager,
+		Authorizer: security.NewAdminAuthorizer("42"),
+	}).RegisterRoutes(router)
 
 	for _, test := range []struct {
 		name   string
@@ -140,16 +148,16 @@ func TestDocumentUploadRequiresCanonicalTypeAndMatchingSignature(t *testing.T) {
 	repository := newDocumentRepositoryFake()
 	storage := newDocumentStorageFake()
 	router := chi.NewRouter()
-	documents.NewRouter(
-		documents.NewDocumentService(
+	documents.NewRouter(documents.RouterDependencies{
+		Service: documents.NewDocumentService(
 			repository,
 			storage,
 			documents.WithContentTypeDetector(http.DetectContentType),
 			documents.WithMaxDocumentBytes(1024),
 		),
-		tokenManager,
-		security.NewAdminAuthorizer("42"),
-	).RegisterRoutes(router)
+		Verifier:   tokenManager,
+		Authorizer: security.NewAdminAuthorizer("42"),
+	}).RegisterRoutes(router)
 
 	for _, test := range []struct {
 		name         string

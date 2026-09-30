@@ -16,6 +16,12 @@ type Router struct {
 	otpVerificationLimit *OTPVerificationRateLimiter
 }
 
+type RouterDependencies struct {
+	Register     *registration.RegisterService
+	Authenticate *authentication.AuthenticateService
+	OTP          *verification.OTPService
+}
+
 type RouterOption func(*Router)
 
 func WithOTPAttemptStore(store middleware.CounterStore) RouterOption {
@@ -27,16 +33,14 @@ func WithOTPAttemptStore(store middleware.CounterStore) RouterOption {
 }
 
 func NewRouter(
-	register *registration.RegisterService,
-	authenticate *authentication.AuthenticateService,
-	otp *verification.OTPService,
+	dependencies RouterDependencies,
 	options ...RouterOption,
 ) *Router {
 	router := &Router{
 		handler: NewHandler(Dependencies{
-			Register:     register,
-			Authenticate: authenticate,
-			OTP:          otp,
+			Register:     dependencies.Register,
+			Authenticate: dependencies.Authenticate,
+			OTP:          dependencies.OTP,
 		}),
 	}
 	for _, option := range options {

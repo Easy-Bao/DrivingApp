@@ -34,11 +34,11 @@ func TestStatsRequiresConfiguredAdministrator(t *testing.T) {
 	}
 
 	router := chi.NewRouter()
-	adminhttp.NewRouter(
-		adminapplication.NewStatsService(httpRepository{}),
-		tokenManager,
-		security.NewAdminAuthorizer("42"),
-	).RegisterRoutes(router)
+	adminhttp.NewRouter(adminhttp.RouterDependencies{
+		Service:    adminapplication.NewStatsService(httpRepository{}),
+		Verifier:   tokenManager,
+		Authorizer: security.NewAdminAuthorizer("42"),
+	}).RegisterRoutes(router)
 
 	for _, test := range []struct {
 		name   string

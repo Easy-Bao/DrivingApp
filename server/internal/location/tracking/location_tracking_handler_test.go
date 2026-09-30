@@ -49,7 +49,7 @@ func TestNearbyDriversClampsThePublicRadiusBoundary(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			store := &nearbyLocationStore{}
 			service := NewLocationTrackingService(store)
-			handler := NewHandler(service, nil)
+			handler := NewHandler(Dependencies{Service: service})
 			request := httptest.NewRequest(
 				http.MethodGet,
 				"/api/v1/telemetry/location/nearby?latitude=6.7&longitude=122.1&radius_km="+test.radius,

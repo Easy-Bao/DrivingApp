@@ -19,11 +19,13 @@ type Handler struct {
 	auth    *security.TokenManager
 }
 
-func NewHandler(
-	service *LocationTrackingService,
-	auth *security.TokenManager,
-) *Handler {
-	return &Handler{service: service, auth: auth}
+type Dependencies struct {
+	Service *LocationTrackingService
+	Auth    *security.TokenManager
+}
+
+func NewHandler(dependencies Dependencies) *Handler {
+	return &Handler{service: dependencies.Service, auth: dependencies.Auth}
 }
 
 func (handler *Handler) UpdateDriverLocation(writer http.ResponseWriter, request *http.Request) {

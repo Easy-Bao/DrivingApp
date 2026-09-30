@@ -12,9 +12,7 @@ import (
 
 func TestRouterOptionConfiguresOTPVerificationLimit(t *testing.T) {
 	router := NewRouter(
-		nil,
-		nil,
-		nil,
+		RouterDependencies{},
 		WithOTPAttemptStore(middleware.NewMemoryCounterStore()),
 	)
 	if router.otpVerificationLimit == nil {

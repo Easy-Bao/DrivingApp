@@ -39,9 +39,7 @@ func TestRoleSpecificLoginRoutes(t *testing.T) {
 	})
 	mux := chi.NewRouter()
 	authhttp.NewRouter(
-		nil,
-		authenticate,
-		nil,
+		authhttp.RouterDependencies{Authenticate: authenticate},
 		authhttp.WithOTPAttemptStore(middleware.NewMemoryCounterStore()),
 	).RegisterRoutes(mux)
 
@@ -106,7 +104,7 @@ func TestLoginAndRefreshIssueRotatingSessionTokens(t *testing.T) {
 		Sessions:   newTestRefreshSessionStore(),
 	})
 	mux := chi.NewRouter()
-	authhttp.NewRouter(nil, authenticate, nil).RegisterRoutes(mux)
+	authhttp.NewRouter(authhttp.RouterDependencies{Authenticate: authenticate}).RegisterRoutes(mux)
 
 	loginRequest := httptest.NewRequest(
 		http.MethodPost,
@@ -167,13 +165,13 @@ func TestLoginRejectsFieldsOutsideTheRequestContract(t *testing.T) {
 	}}
 	mux := chi.NewRouter()
 	authhttp.NewRouter(
-		nil,
-		authentication.NewAuthenticateService(authentication.Dependencies{
-			Repository: repository,
-			Tokens:     issuer{},
-			Sessions:   newTestRefreshSessionStore(),
-		}),
-		nil,
+		authhttp.RouterDependencies{
+			Authenticate: authentication.NewAuthenticateService(authentication.Dependencies{
+				Repository: repository,
+				Tokens:     issuer{},
+				Sessions:   newTestRefreshSessionStore(),
+			}),
+		},
 	).RegisterRoutes(mux)
 
 	for _, body := range []string{

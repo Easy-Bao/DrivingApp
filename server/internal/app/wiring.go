@@ -109,9 +109,11 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 		),
 	).WithLogger(applicationLogger)
 	authRouter := authhttp.NewRouter(
-		registerService,
-		authenticateService,
-		otpService,
+		authhttp.RouterDependencies{
+			Register:     registerService,
+			Authenticate: authenticateService,
+			OTP:          otpService,
+		},
 		authhttp.WithOTPAttemptStore(dependencies.otpAttemptStore),
 	)
 
@@ -124,16 +126,16 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 			Verifier: verifier,
 		},
 	)
-	documentRouter := documents.NewRouter(
-		documents.NewDocumentService(
+	documentRouter := documents.NewRouter(documents.RouterDependencies{
+		Service: documents.NewDocumentService(
 			documentStore,
 			privateObjectStore,
 			documents.WithContentTypeDetector(http.DetectContentType),
 			documents.WithMaxDocumentBytes(config.Security.UploadBodyLimit),
 		),
-		verifier,
-		adminAuthorizer,
-	)
+		Verifier:   verifier,
+		Authorizer: adminAuthorizer,
+	})
 
 	mapboxProvider := mapbox.NewMapboxProvider(config.MapboxAccessToken)
 	routeCalculator := rideapplication.RouteCalculatorFunc(
@@ -180,7 +182,11 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 		Service:  ridesService,
 		Verifier: verifier,
 	})
-	adminRouter := adminhttp.NewRouter(adminapplication.NewStatsService(statsReader), verifier, adminAuthorizer)
+	adminRouter := adminhttp.NewRouter(adminhttp.RouterDependencies{
+		Service:    adminapplication.NewStatsService(statsReader),
+		Verifier:   verifier,
+		Authorizer: adminAuthorizer,
+	})
 	trackingService := tracking.NewLocationTrackingService(
 		tracking.NewDriverLocationStore(redisClient).WithLogger(applicationLogger),
 		tracking.WithRideAssignments(rideAssignments),
@@ -238,7 +244,10 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 			websockethub.WithAllowedOrigins(config.Security.AllowedOrigins),
 		),
 	)
-	tracking.NewRouter(trackingService, verifier).RegisterRoutes(router)
+	tracking.NewRouter(tracking.Dependencies{
+		Service: trackingService,
+		Auth:    verifier,
+	}).RegisterRoutes(router)
 	chathttp.NewRouter(chathttp.Dependencies{
 		Service:  chatService,
 		Verifier: verifier,
