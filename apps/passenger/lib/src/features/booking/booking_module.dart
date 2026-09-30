@@ -75,6 +75,8 @@ class BookingModule._() {
       child: (context, GoRouterState state) => SearchDestinationPage(
         preselectedRideType: state.uri.queryParameters['rideType'],
         pickupAddress: state.uri.queryParameters['pickupAddress'],
+        autofocusSearch: state.uri.queryParameters['focus'] == '1',
+        returnToMapPin: state.uri.queryParameters['returnToMapPin'] == '1',
       ),
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
@@ -107,7 +109,11 @@ class BookingModule._() {
     ChildRoute(
       name: BookingRoutes.mapPin,
       BookingRoutes.mapPinPath,
-      child: (context, GoRouterState state) => const MapPinPage(),
+      child: (context, GoRouterState state) => MapPinPage(
+        flow: state.uri.queryParameters['savedPlace'] == '1'
+            ? MapPinFlow.savedPlace
+            : MapPinFlow.pickup,
+      ),
       transition: AppTransitions.modal.toTop,
       transitionDuration: AppTransitions.modalDuration,
     ),

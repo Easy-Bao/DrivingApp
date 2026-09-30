@@ -45,6 +45,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
       final cubit = BlocProvider.of<SavedPlacesCubit>(context);
       final selectedPlace = await context.pushNamed<Place>(
         BookingRoutes.mapPin,
+        queryParameters: {'savedPlace': '1'},
       );
       if (selectedPlace == null || !mounted) return;
 
@@ -88,6 +89,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
       final cubit = BlocProvider.of<SavedPlacesCubit>(context);
       final selectedPlace = await context.pushNamed<Place>(
         BookingRoutes.mapPin,
+        queryParameters: {'savedPlace': '1'},
       );
       if (selectedPlace == null || !mounted) return;
       final newPlace = await context.pushNamed<SavedPlace>(
@@ -428,7 +430,10 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
           height: 54,
           child: OutlinedButton.icon(
             onPressed: _openAddCategoryPage,
-            icon: const Icon(LucideIcons.plus, size: 18),
+            icon: const Hero(
+              tag: BookingRoutes.savedPlaceMapPinHeroTag,
+              child: Icon(LucideIcons.plus, size: 18),
+            ),
             label: const Text('Add a new place'),
             style: OutlinedButton.styleFrom(
               foregroundColor: context.colorScheme.onSurface,

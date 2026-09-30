@@ -15,11 +15,15 @@ class const SearchDestinationPage({
   super.key,
   this.preselectedRideType,
   this.pickupAddress,
+  this.autofocusSearch = false,
+  this.returnToMapPin = false,
 }) extends StatefulWidget {
   static const searchDebounceDuration = Duration(milliseconds: 300);
 
   final String? preselectedRideType;
   final String? pickupAddress;
+  final bool autofocusSearch;
+  final bool returnToMapPin;
 
   @override
   State<SearchDestinationPage> createState() => _SearchDestinationPageState();
@@ -79,6 +83,11 @@ class _SearchDestinationPageState()
     _scrollController.addListener(_onScroll);
     _lifecycleSubscription = Modular.get<AppLifecycleCoordinator>().changes
         .listen(_onLifecycleChanged);
+    if (widget.autofocusSearch) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _focusNode.requestFocus();
+      });
+    }
     unawaited(_initLocation());
   }
 
@@ -207,6 +216,20 @@ class _SearchDestinationPageState()
       unawaited(_expandController.reverse());
     }
     setState(() {});
+  }
+
+  void _handleSearchBackTap() {
+    if (widget.returnToMapPin) {
+      Navigator.pop(context);
+      return;
+    }
+    if (_focusNode.hasFocus) {
+      _focusNode.unfocus();
+    } else if (_expandController.value > 0.5) {
+      unawaited(_expandController.reverse());
+    } else {
+      Navigator.pop(context);
+    }
   }
 
   Future<void> _initLocation() async {
@@ -914,15 +937,7 @@ class _SearchDestinationPageState()
                                       children: [
                                         GestureDetector(
                                           onTap: () {
-                                            if (_focusNode.hasFocus) {
-                                              _focusNode.unfocus();
-                                            } else if (t > 0.5) {
-                                              unawaited(
-                                                _expandController.reverse(),
-                                              );
-                                            } else {
-                                              Navigator.pop(context);
-                                            }
+                                            _handleSearchBackTap();
                                           },
                                           child: SizedBox(
                                             width:
@@ -1071,11 +1086,7 @@ class _SearchDestinationPageState()
                                   scale: (1.0 - t * 0.5).clamp(0.0, 1.0),
                                   child: GestureDetector(
                                     onTap: () {
-                                      if (_focusNode.hasFocus) {
-                                        _focusNode.unfocus();
-                                      } else {
-                                        Navigator.pop(context);
-                                      }
+                                      _handleSearchBackTap();
                                     },
                                     child: Container(
                                       width: EasyRideSize.minimumTouchTarget,
@@ -1117,7 +1128,7 @@ class _SearchDestinationPageState()
                                     width: EasyRideSize.minimumTouchTarget,
                                     height: EasyRideSize.minimumTouchTarget,
                                     child: Hero(
-                                      tag: 'map_pin_button',
+                                      tag: BookingRoutes.mapPinHeroTag,
                                       child: FittedBox(
                                         child: Material(
                                           color: context.colorScheme.surface

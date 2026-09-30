@@ -4,7 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/map_selection_marker_widget.dart';
 
 void main() {
-  testWidgets('renders the compact green trip-location marker', (tester) async {
+  testWidgets('renders the compact primary trip-location marker', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: EasyRideTheme.main,
@@ -23,7 +25,7 @@ void main() {
     );
     expect(
       MapSelectionMarkerWidget.markerColor,
-      EasyRideSemanticColors.defaults.success,
+      EasyRideTheme.main.colorScheme.onSurface,
     );
     expect(
       find.descendant(of: marker, matching: find.byType(CustomPaint)),

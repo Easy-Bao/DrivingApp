@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class const MapSelectionMarkerWidget({super.key}) extends StatelessWidget {
   static const double width = 32;
   static const double height = 38;
-  static const Color markerColor = EasyRideStatusColors.success;
+  static final Color markerColor = EasyRideTheme.main.colorScheme.onSurface;
 
   @override
   Widget build(BuildContext context) {
@@ -16,6 +16,7 @@ class const MapSelectionMarkerWidget({super.key}) extends StatelessWidget {
         height: height,
         child: CustomPaint(
           painter: _MapSelectionMarkerPainter(
+            markerColor: context.colorScheme.onSurface,
             shadowColor: context.colorScheme.onSurface.withValues(alpha: 0.26),
             surfaceColor: context.colorScheme.surface,
           ),
@@ -26,9 +27,11 @@ class const MapSelectionMarkerWidget({super.key}) extends StatelessWidget {
 }
 
 class const _MapSelectionMarkerPainter({
+  required this.markerColor,
   required this.shadowColor,
   required this.surfaceColor,
 }) extends CustomPainter {
+  final Color markerColor;
   final Color shadowColor;
   final Color surfaceColor;
 
@@ -56,28 +59,18 @@ class const _MapSelectionMarkerPainter({
 
     canvas.drawShadow(shadowPath, shadowColor, 5, true);
     canvas.drawPath(outerTail, Paint()..color = surfaceColor);
-    canvas.drawPath(
-      innerTail,
-      Paint()..color = MapSelectionMarkerWidget.markerColor,
-    );
+    canvas.drawPath(innerTail, Paint()..color = markerColor);
     canvas.drawCircle(center, 23, Paint()..color = surfaceColor);
-    canvas.drawCircle(
-      center,
-      18,
-      Paint()..color = MapSelectionMarkerWidget.markerColor,
-    );
+    canvas.drawCircle(center, 18, Paint()..color = markerColor);
     canvas.drawCircle(center, 9, Paint()..color = surfaceColor);
-    canvas.drawCircle(
-      center,
-      4,
-      Paint()..color = MapSelectionMarkerWidget.markerColor,
-    );
+    canvas.drawCircle(center, 4, Paint()..color = markerColor);
     canvas.restore();
   }
 
   @override
   bool shouldRepaint(covariant _MapSelectionMarkerPainter oldDelegate) {
-    return oldDelegate.shadowColor != shadowColor ||
+    return oldDelegate.markerColor != markerColor ||
+        oldDelegate.shadowColor != shadowColor ||
         oldDelegate.surfaceColor != surfaceColor;
   }
 }

@@ -436,6 +436,7 @@ class _HomePageState extends State<HomePage> {
       final cubit = BlocProvider.of<SavedPlacesCubit>(context);
       final selectedPlace = await context.pushNamed<Place>(
         BookingRoutes.mapPin,
+        queryParameters: {'savedPlace': '1'},
       );
       if (selectedPlace == null || !mounted) return;
       final newPlace = await context.pushNamed<SavedPlace>(
@@ -708,7 +709,10 @@ class _HomePageState extends State<HomePage> {
       );
     } else {
       final cubit = BlocProvider.of<SavedPlacesCubit>(context);
-      final selectedPlace = await context.pushNamed(BookingRoutes.mapPin);
+      final selectedPlace = await context.pushNamed(
+        BookingRoutes.mapPin,
+        queryParameters: {'savedPlace': '1'},
+      );
       if (selectedPlace == null || selectedPlace is! Place) return;
       if (!mounted) return;
       final updatedPlace = await context.pushNamed<SavedPlace>(
