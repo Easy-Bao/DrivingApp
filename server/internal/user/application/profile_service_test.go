@@ -7,9 +7,20 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/user/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/user/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/user/ports"
 )
 
 type repository struct{ profile domain.Profile }
+
+func newProfileService(
+	repository ports.ProfileStore,
+	options ...application.ProfileServiceOption,
+) *application.ProfileService {
+	return application.NewProfileService(
+		application.ProfileServiceDependencies{Repository: repository},
+		options...,
+	)
+}
 
 func (r *repository) Get(context.Context, int) (domain.Profile, error) { return r.profile, nil }
 func (r *repository) Save(_ context.Context, profile domain.Profile) (domain.Profile, error) {
@@ -41,7 +52,7 @@ func (*repository) GetAvatar(context.Context, int) (domain.Avatar, error) {
 	return domain.Avatar{}, errors.New("avatar not found")
 }
 func TestProfileUpdateUsesTheDomainService(t *testing.T) {
-	service := application.NewProfileService(&repository{})
+	service := newProfileService(&repository{})
 	profile, err := service.Update(context.Background(), domain.Profile{UserID: 4, Role: "driver", Name: "Bao Bao Driver"})
 	if err != nil || profile.UserID != 4 {
 		t.Fatalf("profile update = %#v, %v", profile, err)
@@ -49,7 +60,7 @@ func TestProfileUpdateUsesTheDomainService(t *testing.T) {
 }
 
 func TestProfileAvatarUsesInjectedContentTypeDetector(t *testing.T) {
-	service := application.NewProfileService(
+	service := newProfileService(
 		&repository{},
 		application.WithContentTypeDetector(func([]byte) string { return "image/png" }),
 	)

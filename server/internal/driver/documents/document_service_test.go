@@ -17,8 +17,19 @@ var validPDF = []byte("%PDF-1.7\nprivate driver document")
 
 func testContentTypeDetector([]byte) string { return "application/pdf" }
 
+func newDocumentService(
+	repository documents.DocumentStore,
+	storage documents.ObjectStore,
+	options ...documents.DocumentServiceOption,
+) *documents.DocumentService {
+	return documents.NewDocumentService(
+		documents.DocumentServiceDependencies{Repository: repository, Storage: storage},
+		options...,
+	)
+}
+
 func TestDocumentUploadRequiresContentTypeDetector(t *testing.T) {
-	service := documents.NewDocumentService(
+	service := newDocumentService(
 		newDocumentRepositoryFake(),
 		newDocumentStorageFake(),
 		documents.WithMaxDocumentBytes(1024),
@@ -149,7 +160,7 @@ func (storage *documentStorageFake) Delete(_ context.Context, key string) error 
 func TestUploadCreatesAnImmutablePendingRevision(t *testing.T) {
 	repository := newDocumentRepositoryFake()
 	storage := newDocumentStorageFake()
-	service := documents.NewDocumentService(
+	service := newDocumentService(
 		repository,
 		storage,
 		documents.WithContentTypeDetector(testContentTypeDetector),
@@ -182,7 +193,7 @@ func TestUploadCreatesAnImmutablePendingRevision(t *testing.T) {
 
 func TestUploadRejectsMismatchedContentBeforeStorage(t *testing.T) {
 	storage := newDocumentStorageFake()
-	service := documents.NewDocumentService(
+	service := newDocumentService(
 		newDocumentRepositoryFake(),
 		storage,
 		documents.WithContentTypeDetector(testContentTypeDetector),
@@ -202,7 +213,7 @@ func TestUploadRemovesObjectWhenMetadataCreationFails(t *testing.T) {
 	repository := newDocumentRepositoryFake()
 	repository.createErr = errors.New("database unavailable")
 	storage := newDocumentStorageFake()
-	service := documents.NewDocumentService(
+	service := newDocumentService(
 		repository,
 		storage,
 		documents.WithContentTypeDetector(testContentTypeDetector),
@@ -218,7 +229,7 @@ func TestUploadRemovesObjectWhenMetadataCreationFails(t *testing.T) {
 func TestDocumentContentEnforcesOwnershipAndIntegrity(t *testing.T) {
 	repository := newDocumentRepositoryFake()
 	storage := newDocumentStorageFake()
-	service := documents.NewDocumentService(
+	service := newDocumentService(
 		repository,
 		storage,
 		documents.WithContentTypeDetector(testContentTypeDetector),
@@ -241,7 +252,7 @@ func TestDocumentContentEnforcesOwnershipAndIntegrity(t *testing.T) {
 func TestReviewCannotRewriteAFinalDecision(t *testing.T) {
 	repository := newDocumentRepositoryFake()
 	storage := newDocumentStorageFake()
-	service := documents.NewDocumentService(
+	service := newDocumentService(
 		repository,
 		storage,
 		documents.WithContentTypeDetector(testContentTypeDetector),

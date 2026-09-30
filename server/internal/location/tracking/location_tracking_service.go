@@ -21,6 +21,10 @@ type LocationTrackingService struct {
 	logger         *slog.Logger
 }
 
+type LocationTrackingDependencies struct {
+	Repository LocationStore
+}
+
 var ErrPersistenceUnavailable = errors.New("location persistence is unavailable")
 
 type Option func(*LocationTrackingService)
@@ -41,10 +45,15 @@ func WithLogger(logger *slog.Logger) Option {
 	}
 }
 
-func NewLocationTrackingService(repository LocationStore, options ...Option) *LocationTrackingService {
-	service := &LocationTrackingService{repository: repository, logger: slog.Default()}
+func NewLocationTrackingService(
+	dependencies LocationTrackingDependencies,
+	options ...Option,
+) *LocationTrackingService {
+	service := &LocationTrackingService{repository: dependencies.Repository, logger: slog.Default()}
 	for _, option := range options {
-		option(service)
+		if option != nil {
+			option(service)
+		}
 	}
 	return service
 }

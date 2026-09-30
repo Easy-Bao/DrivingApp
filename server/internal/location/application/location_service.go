@@ -37,6 +37,10 @@ type LocationService struct {
 
 type LocationServiceOption func(*LocationService)
 
+type LocationServiceDependencies struct {
+	Provider locationports.Provider
+}
+
 func WithCache(cache locationports.Cache) LocationServiceOption {
 	return func(service *LocationService) {
 		service.cache = cache
@@ -44,10 +48,10 @@ func WithCache(cache locationports.Cache) LocationServiceOption {
 }
 
 func NewLocationService(
-	provider locationports.Provider,
+	dependencies LocationServiceDependencies,
 	options ...LocationServiceOption,
 ) *LocationService {
-	service := &LocationService{provider: provider, logger: slog.Default()}
+	service := &LocationService{provider: dependencies.Provider, logger: slog.Default()}
 	for _, option := range options {
 		if option != nil {
 			option(service)

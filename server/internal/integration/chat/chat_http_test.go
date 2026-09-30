@@ -11,6 +11,7 @@ import (
 
 	chatapplication "github.com/Easy-Bao/DrivingApp/server/internal/chat/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/chat/domain"
+	chatports "github.com/Easy-Bao/DrivingApp/server/internal/chat/ports"
 	chath "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
@@ -20,6 +21,10 @@ import (
 type roomHistory struct {
 	members map[string]bool
 	locked  bool
+}
+
+func newChatService(history chatports.RoomStore) *chatapplication.ChatService {
+	return chatapplication.NewChatService(chatapplication.ChatServiceDependencies{History: history})
 }
 
 func (history *roomHistory) CreateRoom(context.Context, string, string, string) error { return nil }
@@ -51,7 +56,7 @@ func TestChatHTTPRoutesRequireRoomMembership(t *testing.T) {
 	history := &roomHistory{members: map[string]bool{"ride-1:7": true}}
 	router := chi.NewRouter()
 	chath.NewRouter(chath.Dependencies{
-		Service: chatapplication.NewChatService(history).
+		Service: newChatService(history).
 			WithRideAssignmentLookup(chatAssignmentLookup{
 				assignment: assignment.Assignment{
 					RideID: "ride-1", PassengerID: "7", DriverID: "9", Status: "assigned",
@@ -96,7 +101,7 @@ func TestChatCreateRoomReportsResolvedRoom(t *testing.T) {
 	}
 	router := chi.NewRouter()
 	chath.NewRouter(chath.Dependencies{
-		Service: chatapplication.NewChatService(history).
+		Service: newChatService(history).
 			WithRideAssignmentLookup(chatAssignmentLookup{
 				assignment: assignment.Assignment{
 					RideID: "ride-1", PassengerID: "7", DriverID: "8", Status: "assigned",
@@ -128,7 +133,7 @@ func TestChatCreateRoomRejectsClientSuppliedParticipants(t *testing.T) {
 	}
 	router := chi.NewRouter()
 	chath.NewRouter(chath.Dependencies{
-		Service:  chatapplication.NewChatService(&roomHistory{}),
+		Service:  newChatService(&roomHistory{}),
 		Verifier: tokenManager,
 	}).RegisterRoutes(router)
 

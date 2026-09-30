@@ -8,9 +8,20 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
+	locationports "github.com/Easy-Bao/DrivingApp/server/internal/location/ports"
 )
 
 type providerStub struct{}
+
+func newLocationService(
+	provider locationports.Provider,
+	options ...application.LocationServiceOption,
+) *application.LocationService {
+	return application.NewLocationService(
+		application.LocationServiceDependencies{Provider: provider},
+		options...,
+	)
+}
 
 func (providerStub) Search(context.Context, string, domain.Coordinates) ([]domain.Place, error) {
 	return []domain.Place{{Name: "Pagadian City"}}, nil
@@ -124,7 +135,7 @@ func (provider *routeProviderSpy) Route(
 }
 
 func TestServiceRejectsEmptySearch(t *testing.T) {
-	service := application.NewLocationService(providerStub{})
+	service := newLocationService(providerStub{})
 	_, err := service.Search(context.Background(), "  ", domain.Coordinates{})
 	if !errors.Is(err, application.ErrEmptySearch) {
 		t.Fatalf("expected ErrEmptySearch, got %v", err)
@@ -132,7 +143,7 @@ func TestServiceRejectsEmptySearch(t *testing.T) {
 }
 
 func TestServiceDelegatesSearch(t *testing.T) {
-	service := application.NewLocationService(providerStub{})
+	service := newLocationService(providerStub{})
 	places, err := service.Search(context.Background(), "Pagadian", domain.Coordinates{})
 	if err != nil {
 		t.Fatalf("search failed: %v", err)
@@ -144,7 +155,7 @@ func TestServiceDelegatesSearch(t *testing.T) {
 
 func TestServiceSupportsNearbyPlacesAndCaching(t *testing.T) {
 	cache := &cacheStub{values: map[string]any{}}
-	service := application.NewLocationService(providerStub{}, application.WithCache(cache))
+	service := newLocationService(providerStub{}, application.WithCache(cache))
 	places, err := service.Nearby(context.Background(), domain.Coordinates{Latitude: 7.8, Longitude: 123.4}, 1)
 	if err != nil || len(places) != 1 || places[0].Name != "Nearby Place" {
 		t.Fatalf("nearby places = %#v, %v", places, err)
@@ -156,7 +167,7 @@ func TestServiceSupportsNearbyPlacesAndCaching(t *testing.T) {
 }
 
 func TestServiceRejectsUnboundedSearchAndInvalidRouteCoordinates(t *testing.T) {
-	service := application.NewLocationService(providerStub{})
+	service := newLocationService(providerStub{})
 	_, err := service.Search(
 		context.Background(),
 		strings.Repeat("x", 257),
@@ -177,7 +188,7 @@ func TestServiceRejectsUnboundedSearchAndInvalidRouteCoordinates(t *testing.T) {
 
 func TestServiceOwnsRouteOptionValidationAndNormalization(t *testing.T) {
 	provider := &routeProviderSpy{}
-	service := application.NewLocationService(provider)
+	service := newLocationService(provider)
 	origin := domain.Coordinates{Latitude: 7.8, Longitude: 123.4}
 	destination := domain.Coordinates{Latitude: 7.9, Longitude: 123.5}
 
@@ -206,7 +217,7 @@ func TestServiceCopiesProviderValuesAtTheApplicationBoundary(t *testing.T) {
 		route:  &domain.Route{Polyline: [][]float64{{1, 2}}},
 		matrix: &domain.Matrix{DistancesKm: []float64{1}, DurationsMin: []float64{2}},
 	}
-	service := application.NewLocationService(
+	service := newLocationService(
 		provider,
 		application.WithCache(&cacheStub{values: map[string]any{}}),
 	)

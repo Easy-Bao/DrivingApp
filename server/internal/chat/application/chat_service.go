@@ -30,8 +30,12 @@ type ChatService struct {
 
 type EventPublisher = chatports.EventPublisher
 
-func NewChatService(history chatports.RoomStore) *ChatService {
-	return &ChatService{history: history, logger: slog.Default()}
+type ChatServiceDependencies struct {
+	History chatports.RoomStore
+}
+
+func NewChatService(dependencies ChatServiceDependencies) *ChatService {
+	return &ChatService{history: dependencies.History, logger: slog.Default()}
 }
 
 func (service *ChatService) WithEventPublisher(publisher EventPublisher) *ChatService {

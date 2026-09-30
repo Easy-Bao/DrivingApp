@@ -18,6 +18,13 @@ type locationRepositoryStub struct {
 	upsertErr      error
 }
 
+func newLocationTrackingService(
+	repository LocationStore,
+	options ...Option,
+) *LocationTrackingService {
+	return NewLocationTrackingService(LocationTrackingDependencies{Repository: repository}, options...)
+}
+
 func (stub *locationRepositoryStub) Upsert(_ context.Context, point domain.DriverPoint) error {
 	stub.upsertCalls++
 	if stub.upsertErr != nil {
@@ -64,7 +71,7 @@ func (stub *locationEventPublisherStub) Publish(_ context.Context, envelope even
 }
 
 func TestIngestRejectsInvalidCoordinates(t *testing.T) {
-	service := NewLocationTrackingService(&locationRepositoryStub{})
+	service := newLocationTrackingService(&locationRepositoryStub{})
 	invalidLatitudeErr := service.Ingest(
 		context.Background(),
 		domain.DriverPoint{DriverID: "7", Latitude: 91, Longitude: 122},
@@ -85,7 +92,7 @@ func TestIngestStopsBeforePersistenceWhenContextIsCanceled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	repository := &locationRepositoryStub{}
-	service := NewLocationTrackingService(repository)
+	service := newLocationTrackingService(repository)
 
 	err := service.Ingest(ctx, domain.DriverPoint{
 		DriverID:  "driver-1",
@@ -101,7 +108,7 @@ func TestIngestStopsBeforePersistenceWhenContextIsCanceled(t *testing.T) {
 }
 
 func TestNearbyRejectsUnboundedRadius(t *testing.T) {
-	service := NewLocationTrackingService(&locationRepositoryStub{})
+	service := newLocationTrackingService(&locationRepositoryStub{})
 	if _, err := service.Nearby(context.Background(), 6.7, 122.1, 0); err == nil {
 		t.Fatal("expected zero radius to be rejected")
 	}
@@ -114,7 +121,7 @@ func TestNearbyReturnsACopyOfRepositoryResults(t *testing.T) {
 	repository := &locationRepositoryStub{
 		nearby: []domain.DriverPoint{{DriverID: "driver-1", Latitude: 6.7, Longitude: 122.1}},
 	}
-	service := NewLocationTrackingService(repository)
+	service := newLocationTrackingService(repository)
 
 	points, err := service.Nearby(context.Background(), 6.7, 122.1, 5)
 	if err != nil {
@@ -129,7 +136,7 @@ func TestNearbyReturnsACopyOfRepositoryResults(t *testing.T) {
 func TestIngestPublishesAnActiveRideLocationToBothParticipants(t *testing.T) {
 	repository := &locationRepositoryStub{}
 	publisher := &locationEventPublisherStub{}
-	service := NewLocationTrackingService(
+	service := newLocationTrackingService(
 		repository,
 		WithRideAssignments(assignmentLookupStub{
 			assignments: []assignment.Assignment{{
@@ -167,7 +174,7 @@ func TestIngestPublishesAnActiveRideLocationToBothParticipants(t *testing.T) {
 func TestIngestIgnoresAStaleDriverLocation(t *testing.T) {
 	repository := &locationRepositoryStub{upsertErr: domain.ErrStaleLocation}
 	publisher := &locationEventPublisherStub{}
-	service := NewLocationTrackingService(
+	service := newLocationTrackingService(
 		repository,
 		WithEventPublisher(publisher),
 	)
@@ -185,7 +192,7 @@ func TestIngestIgnoresAStaleDriverLocation(t *testing.T) {
 }
 
 func TestPassengerLocationRequiresTheRidePassenger(t *testing.T) {
-	service := NewLocationTrackingService(
+	service := newLocationTrackingService(
 		&locationRepositoryStub{},
 		WithRideAssignments(assignmentLookupStub{
 			assignments: []assignment.Assignment{{

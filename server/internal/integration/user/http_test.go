@@ -16,6 +16,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/Easy-Bao/DrivingApp/server/internal/user/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/user/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/user/ports"
 	userhttp "github.com/Easy-Bao/DrivingApp/server/internal/user/transport/http"
 	"github.com/go-chi/chi/v5"
 )
@@ -38,6 +39,16 @@ func newUserRouter(
 	verifier *security.TokenManager,
 ) *userhttp.Router {
 	return userhttp.NewRouter(userhttp.Dependencies{Service: service, Verifier: verifier})
+}
+
+func newProfileService(
+	repository ports.ProfileStore,
+	options ...application.ProfileServiceOption,
+) *application.ProfileService {
+	return application.NewProfileService(
+		application.ProfileServiceDependencies{Repository: repository},
+		options...,
+	)
 }
 
 func (repository *avatarRepository) Get(context.Context, int) (domain.Profile, error) {
@@ -118,7 +129,7 @@ func TestOnlineUpdatesTheExistingDriverProfileForTheAuthenticatedUser(t *testing
 
 	router := chi.NewRouter()
 	newUserRouter(
-		application.NewProfileService(
+		newProfileService(
 			repository,
 			application.WithContentTypeDetector(http.DetectContentType),
 		),
@@ -156,7 +167,7 @@ func TestOnlineDoesNotMaskProfileRepositoryErrorsAsMissingDriverProfiles(t *test
 
 	router := chi.NewRouter()
 	newUserRouter(
-		application.NewProfileService(
+		newProfileService(
 			repository,
 			application.WithContentTypeDetector(http.DetectContentType),
 		),
@@ -195,7 +206,7 @@ func TestProfileReturnsAccountContactFieldsForPassengerInfo(t *testing.T) {
 
 	router := chi.NewRouter()
 	newUserRouter(
-		application.NewProfileService(
+		newProfileService(
 			repository,
 			application.WithContentTypeDetector(http.DetectContentType),
 		),
@@ -232,7 +243,7 @@ func TestProfileUpdateUsesAuthenticatedIdentityAndPersistsAddress(t *testing.T) 
 
 	router := chi.NewRouter()
 	newUserRouter(
-		application.NewProfileService(
+		newProfileService(
 			repository,
 			application.WithContentTypeDetector(http.DetectContentType),
 		),
@@ -297,7 +308,7 @@ func TestDriverProfileUpdatePersistsAccountAndVehicleFields(t *testing.T) {
 
 	router := chi.NewRouter()
 	newUserRouter(
-		application.NewProfileService(
+		newProfileService(
 			repository,
 			application.WithContentTypeDetector(http.DetectContentType),
 		),
@@ -345,7 +356,7 @@ func TestProfileRejectsUnknownGenderWithoutCallingRepository(t *testing.T) {
 
 	router := chi.NewRouter()
 	newUserRouter(
-		application.NewProfileService(
+		newProfileService(
 			repository,
 			application.WithContentTypeDetector(http.DetectContentType),
 		),
@@ -383,7 +394,7 @@ func TestProfileAvatarUploadAndReadUseAuthenticatedRoutes(t *testing.T) {
 
 	router := chi.NewRouter()
 	newUserRouter(
-		application.NewProfileService(
+		newProfileService(
 			repository,
 			application.WithContentTypeDetector(http.DetectContentType),
 		),

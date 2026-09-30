@@ -83,6 +83,8 @@ func TestLocationHTTPExposesSnakeCaseMatrixContract(t *testing.T) {
 
 func newLocationRouter() *chi.Mux {
 	router := chi.NewRouter()
-	locationhttp.NewRouter(application.NewLocationService(providerStub{})).RegisterRoutes(router)
+	locationhttp.NewRouter(application.NewLocationService(
+		application.LocationServiceDependencies{Provider: providerStub{}},
+	)).RegisterRoutes(router)
 	return router
 }

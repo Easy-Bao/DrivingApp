@@ -120,7 +120,7 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 	usersRouter := userhttp.NewRouter(
 		userhttp.Dependencies{
 			Service: userapplication.NewProfileService(
-				profileStore,
+				userapplication.ProfileServiceDependencies{Repository: profileStore},
 				userapplication.WithContentTypeDetector(http.DetectContentType),
 			),
 			Verifier: verifier,
@@ -128,8 +128,10 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 	)
 	documentRouter := documents.NewRouter(documents.RouterDependencies{
 		Service: documents.NewDocumentService(
-			documentStore,
-			privateObjectStore,
+			documents.DocumentServiceDependencies{
+				Repository: documentStore,
+				Storage:    privateObjectStore,
+			},
 			documents.WithContentTypeDetector(http.DetectContentType),
 			documents.WithMaxDocumentBytes(config.Security.UploadBodyLimit),
 		),
@@ -188,13 +190,15 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 		Authorizer: adminAuthorizer,
 	})
 	trackingService := tracking.NewLocationTrackingService(
-		tracking.NewDriverLocationStore(redisClient).WithLogger(applicationLogger),
+		tracking.LocationTrackingDependencies{
+			Repository: tracking.NewDriverLocationStore(redisClient).WithLogger(applicationLogger),
+		},
 		tracking.WithRideAssignments(rideAssignments),
 		tracking.WithEventPublisher(eventPublisher),
 		tracking.WithLogger(applicationLogger),
 	)
 	locationService := locationapplication.NewLocationService(
-		mapboxProvider,
+		locationapplication.LocationServiceDependencies{Provider: mapboxProvider},
 		locationapplication.WithCache(locationredis.NewCache(redisClient)),
 	).WithLogger(applicationLogger)
 	passengerRideContextQuery := passengerridecontext.NewQueryService(
@@ -217,7 +221,7 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 	}).RegisterRoutes(router)
 
 	chatRoomStore := chatadapter.NewChatHistoryStore(redisClient)
-	chatService := chatapplication.NewChatService(chatRoomStore).
+	chatService := chatapplication.NewChatService(chatapplication.ChatServiceDependencies{History: chatRoomStore}).
 		WithEventPublisher(eventPublisher).
 		WithRideAssignmentLookup(rideAssignments).
 		WithLogger(applicationLogger)

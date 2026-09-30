@@ -14,6 +14,10 @@ type ContentTypeDetector func([]byte) string
 
 type ProfileServiceOption func(*ProfileService)
 
+type ProfileServiceDependencies struct {
+	Repository ports.ProfileStore
+}
+
 func WithContentTypeDetector(detector ContentTypeDetector) ProfileServiceOption {
 	return func(service *ProfileService) {
 		service.detectContentType = detector
@@ -31,11 +35,11 @@ var (
 )
 
 func NewProfileService(
-	repository ports.ProfileStore,
+	dependencies ProfileServiceDependencies,
 	options ...ProfileServiceOption,
 ) *ProfileService {
 	service := &ProfileService{
-		repository: repository,
+		repository: dependencies.Repository,
 	}
 	for _, option := range options {
 		if option != nil {

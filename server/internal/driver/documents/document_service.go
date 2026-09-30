@@ -28,6 +28,11 @@ type DocumentServiceOption func(*DocumentService)
 
 type ContentTypeDetector func([]byte) string
 
+type DocumentServiceDependencies struct {
+	Repository DocumentStore
+	Storage    ObjectStore
+}
+
 func WithContentTypeDetector(detector ContentTypeDetector) DocumentServiceOption {
 	return func(service *DocumentService) {
 		if detector != nil {
@@ -45,13 +50,12 @@ func WithMaxDocumentBytes(limit int64) DocumentServiceOption {
 }
 
 func NewDocumentService(
-	repository DocumentStore,
-	storage ObjectStore,
+	dependencies DocumentServiceDependencies,
 	options ...DocumentServiceOption,
 ) *DocumentService {
 	service := &DocumentService{
-		repository:       repository,
-		storage:          storage,
+		repository:       dependencies.Repository,
+		storage:          dependencies.Storage,
 		maxDocumentBytes: _defaultMaxDocumentBytes,
 	}
 	for _, option := range options {

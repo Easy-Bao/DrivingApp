@@ -16,6 +16,17 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+func newDocumentService(
+	repository documents.DocumentStore,
+	storage documents.ObjectStore,
+	options ...documents.DocumentServiceOption,
+) *documents.DocumentService {
+	return documents.NewDocumentService(
+		documents.DocumentServiceDependencies{Repository: repository, Storage: storage},
+		options...,
+	)
+}
+
 func TestDocumentAdministrationRequiresConfiguredAdministrator(t *testing.T) {
 	tokenManager := security.NewTokenManager("document-test-secret")
 	driverToken, err := tokenManager.IssueWithRole("7", security.RoleDriver)
@@ -28,7 +39,7 @@ func TestDocumentAdministrationRequiresConfiguredAdministrator(t *testing.T) {
 	}
 	repository := newDocumentRepositoryFake()
 	storage := newDocumentStorageFake()
-	service := documents.NewDocumentService(
+	service := newDocumentService(
 		repository,
 		storage,
 		documents.WithContentTypeDetector(http.DetectContentType),
@@ -79,7 +90,7 @@ func TestPrivateDocumentContentIsOwnerOrAdminOnly(t *testing.T) {
 	adminToken, _ := tokenManager.IssueWithRole("42", security.RolePassenger)
 	repository := newDocumentRepositoryFake()
 	storage := newDocumentStorageFake()
-	service := documents.NewDocumentService(
+	service := newDocumentService(
 		repository,
 		storage,
 		documents.WithContentTypeDetector(http.DetectContentType),
@@ -149,7 +160,7 @@ func TestDocumentUploadRequiresCanonicalTypeAndMatchingSignature(t *testing.T) {
 	storage := newDocumentStorageFake()
 	router := chi.NewRouter()
 	documents.NewRouter(documents.RouterDependencies{
-		Service: documents.NewDocumentService(
+		Service: newDocumentService(
 			repository,
 			storage,
 			documents.WithContentTypeDetector(http.DetectContentType),
