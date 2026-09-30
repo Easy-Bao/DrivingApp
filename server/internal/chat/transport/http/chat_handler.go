@@ -18,8 +18,13 @@ type Handler struct {
 	verifier *security.TokenManager
 }
 
-func NewHandler(service *application.ChatService, verifier *security.TokenManager) *Handler {
-	return &Handler{service: service, verifier: verifier}
+type Dependencies struct {
+	Service  *application.ChatService
+	Verifier *security.TokenManager
+}
+
+func NewHandler(dependencies Dependencies) *Handler {
+	return &Handler{service: dependencies.Service, verifier: dependencies.Verifier}
 }
 
 func (handler *Handler) CreateRoom(writer http.ResponseWriter, request *http.Request) {

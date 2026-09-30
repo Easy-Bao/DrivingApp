@@ -116,11 +116,13 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 	)
 
 	usersRouter := userhttp.NewRouter(
-		userapplication.NewProfileService(
-			profileStore,
-			userapplication.WithContentTypeDetector(http.DetectContentType),
-		),
-		verifier,
+		userhttp.Dependencies{
+			Service: userapplication.NewProfileService(
+				profileStore,
+				userapplication.WithContentTypeDetector(http.DetectContentType),
+			),
+			Verifier: verifier,
+		},
 	)
 	documentRouter := documents.NewRouter(
 		documents.NewDocumentService(
@@ -174,7 +176,10 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 		},
 	)
 
-	ridesRouter := ridehttp.NewRouter(ridesService, verifier)
+	ridesRouter := ridehttp.NewRouter(ridehttp.Dependencies{
+		Service:  ridesService,
+		Verifier: verifier,
+	})
 	adminRouter := adminhttp.NewRouter(adminapplication.NewStatsService(statsReader), verifier, adminAuthorizer)
 	trackingService := tracking.NewLocationTrackingService(
 		tracking.NewDriverLocationStore(redisClient).WithLogger(applicationLogger),
@@ -200,7 +205,10 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 	ridesRouter.RegisterRoutes(router)
 	adminRouter.RegisterRoutes(router)
 	locationhttp.NewRouter(locationService).RegisterRoutes(router)
-	passengerridecontext.NewRouter(passengerRideContextQuery, verifier).RegisterRoutes(router)
+	passengerridecontext.NewRouter(passengerridecontext.Dependencies{
+		Query:    passengerRideContextQuery,
+		Verifier: verifier,
+	}).RegisterRoutes(router)
 
 	chatRoomStore := chatadapter.NewChatHistoryStore(redisClient)
 	chatService := chatapplication.NewChatService(chatRoomStore).
@@ -231,7 +239,10 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 		),
 	)
 	tracking.NewRouter(trackingService, verifier).RegisterRoutes(router)
-	chathttp.NewRouter(chatService, verifier).RegisterRoutes(router)
+	chathttp.NewRouter(chathttp.Dependencies{
+		Service:  chatService,
+		Verifier: verifier,
+	}).RegisterRoutes(router)
 	registerHealthRoutes(router, redisClient, postgresPool)
 
 	return router, eventHub

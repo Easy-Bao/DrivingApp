@@ -16,8 +16,13 @@ type Handler struct {
 	verifier *security.TokenManager
 }
 
-func NewHandler(query Query, verifier *security.TokenManager) *Handler {
-	return &Handler{query: query, verifier: verifier}
+type Dependencies struct {
+	Query    Query
+	Verifier *security.TokenManager
+}
+
+func NewHandler(dependencies Dependencies) *Handler {
+	return &Handler{query: dependencies.Query, verifier: dependencies.Verifier}
 }
 
 func (handler *Handler) GetRideContext(writer http.ResponseWriter, request *http.Request) {

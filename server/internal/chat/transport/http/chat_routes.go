@@ -1,7 +1,6 @@
 package http
 
 import (
-	"github.com/Easy-Bao/DrivingApp/server/internal/chat/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
@@ -13,8 +12,11 @@ type Router struct {
 	verifier *security.TokenManager
 }
 
-func NewRouter(service *application.ChatService, verifier *security.TokenManager) *Router {
-	return &Router{handler: NewHandler(service, verifier), verifier: verifier}
+func NewRouter(dependencies Dependencies) *Router {
+	return &Router{
+		handler:  NewHandler(dependencies),
+		verifier: dependencies.Verifier,
+	}
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {

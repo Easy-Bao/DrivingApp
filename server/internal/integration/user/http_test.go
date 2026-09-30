@@ -33,6 +33,13 @@ type avatarRepository struct {
 	savedMimeType string
 }
 
+func newUserRouter(
+	service *application.ProfileService,
+	verifier *security.TokenManager,
+) *userhttp.Router {
+	return userhttp.NewRouter(userhttp.Dependencies{Service: service, Verifier: verifier})
+}
+
 func (repository *avatarRepository) Get(context.Context, int) (domain.Profile, error) {
 	return repository.profile, nil
 }
@@ -110,7 +117,7 @@ func TestOnlineUpdatesTheExistingDriverProfileForTheAuthenticatedUser(t *testing
 	}
 
 	router := chi.NewRouter()
-	userhttp.NewRouter(
+	newUserRouter(
 		application.NewProfileService(
 			repository,
 			application.WithContentTypeDetector(http.DetectContentType),
@@ -148,7 +155,7 @@ func TestOnlineDoesNotMaskProfileRepositoryErrorsAsMissingDriverProfiles(t *test
 	}
 
 	router := chi.NewRouter()
-	userhttp.NewRouter(
+	newUserRouter(
 		application.NewProfileService(
 			repository,
 			application.WithContentTypeDetector(http.DetectContentType),
@@ -187,7 +194,7 @@ func TestProfileReturnsAccountContactFieldsForPassengerInfo(t *testing.T) {
 	}
 
 	router := chi.NewRouter()
-	userhttp.NewRouter(
+	newUserRouter(
 		application.NewProfileService(
 			repository,
 			application.WithContentTypeDetector(http.DetectContentType),
@@ -224,7 +231,7 @@ func TestProfileUpdateUsesAuthenticatedIdentityAndPersistsAddress(t *testing.T) 
 	}
 
 	router := chi.NewRouter()
-	userhttp.NewRouter(
+	newUserRouter(
 		application.NewProfileService(
 			repository,
 			application.WithContentTypeDetector(http.DetectContentType),
@@ -289,7 +296,7 @@ func TestDriverProfileUpdatePersistsAccountAndVehicleFields(t *testing.T) {
 	}
 
 	router := chi.NewRouter()
-	userhttp.NewRouter(
+	newUserRouter(
 		application.NewProfileService(
 			repository,
 			application.WithContentTypeDetector(http.DetectContentType),
@@ -337,7 +344,7 @@ func TestProfileRejectsUnknownGenderWithoutCallingRepository(t *testing.T) {
 	}
 
 	router := chi.NewRouter()
-	userhttp.NewRouter(
+	newUserRouter(
 		application.NewProfileService(
 			repository,
 			application.WithContentTypeDetector(http.DetectContentType),
@@ -375,7 +382,7 @@ func TestProfileAvatarUploadAndReadUseAuthenticatedRoutes(t *testing.T) {
 	}
 
 	router := chi.NewRouter()
-	userhttp.NewRouter(
+	newUserRouter(
 		application.NewProfileService(
 			repository,
 			application.WithContentTypeDetector(http.DetectContentType),

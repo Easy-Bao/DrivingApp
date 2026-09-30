@@ -21,8 +21,13 @@ type Handler struct {
 	verifier *security.TokenManager
 }
 
-func NewHandler(service *application.RideService, verifier *security.TokenManager) *Handler {
-	return &Handler{service: service, verifier: verifier}
+type Dependencies struct {
+	Service  *application.RideService
+	Verifier *security.TokenManager
+}
+
+func NewHandler(dependencies Dependencies) *Handler {
+	return &Handler{service: dependencies.Service, verifier: dependencies.Verifier}
 }
 func (handler *Handler) identity(r *http.Request) (int, bool) {
 	return middleware.AuthenticatedUserID(r, handler.verifier)

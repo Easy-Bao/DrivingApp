@@ -350,6 +350,9 @@ func newRouter(
 		RecentDestinations: destinations,
 		AddressResolver:    resolver,
 	})
-	ridecontext.NewRouter(query, verifier).RegisterRoutes(router)
+	ridecontext.NewRouter(ridecontext.Dependencies{
+		Query:    query,
+		Verifier: verifier,
+	}).RegisterRoutes(router)
 	return router
 }

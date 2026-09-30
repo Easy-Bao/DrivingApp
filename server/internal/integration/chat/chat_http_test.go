@@ -50,16 +50,16 @@ func TestChatHTTPRoutesRequireRoomMembership(t *testing.T) {
 	}
 	history := &roomHistory{members: map[string]bool{"ride-1:7": true}}
 	router := chi.NewRouter()
-	chath.NewRouter(
-		chatapplication.NewChatService(history).
+	chath.NewRouter(chath.Dependencies{
+		Service: chatapplication.NewChatService(history).
 			WithRideAssignmentLookup(chatAssignmentLookup{
 				assignment: assignment.Assignment{
 					RideID: "ride-1", PassengerID: "7", DriverID: "9", Status: "assigned",
 				},
 				found: true,
 			}),
-		tokenManager,
-	).RegisterRoutes(router)
+		Verifier: tokenManager,
+	}).RegisterRoutes(router)
 
 	for _, test := range []struct {
 		name   string
@@ -95,16 +95,16 @@ func TestChatCreateRoomReportsResolvedRoom(t *testing.T) {
 		locked:  true,
 	}
 	router := chi.NewRouter()
-	chath.NewRouter(
-		chatapplication.NewChatService(history).
+	chath.NewRouter(chath.Dependencies{
+		Service: chatapplication.NewChatService(history).
 			WithRideAssignmentLookup(chatAssignmentLookup{
 				assignment: assignment.Assignment{
 					RideID: "ride-1", PassengerID: "7", DriverID: "8", Status: "assigned",
 				},
 				found: true,
 			}),
-		tokenManager,
-	).RegisterRoutes(router)
+		Verifier: tokenManager,
+	}).RegisterRoutes(router)
 
 	request := httptest.NewRequest(
 		http.MethodPost,
@@ -127,10 +127,10 @@ func TestChatCreateRoomRejectsClientSuppliedParticipants(t *testing.T) {
 		t.Fatal(err)
 	}
 	router := chi.NewRouter()
-	chath.NewRouter(
-		chatapplication.NewChatService(&roomHistory{}),
-		tokenManager,
-	).RegisterRoutes(router)
+	chath.NewRouter(chath.Dependencies{
+		Service:  chatapplication.NewChatService(&roomHistory{}),
+		Verifier: tokenManager,
+	}).RegisterRoutes(router)
 
 	request := httptest.NewRequest(
 		http.MethodPost,
