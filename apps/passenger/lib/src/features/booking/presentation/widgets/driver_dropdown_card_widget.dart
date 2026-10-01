@@ -48,20 +48,20 @@ class _DriverDropdownCardWidgetState()
     super.initState();
     _dropdownAnimationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 400),
+      duration: AppTransitions.pushDuration,
     );
 
     _slideAnimation =
         Tween<Offset>(begin: const Offset(0, -0.3), end: Offset.zero).animate(
           CurvedAnimation(
             parent: _dropdownAnimationController,
-            curve: Curves.easeOutBack,
+            curve: Curves.easeOutCubic,
           ),
         );
 
     _fadeAnimation = CurvedAnimation(
       parent: _dropdownAnimationController,
-      curve: Curves.easeIn,
+      curve: Curves.easeOutCubic,
     );
 
     unawaited(_dropdownAnimationController.forward());

@@ -34,6 +34,11 @@ bool _isActiveDriverTripStatus(Object? value) {
   }.contains(dashboardValueAsString(value));
 }
 
+bool shouldAnimateDriverStatusPulse({
+  required bool isOnline,
+  required bool isForeground,
+}) => isOnline && isForeground;
+
 class const DriverDashboardPage({
   super.key,
   required this.lifecycleCoordinator,
@@ -96,7 +101,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _pulseCtrl = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
+    );
     _availabilityCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 520),
@@ -106,6 +111,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         final s = BlocProvider.of<DashboardCubit>(context).state;
+        _syncPulseAnimation(s.isOnline);
         _availabilityCtrl.value = s.isOnline ? 1 : 0;
         _startLocationAccessMonitoring();
         unawaited(_loadActiveTrips());
@@ -142,11 +148,26 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     await BlocProvider.of<DashboardCubit>(context).resyncActiveTrip();
   }
 
+  void _syncPulseAnimation(bool isOnline) {
+    final shouldPulse = shouldAnimateDriverStatusPulse(
+      isOnline: isOnline,
+      isForeground: _isForeground,
+    );
+    if (shouldPulse) {
+      if (!_pulseCtrl.isAnimating) {
+        _pulseCtrl.repeat(reverse: true);
+      }
+      return;
+    }
+    _pulseCtrl.stop();
+  }
+
   void _onLifecycleChanged(AppLifecycleStatus status) {
     final isForeground = status == AppLifecycleStatus.foreground;
     if (!isForeground) {
       if (_isForeground) {
         _isForeground = false;
+        _pulseCtrl.stop();
         _suspendForegroundWork();
       }
       return;
@@ -154,6 +175,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
     if (_isForeground || !mounted) return;
     _isForeground = true;
+    _syncPulseAnimation(
+      BlocProvider.of<DashboardCubit>(context).state.isOnline,
+    );
     _startRequestCountdownTimer();
     unawaited(_resumeForegroundWork());
   }
@@ -833,6 +857,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
           listenWhen: (previous, current) =>
               previous.isOnline != current.isOnline,
           listener: (context, state) {
+            _syncPulseAnimation(state.isOnline);
             if (state.isOnline) {
               _startShiftDurationTimer();
               _availabilityCtrl.forward();

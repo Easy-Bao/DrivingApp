@@ -647,26 +647,20 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
     required VoidCallback onPressed,
     required String tooltip,
   }) {
-    return HeroMode(
-      enabled: widget.isExpanded,
-      child: Hero(
-        tag: 'ride-selection-back-button',
-        child: IconButton(
-          key: key,
-          onPressed: onPressed,
-          tooltip: tooltip,
-          constraints: const BoxConstraints.tightFor(
-            width: EasyRideSize.minimumTouchTarget,
-            height: EasyRideSize.minimumTouchTarget,
-          ),
-          padding: EdgeInsets.zero,
-          style: IconButton.styleFrom(shape: const CircleBorder()),
-          icon: Icon(
-            LucideIcons.arrow_left,
-            color: context.colorScheme.onSurface,
-            size: 20,
-          ),
-        ),
+    return IconButton(
+      key: key,
+      onPressed: onPressed,
+      tooltip: tooltip,
+      constraints: const BoxConstraints.tightFor(
+        width: EasyRideSize.minimumTouchTarget,
+        height: EasyRideSize.minimumTouchTarget,
+      ),
+      padding: EdgeInsets.zero,
+      style: IconButton.styleFrom(shape: const CircleBorder()),
+      icon: Icon(
+        LucideIcons.arrow_left,
+        color: context.colorScheme.onSurface,
+        size: 20,
       ),
     );
   }

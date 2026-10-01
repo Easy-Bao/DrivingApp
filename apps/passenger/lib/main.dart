@@ -45,26 +45,6 @@ Future<void> main() => bootstrapPassengerApp();
 
 
 ///TODO:
-/// Perform a complete animation audit across Passenger App and Driver App.
-///
-/// Check for:
-/// - chunky animation
-/// - delayed animation
-/// - duplicate animation
-/// - unnecessary animation
-/// - inconsistent duration
-/// - inconsistent animation curves
-/// - animation running during heavy rebuilds
-/// - map-related frame drops
-/// - unnecessary Hero widgets
-///
-/// Prefer simple and consistent transitions.
-///
-/// Animation should support usability and should not exist only because the widget
-/// allows animation.
-
-
-///TODO:
 /// Audit navigation architecture across both applications.
 ///
 /// Check:

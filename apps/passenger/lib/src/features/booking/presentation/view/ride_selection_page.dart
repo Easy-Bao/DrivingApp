@@ -591,13 +591,7 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
                       horizontal: EasyRideLayout.pagePadding,
                       vertical: 8,
                     ),
-                    child: HeroMode(
-                      enabled: !_isPanelExpanded,
-                      child: Hero(
-                        tag: 'ride-selection-back-button',
-                        child: _buildMapBackButton(context),
-                      ),
-                    ),
+                    child: _buildMapBackButton(context),
                   ),
                 ),
               ),

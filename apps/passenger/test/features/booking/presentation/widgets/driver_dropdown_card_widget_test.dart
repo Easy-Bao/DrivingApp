@@ -62,6 +62,19 @@ void main() {
 
     expect(find.text('View Full Profile'), findsOneWidget);
   });
+
+  testWidgets('completes the card entrance on the shared page duration', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: _DriverCardHarness()));
+
+    await tester.pump(const Duration(milliseconds: 301));
+
+    final entrance = tester.widget<SlideTransition>(
+      find.byType(SlideTransition).first,
+    );
+    expect(entrance.position.value, Offset.zero);
+  });
 }
 
 class const _DriverCardHarness() extends StatefulWidget {

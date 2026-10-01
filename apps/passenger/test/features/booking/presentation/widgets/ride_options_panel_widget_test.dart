@@ -150,6 +150,8 @@ void main() {
     expect(find.text('4.2 km'), findsNothing);
     expect(find.text('12 min'), findsNothing);
     expect(find.byType(TextField), findsNothing);
+    expect(find.byType(Hero), findsNothing);
+    expect(find.byType(HeroMode), findsNothing);
   });
 
   testWidgets('opens a custom offer panel from the left and saves the offer', (
