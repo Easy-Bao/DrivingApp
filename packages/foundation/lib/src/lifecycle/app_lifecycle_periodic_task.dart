@@ -24,6 +24,7 @@ final class AppLifecyclePeriodicTask({
   Timer? _timer;
   bool _started = false;
   bool _isRunning = false;
+  bool _runAfterCurrentTick = false;
 
   this
     : assert(interval > Duration.zero),
@@ -52,7 +53,13 @@ final class AppLifecyclePeriodicTask({
       return;
     }
 
-    if (_runImmediatelyOnResume) unawaited(_runTick());
+    if (_runImmediatelyOnResume) {
+      if (_isRunning) {
+        _runAfterCurrentTick = true;
+      } else {
+        unawaited(_runTick());
+      }
+    }
     _schedule();
   }
 
@@ -79,11 +86,19 @@ final class AppLifecyclePeriodicTask({
       );
     } finally {
       _isRunning = false;
+      final shouldRunAfterCurrentTick = _runAfterCurrentTick;
+      _runAfterCurrentTick = false;
+      if (shouldRunAfterCurrentTick &&
+          _started &&
+          _lifecycleCoordinator.isForeground) {
+        unawaited(_runTick());
+      }
     }
   }
 
   Future<void> dispose() async {
     _started = false;
+    _runAfterCurrentTick = false;
     _timer?.cancel();
     _timer = null;
     await _lifecycleSubscription?.cancel();

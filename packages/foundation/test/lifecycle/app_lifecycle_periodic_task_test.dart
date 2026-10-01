@@ -60,4 +60,45 @@ void main() {
     firstCall.complete();
     await Future<void>.delayed(Duration.zero);
   });
+
+  test(
+    'runs a requested resume refresh after the current refresh completes',
+    () async {
+      final lifecycleCoordinator = AppLifecycleCoordinator(
+        initiallyForeground: false,
+      );
+      final firstCall = Completer<void>();
+      var calls = 0;
+      final task = AppLifecyclePeriodicTask(
+        lifecycleCoordinator: lifecycleCoordinator,
+        interval: const Duration(seconds: 1),
+        onTick: () {
+          calls++;
+          if (calls == 1) return firstCall.future;
+        },
+      );
+      addTearDown(() async {
+        if (!firstCall.isCompleted) firstCall.complete();
+        await task.dispose();
+        await lifecycleCoordinator.dispose();
+      });
+
+      task.start();
+      await Future<void>.delayed(Duration.zero);
+      expect(calls, 0);
+
+      lifecycleCoordinator.update(isForeground: true);
+      await Future<void>.delayed(Duration.zero);
+      expect(calls, 1);
+
+      lifecycleCoordinator.update(isForeground: false);
+      lifecycleCoordinator.update(isForeground: true);
+      await Future<void>.delayed(Duration.zero);
+      expect(calls, 1);
+
+      firstCall.complete();
+      await Future<void>.delayed(Duration.zero);
+      expect(calls, 2);
+    },
+  );
 }
