@@ -23,6 +23,7 @@ class RideFlowCubit({
   Timer? _waitTimer;
   int _elapsedWaitTime = 0;
   bool _isActionInFlight = false;
+  int _actionGeneration = 0;
 
   this : super(const RideFlowInitial());
 
@@ -41,6 +42,9 @@ class RideFlowCubit({
     double? destLat,
     double? destLng,
   }) {
+    ++_actionGeneration;
+    _waitTimer?.cancel();
+    _isActionInFlight = false;
     _activeRideId = rideId;
     _activePassengerId = passengerId;
     _activePassengerName = passengerName;
@@ -88,11 +92,13 @@ class RideFlowCubit({
     double? destLng,
   }) async {
     if (_isActionInFlight) return;
+    final actionGeneration = ++_actionGeneration;
     _isActionInFlight = true;
     _activeRideId = rideId;
     _activePassengerName = passengerName;
 
     final driverId = await _sessionService.readDriverId();
+    if (!_isCurrentAction(actionGeneration)) return;
     if (driverId == null || driverId.isEmpty) {
       _isActionInFlight = false;
       emit(RideFlowError(ErrorHandler.getErrorMessage(const AuthFailure())));
@@ -104,6 +110,7 @@ class RideFlowCubit({
         rideId: rideId,
         driverId: driverId,
       );
+      if (!_isCurrentAction(actionGeneration)) return;
       final failure = result.fold<Failure?>((value) => value, (_) => null);
       if (failure != null) {
         emit(RideFlowError(ErrorHandler.getErrorMessage(failure)));
@@ -120,10 +127,11 @@ class RideFlowCubit({
         ),
       );
     } catch (error) {
+      if (!_isCurrentAction(actionGeneration)) return;
       dev.log('Error accepting ride on backend: $error');
       emit(RideFlowError(ErrorHandler.getErrorMessage(error)));
     } finally {
-      _isActionInFlight = false;
+      if (_actionGeneration == actionGeneration) _isActionInFlight = false;
     }
   }
 
@@ -135,6 +143,7 @@ class RideFlowCubit({
     double? destLng,
   }) async {
     if (_isActionInFlight) return;
+    final actionGeneration = ++_actionGeneration;
     _isActionInFlight = true;
     _waitTimer?.cancel();
     _elapsedWaitTime = 0;
@@ -145,6 +154,7 @@ class RideFlowCubit({
           rideId: _activeRideId!,
           status: RideStatus.arrived,
         );
+        if (!_isCurrentAction(actionGeneration)) return;
         final failure = result.fold<Failure?>((value) => value, (_) => null);
         if (failure != null) {
           emit(RideFlowError(ErrorHandler.getErrorMessage(failure)));
@@ -163,7 +173,10 @@ class RideFlowCubit({
         ),
       );
       _waitTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        if (isClosed) return;
+        if (!_isCurrentAction(actionGeneration)) {
+          timer.cancel();
+          return;
+        }
         _elapsedWaitTime++;
         emit(
           RideFlowWaitingPassenger(
@@ -177,10 +190,11 @@ class RideFlowCubit({
         );
       });
     } catch (error) {
+      if (!_isCurrentAction(actionGeneration)) return;
       dev.log('Error updating status to arrived: $error');
       emit(RideFlowError(ErrorHandler.getErrorMessage(error)));
     } finally {
-      _isActionInFlight = false;
+      if (_actionGeneration == actionGeneration) _isActionInFlight = false;
     }
   }
 
@@ -193,6 +207,7 @@ class RideFlowCubit({
     double? passengerLng,
   }) async {
     if (_isActionInFlight) return false;
+    final actionGeneration = ++_actionGeneration;
     _isActionInFlight = true;
     _waitTimer?.cancel();
 
@@ -201,11 +216,13 @@ class RideFlowCubit({
       var resolvedDestLng = destLng;
       if (resolvedDestLat == null || resolvedDestLng == null) {
         final recoveredDestination = await _loadActiveRideDestination();
+        if (!_isCurrentAction(actionGeneration)) return false;
         resolvedDestLat = recoveredDestination?.$1;
         resolvedDestLng = recoveredDestination?.$2;
       }
 
       if (!_isValidCoordinatePair(resolvedDestLat, resolvedDestLng)) {
+        if (!_isCurrentAction(actionGeneration)) return false;
         emit(
           RideFlowError(
             ErrorHandler.getErrorMessage(const RouteCalculationFailure()),
@@ -219,6 +236,7 @@ class RideFlowCubit({
           rideId: _activeRideId!,
           status: RideStatus.inTransit,
         );
+        if (!_isCurrentAction(actionGeneration)) return false;
         final failure = result.fold<Failure?>((value) => value, (_) => null);
         if (failure != null) {
           emit(RideFlowError(ErrorHandler.getErrorMessage(failure)));
@@ -226,6 +244,7 @@ class RideFlowCubit({
         }
       }
 
+      if (!_isCurrentAction(actionGeneration)) return false;
       emit(
         RideFlowInTransit(
           passengerName: passengerName,
@@ -238,13 +257,12 @@ class RideFlowCubit({
       );
       return true;
     } catch (error) {
+      if (!_isCurrentAction(actionGeneration)) return false;
       dev.log('Error updating status to in_transit: $error');
-      emit(
-        RideFlowError(ErrorHandler.getErrorMessage(const ServerFailure())),
-      );
+      emit(RideFlowError(ErrorHandler.getErrorMessage(const ServerFailure())));
       return false;
     } finally {
-      _isActionInFlight = false;
+      if (_actionGeneration == actionGeneration) _isActionInFlight = false;
     }
   }
 
@@ -282,15 +300,12 @@ class RideFlowCubit({
         longitude <= 180;
   }
 
-  Future<RideSnapshot?> _loadCompletedRide() async {
-    if (_isActionInFlight) return null;
-    _isActionInFlight = true;
-    _waitTimer?.cancel();
-
+  Future<RideSnapshot?> _loadCompletedRide(int actionGeneration) async {
     final rideId = _activeRideId;
     if (rideId == null || rideId.isEmpty) {
-      _isActionInFlight = false;
-      emit(const RideFlowError('This trip is no longer active.'));
+      if (_isCurrentAction(actionGeneration)) {
+        emit(const RideFlowError('This trip is no longer active.'));
+      }
       return null;
     }
 
@@ -299,6 +314,7 @@ class RideFlowCubit({
       Failure? loadFailure;
       (await _rideRepository.fetchRideResult(rideId))
           .fold((failure) => loadFailure = failure, (value) => ride = value);
+      if (!_isCurrentAction(actionGeneration)) return null;
       if (ride == null) {
         final failure = loadFailure;
         emit(
@@ -318,6 +334,7 @@ class RideFlowCubit({
           rideId: rideId,
           status: RideStatus.completed,
         );
+        if (!_isCurrentAction(actionGeneration)) return null;
         final failure = result.fold<Failure?>((value) => value, (_) => null);
         if (failure != null) {
           emit(RideFlowError(ErrorHandler.getErrorMessage(failure)));
@@ -326,33 +343,43 @@ class RideFlowCubit({
       }
       return ride;
     } catch (error) {
+      if (!_isCurrentAction(actionGeneration)) return null;
       dev.log('Error completing ride on backend: $error');
       emit(RideFlowError(ErrorHandler.getErrorMessage(error)));
       return null;
-    } finally {
-      _isActionInFlight = false;
     }
   }
 
   Future<double?> completeRide() async {
-    final ride = await _loadCompletedRide();
-    if (ride == null) return null;
+    if (_isActionInFlight) return null;
+    final actionGeneration = ++_actionGeneration;
+    _isActionInFlight = true;
+    _waitTimer?.cancel();
+    try {
+      final ride = await _loadCompletedRide(actionGeneration);
+      if (!_isCurrentAction(actionGeneration) || ride == null) return null;
 
-    final fareAmount = ride.fareAmount;
-    if (fareAmount == null || fareAmount <= 0) {
-      emit(RideFlowError(ErrorHandler.getErrorMessage(const ServerFailure())));
-      return null;
+      final fareAmount = ride.fareAmount;
+      if (fareAmount == null || fareAmount <= 0) {
+        emit(
+          RideFlowError(ErrorHandler.getErrorMessage(const ServerFailure())),
+        );
+        return null;
+      }
+      return fareAmount / 100;
+    } finally {
+      if (_actionGeneration == actionGeneration) _isActionInFlight = false;
     }
-    return fareAmount / 100;
   }
 
   Future<double?> confirmCashPayment() async {
     if (_isActionInFlight) return null;
+    final actionGeneration = ++_actionGeneration;
     _isActionInFlight = true;
 
     final rideId = _activeRideId;
     if (rideId == null || rideId.isEmpty) {
-      _isActionInFlight = false;
+      if (_actionGeneration == actionGeneration) _isActionInFlight = false;
       emit(const RideFlowError('This trip is no longer active.'));
       return null;
     }
@@ -364,6 +391,7 @@ class RideFlowCubit({
         (failure) => settleFailure = failure,
         (value) => fareAmount = value,
       );
+      if (!_isCurrentAction(actionGeneration)) return null;
       if (fareAmount == null) {
         final failure = settleFailure;
         emit(
@@ -379,11 +407,12 @@ class RideFlowCubit({
       emit(RideFlowComplete(fare: finalFare));
       return finalFare;
     } catch (error) {
+      if (!_isCurrentAction(actionGeneration)) return null;
       dev.log('Error settling cash trip: $error');
       emit(RideFlowError(ErrorHandler.getErrorMessage(error)));
       return null;
     } finally {
-      _isActionInFlight = false;
+      if (_actionGeneration == actionGeneration) _isActionInFlight = false;
     }
   }
 
@@ -394,6 +423,7 @@ class RideFlowCubit({
   }
 
   void reset() {
+    ++_actionGeneration;
     _waitTimer?.cancel();
     _activeRideId = null;
     _activePassengerId = null;
@@ -404,7 +434,12 @@ class RideFlowCubit({
 
   @override
   Future<void> close() {
+    ++_actionGeneration;
     _waitTimer?.cancel();
     return super.close();
+  }
+
+  bool _isCurrentAction(int generation) {
+    return !isClosed && generation == _actionGeneration;
   }
 }

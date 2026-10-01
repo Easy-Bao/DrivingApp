@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:driver/src/features/active_ride/active_ride.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:foundation/foundation.dart';
@@ -75,6 +77,41 @@ void main() {
         ),
       ],
     );
+
+    test('ignores a late accept result after the ride flow resets', () async {
+      final acceptStarted = Completer<void>();
+      final releaseAccept = Completer<Result<void, Failure>>();
+      when(
+        () => mockRideRepository.acceptRide(
+          rideId: any(named: 'rideId'),
+          driverId: any(named: 'driverId'),
+        ),
+      ).thenAnswer((_) {
+        acceptStarted.complete();
+        return releaseAccept.future;
+      });
+
+      final cubit = _makeCubit(mockRideRepository, mockSessionService);
+      final states = <RideFlowState>[];
+      final subscription = cubit.stream.listen(states.add);
+      final pendingAccept = cubit.acceptRide(
+        rideId: 'test-ride-id',
+        passengerName: 'Juan Dela Cruz',
+        pickupLat: 7.82,
+        pickupLng: 123.43,
+      );
+      await acceptStarted.future;
+
+      cubit.reset();
+      releaseAccept.complete(const Ok(null));
+      await pendingAccept;
+
+      expect(cubit.state, isA<RideFlowInitial>());
+      expect(states.whereType<RideFlowNavigatingToPickup>(), isEmpty);
+
+      await subscription.cancel();
+      await cubit.close();
+    });
   });
 
   group('RideFlowCubit — arriveAtPickup()', () {
