@@ -152,14 +152,11 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                     SliverFillRemaining(
                       hasScrollBody: false,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24.0,
-                          vertical: 16.0,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 20),
                             Center(
                               child: Column(
                                 children: [
@@ -183,7 +180,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 28),
+                            const SizedBox(height: 32),
                             if (errorMessage != null) ...[
                               Container(
                                 width: double.infinity,
@@ -558,7 +555,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 32),
+                            const SizedBox(height: 24),
                             Material(
                               child: Material(
                                 type: MaterialType.transparency,

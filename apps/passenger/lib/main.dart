@@ -45,36 +45,6 @@ Future<void> main() => bootstrapPassengerApp();
 
 
 ///BUG:
-/// Sign In and Sign Up have small layout/alignment differences even though they are
-/// structurally similar.
-///
-/// During transition, the mismatch makes the UI appear to jump slightly.
-///
-///FIX:
-/// Compare Sign In and Sign Up layouts carefully.
-///
-/// Check:
-/// - horizontal padding
-/// - vertical spacing
-/// - title alignment
-/// - subtitle alignment
-/// - logo position
-/// - form width
-/// - TextField height
-/// - spacing between fields
-/// - button dimensions
-/// - bottom action placement
-/// - SafeArea
-/// - screen constraints
-///
-/// Reuse shared authentication layout primitives where possible so both screens use
-/// the same structural spacing instead of maintaining duplicated magic numbers.
-///
-/// The screen frame should remain visually stable when navigating between Sign In
-/// and Sign Up.
-
-
-///BUG:
 /// When focusing a TextField and the Android software keyboard opens, some screens
 /// overflow or change layout incorrectly.
 ///
