@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
@@ -133,6 +135,95 @@ void main() {
         await cubit.close();
       },
     );
+
+    test('ignores a stale synchronization after a newer trip starts', () async {
+      final firstStatusStarted = Completer<void>();
+      final releaseFirstStatus = Completer<Result<RideUpdate, Failure>>();
+      var sessionReads = 0;
+      when(() => session.readActiveRideId()).thenAnswer((_) async {
+        sessionReads++;
+        return sessionReads == 1 ? 'ride-1' : 'ride-2';
+      });
+      when(() => repo.getRideStatusUpdate(any()))
+          .thenAnswer((invocation) async {
+            final rideId = invocation.positionalArguments.first as String;
+            if (rideId == 'ride-1') {
+              firstStatusStarted.complete();
+              return releaseFirstStatus.future;
+            }
+            return const Ok(
+              RideUpdate(
+                status: RideStatus.accepted,
+                driverId: 'driver-2',
+                driverName: 'Driver 2',
+                vehiclePlate: 'XYZ-2024',
+                vehicleType: 'Sedan',
+              ),
+            );
+          });
+      when(() => repo.fetchDriverLocation(any())).thenAnswer((
+        invocation,
+      ) async {
+        final rideId = invocation.positionalArguments.first as String;
+        return rideId == 'ride-1' ? const Ok((1.0, 1.0)) : const Ok((2.0, 2.0));
+      });
+      when(
+        () => repo.getRoutePolyline(
+          startLat: any(named: 'startLat'),
+          startLng: any(named: 'startLng'),
+          endLat: any(named: 'endLat'),
+          endLng: any(named: 'endLng'),
+        ),
+      ).thenAnswer((_) async => null);
+
+      final cubit = _makeCubit(repo, session);
+      final states = <TrackDriverState>[];
+      final subscription = cubit.stream.listen(states.add);
+      final firstStart = cubit.startTracking(
+        startLat: 1,
+        startLng: 1,
+        endLat: 1.1,
+        endLng: 1.1,
+        rideId: 'ride-1',
+        driverId: 'driver-1',
+        driverName: 'Driver 1',
+        vehiclePlate: 'ABC-1000',
+        vehicleType: 'Sedan',
+      );
+      await firstStatusStarted.future;
+
+      await cubit.startTracking(
+        startLat: 2,
+        startLng: 2,
+        endLat: 2.1,
+        endLng: 2.1,
+        rideId: 'ride-2',
+        driverId: 'driver-2',
+        driverName: 'Driver 2',
+        vehiclePlate: 'XYZ-2024',
+        vehicleType: 'Sedan',
+      );
+      releaseFirstStatus.complete(
+        const Ok(
+          RideUpdate(
+            status: RideStatus.accepted,
+            driverId: 'driver-1',
+            driverName: 'Driver 1',
+            vehiclePlate: 'ABC-1000',
+            vehicleType: 'Sedan',
+          ),
+        ),
+      );
+      await firstStart;
+
+      final progressStates = states.whereType<TrackDriverInProgress>().toList();
+      expect(progressStates, hasLength(1));
+      expect(progressStates.single.driverLat, 2.0);
+      expect(progressStates.single.driverLng, 2.0);
+
+      await subscription.cancel();
+      await cubit.close();
+    });
 
     blocTest<TrackDriverCubit, TrackDriverState>(
       'emits TrackDriverInProgress when repo returns route polyline',
