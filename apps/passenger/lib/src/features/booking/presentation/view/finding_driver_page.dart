@@ -22,6 +22,11 @@ import 'package:passenger/src/features/booking/presentation/widgets/finding_driv
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 
+bool shouldStartFindingDriverHomeNavigation({
+  required bool isMounted,
+  required bool isNavigationInFlight,
+}) => isMounted && !isNavigationInFlight;
+
 class const FindingDriverPage({
   super.key,
   required this.rideType,
@@ -110,6 +115,7 @@ class _FindingDriverPageContentState()
   DriverModel? _selectedDriver;
   List<DriverModel> _nearbyDrivers = [];
   bool _isLeaving = false;
+  bool _isReturningHome = false;
   bool _isNoDriverFound = false;
   String? _driverSearchError;
   String? _acceptingOfferId;
@@ -305,7 +311,13 @@ class _FindingDriverPageContentState()
   }
 
   void _returnHome() {
-    if (!mounted) return;
+    if (!shouldStartFindingDriverHomeNavigation(
+      isMounted: mounted,
+      isNavigationInFlight: _isReturningHome,
+    )) {
+      return;
+    }
+    _isReturningHome = true;
     _cancelBiddingSessionOnPop();
     context.goNamed(HomeRoutes.home);
   }
