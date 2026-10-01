@@ -118,6 +118,27 @@ void main() {
     },
   );
 
+  test('does not show a nearby skeleton without an active nearby request', () {
+    expect(
+      shouldShowDestinationResultsLoading(
+        isSearching: false,
+        isLoadingNearby: false,
+        hasQuery: false,
+        hasResults: false,
+      ),
+      isFalse,
+    );
+    expect(
+      shouldShowDestinationResultsLoading(
+        isSearching: false,
+        isLoadingNearby: true,
+        hasQuery: false,
+        hasResults: false,
+      ),
+      isTrue,
+    );
+  });
+
   testWidgets('map-pin search back returns to the map-pin route', (
     tester,
   ) async {

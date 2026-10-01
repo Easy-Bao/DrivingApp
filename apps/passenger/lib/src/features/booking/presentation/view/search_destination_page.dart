@@ -29,6 +29,15 @@ class const SearchDestinationPage({
   State<SearchDestinationPage> createState() => _SearchDestinationPageState();
 }
 
+bool shouldShowDestinationResultsLoading({
+  required bool isSearching,
+  required bool isLoadingNearby,
+  required bool hasQuery,
+  required bool hasResults,
+}) {
+  return isSearching || (!hasQuery && isLoadingNearby && !hasResults);
+}
+
 class _SearchDestinationPageState()
     extends State<SearchDestinationPage>
     with SingleTickerProviderStateMixin {
@@ -53,7 +62,7 @@ class _SearchDestinationPageState()
   bool _isLoadingMoreNearby = false;
   bool _hasMoreNearbyPages = true;
   bool _isSearching = false;
-  bool _isLoadingNearby = true;
+  bool _isLoadingNearby = LocationService.lastPosition != null;
   final Map<String, double> _drivingDistances = {};
   final Set<String> _drivingDistanceRequests = {};
   int _searchRequestId = 0;
@@ -256,6 +265,7 @@ class _SearchDestinationPageState()
       setState(() {
         _userLat = pos.latitude;
         _userLng = pos.longitude;
+        _isLoadingNearby = true;
       });
       if (_mapController != null) {
         await MapProvider.moveCamera(
@@ -268,6 +278,8 @@ class _SearchDestinationPageState()
         unawaited(_updateCurrentLocationMarker(pos.latitude, pos.longitude));
       }
       unawaited(_loadNearbyPlaces());
+    } else if (mounted && (_userLat == null || _userLng == null)) {
+      setState(() => _isLoadingNearby = false);
     }
   }
 
@@ -569,45 +581,18 @@ class _SearchDestinationPageState()
 
   @override
   Widget build(BuildContext context) {
-    if (_userLat == null || _userLng == null) {
-      return Scaffold(
-        backgroundColor: context.colorScheme.surface,
-        appBar: AppBar(
-          backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
-          elevation: 0,
-          leading: Center(
-            child: _buildTripBackButton(context, () => context.pop()),
-          ),
-        ),
-        body: Skeletonizer.zone(
-          child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-            itemCount: 6,
-            separatorBuilder: (_, _) => const SizedBox(height: 8),
-            itemBuilder: (_, _) => const ListTile(
-              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              leading: Bone.circle(size: 44),
-              title: Bone.text(width: 150, fontSize: 15),
-              subtitle: Bone.text(width: 100, fontSize: 13),
-              trailing: Bone.icon(size: 18),
-            ),
-          ),
-        ),
-      );
-    }
-    final defaultLat = _userLat!;
-    final defaultLng = _userLng!;
+    final defaultLat = _userLat;
+    final defaultLng = _userLng;
     final hasQuery = _searchController.text.trim().isNotEmpty;
     final displayList = hasQuery
         ? _results
         : _allNearbyPlaces.take(_displayedCount).toList();
-    final isNetworkUnavailable = AppNetworkStatusScope.isUnavailableOf(context);
-    final isInitialNearbyLoad =
-        !hasQuery && _isLoadingNearby && displayList.isEmpty;
-    final shouldShowLoading =
-        _isSearching ||
-        isInitialNearbyLoad ||
-        (isNetworkUnavailable && displayList.isEmpty);
+    final shouldShowLoading = shouldShowDestinationResultsLoading(
+      isSearching: _isSearching,
+      isLoadingNearby: _isLoadingNearby,
+      hasQuery: hasQuery,
+      hasResults: displayList.isNotEmpty,
+    );
     final screenSize = MediaQuery.of(context).size;
     final topPadding = MediaQuery.of(context).padding.top;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
@@ -646,7 +631,12 @@ class _SearchDestinationPageState()
                           }
                           unawaited(_expandController.reverse());
                         },
-                        child: _getMapView(defaultLat, defaultLng),
+                        child: defaultLat != null && defaultLng != null
+                            ? _getMapView(defaultLat, defaultLng)
+                            : ColoredBox(
+                                color:
+                                    context.colorScheme.surfaceContainerHighest,
+                              ),
                       ),
                     ),
                   ),
@@ -1217,31 +1207,4 @@ class _SearchDestinationPageState()
       ),
     );
   }
-}
-
-Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
-  return Tooltip(
-    message: MaterialLocalizations.of(context).backButtonTooltip,
-    child: Material(
-      color: context.colorScheme.surface,
-      elevation: 2,
-      shadowColor: context.colorScheme.onSurface.withValues(alpha: 0.08),
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onPressed,
-        customBorder: const CircleBorder(),
-        child: SizedBox(
-          width: EasyRideSize.minimumTouchTarget,
-          height: EasyRideSize.minimumTouchTarget,
-          child: Center(
-            child: Icon(
-              LucideIcons.arrow_left,
-              color: context.colorScheme.onSurface,
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
 }
