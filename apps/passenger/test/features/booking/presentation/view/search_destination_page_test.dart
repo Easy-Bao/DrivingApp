@@ -8,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:go_router_modular/testing.dart';
 import 'package:maps/maps.dart' as maps;
+import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/booking/presentation/view/search_destination_page.dart';
 
 class _FakeGeolocatorPlatform extends GeolocatorPlatform {
@@ -160,6 +161,137 @@ void main() {
 
     expect(find.text('Map pin page'), findsOneWidget);
     expect(find.byType(SearchDestinationPage), findsNothing);
+
+    router.dispose();
+  });
+
+  testWidgets('map-pin-originated search returns to its existing map pin', (
+    tester,
+  ) async {
+    final router = GoRouter(
+      initialLocation: '/map-pin',
+      routes: [
+        GoRoute(
+          path: '/map-pin',
+          builder: (_, _) => const Text('Map pin page'),
+        ),
+        GoRoute(
+          path: '/search',
+          builder: (_, _) => Navigator(
+            onGenerateRoute: (_) => MaterialPageRoute(
+              builder: (_) => const SearchDestinationPage(
+                autofocusSearch: true,
+                returnToMapPin: true,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp.router(theme: EasyRideTheme.main, routerConfig: router),
+    );
+    await tester.pumpAndSettle();
+
+    unawaited(router.push('/search'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    final mapPinButton = tester.widget<GestureDetector>(
+      find.byKey(const ValueKey('search-destination-map-pin')),
+    );
+    mapPinButton.onTap!();
+    mapPinButton.onTap!();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Map pin page'), findsOneWidget);
+    expect(find.byType(SearchDestinationPage), findsNothing);
+
+    router.dispose();
+  });
+
+  testWidgets('ignores a second map-pin back pop while the first is pending', (
+    tester,
+  ) async {
+    final router = GoRouter(
+      initialLocation: '/map-pin',
+      routes: [
+        GoRoute(
+          path: '/map-pin',
+          builder: (_, _) => const Text('Map pin page'),
+        ),
+        GoRoute(
+          path: '/search',
+          builder: (_, _) => Navigator(
+            onGenerateRoute: (_) => MaterialPageRoute(
+              builder: (_) => const SearchDestinationPage(
+                autofocusSearch: true,
+                returnToMapPin: true,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp.router(theme: EasyRideTheme.main, routerConfig: router),
+    );
+    await tester.pumpAndSettle();
+
+    unawaited(router.push('/search'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    final backButton = tester.widget<GestureDetector>(
+      find.byKey(const ValueKey('search-destination-back')),
+    );
+    backButton.onTap!();
+    backButton.onTap!();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Map pin page'), findsOneWidget);
+    expect(find.byType(SearchDestinationPage), findsNothing);
+
+    router.dispose();
+  });
+
+  testWidgets('does not stack map-pin routes from repeated taps', (
+    tester,
+  ) async {
+    final router = GoRouter(
+      initialLocation: '/search',
+      routes: [
+        GoRoute(
+          path: '/search',
+          builder: (_, _) => const SearchDestinationPage(),
+        ),
+        GoRoute(
+          name: BookingRoutes.mapPin,
+          path: '/map-pin',
+          builder: (_, _) => const Text('Map pin page'),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp.router(theme: EasyRideTheme.main, routerConfig: router),
+    );
+    await tester.pumpAndSettle();
+
+    final mapPinButton = tester.widget<GestureDetector>(
+      find.byKey(const ValueKey('search-destination-map-pin')),
+    );
+    mapPinButton.onTap!();
+    mapPinButton.onTap!();
+    await tester.pumpAndSettle();
+
+    router.pop();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Map pin page'), findsNothing);
+    expect(find.byType(SearchDestinationPage), findsOneWidget);
 
     router.dispose();
   });

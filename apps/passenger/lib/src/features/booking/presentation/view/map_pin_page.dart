@@ -38,6 +38,8 @@ class _MapPinPageState()
   String _address = 'Move the map to select a location';
   String _subAddress = '';
   bool _isGeocoding = false;
+  bool _isOpeningDestinationSearch = false;
+  bool _isPopping = false;
   bool _hasUserPannedMap = false;
   bool _isProgrammaticCameraMove = false;
   int _geocodeRequestId = 0;
@@ -71,7 +73,7 @@ class _MapPinPageState()
       final hasLocationAccess =
           await LocationService.getAccessState() == LocationAccessState.ready;
       if (!hasLocationAccess) {
-        if (mounted) context.pop();
+        _popOnce();
         return;
       }
     }
@@ -210,21 +212,32 @@ class _MapPinPageState()
   }
 
   Future<void> _openDestinationSearch() async {
-    if (!mounted) return;
+    if (!mounted || _isOpeningDestinationSearch) return;
+    _isOpeningDestinationSearch = true;
     final pickupAddress = [
       if (_address != 'Move the map to select a location' &&
           _address != 'Locating...')
         _address,
       if (_subAddress.isNotEmpty) _subAddress,
     ].join(', ');
-    await context.pushNamed(
-      BookingRoutes.searchDestination,
-      queryParameters: {
-        'focus': '1',
-        'returnToMapPin': '1',
-        if (pickupAddress.isNotEmpty) 'pickupAddress': pickupAddress,
-      },
-    );
+    try {
+      await context.pushNamed(
+        BookingRoutes.searchDestination,
+        queryParameters: {
+          'focus': '1',
+          'returnToMapPin': '1',
+          if (pickupAddress.isNotEmpty) 'pickupAddress': pickupAddress,
+        },
+      );
+    } finally {
+      _isOpeningDestinationSearch = false;
+    }
+  }
+
+  void _popOnce([Object? result]) {
+    if (!mounted || _isPopping) return;
+    _isPopping = true;
+    context.pop(result);
   }
 
   void _confirmLocation() {
@@ -239,7 +252,7 @@ class _MapPinPageState()
       latitude: _centerLat!,
       longitude: _centerLng!,
     );
-    context.pop(result);
+    _popOnce(result);
   }
 
   Widget _getMapView() {
@@ -265,9 +278,7 @@ class _MapPinPageState()
         appBar: AppBar(
           backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
           elevation: 0,
-          leading: Center(
-            child: _buildTripBackButton(context, () => context.pop()),
-          ),
+          leading: Center(child: _buildTripBackButton(context, _popOnce)),
         ),
         body: Center(
           child: CircularProgressIndicator(
@@ -312,10 +323,7 @@ class _MapPinPageState()
                 child: widget.flow == MapPinFlow.savedPlace
                     ? Align(
                         alignment: Alignment.centerLeft,
-                        child: _buildTripBackButton(
-                          context,
-                          () => context.pop(),
-                        ),
+                        child: _buildTripBackButton(context, _popOnce),
                       )
                     : Stack(
                         children: [
@@ -327,10 +335,7 @@ class _MapPinPageState()
                           Positioned(
                             left: 0,
                             top: 3,
-                            child: _buildTripBackButton(
-                              context,
-                              () => context.pop(),
-                            ),
+                            child: _buildTripBackButton(context, _popOnce),
                           ),
                         ],
                       ),

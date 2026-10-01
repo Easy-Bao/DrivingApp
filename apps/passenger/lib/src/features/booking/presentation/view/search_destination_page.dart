@@ -44,6 +44,8 @@ class _SearchDestinationPageState()
   late final Animation<double> _collapsedControlsFadeAnimation;
 
   Timer? _debounce;
+  bool _isOpeningMapPin = false;
+  bool _isPopping = false;
   List<Place> _results = [];
   List<Place> _allNearbyPlaces = [];
   int _displayedCount = 10;
@@ -220,7 +222,7 @@ class _SearchDestinationPageState()
 
   void _handleSearchBackTap() {
     if (widget.returnToMapPin) {
-      context.pop();
+      _popOnce();
       return;
     }
     if (_focusNode.hasFocus) {
@@ -228,8 +230,14 @@ class _SearchDestinationPageState()
     } else if (_expandController.value > 0.5) {
       unawaited(_expandController.reverse());
     } else {
-      context.pop();
+      _popOnce();
     }
+  }
+
+  void _popOnce() {
+    if (!mounted || _isPopping) return;
+    _isPopping = true;
+    context.pop();
   }
 
   Future<void> _initLocation() async {
@@ -432,9 +440,19 @@ class _SearchDestinationPageState()
   }
 
   Future<void> _openMapPin() async {
-    final result = await context.pushNamed(BookingRoutes.mapPin);
-    if (result != null && result is Place) {
-      _onPlaceSelected(result);
+    if (widget.returnToMapPin) {
+      _popOnce();
+      return;
+    }
+    if (!mounted || _isOpeningMapPin) return;
+    _isOpeningMapPin = true;
+    try {
+      final result = await context.pushNamed(BookingRoutes.mapPin);
+      if (mounted && result != null && result is Place) {
+        _onPlaceSelected(result);
+      }
+    } finally {
+      _isOpeningMapPin = false;
     }
   }
 
@@ -1038,6 +1056,9 @@ class _SearchDestinationPageState()
                                                 1.0,
                                               ),
                                               child: GestureDetector(
+                                                key: const ValueKey(
+                                                  'search-destination-map-pin',
+                                                ),
                                                 onTap: _openMapPin,
                                                 child: Material(
                                                   color: context
@@ -1128,6 +1149,9 @@ class _SearchDestinationPageState()
                               child: Transform.scale(
                                 scale: (1.0 - t * 0.5).clamp(0.0, 1.0),
                                 child: GestureDetector(
+                                  key: const ValueKey(
+                                    'search-destination-map-pin',
+                                  ),
                                   onTap: _openMapPin,
                                   child: SizedBox(
                                     width: EasyRideSize.minimumTouchTarget,
