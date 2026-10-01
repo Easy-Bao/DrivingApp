@@ -45,36 +45,6 @@ Future<void> main() => bootstrapPassengerApp();
 
 
 ///BUG:
-/// In authentication screens, when the keyboard opens/closes, the bottom text action
-/// such as:
-///
-/// "Don't have an account? Sign Up"
-///
-/// or:
-///
-/// "Already have an account? Sign In"
-///
-/// moves vertically with the keyboard.
-///
-/// This creates unnecessary visual movement and inconsistent positioning.
-///
-///FIX:
-/// Rework the authentication page structure so the bottom action behaves intentionally.
-///
-/// It should not jump merely because keyboard visibility changed.
-///
-/// Determine whether it should:
-/// - remain attached to the form
-/// - remain inside the scrollable content
-/// - remain in a stable bottom section
-///
-/// Avoid layouts that combine Spacer/Expanded/fixed positioning in a way that causes
-/// unpredictable movement when MediaQuery.viewInsets changes.
-///
-/// Verify the behavior on different screen sizes.
-
-
-///BUG:
 /// Navigating from Passenger Home -> Add Place and then returning can show a delayed
 /// or chunky transition.
 ///

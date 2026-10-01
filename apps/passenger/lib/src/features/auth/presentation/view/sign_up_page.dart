@@ -605,7 +605,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                 );
                               },
                             ),
-                            const Spacer(),
+                            const SizedBox(height: 24),
                             Center(
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,

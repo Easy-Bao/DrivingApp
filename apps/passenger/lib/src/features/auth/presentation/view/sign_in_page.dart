@@ -442,7 +442,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                   );
                                 },
                               ),
-                              const Spacer(),
+                              const SizedBox(height: 24),
                               Center(
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,

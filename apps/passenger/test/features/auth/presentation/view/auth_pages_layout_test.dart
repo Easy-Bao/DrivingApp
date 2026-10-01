@@ -100,4 +100,31 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('sign-in account action stays attached to the form content', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(800, 700));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: EasyRideTheme.main,
+        home: SigninPage(signInBloc: SignInBloc(_UnusedAuthRepository())),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final socialText = find.text('Continue with Google');
+    final footerText = find.text('Sign up');
+    final tallGap =
+        tester.getTopLeft(footerText).dy - tester.getBottomRight(socialText).dy;
+
+    await tester.binding.setSurfaceSize(const Size(800, 400));
+    await tester.pumpAndSettle();
+
+    final compactGap =
+        tester.getTopLeft(footerText).dy - tester.getBottomRight(socialText).dy;
+    expect(compactGap, closeTo(tallGap, 0.1));
+  });
 }
