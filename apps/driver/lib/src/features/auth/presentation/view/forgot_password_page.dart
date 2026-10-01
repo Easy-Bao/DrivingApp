@@ -155,8 +155,7 @@ class _ForgotPasswordPageContentState
                               ),
                             ),
                             const SizedBox(height: 8),
-                            Hero(
-                              tag: 'auth_email_field',
+                            Material(
                               child: Material(
                                 type: MaterialType.transparency,
                                 child: TextField(
@@ -199,8 +198,7 @@ class _ForgotPasswordPageContentState
                       const SizedBox(height: 20),
                       Column(
                         children: [
-                          Hero(
-                            tag: 'auth_primary_button',
+                          Material(
                             child: Material(
                               type: MaterialType.transparency,
                               child: ElevatedButton(

@@ -145,8 +145,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          Hero(
-                            tag: 'auth_email_field',
+                          Material(
                             child: Material(
                               type: MaterialType.transparency,
                               child: TextField(
@@ -238,8 +237,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          Hero(
-                            tag: 'auth_password_field',
+                          Material(
                             child: Material(
                               type: MaterialType.transparency,
                               child: TextField(
@@ -376,8 +374,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                             ],
                           ),
                           const SizedBox(height: 24),
-                          Hero(
-                            tag: 'auth_primary_button',
+                          Material(
                             child: Material(
                               type: MaterialType.transparency,
                               child: ElevatedButton(

@@ -32,7 +32,7 @@ class AuthModule extends Module {
       AuthRoutes.signinPath,
       child: (context, GoRouterState state) =>
           SigninPage(signInBloc: Modular.get<SignInBloc>()),
-      transition: AppTransitions.sharedAxisHorizontal,
+      transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
@@ -40,7 +40,7 @@ class AuthModule extends Module {
       AuthRoutes.signupPath,
       child: (context, GoRouterState state) =>
           SignupPage(signUpBloc: Modular.get<SignUpBloc>()),
-      transition: AppTransitions.sharedAxisHorizontal,
+      transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
@@ -49,7 +49,7 @@ class AuthModule extends Module {
       child: (context, GoRouterState state) => ForgotPasswordPage(
         forgotPasswordBloc: Modular.get<ForgotPasswordBloc>(),
       ),
-      transition: AppTransitions.sharedAxisHorizontal,
+      transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
@@ -68,7 +68,7 @@ class AuthModule extends Module {
           verifyOtpBloc: Modular.get<VerifyOtpBloc>(),
         );
       },
-      transition: AppTransitions.sharedAxisHorizontal,
+      transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(
@@ -84,7 +84,7 @@ class AuthModule extends Module {
           resetPasswordConfirmBloc: Modular.get<ResetPasswordConfirmBloc>(),
         );
       },
-      transition: AppTransitions.sharedAxisHorizontal,
+      transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
   ];

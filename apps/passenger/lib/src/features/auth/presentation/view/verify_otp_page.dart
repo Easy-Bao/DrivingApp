@@ -253,8 +253,7 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
                     ),
                   ],
                   const SizedBox(height: 32),
-                  Hero(
-                    tag: 'auth_primary_button',
+                  Material(
                     child: Material(
                       type: MaterialType.transparency,
                       child: SizedBox(

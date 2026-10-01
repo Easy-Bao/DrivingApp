@@ -5,11 +5,9 @@ class const SocialLoginWidget({
   super.key,
   required this.onGoogleTap,
   this.label = 'Continue with Google',
-  this.heroTag = 'auth_google_button',
 }) extends StatelessWidget {
   final VoidCallback onGoogleTap;
   final String label;
-  final String heroTag;
 
   @override
   Widget build(BuildContext context) {
@@ -43,8 +41,7 @@ class const SocialLoginWidget({
           ],
         ),
         const SizedBox(height: 20),
-        Hero(
-          tag: heroTag,
+        Material(
           child: Material(
             type: MaterialType.transparency,
             child: OutlinedButton(

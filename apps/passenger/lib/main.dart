@@ -45,41 +45,6 @@ Future<void> main() => bootstrapPassengerApp();
 
 
 ///BUG:
-/// Authentication navigation currently contains unnecessary animation complexity.
-///
-/// Sign In -> Sign Up
-/// Sign Up -> Sign In
-///
-/// can use Hero implementations and/or multiple overlapping animations.
-///
-/// There is also a small layout alignment difference when comparing both screens.
-///
-///FIX:
-/// Remove Hero() implementations from the authentication flow.
-///
-/// Search the entire authentication implementation for:
-///
-/// Hero(...)
-///
-/// and remove Hero-based transitions where they are not required.
-///
-/// Authentication should use route navigation transition only.
-///
-/// Expected behavior:
-///
-/// Sign In -> Sign Up
-/// Use a simple horizontal page transition.
-///
-/// Sign Up -> Sign In
-/// Use the reverse horizontal page transition.
-///
-/// Do not combine Hero + page transition + opacity/scale animation for the same
-/// navigation action.
-///
-/// Keep the transition short, smooth, predictable, and consistent.
-
-
-///BUG:
 /// Sign In and Sign Up have small layout/alignment differences even though they are
 /// structurally similar.
 ///
@@ -200,36 +165,6 @@ Future<void> main() => bootstrapPassengerApp();
 /// unpredictable movement when MediaQuery.viewInsets changes.
 ///
 /// Verify the behavior on different screen sizes.
-
-
-///BUG:
-/// Auth currently uses Hero() where only route navigation animation is needed.
-///
-/// This can cause:
-/// - unnecessary transition complexity
-/// - alignment mismatch
-/// - duplicate animation
-/// - visual jumping
-/// - difficult keyboard/navigation interaction.
-///
-///FIX:
-/// Remove Hero() from the complete authentication flow.
-///
-/// Keep only the route transition.
-///
-/// Sign In -> Sign Up:
-/// horizontal transition.
-///
-/// Sign Up -> Sign In:
-/// reverse horizontal transition.
-///
-/// Also inspect:
-/// - Forgot Password
-/// - OTP
-/// - Reset Password
-/// - account verification
-///
-/// and ensure all auth navigation follows one consistent animation strategy.
 
 
 ///BUG:
