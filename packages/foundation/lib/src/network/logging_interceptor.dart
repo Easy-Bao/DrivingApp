@@ -1,6 +1,7 @@
 import 'dart:developer' as dev;
 
 import 'package:dio/dio.dart';
+import 'package:foundation/src/errors/network_error_diagnostic.dart';
 
 class LoggingInterceptor extends Interceptor {
   @override
@@ -35,8 +36,10 @@ final class HttpLogFormatter {
   }
 
   static String error(DioException error) {
+    final diagnostic = NetworkErrorDiagnostic.fromError(error);
     return 'ERROR[${error.response?.statusCode ?? 'network'}] '
-        '${error.type.name} => PATH: ${_path(error.requestOptions.uri)}';
+        '${error.type.name} category=${diagnostic.label} => PATH: '
+        '${_path(error.requestOptions.uri)}';
   }
 
   static String _path(Uri uri) => uri.path.isEmpty ? '/' : uri.path;

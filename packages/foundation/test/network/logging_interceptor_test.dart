@@ -33,7 +33,9 @@ void main() {
     );
 
     expect(HttpLogFormatter.response(response), contains('/api/v1/profile'));
-    expect(HttpLogFormatter.error(error), contains('/api/v1/profile'));
-    expect(HttpLogFormatter.error(error), isNot(contains('secret')));
+    final errorMessage = HttpLogFormatter.error(error);
+    expect(errorMessage, contains('/api/v1/profile'));
+    expect(errorMessage, contains('category=http_unauthorized(401)'));
+    expect(errorMessage, isNot(contains('secret')));
   });
 }

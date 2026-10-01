@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:foundation/src/errors/exceptions.dart';
 import 'package:foundation/src/errors/failures.dart';
+import 'package:foundation/src/errors/network_error_diagnostic.dart';
 
 enum ErrorType { network, server, unauthorized, validation, location, unknown }
 
@@ -222,8 +223,10 @@ class const AppFailure({
   }
 
   static void _logTechnicalError(Object error, StackTrace? stackTrace) {
+    final diagnostic = NetworkErrorDiagnostic.fromError(error);
     developer.log(
-      'Client error mapped to a safe user message.',
+      'Client error mapped to a safe user message: '
+      'category=${diagnostic.label}.',
       name: 'shared-error-handler',
       error: error,
       stackTrace: stackTrace,
