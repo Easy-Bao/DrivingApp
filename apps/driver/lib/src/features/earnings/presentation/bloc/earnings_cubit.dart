@@ -40,8 +40,6 @@ class DriverEarningsCubit({
 
   void _emitFailure(String message) {
     if (isClosed) return;
-    emit(
-      state.copyWith(isLoading: false, clearData: true, errorMessage: message),
-    );
+    emit(state.copyWith(isLoading: false, errorMessage: message));
   }
 }

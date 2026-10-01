@@ -198,6 +198,15 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                     ),
                     physics: const BouncingScrollPhysics(),
                     children: [
+                      if (state.errorMessage != null && !isNetworkUnavailable)
+                        AppErrorBanner(
+                          message: state.errorMessage!,
+                          onRetry: () =>
+                              BlocProvider.of<DriverEarningsCubit>(context)
+                                  .load(),
+                        ),
+                      if (state.errorMessage != null && !isNetworkUnavailable)
+                        const SizedBox(height: 12),
                       Center(
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 720),
@@ -242,7 +251,9 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 720),
                 child: Skeletonizer(
-                  key: const ValueKey<String>('driver-earnings-loading-skeleton'),
+                  key: const ValueKey<String>(
+                    'driver-earnings-loading-skeleton',
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -257,7 +268,9 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                       Container(
                         decoration: BoxDecoration(
                           color: context.colorScheme.surface,
-                          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                          borderRadius: BorderRadius.circular(
+                            EasyRideRadius.lg,
+                          ),
                           border: Border.all(
                             color: context.colorScheme.outlineVariant,
                           ),
@@ -380,10 +393,11 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
-                  color: (isNegative
-                          ? context.colorScheme.onError
-                          : context.semanticColors.success)
-                      .withValues(alpha: 0.2),
+                  color:
+                      (isNegative
+                              ? context.colorScheme.onError
+                              : context.semanticColors.success)
+                          .withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(EasyRideRadius.pill),
                 ),
                 child: Row(
@@ -453,9 +467,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                     textColor: onCardColor,
                   ),
                 ),
-                _summaryDivider(
-                  color: onCardColor.withValues(alpha: 0.15),
-                ),
+                _summaryDivider(color: onCardColor.withValues(alpha: 0.15)),
                 Expanded(
                   child: _miniStat(
                     _averageFareLabel(summary),
@@ -683,16 +695,16 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
         : (amount > 0 ? amount : placeholderHeight);
     final rodColor = isNegative
         ? (day.isCurrent
-            ? context.colorScheme.error
-            : context.colorScheme.error.withValues(alpha: 0.5))
+              ? context.colorScheme.error
+              : context.colorScheme.error.withValues(alpha: 0.5))
         : (day.isCurrent
-            ? context.colorScheme.primary
-            : context.colorScheme.primary.withValues(alpha: 0.2));
+              ? context.colorScheme.primary
+              : context.colorScheme.primary.withValues(alpha: 0.2));
     final labelColor = isNegative
         ? context.colorScheme.error
         : (day.isCurrent
-            ? context.colorScheme.primary
-            : context.colorScheme.onSurfaceVariant);
+              ? context.colorScheme.primary
+              : context.colorScheme.onSurfaceVariant);
 
     return BarChartGroupData(
       x: index,

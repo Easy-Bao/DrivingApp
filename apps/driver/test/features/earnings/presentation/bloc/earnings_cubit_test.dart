@@ -65,4 +65,29 @@ void main() {
       await cubit.close();
     },
   );
+
+  test('preserves cached earnings when a refresh fails', () async {
+    final responses = <Result<Map<String, dynamic>, Failure>>[
+      const Ok({
+        'this_week': {'earnings_amount': 1200},
+      }),
+      const Err(NetworkFailure()),
+    ];
+    when(() => repository.fetchEarningsSummary('driver-1'))
+        .thenAnswer((_) async => responses.removeAt(0));
+    final cubit = DriverEarningsCubit(
+      repository: repository,
+      sessionService: sessionService,
+    );
+
+    await cubit.load();
+    await cubit.load();
+
+    expect(cubit.state.data, {
+      'this_week': {'earnings_amount': 1200},
+    });
+    expect(cubit.state.isLoading, isFalse);
+    expect(cubit.state.errorMessage, isNotNull);
+    await cubit.close();
+  });
 }
