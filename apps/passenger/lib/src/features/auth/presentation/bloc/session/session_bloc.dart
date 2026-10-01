@@ -10,6 +10,7 @@ part 'session_state.dart';
 class SessionBloc({required this._sessionRepository})
     extends Bloc<SessionEvent, SessionState> {
   final SessionRepository _sessionRepository;
+  int _sessionOperation = 0;
 
   this : super(const SessionLoading()) {
     on<SessionStarted>(_onSessionStarted);
@@ -22,8 +23,10 @@ class SessionBloc({required this._sessionRepository})
     SessionStarted event,
     Emitter<SessionState> emit,
   ) async {
+    final operation = ++_sessionOperation;
     emit(const SessionLoading());
     final result = await _sessionRepository.restoreSession();
+    if (operation != _sessionOperation) return;
     result.fold(
       (failure) => emit(SessionFailure(ErrorHandler.getErrorMessage(failure))),
       (session) => emit(_stateFor(session)),
@@ -34,6 +37,7 @@ class SessionBloc({required this._sessionRepository})
     SessionAuthenticatedRequested event,
     Emitter<SessionState> emit,
   ) {
+    _sessionOperation++;
     final passengerId = event.passengerId.trim();
     if (passengerId.isEmpty) {
       emit(const SessionFailure('Passenger session is unavailable.'));
@@ -51,6 +55,7 @@ class SessionBloc({required this._sessionRepository})
     SessionGuestRequested event,
     Emitter<SessionState> emit,
   ) {
+    _sessionOperation++;
     emit(const GuestSession());
   }
 
@@ -58,8 +63,10 @@ class SessionBloc({required this._sessionRepository})
     SessionLogoutRequested event,
     Emitter<SessionState> emit,
   ) async {
+    final operation = ++_sessionOperation;
     emit(const SessionLoading());
     final result = await _sessionRepository.clearSession();
+    if (operation != _sessionOperation) return;
     result.fold(
       (failure) => emit(SessionFailure(ErrorHandler.getErrorMessage(failure))),
       (session) => emit(_stateFor(session)),

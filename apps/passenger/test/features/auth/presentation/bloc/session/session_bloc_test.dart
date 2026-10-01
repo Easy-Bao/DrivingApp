@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
@@ -65,6 +67,33 @@ void main() {
     expect: () => [const SessionLoading(), const GuestSession()],
     verify: (_) {
       verify(() => sessionRepository.clearSession()).called(1);
+    },
+  );
+
+  test(
+    'does not let a late restore overwrite a newer guest transition',
+    () async {
+      final restore = Completer<Result<PassengerSession, Failure>>();
+      when(() => sessionRepository.restoreSession())
+          .thenAnswer((_) => restore.future);
+      final bloc = SessionBloc(sessionRepository: sessionRepository);
+      final states = <SessionState>[];
+      final subscription = bloc.stream.listen(states.add);
+
+      bloc.add(const SessionStarted());
+      await Future<void>.delayed(Duration.zero);
+      bloc.add(const SessionGuestRequested());
+      await Future<void>.delayed(Duration.zero);
+      restore.complete(
+        const Ok<PassengerSession, Failure>(
+          PassengerSession.authenticated(passengerId: 'late-restore'),
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(states.last, const GuestSession());
+      await subscription.cancel();
+      await bloc.close();
     },
   );
 }
