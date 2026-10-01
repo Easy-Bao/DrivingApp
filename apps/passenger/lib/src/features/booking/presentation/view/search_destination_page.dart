@@ -62,6 +62,7 @@ class _SearchDestinationPageState()
 
   Timer? _debounce;
   bool _isOpeningMapPin = false;
+  bool _isOpeningRideSelection = false;
   bool _isPopping = false;
   List<Place> _results = [];
   List<Place> _allNearbyPlaces = [];
@@ -428,7 +429,9 @@ class _SearchDestinationPageState()
     }
   }
 
-  void _onPlaceSelected(Place place) {
+  Future<void> _onPlaceSelected(Place place) async {
+    if (!mounted || _isOpeningRideSelection) return;
+    _isOpeningRideSelection = true;
     _clearSearchAfterSelection();
     final queryParams = <String, String>{};
     if (widget.preselectedRideType != null) {
@@ -441,13 +444,15 @@ class _SearchDestinationPageState()
       queryParams['pickupLat'] = _userLat!.toString();
       queryParams['pickupLng'] = _userLng!.toString();
     }
-    unawaited(
-      context.pushNamed(
+    try {
+      await context.pushNamed(
         BookingRoutes.rideSelection,
         extra: place,
         queryParameters: queryParams,
-      ),
-    );
+      );
+    } finally {
+      _isOpeningRideSelection = false;
+    }
   }
 
   void _clearSearchAfterSelection() {
@@ -469,7 +474,7 @@ class _SearchDestinationPageState()
     try {
       final result = await context.pushNamed(BookingRoutes.mapPin);
       if (mounted && result != null && result is Place) {
-        _onPlaceSelected(result);
+        unawaited(_onPlaceSelected(result));
       }
     } finally {
       _isOpeningMapPin = false;

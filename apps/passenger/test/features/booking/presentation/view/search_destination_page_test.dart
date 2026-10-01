@@ -40,6 +40,7 @@ class _FakeGeolocatorPlatform extends GeolocatorPlatform {
 
 class _FakeLocationRepository implements maps.LocationRepository {
   List<maps.Place> nearbyPlaces = [];
+  List<maps.Place> searchPlacesResult = [];
   Completer<Map<String, dynamic>>? nearbyPlacesCompleter;
 
   @override
@@ -47,7 +48,9 @@ class _FakeLocationRepository implements maps.LocationRepository {
     required String query,
     double? userLat,
     double? userLng,
-  }) async => {};
+  }) async => {
+    'places': [for (final place in searchPlacesResult) place.toJson()],
+  };
 
   @override
   Future<maps.Place> reverseGeocode({
@@ -98,6 +101,7 @@ void main() {
     );
     maps.MapProvider.clearLookupCaches();
     locationRepository.nearbyPlaces = [];
+    locationRepository.searchPlacesResult = [];
     locationRepository.nearbyPlacesCompleter = null;
     await maps.LocationService.getCurrentPosition();
   });
@@ -323,6 +327,57 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Map pin page'), findsNothing);
+    expect(find.byType(SearchDestinationPage), findsOneWidget);
+
+    router.dispose();
+  });
+
+  testWidgets('does not stack ride-selection routes from repeated results', (
+    tester,
+  ) async {
+    const destination = maps.Place(
+      id: 'central-park',
+      name: 'Central Park',
+      fullAddress: 'Central Park, Mountain View',
+      latitude: 37.4,
+      longitude: -122.1,
+    );
+    locationRepository.searchPlacesResult = [destination];
+    final router = GoRouter(
+      initialLocation: '/search',
+      routes: [
+        GoRoute(
+          path: '/search',
+          builder: (_, _) => const SearchDestinationPage(),
+        ),
+        GoRoute(
+          name: BookingRoutes.rideSelection,
+          path: '/ride-selection',
+          builder: (_, _) => const Text('Ride selection page'),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp.router(theme: EasyRideTheme.main, routerConfig: router),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Central');
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pumpAndSettle();
+
+    final result = find.text('Central Park');
+    expect(result, findsOneWidget);
+    final resultTile = tester.widget<ListTile>(
+      find.ancestor(of: result, matching: find.byType(ListTile)),
+    );
+    resultTile.onTap!();
+    resultTile.onTap!();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ride selection page'), findsOneWidget);
+    router.pop();
+    await tester.pumpAndSettle();
     expect(find.byType(SearchDestinationPage), findsOneWidget);
 
     router.dispose();
