@@ -52,6 +52,7 @@ class DashboardCubit({
           'Unable to restore driver online status: ${failure.message}',
         ),
         (isOnline) {
+          if (isClosed) return;
           emit(state.copyWith(isOnline: isOnline));
           if (!isOnline) _onlineSince = null;
         },
@@ -63,7 +64,9 @@ class DashboardCubit({
         stackTrace: stackTrace,
       );
     }
+    if (isClosed) return;
     final onlineSinceResult = await _repository.getPersistedOnlineSinceResult();
+    if (isClosed) return;
     onlineSinceResult.fold(
       (failure) => dev.log(
         'Unable to restore the driver shift timer: ${failure.message}',
@@ -90,27 +93,36 @@ class DashboardCubit({
   }
 
   Future<void> _loadStats() async {
+    if (isClosed) return;
     emit(state.copyWith(isLoadingStats: true, statsErrorMessage: null));
     try {
       final result = await _repository.getDashboardStatsResult();
+      if (isClosed) return;
       result.fold(
-        (failure) => emit(
-          state.copyWith(
-            isLoadingStats: false,
-            statsErrorMessage: ErrorHandler.getErrorMessage(failure),
-          ),
-        ),
-        (stats) => emit(
-          state.copyWith(
-            isLoadingStats: false,
-            hasLoadedStats: true,
-            earnings: stats.earnings,
-            completedTrips: stats.completedTrips,
-            statsErrorMessage: null,
-          ),
-        ),
+        (failure) {
+          if (isClosed) return;
+          emit(
+            state.copyWith(
+              isLoadingStats: false,
+              statsErrorMessage: ErrorHandler.getErrorMessage(failure),
+            ),
+          );
+        },
+        (stats) {
+          if (isClosed) return;
+          emit(
+            state.copyWith(
+              isLoadingStats: false,
+              hasLoadedStats: true,
+              earnings: stats.earnings,
+              completedTrips: stats.completedTrips,
+              statsErrorMessage: null,
+            ),
+          );
+        },
       );
     } catch (error) {
+      if (isClosed) return;
       dev.log('Error loading driver dashboard stats: $error');
       emit(
         state.copyWith(
@@ -137,6 +149,7 @@ class DashboardCubit({
       final result = await _repository.getDispatchSnapshotResult(
         includeOffers: includeOffers,
       );
+      if (isClosed) return false;
       return await result.fold(
         (failure) {
           if (_pausesSilentDispatch(failure)) {
@@ -145,6 +158,7 @@ class DashboardCubit({
             );
           }
           if (!silent) {
+            if (isClosed) return false;
             emit(
               state.copyWith(
                 isLoadingDispatch: false,
@@ -155,6 +169,7 @@ class DashboardCubit({
           return false;
         },
         (snapshot) {
+          if (isClosed) return false;
           _silentDispatchRetryAfter = null;
           emit(
             state.copyWith(
@@ -170,6 +185,7 @@ class DashboardCubit({
         },
       );
     } catch (error, stackTrace) {
+      if (isClosed) return false;
       dev.log(
         'Unable to load driver dispatch snapshot.',
         error: error,
@@ -279,8 +295,10 @@ class DashboardCubit({
         sessionId: sessionId,
         farePesos: farePesos,
       );
+      if (isClosed) return false;
       return await result.fold(
         (failure) {
+          if (isClosed) return false;
           emit(
             state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)),
           );
@@ -292,6 +310,7 @@ class DashboardCubit({
         },
       );
     } catch (error, stackTrace) {
+      if (isClosed) return false;
       dev.log(
         'Unable to submit driver ride offer.',
         error: error,
@@ -336,17 +355,25 @@ class DashboardCubit({
         lat: lat,
         lng: lng,
       );
+      if (isClosed) return;
 
       updateResult.fold(
-        (failure) => emit(
-          state.copyWith(
-            isOnline: previousOnline,
-            errorMessage: ErrorHandler.getErrorMessage(failure),
-          ),
-        ),
-        (_) => emit(state.copyWith(isOnline: goingOnline, errorMessage: null)),
+        (failure) {
+          if (isClosed) return;
+          emit(
+            state.copyWith(
+              isOnline: previousOnline,
+              errorMessage: ErrorHandler.getErrorMessage(failure),
+            ),
+          );
+        },
+        (_) {
+          if (isClosed) return;
+          emit(state.copyWith(isOnline: goingOnline, errorMessage: null));
+        },
       );
     } catch (error, stackTrace) {
+      if (isClosed) return;
       dev.log(
         'Unable to update driver online status.',
         error: error,
@@ -370,15 +397,22 @@ class DashboardCubit({
       lat: lat,
       lng: lng,
     );
+    if (isClosed) return;
 
     updateResult.fold(
-      (failure) => emit(
-        state.copyWith(
-          isOnline: false,
-          errorMessage: ErrorHandler.getErrorMessage(failure),
-        ),
-      ),
-      (_) => emit(state.copyWith(isOnline: false, errorMessage: null)),
+      (failure) {
+        if (isClosed) return;
+        emit(
+          state.copyWith(
+            isOnline: false,
+            errorMessage: ErrorHandler.getErrorMessage(failure),
+          ),
+        );
+      },
+      (_) {
+        if (isClosed) return;
+        emit(state.copyWith(isOnline: false, errorMessage: null));
+      },
     );
     _onlineSince = null;
   }
@@ -394,7 +428,9 @@ class DashboardCubit({
       lat: lat,
       lng: lng,
     );
+    if (isClosed) return false;
     return updateResult.fold((failure) {
+      if (isClosed) return false;
       emit(state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)));
       return false;
     }, (_) => true);

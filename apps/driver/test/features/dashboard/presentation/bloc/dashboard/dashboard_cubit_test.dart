@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -29,6 +31,30 @@ void main() {
   });
 
   group('DashboardCubit — loadStats()', () {
+    test('ignores a statistics result after the cubit closes', () async {
+      final statsStarted = Completer<void>();
+      final releaseStats = Completer<Result<DriverDashboardStats, Failure>>();
+      when(() => repo.getDashboardStats()).thenAnswer((_) {
+        statsStarted.complete();
+        return releaseStats.future;
+      });
+
+      final cubit = _makeCubit(repo);
+      final states = <DashboardState>[];
+      final subscription = cubit.stream.listen(states.add);
+      final pendingLoad = cubit.loadStats();
+      await statsStarted.future;
+
+      await cubit.close();
+      releaseStats.complete(
+        const Ok(DriverDashboardStats(earnings: 42, completedTrips: 2)),
+      );
+      await pendingLoad;
+
+      expect(states, [const DashboardState(isLoadingStats: true)]);
+      await subscription.cancel();
+    });
+
     blocTest<DashboardCubit, DashboardState>(
       'emits [loading=true, loaded with values] on success',
       build: () {
