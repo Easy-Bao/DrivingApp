@@ -5,11 +5,34 @@ import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/auth/data/repositories/session_repository_impl.dart';
 import 'package:passenger/src/features/auth/domain/entities/passenger_session.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
+import 'package:passenger/src/infrastructure/session/passenger_storage_keys.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MockFlutterSecureStorage extends Mock implements FlutterSecureStorage {}
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  test(
+    'restores guests when secure credentials contain only whitespace',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final storage = MockFlutterSecureStorage();
+      when(() => storage.read(key: PassengerStorageKeys.jwtToken))
+          .thenAnswer((_) async => '   ');
+      when(() => storage.read(key: PassengerStorageKeys.passengerId))
+          .thenAnswer((_) async => '\t');
+      final repository = SessionRepositoryImpl(
+        secureSessionService: PassengerSessionStore(storage: storage),
+        preferences: await SharedPreferences.getInstance(),
+      );
+
+      final result = await repository.restoreSession();
+
+      expect(result, const Ok(PassengerSession.guest()));
+    },
+  );
+
   test('clears cached identity values with the secure session', () async {
     SharedPreferences.setMockInitialValues({
       'passenger_name': 'Old Passenger',

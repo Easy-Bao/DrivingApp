@@ -24,15 +24,14 @@ final class SessionRepositoryImpl({
     try {
       final token = await _secureSessionService.readToken();
       final passengerId = await _secureSessionService.readPassengerId();
-      if (token == null ||
-          token.isEmpty ||
-          passengerId == null ||
-          passengerId.isEmpty) {
+      final normalizedToken = token?.trim() ?? '';
+      final normalizedPassengerId = passengerId?.trim() ?? '';
+      if (normalizedToken.isEmpty || normalizedPassengerId.isEmpty) {
         return const Ok(PassengerSession.guest());
       }
       return Ok(
         PassengerSession.authenticated(
-          passengerId: passengerId,
+          passengerId: normalizedPassengerId,
           passengerName: _preferences.getString('passenger_name') ?? '',
         ),
       );
