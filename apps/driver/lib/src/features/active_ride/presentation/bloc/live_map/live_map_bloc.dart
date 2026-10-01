@@ -48,6 +48,8 @@ class LiveMapBloc({required this._rideRepository})
   DateTime? _lastCameraFitAt;
   bool _hasFittedCamera = false;
   Color _routeColor = TripMapMarkerStyle.ownLocation;
+  int _mapViewGeneration = 0;
+  int _routeOperationGeneration = 0;
 
   final PublishSubject<DispatchTelemetryLocationEvent> _locationSubject =
       PublishSubject<DispatchTelemetryLocationEvent>();
@@ -95,7 +97,12 @@ class LiveMapBloc({required this._rideRepository})
     Emitter<LiveMapState> emit,
   ) async {
     if (!identical(_mapController, event.controller)) {
+      _invalidateMapOperations();
+      final initializationGeneration = _mapViewGeneration;
       await _clearAllAnnotations();
+      if (isClosed || initializationGeneration != _mapViewGeneration) {
+        return;
+      }
       _routeTargetKey = null;
       _routeOriginLat = null;
       _routeOriginLng = null;
@@ -117,6 +124,8 @@ class LiveMapBloc({required this._rideRepository})
     Emitter<LiveMapState> emit,
   ) async {
     final mapController = _mapController;
+    final viewGeneration = _mapViewGeneration;
+    final routeOperationGeneration = ++_routeOperationGeneration;
     if (mapController == null) {
       _pendingRouteUpdate = event;
       return;
@@ -127,7 +136,7 @@ class LiveMapBloc({required this._rideRepository})
     if (targetLat == null || targetLng == null) return;
 
     try {
-      _driverMarkerManager = await _upsertMarker(
+      final driverMarkerManager = await _upsertMarker(
         _driverMarkerManager,
         mapController,
         event.driverLat,
@@ -136,31 +145,80 @@ class LiveMapBloc({required this._rideRepository})
         color: TripMapMarkerStyle.ownLocation,
         animate: true,
       );
+      if (!_isCurrentRouteOperation(
+        routeOperationGeneration,
+        viewGeneration,
+        mapController,
+      )) {
+        if (_driverMarkerManager == null) {
+          await _clearAnnotations(driverMarkerManager);
+        }
+        return;
+      }
+      _driverMarkerManager = driverMarkerManager;
 
       if (event.routeTargetLat == null &&
           event.passengerLat != null &&
           event.passengerLng != null) {
-        _passengerMarkerManager = await _upsertMarker(
+        final passengerMarkerManager = await _upsertMarker(
           _passengerMarkerManager,
           mapController,
           event.passengerLat!,
           event.passengerLng!,
           color: TripMapMarkerStyle.tripLocation,
         );
+        if (!_isCurrentRouteOperation(
+          routeOperationGeneration,
+          viewGeneration,
+          mapController,
+        )) {
+          if (_passengerMarkerManager == null) {
+            await _clearAnnotations(passengerMarkerManager);
+          }
+          return;
+        }
+        _passengerMarkerManager = passengerMarkerManager;
       } else {
         await _clearAnnotations(_passengerMarkerManager);
+        if (!_isCurrentRouteOperation(
+          routeOperationGeneration,
+          viewGeneration,
+          mapController,
+        )) {
+          return;
+        }
+        _passengerMarkerManager = null;
       }
 
       if (event.routeTargetLat != null && event.routeTargetLng != null) {
-        _destinationMarkerManager = await _upsertMarker(
+        final destinationMarkerManager = await _upsertMarker(
           _destinationMarkerManager,
           mapController,
           targetLat,
           targetLng,
           color: TripMapMarkerStyle.tripLocation,
         );
+        if (!_isCurrentRouteOperation(
+          routeOperationGeneration,
+          viewGeneration,
+          mapController,
+        )) {
+          if (_destinationMarkerManager == null) {
+            await _clearAnnotations(destinationMarkerManager);
+          }
+          return;
+        }
+        _destinationMarkerManager = destinationMarkerManager;
       } else {
         await _clearAnnotations(_destinationMarkerManager);
+        if (!_isCurrentRouteOperation(
+          routeOperationGeneration,
+          viewGeneration,
+          mapController,
+        )) {
+          return;
+        }
+        _destinationMarkerManager = null;
       }
 
       final now = DateTime.now();
@@ -176,8 +234,22 @@ class LiveMapBloc({required this._rideRepository})
           padding: 72.0,
           maxZoom: 15.0,
         );
+        if (!_isCurrentRouteOperation(
+          routeOperationGeneration,
+          viewGeneration,
+          mapController,
+        )) {
+          return;
+        }
         _hasFittedCamera = true;
         _lastCameraFitAt = now;
+      }
+      if (!_isCurrentRouteOperation(
+        routeOperationGeneration,
+        viewGeneration,
+        mapController,
+      )) {
+        return;
       }
 
       final targetKey = '$targetLat:$targetLng';
@@ -197,23 +269,59 @@ class LiveMapBloc({required this._rideRepository})
           targetLat,
           targetLng,
         );
+        if (!_isCurrentRouteOperation(
+          routeOperationGeneration,
+          viewGeneration,
+          mapController,
+        )) {
+          return;
+        }
         final routeCoordinates = route?.coordinateBuffer;
         if (routeCoordinates != null && routeCoordinates.length >= 4) {
-          _routePolylineManager = await _upsertRoute(
+          final routePolylineManager = await _upsertRoute(
             _routePolylineManager,
             mapController,
             routeCoordinates,
           );
+          if (!_isCurrentRouteOperation(
+            routeOperationGeneration,
+            viewGeneration,
+            mapController,
+          )) {
+            if (_routePolylineManager == null) {
+              await _clearAnnotations(routePolylineManager);
+            }
+            return;
+          }
+          _routePolylineManager = routePolylineManager;
         } else {
           await _clearAnnotations(_routePolylineManager);
+          if (!_isCurrentRouteOperation(
+            routeOperationGeneration,
+            viewGeneration,
+            mapController,
+          )) {
+            return;
+          }
           _routePolylineManager = null;
+        }
+        if (!_isCurrentRouteOperation(
+          routeOperationGeneration,
+          viewGeneration,
+          mapController,
+        )) {
+          return;
         }
         _routeTargetKey = targetKey;
         _routeOriginLat = event.driverLat;
         _routeOriginLng = event.driverLng;
       }
 
-      if (!isClosed) {
+      if (_isCurrentRouteOperation(
+        routeOperationGeneration,
+        viewGeneration,
+        mapController,
+      )) {
         emit(
           LiveMapRouteUpdated(
             driverLat: event.driverLat,
@@ -236,6 +344,7 @@ class LiveMapBloc({required this._rideRepository})
     ClearMapEvent event,
     Emitter<LiveMapState> emit,
   ) async {
+    _invalidateMapOperations();
     await _clearAllAnnotations();
     _routeTargetKey = null;
     _routeOriginLat = null;
@@ -338,9 +447,30 @@ class LiveMapBloc({required this._rideRepository})
 
   @override
   Future<void> close() async {
+    _invalidateMapOperations();
     await _locationSubscription.cancel();
     await _locationSubject.close();
     await _clearAllAnnotations();
     return super.close();
+  }
+
+  void _invalidateMapOperations() {
+    _mapViewGeneration++;
+    _routeOperationGeneration++;
+  }
+
+  bool _isCurrentMapView(int viewGeneration, AppMapController controller) {
+    return !isClosed &&
+        viewGeneration == _mapViewGeneration &&
+        identical(_mapController, controller);
+  }
+
+  bool _isCurrentRouteOperation(
+    int routeOperationGeneration,
+    int viewGeneration,
+    AppMapController controller,
+  ) {
+    return routeOperationGeneration == _routeOperationGeneration &&
+        _isCurrentMapView(viewGeneration, controller);
   }
 }

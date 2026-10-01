@@ -26,6 +26,8 @@ class LiveMapBloc({required this._trackRepository})
   DrawDriverToRiderRouteEvent? _pendingRoute;
   FitMapToCoordinatesEvent? _pendingCameraFit;
   Color _routeColor = TripMapMarkerStyle.ownLocation;
+  int _mapViewGeneration = 0;
+  int _routeOperationGeneration = 0;
 
   final PublishSubject<DispatchTelemetryLocationEvent> _locationSubject =
       PublishSubject<DispatchTelemetryLocationEvent>();
@@ -77,7 +79,12 @@ class LiveMapBloc({required this._trackRepository})
     Emitter<LiveMapState> emit,
   ) async {
     if (!identical(_mapController, event.controller)) {
+      _invalidateMapOperations();
+      final initializationGeneration = _mapViewGeneration;
       await _clearAllMarkers();
+      if (isClosed || initializationGeneration != _mapViewGeneration) {
+        return;
+      }
     }
     _mapController = event.controller;
     _routeColor = event.routeColor;
@@ -99,39 +106,80 @@ class LiveMapBloc({required this._trackRepository})
     DrawDriverToRiderRouteEvent event,
     Emitter<LiveMapState> emit,
   ) async {
-    if (_mapController == null) {
+    final mapController = _mapController;
+    final viewGeneration = _mapViewGeneration;
+    final routeOperationGeneration = ++_routeOperationGeneration;
+    if (mapController == null) {
       _pendingRoute = event;
       return;
     }
 
     if (_riderMarkerManager == null && _markerManagers.isNotEmpty) {
-      for (final manager in _markerManagers) {
+      final pendingMarkerManagers = List.of(_markerManagers);
+      for (final manager in pendingMarkerManagers) {
         await MapProvider.clearAnnotations(manager);
+      }
+      if (!_isCurrentRouteOperation(
+        routeOperationGeneration,
+        viewGeneration,
+        mapController,
+      )) {
+        return;
       }
       _markerManagers.clear();
     }
 
-    _riderMarkerManager = await _upsertMarker(
+    final riderMarkerManager = await _upsertMarker(
       _riderMarkerManager,
-      _mapController!,
+      mapController,
       event.riderLat,
       event.riderLng,
       isOrigin: true,
       color: TripMapMarkerStyle.ownLocation,
     );
-    _driverMarkerManager = await _upsertMarker(
+    if (!_isCurrentRouteOperation(
+      routeOperationGeneration,
+      viewGeneration,
+      mapController,
+    )) {
+      if (_riderMarkerManager == null) {
+        await _clearAnnotations(riderMarkerManager);
+      }
+      return;
+    }
+    _riderMarkerManager = riderMarkerManager;
+
+    final driverMarkerManager = await _upsertMarker(
       _driverMarkerManager,
-      _mapController!,
+      mapController,
       event.driverLat,
       event.driverLng,
       color: TripMapMarkerStyle.tripLocation,
       animate: true,
     );
+    if (!_isCurrentRouteOperation(
+      routeOperationGeneration,
+      viewGeneration,
+      mapController,
+    )) {
+      if (_driverMarkerManager == null) {
+        await _clearAnnotations(driverMarkerManager);
+      }
+      return;
+    }
+    _driverMarkerManager = driverMarkerManager;
 
-    await MapProvider.fitBounds(_mapController!, [
+    await MapProvider.fitBounds(mapController, [
       LatLng(event.riderLat, event.riderLng),
       LatLng(event.driverLat, event.driverLng),
     ]);
+    if (!_isCurrentRouteOperation(
+      routeOperationGeneration,
+      viewGeneration,
+      mapController,
+    )) {
+      return;
+    }
 
     final route = await MapProvider.getRoute(
       event.driverLat,
@@ -139,16 +187,41 @@ class LiveMapBloc({required this._trackRepository})
       event.riderLat,
       event.riderLng,
     );
+    if (!_isCurrentRouteOperation(
+      routeOperationGeneration,
+      viewGeneration,
+      mapController,
+    )) {
+      return;
+    }
     if (route != null && route.coordinateBuffer.length >= 4) {
-      _routePolylineManager = await _upsertPolyline(
+      final routePolylineManager = await _upsertPolyline(
         _routePolylineManager,
-        _mapController!,
+        mapController,
         route.coordinateBuffer,
         color: _routeColor,
         width: 5.0,
       );
+      if (!_isCurrentRouteOperation(
+        routeOperationGeneration,
+        viewGeneration,
+        mapController,
+      )) {
+        if (_routePolylineManager == null) {
+          await _clearAnnotations(routePolylineManager);
+        }
+        return;
+      }
+      _routePolylineManager = routePolylineManager;
     }
 
+    if (!_isCurrentRouteOperation(
+      routeOperationGeneration,
+      viewGeneration,
+      mapController,
+    )) {
+      return;
+    }
     emit(
       LiveMapRouteDrawn(
         riderLat: event.riderLat,
@@ -163,13 +236,15 @@ class LiveMapBloc({required this._trackRepository})
     AddMapMarkerEvent event,
     Emitter<LiveMapState> emit,
   ) async {
-    if (_mapController == null) {
+    final mapController = _mapController;
+    final viewGeneration = _mapViewGeneration;
+    if (mapController == null) {
       _pendingMarkers.add(event);
       return;
     }
 
     final manager = await MapProvider.addMarker(
-      _mapController!,
+      mapController,
       event.lat,
       event.lng,
       isOrigin: event.isOrigin,
@@ -179,6 +254,10 @@ class LiveMapBloc({required this._trackRepository})
           : TripMapMarkerStyle.tripLocation,
       onTap: event.onTap,
     );
+    if (!_isCurrentMapView(viewGeneration, mapController)) {
+      await _clearAnnotations(manager);
+      return;
+    }
     _markerManagers.add(manager);
   }
 
@@ -186,6 +265,7 @@ class LiveMapBloc({required this._trackRepository})
     ClearMapAnnotationsEvent event,
     Emitter<LiveMapState> emit,
   ) async {
+    _invalidateMapOperations();
     _pendingMarkers.clear();
     _pendingRoute = null;
     await _clearAllMarkers();
@@ -268,22 +348,57 @@ class LiveMapBloc({required this._trackRepository})
     FitMapToCoordinatesEvent event,
     Emitter<LiveMapState> emit,
   ) async {
-    if (_mapController == null) {
+    final mapController = _mapController;
+    final viewGeneration = _mapViewGeneration;
+    if (mapController == null) {
       _pendingCameraFit = event;
       return;
     }
     await MapProvider.fitBounds(
-      _mapController!,
+      mapController,
       event.coordinates,
       maxZoom: event.maxZoom,
     );
+    if (!_isCurrentMapView(viewGeneration, mapController)) return;
+  }
+
+  Future<void> _clearAnnotations(
+    mapbox.BaseAnnotationManager? annotationManager,
+  ) async {
+    if (annotationManager == null) return;
+    try {
+      await MapProvider.clearAnnotations(annotationManager);
+    } catch (error) {
+      dev.log('Error clearing passenger map annotation: $error');
+    }
   }
 
   @override
   Future<void> close() async {
+    _invalidateMapOperations();
     await _locationSubscription.cancel();
     await _locationSubject.close();
     await _clearAllMarkers();
     return super.close();
+  }
+
+  void _invalidateMapOperations() {
+    _mapViewGeneration++;
+    _routeOperationGeneration++;
+  }
+
+  bool _isCurrentMapView(int viewGeneration, AppMapController controller) {
+    return !isClosed &&
+        viewGeneration == _mapViewGeneration &&
+        identical(_mapController, controller);
+  }
+
+  bool _isCurrentRouteOperation(
+    int routeOperationGeneration,
+    int viewGeneration,
+    AppMapController controller,
+  ) {
+    return routeOperationGeneration == _routeOperationGeneration &&
+        _isCurrentMapView(viewGeneration, controller);
   }
 }
