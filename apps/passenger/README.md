@@ -16,5 +16,10 @@ expose the native API or Compose gateway on a development-only network
 interface. Release builds intentionally require HTTPS.
 
 Values in this file are bundled with the application and are not secrets.
-Server credentials, signing material, and private access tokens belong only in
-the root server environment or the platform secret store.
+Server credentials and private access tokens belong only in the root server
+environment or the platform secret store.
+
+Release Android artifacts must use a release keystore. Create the ignored
+`android/key.properties` file with `storeFile`, `storePassword`, `keyAlias`,
+and `keyPassword`; release artifact tasks fail when those values are absent.
+Keep the keystore and its credentials outside version control.
