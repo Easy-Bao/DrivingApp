@@ -68,7 +68,11 @@ just server --stop
 All clients use the Go API through the one `API_BASE_URL` configured in each
 app's `.env`. The API bind host and service ports are configured in the root
 `.env`; the explicit `just services-up` and `just docker-up` recipes remain
-available as aliases.
+available as aliases. Loopback is the safe default for published development
+ports. For a physical device on the local network, set `API_HOST=0.0.0.0`
+when running the native API, or `GATEWAY_HOST=0.0.0.0` when running the
+containerized API, then point the app's `API_BASE_URL` at the computer's LAN
+address. Keep the host firewall limited to the development network.
 
 ---
 

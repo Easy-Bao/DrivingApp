@@ -101,7 +101,7 @@ services:
       migrate:
         condition: service_completed_successfully
     ports:
-      - "127.0.0.1:${GATEWAY_PORT}:${API_PORT}"
+      - "${GATEWAY_HOST:-127.0.0.1}:${GATEWAY_PORT}:${API_PORT}"
 
   admin-app:
     build:

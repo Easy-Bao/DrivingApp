@@ -88,8 +88,10 @@ port come from the environment (`API_HOST` and `API_PORT`); do not hard-code a
 deployment URL in the application.
 Native API binds to `API_HOST`, which defaults to `127.0.0.1`; set it to an
 explicit private interface only when a reverse proxy or container network
-requires it. Compose binds its host-published ports to loopback and sets the
-container API host to `0.0.0.0`.
+requires it. Compose sets the container API host to `0.0.0.0` and publishes
+the gateway through `GATEWAY_HOST`, which also defaults to loopback. Set
+`GATEWAY_HOST` to an interface reachable by a physical development device
+when LAN testing is required.
 The API process owns REST, WebSocket, authentication, rides, location,
 realtime, chat, and admin routes.
 
