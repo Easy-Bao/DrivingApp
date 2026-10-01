@@ -39,7 +39,7 @@ void main() {
 
     expect(find.text('stale error'), findsNothing);
     expect(find.text("Today's Net Earnings"), findsNothing);
-    expect(find.byType(Bone), findsWidgets);
+    expect(find.byWidgetPredicate((widget) => widget is Bone), findsWidgets);
     expect(find.byType(CircularProgressIndicator), findsNothing);
   });
 
