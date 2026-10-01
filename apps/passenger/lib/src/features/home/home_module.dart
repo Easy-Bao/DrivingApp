@@ -77,8 +77,8 @@ class HomeModule._() {
           initialIconName: initialIconName,
         );
       },
-      transition: AppTransitions.modal.toTop,
-      transitionDuration: AppTransitions.modalDuration,
+      transition: AppTransitions.push.toLeft,
+      transitionDuration: AppTransitions.pushDuration,
     ),
   ];
 

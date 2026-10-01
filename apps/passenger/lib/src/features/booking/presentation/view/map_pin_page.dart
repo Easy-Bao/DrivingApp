@@ -307,12 +307,12 @@ class _MapPinPageState()
                   child: child,
                 );
               },
-              child: Hero(
-                tag: widget.flow == MapPinFlow.savedPlace
-                    ? BookingRoutes.savedPlaceMapPinHeroTag
-                    : BookingRoutes.mapPinHeroTag,
-                child: const MapSelectionMarkerWidget(),
-              ),
+              child: widget.flow == MapPinFlow.savedPlace
+                  ? const MapSelectionMarkerWidget()
+                  : const Hero(
+                      tag: BookingRoutes.mapPinHeroTag,
+                      child: MapSelectionMarkerWidget(),
+                    ),
             ),
           ),
           SafeArea(

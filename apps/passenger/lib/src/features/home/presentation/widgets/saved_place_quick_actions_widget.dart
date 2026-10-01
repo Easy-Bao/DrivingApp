@@ -1,7 +1,6 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger/src/features/saved_places/domain/saved_place_defaults.dart';
 import 'package:passenger/src/features/saved_places/presentation/saved_place_icon.dart';
@@ -152,13 +151,10 @@ class const _AddPlaceChip({required this.onTap}) extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Hero(
-                  tag: BookingRoutes.savedPlaceMapPinHeroTag,
-                  child: Icon(
-                    LucideIcons.plus,
-                    size: 16,
-                    color: context.colorScheme.onSurface.withValues(alpha: 0.7),
-                  ),
+                Icon(
+                  LucideIcons.plus,
+                  size: 16,
+                  color: context.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
                 const SizedBox(width: 6),
                 Text(

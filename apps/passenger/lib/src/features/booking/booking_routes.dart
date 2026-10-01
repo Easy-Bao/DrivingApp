@@ -6,7 +6,6 @@ abstract final class BookingRoutes() {
   static const String mapPin = 'MapPin';
   static const String mapPinPath = 'home/map-pin';
   static const String mapPinHeroTag = 'map_pin_button';
-  static const String savedPlaceMapPinHeroTag = 'saved_place_map_pin_button';
   static const String rideSelection = 'RideSelection';
   static const String rideSelectionPath = 'home/ride-selection';
   static const String findingDriver = 'FindingDriver';

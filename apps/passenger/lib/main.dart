@@ -44,56 +44,6 @@ Future<void> main() => bootstrapPassengerApp();
 /// is intentional.
 
 
-///BUG:
-/// Navigating from Passenger Home -> Add Place and then returning can show a delayed
-/// or chunky transition.
-///
-/// There may be a visible pause before the back-navigation animation begins or
-/// finishes.
-///
-/// Other animations may contain similar jank.
-///
-///FIX:
-/// Profile navigation and animation performance across both apps.
-///
-/// Specifically inspect:
-/// - Home -> Add Place
-/// - Add Place -> Home
-/// - destination selection
-/// - saved place selection
-/// - ride details
-/// - tracking
-/// - driver offers
-/// - profile
-/// - authentication
-/// - modal/bottom sheet transitions
-///
-/// Check for expensive work occurring during navigation such as:
-/// - synchronous SharedPreferences reads/writes
-/// - unnecessary repository calls
-/// - state restoration
-/// - heavy widget rebuilds
-/// - large map rebuilds
-/// - image decoding
-/// - JSON processing
-/// - unnecessary Bloc/Cubit emissions
-/// - navigation waiting for persistence
-///
-/// Navigation animation should not wait for non-critical async work.
-///
-/// Save/persist state independently when possible instead of blocking route pop.
-///
-/// Check for duplicate:
-/// - AnimationController
-/// - AnimatedSwitcher
-/// - AnimatedContainer
-/// - Hero
-/// - route animation
-/// - custom fade/slide animations
-///
-/// Avoid multiple animations fighting over the same widget.
-
-
 ///TODO:
 /// Perform a complete animation audit across Passenger App and Driver App.
 ///

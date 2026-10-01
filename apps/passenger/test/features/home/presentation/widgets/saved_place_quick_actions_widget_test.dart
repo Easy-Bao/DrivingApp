@@ -1,7 +1,6 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/home/presentation/widgets/saved_place_quick_actions_widget.dart';
 import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
 
@@ -48,8 +47,7 @@ void main() {
     expect(find.text('Near Bathroom'), findsOneWidget);
     expect(find.text('Work'), findsOneWidget);
     expect(find.text('Add place'), findsOneWidget);
-    final addPlaceHero = tester.widget<Hero>(find.byType(Hero));
-    expect(addPlaceHero.tag, BookingRoutes.savedPlaceMapPinHeroTag);
+    expect(find.byType(Hero), findsNothing);
     expect(find.byType(AnimatedContainer), findsNWidgets(3));
 
     final chips = find.byType(AnimatedContainer);

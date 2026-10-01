@@ -430,10 +430,7 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
           height: 54,
           child: OutlinedButton.icon(
             onPressed: _openAddCategoryPage,
-            icon: const Hero(
-              tag: BookingRoutes.savedPlaceMapPinHeroTag,
-              child: Icon(LucideIcons.plus, size: 18),
-            ),
+            icon: const Icon(LucideIcons.plus, size: 18),
             label: const Text('Add a new place'),
             style: OutlinedButton.styleFrom(
               foregroundColor: context.colorScheme.onSurface,
