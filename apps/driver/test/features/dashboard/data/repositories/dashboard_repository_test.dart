@@ -211,6 +211,12 @@ void main() {
       when(
         () => availabilityDataSource.updateOnlineStatus(
           driverId: 'driver-42',
+          isOnline: true,
+        ),
+      ).thenAnswer((_) async {});
+      when(
+        () => availabilityDataSource.updateOnlineStatus(
+          driverId: 'driver-42',
           isOnline: false,
         ),
       ).thenAnswer((_) async {});
