@@ -45,25 +45,6 @@ Future<void> main() => bootstrapPassengerApp();
 
 
 ///TODO:
-/// Audit navigation architecture across both applications.
-///
-/// Check:
-/// - duplicate route pushes
-/// - navigation triggered more than once
-/// - stale BuildContext usage
-/// - navigation after disposed widgets
-/// - async gaps before Navigator/router calls
-/// - unnecessary redirect loops
-/// - route restoration
-/// - back-button behavior
-/// - pop result handling
-/// - animation consistency
-///
-/// Navigation should remain predictable after app rebuild, hot restart, process
-/// restoration, and session restoration.
-
-
-///TODO:
 /// Audit all layouts on multiple Android screen sizes.
 ///
 /// Test:

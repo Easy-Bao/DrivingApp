@@ -36,6 +36,11 @@ import 'package:passenger/src/features/saved_places/presentation/bloc/saved_plac
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
+bool shouldStartHomeNavigation({
+  required bool isMounted,
+  required bool isNavigationInFlight,
+}) => isMounted && !isNavigationInFlight;
+
 class const HomePage({
   super.key,
   required this.bookingBloc,
@@ -60,6 +65,7 @@ class _HomePageState extends State<HomePage> {
   late final StreamSubscription<void> _routePopSubscription;
   late final StreamSubscription<AppLifecycleStatus> _lifecycleSubscription;
   bool _isSavedPlaceFlowOpen = false;
+  bool _isNavigationInFlight = false;
 
   @override
   Widget build(BuildContext context) {
@@ -617,42 +623,7 @@ class _HomePageState extends State<HomePage> {
       hint: 'Opens destination search',
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () {
-          if (_hasActiveRide()) {
-            unawaited(_showActiveRideBlockedDialog());
-            return;
-          }
-          final activeSearch = _bookingBloc.activeDriverSearch;
-          if (activeSearch != null) {
-            final trip = activeSearch.trip;
-            unawaited(
-              context.pushNamed(
-                BookingRoutes.findingDriver,
-                extra: {
-                  'rideType': trip.rideType,
-                  'fare': trip.fare,
-                  'destination': trip.destination,
-                  'distance': trip.distance,
-                  'duration': trip.duration,
-                  'pickupAddress': trip.pickupAddress,
-                  'pickupLat': activeSearch.pickupLat,
-                  'pickupLng': activeSearch.pickupLng,
-                  'passengerNote': trip.passengerNote,
-                },
-              ),
-            );
-            return;
-          }
-          final address = BlocProvider.of<HomeCubit>(context)
-              .state
-              .currentAddress;
-          unawaited(
-            context.pushNamed(
-              BookingRoutes.searchDestination,
-              queryParameters: {'pickupAddress': address},
-            ),
-          );
-        },
+        onTap: () => unawaited(_openDestinationFlow()),
         child: Hero(
           tag: 'search_bar_field',
           child: Material(
@@ -680,6 +651,48 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
+  }
+
+  Future<void> _openDestinationFlow() async {
+    if (!shouldStartHomeNavigation(
+      isMounted: mounted,
+      isNavigationInFlight: _isNavigationInFlight,
+    )) {
+      return;
+    }
+    _isNavigationInFlight = true;
+    try {
+      if (_hasActiveRide()) {
+        await _showActiveRideBlockedDialog();
+        return;
+      }
+      final activeSearch = _bookingBloc.activeDriverSearch;
+      if (activeSearch != null) {
+        final trip = activeSearch.trip;
+        await context.pushNamed(
+          BookingRoutes.findingDriver,
+          extra: {
+            'rideType': trip.rideType,
+            'fare': trip.fare,
+            'destination': trip.destination,
+            'distance': trip.distance,
+            'duration': trip.duration,
+            'pickupAddress': trip.pickupAddress,
+            'pickupLat': activeSearch.pickupLat,
+            'pickupLng': activeSearch.pickupLng,
+            'passengerNote': trip.passengerNote,
+          },
+        );
+        return;
+      }
+      final address = BlocProvider.of<HomeCubit>(context).state.currentAddress;
+      await context.pushNamed(
+        BookingRoutes.searchDestination,
+        queryParameters: {'pickupAddress': address},
+      );
+    } finally {
+      _isNavigationInFlight = false;
+    }
   }
 
   Future<void> _handleSavedPlaceTap(SavedPlace place) async {
