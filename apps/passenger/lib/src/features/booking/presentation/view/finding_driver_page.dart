@@ -22,6 +22,13 @@ import 'package:passenger/src/features/booking/presentation/widgets/finding_driv
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 
+bool shouldRebuildDriverDiscoveryOverlay(
+  BookingState previous,
+  BookingState current,
+) {
+  return (previous is NearestDriverFound) != (current is NearestDriverFound);
+}
+
 bool shouldStartFindingDriverHomeNavigation({
   required bool isMounted,
   required bool isNavigationInFlight,
@@ -512,6 +519,7 @@ class _FindingDriverPageContentState()
                           maxWidth: isWideScreen ? 600.0 : double.infinity,
                         ),
                         child: BlocBuilder<BookingBloc, BookingState>(
+                          buildWhen: shouldRebuildDriverDiscoveryOverlay,
                           builder: (context, state) {
                             final showDriverDiscovery =
                                 state is NearestDriverFound;
