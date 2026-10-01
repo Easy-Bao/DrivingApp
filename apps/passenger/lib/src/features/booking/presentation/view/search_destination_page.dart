@@ -38,6 +38,14 @@ bool shouldShowDestinationResultsLoading({
   return isSearching || (!hasQuery && isLoadingNearby && !hasResults);
 }
 
+double destinationSearchAvailableHeight({
+  required double screenHeight,
+  required double keyboardInset,
+}) {
+  final availableHeight = screenHeight - keyboardInset;
+  return availableHeight < 52 ? 52 : availableHeight;
+}
+
 class _SearchDestinationPageState()
     extends State<SearchDestinationPage>
     with SingleTickerProviderStateMixin {
@@ -595,7 +603,15 @@ class _SearchDestinationPageState()
     );
     final screenSize = MediaQuery.of(context).size;
     final topPadding = MediaQuery.of(context).padding.top;
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final viewInsetsBottom = MediaQuery.viewInsetsOf(context).bottom;
+    final systemBottomPadding = MediaQuery.of(context).padding.bottom;
+    final bottomPadding = viewInsetsBottom > systemBottomPadding
+        ? viewInsetsBottom
+        : systemBottomPadding;
+    final availableHeight = destinationSearchAvailableHeight(
+      screenHeight: screenSize.height,
+      keyboardInset: viewInsetsBottom,
+    );
 
     return Scaffold(
       backgroundColor: context.colorScheme.surface,
@@ -611,10 +627,7 @@ class _SearchDestinationPageState()
             final containerRight = (1.0 - t) * 56.0;
             final containerHeight =
                 52.0 +
-                t *
-                    (screenSize.height -
-                        (1.0 - t) * (topPadding + 10.0) -
-                        52.0);
+                t * (availableHeight - (1.0 - t) * (topPadding + 10.0) - 52.0);
             final containerRadius = (1.0 - t) * 36.0;
 
             return Stack(

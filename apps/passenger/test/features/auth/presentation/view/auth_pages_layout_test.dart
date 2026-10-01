@@ -4,8 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/auth/domain/entities/auth_credentials.dart';
 import 'package:passenger/src/features/auth/domain/repositories/passenger_auth_repository.dart';
+import 'package:passenger/src/features/auth/presentation/bloc/forgot_password/forgot_password_bloc.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/sign_up/sign_up_bloc.dart';
+import 'package:passenger/src/features/auth/presentation/view/forgot_password_page.dart';
 import 'package:passenger/src/features/auth/presentation/view/sign_in_page.dart';
 import 'package:passenger/src/features/auth/presentation/view/sign_up_page.dart';
 
@@ -76,4 +78,26 @@ void main() {
     expect(signUpFieldRect.width, signInFieldRect.width);
     expect(signInFieldRect.left, greaterThan(24));
   });
+
+  testWidgets(
+    'forgot-password form remains scrollable for a reduced viewport',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(360, 640));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: EasyRideTheme.main,
+          home: ForgotPasswordPage(
+            forgotPasswordBloc: ForgotPasswordBloc(_UnusedAuthRepository()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SingleChildScrollView), findsOneWidget);
+      expect(find.text('Reset Password'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

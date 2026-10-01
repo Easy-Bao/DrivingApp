@@ -45,69 +45,6 @@ Future<void> main() => bootstrapPassengerApp();
 
 
 ///BUG:
-/// When focusing a TextField and the Android software keyboard opens, some screens
-/// overflow or change layout incorrectly.
-///
-/// Known examples:
-/// - Sign In
-/// - Sign Up
-///
-/// This may also exist in other forms.
-///
-///FIX:
-/// Audit keyboard behavior across BOTH Passenger App and Driver App.
-///
-/// Test all screens containing TextField / TextFormField.
-///
-/// Passenger examples:
-/// - Sign In
-/// - Sign Up
-/// - OTP
-/// - Forgot Password
-/// - Reset Password
-/// - Destination search
-/// - Saved place creation/edit
-/// - Profile edit
-/// - Chat
-/// - Rating/review input
-///
-/// Driver examples:
-/// - Sign In
-/// - Sign Up
-/// - Driver registration
-/// - KYC forms
-/// - Profile edit
-/// - Offer/fare input
-/// - Chat
-/// - Settlement-related forms
-///
-/// Inspect usage of:
-/// - Scaffold.resizeToAvoidBottomInset
-/// - SafeArea
-/// - MediaQuery.viewInsets
-/// - SingleChildScrollView
-/// - ListView
-/// - CustomScrollView
-/// - Expanded
-/// - Flexible
-/// - Spacer
-/// - Stack
-/// - Positioned
-/// - fixed-height containers
-///
-/// Avoid relying on fixed screen heights that break when the keyboard reduces the
-/// available viewport.
-///
-/// The layout should adapt without:
-/// - RenderFlex overflow
-/// - clipped input fields
-/// - inaccessible buttons
-/// - content jumping unexpectedly
-/// - large empty spaces
-/// - unstable animation.
-
-
-///BUG:
 /// In authentication screens, when the keyboard opens/closes, the bottom text action
 /// such as:
 ///

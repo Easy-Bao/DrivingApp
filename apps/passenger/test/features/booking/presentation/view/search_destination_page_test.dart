@@ -139,6 +139,17 @@ void main() {
     );
   });
 
+  test('keeps the expanded search surface above the software keyboard', () {
+    expect(
+      destinationSearchAvailableHeight(screenHeight: 640, keyboardInset: 280),
+      360,
+    );
+    expect(
+      destinationSearchAvailableHeight(screenHeight: 640, keyboardInset: 0),
+      640,
+    );
+  });
+
   testWidgets('map-pin search back returns to the map-pin route', (
     tester,
   ) async {

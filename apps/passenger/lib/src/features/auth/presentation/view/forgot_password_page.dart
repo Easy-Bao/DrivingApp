@@ -102,163 +102,194 @@ class _ForgotPasswordPageContentState
                 horizontal: 24.0,
                 vertical: 16.0,
               ),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 20),
-                        Text(
-                          'Forgot Password?',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            color: context.colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          "Enter the email linked to your account and we'll send you reset instructions.",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: context.colorScheme.onSurfaceVariant,
-                            height: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-                        Text(
-                          'Email Address',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: context.colorScheme.onSurfaceVariant,
-                            letterSpacing: 1.1,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Material(
-                          child: Material(
-                            type: MaterialType.transparency,
-                            child: TextField(
-                              style: TextStyle(
-                                color: context.colorScheme.onSurface,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: IntrinsicHeight(
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  const SizedBox(height: 20),
+                                  Text(
+                                    'Forgot Password?',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w800,
+                                      color: context.colorScheme.onSurface,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    "Enter the email linked to your account and we'll send you reset instructions.",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      color:
+                                          context.colorScheme.onSurfaceVariant,
+                                      height: 1.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 40),
+                                  Text(
+                                    'Email Address',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                      color:
+                                          context.colorScheme.onSurfaceVariant,
+                                      letterSpacing: 1.1,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Material(
+                                    child: Material(
+                                      type: MaterialType.transparency,
+                                      child: TextField(
+                                        style: TextStyle(
+                                          color: context.colorScheme.onSurface,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        keyboardType:
+                                            TextInputType.emailAddress,
+                                        controller: _emailController,
+                                        textInputAction: TextInputAction.done,
+                                        onSubmitted: (_) =>
+                                            _submitResetLink(context),
+                                        onChanged: (_) {
+                                          if (_emailError != null ||
+                                              _submissionError != null) {
+                                            setState(() {
+                                              _emailError = null;
+                                              _submissionError = null;
+                                            });
+                                          }
+                                        },
+                                        decoration: InputDecoration(
+                                          hintText: 'Email',
+                                          errorText: effectiveEmailError,
+                                          errorStyle: TextStyle(
+                                            color: context.colorScheme.error,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          prefixIcon: Padding(
+                                            padding: const EdgeInsets.only(
+                                              left: 10,
+                                            ),
+                                            child: Icon(
+                                              LucideIcons.mail,
+                                              size: 20,
+                                              color: context
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
+                                          ),
+                                          filled: true,
+                                          fillColor:
+                                              context.colorScheme.surface,
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              EasyRideRadius.lg,
+                                            ),
+                                            borderSide: BorderSide(
+                                              color: context
+                                                  .colorScheme
+                                                  .outlineVariant,
+                                            ),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              EasyRideRadius.lg,
+                                            ),
+                                            borderSide: BorderSide(
+                                              color:
+                                                  context.colorScheme.onSurface,
+                                              width: 1.5,
+                                            ),
+                                          ),
+                                          errorBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              EasyRideRadius.lg,
+                                            ),
+                                            borderSide: BorderSide(
+                                              color: context.colorScheme.error,
+                                              width: 1.0,
+                                            ),
+                                          ),
+                                          focusedErrorBorder:
+                                              OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                      EasyRideRadius.lg,
+                                                    ),
+                                                borderSide: BorderSide(
+                                                  color:
+                                                      context.colorScheme.error,
+                                                  width: 1.5,
+                                                ),
+                                              ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              keyboardType: TextInputType.emailAddress,
-                              controller: _emailController,
-                              textInputAction: TextInputAction.done,
-                              onSubmitted: (_) => _submitResetLink(context),
-                              onChanged: (_) {
-                                if (_emailError != null ||
-                                    _submissionError != null) {
-                                  setState(() {
-                                    _emailError = null;
-                                    _submissionError = null;
-                                  });
-                                }
-                              },
-                              decoration: InputDecoration(
-                                hintText: 'Email',
-                                errorText: effectiveEmailError,
-                                errorStyle: TextStyle(
-                                  color: context.colorScheme.error,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                prefixIcon: Padding(
-                                  padding: const EdgeInsets.only(left: 10),
-                                  child: Icon(
-                                    LucideIcons.mail,
-                                    size: 20,
-                                    color: context.colorScheme.onSurfaceVariant,
+                            ),
+                            Material(
+                              child: Material(
+                                type: MaterialType.transparency,
+                                child: ElevatedButton(
+                                  onPressed: isLoading
+                                      ? null
+                                      : () => _submitResetLink(context),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        context.colorScheme.onSurface,
+                                    foregroundColor:
+                                        context.colorScheme.onPrimary,
+                                    minimumSize: const Size.fromHeight(56),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        EasyRideRadius.lg,
+                                      ),
+                                    ),
+                                    elevation: 0,
                                   ),
-                                ),
-                                filled: true,
-                                fillColor: context.colorScheme.surface,
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    EasyRideRadius.lg,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.outlineVariant,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    EasyRideRadius.lg,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.onSurface,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                errorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    EasyRideRadius.lg,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.error,
-                                    width: 1.0,
-                                  ),
-                                ),
-                                focusedErrorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    EasyRideRadius.lg,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.error,
-                                    width: 1.5,
-                                  ),
+                                  child: isLoading
+                                      ? SizedBox(
+                                          width: 24,
+                                          height: 24,
+                                          child: CircularProgressIndicator(
+                                            color: context.colorScheme.surface,
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Reset Password',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
                                 ),
                               ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                  Material(
-                    child: Material(
-                      type: MaterialType.transparency,
-                      child: ElevatedButton(
-                        onPressed: isLoading
-                            ? null
-                            : () => _submitResetLink(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: context.colorScheme.onSurface,
-                          foregroundColor: context.colorScheme.onPrimary,
-                          minimumSize: const Size.fromHeight(56),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              EasyRideRadius.lg,
-                            ),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: isLoading
-                            ? SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  color: context.colorScheme.surface,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text(
-                                'Reset Password',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
                       ),
                     ),
-                  ),
-                ],
+                  );
+                },
               ),
             );
           },
