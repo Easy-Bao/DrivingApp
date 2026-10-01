@@ -18,58 +18,74 @@ class const CompactRouteTimelineWidget({
     final colors = Theme.of(context).colorScheme;
     return SizedBox(
       height: 82,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: Stack(
         children: [
-          SizedBox(
-            width: 20,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Positioned(
-                  top: 18,
-                  bottom: 18,
-                  child: CustomPaint(
-                    size: const Size(1, 44),
-                    painter: _DashedLinePainter(color: colors.outlineVariant),
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.topCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: _StopIcon(
-                      icon: LucideIcons.map_pin,
-                      color: colors.primary,
-                    ),
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 2),
-                    child: _StopIcon(
-                      icon: LucideIcons.navigation,
-                      color: colors.tertiary,
-                    ),
-                  ),
-                ),
-              ],
+          Positioned(
+            left: 9.5,
+            top: 20,
+            bottom: 20,
+            child: CustomPaint(
+              size: const Size(1, 42),
+              painter: _DashedLinePainter(color: colors.outlineVariant),
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _RouteStopText(label: pickupLabel, value: pickup),
-                _RouteStopText(label: dropoffLabel, value: dropoff),
-              ],
-            ),
+          Column(
+            children: [
+              Expanded(
+                child: _RouteStopRow(
+                  icon: LucideIcons.map_pin,
+                  color: colors.primary,
+                  label: pickupLabel,
+                  value: pickup,
+                ),
+              ),
+              Expanded(
+                child: _RouteStopRow(
+                  icon: LucideIcons.navigation,
+                  color: colors.tertiary,
+                  label: dropoffLabel,
+                  value: dropoff,
+                ),
+              ),
+            ],
           ),
         ],
       ),
+    );
+  }
+}
+
+class const _RouteStopRow({
+  required this.icon,
+  required this.color,
+  required this.label,
+  required this.value,
+}) extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          width: 20,
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: _StopIcon(icon: icon, color: color),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _RouteStopText(label: label, value: value),
+        ),
+      ],
     );
   }
 }
@@ -81,11 +97,7 @@ class const _StopIcon({required this.icon, required this.color})
 
   @override
   Widget build(BuildContext context) {
-    return Icon(
-      icon,
-      size: 18,
-      color: color,
-    );
+    return Icon(icon, size: 18, color: color);
   }
 }
 
@@ -97,31 +109,29 @@ class const _RouteStopText({required this.label, required this.value})
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Expanded(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-            ),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w600,
           ),
-          const SizedBox(height: 1),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w700,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
+        ),
+        const SizedBox(height: 1),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurface,
+            fontWeight: FontWeight.w700,
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
