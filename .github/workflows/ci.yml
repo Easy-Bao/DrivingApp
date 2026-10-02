@@ -71,10 +71,15 @@ jobs:
             pub-${{ runner.os }}-
 
       - name: Prepare Flutter environment assets
-        run: cp .env.example apps/driver/.env
+        run: cp apps/driver/.env.example apps/driver/.env
 
       - name: Prepare passenger environment asset
-        run: cp .env.example apps/passenger/.env
+        run: cp apps/passenger/.env.example apps/passenger/.env
+
+      - name: Verify mobile environment assets
+        run: |
+          cmp --silent apps/driver/.env.example apps/driver/.env
+          cmp --silent apps/passenger/.env.example apps/passenger/.env
 
       - name: Install root dependencies
         run: flutter pub get
@@ -112,8 +117,8 @@ jobs:
 
       - name: Prepare Flutter environment assets
         run: |
-          cp .env.example apps/driver/.env
-          cp .env.example apps/passenger/.env
+          cp apps/driver/.env.example apps/driver/.env
+          cp apps/passenger/.env.example apps/passenger/.env
 
       - name: Install root dependencies
         run: flutter pub get
@@ -155,8 +160,8 @@ jobs:
 
       - name: Prepare Flutter environment assets
         run: |
-          cp .env.example apps/driver/.env
-          cp .env.example apps/passenger/.env
+          cp apps/driver/.env.example apps/driver/.env
+          cp apps/passenger/.env.example apps/passenger/.env
 
       - name: Install root dependencies
         run: flutter pub get
@@ -199,8 +204,8 @@ jobs:
 
       - name: Prepare Flutter environment assets
         run: |
-          cp .env.example apps/driver/.env
-          cp .env.example apps/passenger/.env
+          cp apps/driver/.env.example apps/driver/.env
+          cp apps/passenger/.env.example apps/passenger/.env
 
       - name: Install root dependencies
         run: flutter pub get
@@ -243,8 +248,8 @@ jobs:
 
       - name: Prepare Flutter environment assets
         run: |
-          cp .env.example apps/driver/.env
-          cp .env.example apps/passenger/.env
+          cp apps/driver/.env.example apps/driver/.env
+          cp apps/passenger/.env.example apps/passenger/.env
 
       - name: Install root dependencies
         run: flutter pub get
