@@ -22,11 +22,7 @@ void main() {
       final sessionBloc = SessionBloc(
         sessionRepository: _AuthenticatedSessionRepository(),
       );
-      final rideHistoryBloc = RideHistoryBloc(
-        repository: _EmptyRideHistoryRepository(),
-      );
       addTearDown(sessionBloc.close);
-      addTearDown(rideHistoryBloc.close);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -34,7 +30,10 @@ void main() {
           home: MultiBlocProvider(
             providers: [
               BlocProvider<SessionBloc>.value(value: sessionBloc),
-              BlocProvider<RideHistoryBloc>.value(value: rideHistoryBloc),
+              BlocProvider<RideHistoryBloc>(
+                create: (_) =>
+                    RideHistoryBloc(repository: _EmptyRideHistoryRepository()),
+              ),
             ],
             child: const RideHistoryPage(),
           ),
@@ -60,16 +59,16 @@ void main() {
       sessionRepository: _AuthenticatedSessionRepository(),
     );
     final repository = _PendingRideHistoryRepository();
-    final rideHistoryBloc = RideHistoryBloc(repository: repository);
     addTearDown(sessionBloc.close);
-    addTearDown(rideHistoryBloc.close);
     await tester.pumpWidget(
       MaterialApp(
         theme: EasyRideTheme.main,
         home: MultiBlocProvider(
           providers: [
             BlocProvider<SessionBloc>.value(value: sessionBloc),
-            BlocProvider<RideHistoryBloc>.value(value: rideHistoryBloc),
+            BlocProvider<RideHistoryBloc>(
+              create: (_) => RideHistoryBloc(repository: repository),
+            ),
           ],
           child: const RideHistoryPage(),
         ),
@@ -131,11 +130,7 @@ void main() {
     final sessionBloc = SessionBloc(
       sessionRepository: _AuthenticatedSessionRepository(),
     );
-    final rideHistoryBloc = RideHistoryBloc(
-      repository: _EmptyRideHistoryRepository(),
-    );
     addTearDown(sessionBloc.close);
-    addTearDown(rideHistoryBloc.close);
 
     await tester.pumpWidget(
       MaterialApp(
@@ -143,7 +138,10 @@ void main() {
         home: MultiBlocProvider(
           providers: [
             BlocProvider<SessionBloc>.value(value: sessionBloc),
-            BlocProvider<RideHistoryBloc>.value(value: rideHistoryBloc),
+            BlocProvider<RideHistoryBloc>(
+              create: (_) =>
+                  RideHistoryBloc(repository: _EmptyRideHistoryRepository()),
+            ),
           ],
           child: const RecentActivityPage(),
         ),
