@@ -23,6 +23,12 @@ Values in this file are bundled with the application and are not secrets.
 Server credentials and private access tokens belong only in the root server
 environment or the platform secret store.
 
+Android also resolves the native Mapbox dependency from a private Maven
+repository. Provide the team's `MAPBOX_DOWNLOADS_TOKEN` as a Gradle property,
+either in the user-level `~/.gradle/gradle.properties` file or with
+`-PMAPBOX_DOWNLOADS_TOKEN=...` on the Gradle command. Keep this credential out
+of `.env`, repository files, and source control.
+
 Release Android artifacts must use a release keystore. Create the ignored
 `android/key.properties` file with `storeFile`, `storePassword`, `keyAlias`,
 and `keyPassword`; release artifact tasks fail when those values are absent.
