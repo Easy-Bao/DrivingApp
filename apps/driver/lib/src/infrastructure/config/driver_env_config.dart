@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:foundation/foundation.dart';
 
 class DriverEnvConfig._() {
+  static const _appEnvironment = String.fromEnvironment('APP_ENV');
   static const _apiBaseUrl = String.fromEnvironment('API_BASE_URL');
   static const _mapboxPublicToken = String.fromEnvironment(
     'MAPBOX_PUBLIC_TOKEN',
@@ -24,6 +25,13 @@ class DriverEnvConfig._() {
   static String? get mapboxPublicToken {
     final token = _value('MAPBOX_PUBLIC_TOKEN', _mapboxPublicToken)?.trim();
     return token == null || token.isEmpty ? null : token;
+  }
+
+  static String get appEnvironment {
+    final environment = _value('APP_ENV', _appEnvironment)?.trim();
+    return environment == null || environment.isEmpty
+        ? 'development'
+        : environment;
   }
 
   static String get sentryDsn => _value('SENTRY_DSN', _sentryDsn) ?? '';

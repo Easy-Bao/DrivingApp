@@ -4,6 +4,10 @@ The passenger client reads its public runtime configuration from the local
 `.env` asset. Copy `.env.example` to `.env`, set the API origin and Mapbox
 public token, then bootstrap the workspace from the repository root.
 
+Set `APP_ENV` to `development`, `staging`, or `production` so telemetry is
+grouped under the correct deployment environment. A Dart define such as
+`--dart-define=APP_ENV=staging` takes precedence over the `.env` value.
+
 `API_BASE_URL` must be a complete HTTP or HTTPS origin, including its configured
 gateway port. Release builds require HTTPS. Local Android emulators rewrite a
 loopback origin through `ANDROID_EMULATOR_LOOPBACK_HOST` unless adb reverse is

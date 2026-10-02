@@ -31,10 +31,7 @@ Future<void> bootstrapDriverApp() async {
       (options) {
         options.dsn = DriverEnvConfig.sentryDsn;
         options.tracesSampleRate = 0.1;
-        options.environment = const String.fromEnvironment(
-          'APP_ENV',
-          defaultValue: 'development',
-        );
+        options.environment = DriverEnvConfig.appEnvironment;
       },
       appRunner: () async {
         await Modular.configure(
