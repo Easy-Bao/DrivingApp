@@ -67,6 +67,22 @@ final class const RideSnapshot({
 
   double? get farePesos => fareAmount == null ? null : fareAmount! / 100;
 
+  RideId? get typedId => RideId.tryParse(id);
+
+  PassengerId? get typedPassengerId => PassengerId.tryParse(passengerId);
+
+  RideCoordinates? get pickupCoordinates =>
+      _coordinatesOrNull(pickupLatitude, pickupLongitude);
+
+  RideCoordinates? get dropoffCoordinates =>
+      _coordinatesOrNull(dropoffLatitude, dropoffLongitude);
+
+  DistanceKm? get routeDistance =>
+      distanceKm == null ? null : DistanceKm(distanceKm!);
+
+  FareCents? get typedFare =>
+      fareAmount == null ? null : FareCents(fareAmount!);
+
   bool get isTerminal =>
       const {'completed', 'canceled', 'cancelled'}.contains(status);
 
@@ -134,4 +150,10 @@ int? _fareAmount(Object? rawAmount, Object? rawPesos) {
 String? _nullableString(Object? value) {
   final normalized = SafeParse.toStringValue(value).trim();
   return normalized.isEmpty ? null : normalized;
+}
+
+RideCoordinates? _coordinatesOrNull(double? latitude, double? longitude) {
+  if (latitude == null || longitude == null) return null;
+  final coordinates = (latitude, longitude);
+  return isValidRideCoordinates(coordinates) ? coordinates : null;
 }

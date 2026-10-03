@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:foundation/foundation.dart';
 
 sealed class const RideState() extends Equatable {
   @override
@@ -103,6 +104,25 @@ final class RideFlowError extends RideFailed {
 }
 
 extension RideStatePresentation on RideState {
+  String get statusMessage => switch (this) {
+    Idle() => 'Ready for the next short hop.',
+    SearchingDriver(:final passengerName) =>
+      passengerName == null
+          ? 'Hunting for nearby requests.'
+          : 'Finding a ride for $passengerName.',
+    DriverEnRoute(:final passengerName, :final waitTimeSeconds) =>
+      waitTimeSeconds == null
+          ? 'Heading to $passengerName.'
+          : 'Waiting for $passengerName.',
+    TripInProgress(:final passengerName, :final distanceKm) =>
+      distanceKm == null
+          ? 'Driving $passengerName.'
+          : 'Driving $passengerName for ${DistanceKm(distanceKm).label}.',
+    TripCompleted(:final fare) =>
+      'Trip complete • ${FareCents((fare * 100).round()).displayAmount}.',
+    RideFailed(:final message) => message,
+  };
+
   bool get isWaitingAtPickup => switch (this) {
     Idle() ||
     SearchingDriver() ||
@@ -153,6 +173,23 @@ extension RideStatePresentation on RideState {
   double? get destinationLongitude => switch (this) {
     Idle() || SearchingDriver() || TripCompleted() || RideFailed() => null,
     DriverEnRoute(:final destLng) || TripInProgress(:final destLng) => destLng,
+  };
+
+  RideCoordinates? get destinationCoordinates => switch (this) {
+    DriverEnRoute(:final destLat, :final destLng)
+        when destLat != null && destLng != null =>
+      (destLat, destLng),
+    TripInProgress(:final destLat, :final destLng)
+        when destLat != null && destLng != null =>
+      (destLat, destLng),
+    _ => null,
+  };
+
+  DistanceKm? get routeDistance => switch (this) {
+    TripInProgress(:final distanceKm) when distanceKm != null => DistanceKm(
+      distanceKm,
+    ),
+    _ => null,
   };
 
   double? get passengerLatitude => switch (this) {

@@ -127,9 +127,9 @@ class _InTransitPageState extends State<InTransitPage> {
       // Resolve the destination before waiting on driver location so a
       // delayed permission response cannot prevent the destination leg from
       // being rendered.
-      final destinationLat = rideState.destinationLatitude;
-      final destinationLng = rideState.destinationLongitude;
-      if (destinationLat != null && destinationLng != null) {
+      final destination = rideState.destinationCoordinates;
+      if (destination != null) {
+        final (destinationLat, destinationLng) = destination;
         _destLat = destinationLat;
         _destLng = destinationLng;
       } else {

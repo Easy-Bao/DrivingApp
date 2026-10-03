@@ -42,10 +42,15 @@ class RideFlowCubit({
     double? destLat,
     double? destLng,
   }) {
+    final typedRideId = RideId.tryParse(rideId);
+    if (typedRideId == null) {
+      emit(const RideFlowError('This trip is no longer active.'));
+      return;
+    }
     ++_actionGeneration;
     _waitTimer?.cancel();
     _isActionInFlight = false;
-    _activeRideId = rideId;
+    _activeRideId = typedRideId.normalized;
     _activePassengerId = passengerId;
     _activePassengerName = passengerName;
     if (status == 'arrived') {
@@ -92,9 +97,14 @@ class RideFlowCubit({
     double? destLng,
   }) async {
     if (_isActionInFlight) return;
+    final typedRideId = RideId.tryParse(rideId);
+    if (typedRideId == null) {
+      emit(const RideFlowError('This trip is no longer active.'));
+      return;
+    }
     final actionGeneration = ++_actionGeneration;
     _isActionInFlight = true;
-    _activeRideId = rideId;
+    _activeRideId = typedRideId.normalized;
     _activePassengerName = passengerName;
 
     final driverId = await _sessionService.readDriverId();
