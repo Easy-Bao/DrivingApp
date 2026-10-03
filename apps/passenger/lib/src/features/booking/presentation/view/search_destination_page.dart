@@ -31,11 +31,17 @@ class const SearchDestinationPage({
 
 bool shouldShowDestinationResultsLoading({
   required bool isSearching,
+  required bool hasQuery,
+}) {
+  return isSearching && hasQuery;
+}
+
+bool shouldHideInitialDestinationResults({
   required bool isLoadingNearby,
   required bool hasQuery,
   required bool hasResults,
 }) {
-  return isSearching || (!hasQuery && isLoadingNearby && !hasResults);
+  return !hasQuery && isLoadingNearby && !hasResults;
 }
 
 double destinationSearchAvailableHeight({
@@ -602,6 +608,9 @@ class _SearchDestinationPageState()
         : _allNearbyPlaces.take(_displayedCount).toList();
     final shouldShowLoading = shouldShowDestinationResultsLoading(
       isSearching: _isSearching,
+      hasQuery: hasQuery,
+    );
+    final shouldHideInitialResults = shouldHideInitialDestinationResults(
       isLoadingNearby: _isLoadingNearby,
       hasQuery: hasQuery,
       hasResults: displayList.isNotEmpty,
@@ -676,7 +685,7 @@ class _SearchDestinationPageState()
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               SizedBox(height: t * (topPadding + 62.0)),
-                              if (t > 0.2)
+                              if (t > 0.2 && !shouldHideInitialResults)
                                 Padding(
                                   padding: const EdgeInsets.fromLTRB(
                                     20,
@@ -697,7 +706,7 @@ class _SearchDestinationPageState()
                                     ),
                                   ),
                                 ),
-                              if (t > 0.2)
+                              if (t > 0.2 && !shouldHideInitialResults)
                                 Expanded(
                                   child: FadeTransition(
                                     opacity: _resultsFadeAnimation,

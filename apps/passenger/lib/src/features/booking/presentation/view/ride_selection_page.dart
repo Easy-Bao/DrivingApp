@@ -368,16 +368,7 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
           notes: _notesController.text.trim(),
         ),
       );
-      final action = await showModalBottomSheet<BookingAuthAction>(
-        context: context,
-        backgroundColor: context.colorScheme.surface,
-        isScrollControlled: true,
-        isDismissible: false,
-        enableDrag: true,
-        barrierColor: context.colorScheme.onSurface.withValues(alpha: 0.54),
-        useSafeArea: true,
-        builder: (_) => const BookingAuthBottomSheetWidget(),
-      );
+      final action = await showBookingAuthBottomSheet(context);
       if (!mounted || action == null) return;
       final authRoute = switch (action) {
         BookingAuthAction.signIn => AuthRoutes.signin,

@@ -7,6 +7,20 @@ enum BookingAuthAction() {
   signUp,
 }
 
+Future<BookingAuthAction?> showBookingAuthBottomSheet(BuildContext context) {
+  return showModalBottomSheet<BookingAuthAction>(
+    context: context,
+    backgroundColor: context.colorScheme.surface,
+    isScrollControlled: true,
+    isDismissible: true,
+    enableDrag: true,
+    showDragHandle: false,
+    barrierColor: context.colorScheme.onSurface.withValues(alpha: 0.54),
+    useSafeArea: true,
+    builder: (_) => const BookingAuthBottomSheetWidget(),
+  );
+}
+
 class const BookingAuthBottomSheetWidget({super.key}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -59,11 +73,6 @@ class const BookingAuthBottomSheetWidget({super.key}) extends StatelessWidget {
                     Navigator.of(context).pop(BookingAuthAction.signIn),
                 child: const Text('Log in'),
               ),
-            ),
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Continue exploring'),
             ),
           ],
         ),

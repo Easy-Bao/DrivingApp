@@ -57,8 +57,8 @@ class _FadeThroughPageTransition() extends GoTransition {
 }
 
 class const _CustomPushTransitions() {
-  GoTransition get toLeft => CustomPageTransition();
-  GoTransition get toRight => CustomPageTransition();
+  GoTransition get toLeft => CustomPageTransition(fromRight: true);
+  GoTransition get toRight => CustomPageTransition(fromRight: false);
   GoTransition get toTop => GoTransitions.slide;
   GoTransition get toBottom => GoTransitions.slide;
 }

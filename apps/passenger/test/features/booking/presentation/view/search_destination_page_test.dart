@@ -122,24 +122,30 @@ void main() {
     },
   );
 
-  test('does not show a nearby skeleton without an active nearby request', () {
+  test('does not show a nearby skeleton while the destination page opens', () {
     expect(
-      shouldShowDestinationResultsLoading(
-        isSearching: false,
-        isLoadingNearby: false,
-        hasQuery: false,
-        hasResults: false,
-      ),
+      shouldShowDestinationResultsLoading(isSearching: false, hasQuery: false),
       isFalse,
     );
     expect(
-      shouldShowDestinationResultsLoading(
-        isSearching: false,
+      shouldShowDestinationResultsLoading(isSearching: true, hasQuery: true),
+      isTrue,
+    );
+    expect(
+      shouldHideInitialDestinationResults(
         isLoadingNearby: true,
         hasQuery: false,
         hasResults: false,
       ),
       isTrue,
+    );
+    expect(
+      shouldHideInitialDestinationResults(
+        isLoadingNearby: true,
+        hasQuery: false,
+        hasResults: true,
+      ),
+      isFalse,
     );
   });
 
@@ -381,6 +387,28 @@ void main() {
     expect(find.byType(SearchDestinationPage), findsOneWidget);
 
     router.dispose();
+  });
+
+  testWidgets('keeps the initial nearby state blank while the page opens', (
+    tester,
+  ) async {
+    locationRepository.nearbyPlacesCompleter =
+        Completer<Map<String, dynamic>>();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: EasyRideTheme.main,
+        home: const SearchDestinationPage(autofocusSearch: true),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('Nearby Places'), findsNothing);
+    expect(find.byType(ListTile), findsNothing);
+
+    locationRepository.nearbyPlacesCompleter!.complete(const {'places': []});
+    await tester.pumpAndSettle();
   });
 
   testWidgets(

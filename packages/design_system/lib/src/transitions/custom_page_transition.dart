@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:go_transitions/go_transitions.dart';
 
-class CustomPageTransition({super.settings, super.child}) extends GoTransition {
+class CustomPageTransition({this.fromRight = true, super.settings, super.child})
+    extends GoTransition {
+  final bool fromRight;
+
   this
     : super(
         builder: (route, context, animation, secondaryAnimation, child) {
+          final horizontalDirection = fromRight ? 1.0 : -1.0;
           final colors = Theme.of(context).colorScheme;
           final primarySlide =
               Tween<Offset>(
-                begin: const Offset(1.0, 0.0),
+                begin: Offset(horizontalDirection, 0.0),
                 end: Offset.zero,
               ).animate(
                 CurvedAnimation(
@@ -20,7 +24,7 @@ class CustomPageTransition({super.settings, super.child}) extends GoTransition {
           final secondarySlide =
               Tween<Offset>(
                 begin: Offset.zero,
-                end: const Offset(-0.3, 0.0),
+                end: Offset(-0.3 * horizontalDirection, 0.0),
               ).animate(
                 CurvedAnimation(
                   parent: secondaryAnimation,
@@ -39,7 +43,7 @@ class CustomPageTransition({super.settings, super.child}) extends GoTransition {
                       color: colors.shadow.withValues(alpha: 0.08),
                       blurRadius: 16,
                       spreadRadius: -4,
-                      offset: const Offset(-8, 0),
+                      offset: Offset(-8 * horizontalDirection, 0.0),
                     ),
                   ],
                 ),
