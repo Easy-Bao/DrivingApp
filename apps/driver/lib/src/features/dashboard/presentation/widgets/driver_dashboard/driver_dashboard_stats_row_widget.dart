@@ -162,13 +162,13 @@ class const DriverDashboardStatsRowWidget({
     required IconData icon,
   }) {
     return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(EasyRideSpacing.lg),
-        decoration: BoxDecoration(
-          color: context.colorScheme.surface,
-          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-          border: Border.all(color: context.colorScheme.outlineVariant),
-        ),
+      width: double.infinity,
+      padding: const EdgeInsets.all(EasyRideSpacing.lg),
+      decoration: BoxDecoration(
+        color: context.colorScheme.surface,
+        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        border: Border.all(color: context.colorScheme.outlineVariant),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

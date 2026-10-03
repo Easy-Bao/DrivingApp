@@ -474,8 +474,8 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
                     Text(
                       _formatTripTime(
                         trip,
-                        alwaysUse24HourFormat:
-                            MediaQuery.of(context).alwaysUse24HourFormat,
+                        alwaysUse24HourFormat: MediaQuery.of(context)
+                            .alwaysUse24HourFormat,
                       ),
                       style: TextStyle(
                         fontSize: 13,
@@ -541,10 +541,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
     );
   }
 
-  String _formatTripTime(
-    dynamic trip, {
-    required bool alwaysUse24HourFormat,
-  }) {
+  String _formatTripTime(dynamic trip, {required bool alwaysUse24HourFormat}) {
     final rawDate =
         driverValueAsString(trip['completed_at']) ??
         driverValueAsString(trip['created_at']);
