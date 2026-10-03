@@ -30,6 +30,12 @@ class const DriverModel({
   final String? avatarUrl;
   final String? recentFeedback;
 
+  DriverId? get typedId => DriverId.tryParse(id);
+
+  RideCoordinates get coordinates => (lat, lng);
+
+  DistanceKm get distance => DistanceKm(distanceKm);
+
   bool get hasPassengerOnboard => (onboardPassengerCount ?? 0) > 0;
 
   String get displayName {

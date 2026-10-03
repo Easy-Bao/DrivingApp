@@ -15,7 +15,7 @@ final class BookingRepositoryImpl({required this._dataSource})
   Future<Result<String, Failure>> createSession(
     BookingSessionRequest request,
   ) async {
-    if (!_validRequest(request)) {
+    if (!request.isValid) {
       return const Err(ValidationFailure('The booking request is invalid.'));
     }
     try {
@@ -76,15 +76,18 @@ final class BookingRepositoryImpl({required this._dataSource})
       final ride = nested is Map
           ? Map<String, dynamic>.from(nested)
           : const <String, dynamic>{};
-      final rideId = SafeParse.toStringValue(response['ride_id'] ?? ride['id'])
-          .trim();
-      if (rideId.isEmpty) {
+      final rideId = RideId.tryParse(
+        SafeParse.toStringValue(response['ride_id'] ?? ride['id']),
+      );
+      if (rideId == null) {
         return const Err(
           ValidationFailure('The accepted offer has no ride ID.'),
         );
       }
       final fare = SafeParse.toNullableDouble(ride['fare_amount']);
-      return Ok(AcceptedBooking(rideId: rideId, fareAmount: fare?.round()));
+      return Ok(
+        AcceptedBooking(rideId: rideId.normalized, fareAmount: fare?.round()),
+      );
     } catch (error) {
       return Err(_mapFailure(error));
     }
@@ -101,26 +104,6 @@ final class BookingRepositoryImpl({required this._dataSource})
       return Err(_mapFailure(error));
     }
   }
-}
-
-bool _validRequest(BookingSessionRequest request) {
-  return request.rideType.trim().isNotEmpty &&
-      _validCoordinate(request.pickupLatitude, request.pickupLongitude) &&
-      _validCoordinate(request.dropoffLatitude, request.dropoffLongitude) &&
-      request.distanceKm.isFinite &&
-      request.distanceKm > 0 &&
-      request.durationMinutes.isFinite &&
-      request.durationMinutes > 0 &&
-      request.customFareAmount > 0;
-}
-
-bool _validCoordinate(double latitude, double longitude) {
-  return latitude.isFinite &&
-      longitude.isFinite &&
-      latitude >= -90 &&
-      latitude <= 90 &&
-      longitude >= -180 &&
-      longitude <= 180;
 }
 
 Failure _mapFailure(Object error) {

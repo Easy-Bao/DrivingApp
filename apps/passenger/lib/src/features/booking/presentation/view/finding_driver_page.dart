@@ -606,7 +606,7 @@ class _FindingDriverPageContentState()
                         builder: (context, state) {
                           if (state is FindingNearestDriver) {
                             return FindingDriverSearchingPanelWidget(
-                              message: 'Locating nearest driver',
+                              message: state.statusMessage,
                               rideType: widget.rideType,
                               fare: widget.fare,
                               destination: widget.destination,
@@ -655,9 +655,7 @@ class _FindingDriverPageContentState()
                             );
                           } else if (state is BookingSearching) {
                             return FindingDriverSearchingPanelWidget(
-                              message: state.isDirect
-                                  ? 'Waiting For ${state.targetDriver?.displayName ?? 'Driver'}'
-                                  : 'Finding your driver',
+                              message: state.statusMessage,
                               rideType: widget.rideType,
                               fare: widget.fare,
                               destination: widget.destination,
@@ -669,9 +667,7 @@ class _FindingDriverPageContentState()
                           } else if (state is BookingOffersReceived) {
                             if (state.offers.isEmpty) {
                               return FindingDriverSearchingPanelWidget(
-                                message: state.isDirect
-                                    ? 'Waiting For ${state.targetDriver?.displayName ?? 'Driver'}'
-                                    : 'Finding your driver',
+                                message: state.statusMessage,
                                 rideType: widget.rideType,
                                 fare: widget.fare,
                                 destination: widget.destination,

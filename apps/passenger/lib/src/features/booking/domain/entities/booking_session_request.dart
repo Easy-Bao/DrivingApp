@@ -1,3 +1,5 @@
+import 'package:foundation/foundation.dart';
+
 class const BookingSessionRequest({
   required this.rideType,
   required this.pickupLatitude,
@@ -24,4 +26,22 @@ class const BookingSessionRequest({
   final int customFareAmount;
   final String passengerNote;
   final int? targetDriverId;
+
+  RideCoordinates get pickupCoordinates => (pickupLatitude, pickupLongitude);
+
+  RideCoordinates get dropoffCoordinates => (dropoffLatitude, dropoffLongitude);
+
+  DistanceKm get routeDistance => DistanceKm(distanceKm);
+
+  FareCents get customFare => FareCents(customFareAmount);
+
+  bool get isValid =>
+      rideType.trim().isNotEmpty &&
+      isValidRideCoordinates(pickupCoordinates) &&
+      isValidRideCoordinates(dropoffCoordinates) &&
+      routeDistance.value.isFinite &&
+      routeDistance.value > 0 &&
+      durationMinutes.isFinite &&
+      durationMinutes > 0 &&
+      customFare.isValid;
 }

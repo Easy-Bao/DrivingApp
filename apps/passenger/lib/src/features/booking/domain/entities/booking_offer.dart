@@ -50,6 +50,14 @@ class const BookingOffer({
   final int proposedFareAmount;
   final double? driverRating;
 
+  BookingOfferId get typedOfferId => BookingOfferId(offerId);
+
+  BookingSessionId get typedSessionId => BookingSessionId(sessionId);
+
+  DriverId get typedDriverId => DriverId(driverId);
+
+  FareCents get proposedFareCents => FareCents(proposedFareAmount);
+
   double get proposedFare => proposedFareAmount / 100;
   String get ratingLabel => driverRating?.toStringAsFixed(1) ?? '—';
 

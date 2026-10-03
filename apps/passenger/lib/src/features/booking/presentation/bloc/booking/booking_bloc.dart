@@ -631,7 +631,7 @@ class BookingBloc({
         offerId: event.offerId,
       )).fold((value) => failure = value, (value) => acceptedBooking = value);
       if (acceptedBooking == null) throw failure!;
-      final rideId = acceptedBooking!.rideId;
+      final rideId = acceptedBooking!.typedRideId.normalized;
 
       final pickupLat = _pickupLat;
       final pickupLng = _pickupLng;
