@@ -76,7 +76,9 @@ void main() {
     await tester.tap(find.text('Open'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const ValueKey('cancellation-reason-dropdown')));
+    await tester.tap(
+      find.byKey(const ValueKey('cancellation-reason-dropdown')),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Driver is taking too long').last);
@@ -110,37 +112,40 @@ void main() {
     expect(result, isFalse);
   });
 
-  testWidgets('confirms cancel ride directly when Cancel ride button is tapped', (
-    tester,
-  ) async {
-    bool? result;
+  testWidgets(
+    'confirms cancel ride directly when Cancel ride button is tapped',
+    (tester) async {
+      bool? result;
 
-    await tester.pumpWidget(
-      buildTestableWidget(
-        Builder(
-          builder: (context) {
-            return ElevatedButton(
-              onPressed: () async {
-                result = await showDialog<bool>(
-                  context: context,
-                  barrierDismissible: true,
-                  builder: (_) => const TripCancellationDialog(),
-                );
-              },
-              child: const Text('Open'),
-            );
-          },
+      await tester.pumpWidget(
+        buildTestableWidget(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () async {
+                  result = await showDialog<bool>(
+                    context: context,
+                    barrierDismissible: true,
+                    builder: (_) => const TripCancellationDialog(),
+                  );
+                },
+                child: const Text('Open'),
+              );
+            },
+          ),
         ),
-      ),
-    );
+      );
 
-    await tester.tap(find.text('Open'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Open'));
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const ValueKey('confirm-cancel-ride-button')));
-    await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('confirm-cancel-ride-button')),
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('Cancel ride?'), findsNothing);
-    expect(result, isTrue);
-  });
+      expect(find.text('Cancel ride?'), findsNothing);
+      expect(result, isTrue);
+    },
+  );
 }

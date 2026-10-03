@@ -49,10 +49,7 @@ void main() {
       find.byKey(const ValueKey<String>('inbox-loading-skeleton')),
       findsOneWidget,
     );
-    expect(
-      find.byWidgetPredicate((widget) => widget is Bone),
-      findsWidgets,
-    );
+    expect(find.byWidgetPredicate((widget) => widget is Bone), findsWidgets);
     expect(find.byType(CircularProgressIndicator), findsNothing);
   });
 }

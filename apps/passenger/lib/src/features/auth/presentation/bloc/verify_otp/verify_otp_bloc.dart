@@ -60,7 +60,9 @@ class VerifyOtpBloc(this._authRepository)
     final normalizedCode = event.code.trim();
     final normalizedEmail = event.email.trim().toLowerCase();
     if (normalizedCode.length < 6) {
-      emit(const VerifyOtpFailure('Enter the 6-digit code sent to your email.'));
+      emit(
+        const VerifyOtpFailure('Enter the 6-digit code sent to your email.'),
+      );
       return;
     }
 

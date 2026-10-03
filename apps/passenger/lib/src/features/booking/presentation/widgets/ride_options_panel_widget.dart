@@ -976,9 +976,7 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
                 maxLines: 5,
                 maxLength: 160,
                 maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                inputFormatters: [
-                  LengthLimitingTextInputFormatter(160),
-                ],
+                inputFormatters: [LengthLimitingTextInputFormatter(160)],
                 textCapitalization: TextCapitalization.sentences,
                 textInputAction: TextInputAction.newline,
                 onChanged: (value) {
@@ -1012,8 +1010,8 @@ class _RideOptionsPanelWidgetState() extends State<RideOptionsPanelWidget> {
                         final next = current.isEmpty
                             ? preset
                             : current.contains(preset)
-                                ? current
-                                : '$current. $preset';
+                            ? current
+                            : '$current. $preset';
                         final clamped = next.length > 160
                             ? next.substring(0, 160)
                             : next;

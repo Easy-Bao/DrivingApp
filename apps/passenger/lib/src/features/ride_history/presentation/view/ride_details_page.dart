@@ -144,14 +144,10 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
 
     try {
       unawaited(
-        MapProvider.fitBounds(
-          controller,
-          [
-            LatLng(ride.pickupLat, ride.pickupLng),
-            LatLng(ride.destLat, ride.destLng),
-          ],
-          padding: 44.0,
-        ),
+        MapProvider.fitBounds(controller, [
+          LatLng(ride.pickupLat, ride.pickupLng),
+          LatLng(ride.destLat, ride.destLng),
+        ], padding: 44.0),
       );
 
       unawaited(
@@ -184,13 +180,14 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
         width: 3.5,
       );
 
-      final route = await (_routeFuture ??
-          MapProvider.getRoute(
-            ride.pickupLat,
-            ride.pickupLng,
-            ride.destLat,
-            ride.destLng,
-          ));
+      final route =
+          await (_routeFuture ??
+              MapProvider.getRoute(
+                ride.pickupLat,
+                ride.pickupLng,
+                ride.destLat,
+                ride.destLng,
+              ));
 
       if (!mounted) return;
       if (route != null && route.hasGeometry) {
@@ -363,8 +360,9 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                       color: context.colorScheme.surface,
                       shape: CircleBorder(
                         side: BorderSide(
-                          color: context.colorScheme.outlineVariant
-                              .withValues(alpha: 0.4),
+                          color: context.colorScheme.outlineVariant.withValues(
+                            alpha: 0.4,
+                          ),
                           width: 1.0,
                         ),
                       ),

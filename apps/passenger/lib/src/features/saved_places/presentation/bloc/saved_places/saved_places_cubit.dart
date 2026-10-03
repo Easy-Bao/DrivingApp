@@ -45,11 +45,7 @@ class SavedPlacesCubit({required this._repository})
       await replacePlace(homeIndex, updated);
     } else if (trimmed.isNotEmpty) {
       await addPlace(
-        SavedPlace(
-          label: 'Home',
-          iconName: 'house',
-          savedAddress: trimmed,
-        ),
+        SavedPlace(label: 'Home', iconName: 'house', savedAddress: trimmed),
       );
     }
   }

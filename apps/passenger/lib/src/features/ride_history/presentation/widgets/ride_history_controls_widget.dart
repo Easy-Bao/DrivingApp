@@ -213,21 +213,22 @@ class const _RideHistoryFilterChip({
             decoration: BoxDecoration(
               color: isSelected
                   ? context.colorScheme.primary
-                  : context.colorScheme.surfaceContainerHighest
-                      .withValues(alpha: 0.35),
+                  : context.colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.35,
+                    ),
               borderRadius: radius,
               border: Border.all(
                 color: isSelected
                     ? context.colorScheme.primary
-                    : context.colorScheme.outlineVariant
-                        .withValues(alpha: 0.6),
+                    : context.colorScheme.outlineVariant.withValues(alpha: 0.6),
                 width: 1.0,
               ),
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: context.colorScheme.primary
-                            .withValues(alpha: 0.2),
+                        color: context.colorScheme.primary.withValues(
+                          alpha: 0.2,
+                        ),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),

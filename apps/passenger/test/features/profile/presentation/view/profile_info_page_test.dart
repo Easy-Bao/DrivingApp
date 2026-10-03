@@ -144,10 +144,8 @@ void main() {
   testWidgets('rejects photo uploads exceeding 5MB', (tester) async {
     await tester.pumpWidget(
       buildSubject(
-        pickPhoto: () async => XFile.fromData(
-          Uint8List(6 * 1024 * 1024),
-          path: '',
-        ),
+        pickPhoto: () async =>
+            XFile.fromData(Uint8List(6 * 1024 * 1024), path: ''),
       ),
     );
 
@@ -157,7 +155,9 @@ void main() {
     await tester.pump();
 
     expect(
-      find.text('Selected photo exceeds 5MB limit. Please choose a smaller image.'),
+      find.text(
+        'Selected photo exceeds 5MB limit. Please choose a smaller image.',
+      ),
       findsOneWidget,
     );
     expect(
