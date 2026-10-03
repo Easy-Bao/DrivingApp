@@ -60,17 +60,7 @@ class const SocialLoginWidget({
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Image.asset(
-                    'assets/icons/google.png',
-                    package: 'design_system',
-                    width: 22,
-                    height: 22,
-                    errorBuilder: (context, error, stackTrace) => Icon(
-                      Icons.g_mobiledata,
-                      size: 24,
-                      color: context.colorScheme.onSurface,
-                    ),
-                  ),
+                  const GoogleLogo(),
                   const SizedBox(width: 12),
                   Text(
                     label,
