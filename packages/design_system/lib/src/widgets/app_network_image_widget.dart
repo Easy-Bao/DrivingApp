@@ -31,10 +31,7 @@ class const AppNetworkImageWidget({
         decoration: BoxDecoration(
           color: colors.surfaceContainerHighest,
           borderRadius: effectiveRadius,
-          border: Border.all(
-            color: const Color(0x14000000),
-            width: 1,
-          ),
+          border: Border.all(color: const Color(0x14000000), width: 1),
         ),
         child: Icon(
           fallbackIcon,
@@ -49,10 +46,7 @@ class const AppNetworkImageWidget({
       height: height,
       decoration: BoxDecoration(
         borderRadius: effectiveRadius,
-        border: Border.all(
-          color: const Color(0x14000000),
-          width: 1,
-        ),
+        border: Border.all(color: const Color(0x14000000), width: 1),
       ),
       child: ClipRRect(
         borderRadius: effectiveRadius,

@@ -25,7 +25,10 @@ void main() {
       queryParameters: {'refresh_token': 'secret-refresh-token'},
       headers: {'Authorization': 'Bearer secret-header-token'},
     );
-    final response = Response<Object?>(requestOptions: options, statusCode: 401);
+    final response = Response<Object?>(
+      requestOptions: options,
+      statusCode: 401,
+    );
     final error = DioException(
       requestOptions: options,
       response: response,

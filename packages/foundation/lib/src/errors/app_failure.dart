@@ -65,7 +65,8 @@ class const AppFailure({
     if (_isOffline(error)) {
       return createFailure(
         title: 'No connection',
-        userMessage: "Couldn't connect. Check your internet connection and try again.",
+        userMessage:
+            "Couldn't connect. Check your internet connection and try again.",
         actionText: 'Retry',
         type: ErrorType.network,
       );
@@ -74,7 +75,8 @@ class const AppFailure({
     if (_isSocketDisconnected(error)) {
       return createFailure(
         title: 'Connection interrupted',
-        userMessage: "Couldn't connect. Check your internet connection and try again.",
+        userMessage:
+            "Couldn't connect. Check your internet connection and try again.",
         actionText: 'Retry',
         type: ErrorType.network,
       );
@@ -91,7 +93,8 @@ class const AppFailure({
     if (error is NetworkFailure) {
       return createFailure(
         title: 'No connection',
-        userMessage: "Couldn't connect. Check your internet connection and try again.",
+        userMessage:
+            "Couldn't connect. Check your internet connection and try again.",
         actionText: 'Retry',
         type: ErrorType.network,
       );

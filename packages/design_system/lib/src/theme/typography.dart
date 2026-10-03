@@ -96,11 +96,7 @@ abstract final class EasyRideTypography {
 }
 
 extension EasyRideTextStyleX on TextStyle {
-  
   TextStyle get tabular => copyWith(
-        fontFeatures: [
-          ...?fontFeatures,
-          const FontFeature.tabularFigures(),
-        ],
-      );
+    fontFeatures: [...?fontFeatures, const FontFeature.tabularFigures()],
+  );
 }

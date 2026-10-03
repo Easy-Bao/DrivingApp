@@ -85,9 +85,7 @@ class const AppStatusBanner({
         ),
       ),
     );
-    final statusSurface = canAct
-        ? banner
-        : IgnorePointer(child: banner);
+    final statusSurface = canAct ? banner : IgnorePointer(child: banner);
 
     return Positioned(
       top: 0,

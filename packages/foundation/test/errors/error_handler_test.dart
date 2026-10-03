@@ -11,10 +11,7 @@ void main() {
       const ServerFailure('database password leaked by the server'),
     );
 
-    expect(
-      message,
-      'Something went wrong. Try again.',
-    );
+    expect(message, 'Something went wrong. Try again.');
     expect(message, isNot(contains('database')));
   });
 

@@ -48,9 +48,7 @@ final class DemandHeatmapViewportCoordinator<T> {
 
     final visibleTiles = _tilesFor(viewport);
     await Future.wait(visibleTiles.map(_loadIfNeeded));
-    return [
-      for (final tile in visibleTiles) ...?_loadedTiles[tile],
-    ];
+    return [for (final tile in visibleTiles) ...?_loadedTiles[tile]];
   }
 
   void clear() {
@@ -81,12 +79,16 @@ final class DemandHeatmapViewportCoordinator<T> {
     final minLongitudeTile = _tileIndex(viewport.minLongitude);
     final maxLongitudeTile = _tileIndex(viewport.maxLongitude);
     final tiles = <_HeatmapTile>[];
-    for (var latitude = minLatitudeTile;
-        latitude <= maxLatitudeTile;
-        latitude++) {
-      for (var longitude = minLongitudeTile;
-          longitude <= maxLongitudeTile;
-          longitude++) {
+    for (
+      var latitude = minLatitudeTile;
+      latitude <= maxLatitudeTile;
+      latitude++
+    ) {
+      for (
+        var longitude = minLongitudeTile;
+        longitude <= maxLongitudeTile;
+        longitude++
+      ) {
         tiles.add(_HeatmapTile(latitude, longitude));
       }
     }

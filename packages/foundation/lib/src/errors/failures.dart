@@ -6,7 +6,8 @@ abstract class const Failure(this.message) implements Exception {
 }
 
 class const NetworkFailure([
-  super.message = "Couldn't connect. Check your internet connection and try again.",
+  super.message =
+      "Couldn't connect. Check your internet connection and try again.",
 ]) extends Failure {}
 
 class const ValidationFailure([super.message = 'Check the highlighted fields.'])

@@ -5,16 +5,12 @@ import 'package:dio/dio.dart';
 import 'package:foundation/src/errors/exceptions.dart';
 import 'package:foundation/src/errors/failures.dart';
 
-const _defaultServerMessage =
-    'Something went wrong. Try again.';
-const _defaultValidationMessage =
-    'Check the highlighted fields.';
+const _defaultServerMessage = 'Something went wrong. Try again.';
+const _defaultValidationMessage = 'Check the highlighted fields.';
 const _defaultNetworkMessage =
     "Couldn't connect. Check your internet connection and try again.";
-const _defaultTimeoutMessage =
-    'The request took too long. Try again.';
-const _defaultCacheMessage =
-    'Saved information is unavailable. Try again.';
+const _defaultTimeoutMessage = 'The request took too long. Try again.';
+const _defaultCacheMessage = 'Saved information is unavailable. Try again.';
 
 /// Converts transport and storage exceptions into safe domain failures.
 ///
