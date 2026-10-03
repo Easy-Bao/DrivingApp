@@ -190,13 +190,14 @@ type RideSettlement struct {
 }
 
 type User struct {
-	ID           int32       `db:"id"`
-	Name         pgtype.Text `db:"name"`
-	Phone        string      `db:"phone"`
-	Email        string      `db:"email"`
-	PasswordHash string      `db:"password_hash"`
-	Role         string      `db:"role"`
-	IsVerified   bool        `db:"is_verified"`
+	ID            int32       `db:"id"`
+	Name          pgtype.Text `db:"name"`
+	Phone         string      `db:"phone"`
+	Email         string      `db:"email"`
+	PasswordHash  string      `db:"password_hash"`
+	Role          string      `db:"role"`
+	IsVerified    bool        `db:"is_verified"`
+	AccountStatus string      `db:"account_status"`
 }
 
 type WalletLedger struct {

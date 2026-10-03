@@ -70,7 +70,7 @@ func (repository *RefreshSessionRepository) FindActive(
 	}
 	row, err := repository.queries.GetActiveRefreshSession(ctx, databasepostgres.GetActiveRefreshSessionParams{
 		TokenHash: tokenHash,
-		ExpiresAt: toPostgresTimestamp(now),
+		Now:       toPostgresTimestamp(now),
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.RefreshSession{}, domain.ErrInvalidRefreshToken
@@ -112,7 +112,7 @@ func (repository *RefreshSessionRepository) Rotate(
 		ctx,
 		databasepostgres.GetActiveRefreshSessionForUpdateParams{
 			TokenHash: tokenHash,
-			ExpiresAt: toPostgresTimestamp(now),
+			Now:       toPostgresTimestamp(now),
 		},
 	)
 	if errors.Is(err, pgx.ErrNoRows) {

@@ -15,7 +15,8 @@ LIMIT 1;
 UPDATE users
 SET name = $2, phone = $3, email = $4
 WHERE id = $1
-RETURNING id, name, phone, email, password_hash, role, is_verified;
+RETURNING id, name, phone, email, password_hash, role, is_verified,
+    account_status;
 
 -- name: UpdateDriverProfile :one
 UPDATE driver_profiles
@@ -25,8 +26,9 @@ RETURNING id, user_id, name, vehicle_type, plate_number, rating, is_online;
 
 -- name: UpdateDriverOnlineStatus :one
 UPDATE driver_profiles
-SET is_online = $2
-WHERE user_id = $1 AND (user_id = $3 OR id = $3)
+SET is_online = sqlc.arg('is_online')
+WHERE user_id = sqlc.arg('user_id')
+  AND (user_id = sqlc.arg('target_id') OR id = sqlc.arg('target_id'))
 RETURNING id, user_id, name, vehicle_type, plate_number, rating, is_online;
 
 -- name: UpdatePassengerProfile :one

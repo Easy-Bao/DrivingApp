@@ -10,7 +10,8 @@ import (
 )
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, name, phone, email, password_hash, role, is_verified
+SELECT id, name, phone, email, password_hash, role, is_verified,
+    account_status
 FROM users
 WHERE email = $1
 LIMIT 1
@@ -27,12 +28,14 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.PasswordHash,
 		&i.Role,
 		&i.IsVerified,
+		&i.AccountStatus,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, name, phone, email, password_hash, role, is_verified
+SELECT id, name, phone, email, password_hash, role, is_verified,
+    account_status
 FROM users
 WHERE id = $1
 LIMIT 1
@@ -49,6 +52,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id int32) (User, error) {
 		&i.PasswordHash,
 		&i.Role,
 		&i.IsVerified,
+		&i.AccountStatus,
 	)
 	return i, err
 }

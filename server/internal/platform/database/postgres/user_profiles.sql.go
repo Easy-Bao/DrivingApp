@@ -117,6 +117,35 @@ func (q *Queries) ListNotifications(ctx context.Context, arg ListNotificationsPa
 	return items, nil
 }
 
+const updateDriverOnlineStatus = `-- name: UpdateDriverOnlineStatus :one
+UPDATE driver_profiles
+SET is_online = $1
+WHERE user_id = $2
+  AND (user_id = $3 OR id = $3)
+RETURNING id, user_id, name, vehicle_type, plate_number, rating, is_online
+`
+
+type UpdateDriverOnlineStatusParams struct {
+	IsOnline bool  `db:"is_online"`
+	UserID   int32 `db:"user_id"`
+	TargetID int32 `db:"target_id"`
+}
+
+func (q *Queries) UpdateDriverOnlineStatus(ctx context.Context, arg UpdateDriverOnlineStatusParams) (DriverProfile, error) {
+	row := q.db.QueryRow(ctx, updateDriverOnlineStatus, arg.IsOnline, arg.UserID, arg.TargetID)
+	var i DriverProfile
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Name,
+		&i.VehicleType,
+		&i.PlateNumber,
+		&i.Rating,
+		&i.IsOnline,
+	)
+	return i, err
+}
+
 const updateDriverProfile = `-- name: UpdateDriverProfile :one
 UPDATE driver_profiles
 SET name = $2, vehicle_type = $3, plate_number = $4, is_online = $5
@@ -139,41 +168,6 @@ func (q *Queries) UpdateDriverProfile(ctx context.Context, arg UpdateDriverProfi
 		arg.VehicleType,
 		arg.PlateNumber,
 		arg.IsOnline,
-	)
-	var i DriverProfile
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.Name,
-		&i.VehicleType,
-		&i.PlateNumber,
-		&i.Rating,
-		&i.IsOnline,
-	)
-	return i, err
-}
-
-const updateDriverOnlineStatus = `-- name: UpdateDriverOnlineStatus :one
-UPDATE driver_profiles
-SET is_online = $2
-WHERE user_id = $1 AND (user_id = $3 OR id = $3)
-RETURNING id, user_id, name, vehicle_type, plate_number, rating, is_online
-`
-
-type UpdateDriverOnlineStatusParams struct {
-	UserID   int32 `db:"user_id"`
-	IsOnline bool  `db:"is_online"`
-	TargetID int32 `db:"target_id"`
-}
-
-func (q *Queries) UpdateDriverOnlineStatus(
-	ctx context.Context,
-	arg UpdateDriverOnlineStatusParams,
-) (DriverProfile, error) {
-	row := q.db.QueryRow(ctx, updateDriverOnlineStatus,
-		arg.UserID,
-		arg.IsOnline,
-		arg.TargetID,
 	)
 	var i DriverProfile
 	err := row.Scan(
@@ -250,7 +244,8 @@ const updateUserProfile = `-- name: UpdateUserProfile :one
 UPDATE users
 SET name = $2, phone = $3, email = $4
 WHERE id = $1
-RETURNING id, name, phone, email, password_hash, role, is_verified
+RETURNING id, name, phone, email, password_hash, role, is_verified,
+    account_status
 `
 
 type UpdateUserProfileParams struct {
@@ -276,6 +271,7 @@ func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfilePa
 		&i.PasswordHash,
 		&i.Role,
 		&i.IsVerified,
+		&i.AccountStatus,
 	)
 	return i, err
 }

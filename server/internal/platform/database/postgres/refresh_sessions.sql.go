@@ -38,7 +38,7 @@ LIMIT 1
 
 type GetActiveRefreshSessionParams struct {
 	TokenHash string             `db:"token_hash"`
-	ExpiresAt pgtype.Timestamptz `db:"expires_at"`
+	Now       pgtype.Timestamptz `db:"now"`
 }
 
 type GetActiveRefreshSessionRow struct {
@@ -49,7 +49,7 @@ type GetActiveRefreshSessionRow struct {
 }
 
 func (q *Queries) GetActiveRefreshSession(ctx context.Context, arg GetActiveRefreshSessionParams) (GetActiveRefreshSessionRow, error) {
-	row := q.db.QueryRow(ctx, getActiveRefreshSession, arg.TokenHash, arg.ExpiresAt)
+	row := q.db.QueryRow(ctx, getActiveRefreshSession, arg.TokenHash, arg.Now)
 	var i GetActiveRefreshSessionRow
 	err := row.Scan(
 		&i.ID,
@@ -72,7 +72,7 @@ FOR UPDATE
 
 type GetActiveRefreshSessionForUpdateParams struct {
 	TokenHash string             `db:"token_hash"`
-	ExpiresAt pgtype.Timestamptz `db:"expires_at"`
+	Now       pgtype.Timestamptz `db:"now"`
 }
 
 type GetActiveRefreshSessionForUpdateRow struct {
@@ -83,7 +83,7 @@ type GetActiveRefreshSessionForUpdateRow struct {
 }
 
 func (q *Queries) GetActiveRefreshSessionForUpdate(ctx context.Context, arg GetActiveRefreshSessionForUpdateParams) (GetActiveRefreshSessionForUpdateRow, error) {
-	row := q.db.QueryRow(ctx, getActiveRefreshSessionForUpdate, arg.TokenHash, arg.ExpiresAt)
+	row := q.db.QueryRow(ctx, getActiveRefreshSessionForUpdate, arg.TokenHash, arg.Now)
 	var i GetActiveRefreshSessionForUpdateRow
 	err := row.Scan(
 		&i.ID,

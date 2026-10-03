@@ -52,7 +52,8 @@ func (q *Queries) CreatePassengerProfile(ctx context.Context, arg CreatePassenge
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (name, phone, email, password_hash, role, is_verified)
 VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, name, phone, email, password_hash, role, is_verified
+RETURNING id, name, phone, email, password_hash, role, is_verified,
+    account_status
 `
 
 type CreateUserParams struct {
@@ -82,6 +83,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.PasswordHash,
 		&i.Role,
 		&i.IsVerified,
+		&i.AccountStatus,
 	)
 	return i, err
 }

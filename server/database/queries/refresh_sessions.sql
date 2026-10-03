@@ -5,17 +5,17 @@ VALUES ($1, $2, $3);
 -- name: GetActiveRefreshSession :one
 SELECT id, user_id, token_hash, expires_at
 FROM refresh_sessions
-WHERE token_hash = $1
-  AND (revoked_at IS NULL OR rotation_grace_until > $2)
-  AND expires_at > $2
+WHERE token_hash = sqlc.arg('token_hash')
+  AND (revoked_at IS NULL OR rotation_grace_until > sqlc.arg('now'))
+  AND expires_at > sqlc.arg('now')
 LIMIT 1;
 
 -- name: GetActiveRefreshSessionForUpdate :one
 SELECT id, user_id, token_hash, expires_at
 FROM refresh_sessions
-WHERE token_hash = $1
-  AND (revoked_at IS NULL OR rotation_grace_until > $2)
-  AND expires_at > $2
+WHERE token_hash = sqlc.arg('token_hash')
+  AND (revoked_at IS NULL OR rotation_grace_until > sqlc.arg('now'))
+  AND expires_at > sqlc.arg('now')
 LIMIT 1
 FOR UPDATE;
 
