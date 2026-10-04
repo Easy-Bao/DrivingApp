@@ -76,8 +76,9 @@ type RideTransition struct {
 }
 
 const (
-	RideEventStatusChanged = "ride.status_changed"
-	RideEventCancelled     = "ride.cancelled"
+	RideEventStatusChanged    = "ride.status_changed"
+	RideEventCancelled        = "ride.cancelled"
+	RideEventEmergencyStopped = "ride.emergency_stopped"
 )
 
 func NormalizeCancellationReason(value string) CancellationReason {

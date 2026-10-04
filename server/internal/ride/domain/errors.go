@@ -26,6 +26,8 @@ var (
 	ErrCompletionLocation      = errors.New("driver is not close enough to the destination")
 	ErrPassengerNoShowNotReady = errors.New("the passenger wait period has not elapsed")
 	ErrNoShowCommand           = errors.New("passenger no-show requires the no-show command")
+	ErrEmergencyStopNotAllowed = errors.New("emergency stop is not available for this ride")
+	ErrInvalidEmergencyStop    = errors.New("invalid emergency stop")
 	ErrReviewNotAllowed        = errors.New("reviews are allowed only after a completed ride")
 	ErrReviewAlreadySubmitted  = errors.New("a review was already submitted for this ride")
 	ErrSafetyReportNotAllowed  = errors.New("you cannot report this ride")

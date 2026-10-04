@@ -313,3 +313,38 @@ func TestCancelRejectsReasonFromWrongActor(t *testing.T) {
 		t.Fatalf("expected invalid cancellation, got %v", err)
 	}
 }
+
+func TestEmergencyStopUsesSafetyAttributionAfterTripStart(t *testing.T) {
+	driverID := 42
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:          1,
+			PassengerID: 10,
+			DriverID:    &driverID,
+			Status:      string(domain.RideInTransit),
+		},
+	}
+	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
+
+	updated, err := service.EmergencyStop(context.Background(), domain.EmergencyStopRequest{
+		RideID:  1,
+		ActorID: driverID,
+		Reason:  domain.EmergencyStopReasonAccident,
+		Details: "Minor collision; passenger is safe.",
+	})
+	if err != nil {
+		t.Fatalf("EmergencyStop() error = %v", err)
+	}
+	if updated.Status != string(domain.RideCancelled) {
+		t.Fatalf("status = %q, want cancelled", updated.Status)
+	}
+	if store.transition.EventType != domain.RideEventEmergencyStopped {
+		t.Fatalf("event type = %q, want %q", store.transition.EventType, domain.RideEventEmergencyStopped)
+	}
+	if store.transition.Reason != domain.CancellationReason(domain.EmergencyStopReasonAccident) {
+		t.Fatalf("reason = %q, want %q", store.transition.Reason, domain.EmergencyStopReasonAccident)
+	}
+	if store.transition.Responsibility != domain.CancellationResponsibilitySafetyRelated {
+		t.Fatalf("responsibility = %q, want %q", store.transition.Responsibility, domain.CancellationResponsibilitySafetyRelated)
+	}
+}

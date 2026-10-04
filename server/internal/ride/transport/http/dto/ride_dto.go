@@ -41,6 +41,11 @@ type CancellationRequest struct {
 	Details string `json:"details"`
 }
 
+type EmergencyStopRequest struct {
+	Reason  string `json:"reason"`
+	Details string `json:"details"`
+}
+
 type ArrivalRequest struct {
 	Latitude  *float64 `json:"latitude"`
 	Longitude *float64 `json:"longitude"`

@@ -408,9 +408,13 @@ func (repository *RideRepository) UpdateStatus(
 		)
 	}
 	if next == domain.RideCancelled {
+		auditAction := "ride.cancelled"
+		if transition.EventType == domain.RideEventEmergencyStopped {
+			auditAction = "ride.emergency_stopped"
+		}
 		if _, err := transactionQueries.CreateAuditEvent(ctx, databasepostgres.CreateAuditEventParams{
 			ActorID:    dbActorID,
-			Action:     "ride.cancelled",
+			Action:     auditAction,
 			TargetType: "ride",
 			TargetID:   pgtype.Text{String: strconv.Itoa(rideID), Valid: true},
 			Outcome:    "success",

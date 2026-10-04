@@ -286,6 +286,73 @@ func (service *Service) Cancel(ctx context.Context, request domain.CancellationR
 	})
 }
 
+// EmergencyStop ends an active ride through a dedicated safety command. It
+// records the safety attribution and reason in the same atomic status update,
+// rather than routing an emergency through ordinary cancellation policy.
+func (service *Service) EmergencyStop(
+	ctx context.Context,
+	request domain.EmergencyStopRequest,
+) (domain.Ride, error) {
+	if service.store == nil {
+		return domain.Ride{}, ErrPersistenceUnavailable
+	}
+	current, err := service.store.Get(ctx, request.RideID)
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("load ride for emergency stop: %w", err)
+	}
+	isPassenger := current.PassengerID == request.ActorID
+	isDriver := current.DriverID != nil && *current.DriverID == request.ActorID
+	if !isPassenger && !isDriver {
+		return domain.Ride{}, domain.ErrUnauthorizedRide
+	}
+
+	reason := domain.NormalizeEmergencyStopReason(string(request.Reason))
+	if current.Status == string(domain.RideCancelled) &&
+		current.CancelledBy != nil &&
+		*current.CancelledBy == request.ActorID &&
+		domain.NormalizeEmergencyStopReason(current.CancellationReason) == reason {
+		return current, nil
+	}
+	normalizedReason, details, err := domain.ValidateEmergencyStop(
+		current.Status,
+		request.Reason,
+		request.Details,
+	)
+	if err != nil {
+		return domain.Ride{}, err
+	}
+
+	updated, err := service.store.UpdateStatus(
+		ctx,
+		request.RideID,
+		request.ActorID,
+		current.Status,
+		string(domain.RideCancelled),
+		domain.RideTransition{
+			EventType:      domain.RideEventEmergencyStopped,
+			Reason:         domain.CancellationReason(normalizedReason),
+			Responsibility: domain.CancellationResponsibilitySafetyRelated,
+			Details:        details,
+		},
+	)
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("emergency stop ride: %w", err)
+	}
+	service.publish(
+		ctx,
+		event.RideStatusChanged,
+		updated,
+		map[string]any{
+			"previous_status": current.Status,
+			"reason":          string(normalizedReason),
+			"responsibility":  string(domain.CancellationResponsibilitySafetyRelated),
+			"emergency_stop":  true,
+			"ride":            updated,
+		},
+	)
+	return updated, nil
+}
+
 func (service *Service) transition(
 	ctx context.Context,
 	rideID, actorID int,

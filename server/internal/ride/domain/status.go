@@ -54,6 +54,22 @@ func CanTransition(current, next string) bool {
 	}
 }
 
+// CanEmergencyStop identifies active states where a participant may need to
+// end a ride early for a safety reason. This is deliberately separate from
+// CanTransition because ordinary cancellation is not valid after pickup.
+func CanEmergencyStop(status string) bool {
+	normalized, ok := NormalizeRideStatus(status)
+	if !ok {
+		return false
+	}
+	switch normalized {
+	case RideAssigned, RideAccepted, RideArrived, RideInTransit:
+		return true
+	default:
+		return false
+	}
+}
+
 func IsActive(status string) bool {
 	normalized, ok := NormalizeRideStatus(status)
 	if !ok {

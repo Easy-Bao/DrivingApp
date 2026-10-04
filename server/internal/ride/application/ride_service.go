@@ -268,6 +268,13 @@ func (service *RideService) CancelRide(
 	return service.lifecycleService.Cancel(ctx, request)
 }
 
+func (service *RideService) EmergencyStop(
+	ctx context.Context,
+	request domain.EmergencyStopRequest,
+) (domain.Ride, error) {
+	return service.lifecycleService.EmergencyStop(ctx, request)
+}
+
 func (service *RideService) MarkArrived(
 	ctx context.Context,
 	rideID, driverID int,

@@ -34,6 +34,7 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 		driverOnly := middleware.RequireRole(security.RoleDriver)
 		protected.Post(apiPrefix+"/rides/{id}/status", router.handler.UpdateStatus)
 		protected.Post(apiPrefix+"/rides/{id}/cancel", router.handler.CancelRide)
+		protected.Post(apiPrefix+"/rides/{id}/emergency-stop", router.handler.EmergencyStop)
 		protected.Post(apiPrefix+"/rides/{id}/reports", router.handler.CreateSafetyReport)
 		protected.Get(apiPrefix+"/rides/{id}", router.handler.GetRide)
 		protected.Get(apiPrefix+"/rides/{id}/counterparty", router.handler.Counterparty)

@@ -240,6 +240,35 @@ func (handler *Handler) CancelRide(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, ride)
 }
 
+func (handler *Handler) EmergencyStop(w http.ResponseWriter, r *http.Request) {
+	actorID, ok := handler.identity(r)
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid ride id")
+		return
+	}
+	var input dto.EmergencyStopRequest
+	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil || strings.TrimSpace(input.Reason) == "" {
+		response.Error(w, http.StatusBadRequest, "an emergency reason is required")
+		return
+	}
+	ride, err := handler.service.EmergencyStop(r.Context(), domain.EmergencyStopRequest{
+		RideID:  rideID,
+		ActorID: actorID,
+		Reason:  domain.EmergencyStopReason(input.Reason),
+		Details: input.Details,
+	})
+	if err != nil {
+		response.Error(w, rideErrorStatus(err), safeRideError(err))
+		return
+	}
+	response.JSON(w, http.StatusOK, ride)
+}
+
 func (handler *Handler) SettleCash(w http.ResponseWriter, r *http.Request) {
 	driverID, ok := handler.identity(r)
 	if !ok {
@@ -925,6 +954,8 @@ func rideErrorStatus(err error) int {
 		return http.StatusBadRequest
 	case errors.Is(err, domain.ErrInvalidCancellation):
 		return http.StatusBadRequest
+	case errors.Is(err, domain.ErrInvalidEmergencyStop):
+		return http.StatusBadRequest
 	case errors.Is(err, domain.ErrArrivalLocation),
 		errors.Is(err, domain.ErrCompletionLocation):
 		return http.StatusUnprocessableEntity
@@ -949,7 +980,8 @@ func rideErrorStatus(err error) int {
 		errors.Is(err, domain.ErrTripStartCommand),
 		errors.Is(err, domain.ErrTripCompletionCommand),
 		errors.Is(err, domain.ErrPassengerNoShowNotReady),
-		errors.Is(err, domain.ErrNoShowCommand):
+		errors.Is(err, domain.ErrNoShowCommand),
+		errors.Is(err, domain.ErrEmergencyStopNotAllowed):
 		return 409
 	default:
 		return 500
@@ -984,6 +1016,10 @@ func safeRideError(err error) string {
 		return "Use the cancellation action with a reason."
 	case errors.Is(err, domain.ErrInvalidCancellation):
 		return "Choose a valid cancellation reason for this ride."
+	case errors.Is(err, domain.ErrInvalidEmergencyStop):
+		return "Choose a valid emergency reason for this ride."
+	case errors.Is(err, domain.ErrEmergencyStopNotAllowed):
+		return "An emergency stop is not available for this ride right now."
 	case errors.Is(err, domain.ErrArrivalCommand):
 		return "Confirm arrival from the pickup action with location enabled."
 	case errors.Is(err, domain.ErrArrivalLocation):
