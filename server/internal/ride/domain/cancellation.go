@@ -162,9 +162,11 @@ func passengerCancellationResponsibility(reason CancellationReason) Cancellation
 	switch reason {
 	case CancellationReasonDriverTakingTooLong,
 		CancellationReasonDriverAskedToCancel,
-		CancellationReasonDriverNoShow:
-		return CancellationResponsibilityDriverFault
-	case CancellationReasonOther:
+		CancellationReasonDriverNoShow,
+		CancellationReasonOther:
+		// These are passenger claims until corroborated by server telemetry,
+		// timestamps, or another evidence source. They must not immediately
+		// reduce the driver's standing.
 		return CancellationResponsibilityPendingReview
 	default:
 		return CancellationResponsibilityPassengerFault
@@ -175,20 +177,21 @@ func driverCancellationResponsibility(reason CancellationReason) CancellationRes
 	switch reason {
 	case CancellationReasonPassengerRequestedCancel,
 		CancellationReasonPassengerUnreachable,
-		CancellationReasonPassengerBehaviorUnsafe:
-		return CancellationResponsibilityPassengerFault
+		CancellationReasonOther:
+		// A driver's statement alone is not enough to penalize a passenger.
+		// Passenger no-show is attributed separately after the server timer.
+		return CancellationResponsibilityPendingReview
 	case CancellationReasonVehicleProblem:
 		return CancellationResponsibilityDriverFault
 	case CancellationReasonMedicalEmergency,
 		CancellationReasonUnsafePickup,
+		CancellationReasonPassengerBehaviorUnsafe,
 		CancellationReasonAccident:
 		return CancellationResponsibilitySafetyRelated
 	case CancellationReasonRoadBlocked,
 		CancellationReasonPickupInaccessible,
 		CancellationReasonUnableToContinue:
 		return CancellationResponsibilityNoFault
-	case CancellationReasonOther:
-		return CancellationResponsibilityPendingReview
 	default:
 		return CancellationResponsibilityPendingReview
 	}

@@ -406,7 +406,7 @@ func TestMarkPassengerNoShowPersistsAfterTheDeadline(t *testing.T) {
 	}
 }
 
-func TestCancelDerivesDriverResponsibilityFromPassengerReason(t *testing.T) {
+func TestCancelDefersUnverifiedDriverFaultClaim(t *testing.T) {
 	driverID := 42
 	store := &fakeLifecycleStore{
 		ride: domain.Ride{
@@ -432,8 +432,8 @@ func TestCancelDerivesDriverResponsibilityFromPassengerReason(t *testing.T) {
 	if store.transition.Reason != domain.CancellationReasonDriverNoShow {
 		t.Fatalf("reason = %q, want %q", store.transition.Reason, domain.CancellationReasonDriverNoShow)
 	}
-	if store.transition.Responsibility != domain.CancellationResponsibilityDriverFault {
-		t.Fatalf("responsibility = %q, want %q", store.transition.Responsibility, domain.CancellationResponsibilityDriverFault)
+	if store.transition.Responsibility != domain.CancellationResponsibilityPendingReview {
+		t.Fatalf("responsibility = %q, want %q", store.transition.Responsibility, domain.CancellationResponsibilityPendingReview)
 	}
 }
 
