@@ -14,6 +14,7 @@ import 'package:driver/src/features/active_ride/presentation/widgets/driver_safe
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_emergency_button.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_ride_cancellation_sheet.dart';
 import 'package:driver/src/features/active_ride/active_ride_routes.dart';
+import 'package:driver/src/features/dashboard/dashboard_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -344,6 +345,20 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
     }
   }
 
+  Future<bool> _emergencyStop(String reason, String details) async {
+    if (!mounted) return false;
+    final stopped = await BlocProvider.of<RideFlowCubit>(context)
+        .emergencyStop(reason: reason, details: details);
+    if (!stopped && mounted) {
+      CustomToast.show(
+        context,
+        'The ride could not be ended for safety. Please try again.',
+        isError: true,
+      );
+    }
+    return stopped;
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider<LiveMapBloc>.value(
@@ -503,7 +518,12 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          const DriverEmergencyButton(),
+          DriverEmergencyButton(
+            onEmergencyStop: _emergencyStop,
+            onEmergencyStopCompleted: () {
+              if (mounted) context.goNamed(DashboardRoutes.dashboard);
+            },
+          ),
           DriverSafetyReportButton(
             rideId: BlocProvider.of<RideFlowCubit>(context).activeRideId,
             rideRepository: widget.rideRepository,

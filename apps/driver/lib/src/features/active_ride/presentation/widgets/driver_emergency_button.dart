@@ -6,17 +6,257 @@ import 'package:url_launcher/url_launcher.dart';
 
 const _emergencyContactNumber = '911';
 
-class const DriverEmergencyButton({super.key}) extends StatelessWidget {
+typedef DriverEmergencyStopCallback = Future<bool> Function(
+  String reason,
+  String details,
+);
+
+class const DriverEmergencyButton({
+  super.key,
+  required this.onEmergencyStop,
+  this.onEmergencyStopCompleted,
+}) extends StatelessWidget {
+  final DriverEmergencyStopCallback onEmergencyStop;
+  final VoidCallback? onEmergencyStopCompleted;
+
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      onPressed: () => unawaited(showDriverEmergencyContacts(context)),
+      onPressed: () => unawaited(_openEmergencyActions(context)),
       tooltip: 'Call emergency services (911)',
       icon: const Icon(Icons.emergency_outlined),
       color: context.colorScheme.error,
       constraints: const BoxConstraints(
         minWidth: EasyRideSize.minimumTouchTarget,
         minHeight: EasyRideSize.minimumTouchTarget,
+      ),
+    );
+  }
+
+  Future<void> _openEmergencyActions(BuildContext context) async {
+    final stopped = await showDriverEmergencyActionSheet(
+      context,
+      onEmergencyStop: onEmergencyStop,
+    );
+    if (stopped && context.mounted) {
+      onEmergencyStopCompleted?.call();
+    }
+  }
+}
+
+const _driverEmergencyStopReasons = <String, String>{
+  'accident': 'Accident or collision',
+  'medical_emergency': 'Medical emergency',
+  'threat_or_violence': 'Threat or violence',
+  'vehicle_breakdown': 'Vehicle breakdown',
+  'road_hazard': 'Road hazard or disaster',
+  'police_or_disaster': 'Police checkpoint or disaster',
+  'other': 'Other serious emergency',
+};
+
+Future<bool> showDriverEmergencyActionSheet(
+  BuildContext context, {
+  required DriverEmergencyStopCallback onEmergencyStop,
+}) async {
+  return await showModalBottomSheet<bool>(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) =>
+            _DriverEmergencyStopSheet(onEmergencyStop: onEmergencyStop),
+      ) ??
+      false;
+}
+
+class const _DriverEmergencyStopSheet({required this.onEmergencyStop})
+    extends StatefulWidget {
+  final DriverEmergencyStopCallback onEmergencyStop;
+
+  @override
+  State<_DriverEmergencyStopSheet> createState() =>
+      _DriverEmergencyStopSheetState();
+}
+
+class _DriverEmergencyStopSheetState extends State<_DriverEmergencyStopSheet> {
+  String? _selectedReason;
+  String _details = '';
+  String? _errorMessage;
+  bool _isSubmitting = false;
+
+  Future<void> _submit() async {
+    final reason = _selectedReason;
+    final details = _details.trim();
+    if (reason == null) {
+      setState(() => _errorMessage = 'Choose the emergency reason first.');
+      return;
+    }
+    if (reason == 'other' && details.isEmpty) {
+      setState(() => _errorMessage = 'Add details when choosing Other.');
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('End ride for safety?'),
+        content: const Text(
+          'This will close the active ride and record a safety event. It will not mark the cash fare as paid.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Keep ride'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('End ride'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() {
+      _isSubmitting = true;
+      _errorMessage = null;
+    });
+    try {
+      final stopped = await widget.onEmergencyStop(reason, details);
+      if (!mounted) return;
+      if (stopped) {
+        Navigator.pop(context, true);
+        return;
+      }
+      setState(() {
+        _isSubmitting = false;
+        _errorMessage = 'The ride could not be ended. Keep the passenger safe and try again.';
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+        _errorMessage = 'The emergency stop could not be submitted.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: Material(
+        color: context.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(EasyRideRadius.sheet),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(
+            EasyRideSpacing.lg,
+            EasyRideSpacing.lg,
+            EasyRideSpacing.lg,
+            EasyRideSpacing.lg,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Emergency SOS',
+                style: context.textStyles.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Call 911 immediately if anyone is in danger. You can also end this ride so the safety event is recorded.',
+                style: context.textStyles.bodyMedium?.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: EasyRideSize.minimumTouchTarget,
+                child: OutlinedButton.icon(
+                  onPressed: _isSubmitting
+                      ? null
+                      : () => unawaited(showDriverEmergencyContacts(context)),
+                  icon: const Icon(Icons.phone_in_talk_outlined),
+                  label: const Text('Call emergency services (911)'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: context.colorScheme.error,
+                    side: BorderSide(color: context.colorScheme.error),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                key: const ValueKey('driver-emergency-reason-dropdown'),
+                initialValue: _selectedReason,
+                decoration: const InputDecoration(
+                  labelText: 'Why are you ending the ride?',
+                ),
+                items: _driverEmergencyStopReasons.entries
+                    .map(
+                      (entry) => DropdownMenuItem<String>(
+                        value: entry.key,
+                        child: Text(entry.value),
+                      ),
+                    )
+                    .toList(),
+                onChanged: _isSubmitting
+                    ? null
+                    : (value) {
+                        setState(() {
+                          _selectedReason = value;
+                          _errorMessage = null;
+                        });
+                      },
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                key: const ValueKey('driver-emergency-details'),
+                maxLength: 500,
+                maxLines: 3,
+                enabled: !_isSubmitting,
+                onChanged: (value) {
+                  _details = value;
+                  if (_errorMessage != null) {
+                    setState(() => _errorMessage = null);
+                  }
+                },
+                decoration: const InputDecoration(
+                  labelText: 'What happened? (optional unless Other)',
+                ),
+              ),
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  _errorMessage!,
+                  style: TextStyle(color: context.colorScheme.error),
+                ),
+              ],
+              const SizedBox(height: 12),
+              SizedBox(
+                height: EasyRideSize.minimumTouchTarget,
+                child: FilledButton.icon(
+                  onPressed: _selectedReason == null || _isSubmitting
+                      ? null
+                      : _submit,
+                  icon: _isSubmitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.stop_circle_outlined),
+                  label: Text(
+                    _isSubmitting ? 'Ending ride…' : 'End ride for safety',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

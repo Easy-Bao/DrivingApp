@@ -11,6 +11,7 @@ import 'package:driver/src/features/active_ride/presentation/widgets/in_transit/
 import 'package:driver/src/features/active_ride/presentation/widgets/in_transit/in_transit_passenger_card_widget.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_safety_report_sheet.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_emergency_button.dart';
+import 'package:driver/src/features/dashboard/dashboard_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -260,6 +261,20 @@ class _InTransitPageState extends State<InTransitPage> {
     }
   }
 
+  Future<bool> _emergencyStop(String reason, String details) async {
+    if (!mounted) return false;
+    final stopped = await BlocProvider.of<RideFlowCubit>(context)
+        .emergencyStop(reason: reason, details: details);
+    if (!stopped && mounted) {
+      CustomToast.show(
+        context,
+        'The ride could not be ended for safety. Please try again.',
+        isError: true,
+      );
+    }
+    return stopped;
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider<LiveMapBloc>.value(
@@ -309,7 +324,14 @@ class _InTransitPageState extends State<InTransitPage> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          const DriverEmergencyButton(),
+                          DriverEmergencyButton(
+                            onEmergencyStop: _emergencyStop,
+                            onEmergencyStopCompleted: () {
+                              if (mounted) {
+                                context.goNamed(DashboardRoutes.dashboard);
+                              }
+                            },
+                          ),
                           DriverSafetyReportButton(
                             rideId: BlocProvider.of<RideFlowCubit>(context)
                                 .activeRideId,
