@@ -10,6 +10,7 @@ import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/waiting_passenger_panel_widget.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_safety_report_sheet.dart';
+import 'package:driver/src/features/active_ride/presentation/widgets/driver_ride_cancellation_sheet.dart';
 import 'package:driver/src/features/active_ride/active_ride_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -58,6 +59,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
   bool _isInitialChatMessagesCountFetched = false;
   bool _isStartingTrip = false;
   bool _isMarkingNoShow = false;
+  bool _isCancellingRide = false;
   bool _isPollingChat = false;
   late final AppLifecyclePeriodicTask _chatPollingTask;
   ChatRepository? _chatRepository;
@@ -233,6 +235,26 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
     }
   }
 
+  Future<void> _cancelRide() async {
+    if (_isCancellingRide || !mounted) return;
+    final choice = await showDriverRideCancellationSheet(context);
+    if (!mounted || choice == null) return;
+
+    setState(() => _isCancellingRide = true);
+    try {
+      final canceled = await BlocProvider.of<RideFlowCubit>(context)
+          .cancelRide(reason: choice.reason, details: choice.details);
+      if (!mounted) return;
+      if (canceled) {
+        context.pop();
+      } else {
+        _showError('The ride could not be cancelled. Please try again.');
+      }
+    } finally {
+      if (mounted) setState(() => _isCancellingRide = false);
+    }
+  }
+
   void _showError(String message) {
     if (!mounted) return;
     setState(() => _errorMessage = message);
@@ -392,7 +414,9 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                                   const Spacer(),
                                   WaitingPassengerStartTripButton(
                                     isStartingTrip:
-                                        _isStartingTrip || _isMarkingNoShow,
+                                        _isStartingTrip ||
+                                        _isMarkingNoShow ||
+                                        _isCancellingRide,
                                     onPressed: _startTrip,
                                   ),
                                   const SizedBox(height: 10),
@@ -415,6 +439,30 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                                             )
                                           : const Icon(LucideIcons.user_x),
                                       label: Text('Passenger No-Show'),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 48,
+                                    child: OutlinedButton.icon(
+                                      onPressed: _isCancellingRide
+                                          ? null
+                                          : _cancelRide,
+                                      icon: _isCancellingRide
+                                          ? const SizedBox(
+                                              width: 18,
+                                              height: 18,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                              ),
+                                            )
+                                          : const Icon(LucideIcons.circle_x),
+                                      label: Text(
+                                        _isCancellingRide
+                                            ? 'Cancelling…'
+                                            : 'Cancel ride',
+                                      ),
                                     ),
                                   ),
                                 ],

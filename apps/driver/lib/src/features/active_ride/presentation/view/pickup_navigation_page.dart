@@ -11,6 +11,7 @@ import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/pickup_navigation_panel_widget.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_safety_report_sheet.dart';
+import 'package:driver/src/features/active_ride/presentation/widgets/driver_ride_cancellation_sheet.dart';
 import 'package:driver/src/features/active_ride/active_ride_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -53,6 +54,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
   double _sliderVal = 0;
   bool _isLoading = true;
   bool _isConfirmingArrival = false;
+  bool _isCancellingRide = false;
   double? _pickupLat;
   double? _pickupLng;
   late final AppLifecyclePeriodicTask _routeTrackingTask;
@@ -317,6 +319,30 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
     }
   }
 
+  Future<void> _cancelRide() async {
+    if (_isCancellingRide || !mounted) return;
+    final choice = await showDriverRideCancellationSheet(context);
+    if (!mounted || choice == null) return;
+
+    setState(() => _isCancellingRide = true);
+    try {
+      final canceled = await BlocProvider.of<RideFlowCubit>(context)
+          .cancelRide(reason: choice.reason, details: choice.details);
+      if (!mounted) return;
+      if (canceled) {
+        context.pop();
+      } else {
+        CustomToast.show(
+          context,
+          'The ride could not be cancelled. Please try again.',
+          isError: true,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isCancellingRide = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider<LiveMapBloc>.value(
@@ -381,6 +407,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
                               fare: widget.fare,
                               sliderValue: _sliderVal,
                               isConfirmingArrival: _isConfirmingArrival,
+                              isCancelling: _isCancellingRide,
                               unreadChatMessagesCount: _unreadChatMessagesCount,
                               onSliderChanged: (val) {
                                 setState(() {
@@ -388,6 +415,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
                                 });
                               },
                               onSliderCompleted: () => _confirmArrival(context),
+                              onCancelPressed: _cancelRide,
                               onCallPressed: () async {
                                 try {
                                   final rideCubit =

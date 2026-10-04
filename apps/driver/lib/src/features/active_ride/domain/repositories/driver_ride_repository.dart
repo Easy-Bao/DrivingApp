@@ -27,6 +27,12 @@ abstract interface class DriverRideRepository {
 
   Future<Result<RideSnapshot, Failure>> markPassengerNoShow(String rideId);
 
+  Future<Result<RideSnapshot, Failure>> cancelRide({
+    required String rideId,
+    required String reason,
+    String details = '',
+  });
+
   Future<Result<void, Failure>> createSafetyReport({
     required String rideId,
     required String category,
@@ -101,6 +107,17 @@ extension DriverRideRepositoryResultAdapters on DriverRideRepository {
         description: description,
       ),
       message: 'Unable to submit the safety report right now.',
+    );
+  }
+
+  Future<Result<RideSnapshot, DomainFailure>> cancelRideResult({
+    required String rideId,
+    required String reason,
+    String details = '',
+  }) {
+    return _captureResult(
+      () => cancelRide(rideId: rideId, reason: reason, details: details),
+      message: 'Unable to cancel this ride right now.',
     );
   }
 

@@ -83,6 +83,30 @@ final class DriverRideRepositoryImpl({
   }
 
   @override
+  Future<Result<RideSnapshot, Failure>> cancelRide({
+    required String rideId,
+    required String reason,
+    String details = '',
+  }) async {
+    try {
+      final data = await _rideDataSource.cancelRide(
+        rideId: rideId,
+        reason: reason,
+        details: details,
+      );
+      final ride = RideDto.fromJson(data, fallbackId: rideId).toDomain();
+      if (ride.id.isEmpty || ride.status != RideStatus.cancelled.value) {
+        return const Err(
+          ValidationFailure('The cancellation response is incomplete.'),
+        );
+      }
+      return Ok(ride);
+    } catch (error) {
+      return Err(_mapFailure(error, action: 'cancel this ride'));
+    }
+  }
+
+  @override
   Future<Result<void, Failure>> createSafetyReport({
     required String rideId,
     required String category,

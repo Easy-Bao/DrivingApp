@@ -228,10 +228,8 @@ class RideFlowCubit({
     _isActionInFlight = true;
     try {
       Failure? noShowFailure;
-      (await _rideRepository.markPassengerNoShowResult(_activeRideId!)).fold(
-        (failure) => noShowFailure = failure,
-        (_) {},
-      );
+      (await _rideRepository.markPassengerNoShowResult(_activeRideId!))
+          .fold((failure) => noShowFailure = failure, (_) {});
       if (!_isCurrentAction(actionGeneration)) return false;
       if (noShowFailure != null) {
         emit(RideFlowError(ErrorHandler.getErrorMessage(noShowFailure!)));
@@ -244,6 +242,44 @@ class RideFlowCubit({
       _waitingUntil = null;
       _waitStartedAt = null;
       _elapsedWaitTime = 0;
+      await _clearActiveRideSession();
+      emit(const RideFlowInitial());
+      return true;
+    } catch (error) {
+      if (_isCurrentAction(actionGeneration)) {
+        emit(RideFlowError(ErrorHandler.getErrorMessage(error)));
+      }
+      return false;
+    } finally {
+      if (_actionGeneration == actionGeneration) _isActionInFlight = false;
+    }
+  }
+
+  Future<bool> cancelRide({required String reason, String details = ''}) async {
+    if (_isActionInFlight || _activeRideId == null) return false;
+    final actionGeneration = ++_actionGeneration;
+    _isActionInFlight = true;
+    try {
+      Failure? cancellationFailure;
+      (await _rideRepository.cancelRideResult(
+        rideId: _activeRideId!,
+        reason: reason,
+        details: details,
+      )).fold((failure) => cancellationFailure = failure, (_) {});
+      if (!_isCurrentAction(actionGeneration)) return false;
+      if (cancellationFailure != null) {
+        emit(RideFlowError(ErrorHandler.getErrorMessage(cancellationFailure!)));
+        return false;
+      }
+      _waitTimer?.cancel();
+      _activeRideId = null;
+      _activePassengerId = null;
+      _activePassengerName = null;
+      _waitingUntil = null;
+      _waitStartedAt = null;
+      _elapsedWaitTime = 0;
+      await _clearActiveRideSession();
+      if (!_isCurrentAction(actionGeneration)) return false;
       emit(const RideFlowInitial());
       return true;
     } catch (error) {
@@ -314,7 +350,9 @@ class RideFlowCubit({
       return false;
     }
     if (!_isValidCoordinatePair(driverLat, driverLng)) {
-      emit(RideFlowError(ErrorHandler.getErrorMessage(const LocationFailure())));
+      emit(
+        RideFlowError(ErrorHandler.getErrorMessage(const LocationFailure())),
+      );
       return false;
     }
     final actionGeneration = ++_actionGeneration;
@@ -357,9 +395,7 @@ class RideFlowCubit({
       if (startFailure != null || startedRide == null) {
         emit(
           RideFlowError(
-            ErrorHandler.getErrorMessage(
-              startFailure ?? const ServerFailure(),
-            ),
+            ErrorHandler.getErrorMessage(startFailure ?? const ServerFailure()),
           ),
         );
         return false;
@@ -537,10 +573,8 @@ class RideFlowCubit({
       var receivedAmount = cashReceivedAmount;
       if (receivedAmount == null) {
         RideSnapshot? ride;
-        (await _rideRepository.fetchRideResult(rideId)).fold(
-          (_) {},
-          (value) => ride = value,
-        );
+        (await _rideRepository.fetchRideResult(rideId))
+            .fold((_) {}, (value) => ride = value);
         receivedAmount = ride?.fareAmount;
       }
       if (receivedAmount == null || receivedAmount <= 0) {
@@ -605,6 +639,18 @@ class RideFlowCubit({
     _elapsedWaitTime = 0;
     _isActionInFlight = false;
     emit(const RideFlowInitial());
+  }
+
+  Future<void> _clearActiveRideSession() async {
+    try {
+      await _sessionService.saveActiveRideId('');
+    } catch (error, stackTrace) {
+      dev.log(
+        'Unable to clear the locally cached active ride',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   @override

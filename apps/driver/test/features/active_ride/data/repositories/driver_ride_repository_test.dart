@@ -173,6 +173,39 @@ void main() {
     ).called(1);
   });
 
+  test('requires the server to confirm a cancelled ride', () async {
+    when(
+      () => rideDataSource.cancelRide(
+        rideId: 'ride-7',
+        reason: 'vehicle_problem',
+        details: '',
+      ),
+    ).thenAnswer(
+      (_) async => <String, dynamic>{
+        'id': 'ride-7',
+        'status': 'cancelled',
+        'pickup_name': 'Mountain View',
+        'dropoff_name': 'Vista Slope',
+        'cancellation_reason': 'vehicle_problem',
+        'cancellation_responsibility': 'driver_fault',
+      },
+    );
+
+    final result = await repository.cancelRide(
+      rideId: 'ride-7',
+      reason: 'vehicle_problem',
+    );
+
+    expect(result.fold((_) => '', (ride) => ride.status), 'cancelled');
+    verify(
+      () => rideDataSource.cancelRide(
+        rideId: 'ride-7',
+        reason: 'vehicle_problem',
+        details: '',
+      ),
+    ).called(1);
+  });
+
   test(
     'adapts passenger reads and location cleanup into strict results',
     () async {

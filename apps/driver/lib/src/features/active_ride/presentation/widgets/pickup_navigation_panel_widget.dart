@@ -12,9 +12,11 @@ class const PickupNavigationPanelWidget({
   required this.fare,
   required this.sliderValue,
   this.isConfirmingArrival = false,
+  this.isCancelling = false,
   required this.unreadChatMessagesCount,
   required this.onSliderChanged,
   required this.onSliderCompleted,
+  required this.onCancelPressed,
   required this.onCallPressed,
   required this.onChatPressed,
 }) extends StatelessWidget {
@@ -25,9 +27,11 @@ class const PickupNavigationPanelWidget({
   final double fare;
   final double sliderValue;
   final bool isConfirmingArrival;
+  final bool isCancelling;
   final int unreadChatMessagesCount;
   final ValueChanged<double> onSliderChanged;
   final VoidCallback onSliderCompleted;
+  final VoidCallback onCancelPressed;
   final VoidCallback onCallPressed;
   final VoidCallback onChatPressed;
 
@@ -121,6 +125,22 @@ class const PickupNavigationPanelWidget({
           ),
           const SizedBox(height: 12),
           _arrivalSlider(),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            height: EasyRideSize.minimumTouchTarget,
+            child: OutlinedButton.icon(
+              onPressed: isCancelling ? null : onCancelPressed,
+              icon: isCancelling
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(LucideIcons.circle_x),
+              label: Text(isCancelling ? 'Cancelling…' : 'Cancel ride'),
+            ),
+          ),
         ],
       ),
     );
