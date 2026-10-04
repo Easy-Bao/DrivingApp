@@ -17,3 +17,9 @@ type ReviewStore interface {
 type PassengerReviewStore interface {
 	CreatePassengerReview(ctx context.Context, review domain.PassengerReview) (domain.PassengerReview, error)
 }
+
+// SafetyReportStore persists reports separately from service-quality ratings.
+// The ride ID remains the evidence link to lifecycle, location, and chat data.
+type SafetyReportStore interface {
+	CreateSafetyReport(ctx context.Context, report domain.SafetyReport) (domain.SafetyReport, error)
+}

@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"math"
 	"slices"
+	"strings"
 	"time"
 
 	biddingapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/bidding"
@@ -524,6 +525,35 @@ func (service *RideService) CreatePassengerReview(
 	created, err := repository.CreatePassengerReview(ctx, review)
 	if err != nil {
 		return domain.PassengerReview{}, fmt.Errorf("create passenger review: %w", err)
+	}
+	return created, nil
+}
+
+func (service *RideService) CreateSafetyReport(
+	ctx context.Context,
+	report domain.SafetyReport,
+) (domain.SafetyReport, error) {
+	repository, ok := service.repository.(ports.SafetyReportStore)
+	if !ok {
+		return domain.SafetyReport{}, errors.New("safety report persistence is unavailable")
+	}
+	report.ReporterRole = strings.ToLower(strings.TrimSpace(report.ReporterRole))
+	report.Category = domain.SafetyReportCategory(
+		strings.ToLower(strings.TrimSpace(string(report.Category))),
+	)
+	report.Description = strings.TrimSpace(report.Description)
+	severity, valid := domain.ValidateSafetyReport(
+		report.ReporterRole,
+		report.Category,
+		report.Description,
+	)
+	if !valid {
+		return domain.SafetyReport{}, domain.ErrSafetyReportInvalid
+	}
+	report.Severity = severity
+	created, err := repository.CreateSafetyReport(ctx, report)
+	if err != nil {
+		return domain.SafetyReport{}, fmt.Errorf("create safety report: %w", err)
 	}
 	return created, nil
 }

@@ -23,6 +23,7 @@ var (
 	_ ports.PassengerActiveRideChecker = (*ridesRepositoryStub)(nil)
 	_ ports.BiddingStore               = (*ridesRepositoryStub)(nil)
 	_ ports.RideLifecycleStore         = (*ridesRepositoryStub)(nil)
+	_ ports.SafetyReportStore          = (*ridesRepositoryStub)(nil)
 )
 
 func testPricingConfig(t *testing.T) PricingConfig {
@@ -116,6 +117,15 @@ func (stub *ridesRepositoryStub) CompleteTrip(
 	return stub.updated, nil
 }
 
+func (stub *ridesRepositoryStub) CreateSafetyReport(
+	_ context.Context,
+	report domain.SafetyReport,
+) (domain.SafetyReport, error) {
+	report.ID = 21
+	report.Status = domain.SafetyReportSubmitted
+	return report, nil
+}
+
 func (stub *ridesRepositoryStub) UpdateStatus(
 	_ context.Context,
 	_ int,
@@ -188,6 +198,26 @@ func TestCreateRideBuildsRequestedRide(t *testing.T) {
 	if stub.created.PassengerID != 2 || stub.created.FareAmount != 2500 ||
 		stub.created.Status != "requested" || stub.created.RideType != "Solo Ride" {
 		t.Fatalf("persisted ride = %#v", stub.created)
+	}
+}
+
+func TestCreateSafetyReportNormalizesAndDerivesSeverity(t *testing.T) {
+	stub := &ridesRepositoryStub{}
+	service := newTestRideService(stub, testPricingConfig(t), nil)
+	report, err := service.CreateSafetyReport(context.Background(), domain.SafetyReport{
+		RideID:       12,
+		ReporterID:   7,
+		ReporterRole: " PASSENGER ",
+		Category:     " UNSAFE_DRIVING ",
+		Severity:     domain.SafetyReportCritical,
+		Description:  "The driver was driving dangerously near the market.",
+	})
+	if err != nil {
+		t.Fatalf("CreateSafetyReport returned error: %v", err)
+	}
+	if report.ReporterRole != "passenger" || report.Category != domain.SafetyReportUnsafeDriving ||
+		report.Severity != domain.SafetyReportHigh || report.Status != domain.SafetyReportSubmitted {
+		t.Fatalf("created report = %+v", report)
 	}
 }
 

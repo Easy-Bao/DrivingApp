@@ -533,6 +533,36 @@ func (handler *Handler) CreatePassengerReview(w http.ResponseWriter, r *http.Req
 	response.JSON(w, 201, item)
 }
 
+func (handler *Handler) CreateSafetyReport(w http.ResponseWriter, r *http.Request) {
+	principal, ok := middleware.PrincipalFromRequest(r)
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid ride id")
+		return
+	}
+	var input dto.SafetyReportRequest
+	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil {
+		response.Error(w, http.StatusBadRequest, "invalid safety report")
+		return
+	}
+	item, err := handler.service.CreateSafetyReport(r.Context(), domain.SafetyReport{
+		RideID:       rideID,
+		ReporterID:   principal.UserID,
+		ReporterRole: principal.Role,
+		Category:     domain.SafetyReportCategory(input.Category),
+		Description:  input.Description,
+	})
+	if err != nil {
+		response.Error(w, rideErrorStatus(err), safeRideError(err))
+		return
+	}
+	response.JSON(w, http.StatusCreated, item)
+}
+
 func (handler *Handler) OnlineDrivers(w http.ResponseWriter, r *http.Request) {
 	if _, ok := handler.identity(r); !ok {
 		response.Error(w, 401, "unauthorized")
@@ -898,6 +928,12 @@ func rideErrorStatus(err error) int {
 	case errors.Is(err, domain.ErrArrivalLocation),
 		errors.Is(err, domain.ErrCompletionLocation):
 		return http.StatusUnprocessableEntity
+	case errors.Is(err, domain.ErrSafetyReportInvalid):
+		return http.StatusBadRequest
+	case errors.Is(err, domain.ErrSafetyReportNotAllowed):
+		return http.StatusForbidden
+	case errors.Is(err, domain.ErrSafetyReportAlreadySent):
+		return http.StatusConflict
 	case errors.Is(err, domain.ErrRouteUnavailable):
 		return 503
 	case errors.Is(err, domain.ErrUnauthorizedRide), errors.Is(err, domain.ErrUnauthorizedSession):
@@ -966,6 +1002,12 @@ func safeRideError(err error) string {
 		return "Reviews are available after a completed ride."
 	case errors.Is(err, domain.ErrReviewAlreadySubmitted):
 		return "You already submitted a review for this ride."
+	case errors.Is(err, domain.ErrSafetyReportInvalid):
+		return "Choose a valid report category and describe what happened."
+	case errors.Is(err, domain.ErrSafetyReportNotAllowed):
+		return "Only ride participants can report this ride."
+	case errors.Is(err, domain.ErrSafetyReportAlreadySent):
+		return "You already submitted this report for the ride."
 	default:
 		return "The ride request could not be completed."
 	}

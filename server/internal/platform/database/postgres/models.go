@@ -198,6 +198,19 @@ type RideEvent struct {
 	CreatedAt      pgtype.Timestamptz `db:"created_at"`
 }
 
+type RideReport struct {
+	ID             int32              `db:"id"`
+	RideID         int32              `db:"ride_id"`
+	ReporterID     int32              `db:"reporter_id"`
+	ReportedUserID int32              `db:"reported_user_id"`
+	ReporterRole   string             `db:"reporter_role"`
+	Category       string             `db:"category"`
+	Severity       string             `db:"severity"`
+	Description    string             `db:"description"`
+	Status         string             `db:"status"`
+	CreatedAt      pgtype.Timestamptz `db:"created_at"`
+}
+
 type RideSettlement struct {
 	ID                 int32              `db:"id"`
 	RideID             int32              `db:"ride_id"`
