@@ -172,6 +172,16 @@ func (service *Service) MarkArrived(
 	if current.DriverID == nil || *current.DriverID != driverID {
 		return domain.Ride{}, domain.ErrUnauthorizedRide
 	}
+	normalizedStatus, ok := domain.NormalizeRideStatus(current.Status)
+	if !ok {
+		return domain.Ride{}, domain.ErrInvalidStatusTransition
+	}
+	if normalizedStatus == domain.RideArrived {
+		return current, nil
+	}
+	if normalizedStatus != domain.RideAssigned && normalizedStatus != domain.RideAccepted {
+		return domain.Ride{}, domain.ErrInvalidStatusTransition
+	}
 	if err := domain.ValidateArrivalLocation(
 		current.PickupLatitude,
 		current.PickupLongitude,
@@ -179,10 +189,6 @@ func (service *Service) MarkArrived(
 		driverLongitude,
 	); err != nil {
 		return domain.Ride{}, err
-	}
-	normalizedStatus, ok := domain.NormalizeRideStatus(current.Status)
-	if !ok || (normalizedStatus != domain.RideAssigned && normalizedStatus != domain.RideAccepted) {
-		return domain.Ride{}, domain.ErrInvalidStatusTransition
 	}
 	updated, err := service.store.MarkArrived(
 		ctx,

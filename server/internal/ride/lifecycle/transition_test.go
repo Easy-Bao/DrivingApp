@@ -10,9 +10,10 @@ import (
 )
 
 type fakeLifecycleStore struct {
-	ride        domain.Ride
-	transition  domain.RideTransition
-	noShowCalls int
+	ride         domain.Ride
+	transition   domain.RideTransition
+	arrivalCalls int
+	noShowCalls  int
 }
 
 func (store *fakeLifecycleStore) Get(_ context.Context, _ int) (domain.Ride, error) {
@@ -28,6 +29,7 @@ func (store *fakeLifecycleStore) MarkArrived(
 	_, _ int,
 	_ string,
 ) (domain.Ride, error) {
+	store.arrivalCalls++
 	store.ride.Status = string(domain.RideArrived)
 	return store.ride, nil
 }
@@ -226,6 +228,30 @@ func TestMarkArrivedPersistsOnlyForTheAssignedDriver(t *testing.T) {
 	}
 	if updated.Status != string(domain.RideArrived) {
 		t.Fatalf("status = %q, want arrived", updated.Status)
+	}
+}
+
+func TestMarkArrivedIsIdempotentAfterTheServerAlreadyRecordedIt(t *testing.T) {
+	driverID := 42
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:          1,
+			PassengerID: 10,
+			DriverID:    &driverID,
+			Status:      string(domain.RideArrived),
+		},
+	}
+	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
+
+	updated, err := service.MarkArrived(context.Background(), 1, driverID, 0, 0)
+	if err != nil {
+		t.Fatalf("MarkArrived() retry error = %v", err)
+	}
+	if updated.Status != string(domain.RideArrived) {
+		t.Fatalf("status = %q, want arrived", updated.Status)
+	}
+	if store.arrivalCalls != 0 {
+		t.Fatalf("idempotent retry wrote the arrival transition %d times", store.arrivalCalls)
 	}
 }
 
