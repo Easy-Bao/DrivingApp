@@ -220,7 +220,21 @@ func (service *Service) MarkPassengerNoShow(
 		return domain.Ride{}, domain.ErrUnauthorizedRide
 	}
 	status, ok := domain.NormalizeRideStatus(current.Status)
-	if !ok || status != domain.RideArrived {
+	if !ok {
+		return domain.Ride{}, domain.ErrInvalidStatusTransition
+	}
+	if status == domain.RideCancelled {
+		if current.CancelledBy != nil &&
+			*current.CancelledBy == driverID &&
+			domain.NormalizeCancellationReason(current.CancellationReason) ==
+				domain.CancellationReasonPassengerNoShow &&
+			current.CancellationResponsibility ==
+				string(domain.CancellationResponsibilityPassengerFault) {
+			return current, nil
+		}
+		return domain.Ride{}, domain.ErrInvalidStatusTransition
+	}
+	if status != domain.RideArrived {
 		return domain.Ride{}, domain.ErrInvalidStatusTransition
 	}
 	if current.WaitingUntil != nil {
@@ -249,7 +263,7 @@ func (service *Service) MarkPassengerNoShow(
 
 // Cancel applies the ordinary cancellation policy and records the reason and
 // server-derived responsibility with the same transaction as the status
-// change. Emergency termination is deliberately a separate future command.
+// change. Emergency termination uses its own safety command.
 func (service *Service) Cancel(ctx context.Context, request domain.CancellationRequest) (domain.Ride, error) {
 	if service.store == nil {
 		return domain.Ride{}, ErrPersistenceUnavailable

@@ -10,8 +10,9 @@ import (
 )
 
 type fakeLifecycleStore struct {
-	ride       domain.Ride
-	transition domain.RideTransition
+	ride        domain.Ride
+	transition  domain.RideTransition
+	noShowCalls int
 }
 
 func (store *fakeLifecycleStore) Get(_ context.Context, _ int) (domain.Ride, error) {
@@ -35,6 +36,7 @@ func (store *fakeLifecycleStore) MarkPassengerNoShow(
 	_ context.Context,
 	_, _ int,
 ) (domain.Ride, error) {
+	store.noShowCalls++
 	store.ride.Status = string(domain.RideCancelled)
 	return store.ride, nil
 }
@@ -258,6 +260,59 @@ func TestUpdateStatusRequiresCancellationCommand(t *testing.T) {
 	_, err := service.UpdateStatus(context.Background(), 1, 10, string(domain.RideCancelled))
 	if !errors.Is(err, domain.ErrCancellationCommand) {
 		t.Fatalf("expected cancellation command error, got %v", err)
+	}
+}
+
+func TestMarkPassengerNoShowIsIdempotentAfterTheServerAlreadyRecordedIt(t *testing.T) {
+	driverID := 42
+	cancelledBy := driverID
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:                         1,
+			PassengerID:                10,
+			DriverID:                   &driverID,
+			Status:                     string(domain.RideCancelled),
+			CancelledBy:                &cancelledBy,
+			CancellationReason:         string(domain.CancellationReasonPassengerNoShow),
+			CancellationResponsibility: string(domain.CancellationResponsibilityPassengerFault),
+		},
+	}
+	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
+
+	updated, err := service.MarkPassengerNoShow(context.Background(), 1, driverID)
+	if err != nil {
+		t.Fatalf("MarkPassengerNoShow() retry error = %v", err)
+	}
+	if updated.Status != string(domain.RideCancelled) {
+		t.Fatalf("status = %q, want cancelled", updated.Status)
+	}
+	if store.noShowCalls != 0 {
+		t.Fatalf("idempotent retry wrote the no-show transition %d times", store.noShowCalls)
+	}
+}
+
+func TestMarkPassengerNoShowRejectsAnotherCancellationOutcome(t *testing.T) {
+	driverID := 42
+	cancelledBy := driverID
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:                         1,
+			PassengerID:                10,
+			DriverID:                   &driverID,
+			Status:                     string(domain.RideCancelled),
+			CancelledBy:                &cancelledBy,
+			CancellationReason:         string(domain.CancellationReasonVehicleProblem),
+			CancellationResponsibility: string(domain.CancellationResponsibilityDriverFault),
+		},
+	}
+	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
+
+	_, err := service.MarkPassengerNoShow(context.Background(), 1, driverID)
+	if !errors.Is(err, domain.ErrInvalidStatusTransition) {
+		t.Fatalf("expected invalid status transition, got %v", err)
+	}
+	if store.noShowCalls != 0 {
+		t.Fatalf("rejected retry wrote the no-show transition %d times", store.noShowCalls)
 	}
 }
 
