@@ -11,5 +11,10 @@ import (
 type RideLifecycleStore interface {
 	RideReader
 	AcceptRide(ctx context.Context, rideID, driverID int) (domain.Ride, error)
-	UpdateStatus(ctx context.Context, rideID, actorID int, currentStatus, nextStatus string) (domain.Ride, error)
+	UpdateStatus(
+		ctx context.Context,
+		rideID, actorID int,
+		currentStatus, nextStatus string,
+		transition domain.RideTransition,
+	) (domain.Ride, error)
 }

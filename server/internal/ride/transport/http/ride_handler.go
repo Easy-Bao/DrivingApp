@@ -110,14 +110,19 @@ func (handler *Handler) CancelRide(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusBadRequest, "invalid ride id")
 		return
 	}
-	ride, err := handler.service.UpdateStatus(
-		r.Context(),
-		rideID,
-		actorID,
-		"cancelled",
-	)
+	var input dto.CancellationRequest
+	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil || strings.TrimSpace(input.Reason) == "" {
+		response.Error(w, http.StatusBadRequest, "a cancellation reason is required")
+		return
+	}
+	ride, err := handler.service.CancelRide(r.Context(), domain.CancellationRequest{
+		RideID:  rideID,
+		ActorID: actorID,
+		Reason:  domain.CancellationReason(input.Reason),
+		Details: input.Details,
+	})
 	if err != nil {
-		response.Error(w, http.StatusConflict, safeRideError(err))
+		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
 	response.JSON(w, http.StatusOK, ride)
@@ -776,6 +781,8 @@ func rideErrorStatus(err error) int {
 		return 400
 	case errors.Is(err, domain.ErrInvalidSettlement):
 		return http.StatusBadRequest
+	case errors.Is(err, domain.ErrInvalidCancellation):
+		return http.StatusBadRequest
 	case errors.Is(err, domain.ErrRouteUnavailable):
 		return 503
 	case errors.Is(err, domain.ErrUnauthorizedRide), errors.Is(err, domain.ErrUnauthorizedSession):
@@ -784,7 +791,9 @@ func rideErrorStatus(err error) int {
 		errors.Is(err, domain.ErrDriverHasActiveRide),
 		errors.Is(err, domain.ErrDriverSettlementOverdue),
 		errors.Is(err, domain.ErrDriverUnavailable),
-		errors.Is(err, domain.ErrDuplicateBid):
+		errors.Is(err, domain.ErrDuplicateBid),
+		errors.Is(err, domain.ErrInvalidStatusTransition),
+		errors.Is(err, domain.ErrCancellationCommand):
 		return 409
 	default:
 		return 500
@@ -815,6 +824,10 @@ func safeRideError(err error) string {
 		return "You already sent an offer for this ride."
 	case errors.Is(err, domain.ErrInvalidStatusTransition):
 		return "That ride status cannot be changed right now."
+	case errors.Is(err, domain.ErrCancellationCommand):
+		return "Use the cancellation action with a reason."
+	case errors.Is(err, domain.ErrInvalidCancellation):
+		return "Choose a valid cancellation reason for this ride."
 	case errors.Is(err, domain.ErrReviewNotAllowed):
 		return "Reviews are available after a completed ride."
 	case errors.Is(err, domain.ErrReviewAlreadySubmitted):

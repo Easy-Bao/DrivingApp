@@ -12,7 +12,7 @@ import (
 )
 
 const listDriverRides = `-- name: ListDriverRides :many
-SELECT r.id, r.passenger_id, r.driver_id, r.status, r.fare_amount, r.ride_type, r.pickup_latitude, r.pickup_longitude, r.pickup_name, r.dropoff_latitude, r.dropoff_longitude, r.dropoff_name, r.distance_km, r.duration_minutes, r.driver_name, r.vehicle_type, r.plate_number, r.driver_rating, r.created_at, r.completed_at, r.payment_status, r.cash_received_at, r.cash_received_amount, r.cash_change_amount, r.cash_outcome, r.commission_bps, r.commission_amount, r.driver_payout_amount,
+SELECT r.id, r.passenger_id, r.driver_id, r.status, r.fare_amount, r.ride_type, r.pickup_latitude, r.pickup_longitude, r.pickup_name, r.dropoff_latitude, r.dropoff_longitude, r.dropoff_name, r.distance_km, r.duration_minutes, r.driver_name, r.vehicle_type, r.plate_number, r.driver_rating, r.created_at, r.completed_at, r.payment_status, r.cash_received_at, r.cash_received_amount, r.cash_change_amount, r.cash_outcome, r.cancelled_by, r.cancellation_reason, r.cancellation_responsibility, r.cancellation_details, r.commission_bps, r.commission_amount, r.driver_payout_amount,
     COALESCE(NULLIF(passenger_profile.name, ''), user_account.name, '') AS passenger_name,
     COALESCE(user_account.phone, '') AS passenger_phone,
     passenger_review.rating AS passenger_rating,
@@ -86,6 +86,10 @@ func (q *Queries) ListDriverRides(ctx context.Context, arg ListDriverRidesParams
 			&i.Ride.CashReceivedAmount,
 			&i.Ride.CashChangeAmount,
 			&i.Ride.CashOutcome,
+			&i.Ride.CancelledBy,
+			&i.Ride.CancellationReason,
+			&i.Ride.CancellationResponsibility,
+			&i.Ride.CancellationDetails,
 			&i.Ride.CommissionBps,
 			&i.Ride.CommissionAmount,
 			&i.Ride.DriverPayoutAmount,
@@ -105,7 +109,7 @@ func (q *Queries) ListDriverRides(ctx context.Context, arg ListDriverRidesParams
 }
 
 const listPassengerRides = `-- name: ListPassengerRides :many
-SELECT r.id, r.passenger_id, r.driver_id, r.status, r.fare_amount, r.ride_type, r.pickup_latitude, r.pickup_longitude, r.pickup_name, r.dropoff_latitude, r.dropoff_longitude, r.dropoff_name, r.distance_km, r.duration_minutes, r.driver_name, r.vehicle_type, r.plate_number, r.driver_rating, r.created_at, r.completed_at, r.payment_status, r.cash_received_at, r.cash_received_amount, r.cash_change_amount, r.cash_outcome, r.commission_bps, r.commission_amount, r.driver_payout_amount,
+SELECT r.id, r.passenger_id, r.driver_id, r.status, r.fare_amount, r.ride_type, r.pickup_latitude, r.pickup_longitude, r.pickup_name, r.dropoff_latitude, r.dropoff_longitude, r.dropoff_name, r.distance_km, r.duration_minutes, r.driver_name, r.vehicle_type, r.plate_number, r.driver_rating, r.created_at, r.completed_at, r.payment_status, r.cash_received_at, r.cash_received_amount, r.cash_change_amount, r.cash_outcome, r.cancelled_by, r.cancellation_reason, r.cancellation_responsibility, r.cancellation_details, r.commission_bps, r.commission_amount, r.driver_payout_amount,
     COALESCE(driver_profile.name, '') AS driver_profile_name,
     COALESCE(driver_profile.vehicle_type, '') AS driver_profile_vehicle_type,
     COALESCE(driver_profile.plate_number, '') AS driver_profile_plate_number
@@ -165,6 +169,10 @@ func (q *Queries) ListPassengerRides(ctx context.Context, arg ListPassengerRides
 			&i.Ride.CashReceivedAmount,
 			&i.Ride.CashChangeAmount,
 			&i.Ride.CashOutcome,
+			&i.Ride.CancelledBy,
+			&i.Ride.CancellationReason,
+			&i.Ride.CancellationResponsibility,
+			&i.Ride.CancellationDetails,
 			&i.Ride.CommissionBps,
 			&i.Ride.CommissionAmount,
 			&i.Ride.DriverPayoutAmount,
@@ -183,7 +191,7 @@ func (q *Queries) ListPassengerRides(ctx context.Context, arg ListPassengerRides
 }
 
 const listRecentPassengerRides = `-- name: ListRecentPassengerRides :many
-SELECT r.id, r.passenger_id, r.driver_id, r.status, r.fare_amount, r.ride_type, r.pickup_latitude, r.pickup_longitude, r.pickup_name, r.dropoff_latitude, r.dropoff_longitude, r.dropoff_name, r.distance_km, r.duration_minutes, r.driver_name, r.vehicle_type, r.plate_number, r.driver_rating, r.created_at, r.completed_at, r.payment_status, r.cash_received_at, r.cash_received_amount, r.cash_change_amount, r.cash_outcome, r.commission_bps, r.commission_amount, r.driver_payout_amount,
+SELECT r.id, r.passenger_id, r.driver_id, r.status, r.fare_amount, r.ride_type, r.pickup_latitude, r.pickup_longitude, r.pickup_name, r.dropoff_latitude, r.dropoff_longitude, r.dropoff_name, r.distance_km, r.duration_minutes, r.driver_name, r.vehicle_type, r.plate_number, r.driver_rating, r.created_at, r.completed_at, r.payment_status, r.cash_received_at, r.cash_received_amount, r.cash_change_amount, r.cash_outcome, r.cancelled_by, r.cancellation_reason, r.cancellation_responsibility, r.cancellation_details, r.commission_bps, r.commission_amount, r.driver_payout_amount,
     COALESCE(driver_profile.name, '') AS driver_profile_name,
     COALESCE(driver_profile.vehicle_type, '') AS driver_profile_vehicle_type,
     COALESCE(driver_profile.plate_number, '') AS driver_profile_plate_number
@@ -241,6 +249,10 @@ func (q *Queries) ListRecentPassengerRides(ctx context.Context, arg ListRecentPa
 			&i.Ride.CashReceivedAmount,
 			&i.Ride.CashChangeAmount,
 			&i.Ride.CashOutcome,
+			&i.Ride.CancelledBy,
+			&i.Ride.CancellationReason,
+			&i.Ride.CancellationResponsibility,
+			&i.Ride.CancellationDetails,
 			&i.Ride.CommissionBps,
 			&i.Ride.CommissionAmount,
 			&i.Ride.DriverPayoutAmount,

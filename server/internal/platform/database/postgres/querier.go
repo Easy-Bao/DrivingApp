@@ -32,6 +32,7 @@ type Querier interface {
 	CreateRefreshSession(ctx context.Context, arg CreateRefreshSessionParams) error
 	CreateReview(ctx context.Context, arg CreateReviewParams) (Review, error)
 	CreateRide(ctx context.Context, arg CreateRideParams) (Ride, error)
+	CreateRideEvent(ctx context.Context, arg CreateRideEventParams) error
 	CreateRideSettlement(ctx context.Context, arg CreateRideSettlementParams) error
 	CreateRideSettlementForCash(ctx context.Context, arg CreateRideSettlementForCashParams) (RideSettlement, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)

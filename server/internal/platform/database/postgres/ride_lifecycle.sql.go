@@ -11,34 +11,90 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createRideEvent = `-- name: CreateRideEvent :exec
+INSERT INTO ride_events (
+    ride_id, actor_id, event_type, from_status, to_status,
+    reason, responsibility, details, request_id
+)
+VALUES (
+    $1, $2, $3,
+    $4, $5, $6,
+    $7, $8, $9
+)
+`
+
+type CreateRideEventParams struct {
+	RideID         int32  `db:"ride_id"`
+	ActorID        int32  `db:"actor_id"`
+	EventType      string `db:"event_type"`
+	FromStatus     string `db:"from_status"`
+	ToStatus       string `db:"to_status"`
+	Reason         string `db:"reason"`
+	Responsibility string `db:"responsibility"`
+	Details        string `db:"details"`
+	RequestID      string `db:"request_id"`
+}
+
+func (q *Queries) CreateRideEvent(ctx context.Context, arg CreateRideEventParams) error {
+	_, err := q.db.Exec(ctx, createRideEvent,
+		arg.RideID,
+		arg.ActorID,
+		arg.EventType,
+		arg.FromStatus,
+		arg.ToStatus,
+		arg.Reason,
+		arg.Responsibility,
+		arg.Details,
+		arg.RequestID,
+	)
+	return err
+}
+
 const updateRideStatus = `-- name: UpdateRideStatus :one
 UPDATE rides
 SET status = $1,
-    completed_at = COALESCE($2::timestamptz, completed_at)
-WHERE id = $3
-  AND status = $4
-  AND (passenger_id = $5 OR driver_id = $5)
+    cancelled_by = COALESCE($2::integer, cancelled_by),
+    cancellation_reason = COALESCE($3::text, cancellation_reason),
+    cancellation_responsibility = COALESCE(
+        $4::text,
+        cancellation_responsibility
+    ),
+    cancellation_details = COALESCE($5::text, cancellation_details),
+    completed_at = COALESCE($6::timestamptz, completed_at)
+WHERE id = $7
+  AND status = $8
+  AND (passenger_id = $9 OR driver_id = $9)
 RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
     pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name,
     distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
     driver_rating, created_at, completed_at, payment_status,
     cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
+    cancelled_by, cancellation_reason, cancellation_responsibility,
+    cancellation_details,
     commission_bps, commission_amount,
     driver_payout_amount
 `
 
 type UpdateRideStatusParams struct {
-	NextStatus    string             `db:"next_status"`
-	CompletedAt   pgtype.Timestamptz `db:"completed_at"`
-	RideID        int32              `db:"ride_id"`
-	CurrentStatus string             `db:"current_status"`
-	ActorID       int32              `db:"actor_id"`
+	NextStatus                 string             `db:"next_status"`
+	CancelledBy                pgtype.Int4        `db:"cancelled_by"`
+	CancellationReason         pgtype.Text        `db:"cancellation_reason"`
+	CancellationResponsibility pgtype.Text        `db:"cancellation_responsibility"`
+	CancellationDetails        pgtype.Text        `db:"cancellation_details"`
+	CompletedAt                pgtype.Timestamptz `db:"completed_at"`
+	RideID                     int32              `db:"ride_id"`
+	CurrentStatus              string             `db:"current_status"`
+	ActorID                    int32              `db:"actor_id"`
 }
 
 func (q *Queries) UpdateRideStatus(ctx context.Context, arg UpdateRideStatusParams) (Ride, error) {
 	row := q.db.QueryRow(ctx, updateRideStatus,
 		arg.NextStatus,
+		arg.CancelledBy,
+		arg.CancellationReason,
+		arg.CancellationResponsibility,
+		arg.CancellationDetails,
 		arg.CompletedAt,
 		arg.RideID,
 		arg.CurrentStatus,
@@ -71,6 +127,10 @@ func (q *Queries) UpdateRideStatus(ctx context.Context, arg UpdateRideStatusPara
 		&i.CashReceivedAmount,
 		&i.CashChangeAmount,
 		&i.CashOutcome,
+		&i.CancelledBy,
+		&i.CancellationReason,
+		&i.CancellationResponsibility,
+		&i.CancellationDetails,
 		&i.CommissionBps,
 		&i.CommissionAmount,
 		&i.DriverPayoutAmount,

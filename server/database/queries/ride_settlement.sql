@@ -5,6 +5,8 @@ SELECT id, passenger_id, driver_id, status, fare_amount, ride_type,
     distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
     driver_rating, created_at, completed_at, payment_status,
     cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
+    cancelled_by, cancellation_reason, cancellation_responsibility,
+    cancellation_details,
     commission_bps, commission_amount,
     driver_payout_amount
 FROM rides
@@ -72,6 +74,8 @@ RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
     distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
     driver_rating, created_at, completed_at, payment_status,
     cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
+    cancelled_by, cancellation_reason, cancellation_responsibility,
+    cancellation_details,
     commission_bps, commission_amount,
     driver_payout_amount;
 

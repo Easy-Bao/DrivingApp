@@ -174,6 +174,37 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
   }
 
   @override
+  Future<Result<void, Failure>> cancelRide({
+    required String rideId,
+    required String reason,
+    String details = '',
+  }) async {
+    try {
+      final success = await _remoteDataSource.cancelRide(
+        rideId: rideId,
+        reason: reason,
+        details: details,
+      );
+      if (success) {
+        return const Ok(null);
+      }
+      return const Err(ServerFailure('The ride could not be cancelled.'));
+    } on ServerException catch (error) {
+      return Err(
+        FailureMapper.fromException(
+          error,
+          serverMessage:
+              'The ride could not be cancelled. Please try again.',
+        ),
+      );
+    } catch (_) {
+      return const Err(
+        ServerFailure('The ride could not be cancelled. Please try again.'),
+      );
+    }
+  }
+
+  @override
   Future<Result<void, Failure>> publishPassengerLocation({
     required String rideId,
     required double latitude,

@@ -274,23 +274,30 @@ class TrackDriverCubit({
             2;
   }
 
-  Future<void> cancelTrip() async {
-    await cancelTripRequest();
+  Future<void> cancelTrip({
+    String reason = 'passenger_changed_mind',
+    String details = '',
+  }) async {
+    await cancelTripRequest(reason: reason, details: details);
   }
 
   /// Requests cancellation while keeping the active tracker alive until the
   /// server confirms the transition. A false result leaves the prior ride
   /// state and polling owner in place for UI rollback.
-  Future<bool> cancelTripRequest() async {
+  Future<bool> cancelTripRequest({
+    String reason = 'passenger_changed_mind',
+    String details = '',
+  }) async {
     if (isClosed || _isCancellingTrip) return false;
     ++_trackingGeneration;
     _isCancellingTrip = true;
     try {
       final rideId = await _sessionService.readActiveRideId() ?? '';
       if (rideId.isNotEmpty) {
-        final result = await _repository.updateRideStatusResult(
-          rideId,
-          RideStatus.cancelled,
+        final result = await _repository.cancelRideResult(
+          rideId: rideId,
+          reason: reason,
+          details: details,
         );
         final failure = result.fold<Failure?>((value) => value, (_) => null);
         if (failure != null) {

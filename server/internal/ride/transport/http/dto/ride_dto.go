@@ -36,6 +36,11 @@ type StatusRequest struct {
 	Status string `json:"status"`
 }
 
+type CancellationRequest struct {
+	Reason  string `json:"reason"`
+	Details string `json:"details"`
+}
+
 type CashSettlementRequest struct {
 	CashReceivedAmount int64  `json:"cash_received_amount"`
 	CashChangeAmount   int64  `json:"cash_change_amount"`

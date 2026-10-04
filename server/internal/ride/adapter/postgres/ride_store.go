@@ -152,33 +152,37 @@ func fromPostgresRide(item databasepostgres.Ride) (domain.Ride, error) {
 		commissionBPS = &value
 	}
 	return domain.Ride{
-		ID:                 int(item.ID),
-		PassengerID:        int(item.PassengerID),
-		DriverID:           driverID,
-		Status:             item.Status,
-		FareAmount:         item.FareAmount,
-		RideType:           item.RideType,
-		PickupLatitude:     rideFloatValue(item.PickupLatitude),
-		PickupLongitude:    rideFloatValue(item.PickupLongitude),
-		PickupName:         rideTextValue(item.PickupName),
-		DropoffLatitude:    rideFloatValue(item.DropoffLatitude),
-		DropoffLongitude:   rideFloatValue(item.DropoffLongitude),
-		DropoffName:        rideTextValue(item.DropoffName),
-		DistanceKm:         rideFloatValue(item.DistanceKm),
-		DurationMinutes:    rideFloatValue(item.DurationMinutes),
-		DriverName:         rideTextValue(item.DriverName),
-		VehicleType:        rideTextValue(item.VehicleType),
-		PlateNumber:        rideTextValue(item.PlateNumber),
-		DriverRating:       rideFloatValue(item.DriverRating),
-		CreatedAt:          rideTimestamp(item.CreatedAt),
-		CompletedAt:        rideTimestamp(item.CompletedAt),
-		PaymentStatus:      item.PaymentStatus,
-		CashReceivedAmount: item.CashReceivedAmount,
-		CashChangeAmount:   item.CashChangeAmount,
-		CashOutcome:        item.CashOutcome,
-		CommissionBPS:      commissionBPS,
-		CommissionAmount:   item.CommissionAmount,
-		DriverPayoutAmount: item.DriverPayoutAmount,
+		ID:                         int(item.ID),
+		PassengerID:                int(item.PassengerID),
+		DriverID:                   driverID,
+		Status:                     item.Status,
+		FareAmount:                 item.FareAmount,
+		RideType:                   item.RideType,
+		PickupLatitude:             rideFloatValue(item.PickupLatitude),
+		PickupLongitude:            rideFloatValue(item.PickupLongitude),
+		PickupName:                 rideTextValue(item.PickupName),
+		DropoffLatitude:            rideFloatValue(item.DropoffLatitude),
+		DropoffLongitude:           rideFloatValue(item.DropoffLongitude),
+		DropoffName:                rideTextValue(item.DropoffName),
+		DistanceKm:                 rideFloatValue(item.DistanceKm),
+		DurationMinutes:            rideFloatValue(item.DurationMinutes),
+		DriverName:                 rideTextValue(item.DriverName),
+		VehicleType:                rideTextValue(item.VehicleType),
+		PlateNumber:                rideTextValue(item.PlateNumber),
+		DriverRating:               rideFloatValue(item.DriverRating),
+		CreatedAt:                  rideTimestamp(item.CreatedAt),
+		CompletedAt:                rideTimestamp(item.CompletedAt),
+		PaymentStatus:              item.PaymentStatus,
+		CashReceivedAmount:         item.CashReceivedAmount,
+		CashChangeAmount:           item.CashChangeAmount,
+		CashOutcome:                item.CashOutcome,
+		CancelledBy:                rideOptionalInt(item.CancelledBy),
+		CancellationReason:         item.CancellationReason,
+		CancellationResponsibility: item.CancellationResponsibility,
+		CancellationDetails:        item.CancellationDetails,
+		CommissionBPS:              commissionBPS,
+		CommissionAmount:           item.CommissionAmount,
+		DriverPayoutAmount:         item.DriverPayoutAmount,
 	}, nil
 }
 
@@ -202,6 +206,14 @@ func rideFloatValue(value pgtype.Float8) float64 {
 		return 0
 	}
 	return value.Float64
+}
+
+func rideOptionalInt(value pgtype.Int4) *int {
+	if !value.Valid || value.Int32 <= 0 {
+		return nil
+	}
+	result := int(value.Int32)
+	return &result
 }
 
 func toPostgresRideID(value int, field string) (int32, error) {

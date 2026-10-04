@@ -13,6 +13,12 @@ abstract class RideRemoteDataSource {
 
   Future<bool> updateStatus(String rideId, String status);
 
+  Future<bool> cancelRide({
+    required String rideId,
+    required String reason,
+    String details = '',
+  });
+
   Future<Map<String, dynamic>> fetchCounterparty(String rideId);
 }
 
@@ -53,6 +59,19 @@ class RideRemoteDataSourceImpl(this._dio) implements RideRemoteDataSource {
     final response = await _dio.post<Map<String, dynamic>>(
       '/api/v1/rides/${Uri.encodeComponent(rideId)}/status',
       data: {'status': status},
+    );
+    return response.statusCode == 200;
+  }
+
+  @override
+  Future<bool> cancelRide({
+    required String rideId,
+    required String reason,
+    String details = '',
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/api/v1/rides/${Uri.encodeComponent(rideId)}/cancel',
+      data: {'reason': reason, 'details': details},
     );
     return response.statusCode == 200;
   }

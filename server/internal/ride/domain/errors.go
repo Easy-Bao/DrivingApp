@@ -16,6 +16,8 @@ var (
 	ErrDriverUnavailable       = errors.New("driver is unavailable")
 	ErrDuplicateBid            = errors.New("driver already submitted a bid for this ride")
 	ErrInvalidStatusTransition = errors.New("invalid ride status transition")
+	ErrInvalidCancellation     = errors.New("invalid ride cancellation")
+	ErrCancellationCommand     = errors.New("ride cancellation requires a cancellation command")
 	ErrReviewNotAllowed        = errors.New("reviews are allowed only after a completed ride")
 	ErrReviewAlreadySubmitted  = errors.New("a review was already submitted for this ride")
 )

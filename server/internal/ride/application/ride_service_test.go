@@ -81,6 +81,7 @@ func (stub *ridesRepositoryStub) UpdateStatus(
 	_ int,
 	currentStatus string,
 	nextStatus string,
+	_ domain.RideTransition,
 ) (domain.Ride, error) {
 	if currentStatus != stub.ride.Status {
 		return domain.Ride{}, errors.New("stale ride")
@@ -372,42 +373,42 @@ func TestUpdateStatusAllowsLegacyAssignedRideToReachPickup(t *testing.T) {
 	}
 }
 
-func TestUpdateStatusRejectsCancellationAfterRideCompletion(t *testing.T) {
+func TestUpdateStatusRequiresCancellationCommandAfterRideCompletion(t *testing.T) {
 	stub := &ridesRepositoryStub{
 		ride: domain.Ride{ID: 11, PassengerID: 7, DriverID: intPointer(11), Status: "completed"},
 	}
 	service := newTestRideService(stub, testPricingConfig(t), nil)
 
-	if _, err := service.UpdateStatus(context.Background(), 11, 11, "cancelled"); !errors.Is(err, domain.ErrInvalidStatusTransition) {
-		t.Fatalf("expected completed ride cancellation to be rejected, got %v", err)
+	if _, err := service.UpdateStatus(context.Background(), 11, 11, "cancelled"); !errors.Is(err, domain.ErrCancellationCommand) {
+		t.Fatalf("expected completed ride cancellation command error, got %v", err)
 	}
 	if stub.updateNext != "" {
 		t.Fatalf("expected completed ride not to be persisted as cancelled, got %q", stub.updateNext)
 	}
 }
 
-func TestUpdateStatusRejectsPassengerCancellationAfterTripStart(t *testing.T) {
+func TestUpdateStatusRequiresCancellationCommandAfterTripStartForPassenger(t *testing.T) {
 	stub := &ridesRepositoryStub{
 		ride: domain.Ride{ID: 12, PassengerID: 7, DriverID: intPointer(11), Status: "in_transit"},
 	}
 	service := newTestRideService(stub, testPricingConfig(t), nil)
 
-	if _, err := service.UpdateStatus(context.Background(), 12, 7, "cancelled"); !errors.Is(err, domain.ErrInvalidStatusTransition) {
-		t.Fatalf("expected passenger cancellation after pickup to be rejected, got %v", err)
+	if _, err := service.UpdateStatus(context.Background(), 12, 7, "cancelled"); !errors.Is(err, domain.ErrCancellationCommand) {
+		t.Fatalf("expected passenger cancellation command error, got %v", err)
 	}
 	if stub.updateNext != "" {
 		t.Fatalf("expected in-transit ride not to be persisted as cancelled, got %q", stub.updateNext)
 	}
 }
 
-func TestUpdateStatusRejectsDriverCancellationAfterTripStart(t *testing.T) {
+func TestUpdateStatusRequiresCancellationCommandAfterTripStartForDriver(t *testing.T) {
 	stub := &ridesRepositoryStub{
 		ride: domain.Ride{ID: 13, PassengerID: 7, DriverID: intPointer(11), Status: "in_transit"},
 	}
 	service := newTestRideService(stub, testPricingConfig(t), nil)
 
-	if _, err := service.UpdateStatus(context.Background(), 13, 11, "cancelled"); !errors.Is(err, domain.ErrInvalidStatusTransition) {
-		t.Fatalf("expected driver cancellation after pickup to be rejected, got %v", err)
+	if _, err := service.UpdateStatus(context.Background(), 13, 11, "cancelled"); !errors.Is(err, domain.ErrCancellationCommand) {
+		t.Fatalf("expected driver cancellation command error, got %v", err)
 	}
 	if stub.updateNext != "" {
 		t.Fatalf("expected in-transit ride not to be persisted as cancelled, got %q", stub.updateNext)

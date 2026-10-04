@@ -260,6 +260,13 @@ func (service *RideService) UpdateStatus(ctx context.Context, rideID, actorID in
 	)
 }
 
+func (service *RideService) CancelRide(
+	ctx context.Context,
+	request domain.CancellationRequest,
+) (domain.Ride, error) {
+	return service.lifecycleService.Cancel(ctx, request)
+}
+
 func (service *RideService) CalculateFare(distanceKm, durationMinutes float64) int64 {
 	return service.pricingConfig.FareAmount(distanceKm, durationMinutes)
 }

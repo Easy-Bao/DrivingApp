@@ -382,14 +382,14 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
 
   Future<void> _handleCancelTrip() async {
     if (_isCancellingTrip) return;
-    final shouldCancel = await showDialog<bool>(
+    final reason = await showDialog<String>(
       context: context,
       barrierDismissible: true,
       builder: (_) => const TripCancellationDialog(),
     );
-    if (shouldCancel != true || !mounted) return;
+    if (reason == null || !mounted) return;
 
-    await _cancelTripRequest();
+    await _cancelTripRequest(reason: reason);
   }
 
   Future<void> _handleEmergencyPressed() async {
@@ -420,13 +420,13 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
     );
   }
 
-  Future<void> _cancelTripRequest() async {
+  Future<void> _cancelTripRequest({required String reason}) async {
     if (_isCancellingTrip || !mounted) return;
 
     setState(() => _isCancellingTrip = true);
     try {
       final canceled = await BlocProvider.of<TrackDriverCubit>(context)
-          .cancelTripRequest();
+          .cancelTripRequest(reason: reason);
       if (mounted && !canceled) {
         CustomToast.show(
           context,
@@ -460,7 +460,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
       case ActiveTripExitAction.keepTracking:
         return;
       case ActiveTripExitAction.cancel:
-        await _cancelTripRequest();
+        await _handleCancelTrip();
       case ActiveTripExitAction.minimize:
         context.goNamed(HomeRoutes.home);
     }

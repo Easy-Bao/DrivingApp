@@ -23,6 +23,12 @@ abstract interface class TrackRepository {
     RideStatus status,
   );
 
+  Future<Result<void, Failure>> cancelRide({
+    required String rideId,
+    required String reason,
+    String details = '',
+  });
+
   Future<Result<void, Failure>> publishPassengerLocation({
     required String rideId,
     required double latitude,
@@ -134,6 +140,32 @@ extension TrackRepositoryResultAdapters on TrackRepository {
           error,
           serverMessage:
               'The ride status could not be updated. Please try again.',
+        ),
+      );
+    }
+  }
+
+  Future<Result<void, DomainFailure>> cancelRideResult({
+    required String rideId,
+    required String reason,
+    String details = '',
+  }) async {
+    try {
+      final result = await cancelRide(
+        rideId: rideId,
+        reason: reason,
+        details: details,
+      );
+      return await result.fold(
+        (failure) => Err<void, DomainFailure>(failure),
+        (_) => const Ok<void, DomainFailure>(null),
+      );
+    } catch (error) {
+      return Err<void, DomainFailure>(
+        FailureMapper.fromException(
+          error,
+          serverMessage:
+              'The ride could not be cancelled. Please try again.',
         ),
       );
     }

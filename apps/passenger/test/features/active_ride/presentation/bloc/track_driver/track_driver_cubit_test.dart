@@ -58,15 +58,26 @@ void main() {
       build: () {
         when(() => session.readActiveRideId())
             .thenAnswer((_) async => 'ride-42');
-        when(() => repo.updateRideStatus(any(), any()))
+        when(
+          () => repo.cancelRide(
+            rideId: any(named: 'rideId'),
+            reason: any(named: 'reason'),
+            details: any(named: 'details'),
+          ),
+        )
             .thenAnswer((_) async => const Ok(null));
         return _makeCubit(repo, session);
       },
       act: (cubit) => cubit.cancelTrip(),
       expect: () => [isA<TrackDriverCanceled>()],
       verify: (_) {
-        verify(() => repo.updateRideStatus('ride-42', RideStatus.cancelled))
-            .called(1);
+        verify(
+          () => repo.cancelRide(
+            rideId: 'ride-42',
+            reason: 'passenger_changed_mind',
+            details: '',
+          ),
+        ).called(1);
       },
     );
 
@@ -76,14 +87,23 @@ void main() {
         when(() => session.readActiveRideId())
             .thenAnswer((_) async => 'ride-42');
         when(
-          () => repo.updateRideStatus(any(), any()),
+          () => repo.cancelRide(
+            rideId: any(named: 'rideId'),
+            reason: any(named: 'reason'),
+            details: any(named: 'details'),
+          ),
         ).thenAnswer((_) async => const Err(NetworkFailure('cancel rejected')));
         final cubit = _makeCubit(repo, session);
 
         expect(await cubit.cancelTripRequest(), isFalse);
         expect(cubit.state, isA<TrackDriverInitial>());
-        verify(() => repo.updateRideStatus('ride-42', RideStatus.cancelled))
-            .called(1);
+        verify(
+          () => repo.cancelRide(
+            rideId: 'ride-42',
+            reason: 'passenger_changed_mind',
+            details: '',
+          ),
+        ).called(1);
         await cubit.close();
       },
     );

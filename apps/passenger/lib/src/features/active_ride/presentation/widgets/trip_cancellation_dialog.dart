@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 class TripCancellationDialog extends StatefulWidget {
   const TripCancellationDialog({super.key});
 
-  static const List<String> cancellationReasons = [
-    'Driver is taking too long',
-    'Driver asked to cancel',
-    'Wrong pickup location',
-    'Changed my mind',
-    'Found another ride',
-    'Other',
-  ];
+  static const Map<String, String> cancellationReasons = {
+    'driver_taking_too_long': 'Driver is taking too long',
+    'driver_asked_to_cancel': 'Driver asked to cancel',
+    'wrong_pickup_location': 'Wrong pickup location',
+    'passenger_changed_mind': 'Changed my mind',
+    'found_another_ride': 'Found another ride',
+    'driver_no_show': 'Driver did not arrive',
+  };
 
   @override
   State<TripCancellationDialog> createState() => _TripCancellationDialogState();
@@ -77,7 +77,7 @@ class _TripCancellationDialogState extends State<TripCancellationDialog> {
         if (didPop) return;
         final shouldDiscard = await _showDiscardConfirmation(context);
         if (shouldDiscard && context.mounted) {
-          Navigator.pop(context, false);
+          Navigator.pop(context);
         }
       },
       child: AlertDialog(
@@ -98,7 +98,7 @@ class _TripCancellationDialogState extends State<TripCancellationDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Are you sure you want to cancel this ride? A cancellation fee may apply.',
+                'Select a reason so the ride record stays accurate. Repeated cancellations may affect account standing.',
                 style: TextStyle(
                   color: context.colorScheme.onSurface.withValues(alpha: 0.7),
                   fontSize: 14,
@@ -154,11 +154,12 @@ class _TripCancellationDialogState extends State<TripCancellationDialog> {
                     ),
                   ),
                 ),
-                items: TripCancellationDialog.cancellationReasons.map((reason) {
+                items: TripCancellationDialog.cancellationReasons.entries
+                    .map((entry) {
                   return DropdownMenuItem<String>(
-                    value: reason,
+                    value: entry.key,
                     child: Text(
-                      reason,
+                      entry.value,
                       style: TextStyle(
                         fontSize: 14,
                         color: context.colorScheme.onSurface,
@@ -181,10 +182,10 @@ class _TripCancellationDialogState extends State<TripCancellationDialog> {
               if (_selectedReason != null) {
                 final shouldDiscard = await _showDiscardConfirmation(context);
                 if (shouldDiscard && context.mounted) {
-                  Navigator.pop(context, false);
+                  Navigator.pop(context);
                 }
               } else {
-                Navigator.pop(context, false);
+                Navigator.pop(context);
               }
             },
             child: Text(
@@ -197,9 +198,9 @@ class _TripCancellationDialogState extends State<TripCancellationDialog> {
           ),
           TextButton(
             key: const ValueKey('confirm-cancel-ride-button'),
-            onPressed: () {
-              Navigator.pop(context, true);
-            },
+            onPressed: _selectedReason == null
+                ? null
+                : () => Navigator.pop(context, _selectedReason),
             child: Text(
               'Cancel ride',
               style: TextStyle(
