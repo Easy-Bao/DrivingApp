@@ -19,7 +19,7 @@ void main() {
         Builder(
           builder: (context) {
             return ElevatedButton(
-              onPressed: () => showDialog<bool>(
+              onPressed: () => showDialog<String>(
                 context: context,
                 builder: (_) => const TripCancellationDialog(),
               ),
@@ -36,7 +36,7 @@ void main() {
     expect(find.text('Cancel ride?'), findsOneWidget);
     expect(
       find.text(
-        'Are you sure you want to cancel this ride? A cancellation fee may apply.',
+        'Select a reason so EasyRide can record what happened. No cancellation fee is collected in the app.',
       ),
       findsOneWidget,
     );
@@ -52,7 +52,7 @@ void main() {
   testWidgets('confirms discard when a reason is selected and user cancels', (
     tester,
   ) async {
-    bool? result;
+    String? result;
 
     await tester.pumpWidget(
       buildTestableWidget(
@@ -60,7 +60,7 @@ void main() {
           builder: (context) {
             return ElevatedButton(
               onPressed: () async {
-                result = await showDialog<bool>(
+                result = await showDialog<String>(
                   context: context,
                   barrierDismissible: true,
                   builder: (_) => const TripCancellationDialog(),
@@ -109,13 +109,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Cancel ride?'), findsNothing);
-    expect(result, isFalse);
+    expect(result, isNull);
   });
 
   testWidgets(
     'confirms cancel ride directly when Cancel ride button is tapped',
     (tester) async {
-      bool? result;
+      String? result;
 
       await tester.pumpWidget(
         buildTestableWidget(
@@ -123,7 +123,7 @@ void main() {
             builder: (context) {
               return ElevatedButton(
                 onPressed: () async {
-                  result = await showDialog<bool>(
+                  result = await showDialog<String>(
                     context: context,
                     barrierDismissible: true,
                     builder: (_) => const TripCancellationDialog(),
@@ -140,12 +140,20 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.tap(
+        find.byKey(const ValueKey('cancellation-reason-dropdown')),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Changed my mind').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(
         find.byKey(const ValueKey('confirm-cancel-ride-button')),
       );
       await tester.pumpAndSettle();
 
       expect(find.text('Cancel ride?'), findsNothing);
-      expect(result, isTrue);
+      expect(result, 'passenger_changed_mind');
     },
   );
 }

@@ -98,7 +98,7 @@ class _TripCancellationDialogState extends State<TripCancellationDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Select a reason so the ride record stays accurate. Repeated cancellations may affect account standing.',
+                'Select a reason so EasyRide can record what happened. No cancellation fee is collected in the app.',
                 style: TextStyle(
                   color: context.colorScheme.onSurface.withValues(alpha: 0.7),
                   fontSize: 14,
@@ -154,8 +154,9 @@ class _TripCancellationDialogState extends State<TripCancellationDialog> {
                     ),
                   ),
                 ),
-                items: TripCancellationDialog.cancellationReasons.entries
-                    .map((entry) {
+                items: TripCancellationDialog.cancellationReasons.entries.map((
+                  entry,
+                ) {
                   return DropdownMenuItem<String>(
                     value: entry.key,
                     child: Text(
