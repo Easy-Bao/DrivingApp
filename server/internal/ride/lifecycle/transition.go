@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
@@ -266,7 +267,17 @@ func (service *Service) Cancel(ctx context.Context, request domain.CancellationR
 	default:
 		return domain.Ride{}, domain.ErrUnauthorizedRide
 	}
-	if domain.NormalizeCancellationReason(string(request.Reason)) == domain.CancellationReasonPassengerNoShow {
+	normalizedReason := domain.NormalizeCancellationReason(string(request.Reason))
+	if normalizedStatus, ok := domain.NormalizeRideStatus(current.Status); ok && normalizedStatus == domain.RideCancelled {
+		if current.CancelledBy != nil &&
+			*current.CancelledBy == request.ActorID &&
+			domain.NormalizeCancellationReason(current.CancellationReason) == normalizedReason &&
+			strings.TrimSpace(current.CancellationDetails) == strings.TrimSpace(request.Details) {
+			return current, nil
+		}
+		return domain.Ride{}, domain.ErrInvalidStatusTransition
+	}
+	if normalizedReason == domain.CancellationReasonPassengerNoShow {
 		return domain.Ride{}, domain.ErrNoShowCommand
 	}
 	responsibility, details, err := domain.ValidateCancellation(
@@ -280,7 +291,7 @@ func (service *Service) Cancel(ctx context.Context, request domain.CancellationR
 	}
 	return service.transition(ctx, request.RideID, request.ActorID, string(domain.RideCancelled), domain.RideTransition{
 		EventType:      domain.RideEventCancelled,
-		Reason:         domain.NormalizeCancellationReason(string(request.Reason)),
+		Reason:         normalizedReason,
 		Responsibility: responsibility,
 		Details:        details,
 	})

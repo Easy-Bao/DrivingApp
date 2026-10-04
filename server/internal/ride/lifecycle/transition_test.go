@@ -292,6 +292,65 @@ func TestCancelDerivesDriverResponsibilityFromPassengerReason(t *testing.T) {
 	}
 }
 
+func TestCancelIsIdempotentForTheSameActorAndCancellationDetails(t *testing.T) {
+	driverID := 42
+	cancelledBy := 10
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:                         1,
+			PassengerID:                10,
+			DriverID:                   &driverID,
+			Status:                     string(domain.RideCancelled),
+			CancelledBy:                &cancelledBy,
+			CancellationReason:         string(domain.CancellationReasonDriverNoShow),
+			CancellationDetails:        "Driver did not move toward pickup.",
+			CancellationResponsibility: string(domain.CancellationResponsibilityDriverFault),
+		},
+	}
+	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
+
+	updated, err := service.Cancel(context.Background(), domain.CancellationRequest{
+		RideID:  1,
+		ActorID: 10,
+		Reason:  domain.CancellationReasonDriverNoShow,
+		Details: "Driver did not move toward pickup.",
+	})
+	if err != nil {
+		t.Fatalf("Cancel() retry error = %v", err)
+	}
+	if updated.Status != string(domain.RideCancelled) {
+		t.Fatalf("status = %q, want cancelled", updated.Status)
+	}
+	if store.transition.EventType != "" {
+		t.Fatalf("idempotent retry wrote a transition: %+v", store.transition)
+	}
+}
+
+func TestCancelRejectsDifferentRetryForAnAlreadyCancelledRide(t *testing.T) {
+	driverID := 42
+	cancelledBy := 10
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:                 1,
+			PassengerID:        10,
+			DriverID:           &driverID,
+			Status:             string(domain.RideCancelled),
+			CancelledBy:        &cancelledBy,
+			CancellationReason: string(domain.CancellationReasonDriverNoShow),
+		},
+	}
+	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
+
+	_, err := service.Cancel(context.Background(), domain.CancellationRequest{
+		RideID:  1,
+		ActorID: 10,
+		Reason:  domain.CancellationReasonPassengerChangedMind,
+	})
+	if !errors.Is(err, domain.ErrInvalidStatusTransition) {
+		t.Fatalf("expected invalid status transition, got %v", err)
+	}
+}
+
 func TestCancelRejectsReasonFromWrongActor(t *testing.T) {
 	driverID := 42
 	store := &fakeLifecycleStore{
