@@ -70,6 +70,56 @@ func (handler *Handler) AcceptRide(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, 200, item)
 }
 
+func (handler *Handler) MarkArrived(w http.ResponseWriter, r *http.Request) {
+	driverID, ok := handler.identity(r)
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid ride id")
+		return
+	}
+	var input dto.ArrivalRequest
+	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil ||
+		input.Latitude == nil || input.Longitude == nil {
+		response.Error(w, http.StatusBadRequest, "driver location is required")
+		return
+	}
+	ride, err := handler.service.MarkArrived(
+		r.Context(),
+		rideID,
+		driverID,
+		*input.Latitude,
+		*input.Longitude,
+	)
+	if err != nil {
+		response.Error(w, rideErrorStatus(err), safeRideError(err))
+		return
+	}
+	response.JSON(w, http.StatusOK, ride)
+}
+
+func (handler *Handler) MarkPassengerNoShow(w http.ResponseWriter, r *http.Request) {
+	driverID, ok := handler.identity(r)
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid ride id")
+		return
+	}
+	ride, err := handler.service.MarkPassengerNoShow(r.Context(), rideID, driverID)
+	if err != nil {
+		response.Error(w, rideErrorStatus(err), safeRideError(err))
+		return
+	}
+	response.JSON(w, http.StatusOK, ride)
+}
+
 func (handler *Handler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 	actorID, ok := handler.identity(r)
 	if !ok {
@@ -783,6 +833,8 @@ func rideErrorStatus(err error) int {
 		return http.StatusBadRequest
 	case errors.Is(err, domain.ErrInvalidCancellation):
 		return http.StatusBadRequest
+	case errors.Is(err, domain.ErrArrivalLocation):
+		return http.StatusUnprocessableEntity
 	case errors.Is(err, domain.ErrRouteUnavailable):
 		return 503
 	case errors.Is(err, domain.ErrUnauthorizedRide), errors.Is(err, domain.ErrUnauthorizedSession):
@@ -793,7 +845,10 @@ func rideErrorStatus(err error) int {
 		errors.Is(err, domain.ErrDriverUnavailable),
 		errors.Is(err, domain.ErrDuplicateBid),
 		errors.Is(err, domain.ErrInvalidStatusTransition),
-		errors.Is(err, domain.ErrCancellationCommand):
+		errors.Is(err, domain.ErrCancellationCommand),
+		errors.Is(err, domain.ErrArrivalCommand),
+		errors.Is(err, domain.ErrPassengerNoShowNotReady),
+		errors.Is(err, domain.ErrNoShowCommand):
 		return 409
 	default:
 		return 500
@@ -828,6 +883,14 @@ func safeRideError(err error) string {
 		return "Use the cancellation action with a reason."
 	case errors.Is(err, domain.ErrInvalidCancellation):
 		return "Choose a valid cancellation reason for this ride."
+	case errors.Is(err, domain.ErrArrivalCommand):
+		return "Confirm arrival from the pickup action with location enabled."
+	case errors.Is(err, domain.ErrArrivalLocation):
+		return "Move closer to the pickup point before confirming arrival."
+	case errors.Is(err, domain.ErrPassengerNoShowNotReady):
+		return "Keep waiting until the pickup timer finishes before marking a no-show."
+	case errors.Is(err, domain.ErrNoShowCommand):
+		return "Use the passenger no-show action after the waiting period."
 	case errors.Is(err, domain.ErrReviewNotAllowed):
 		return "Reviews are available after a completed ride."
 	case errors.Is(err, domain.ErrReviewAlreadySubmitted):

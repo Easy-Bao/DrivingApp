@@ -88,6 +88,40 @@ void main() {
     ).called(1);
   });
 
+  test('requires the server arrival response to include its wait timer', () async {
+    when(
+      () => rideDataSource.markArrived(
+        rideId: 'ride-7',
+        latitude: 7.82,
+        longitude: 123.43,
+      ),
+    ).thenAnswer(
+      (_) async => <String, dynamic>{
+        'id': 'ride-7',
+        'status': 'arrived',
+        'pickup_name': 'Mountain View',
+        'dropoff_name': 'Vista Slope',
+        'arrived_at': '2026-10-04T10:00:00Z',
+        'waiting_until': '2026-10-04T10:05:00Z',
+      },
+    );
+
+    final result = await repository.markArrived(
+      rideId: 'ride-7',
+      latitude: 7.82,
+      longitude: 123.43,
+    );
+
+    expect(
+      result,
+      isA<Ok<RideSnapshot, Failure>>(),
+    );
+    expect(
+      result.fold((_) => null, (ride) => ride.waitingUntil),
+      DateTime.parse('2026-10-04T10:05:00Z'),
+    );
+  });
+
   test(
     'adapts passenger reads and location cleanup into strict results',
     () async {

@@ -174,7 +174,6 @@ func driverCancellationResponsibility(reason CancellationReason) CancellationRes
 	switch reason {
 	case CancellationReasonPassengerRequestedCancel,
 		CancellationReasonPassengerUnreachable,
-		CancellationReasonPassengerNoShow,
 		CancellationReasonPassengerBehaviorUnsafe:
 		return CancellationResponsibilityPassengerFault
 	case CancellationReasonVehicleProblem:

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
@@ -55,9 +56,102 @@ func (service *Service) UpdateStatus(ctx context.Context, rideID, actorID int, n
 	if normalized, ok := domain.NormalizeRideStatus(next); ok && normalized == domain.RideCancelled {
 		return domain.Ride{}, domain.ErrCancellationCommand
 	}
+	if normalized, ok := domain.NormalizeRideStatus(next); ok && normalized == domain.RideArrived {
+		return domain.Ride{}, domain.ErrArrivalCommand
+	}
 	return service.transition(ctx, rideID, actorID, next, domain.RideTransition{
 		EventType: domain.RideEventStatusChanged,
 	})
+}
+
+func (service *Service) MarkArrived(
+	ctx context.Context,
+	rideID, driverID int,
+	driverLatitude, driverLongitude float64,
+) (domain.Ride, error) {
+	if service.store == nil {
+		return domain.Ride{}, ErrPersistenceUnavailable
+	}
+	current, err := service.store.Get(ctx, rideID)
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("load ride for arrival: %w", err)
+	}
+	if current.DriverID == nil || *current.DriverID != driverID {
+		return domain.Ride{}, domain.ErrUnauthorizedRide
+	}
+	if err := domain.ValidateArrivalLocation(
+		current.PickupLatitude,
+		current.PickupLongitude,
+		driverLatitude,
+		driverLongitude,
+	); err != nil {
+		return domain.Ride{}, err
+	}
+	normalizedStatus, ok := domain.NormalizeRideStatus(current.Status)
+	if !ok || (normalizedStatus != domain.RideAssigned && normalizedStatus != domain.RideAccepted) {
+		return domain.Ride{}, domain.ErrInvalidStatusTransition
+	}
+	updated, err := service.store.MarkArrived(
+		ctx,
+		rideID,
+		driverID,
+		string(normalizedStatus),
+	)
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("mark ride arrived: %w", err)
+	}
+	service.publish(
+		ctx,
+		event.RideStatusChanged,
+		updated,
+		map[string]any{
+			"previous_status": string(normalizedStatus),
+			"ride":            updated,
+		},
+	)
+	return updated, nil
+}
+
+func (service *Service) MarkPassengerNoShow(
+	ctx context.Context,
+	rideID, driverID int,
+) (domain.Ride, error) {
+	if service.store == nil {
+		return domain.Ride{}, ErrPersistenceUnavailable
+	}
+	current, err := service.store.Get(ctx, rideID)
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("load ride for passenger no-show: %w", err)
+	}
+	if current.DriverID == nil || *current.DriverID != driverID {
+		return domain.Ride{}, domain.ErrUnauthorizedRide
+	}
+	status, ok := domain.NormalizeRideStatus(current.Status)
+	if !ok || status != domain.RideArrived {
+		return domain.Ride{}, domain.ErrInvalidStatusTransition
+	}
+	if current.WaitingUntil != nil {
+		waitingUntil, parseErr := time.Parse(time.RFC3339, *current.WaitingUntil)
+		if parseErr == nil && time.Now().UTC().Before(waitingUntil) {
+			return domain.Ride{}, domain.ErrPassengerNoShowNotReady
+		}
+	}
+	updated, err := service.store.MarkPassengerNoShow(ctx, rideID, driverID)
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("mark passenger no-show: %w", err)
+	}
+	service.publish(
+		ctx,
+		event.RideStatusChanged,
+		updated,
+		map[string]any{
+			"previous_status": string(domain.RideArrived),
+			"reason":          string(domain.CancellationReasonPassengerNoShow),
+			"responsibility":  string(domain.CancellationResponsibilityPassengerFault),
+			"ride":            updated,
+		},
+	)
+	return updated, nil
 }
 
 // Cancel applies the ordinary cancellation policy and records the reason and
@@ -79,6 +173,9 @@ func (service *Service) Cancel(ctx context.Context, request domain.CancellationR
 		actor = domain.CancellationActorDriver
 	default:
 		return domain.Ride{}, domain.ErrUnauthorizedRide
+	}
+	if domain.NormalizeCancellationReason(string(request.Reason)) == domain.CancellationReasonPassengerNoShow {
+		return domain.Ride{}, domain.ErrNoShowCommand
 	}
 	responsibility, details, err := domain.ValidateCancellation(
 		actor,

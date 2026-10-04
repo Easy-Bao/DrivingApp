@@ -56,6 +56,51 @@ final class DriverRideRepositoryImpl({
   }
 
   @override
+  Future<Result<RideSnapshot, Failure>> markArrived({
+    required String rideId,
+    required double latitude,
+    required double longitude,
+  }) async {
+    try {
+      final data = await _rideDataSource.markArrived(
+        rideId: rideId,
+        latitude: latitude,
+        longitude: longitude,
+      );
+      final ride = RideDto.fromJson(data, fallbackId: rideId).toDomain();
+      if (ride.id.isEmpty ||
+          ride.status != RideStatus.arrived.value ||
+          ride.arrivedAt == null ||
+          ride.waitingUntil == null) {
+        return const Err(
+          ValidationFailure('The arrival response is missing the wait timer.'),
+        );
+      }
+      return Ok(ride);
+    } catch (error) {
+      return Err(_mapFailure(error, action: 'confirm arrival'));
+    }
+  }
+
+  @override
+  Future<Result<RideSnapshot, Failure>> markPassengerNoShow(
+    String rideId,
+  ) async {
+    try {
+      final data = await _rideDataSource.markPassengerNoShow(rideId);
+      final ride = RideDto.fromJson(data, fallbackId: rideId).toDomain();
+      if (ride.id.isEmpty || ride.status != RideStatus.cancelled.value) {
+        return const Err(
+          ValidationFailure('The no-show response is incomplete.'),
+        );
+      }
+      return Ok(ride);
+    } catch (error) {
+      return Err(_mapFailure(error, action: 'record the passenger no-show'));
+    }
+  }
+
+  @override
   Future<Result<RideSnapshot, Failure>> fetchRide(String rideId) async {
     try {
       final data = await _rideDataSource.getRideStatus(rideId);

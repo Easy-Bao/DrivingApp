@@ -75,6 +75,27 @@ func (stub *ridesRepositoryStub) AcceptRide(context.Context, int, int) (domain.R
 	return domain.Ride{}, nil
 }
 
+func (stub *ridesRepositoryStub) MarkArrived(
+	_ context.Context,
+	_ int,
+	_ int,
+	_ string,
+) (domain.Ride, error) {
+	stub.updated = stub.ride
+	stub.updated.Status = "arrived"
+	return stub.updated, nil
+}
+
+func (stub *ridesRepositoryStub) MarkPassengerNoShow(
+	_ context.Context,
+	_ int,
+	_ int,
+) (domain.Ride, error) {
+	stub.updated = stub.ride
+	stub.updated.Status = "cancelled"
+	return stub.updated, nil
+}
+
 func (stub *ridesRepositoryStub) UpdateStatus(
 	_ context.Context,
 	_ int,
@@ -340,36 +361,36 @@ func TestCreateSessionRejectsPassengerWithActiveRideBeforeRouteCalculation(t *te
 }
 
 func TestUpdateStatusRequiresRideParticipantAndCurrentState(t *testing.T) {
-	stub := &ridesRepositoryStub{ride: domain.Ride{ID: 9, PassengerID: 7, DriverID: intPointer(11), Status: "accepted"}}
+	stub := &ridesRepositoryStub{ride: domain.Ride{ID: 9, PassengerID: 7, DriverID: intPointer(11), Status: "arrived"}}
 	service := newTestRideService(stub, testPricingConfig(t), nil)
 	if _, err := service.UpdateStatus(
 		context.Background(),
 		9,
 		99,
-		"arrived",
+		"in_transit",
 	); !errors.Is(err, domain.ErrUnauthorizedRide) {
 		t.Fatalf("expected unauthorized ride error, got %v", err)
 	}
-	if _, err := service.UpdateStatus(context.Background(), 9, 7, "arrived"); !errors.Is(err, domain.ErrUnauthorizedRide) {
+	if _, err := service.UpdateStatus(context.Background(), 9, 7, "in_transit"); !errors.Is(err, domain.ErrUnauthorizedRide) {
 		t.Fatalf("expected passenger transition rejection, got %v", err)
 	}
-	if _, err := service.UpdateStatus(context.Background(), 9, 11, "arrived"); err != nil {
+	if _, err := service.UpdateStatus(context.Background(), 9, 11, "in_transit"); err != nil {
 		t.Fatalf("expected driver transition to succeed, got %v", err)
 	}
-	if stub.updateNext != "arrived" {
-		t.Fatalf("expected persisted arrived status, got %q", stub.updateNext)
+	if stub.updateNext != "in_transit" {
+		t.Fatalf("expected persisted in-transit status, got %q", stub.updateNext)
 	}
 }
 
-func TestUpdateStatusAllowsLegacyAssignedRideToReachPickup(t *testing.T) {
+func TestUpdateStatusRequiresArrivalCommandForLegacyAssignedRide(t *testing.T) {
 	stub := &ridesRepositoryStub{ride: domain.Ride{ID: 10, PassengerID: 7, DriverID: intPointer(11), Status: "assigned"}}
 	service := newTestRideService(stub, testPricingConfig(t), nil)
 
-	if _, err := service.UpdateStatus(context.Background(), 10, 11, "arrived"); err != nil {
-		t.Fatalf("expected legacy assigned ride to reach pickup, got %v", err)
+	if _, err := service.UpdateStatus(context.Background(), 10, 11, "arrived"); !errors.Is(err, domain.ErrArrivalCommand) {
+		t.Fatalf("expected arrival command requirement, got %v", err)
 	}
-	if stub.updateNext != "arrived" {
-		t.Fatalf("expected persisted arrived status, got %q", stub.updateNext)
+	if stub.updateNext != "" {
+		t.Fatalf("expected legacy assigned ride not to be persisted, got %q", stub.updateNext)
 	}
 }
 

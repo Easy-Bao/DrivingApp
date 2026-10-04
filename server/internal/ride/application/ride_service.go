@@ -267,6 +267,27 @@ func (service *RideService) CancelRide(
 	return service.lifecycleService.Cancel(ctx, request)
 }
 
+func (service *RideService) MarkArrived(
+	ctx context.Context,
+	rideID, driverID int,
+	driverLatitude, driverLongitude float64,
+) (domain.Ride, error) {
+	return service.lifecycleService.MarkArrived(
+		ctx,
+		rideID,
+		driverID,
+		driverLatitude,
+		driverLongitude,
+	)
+}
+
+func (service *RideService) MarkPassengerNoShow(
+	ctx context.Context,
+	rideID, driverID int,
+) (domain.Ride, error) {
+	return service.lifecycleService.MarkPassengerNoShow(ctx, rideID, driverID)
+}
+
 func (service *RideService) CalculateFare(distanceKm, durationMinutes float64) int64 {
 	return service.pricingConfig.FareAmount(distanceKm, durationMinutes)
 }

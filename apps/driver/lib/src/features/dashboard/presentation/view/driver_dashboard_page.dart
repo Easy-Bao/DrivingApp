@@ -781,6 +781,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       pickupLng: resolvedTrip.pickupLongitude,
       destLat: resolvedTrip.dropoffLatitude,
       destLng: resolvedTrip.dropoffLongitude,
+      arrivedAt: resolvedTrip.arrivedAt,
+      waitingUntil: resolvedTrip.waitingUntil,
     );
 
     context.pushNamed(
@@ -819,6 +821,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         pickupLng: resolvedTrip.pickupLongitude,
         destLat: resolvedTrip.dropoffLatitude,
         destLng: resolvedTrip.dropoffLongitude,
+        arrivedAt: resolvedTrip.arrivedAt,
+        waitingUntil: resolvedTrip.waitingUntil,
       );
 
       final finalFare = await cubit.completeRide();

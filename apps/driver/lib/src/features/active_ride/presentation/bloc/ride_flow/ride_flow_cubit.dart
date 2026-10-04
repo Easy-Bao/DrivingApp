@@ -22,6 +22,8 @@ class RideFlowCubit({
   String? _activePassengerName;
   Timer? _waitTimer;
   int _elapsedWaitTime = 0;
+  DateTime? _waitingUntil;
+  DateTime? _waitStartedAt;
   bool _isActionInFlight = false;
   int _actionGeneration = 0;
 
@@ -41,6 +43,8 @@ class RideFlowCubit({
     double? pickupLng,
     double? destLat,
     double? destLng,
+    DateTime? arrivedAt,
+    DateTime? waitingUntil,
   }) {
     final typedRideId = RideId.tryParse(rideId);
     if (typedRideId == null) {
@@ -53,18 +57,20 @@ class RideFlowCubit({
     _activeRideId = typedRideId.normalized;
     _activePassengerId = passengerId;
     _activePassengerName = passengerName;
+    _waitingUntil = waitingUntil?.toUtc();
     if (status == 'arrived') {
-      emit(
-        RideFlowWaitingPassenger(
-          passengerName: passengerName,
-          waitTimeSeconds: 0,
-          pickupLat: pickupLat,
-          pickupLng: pickupLng,
-          destLat: destLat,
-          destLng: destLng,
-        ),
+      _waitStartedAt = arrivedAt?.toUtc() ?? DateTime.now().toUtc();
+      _startWaitTimer(
+        actionGeneration: _actionGeneration,
+        passengerName: passengerName,
+        pickupLat: pickupLat,
+        pickupLng: pickupLng,
+        destLat: destLat,
+        destLng: destLng,
       );
     } else if (status == 'in_transit') {
+      _waitingUntil = null;
+      _waitStartedAt = null;
       emit(
         RideFlowInTransit(
           passengerName: passengerName,
@@ -76,6 +82,8 @@ class RideFlowCubit({
         ),
       );
     } else {
+      _waitingUntil = null;
+      _waitStartedAt = null;
       emit(
         RideFlowNavigatingToPickup(
           passengerName: passengerName,
@@ -86,6 +94,12 @@ class RideFlowCubit({
         ),
       );
     }
+  }
+
+  bool get canMarkPassengerNoShow {
+    final waitingUntil = _waitingUntil;
+    return waitingUntil != null &&
+        !DateTime.now().toUtc().isBefore(waitingUntil);
   }
 
   Future<void> acceptRide({
@@ -147,6 +161,8 @@ class RideFlowCubit({
 
   Future<void> arriveAtPickup(
     String passengerName, {
+    required double driverLat,
+    required double driverLng,
     double? pickupLat,
     double? pickupLng,
     double? destLat,
@@ -157,55 +173,118 @@ class RideFlowCubit({
     _isActionInFlight = true;
     _waitTimer?.cancel();
     _elapsedWaitTime = 0;
+    _waitingUntil = null;
 
     try {
+      RideSnapshot? arrivedRide;
+      Failure? arrivalFailure;
       if (_activeRideId != null) {
-        final result = await _rideRepository.updateRideStatusResult(
+        (await _rideRepository.markArrivedResult(
           rideId: _activeRideId!,
-          status: RideStatus.arrived,
+          latitude: driverLat,
+          longitude: driverLng,
+        )).fold(
+          (failure) => arrivalFailure = failure,
+          (value) => arrivedRide = value,
         );
-        if (!_isCurrentAction(actionGeneration)) return;
-        final failure = result.fold<Failure?>((value) => value, (_) => null);
-        if (failure != null) {
-          emit(RideFlowError(ErrorHandler.getErrorMessage(failure)));
+        if (arrivalFailure != null) {
+          emit(RideFlowError(ErrorHandler.getErrorMessage(arrivalFailure!)));
           return;
         }
+        _waitingUntil = arrivedRide?.waitingUntil;
       }
 
+      _waitStartedAt = arrivedRide?.arrivedAt ?? DateTime.now().toUtc();
+      _startWaitTimer(
+        actionGeneration: actionGeneration,
+        passengerName: passengerName,
+        pickupLat: pickupLat,
+        pickupLng: pickupLng,
+        destLat: destLat,
+        destLng: destLng,
+      );
+    } catch (error) {
+      if (!_isCurrentAction(actionGeneration)) return;
+      dev.log('Error confirming arrival: $error');
+      emit(RideFlowError(ErrorHandler.getErrorMessage(error)));
+    } finally {
+      if (_actionGeneration == actionGeneration) _isActionInFlight = false;
+    }
+  }
+
+  Future<bool> markPassengerNoShow() async {
+    if (_isActionInFlight || _activeRideId == null) return false;
+    final actionGeneration = ++_actionGeneration;
+    _isActionInFlight = true;
+    try {
+      Failure? noShowFailure;
+      (await _rideRepository.markPassengerNoShowResult(_activeRideId!)).fold(
+        (failure) => noShowFailure = failure,
+        (_) {},
+      );
+      if (!_isCurrentAction(actionGeneration)) return false;
+      if (noShowFailure != null) {
+        emit(RideFlowError(ErrorHandler.getErrorMessage(noShowFailure!)));
+        return false;
+      }
+      _waitTimer?.cancel();
+      _activeRideId = null;
+      _activePassengerId = null;
+      _activePassengerName = null;
+      _waitingUntil = null;
+      _waitStartedAt = null;
+      _elapsedWaitTime = 0;
+      emit(const RideFlowInitial());
+      return true;
+    } catch (error) {
+      if (_isCurrentAction(actionGeneration)) {
+        emit(RideFlowError(ErrorHandler.getErrorMessage(error)));
+      }
+      return false;
+    } finally {
+      if (_actionGeneration == actionGeneration) _isActionInFlight = false;
+    }
+  }
+
+  void _startWaitTimer({
+    required int actionGeneration,
+    required String passengerName,
+    double? pickupLat,
+    double? pickupLng,
+    double? destLat,
+    double? destLng,
+  }) {
+    _waitTimer?.cancel();
+    _waitStartedAt ??= DateTime.now().toUtc();
+    void emitWaiting() {
+      if (!_isCurrentAction(actionGeneration)) return;
+      _elapsedWaitTime = _calculateElapsedWaitSeconds();
       emit(
         RideFlowWaitingPassenger(
           passengerName: passengerName,
-          waitTimeSeconds: 0,
+          waitTimeSeconds: _elapsedWaitTime,
           pickupLat: pickupLat,
           pickupLng: pickupLng,
           destLat: destLat,
           destLng: destLng,
         ),
       );
-      _waitTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        if (!_isCurrentAction(actionGeneration)) {
-          timer.cancel();
-          return;
-        }
-        _elapsedWaitTime++;
-        emit(
-          RideFlowWaitingPassenger(
-            passengerName: passengerName,
-            waitTimeSeconds: _elapsedWaitTime,
-            pickupLat: pickupLat,
-            pickupLng: pickupLng,
-            destLat: destLat,
-            destLng: destLng,
-          ),
-        );
-      });
-    } catch (error) {
-      if (!_isCurrentAction(actionGeneration)) return;
-      dev.log('Error updating status to arrived: $error');
-      emit(RideFlowError(ErrorHandler.getErrorMessage(error)));
-    } finally {
-      if (_actionGeneration == actionGeneration) _isActionInFlight = false;
     }
+
+    emitWaiting();
+    _waitTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!_isCurrentAction(actionGeneration)) {
+        _waitTimer?.cancel();
+        return;
+      }
+      emitWaiting();
+    });
+  }
+
+  int _calculateElapsedWaitSeconds() {
+    final start = _waitStartedAt ?? DateTime.now().toUtc();
+    final elapsed = DateTime.now().toUtc().difference(start).inSeconds;
+    return elapsed.clamp(0, 24 * 60 * 60).toInt();
   }
 
   Future<bool> startRide({
@@ -220,6 +299,8 @@ class RideFlowCubit({
     final actionGeneration = ++_actionGeneration;
     _isActionInFlight = true;
     _waitTimer?.cancel();
+    _waitingUntil = null;
+    _waitStartedAt = null;
 
     try {
       var resolvedDestLat = destLat;
@@ -460,6 +541,9 @@ class RideFlowCubit({
     _activeRideId = null;
     _activePassengerId = null;
     _activePassengerName = null;
+    _waitingUntil = null;
+    _waitStartedAt = null;
+    _elapsedWaitTime = 0;
     _isActionInFlight = false;
     emit(const RideFlowInitial());
   }

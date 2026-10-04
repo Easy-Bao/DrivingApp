@@ -19,6 +19,8 @@ final class const RideSnapshot({
   final double? distanceKm,
   final double? durationMinutes,
   final int? fareAmount,
+  final DateTime? arrivedAt,
+  final DateTime? waitingUntil,
 }) extends Equatable {
   factory fromJson(Map<String, dynamic> json, {String? fallbackId}) {
     final {
@@ -40,6 +42,8 @@ final class const RideSnapshot({
       'duration_minutes': rawDurationMinutes,
       'fare_amount': rawFareAmount,
       'fare': rawFare,
+      'arrived_at': rawArrivedAt,
+      'waiting_until': rawWaitingUntil,
     } = _canonicalPayload(
       json,
     );
@@ -62,6 +66,8 @@ final class const RideSnapshot({
       distanceKm: SafeParse.toNullableDouble(rawDistanceKm),
       durationMinutes: SafeParse.toNullableDouble(rawDurationMinutes),
       fareAmount: _fareAmount(rawFareAmount, rawFare),
+      arrivedAt: _nullableDateTime(rawArrivedAt),
+      waitingUntil: _nullableDateTime(rawWaitingUntil),
     );
   }
 
@@ -105,6 +111,8 @@ final class const RideSnapshot({
     distanceKm,
     durationMinutes,
     fareAmount,
+    arrivedAt,
+    waitingUntil,
   ];
 }
 
@@ -133,6 +141,8 @@ Map<String, Object?> _canonicalPayload(Map<String, dynamic> json) => {
   'duration_minutes': json['duration_minutes'] ?? json['durationMinutes'],
   'fare_amount': json['fare_amount'],
   'fare': json['fare'],
+  'arrived_at': json['arrived_at'] ?? json['arrivedAt'],
+  'waiting_until': json['waiting_until'] ?? json['waitingUntil'],
 };
 
 int? _fareAmount(Object? rawAmount, Object? rawPesos) {
@@ -150,6 +160,12 @@ int? _fareAmount(Object? rawAmount, Object? rawPesos) {
 String? _nullableString(Object? value) {
   final normalized = SafeParse.toStringValue(value).trim();
   return normalized.isEmpty ? null : normalized;
+}
+
+DateTime? _nullableDateTime(Object? value) {
+  final normalized = SafeParse.toStringValue(value).trim();
+  if (normalized.isEmpty) return null;
+  return DateTime.tryParse(normalized)?.toUtc();
 }
 
 RideCoordinates? _coordinatesOrNull(double? latitude, double? longitude) {

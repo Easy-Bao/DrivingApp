@@ -257,8 +257,22 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
     setState(() => _isConfirmingArrival = true);
     final rideCubit = BlocProvider.of<RideFlowCubit>(context);
     try {
+      final position =
+          LocationService.lastPosition ??
+          await LocationService.getCurrentPosition();
+      if (!mounted) return;
+      if (position == null) {
+        CustomToast.show(
+          this.context,
+          'Your current location is unavailable. Enable location and try again.',
+          isError: true,
+        );
+        return;
+      }
       await rideCubit.arriveAtPickup(
         passengerName,
+        driverLat: position.latitude,
+        driverLng: position.longitude,
         pickupLat: pickupLat,
         pickupLng: pickupLng,
         destLat: state.destinationLatitude,

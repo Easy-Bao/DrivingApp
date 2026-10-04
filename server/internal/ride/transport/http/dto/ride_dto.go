@@ -41,6 +41,11 @@ type CancellationRequest struct {
 	Details string `json:"details"`
 }
 
+type ArrivalRequest struct {
+	Latitude  *float64 `json:"latitude"`
+	Longitude *float64 `json:"longitude"`
+}
+
 type CashSettlementRequest struct {
 	CashReceivedAmount int64  `json:"cash_received_amount"`
 	CashChangeAmount   int64  `json:"cash_change_amount"`

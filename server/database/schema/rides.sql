@@ -20,6 +20,8 @@ CREATE TABLE rides (
     driver_rating double precision,
     created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
     completed_at timestamptz,
+    arrived_at timestamptz,
+    waiting_until timestamptz,
     payment_status text NOT NULL DEFAULT 'unpaid',
     cash_received_at timestamptz,
     cash_received_amount bigint NOT NULL DEFAULT 0,

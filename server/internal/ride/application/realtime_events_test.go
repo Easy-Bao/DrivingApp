@@ -21,17 +21,17 @@ func (stub *eventPublisherStub) Publish(_ context.Context, envelope event.Envelo
 
 func TestUpdateStatusPublishesToBothRideParticipants(t *testing.T) {
 	repository := &ridesRepositoryStub{
-		ride: domain.Ride{ID: 9, PassengerID: 7, DriverID: intPointer(11), Status: "accepted"},
+		ride: domain.Ride{ID: 9, PassengerID: 7, DriverID: intPointer(11), Status: "arrived"},
 	}
 	publisher := &eventPublisherStub{}
 	service := newTestRideService(repository, testPricingConfig(t), publisher)
 
-	updated, err := service.UpdateStatus(context.Background(), 9, 11, "arrived")
+	updated, err := service.UpdateStatus(context.Background(), 9, 11, "in_transit")
 	if err != nil {
 		t.Fatalf("UpdateStatus() error = %v", err)
 	}
-	if updated.Status != "arrived" {
-		t.Fatalf("updated status = %q, want arrived", updated.Status)
+	if updated.Status != "in_transit" {
+		t.Fatalf("updated status = %q, want in_transit", updated.Status)
 	}
 	if len(publisher.envelopes) != 1 {
 		t.Fatalf("published event count = %d, want 1", len(publisher.envelopes))
@@ -102,16 +102,16 @@ func TestCreateOpenSessionPublishesToTheDriverPool(t *testing.T) {
 
 func TestPublishingFailureDoesNotRollbackPersistedStatus(t *testing.T) {
 	repository := &ridesRepositoryStub{
-		ride: domain.Ride{ID: 9, PassengerID: 7, DriverID: intPointer(11), Status: "accepted"},
+		ride: domain.Ride{ID: 9, PassengerID: 7, DriverID: intPointer(11), Status: "arrived"},
 	}
 	publisher := &eventPublisherStub{err: errors.New("redis unavailable")}
 	service := newTestRideService(repository, testPricingConfig(t), publisher)
 
-	updated, err := service.UpdateStatus(context.Background(), 9, 11, "arrived")
+	updated, err := service.UpdateStatus(context.Background(), 9, 11, "in_transit")
 	if err != nil {
 		t.Fatalf("UpdateStatus() error = %v", err)
 	}
-	if updated.Status != "arrived" || repository.updateNext != "arrived" {
+	if updated.Status != "in_transit" || repository.updateNext != "in_transit" {
 		t.Fatalf("persisted update was rolled back: %#v", updated)
 	}
 }

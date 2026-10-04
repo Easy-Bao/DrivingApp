@@ -27,6 +27,8 @@ type Ride struct {
 	PassengerFeedback          string  `json:"passenger_feedback,omitempty"`
 	CreatedAt                  *string `json:"created_at,omitempty"`
 	CompletedAt                *string `json:"completed_at,omitempty"`
+	ArrivedAt                  *string `json:"arrived_at,omitempty"`
+	WaitingUntil               *string `json:"waiting_until,omitempty"`
 	PaymentStatus              string  `json:"payment_status"`
 	CashReceivedAmount         int64   `json:"cash_received_amount"`
 	CashChangeAmount           int64   `json:"cash_change_amount"`

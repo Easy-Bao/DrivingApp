@@ -22,6 +22,23 @@ func (store *fakeLifecycleStore) AcceptRide(_ context.Context, _, _ int) (domain
 	return domain.Ride{}, nil
 }
 
+func (store *fakeLifecycleStore) MarkArrived(
+	_ context.Context,
+	_, _ int,
+	_ string,
+) (domain.Ride, error) {
+	store.ride.Status = string(domain.RideArrived)
+	return store.ride, nil
+}
+
+func (store *fakeLifecycleStore) MarkPassengerNoShow(
+	_ context.Context,
+	_, _ int,
+) (domain.Ride, error) {
+	store.ride.Status = string(domain.RideCancelled)
+	return store.ride, nil
+}
+
 func (store *fakeLifecycleStore) UpdateStatus(
 	_ context.Context,
 	_, _ int,
@@ -40,17 +57,17 @@ func TestUpdateStatusIdempotentWhenAlreadyInTargetStatus(t *testing.T) {
 			ID:          1,
 			PassengerID: 10,
 			DriverID:    &driverID,
-			Status:      string(domain.RideArrived),
+			Status:      string(domain.RideInTransit),
 		},
 	}
 	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
 
-	updated, err := service.UpdateStatus(context.Background(), 1, driverID, string(domain.RideArrived))
+	updated, err := service.UpdateStatus(context.Background(), 1, driverID, string(domain.RideInTransit))
 	if err != nil {
 		t.Fatalf("expected no error on duplicate status update, got %v", err)
 	}
-	if updated.Status != string(domain.RideArrived) {
-		t.Fatalf("expected status %q, got %q", domain.RideArrived, updated.Status)
+	if updated.Status != string(domain.RideInTransit) {
+		t.Fatalf("expected status %q, got %q", domain.RideInTransit, updated.Status)
 	}
 }
 
@@ -61,17 +78,62 @@ func TestUpdateStatusValidTransition(t *testing.T) {
 			ID:          1,
 			PassengerID: 10,
 			DriverID:    &driverID,
-			Status:      string(domain.RideAccepted),
+			Status:      string(domain.RideArrived),
 		},
 	}
 	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
 
-	updated, err := service.UpdateStatus(context.Background(), 1, driverID, string(domain.RideArrived))
+	updated, err := service.UpdateStatus(context.Background(), 1, driverID, string(domain.RideInTransit))
 	if err != nil {
 		t.Fatalf("expected no error on valid transition, got %v", err)
 	}
+	if updated.Status != string(domain.RideInTransit) {
+		t.Fatalf("expected status %q, got %q", domain.RideInTransit, updated.Status)
+	}
+}
+
+func TestMarkArrivedRequiresPickupProximity(t *testing.T) {
+	driverID := 42
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:              1,
+			PassengerID:     10,
+			DriverID:        &driverID,
+			Status:          string(domain.RideAccepted),
+			PickupLatitude:  6.7000,
+			PickupLongitude: 122.1000,
+		},
+	}
+	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
+
+	if _, err := service.MarkArrived(context.Background(), 1, driverID, 6.7100, 122.1100); !errors.Is(err, domain.ErrArrivalLocation) {
+		t.Fatalf("expected pickup proximity error, got %v", err)
+	}
+	if store.ride.Status != string(domain.RideAccepted) {
+		t.Fatalf("ride status changed after rejected arrival: %q", store.ride.Status)
+	}
+}
+
+func TestMarkArrivedPersistsOnlyForTheAssignedDriver(t *testing.T) {
+	driverID := 42
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:              1,
+			PassengerID:     10,
+			DriverID:        &driverID,
+			Status:          string(domain.RideAccepted),
+			PickupLatitude:  6.7000,
+			PickupLongitude: 122.1000,
+		},
+	}
+	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
+
+	updated, err := service.MarkArrived(context.Background(), 1, driverID, 6.7005, 122.1005)
+	if err != nil {
+		t.Fatalf("MarkArrived() error = %v", err)
+	}
 	if updated.Status != string(domain.RideArrived) {
-		t.Fatalf("expected status %q, got %q", domain.RideArrived, updated.Status)
+		t.Fatalf("status = %q, want arrived", updated.Status)
 	}
 }
 

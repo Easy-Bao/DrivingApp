@@ -8,6 +8,14 @@ abstract class RideRemoteDataSource {
     required String status,
   });
 
+  Future<Map<String, dynamic>> markArrived({
+    required String rideId,
+    required double latitude,
+    required double longitude,
+  });
+
+  Future<Map<String, dynamic>> markPassengerNoShow(String rideId);
+
   Future<Map<String, dynamic>> getRideStatus(String tripId);
 
   Future<Map<String, dynamic>> settleCash({
@@ -43,6 +51,27 @@ class RideRemoteDataSourceImpl(this._dio) implements RideRemoteDataSource {
       data: {'status': status},
     );
     return response.statusCode == 200;
+  }
+
+  @override
+  Future<Map<String, dynamic>> markArrived({
+    required String rideId,
+    required double latitude,
+    required double longitude,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/api/v1/rides/${Uri.encodeComponent(rideId)}/arrived',
+      data: {'latitude': latitude, 'longitude': longitude},
+    );
+    return response.data ?? const <String, dynamic>{};
+  }
+
+  @override
+  Future<Map<String, dynamic>> markPassengerNoShow(String rideId) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/api/v1/rides/${Uri.encodeComponent(rideId)}/no-show',
+    );
+    return response.data ?? const <String, dynamic>{};
   }
 
   @override

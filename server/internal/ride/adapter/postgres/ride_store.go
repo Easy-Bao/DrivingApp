@@ -172,6 +172,8 @@ func fromPostgresRide(item databasepostgres.Ride) (domain.Ride, error) {
 		DriverRating:               rideFloatValue(item.DriverRating),
 		CreatedAt:                  rideTimestamp(item.CreatedAt),
 		CompletedAt:                rideTimestamp(item.CompletedAt),
+		ArrivedAt:                  rideTimestamp(item.ArrivedAt),
+		WaitingUntil:               rideTimestamp(item.WaitingUntil),
 		PaymentStatus:              item.PaymentStatus,
 		CashReceivedAmount:         item.CashReceivedAmount,
 		CashChangeAmount:           item.CashChangeAmount,

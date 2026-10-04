@@ -50,6 +50,152 @@ func (q *Queries) CreateRideEvent(ctx context.Context, arg CreateRideEventParams
 	return err
 }
 
+const markRideArrived = `-- name: MarkRideArrived :one
+UPDATE rides
+SET status = 'arrived',
+    arrived_at = COALESCE(arrived_at, CURRENT_TIMESTAMP),
+    waiting_until = COALESCE(
+        waiting_until,
+        CURRENT_TIMESTAMP + INTERVAL '5 minutes'
+    )
+WHERE id = $1
+  AND driver_id = $2
+  AND status = $3
+  AND $3 IN ('assigned', 'accepted')
+RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
+    pickup_latitude, pickup_longitude, pickup_name,
+    dropoff_latitude, dropoff_longitude, dropoff_name,
+    distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
+    driver_rating, created_at, completed_at, arrived_at, waiting_until, payment_status,
+    cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
+    cancelled_by, cancellation_reason, cancellation_responsibility,
+    cancellation_details,
+    commission_bps, commission_amount,
+    driver_payout_amount
+`
+
+type MarkRideArrivedParams struct {
+	RideID        int32       `db:"ride_id"`
+	DriverID      pgtype.Int4 `db:"driver_id"`
+	CurrentStatus string      `db:"current_status"`
+}
+
+func (q *Queries) MarkRideArrived(ctx context.Context, arg MarkRideArrivedParams) (Ride, error) {
+	row := q.db.QueryRow(ctx, markRideArrived, arg.RideID, arg.DriverID, arg.CurrentStatus)
+	var i Ride
+	err := row.Scan(
+		&i.ID,
+		&i.PassengerID,
+		&i.DriverID,
+		&i.Status,
+		&i.FareAmount,
+		&i.RideType,
+		&i.PickupLatitude,
+		&i.PickupLongitude,
+		&i.PickupName,
+		&i.DropoffLatitude,
+		&i.DropoffLongitude,
+		&i.DropoffName,
+		&i.DistanceKm,
+		&i.DurationMinutes,
+		&i.DriverName,
+		&i.VehicleType,
+		&i.PlateNumber,
+		&i.DriverRating,
+		&i.CreatedAt,
+		&i.CompletedAt,
+		&i.ArrivedAt,
+		&i.WaitingUntil,
+		&i.PaymentStatus,
+		&i.CashReceivedAt,
+		&i.CashReceivedAmount,
+		&i.CashChangeAmount,
+		&i.CashOutcome,
+		&i.CancelledBy,
+		&i.CancellationReason,
+		&i.CancellationResponsibility,
+		&i.CancellationDetails,
+		&i.CommissionBps,
+		&i.CommissionAmount,
+		&i.DriverPayoutAmount,
+	)
+	return i, err
+}
+
+const markRidePassengerNoShow = `-- name: MarkRidePassengerNoShow :one
+UPDATE rides
+SET status = 'cancelled',
+    completed_at = CURRENT_TIMESTAMP,
+    cancelled_by = $1,
+    cancellation_reason = 'passenger_no_show',
+    cancellation_responsibility = 'passenger_fault',
+    cancellation_details = 'Driver completed the server-enforced pickup wait.',
+    arrived_at = COALESCE(arrived_at, CURRENT_TIMESTAMP),
+    waiting_until = COALESCE(waiting_until, CURRENT_TIMESTAMP)
+WHERE id = $2
+  AND driver_id = $1
+  AND status = 'arrived'
+  AND waiting_until IS NOT NULL
+  AND waiting_until <= CURRENT_TIMESTAMP
+RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
+    pickup_latitude, pickup_longitude, pickup_name,
+    dropoff_latitude, dropoff_longitude, dropoff_name,
+    distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
+    driver_rating, created_at, completed_at, arrived_at, waiting_until, payment_status,
+    cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
+    cancelled_by, cancellation_reason, cancellation_responsibility,
+    cancellation_details,
+    commission_bps, commission_amount,
+    driver_payout_amount
+`
+
+type MarkRidePassengerNoShowParams struct {
+	DriverID pgtype.Int4 `db:"driver_id"`
+	RideID   int32       `db:"ride_id"`
+}
+
+func (q *Queries) MarkRidePassengerNoShow(ctx context.Context, arg MarkRidePassengerNoShowParams) (Ride, error) {
+	row := q.db.QueryRow(ctx, markRidePassengerNoShow, arg.DriverID, arg.RideID)
+	var i Ride
+	err := row.Scan(
+		&i.ID,
+		&i.PassengerID,
+		&i.DriverID,
+		&i.Status,
+		&i.FareAmount,
+		&i.RideType,
+		&i.PickupLatitude,
+		&i.PickupLongitude,
+		&i.PickupName,
+		&i.DropoffLatitude,
+		&i.DropoffLongitude,
+		&i.DropoffName,
+		&i.DistanceKm,
+		&i.DurationMinutes,
+		&i.DriverName,
+		&i.VehicleType,
+		&i.PlateNumber,
+		&i.DriverRating,
+		&i.CreatedAt,
+		&i.CompletedAt,
+		&i.ArrivedAt,
+		&i.WaitingUntil,
+		&i.PaymentStatus,
+		&i.CashReceivedAt,
+		&i.CashReceivedAmount,
+		&i.CashChangeAmount,
+		&i.CashOutcome,
+		&i.CancelledBy,
+		&i.CancellationReason,
+		&i.CancellationResponsibility,
+		&i.CancellationDetails,
+		&i.CommissionBps,
+		&i.CommissionAmount,
+		&i.DriverPayoutAmount,
+	)
+	return i, err
+}
+
 const updateRideStatus = `-- name: UpdateRideStatus :one
 UPDATE rides
 SET status = $1,
@@ -68,7 +214,7 @@ RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
     pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name,
     distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
-    driver_rating, created_at, completed_at, payment_status,
+    driver_rating, created_at, completed_at, arrived_at, waiting_until, payment_status,
     cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
     cancelled_by, cancellation_reason, cancellation_responsibility,
     cancellation_details,
@@ -122,6 +268,8 @@ func (q *Queries) UpdateRideStatus(ctx context.Context, arg UpdateRideStatusPara
 		&i.DriverRating,
 		&i.CreatedAt,
 		&i.CompletedAt,
+		&i.ArrivedAt,
+		&i.WaitingUntil,
 		&i.PaymentStatus,
 		&i.CashReceivedAt,
 		&i.CashReceivedAmount,

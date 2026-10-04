@@ -48,6 +48,23 @@ void main() {
         status: any(named: 'status'),
       ),
     ).thenAnswer((_) async => const Ok(null));
+
+    when(
+      () => mockRideRepository.markArrived(
+        rideId: any(named: 'rideId'),
+        latitude: any(named: 'latitude'),
+        longitude: any(named: 'longitude'),
+      ),
+    ).thenAnswer(
+      (_) async => const Ok(
+        RideSnapshot(
+          id: 'test-ride-id',
+          status: 'arrived',
+          pickupName: 'Pickup',
+          dropoffName: 'Dropoff',
+        ),
+      ),
+    );
   });
 
   group('RideFlowCubit — initial state', () {
@@ -118,7 +135,11 @@ void main() {
     blocTest<RideFlowCubit, RideFlowState>(
       'emits RideFlowWaitingPassenger starting at 0 seconds',
       build: () => _makeCubit(mockRideRepository, mockSessionService),
-      act: (cubit) => cubit.arriveAtPickup('Juan Dela Cruz'),
+      act: (cubit) => cubit.arriveAtPickup(
+        'Juan Dela Cruz',
+        driverLat: 7.82,
+        driverLng: 123.43,
+      ),
       expect: () => [
         const RideFlowWaitingPassenger(
           passengerName: 'Juan Dela Cruz',
@@ -224,6 +245,22 @@ void main() {
         ),
       ],
     );
+  });
+
+  test('uses the server arrival deadline after resuming a waiting ride', () async {
+    final now = DateTime.now().toUtc();
+    final cubit = _makeCubit(mockRideRepository, mockSessionService);
+    cubit.resumeRide(
+      rideId: 'test-ride-id',
+      status: 'arrived',
+      passengerName: 'Juan Dela Cruz',
+      arrivedAt: now.subtract(const Duration(seconds: 30)),
+      waitingUntil: now.subtract(const Duration(seconds: 1)),
+    );
+
+    expect(cubit.canMarkPassengerNoShow, isTrue);
+    expect(cubit.state.waitTimeSecondsOr(0), greaterThanOrEqualTo(29));
+    await cubit.close();
   });
 
   group('RideFlowCubit — reset()', () {

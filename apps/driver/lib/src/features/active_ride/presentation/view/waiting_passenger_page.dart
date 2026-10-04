@@ -22,6 +22,7 @@ import 'package:url_launcher/url_launcher.dart';
 typedef _WaitingPassengerPresentation = ({
   String passengerName,
   String waitFormatted,
+  bool canMarkNoShow,
 });
 
 class const WaitingPassengerPage({
@@ -55,6 +56,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
   int _viewedPassengerMessagesCount = 0;
   bool _isInitialChatMessagesCountFetched = false;
   bool _isStartingTrip = false;
+  bool _isMarkingNoShow = false;
   bool _isPollingChat = false;
   late final AppLifecyclePeriodicTask _chatPollingTask;
   ChatRepository? _chatRepository;
@@ -185,6 +187,39 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
     }
   }
 
+  Future<void> _markPassengerNoShow() async {
+    if (_isMarkingNoShow) return;
+    final rideCubit = BlocProvider.of<RideFlowCubit>(context);
+    final state = rideCubit.state;
+    if (!state.isWaitingAtPickup || !rideCubit.canMarkPassengerNoShow) {
+      _showError('The pickup waiting timer has not finished yet.');
+      return;
+    }
+
+    setState(() => _isMarkingNoShow = true);
+    try {
+      final marked = await rideCubit.markPassengerNoShow();
+      if (!mounted) return;
+      if (marked) {
+        context.pop();
+        return;
+      }
+      _showError(
+        rideCubit.state.failureMessage ??
+            'Unable to record the passenger no-show. Please try again.',
+      );
+    } catch (error, stackTrace) {
+      dev.log(
+        'Unable to record passenger no-show',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      _showError(ErrorHandler.getErrorMessage(error, stackTrace));
+    } finally {
+      if (mounted) setState(() => _isMarkingNoShow = false);
+    }
+  }
+
   void _showError(String message) {
     if (!mounted) return;
     setState(() => _errorMessage = message);
@@ -202,6 +237,8 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
             waitFormatted: state.isWaitingAtPickup
                 ? _formatWaitDuration(state.waitTimeSecondsOr(0))
                 : '00:00',
+            canMarkNoShow: state.isWaitingAtPickup &&
+                cubit.canMarkPassengerNoShow,
           );
         });
 
@@ -335,8 +372,32 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                                   ),
                                   const Spacer(),
                                   WaitingPassengerStartTripButton(
-                                    isStartingTrip: _isStartingTrip,
+                                    isStartingTrip:
+                                        _isStartingTrip || _isMarkingNoShow,
                                     onPressed: _startTrip,
+                                  ),
+                                  const SizedBox(height: 10),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 48,
+                                    child: OutlinedButton.icon(
+                                      onPressed: presentation.canMarkNoShow &&
+                                              !_isMarkingNoShow
+                                          ? _markPassengerNoShow
+                                          : null,
+                                      icon: _isMarkingNoShow
+                                          ? const SizedBox(
+                                              width: 18,
+                                              height: 18,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                              ),
+                                            )
+                                          : const Icon(LucideIcons.user_x),
+                                      label: Text(
+                                        'Passenger No-Show',
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),

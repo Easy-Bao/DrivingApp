@@ -11,6 +11,8 @@ import (
 type RideLifecycleStore interface {
 	RideReader
 	AcceptRide(ctx context.Context, rideID, driverID int) (domain.Ride, error)
+	MarkArrived(ctx context.Context, rideID, driverID int, currentStatus string) (domain.Ride, error)
+	MarkPassengerNoShow(ctx context.Context, rideID, driverID int) (domain.Ride, error)
 	UpdateStatus(
 		ctx context.Context,
 		rideID, actorID int,

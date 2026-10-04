@@ -168,6 +168,8 @@ type Ride struct {
 	DriverRating               pgtype.Float8      `db:"driver_rating"`
 	CreatedAt                  pgtype.Timestamptz `db:"created_at"`
 	CompletedAt                pgtype.Timestamptz `db:"completed_at"`
+	ArrivedAt                  pgtype.Timestamptz `db:"arrived_at"`
+	WaitingUntil               pgtype.Timestamptz `db:"waiting_until"`
 	PaymentStatus              string             `db:"payment_status"`
 	CashReceivedAt             pgtype.Timestamptz `db:"cash_received_at"`
 	CashReceivedAmount         int64              `db:"cash_received_amount"`

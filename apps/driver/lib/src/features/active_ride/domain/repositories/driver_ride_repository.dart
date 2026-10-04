@@ -12,6 +12,14 @@ abstract interface class DriverRideRepository {
     required RideStatus status,
   });
 
+  Future<Result<RideSnapshot, Failure>> markArrived({
+    required String rideId,
+    required double latitude,
+    required double longitude,
+  });
+
+  Future<Result<RideSnapshot, Failure>> markPassengerNoShow(String rideId);
+
   Future<Result<RideSnapshot, Failure>> fetchRide(String rideId);
 
   Future<Result<int, Failure>> settleCash({
@@ -54,6 +62,30 @@ extension DriverRideRepositoryResultAdapters on DriverRideRepository {
     return _captureResult(
       () => updateRideStatus(rideId: rideId, status: status),
       message: 'Unable to update this ride right now.',
+    );
+  }
+
+  Future<Result<RideSnapshot, DomainFailure>> markArrivedResult({
+    required String rideId,
+    required double latitude,
+    required double longitude,
+  }) {
+    return _captureResult(
+      () => markArrived(
+        rideId: rideId,
+        latitude: latitude,
+        longitude: longitude,
+      ),
+      message: 'Unable to confirm arrival at the pickup point.',
+    );
+  }
+
+  Future<Result<RideSnapshot, DomainFailure>> markPassengerNoShowResult(
+    String rideId,
+  ) {
+    return _captureResult(
+      () => markPassengerNoShow(rideId),
+      message: 'Unable to record the passenger no-show.',
     );
   }
 
