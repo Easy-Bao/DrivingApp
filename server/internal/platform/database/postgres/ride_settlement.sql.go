@@ -38,16 +38,20 @@ func (q *Queries) CreateDriverWalletAccount(ctx context.Context, arg CreateDrive
 const createRideSettlementForCash = `-- name: CreateRideSettlementForCash :one
 INSERT INTO ride_settlements (
     ride_id, gross_fare, commission_bps, commission_amount,
-    driver_payout_amount, payment_status, cash_received_at, settled_at
+    driver_payout_amount, payment_status, cash_received_at,
+    cash_received_amount, cash_change_amount, cash_outcome, settled_at
 )
 VALUES (
     $1, $2,
     $3, $4,
     $5, $6,
-    $7, $8
+    $7, $8,
+    $9, $10,
+    $11
 )
 RETURNING id, ride_id, gross_fare, commission_bps, commission_amount,
-    driver_payout_amount, payment_status, cash_received_at, settled_at,
+    driver_payout_amount, payment_status, cash_received_at,
+    cash_received_amount, cash_change_amount, cash_outcome, settled_at,
     created_at, updated_at
 `
 
@@ -59,6 +63,9 @@ type CreateRideSettlementForCashParams struct {
 	DriverPayoutAmount int64              `db:"driver_payout_amount"`
 	PaymentStatus      string             `db:"payment_status"`
 	CashReceivedAt     pgtype.Timestamptz `db:"cash_received_at"`
+	CashReceivedAmount int64              `db:"cash_received_amount"`
+	CashChangeAmount   int64              `db:"cash_change_amount"`
+	CashOutcome        string             `db:"cash_outcome"`
 	SettledAt          pgtype.Timestamptz `db:"settled_at"`
 }
 
@@ -71,6 +78,9 @@ func (q *Queries) CreateRideSettlementForCash(ctx context.Context, arg CreateRid
 		arg.DriverPayoutAmount,
 		arg.PaymentStatus,
 		arg.CashReceivedAt,
+		arg.CashReceivedAmount,
+		arg.CashChangeAmount,
+		arg.CashOutcome,
 		arg.SettledAt,
 	)
 	var i RideSettlement
@@ -83,6 +93,9 @@ func (q *Queries) CreateRideSettlementForCash(ctx context.Context, arg CreateRid
 		&i.DriverPayoutAmount,
 		&i.PaymentStatus,
 		&i.CashReceivedAt,
+		&i.CashReceivedAmount,
+		&i.CashChangeAmount,
+		&i.CashOutcome,
 		&i.SettledAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -164,7 +177,8 @@ func (q *Queries) GetDriverWalletAccountForUpdate(ctx context.Context, driverID 
 
 const getRideSettlementByRideID = `-- name: GetRideSettlementByRideID :one
 SELECT id, ride_id, gross_fare, commission_bps, commission_amount,
-    driver_payout_amount, payment_status, cash_received_at, settled_at,
+    driver_payout_amount, payment_status, cash_received_at,
+    cash_received_amount, cash_change_amount, cash_outcome, settled_at,
     created_at, updated_at
 FROM ride_settlements
 WHERE ride_id = $1
@@ -184,6 +198,9 @@ func (q *Queries) GetRideSettlementByRideID(ctx context.Context, rideID int32) (
 		&i.DriverPayoutAmount,
 		&i.PaymentStatus,
 		&i.CashReceivedAt,
+		&i.CashReceivedAmount,
+		&i.CashChangeAmount,
+		&i.CashOutcome,
 		&i.SettledAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -197,7 +214,8 @@ SELECT id, passenger_id, driver_id, status, fare_amount, ride_type,
     dropoff_latitude, dropoff_longitude, dropoff_name,
     distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
     driver_rating, created_at, completed_at, payment_status,
-    cash_received_at, commission_bps, commission_amount,
+    cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
+    commission_bps, commission_amount,
     driver_payout_amount
 FROM rides
 WHERE id = $1
@@ -238,6 +256,9 @@ func (q *Queries) LockCompletedRideForCashSettlement(ctx context.Context, arg Lo
 		&i.CompletedAt,
 		&i.PaymentStatus,
 		&i.CashReceivedAt,
+		&i.CashReceivedAmount,
+		&i.CashChangeAmount,
+		&i.CashOutcome,
 		&i.CommissionBps,
 		&i.CommissionAmount,
 		&i.DriverPayoutAmount,
@@ -245,34 +266,46 @@ func (q *Queries) LockCompletedRideForCashSettlement(ctx context.Context, arg Lo
 	return i, err
 }
 
-const markRidePaidFromSettlement = `-- name: MarkRidePaidFromSettlement :one
+const markRideCashOutcome = `-- name: MarkRideCashOutcome :one
 UPDATE rides
-SET payment_status = 'paid',
-    cash_received_at = $1,
-    commission_bps = $2,
-    commission_amount = $3,
-    driver_payout_amount = $4
-WHERE id = $5
+SET payment_status = $1,
+    cash_received_at = $2,
+    cash_received_amount = $3,
+    cash_change_amount = $4,
+    cash_outcome = $5,
+    commission_bps = $6,
+    commission_amount = $7,
+    driver_payout_amount = $8
+WHERE id = $9
 RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
     pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name,
     distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
     driver_rating, created_at, completed_at, payment_status,
-    cash_received_at, commission_bps, commission_amount,
+    cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
+    commission_bps, commission_amount,
     driver_payout_amount
 `
 
-type MarkRidePaidFromSettlementParams struct {
+type MarkRideCashOutcomeParams struct {
+	PaymentStatus      string             `db:"payment_status"`
 	CashReceivedAt     pgtype.Timestamptz `db:"cash_received_at"`
+	CashReceivedAmount int64              `db:"cash_received_amount"`
+	CashChangeAmount   int64              `db:"cash_change_amount"`
+	CashOutcome        string             `db:"cash_outcome"`
 	CommissionBps      pgtype.Int4        `db:"commission_bps"`
 	CommissionAmount   int64              `db:"commission_amount"`
 	DriverPayoutAmount int64              `db:"driver_payout_amount"`
 	RideID             int32              `db:"ride_id"`
 }
 
-func (q *Queries) MarkRidePaidFromSettlement(ctx context.Context, arg MarkRidePaidFromSettlementParams) (Ride, error) {
-	row := q.db.QueryRow(ctx, markRidePaidFromSettlement,
+func (q *Queries) MarkRideCashOutcome(ctx context.Context, arg MarkRideCashOutcomeParams) (Ride, error) {
+	row := q.db.QueryRow(ctx, markRideCashOutcome,
+		arg.PaymentStatus,
 		arg.CashReceivedAt,
+		arg.CashReceivedAmount,
+		arg.CashChangeAmount,
+		arg.CashOutcome,
 		arg.CommissionBps,
 		arg.CommissionAmount,
 		arg.DriverPayoutAmount,
@@ -302,6 +335,9 @@ func (q *Queries) MarkRidePaidFromSettlement(ctx context.Context, arg MarkRidePa
 		&i.CompletedAt,
 		&i.PaymentStatus,
 		&i.CashReceivedAt,
+		&i.CashReceivedAmount,
+		&i.CashChangeAmount,
+		&i.CashOutcome,
 		&i.CommissionBps,
 		&i.CommissionAmount,
 		&i.DriverPayoutAmount,
@@ -309,23 +345,31 @@ func (q *Queries) MarkRidePaidFromSettlement(ctx context.Context, arg MarkRidePa
 	return i, err
 }
 
-const markRideSettlementPaid = `-- name: MarkRideSettlementPaid :one
+const markRideSettlementOutcome = `-- name: MarkRideSettlementOutcome :one
 UPDATE ride_settlements
-SET payment_status = 'paid',
-    cash_received_at = $1,
-    settled_at = $2,
-    commission_bps = $3,
-    commission_amount = $4,
-    driver_payout_amount = $5,
+SET payment_status = $1,
+    cash_received_at = $2,
+    cash_received_amount = $3,
+    cash_change_amount = $4,
+    cash_outcome = $5,
+    settled_at = $6,
+    commission_bps = $7,
+    commission_amount = $8,
+    driver_payout_amount = $9,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $6
+WHERE id = $10
 RETURNING id, ride_id, gross_fare, commission_bps, commission_amount,
-    driver_payout_amount, payment_status, cash_received_at, settled_at,
+    driver_payout_amount, payment_status, cash_received_at,
+    cash_received_amount, cash_change_amount, cash_outcome, settled_at,
     created_at, updated_at
 `
 
-type MarkRideSettlementPaidParams struct {
+type MarkRideSettlementOutcomeParams struct {
+	PaymentStatus      string             `db:"payment_status"`
 	CashReceivedAt     pgtype.Timestamptz `db:"cash_received_at"`
+	CashReceivedAmount int64              `db:"cash_received_amount"`
+	CashChangeAmount   int64              `db:"cash_change_amount"`
+	CashOutcome        string             `db:"cash_outcome"`
 	SettledAt          pgtype.Timestamptz `db:"settled_at"`
 	CommissionBps      pgtype.Int4        `db:"commission_bps"`
 	CommissionAmount   int64              `db:"commission_amount"`
@@ -333,9 +377,13 @@ type MarkRideSettlementPaidParams struct {
 	SettlementID       int32              `db:"settlement_id"`
 }
 
-func (q *Queries) MarkRideSettlementPaid(ctx context.Context, arg MarkRideSettlementPaidParams) (RideSettlement, error) {
-	row := q.db.QueryRow(ctx, markRideSettlementPaid,
+func (q *Queries) MarkRideSettlementOutcome(ctx context.Context, arg MarkRideSettlementOutcomeParams) (RideSettlement, error) {
+	row := q.db.QueryRow(ctx, markRideSettlementOutcome,
+		arg.PaymentStatus,
 		arg.CashReceivedAt,
+		arg.CashReceivedAmount,
+		arg.CashChangeAmount,
+		arg.CashOutcome,
 		arg.SettledAt,
 		arg.CommissionBps,
 		arg.CommissionAmount,
@@ -352,6 +400,9 @@ func (q *Queries) MarkRideSettlementPaid(ctx context.Context, arg MarkRideSettle
 		&i.DriverPayoutAmount,
 		&i.PaymentStatus,
 		&i.CashReceivedAt,
+		&i.CashReceivedAmount,
+		&i.CashChangeAmount,
+		&i.CashOutcome,
 		&i.SettledAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -367,7 +418,8 @@ SET commission_bps = $1,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $4
 RETURNING id, ride_id, gross_fare, commission_bps, commission_amount,
-    driver_payout_amount, payment_status, cash_received_at, settled_at,
+    driver_payout_amount, payment_status, cash_received_at,
+    cash_received_amount, cash_change_amount, cash_outcome, settled_at,
     created_at, updated_at
 `
 
@@ -395,6 +447,9 @@ func (q *Queries) UpdateRideSettlementEconomics(ctx context.Context, arg UpdateR
 		&i.DriverPayoutAmount,
 		&i.PaymentStatus,
 		&i.CashReceivedAt,
+		&i.CashReceivedAmount,
+		&i.CashChangeAmount,
+		&i.CashOutcome,
 		&i.SettledAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,

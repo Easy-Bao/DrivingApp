@@ -382,7 +382,11 @@ class RideFlowCubit({
     }
   }
 
-  Future<double?> confirmCashPayment() async {
+  Future<double?> confirmCashPayment({
+    int? cashReceivedAmount,
+    int cashChangeAmount = 0,
+    String cashOutcome = 'paid',
+  }) async {
     if (_isActionInFlight) return null;
     final actionGeneration = ++_actionGeneration;
     _isActionInFlight = true;
@@ -396,8 +400,26 @@ class RideFlowCubit({
 
     try {
       int? fareAmount;
+      var receivedAmount = cashReceivedAmount;
+      if (receivedAmount == null) {
+        RideSnapshot? ride;
+        (await _rideRepository.fetchRideResult(rideId)).fold(
+          (_) {},
+          (value) => ride = value,
+        );
+        receivedAmount = ride?.fareAmount;
+      }
+      if (receivedAmount == null || receivedAmount <= 0) {
+        emit(const RideFlowError('The cash fare is unavailable.'));
+        return null;
+      }
       Failure? settleFailure;
-      (await _rideRepository.settleCashResult(rideId)).fold(
+      (await _rideRepository.settleCashResult(
+        rideId: rideId,
+        cashReceivedAmount: receivedAmount,
+        cashChangeAmount: cashChangeAmount,
+        cashOutcome: cashOutcome,
+      )).fold(
         (failure) => settleFailure = failure,
         (value) => fareAmount = value,
       );

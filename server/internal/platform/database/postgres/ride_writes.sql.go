@@ -24,7 +24,8 @@ RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
     dropoff_latitude, dropoff_longitude, dropoff_name,
     distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
     driver_rating, created_at, completed_at, payment_status,
-    cash_received_at, commission_bps, commission_amount,
+    cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
+    commission_bps, commission_amount,
     driver_payout_amount
 `
 
@@ -82,6 +83,9 @@ func (q *Queries) CreateRide(ctx context.Context, arg CreateRideParams) (Ride, e
 		&i.CompletedAt,
 		&i.PaymentStatus,
 		&i.CashReceivedAt,
+		&i.CashReceivedAmount,
+		&i.CashChangeAmount,
+		&i.CashOutcome,
 		&i.CommissionBps,
 		&i.CommissionAmount,
 		&i.DriverPayoutAmount,

@@ -70,9 +70,19 @@ final class DriverRideRepositoryImpl({
   }
 
   @override
-  Future<Result<int, Failure>> settleCash(String rideId) async {
+  Future<Result<int, Failure>> settleCash({
+    required String rideId,
+    required int cashReceivedAmount,
+    required int cashChangeAmount,
+    required String cashOutcome,
+  }) async {
     try {
-      final data = await _rideDataSource.settleCash(rideId);
+      final data = await _rideDataSource.settleCash(
+        rideId: rideId,
+        cashReceivedAmount: cashReceivedAmount,
+        cashChangeAmount: cashChangeAmount,
+        cashOutcome: cashOutcome,
+      );
       final fareAmount = SafeParse.toNullableDouble(data['fare_amount']);
       if (fareAmount == null || fareAmount <= 0) {
         return const Err(

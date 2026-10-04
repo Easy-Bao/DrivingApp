@@ -87,8 +87,8 @@ type Querier interface {
 	LockUserForBidSession(ctx context.Context, id int32) (int32, error)
 	MarkBidOfferAccepted(ctx context.Context, id int32) (BidOffer, error)
 	MarkBidSessionAccepted(ctx context.Context, arg MarkBidSessionAcceptedParams) (BidSession, error)
-	MarkRidePaidFromSettlement(ctx context.Context, arg MarkRidePaidFromSettlementParams) (Ride, error)
-	MarkRideSettlementPaid(ctx context.Context, arg MarkRideSettlementPaidParams) (RideSettlement, error)
+	MarkRideCashOutcome(ctx context.Context, arg MarkRideCashOutcomeParams) (Ride, error)
+	MarkRideSettlementOutcome(ctx context.Context, arg MarkRideSettlementOutcomeParams) (RideSettlement, error)
 	MarkUserVerified(ctx context.Context, id int32) (int64, error)
 	RejectBidOffer(ctx context.Context, id int32) (BidOffer, error)
 	RejectOtherPendingBidOffers(ctx context.Context, arg RejectOtherPendingBidOffersParams) error

@@ -36,6 +36,12 @@ type StatusRequest struct {
 	Status string `json:"status"`
 }
 
+type CashSettlementRequest struct {
+	CashReceivedAmount int64  `json:"cash_received_amount"`
+	CashChangeAmount   int64  `json:"cash_change_amount"`
+	CashOutcome        string `json:"cash_outcome"`
+}
+
 type BidSessionRequest struct {
 	RideType         string  `json:"ride_type"`
 	PickupLatitude   float64 `json:"pickup_latitude"`

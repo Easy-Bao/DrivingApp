@@ -247,8 +247,8 @@ func (service *RideService) AcceptRide(ctx context.Context, rideID, driverID int
 	return service.lifecycleService.AcceptRide(ctx, rideID, driverID)
 }
 
-func (service *RideService) SettleCash(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
-	return service.settlementService.SettleCash(ctx, rideID, driverID)
+func (service *RideService) SettleCash(ctx context.Context, request domain.CashSettlementRequest) (domain.Ride, error) {
+	return service.settlementService.SettleCash(ctx, request)
 }
 
 func (service *RideService) UpdateStatus(ctx context.Context, rideID, actorID int, next string) (domain.Ride, error) {

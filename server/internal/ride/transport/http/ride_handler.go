@@ -134,7 +134,18 @@ func (handler *Handler) SettleCash(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusBadRequest, "invalid ride id")
 		return
 	}
-	ride, err := handler.service.SettleCash(r.Context(), rideID, driverID)
+	var input dto.CashSettlementRequest
+	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil {
+		response.Error(w, http.StatusBadRequest, "invalid cash settlement")
+		return
+	}
+	ride, err := handler.service.SettleCash(r.Context(), domain.CashSettlementRequest{
+		RideID:         rideID,
+		DriverID:       driverID,
+		ReceivedAmount: input.CashReceivedAmount,
+		ChangeAmount:   input.CashChangeAmount,
+		Outcome:        domain.CashOutcome(strings.ToLower(strings.TrimSpace(input.CashOutcome))),
+	})
 	if err != nil {
 		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
@@ -763,6 +774,8 @@ func rideErrorStatus(err error) int {
 	switch {
 	case errors.Is(err, domain.ErrInvalidTrip), errors.Is(err, domain.ErrInvalidFareOffer):
 		return 400
+	case errors.Is(err, domain.ErrInvalidSettlement):
+		return http.StatusBadRequest
 	case errors.Is(err, domain.ErrRouteUnavailable):
 		return 503
 	case errors.Is(err, domain.ErrUnauthorizedRide), errors.Is(err, domain.ErrUnauthorizedSession):
@@ -782,6 +795,8 @@ func safeRideError(err error) string {
 	switch {
 	case errors.Is(err, domain.ErrInvalidTrip):
 		return "The route details are invalid."
+	case errors.Is(err, domain.ErrInvalidSettlement):
+		return "The cash amount or payment outcome is invalid."
 	case errors.Is(err, domain.ErrInvalidFareOffer):
 		return "The custom offer cannot be lower than the calculated minimum fare."
 	case errors.Is(err, domain.ErrRouteUnavailable):

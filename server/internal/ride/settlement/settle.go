@@ -32,14 +32,14 @@ func NewService(dependencies Dependencies) *Service {
 	}
 }
 
-func (service *Service) SettleCash(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
+func (service *Service) SettleCash(ctx context.Context, request domain.CashSettlementRequest) (domain.Ride, error) {
 	if service.store == nil {
 		return domain.Ride{}, ErrPersistenceUnavailable
 	}
-	if driverID <= 0 {
+	if request.RideID <= 0 || request.DriverID <= 0 {
 		return domain.Ride{}, domain.ErrUnauthorizedRide
 	}
-	ride, err := service.store.SettleCash(ctx, rideID, driverID)
+	ride, err := service.store.SettleCash(ctx, request)
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("settle ride cash payment: %w", err)
 	}

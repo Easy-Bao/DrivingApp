@@ -170,6 +170,9 @@ type Ride struct {
 	CompletedAt        pgtype.Timestamptz `db:"completed_at"`
 	PaymentStatus      string             `db:"payment_status"`
 	CashReceivedAt     pgtype.Timestamptz `db:"cash_received_at"`
+	CashReceivedAmount int64              `db:"cash_received_amount"`
+	CashChangeAmount   int64              `db:"cash_change_amount"`
+	CashOutcome        string             `db:"cash_outcome"`
 	CommissionBps      pgtype.Int4        `db:"commission_bps"`
 	CommissionAmount   int64              `db:"commission_amount"`
 	DriverPayoutAmount int64              `db:"driver_payout_amount"`
@@ -184,6 +187,9 @@ type RideSettlement struct {
 	DriverPayoutAmount int64              `db:"driver_payout_amount"`
 	PaymentStatus      string             `db:"payment_status"`
 	CashReceivedAt     pgtype.Timestamptz `db:"cash_received_at"`
+	CashReceivedAmount int64              `db:"cash_received_amount"`
+	CashChangeAmount   int64              `db:"cash_change_amount"`
+	CashOutcome        string             `db:"cash_outcome"`
 	SettledAt          pgtype.Timestamptz `db:"settled_at"`
 	CreatedAt          pgtype.Timestamptz `db:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `db:"updated_at"`
