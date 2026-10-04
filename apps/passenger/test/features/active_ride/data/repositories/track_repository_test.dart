@@ -106,4 +106,35 @@ void main() {
       ),
     ).called(1);
   });
+
+  test('accepts only a safety-attributed emergency-stop response', () async {
+    when(
+      () => dataSource.emergencyStop(
+        rideId: '303',
+        reason: 'accident',
+        details: 'Minor collision.',
+      ),
+    ).thenAnswer(
+      (_) async => <String, dynamic>{
+        'status': 'cancelled',
+        'cancellation_reason': 'accident',
+        'cancellation_responsibility': 'safety_related',
+      },
+    );
+
+    final result = await repository.emergencyStop(
+      rideId: '303',
+      reason: 'accident',
+      details: 'Minor collision.',
+    );
+
+    expect(result, isA<Ok<void, Failure>>());
+    verify(
+      () => dataSource.emergencyStop(
+        rideId: '303',
+        reason: 'accident',
+        details: 'Minor collision.',
+      ),
+    ).called(1);
+  });
 }

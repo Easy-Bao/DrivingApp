@@ -29,6 +29,12 @@ abstract interface class TrackRepository {
     String details = '',
   });
 
+  Future<Result<void, Failure>> emergencyStop({
+    required String rideId,
+    required String reason,
+    String details = '',
+  });
+
   Future<Result<void, Failure>> createSafetyReport({
     required String rideId,
     required String category,
@@ -171,6 +177,32 @@ extension TrackRepositoryResultAdapters on TrackRepository {
         FailureMapper.fromException(
           error,
           serverMessage: 'The ride could not be cancelled. Please try again.',
+        ),
+      );
+    }
+  }
+
+  Future<Result<void, DomainFailure>> emergencyStopResult({
+    required String rideId,
+    required String reason,
+    String details = '',
+  }) async {
+    try {
+      final result = await emergencyStop(
+        rideId: rideId,
+        reason: reason,
+        details: details,
+      );
+      return await result.fold(
+        (failure) => Err<void, DomainFailure>(failure),
+        (_) => const Ok<void, DomainFailure>(null),
+      );
+    } catch (error) {
+      return Err<void, DomainFailure>(
+        FailureMapper.fromException(
+          error,
+          serverMessage:
+              'The ride could not be ended for safety. Please try again.',
         ),
       );
     }

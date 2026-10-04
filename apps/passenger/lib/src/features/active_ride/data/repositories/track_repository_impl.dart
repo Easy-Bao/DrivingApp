@@ -204,6 +204,50 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
   }
 
   @override
+  Future<Result<void, Failure>> emergencyStop({
+    required String rideId,
+    required String reason,
+    String details = '',
+  }) async {
+    try {
+      final data = await _remoteDataSource.emergencyStop(
+        rideId: rideId,
+        reason: reason,
+        details: details,
+      );
+      final status = SafeParse.toStringValue(data['status']).toLowerCase();
+      final responseReason = SafeParse.toStringValue(
+        data['cancellation_reason'],
+      ).toLowerCase();
+      final responsibility = SafeParse.toStringValue(
+        data['cancellation_responsibility'],
+      ).toLowerCase();
+      if (status != 'cancelled' ||
+          responseReason != reason.trim().toLowerCase() ||
+          responsibility != 'safety_related') {
+        return const Err(
+          ValidationFailure('The emergency-stop response is incomplete.'),
+        );
+      }
+      return const Ok(null);
+    } on ServerException catch (error) {
+      return Err(
+        FailureMapper.fromException(
+          error,
+          serverMessage:
+              'The ride could not be ended for safety. Please try again.',
+        ),
+      );
+    } catch (_) {
+      return const Err(
+        ServerFailure(
+          'The ride could not be ended for safety. Please try again.',
+        ),
+      );
+    }
+  }
+
+  @override
   Future<Result<void, Failure>> createSafetyReport({
     required String rideId,
     required String category,

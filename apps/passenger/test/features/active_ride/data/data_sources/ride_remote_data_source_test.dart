@@ -130,4 +130,46 @@ void main() {
       expect(report['status'], 'submitted');
     },
   );
+
+  test('posts a participant emergency stop with its safety reason', () async {
+    final dio = MockDio();
+    final dataSource = RideRemoteDataSourceImpl(dio);
+    Map<String, dynamic>? payload;
+    when(
+      () => dio.post<Map<String, dynamic>>(
+        any(),
+        data: any<dynamic>(named: 'data'),
+      ),
+    ).thenAnswer((invocation) async {
+      payload = Map<String, dynamic>.from(
+        invocation.namedArguments[#data] as Map,
+      );
+      return Response<Map<String, dynamic>>(
+        requestOptions: RequestOptions(
+          path: '/api/v1/rides/303/emergency-stop',
+        ),
+        statusCode: 200,
+        data: const {
+          'status': 'cancelled',
+          'cancellation_reason': 'accident',
+          'cancellation_responsibility': 'safety_related',
+        },
+      );
+    });
+
+    final response = await dataSource.emergencyStop(
+      rideId: '303',
+      reason: 'accident',
+      details: 'Minor collision.',
+    );
+
+    verify(
+      () => dio.post<Map<String, dynamic>>(
+        '/api/v1/rides/303/emergency-stop',
+        data: any<dynamic>(named: 'data'),
+      ),
+    ).called(1);
+    expect(payload, {'reason': 'accident', 'details': 'Minor collision.'});
+    expect(response['cancellation_responsibility'], 'safety_related');
+  });
 }
