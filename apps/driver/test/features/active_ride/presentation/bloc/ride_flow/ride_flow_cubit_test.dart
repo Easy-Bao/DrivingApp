@@ -356,6 +356,32 @@ void main() {
   );
 
   test(
+    'keeps an active cached ride available for normal trip recovery',
+    () async {
+      when(() => mockSessionService.readActiveRideId())
+          .thenAnswer((_) async => 'test-ride-id');
+      when(() => mockRideRepository.fetchRide('test-ride-id')).thenAnswer(
+        (_) async => const Ok(
+          RideSnapshot(
+            id: 'test-ride-id',
+            status: 'in_transit',
+            pickupName: 'Pickup',
+            dropoffName: 'Dropoff',
+            fareAmount: 3000,
+          ),
+        ),
+      );
+
+      final cubit = _makeCubit(mockRideRepository, mockSessionService);
+      final ride = await cubit.restorePendingCashSettlement();
+
+      expect(ride, isNull);
+      verifyNever(() => mockSessionService.saveActiveRideId(''));
+      await cubit.close();
+    },
+  );
+
+  test(
     'uses the server arrival deadline after resuming a waiting ride',
     () async {
       final now = DateTime.now().toUtc();

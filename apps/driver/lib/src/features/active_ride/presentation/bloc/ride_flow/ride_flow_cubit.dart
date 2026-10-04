@@ -720,7 +720,11 @@ class RideFlowCubit({
       return null;
     }
 
-    if (ride!.status != 'completed' || ride!.hasCashSettlement) {
+    if (ride!.status != 'completed') {
+      if (ride!.isTerminal) await _clearActiveRideSession();
+      return null;
+    }
+    if (ride!.hasCashSettlement) {
       await _clearActiveRideSession();
       return null;
     }

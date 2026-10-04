@@ -79,6 +79,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   bool _isForcingOfflineForLocationLoss = false;
   bool _isForeground = true;
   bool _isHandlingPassengerCancellation = false;
+  bool _isRestoringPendingCashSettlement = false;
   bool _breakAlertShown = false;
 
   static const _locationAccessPollInterval = Duration(seconds: 5);
@@ -115,6 +116,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         _availabilityCtrl.value = s.isOnline ? 1 : 0;
         _startLocationAccessMonitoring();
         unawaited(_loadActiveTrips());
+        unawaited(_restorePendingCashSettlement());
         if (s.isOnline) {
           _startShiftDurationTimer();
           unawaited(_resumeOnlineTelemetry());
@@ -219,6 +221,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   Future<void> _resumeForegroundWork() async {
     await _loadActiveTrips();
     if (!mounted || !_isForeground) return;
+    await _restorePendingCashSettlement();
+    if (!mounted || !_isForeground) return;
     await _refreshLocationAfterResume();
   }
 
@@ -226,6 +230,42 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     if (!mounted || !_isForeground) return;
     await BlocProvider.of<DashboardCubit>(context)
         .loadDispatchSnapshot(includeOffers: false, silent: true);
+  }
+
+  Future<void> _restorePendingCashSettlement() async {
+    if (!mounted || _isRestoringPendingCashSettlement) return;
+    _isRestoringPendingCashSettlement = true;
+    try {
+      final ride = await BlocProvider.of<RideFlowCubit>(context)
+          .restorePendingCashSettlement();
+      if (!mounted || ride == null) return;
+
+      final fare = ride.farePesos;
+      if (fare == null || fare <= 0) {
+        CustomToast.show(
+          context,
+          'The completed cash fare is unavailable. Please try again.',
+          isError: true,
+        );
+        return;
+      }
+
+      final duration = ride.durationMinutes;
+      context.pushReplacementNamed(
+        ActiveRideRoutes.fareSummary,
+        extra: {
+          'pickup': ride.pickupName,
+          'dropoff': ride.dropoffName,
+          'distance': ride.distanceKm ?? 0,
+          'fare': fare,
+          'duration': duration == null
+              ? 'Duration unavailable'
+              : '${duration.toStringAsFixed(0)} min',
+        },
+      );
+    } finally {
+      _isRestoringPendingCashSettlement = false;
+    }
   }
 
   Future<void> _refreshLocationAfterResume() async {

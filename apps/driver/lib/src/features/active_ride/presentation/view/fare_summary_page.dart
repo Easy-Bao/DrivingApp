@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:maps/maps.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver/src/features/dashboard/dashboard_routes.dart';
@@ -40,6 +42,8 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
   late final TextEditingController _cashReceivedController;
   late final TextEditingController _cashChangeController;
   bool _isSubmitting = false;
+  bool _canLeavePage = false;
+  bool _isShowingExitPrompt = false;
   String? _error;
   String _cashOutcome = 'paid';
 
@@ -136,6 +140,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
         return;
       }
 
+      setState(() => _canLeavePage = true);
       final dashboardCubit = widget.dashboardCubit;
       final wasOnline = dashboardCubit.state.isOnline;
       cubit.reset();
@@ -155,6 +160,10 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
       context.goNamed(DashboardRoutes.dashboard);
     } catch (_) {
       if (!mounted) return;
+      if (_canLeavePage) {
+        context.goNamed(DashboardRoutes.dashboard);
+        return;
+      }
       setState(() {
         _isSubmitting = false;
         _error = 'Payment could not be confirmed. Please try again.';
@@ -164,73 +173,79 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: context.canvasColor,
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                EasyRideLayout.pagePadding,
-                12,
-                EasyRideLayout.pagePadding,
-                EasyRideLayout.pagePadding,
-              ),
-              child: Column(
-                children: [
-                  _buildHeader(context),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          _buildAmountCard(),
-                          const SizedBox(height: 12),
-                          _buildCashCollectionForm(),
-                          const SizedBox(height: 12),
-                          _buildTripCard(),
-                          if (_error != null) ...[
+    return PopScope<void>(
+      canPop: _canLeavePage,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) unawaited(_showCashOutcomeRequired());
+      },
+      child: Scaffold(
+        backgroundColor: context.canvasColor,
+        body: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  EasyRideLayout.pagePadding,
+                  12,
+                  EasyRideLayout.pagePadding,
+                  EasyRideLayout.pagePadding,
+                ),
+                child: Column(
+                  children: [
+                    _buildHeader(context),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            _buildAmountCard(),
                             const SizedBox(height: 12),
-                            _buildError(),
+                            _buildCashCollectionForm(),
+                            const SizedBox(height: 12),
+                            _buildTripCard(),
+                            if (_error != null) ...[
+                              const SizedBox(height: 12),
+                              _buildError(),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton.icon(
-                      onPressed: _isSubmitting ? null : _confirmCashPayment,
-                      icon: _isSubmitting
-                          ? SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: context.semanticColors.onSuccess,
-                              ),
-                            )
-                          : const Icon(LucideIcons.check, size: 18),
-                      label: Text(
-                        _isSubmitting
-                            ? 'Recording cash outcome…'
-                            : _cashButtonLabel,
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: context.semanticColors.success,
-                        foregroundColor: context.semanticColors.onSuccess,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            EasyRideRadius.lg,
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton.icon(
+                        onPressed: _isSubmitting ? null : _confirmCashPayment,
+                        icon: _isSubmitting
+                            ? SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: context.semanticColors.onSuccess,
+                                ),
+                              )
+                            : const Icon(LucideIcons.check, size: 18),
+                        label: Text(
+                          _isSubmitting
+                              ? 'Recording cash outcome…'
+                              : _cashButtonLabel,
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: context.semanticColors.success,
+                          foregroundColor: context.semanticColors.onSuccess,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              EasyRideRadius.lg,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -243,7 +258,8 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
     return Row(
       children: [
         IconButton(
-          onPressed: () => context.goNamed(DashboardRoutes.dashboard),
+          key: const ValueKey('cash-summary-back-button'),
+          onPressed: _isSubmitting ? null : _showCashOutcomeRequired,
           tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           padding: EdgeInsets.zero,
           style: IconButton.styleFrom(
@@ -282,6 +298,34 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
         ),
       ],
     );
+  }
+
+  Future<void> _showCashOutcomeRequired() async {
+    if (!mounted || _canLeavePage || _isSubmitting || _isShowingExitPrompt) {
+      return;
+    }
+
+    _isShowingExitPrompt = true;
+    try {
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Cash outcome required'),
+          content: const Text(
+            'Record whether the fare was paid, partially paid, refused, or unpaid before leaving this trip.',
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Continue recording'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      _isShowingExitPrompt = false;
+    }
   }
 
   String get _cashButtonLabel => switch (_cashOutcome) {

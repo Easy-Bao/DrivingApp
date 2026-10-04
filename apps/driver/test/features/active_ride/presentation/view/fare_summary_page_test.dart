@@ -95,4 +95,36 @@ void main() {
     expect(find.text('Record unpaid cash'), findsOneWidget);
     expect(find.textContaining('No cash is recorded.'), findsOneWidget);
   });
+
+  testWidgets('requires a cash outcome before leaving the summary', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: FareSummaryPage(
+          pickup: 'Pickup',
+          dropoff: 'Dropoff',
+          duration: '5 min',
+          distance: 2.5,
+          fare: 29.69,
+          dashboardCubit: DashboardCubit(
+            repository: const _NoOpDashboardRepository(),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('cash-summary-back-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cash outcome required'), findsOneWidget);
+    expect(find.text('Continue recording'), findsOneWidget);
+    expect(find.text('Cash collection'), findsOneWidget);
+
+    await tester.tap(find.text('Continue recording'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cash outcome required'), findsNothing);
+    expect(find.text('Cash collection'), findsOneWidget);
+  });
 }
