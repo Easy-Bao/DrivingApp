@@ -79,4 +79,31 @@ void main() {
     expect(rideResult.fold((_) => '', (value) => value.id), '303');
     expect(counterpartyResult.fold((_) => '', (value) => value.userId), '42');
   });
+
+  test('accepts a server-confirmed safety report', () async {
+    when(
+      () => dataSource.createSafetyReport(
+        rideId: '303',
+        category: 'unsafe_driving',
+        description: 'The driver was driving dangerously near the market.',
+      ),
+    ).thenAnswer(
+      (_) async => <String, dynamic>{'id': 13, 'status': 'submitted'},
+    );
+
+    final result = await repository.createSafetyReport(
+      rideId: '303',
+      category: 'unsafe_driving',
+      description: 'The driver was driving dangerously near the market.',
+    );
+
+    expect(result, isA<Ok<void, Failure>>());
+    verify(
+      () => dataSource.createSafetyReport(
+        rideId: '303',
+        category: 'unsafe_driving',
+        description: 'The driver was driving dangerously near the market.',
+      ),
+    ).called(1);
+  });
 }

@@ -19,6 +19,12 @@ abstract class RideRemoteDataSource {
     String details = '',
   });
 
+  Future<Map<String, dynamic>> createSafetyReport({
+    required String rideId,
+    required String category,
+    required String description,
+  });
+
   Future<Map<String, dynamic>> fetchCounterparty(String rideId);
 }
 
@@ -74,6 +80,19 @@ class RideRemoteDataSourceImpl(this._dio) implements RideRemoteDataSource {
       data: {'reason': reason, 'details': details},
     );
     return response.statusCode == 200;
+  }
+
+  @override
+  Future<Map<String, dynamic>> createSafetyReport({
+    required String rideId,
+    required String category,
+    required String description,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/api/v1/rides/${Uri.encodeComponent(rideId)}/reports',
+      data: {'category': category, 'description': description},
+    );
+    return response.data ?? const <String, dynamic>{};
   }
 
   @override

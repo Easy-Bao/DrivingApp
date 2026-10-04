@@ -88,4 +88,46 @@ void main() {
       expect(counterparty['role'], 'driver');
     },
   );
+
+  test(
+    'posts a ride-scoped safety report without client identity fields',
+    () async {
+      final dio = MockDio();
+      final dataSource = RideRemoteDataSourceImpl(dio);
+      Map<String, dynamic>? payload;
+      when(
+        () => dio.post<Map<String, dynamic>>(
+          any(),
+          data: any<dynamic>(named: 'data'),
+        ),
+      ).thenAnswer((invocation) async {
+        payload = Map<String, dynamic>.from(
+          invocation.namedArguments[#data] as Map,
+        );
+        return Response<Map<String, dynamic>>(
+          requestOptions: RequestOptions(path: '/api/v1/rides/303/reports'),
+          statusCode: 201,
+          data: const {'id': 13, 'status': 'submitted'},
+        );
+      });
+
+      final report = await dataSource.createSafetyReport(
+        rideId: '303',
+        category: 'unsafe_driving',
+        description: 'The driver was driving dangerously near the market.',
+      );
+
+      verify(
+        () => dio.post<Map<String, dynamic>>(
+          '/api/v1/rides/303/reports',
+          data: any<dynamic>(named: 'data'),
+        ),
+      ).called(1);
+      expect(payload, {
+        'category': 'unsafe_driving',
+        'description': 'The driver was driving dangerously near the market.',
+      });
+      expect(report['status'], 'submitted');
+    },
+  );
 }

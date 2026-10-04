@@ -9,6 +9,7 @@ void main() {
     tester,
   ) async {
     var emergencyPressed = false;
+    var reportPressed = false;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -38,6 +39,7 @@ void main() {
             onCallDriverPressed: () {},
             onChatDriverPressed: () {},
             onEmergencyPressed: () => emergencyPressed = true,
+            onReportDriverPressed: () => reportPressed = true,
             onCancelTripPressed: () {},
           ),
         ),
@@ -45,10 +47,18 @@ void main() {
     );
 
     expect(find.text('Emergency SOS'), findsOneWidget);
-    expect(tester.getSize(find.byType(OutlinedButton)).height, 48);
+    expect(
+      tester
+          .getSize(find.widgetWithText(OutlinedButton, 'Emergency SOS'))
+          .height,
+      48,
+    );
 
     await tester.tap(find.text('Emergency SOS'));
 
     expect(emergencyPressed, isTrue);
+    await tester.tap(find.text('Report driver or safety issue'));
+
+    expect(reportPressed, isTrue);
   });
 }

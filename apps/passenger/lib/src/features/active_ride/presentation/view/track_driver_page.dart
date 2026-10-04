@@ -420,6 +420,16 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
     );
   }
 
+  Future<void> _handleReportDriverPressed() async {
+    final submitted = await showPassengerSafetyReportSheet(
+      context,
+      rideId: widget.ride.id,
+      trackRepository: widget.trackRepository,
+    );
+    if (!mounted || !submitted) return;
+    CustomToast.show(context, 'Report submitted and linked to this ride.');
+  }
+
   Future<void> _cancelTripRequest({required String reason}) async {
     if (_isCancellingTrip || !mounted) return;
 
@@ -673,6 +683,8 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                               },
                               onEmergencyPressed: () =>
                                   unawaited(_handleEmergencyPressed()),
+                              onReportDriverPressed: () =>
+                                  unawaited(_handleReportDriverPressed()),
                               onCancelTripPressed: _handleCancelTrip,
                             ),
                           );

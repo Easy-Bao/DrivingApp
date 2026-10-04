@@ -17,6 +17,7 @@ class const TrackDriverPanelWidget({
   required this.onCallDriverPressed,
   required this.onChatDriverPressed,
   required this.onEmergencyPressed,
+  required this.onReportDriverPressed,
   required this.onCancelTripPressed,
 }) extends StatelessWidget {
   final RideHistory ride;
@@ -31,6 +32,7 @@ class const TrackDriverPanelWidget({
   final VoidCallback onCallDriverPressed;
   final VoidCallback onChatDriverPressed;
   final VoidCallback onEmergencyPressed;
+  final VoidCallback onReportDriverPressed;
   final VoidCallback onCancelTripPressed;
 
   @override
@@ -262,6 +264,23 @@ class const TrackDriverPanelWidget({
               ),
             ),
           ],
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            height: EasyRideSize.minimumTouchTarget,
+            child: OutlinedButton.icon(
+              onPressed: onReportDriverPressed,
+              icon: const Icon(LucideIcons.flag_triangle_right),
+              label: const Text('Report driver or safety issue'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: context.colorScheme.error,
+                side: BorderSide(color: context.colorScheme.error),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

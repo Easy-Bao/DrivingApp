@@ -381,6 +381,10 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                       ),
                     ),
                   ],
+                  PassengerSafetyReportButton(
+                    rideId: ride?.id,
+                    trackRepository: widget.trackRepository,
+                  ),
                 ],
               ),
             ),

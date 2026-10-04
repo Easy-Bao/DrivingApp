@@ -193,13 +193,47 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
       return Err(
         FailureMapper.fromException(
           error,
-          serverMessage:
-              'The ride could not be cancelled. Please try again.',
+          serverMessage: 'The ride could not be cancelled. Please try again.',
         ),
       );
     } catch (_) {
       return const Err(
         ServerFailure('The ride could not be cancelled. Please try again.'),
+      );
+    }
+  }
+
+  @override
+  Future<Result<void, Failure>> createSafetyReport({
+    required String rideId,
+    required String category,
+    required String description,
+  }) async {
+    try {
+      final data = await _remoteDataSource.createSafetyReport(
+        rideId: rideId,
+        category: category,
+        description: description,
+      );
+      final reportId = SafeParse.toNullableDouble(data['id']);
+      final status = SafeParse.toStringValue(data['status']).toLowerCase();
+      if (reportId == null || reportId <= 0 || status != 'submitted') {
+        return const Err(
+          ValidationFailure('The safety report response is incomplete.'),
+        );
+      }
+      return const Ok(null);
+    } on ServerException catch (error) {
+      return Err(
+        FailureMapper.fromException(
+          error,
+          serverMessage: 'Unable to submit the safety report right now.',
+          validationMessage: 'Choose a valid report category and description.',
+        ),
+      );
+    } catch (_) {
+      return const Err(
+        ServerFailure('Unable to submit the safety report right now.'),
       );
     }
   }

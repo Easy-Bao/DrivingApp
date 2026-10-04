@@ -29,6 +29,12 @@ abstract interface class TrackRepository {
     String details = '',
   });
 
+  Future<Result<void, Failure>> createSafetyReport({
+    required String rideId,
+    required String category,
+    required String description,
+  });
+
   Future<Result<void, Failure>> publishPassengerLocation({
     required String rideId,
     required double latitude,
@@ -164,8 +170,7 @@ extension TrackRepositoryResultAdapters on TrackRepository {
       return Err<void, DomainFailure>(
         FailureMapper.fromException(
           error,
-          serverMessage:
-              'The ride could not be cancelled. Please try again.',
+          serverMessage: 'The ride could not be cancelled. Please try again.',
         ),
       );
     }
@@ -193,6 +198,31 @@ extension TrackRepositoryResultAdapters on TrackRepository {
         FailureMapper.fromException(
           error,
           serverMessage: 'Unable to share your current trip location.',
+        ),
+      );
+    }
+  }
+
+  Future<Result<void, DomainFailure>> createSafetyReportResult({
+    required String rideId,
+    required String category,
+    required String description,
+  }) async {
+    try {
+      final result = await createSafetyReport(
+        rideId: rideId,
+        category: category,
+        description: description,
+      );
+      return await result.fold(
+        (failure) => Err<void, DomainFailure>(failure),
+        (_) => const Ok<void, DomainFailure>(null),
+      );
+    } catch (error) {
+      return Err<void, DomainFailure>(
+        FailureMapper.fromException(
+          error,
+          serverMessage: 'Unable to submit the safety report right now.',
         ),
       );
     }
