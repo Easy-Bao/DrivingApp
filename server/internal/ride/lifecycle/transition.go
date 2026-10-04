@@ -243,11 +243,12 @@ func (service *Service) MarkPassengerNoShow(
 	if status != domain.RideArrived {
 		return domain.Ride{}, domain.ErrInvalidStatusTransition
 	}
-	if current.WaitingUntil != nil {
-		waitingUntil, parseErr := time.Parse(time.RFC3339, *current.WaitingUntil)
-		if parseErr == nil && time.Now().UTC().Before(waitingUntil) {
-			return domain.Ride{}, domain.ErrPassengerNoShowNotReady
-		}
+	if current.WaitingUntil == nil {
+		return domain.Ride{}, domain.ErrPassengerNoShowNotReady
+	}
+	waitingUntil, parseErr := time.Parse(time.RFC3339, *current.WaitingUntil)
+	if parseErr != nil || time.Now().UTC().Before(waitingUntil) {
+		return domain.Ride{}, domain.ErrPassengerNoShowNotReady
 	}
 	updated, err := service.store.MarkPassengerNoShow(ctx, rideID, driverID)
 	if err != nil {

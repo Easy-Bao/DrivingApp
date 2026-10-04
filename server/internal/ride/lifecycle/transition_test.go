@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/lifecycle"
@@ -339,6 +340,69 @@ func TestMarkPassengerNoShowRejectsAnotherCancellationOutcome(t *testing.T) {
 	}
 	if store.noShowCalls != 0 {
 		t.Fatalf("rejected retry wrote the no-show transition %d times", store.noShowCalls)
+	}
+}
+
+func TestMarkPassengerNoShowRequiresAValidElapsedDeadline(t *testing.T) {
+	driverID := 42
+	futureDeadline := time.Now().UTC().Add(time.Minute).Format(time.RFC3339)
+	invalidDeadline := "not-a-deadline"
+	tests := []struct {
+		name         string
+		waitingUntil *string
+	}{
+		{name: "missing deadline", waitingUntil: nil},
+		{name: "malformed deadline", waitingUntil: &invalidDeadline},
+		{name: "deadline has not elapsed", waitingUntil: &futureDeadline},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			store := &fakeLifecycleStore{
+				ride: domain.Ride{
+					ID:           1,
+					PassengerID:  10,
+					DriverID:     &driverID,
+					Status:       string(domain.RideArrived),
+					WaitingUntil: test.waitingUntil,
+				},
+			}
+			service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
+
+			_, err := service.MarkPassengerNoShow(context.Background(), 1, driverID)
+			if !errors.Is(err, domain.ErrPassengerNoShowNotReady) {
+				t.Fatalf("expected passenger no-show not ready, got %v", err)
+			}
+			if store.noShowCalls != 0 {
+				t.Fatalf("rejected no-show wrote the transition %d times", store.noShowCalls)
+			}
+		})
+	}
+}
+
+func TestMarkPassengerNoShowPersistsAfterTheDeadline(t *testing.T) {
+	driverID := 42
+	pastDeadline := time.Now().UTC().Add(-time.Minute).Format(time.RFC3339)
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:           1,
+			PassengerID:  10,
+			DriverID:     &driverID,
+			Status:       string(domain.RideArrived),
+			WaitingUntil: &pastDeadline,
+		},
+	}
+	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
+
+	updated, err := service.MarkPassengerNoShow(context.Background(), 1, driverID)
+	if err != nil {
+		t.Fatalf("MarkPassengerNoShow() error = %v", err)
+	}
+	if updated.Status != string(domain.RideCancelled) {
+		t.Fatalf("status = %q, want cancelled", updated.Status)
+	}
+	if store.noShowCalls != 1 {
+		t.Fatalf("no-show transition writes = %d, want 1", store.noShowCalls)
 	}
 }
 
