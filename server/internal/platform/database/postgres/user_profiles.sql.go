@@ -120,9 +120,23 @@ func (q *Queries) ListNotifications(ctx context.Context, arg ListNotificationsPa
 const updateDriverOnlineStatus = `-- name: UpdateDriverOnlineStatus :one
 UPDATE driver_profiles
 SET is_online = $1
-WHERE user_id = $2
-  AND (user_id = $3 OR id = $3)
-RETURNING id, user_id, name, vehicle_type, plate_number, rating, is_online
+FROM users AS account
+WHERE driver_profiles.user_id = $2
+  AND (
+      driver_profiles.user_id = $3
+      OR driver_profiles.id = $3
+  )
+  AND account.id = driver_profiles.user_id
+  AND (
+      $1::boolean = false
+      OR (
+          account.account_status = 'active'
+          AND account.is_verified = true
+      )
+  )
+RETURNING driver_profiles.id, driver_profiles.user_id, driver_profiles.name,
+    driver_profiles.vehicle_type, driver_profiles.plate_number,
+    driver_profiles.rating, driver_profiles.is_online
 `
 
 type UpdateDriverOnlineStatusParams struct {

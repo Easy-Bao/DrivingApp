@@ -245,9 +245,14 @@ func (q *Queries) GetBidSessionByID(ctx context.Context, id int32) (BidSession, 
 }
 
 const getOnlineDriverProfileForBidding = `-- name: GetOnlineDriverProfileForBidding :one
-SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online
+SELECT driver_profiles.id, driver_profiles.user_id, driver_profiles.name,
+    driver_profiles.vehicle_type, driver_profiles.plate_number,
+    driver_profiles.rating, driver_profiles.is_online
 FROM driver_profiles
-WHERE user_id = $1
+JOIN users AS account ON account.id = driver_profiles.user_id
+WHERE driver_profiles.user_id = $1
+  AND account.account_status = 'active'
+  AND account.is_verified = true
   AND is_online = true
 LIMIT 1
 `
@@ -585,9 +590,14 @@ func (q *Queries) LockActiveBidSessionForOffer(ctx context.Context, arg LockActi
 }
 
 const lockOnlineDriverProfileForBidding = `-- name: LockOnlineDriverProfileForBidding :one
-SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online
+SELECT driver_profiles.id, driver_profiles.user_id, driver_profiles.name,
+    driver_profiles.vehicle_type, driver_profiles.plate_number,
+    driver_profiles.rating, driver_profiles.is_online
 FROM driver_profiles
-WHERE user_id = $1
+JOIN users AS account ON account.id = driver_profiles.user_id
+WHERE driver_profiles.user_id = $1
+  AND account.account_status = 'active'
+  AND account.is_verified = true
   AND is_online = true
 LIMIT 1
 FOR UPDATE

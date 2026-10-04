@@ -28,6 +28,7 @@ FROM driver_profiles AS profile
 JOIN users AS account ON account.id = profile.user_id
 LEFT JOIN rides AS ride ON ride.driver_id = profile.user_id
 WHERE account.account_status = 'active'
+  AND account.is_verified = true
   AND profile.is_online = true
   AND profile.user_id = ANY($1::int[])
 GROUP BY profile.id, profile.user_id, profile.name, profile.vehicle_type, profile.plate_number, profile.rating
@@ -91,6 +92,7 @@ SELECT
 FROM driver_profiles AS profile
 JOIN users AS account ON account.id = profile.user_id
 WHERE account.account_status = 'active'
+  AND account.is_verified = true
   AND profile.is_online = true
 ORDER BY profile.id
 LIMIT $1::int

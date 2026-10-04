@@ -45,16 +45,26 @@ RETURNING id, passenger_id, ride_type, pickup_latitude, pickup_longitude,
     status, target_driver_id, accepted_driver_id, expires_at, created_at;
 
 -- name: GetOnlineDriverProfileForBidding :one
-SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online
+SELECT driver_profiles.id, driver_profiles.user_id, driver_profiles.name,
+    driver_profiles.vehicle_type, driver_profiles.plate_number,
+    driver_profiles.rating, driver_profiles.is_online
 FROM driver_profiles
-WHERE user_id = $1
+JOIN users AS account ON account.id = driver_profiles.user_id
+WHERE driver_profiles.user_id = $1
+  AND account.account_status = 'active'
+  AND account.is_verified = true
   AND is_online = true
 LIMIT 1;
 
 -- name: LockOnlineDriverProfileForBidding :one
-SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online
+SELECT driver_profiles.id, driver_profiles.user_id, driver_profiles.name,
+    driver_profiles.vehicle_type, driver_profiles.plate_number,
+    driver_profiles.rating, driver_profiles.is_online
 FROM driver_profiles
-WHERE user_id = $1
+JOIN users AS account ON account.id = driver_profiles.user_id
+WHERE driver_profiles.user_id = $1
+  AND account.account_status = 'active'
+  AND account.is_verified = true
   AND is_online = true
 LIMIT 1
 FOR UPDATE;

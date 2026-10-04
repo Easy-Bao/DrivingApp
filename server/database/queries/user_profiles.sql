@@ -27,9 +27,23 @@ RETURNING id, user_id, name, vehicle_type, plate_number, rating, is_online;
 -- name: UpdateDriverOnlineStatus :one
 UPDATE driver_profiles
 SET is_online = sqlc.arg('is_online')
-WHERE user_id = sqlc.arg('user_id')
-  AND (user_id = sqlc.arg('target_id') OR id = sqlc.arg('target_id'))
-RETURNING id, user_id, name, vehicle_type, plate_number, rating, is_online;
+FROM users AS account
+WHERE driver_profiles.user_id = sqlc.arg('user_id')
+  AND (
+      driver_profiles.user_id = sqlc.arg('target_id')
+      OR driver_profiles.id = sqlc.arg('target_id')
+  )
+  AND account.id = driver_profiles.user_id
+  AND (
+      sqlc.arg('is_online')::boolean = false
+      OR (
+          account.account_status = 'active'
+          AND account.is_verified = true
+      )
+  )
+RETURNING driver_profiles.id, driver_profiles.user_id, driver_profiles.name,
+    driver_profiles.vehicle_type, driver_profiles.plate_number,
+    driver_profiles.rating, driver_profiles.is_online;
 
 -- name: UpdatePassengerProfile :one
 UPDATE passenger_profiles
