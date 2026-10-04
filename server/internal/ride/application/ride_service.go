@@ -36,6 +36,7 @@ type RideService struct {
 	repository        ports.RideStore
 	routeCalculator   RouteCalculator
 	pricingConfig     PricingConfig
+	biddingConfig     biddingapplication.Config
 	eventPublisher    ports.EventPublisher
 	bookingService    *booking.Service
 	biddingService    *biddingapplication.Service
@@ -50,6 +51,7 @@ type RideServiceDependencies struct {
 	PricingConfig   PricingConfig
 	EventPublisher  ports.EventPublisher
 	LifecycleConfig lifecycleapplication.Config
+	BiddingConfig   biddingapplication.Config
 }
 
 func NewRideService(
@@ -62,6 +64,7 @@ func NewRideService(
 	service := &RideService{
 		repository:        repository,
 		pricingConfig:     pricingConfig,
+		biddingConfig:     dependencies.BiddingConfig,
 		eventPublisher:    dependencies.EventPublisher,
 		reportingLocation: _defaultReportingLocation,
 		logger:            slog.Default(),

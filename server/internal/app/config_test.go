@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	ridebidding "github.com/Easy-Bao/DrivingApp/server/internal/ride/bidding"
 	ridelifecycle "github.com/Easy-Bao/DrivingApp/server/internal/ride/lifecycle"
 )
 
@@ -107,6 +108,42 @@ func TestRideLifecycleConfigRejectsUnsafeDurations(t *testing.T) {
 			_, err := loadRideLifecycleConfig(func(string) string { return value })
 			if err == nil {
 				t.Fatalf("PASSENGER_NO_SHOW_WAIT=%q should be rejected", value)
+			}
+		})
+	}
+}
+
+func TestRideBiddingConfigUsesDefaultSessionDuration(t *testing.T) {
+	config, err := loadRideBiddingConfig(func(string) string { return "" })
+	if err != nil {
+		t.Fatalf("loadRideBiddingConfig() error = %v", err)
+	}
+	if config.SessionDuration != ridebidding.DefaultSessionDuration {
+		t.Fatalf("session duration = %v, want %v", config.SessionDuration, ridebidding.DefaultSessionDuration)
+	}
+}
+
+func TestRideBiddingConfigAcceptsCustomSessionDuration(t *testing.T) {
+	config, err := loadRideBiddingConfig(func(key string) string {
+		if key == "BID_SESSION_DURATION" {
+			return "90s"
+		}
+		return ""
+	})
+	if err != nil {
+		t.Fatalf("loadRideBiddingConfig() error = %v", err)
+	}
+	if config.SessionDuration != 90*time.Second {
+		t.Fatalf("session duration = %v", config.SessionDuration)
+	}
+}
+
+func TestRideBiddingConfigRejectsUnsafeDurations(t *testing.T) {
+	for _, value := range []string{"invalid", "0s", "-1m", "500ms"} {
+		t.Run(value, func(t *testing.T) {
+			_, err := loadRideBiddingConfig(func(string) string { return value })
+			if err == nil {
+				t.Fatalf("BID_SESSION_DURATION=%q should be rejected", value)
 			}
 		})
 	}

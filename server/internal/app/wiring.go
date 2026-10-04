@@ -171,6 +171,7 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 			PricingConfig:   config.Pricing,
 			EventPublisher:  eventPublisher,
 			LifecycleConfig: config.RideLifecycle,
+			BiddingConfig:   config.Bidding,
 		},
 		rideapplication.WithRouteCalculator(routeCalculator),
 	).WithReportingLocation(config.ReportingLocation).WithLogger(applicationLogger)

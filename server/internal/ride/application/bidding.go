@@ -22,6 +22,7 @@ func newBiddingService(service *RideService) *biddingapplication.Service {
 		PublishRide:        service.publishRide,
 		PublishSession:     service.publishSession,
 		PublishDriverOffer: service.publishDriverOffer,
+		Config:             service.biddingConfig,
 	})
 }
 

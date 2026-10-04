@@ -1,7 +1,6 @@
 package app
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"net"
@@ -14,6 +13,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	rideconfig "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/config"
 	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
+	ridebidding "github.com/Easy-Bao/DrivingApp/server/internal/ride/bidding"
 	ridelifecycle "github.com/Easy-Bao/DrivingApp/server/internal/ride/lifecycle"
 )
 
@@ -31,6 +31,7 @@ type Config struct {
 	Security          middleware.SecurityConfig
 	Pricing           rideapplication.PricingConfig
 	RideLifecycle     ridelifecycle.Config
+	Bidding           ridebidding.Config
 	ReportingLocation *time.Location
 }
 
@@ -62,6 +63,10 @@ func LoadConfig() (Config, error) {
 	if err != nil {
 		return Config{}, fmt.Errorf("load ride lifecycle configuration: %w", err)
 	}
+	bidding, err := loadRideBiddingConfig(os.Getenv)
+	if err != nil {
+		return Config{}, fmt.Errorf("load bidding configuration: %w", err)
+	}
 	reportingLocation, err := rideapplication.LoadReportingLocation(os.Getenv("REPORTING_TIMEZONE"))
 	if err != nil {
 		return Config{}, fmt.Errorf("load reporting timezone: %w", err)
@@ -79,23 +84,20 @@ func LoadConfig() (Config, error) {
 		Security:          middleware.SecurityConfigFromEnv(),
 		Pricing:           pricing,
 		RideLifecycle:     rideLifecycle,
+		Bidding:           bidding,
 		ReportingLocation: reportingLocation,
 	}, nil
 }
 
 func loadRideLifecycleConfig(getenv func(string) string) (ridelifecycle.Config, error) {
 	config := ridelifecycle.DefaultConfig()
-	raw := strings.TrimSpace(getenv("PASSENGER_NO_SHOW_WAIT"))
-	if raw != "" {
-		duration, err := time.ParseDuration(raw)
-		seconds := duration / time.Second
-		invalid := err != nil || duration <= 0 || duration%time.Second != 0 || seconds > 1<<31-1
-		if invalid {
-			return ridelifecycle.Config{}, errors.New(
-				"PASSENGER_NO_SHOW_WAIT must be a positive whole-second duration",
-			)
-		}
-		config.PassengerWaitDuration = duration
+	passengerWait, err := positiveWholeSecondDurationEnv(
+		getenv,
+		"PASSENGER_NO_SHOW_WAIT",
+		config.PassengerWaitDuration,
+	)
+	if err != nil {
+		return ridelifecycle.Config{}, err
 	}
 
 	arrivalRadius, err := positiveFloatEnv(
@@ -116,7 +118,39 @@ func loadRideLifecycleConfig(getenv func(string) string) (ridelifecycle.Config, 
 	}
 	config.ArrivalRadiusMeters = arrivalRadius
 	config.CompletionRadiusMeters = completionRadius
+	config.PassengerWaitDuration = passengerWait
 	return config, nil
+}
+
+func loadRideBiddingConfig(getenv func(string) string) (ridebidding.Config, error) {
+	config := ridebidding.DefaultConfig()
+	duration, err := positiveWholeSecondDurationEnv(
+		getenv,
+		"BID_SESSION_DURATION",
+		config.SessionDuration,
+	)
+	if err != nil {
+		return ridebidding.Config{}, err
+	}
+	config.SessionDuration = duration
+	return config, nil
+}
+
+func positiveWholeSecondDurationEnv(
+	getenv func(string) string,
+	key string,
+	fallback time.Duration,
+) (time.Duration, error) {
+	raw := strings.TrimSpace(getenv(key))
+	if raw == "" {
+		return fallback, nil
+	}
+	duration, err := time.ParseDuration(raw)
+	seconds := duration / time.Second
+	if err != nil || duration <= 0 || duration%time.Second != 0 || seconds > 1<<31-1 {
+		return 0, fmt.Errorf("%s must be a positive whole-second duration", key)
+	}
+	return duration, nil
 }
 
 func positiveFloatEnv(getenv func(string) string, key string, fallback float64) (float64, error) {

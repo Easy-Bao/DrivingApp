@@ -39,6 +39,8 @@ type Dependencies struct {
 	PublishRide        RideEventPublisher
 	PublishSession     SessionEventPublisher
 	PublishDriverOffer DriverOfferPublisher
+	Config             Config
+	Now                func() time.Time
 }
 
 type Service struct {
@@ -49,6 +51,8 @@ type Service struct {
 	publishRide        RideEventPublisher
 	publishSession     SessionEventPublisher
 	publishDriverOffer DriverOfferPublisher
+	config             Config
+	now                func() time.Time
 	logger             *slog.Logger
 }
 
@@ -59,6 +63,10 @@ func NewService(dependencies Dependencies) *Service {
 			activeRideChecker = checker
 		}
 	}
+	now := dependencies.Now
+	if now == nil {
+		now = time.Now
+	}
 	return &Service{
 		store:              dependencies.Store,
 		activeRideChecker:  activeRideChecker,
@@ -67,6 +75,8 @@ func NewService(dependencies Dependencies) *Service {
 		publishRide:        dependencies.PublishRide,
 		publishSession:     dependencies.PublishSession,
 		publishDriverOffer: dependencies.PublishDriverOffer,
+		config:             dependencies.Config,
+		now:                now,
 		logger:             slog.Default(),
 	}
 }
@@ -117,12 +127,9 @@ func (service *Service) CreateSession(ctx context.Context, session domain.BidSes
 		}
 		session.OfferedFareAmount = *session.CustomFareAmount
 	}
-	if session.Status == "" {
-		session.Status = "open"
-	}
-	if session.ExpiresAt.IsZero() {
-		session.ExpiresAt = time.Now().Add(5 * time.Minute)
-	}
+	// Session state and expiration are server-owned even for internal callers.
+	session.Status = "open"
+	session.ExpiresAt = service.now().UTC().Add(service.config.sessionDuration())
 	created, err := service.store.CreateSession(ctx, session)
 	if err != nil {
 		return domain.BidSession{}, fmt.Errorf("create bid session: %w", err)

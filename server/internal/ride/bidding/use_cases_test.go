@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/bidding"
@@ -107,6 +108,47 @@ func TestCreateSessionRejectsPassengerWithActiveRide(t *testing.T) {
 	}
 	if store.session.ID != 0 {
 		t.Fatal("expected session NOT to be persisted when passenger has an active ride")
+	}
+}
+
+func TestCreateSessionUsesServerOwnedStatusAndExpiration(t *testing.T) {
+	store := &biddingStoreStub{}
+	now := time.Date(2026, time.October, 5, 10, 0, 0, 0, time.UTC)
+	service := bidding.NewService(bidding.Dependencies{
+		Store: store,
+		ResolveRoute: func(
+			context.Context,
+			float64,
+			float64,
+			float64,
+			float64,
+			float64,
+			float64,
+		) (ports.RouteMetrics, error) {
+			return ports.RouteMetrics{DistanceKm: 4, DurationMinutes: 12}, nil
+		},
+		CalculateFare: func(float64, float64) int64 { return 3500 },
+		Config:        bidding.Config{SessionDuration: 90 * time.Second},
+		Now:           func() time.Time { return now },
+	})
+
+	created, err := service.CreateSession(context.Background(), domain.BidSession{
+		PassengerID:      101,
+		PickupLatitude:   14.5,
+		PickupLongitude:  121.0,
+		DropoffLatitude:  14.6,
+		DropoffLongitude: 121.1,
+		Status:           "accepted",
+		ExpiresAt:        now.Add(24 * time.Hour),
+	})
+	if err != nil {
+		t.Fatalf("CreateSession() error = %v", err)
+	}
+	if created.Status != "open" {
+		t.Fatalf("status = %q, want open", created.Status)
+	}
+	if want := now.Add(90 * time.Second); !created.ExpiresAt.Equal(want) {
+		t.Fatalf("expiration = %v, want %v", created.ExpiresAt, want)
 	}
 }
 
