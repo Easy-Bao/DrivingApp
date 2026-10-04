@@ -60,18 +60,26 @@ func TestFromPostgresRideRejectsMissingCreationTime(t *testing.T) {
 
 func TestFromPostgresDriverStatsMapsMetrics(t *testing.T) {
 	stats, err := fromPostgresDriverStats(7, databasepostgres.GetDriverStatsRow{
-		TotalTrips:          12,
-		CompletedTrips:      8,
-		ActiveTrips:         2,
-		TotalEarningsAmount: 48_000,
-		TodayCompletedTrips: 3,
-		TodayEarningsAmount: 15_000,
-		AverageRating:       4.75,
-		OneStarCount:        1,
-		TwoStarCount:        2,
-		ThreeStarCount:      3,
-		FourStarCount:       4,
-		FiveStarCount:       5,
+		TotalTrips:                      12,
+		CompletedTrips:                  8,
+		ActiveTrips:                     2,
+		TotalEarningsAmount:             48_000,
+		TodayCompletedTrips:             3,
+		TodayEarningsAmount:             15_000,
+		AverageRating:                   4.75,
+		OneStarCount:                    1,
+		TwoStarCount:                    2,
+		ThreeStarCount:                  3,
+		FourStarCount:                   4,
+		FiveStarCount:                   5,
+		StandingSettledTrips:            10,
+		DriverFaultCancellationCount:    1,
+		PassengerFaultCancellationCount: 2,
+		SystemFaultCancellationCount:    0,
+		NoFaultCancellationCount:        1,
+		SafetyRelatedCancellationCount:  0,
+		PendingReviewCancellationCount:  1,
+		AdminOverrideCancellationCount:  0,
 	})
 	if err != nil {
 		t.Fatalf("fromPostgresDriverStats() error = %v", err)
@@ -80,6 +88,14 @@ func TestFromPostgresDriverStatsMapsMetrics(t *testing.T) {
 		stats.TotalEarnings != 48_000 || stats.TodayCompletedTrips != 3 || stats.TodayEarnings != 15_000 ||
 		stats.AverageRating != 4.75 || stats.RatingDistribution != [5]int{1, 2, 3, 4, 5} {
 		t.Fatalf("mapped driver stats = %+v", stats)
+	}
+	if stats.Standing.SettledTrips != 10 ||
+		stats.Standing.DriverFaultCancellations != 1 ||
+		stats.Standing.PassengerFaultCancellations != 2 ||
+		stats.Standing.PendingReviewCancellations != 1 ||
+		stats.Standing.CompletionRatePercent != 80 ||
+		stats.Standing.DriverFaultCancellationRatePercent != 10 {
+		t.Fatalf("mapped driver standing = %+v", stats.Standing)
 	}
 }
 

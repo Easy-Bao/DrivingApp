@@ -4,6 +4,7 @@ import "errors"
 
 var (
 	ErrInvalidTrip             = errors.New("invalid trip details")
+	ErrInvalidDriverStanding   = errors.New("invalid driver standing")
 	ErrRouteUnavailable        = errors.New("route calculation is unavailable")
 	ErrActiveBooking           = errors.New("passenger already has an active booking")
 	ErrDriverHasActiveRide     = errors.New("driver already has an active ride")

@@ -69,6 +69,61 @@ SELECT
           AND review.rating >= 5
           AND review.rating <= 5
     ) AS five_star_count
+    ,(
+        SELECT COUNT(*)::bigint
+        FROM rides AS standing_ride
+        WHERE standing_ride.driver_id = sqlc.arg('driver_id')
+          AND standing_ride.status IN ('completed', 'cancelled')
+    ) AS standing_settled_trips
+    ,(
+        SELECT COUNT(*)::bigint
+        FROM rides AS standing_ride
+        WHERE standing_ride.driver_id = sqlc.arg('driver_id')
+          AND standing_ride.status = 'cancelled'
+          AND standing_ride.cancellation_responsibility = 'driver_fault'
+    ) AS driver_fault_cancellation_count
+    ,(
+        SELECT COUNT(*)::bigint
+        FROM rides AS standing_ride
+        WHERE standing_ride.driver_id = sqlc.arg('driver_id')
+          AND standing_ride.status = 'cancelled'
+          AND standing_ride.cancellation_responsibility = 'passenger_fault'
+    ) AS passenger_fault_cancellation_count
+    ,(
+        SELECT COUNT(*)::bigint
+        FROM rides AS standing_ride
+        WHERE standing_ride.driver_id = sqlc.arg('driver_id')
+          AND standing_ride.status = 'cancelled'
+          AND standing_ride.cancellation_responsibility = 'system_fault'
+    ) AS system_fault_cancellation_count
+    ,(
+        SELECT COUNT(*)::bigint
+        FROM rides AS standing_ride
+        WHERE standing_ride.driver_id = sqlc.arg('driver_id')
+          AND standing_ride.status = 'cancelled'
+          AND standing_ride.cancellation_responsibility = 'no_fault'
+    ) AS no_fault_cancellation_count
+    ,(
+        SELECT COUNT(*)::bigint
+        FROM rides AS standing_ride
+        WHERE standing_ride.driver_id = sqlc.arg('driver_id')
+          AND standing_ride.status = 'cancelled'
+          AND standing_ride.cancellation_responsibility = 'safety_related'
+    ) AS safety_related_cancellation_count
+    ,(
+        SELECT COUNT(*)::bigint
+        FROM rides AS standing_ride
+        WHERE standing_ride.driver_id = sqlc.arg('driver_id')
+          AND standing_ride.status = 'cancelled'
+          AND standing_ride.cancellation_responsibility = 'pending_review'
+    ) AS pending_review_cancellation_count
+    ,(
+        SELECT COUNT(*)::bigint
+        FROM rides AS standing_ride
+        WHERE standing_ride.driver_id = sqlc.arg('driver_id')
+          AND standing_ride.status = 'cancelled'
+          AND standing_ride.cancellation_responsibility = 'admin_override'
+    ) AS admin_override_cancellation_count
 FROM rides AS r
 WHERE r.driver_id = sqlc.arg('driver_id');
 

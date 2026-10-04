@@ -60,6 +60,10 @@ func fromPostgresDriverStats(driverID int, row databasepostgres.GetDriverStatsRo
 	if err != nil {
 		return domain.DriverStats{}, fmt.Errorf("map rating distribution: %w", err)
 	}
+	standing, err := fromPostgresDriverStanding(row)
+	if err != nil {
+		return domain.DriverStats{}, fmt.Errorf("map driver standing: %w", err)
+	}
 	return domain.DriverStats{
 		DriverID:            driverID,
 		TotalTrips:          totalTrips,
@@ -70,7 +74,44 @@ func fromPostgresDriverStats(driverID int, row databasepostgres.GetDriverStatsRo
 		TodayEarnings:       row.TodayEarningsAmount,
 		AverageRating:       row.AverageRating,
 		RatingDistribution:  ratingDistribution,
+		Standing:            standing,
 	}, nil
+}
+
+func fromPostgresDriverStanding(row databasepostgres.GetDriverStatsRow) (domain.DriverStanding, error) {
+	counts := []struct {
+		value int64
+		name  string
+	}{
+		{row.StandingSettledTrips, "settled trips"},
+		{row.CompletedTrips, "completed trips"},
+		{row.DriverFaultCancellationCount, "driver fault cancellation count"},
+		{row.PassengerFaultCancellationCount, "passenger fault cancellation count"},
+		{row.SystemFaultCancellationCount, "system fault cancellation count"},
+		{row.NoFaultCancellationCount, "no fault cancellation count"},
+		{row.SafetyRelatedCancellationCount, "safety related cancellation count"},
+		{row.PendingReviewCancellationCount, "pending review cancellation count"},
+		{row.AdminOverrideCancellationCount, "admin override cancellation count"},
+	}
+	native := make([]int, len(counts))
+	for index, count := range counts {
+		value, err := toNativeRideCount(count.value, count.name)
+		if err != nil {
+			return domain.DriverStanding{}, err
+		}
+		native[index] = value
+	}
+	return domain.BuildDriverStanding(
+		native[0],
+		native[1],
+		native[2],
+		native[3],
+		native[4],
+		native[5],
+		native[6],
+		native[7],
+		native[8],
+	)
 }
 
 func mapRatingDistribution(row databasepostgres.GetDriverStatsRow) ([5]int, error) {
