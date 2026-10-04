@@ -40,6 +40,8 @@ class const DriverPerformancePage({super.key, this.onBack, this.onRefresh})
               const SizedBox(height: 20),
               _PerformanceMetrics(stats: state.stats),
               const SizedBox(height: 20),
+              _StandingSummary(stats: state.stats),
+              const SizedBox(height: 20),
               _RatingDistribution(stats: state.stats),
               if (state.errorMessage != null) ...[
                 const SizedBox(height: 20),
@@ -66,11 +68,7 @@ class const _PerformanceSummary({required this.stats}) extends StatelessWidget {
     final rating = stats?.averageRating != null && stats!.averageRating > 0
         ? stats!.averageRating.toStringAsFixed(1)
         : '—';
-    final totalTrips = stats?.totalTrips ?? 0;
-    final completedTrips = stats?.completedTrips ?? 0;
-    final completionRate = totalTrips == 0
-        ? 0
-        : (completedTrips / totalTrips * 100).round();
+    final completionRate = stats?.standing.completionRatePercent.round() ?? 0;
 
     return Container(
       padding: const EdgeInsets.all(EasyRideSpacing.xl),
@@ -169,6 +167,127 @@ class const _RatingDistribution({required this.stats}) extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class const _StandingSummary({required this.stats}) extends StatelessWidget {
+  final DriverPerformanceStats? stats;
+
+  @override
+  Widget build(BuildContext context) {
+    final standing = stats?.standing;
+    if (standing == null) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.all(EasyRideSpacing.lg),
+      decoration: BoxDecoration(
+        color: context.colorScheme.surface,
+        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        border: Border.all(color: context.colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Trip reliability', style: context.textStyles.titleMedium),
+          const SizedBox(height: 4),
+          Text(
+            'Based on completed and resolved rides. Safety, system, and passenger outcomes are shown separately from driver fault.',
+            style: context.textStyles.bodySmall?.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _StandingValue(
+                  label: 'Completion',
+                  value: '${standing.completionRatePercent.round()}%',
+                ),
+              ),
+              Expanded(
+                child: _StandingValue(
+                  label: 'Driver-attributed cancellations',
+                  value: '${standing.driverFaultCancellations}',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _StandingChip(
+                label: 'Passenger attributed',
+                value: standing.passengerFaultCancellations,
+              ),
+              _StandingChip(
+                label: 'Safety / no fault',
+                value:
+                    standing.safetyRelatedCancellations +
+                    standing.noFaultCancellations +
+                    standing.systemFaultCancellations,
+              ),
+              _StandingChip(
+                label: 'Pending review',
+                value: standing.pendingReviewCancellations,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class const _StandingValue({required this.label, required this.value})
+    extends StatelessWidget {
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          value,
+          style: context.textStyles.titleLarge?.copyWith(
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          label,
+          style: context.textStyles.bodySmall?.copyWith(
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class const _StandingChip({required this.label, required this.value})
+    extends StatelessWidget {
+  final String label;
+  final int value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: context.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+      ),
+      child: Text(
+        '$label: $value',
+        style: context.textStyles.labelSmall?.copyWith(
+          color: context.colorScheme.onSurfaceVariant,
+        ),
       ),
     );
   }

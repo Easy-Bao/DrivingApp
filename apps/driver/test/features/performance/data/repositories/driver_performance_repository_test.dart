@@ -28,6 +28,18 @@ void main() {
         'total_earnings_amount': 14085,
         'average_rating': '4.8',
         'rating_distribution': [1, 0, 1, 2, 2],
+        'standing': {
+          'settled_trips': 6,
+          'driver_fault_cancellations': 1,
+          'passenger_fault_cancellations': 0,
+          'system_fault_cancellations': 0,
+          'no_fault_cancellations': 0,
+          'safety_related_cancellations': 0,
+          'pending_review_cancellations': 0,
+          'admin_override_cancellations': 0,
+          'completion_rate_percent': 83.3333333333,
+          'driver_fault_cancellation_rate_percent': 16.6666666667,
+        },
       },
     );
 
@@ -43,6 +55,12 @@ void main() {
           completedTrips: 5,
           totalEarningsAmount: 14085,
           averageRating: 4.8,
+          standing: DriverStanding(
+            settledTrips: 6,
+            driverFaultCancellations: 1,
+            completionRatePercent: 83.3333333333,
+            driverFaultCancellationRatePercent: 16.6666666667,
+          ),
           ratingDistribution: [1, 0, 1, 2, 2],
         ),
       ),

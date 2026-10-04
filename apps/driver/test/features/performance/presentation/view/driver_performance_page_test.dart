@@ -35,6 +35,12 @@ void main() {
           completedTrips: 18,
           totalEarningsAmount: 1245050,
           averageRating: 4.8,
+          standing: DriverStanding(
+            settledTrips: 20,
+            driverFaultCancellations: 1,
+            passengerFaultCancellations: 1,
+            completionRatePercent: 90,
+          ),
         ),
       ),
     );
@@ -61,6 +67,13 @@ void main() {
     expect(find.text('Total trips'), findsOneWidget);
     expect(find.text('20'), findsOneWidget);
     expect(find.text('Lifetime earnings'), findsOneWidget);
+
+    await tester.drag(find.byType(ListView), const Offset(0, -360));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Trip reliability'), findsOneWidget);
+    expect(find.text('Driver-attributed cancellations'), findsOneWidget);
+    expect(find.text('Passenger attributed: 1'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

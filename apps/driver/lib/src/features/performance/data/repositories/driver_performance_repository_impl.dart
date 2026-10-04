@@ -32,6 +32,7 @@ final class DriverPerformanceRepositoryImpl({required this._dataSource})
             'total_earnings_amount',
           ),
           averageRating: _readNonNegativeDouble(values, 'average_rating'),
+          standing: _readStanding(values),
           ratingDistribution: _readRatingDistribution(values),
         ),
       );
@@ -98,6 +99,56 @@ final class DriverPerformanceRepositoryImpl({required this._dataSource})
     DioExceptionType.receiveTimeout => true,
     _ => false,
   };
+}
+
+DriverStanding _readStanding(Map<String, dynamic> values) {
+  final raw = values['standing'];
+  if (raw == null) return const DriverStanding();
+  if (raw is! Map) {
+    throw DataParsingException(message: 'Driver standing is invalid.');
+  }
+  final standing = <String, dynamic>{
+    for (final entry in raw.entries) entry.key.toString(): entry.value,
+  };
+  return DriverStanding(
+    settledTrips: _readNonNegativeInt(standing, 'settled_trips'),
+    driverFaultCancellations: _readNonNegativeInt(
+      standing,
+      'driver_fault_cancellations',
+    ),
+    passengerFaultCancellations: _readNonNegativeInt(
+      standing,
+      'passenger_fault_cancellations',
+    ),
+    systemFaultCancellations: _readNonNegativeInt(
+      standing,
+      'system_fault_cancellations',
+    ),
+    noFaultCancellations: _readNonNegativeInt(
+      standing,
+      'no_fault_cancellations',
+    ),
+    safetyRelatedCancellations: _readNonNegativeInt(
+      standing,
+      'safety_related_cancellations',
+    ),
+    pendingReviewCancellations: _readNonNegativeInt(
+      standing,
+      'pending_review_cancellations',
+    ),
+    adminOverrideCancellations: _readNonNegativeInt(
+      standing,
+      'admin_override_cancellations',
+    ),
+    completionRatePercent: _readNonNegativeDouble(
+      standing,
+      'completion_rate_percent',
+    ),
+    driverFaultCancellationRatePercent: _readNonNegativeDouble(
+      standing,
+      'driver_fault_cancellation_rate_percent',
+    ),
+  );
 }
 
 List<int> _readRatingDistribution(Map<String, dynamic> values) {
