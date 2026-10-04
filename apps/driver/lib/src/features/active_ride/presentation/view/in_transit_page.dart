@@ -9,6 +9,7 @@ import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/in_transit/in_transit_complete_button_widget.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/in_transit/in_transit_passenger_card_widget.dart';
+import 'package:driver/src/features/active_ride/presentation/widgets/driver_safety_report_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -213,6 +214,7 @@ class _InTransitPageState extends State<InTransitPage> {
 
   Future<void> _completeTrip(BuildContext context) async {
     if (_isCompletingTrip) return;
+    final rideCubit = BlocProvider.of<RideFlowCubit>(context);
     setState(() => _isCompletingTrip = true);
     try {
       final position =
@@ -227,11 +229,10 @@ class _InTransitPageState extends State<InTransitPage> {
         );
         return;
       }
-      final finalFare = await BlocProvider.of<RideFlowCubit>(context)
-          .completeRide(
-            driverLat: position.latitude,
-            driverLng: position.longitude,
-          );
+      final finalFare = await rideCubit.completeRide(
+        driverLat: position.latitude,
+        driverLng: position.longitude,
+      );
       if (finalFare == null) {
         if (mounted) {
           CustomToast.show(
@@ -304,7 +305,17 @@ class _InTransitPageState extends State<InTransitPage> {
                   SafeArea(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                      child: _buildTripBackButton(context, () => context.pop()),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          DriverSafetyReportButton(
+                            rideId: BlocProvider.of<RideFlowCubit>(context)
+                                .activeRideId,
+                            rideRepository: widget.rideRepository,
+                          ),
+                          _buildTripBackButton(context, () => context.pop()),
+                        ],
+                      ),
                     ),
                   ),
                   Align(

@@ -66,39 +66,39 @@ void main() {
     );
   });
 
-  test('requires the server arrival response to include its wait timer', () async {
-    when(
-      () => rideDataSource.markArrived(
+  test(
+    'requires the server arrival response to include its wait timer',
+    () async {
+      when(
+        () => rideDataSource.markArrived(
+          rideId: 'ride-7',
+          latitude: 7.82,
+          longitude: 123.43,
+        ),
+      ).thenAnswer(
+        (_) async => <String, dynamic>{
+          'id': 'ride-7',
+          'status': 'arrived',
+          'pickup_name': 'Mountain View',
+          'dropoff_name': 'Vista Slope',
+          'arrived_at': '2026-10-04T10:00:00Z',
+          'waiting_until': '2026-10-04T10:05:00Z',
+        },
+      );
+
+      final result = await repository.markArrived(
         rideId: 'ride-7',
         latitude: 7.82,
         longitude: 123.43,
-      ),
-    ).thenAnswer(
-      (_) async => <String, dynamic>{
-        'id': 'ride-7',
-        'status': 'arrived',
-        'pickup_name': 'Mountain View',
-        'dropoff_name': 'Vista Slope',
-        'arrived_at': '2026-10-04T10:00:00Z',
-        'waiting_until': '2026-10-04T10:05:00Z',
-      },
-    );
+      );
 
-    final result = await repository.markArrived(
-      rideId: 'ride-7',
-      latitude: 7.82,
-      longitude: 123.43,
-    );
-
-    expect(
-      result,
-      isA<Ok<RideSnapshot, Failure>>(),
-    );
-    expect(
-      result.fold((_) => null, (ride) => ride.waitingUntil),
-      DateTime.parse('2026-10-04T10:05:00Z'),
-    );
-  });
+      expect(result, isA<Ok<RideSnapshot, Failure>>());
+      expect(
+        result.fold((_) => null, (ride) => ride.waitingUntil),
+        DateTime.parse('2026-10-04T10:05:00Z'),
+      );
+    },
+  );
 
   test('uses dedicated server commands for start and completion', () async {
     when(
@@ -144,6 +144,33 @@ void main() {
 
     expect(started.fold((_) => '', (ride) => ride.status), 'in_transit');
     expect(completed.fold((_) => 0, (ride) => ride.fareAmount), 2764);
+  });
+
+  test('accepts a server-confirmed safety report', () async {
+    when(
+      () => rideDataSource.createSafetyReport(
+        rideId: 'ride-7',
+        category: 'non_payment',
+        description: 'Passenger did not pay the agreed cash fare.',
+      ),
+    ).thenAnswer(
+      (_) async => <String, dynamic>{'id': 13, 'status': 'submitted'},
+    );
+
+    final result = await repository.createSafetyReport(
+      rideId: 'ride-7',
+      category: 'non_payment',
+      description: 'Passenger did not pay the agreed cash fare.',
+    );
+
+    expect(result, isA<Ok<void, Failure>>());
+    verify(
+      () => rideDataSource.createSafetyReport(
+        rideId: 'ride-7',
+        category: 'non_payment',
+        description: 'Passenger did not pay the agreed cash fare.',
+      ),
+    ).called(1);
   });
 
   test(

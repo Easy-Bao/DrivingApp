@@ -10,6 +10,7 @@ import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/pickup_navigation_panel_widget.dart';
+import 'package:driver/src/features/active_ride/presentation/widgets/driver_safety_report_sheet.dart';
 import 'package:driver/src/features/active_ride/active_ride_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -470,7 +471,16 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
   Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      child: _buildTripBackButton(context, () => context.pop()),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          DriverSafetyReportButton(
+            rideId: BlocProvider.of<RideFlowCubit>(context).activeRideId,
+            rideRepository: widget.rideRepository,
+          ),
+          _buildTripBackButton(context, () => context.pop()),
+        ],
+      ),
     );
   }
 }

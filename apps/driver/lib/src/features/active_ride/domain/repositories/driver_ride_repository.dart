@@ -27,6 +27,12 @@ abstract interface class DriverRideRepository {
 
   Future<Result<RideSnapshot, Failure>> markPassengerNoShow(String rideId);
 
+  Future<Result<void, Failure>> createSafetyReport({
+    required String rideId,
+    required String category,
+    required String description,
+  });
+
   Future<Result<RideSnapshot, Failure>> fetchRide(String rideId);
 
   Future<Result<int, Failure>> settleCash({
@@ -68,11 +74,8 @@ extension DriverRideRepositoryResultAdapters on DriverRideRepository {
     required double longitude,
   }) {
     return _captureResult(
-      () => markArrived(
-        rideId: rideId,
-        latitude: latitude,
-        longitude: longitude,
-      ),
+      () =>
+          markArrived(rideId: rideId, latitude: latitude, longitude: longitude),
       message: 'Unable to confirm arrival at the pickup point.',
     );
   }
@@ -86,17 +89,28 @@ extension DriverRideRepositoryResultAdapters on DriverRideRepository {
     );
   }
 
+  Future<Result<void, DomainFailure>> createSafetyReportResult({
+    required String rideId,
+    required String category,
+    required String description,
+  }) {
+    return _captureResult(
+      () => createSafetyReport(
+        rideId: rideId,
+        category: category,
+        description: description,
+      ),
+      message: 'Unable to submit the safety report right now.',
+    );
+  }
+
   Future<Result<RideSnapshot, DomainFailure>> startRideResult({
     required String rideId,
     required double latitude,
     required double longitude,
   }) {
     return _captureResult(
-      () => startRide(
-        rideId: rideId,
-        latitude: latitude,
-        longitude: longitude,
-      ),
+      () => startRide(rideId: rideId, latitude: latitude, longitude: longitude),
       message: 'Unable to start this trip right now.',
     );
   }

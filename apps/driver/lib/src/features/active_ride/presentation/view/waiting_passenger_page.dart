@@ -9,6 +9,7 @@ import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/waiting_passenger_panel_widget.dart';
+import 'package:driver/src/features/active_ride/presentation/widgets/driver_safety_report_sheet.dart';
 import 'package:driver/src/features/active_ride/active_ride_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -249,8 +250,8 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
             waitFormatted: state.isWaitingAtPickup
                 ? _formatWaitDuration(state.waitTimeSecondsOr(0))
                 : '00:00',
-            canMarkNoShow: state.isWaitingAtPickup &&
-                cubit.canMarkPassengerNoShow,
+            canMarkNoShow:
+                state.isWaitingAtPickup && cubit.canMarkPassengerNoShow,
           );
         });
 
@@ -275,7 +276,13 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                       children: [
                         const SizedBox(height: 12),
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
                           children: [
+                            DriverSafetyReportButton(
+                              rideId: BlocProvider.of<RideFlowCubit>(context)
+                                  .activeRideId,
+                              rideRepository: widget.rideRepository,
+                            ),
                             _buildTripBackButton(context, () => context.pop()),
                           ],
                         ),
@@ -393,7 +400,8 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                                     width: double.infinity,
                                     height: 48,
                                     child: OutlinedButton.icon(
-                                      onPressed: presentation.canMarkNoShow &&
+                                      onPressed:
+                                          presentation.canMarkNoShow &&
                                               !_isMarkingNoShow
                                           ? _markPassengerNoShow
                                           : null,
@@ -406,9 +414,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                                               ),
                                             )
                                           : const Icon(LucideIcons.user_x),
-                                      label: Text(
-                                        'Passenger No-Show',
-                                      ),
+                                      label: Text('Passenger No-Show'),
                                     ),
                                   ),
                                 ],

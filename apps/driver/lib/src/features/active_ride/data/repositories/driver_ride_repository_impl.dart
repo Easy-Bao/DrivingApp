@@ -83,6 +83,31 @@ final class DriverRideRepositoryImpl({
   }
 
   @override
+  Future<Result<void, Failure>> createSafetyReport({
+    required String rideId,
+    required String category,
+    required String description,
+  }) async {
+    try {
+      final data = await _rideDataSource.createSafetyReport(
+        rideId: rideId,
+        category: category,
+        description: description,
+      );
+      final reportId = SafeParse.toNullableDouble(data['id']);
+      final status = SafeParse.toStringValue(data['status']).toLowerCase();
+      if (reportId == null || reportId <= 0 || status != 'submitted') {
+        return const Err(
+          ValidationFailure('The safety report response is incomplete.'),
+        );
+      }
+      return const Ok(null);
+    } catch (error) {
+      return Err(_mapFailure(error, action: 'submit the safety report'));
+    }
+  }
+
+  @override
   Future<Result<RideSnapshot, Failure>> startRide({
     required String rideId,
     required double latitude,
