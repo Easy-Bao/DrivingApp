@@ -170,8 +170,8 @@ func (stub *ridesRepositoryStub) AcceptOffer(
 	int,
 	int,
 	int,
-) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
-	return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, nil
+) (domain.OfferAcceptance, error) {
+	return domain.OfferAcceptance{}, nil
 }
 
 func (stub *ridesRepositoryStub) CancelSession(context.Context, int, int) (domain.BidSession, error) {

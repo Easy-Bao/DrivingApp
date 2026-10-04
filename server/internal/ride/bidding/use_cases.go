@@ -218,7 +218,7 @@ func (service *Service) AcceptOffer(
 	if passengerID <= 0 {
 		return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, domain.ErrUnauthorizedSession
 	}
-	session, offer, ride, err := service.store.AcceptOffer(
+	accepted, err := service.store.AcceptOffer(
 		ctx,
 		sessionID,
 		offerID,
@@ -230,14 +230,25 @@ func (service *Service) AcceptOffer(
 	service.publishRideEvent(
 		ctx,
 		event.RideMatched,
-		ride,
+		accepted.Ride,
 		map[string]any{
-			"offer":   offer,
-			"ride":    ride,
-			"session": session,
+			"offer":   accepted.Offer,
+			"ride":    accepted.Ride,
+			"session": accepted.Session,
 		},
 	)
-	return session, offer, ride, nil
+	for _, withdrawal := range accepted.WithdrawnOffers {
+		service.publishSessionEvent(
+			ctx,
+			event.RideOfferUpdated,
+			withdrawal.Session,
+			map[string]any{
+				"offer":  withdrawal.Offer,
+				"reason": "driver_unavailable",
+			},
+		)
+	}
+	return accepted.Session, accepted.Offer, accepted.Ride, nil
 }
 
 func (service *Service) CancelSession(ctx context.Context, sessionID, passengerID int) (domain.BidSession, error) {

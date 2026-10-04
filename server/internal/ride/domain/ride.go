@@ -75,3 +75,18 @@ type BidOffer struct {
 	Status             string    `json:"status"`
 	CreatedAt          time.Time `json:"created_at"`
 }
+
+// BidOfferWithdrawal pairs an offer rejected because its driver became busy
+// with the session whose passenger must receive the update.
+type BidOfferWithdrawal struct {
+	Session BidSession
+	Offer   BidOffer
+}
+
+// OfferAcceptance is the atomic persistence result of accepting one bid.
+type OfferAcceptance struct {
+	Session         BidSession
+	Offer           BidOffer
+	Ride            Ride
+	WithdrawnOffers []BidOfferWithdrawal
+}

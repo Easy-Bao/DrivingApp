@@ -330,6 +330,27 @@ func (q *Queries) CreateRideSettlement(ctx context.Context, arg CreateRideSettle
 	return err
 }
 
+const getBidOfferDriverForAcceptance = `-- name: GetBidOfferDriverForAcceptance :one
+SELECT driver_id
+FROM bid_offers
+WHERE id = $1
+  AND session_id = $2
+  AND status = 'pending'
+LIMIT 1
+`
+
+type GetBidOfferDriverForAcceptanceParams struct {
+	ID        int32 `db:"id"`
+	SessionID int32 `db:"session_id"`
+}
+
+func (q *Queries) GetBidOfferDriverForAcceptance(ctx context.Context, arg GetBidOfferDriverForAcceptanceParams) (int32, error) {
+	row := q.db.QueryRow(ctx, getBidOfferDriverForAcceptance, arg.ID, arg.SessionID)
+	var driver_id int32
+	err := row.Scan(&driver_id)
+	return driver_id, err
+}
+
 const lockPendingBidOfferForAcceptance = `-- name: LockPendingBidOfferForAcceptance :one
 SELECT id, session_id, driver_id, driver_name, plate_number, vehicle_type,
     proposed_fare, status, created_at
@@ -490,6 +511,51 @@ func (q *Queries) MarkBidSessionAccepted(ctx context.Context, arg MarkBidSession
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const rejectDriverPendingBidOffers = `-- name: RejectDriverPendingBidOffers :many
+UPDATE bid_offers
+SET status = 'rejected'
+WHERE driver_id = $1
+  AND status = 'pending'
+  AND id <> $2
+RETURNING id, session_id, driver_id, driver_name, plate_number, vehicle_type,
+    proposed_fare, status, created_at
+`
+
+type RejectDriverPendingBidOffersParams struct {
+	DriverID int32 `db:"driver_id"`
+	ID       int32 `db:"id"`
+}
+
+func (q *Queries) RejectDriverPendingBidOffers(ctx context.Context, arg RejectDriverPendingBidOffersParams) ([]BidOffer, error) {
+	rows, err := q.db.Query(ctx, rejectDriverPendingBidOffers, arg.DriverID, arg.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []BidOffer{}
+	for rows.Next() {
+		var i BidOffer
+		if err := rows.Scan(
+			&i.ID,
+			&i.SessionID,
+			&i.DriverID,
+			&i.DriverName,
+			&i.PlateNumber,
+			&i.VehicleType,
+			&i.ProposedFare,
+			&i.Status,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const rejectOtherPendingBidOffers = `-- name: RejectOtherPendingBidOffers :exec

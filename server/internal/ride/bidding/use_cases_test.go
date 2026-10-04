@@ -13,8 +13,9 @@ import (
 )
 
 type biddingStoreStub struct {
-	session domain.BidSession
-	offers  []domain.BidOffer
+	session    domain.BidSession
+	offers     []domain.BidOffer
+	acceptance domain.OfferAcceptance
 }
 
 func (stub *biddingStoreStub) CreateSession(_ context.Context, session domain.BidSession) (domain.BidSession, error) {
@@ -36,8 +37,8 @@ func (stub *biddingStoreStub) AcceptOffer(
 	int,
 	int,
 	int,
-) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
-	return domain.BidSession{}, domain.BidOffer{}, domain.Ride{}, nil
+) (domain.OfferAcceptance, error) {
+	return stub.acceptance, nil
 }
 func (stub *biddingStoreStub) CancelSession(context.Context, int, int) (domain.BidSession, error) {
 	return domain.BidSession{}, nil
@@ -168,6 +169,51 @@ func TestAcceptOfferPublishesRideMatchedEvent(t *testing.T) {
 	}
 	if publishedType != string(event.RideMatched) {
 		t.Fatalf("published event = %q, want %q", publishedType, event.RideMatched)
+	}
+}
+
+func TestAcceptOfferPublishesWithdrawnOutstandingOffers(t *testing.T) {
+	withdrawnSession := domain.BidSession{ID: 33, PassengerID: 202}
+	withdrawnOffer := domain.BidOffer{
+		ID:        44,
+		SessionID: withdrawnSession.ID,
+		DriverID:  303,
+		Status:    "rejected",
+	}
+	store := &biddingStoreStub{acceptance: domain.OfferAcceptance{
+		Session: domain.BidSession{ID: 10, PassengerID: 101},
+		Offer:   domain.BidOffer{ID: 20, SessionID: 10, DriverID: 303, Status: "accepted"},
+		Ride:    domain.Ride{ID: 55, PassengerID: 101},
+		WithdrawnOffers: []domain.BidOfferWithdrawal{
+			{Session: withdrawnSession, Offer: withdrawnOffer},
+		},
+	}}
+	var publishedSession domain.BidSession
+	var publishedPayload map[string]any
+	service := bidding.NewService(bidding.Dependencies{
+		Store: store,
+		PublishSession: func(
+			_ context.Context,
+			eventType event.Type,
+			session domain.BidSession,
+			payload map[string]any,
+		) {
+			if eventType != event.RideOfferUpdated {
+				t.Fatalf("event type = %q, want %q", eventType, event.RideOfferUpdated)
+			}
+			publishedSession = session
+			publishedPayload = payload
+		},
+	})
+
+	if _, _, _, err := service.AcceptOffer(context.Background(), 10, 20, 101); err != nil {
+		t.Fatalf("AcceptOffer() error = %v", err)
+	}
+	if publishedSession.ID != withdrawnSession.ID || publishedSession.PassengerID != withdrawnSession.PassengerID {
+		t.Fatalf("published session = %+v", publishedSession)
+	}
+	if publishedPayload["offer"] != withdrawnOffer || publishedPayload["reason"] != "driver_unavailable" {
+		t.Fatalf("published payload = %#v", publishedPayload)
 	}
 }
 

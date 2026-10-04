@@ -82,13 +82,13 @@ func (repository *activeSessionsRepository) AcceptOffer(
 	sessionID int,
 	offerID int,
 	passengerID int,
-) (domain.BidSession, domain.BidOffer, domain.Ride, error) {
+) (domain.OfferAcceptance, error) {
 	repository.requestedSessionID = sessionID
 	repository.requestedOfferID = offerID
 	session := domain.BidSession{ID: sessionID, PassengerID: passengerID}
 	offer := domain.BidOffer{ID: int64(offerID), SessionID: sessionID}
 	ride := domain.Ride{ID: 303, PassengerID: passengerID}
-	return session, offer, ride, nil
+	return domain.OfferAcceptance{Session: session, Offer: offer, Ride: ride}, nil
 }
 func (repository *activeSessionsRepository) CancelSession(
 	_ context.Context,

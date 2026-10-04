@@ -45,6 +45,7 @@ type Querier interface {
 	ExpireBidSessions(ctx context.Context, arg ExpireBidSessionsParams) error
 	GetActiveRefreshSession(ctx context.Context, arg GetActiveRefreshSessionParams) (GetActiveRefreshSessionRow, error)
 	GetActiveRefreshSessionForUpdate(ctx context.Context, arg GetActiveRefreshSessionForUpdateParams) (GetActiveRefreshSessionForUpdateRow, error)
+	GetBidOfferDriverForAcceptance(ctx context.Context, arg GetBidOfferDriverForAcceptanceParams) (int32, error)
 	GetBidSessionByID(ctx context.Context, id int32) (BidSession, error)
 	GetDriverDocumentByID(ctx context.Context, id int32) (DriverDocument, error)
 	GetDriverProfileByUserID(ctx context.Context, userID int32) (GetDriverProfileByUserIDRow, error)
@@ -96,6 +97,7 @@ type Querier interface {
 	MarkRideSettlementOutcome(ctx context.Context, arg MarkRideSettlementOutcomeParams) (RideSettlement, error)
 	MarkUserVerified(ctx context.Context, id int32) (int64, error)
 	RejectBidOffer(ctx context.Context, id int32) (BidOffer, error)
+	RejectDriverPendingBidOffers(ctx context.Context, arg RejectDriverPendingBidOffersParams) ([]BidOffer, error)
 	RejectOtherPendingBidOffers(ctx context.Context, arg RejectOtherPendingBidOffersParams) error
 	ReviewDriverDocument(ctx context.Context, arg ReviewDriverDocumentParams) (DriverDocument, error)
 	RevokeRefreshSession(ctx context.Context, arg RevokeRefreshSessionParams) error

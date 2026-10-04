@@ -31,6 +31,14 @@ WHERE id = $1
 LIMIT 1
 FOR UPDATE;
 
+-- name: GetBidOfferDriverForAcceptance :one
+SELECT driver_id
+FROM bid_offers
+WHERE id = $1
+  AND session_id = $2
+  AND status = 'pending'
+LIMIT 1;
+
 -- name: MarkBidOfferAccepted :one
 UPDATE bid_offers
 SET status = 'accepted'
@@ -45,6 +53,15 @@ SET status = 'rejected'
 WHERE session_id = $1
   AND status = 'pending'
   AND id <> $2;
+
+-- name: RejectDriverPendingBidOffers :many
+UPDATE bid_offers
+SET status = 'rejected'
+WHERE driver_id = $1
+  AND status = 'pending'
+  AND id <> $2
+RETURNING id, session_id, driver_id, driver_name, plate_number, vehicle_type,
+    proposed_fare, status, created_at;
 
 -- name: MarkBidSessionAccepted :one
 UPDATE bid_sessions
