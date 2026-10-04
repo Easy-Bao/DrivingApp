@@ -34,6 +34,8 @@ void main() {
         .thenAnswer((_) async => 'test-driver-id');
     when(() => mockSessionService.saveActiveRideId(any()))
         .thenAnswer((_) async {});
+    when(() => mockSessionService.readActiveRideId())
+        .thenAnswer((_) async => null);
 
     when(
       () => mockRideRepository.acceptRide(
@@ -295,6 +297,63 @@ void main() {
     verify(() => mockSessionService.saveActiveRideId('')).called(1);
     await cubit.close();
   });
+
+  test('restores a completed ride that still needs a cash outcome', () async {
+    when(() => mockSessionService.readActiveRideId())
+        .thenAnswer((_) async => 'test-ride-id');
+    when(() => mockRideRepository.fetchRide('test-ride-id')).thenAnswer(
+      (_) async => const Ok(
+        RideSnapshot(
+          id: 'test-ride-id',
+          status: 'completed',
+          pickupName: 'Pickup',
+          dropoffName: 'Dropoff',
+          fareAmount: 3000,
+          paymentStatus: 'unpaid',
+          cashOutcome: 'unpaid',
+        ),
+      ),
+    );
+
+    final cubit = _makeCubit(mockRideRepository, mockSessionService);
+    final ride = await cubit.restorePendingCashSettlement();
+
+    expect(ride?.id, 'test-ride-id');
+    expect(cubit.activeRideId, 'test-ride-id');
+    expect(cubit.state, const RideFlowComplete(fare: 30));
+    verify(() => mockRideRepository.fetchRide('test-ride-id')).called(1);
+    await cubit.close();
+  });
+
+  test(
+    'clears a cached ride after its cash outcome was already recorded',
+    () async {
+      when(() => mockSessionService.readActiveRideId())
+          .thenAnswer((_) async => 'test-ride-id');
+      when(() => mockRideRepository.fetchRide('test-ride-id')).thenAnswer(
+        (_) async => Ok(
+          RideSnapshot(
+            id: 'test-ride-id',
+            status: 'completed',
+            pickupName: 'Pickup',
+            dropoffName: 'Dropoff',
+            fareAmount: 3000,
+            paymentStatus: 'unpaid',
+            cashOutcome: 'unpaid',
+            cashReceivedAt: DateTime.utc(2026, 10, 5),
+          ),
+        ),
+      );
+
+      final cubit = _makeCubit(mockRideRepository, mockSessionService);
+      final ride = await cubit.restorePendingCashSettlement();
+
+      expect(ride, isNull);
+      expect(cubit.activeRideId, isNull);
+      verify(() => mockSessionService.saveActiveRideId('')).called(1);
+      await cubit.close();
+    },
+  );
 
   test(
     'uses the server arrival deadline after resuming a waiting ride',

@@ -21,6 +21,9 @@ final class const RideSnapshot({
   final int? fareAmount,
   final DateTime? arrivedAt,
   final DateTime? waitingUntil,
+  final String? paymentStatus,
+  final DateTime? cashReceivedAt,
+  final String? cashOutcome,
 }) extends Equatable {
   factory fromJson(Map<String, dynamic> json, {String? fallbackId}) {
     final {
@@ -44,6 +47,9 @@ final class const RideSnapshot({
       'fare': rawFare,
       'arrived_at': rawArrivedAt,
       'waiting_until': rawWaitingUntil,
+      'payment_status': rawPaymentStatus,
+      'cash_received_at': rawCashReceivedAt,
+      'cash_outcome': rawCashOutcome,
     } = _canonicalPayload(
       json,
     );
@@ -68,6 +74,9 @@ final class const RideSnapshot({
       fareAmount: _fareAmount(rawFareAmount, rawFare),
       arrivedAt: _nullableDateTime(rawArrivedAt),
       waitingUntil: _nullableDateTime(rawWaitingUntil),
+      paymentStatus: _nullableString(rawPaymentStatus)?.toLowerCase(),
+      cashReceivedAt: _nullableDateTime(rawCashReceivedAt),
+      cashOutcome: _nullableString(rawCashOutcome)?.toLowerCase(),
     );
   }
 
@@ -92,6 +101,10 @@ final class const RideSnapshot({
   bool get isTerminal =>
       const {'completed', 'canceled', 'cancelled'}.contains(status);
 
+  bool get hasCashSettlement =>
+      cashReceivedAt != null ||
+      (paymentStatus == 'paid' && cashOutcome == 'paid');
+
   @override
   List<Object?> get props => [
     id,
@@ -113,6 +126,9 @@ final class const RideSnapshot({
     fareAmount,
     arrivedAt,
     waitingUntil,
+    paymentStatus,
+    cashReceivedAt,
+    cashOutcome,
   ];
 }
 
@@ -143,6 +159,9 @@ Map<String, Object?> _canonicalPayload(Map<String, dynamic> json) => {
   'fare': json['fare'],
   'arrived_at': json['arrived_at'] ?? json['arrivedAt'],
   'waiting_until': json['waiting_until'] ?? json['waitingUntil'],
+  'payment_status': json['payment_status'] ?? json['paymentStatus'],
+  'cash_received_at': json['cash_received_at'] ?? json['cashReceivedAt'],
+  'cash_outcome': json['cash_outcome'] ?? json['cashOutcome'],
 };
 
 int? _fareAmount(Object? rawAmount, Object? rawPesos) {

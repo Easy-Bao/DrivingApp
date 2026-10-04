@@ -21,6 +21,8 @@ void main() {
       'distance': '4.5',
       'durationMinutes': 12,
       'fare': '125.50',
+      'payment_status': 'UNPAID',
+      'cash_outcome': 'UNPAID',
     });
 
     expect(snapshot.id, '303');
@@ -41,6 +43,26 @@ void main() {
     expect(snapshot.durationMinutes, 12);
     expect(snapshot.fareAmount, 12550);
     expect(snapshot.farePesos, 125.5);
+    expect(snapshot.paymentStatus, 'unpaid');
+    expect(snapshot.cashOutcome, 'unpaid');
+    expect(snapshot.cashReceivedAt, isNull);
+    expect(snapshot.hasCashSettlement, isFalse);
+  });
+
+  test('recognizes a recorded cash outcome from the server snapshot', () {
+    final snapshot = RideSnapshot.fromJson(const {
+      'id': 7,
+      'status': 'completed',
+      'pickup_name': 'Pickup',
+      'dropoff_name': 'Dropoff',
+      'fare_amount': 1250,
+      'payment_status': 'unpaid',
+      'cash_outcome': 'unpaid',
+      'cash_received_at': '2026-10-05T10:00:00Z',
+    });
+
+    expect(snapshot.hasCashSettlement, isTrue);
+    expect(snapshot.cashReceivedAt, isNotNull);
   });
 
   test('keeps fallback identifiers and defaults for sparse snapshots', () {

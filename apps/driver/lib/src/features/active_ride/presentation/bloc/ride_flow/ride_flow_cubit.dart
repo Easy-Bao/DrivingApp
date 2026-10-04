@@ -77,6 +77,7 @@ class RideFlowCubit({
     _activeRideId = typedRideId.normalized;
     _activePassengerId = passengerId;
     _activePassengerName = passengerName;
+    unawaited(_saveActiveRideSession(typedRideId.normalized));
     _waitingUntil = waitingUntil?.toUtc();
     if (status == 'arrived') {
       _waitStartedAt = arrivedAt?.toUtc() ?? DateTime.now().toUtc();
@@ -145,6 +146,8 @@ class RideFlowCubit({
     final driverId = await _sessionService.readDriverId();
     if (!_isCurrentAction(actionGeneration)) return;
     if (driverId == null || driverId.isEmpty) {
+      _activeRideId = null;
+      unawaited(_clearActiveRideSession());
       _isActionInFlight = false;
       emit(RideFlowError(ErrorHandler.getErrorMessage(const AuthFailure())));
       return;
@@ -158,9 +161,13 @@ class RideFlowCubit({
       if (!_isCurrentAction(actionGeneration)) return;
       final failure = result.fold<Failure?>((value) => value, (_) => null);
       if (failure != null) {
+        _activeRideId = null;
+        unawaited(_clearActiveRideSession());
         emit(RideFlowError(ErrorHandler.getErrorMessage(failure)));
         return;
       }
+
+      unawaited(_saveActiveRideSession(typedRideId.normalized));
 
       emit(
         RideFlowNavigatingToPickup(
@@ -678,6 +685,59 @@ class RideFlowCubit({
     }
   }
 
+  Future<RideSnapshot?> restorePendingCashSettlement() async {
+    final cachedRideId = (await _sessionService.readActiveRideId())?.trim();
+    if (cachedRideId == null || cachedRideId.isEmpty) return null;
+
+    final typedRideId = RideId.tryParse(cachedRideId);
+    if (typedRideId == null) {
+      await _clearActiveRideSession();
+      return null;
+    }
+
+    RideSnapshot? ride;
+    Failure? loadFailure;
+    try {
+      (await _rideRepository.fetchRideResult(typedRideId.normalized))
+          .fold((failure) => loadFailure = failure, (value) => ride = value);
+    } catch (error, stackTrace) {
+      dev.log(
+        'Unable to restore the pending cash settlement.',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      loadFailure = const ServerFailure();
+    }
+
+    if (ride == null) {
+      emit(
+        RideFlowError(
+          loadFailure == null
+              ? 'Unable to restore the pending cash settlement.'
+              : ErrorHandler.getErrorMessage(loadFailure!),
+        ),
+      );
+      return null;
+    }
+
+    if (ride!.status != 'completed' || ride!.hasCashSettlement) {
+      await _clearActiveRideSession();
+      return null;
+    }
+
+    final fare = ride!.farePesos;
+    if (fare == null || fare <= 0) {
+      emit(const RideFlowError('The completed cash fare is unavailable.'));
+      return null;
+    }
+
+    _activeRideId = typedRideId.normalized;
+    _activePassengerId = ride!.passengerId;
+    _activePassengerName = ride!.passengerName;
+    emit(RideFlowComplete(fare: fare));
+    return ride;
+  }
+
   Future<double?> endRide({
     required double driverLat,
     required double driverLng,
@@ -710,6 +770,18 @@ class RideFlowCubit({
     } catch (error, stackTrace) {
       dev.log(
         'Unable to clear the locally cached active ride',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  Future<void> _saveActiveRideSession(String rideId) async {
+    try {
+      await _sessionService.saveActiveRideId(rideId);
+    } catch (error, stackTrace) {
+      dev.log(
+        'Unable to cache the active ride for recovery',
         error: error,
         stackTrace: stackTrace,
       );
