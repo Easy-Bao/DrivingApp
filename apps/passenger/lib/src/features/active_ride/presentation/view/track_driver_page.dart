@@ -16,6 +16,7 @@ import 'package:passenger/src/features/active_ride/presentation/bloc/live_map/li
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_state.dart';
 import 'package:passenger/src/features/active_ride/presentation/widgets/active_trip_exit_dialog.dart';
+import 'package:passenger/src/features/active_ride/presentation/widgets/passenger_emergency_button.dart';
 import 'package:passenger/src/features/active_ride/presentation/widgets/track_driver_panel_widget.dart';
 import 'package:passenger/src/features/active_ride/presentation/widgets/trip_cancellation_dialog.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
@@ -40,8 +41,6 @@ class const _MapUpdateRequest({
   final RideStatus status;
   final String driverName;
 }
-
-const _emergencyContactNumber = '911';
 
 class const TrackDriverPage({
   super.key,
@@ -87,6 +86,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
   ChatRepository? _chatRepository;
   String _passengerIdentifier = '';
   bool _isCancellingTrip = false;
+  bool _isEmergencyStopping = false;
   bool _isPollingChat = false;
 
   @override
@@ -393,31 +393,30 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
   }
 
   Future<void> _handleEmergencyPressed() async {
-    final emergencyUri = Uri(scheme: 'tel', path: _emergencyContactNumber);
-    var launched = false;
-    try {
-      launched =
-          await canLaunchUrl(emergencyUri) && await launchUrl(emergencyUri);
-    } catch (_) {
-      launched = false;
-    }
-    if (launched || !mounted) return;
-
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Emergency contacts'),
-        content: const Text(
-          'Your device cannot open the phone dialer. Call emergency services at 911.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
+    await showPassengerEmergencyActionSheet(
+      context,
+      onEmergencyStop: _emergencyStop,
     );
+  }
+
+  Future<bool> _emergencyStop(String reason, String details) async {
+    if (!mounted || _isEmergencyStopping) return false;
+
+    setState(() => _isEmergencyStopping = true);
+    try {
+      final stopped = await BlocProvider.of<TrackDriverCubit>(context)
+          .emergencyStopRequest(reason: reason, details: details);
+      if (mounted && !stopped) {
+        CustomToast.show(
+          context,
+          'The ride could not be ended for safety. Please try again.',
+          isError: true,
+        );
+      }
+      return stopped;
+    } finally {
+      if (mounted) setState(() => _isEmergencyStopping = false);
+    }
   }
 
   Future<void> _handleReportDriverPressed() async {

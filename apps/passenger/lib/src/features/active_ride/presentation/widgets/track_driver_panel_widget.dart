@@ -226,23 +226,6 @@ class const TrackDriverPanelWidget({
             SizedBox(
               width: double.infinity,
               height: EasyRideSize.minimumTouchTarget,
-              child: OutlinedButton.icon(
-                onPressed: onEmergencyPressed,
-                icon: const Icon(Icons.emergency_outlined),
-                label: const Text('Emergency SOS'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: context.colorScheme.error,
-                  side: BorderSide(color: context.colorScheme.error),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              height: EasyRideSize.minimumTouchTarget,
               child: TextButton(
                 onPressed: isCancellingTrip ? null : onCancelTripPressed,
                 style: TextButton.styleFrom(
@@ -264,6 +247,23 @@ class const TrackDriverPanelWidget({
               ),
             ),
           ],
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            height: EasyRideSize.minimumTouchTarget,
+            child: OutlinedButton.icon(
+              onPressed: onEmergencyPressed,
+              icon: const Icon(Icons.emergency_outlined),
+              label: const Text('Emergency SOS'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: context.colorScheme.error,
+                side: BorderSide(color: context.colorScheme.error),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                ),
+              ),
+            ),
+          ),
           const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,

@@ -61,4 +61,47 @@ void main() {
 
     expect(reportPressed, isTrue);
   });
+
+  testWidgets('keeps emergency access during an in-progress trip', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: EasyRideTheme.main,
+        home: Scaffold(
+          body: TrackDriverPanelWidget(
+            ride: const RideHistory(
+              id: 'ride-1',
+              pickup: 'Pickup',
+              destination: 'Destination',
+              pickupLat: 14.6,
+              pickupLng: 120.98,
+              destLat: 14.61,
+              destLng: 120.99,
+              date: '2026-09-18',
+              price: '₱100',
+              status: 'in_transit',
+              driverId: 'driver-1',
+              driverName: 'Alex',
+              vehiclePlate: 'ABC 123',
+              vehicleType: 'Sedan',
+            ),
+            statusTitle: 'Heading to destination',
+            statusSubtitle: 'Trip in progress',
+            etaText: '8 min',
+            unreadChatMessagesCount: 0,
+            showContactActions: false,
+            onCallDriverPressed: () {},
+            onChatDriverPressed: () {},
+            onEmergencyPressed: () {},
+            onReportDriverPressed: () {},
+            onCancelTripPressed: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Emergency SOS'), findsOneWidget);
+    expect(find.text('Cancel ride'), findsNothing);
+  });
 }
