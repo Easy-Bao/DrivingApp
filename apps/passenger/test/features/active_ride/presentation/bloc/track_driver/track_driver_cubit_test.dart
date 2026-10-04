@@ -480,5 +480,41 @@ void main() {
       expect: () => [isA<TrackDriverCompleted>()],
       skip: 0,
     );
+
+    blocTest<TrackDriverCubit, TrackDriverState>(
+      'emits TrackDriverCanceled when server reports RideStatus.cancelled',
+      build: () {
+        when(() => session.readActiveRideId())
+            .thenAnswer((_) async => 'ride-1');
+        when(() => repo.getRideStatusUpdate('ride-1')).thenAnswer(
+          (_) async => const Ok(
+            RideUpdate(
+              status: RideStatus.cancelled,
+              driverId: 'drv-1',
+              driverName: 'Ali',
+              vehiclePlate: 'ABC-123',
+              vehicleType: 'Sedan',
+            ),
+          ),
+        );
+        return _makeCubit(repo, session);
+      },
+      act: (cubit) => cubit.startTracking(
+        startLat: 7.828,
+        startLng: 123.434,
+        endLat: 7.830,
+        endLng: 123.436,
+        rideId: 'ride-1',
+        driverId: 'drv-1',
+        driverName: 'Driver',
+        vehiclePlate: 'ABC-123',
+        vehicleType: 'Sedan',
+      ),
+      expect: () => [isA<TrackDriverCanceled>()],
+      verify: (_) {
+        verifyNever(() => repo.fetchDriverLocation('ride-1'));
+        verify(() => session.saveActiveRideId('')).called(1);
+      },
+    );
   });
 }

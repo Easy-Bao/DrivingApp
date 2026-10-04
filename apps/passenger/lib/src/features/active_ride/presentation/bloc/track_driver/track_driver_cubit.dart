@@ -111,6 +111,21 @@ class TrackDriverCubit({
               currentRide = null;
               return;
             }
+            if (rideUpdate.status == RideStatus.cancelled) {
+              trackingCompleted = true;
+              unawaited(_trackingTask?.dispose());
+              _trackingTask = null;
+              if (identical(_activeTripResync, activeTripResync)) {
+                _activeTripResync = null;
+              }
+              await session.saveActiveRideId('');
+              if (!_isCurrentTrackingOperation(trackingGeneration)) return;
+              await _stopBackgroundTelemetry();
+              if (!_isCurrentTrackingOperation(trackingGeneration)) return;
+              currentRide = null;
+              emit(const TrackDriverCanceled());
+              return;
+            }
 
             double? driverLat;
             double? driverLng;
