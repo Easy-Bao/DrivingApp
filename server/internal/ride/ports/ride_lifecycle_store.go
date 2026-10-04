@@ -2,6 +2,7 @@ package ports
 
 import (
 	"context"
+	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 )
@@ -11,7 +12,12 @@ import (
 type RideLifecycleStore interface {
 	RideReader
 	AcceptRide(ctx context.Context, rideID, driverID int) (domain.Ride, error)
-	MarkArrived(ctx context.Context, rideID, driverID int, currentStatus string) (domain.Ride, error)
+	MarkArrived(
+		ctx context.Context,
+		rideID, driverID int,
+		currentStatus string,
+		passengerWaitDuration time.Duration,
+	) (domain.Ride, error)
 	StartTrip(ctx context.Context, rideID, driverID int) (domain.Ride, error)
 	CompleteTrip(ctx context.Context, rideID, driverID int) (domain.Ride, error)
 	MarkPassengerNoShow(ctx context.Context, rideID, driverID int) (domain.Ride, error)

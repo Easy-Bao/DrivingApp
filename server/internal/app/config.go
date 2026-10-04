@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	rideconfig "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/config"
 	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
+	ridelifecycle "github.com/Easy-Bao/DrivingApp/server/internal/ride/lifecycle"
 )
 
 const _serviceName = "api"
@@ -27,6 +29,7 @@ type Config struct {
 	AdminUserIDs      string
 	Security          middleware.SecurityConfig
 	Pricing           rideapplication.PricingConfig
+	RideLifecycle     ridelifecycle.Config
 	ReportingLocation *time.Location
 }
 
@@ -54,6 +57,10 @@ func LoadConfig() (Config, error) {
 	if err != nil {
 		return Config{}, fmt.Errorf("load pricing configuration: %w", err)
 	}
+	rideLifecycle, err := loadRideLifecycleConfig(os.Getenv)
+	if err != nil {
+		return Config{}, fmt.Errorf("load ride lifecycle configuration: %w", err)
+	}
 	reportingLocation, err := rideapplication.LoadReportingLocation(os.Getenv("REPORTING_TIMEZONE"))
 	if err != nil {
 		return Config{}, fmt.Errorf("load reporting timezone: %w", err)
@@ -70,8 +77,27 @@ func LoadConfig() (Config, error) {
 		AdminUserIDs:      os.Getenv("ADMIN_USER_IDS"),
 		Security:          middleware.SecurityConfigFromEnv(),
 		Pricing:           pricing,
+		RideLifecycle:     rideLifecycle,
 		ReportingLocation: reportingLocation,
 	}, nil
+}
+
+func loadRideLifecycleConfig(getenv func(string) string) (ridelifecycle.Config, error) {
+	config := ridelifecycle.DefaultConfig()
+	raw := strings.TrimSpace(getenv("PASSENGER_NO_SHOW_WAIT"))
+	if raw == "" {
+		return config, nil
+	}
+	duration, err := time.ParseDuration(raw)
+	seconds := duration / time.Second
+	invalid := err != nil || duration <= 0 || duration%time.Second != 0 || seconds > 1<<31-1
+	if invalid {
+		return ridelifecycle.Config{}, errors.New(
+			"PASSENGER_NO_SHOW_WAIT must be a positive whole-second duration",
+		)
+	}
+	config.PassengerWaitDuration = duration
+	return config, nil
 }
 
 func apiHost() string {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
@@ -81,6 +82,7 @@ func (stub *ridesRepositoryStub) MarkArrived(
 	_ int,
 	_ int,
 	_ string,
+	_ time.Duration,
 ) (domain.Ride, error) {
 	stub.updated = stub.ride
 	stub.updated.Status = "arrived"

@@ -20,17 +20,20 @@ type RideEventPublisher func(ctx context.Context, eventType event.Type, ride dom
 type Dependencies struct {
 	Store       ports.RideLifecycleStore
 	PublishRide RideEventPublisher
+	Config      Config
 }
 
 type Service struct {
 	store       ports.RideLifecycleStore
 	publishRide RideEventPublisher
+	config      Config
 }
 
 func NewService(dependencies Dependencies) *Service {
 	return &Service{
 		store:       dependencies.Store,
 		publishRide: dependencies.PublishRide,
+		config:      dependencies.Config,
 	}
 }
 
@@ -195,6 +198,7 @@ func (service *Service) MarkArrived(
 		rideID,
 		driverID,
 		string(normalizedStatus),
+		service.config.passengerWaitDuration(),
 	)
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("mark ride arrived: %w", err)

@@ -1,6 +1,11 @@
 package app
 
-import "testing"
+import (
+	"testing"
+	"time"
+
+	ridelifecycle "github.com/Easy-Bao/DrivingApp/server/internal/ride/lifecycle"
+)
 
 func TestAPIAddressDefaultsToLoopback(t *testing.T) {
 	t.Setenv("API_HOST", "")
@@ -34,5 +39,36 @@ func TestRequiredPortEnvRejectsMissingOrInvalidValues(t *testing.T) {
 		if _, err := requiredPortEnv("API_PORT"); err == nil {
 			t.Fatalf("API_PORT=%q should be rejected", value)
 		}
+	}
+}
+
+func TestRideLifecycleConfigUsesDefaultPassengerWait(t *testing.T) {
+	config, err := loadRideLifecycleConfig(func(string) string { return "" })
+	if err != nil {
+		t.Fatalf("loadRideLifecycleConfig() error = %v", err)
+	}
+	if config.PassengerWaitDuration != ridelifecycle.DefaultPassengerWaitDuration {
+		t.Fatalf("passenger wait = %v, want %v", config.PassengerWaitDuration, ridelifecycle.DefaultPassengerWaitDuration)
+	}
+}
+
+func TestRideLifecycleConfigAcceptsWholeSecondDuration(t *testing.T) {
+	config, err := loadRideLifecycleConfig(func(string) string { return "7m30s" })
+	if err != nil {
+		t.Fatalf("loadRideLifecycleConfig() error = %v", err)
+	}
+	if config.PassengerWaitDuration != 7*time.Minute+30*time.Second {
+		t.Fatalf("passenger wait = %v", config.PassengerWaitDuration)
+	}
+}
+
+func TestRideLifecycleConfigRejectsUnsafeDurations(t *testing.T) {
+	for _, value := range []string{"invalid", "0s", "-1m", "500ms"} {
+		t.Run(value, func(t *testing.T) {
+			_, err := loadRideLifecycleConfig(func(string) string { return value })
+			if err == nil {
+				t.Fatalf("PASSENGER_NO_SHOW_WAIT=%q should be rejected", value)
+			}
+		})
 	}
 }

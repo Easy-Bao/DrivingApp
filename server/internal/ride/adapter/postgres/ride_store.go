@@ -15,6 +15,7 @@ import (
 )
 
 const _maxPostgresRideID = 1<<31 - 1
+const _maxPostgresWaitSeconds = 1<<31 - 1
 
 type RideRepository struct {
 	pool                  *pgxpool.Pool
@@ -52,6 +53,14 @@ type RideStore = RideRepository
 
 func NewRideStore(config RideStoreConfig) (*RideStore, error) {
 	return NewRideRepository(config)
+}
+
+func toPostgresWaitSeconds(duration time.Duration) (int32, error) {
+	seconds := duration / time.Second
+	if duration <= 0 || duration%time.Second != 0 || seconds > _maxPostgresWaitSeconds {
+		return 0, errors.New("passenger wait duration must be a positive whole number of seconds")
+	}
+	return int32(seconds), nil
 }
 
 func (repository *RideRepository) Get(ctx context.Context, rideID int) (domain.Ride, error) {

@@ -1,14 +1,10 @@
 package domain
 
-import (
-	"math"
-	"time"
-)
+import "math"
 
 const (
 	RideLocationRadiusMeters = 250.0
 	ArrivalRadiusMeters      = RideLocationRadiusMeters
-	PassengerWaitDuration    = 5 * time.Minute
 	_earthRadiusMeters       = 6_371_000.0
 )
 

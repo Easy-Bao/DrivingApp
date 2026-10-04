@@ -11,10 +11,11 @@ import (
 )
 
 type fakeLifecycleStore struct {
-	ride         domain.Ride
-	transition   domain.RideTransition
-	arrivalCalls int
-	noShowCalls  int
+	ride                  domain.Ride
+	transition            domain.RideTransition
+	arrivalCalls          int
+	noShowCalls           int
+	passengerWaitDuration time.Duration
 }
 
 func (store *fakeLifecycleStore) Get(_ context.Context, _ int) (domain.Ride, error) {
@@ -29,8 +30,10 @@ func (store *fakeLifecycleStore) MarkArrived(
 	_ context.Context,
 	_, _ int,
 	_ string,
+	passengerWaitDuration time.Duration,
 ) (domain.Ride, error) {
 	store.arrivalCalls++
+	store.passengerWaitDuration = passengerWaitDuration
 	store.ride.Status = string(domain.RideArrived)
 	return store.ride, nil
 }
@@ -229,6 +232,31 @@ func TestMarkArrivedPersistsOnlyForTheAssignedDriver(t *testing.T) {
 	}
 	if updated.Status != string(domain.RideArrived) {
 		t.Fatalf("status = %q, want arrived", updated.Status)
+	}
+}
+
+func TestMarkArrivedUsesConfiguredPassengerWait(t *testing.T) {
+	driverID := 42
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:              1,
+			PassengerID:     10,
+			DriverID:        &driverID,
+			Status:          string(domain.RideAccepted),
+			PickupLatitude:  6.7000,
+			PickupLongitude: 122.1000,
+		},
+	}
+	service := lifecycle.NewService(lifecycle.Dependencies{
+		Store:  store,
+		Config: lifecycle.Config{PassengerWaitDuration: 7 * time.Minute},
+	})
+
+	if _, err := service.MarkArrived(context.Background(), 1, driverID, 6.7005, 122.1005); err != nil {
+		t.Fatalf("MarkArrived() error = %v", err)
+	}
+	if store.passengerWaitDuration != 7*time.Minute {
+		t.Fatalf("passenger wait = %v, want 7m", store.passengerWaitDuration)
 	}
 }
 

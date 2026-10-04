@@ -46,9 +46,10 @@ type RideService struct {
 }
 
 type RideServiceDependencies struct {
-	Repository     ports.RideStore
-	PricingConfig  PricingConfig
-	EventPublisher ports.EventPublisher
+	Repository      ports.RideStore
+	PricingConfig   PricingConfig
+	EventPublisher  ports.EventPublisher
+	LifecycleConfig lifecycleapplication.Config
 }
 
 func NewRideService(
@@ -82,6 +83,7 @@ func NewRideService(
 	service.lifecycleService = lifecycleapplication.NewService(lifecycleapplication.Dependencies{
 		Store:       lifecycleStore,
 		PublishRide: service.publishRide,
+		Config:      dependencies.LifecycleConfig,
 	})
 	service.settlementService = settlementapplication.NewService(settlementapplication.Dependencies{
 		Store:       settlementStore,

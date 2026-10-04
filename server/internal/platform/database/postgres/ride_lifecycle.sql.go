@@ -122,12 +122,12 @@ SET status = 'arrived',
     arrived_at = COALESCE(arrived_at, CURRENT_TIMESTAMP),
     waiting_until = COALESCE(
         waiting_until,
-        CURRENT_TIMESTAMP + INTERVAL '5 minutes'
+        CURRENT_TIMESTAMP + make_interval(secs => $1::integer)
     )
-WHERE id = $1
-  AND driver_id = $2
-  AND status = $3
-  AND $3 IN ('assigned', 'accepted')
+WHERE id = $2
+  AND driver_id = $3
+  AND status = $4
+  AND $4 IN ('assigned', 'accepted')
 RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
     pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name,
@@ -141,13 +141,19 @@ RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
 `
 
 type MarkRideArrivedParams struct {
+	WaitSeconds   int32       `db:"wait_seconds"`
 	RideID        int32       `db:"ride_id"`
 	DriverID      pgtype.Int4 `db:"driver_id"`
 	CurrentStatus string      `db:"current_status"`
 }
 
 func (q *Queries) MarkRideArrived(ctx context.Context, arg MarkRideArrivedParams) (Ride, error) {
-	row := q.db.QueryRow(ctx, markRideArrived, arg.RideID, arg.DriverID, arg.CurrentStatus)
+	row := q.db.QueryRow(ctx, markRideArrived,
+		arg.WaitSeconds,
+		arg.RideID,
+		arg.DriverID,
+		arg.CurrentStatus,
+	)
 	var i Ride
 	err := row.Scan(
 		&i.ID,

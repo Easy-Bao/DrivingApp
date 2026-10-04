@@ -29,7 +29,7 @@ SET status = 'arrived',
     arrived_at = COALESCE(arrived_at, CURRENT_TIMESTAMP),
     waiting_until = COALESCE(
         waiting_until,
-        CURRENT_TIMESTAMP + INTERVAL '5 minutes'
+        CURRENT_TIMESTAMP + make_interval(secs => sqlc.arg('wait_seconds')::integer)
     )
 WHERE id = sqlc.arg('ride_id')
   AND driver_id = sqlc.arg('driver_id')

@@ -14,6 +14,17 @@ func TestNewRideRepositoryRejectsMissingPool(t *testing.T) {
 	}
 }
 
+func TestToPostgresWaitSecondsRequiresPositiveWholeSeconds(t *testing.T) {
+	if got, err := toPostgresWaitSeconds(7*time.Minute + 30*time.Second); err != nil || got != 450 {
+		t.Fatalf("toPostgresWaitSeconds() = %d, %v", got, err)
+	}
+	for _, duration := range []time.Duration{0, -time.Second, 500 * time.Millisecond} {
+		if _, err := toPostgresWaitSeconds(duration); err == nil {
+			t.Fatalf("duration %v should be rejected", duration)
+		}
+	}
+}
+
 func TestFromPostgresRideMapsOptionalFieldsAndTimestamps(t *testing.T) {
 	item := databasepostgres.Ride{
 		ID:             19,

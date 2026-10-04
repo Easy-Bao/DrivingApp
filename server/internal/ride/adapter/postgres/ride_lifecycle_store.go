@@ -23,6 +23,7 @@ func (repository *RideRepository) MarkArrived(
 	rideID int,
 	driverID int,
 	currentStatus string,
+	passengerWaitDuration time.Duration,
 ) (domain.Ride, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return domain.Ride{}, err
@@ -39,6 +40,10 @@ func (repository *RideRepository) MarkArrived(
 	if err != nil {
 		return domain.Ride{}, err
 	}
+	waitSeconds, err := toPostgresWaitSeconds(passengerWaitDuration)
+	if err != nil {
+		return domain.Ride{}, err
+	}
 	transaction, err := repository.pool.Begin(ctx)
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("begin ride arrival transaction: %w", err)
@@ -48,6 +53,7 @@ func (repository *RideRepository) MarkArrived(
 		RideID:        dbRideID,
 		DriverID:      pgtype.Int4{Int32: dbDriverID, Valid: true},
 		CurrentStatus: string(current),
+		WaitSeconds:   waitSeconds,
 	})
 	if err != nil {
 		return domain.Ride{}, rollbackRideStatusTransaction(
