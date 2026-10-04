@@ -386,6 +386,34 @@ func TestUpdateStatusRejectsCancellationAfterRideCompletion(t *testing.T) {
 	}
 }
 
+func TestUpdateStatusRejectsPassengerCancellationAfterTripStart(t *testing.T) {
+	stub := &ridesRepositoryStub{
+		ride: domain.Ride{ID: 12, PassengerID: 7, DriverID: intPointer(11), Status: "in_transit"},
+	}
+	service := newTestRideService(stub, testPricingConfig(t), nil)
+
+	if _, err := service.UpdateStatus(context.Background(), 12, 7, "cancelled"); !errors.Is(err, domain.ErrInvalidStatusTransition) {
+		t.Fatalf("expected passenger cancellation after pickup to be rejected, got %v", err)
+	}
+	if stub.updateNext != "" {
+		t.Fatalf("expected in-transit ride not to be persisted as cancelled, got %q", stub.updateNext)
+	}
+}
+
+func TestUpdateStatusRejectsDriverCancellationAfterTripStart(t *testing.T) {
+	stub := &ridesRepositoryStub{
+		ride: domain.Ride{ID: 13, PassengerID: 7, DriverID: intPointer(11), Status: "in_transit"},
+	}
+	service := newTestRideService(stub, testPricingConfig(t), nil)
+
+	if _, err := service.UpdateStatus(context.Background(), 13, 11, "cancelled"); !errors.Is(err, domain.ErrInvalidStatusTransition) {
+		t.Fatalf("expected driver cancellation after pickup to be rejected, got %v", err)
+	}
+	if stub.updateNext != "" {
+		t.Fatalf("expected in-transit ride not to be persisted as cancelled, got %q", stub.updateNext)
+	}
+}
+
 func TestCalculateFareRejectsNonFiniteInput(t *testing.T) {
 	service := newTestRideService(nil, testPricingConfig(t), nil)
 	if got := service.CalculateFare(-1, 2); got != 0 {

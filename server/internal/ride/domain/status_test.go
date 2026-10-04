@@ -17,7 +17,6 @@ func TestRideStatusTransitionsRejectSkippingLifecycleSteps(t *testing.T) {
 		{string(RideAccepted), string(RideArrived)},
 		{string(RideArrived), string(RideInTransit)},
 		{string(RideInTransit), string(RideCompleted)},
-		{string(RideInTransit), "canceled"},
 	}
 	for _, transition := range valid {
 		if !CanTransition(transition[0], transition[1]) {
@@ -29,6 +28,7 @@ func TestRideStatusTransitionsRejectSkippingLifecycleSteps(t *testing.T) {
 		{string(RideCompleted), string(RideCancelled)},
 		{string(RideCancelled), string(RideRequested)},
 		{"unknown", string(RideAccepted)},
+		{string(RideInTransit), "canceled"},
 	} {
 		if CanTransition(transition[0], transition[1]) {
 			t.Fatalf("expected transition %q -> %q to be rejected", transition[0], transition[1])
