@@ -65,4 +65,34 @@ void main() {
     expect(find.text('₱30'), findsOneWidget);
     expect(find.text('₱29.69'), findsNothing);
   });
+
+  testWidgets('lets the driver record an unpaid cash outcome', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: FareSummaryPage(
+          pickup: 'Pickup',
+          dropoff: 'Dropoff',
+          duration: '5 min',
+          distance: 2.5,
+          fare: 29.69,
+          dashboardCubit: DashboardCubit(
+            repository: const _NoOpDashboardRepository(),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byKey(const ValueKey('cash-received-field')), findsOneWidget);
+    expect(find.byKey(const ValueKey('cash-change-field')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('cash-outcome-dropdown')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Passenger refused to pay').last);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('cash-received-field')), findsNothing);
+    expect(find.byKey(const ValueKey('cash-change-field')), findsNothing);
+    expect(find.text('Record unpaid cash'), findsOneWidget);
+    expect(find.textContaining('No cash is recorded.'), findsOneWidget);
+  });
 }

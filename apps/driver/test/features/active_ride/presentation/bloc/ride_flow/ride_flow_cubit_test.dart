@@ -393,4 +393,38 @@ void main() {
     verify(() => mockSessionService.saveActiveRideId('')).called(1);
     await cubit.close();
   });
+
+  test('records a partial cash outcome without treating it as paid', () async {
+    when(
+      () => mockRideRepository.settleCash(
+        rideId: 'test-ride-id',
+        cashReceivedAmount: 1500,
+        cashChangeAmount: 0,
+        cashOutcome: 'partial',
+      ),
+    ).thenAnswer((_) async => const Ok(3000));
+    final cubit = _makeCubit(mockRideRepository, mockSessionService);
+    cubit.resumeRide(
+      rideId: 'test-ride-id',
+      status: 'in_transit',
+      passengerName: 'Juan Dela Cruz',
+    );
+
+    final fare = await cubit.confirmCashPayment(
+      cashReceivedAmount: 1500,
+      cashChangeAmount: 0,
+      cashOutcome: 'partial',
+    );
+
+    expect(fare, 30.0);
+    verify(
+      () => mockRideRepository.settleCash(
+        rideId: 'test-ride-id',
+        cashReceivedAmount: 1500,
+        cashChangeAmount: 0,
+        cashOutcome: 'partial',
+      ),
+    ).called(1);
+    await cubit.close();
+  });
 }

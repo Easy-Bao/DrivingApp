@@ -9,6 +9,13 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
 
+const _cashOutcomeLabels = <String, String>{
+  'paid': 'Paid in full',
+  'partial': 'Partial cash received',
+  'refused': 'Passenger refused to pay',
+  'unpaid': 'No cash received',
+};
+
 class const FareSummaryPage({
   super.key,
   required this.pickup,
@@ -30,11 +37,84 @@ class const FareSummaryPage({
 }
 
 class _FareSummaryPageState extends State<FareSummaryPage> {
+  late final TextEditingController _cashReceivedController;
+  late final TextEditingController _cashChangeController;
   bool _isSubmitting = false;
   String? _error;
+  String _cashOutcome = 'paid';
+
+  @override
+  void initState() {
+    super.initState();
+    _cashReceivedController = TextEditingController(
+      text: _formatCashInput(_fareAmountCents),
+    );
+    _cashChangeController = TextEditingController(text: '0.00');
+  }
+
+  @override
+  void dispose() {
+    _cashReceivedController.dispose();
+    _cashChangeController.dispose();
+    super.dispose();
+  }
+
+  int get _fareAmountCents => (widget.fare * 100).round();
+
+  String _formatCashInput(int amountCents) {
+    return (amountCents / 100).toStringAsFixed(2);
+  }
+
+  int? _parseCashInput(String value) {
+    final normalized = value.trim().replaceAll(',', '');
+    if (normalized.isEmpty) return null;
+    final amount = double.tryParse(normalized);
+    if (amount == null || !amount.isFinite || amount < 0) return null;
+    return (amount * 100).round();
+  }
+
+  String? _validateCashEntry({
+    required int? receivedAmount,
+    required int? changeAmount,
+  }) {
+    if (_fareAmountCents <= 0) return 'The payable fare is unavailable.';
+    if (_cashOutcome == 'paid') {
+      if (receivedAmount == null || changeAmount == null) {
+        return 'Enter the cash received and change returned.';
+      }
+      if (changeAmount > receivedAmount) {
+        return 'Change cannot be greater than the cash received.';
+      }
+      if (receivedAmount - changeAmount != _fareAmountCents) {
+        return 'Cash received minus change must equal the fare.';
+      }
+    } else if (_cashOutcome == 'partial') {
+      if (receivedAmount == null) return 'Enter the cash received.';
+      if (receivedAmount <= 0 || receivedAmount >= _fareAmountCents) {
+        return 'Partial cash must be more than zero and less than the fare.';
+      }
+    }
+    return null;
+  }
 
   Future<void> _confirmCashPayment() async {
     if (_isSubmitting) return;
+
+    final receivedAmount = _cashOutcome == 'paid' || _cashOutcome == 'partial'
+        ? _parseCashInput(_cashReceivedController.text)
+        : 0;
+    final changeAmount = _cashOutcome == 'paid'
+        ? _parseCashInput(_cashChangeController.text)
+        : 0;
+    final validationMessage = _validateCashEntry(
+      receivedAmount: receivedAmount,
+      changeAmount: changeAmount,
+    );
+    if (validationMessage != null) {
+      setState(() => _error = validationMessage);
+      return;
+    }
+
     setState(() {
       _isSubmitting = true;
       _error = null;
@@ -42,7 +122,11 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
 
     try {
       final cubit = BlocProvider.of<RideFlowCubit>(context);
-      final fare = await cubit.confirmCashPayment();
+      final fare = await cubit.confirmCashPayment(
+        cashReceivedAmount: receivedAmount,
+        cashChangeAmount: changeAmount ?? 0,
+        cashOutcome: _cashOutcome,
+      );
       if (!mounted) return;
       if (fare == null) {
         setState(() {
@@ -103,6 +187,8 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
                         children: [
                           _buildAmountCard(),
                           const SizedBox(height: 12),
+                          _buildCashCollectionForm(),
+                          const SizedBox(height: 12),
                           _buildTripCard(),
                           if (_error != null) ...[
                             const SizedBox(height: 12),
@@ -130,8 +216,8 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
                           : const Icon(LucideIcons.check, size: 18),
                       label: Text(
                         _isSubmitting
-                            ? 'Confirming payment…'
-                            : 'Confirm cash collected',
+                            ? 'Recording cash outcome…'
+                            : _cashButtonLabel,
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: context.semanticColors.success,
@@ -185,7 +271,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
               ),
               SizedBox(height: 1),
               Text(
-                'Confirm after receiving payment',
+                'Record the cash outcome after collection or refusal',
                 style: TextStyle(
                   fontSize: 12,
                   color: context.colorScheme.onSurfaceVariant,
@@ -195,6 +281,129 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
           ),
         ),
       ],
+    );
+  }
+
+  String get _cashButtonLabel => switch (_cashOutcome) {
+    'paid' => 'Confirm cash collected',
+    'partial' => 'Record partial cash',
+    'refused' || 'unpaid' => 'Record unpaid cash',
+    _ => 'Record cash outcome',
+  };
+
+  Widget _buildCashCollectionForm() {
+    final recordsAmount = _cashOutcome == 'paid' || _cashOutcome == 'partial';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(EasyRideSpacing.lg),
+      decoration: BoxDecoration(
+        color: context.colorScheme.surface,
+        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        border: Border.all(color: context.colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Cash outcome',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: context.colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Choose what happened in person. Digital payment is not used.',
+            style: TextStyle(
+              fontSize: 12,
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            key: const ValueKey('cash-outcome-dropdown'),
+            initialValue: _cashOutcome,
+            decoration: const InputDecoration(labelText: 'Payment outcome'),
+            items: _cashOutcomeLabels.entries
+                .map(
+                  (entry) => DropdownMenuItem<String>(
+                    value: entry.key,
+                    child: Text(entry.value),
+                  ),
+                )
+                .toList(),
+            onChanged: _isSubmitting
+                ? null
+                : (value) {
+                    if (value == null) return;
+                    setState(() {
+                      _cashOutcome = value;
+                      _error = null;
+                      if (value != 'paid') {
+                        _cashChangeController.text = '0.00';
+                      }
+                    });
+                  },
+          ),
+          if (recordsAmount) ...[
+            const SizedBox(height: 12),
+            TextField(
+              key: const ValueKey('cash-received-field'),
+              controller: _cashReceivedController,
+              enabled: !_isSubmitting,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Cash received',
+                prefixText: '₱ ',
+              ),
+              onChanged: (_) {
+                if (_error != null) setState(() => _error = null);
+              },
+            ),
+          ],
+          if (_cashOutcome == 'paid') ...[
+            const SizedBox(height: 12),
+            TextField(
+              key: const ValueKey('cash-change-field'),
+              controller: _cashChangeController,
+              enabled: !_isSubmitting,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Change returned',
+                prefixText: '₱ ',
+              ),
+              onChanged: (_) {
+                if (_error != null) setState(() => _error = null);
+              },
+            ),
+          ],
+          if (_cashOutcome == 'partial') ...[
+            const SizedBox(height: 8),
+            Text(
+              'No change is recorded for a partial collection. The remaining fare stays unresolved.',
+              style: TextStyle(
+                fontSize: 12,
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+          if (_cashOutcome == 'refused' || _cashOutcome == 'unpaid') ...[
+            const SizedBox(height: 8),
+            Text(
+              'No cash is recorded. This ride will be marked unpaid for follow-up.',
+              style: TextStyle(
+                fontSize: 12,
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
