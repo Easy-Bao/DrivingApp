@@ -10,6 +10,7 @@ import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/waiting_passenger_panel_widget.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_safety_report_sheet.dart';
+import 'package:driver/src/features/active_ride/presentation/widgets/driver_emergency_button.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_ride_cancellation_sheet.dart';
 import 'package:driver/src/features/active_ride/active_ride_routes.dart';
 import 'package:flutter/material.dart';
@@ -300,6 +301,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
+                            const DriverEmergencyButton(),
                             DriverSafetyReportButton(
                               rideId: BlocProvider.of<RideFlowCubit>(context)
                                   .activeRideId,

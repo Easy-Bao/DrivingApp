@@ -10,6 +10,7 @@ import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_
 import 'package:driver/src/features/active_ride/presentation/widgets/in_transit/in_transit_complete_button_widget.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/in_transit/in_transit_passenger_card_widget.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_safety_report_sheet.dart';
+import 'package:driver/src/features/active_ride/presentation/widgets/driver_emergency_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -308,6 +309,7 @@ class _InTransitPageState extends State<InTransitPage> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
+                          const DriverEmergencyButton(),
                           DriverSafetyReportButton(
                             rideId: BlocProvider.of<RideFlowCubit>(context)
                                 .activeRideId,
