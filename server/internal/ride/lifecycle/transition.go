@@ -53,15 +53,107 @@ func (service *Service) AcceptRide(ctx context.Context, rideID, driverID int) (d
 // UpdateStatus validates the current aggregate state and persists the next
 // participant-authorized status.
 func (service *Service) UpdateStatus(ctx context.Context, rideID, actorID int, next string) (domain.Ride, error) {
-	if normalized, ok := domain.NormalizeRideStatus(next); ok && normalized == domain.RideCancelled {
-		return domain.Ride{}, domain.ErrCancellationCommand
-	}
-	if normalized, ok := domain.NormalizeRideStatus(next); ok && normalized == domain.RideArrived {
-		return domain.Ride{}, domain.ErrArrivalCommand
-	}
 	return service.transition(ctx, rideID, actorID, next, domain.RideTransition{
 		EventType: domain.RideEventStatusChanged,
 	})
+}
+
+func (service *Service) StartTrip(
+	ctx context.Context,
+	rideID, driverID int,
+	driverLatitude, driverLongitude float64,
+) (domain.Ride, error) {
+	if service.store == nil {
+		return domain.Ride{}, ErrPersistenceUnavailable
+	}
+	current, err := service.store.Get(ctx, rideID)
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("load ride for trip start: %w", err)
+	}
+	if current.DriverID == nil || *current.DriverID != driverID {
+		return domain.Ride{}, domain.ErrUnauthorizedRide
+	}
+	status, ok := domain.NormalizeRideStatus(current.Status)
+	if !ok {
+		return domain.Ride{}, domain.ErrInvalidStatusTransition
+	}
+	if status == domain.RideInTransit {
+		return current, nil
+	}
+	if status != domain.RideArrived {
+		return domain.Ride{}, domain.ErrInvalidStatusTransition
+	}
+	if err := domain.ValidateArrivalLocation(
+		current.PickupLatitude,
+		current.PickupLongitude,
+		driverLatitude,
+		driverLongitude,
+	); err != nil {
+		return domain.Ride{}, err
+	}
+	updated, err := service.store.StartTrip(ctx, rideID, driverID)
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("start ride: %w", err)
+	}
+	service.publish(
+		ctx,
+		event.RideStatusChanged,
+		updated,
+		map[string]any{
+			"previous_status": string(domain.RideArrived),
+			"ride":            updated,
+		},
+	)
+	return updated, nil
+}
+
+func (service *Service) CompleteTrip(
+	ctx context.Context,
+	rideID, driverID int,
+	driverLatitude, driverLongitude float64,
+) (domain.Ride, error) {
+	if service.store == nil {
+		return domain.Ride{}, ErrPersistenceUnavailable
+	}
+	current, err := service.store.Get(ctx, rideID)
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("load ride for trip completion: %w", err)
+	}
+	if current.DriverID == nil || *current.DriverID != driverID {
+		return domain.Ride{}, domain.ErrUnauthorizedRide
+	}
+	status, ok := domain.NormalizeRideStatus(current.Status)
+	if !ok {
+		return domain.Ride{}, domain.ErrInvalidStatusTransition
+	}
+	if status == domain.RideCompleted {
+		return current, nil
+	}
+	if status != domain.RideInTransit {
+		return domain.Ride{}, domain.ErrInvalidStatusTransition
+	}
+	if err := domain.ValidateCompletionLocation(
+		current.DropoffLatitude,
+		current.DropoffLongitude,
+		driverLatitude,
+		driverLongitude,
+	); err != nil {
+		return domain.Ride{}, err
+	}
+	updated, err := service.store.CompleteTrip(ctx, rideID, driverID)
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("complete ride: %w", err)
+	}
+	service.publish(
+		ctx,
+		event.RideStatusChanged,
+		updated,
+		map[string]any{
+			"previous_status": string(domain.RideInTransit),
+			"ride":            updated,
+		},
+	)
+	return updated, nil
 }
 
 func (service *Service) MarkArrived(
@@ -221,6 +313,18 @@ func (service *Service) transition(
 	}
 	if currentStatus == nextStatus {
 		return current, nil
+	}
+	switch nextStatus {
+	case domain.RideCancelled:
+		if transition.EventType == domain.RideEventStatusChanged {
+			return domain.Ride{}, domain.ErrCancellationCommand
+		}
+	case domain.RideArrived:
+		return domain.Ride{}, domain.ErrArrivalCommand
+	case domain.RideInTransit:
+		return domain.Ride{}, domain.ErrTripStartCommand
+	case domain.RideCompleted:
+		return domain.Ride{}, domain.ErrTripCompletionCommand
 	}
 	if !domain.CanTransition(string(currentStatus), string(nextStatus)) {
 		return domain.Ride{}, domain.ErrInvalidStatusTransition

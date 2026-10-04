@@ -66,28 +66,6 @@ void main() {
     );
   });
 
-  test('serializes the typed in-transit status for the transport', () async {
-    when(
-      () => rideDataSource.updateRideStatus(
-        tripId: 'ride-7',
-        status: 'in_transit',
-      ),
-    ).thenAnswer((_) async => true);
-
-    final result = await repository.updateRideStatus(
-      rideId: 'ride-7',
-      status: RideStatus.inTransit,
-    );
-
-    expect(result, const Ok<void, Failure>(null));
-    verify(
-      () => rideDataSource.updateRideStatus(
-        tripId: 'ride-7',
-        status: 'in_transit',
-      ),
-    ).called(1);
-  });
-
   test('requires the server arrival response to include its wait timer', () async {
     when(
       () => rideDataSource.markArrived(
@@ -120,6 +98,52 @@ void main() {
       result.fold((_) => null, (ride) => ride.waitingUntil),
       DateTime.parse('2026-10-04T10:05:00Z'),
     );
+  });
+
+  test('uses dedicated server commands for start and completion', () async {
+    when(
+      () => rideDataSource.startRide(
+        rideId: 'ride-7',
+        latitude: 7.82,
+        longitude: 123.43,
+      ),
+    ).thenAnswer(
+      (_) async => <String, dynamic>{
+        'id': 'ride-7',
+        'status': 'in_transit',
+        'pickup_name': 'Mountain View',
+        'dropoff_name': 'Vista Slope',
+      },
+    );
+    when(
+      () => rideDataSource.completeRide(
+        rideId: 'ride-7',
+        latitude: 7.85,
+        longitude: 123.45,
+      ),
+    ).thenAnswer(
+      (_) async => <String, dynamic>{
+        'id': 'ride-7',
+        'status': 'completed',
+        'pickup_name': 'Mountain View',
+        'dropoff_name': 'Vista Slope',
+        'fare_amount': 2764,
+      },
+    );
+
+    final started = await repository.startRide(
+      rideId: 'ride-7',
+      latitude: 7.82,
+      longitude: 123.43,
+    );
+    final completed = await repository.completeRide(
+      rideId: 'ride-7',
+      latitude: 7.85,
+      longitude: 123.45,
+    );
+
+    expect(started.fold((_) => '', (ride) => ride.status), 'in_transit');
+    expect(completed.fold((_) => 0, (ride) => ride.fareAmount), 2764);
   });
 
   test(

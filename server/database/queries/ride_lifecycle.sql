@@ -72,6 +72,41 @@ RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
     commission_bps, commission_amount,
     driver_payout_amount;
 
+-- name: StartRide :one
+UPDATE rides
+SET status = 'in_transit'
+WHERE id = sqlc.arg('ride_id')
+  AND driver_id = sqlc.arg('driver_id')
+  AND status = 'arrived'
+RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
+    pickup_latitude, pickup_longitude, pickup_name,
+    dropoff_latitude, dropoff_longitude, dropoff_name,
+    distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
+    driver_rating, created_at, completed_at, arrived_at, waiting_until, payment_status,
+    cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
+    cancelled_by, cancellation_reason, cancellation_responsibility,
+    cancellation_details,
+    commission_bps, commission_amount,
+    driver_payout_amount;
+
+-- name: CompleteRide :one
+UPDATE rides
+SET status = 'completed',
+    completed_at = COALESCE(completed_at, CURRENT_TIMESTAMP)
+WHERE id = sqlc.arg('ride_id')
+  AND driver_id = sqlc.arg('driver_id')
+  AND status = 'in_transit'
+RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
+    pickup_latitude, pickup_longitude, pickup_name,
+    dropoff_latitude, dropoff_longitude, dropoff_name,
+    distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
+    driver_rating, created_at, completed_at, arrived_at, waiting_until, payment_status,
+    cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
+    cancelled_by, cancellation_reason, cancellation_responsibility,
+    cancellation_details,
+    commission_bps, commission_amount,
+    driver_payout_amount;
+
 -- name: CreateRideEvent :exec
 INSERT INTO ride_events (
     ride_id, actor_id, event_type, from_status, to_status,

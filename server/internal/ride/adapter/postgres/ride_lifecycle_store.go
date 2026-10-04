@@ -92,6 +92,96 @@ func (repository *RideRepository) MarkArrived(
 	return ride, nil
 }
 
+func (repository *RideRepository) StartTrip(
+	ctx context.Context,
+	rideID int,
+	driverID int,
+) (domain.Ride, error) {
+	if err := repository.validateNativeReadRepository(); err != nil {
+		return domain.Ride{}, err
+	}
+	dbRideID, err := toPostgresRideID(rideID, "ride id")
+	if err != nil {
+		return domain.Ride{}, err
+	}
+	dbDriverID, err := toPostgresRideID(driverID, "driver id")
+	if err != nil {
+		return domain.Ride{}, err
+	}
+	transaction, err := repository.pool.Begin(ctx)
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("begin trip start transaction: %w", err)
+	}
+	transactionQueries := repository.queries.WithTx(transaction)
+	item, err := transactionQueries.StartRide(ctx, databasepostgres.StartRideParams{
+		RideID:   dbRideID,
+		DriverID: pgtype.Int4{Int32: dbDriverID, Valid: true},
+	})
+	if err != nil {
+		return domain.Ride{}, rollbackRideStatusTransaction(
+			ctx,
+			transaction,
+			fmt.Errorf("start ride: %w", err),
+		)
+	}
+	return repository.commitLifecycleCommand(
+		ctx,
+		transaction,
+		transactionQueries,
+		item,
+		dbRideID,
+		dbDriverID,
+		domain.RideArrived,
+		domain.RideInTransit,
+		"ride.started",
+	)
+}
+
+func (repository *RideRepository) CompleteTrip(
+	ctx context.Context,
+	rideID int,
+	driverID int,
+) (domain.Ride, error) {
+	if err := repository.validateNativeReadRepository(); err != nil {
+		return domain.Ride{}, err
+	}
+	dbRideID, err := toPostgresRideID(rideID, "ride id")
+	if err != nil {
+		return domain.Ride{}, err
+	}
+	dbDriverID, err := toPostgresRideID(driverID, "driver id")
+	if err != nil {
+		return domain.Ride{}, err
+	}
+	transaction, err := repository.pool.Begin(ctx)
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("begin trip completion transaction: %w", err)
+	}
+	transactionQueries := repository.queries.WithTx(transaction)
+	item, err := transactionQueries.CompleteRide(ctx, databasepostgres.CompleteRideParams{
+		RideID:   dbRideID,
+		DriverID: pgtype.Int4{Int32: dbDriverID, Valid: true},
+	})
+	if err != nil {
+		return domain.Ride{}, rollbackRideStatusTransaction(
+			ctx,
+			transaction,
+			fmt.Errorf("complete ride: %w", err),
+		)
+	}
+	return repository.commitLifecycleCommand(
+		ctx,
+		transaction,
+		transactionQueries,
+		item,
+		dbRideID,
+		dbDriverID,
+		domain.RideInTransit,
+		domain.RideCompleted,
+		"ride.completed",
+	)
+}
+
 func (repository *RideRepository) MarkPassengerNoShow(
 	ctx context.Context,
 	rideID int,
@@ -153,7 +243,7 @@ func (repository *RideRepository) MarkPassengerNoShow(
 		ActorID:    dbDriverID,
 		Action:     "ride.passenger_no_show",
 		TargetType: "ride",
-		TargetID:   pgtype.Text{String: strconv.Itoa(rideID), Valid: true},
+		TargetID:   pgtype.Text{String: strconv.FormatInt(int64(rideID), 10), Valid: true},
 		Outcome:    "success",
 		RequestID:  requestID + "-audit",
 	}); err != nil {
@@ -173,6 +263,67 @@ func (repository *RideRepository) MarkPassengerNoShow(
 	ride, err := fromPostgresRide(item)
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("map passenger no-show ride: %w", err)
+	}
+	return ride, nil
+}
+
+func (repository *RideRepository) commitLifecycleCommand(
+	ctx context.Context,
+	transaction pgx.Tx,
+	transactionQueries *databasepostgres.Queries,
+	item databasepostgres.Ride,
+	rideID int32,
+	driverID int32,
+	fromStatus domain.RideStatus,
+	toStatus domain.RideStatus,
+	auditAction string,
+) (domain.Ride, error) {
+	requestID, err := newAuditRequestID()
+	if err != nil {
+		return domain.Ride{}, rollbackRideStatusTransaction(
+			ctx,
+			transaction,
+			fmt.Errorf("create lifecycle request id: %w", err),
+		)
+	}
+	if err := transactionQueries.CreateRideEvent(ctx, databasepostgres.CreateRideEventParams{
+		RideID:     rideID,
+		ActorID:    driverID,
+		EventType:  domain.RideEventStatusChanged,
+		FromStatus: string(fromStatus),
+		ToStatus:   string(toStatus),
+		RequestID:  requestID,
+	}); err != nil {
+		return domain.Ride{}, rollbackRideStatusTransaction(
+			ctx,
+			transaction,
+			fmt.Errorf("create lifecycle event: %w", err),
+		)
+	}
+	if _, err := transactionQueries.CreateAuditEvent(ctx, databasepostgres.CreateAuditEventParams{
+		ActorID:    driverID,
+		Action:     auditAction,
+		TargetType: "ride",
+		TargetID:   pgtype.Text{String: strconv.FormatInt(int64(rideID), 10), Valid: true},
+		Outcome:    "success",
+		RequestID:  requestID + "-audit",
+	}); err != nil {
+		return domain.Ride{}, rollbackRideStatusTransaction(
+			ctx,
+			transaction,
+			fmt.Errorf("create lifecycle audit event: %w", err),
+		)
+	}
+	if err := transaction.Commit(ctx); err != nil {
+		return domain.Ride{}, rollbackRideStatusTransaction(
+			ctx,
+			transaction,
+			fmt.Errorf("commit lifecycle transaction: %w", err),
+		)
+	}
+	ride, err := fromPostgresRide(item)
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("map lifecycle ride: %w", err)
 	}
 	return ride, nil
 }

@@ -96,6 +96,26 @@ func (stub *ridesRepositoryStub) MarkPassengerNoShow(
 	return stub.updated, nil
 }
 
+func (stub *ridesRepositoryStub) StartTrip(
+	_ context.Context,
+	_ int,
+	_ int,
+) (domain.Ride, error) {
+	stub.updated = stub.ride
+	stub.updated.Status = "in_transit"
+	return stub.updated, nil
+}
+
+func (stub *ridesRepositoryStub) CompleteTrip(
+	_ context.Context,
+	_ int,
+	_ int,
+) (domain.Ride, error) {
+	stub.updated = stub.ride
+	stub.updated.Status = "completed"
+	return stub.updated, nil
+}
+
 func (stub *ridesRepositoryStub) UpdateStatus(
 	_ context.Context,
 	_ int,
@@ -360,25 +380,33 @@ func TestCreateSessionRejectsPassengerWithActiveRideBeforeRouteCalculation(t *te
 	}
 }
 
-func TestUpdateStatusRequiresRideParticipantAndCurrentState(t *testing.T) {
-	stub := &ridesRepositoryStub{ride: domain.Ride{ID: 9, PassengerID: 7, DriverID: intPointer(11), Status: "arrived"}}
+func TestStartTripRequiresRideParticipantAndCurrentState(t *testing.T) {
+	stub := &ridesRepositoryStub{ride: domain.Ride{
+		ID:              9,
+		PassengerID:     7,
+		DriverID:        intPointer(11),
+		Status:          "arrived",
+		PickupLatitude:  6.7,
+		PickupLongitude: 122.1,
+	}}
 	service := newTestRideService(stub, testPricingConfig(t), nil)
-	if _, err := service.UpdateStatus(
+	if _, err := service.StartTrip(
 		context.Background(),
 		9,
 		99,
-		"in_transit",
+		6.7,
+		122.1,
 	); !errors.Is(err, domain.ErrUnauthorizedRide) {
 		t.Fatalf("expected unauthorized ride error, got %v", err)
 	}
-	if _, err := service.UpdateStatus(context.Background(), 9, 7, "in_transit"); !errors.Is(err, domain.ErrUnauthorizedRide) {
+	if _, err := service.StartTrip(context.Background(), 9, 7, 6.7, 122.1); !errors.Is(err, domain.ErrUnauthorizedRide) {
 		t.Fatalf("expected passenger transition rejection, got %v", err)
 	}
-	if _, err := service.UpdateStatus(context.Background(), 9, 11, "in_transit"); err != nil {
+	if _, err := service.StartTrip(context.Background(), 9, 11, 6.7, 122.1); err != nil {
 		t.Fatalf("expected driver transition to succeed, got %v", err)
 	}
-	if stub.updateNext != "in_transit" {
-		t.Fatalf("expected persisted in-transit status, got %q", stub.updateNext)
+	if stub.updated.Status != "in_transit" {
+		t.Fatalf("expected persisted in-transit status, got %q", stub.updated.Status)
 	}
 }
 

@@ -7,12 +7,19 @@ abstract interface class DriverRideRepository {
     required String driverId,
   });
 
-  Future<Result<void, Failure>> updateRideStatus({
+  Future<Result<RideSnapshot, Failure>> markArrived({
     required String rideId,
-    required RideStatus status,
+    required double latitude,
+    required double longitude,
   });
 
-  Future<Result<RideSnapshot, Failure>> markArrived({
+  Future<Result<RideSnapshot, Failure>> startRide({
+    required String rideId,
+    required double latitude,
+    required double longitude,
+  });
+
+  Future<Result<RideSnapshot, Failure>> completeRide({
     required String rideId,
     required double latitude,
     required double longitude,
@@ -55,16 +62,6 @@ extension DriverRideRepositoryResultAdapters on DriverRideRepository {
     );
   }
 
-  Future<Result<void, DomainFailure>> updateRideStatusResult({
-    required String rideId,
-    required RideStatus status,
-  }) {
-    return _captureResult(
-      () => updateRideStatus(rideId: rideId, status: status),
-      message: 'Unable to update this ride right now.',
-    );
-  }
-
   Future<Result<RideSnapshot, DomainFailure>> markArrivedResult({
     required String rideId,
     required double latitude,
@@ -86,6 +83,36 @@ extension DriverRideRepositoryResultAdapters on DriverRideRepository {
     return _captureResult(
       () => markPassengerNoShow(rideId),
       message: 'Unable to record the passenger no-show.',
+    );
+  }
+
+  Future<Result<RideSnapshot, DomainFailure>> startRideResult({
+    required String rideId,
+    required double latitude,
+    required double longitude,
+  }) {
+    return _captureResult(
+      () => startRide(
+        rideId: rideId,
+        latitude: latitude,
+        longitude: longitude,
+      ),
+      message: 'Unable to start this trip right now.',
+    );
+  }
+
+  Future<Result<RideSnapshot, DomainFailure>> completeRideResult({
+    required String rideId,
+    required double latitude,
+    required double longitude,
+  }) {
+    return _captureResult(
+      () => completeRide(
+        rideId: rideId,
+        latitude: latitude,
+        longitude: longitude,
+      ),
+      message: 'Unable to complete this trip right now.',
     );
   }
 

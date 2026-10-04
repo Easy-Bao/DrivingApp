@@ -101,6 +101,68 @@ func (handler *Handler) MarkArrived(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, ride)
 }
 
+func (handler *Handler) StartTrip(w http.ResponseWriter, r *http.Request) {
+	driverID, ok := handler.identity(r)
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid ride id")
+		return
+	}
+	var input dto.TripLocationRequest
+	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil ||
+		input.Latitude == nil || input.Longitude == nil {
+		response.Error(w, http.StatusBadRequest, "driver location is required")
+		return
+	}
+	ride, err := handler.service.StartTrip(
+		r.Context(),
+		rideID,
+		driverID,
+		*input.Latitude,
+		*input.Longitude,
+	)
+	if err != nil {
+		response.Error(w, rideErrorStatus(err), safeRideError(err))
+		return
+	}
+	response.JSON(w, http.StatusOK, ride)
+}
+
+func (handler *Handler) CompleteTrip(w http.ResponseWriter, r *http.Request) {
+	driverID, ok := handler.identity(r)
+	if !ok {
+		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	rideID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "invalid ride id")
+		return
+	}
+	var input dto.TripLocationRequest
+	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil ||
+		input.Latitude == nil || input.Longitude == nil {
+		response.Error(w, http.StatusBadRequest, "driver location is required")
+		return
+	}
+	ride, err := handler.service.CompleteTrip(
+		r.Context(),
+		rideID,
+		driverID,
+		*input.Latitude,
+		*input.Longitude,
+	)
+	if err != nil {
+		response.Error(w, rideErrorStatus(err), safeRideError(err))
+		return
+	}
+	response.JSON(w, http.StatusOK, ride)
+}
+
 func (handler *Handler) MarkPassengerNoShow(w http.ResponseWriter, r *http.Request) {
 	driverID, ok := handler.identity(r)
 	if !ok {
@@ -833,7 +895,8 @@ func rideErrorStatus(err error) int {
 		return http.StatusBadRequest
 	case errors.Is(err, domain.ErrInvalidCancellation):
 		return http.StatusBadRequest
-	case errors.Is(err, domain.ErrArrivalLocation):
+	case errors.Is(err, domain.ErrArrivalLocation),
+		errors.Is(err, domain.ErrCompletionLocation):
 		return http.StatusUnprocessableEntity
 	case errors.Is(err, domain.ErrRouteUnavailable):
 		return 503
@@ -847,6 +910,8 @@ func rideErrorStatus(err error) int {
 		errors.Is(err, domain.ErrInvalidStatusTransition),
 		errors.Is(err, domain.ErrCancellationCommand),
 		errors.Is(err, domain.ErrArrivalCommand),
+		errors.Is(err, domain.ErrTripStartCommand),
+		errors.Is(err, domain.ErrTripCompletionCommand),
 		errors.Is(err, domain.ErrPassengerNoShowNotReady),
 		errors.Is(err, domain.ErrNoShowCommand):
 		return 409
@@ -887,6 +952,12 @@ func safeRideError(err error) string {
 		return "Confirm arrival from the pickup action with location enabled."
 	case errors.Is(err, domain.ErrArrivalLocation):
 		return "Move closer to the pickup point before confirming arrival."
+	case errors.Is(err, domain.ErrTripStartCommand):
+		return "Start the trip from the passenger pickup action."
+	case errors.Is(err, domain.ErrTripCompletionCommand):
+		return "Complete the trip from the destination action."
+	case errors.Is(err, domain.ErrCompletionLocation):
+		return "Move closer to the destination before completing the trip."
 	case errors.Is(err, domain.ErrPassengerNoShowNotReady):
 		return "Keep waiting until the pickup timer finishes before marking a no-show."
 	case errors.Is(err, domain.ErrNoShowCommand):

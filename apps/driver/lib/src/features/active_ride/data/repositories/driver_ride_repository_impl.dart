@@ -38,24 +38,6 @@ final class DriverRideRepositoryImpl({
   }
 
   @override
-  Future<Result<void, Failure>> updateRideStatus({
-    required String rideId,
-    required RideStatus status,
-  }) async {
-    try {
-      final updated = await _rideDataSource.updateRideStatus(
-        tripId: rideId,
-        status: status.value,
-      );
-      return updated
-          ? const Ok(null)
-          : const Err(ServerFailure('The ride status was not updated.'));
-    } catch (error) {
-      return Err(_mapFailure(error, action: 'update this ride'));
-    }
-  }
-
-  @override
   Future<Result<RideSnapshot, Failure>> markArrived({
     required String rideId,
     required double latitude,
@@ -97,6 +79,54 @@ final class DriverRideRepositoryImpl({
       return Ok(ride);
     } catch (error) {
       return Err(_mapFailure(error, action: 'record the passenger no-show'));
+    }
+  }
+
+  @override
+  Future<Result<RideSnapshot, Failure>> startRide({
+    required String rideId,
+    required double latitude,
+    required double longitude,
+  }) async {
+    try {
+      final data = await _rideDataSource.startRide(
+        rideId: rideId,
+        latitude: latitude,
+        longitude: longitude,
+      );
+      final ride = RideDto.fromJson(data, fallbackId: rideId).toDomain();
+      if (ride.id.isEmpty || ride.status != RideStatus.inTransit.value) {
+        return const Err(
+          ValidationFailure('The trip start response is incomplete.'),
+        );
+      }
+      return Ok(ride);
+    } catch (error) {
+      return Err(_mapFailure(error, action: 'start this trip'));
+    }
+  }
+
+  @override
+  Future<Result<RideSnapshot, Failure>> completeRide({
+    required String rideId,
+    required double latitude,
+    required double longitude,
+  }) async {
+    try {
+      final data = await _rideDataSource.completeRide(
+        rideId: rideId,
+        latitude: latitude,
+        longitude: longitude,
+      );
+      final ride = RideDto.fromJson(data, fallbackId: rideId).toDomain();
+      if (ride.id.isEmpty || ride.status != RideStatus.completed.value) {
+        return const Err(
+          ValidationFailure('The trip completion response is incomplete.'),
+        );
+      }
+      return Ok(ride);
+    } catch (error) {
+      return Err(_mapFailure(error, action: 'complete this trip'));
     }
   }
 

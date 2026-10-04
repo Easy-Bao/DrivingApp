@@ -6,9 +6,10 @@ import (
 )
 
 const (
-	ArrivalRadiusMeters   = 250.0
-	PassengerWaitDuration = 5 * time.Minute
-	_earthRadiusMeters    = 6_371_000.0
+	RideLocationRadiusMeters = 250.0
+	ArrivalRadiusMeters      = RideLocationRadiusMeters
+	PassengerWaitDuration    = 5 * time.Minute
+	_earthRadiusMeters       = 6_371_000.0
 )
 
 func ValidateArrivalLocation(
@@ -26,8 +27,29 @@ func ValidateArrivalLocation(
 		pickupLongitude,
 		driverLatitude,
 		driverLongitude,
-	) > ArrivalRadiusMeters {
+	) > RideLocationRadiusMeters {
 		return ErrArrivalLocation
+	}
+	return nil
+}
+
+func ValidateCompletionLocation(
+	dropoffLatitude,
+	dropoffLongitude,
+	driverLatitude,
+	driverLongitude float64,
+) error {
+	if !validCoordinate(dropoffLatitude, dropoffLongitude) ||
+		!validCoordinate(driverLatitude, driverLongitude) {
+		return ErrCompletionLocation
+	}
+	if haversineMeters(
+		dropoffLatitude,
+		dropoffLongitude,
+		driverLatitude,
+		driverLongitude,
+	) > RideLocationRadiusMeters {
+		return ErrCompletionLocation
 	}
 	return nil
 }

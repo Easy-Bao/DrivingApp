@@ -14,6 +14,7 @@ type Querier interface {
 	AcceptRideFromRequest(ctx context.Context, arg AcceptRideFromRequestParams) (Ride, error)
 	AssignRideFromAcceptance(ctx context.Context, arg AssignRideFromAcceptanceParams) (Ride, error)
 	CancelBidSession(ctx context.Context, arg CancelBidSessionParams) (BidSession, error)
+	CompleteRide(ctx context.Context, arg CompleteRideParams) (Ride, error)
 	CountActiveRidesForAcceptance(ctx context.Context, driverID pgtype.Int4) (int64, error)
 	CountActiveRidesForDriver(ctx context.Context, driverID pgtype.Int4) (int64, error)
 	CountDriverDocuments(ctx context.Context) (int64, error)
@@ -99,6 +100,7 @@ type Querier interface {
 	RevokeRefreshSession(ctx context.Context, arg RevokeRefreshSessionParams) error
 	RevokeRefreshSessionByID(ctx context.Context, arg RevokeRefreshSessionByIDParams) (int64, error)
 	RevokeUserRefreshSessions(ctx context.Context, arg RevokeUserRefreshSessionsParams) error
+	StartRide(ctx context.Context, arg StartRideParams) (Ride, error)
 	UpdateDriverOnlineStatus(ctx context.Context, arg UpdateDriverOnlineStatusParams) (DriverProfile, error)
 	UpdateDriverProfile(ctx context.Context, arg UpdateDriverProfileParams) (DriverProfile, error)
 	UpdatePassengerAvatar(ctx context.Context, arg UpdatePassengerAvatarParams) (int64, error)

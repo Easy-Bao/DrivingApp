@@ -26,8 +26,6 @@ void main() {
   late MockDriverRideRepository mockRideRepository;
   late MockSecureSessionService mockSessionService;
 
-  setUpAll(() => registerFallbackValue(RideStatus.unknown));
-
   setUp(() {
     mockRideRepository = MockDriverRideRepository();
     mockSessionService = MockSecureSessionService();
@@ -43,13 +41,6 @@ void main() {
     ).thenAnswer((_) async => const Ok(null));
 
     when(
-      () => mockRideRepository.updateRideStatus(
-        rideId: any(named: 'rideId'),
-        status: any(named: 'status'),
-      ),
-    ).thenAnswer((_) async => const Ok(null));
-
-    when(
       () => mockRideRepository.markArrived(
         rideId: any(named: 'rideId'),
         latitude: any(named: 'latitude'),
@@ -60,6 +51,23 @@ void main() {
         RideSnapshot(
           id: 'test-ride-id',
           status: 'arrived',
+          pickupName: 'Pickup',
+          dropoffName: 'Dropoff',
+        ),
+      ),
+    );
+
+    when(
+      () => mockRideRepository.startRide(
+        rideId: any(named: 'rideId'),
+        latitude: any(named: 'latitude'),
+        longitude: any(named: 'longitude'),
+      ),
+    ).thenAnswer(
+      (_) async => const Ok(
+        RideSnapshot(
+          id: 'test-ride-id',
+          status: 'in_transit',
           pickupName: 'Pickup',
           dropoffName: 'Dropoff',
         ),
@@ -135,12 +143,20 @@ void main() {
     blocTest<RideFlowCubit, RideFlowState>(
       'emits RideFlowWaitingPassenger starting at 0 seconds',
       build: () => _makeCubit(mockRideRepository, mockSessionService),
-      act: (cubit) => cubit.arriveAtPickup(
-        'Juan Dela Cruz',
-        driverLat: 7.82,
-        driverLng: 123.43,
-      ),
+      act: (cubit) async {
+        cubit.resumeRide(
+          rideId: 'test-ride-id',
+          status: 'accepted',
+          passengerName: 'Juan Dela Cruz',
+        );
+        await cubit.arriveAtPickup(
+          'Juan Dela Cruz',
+          driverLat: 7.82,
+          driverLng: 123.43,
+        );
+      },
       expect: () => [
+        const RideFlowNavigatingToPickup(passengerName: 'Juan Dela Cruz'),
         const RideFlowWaitingPassenger(
           passengerName: 'Juan Dela Cruz',
           waitTimeSeconds: 0,
@@ -153,13 +169,26 @@ void main() {
     blocTest<RideFlowCubit, RideFlowState>(
       'emits RideFlowInTransit with correct trip data',
       build: () => _makeCubit(mockRideRepository, mockSessionService),
-      act: (cubit) => cubit.startRide(
-        passengerName: 'Juan Dela Cruz',
-        destLat: 7.85,
-        destLng: 123.45,
-        distanceKm: 3.2,
-      ),
+      act: (cubit) async {
+        cubit.resumeRide(
+          rideId: 'test-ride-id',
+          status: 'arrived',
+          passengerName: 'Juan Dela Cruz',
+        );
+        await cubit.startRide(
+          passengerName: 'Juan Dela Cruz',
+          destLat: 7.85,
+          destLng: 123.45,
+          distanceKm: 3.2,
+          driverLat: 7.82,
+          driverLng: 123.43,
+        );
+      },
       expect: () => [
+        const RideFlowWaitingPassenger(
+          passengerName: 'Juan Dela Cruz',
+          waitTimeSeconds: 0,
+        ),
         const RideFlowInTransit(
           passengerName: 'Juan Dela Cruz',
           destLat: 7.85,
@@ -199,6 +228,8 @@ void main() {
           destLat: null,
           destLng: null,
           distanceKm: 3.2,
+          driverLat: 7.82,
+          driverLng: 123.43,
           passengerLat: 7.82,
           passengerLng: 123.43,
         );

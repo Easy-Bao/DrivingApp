@@ -150,12 +150,24 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
 
     setState(() => _isStartingTrip = true);
     try {
+      final position =
+          LocationService.lastPosition ??
+          await LocationService.getCurrentPosition();
+      if (!mounted) return;
+      if (position == null) {
+        _showError(
+          'Your current location is unavailable. Enable location and try again.',
+        );
+        return;
+      }
       final rideCubit = BlocProvider.of<RideFlowCubit>(context);
       final started = await rideCubit.startRide(
         passengerName: state.passengerNameOr('Passenger'),
         destLat: state.destinationLatitude,
         destLng: state.destinationLongitude,
         distanceKm: widget.distance,
+        driverLat: position.latitude,
+        driverLng: position.longitude,
         passengerLat: state.pickupLatitude,
         passengerLng: state.pickupLongitude,
       );

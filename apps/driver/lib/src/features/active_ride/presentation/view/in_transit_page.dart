@@ -215,8 +215,23 @@ class _InTransitPageState extends State<InTransitPage> {
     if (_isCompletingTrip) return;
     setState(() => _isCompletingTrip = true);
     try {
+      final position =
+          LocationService.lastPosition ??
+          await LocationService.getCurrentPosition();
+      if (!mounted) return;
+      if (position == null) {
+        CustomToast.show(
+          this.context,
+          'Your current location is unavailable. Enable location and try again.',
+          isError: true,
+        );
+        return;
+      }
       final finalFare = await BlocProvider.of<RideFlowCubit>(context)
-          .completeRide();
+          .completeRide(
+            driverLat: position.latitude,
+            driverLng: position.longitude,
+          );
       if (finalFare == null) {
         if (mounted) {
           CustomToast.show(

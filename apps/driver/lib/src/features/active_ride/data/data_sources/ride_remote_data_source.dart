@@ -3,12 +3,19 @@ import 'package:dio/dio.dart';
 abstract class RideRemoteDataSource {
   Future<bool> acceptRide({required String tripId, required String driverId});
 
-  Future<bool> updateRideStatus({
-    required String tripId,
-    required String status,
+  Future<Map<String, dynamic>> markArrived({
+    required String rideId,
+    required double latitude,
+    required double longitude,
   });
 
-  Future<Map<String, dynamic>> markArrived({
+  Future<Map<String, dynamic>> startRide({
+    required String rideId,
+    required double latitude,
+    required double longitude,
+  });
+
+  Future<Map<String, dynamic>> completeRide({
     required String rideId,
     required double latitude,
     required double longitude,
@@ -42,18 +49,6 @@ class RideRemoteDataSourceImpl(this._dio) implements RideRemoteDataSource {
   }
 
   @override
-  Future<bool> updateRideStatus({
-    required String tripId,
-    required String status,
-  }) async {
-    final response = await _dio.post<Map<String, dynamic>>(
-      '/api/v1/rides/${Uri.encodeComponent(tripId)}/status',
-      data: {'status': status},
-    );
-    return response.statusCode == 200;
-  }
-
-  @override
   Future<Map<String, dynamic>> markArrived({
     required String rideId,
     required double latitude,
@@ -70,6 +65,32 @@ class RideRemoteDataSourceImpl(this._dio) implements RideRemoteDataSource {
   Future<Map<String, dynamic>> markPassengerNoShow(String rideId) async {
     final response = await _dio.post<Map<String, dynamic>>(
       '/api/v1/rides/${Uri.encodeComponent(rideId)}/no-show',
+    );
+    return response.data ?? const <String, dynamic>{};
+  }
+
+  @override
+  Future<Map<String, dynamic>> startRide({
+    required String rideId,
+    required double latitude,
+    required double longitude,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/api/v1/rides/${Uri.encodeComponent(rideId)}/start',
+      data: {'latitude': latitude, 'longitude': longitude},
+    );
+    return response.data ?? const <String, dynamic>{};
+  }
+
+  @override
+  Future<Map<String, dynamic>> completeRide({
+    required String rideId,
+    required double latitude,
+    required double longitude,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/api/v1/rides/${Uri.encodeComponent(rideId)}/complete',
+      data: {'latitude': latitude, 'longitude': longitude},
     );
     return response.data ?? const <String, dynamic>{};
   }

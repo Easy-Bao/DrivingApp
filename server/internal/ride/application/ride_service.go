@@ -281,6 +281,34 @@ func (service *RideService) MarkArrived(
 	)
 }
 
+func (service *RideService) StartTrip(
+	ctx context.Context,
+	rideID, driverID int,
+	driverLatitude, driverLongitude float64,
+) (domain.Ride, error) {
+	return service.lifecycleService.StartTrip(
+		ctx,
+		rideID,
+		driverID,
+		driverLatitude,
+		driverLongitude,
+	)
+}
+
+func (service *RideService) CompleteTrip(
+	ctx context.Context,
+	rideID, driverID int,
+	driverLatitude, driverLongitude float64,
+) (domain.Ride, error) {
+	return service.lifecycleService.CompleteTrip(
+		ctx,
+		rideID,
+		driverID,
+		driverLatitude,
+		driverLongitude,
+	)
+}
+
 func (service *RideService) MarkPassengerNoShow(
 	ctx context.Context,
 	rideID, driverID int,

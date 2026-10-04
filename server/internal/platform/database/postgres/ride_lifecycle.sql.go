@@ -11,6 +11,72 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const completeRide = `-- name: CompleteRide :one
+UPDATE rides
+SET status = 'completed',
+    completed_at = COALESCE(completed_at, CURRENT_TIMESTAMP)
+WHERE id = $1
+  AND driver_id = $2
+  AND status = 'in_transit'
+RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
+    pickup_latitude, pickup_longitude, pickup_name,
+    dropoff_latitude, dropoff_longitude, dropoff_name,
+    distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
+    driver_rating, created_at, completed_at, arrived_at, waiting_until, payment_status,
+    cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
+    cancelled_by, cancellation_reason, cancellation_responsibility,
+    cancellation_details,
+    commission_bps, commission_amount,
+    driver_payout_amount
+`
+
+type CompleteRideParams struct {
+	RideID   int32       `db:"ride_id"`
+	DriverID pgtype.Int4 `db:"driver_id"`
+}
+
+func (q *Queries) CompleteRide(ctx context.Context, arg CompleteRideParams) (Ride, error) {
+	row := q.db.QueryRow(ctx, completeRide, arg.RideID, arg.DriverID)
+	var i Ride
+	err := row.Scan(
+		&i.ID,
+		&i.PassengerID,
+		&i.DriverID,
+		&i.Status,
+		&i.FareAmount,
+		&i.RideType,
+		&i.PickupLatitude,
+		&i.PickupLongitude,
+		&i.PickupName,
+		&i.DropoffLatitude,
+		&i.DropoffLongitude,
+		&i.DropoffName,
+		&i.DistanceKm,
+		&i.DurationMinutes,
+		&i.DriverName,
+		&i.VehicleType,
+		&i.PlateNumber,
+		&i.DriverRating,
+		&i.CreatedAt,
+		&i.CompletedAt,
+		&i.ArrivedAt,
+		&i.WaitingUntil,
+		&i.PaymentStatus,
+		&i.CashReceivedAt,
+		&i.CashReceivedAmount,
+		&i.CashChangeAmount,
+		&i.CashOutcome,
+		&i.CancelledBy,
+		&i.CancellationReason,
+		&i.CancellationResponsibility,
+		&i.CancellationDetails,
+		&i.CommissionBps,
+		&i.CommissionAmount,
+		&i.DriverPayoutAmount,
+	)
+	return i, err
+}
+
 const createRideEvent = `-- name: CreateRideEvent :exec
 INSERT INTO ride_events (
     ride_id, actor_id, event_type, from_status, to_status,
@@ -156,6 +222,71 @@ type MarkRidePassengerNoShowParams struct {
 
 func (q *Queries) MarkRidePassengerNoShow(ctx context.Context, arg MarkRidePassengerNoShowParams) (Ride, error) {
 	row := q.db.QueryRow(ctx, markRidePassengerNoShow, arg.DriverID, arg.RideID)
+	var i Ride
+	err := row.Scan(
+		&i.ID,
+		&i.PassengerID,
+		&i.DriverID,
+		&i.Status,
+		&i.FareAmount,
+		&i.RideType,
+		&i.PickupLatitude,
+		&i.PickupLongitude,
+		&i.PickupName,
+		&i.DropoffLatitude,
+		&i.DropoffLongitude,
+		&i.DropoffName,
+		&i.DistanceKm,
+		&i.DurationMinutes,
+		&i.DriverName,
+		&i.VehicleType,
+		&i.PlateNumber,
+		&i.DriverRating,
+		&i.CreatedAt,
+		&i.CompletedAt,
+		&i.ArrivedAt,
+		&i.WaitingUntil,
+		&i.PaymentStatus,
+		&i.CashReceivedAt,
+		&i.CashReceivedAmount,
+		&i.CashChangeAmount,
+		&i.CashOutcome,
+		&i.CancelledBy,
+		&i.CancellationReason,
+		&i.CancellationResponsibility,
+		&i.CancellationDetails,
+		&i.CommissionBps,
+		&i.CommissionAmount,
+		&i.DriverPayoutAmount,
+	)
+	return i, err
+}
+
+const startRide = `-- name: StartRide :one
+UPDATE rides
+SET status = 'in_transit'
+WHERE id = $1
+  AND driver_id = $2
+  AND status = 'arrived'
+RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
+    pickup_latitude, pickup_longitude, pickup_name,
+    dropoff_latitude, dropoff_longitude, dropoff_name,
+    distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
+    driver_rating, created_at, completed_at, arrived_at, waiting_until, payment_status,
+    cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
+    cancelled_by, cancellation_reason, cancellation_responsibility,
+    cancellation_details,
+    commission_bps, commission_amount,
+    driver_payout_amount
+`
+
+type StartRideParams struct {
+	RideID   int32       `db:"ride_id"`
+	DriverID pgtype.Int4 `db:"driver_id"`
+}
+
+func (q *Queries) StartRide(ctx context.Context, arg StartRideParams) (Ride, error) {
+	row := q.db.QueryRow(ctx, startRide, arg.RideID, arg.DriverID)
 	var i Ride
 	err := row.Scan(
 		&i.ID,

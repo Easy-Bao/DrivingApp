@@ -39,6 +39,22 @@ func (store *fakeLifecycleStore) MarkPassengerNoShow(
 	return store.ride, nil
 }
 
+func (store *fakeLifecycleStore) StartTrip(
+	_ context.Context,
+	_, _ int,
+) (domain.Ride, error) {
+	store.ride.Status = string(domain.RideInTransit)
+	return store.ride, nil
+}
+
+func (store *fakeLifecycleStore) CompleteTrip(
+	_ context.Context,
+	_, _ int,
+) (domain.Ride, error) {
+	store.ride.Status = string(domain.RideCompleted)
+	return store.ride, nil
+}
+
 func (store *fakeLifecycleStore) UpdateStatus(
 	_ context.Context,
 	_, _ int,
@@ -71,24 +87,98 @@ func TestUpdateStatusIdempotentWhenAlreadyInTargetStatus(t *testing.T) {
 	}
 }
 
-func TestUpdateStatusValidTransition(t *testing.T) {
+func TestStartTripRequiresPickupProximity(t *testing.T) {
+	driverID := 42
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:              1,
+			PassengerID:     10,
+			DriverID:        &driverID,
+			Status:          string(domain.RideArrived),
+			PickupLatitude:  6.7000,
+			PickupLongitude: 122.1000,
+		},
+	}
+	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
+
+	updated, err := service.StartTrip(context.Background(), 1, driverID, 6.7005, 122.1005)
+	if err != nil {
+		t.Fatalf("StartTrip() error = %v", err)
+	}
+	if updated.Status != string(domain.RideInTransit) {
+		t.Fatalf("expected status %q, got %q", domain.RideInTransit, updated.Status)
+	}
+}
+
+func TestStartTripIsIdempotentAfterTheServerAlreadyStartedIt(t *testing.T) {
 	driverID := 42
 	store := &fakeLifecycleStore{
 		ride: domain.Ride{
 			ID:          1,
 			PassengerID: 10,
 			DriverID:    &driverID,
-			Status:      string(domain.RideArrived),
+			Status:      string(domain.RideInTransit),
 		},
 	}
 	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
 
-	updated, err := service.UpdateStatus(context.Background(), 1, driverID, string(domain.RideInTransit))
+	updated, err := service.StartTrip(context.Background(), 1, driverID, 0, 0)
 	if err != nil {
-		t.Fatalf("expected no error on valid transition, got %v", err)
+		t.Fatalf("StartTrip() retry error = %v", err)
 	}
 	if updated.Status != string(domain.RideInTransit) {
-		t.Fatalf("expected status %q, got %q", domain.RideInTransit, updated.Status)
+		t.Fatalf("status = %q, want in_transit", updated.Status)
+	}
+}
+
+func TestCompleteTripRequiresDestinationProximity(t *testing.T) {
+	driverID := 42
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:               1,
+			PassengerID:      10,
+			DriverID:         &driverID,
+			Status:           string(domain.RideInTransit),
+			DropoffLatitude:  6.7000,
+			DropoffLongitude: 122.1000,
+		},
+	}
+	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
+
+	if _, err := service.CompleteTrip(context.Background(), 1, driverID, 6.7100, 122.1100); !errors.Is(err, domain.ErrCompletionLocation) {
+		t.Fatalf("expected destination proximity error, got %v", err)
+	}
+	if store.ride.Status != string(domain.RideInTransit) {
+		t.Fatalf("ride status changed after rejected completion: %q", store.ride.Status)
+	}
+
+	updated, err := service.CompleteTrip(context.Background(), 1, driverID, 6.7005, 122.1005)
+	if err != nil {
+		t.Fatalf("CompleteTrip() error = %v", err)
+	}
+	if updated.Status != string(domain.RideCompleted) {
+		t.Fatalf("status = %q, want completed", updated.Status)
+	}
+}
+
+func TestCompleteTripIsIdempotentAfterTheServerAlreadyCompletedIt(t *testing.T) {
+	driverID := 42
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:          1,
+			PassengerID: 10,
+			DriverID:    &driverID,
+			Status:      string(domain.RideCompleted),
+		},
+	}
+	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
+
+	updated, err := service.CompleteTrip(context.Background(), 1, driverID, 0, 0)
+	if err != nil {
+		t.Fatalf("CompleteTrip() retry error = %v", err)
+	}
+	if updated.Status != string(domain.RideCompleted) {
+		t.Fatalf("status = %q, want completed", updated.Status)
 	}
 }
 
@@ -137,7 +227,7 @@ func TestMarkArrivedPersistsOnlyForTheAssignedDriver(t *testing.T) {
 	}
 }
 
-func TestUpdateStatusRejectsInvalidTransition(t *testing.T) {
+func TestUpdateStatusRejectsTripCompletionCommand(t *testing.T) {
 	driverID := 42
 	store := &fakeLifecycleStore{
 		ride: domain.Ride{
@@ -150,8 +240,8 @@ func TestUpdateStatusRejectsInvalidTransition(t *testing.T) {
 	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
 
 	_, err := service.UpdateStatus(context.Background(), 1, driverID, string(domain.RideCompleted))
-	if !errors.Is(err, domain.ErrInvalidStatusTransition) {
-		t.Fatalf("expected ErrInvalidStatusTransition, got %v", err)
+	if !errors.Is(err, domain.ErrTripCompletionCommand) {
+		t.Fatalf("expected ErrTripCompletionCommand, got %v", err)
 	}
 }
 
