@@ -206,6 +206,38 @@ void main() {
     ).called(1);
   });
 
+  test('requires a safety-attributed emergency-stop response', () async {
+    when(
+      () => rideDataSource.emergencyStop(
+        rideId: 'ride-7',
+        reason: 'accident',
+        details: 'Minor collision.',
+      ),
+    ).thenAnswer(
+      (_) async => <String, dynamic>{
+        'id': 'ride-7',
+        'status': 'cancelled',
+        'cancellation_reason': 'accident',
+        'cancellation_responsibility': 'safety_related',
+      },
+    );
+
+    final result = await repository.emergencyStop(
+      rideId: 'ride-7',
+      reason: 'accident',
+      details: 'Minor collision.',
+    );
+
+    expect(result.fold((_) => '', (ride) => ride.status), 'cancelled');
+    verify(
+      () => rideDataSource.emergencyStop(
+        rideId: 'ride-7',
+        reason: 'accident',
+        details: 'Minor collision.',
+      ),
+    ).called(1);
+  });
+
   test(
     'adapts passenger reads and location cleanup into strict results',
     () async {

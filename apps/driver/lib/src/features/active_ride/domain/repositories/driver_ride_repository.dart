@@ -33,6 +33,12 @@ abstract interface class DriverRideRepository {
     String details = '',
   });
 
+  Future<Result<RideSnapshot, Failure>> emergencyStop({
+    required String rideId,
+    required String reason,
+    String details = '',
+  });
+
   Future<Result<void, Failure>> createSafetyReport({
     required String rideId,
     required String category,
@@ -118,6 +124,17 @@ extension DriverRideRepositoryResultAdapters on DriverRideRepository {
     return _captureResult(
       () => cancelRide(rideId: rideId, reason: reason, details: details),
       message: 'Unable to cancel this ride right now.',
+    );
+  }
+
+  Future<Result<RideSnapshot, DomainFailure>> emergencyStopResult({
+    required String rideId,
+    required String reason,
+    String details = '',
+  }) {
+    return _captureResult(
+      () => emergencyStop(rideId: rideId, reason: reason, details: details),
+      message: 'Unable to end this ride for safety right now.',
     );
   }
 

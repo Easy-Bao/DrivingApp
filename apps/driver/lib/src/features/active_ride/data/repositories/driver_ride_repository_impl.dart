@@ -107,6 +107,39 @@ final class DriverRideRepositoryImpl({
   }
 
   @override
+  Future<Result<RideSnapshot, Failure>> emergencyStop({
+    required String rideId,
+    required String reason,
+    String details = '',
+  }) async {
+    try {
+      final data = await _rideDataSource.emergencyStop(
+        rideId: rideId,
+        reason: reason,
+        details: details,
+      );
+      final ride = RideDto.fromJson(data, fallbackId: rideId).toDomain();
+      final responsibility = SafeParse.toStringValue(
+        data['cancellation_responsibility'],
+      ).toLowerCase();
+      final responseReason = SafeParse.toStringValue(
+        data['cancellation_reason'],
+      ).toLowerCase();
+      if (ride.id.isEmpty ||
+          ride.status != RideStatus.cancelled.value ||
+          responseReason != reason.trim().toLowerCase() ||
+          responsibility != 'safety_related') {
+        return const Err(
+          ValidationFailure('The emergency-stop response is incomplete.'),
+        );
+      }
+      return Ok(ride);
+    } catch (error) {
+      return Err(_mapFailure(error, action: 'end this ride for safety'));
+    }
+  }
+
+  @override
   Future<Result<void, Failure>> createSafetyReport({
     required String rideId,
     required String category,
