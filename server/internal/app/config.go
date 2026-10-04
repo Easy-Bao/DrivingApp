@@ -3,6 +3,7 @@ package app
 import (
 	"errors"
 	"fmt"
+	"math"
 	"net"
 	"os"
 	"strconv"
@@ -85,19 +86,49 @@ func LoadConfig() (Config, error) {
 func loadRideLifecycleConfig(getenv func(string) string) (ridelifecycle.Config, error) {
 	config := ridelifecycle.DefaultConfig()
 	raw := strings.TrimSpace(getenv("PASSENGER_NO_SHOW_WAIT"))
-	if raw == "" {
-		return config, nil
+	if raw != "" {
+		duration, err := time.ParseDuration(raw)
+		seconds := duration / time.Second
+		invalid := err != nil || duration <= 0 || duration%time.Second != 0 || seconds > 1<<31-1
+		if invalid {
+			return ridelifecycle.Config{}, errors.New(
+				"PASSENGER_NO_SHOW_WAIT must be a positive whole-second duration",
+			)
+		}
+		config.PassengerWaitDuration = duration
 	}
-	duration, err := time.ParseDuration(raw)
-	seconds := duration / time.Second
-	invalid := err != nil || duration <= 0 || duration%time.Second != 0 || seconds > 1<<31-1
-	if invalid {
-		return ridelifecycle.Config{}, errors.New(
-			"PASSENGER_NO_SHOW_WAIT must be a positive whole-second duration",
-		)
+
+	arrivalRadius, err := positiveFloatEnv(
+		getenv,
+		"RIDE_ARRIVAL_RADIUS_METERS",
+		config.ArrivalRadiusMeters,
+	)
+	if err != nil {
+		return ridelifecycle.Config{}, err
 	}
-	config.PassengerWaitDuration = duration
+	completionRadius, err := positiveFloatEnv(
+		getenv,
+		"RIDE_COMPLETION_RADIUS_METERS",
+		config.CompletionRadiusMeters,
+	)
+	if err != nil {
+		return ridelifecycle.Config{}, err
+	}
+	config.ArrivalRadiusMeters = arrivalRadius
+	config.CompletionRadiusMeters = completionRadius
 	return config, nil
+}
+
+func positiveFloatEnv(getenv func(string) string, key string, fallback float64) (float64, error) {
+	raw := strings.TrimSpace(getenv(key))
+	if raw == "" {
+		return fallback, nil
+	}
+	value, err := strconv.ParseFloat(raw, 64)
+	if err != nil || value <= 0 || math.IsNaN(value) || math.IsInf(value, 0) {
+		return 0, fmt.Errorf("%s must be a positive finite number", key)
+	}
+	return value, nil
 }
 
 func apiHost() string {

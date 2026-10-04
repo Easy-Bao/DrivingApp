@@ -118,6 +118,29 @@ func TestStartTripRequiresPickupProximity(t *testing.T) {
 	}
 }
 
+func TestStartTripUsesConfiguredArrivalRadius(t *testing.T) {
+	driverID := 42
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:              1,
+			PassengerID:     10,
+			DriverID:        &driverID,
+			Status:          string(domain.RideArrived),
+			PickupLatitude:  6.7000,
+			PickupLongitude: 122.1000,
+		},
+	}
+	service := lifecycle.NewService(lifecycle.Dependencies{
+		Store:  store,
+		Config: lifecycle.Config{ArrivalRadiusMeters: 25},
+	})
+
+	_, err := service.StartTrip(context.Background(), 1, driverID, 6.7005, 122.1005)
+	if !errors.Is(err, domain.ErrArrivalLocation) {
+		t.Fatalf("expected configured pickup proximity error, got %v", err)
+	}
+}
+
 func TestStartTripIsIdempotentAfterTheServerAlreadyStartedIt(t *testing.T) {
 	driverID := 42
 	store := &fakeLifecycleStore{
@@ -166,6 +189,29 @@ func TestCompleteTripRequiresDestinationProximity(t *testing.T) {
 	}
 	if updated.Status != string(domain.RideCompleted) {
 		t.Fatalf("status = %q, want completed", updated.Status)
+	}
+}
+
+func TestCompleteTripUsesConfiguredDestinationRadius(t *testing.T) {
+	driverID := 42
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:               1,
+			PassengerID:      10,
+			DriverID:         &driverID,
+			Status:           string(domain.RideInTransit),
+			DropoffLatitude:  6.7000,
+			DropoffLongitude: 122.1000,
+		},
+	}
+	service := lifecycle.NewService(lifecycle.Dependencies{
+		Store:  store,
+		Config: lifecycle.Config{CompletionRadiusMeters: 25},
+	})
+
+	_, err := service.CompleteTrip(context.Background(), 1, driverID, 6.7005, 122.1005)
+	if !errors.Is(err, domain.ErrCompletionLocation) {
+		t.Fatalf("expected configured destination proximity error, got %v", err)
 	}
 }
 

@@ -50,15 +50,54 @@ func TestRideLifecycleConfigUsesDefaultPassengerWait(t *testing.T) {
 	if config.PassengerWaitDuration != ridelifecycle.DefaultPassengerWaitDuration {
 		t.Fatalf("passenger wait = %v, want %v", config.PassengerWaitDuration, ridelifecycle.DefaultPassengerWaitDuration)
 	}
+	if config.ArrivalRadiusMeters != ridelifecycle.DefaultArrivalRadiusMeters ||
+		config.CompletionRadiusMeters != ridelifecycle.DefaultCompletionRadiusMeters {
+		t.Fatalf("ride radii = arrival %v, completion %v", config.ArrivalRadiusMeters, config.CompletionRadiusMeters)
+	}
+}
+
+func TestRideLifecycleConfigAcceptsSeparateLocationRadii(t *testing.T) {
+	values := map[string]string{
+		"RIDE_ARRIVAL_RADIUS_METERS":    "175.5",
+		"RIDE_COMPLETION_RADIUS_METERS": "325",
+	}
+	config, err := loadRideLifecycleConfig(func(key string) string { return values[key] })
+	if err != nil {
+		t.Fatalf("loadRideLifecycleConfig() error = %v", err)
+	}
+	if config.ArrivalRadiusMeters != 175.5 || config.CompletionRadiusMeters != 325 {
+		t.Fatalf("ride radii = arrival %v, completion %v", config.ArrivalRadiusMeters, config.CompletionRadiusMeters)
+	}
 }
 
 func TestRideLifecycleConfigAcceptsWholeSecondDuration(t *testing.T) {
-	config, err := loadRideLifecycleConfig(func(string) string { return "7m30s" })
+	config, err := loadRideLifecycleConfig(func(key string) string {
+		if key == "PASSENGER_NO_SHOW_WAIT" {
+			return "7m30s"
+		}
+		return ""
+	})
 	if err != nil {
 		t.Fatalf("loadRideLifecycleConfig() error = %v", err)
 	}
 	if config.PassengerWaitDuration != 7*time.Minute+30*time.Second {
 		t.Fatalf("passenger wait = %v", config.PassengerWaitDuration)
+	}
+}
+
+func TestRideLifecycleConfigRejectsInvalidLocationRadii(t *testing.T) {
+	for _, value := range []string{"invalid", "0", "-1", "NaN", "+Inf"} {
+		t.Run(value, func(t *testing.T) {
+			_, err := loadRideLifecycleConfig(func(key string) string {
+				if key == "RIDE_ARRIVAL_RADIUS_METERS" {
+					return value
+				}
+				return ""
+			})
+			if err == nil {
+				t.Fatalf("RIDE_ARRIVAL_RADIUS_METERS=%q should be rejected", value)
+			}
+		})
 	}
 }
 

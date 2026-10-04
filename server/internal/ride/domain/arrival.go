@@ -2,20 +2,18 @@ package domain
 
 import "math"
 
-const (
-	RideLocationRadiusMeters = 250.0
-	ArrivalRadiusMeters      = RideLocationRadiusMeters
-	_earthRadiusMeters       = 6_371_000.0
-)
+const _earthRadiusMeters = 6_371_000.0
 
 func ValidateArrivalLocation(
 	pickupLatitude,
 	pickupLongitude,
 	driverLatitude,
-	driverLongitude float64,
+	driverLongitude,
+	radiusMeters float64,
 ) error {
 	if !validCoordinate(pickupLatitude, pickupLongitude) ||
-		!validCoordinate(driverLatitude, driverLongitude) {
+		!validCoordinate(driverLatitude, driverLongitude) ||
+		!validRadius(radiusMeters) {
 		return ErrArrivalLocation
 	}
 	if haversineMeters(
@@ -23,7 +21,7 @@ func ValidateArrivalLocation(
 		pickupLongitude,
 		driverLatitude,
 		driverLongitude,
-	) > RideLocationRadiusMeters {
+	) > radiusMeters {
 		return ErrArrivalLocation
 	}
 	return nil
@@ -33,10 +31,12 @@ func ValidateCompletionLocation(
 	dropoffLatitude,
 	dropoffLongitude,
 	driverLatitude,
-	driverLongitude float64,
+	driverLongitude,
+	radiusMeters float64,
 ) error {
 	if !validCoordinate(dropoffLatitude, dropoffLongitude) ||
-		!validCoordinate(driverLatitude, driverLongitude) {
+		!validCoordinate(driverLatitude, driverLongitude) ||
+		!validRadius(radiusMeters) {
 		return ErrCompletionLocation
 	}
 	if haversineMeters(
@@ -44,10 +44,14 @@ func ValidateCompletionLocation(
 		dropoffLongitude,
 		driverLatitude,
 		driverLongitude,
-	) > RideLocationRadiusMeters {
+	) > radiusMeters {
 		return ErrCompletionLocation
 	}
 	return nil
+}
+
+func validRadius(radiusMeters float64) bool {
+	return radiusMeters > 0 && !math.IsNaN(radiusMeters) && !math.IsInf(radiusMeters, 0)
 }
 
 func validCoordinate(latitude, longitude float64) bool {

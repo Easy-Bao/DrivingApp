@@ -92,6 +92,7 @@ func (service *Service) StartTrip(
 		current.PickupLongitude,
 		driverLatitude,
 		driverLongitude,
+		service.config.arrivalRadiusMeters(),
 	); err != nil {
 		return domain.Ride{}, err
 	}
@@ -141,6 +142,7 @@ func (service *Service) CompleteTrip(
 		current.DropoffLongitude,
 		driverLatitude,
 		driverLongitude,
+		service.config.completionRadiusMeters(),
 	); err != nil {
 		return domain.Ride{}, err
 	}
@@ -190,6 +192,7 @@ func (service *Service) MarkArrived(
 		current.PickupLongitude,
 		driverLatitude,
 		driverLongitude,
+		service.config.arrivalRadiusMeters(),
 	); err != nil {
 		return domain.Ride{}, err
 	}
