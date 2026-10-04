@@ -292,6 +292,48 @@ class RideFlowCubit({
     }
   }
 
+  Future<bool> emergencyStop({
+    required String reason,
+    String details = '',
+  }) async {
+    if (_isActionInFlight || _activeRideId == null) return false;
+    final actionGeneration = ++_actionGeneration;
+    _isActionInFlight = true;
+    try {
+      Failure? emergencyStopFailure;
+      (await _rideRepository.emergencyStopResult(
+        rideId: _activeRideId!,
+        reason: reason,
+        details: details,
+      )).fold((failure) => emergencyStopFailure = failure, (_) {});
+      if (!_isCurrentAction(actionGeneration)) return false;
+      if (emergencyStopFailure != null) {
+        emit(
+          RideFlowError(ErrorHandler.getErrorMessage(emergencyStopFailure!)),
+        );
+        return false;
+      }
+      _waitTimer?.cancel();
+      _activeRideId = null;
+      _activePassengerId = null;
+      _activePassengerName = null;
+      _waitingUntil = null;
+      _waitStartedAt = null;
+      _elapsedWaitTime = 0;
+      await _clearActiveRideSession();
+      if (!_isCurrentAction(actionGeneration)) return false;
+      emit(const RideFlowInitial());
+      return true;
+    } catch (error) {
+      if (_isCurrentAction(actionGeneration)) {
+        emit(RideFlowError(ErrorHandler.getErrorMessage(error)));
+      }
+      return false;
+    } finally {
+      if (_actionGeneration == actionGeneration) _isActionInFlight = false;
+    }
+  }
+
   void _startWaitTimer({
     required int actionGeneration,
     required String passengerName,

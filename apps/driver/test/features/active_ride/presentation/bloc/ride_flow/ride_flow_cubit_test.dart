@@ -341,4 +341,40 @@ void main() {
     verify(() => mockSessionService.saveActiveRideId('')).called(1);
     await cubit.close();
   });
+
+  test('ends the server ride for safety and clears the active flow', () async {
+    when(
+      () => mockRideRepository.emergencyStop(
+        rideId: 'test-ride-id',
+        reason: 'accident',
+        details: 'Minor collision.',
+      ),
+    ).thenAnswer(
+      (_) async => const Ok(
+        RideSnapshot(
+          id: 'test-ride-id',
+          status: 'cancelled',
+          pickupName: 'Pickup',
+          dropoffName: 'Dropoff',
+        ),
+      ),
+    );
+    final cubit = _makeCubit(mockRideRepository, mockSessionService);
+    cubit.resumeRide(
+      rideId: 'test-ride-id',
+      status: 'in_transit',
+      passengerName: 'Juan Dela Cruz',
+    );
+
+    final stopped = await cubit.emergencyStop(
+      reason: 'accident',
+      details: 'Minor collision.',
+    );
+
+    expect(stopped, isTrue);
+    expect(cubit.activeRideId, isNull);
+    expect(cubit.state, isA<RideFlowInitial>());
+    verify(() => mockSessionService.saveActiveRideId('')).called(1);
+    await cubit.close();
+  });
 }
