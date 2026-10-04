@@ -26,6 +26,7 @@ class TrackDriverCubit({
   int? _syncGeneration;
   int _trackingGeneration = 0;
   bool _isCancellingTrip = false;
+  bool _isEmergencyStopping = false;
   RideHistory? currentRide;
 
   this : super(const TrackDriverInitial());
@@ -330,6 +331,69 @@ class TrackDriverCubit({
     }
   }
 
+  Future<void> emergencyStop({
+    required String reason,
+    String details = '',
+  }) async {
+    await emergencyStopRequest(reason: reason, details: details);
+  }
+
+  /// Ends an active ride through the safety-specific server command. The
+  /// local tracker is cleared only after the server confirms the transition so
+  /// a rejected request can leave the passenger on the active ride screen.
+  Future<bool> emergencyStopRequest({
+    required String reason,
+    String details = '',
+  }) async {
+    if (isClosed || _isEmergencyStopping) return false;
+    _isEmergencyStopping = true;
+    try {
+      final rideId = (await _sessionService.readActiveRideId() ?? '').trim();
+      if (rideId.isEmpty) {
+        dev.log('Unable to end passenger trip for safety without a ride id.');
+        return false;
+      }
+
+      final result = await _repository.emergencyStopResult(
+        rideId: rideId,
+        reason: reason,
+        details: details,
+      );
+      final failure = result.fold<Failure?>((value) => value, (_) => null);
+      if (failure != null) {
+        dev.log('Unable to end passenger trip for safety: ${failure.message}');
+        return false;
+      }
+
+      ++_trackingGeneration;
+      unawaited(_trackingTask?.dispose());
+      _trackingTask = null;
+      _activeTripResync = null;
+      try {
+        await _sessionService.saveActiveRideId('');
+      } catch (error, stackTrace) {
+        dev.log(
+          'Unable to clear the safety-stopped passenger ride locally.',
+          error: error,
+          stackTrace: stackTrace,
+        );
+      }
+      await _stopBackgroundTelemetry();
+      currentRide = null;
+      if (!isClosed) emit(const TrackDriverEmergencyStopped());
+      return true;
+    } catch (error, stackTrace) {
+      dev.log(
+        'Error ending passenger trip for safety in track cubit.',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return false;
+    } finally {
+      _isEmergencyStopping = false;
+    }
+  }
+
   String _getEtaLabel(RideStatus status) {
     switch (status) {
       case RideStatus.accepted:
@@ -354,7 +418,9 @@ class TrackDriverCubit({
   }
 
   bool _isCurrentTrackingOperation(int generation) {
-    return !isClosed && generation == _trackingGeneration;
+    return !isClosed &&
+        !_isEmergencyStopping &&
+        generation == _trackingGeneration;
   }
 
   Future<void> _stopBackgroundTelemetry() async {

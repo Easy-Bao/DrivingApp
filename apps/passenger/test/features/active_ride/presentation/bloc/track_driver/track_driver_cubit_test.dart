@@ -64,8 +64,7 @@ void main() {
             reason: any(named: 'reason'),
             details: any(named: 'details'),
           ),
-        )
-            .thenAnswer((_) async => const Ok(null));
+        ).thenAnswer((_) async => const Ok(null));
         return _makeCubit(repo, session);
       },
       act: (cubit) => cubit.cancelTrip(),
@@ -107,6 +106,59 @@ void main() {
         await cubit.close();
       },
     );
+  });
+
+  group('TrackDriverCubit — emergencyStop()', () {
+    blocTest<TrackDriverCubit, TrackDriverState>(
+      'emits a safety terminal state after the server confirms the stop',
+      build: () {
+        when(() => session.readActiveRideId())
+            .thenAnswer((_) async => 'ride-42');
+        when(
+          () => repo.emergencyStop(
+            rideId: any(named: 'rideId'),
+            reason: any(named: 'reason'),
+            details: any(named: 'details'),
+          ),
+        ).thenAnswer((_) async => const Ok(null));
+        return _makeCubit(repo, session);
+      },
+      act: (cubit) => cubit.emergencyStop(
+        reason: 'accident',
+        details: 'Vehicle collision at pickup.',
+      ),
+      expect: () => [isA<TrackDriverEmergencyStopped>()],
+      verify: (_) {
+        verify(
+          () => repo.emergencyStop(
+            rideId: 'ride-42',
+            reason: 'accident',
+            details: 'Vehicle collision at pickup.',
+          ),
+        ).called(1);
+        verify(() => session.saveActiveRideId('')).called(1);
+      },
+    );
+
+    test('keeps the active ride when the safety stop is rejected', () async {
+      when(() => session.readActiveRideId()).thenAnswer((_) async => 'ride-42');
+      when(
+        () => repo.emergencyStop(
+          rideId: any(named: 'rideId'),
+          reason: any(named: 'reason'),
+          details: any(named: 'details'),
+        ),
+      ).thenAnswer((_) async => const Err(NetworkFailure('stop rejected')));
+      final cubit = _makeCubit(repo, session);
+
+      expect(
+        await cubit.emergencyStopRequest(reason: 'medical_emergency'),
+        isFalse,
+      );
+      expect(cubit.state, isA<TrackDriverInitial>());
+      verifyNever(() => session.saveActiveRideId(''));
+      await cubit.close();
+    });
   });
 
   group('TrackDriverCubit — startTracking()', () {

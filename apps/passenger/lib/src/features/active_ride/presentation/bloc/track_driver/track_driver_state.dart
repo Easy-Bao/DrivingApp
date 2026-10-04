@@ -116,6 +116,10 @@ final class TrackDriverCanceled extends RideFailed {
   const TrackDriverCanceled() : super('Ride canceled');
 }
 
+final class TrackDriverEmergencyStopped extends RideFailed {
+  const TrackDriverEmergencyStopped() : super('Ride ended for safety');
+}
+
 extension TrackDriverRideStatePresentation on RideState {
   bool get isTracking => switch (this) {
     DriverEnRoute() || TripInProgress() => true,
