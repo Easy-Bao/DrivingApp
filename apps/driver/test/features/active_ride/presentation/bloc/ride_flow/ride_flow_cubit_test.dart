@@ -280,6 +280,22 @@ void main() {
     );
   });
 
+  test('rejects terminal rides during recovery', () async {
+    final cubit = _makeCubit(mockRideRepository, mockSessionService);
+
+    final resumed = cubit.resumeRide(
+      rideId: 'test-ride-id',
+      status: 'cancelled',
+      passengerName: 'Juan Dela Cruz',
+    );
+
+    expect(resumed, isFalse);
+    expect(cubit.activeRideId, isNull);
+    expect(cubit.state, isA<RideFlowError>());
+    verify(() => mockSessionService.saveActiveRideId('')).called(1);
+    await cubit.close();
+  });
+
   test(
     'uses the server arrival deadline after resuming a waiting ride',
     () async {

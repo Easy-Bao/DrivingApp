@@ -34,7 +34,7 @@ class RideFlowCubit({
   String? get activePassengerId => _activePassengerId;
   String get activePassengerName => _activePassengerName ?? 'Passenger';
 
-  void resumeRide({
+  bool resumeRide({
     required String rideId,
     required String status,
     required String passengerName,
@@ -47,10 +47,29 @@ class RideFlowCubit({
     DateTime? arrivedAt,
     DateTime? waitingUntil,
   }) {
+    final normalizedStatus = status.trim().toLowerCase();
+    if (const {
+      'completed',
+      'canceled',
+      'cancelled',
+    }.contains(normalizedStatus)) {
+      ++_actionGeneration;
+      _waitTimer?.cancel();
+      _activeRideId = null;
+      _activePassengerId = null;
+      _activePassengerName = null;
+      _waitingUntil = null;
+      _waitStartedAt = null;
+      _elapsedWaitTime = 0;
+      unawaited(_clearActiveRideSession());
+      emit(const RideFlowError('This trip is no longer active.'));
+      return false;
+    }
+
     final typedRideId = RideId.tryParse(rideId);
     if (typedRideId == null) {
       emit(const RideFlowError('This trip is no longer active.'));
-      return;
+      return false;
     }
     ++_actionGeneration;
     _waitTimer?.cancel();
@@ -95,6 +114,7 @@ class RideFlowCubit({
         ),
       );
     }
+    return true;
   }
 
   bool get canMarkPassengerNoShow {
@@ -679,6 +699,7 @@ class RideFlowCubit({
     _waitingUntil = null;
     _waitStartedAt = null;
     _elapsedWaitTime = 0;
+    unawaited(_clearActiveRideSession());
     _isActionInFlight = false;
     emit(const RideFlowInitial());
   }

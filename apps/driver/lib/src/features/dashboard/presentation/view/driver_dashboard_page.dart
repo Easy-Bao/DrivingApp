@@ -752,6 +752,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
     final resolvedTrip = await _authoritativeTrip(trip, rideId);
     if (!mounted) return;
+    if (_discardTerminalTrip(resolvedTrip, rideId)) return;
     final fare = resolvedTrip.farePesos;
     final distance = resolvedTrip.distanceKm;
     final duration = resolvedTrip.durationMinutes;
@@ -771,7 +772,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       routeName = ActiveRideRoutes.inTransit;
     }
 
-    BlocProvider.of<RideFlowCubit>(context).resumeRide(
+    final resumed = BlocProvider.of<RideFlowCubit>(context).resumeRide(
       rideId: rideId,
       status: resolvedTrip.status.isEmpty ? 'accepted' : resolvedTrip.status,
       passengerName: resolvedTrip.passengerName ?? 'Passenger',
@@ -784,6 +785,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       arrivedAt: resolvedTrip.arrivedAt,
       waitingUntil: resolvedTrip.waitingUntil,
     );
+    if (!resumed || !mounted) return;
 
     context.pushNamed(
       routeName,
@@ -803,6 +805,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     if (rideId == null) return;
     final resolvedTrip = await _authoritativeTrip(trip, rideId);
     if (!mounted) return;
+    if (_discardTerminalTrip(resolvedTrip, rideId)) return;
     final fare = resolvedTrip.farePesos;
     final distance = resolvedTrip.distanceKm;
     final duration = resolvedTrip.durationMinutes;
@@ -823,7 +826,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         );
         return;
       }
-      cubit.resumeRide(
+      final resumed = cubit.resumeRide(
         rideId: rideId,
         status: resolvedTrip.status.isEmpty ? 'accepted' : resolvedTrip.status,
         passengerName: resolvedTrip.passengerName ?? 'Passenger',
@@ -836,6 +839,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         arrivedAt: resolvedTrip.arrivedAt,
         waitingUntil: resolvedTrip.waitingUntil,
       );
+      if (!resumed || !mounted) return;
 
       final finalFare = await cubit.completeRide(
         driverLat: position.latitude,
@@ -866,6 +870,26 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     } finally {
       if (mounted) setState(() => _completingTripId = null);
     }
+  }
+
+  bool _discardTerminalTrip(RideSnapshot trip, String rideId) {
+    if (!trip.isTerminal) return false;
+
+    BlocProvider.of<DashboardCubit>(context).removeActiveTrip(rideId);
+    final rideFlowCubit = BlocProvider.of<RideFlowCubit>(context);
+    if (rideFlowCubit.activeRideId == rideId) {
+      rideFlowCubit.reset();
+    }
+    if (mounted) {
+      CustomToast.show(
+        context,
+        trip.status == 'completed'
+            ? 'This trip is already complete.'
+            : 'This trip is no longer active.',
+        isError: true,
+      );
+    }
+    return true;
   }
 
   @override
