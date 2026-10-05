@@ -184,6 +184,22 @@ func (service *Service) PlaceOffer(ctx context.Context, offer domain.BidOffer) (
 	}
 	created, err := service.store.PlaceOffer(ctx, offer)
 	if err != nil {
+		if errors.Is(err, domain.ErrDuplicateBid) {
+			existingOffers, lookupErr := service.store.Offers(ctx, offer.SessionID)
+			if lookupErr != nil {
+				return domain.BidOffer{}, fmt.Errorf("recover duplicate bid offer: %w", lookupErr)
+			}
+			for _, existing := range existingOffers {
+				if existing.SessionID != offer.SessionID ||
+					existing.DriverID != offer.DriverID ||
+					existing.ProposedFareAmount != offer.ProposedFareAmount {
+					continue
+				}
+				if existing.Status == "pending" || existing.Status == "accepted" {
+					return existing, nil
+				}
+			}
+		}
 		return domain.BidOffer{}, fmt.Errorf("place bid offer: %w", err)
 	}
 	session, sessionErr := service.store.Session(ctx, created.SessionID)

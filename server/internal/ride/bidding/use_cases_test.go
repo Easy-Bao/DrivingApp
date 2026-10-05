@@ -16,6 +16,7 @@ type biddingStoreStub struct {
 	session    domain.BidSession
 	offers     []domain.BidOffer
 	acceptance domain.OfferAcceptance
+	placeErr   error
 }
 
 func (stub *biddingStoreStub) CreateSession(_ context.Context, session domain.BidSession) (domain.BidSession, error) {
@@ -30,7 +31,7 @@ func (stub *biddingStoreStub) Offers(context.Context, int) ([]domain.BidOffer, e
 	return stub.offers, nil
 }
 func (stub *biddingStoreStub) PlaceOffer(context.Context, domain.BidOffer) (domain.BidOffer, error) {
-	return domain.BidOffer{}, nil
+	return domain.BidOffer{}, stub.placeErr
 }
 func (stub *biddingStoreStub) AcceptOffer(
 	context.Context,
@@ -150,6 +151,55 @@ func TestCreateSessionUsesServerOwnedStatusAndExpiration(t *testing.T) {
 	}
 	if want := now.Add(90 * time.Second); !created.ExpiresAt.Equal(want) {
 		t.Fatalf("expiration = %v, want %v", created.ExpiresAt, want)
+	}
+}
+
+func TestPlaceOfferRecoversAnIdempotentDuplicate(t *testing.T) {
+	existing := domain.BidOffer{
+		ID:                 7,
+		SessionID:          10,
+		DriverID:           42,
+		ProposedFareAmount: 3500,
+		Status:             "pending",
+	}
+	store := &biddingStoreStub{
+		offers:   []domain.BidOffer{existing},
+		placeErr: domain.ErrDuplicateBid,
+	}
+	service := bidding.NewService(bidding.Dependencies{Store: store})
+
+	created, err := service.PlaceOffer(context.Background(), domain.BidOffer{
+		SessionID:          existing.SessionID,
+		DriverID:           existing.DriverID,
+		ProposedFareAmount: existing.ProposedFareAmount,
+	})
+	if err != nil {
+		t.Fatalf("PlaceOffer() error = %v", err)
+	}
+	if created != existing {
+		t.Fatalf("recovered offer = %+v, want %+v", created, existing)
+	}
+}
+
+func TestPlaceOfferKeepsDuplicateErrorForDifferentFare(t *testing.T) {
+	store := &biddingStoreStub{
+		offers: []domain.BidOffer{{
+			SessionID:          10,
+			DriverID:           42,
+			ProposedFareAmount: 3500,
+			Status:             "pending",
+		}},
+		placeErr: domain.ErrDuplicateBid,
+	}
+	service := bidding.NewService(bidding.Dependencies{Store: store})
+
+	_, err := service.PlaceOffer(context.Background(), domain.BidOffer{
+		SessionID:          10,
+		DriverID:           42,
+		ProposedFareAmount: 4000,
+	})
+	if !errors.Is(err, domain.ErrDuplicateBid) {
+		t.Fatalf("PlaceOffer() error = %v, want %v", err, domain.ErrDuplicateBid)
 	}
 }
 
