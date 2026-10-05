@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
-	"slices"
 	"time"
 
 	assignment "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment"
@@ -32,6 +31,7 @@ var ErrPersistenceUnavailable = errors.New("location persistence is unavailable"
 const (
 	defaultLocationMaxAge    = 45 * time.Second
 	maximumLocationClockSkew = 15 * time.Second
+	nearbyCoordinateGrid     = 1_000
 )
 
 type Option func(*LocationTrackingService)
@@ -165,7 +165,7 @@ func (service *LocationTrackingService) Nearby(
 	if err := contextError(ctx); err != nil {
 		return nil, err
 	}
-	return slices.Clone(points), nil
+	return approximateNearbyPoints(points), nil
 }
 
 func (service *LocationTrackingService) Remove(ctx context.Context, driverID string) error {
@@ -392,6 +392,18 @@ func (service *LocationTrackingService) maxLocationAge() time.Duration {
 		return service.maxAge
 	}
 	return defaultLocationMaxAge
+}
+
+func approximateNearbyPoints(points []domain.DriverPoint) []domain.DriverPoint {
+	result := make([]domain.DriverPoint, 0, len(points))
+	for _, point := range points {
+		result = append(result, domain.DriverPoint{
+			DriverID:  point.DriverID,
+			Latitude:  math.Round(point.Latitude*nearbyCoordinateGrid) / nearbyCoordinateGrid,
+			Longitude: math.Round(point.Longitude*nearbyCoordinateGrid) / nearbyCoordinateGrid,
+		})
+	}
+	return result
 }
 
 func validCoordinates(latitude, longitude float64) bool {

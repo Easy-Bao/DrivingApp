@@ -167,13 +167,26 @@ func TestNearbyRejectsUnboundedRadius(t *testing.T) {
 
 func TestNearbyReturnsACopyOfRepositoryResults(t *testing.T) {
 	repository := &locationRepositoryStub{
-		nearby: []domain.DriverPoint{{DriverID: "driver-1", Latitude: 6.7, Longitude: 122.1}},
+		nearby: []domain.DriverPoint{{
+			DriverID:   "driver-1",
+			Latitude:   6.7006,
+			Longitude:  122.1004,
+			Heading:    120,
+			Speed:      18,
+			ObservedAt: time.Now().UTC(),
+		}},
 	}
 	service := newLocationTrackingService(repository)
 
 	points, err := service.Nearby(context.Background(), 6.7, 122.1, 5)
 	if err != nil {
 		t.Fatalf("Nearby() error = %v", err)
+	}
+	if points[0].Latitude != 6.701 || points[0].Longitude != 122.1 {
+		t.Fatalf("Nearby() coordinates = (%v, %v), want rounded discovery coordinates", points[0].Latitude, points[0].Longitude)
+	}
+	if points[0].Heading != 0 || points[0].Speed != 0 || !points[0].ObservedAt.IsZero() {
+		t.Fatalf("Nearby() exposed tracking metadata: %#v", points[0])
 	}
 	points[0].DriverID = "mutated"
 	if repository.nearby[0].DriverID != "driver-1" {
