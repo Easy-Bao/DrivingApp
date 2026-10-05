@@ -7,6 +7,8 @@ package postgres
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const listOnlineDrivers = `-- name: ListOnlineDrivers :many
@@ -30,15 +32,17 @@ LEFT JOIN rides AS ride ON ride.driver_id = profile.user_id
 WHERE account.account_status = 'active'
   AND account.is_verified = true
   AND profile.is_online = true
-  AND profile.user_id = ANY($1::int[])
+  AND profile.online_last_seen_at >= $1::timestamptz
+  AND profile.user_id = ANY($2::int[])
 GROUP BY profile.id, profile.user_id, profile.name, profile.vehicle_type, profile.plate_number, profile.rating
 ORDER BY profile.id
-LIMIT $2::int
+LIMIT $3::int
 `
 
 type ListOnlineDriversParams struct {
-	DriverIds []int32 `db:"driver_ids"`
-	Limit     int32   `db:"limit"`
+	OnlineCutoff pgtype.Timestamptz `db:"online_cutoff"`
+	DriverIds    []int32            `db:"driver_ids"`
+	Limit        int32              `db:"limit"`
 }
 
 type ListOnlineDriversRow struct {
@@ -52,7 +56,7 @@ type ListOnlineDriversRow struct {
 }
 
 func (q *Queries) ListOnlineDrivers(ctx context.Context, arg ListOnlineDriversParams) ([]ListOnlineDriversRow, error) {
-	rows, err := q.db.Query(ctx, listOnlineDrivers, arg.DriverIds, arg.Limit)
+	rows, err := q.db.Query(ctx, listOnlineDrivers, arg.OnlineCutoff, arg.DriverIds, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -94,9 +98,15 @@ JOIN users AS account ON account.id = profile.user_id
 WHERE account.account_status = 'active'
   AND account.is_verified = true
   AND profile.is_online = true
+  AND profile.online_last_seen_at >= $1::timestamptz
 ORDER BY profile.id
-LIMIT $1::int
+LIMIT $2::int
 `
+
+type ListPublicDriverSummariesParams struct {
+	OnlineCutoff pgtype.Timestamptz `db:"online_cutoff"`
+	Limit        int32              `db:"limit"`
+}
 
 type ListPublicDriverSummariesRow struct {
 	ID          int32   `db:"id"`
@@ -105,8 +115,8 @@ type ListPublicDriverSummariesRow struct {
 	Rating      float64 `db:"rating"`
 }
 
-func (q *Queries) ListPublicDriverSummaries(ctx context.Context, limit int32) ([]ListPublicDriverSummariesRow, error) {
-	rows, err := q.db.Query(ctx, listPublicDriverSummaries, limit)
+func (q *Queries) ListPublicDriverSummaries(ctx context.Context, arg ListPublicDriverSummariesParams) ([]ListPublicDriverSummariesRow, error) {
+	rows, err := q.db.Query(ctx, listPublicDriverSummaries, arg.OnlineCutoff, arg.Limit)
 	if err != nil {
 		return nil, err
 	}

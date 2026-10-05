@@ -47,25 +47,29 @@ RETURNING id, passenger_id, ride_type, pickup_latitude, pickup_longitude,
 -- name: GetOnlineDriverProfileForBidding :one
 SELECT driver_profiles.id, driver_profiles.user_id, driver_profiles.name,
     driver_profiles.vehicle_type, driver_profiles.plate_number,
-    driver_profiles.rating, driver_profiles.is_online
+    driver_profiles.rating, driver_profiles.is_online,
+    driver_profiles.online_last_seen_at
 FROM driver_profiles
 JOIN users AS account ON account.id = driver_profiles.user_id
 WHERE driver_profiles.user_id = $1
   AND account.account_status = 'active'
   AND account.is_verified = true
-  AND is_online = true
+  AND driver_profiles.is_online = true
+  AND driver_profiles.online_last_seen_at >= sqlc.arg('online_cutoff')::timestamptz
 LIMIT 1;
 
 -- name: LockOnlineDriverProfileForBidding :one
 SELECT driver_profiles.id, driver_profiles.user_id, driver_profiles.name,
     driver_profiles.vehicle_type, driver_profiles.plate_number,
-    driver_profiles.rating, driver_profiles.is_online
+    driver_profiles.rating, driver_profiles.is_online,
+    driver_profiles.online_last_seen_at
 FROM driver_profiles
 JOIN users AS account ON account.id = driver_profiles.user_id
 WHERE driver_profiles.user_id = $1
   AND account.account_status = 'active'
   AND account.is_verified = true
-  AND is_online = true
+  AND driver_profiles.is_online = true
+  AND driver_profiles.online_last_seen_at >= sqlc.arg('online_cutoff')::timestamptz
 LIMIT 1
 FOR UPDATE;
 

@@ -28,8 +28,9 @@ func (repository *RideRepository) OnlineDrivers(
 	}
 
 	items, err := repository.queries.ListOnlineDrivers(ctx, databasepostgres.ListOnlineDriversParams{
-		DriverIds: dbDriverIDs,
-		Limit:     dbLimit,
+		DriverIds:    dbDriverIDs,
+		Limit:        dbLimit,
+		OnlineCutoff: repository.onlinePresenceCutoff(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("list online drivers: %w", err)
@@ -58,7 +59,13 @@ func (repository *RideRepository) PublicDriverSummaries(
 		return nil, err
 	}
 
-	items, err := repository.queries.ListPublicDriverSummaries(ctx, dbLimit)
+	items, err := repository.queries.ListPublicDriverSummaries(
+		ctx,
+		databasepostgres.ListPublicDriverSummariesParams{
+			Limit:        dbLimit,
+			OnlineCutoff: repository.onlinePresenceCutoff(),
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("list public driver summaries: %w", err)
 	}

@@ -67,13 +67,14 @@ type DriverDocument struct {
 }
 
 type DriverProfile struct {
-	ID          int32   `db:"id"`
-	UserID      int32   `db:"user_id"`
-	Name        string  `db:"name"`
-	VehicleType string  `db:"vehicle_type"`
-	PlateNumber string  `db:"plate_number"`
-	Rating      float64 `db:"rating"`
-	IsOnline    bool    `db:"is_online"`
+	ID               int32              `db:"id"`
+	UserID           int32              `db:"user_id"`
+	Name             string             `db:"name"`
+	VehicleType      string             `db:"vehicle_type"`
+	PlateNumber      string             `db:"plate_number"`
+	Rating           float64            `db:"rating"`
+	IsOnline         bool               `db:"is_online"`
+	OnlineLastSeenAt pgtype.Timestamptz `db:"online_last_seen_at"`
 }
 
 type DriverWalletAccount struct {

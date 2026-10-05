@@ -16,16 +16,19 @@ import (
 
 const _maxPostgresRideID = 1<<31 - 1
 const _maxPostgresWaitSeconds = 1<<31 - 1
+const _defaultOnlinePresenceMaxAge = 45 * time.Second
 
 type RideRepository struct {
 	pool                  *pgxpool.Pool
 	queries               *databasepostgres.Queries
 	platformCommissionBPS int64
+	onlinePresenceMaxAge  time.Duration
 }
 
 type RideStoreConfig struct {
 	Pool                  *pgxpool.Pool
 	PlatformCommissionBPS int64
+	OnlinePresenceMaxAge  time.Duration
 }
 
 var (
@@ -40,11 +43,24 @@ func NewRideRepository(config RideStoreConfig) (*RideRepository, error) {
 	if config.Pool == nil {
 		return nil, errors.New("postgresql pool is required")
 	}
+	onlinePresenceMaxAge := config.OnlinePresenceMaxAge
+	if onlinePresenceMaxAge <= 0 {
+		onlinePresenceMaxAge = _defaultOnlinePresenceMaxAge
+	}
 	return &RideRepository{
 		pool:                  config.Pool,
 		queries:               databasepostgres.New(config.Pool),
 		platformCommissionBPS: config.PlatformCommissionBPS,
+		onlinePresenceMaxAge:  onlinePresenceMaxAge,
 	}, nil
+}
+
+func (repository *RideRepository) onlinePresenceCutoff() pgtype.Timestamptz {
+	maxAge := repository.onlinePresenceMaxAge
+	if maxAge <= 0 {
+		maxAge = _defaultOnlinePresenceMaxAge
+	}
+	return bidTimestamp(time.Now().UTC().Add(-maxAge))
 }
 
 // RideStore is the canonical adapter name used by the ride composition root.

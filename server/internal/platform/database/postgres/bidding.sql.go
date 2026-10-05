@@ -247,18 +247,25 @@ func (q *Queries) GetBidSessionByID(ctx context.Context, id int32) (BidSession, 
 const getOnlineDriverProfileForBidding = `-- name: GetOnlineDriverProfileForBidding :one
 SELECT driver_profiles.id, driver_profiles.user_id, driver_profiles.name,
     driver_profiles.vehicle_type, driver_profiles.plate_number,
-    driver_profiles.rating, driver_profiles.is_online
+    driver_profiles.rating, driver_profiles.is_online,
+    driver_profiles.online_last_seen_at
 FROM driver_profiles
 JOIN users AS account ON account.id = driver_profiles.user_id
 WHERE driver_profiles.user_id = $1
   AND account.account_status = 'active'
   AND account.is_verified = true
-  AND is_online = true
+  AND driver_profiles.is_online = true
+  AND driver_profiles.online_last_seen_at >= $2::timestamptz
 LIMIT 1
 `
 
-func (q *Queries) GetOnlineDriverProfileForBidding(ctx context.Context, userID int32) (DriverProfile, error) {
-	row := q.db.QueryRow(ctx, getOnlineDriverProfileForBidding, userID)
+type GetOnlineDriverProfileForBiddingParams struct {
+	UserID       int32              `db:"user_id"`
+	OnlineCutoff pgtype.Timestamptz `db:"online_cutoff"`
+}
+
+func (q *Queries) GetOnlineDriverProfileForBidding(ctx context.Context, arg GetOnlineDriverProfileForBiddingParams) (DriverProfile, error) {
+	row := q.db.QueryRow(ctx, getOnlineDriverProfileForBidding, arg.UserID, arg.OnlineCutoff)
 	var i DriverProfile
 	err := row.Scan(
 		&i.ID,
@@ -268,6 +275,7 @@ func (q *Queries) GetOnlineDriverProfileForBidding(ctx context.Context, userID i
 		&i.PlateNumber,
 		&i.Rating,
 		&i.IsOnline,
+		&i.OnlineLastSeenAt,
 	)
 	return i, err
 }
@@ -592,19 +600,26 @@ func (q *Queries) LockActiveBidSessionForOffer(ctx context.Context, arg LockActi
 const lockOnlineDriverProfileForBidding = `-- name: LockOnlineDriverProfileForBidding :one
 SELECT driver_profiles.id, driver_profiles.user_id, driver_profiles.name,
     driver_profiles.vehicle_type, driver_profiles.plate_number,
-    driver_profiles.rating, driver_profiles.is_online
+    driver_profiles.rating, driver_profiles.is_online,
+    driver_profiles.online_last_seen_at
 FROM driver_profiles
 JOIN users AS account ON account.id = driver_profiles.user_id
 WHERE driver_profiles.user_id = $1
   AND account.account_status = 'active'
   AND account.is_verified = true
-  AND is_online = true
+  AND driver_profiles.is_online = true
+  AND driver_profiles.online_last_seen_at >= $2::timestamptz
 LIMIT 1
 FOR UPDATE
 `
 
-func (q *Queries) LockOnlineDriverProfileForBidding(ctx context.Context, userID int32) (DriverProfile, error) {
-	row := q.db.QueryRow(ctx, lockOnlineDriverProfileForBidding, userID)
+type LockOnlineDriverProfileForBiddingParams struct {
+	UserID       int32              `db:"user_id"`
+	OnlineCutoff pgtype.Timestamptz `db:"online_cutoff"`
+}
+
+func (q *Queries) LockOnlineDriverProfileForBidding(ctx context.Context, arg LockOnlineDriverProfileForBiddingParams) (DriverProfile, error) {
+	row := q.db.QueryRow(ctx, lockOnlineDriverProfileForBidding, arg.UserID, arg.OnlineCutoff)
 	var i DriverProfile
 	err := row.Scan(
 		&i.ID,
@@ -614,6 +629,7 @@ func (q *Queries) LockOnlineDriverProfileForBidding(ctx context.Context, userID 
 		&i.PlateNumber,
 		&i.Rating,
 		&i.IsOnline,
+		&i.OnlineLastSeenAt,
 	)
 	return i, err
 }

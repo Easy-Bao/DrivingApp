@@ -100,7 +100,13 @@ func (repository *RideRepository) AcceptOffer(
 	if err != nil {
 		return domain.OfferAcceptance{}, fmt.Errorf("find bid offer driver: %w", err)
 	}
-	profile, err := transactionQueries.LockOnlineDriverProfileForBidding(ctx, offerDriverID)
+	profile, err := transactionQueries.LockOnlineDriverProfileForBidding(
+		ctx,
+		databasepostgres.LockOnlineDriverProfileForBiddingParams{
+			UserID:       offerDriverID,
+			OnlineCutoff: repository.onlinePresenceCutoff(),
+		},
+	)
 	if err != nil {
 		return domain.OfferAcceptance{}, driverUnavailableError(
 			"lock online driver profile for offer acceptance",

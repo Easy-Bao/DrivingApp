@@ -42,7 +42,13 @@ func (repository *RideRepository) AcceptRide(ctx context.Context, rideID, driver
 	}
 
 	transactionQueries := repository.queries.WithTx(transaction)
-	profile, err := transactionQueries.LockOnlineDriverProfileForBidding(ctx, dbDriverID)
+	profile, err := transactionQueries.LockOnlineDriverProfileForBidding(
+		ctx,
+		databasepostgres.LockOnlineDriverProfileForBiddingParams{
+			UserID:       dbDriverID,
+			OnlineCutoff: repository.onlinePresenceCutoff(),
+		},
+	)
 	if err != nil {
 		return domain.Ride{}, driverUnavailableError("lock online driver profile for ride acceptance", err)
 	}

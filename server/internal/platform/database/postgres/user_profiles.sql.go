@@ -30,7 +30,8 @@ func (q *Queries) DeleteNotification(ctx context.Context, arg DeleteNotification
 }
 
 const getDriverProfileByUserIDFull = `-- name: GetDriverProfileByUserIDFull :one
-SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online
+SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online,
+    online_last_seen_at
 FROM driver_profiles
 WHERE user_id = $1
 LIMIT 1
@@ -47,6 +48,7 @@ func (q *Queries) GetDriverProfileByUserIDFull(ctx context.Context, userID int32
 		&i.PlateNumber,
 		&i.Rating,
 		&i.IsOnline,
+		&i.OnlineLastSeenAt,
 	)
 	return i, err
 }
@@ -119,7 +121,11 @@ func (q *Queries) ListNotifications(ctx context.Context, arg ListNotificationsPa
 
 const updateDriverOnlineStatus = `-- name: UpdateDriverOnlineStatus :one
 UPDATE driver_profiles
-SET is_online = $1
+SET is_online = $1,
+    online_last_seen_at = CASE
+        WHEN $1::boolean THEN CURRENT_TIMESTAMP
+        ELSE NULL
+    END
 FROM users AS account
 WHERE driver_profiles.user_id = $2
   AND (
@@ -136,7 +142,8 @@ WHERE driver_profiles.user_id = $2
   )
 RETURNING driver_profiles.id, driver_profiles.user_id, driver_profiles.name,
     driver_profiles.vehicle_type, driver_profiles.plate_number,
-    driver_profiles.rating, driver_profiles.is_online
+    driver_profiles.rating, driver_profiles.is_online,
+    driver_profiles.online_last_seen_at
 `
 
 type UpdateDriverOnlineStatusParams struct {
@@ -156,15 +163,21 @@ func (q *Queries) UpdateDriverOnlineStatus(ctx context.Context, arg UpdateDriver
 		&i.PlateNumber,
 		&i.Rating,
 		&i.IsOnline,
+		&i.OnlineLastSeenAt,
 	)
 	return i, err
 }
 
 const updateDriverProfile = `-- name: UpdateDriverProfile :one
 UPDATE driver_profiles
-SET name = $2, vehicle_type = $3, plate_number = $4, is_online = $5
+SET name = $2,
+    vehicle_type = $3,
+    plate_number = $4,
+    is_online = $5,
+    online_last_seen_at = CASE WHEN $5::boolean THEN online_last_seen_at ELSE NULL END
 WHERE id = $1
-RETURNING id, user_id, name, vehicle_type, plate_number, rating, is_online
+RETURNING id, user_id, name, vehicle_type, plate_number, rating, is_online,
+    online_last_seen_at
 `
 
 type UpdateDriverProfileParams struct {
@@ -192,6 +205,7 @@ func (q *Queries) UpdateDriverProfile(ctx context.Context, arg UpdateDriverProfi
 		&i.PlateNumber,
 		&i.Rating,
 		&i.IsOnline,
+		&i.OnlineLastSeenAt,
 	)
 	return i, err
 }

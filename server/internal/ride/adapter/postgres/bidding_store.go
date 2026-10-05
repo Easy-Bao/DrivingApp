@@ -133,7 +133,13 @@ func (repository *RideRepository) ActiveSessions(ctx context.Context, driverID *
 		if idErr != nil {
 			return nil, idErr
 		}
-		if _, profileErr := repository.queries.GetOnlineDriverProfileForBidding(ctx, dbDriverID); profileErr != nil {
+		if _, profileErr := repository.queries.GetOnlineDriverProfileForBidding(
+			ctx,
+			databasepostgres.GetOnlineDriverProfileForBiddingParams{
+				UserID:       dbDriverID,
+				OnlineCutoff: repository.onlinePresenceCutoff(),
+			},
+		); profileErr != nil {
 			return nil, driverUnavailableError("find online driver profile for active sessions", profileErr)
 		}
 		activeRides, countErr := repository.queries.CountActiveRidesForDriver(
@@ -242,7 +248,13 @@ func (repository *RideRepository) PlaceOffer(ctx context.Context, value domain.B
 	if session.TargetDriverID.Valid && session.TargetDriverID.Int32 != driverID {
 		return domain.BidOffer{}, domain.ErrDriverUnavailable
 	}
-	profile, err := transactionQueries.LockOnlineDriverProfileForBidding(ctx, driverID)
+	profile, err := transactionQueries.LockOnlineDriverProfileForBidding(
+		ctx,
+		databasepostgres.LockOnlineDriverProfileForBiddingParams{
+			UserID:       driverID,
+			OnlineCutoff: repository.onlinePresenceCutoff(),
+		},
+	)
 	if err != nil {
 		return domain.BidOffer{}, driverUnavailableError("lock online driver profile for offer", err)
 	}

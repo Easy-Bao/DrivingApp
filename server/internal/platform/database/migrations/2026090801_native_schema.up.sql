@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS driver_profiles (
     plate_number text NOT NULL,
     rating double precision NOT NULL DEFAULT 0,
     is_online boolean NOT NULL DEFAULT false,
+    online_last_seen_at timestamptz,
     wallet_balance_centavos bigint NOT NULL DEFAULT 0
 );
 
