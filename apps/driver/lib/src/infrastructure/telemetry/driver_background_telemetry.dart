@@ -12,6 +12,7 @@ import 'package:driver/src/infrastructure/telemetry/driver_location_spool.dart';
 import 'package:foundation/foundation.dart';
 
 const _backgroundTelemetryInterval = Duration(seconds: 10);
+const _backgroundPresenceInterval = Duration(seconds: 20);
 const _backgroundRideRequestInterval = Duration(seconds: 4);
 const _notificationChannelId = 'easyride_driver_location';
 const _notificationId = 4801;
@@ -194,12 +195,14 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
   Dio? telemetryClient;
   RefreshableTokenProvider? tokenProvider;
   var sending = false;
+  var sendingPresence = false;
   var pollingRideRequests = false;
   var appIsVisible = false;
   var batteryOptimizationWarning = false;
   var isConfigured = false;
   var activeRequestIds = <String>{};
   Timer? locationTimer;
+  Timer? presenceTimer;
   Timer? requestTimer;
   StreamSubscription<Map<String, dynamic>?>? configureSubscription;
   StreamSubscription<Map<String, dynamic>?>? visibilitySubscription;
@@ -211,8 +214,10 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     if (isStopping) return;
     isStopping = true;
     locationTimer?.cancel();
+    presenceTimer?.cancel();
     requestTimer?.cancel();
     locationTimer = null;
+    presenceTimer = null;
     requestTimer = null;
     activeRequestIds = <String>{};
     isConfigured = false;
@@ -428,6 +433,49 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     }
   }
 
+  Future<void> sendOnlinePresence() async {
+    final client = telemetryClient;
+    final provider = tokenProvider;
+    if (!isConfigured ||
+        appIsVisible ||
+        sendingPresence ||
+        client == null ||
+        provider == null) {
+      return;
+    }
+
+    sendingPresence = true;
+    try {
+      final token = await provider.getToken();
+      final driverId = await sessionStore.readDriverId();
+      if (token == null ||
+          token.isEmpty ||
+          driverId == null ||
+          driverId.isEmpty) {
+        return;
+      }
+
+      final response = await client.post<void>(
+        '/api/v1/drivers/${Uri.encodeComponent(driverId)}/online',
+        data: {'is_online': true},
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      if (response.statusCode != 200) {
+        dev.log(
+          'Driver presence heartbeat was rejected: ${response.statusCode}',
+        );
+      }
+    } on DioException catch (error) {
+      dev.log(
+        'Driver presence heartbeat failed: ${error.type.name}/${error.response?.statusCode ?? 'network'}',
+      );
+    } catch (_) {
+      dev.log('Driver presence heartbeat failed.');
+    } finally {
+      sendingPresence = false;
+    }
+  }
+
   stopSubscription = service.on('stopService').listen((_) {
     unawaited(shutdown());
   });
@@ -435,11 +483,16 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
     _backgroundTelemetryInterval,
     (_) => unawaited(sendLocation()),
   );
+  presenceTimer = Timer.periodic(
+    _backgroundPresenceInterval,
+    (_) => unawaited(sendOnlinePresence()),
+  );
   requestTimer = Timer.periodic(
     _backgroundRideRequestInterval,
     (_) => unawaited(pollRideRequests()),
   );
   unawaited(sendLocation());
+  unawaited(sendOnlinePresence());
   unawaited(pollRideRequests());
 }
 
