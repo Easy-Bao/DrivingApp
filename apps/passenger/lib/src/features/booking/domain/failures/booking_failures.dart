@@ -1,10 +1,7 @@
 import 'package:foundation/foundation.dart';
 
 class const NoDriversAvailableFailure() extends Failure {
-  this
-    : super(
-        'No drivers available nearby. Adjust your pickup or try again shortly.',
-      );
+  this : super('No drivers nearby');
 }
 
 class const RouteCalculationFailure() extends Failure {
