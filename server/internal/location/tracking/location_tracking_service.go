@@ -16,6 +16,7 @@ import (
 type LocationTrackingService struct {
 	repository     LocationStore
 	assignments    assignment.Lookup
+	presence       DriverPresenceReader
 	eventPublisher EventPublisher
 	logger         *slog.Logger
 	maxAge         time.Duration
@@ -38,6 +39,10 @@ type Option func(*LocationTrackingService)
 
 func WithRideAssignments(assignments assignment.Lookup) Option {
 	return func(service *LocationTrackingService) { service.assignments = assignments }
+}
+
+func WithDriverPresence(reader DriverPresenceReader) Option {
+	return func(service *LocationTrackingService) { service.presence = reader }
 }
 
 func WithEventPublisher(publisher EventPublisher) Option {
@@ -98,6 +103,9 @@ func (service *LocationTrackingService) Ingest(ctx context.Context, point domain
 	missingDriverID := point.DriverID == ""
 	if invalidCoordinates || invalidMotion || missingDriverID {
 		return domain.ErrInvalidLocation
+	}
+	if err := service.requireOnlineDriver(ctx, point.DriverID); err != nil {
+		return err
 	}
 	if err := service.repository.Upsert(ctx, point); err != nil {
 		if errors.Is(err, domain.ErrStaleLocation) {
@@ -392,6 +400,23 @@ func (service *LocationTrackingService) maxLocationAge() time.Duration {
 		return service.maxAge
 	}
 	return defaultLocationMaxAge
+}
+
+func (service *LocationTrackingService) requireOnlineDriver(
+	ctx context.Context,
+	driverID string,
+) error {
+	if service == nil || service.presence == nil {
+		return nil
+	}
+	online, err := service.presence.IsOnline(ctx, driverID)
+	if err != nil {
+		return fmt.Errorf("%w: %v", domain.ErrDriverPresenceUnavailable, err)
+	}
+	if !online {
+		return domain.ErrDriverOffline
+	}
+	return nil
 }
 
 func approximateNearbyPoints(points []domain.DriverPoint) []domain.DriverPoint {

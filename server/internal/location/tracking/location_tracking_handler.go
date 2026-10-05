@@ -52,6 +52,14 @@ func (handler *Handler) UpdateDriverLocation(writer http.ResponseWriter, request
 			response.Error(writer, http.StatusBadRequest, "invalid location")
 			return
 		}
+		if errors.Is(err, domain.ErrDriverOffline) {
+			response.Error(writer, http.StatusConflict, "driver must be online to share location")
+			return
+		}
+		if errors.Is(err, domain.ErrDriverPresenceUnavailable) {
+			response.Error(writer, http.StatusServiceUnavailable, "driver availability unavailable")
+			return
+		}
 		response.Error(writer, http.StatusInternalServerError, "could not save location")
 		return
 	}

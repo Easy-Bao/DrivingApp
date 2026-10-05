@@ -19,6 +19,15 @@ type locationRepositoryStub struct {
 	upsertErr      error
 }
 
+type driverPresenceStub struct {
+	online bool
+	err    error
+}
+
+func (stub driverPresenceStub) IsOnline(context.Context, string) (bool, error) {
+	return stub.online, stub.err
+}
+
 func newLocationTrackingService(
 	repository LocationStore,
 	options ...Option,
@@ -86,6 +95,52 @@ func TestIngestRejectsInvalidCoordinates(t *testing.T) {
 	)
 	if invalidLongitudeErr == nil {
 		t.Fatal("expected invalid longitude to be rejected")
+	}
+}
+
+func TestIngestRejectsLocationFromAnOfflineDriver(t *testing.T) {
+	repository := &locationRepositoryStub{}
+	service := newLocationTrackingService(
+		repository,
+		WithDriverPresence(driverPresenceStub{}),
+	)
+
+	err := service.Ingest(
+		context.Background(),
+		domain.DriverPoint{
+			DriverID:  "driver-1",
+			Latitude:  6.7,
+			Longitude: 122.1,
+		},
+	)
+	if !errors.Is(err, domain.ErrDriverOffline) {
+		t.Fatalf("Ingest() error = %v, want offline driver error", err)
+	}
+	if repository.upsertCalls != 0 {
+		t.Fatalf("Upsert() calls = %d, want 0", repository.upsertCalls)
+	}
+}
+
+func TestIngestFailsClosedWhenDriverPresenceCannotBeRead(t *testing.T) {
+	repository := &locationRepositoryStub{}
+	service := newLocationTrackingService(
+		repository,
+		WithDriverPresence(driverPresenceStub{err: errors.New("database unavailable")}),
+	)
+
+	err := service.Ingest(
+		context.Background(),
+		domain.DriverPoint{
+			DriverID:  "driver-1",
+			Latitude:  6.7,
+			Longitude: 122.1,
+		},
+	)
+	if !errors.Is(err, domain.ErrDriverPresenceUnavailable) {
+		t.Fatalf("Ingest() error = %v, want presence unavailable error", err)
+	}
+	if repository.upsertCalls != 0 {
+		t.Fatalf("Upsert() calls = %d, want 0", repository.upsertCalls)
 	}
 }
 

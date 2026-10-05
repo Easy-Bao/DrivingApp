@@ -178,6 +178,19 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 			MaxAge:     config.RideLifecycle.DriverLocationMaxAge,
 		},
 		tracking.WithRideAssignments(rideAssignments),
+		tracking.WithDriverPresence(tracking.DriverPresenceReaderFunc(
+			func(ctx context.Context, driverID string) (bool, error) {
+				parsedDriverID, err := strconv.Atoi(driverID)
+				if err != nil {
+					return false, fmt.Errorf("parse driver id: %w", err)
+				}
+				profile, err := profileStore.Get(ctx, parsedDriverID)
+				if err != nil {
+					return false, err
+				}
+				return profile.Role == "driver" && profile.IsOnline, nil
+			},
+		)),
 		tracking.WithEventPublisher(eventPublisher),
 		tracking.WithLogger(applicationLogger),
 	)
