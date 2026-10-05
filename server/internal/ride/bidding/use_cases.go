@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
+	"strings"
 	"time"
 
 	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
@@ -276,7 +277,11 @@ func (service *Service) CancelSession(ctx context.Context, sessionID, passengerI
 	}
 	session, err := service.store.CancelSession(ctx, sessionID, passengerID)
 	if err != nil {
-		return domain.BidSession{}, fmt.Errorf("cancel bid session: %w", err)
+		recovered, recoveredOK := service.recoverCancelledSession(ctx, sessionID, passengerID)
+		if !recoveredOK {
+			return domain.BidSession{}, fmt.Errorf("cancel bid session: %w", err)
+		}
+		session = recovered
 	}
 	service.publishSessionEvent(
 		ctx,
@@ -293,7 +298,11 @@ func (service *Service) CancelOffer(ctx context.Context, sessionID, driverID int
 	}
 	offer, err := service.store.CancelOffer(ctx, sessionID, driverID)
 	if err != nil {
-		return domain.BidOffer{}, fmt.Errorf("cancel bid offer: %w", err)
+		recovered, recoveredOK := service.recoverRejectedOffer(ctx, sessionID, driverID)
+		if !recoveredOK {
+			return domain.BidOffer{}, fmt.Errorf("cancel bid offer: %w", err)
+		}
+		offer = recovered
 	}
 	session, sessionErr := service.store.Session(ctx, sessionID)
 	if sessionErr == nil {
@@ -313,6 +322,39 @@ func (service *Service) CancelOffer(ctx context.Context, sessionID, driverID int
 		service.publishDriverOfferEvent(ctx, offer, map[string]any{"offer": offer})
 	}
 	return offer, nil
+}
+
+func (service *Service) recoverCancelledSession(
+	ctx context.Context,
+	sessionID, passengerID int,
+) (domain.BidSession, bool) {
+	recovered, err := service.store.Session(ctx, sessionID)
+	if err != nil || recovered.PassengerID != passengerID {
+		return domain.BidSession{}, false
+	}
+	return recovered, isBidStatus(recovered.Status, "cancelled")
+}
+
+func (service *Service) recoverRejectedOffer(
+	ctx context.Context,
+	sessionID, driverID int,
+) (domain.BidOffer, bool) {
+	offers, err := service.store.Offers(ctx, sessionID)
+	if err != nil {
+		return domain.BidOffer{}, false
+	}
+	for _, offer := range offers {
+		if offer.SessionID == sessionID &&
+			offer.DriverID == driverID &&
+			isBidStatus(offer.Status, "rejected") {
+			return offer, true
+		}
+	}
+	return domain.BidOffer{}, false
+}
+
+func isBidStatus(value, expected string) bool {
+	return strings.EqualFold(strings.TrimSpace(value), expected)
 }
 
 func (service *Service) Session(ctx context.Context, sessionID int) (domain.BidSession, error) {

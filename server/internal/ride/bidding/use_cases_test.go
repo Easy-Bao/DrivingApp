@@ -13,10 +13,12 @@ import (
 )
 
 type biddingStoreStub struct {
-	session    domain.BidSession
-	offers     []domain.BidOffer
-	acceptance domain.OfferAcceptance
-	placeErr   error
+	session          domain.BidSession
+	offers           []domain.BidOffer
+	acceptance       domain.OfferAcceptance
+	placeErr         error
+	cancelSessionErr error
+	cancelOfferErr   error
 }
 
 func (stub *biddingStoreStub) CreateSession(_ context.Context, session domain.BidSession) (domain.BidSession, error) {
@@ -42,13 +44,13 @@ func (stub *biddingStoreStub) AcceptOffer(
 	return stub.acceptance, nil
 }
 func (stub *biddingStoreStub) CancelSession(context.Context, int, int) (domain.BidSession, error) {
-	return domain.BidSession{}, nil
+	return domain.BidSession{}, stub.cancelSessionErr
 }
 func (stub *biddingStoreStub) CancelOffer(context.Context, int, int) (domain.BidOffer, error) {
-	return domain.BidOffer{}, nil
+	return domain.BidOffer{}, stub.cancelOfferErr
 }
 func (stub *biddingStoreStub) Session(context.Context, int) (domain.BidSession, error) {
-	return domain.BidSession{}, nil
+	return stub.session, nil
 }
 
 type activeRideCheckerStub struct {
@@ -278,5 +280,46 @@ func TestSessionCopiesOffersAtTheApplicationBoundary(t *testing.T) {
 	session.Offers[0].Status = "mutated"
 	if store.offers[0].Status != "pending" {
 		t.Fatalf("store offers were mutated through returned session: %#v", store.offers)
+	}
+}
+
+func TestCancelSessionRecoversAnAlreadyCancelledSession(t *testing.T) {
+	existing := domain.BidSession{ID: 10, PassengerID: 101, Status: "cancelled"}
+	store := &biddingStoreStub{
+		session:          existing,
+		cancelSessionErr: errors.New("response lost after cancellation"),
+	}
+	service := bidding.NewService(bidding.Dependencies{Store: store})
+
+	recovered, err := service.CancelSession(context.Background(), existing.ID, existing.PassengerID)
+	if err != nil {
+		t.Fatalf("CancelSession() error = %v", err)
+	}
+	if recovered.ID != existing.ID ||
+		recovered.PassengerID != existing.PassengerID ||
+		recovered.Status != existing.Status {
+		t.Fatalf("recovered session = %+v, want %+v", recovered, existing)
+	}
+}
+
+func TestCancelOfferRecoversAnAlreadyRejectedOffer(t *testing.T) {
+	existing := domain.BidOffer{
+		ID:        20,
+		SessionID: 10,
+		DriverID:  42,
+		Status:    "rejected",
+	}
+	store := &biddingStoreStub{
+		offers:         []domain.BidOffer{existing},
+		cancelOfferErr: errors.New("response lost after cancellation"),
+	}
+	service := bidding.NewService(bidding.Dependencies{Store: store})
+
+	recovered, err := service.CancelOffer(context.Background(), existing.SessionID, existing.DriverID)
+	if err != nil {
+		t.Fatalf("CancelOffer() error = %v", err)
+	}
+	if recovered != existing {
+		t.Fatalf("recovered offer = %+v, want %+v", recovered, existing)
 	}
 }
