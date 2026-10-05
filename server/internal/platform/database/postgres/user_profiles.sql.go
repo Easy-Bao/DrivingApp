@@ -172,9 +172,7 @@ const updateDriverProfile = `-- name: UpdateDriverProfile :one
 UPDATE driver_profiles
 SET name = $2,
     vehicle_type = $3,
-    plate_number = $4,
-    is_online = $5,
-    online_last_seen_at = CASE WHEN $5::boolean THEN online_last_seen_at ELSE NULL END
+    plate_number = $4
 WHERE id = $1
 RETURNING id, user_id, name, vehicle_type, plate_number, rating, is_online,
     online_last_seen_at
@@ -185,7 +183,6 @@ type UpdateDriverProfileParams struct {
 	Name        string `db:"name"`
 	VehicleType string `db:"vehicle_type"`
 	PlateNumber string `db:"plate_number"`
-	IsOnline    bool   `db:"is_online"`
 }
 
 func (q *Queries) UpdateDriverProfile(ctx context.Context, arg UpdateDriverProfileParams) (DriverProfile, error) {
@@ -194,7 +191,6 @@ func (q *Queries) UpdateDriverProfile(ctx context.Context, arg UpdateDriverProfi
 		arg.Name,
 		arg.VehicleType,
 		arg.PlateNumber,
-		arg.IsOnline,
 	)
 	var i DriverProfile
 	err := row.Scan(

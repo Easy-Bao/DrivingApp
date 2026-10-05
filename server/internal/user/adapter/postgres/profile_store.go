@@ -146,7 +146,6 @@ func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Pr
 			Name:        profile.Name,
 			VehicleType: profile.VehicleType,
 			PlateNumber: profile.PlateNumber,
-			IsOnline:    profile.IsOnline,
 		})
 		if updateErr != nil {
 			return domain.Profile{}, fmt.Errorf("update driver profile: %w", updateErr)
