@@ -323,6 +323,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
         provider == null) {
       return;
     }
+    if (!await shouldContinueOnlineWork()) return;
 
     final token = await provider.getToken();
     if (token == null || token.isEmpty) {
@@ -395,6 +396,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
         provider == null) {
       return;
     }
+    if (!await shouldContinueOnlineWork()) return;
 
     final token = await provider.getToken();
     final driverId = await sessionStore.readDriverId();
