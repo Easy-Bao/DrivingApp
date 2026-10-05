@@ -50,6 +50,9 @@ Future<bool> showPassengerSafetyReportSheet(
   return await showModalBottomSheet<bool>(
         context: context,
         isScrollControlled: true,
+        isDismissible: true,
+        enableDrag: true,
+        showDragHandle: false,
         useSafeArea: true,
         backgroundColor: Colors.transparent,
         builder: (context) => _PassengerSafetyReportSheet(
@@ -190,14 +193,6 @@ class _PassengerSafetyReportSheetState
                         ),
                       ),
                     ),
-                    IconButton(
-                      onPressed: _isSubmitting
-                          ? null
-                          : () => Navigator.of(context).pop(),
-                      tooltip: MaterialLocalizations.of(context)
-                          .closeButtonTooltip,
-                      icon: const Icon(LucideIcons.x),
-                    ),
                   ],
                 ),
                 const SizedBox(height: EasyRideSpacing.xs),
@@ -250,18 +245,24 @@ class _PassengerSafetyReportSheetState
                 const SizedBox(height: EasyRideSpacing.md),
                 SizedBox(
                   height: EasyRideSize.controlHeight,
-                  child: FilledButton.icon(
+                  child: FilledButton(
                     onPressed: _isSubmitting ? null : _submit,
-                    icon: _isSubmitting
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                    child: _isSubmitting
+                        ? const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                              SizedBox(width: EasyRideSpacing.sm),
+                              Text('Submitting…'),
+                            ],
                           )
-                        : const Icon(LucideIcons.send),
-                    label: Text(
-                      _isSubmitting ? 'Submitting…' : 'Submit report',
-                    ),
+                        : const Text('Submit report'),
                   ),
                 ),
               ],
