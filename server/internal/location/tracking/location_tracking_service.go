@@ -113,6 +113,12 @@ func (service *LocationTrackingService) Ingest(ctx context.Context, point domain
 		}
 		return fmt.Errorf("persist driver location: %w", err)
 	}
+	if err := service.requireOnlineDriver(ctx, point.DriverID); err != nil {
+		if cleanupErr := service.repository.Remove(ctx, point.DriverID); cleanupErr != nil {
+			return fmt.Errorf("%w: remove location after presence changed: %v", err, cleanupErr)
+		}
+		return err
+	}
 	if err := contextError(ctx); err != nil {
 		return err
 	}

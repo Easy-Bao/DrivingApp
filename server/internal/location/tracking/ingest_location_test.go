@@ -16,6 +16,7 @@ type locationRepositoryStub struct {
 	passengerPoint domain.DriverPoint
 	nearby         []domain.DriverPoint
 	upsertCalls    int
+	removeCalls    int
 	upsertErr      error
 }
 
@@ -26,6 +27,20 @@ type driverPresenceStub struct {
 
 func (stub driverPresenceStub) IsOnline(context.Context, string) (bool, error) {
 	return stub.online, stub.err
+}
+
+type driverPresenceSequenceStub struct {
+	results []bool
+	calls   int
+}
+
+func (stub *driverPresenceSequenceStub) IsOnline(context.Context, string) (bool, error) {
+	index := stub.calls
+	if index >= len(stub.results) {
+		index = len(stub.results) - 1
+	}
+	stub.calls++
+	return stub.results[index], nil
 }
 
 func newLocationTrackingService(
@@ -43,7 +58,10 @@ func (stub *locationRepositoryStub) Upsert(_ context.Context, point domain.Drive
 	stub.driverPoint = point
 	return nil
 }
-func (locationRepositoryStub) Remove(context.Context, string) error { return nil }
+func (stub *locationRepositoryStub) Remove(context.Context, string) error {
+	stub.removeCalls++
+	return nil
+}
 func (stub *locationRepositoryStub) Nearby(context.Context, float64, float64, float64) ([]domain.DriverPoint, error) {
 	return stub.nearby, nil
 }
@@ -118,6 +136,33 @@ func TestIngestRejectsLocationFromAnOfflineDriver(t *testing.T) {
 	}
 	if repository.upsertCalls != 0 {
 		t.Fatalf("Upsert() calls = %d, want 0", repository.upsertCalls)
+	}
+}
+
+func TestIngestRemovesLocationWhenTheDriverGoesOfflineDuringPersistence(t *testing.T) {
+	repository := &locationRepositoryStub{}
+	presence := &driverPresenceSequenceStub{results: []bool{true, false}}
+	service := newLocationTrackingService(
+		repository,
+		WithDriverPresence(presence),
+	)
+
+	err := service.Ingest(
+		context.Background(),
+		domain.DriverPoint{
+			DriverID:  "driver-1",
+			Latitude:  6.7,
+			Longitude: 122.1,
+		},
+	)
+	if !errors.Is(err, domain.ErrDriverOffline) {
+		t.Fatalf("Ingest() error = %v, want offline driver error", err)
+	}
+	if repository.upsertCalls != 1 {
+		t.Fatalf("Upsert() calls = %d, want 1", repository.upsertCalls)
+	}
+	if repository.removeCalls != 1 {
+		t.Fatalf("Remove() calls = %d, want 1", repository.removeCalls)
 	}
 }
 
