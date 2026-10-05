@@ -73,6 +73,10 @@ func (handler *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	profile, err := handler.service.Update(r.Context(), applyProfileUpdate(current, input))
 	if err != nil {
+		if errors.Is(err, domain.ErrDriverVehicleChangeWhileOnline) {
+			response.Error(w, http.StatusConflict, "Go offline before changing vehicle information.")
+			return
+		}
 		response.Error(w, http.StatusInternalServerError, "Your profile is temporarily unavailable. Please try again.")
 		return
 	}

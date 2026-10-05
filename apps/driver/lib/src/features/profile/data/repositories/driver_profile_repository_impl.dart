@@ -3,6 +3,7 @@ import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver/src/features/profile/data/data_sources/driver_profile_remote_data_source.dart';
 import 'package:driver/src/features/profile/domain/entities/driver_account_snapshot.dart';
 import 'package:driver/src/features/profile/domain/repositories/driver_profile_repository.dart';
+import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -142,6 +143,11 @@ final class DriverProfileRepositoryImpl({
 }
 
 Failure _mapFailure(Object error) {
+  if (error is DioException && error.response?.statusCode == 409) {
+    return const ValidationFailure(
+      'Go offline before changing your registered vehicle information.',
+    );
+  }
   return FailureMapper.fromException(
     error,
     serverMessage: 'Your driver account is temporarily unavailable.',

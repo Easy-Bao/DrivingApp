@@ -119,6 +119,31 @@ func (q *Queries) ListNotifications(ctx context.Context, arg ListNotificationsPa
 	return items, nil
 }
 
+const lockDriverProfileByUserID = `-- name: LockDriverProfileByUserID :one
+SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online,
+    online_last_seen_at
+FROM driver_profiles
+WHERE user_id = $1
+LIMIT 1
+FOR UPDATE
+`
+
+func (q *Queries) LockDriverProfileByUserID(ctx context.Context, userID int32) (DriverProfile, error) {
+	row := q.db.QueryRow(ctx, lockDriverProfileByUserID, userID)
+	var i DriverProfile
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Name,
+		&i.VehicleType,
+		&i.PlateNumber,
+		&i.Rating,
+		&i.IsOnline,
+		&i.OnlineLastSeenAt,
+	)
+	return i, err
+}
+
 const updateDriverOnlineStatus = `-- name: UpdateDriverOnlineStatus :one
 UPDATE driver_profiles
 SET is_online = $1,

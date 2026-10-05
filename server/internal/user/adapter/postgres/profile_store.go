@@ -141,6 +141,15 @@ func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Pr
 	var updated domain.Profile
 	switch profile.Role {
 	case "driver":
+		currentDriver, lockErr := transactionQueries.LockDriverProfileByUserID(ctx, dbUserID)
+		if lockErr != nil {
+			return domain.Profile{}, fmt.Errorf("lock driver profile: %w", lockErr)
+		}
+		if currentDriver.IsOnline &&
+			(currentDriver.VehicleType != profile.VehicleType ||
+				currentDriver.PlateNumber != profile.PlateNumber) {
+			return domain.Profile{}, domain.ErrDriverVehicleChangeWhileOnline
+		}
 		driverProfile, updateErr := transactionQueries.UpdateDriverProfile(ctx, databasepostgres.UpdateDriverProfileParams{
 			ID:          dbProfileID,
 			Name:        profile.Name,

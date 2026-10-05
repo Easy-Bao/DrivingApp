@@ -1,5 +1,11 @@
 package domain
 
+import "errors"
+
+var ErrDriverVehicleChangeWhileOnline = errors.New(
+	"driver vehicle identity cannot change while online",
+)
+
 type Profile struct {
 	ID                int     `json:"id"`
 	UserID            int     `json:"user_id"`

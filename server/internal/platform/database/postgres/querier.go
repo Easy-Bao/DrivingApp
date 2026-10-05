@@ -88,6 +88,7 @@ type Querier interface {
 	ListTargetedActiveBidSessions(ctx context.Context, arg ListTargetedActiveBidSessionsParams) ([]BidSession, error)
 	LockActiveBidSessionForOffer(ctx context.Context, arg LockActiveBidSessionForOfferParams) (BidSession, error)
 	LockCompletedRideForCashSettlement(ctx context.Context, arg LockCompletedRideForCashSettlementParams) (Ride, error)
+	LockDriverProfileByUserID(ctx context.Context, userID int32) (DriverProfile, error)
 	LockOnlineDriverProfileForBidding(ctx context.Context, arg LockOnlineDriverProfileForBiddingParams) (DriverProfile, error)
 	LockPendingBidOfferForAcceptance(ctx context.Context, arg LockPendingBidOfferForAcceptanceParams) (BidOffer, error)
 	LockRequestedRideForAcceptance(ctx context.Context, id int32) (Ride, error)
