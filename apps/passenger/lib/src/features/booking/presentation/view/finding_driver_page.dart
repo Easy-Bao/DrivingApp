@@ -461,7 +461,6 @@ class _FindingDriverPageContentState()
               unawaited(HapticFeedback.lightImpact());
               final match = state.matchResult;
               final navExtra = <String, dynamic>{
-                'rideType': widget.rideType,
                 'destination': widget.destination,
                 'distance': widget.distance,
                 'duration': widget.duration,
@@ -607,7 +606,6 @@ class _FindingDriverPageContentState()
                           if (state is FindingNearestDriver) {
                             return FindingDriverSearchingPanelWidget(
                               message: state.statusMessage,
-                              rideType: widget.rideType,
                               fare: widget.fare,
                               destination: widget.destination,
                               pickupAddress: widget.pickupAddress,
@@ -655,7 +653,6 @@ class _FindingDriverPageContentState()
                           } else if (state is BookingSearching) {
                             return FindingDriverSearchingPanelWidget(
                               message: state.statusMessage,
-                              rideType: widget.rideType,
                               fare: widget.fare,
                               destination: widget.destination,
                               pickupAddress: widget.pickupAddress,
@@ -667,7 +664,6 @@ class _FindingDriverPageContentState()
                             if (state.offers.isEmpty) {
                               return FindingDriverSearchingPanelWidget(
                                 message: state.statusMessage,
-                                rideType: widget.rideType,
                                 fare: widget.fare,
                                 destination: widget.destination,
                                 pickupAddress: widget.pickupAddress,

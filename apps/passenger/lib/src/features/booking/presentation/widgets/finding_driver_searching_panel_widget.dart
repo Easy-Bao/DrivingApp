@@ -6,7 +6,6 @@ import 'package:passenger/src/features/booking/presentation/widgets/finding_driv
 class const FindingDriverSearchingPanelWidget({
   super.key,
   required this.message,
-  required this.rideType,
   required this.fare,
   required this.destination,
   this.pickupAddress,
@@ -15,7 +14,6 @@ class const FindingDriverSearchingPanelWidget({
   this.isCanceling = false,
 }) extends StatelessWidget {
   final String message;
-  final String rideType;
   final double fare;
   final Place destination;
   final String? pickupAddress;
@@ -30,7 +28,7 @@ class const FindingDriverSearchingPanelWidget({
       title: message,
       message: pickupAddress != null
           ? 'Your request is with nearby drivers. We’ll let you know as soon as one accepts.'
-          : 'We’re checking nearby $rideType drivers for your ride.',
+          : 'We’re checking nearby drivers for your ride.',
       statusIcon: LucideIcons.search,
       statusColor: Theme.of(context).colorScheme.primary,
       statusAnimation: dotAnimation,

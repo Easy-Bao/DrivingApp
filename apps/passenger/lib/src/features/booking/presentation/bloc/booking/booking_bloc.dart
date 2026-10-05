@@ -286,8 +286,8 @@ class BookingBloc({
     inboxCubit.addLocalNotification(
       InboxNotification(
         id: 'no-driver-${DateTime.now().millisecondsSinceEpoch}',
-        title: 'No driver found',
-        message: 'We could not find a driver for your ride. You can try searching again.',
+        title: 'No drivers nearby',
+        message: 'Try searching again when you’re ready.',
         timestamp: DateTime.now(),
         type: 'driver',
         isRead: false,

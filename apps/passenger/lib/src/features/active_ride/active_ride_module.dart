@@ -65,7 +65,6 @@ class ActiveRideModule._() {
           );
         }
         return DriverMatchedPage(
-          rideType: data.string('rideType') ?? 'Solo Ride',
           fare: fare,
           destination: destination,
           distance: distance,

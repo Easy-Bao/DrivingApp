@@ -13,7 +13,6 @@ import 'package:passenger/src/features/ride_history/ride_history.dart';
 
 class const DriverMatchedPage({
   super.key,
-  required this.rideType,
   required this.fare,
   required this.destination,
   required this.distance,
@@ -27,7 +26,6 @@ class const DriverMatchedPage({
   this.createdRide,
   required this.profileRepository,
 }) extends StatefulWidget {
-  final String rideType;
   final double fare;
   final Place destination;
   final String distance;
@@ -154,7 +152,7 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Your ${widget.rideType} driver is on the way',
+                        'Your driver is on the way',
                         style: TextStyle(
                           fontSize: 14,
                           color: context.colorScheme.onSurfaceVariant,

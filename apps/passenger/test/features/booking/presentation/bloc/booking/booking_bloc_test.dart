@@ -184,7 +184,7 @@ void main() {
 
         expect(await failure, isA<BookingFailure>());
         final inboxState = inboxCubit.state as InboxLoadedState;
-        expect(inboxState.notifications.single.title, 'No driver found');
+        expect(inboxState.notifications.single.title, 'No drivers nearby');
         verify(() => driverRepo.getNearbyDrivers(lat: 7.828, lng: 123.434))
             .called(1);
 

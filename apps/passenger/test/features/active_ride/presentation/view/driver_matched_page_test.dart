@@ -40,7 +40,6 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: DriverMatchedPage(
-          rideType: 'Bicycle',
           fare: 26,
           destination: const Place(
             id: 'destination-1',
@@ -62,6 +61,8 @@ void main() {
     await tester.pump();
 
     expect(tester.takeException(), isNull);
+    expect(find.text('Your driver is on the way'), findsOneWidget);
+    expect(find.text('Your Bicycle driver is on the way'), findsNothing);
     expect(find.text('Track Your Driver'), findsOneWidget);
   });
 }
