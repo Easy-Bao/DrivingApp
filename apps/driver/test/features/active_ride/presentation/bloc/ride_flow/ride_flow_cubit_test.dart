@@ -400,6 +400,23 @@ void main() {
     },
   );
 
+  test('exposes the server-owned no-show time remaining', () async {
+    final now = DateTime.now().toUtc();
+    final cubit = _makeCubit(mockRideRepository, mockSessionService);
+    cubit.resumeRide(
+      rideId: 'test-ride-id',
+      status: 'arrived',
+      passengerName: 'Juan Dela Cruz',
+      waitingUntil: now.add(const Duration(seconds: 30)),
+    );
+
+    final remaining = cubit.passengerNoShowTimeRemaining;
+
+    expect(remaining, isNotNull);
+    expect(remaining!.inSeconds, inInclusiveRange(29, 30));
+    await cubit.close();
+  });
+
   group('RideFlowCubit — reset()', () {
     blocTest<RideFlowCubit, RideFlowState>(
       'returns to RideFlowInitial from any state',

@@ -124,6 +124,13 @@ class RideFlowCubit({
         !DateTime.now().toUtc().isBefore(waitingUntil);
   }
 
+  Duration? get passengerNoShowTimeRemaining {
+    final waitingUntil = _waitingUntil;
+    if (waitingUntil == null) return null;
+    final remaining = waitingUntil.difference(DateTime.now().toUtc());
+    return remaining.isNegative ? Duration.zero : remaining;
+  }
+
   Future<void> acceptRide({
     required String rideId,
     required String passengerName,

@@ -27,6 +27,7 @@ typedef _WaitingPassengerPresentation = ({
   String passengerName,
   String waitFormatted,
   bool canMarkNoShow,
+  Duration? noShowTimeRemaining,
 });
 
 class const WaitingPassengerPage({
@@ -141,6 +142,14 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
     final elapsedMinutes = elapsedSeconds ~/ 60;
     final remainingSeconds = elapsedSeconds % 60;
     return '${elapsedMinutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
+  }
+
+  String _formatNoShowTimeRemaining(Duration? remaining) {
+    if (remaining == null) return 'No-Show Unavailable';
+    final totalSeconds = (remaining.inMilliseconds + 999) ~/ 1000;
+    final minutes = totalSeconds ~/ 60;
+    final seconds = totalSeconds % 60;
+    return 'No-Show Available After ${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   Future<void> _startTrip() async {
@@ -286,8 +295,14 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                 : '00:00',
             canMarkNoShow:
                 state.isWaitingAtPickup && cubit.canMarkPassengerNoShow,
+            noShowTimeRemaining: state.isWaitingAtPickup
+                ? cubit.passengerNoShowTimeRemaining
+                : null,
           );
         });
+    final noShowLabel = presentation.canMarkNoShow
+        ? 'Passenger No-Show'
+        : _formatNoShowTimeRemaining(presentation.noShowTimeRemaining);
 
     return PopScope(
       canPop: false,
@@ -458,7 +473,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                                               ),
                                             )
                                           : const Icon(LucideIcons.user_x),
-                                      label: Text('Passenger No-Show'),
+                                      label: Text(noShowLabel),
                                     ),
                                   ),
                                   const SizedBox(height: 10),
