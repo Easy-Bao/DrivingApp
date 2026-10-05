@@ -338,6 +338,69 @@ void main() {
     router.dispose();
   });
 
+  testWidgets('keeps the map-pin search cycle to one back-stack return', (
+    tester,
+  ) async {
+    final router = GoRouter(
+      initialLocation: '/search',
+      routes: [
+        GoRoute(
+          path: '/search',
+          builder: (context, state) => SearchDestinationPage(
+            autofocusSearch: state.uri.queryParameters['focus'] == '1',
+            returnToMapPin: state.uri.queryParameters['returnToMapPin'] == '1',
+          ),
+        ),
+        GoRoute(
+          name: BookingRoutes.mapPin,
+          path: '/map-pin',
+          builder: (context, state) => Scaffold(
+            body: Center(
+              child: ElevatedButton(
+                key: const ValueKey('map-pin-search'),
+                onPressed: () =>
+                    context.push('/search?focus=1&returnToMapPin=1'),
+                child: const Text('Search from map pin'),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp.router(theme: EasyRideTheme.main, routerConfig: router),
+    );
+    await tester.pumpAndSettle();
+
+    Future<void> openSearchFromMapPin() async {
+      await tester.tap(find.byKey(const ValueKey('map-pin-search')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      final topSearch = find.byType(SearchDestinationPage).last;
+      await tester.tap(
+        find.descendant(
+          of: topSearch,
+          matching: find.byKey(const ValueKey('search-destination-map-pin')),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('map-pin-search')), findsOneWidget);
+    }
+
+    await tester.tap(find.byKey(const ValueKey('search-destination-map-pin')));
+    await tester.pumpAndSettle();
+    await openSearchFromMapPin();
+    await openSearchFromMapPin();
+
+    router.pop();
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SearchDestinationPage), findsOneWidget);
+  });
+
   testWidgets('does not stack ride-selection routes from repeated results', (
     tester,
   ) async {
