@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
@@ -158,6 +159,20 @@ func (repository *RideRepository) SettleCash(
 	})
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("mark ride cash outcome: %w", err)
+	}
+	auditRequestID, err := newAuditRequestID()
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("create cash settlement audit request id: %w", err)
+	}
+	if _, err := transactionQueries.CreateAuditEvent(ctx, databasepostgres.CreateAuditEventParams{
+		ActorID:    dbDriverID,
+		Action:     "ride.cash_settled",
+		TargetType: "ride",
+		TargetID:   pgtype.Text{String: strconv.FormatInt(int64(request.RideID), 10), Valid: true},
+		Outcome:    string(validated.Outcome),
+		RequestID:  auditRequestID,
+	}); err != nil {
+		return domain.Ride{}, fmt.Errorf("create cash settlement audit event: %w", err)
 	}
 	if err := transaction.Commit(ctx); err != nil {
 		return domain.Ride{}, fmt.Errorf("commit cash settlement transaction: %w", err)
