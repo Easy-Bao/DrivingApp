@@ -19,3 +19,7 @@ CREATE TABLE passenger_profiles (
     avatar_content_type text,
     preferred_ride_type text
 );
+
+CREATE INDEX driver_profiles_online_last_seen_at_idx
+    ON driver_profiles (online_last_seen_at, user_id)
+    WHERE is_online = true;

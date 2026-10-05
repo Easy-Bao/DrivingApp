@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS driver_profiles_online_last_seen_at_idx;
