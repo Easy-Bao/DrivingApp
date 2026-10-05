@@ -464,6 +464,33 @@ void main() {
       ],
     );
 
+    blocTest<DashboardCubit, DashboardState>(
+      'reconciles a rejected online lease to offline',
+      build: () {
+        when(() => repo.updateOnlineStatus(isOnline: true, lat: lat, lng: lng))
+            .thenAnswer(
+              (_) async => const Err(
+                ServerFailure.withStatusCode('availability restricted', 403),
+              ),
+            );
+        when(() => repo.updateOnlineStatus(isOnline: false, lat: lat, lng: lng))
+            .thenAnswer((_) async => const Ok(null));
+        return _makeCubit(repo);
+      },
+      seed: () => const DashboardState(isOnline: true),
+      act: (cubit) => cubit.refreshOnlinePresence(lat: lat, lng: lng),
+      expect: () => [
+        const DashboardState(
+          errorMessage: "You don't have permission to do that.",
+        ),
+      ],
+      verify: (_) {
+        verify(
+          () => repo.updateOnlineStatus(isOnline: false, lat: lat, lng: lng),
+        ).called(1);
+      },
+    );
+
     test(
       'forceOffline reconciles the server even from local offline state',
       () async {
