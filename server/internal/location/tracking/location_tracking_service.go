@@ -19,13 +19,20 @@ type LocationTrackingService struct {
 	assignments    assignment.Lookup
 	eventPublisher EventPublisher
 	logger         *slog.Logger
+	maxAge         time.Duration
 }
 
 type LocationTrackingDependencies struct {
 	Repository LocationStore
+	MaxAge     time.Duration
 }
 
 var ErrPersistenceUnavailable = errors.New("location persistence is unavailable")
+
+const (
+	defaultLocationMaxAge    = 45 * time.Second
+	maximumLocationClockSkew = 15 * time.Second
+)
 
 type Option func(*LocationTrackingService)
 
@@ -49,7 +56,15 @@ func NewLocationTrackingService(
 	dependencies LocationTrackingDependencies,
 	options ...Option,
 ) *LocationTrackingService {
-	service := &LocationTrackingService{repository: dependencies.Repository, logger: slog.Default()}
+	maxAge := dependencies.MaxAge
+	if maxAge <= 0 {
+		maxAge = defaultLocationMaxAge
+	}
+	service := &LocationTrackingService{
+		repository: dependencies.Repository,
+		logger:     slog.Default(),
+		maxAge:     maxAge,
+	}
 	for _, option := range options {
 		if option != nil {
 			option(service)
@@ -67,6 +82,16 @@ func (service *LocationTrackingService) Ingest(ctx context.Context, point domain
 	}
 	if point.ObservedAt.IsZero() {
 		point.ObservedAt = time.Now().UTC()
+	}
+	observedAge := time.Since(point.ObservedAt)
+	if observedAge < -maximumLocationClockSkew {
+		return domain.ErrInvalidLocation
+	}
+	if observedAge > service.maxLocationAge() {
+		// A delayed mobile spool may legitimately deliver an old point after
+		// reconnecting. It must not replace fresh telemetry, but retrying it is
+		// also pointless, so treat it as an accepted no-op.
+		return nil
 	}
 	invalidCoordinates := !validCoordinates(point.Latitude, point.Longitude)
 	invalidMotion := !validMotion(point.Heading, point.Speed)
@@ -360,6 +385,13 @@ func (service *LocationTrackingService) log() *slog.Logger {
 		return service.logger
 	}
 	return slog.Default()
+}
+
+func (service *LocationTrackingService) maxLocationAge() time.Duration {
+	if service != nil && service.maxAge > 0 {
+		return service.maxAge
+	}
+	return defaultLocationMaxAge
 }
 
 func validCoordinates(latitude, longitude float64) bool {

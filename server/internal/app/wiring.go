@@ -175,6 +175,7 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 	trackingService := tracking.NewLocationTrackingService(
 		tracking.LocationTrackingDependencies{
 			Repository: tracking.NewDriverLocationStore(redisClient).WithLogger(applicationLogger),
+			MaxAge:     config.RideLifecycle.DriverLocationMaxAge,
 		},
 		tracking.WithRideAssignments(rideAssignments),
 		tracking.WithEventPublisher(eventPublisher),

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/domain"
@@ -85,6 +86,53 @@ func TestIngestRejectsInvalidCoordinates(t *testing.T) {
 	)
 	if invalidLongitudeErr == nil {
 		t.Fatal("expected invalid longitude to be rejected")
+	}
+}
+
+func TestIngestIgnoresTelemetryOlderThanTheConfiguredFreshnessWindow(t *testing.T) {
+	repository := &locationRepositoryStub{}
+	service := NewLocationTrackingService(
+		LocationTrackingDependencies{
+			Repository: repository,
+			MaxAge:     time.Minute,
+		},
+	)
+
+	err := service.Ingest(
+		context.Background(),
+		domain.DriverPoint{
+			DriverID:   "driver-1",
+			Latitude:   6.7,
+			Longitude:  122.1,
+			ObservedAt: time.Now().UTC().Add(-time.Minute - time.Second),
+		},
+	)
+	if err != nil {
+		t.Fatalf("Ingest() error = %v, want nil for stale telemetry", err)
+	}
+	if repository.upsertCalls != 0 {
+		t.Fatalf("Upsert() calls = %d, want 0", repository.upsertCalls)
+	}
+}
+
+func TestIngestRejectsTelemetryBeyondTheAllowedClockSkew(t *testing.T) {
+	repository := &locationRepositoryStub{}
+	service := newLocationTrackingService(repository)
+
+	err := service.Ingest(
+		context.Background(),
+		domain.DriverPoint{
+			DriverID:   "driver-1",
+			Latitude:   6.7,
+			Longitude:  122.1,
+			ObservedAt: time.Now().UTC().Add(16 * time.Second),
+		},
+	)
+	if !errors.Is(err, domain.ErrInvalidLocation) {
+		t.Fatalf("Ingest() error = %v, want invalid location", err)
+	}
+	if repository.upsertCalls != 0 {
+		t.Fatalf("Upsert() calls = %d, want 0", repository.upsertCalls)
 	}
 }
 
