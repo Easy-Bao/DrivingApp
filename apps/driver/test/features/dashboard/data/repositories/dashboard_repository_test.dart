@@ -333,6 +333,46 @@ void main() {
     verify(() => _rideRepository.clearDriverLocation()).called(1);
   });
 
+  test('explains that an active ride blocks going offline', () async {
+    final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
+    final sessionService = MockSecureSessionService();
+
+    when(() => sessionService.readDriverId())
+        .thenAnswer((_) async => 'driver-42');
+    when(
+      () => availabilityDataSource.updateOnlineStatus(
+        driverId: 'driver-42',
+        isOnline: false,
+      ),
+    ).thenThrow(_httpFailure(statusCode: 409));
+    when(() => _rideRepository.clearDriverLocation())
+        .thenAnswer((_) async => const Ok(null));
+    when(() => sessionService.saveDriverOnlineStatus(false))
+        .thenAnswer((_) async {});
+    when(() => sessionService.clearDriverOnlineSince())
+        .thenAnswer((_) async {});
+
+    final repository = _buildRepository(
+      availabilityDataSource: availabilityDataSource,
+      sessionService: sessionService,
+    );
+
+    final result = await repository.updateOnlineStatus(
+      isOnline: false,
+      lat: 7.828,
+      lng: 123.434,
+    );
+
+    expect(result.isErr, isTrue);
+    result.fold(
+      (failure) => expect(
+        failure.message,
+        'Finish your active ride before going offline.',
+      ),
+      (_) => fail('Expected the active-ride availability conflict.'),
+    );
+  });
+
   test(
     'keeps the server error actionable when availability update fails',
     () async {

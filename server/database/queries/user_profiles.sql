@@ -13,6 +13,18 @@ WHERE user_id = $1
 LIMIT 1
 FOR UPDATE;
 
+-- name: LockDriverProfileForOnlineStatus :one
+SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online,
+    online_last_seen_at
+FROM driver_profiles
+WHERE user_id = sqlc.arg('user_id')
+  AND (
+      user_id = sqlc.arg('target_id')
+      OR id = sqlc.arg('target_id')
+  )
+LIMIT 1
+FOR UPDATE;
+
 -- name: GetPassengerProfileByUserIDFull :one
 SELECT id, user_id, name, address, gender, avatar_storage_key,
     avatar_content_type, preferred_ride_type

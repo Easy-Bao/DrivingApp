@@ -70,6 +70,10 @@ final class DashboardRepositoryImpl({
         'Driver availability access is restricted.',
         403,
       ),
+      409 => const ServerFailure.withStatusCode(
+        'Finish your active ride before going offline.',
+        409,
+      ),
       400 || 422 => ValidationFailure(
         _safeAvailabilityMessage(error.response?.data) ??
             'The online status request was invalid. Please try again.',
@@ -270,19 +274,19 @@ final class DashboardRepositoryImpl({
     }
 
     if (!isOnline) {
-      Object? statusError;
       try {
         await _availabilityDataSource.updateOnlineStatus(
           driverId: driverId,
           isOnline: false,
         );
       } catch (error) {
-        statusError = error;
+        // The server remains authoritative when the transition fails. Keep
+        // the current local online intent and telemetry alive until a later
+        // retry confirms that the driver is actually offline.
+        return Err(_mapExceptionToFailure(error));
       }
       await _clearOnlinePresence(driverId: driverId, markServerOffline: false);
-      return statusError == null
-          ? const Ok(null)
-          : Err(_mapExceptionToFailure(statusError));
+      return const Ok(null);
     }
 
     try {

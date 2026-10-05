@@ -201,7 +201,39 @@ func (repository *ProfileRepository) UpdateOnlineStatus(
 		return domain.Profile{}, fmt.Errorf("convert profile target id: %w", err)
 	}
 
-	profile, err := repository.queries.UpdateDriverOnlineStatus(
+	transaction, err := repository.pool.Begin(ctx)
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("begin driver online status transaction: %w", err)
+	}
+	defer func() {
+		platformdatabase.Rollback(ctx, transaction)
+	}()
+
+	transactionQueries := repository.queries.WithTx(transaction)
+	lockedProfile, err := transactionQueries.LockDriverProfileForOnlineStatus(
+		ctx,
+		databasepostgres.LockDriverProfileForOnlineStatusParams{
+			UserID:   dbUserID,
+			TargetID: dbTargetID,
+		},
+	)
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("lock driver online status profile: %w", err)
+	}
+	if !isOnline {
+		activeRideCount, countErr := transactionQueries.CountActiveRidesForDriver(
+			ctx,
+			pgtype.Int4{Int32: lockedProfile.UserID, Valid: true},
+		)
+		if countErr != nil {
+			return domain.Profile{}, fmt.Errorf("count active driver rides: %w", countErr)
+		}
+		if activeRideCount > 0 {
+			return domain.Profile{}, domain.ErrDriverAvailabilityBlocked
+		}
+	}
+
+	profile, err := transactionQueries.UpdateDriverOnlineStatus(
 		ctx,
 		databasepostgres.UpdateDriverOnlineStatusParams{
 			UserID:   dbUserID,
@@ -211,6 +243,9 @@ func (repository *ProfileRepository) UpdateOnlineStatus(
 	)
 	if err != nil {
 		return domain.Profile{}, fmt.Errorf("update driver online status: %w", err)
+	}
+	if err := transaction.Commit(ctx); err != nil {
+		return domain.Profile{}, fmt.Errorf("commit driver online status transaction: %w", err)
 	}
 	return domain.Profile{
 		ID:       int(profile.ID),

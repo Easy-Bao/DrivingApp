@@ -6,6 +6,10 @@ var ErrDriverVehicleChangeWhileOnline = errors.New(
 	"driver vehicle identity cannot change while online",
 )
 
+var ErrDriverAvailabilityBlocked = errors.New(
+	"driver cannot go offline with an active ride",
+)
+
 type Profile struct {
 	ID                int     `json:"id"`
 	UserID            int     `json:"user_id"`

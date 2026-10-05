@@ -344,6 +344,10 @@ func (handler *Handler) Online(w http.ResponseWriter, r *http.Request) {
 		isOnline,
 	)
 	if err != nil {
+		if errors.Is(err, domain.ErrDriverAvailabilityBlocked) {
+			response.Error(w, http.StatusConflict, "Finish your active ride before going offline.")
+			return
+		}
 		if isProfileNotFound(err) {
 			response.Error(w, http.StatusForbidden, "forbidden")
 			return
