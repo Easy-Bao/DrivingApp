@@ -41,6 +41,18 @@ func (service *Service) AcceptRide(ctx context.Context, rideID, driverID int) (d
 	if service.store == nil {
 		return domain.Ride{}, ErrPersistenceUnavailable
 	}
+	current, err := service.store.Get(ctx, rideID)
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("load ride for acceptance: %w", err)
+	}
+	currentStatus, currentStatusOK := domain.NormalizeRideStatus(current.Status)
+	if current.DriverID != nil &&
+		*current.DriverID == driverID &&
+		currentStatusOK &&
+		domain.IsActive(current.Status) &&
+		currentStatus != domain.RideRequested {
+		return current, nil
+	}
 	ride, err := service.store.AcceptRide(ctx, rideID, driverID)
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("accept ride: %w", err)

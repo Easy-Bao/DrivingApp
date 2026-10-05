@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/lifecycle"
 )
@@ -15,6 +16,7 @@ type fakeLifecycleStore struct {
 	transition            domain.RideTransition
 	arrivalCalls          int
 	noShowCalls           int
+	acceptCalls           int
 	passengerWaitDuration time.Duration
 }
 
@@ -23,7 +25,9 @@ func (store *fakeLifecycleStore) Get(_ context.Context, _ int) (domain.Ride, err
 }
 
 func (store *fakeLifecycleStore) AcceptRide(_ context.Context, _, _ int) (domain.Ride, error) {
-	return domain.Ride{}, nil
+	store.acceptCalls++
+	store.ride.Status = string(domain.RideAccepted)
+	return store.ride, nil
 }
 
 func (store *fakeLifecycleStore) MarkArrived(
@@ -92,6 +96,44 @@ func TestUpdateStatusIdempotentWhenAlreadyInTargetStatus(t *testing.T) {
 	}
 	if updated.Status != string(domain.RideInTransit) {
 		t.Fatalf("expected status %q, got %q", domain.RideInTransit, updated.Status)
+	}
+}
+
+func TestAcceptRideIsIdempotentForTheSameDriverWithAnActiveRide(t *testing.T) {
+	driverID := 42
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:          1,
+			PassengerID: 10,
+			DriverID:    &driverID,
+			Status:      string(domain.RideAccepted),
+		},
+	}
+	published := 0
+	service := lifecycle.NewService(lifecycle.Dependencies{
+		Store: store,
+		PublishRide: func(
+			context.Context,
+			event.Type,
+			domain.Ride,
+			map[string]any,
+		) {
+			published++
+		},
+	})
+
+	accepted, err := service.AcceptRide(context.Background(), 1, driverID)
+	if err != nil {
+		t.Fatalf("AcceptRide() retry error = %v", err)
+	}
+	if accepted.Status != string(domain.RideAccepted) {
+		t.Fatalf("status = %q, want accepted", accepted.Status)
+	}
+	if store.acceptCalls != 0 {
+		t.Fatalf("idempotent retry called the acceptance store %d times", store.acceptCalls)
+	}
+	if published != 0 {
+		t.Fatalf("idempotent retry published %d match events", published)
 	}
 }
 
