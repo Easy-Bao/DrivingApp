@@ -507,23 +507,18 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
       children: [
         _buildFieldLabel('Gender'),
         const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
+        EasyRideSelectField<String>(
           key: const ValueKey<String>('passenger-profile-gender'),
-          initialValue: _gender,
-          isExpanded: true,
-          icon: Icon(
-            LucideIcons.chevron_down,
-            size: 20,
-            color: context.colorScheme.onSurface,
-          ),
+          value: _gender,
+          menuTitle: 'Gender',
           style: context.textStyles.bodyLarge?.copyWith(
             fontWeight: FontWeight.w600,
             color: context.colorScheme.onSurface,
           ),
           decoration: _fieldDecoration(prefixIcon: LucideIcons.venus_and_mars),
-          items: [
+          options: [
             for (final gender in _genderOptions)
-              DropdownMenuItem<String>(value: gender, child: Text(gender)),
+              EasyRideSelectOption<String>(value: gender, label: gender),
           ],
           onChanged: (gender) {
             if (gender == null) return;

@@ -63,20 +63,21 @@ class _DriverRideCancellationSheetState
               ),
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
+            EasyRideSelectField<String>(
               key: const ValueKey('driver-cancellation-reason-dropdown'),
-              initialValue: _selectedReason,
+              value: _selectedReason,
+              menuTitle: 'Reason for cancellation',
               decoration: const InputDecoration(
                 labelText: 'Reason for cancellation',
               ),
-              items: DriverRideCancellationSheet.cancellationReasons.entries
-                  .map(
-                    (entry) => DropdownMenuItem<String>(
-                      value: entry.key,
-                      child: Text(entry.value),
-                    ),
-                  )
-                  .toList(),
+              options: [
+                for (final entry
+                    in DriverRideCancellationSheet.cancellationReasons.entries)
+                  EasyRideSelectOption<String>(
+                    value: entry.key,
+                    label: entry.value,
+                  ),
+              ],
               onChanged: (value) {
                 setState(() {
                   _selectedReason = value;

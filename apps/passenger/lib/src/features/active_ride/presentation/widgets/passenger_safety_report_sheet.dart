@@ -203,17 +203,19 @@ class _PassengerSafetyReportSheetState
                   ),
                 ),
                 const SizedBox(height: EasyRideSpacing.md),
-                DropdownButtonFormField<String>(
-                  initialValue: _category,
+                EasyRideSelectField<String>(
+                  key: const ValueKey('passenger-safety-report-category'),
+                  value: _category,
+                  menuTitle: 'What happened?',
                   decoration: const InputDecoration(
                     labelText: 'What happened?',
                     border: OutlineInputBorder(),
                   ),
-                  items: [
+                  options: [
                     for (final option in _passengerSafetyReportOptions)
-                      DropdownMenuItem<String>(
+                      EasyRideSelectOption<String>(
                         value: option.value,
-                        child: Text(option.label),
+                        label: option.label,
                       ),
                   ],
                   onChanged: _isSubmitting

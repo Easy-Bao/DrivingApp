@@ -197,17 +197,19 @@ class _DriverSafetyReportSheetState extends State<_DriverSafetyReportSheet> {
                   ),
                 ),
                 const SizedBox(height: EasyRideSpacing.md),
-                DropdownButtonFormField<String>(
-                  initialValue: _category,
+                EasyRideSelectField<String>(
+                  key: const ValueKey('driver-safety-report-category'),
+                  value: _category,
+                  menuTitle: 'What happened?',
                   decoration: const InputDecoration(
                     labelText: 'What happened?',
                     border: OutlineInputBorder(),
                   ),
-                  items: [
+                  options: [
                     for (final option in _driverSafetyReportOptions)
-                      DropdownMenuItem<String>(
+                      EasyRideSelectOption<String>(
                         value: option.value,
-                        child: Text(option.label),
+                        label: option.label,
                       ),
                   ],
                   onChanged: _isSubmitting

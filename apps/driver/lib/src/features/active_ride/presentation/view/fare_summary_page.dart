@@ -365,18 +365,18 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
             ),
           ),
           const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
+          EasyRideSelectField<String>(
             key: const ValueKey('cash-outcome-dropdown'),
-            initialValue: _cashOutcome,
+            value: _cashOutcome,
+            menuTitle: 'Payment outcome',
             decoration: const InputDecoration(labelText: 'Payment outcome'),
-            items: _cashOutcomeLabels.entries
-                .map(
-                  (entry) => DropdownMenuItem<String>(
-                    value: entry.key,
-                    child: Text(entry.value),
-                  ),
-                )
-                .toList(),
+            options: [
+              for (final entry in _cashOutcomeLabels.entries)
+                EasyRideSelectOption<String>(
+                  value: entry.key,
+                  label: entry.value,
+                ),
+            ],
             onChanged: _isSubmitting
                 ? null
                 : (value) {

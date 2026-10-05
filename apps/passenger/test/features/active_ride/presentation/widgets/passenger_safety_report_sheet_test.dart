@@ -75,7 +75,9 @@ void main() {
 
     await tester.tap(find.byTooltip('Report a safety issue'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.tap(
+      find.byKey(const ValueKey('passenger-safety-report-category')),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Unsafe driving').last);
     await tester.pumpAndSettle();

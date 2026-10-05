@@ -114,14 +114,10 @@ class _TripCancellationDialogState extends State<TripCancellationDialog> {
                 ),
               ),
               const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
+              EasyRideSelectField<String>(
                 key: const ValueKey('cancellation-reason-dropdown'),
-                initialValue: _selectedReason,
-                dropdownColor: context.colorScheme.surface,
-                icon: Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  color: context.colorScheme.onSurfaceVariant,
-                ),
+                value: _selectedReason,
+                menuTitle: 'Reason for cancellation',
                 decoration: InputDecoration(
                   hintText: 'Select a reason',
                   hintStyle: TextStyle(
@@ -154,20 +150,14 @@ class _TripCancellationDialogState extends State<TripCancellationDialog> {
                     ),
                   ),
                 ),
-                items: TripCancellationDialog.cancellationReasons.entries.map((
-                  entry,
-                ) {
-                  return DropdownMenuItem<String>(
-                    value: entry.key,
-                    child: Text(
-                      entry.value,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: context.colorScheme.onSurface,
-                      ),
+                options: [
+                  for (final entry
+                      in TripCancellationDialog.cancellationReasons.entries)
+                    EasyRideSelectOption<String>(
+                      value: entry.key,
+                      label: entry.value,
                     ),
-                  );
-                }).toList(),
+                ],
                 onChanged: (value) {
                   setState(() {
                     _selectedReason = value;

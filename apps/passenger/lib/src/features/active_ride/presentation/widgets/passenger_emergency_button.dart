@@ -159,20 +159,20 @@ class _PassengerEmergencyStopSheetState
                 ),
               ),
               const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
+              EasyRideSelectField<String>(
                 key: const ValueKey('passenger-emergency-reason-dropdown'),
-                initialValue: _selectedReason,
+                value: _selectedReason,
+                menuTitle: 'Why are you ending the ride?',
                 decoration: const InputDecoration(
                   labelText: 'Why are you ending the ride?',
                 ),
-                items: _passengerEmergencyStopReasons.entries
-                    .map(
-                      (entry) => DropdownMenuItem<String>(
-                        value: entry.key,
-                        child: Text(entry.value),
-                      ),
-                    )
-                    .toList(),
+                options: [
+                  for (final entry in _passengerEmergencyStopReasons.entries)
+                    EasyRideSelectOption<String>(
+                      value: entry.key,
+                      label: entry.value,
+                    ),
+                ],
                 onChanged: _isSubmitting
                     ? null
                     : (value) {
