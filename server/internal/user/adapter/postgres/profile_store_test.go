@@ -25,6 +25,7 @@ func TestProfileTextValue(t *testing.T) {
 }
 
 func TestProfileMappingsPreserveAccountContactDetails(t *testing.T) {
+	lastSeen := time.Now().UTC().Add(-time.Second)
 	account := databasepostgres.User{
 		Phone: "+639000000000",
 		Email: "user@example.com",
@@ -37,9 +38,16 @@ func TestProfileMappingsPreserveAccountContactDetails(t *testing.T) {
 		PlateNumber: "ABC123",
 		Rating:      4.8,
 		IsOnline:    true,
+		OnlineLastSeenAt: pgtype.Timestamptz{
+			Time:  lastSeen,
+			Valid: true,
+		},
 	})
 	if driver.Role != "driver" || driver.Phone != account.Phone || driver.Email != account.Email || !driver.IsOnline {
 		t.Fatalf("driver profile = %+v", driver)
+	}
+	if driver.OnlineLastSeenAt == nil || !driver.OnlineLastSeenAt.Equal(lastSeen) {
+		t.Fatalf("driver online timestamp = %v, want %v", driver.OnlineLastSeenAt, lastSeen)
 	}
 
 	passenger := passengerProfileFromPostgres(account, databasepostgres.PassengerProfile{

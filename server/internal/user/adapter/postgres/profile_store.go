@@ -248,10 +248,11 @@ func (repository *ProfileRepository) UpdateOnlineStatus(
 		return domain.Profile{}, fmt.Errorf("commit driver online status transaction: %w", err)
 	}
 	return domain.Profile{
-		ID:       int(profile.ID),
-		UserID:   int(profile.UserID),
-		Role:     "driver",
-		IsOnline: profile.IsOnline,
+		ID:               int(profile.ID),
+		UserID:           int(profile.UserID),
+		Role:             "driver",
+		IsOnline:         profile.IsOnline,
+		OnlineLastSeenAt: onlineLastSeenAt(profile.OnlineLastSeenAt),
 	}, nil
 }
 
@@ -442,17 +443,26 @@ func (repository *ProfileRepository) validate() error {
 
 func driverProfileFromPostgres(account databasepostgres.User, profile databasepostgres.DriverProfile) domain.Profile {
 	return domain.Profile{
-		ID:          int(profile.ID),
-		UserID:      int(profile.UserID),
-		Role:        "driver",
-		Name:        profile.Name,
-		Phone:       account.Phone,
-		Email:       account.Email,
-		VehicleType: profile.VehicleType,
-		PlateNumber: profile.PlateNumber,
-		Rating:      profile.Rating,
-		IsOnline:    profile.IsOnline,
+		ID:               int(profile.ID),
+		UserID:           int(profile.UserID),
+		Role:             "driver",
+		Name:             profile.Name,
+		Phone:            account.Phone,
+		Email:            account.Email,
+		VehicleType:      profile.VehicleType,
+		PlateNumber:      profile.PlateNumber,
+		Rating:           profile.Rating,
+		IsOnline:         profile.IsOnline,
+		OnlineLastSeenAt: onlineLastSeenAt(profile.OnlineLastSeenAt),
 	}
+}
+
+func onlineLastSeenAt(value pgtype.Timestamptz) *time.Time {
+	if !value.Valid {
+		return nil
+	}
+	seenAt := value.Time
+	return &seenAt
 }
 
 func passengerProfileFromPostgres(

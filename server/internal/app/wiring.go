@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"time"
 
 	adminapplication "github.com/Easy-Bao/DrivingApp/server/internal/admin/application"
 	adminports "github.com/Easy-Bao/DrivingApp/server/internal/admin/ports"
@@ -188,7 +189,14 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 				if err != nil {
 					return false, err
 				}
-				return profile.Role == "driver" && profile.IsOnline, nil
+				if profile.Role != "driver" || !profile.IsOnline || profile.OnlineLastSeenAt == nil {
+					return false, nil
+				}
+				maxAge := config.RideLifecycle.DriverLocationMaxAge
+				if maxAge <= 0 {
+					maxAge = 45 * time.Second
+				}
+				return time.Since(*profile.OnlineLastSeenAt) <= maxAge, nil
 			},
 		)),
 		tracking.WithEventPublisher(eventPublisher),
