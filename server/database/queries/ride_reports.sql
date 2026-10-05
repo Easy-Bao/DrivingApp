@@ -29,3 +29,12 @@ WHERE ride.id = sqlc.arg('ride_id')
   )
 RETURNING id, ride_id, reporter_id, reported_user_id, reporter_role,
     category, severity, description, status, created_at;
+
+-- name: GetRideReportByReporterCategory :one
+SELECT id, ride_id, reporter_id, reported_user_id, reporter_role,
+    category, severity, description, status, created_at
+FROM ride_reports
+WHERE ride_id = $1
+  AND reporter_id = $2
+  AND category = $3
+LIMIT 1;

@@ -75,3 +75,37 @@ func (q *Queries) CreateRideReport(ctx context.Context, arg CreateRideReportPara
 	)
 	return i, err
 }
+
+const getRideReportByReporterCategory = `-- name: GetRideReportByReporterCategory :one
+SELECT id, ride_id, reporter_id, reported_user_id, reporter_role,
+    category, severity, description, status, created_at
+FROM ride_reports
+WHERE ride_id = $1
+  AND reporter_id = $2
+  AND category = $3
+LIMIT 1
+`
+
+type GetRideReportByReporterCategoryParams struct {
+	RideID     int32  `db:"ride_id"`
+	ReporterID int32  `db:"reporter_id"`
+	Category   string `db:"category"`
+}
+
+func (q *Queries) GetRideReportByReporterCategory(ctx context.Context, arg GetRideReportByReporterCategoryParams) (RideReport, error) {
+	row := q.db.QueryRow(ctx, getRideReportByReporterCategory, arg.RideID, arg.ReporterID, arg.Category)
+	var i RideReport
+	err := row.Scan(
+		&i.ID,
+		&i.RideID,
+		&i.ReporterID,
+		&i.ReportedUserID,
+		&i.ReporterRole,
+		&i.Category,
+		&i.Severity,
+		&i.Description,
+		&i.Status,
+		&i.CreatedAt,
+	)
+	return i, err
+}

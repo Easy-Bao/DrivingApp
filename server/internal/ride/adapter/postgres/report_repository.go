@@ -53,7 +53,22 @@ func (repository *RideRepository) CreateSafetyReport(
 			return domain.SafetyReport{}, domain.ErrSafetyReportNotAllowed
 		}
 		if isPostgresUniqueViolation(err) {
-			return domain.SafetyReport{}, domain.ErrSafetyReportAlreadySent
+			existing, lookupErr := repository.queries.GetRideReportByReporterCategory(
+				ctx,
+				databasepostgres.GetRideReportByReporterCategoryParams{
+					RideID:     reportID,
+					ReporterID: reporterID,
+					Category:   string(category),
+				},
+			)
+			if lookupErr != nil {
+				return domain.SafetyReport{}, fmt.Errorf("recover existing ride safety report: %w", lookupErr)
+			}
+			recovered, mappingErr := fromPostgresSafetyReport(existing)
+			if mappingErr != nil {
+				return domain.SafetyReport{}, fmt.Errorf("map recovered ride safety report: %w", mappingErr)
+			}
+			return recovered, nil
 		}
 		return domain.SafetyReport{}, fmt.Errorf("create ride safety report: %w", err)
 	}
