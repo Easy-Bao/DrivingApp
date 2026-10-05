@@ -116,9 +116,18 @@ func loadRideLifecycleConfig(getenv func(string) string) (ridelifecycle.Config, 
 	if err != nil {
 		return ridelifecycle.Config{}, err
 	}
+	locationMaxAge, err := positiveWholeSecondDurationEnv(
+		getenv,
+		"DRIVER_LOCATION_MAX_AGE",
+		config.DriverLocationMaxAge,
+	)
+	if err != nil {
+		return ridelifecycle.Config{}, err
+	}
 	config.ArrivalRadiusMeters = arrivalRadius
 	config.CompletionRadiusMeters = completionRadius
 	config.PassengerWaitDuration = passengerWait
+	config.DriverLocationMaxAge = locationMaxAge
 	return config, nil
 }
 

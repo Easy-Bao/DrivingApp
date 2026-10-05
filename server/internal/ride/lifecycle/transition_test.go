@@ -9,6 +9,7 @@ import (
 	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/lifecycle"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
 )
 
 type fakeLifecycleStore struct {
@@ -18,6 +19,37 @@ type fakeLifecycleStore struct {
 	noShowCalls           int
 	acceptCalls           int
 	passengerWaitDuration time.Duration
+}
+
+type fakeDriverLocationReader struct {
+	point ports.DriverLocation
+}
+
+func (reader *fakeDriverLocationReader) ReadDriverLocation(
+	context.Context,
+	int,
+) (ports.DriverLocation, error) {
+	return reader.point, nil
+}
+
+func newLifecycleServiceWithLocation(
+	store *fakeLifecycleStore,
+	config lifecycle.Config,
+	latitude float64,
+	longitude float64,
+) (*lifecycle.Service, *fakeDriverLocationReader) {
+	reader := &fakeDriverLocationReader{
+		point: ports.DriverLocation{
+			Latitude:   latitude,
+			Longitude:  longitude,
+			ObservedAt: time.Now().UTC(),
+		},
+	}
+	return lifecycle.NewService(lifecycle.Dependencies{
+		Store:          store,
+		DriverLocation: reader,
+		Config:         config,
+	}), reader
 }
 
 func (store *fakeLifecycleStore) Get(_ context.Context, _ int) (domain.Ride, error) {
@@ -149,7 +181,7 @@ func TestStartTripRequiresPickupProximity(t *testing.T) {
 			PickupLongitude: 122.1000,
 		},
 	}
-	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
+	service, _ := newLifecycleServiceWithLocation(store, lifecycle.Config{}, 6.7005, 122.1005)
 
 	updated, err := service.StartTrip(context.Background(), 1, driverID, 6.7005, 122.1005)
 	if err != nil {
@@ -172,10 +204,12 @@ func TestStartTripUsesConfiguredArrivalRadius(t *testing.T) {
 			PickupLongitude: 122.1000,
 		},
 	}
-	service := lifecycle.NewService(lifecycle.Dependencies{
-		Store:  store,
-		Config: lifecycle.Config{ArrivalRadiusMeters: 25},
-	})
+	service, _ := newLifecycleServiceWithLocation(
+		store,
+		lifecycle.Config{ArrivalRadiusMeters: 25},
+		6.7005,
+		122.1005,
+	)
 
 	_, err := service.StartTrip(context.Background(), 1, driverID, 6.7005, 122.1005)
 	if !errors.Is(err, domain.ErrArrivalLocation) {
@@ -193,7 +227,7 @@ func TestStartTripIsIdempotentAfterTheServerAlreadyStartedIt(t *testing.T) {
 			Status:      string(domain.RideInTransit),
 		},
 	}
-	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
+	service, _ := newLifecycleServiceWithLocation(store, lifecycle.Config{}, 6.7005, 122.1005)
 
 	updated, err := service.StartTrip(context.Background(), 1, driverID, 0, 0)
 	if err != nil {
@@ -216,7 +250,7 @@ func TestCompleteTripRequiresDestinationProximity(t *testing.T) {
 			DropoffLongitude: 122.1000,
 		},
 	}
-	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
+	service, reader := newLifecycleServiceWithLocation(store, lifecycle.Config{}, 6.7100, 122.1100)
 
 	if _, err := service.CompleteTrip(context.Background(), 1, driverID, 6.7100, 122.1100); !errors.Is(err, domain.ErrCompletionLocation) {
 		t.Fatalf("expected destination proximity error, got %v", err)
@@ -224,6 +258,8 @@ func TestCompleteTripRequiresDestinationProximity(t *testing.T) {
 	if store.ride.Status != string(domain.RideInTransit) {
 		t.Fatalf("ride status changed after rejected completion: %q", store.ride.Status)
 	}
+	reader.point.Latitude = 6.7005
+	reader.point.Longitude = 122.1005
 
 	updated, err := service.CompleteTrip(context.Background(), 1, driverID, 6.7005, 122.1005)
 	if err != nil {
@@ -246,10 +282,12 @@ func TestCompleteTripUsesConfiguredDestinationRadius(t *testing.T) {
 			DropoffLongitude: 122.1000,
 		},
 	}
-	service := lifecycle.NewService(lifecycle.Dependencies{
-		Store:  store,
-		Config: lifecycle.Config{CompletionRadiusMeters: 25},
-	})
+	service, _ := newLifecycleServiceWithLocation(
+		store,
+		lifecycle.Config{CompletionRadiusMeters: 25},
+		6.7005,
+		122.1005,
+	)
 
 	_, err := service.CompleteTrip(context.Background(), 1, driverID, 6.7005, 122.1005)
 	if !errors.Is(err, domain.ErrCompletionLocation) {
@@ -267,7 +305,7 @@ func TestCompleteTripIsIdempotentAfterTheServerAlreadyCompletedIt(t *testing.T) 
 			Status:      string(domain.RideCompleted),
 		},
 	}
-	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
+	service, _ := newLifecycleServiceWithLocation(store, lifecycle.Config{}, 6.7005, 122.1005)
 
 	updated, err := service.CompleteTrip(context.Background(), 1, driverID, 0, 0)
 	if err != nil {
@@ -290,13 +328,65 @@ func TestMarkArrivedRequiresPickupProximity(t *testing.T) {
 			PickupLongitude: 122.1000,
 		},
 	}
-	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
+	service, _ := newLifecycleServiceWithLocation(store, lifecycle.Config{}, 6.7100, 122.1100)
 
 	if _, err := service.MarkArrived(context.Background(), 1, driverID, 6.7100, 122.1100); !errors.Is(err, domain.ErrArrivalLocation) {
 		t.Fatalf("expected pickup proximity error, got %v", err)
 	}
 	if store.ride.Status != string(domain.RideAccepted) {
 		t.Fatalf("ride status changed after rejected arrival: %q", store.ride.Status)
+	}
+}
+
+func TestMarkArrivedRejectsClientCoordinateSpoofing(t *testing.T) {
+	driverID := 42
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:              1,
+			PassengerID:     10,
+			DriverID:        &driverID,
+			Status:          string(domain.RideAccepted),
+			PickupLatitude:  6.7000,
+			PickupLongitude: 122.1000,
+		},
+	}
+	service, _ := newLifecycleServiceWithLocation(store, lifecycle.Config{}, 6.7100, 122.1100)
+
+	_, err := service.MarkArrived(context.Background(), 1, driverID, 6.7001, 122.1001)
+	if !errors.Is(err, domain.ErrArrivalLocation) {
+		t.Fatalf("expected server telemetry to reject spoofed command coordinates, got %v", err)
+	}
+	if store.arrivalCalls != 0 {
+		t.Fatalf("spoofed arrival wrote %d transitions", store.arrivalCalls)
+	}
+}
+
+func TestMarkArrivedRejectsStaleDriverTelemetry(t *testing.T) {
+	driverID := 42
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:              1,
+			PassengerID:     10,
+			DriverID:        &driverID,
+			Status:          string(domain.RideAccepted),
+			PickupLatitude:  6.7000,
+			PickupLongitude: 122.1000,
+		},
+	}
+	service, reader := newLifecycleServiceWithLocation(
+		store,
+		lifecycle.Config{DriverLocationMaxAge: time.Second},
+		6.7001,
+		122.1001,
+	)
+	reader.point.ObservedAt = time.Now().UTC().Add(-2 * time.Second)
+
+	_, err := service.MarkArrived(context.Background(), 1, driverID, 6.7001, 122.1001)
+	if !errors.Is(err, domain.ErrDriverLocationStale) {
+		t.Fatalf("expected stale telemetry error, got %v", err)
+	}
+	if store.arrivalCalls != 0 {
+		t.Fatalf("stale telemetry wrote %d transitions", store.arrivalCalls)
 	}
 }
 
@@ -312,7 +402,7 @@ func TestMarkArrivedPersistsOnlyForTheAssignedDriver(t *testing.T) {
 			PickupLongitude: 122.1000,
 		},
 	}
-	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
+	service, _ := newLifecycleServiceWithLocation(store, lifecycle.Config{}, 6.7005, 122.1005)
 
 	updated, err := service.MarkArrived(context.Background(), 1, driverID, 6.7005, 122.1005)
 	if err != nil {
@@ -335,10 +425,12 @@ func TestMarkArrivedUsesConfiguredPassengerWait(t *testing.T) {
 			PickupLongitude: 122.1000,
 		},
 	}
-	service := lifecycle.NewService(lifecycle.Dependencies{
-		Store:  store,
-		Config: lifecycle.Config{PassengerWaitDuration: 7 * time.Minute},
-	})
+	service, _ := newLifecycleServiceWithLocation(
+		store,
+		lifecycle.Config{PassengerWaitDuration: 7 * time.Minute},
+		6.7005,
+		122.1005,
+	)
 
 	if _, err := service.MarkArrived(context.Background(), 1, driverID, 6.7005, 122.1005); err != nil {
 		t.Fatalf("MarkArrived() error = %v", err)

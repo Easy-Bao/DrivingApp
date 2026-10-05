@@ -52,7 +52,8 @@ func TestRideLifecycleConfigUsesDefaultPassengerWait(t *testing.T) {
 		t.Fatalf("passenger wait = %v, want %v", config.PassengerWaitDuration, ridelifecycle.DefaultPassengerWaitDuration)
 	}
 	if config.ArrivalRadiusMeters != ridelifecycle.DefaultArrivalRadiusMeters ||
-		config.CompletionRadiusMeters != ridelifecycle.DefaultCompletionRadiusMeters {
+		config.CompletionRadiusMeters != ridelifecycle.DefaultCompletionRadiusMeters ||
+		config.DriverLocationMaxAge != ridelifecycle.DefaultDriverLocationMaxAge {
 		t.Fatalf("ride radii = arrival %v, completion %v", config.ArrivalRadiusMeters, config.CompletionRadiusMeters)
 	}
 }
@@ -83,6 +84,21 @@ func TestRideLifecycleConfigAcceptsWholeSecondDuration(t *testing.T) {
 	}
 	if config.PassengerWaitDuration != 7*time.Minute+30*time.Second {
 		t.Fatalf("passenger wait = %v", config.PassengerWaitDuration)
+	}
+}
+
+func TestRideLifecycleConfigAcceptsDriverLocationMaxAge(t *testing.T) {
+	config, err := loadRideLifecycleConfig(func(key string) string {
+		if key == "DRIVER_LOCATION_MAX_AGE" {
+			return "30s"
+		}
+		return ""
+	})
+	if err != nil {
+		t.Fatalf("loadRideLifecycleConfig() error = %v", err)
+	}
+	if config.DriverLocationMaxAge != 30*time.Second {
+		t.Fatalf("driver location max age = %v", config.DriverLocationMaxAge)
 	}
 }
 

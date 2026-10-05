@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	adminapplication "github.com/Easy-Bao/DrivingApp/server/internal/admin/application"
 	adminports "github.com/Easy-Bao/DrivingApp/server/internal/admin/ports"
@@ -165,6 +166,20 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 	eventHub := websockethub.NewHub()
 	assignmentProjection := assignment.NewMemoryProjection()
 	eventPublisher := eventadapter.NewMemoryPublisher(assignmentProjection, eventHub)
+	rideAssignments := assignment.NewResolver(
+		assignment.ResolverDependencies{
+			Routing:   assignmentProjection,
+			Authority: assignment.NewRideLookup(rideStore),
+		},
+	)
+	trackingService := tracking.NewLocationTrackingService(
+		tracking.LocationTrackingDependencies{
+			Repository: tracking.NewDriverLocationStore(redisClient).WithLogger(applicationLogger),
+		},
+		tracking.WithRideAssignments(rideAssignments),
+		tracking.WithEventPublisher(eventPublisher),
+		tracking.WithLogger(applicationLogger),
+	)
 	ridesService := rideapplication.NewRideService(
 		rideapplication.RideServiceDependencies{
 			Repository:      rideStore,
@@ -172,15 +187,25 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 			EventPublisher:  eventPublisher,
 			LifecycleConfig: config.RideLifecycle,
 			BiddingConfig:   config.Bidding,
+			DriverLocation: rideports.DriverLocationReaderFunc(
+				func(ctx context.Context, driverID int) (rideports.DriverLocation, error) {
+					point, err := trackingService.Get(ctx, strconv.Itoa(driverID))
+					if err != nil {
+						return rideports.DriverLocation{}, err
+					}
+					if point.DriverID != strconv.Itoa(driverID) {
+						return rideports.DriverLocation{}, fmt.Errorf("driver location identity mismatch")
+					}
+					return rideports.DriverLocation{
+						Latitude:   point.Latitude,
+						Longitude:  point.Longitude,
+						ObservedAt: point.ObservedAt,
+					}, nil
+				},
+			),
 		},
 		rideapplication.WithRouteCalculator(routeCalculator),
 	).WithReportingLocation(config.ReportingLocation).WithLogger(applicationLogger)
-	rideAssignments := assignment.NewResolver(
-		assignment.ResolverDependencies{
-			Routing:   assignmentProjection,
-			Authority: assignment.NewRideLookup(rideStore),
-		},
-	)
 
 	ridesRouter := ridehttp.NewRouter(ridehttp.Dependencies{
 		Service:  ridesService,
@@ -191,14 +216,6 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 		Verifier:   verifier,
 		Authorizer: adminAuthorizer,
 	})
-	trackingService := tracking.NewLocationTrackingService(
-		tracking.LocationTrackingDependencies{
-			Repository: tracking.NewDriverLocationStore(redisClient).WithLogger(applicationLogger),
-		},
-		tracking.WithRideAssignments(rideAssignments),
-		tracking.WithEventPublisher(eventPublisher),
-		tracking.WithLogger(applicationLogger),
-	)
 	locationService := locationapplication.NewLocationService(
 		locationapplication.LocationServiceDependencies{Provider: mapboxProvider},
 		locationapplication.WithCache(locationredis.NewCache(redisClient)),

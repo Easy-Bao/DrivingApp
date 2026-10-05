@@ -87,6 +87,8 @@ func (handler *Handler) MarkArrived(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusBadRequest, "driver location is required")
 		return
 	}
+	// Coordinates remain accepted for older clients, but lifecycle validation
+	// deliberately reads server-owned telemetry instead of trusting this body.
 	ride, err := handler.service.MarkArrived(
 		r.Context(),
 		rideID,
@@ -959,6 +961,9 @@ func rideErrorStatus(err error) int {
 	case errors.Is(err, domain.ErrArrivalLocation),
 		errors.Is(err, domain.ErrCompletionLocation):
 		return http.StatusUnprocessableEntity
+	case errors.Is(err, domain.ErrDriverLocationUnavailable),
+		errors.Is(err, domain.ErrDriverLocationStale):
+		return http.StatusServiceUnavailable
 	case errors.Is(err, domain.ErrSafetyReportInvalid):
 		return http.StatusBadRequest
 	case errors.Is(err, domain.ErrSafetyReportNotAllowed):
@@ -1024,6 +1029,10 @@ func safeRideError(err error) string {
 		return "Confirm arrival from the pickup action with location enabled."
 	case errors.Is(err, domain.ErrArrivalLocation):
 		return "Move closer to the pickup point before confirming arrival."
+	case errors.Is(err, domain.ErrDriverLocationUnavailable):
+		return "Your live location is unavailable. Keep location sharing on and try again."
+	case errors.Is(err, domain.ErrDriverLocationStale):
+		return "Your live location is out of date. Keep location sharing on and try again."
 	case errors.Is(err, domain.ErrTripStartCommand):
 		return "Start the trip from the passenger pickup action."
 	case errors.Is(err, domain.ErrTripCompletionCommand):

@@ -52,6 +52,7 @@ type RideServiceDependencies struct {
 	EventPublisher  ports.EventPublisher
 	LifecycleConfig lifecycleapplication.Config
 	BiddingConfig   biddingapplication.Config
+	DriverLocation  ports.DriverLocationReader
 }
 
 func NewRideService(
@@ -84,9 +85,10 @@ func NewRideService(
 	})
 	service.biddingService = newBiddingService(service)
 	service.lifecycleService = lifecycleapplication.NewService(lifecycleapplication.Dependencies{
-		Store:       lifecycleStore,
-		PublishRide: service.publishRide,
-		Config:      dependencies.LifecycleConfig,
+		Store:          lifecycleStore,
+		DriverLocation: dependencies.DriverLocation,
+		PublishRide:    service.publishRide,
+		Config:         dependencies.LifecycleConfig,
 	})
 	service.settlementService = settlementapplication.NewService(settlementapplication.Dependencies{
 		Store:       settlementStore,

@@ -54,6 +54,15 @@ func newTestRideService(
 			Repository:     repository,
 			PricingConfig:  pricingConfig,
 			EventPublisher: publisher,
+			DriverLocation: ports.DriverLocationReaderFunc(
+				func(context.Context, int) (ports.DriverLocation, error) {
+					return ports.DriverLocation{
+						Latitude:   6.7,
+						Longitude:  122.1,
+						ObservedAt: time.Now().UTC(),
+					}, nil
+				},
+			),
 		},
 		options...,
 	)

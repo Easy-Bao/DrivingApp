@@ -3,6 +3,7 @@ package lifecycle
 import "time"
 
 const DefaultPassengerWaitDuration = 5 * time.Minute
+const DefaultDriverLocationMaxAge = 45 * time.Second
 
 const (
 	DefaultArrivalRadiusMeters    = 250.0
@@ -12,6 +13,7 @@ const (
 // Config contains server-authoritative ride lifecycle policy values.
 type Config struct {
 	PassengerWaitDuration  time.Duration
+	DriverLocationMaxAge   time.Duration
 	ArrivalRadiusMeters    float64
 	CompletionRadiusMeters float64
 }
@@ -19,9 +21,17 @@ type Config struct {
 func DefaultConfig() Config {
 	return Config{
 		PassengerWaitDuration:  DefaultPassengerWaitDuration,
+		DriverLocationMaxAge:   DefaultDriverLocationMaxAge,
 		ArrivalRadiusMeters:    DefaultArrivalRadiusMeters,
 		CompletionRadiusMeters: DefaultCompletionRadiusMeters,
 	}
+}
+
+func (config Config) driverLocationMaxAge() time.Duration {
+	if config.DriverLocationMaxAge <= 0 {
+		return DefaultDriverLocationMaxAge
+	}
+	return config.DriverLocationMaxAge
 }
 
 func (config Config) arrivalRadiusMeters() float64 {

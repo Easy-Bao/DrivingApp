@@ -18,22 +18,25 @@ var ErrPersistenceUnavailable = errors.New("ride lifecycle persistence is unavai
 type RideEventPublisher func(ctx context.Context, eventType event.Type, ride domain.Ride, payload map[string]any)
 
 type Dependencies struct {
-	Store       ports.RideLifecycleStore
-	PublishRide RideEventPublisher
-	Config      Config
+	Store          ports.RideLifecycleStore
+	DriverLocation ports.DriverLocationReader
+	PublishRide    RideEventPublisher
+	Config         Config
 }
 
 type Service struct {
-	store       ports.RideLifecycleStore
-	publishRide RideEventPublisher
-	config      Config
+	store          ports.RideLifecycleStore
+	driverLocation ports.DriverLocationReader
+	publishRide    RideEventPublisher
+	config         Config
 }
 
 func NewService(dependencies Dependencies) *Service {
 	return &Service{
-		store:       dependencies.Store,
-		publishRide: dependencies.PublishRide,
-		config:      dependencies.Config,
+		store:          dependencies.Store,
+		driverLocation: dependencies.DriverLocation,
+		publishRide:    dependencies.PublishRide,
+		config:         dependencies.Config,
 	}
 }
 
@@ -77,7 +80,7 @@ func (service *Service) UpdateStatus(ctx context.Context, rideID, actorID int, n
 func (service *Service) StartTrip(
 	ctx context.Context,
 	rideID, driverID int,
-	driverLatitude, driverLongitude float64,
+	_, _ float64,
 ) (domain.Ride, error) {
 	if service.store == nil {
 		return domain.Ride{}, ErrPersistenceUnavailable
@@ -98,6 +101,10 @@ func (service *Service) StartTrip(
 	}
 	if status != domain.RideArrived {
 		return domain.Ride{}, domain.ErrInvalidStatusTransition
+	}
+	driverLatitude, driverLongitude, err := service.authoritativeDriverLocation(ctx, driverID)
+	if err != nil {
+		return domain.Ride{}, err
 	}
 	if err := domain.ValidateArrivalLocation(
 		current.PickupLatitude,
@@ -127,7 +134,7 @@ func (service *Service) StartTrip(
 func (service *Service) CompleteTrip(
 	ctx context.Context,
 	rideID, driverID int,
-	driverLatitude, driverLongitude float64,
+	_, _ float64,
 ) (domain.Ride, error) {
 	if service.store == nil {
 		return domain.Ride{}, ErrPersistenceUnavailable
@@ -148,6 +155,10 @@ func (service *Service) CompleteTrip(
 	}
 	if status != domain.RideInTransit {
 		return domain.Ride{}, domain.ErrInvalidStatusTransition
+	}
+	driverLatitude, driverLongitude, err := service.authoritativeDriverLocation(ctx, driverID)
+	if err != nil {
+		return domain.Ride{}, err
 	}
 	if err := domain.ValidateCompletionLocation(
 		current.DropoffLatitude,
@@ -177,7 +188,7 @@ func (service *Service) CompleteTrip(
 func (service *Service) MarkArrived(
 	ctx context.Context,
 	rideID, driverID int,
-	driverLatitude, driverLongitude float64,
+	_, _ float64,
 ) (domain.Ride, error) {
 	if service.store == nil {
 		return domain.Ride{}, ErrPersistenceUnavailable
@@ -198,6 +209,10 @@ func (service *Service) MarkArrived(
 	}
 	if normalizedStatus != domain.RideAssigned && normalizedStatus != domain.RideAccepted {
 		return domain.Ride{}, domain.ErrInvalidStatusTransition
+	}
+	driverLatitude, driverLongitude, err := service.authoritativeDriverLocation(ctx, driverID)
+	if err != nil {
+		return domain.Ride{}, err
 	}
 	if err := domain.ValidateArrivalLocation(
 		current.PickupLatitude,
@@ -228,6 +243,30 @@ func (service *Service) MarkArrived(
 		},
 	)
 	return updated, nil
+}
+
+func (service *Service) authoritativeDriverLocation(
+	ctx context.Context,
+	driverID int,
+) (float64, float64, error) {
+	if service.driverLocation == nil {
+		return 0, 0, domain.ErrDriverLocationUnavailable
+	}
+	point, err := service.driverLocation.ReadDriverLocation(ctx, driverID)
+	if err != nil {
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return 0, 0, err
+		}
+		return 0, 0, fmt.Errorf("read authoritative driver location: %w: %v", domain.ErrDriverLocationUnavailable, err)
+	}
+	if point.ObservedAt.IsZero() {
+		return 0, 0, domain.ErrDriverLocationUnavailable
+	}
+	observedAge := time.Since(point.ObservedAt)
+	if observedAge < 0 || observedAge > service.config.driverLocationMaxAge() {
+		return 0, 0, domain.ErrDriverLocationStale
+	}
+	return point.Latitude, point.Longitude, nil
 }
 
 func (service *Service) MarkPassengerNoShow(
