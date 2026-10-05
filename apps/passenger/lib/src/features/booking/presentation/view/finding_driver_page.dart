@@ -619,7 +619,6 @@ class _FindingDriverPageContentState()
                               state is BookingFailure &&
                               state.isNoDriverFound) {
                             return FindingDriverNoDriverPanelWidget(
-                              rideType: widget.rideType,
                               fare: widget.fare,
                               destination: widget.destination,
                               onRetryPressed: _retryFindingDriver,

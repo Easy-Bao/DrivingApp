@@ -19,7 +19,6 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: FindingDriverNoDriverPanelWidget(
-            rideType: 'Solo Ride',
             fare: 100,
             destination: destination,
             onRetryPressed: () => retryCount++,
@@ -29,7 +28,9 @@ void main() {
       ),
     );
 
-    expect(find.text('No driver found'), findsOneWidget);
+    expect(find.text('No drivers nearby'), findsOneWidget);
+    expect(find.text('Try again when you’re ready.'), findsOneWidget);
+    expect(find.textContaining('Solo'), findsNothing);
     await tester.tap(find.text('Try again'));
 
     expect(retryCount, 1);
