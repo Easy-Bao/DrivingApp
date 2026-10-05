@@ -88,7 +88,7 @@ func (repository *RideRepository) CreateReview(ctx context.Context, value domain
 		return domain.Review{}, fmt.Errorf("check existing driver review: %w", err)
 	}
 	if exists {
-		return domain.Review{}, domain.ErrReviewAlreadySubmitted
+		return repository.existingDriverReview(ctx, rideID)
 	}
 	passengerName, err := repository.queries.GetPassengerName(ctx, passengerID)
 	if err != nil {
@@ -106,7 +106,7 @@ func (repository *RideRepository) CreateReview(ctx context.Context, value domain
 	})
 	if err != nil {
 		if isPostgresUniqueViolation(err) {
-			return domain.Review{}, domain.ErrReviewAlreadySubmitted
+			return repository.existingDriverReview(ctx, rideID)
 		}
 		return domain.Review{}, fmt.Errorf("create driver review: %w", err)
 	}
@@ -150,7 +150,7 @@ func (repository *RideRepository) CreatePassengerReview(
 		return domain.PassengerReview{}, fmt.Errorf("check existing passenger review: %w", err)
 	}
 	if exists {
-		return domain.PassengerReview{}, domain.ErrReviewAlreadySubmitted
+		return repository.existingPassengerReview(ctx, rideID)
 	}
 
 	item, err := repository.queries.CreatePassengerReview(ctx, databasepostgres.CreatePassengerReviewParams{
@@ -162,13 +162,43 @@ func (repository *RideRepository) CreatePassengerReview(
 	})
 	if err != nil {
 		if isPostgresUniqueViolation(err) {
-			return domain.PassengerReview{}, domain.ErrReviewAlreadySubmitted
+			return repository.existingPassengerReview(ctx, rideID)
 		}
 		return domain.PassengerReview{}, fmt.Errorf("create passenger review: %w", err)
 	}
 	review, err := fromPostgresPassengerReview(item)
 	if err != nil {
 		return domain.PassengerReview{}, fmt.Errorf("map created passenger review: %w", err)
+	}
+	return review, nil
+}
+
+func (repository *RideRepository) existingDriverReview(
+	ctx context.Context,
+	rideID int32,
+) (domain.Review, error) {
+	item, err := repository.queries.GetReviewByRide(ctx, pgtype.Int4{Int32: rideID, Valid: true})
+	if err != nil {
+		return domain.Review{}, fmt.Errorf("load existing driver review: %w", err)
+	}
+	review, err := fromPostgresCreatedReview(item)
+	if err != nil {
+		return domain.Review{}, fmt.Errorf("map existing driver review: %w", err)
+	}
+	return review, nil
+}
+
+func (repository *RideRepository) existingPassengerReview(
+	ctx context.Context,
+	rideID int32,
+) (domain.PassengerReview, error) {
+	item, err := repository.queries.GetPassengerReviewByRide(ctx, rideID)
+	if err != nil {
+		return domain.PassengerReview{}, fmt.Errorf("load existing passenger review: %w", err)
+	}
+	review, err := fromPostgresPassengerReview(item)
+	if err != nil {
+		return domain.PassengerReview{}, fmt.Errorf("map existing passenger review: %w", err)
 	}
 	return review, nil
 }

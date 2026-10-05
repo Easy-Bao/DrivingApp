@@ -128,6 +128,51 @@ func (q *Queries) GetPassengerName(ctx context.Context, passengerID int32) (stri
 	return name, err
 }
 
+const getPassengerReviewByRide = `-- name: GetPassengerReviewByRide :one
+SELECT id, ride_id, driver_id, passenger_id, rating, comment, created_at
+FROM passenger_reviews
+WHERE ride_id = $1
+LIMIT 1
+`
+
+func (q *Queries) GetPassengerReviewByRide(ctx context.Context, rideID int32) (PassengerReview, error) {
+	row := q.db.QueryRow(ctx, getPassengerReviewByRide, rideID)
+	var i PassengerReview
+	err := row.Scan(
+		&i.ID,
+		&i.RideID,
+		&i.DriverID,
+		&i.PassengerID,
+		&i.Rating,
+		&i.Comment,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getReviewByRide = `-- name: GetReviewByRide :one
+SELECT id, ride_id, driver_id, passenger_id, passenger_name, rating, comment, created_at
+FROM reviews
+WHERE ride_id = $1
+LIMIT 1
+`
+
+func (q *Queries) GetReviewByRide(ctx context.Context, rideID pgtype.Int4) (Review, error) {
+	row := q.db.QueryRow(ctx, getReviewByRide, rideID)
+	var i Review
+	err := row.Scan(
+		&i.ID,
+		&i.RideID,
+		&i.DriverID,
+		&i.PassengerID,
+		&i.PassengerName,
+		&i.Rating,
+		&i.Comment,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const hasPassengerReviewForRide = `-- name: HasPassengerReviewForRide :one
 SELECT EXISTS(
     SELECT 1

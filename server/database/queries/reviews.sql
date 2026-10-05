@@ -36,6 +36,12 @@ SELECT EXISTS(
     WHERE ride_id = sqlc.arg('ride_id')
 ) AS exists;
 
+-- name: GetReviewByRide :one
+SELECT id, ride_id, driver_id, passenger_id, passenger_name, rating, comment, created_at
+FROM reviews
+WHERE ride_id = sqlc.arg('ride_id')
+LIMIT 1;
+
 -- name: CreateReview :one
 INSERT INTO reviews (
     ride_id,
@@ -61,6 +67,12 @@ SELECT EXISTS(
     FROM passenger_reviews
     WHERE ride_id = sqlc.arg('ride_id')
 ) AS exists;
+
+-- name: GetPassengerReviewByRide :one
+SELECT id, ride_id, driver_id, passenger_id, rating, comment, created_at
+FROM passenger_reviews
+WHERE ride_id = sqlc.arg('ride_id')
+LIMIT 1;
 
 -- name: CreatePassengerReview :one
 INSERT INTO passenger_reviews (
