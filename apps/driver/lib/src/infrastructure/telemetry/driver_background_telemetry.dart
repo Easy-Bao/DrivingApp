@@ -210,6 +210,17 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
   var isStopping = false;
   final locationSpool = DriverLocationSpool();
 
+  Future<bool> shouldContinueOnlineWork() async {
+    try {
+      return await sessionStore.readDriverOnlineStatus() == true;
+    } catch (error) {
+      // If the local online intent cannot be read, fail closed. Continuing to
+      // publish a heartbeat could resurrect an explicitly stopped driver.
+      dev.log('Unable to read driver online intent: $error');
+      return false;
+    }
+  }
+
   Future<void> shutdown() async {
     if (isStopping) return;
     isStopping = true;
@@ -443,6 +454,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
         provider == null) {
       return;
     }
+    if (!await shouldContinueOnlineWork()) return;
 
     sendingPresence = true;
     try {

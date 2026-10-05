@@ -160,6 +160,16 @@ final class DashboardRepositoryImpl({
     required String driverId,
     required bool markServerOffline,
   }) async {
+    // Persist the local intent first. A background isolate may still have a
+    // timer tick in flight while the foreground service is shutting down; it
+    // must observe offline before it can send another heartbeat.
+    try {
+      await _sessionService.saveDriverOnlineStatus(false);
+      await _sessionService.clearDriverOnlineSince();
+    } catch (error) {
+      dev.log('Unable to persist offline driver status: $error');
+    }
+
     if (markServerOffline) {
       try {
         await _availabilityDataSource.updateOnlineStatus(
@@ -181,12 +191,6 @@ final class DashboardRepositoryImpl({
       );
     } catch (error) {
       dev.log('Unable to remove driver location during cleanup: $error');
-    }
-    try {
-      await _sessionService.saveDriverOnlineStatus(false);
-      await _sessionService.clearDriverOnlineSince();
-    } catch (error) {
-      dev.log('Unable to persist offline driver status: $error');
     }
     try {
       await _backgroundTelemetryService?.stop();
