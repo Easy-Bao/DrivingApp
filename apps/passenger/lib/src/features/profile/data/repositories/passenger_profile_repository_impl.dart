@@ -53,11 +53,18 @@ final class PassengerProfileRepositoryImpl({
         }
       }
       _avatarData = avatarData;
+      final remoteName = remote.name.trim();
+      final cachedName = cached.name.trim();
+      final resolvedName = remoteName.isNotEmpty && !remoteName.contains('@')
+          ? remoteName
+          : (cachedName.isNotEmpty && !cachedName.contains('@')
+              ? cachedName
+              : (remoteName.isNotEmpty ? remoteName : cachedName));
       final profile = ProfileModel(
         id: remote.id,
         userId: remote.userId,
         role: remote.role,
-        name: remote.name.isEmpty ? cached.name : remote.name,
+        name: resolvedName,
         phone: remote.phone.isEmpty ? cached.phone : remote.phone,
         email: remote.email.isEmpty ? cached.email : remote.email,
         address: remote.address.isEmpty ? cached.address : remote.address,

@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:driver/src/features/auth/auth_routes.dart';
-import 'package:driver/src/features/help_center/help_center_routes.dart';
 import 'package:driver/src/features/profile/presentation/bloc/account/account_cubit.dart';
 import 'package:driver/src/features/profile/presentation/bloc/account/account_state.dart';
 import 'package:driver/src/features/profile/domain/entities/driver_account_snapshot.dart';
@@ -102,31 +101,16 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                           ),
                         ]),
                         const SizedBox(height: 32),
-                        _buildSectionTitle(context, 'Support'),
+                        _buildSectionTitle(context, 'App settings'),
                         const SizedBox(height: 12),
                         _buildMenuGroup(context, [
                           _DriverAccountMenuItem(
                             icon: LucideIcons.settings,
                             title: 'Settings',
-                            subtitle: 'Location access and app support',
+                            subtitle: 'Location, support, and app details',
                             onTap: () => context.pushNamed(
                               DriverSettingsRoutes.settings,
                             ),
-                          ),
-                          _DriverAccountMenuItem(
-                            icon: LucideIcons.circle_question_mark,
-                            title: 'Help Center',
-                            subtitle: 'Support and frequently asked questions',
-                            onTap: () => context.pushNamed(
-                              DriverHelpCenterRoutes.helpCenter,
-                            ),
-                          ),
-                          _DriverAccountMenuItem(
-                            icon: LucideIcons.info,
-                            title: 'About EasyRide',
-                            subtitle: 'Driver app version and licenses',
-                            onTap: () =>
-                                context.pushNamed(DriverSettingsRoutes.about),
                           ),
                         ]),
                         const SizedBox(height: 32),

@@ -159,9 +159,12 @@ final class PassengerAuthRepositoryImpl({
         message: 'Authentication response did not contain a refresh token.',
       );
     }
+    final rawName = _stringValue(
+      passenger['name'] ?? passenger['full_name'] ?? passenger['fullName'],
+    );
     return PassengerAuthCredentials(
       passengerId: passengerId,
-      passengerName: _stringValue(passenger['name']),
+      passengerName: rawName,
       passengerEmail: passengerEmail.isEmpty ? fallbackEmail : passengerEmail,
       passengerPhone: _stringValue(passenger['phone']),
       token: token,
@@ -174,7 +177,13 @@ final class PassengerAuthRepositoryImpl({
     await _secureSessionService.saveToken(credentials.token);
     await _secureSessionService.saveRefreshToken(credentials.refreshToken);
     await _secureSessionService.savePassengerId(credentials.passengerId);
-    await _preferences.setString('passenger_name', credentials.passengerName);
+    final incomingName = credentials.passengerName.trim();
+    final cachedName = _preferences.getString('passenger_name') ?? '';
+    if (incomingName.isNotEmpty && !incomingName.contains('@')) {
+      await _preferences.setString('passenger_name', incomingName);
+    } else if (cachedName.isEmpty || cachedName.contains('@')) {
+      await _preferences.setString('passenger_name', incomingName);
+    }
     await _preferences.setString('passenger_email', credentials.passengerEmail);
     await _preferences.setString('passenger_phone', credentials.passengerPhone);
   }

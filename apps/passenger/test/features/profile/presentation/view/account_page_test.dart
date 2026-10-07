@@ -55,7 +55,7 @@ void main() {
     expect(find.text('Profile Info'), findsNothing);
     expect(find.byIcon(Icons.edit), findsNothing);
     expect(find.text('Safety Center'), findsNothing);
-    expect(find.text('Location access and app support'), findsOneWidget);
+    expect(find.text('Location, support, and app details'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -91,15 +91,18 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('exposes real account, legal, and logout destinations', (
+  testWidgets('keeps settings as the single support and legal destination', (
     tester,
   ) async {
     var logoutCount = 0;
     await tester.pumpWidget(buildSubject(onLogout: () => logoutCount++));
 
     expect(find.text('Personal Details'), findsOneWidget);
-    expect(find.text('Terms of Service'), findsOneWidget);
-    expect(find.text('About EasyRide'), findsOneWidget);
+    expect(find.text('Saved Places'), findsOneWidget);
+    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('Help Center'), findsNothing);
+    expect(find.text('Terms of Service'), findsNothing);
+    expect(find.text('About EasyRide'), findsNothing);
     await tester.scrollUntilVisible(
       find.byKey(const ValueKey('passenger-account-logout')),
       300,

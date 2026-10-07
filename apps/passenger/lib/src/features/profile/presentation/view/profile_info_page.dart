@@ -74,16 +74,32 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   void _applyProfile(ProfileState profile) {
     final phone = _splitPhone(profile.phone);
     _isApplyingProfile = true;
-    _nameController.text = profile.name;
+    var name = profile.name.trim();
+    final email = profile.email.trim();
+
+    if (name.isEmpty ||
+        (email.isNotEmpty && name.toLowerCase() == email.toLowerCase()) ||
+        name.contains('@')) {
+      final session = BlocProvider.of<SessionBloc>(context).state;
+      if (session is AuthenticatedSession &&
+          session.passengerName.trim().isNotEmpty &&
+          !session.passengerName.trim().contains('@')) {
+        name = session.passengerName.trim();
+      } else if (name.contains('@')) {
+        name = '';
+      }
+    }
+
+    _nameController.text = name;
     _phoneNumberController.text = phone.number;
-    _emailController.text = profile.email;
+    _emailController.text = email;
     _gender = _normalizeGender(profile.gender);
     _avatarPath = profile.avatarPath;
     _avatarData = profile.avatarData;
     _savedAddress = profile.address;
-    _initialName = profile.name.trim();
+    _initialName = name;
     _initialPhone = _formatPhone(_phonePrefix, phone.number);
-    _initialEmail = profile.email.trim();
+    _initialEmail = email;
     _initialGender = _gender;
     _initialAvatarPath = _avatarPath;
     _isDirty = false;
@@ -347,9 +363,9 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   }
 
   Widget _buildProfileHeader() {
-    final displayName = _nameController.text.trim().isEmpty
-        ? 'Your profile'
-        : _nameController.text.trim();
+    final rawName = _nameController.text.trim();
+    final displayName =
+        rawName.isEmpty || rawName.contains('@') ? 'Your profile' : rawName;
     final displayEmail = _emailController.text.trim();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -387,189 +403,331 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   }
 
   Widget _buildDetailsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _buildTextField(
-          label: 'Full Name',
-          controller: _nameController,
-          errorText: _nameError,
-          textInputAction: TextInputAction.next,
-        ),
-        const SizedBox(height: 20),
-        _buildPhoneField(),
-        const SizedBox(height: 20),
-        _buildTextField(
-          label: 'Email',
-          controller: _emailController,
-          keyboardType: TextInputType.emailAddress,
-          errorText: _emailError,
-          textInputAction: TextInputAction.done,
-        ),
-        const SizedBox(height: 20),
-        _buildGenderField(),
-      ],
-    );
-  }
-
-  Widget _buildTextField({
-    required String label,
-    required TextEditingController controller,
-    String? errorText,
-    TextInputType? keyboardType,
-    TextInputAction? textInputAction,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildFieldLabel(label),
-        const SizedBox(height: 8),
-        TextField(
-          key: ValueKey<String>('passenger-profile-field-$label'),
-          controller: controller,
-          keyboardType: keyboardType,
-          textInputAction: textInputAction,
-          textCapitalization: label == 'Email'
-              ? TextCapitalization.none
-              : TextCapitalization.words,
-          style: context.textStyles.bodyLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-          decoration: _fieldDecoration(
-            errorText: errorText,
-            prefixIcon: label == 'Full Name'
-                ? LucideIcons.user_round
-                : LucideIcons.mail,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPhoneField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildFieldLabel('Mobile Number'),
-        const SizedBox(height: 8),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              height: 52,
-              width: 76,
-              decoration: BoxDecoration(
-                color: context.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-                border: Border.all(
-                  color: context.colorScheme.outlineVariant,
-                  width: 0.8,
-                ),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                _phonePrefix,
-                style: context.textStyles.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: context.colorScheme.onSurface,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: TextField(
-                key: const ValueKey<String>('passenger-profile-phone-number'),
-                controller: _phoneNumberController,
-                keyboardType: TextInputType.phone,
-                textInputAction: TextInputAction.next,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                style: context.textStyles.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-                decoration: _fieldDecoration(
-                  hintText: '917 000 0001',
-                  errorText: _phoneError,
-                  prefixIcon: LucideIcons.phone,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildGenderField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildFieldLabel('Gender'),
-        const SizedBox(height: 8),
-        EasyRideSelectField<String>(
-          key: const ValueKey<String>('passenger-profile-gender'),
-          value: _gender,
-          menuTitle: 'Gender',
-          style: context.textStyles.bodyLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: context.colorScheme.onSurface,
-          ),
-          decoration: _fieldDecoration(prefixIcon: LucideIcons.venus_and_mars),
-          options: [
-            for (final gender in _genderOptions)
-              EasyRideSelectOption<String>(value: gender, label: gender),
-          ],
-          onChanged: (gender) {
-            if (gender == null) return;
-            setState(() {
-              _gender = gender;
-              _isDirty = _draftHasChanges;
-            });
-          },
-        ),
-      ],
-    );
-  }
-
-  InputDecoration _fieldDecoration({
-    String? hintText,
-    String? errorText,
-    IconData? prefixIcon,
-  }) {
-    final border = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-      borderSide: BorderSide(
-        color: context.colorScheme.outlineVariant,
-        width: 0.8,
+    return EasyRideSurfaceCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildFullNameTile(),
+          _buildDivider(),
+          _buildPhoneTile(),
+          _buildDivider(),
+          _buildEmailTile(),
+          _buildDivider(),
+          _buildGenderTile(),
+        ],
       ),
     );
-    return InputDecoration(
-      hintText: hintText,
-      errorText: errorText,
-      prefixIcon: prefixIcon == null
-          ? null
-          : Icon(
-              prefixIcon,
-              size: 19,
-              color: context.colorScheme.onSurfaceVariant,
-            ),
-      filled: true,
-      fillColor: context.colorScheme.surfaceContainerHighest,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: EasyRideLayout.pagePadding,
+  }
+
+  Widget _buildDivider() {
+    return Divider(
+      height: 1,
+      thickness: 1,
+      indent: 16,
+      endIndent: 16,
+      color: context.colorScheme.outlineVariant.withValues(alpha: 0.65),
+    );
+  }
+
+  Widget _buildFullNameTile() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: EasyRideSpacing.lg,
         vertical: 14,
       ),
-      border: border,
-      enabledBorder: border,
-      focusedBorder: border.copyWith(
-        borderSide: BorderSide(color: context.colorScheme.primary, width: 1.5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(
+            LucideIcons.user_round,
+            size: 20,
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildFieldLabel('Full Name'),
+                const SizedBox(height: 4),
+                TextField(
+                  key: const ValueKey<String>(
+                    'passenger-profile-field-Full Name',
+                  ),
+                  controller: _nameController,
+                  textInputAction: TextInputAction.next,
+                  textCapitalization: TextCapitalization.words,
+                  style: context.textStyles.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                    hintText: 'Enter your name',
+                    hintStyle: TextStyle(
+                      fontSize: 15,
+                      color: context.colorScheme.onSurface.withValues(
+                        alpha: 0.38,
+                      ),
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ),
+                if (_nameError != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    _nameError!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: context.colorScheme.error,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
-      errorBorder: border.copyWith(
-        borderSide: BorderSide(color: context.colorScheme.error),
+    );
+  }
+
+  Widget _buildPhoneTile() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: EasyRideSpacing.lg,
+        vertical: 14,
       ),
-      focusedErrorBorder: border.copyWith(
-        borderSide: BorderSide(color: context.colorScheme.error, width: 1.5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(
+            LucideIcons.phone,
+            size: 20,
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildFieldLabel('Mobile Number'),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Text(
+                      _phonePrefix,
+                      style: context.textStyles.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: context.colorScheme.onSurface,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 1,
+                      height: 16,
+                      color: context.colorScheme.outlineVariant,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        key: const ValueKey<String>(
+                          'passenger-profile-phone-number',
+                        ),
+                        controller: _phoneNumberController,
+                        keyboardType: TextInputType.phone,
+                        textInputAction: TextInputAction.next,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        style: context.textStyles.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                        decoration: InputDecoration(
+                          isDense: true,
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          errorBorder: InputBorder.none,
+                          focusedErrorBorder: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                          hintText: '917 000 0001',
+                          hintStyle: TextStyle(
+                            fontSize: 15,
+                            color: context.colorScheme.onSurface.withValues(
+                              alpha: 0.38,
+                            ),
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (_phoneError != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    _phoneError!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: context.colorScheme.error,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmailTile() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: EasyRideSpacing.lg,
+        vertical: 14,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(
+            LucideIcons.mail,
+            size: 20,
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildFieldLabel('Email'),
+                const SizedBox(height: 4),
+                TextField(
+                  key: const ValueKey<String>('passenger-profile-field-Email'),
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  textCapitalization: TextCapitalization.none,
+                  textInputAction: TextInputAction.done,
+                  style: context.textStyles.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                    hintText: 'name@example.com',
+                    hintStyle: TextStyle(
+                      fontSize: 15,
+                      color: context.colorScheme.onSurface.withValues(
+                        alpha: 0.38,
+                      ),
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ),
+                if (_emailError != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    _emailError!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: context.colorScheme.error,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGenderTile() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: EasyRideSpacing.lg,
+        vertical: 14,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(
+            LucideIcons.venus_and_mars,
+            size: 20,
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildFieldLabel('Gender'),
+                const SizedBox(height: 4),
+                EasyRideSelectField<String>(
+                  key: const ValueKey<String>('passenger-profile-gender'),
+                  value: _gender,
+                  menuTitle: 'Gender',
+                  style: context.textStyles.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: context.colorScheme.onSurface,
+                  ),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                    suffixIcon: Icon(
+                      LucideIcons.chevron_down,
+                      size: 18,
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
+                    suffixIconConstraints: const BoxConstraints(
+                      minWidth: 20,
+                      minHeight: 20,
+                    ),
+                  ),
+                  options: [
+                    for (final gender in _genderOptions)
+                      EasyRideSelectOption<String>(
+                        value: gender,
+                        label: gender,
+                      ),
+                  ],
+                  onChanged: (gender) {
+                    if (gender == null) return;
+                    setState(() {
+                      _gender = gender;
+                      _isDirty = _draftHasChanges;
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -597,7 +755,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
 
   String _getInitials(String name) {
     final trimmedName = name.trim();
-    if (trimmedName.isEmpty) return 'P';
+    if (trimmedName.isEmpty || trimmedName.contains('@')) return 'P';
     final parts = trimmedName.split(RegExp(r'\s+'));
     if (parts.length >= 2) {
       return '${parts.first[0]}${parts.last[0]}'.toUpperCase();

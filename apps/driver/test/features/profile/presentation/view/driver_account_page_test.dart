@@ -95,11 +95,12 @@ void main() {
     expect(find.textContaining('XYZ-123'), findsOneWidget);
     expect(find.text('Ratings, trips, and earnings'), findsOneWidget);
     expect(find.text('Performance'), findsOneWidget);
-    expect(find.text('Support'), findsOneWidget);
+    expect(find.text('App settings'), findsOneWidget);
     expect(find.text('Settings'), findsOneWidget);
-    expect(find.text('Location access and app support'), findsOneWidget);
-    expect(find.text('Help Center'), findsOneWidget);
-    expect(find.text('About EasyRide'), findsOneWidget);
+    expect(find.text('Location, support, and app details'), findsOneWidget);
+    expect(find.text('Help Center'), findsNothing);
+    expect(find.text('Terms of Service'), findsNothing);
+    expect(find.text('About EasyRide'), findsNothing);
     expect(find.text('Account Settings'), findsNothing);
     expect(
       tester.getSize(find.byKey(const ValueKey('driver-profile-avatar'))),

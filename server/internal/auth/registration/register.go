@@ -193,6 +193,7 @@ func normalizeInput(input RegisterInput, role domain.Role) (normalizedRegistrati
 	if err != nil {
 		return normalizedRegistration{}, fmt.Errorf("hash registration password: %w", err)
 	}
+	//TODO: Remove PreferredRideType instead default solo
 	return normalizedRegistration{
 		Email:             email,
 		Phone:             phone,

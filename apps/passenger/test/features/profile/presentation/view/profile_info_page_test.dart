@@ -202,4 +202,42 @@ void main() {
     final textField = tester.widget<TextField>(phoneFinder);
     expect(textField.controller?.text, '15551234567');
   });
+
+  testWidgets('renders fields within a single container card with dividers', (
+    tester,
+  ) async {
+    await tester.pumpWidget(buildSubject());
+
+    expect(find.byType(EasyRideSurfaceCard), findsOneWidget);
+    expect(find.byType(Divider), findsNWidgets(3));
+  });
+
+  testWidgets(
+    'resolves full name from session rather than displaying email when profile name is an email',
+    (tester) async {
+      when(() => profileCubit.state).thenReturn(
+        const ProfileState(
+          name: 'passenger@example.com',
+          phone: '+639170000001',
+          email: 'passenger@example.com',
+          gender: 'Female',
+        ),
+      );
+      when(() => sessionBloc.state).thenReturn(
+        const AuthenticatedSession(
+          passengerId: 'passenger-1',
+          passengerName: 'Jane Doe',
+        ),
+      );
+
+      await tester.pumpWidget(buildSubject());
+
+      final nameFinder = find.byKey(
+        const ValueKey<String>('passenger-profile-field-Full Name'),
+      );
+      final textField = tester.widget<TextField>(nameFinder);
+      expect(textField.controller?.text, 'Jane Doe');
+      expect(find.text('Jane Doe'), findsNWidgets(2));
+    },
+  );
 }

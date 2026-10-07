@@ -11,3 +11,5 @@ TODO (manual deployment verification):
 The source-level deployment audit is complete; these checks require a release
 keystore, a reachable backend, and hardware that are not available to this run.
 */
+
+/// use patrol for e2e testing

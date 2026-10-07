@@ -76,44 +76,15 @@ class const AccountPage({super.key, this.onLogout}) extends StatelessWidget {
                             ),
                           ]),
                           const SizedBox(height: 24),
-                          _buildSectionTitle(context, 'Support'),
+                          _buildSectionTitle(context, 'App settings'),
                           const SizedBox(height: 12),
                           _buildMenuGroup(context, [
-                            _AccountMenuItem(
-                              icon: LucideIcons.circle_question_mark,
-                              title: 'Help Center',
-                              subtitle: 'Get help with rides and payments',
-                              onTap: () =>
-                                  context.pushNamed(ProfileRoutes.helpCenter),
-                            ),
                             _AccountMenuItem(
                               icon: LucideIcons.settings,
                               title: 'Settings',
-                              subtitle: 'Location access and app support',
+                              subtitle: 'Location, support, and app details',
                               onTap: () =>
                                   context.pushNamed(SettingsRoutes.settings),
-                            ),
-                          ]),
-                          const SizedBox(height: 24),
-                          _buildSectionTitle(
-                            context,
-                            'Legal and app information',
-                          ),
-                          const SizedBox(height: 12),
-                          _buildMenuGroup(context, [
-                            _AccountMenuItem(
-                              icon: LucideIcons.file_text,
-                              title: 'Terms of Service',
-                              subtitle: 'Read the rules for using EasyRide',
-                              onTap: () =>
-                                  context.pushNamed(SettingsRoutes.terms),
-                            ),
-                            _AccountMenuItem(
-                              icon: LucideIcons.info,
-                              title: 'About EasyRide',
-                              subtitle: 'Version and open-source licenses',
-                              onTap: () =>
-                                  context.pushNamed(SettingsRoutes.about),
                             ),
                           ]),
                           if (onLogout != null && isAuthenticated) ...[
