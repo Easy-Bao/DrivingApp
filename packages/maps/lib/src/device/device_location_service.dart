@@ -1,3 +1,7 @@
+import 'dart:developer' as developer;
+
+import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:foundation/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 
 import 'package:maps/src/map/map_native_service.dart';
@@ -6,6 +10,9 @@ enum LocationAccessState { ready, serviceDisabled, denied, deniedForever }
 
 class LocationService._() {
   static Position? _lastPosition;
+  static Position? _lastStreamPosition;
+  static DateTime? _lastStreamReceivedAt;
+  static int _streamSampleCount = 0;
   static MapNativeService? _nativeService;
 
   static set nativeService(MapNativeService nativeService) {
@@ -71,14 +78,30 @@ class LocationService._() {
     try {
       if (await getAccessState() != LocationAccessState.ready) return null;
 
-      _lastPosition = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 10,
-          timeLimit: Duration(seconds: 5),
+      final position = await traceTimelineStage(
+        'maps.location.current_position',
+        () => Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 10,
+            timeLimit: Duration(seconds: 5),
+          ),
         ),
       );
-      return _lastPosition;
+      _lastPosition = position;
+      if (!kReleaseMode) {
+        developer.Timeline.instantSync(
+          'maps.location.current_fix',
+          arguments: {
+            'sample_age_ms': DateTime.now()
+                .toUtc()
+                .difference(position.timestamp)
+                .inMilliseconds,
+            'accuracy_m': position.accuracy,
+          },
+        );
+      }
+      return position;
     } catch (_) {
       return null;
     }
@@ -94,12 +117,44 @@ class LocationService._() {
           )
           .map((pos) {
             _lastPosition = pos;
+            _recordStreamSample(pos);
             return pos;
           })
           .handleError((Object _) {});
     } catch (_) {
       return const Stream<Position>.empty();
     }
+  }
+
+  static void _recordStreamSample(Position position) {
+    if (kReleaseMode) return;
+
+    final receivedAt = DateTime.now().toUtc();
+    final previousPosition = _lastStreamPosition;
+    final previousReceivedAt = _lastStreamReceivedAt;
+    _lastStreamPosition = position;
+    _lastStreamReceivedAt = receivedAt;
+    _streamSampleCount++;
+    if (_streamSampleCount % 10 != 0) return;
+
+    developer.Timeline.instantSync(
+      'maps.location.stream_sample',
+      arguments: {
+        'sample_count': _streamSampleCount,
+        'sample_age_ms': receivedAt
+            .difference(position.timestamp)
+            .inMilliseconds,
+        'accuracy_m': position.accuracy,
+        if (previousPosition != null)
+          'observed_interval_ms': position.timestamp
+              .difference(previousPosition.timestamp)
+              .inMilliseconds,
+        if (previousReceivedAt != null)
+          'received_interval_ms': receivedAt
+              .difference(previousReceivedAt)
+              .inMilliseconds,
+      },
+    );
   }
 
   static LocationAccessState _stateForPermission(
