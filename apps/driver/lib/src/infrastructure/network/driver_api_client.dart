@@ -41,10 +41,12 @@ class DriverApiClient._() {
         tokenProvider: tokenProvider,
       ),
     );
-    if (kDebugMode) {
+    if (kDebugMode || kProfileMode) {
       dio.interceptors.add(
         RequestMetricsInterceptor(HttpRequestMetrics.instance),
       );
+    }
+    if (kDebugMode) {
       dio.interceptors.add(LoggingInterceptor());
     }
     dio.interceptors.add(IdempotencyInterceptor());
