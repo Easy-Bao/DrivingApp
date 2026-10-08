@@ -1,8 +1,12 @@
 package tracking
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
+	"log/slog"
+	"strings"
 	"testing"
 	"time"
 
@@ -329,6 +333,55 @@ func TestIngestPublishesAnActiveRideLocationToBothParticipants(t *testing.T) {
 	invalidPassengerID := published.Scope.PassengerID != "passenger-2"
 	if invalidRideID || invalidDriverID || invalidPassengerID {
 		t.Fatalf("event scope = %#v", published.Scope)
+	}
+}
+
+func TestIngestDebugTimingOmitsDriverAndLocationData(t *testing.T) {
+	var output bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&output, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
+	service := newLocationTrackingService(
+		&locationRepositoryStub{},
+		WithLogger(logger),
+		WithDriverPresence(driverPresenceStub{online: true}),
+		WithRideAssignments(assignmentLookupStub{}),
+	)
+	point := domain.DriverPoint{
+		DriverID:  "private-driver-id",
+		Latitude:  6.712345,
+		Longitude: 122.123456,
+	}
+
+	if err := service.Ingest(context.Background(), point); err != nil {
+		t.Fatalf("Ingest() error = %v", err)
+	}
+	if strings.Contains(output.String(), point.DriverID) ||
+		strings.Contains(output.String(), "6.712345") ||
+		strings.Contains(output.String(), "122.123456") {
+		t.Fatalf("timing log included driver or location data: %s", output.String())
+	}
+
+	var entry map[string]any
+	if err := json.Unmarshal(output.Bytes(), &entry); err != nil {
+		t.Fatalf("unmarshal timing log: %v", err)
+	}
+	if entry["msg"] != "location ingest stage timings" || entry["outcome"] != "accepted" {
+		t.Fatalf("timing log = %#v", entry)
+	}
+	for _, field := range []string{
+		"total_us",
+		"validation_us",
+		"pre_write_presence_us",
+		"persistence_us",
+		"post_write_presence_us",
+		"assignment_lookup_us",
+		"event_publication_us",
+	} {
+		value, ok := entry[field].(float64)
+		if !ok || value < 0 {
+			t.Errorf("%s = %#v, want a non-negative duration", field, entry[field])
+		}
 	}
 }
 
