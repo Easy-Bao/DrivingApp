@@ -29,6 +29,9 @@ func Logging(logger *slog.Logger) func(http.Handler) http.Handler {
 				"method", request.Method,
 				"path", request.URL.Path,
 				"status", status,
+				"request_bytes", request.ContentLength,
+				"response_bytes", response.responseBytes(),
+				"cancelled", request.Context().Err() != nil,
 				"client_ip", ClientIPFromRequest(request),
 				"user_agent", request.UserAgent(),
 				"duration_ms", time.Since(startedAt).Milliseconds(),
@@ -52,7 +55,9 @@ func Logging(logger *slog.Logger) func(http.Handler) http.Handler {
 
 type statusWriter struct {
 	http.ResponseWriter
-	status int
+	status       int
+	bytesWritten int64
+	hijacked     bool
 }
 
 var _ http.ResponseWriter = (*statusWriter)(nil)
@@ -69,7 +74,9 @@ func (writer *statusWriter) Write(body []byte) (int, error) {
 	if writer.status == 0 {
 		writer.WriteHeader(http.StatusOK)
 	}
-	return writer.ResponseWriter.Write(body)
+	written, err := writer.ResponseWriter.Write(body)
+	writer.bytesWritten += int64(written)
+	return written, err
 }
 
 func (writer *statusWriter) Flush() {
@@ -86,7 +93,11 @@ func (writer *statusWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	if !ok {
 		return nil, nil, http.ErrNotSupported
 	}
-	return hijacker.Hijack()
+	connection, buffered, err := hijacker.Hijack()
+	if err == nil {
+		writer.hijacked = true
+	}
+	return connection, buffered, err
 }
 
 func (writer *statusWriter) ReadFrom(reader io.Reader) (int64, error) {
@@ -94,9 +105,13 @@ func (writer *statusWriter) ReadFrom(reader io.Reader) (int64, error) {
 		writer.WriteHeader(http.StatusOK)
 	}
 	if readerFrom, ok := writer.ResponseWriter.(io.ReaderFrom); ok {
-		return readerFrom.ReadFrom(reader)
+		read, err := readerFrom.ReadFrom(reader)
+		writer.bytesWritten += read
+		return read, err
 	}
-	return io.Copy(writer.ResponseWriter, reader)
+	read, err := io.Copy(writer.ResponseWriter, reader)
+	writer.bytesWritten += read
+	return read, err
 }
 
 func (writer *statusWriter) Push(target string, options *http.PushOptions) error {
@@ -115,6 +130,13 @@ func (writer *statusWriter) statusCode() int {
 		return http.StatusOK
 	}
 	return writer.status
+}
+
+func (writer *statusWriter) responseBytes() int64 {
+	if writer.hijacked {
+		return -1
+	}
+	return writer.bytesWritten
 }
 
 func securityEvent(status int) string {
