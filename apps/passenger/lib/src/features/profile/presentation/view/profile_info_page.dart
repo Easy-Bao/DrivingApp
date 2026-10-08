@@ -279,51 +279,8 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
               ),
             ),
             centerTitle: true,
-            actions: [
-              if (_isDirty)
-                Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: Center(
-                    child: SizedBox(
-                      height: 36,
-                      child: FilledButton(
-                        key: const ValueKey<String>('passenger-profile-save'),
-                        onPressed: _isSaving ? null : _saveProfile,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: context.colorScheme.primary,
-                          foregroundColor: context.colorScheme.onPrimary,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              EasyRideRadius.pill,
-                            ),
-                          ),
-                        ),
-                        child: _isSaving
-                            ? SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: context.colorScheme.onPrimary,
-                                ),
-                              )
-                            : const Text(
-                                'Save',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13,
-                                ),
-                              ),
-                      ),
-                    ),
-                  ),
-                )
-              else
-                const SizedBox(width: 48),
-            ],
           ),
+          bottomNavigationBar: _buildBottomBar(context),
           body: SafeArea(
             top: false,
             child: LayoutBuilder(
@@ -358,6 +315,67 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget? _buildBottomBar(BuildContext context) {
+    if (!_isDirty) return null;
+    return SafeArea(
+      top: false,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final horizontalPadding = constraints.maxWidth < 360
+              ? EasyRideLayout.pagePadding
+              : EasyRideLayout.pagePaddingWide;
+          return Container(
+            color: context.canvasColor,
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              12,
+              horizontalPadding,
+              16,
+            ),
+            child: Center(
+              heightFactor: 1,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: EasyRideSize.controlHeight,
+                  child: FilledButton(
+                    key: const ValueKey<String>('passenger-profile-save'),
+                    onPressed: _isSaving ? null : _saveProfile,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: context.colorScheme.primary,
+                      foregroundColor: context.colorScheme.onPrimary,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                      ),
+                    ),
+                    child: _isSaving
+                        ? SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.2,
+                              color: context.colorScheme.onPrimary,
+                            ),
+                          )
+                        : const Text(
+                            'Save',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
