@@ -32,7 +32,7 @@ func run(ctx context.Context) error {
 	sqlDatabase, err := database.OpenPostgresMigrationDatabaseWithContext(
 		ctx,
 		databaseURL,
-		database.PostgresNativePoolConfigFromEnv().PingTimeout,
+		database.PostgresNativePoolConfigFrom(os.Getenv).PingTimeout,
 	)
 	if err != nil {
 		return fmt.Errorf("open migration database: %w", err)

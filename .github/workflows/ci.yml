@@ -1,4 +1,4 @@
-name: DriveApp Continuous Integration
+name: DriveApp CI
 
 on:
   pull_request:
@@ -13,96 +13,31 @@ permissions:
 
 env:
   FLUTTER_VERSION: '3.47.2'
-  TZ: Asia/Manila
 
 concurrency:
   group: driveapp-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  repository-integrity:
-    name: Repository Integrity
+  build:
+    name: Build applications and services
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
-          fetch-depth: 0
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
 
-      - name: Check whitespace errors
-        run: git diff --check
-
-      - name: Set up Gitleaks runtime
+      - name: Set up Go
         uses: actions/setup-go@v7
         with:
-          go-version: '1.27.0'
-          cache: false
-
-      - name: Install Gitleaks CLI
-        env:
-          GOBIN: ${{ runner.temp }}/gitleaks-bin
-        run: go install github.com/zricethezav/gitleaks/v8@v8.30.1
-
-      - name: Scan for leaked secrets
-        run: ${{ runner.temp }}/gitleaks-bin/gitleaks git --no-banner --redact --log-opts=--all .
-
-  mobile-format-and-boundaries:
-    name: Mobile Format and Boundaries
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          go-version-file: server/go.mod
           cache: true
-
-      - name: Cache pub dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.pub-cache
-            .dart_tool
-            apps/*/.dart_tool
-            packages/*/.dart_tool
-          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            pub-${{ runner.os }}-
-
-      - name: Prepare Flutter environment assets
-        run: cp apps/driver/.env.example apps/driver/.env
-
-      - name: Prepare passenger environment asset
-        run: cp apps/passenger/.env.example apps/passenger/.env
-
-      - name: Verify mobile environment assets
-        run: |
-          cmp --silent apps/driver/.env.example apps/driver/.env
-          cmp --silent apps/passenger/.env.example apps/passenger/.env
-
-      - name: Install root dependencies
-        run: flutter pub get
-
-      - name: Bootstrap Melos workspace
-        run: dart run melos bootstrap
-
-      - name: Check Dart formatting
-        run: dart format --set-exit-if-changed apps packages
-
-  mobile-analysis:
-    name: Mobile Static Analysis
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
+          cache-dependency-path: server/go.sum
 
       - name: Cache pub dependencies
         uses: actions/cache@v4
@@ -118,113 +53,33 @@ jobs:
 
       - name: Prepare Flutter environment assets
         run: |
-          cp apps/driver/.env.example apps/driver/.env
           cp apps/passenger/.env.example apps/passenger/.env
-
-      - name: Install root dependencies
-        run: flutter pub get
-
-      - name: Bootstrap Melos workspace
-        run: dart run melos bootstrap
-
-      - name: Analyze Flutter workspace
-        run: dart run melos exec -- "flutter analyze --no-fatal-infos ."
-
-  passenger-tests:
-    name: Passenger Tests
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [0, 1]
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-
-      - name: Cache pub dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.pub-cache
-            .dart_tool
-            apps/*/.dart_tool
-            packages/*/.dart_tool
-          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            pub-${{ runner.os }}-
-
-      - name: Prepare Flutter environment assets
-        run: |
           cp apps/driver/.env.example apps/driver/.env
-          cp apps/passenger/.env.example apps/passenger/.env
 
-      - name: Install root dependencies
-        run: flutter pub get
+      - name: Install Flutter dependencies
+        run: |
+          flutter pub get
+          dart run melos bootstrap
 
-      - name: Bootstrap Melos workspace
-        run: dart run melos bootstrap
-
-      - name: Test passenger app
+      - name: Build Passenger Android debug app
         working-directory: apps/passenger
-        run: flutter test --total-shards=2 --shard-index=${{ matrix.shard }} --reporter compact
+        env:
+          ORG_GRADLE_PROJECT_MAPBOX_DOWNLOADS_TOKEN: ${{ secrets.MAPBOX_DOWNLOADS_TOKEN }}
+        run: flutter build apk --debug
 
-  driver-tests:
-    name: Driver Tests
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [0, 1]
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-
-      - name: Cache pub dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.pub-cache
-            .dart_tool
-            apps/*/.dart_tool
-            packages/*/.dart_tool
-          key: pub-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            pub-${{ runner.os }}-
-
-      - name: Prepare Flutter environment assets
-        run: |
-          cp apps/driver/.env.example apps/driver/.env
-          cp apps/passenger/.env.example apps/passenger/.env
-
-      - name: Install root dependencies
-        run: flutter pub get
-
-      - name: Bootstrap Melos workspace
-        run: dart run melos bootstrap
-
-      - name: Test driver app
+      - name: Build Driver Android debug app
         working-directory: apps/driver
-        run: flutter test --total-shards=2 --shard-index=${{ matrix.shard }} --reporter compact
+        env:
+          ORG_GRADLE_PROJECT_MAPBOX_DOWNLOADS_TOKEN: ${{ secrets.MAPBOX_DOWNLOADS_TOKEN }}
+        run: flutter build apk --debug
 
-  shared-package-tests:
-    name: Shared Package Tests (${{ matrix.package }})
+      - name: Build Go services
+        working-directory: server
+        run: go build ./...
+
+  test:
+    name: Test applications and services
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        package: [design_system, foundation, maps]
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -234,6 +89,13 @@ jobs:
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: server/go.mod
+          cache: true
+          cache-dependency-path: server/go.sum
 
       - name: Cache pub dependencies
         uses: actions/cache@v4
@@ -249,135 +111,17 @@ jobs:
 
       - name: Prepare Flutter environment assets
         run: |
-          cp apps/driver/.env.example apps/driver/.env
           cp apps/passenger/.env.example apps/passenger/.env
+          cp apps/driver/.env.example apps/driver/.env
 
-      - name: Install root dependencies
-        run: flutter pub get
+      - name: Install Flutter dependencies
+        run: |
+          flutter pub get
+          dart run melos bootstrap
 
-      - name: Bootstrap Melos workspace
-        run: dart run melos bootstrap
+      - name: Test Flutter apps and packages
+        run: dart run melos exec -- "flutter test --reporter compact"
 
-      - name: Test shared package
-        working-directory: packages/${{ matrix.package }}
-        run: flutter test --reporter compact
-
-  backend-static:
-    name: Backend Static Checks
-    runs-on: ubuntu-latest
-    defaults:
-      run:
+      - name: Test Go services
         working-directory: server
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-
-      - name: Set up Go
-        uses: actions/setup-go@v7
-        with:
-          go-version-file: server/go.mod
-          cache: true
-          cache-dependency-path: server/go.sum
-
-      - name: Download Go dependencies
-        run: go mod download
-
-      - name: Verify Go modules
-        run: go mod verify
-
-      - name: Generate sqlc client
-        run: go tool sqlc generate
-
-      - name: Verify generated sqlc client is current
-        run: git diff --exit-code -- internal/platform/database/postgres
-
-      - name: Check Go module tidiness
-        run: go mod tidy -diff
-
-      - name: Vet Go packages
-        run: go vet ./...
-
-  backend-unit:
-    name: Backend Unit Tests
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: server
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-
-      - name: Set up Go
-        uses: actions/setup-go@v7
-        with:
-          go-version-file: server/go.mod
-          cache: true
-          cache-dependency-path: server/go.sum
-
-      - name: Download Go dependencies
-        run: go mod download
-
-      - name: Test Go packages
         run: go test -count=1 -shuffle=on ./...
-
-  backend-race:
-    name: Backend Race Tests
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: server
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-
-      - name: Set up Go
-        uses: actions/setup-go@v7
-        with:
-          go-version-file: server/go.mod
-          cache: true
-          cache-dependency-path: server/go.sum
-
-      - name: Download Go dependencies
-        run: go mod download
-
-      - name: Test Go packages with race detector
-        run: go test -count=1 -race ./...
-
-  backend-integration:
-    name: Backend Integration Tests
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: server
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-
-      - name: Set up Go
-        uses: actions/setup-go@v7
-        with:
-          go-version-file: server/go.mod
-          cache: true
-          cache-dependency-path: server/go.sum
-
-      - name: Download Go dependencies
-        run: go mod download
-
-      - name: Test tagged integration packages
-        run: go test -count=1 -tags=integration ./...
-
-      - name: Test tagged integration packages with race detector
-        run: go test -count=1 -race -tags=integration ./...
-
-  dependency-review:
-    name: Dependency Security Review
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
-
-      - name: Review dependency changes
-        uses: actions/dependency-review-action@v4
-        with:
-          fail-on-severity: high

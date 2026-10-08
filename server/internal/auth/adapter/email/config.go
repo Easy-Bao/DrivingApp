@@ -3,7 +3,6 @@ package email
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -32,11 +31,7 @@ type Config struct {
 	Timeout  time.Duration
 }
 
-func NewConfigFromEnv() Config {
-	return configFromEnv(os.Getenv)
-}
-
-func configFromEnv(getenv func(string) string) Config {
+func ConfigFrom(getenv func(string) string) Config {
 	return Config{
 		Host:     strings.TrimSpace(getenv("MAIL_HOST")),
 		Port:     integerEnv(getenv, "MAIL_PORT", 0),

@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 )
@@ -46,7 +47,7 @@ func TestOpenPostgresPoolRejectsInvalidConfigBeforeConnecting(t *testing.T) {
 	}
 }
 
-func TestPostgresNativePoolConfigFromEnv(t *testing.T) {
+func TestPostgresNativePoolConfigFrom(t *testing.T) {
 	t.Setenv("POSTGRES_MAX_OPEN_CONNECTIONS", "40")
 	t.Setenv("POSTGRES_MIN_CONNECTIONS", "4")
 	t.Setenv("POSTGRES_MIN_IDLE_CONNECTIONS", "8")
@@ -54,7 +55,7 @@ func TestPostgresNativePoolConfigFromEnv(t *testing.T) {
 	t.Setenv("POSTGRES_CONNECTION_MAX_IDLE_TIME", "8m")
 	t.Setenv("POSTGRES_PING_TIMEOUT", "3s")
 
-	config := PostgresNativePoolConfigFromEnv()
+	config := PostgresNativePoolConfigFrom(os.Getenv)
 	if config.MaxConnections != 40 || config.MinConnections != 4 || config.MinIdleConnections != 8 {
 		t.Fatalf("pool sizes = %d/%d/%d", config.MaxConnections, config.MinConnections, config.MinIdleConnections)
 	}

@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -32,12 +31,12 @@ const (
 	HSTSEnabled
 )
 
-func SecurityConfigFromEnv() SecurityConfig {
+func SecurityConfigFrom(getenv func(string) string) SecurityConfig {
 	return SecurityConfig{
-		AllowedOrigins:  parseOrigins(os.Getenv("CORS_ALLOWED_ORIGINS")),
-		EnableHSTS:      strings.EqualFold(strings.TrimSpace(os.Getenv("ENABLE_HSTS")), "true"),
-		JSONBodyLimit:   positiveInt64Env("JSON_BODY_LIMIT_BYTES", _defaultJSONBodyLimit),
-		UploadBodyLimit: positiveInt64Env("UPLOAD_BODY_LIMIT_BYTES", _defaultUploadBodyLimit),
+		AllowedOrigins:  parseOrigins(getenv("CORS_ALLOWED_ORIGINS")),
+		EnableHSTS:      strings.EqualFold(strings.TrimSpace(getenv("ENABLE_HSTS")), "true"),
+		JSONBodyLimit:   positiveInt64Value(getenv, "JSON_BODY_LIMIT_BYTES", _defaultJSONBodyLimit),
+		UploadBodyLimit: positiveInt64Value(getenv, "UPLOAD_BODY_LIMIT_BYTES", _defaultUploadBodyLimit),
 	}
 }
 
@@ -190,14 +189,6 @@ func parseOrigins(raw string) []string {
 		}
 	}
 	return origins
-}
-
-func positiveInt64Env(key string, fallback int64) int64 {
-	value, err := strconv.ParseInt(strings.TrimSpace(os.Getenv(key)), 10, 64)
-	if err != nil || value <= 0 {
-		return fallback
-	}
-	return value
 }
 
 func validRequestID(value string) bool {

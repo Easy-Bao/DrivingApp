@@ -48,6 +48,40 @@ Bootstrapping links all local packages together and installs their external depe
 melos bootstrap
 ```
 
+### Configuration ownership and precedence
+
+Configuration is intentionally split by runtime boundary:
+
+- `.env` at the repository root is for the native Go API, Docker Compose
+  interpolation, migrations, and local service scripts. It is never bundled
+  into either Flutter application.
+- `apps/passenger/.env` and `apps/driver/.env` are separate public client
+  configuration assets. Their templates may share values because each app is
+  built and shipped independently; the Driver template also owns its
+  background-telemetry switch.
+- `web/admin/.env` is private server-side configuration for the SvelteKit
+  process. It is not loaded by the Go API or Flutter clients.
+- Melos only orchestrates workspace commands. It does not load or copy any
+  environment file.
+
+For Flutter, a non-empty `--dart-define` value takes precedence over the
+app-local `.env` asset, followed by the configuration class default. The
+asset is public once bundled, so it must contain no backend credentials. The
+Go API reads process environment variables once in `app.LoadConfig`; native
+commands receive the root `.env` through Just, while Compose maps root values
+or derives container-network values such as `DATABASE_URL` and `REDIS_URL`.
+Docker Compose supplies its own container defaults for optional settings.
+
+The root template is the server/Compose contract, while each application or
+the admin service owns its own template. Do not copy the root `.env` into an
+application directory.
+
+When upgrading an older checkout, remove these unused legacy entries from the
+local root `.env` after confirming they are not needed by a private local
+tool: `CORE_API_URL`, `CORE_API_INTERNAL_URL`, `REALTIME_SERVICE_URL`,
+`REALTIME_SERVICE_INTERNAL_URL`, and `RABBITMQ_URL`. They have no consumers in
+this repository and are intentionally absent from `.env.example`.
+
 ### Run the Go backend natively
 
 The default local backend workflow runs the API natively and starts the
@@ -82,7 +116,7 @@ The following commands are configured in `melos.yaml`:
 
 * **Bootstrap all packages:**
   ```bash
-  melos run bootstrap
+  melos bootstrap
   ```
 * **Run Flutter analyzer on all packages:**
   ```bash

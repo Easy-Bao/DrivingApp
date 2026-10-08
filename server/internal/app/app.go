@@ -46,7 +46,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	postgresPool, err := database.OpenPostgresPoolWithContext(
 		ctx,
 		config.DatabaseURL,
-		database.PostgresNativePoolConfigFromEnv(),
+		config.PostgresPool,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("initialize postgresql pool: %w", err)
@@ -133,7 +133,10 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	secureHandler := middleware.SecureHTTPWithIdempotency(
 		router,
 		config.Security,
-		middleware.NewRateLimiterFromEnv(rateCounterStore),
+		middleware.NewRateLimiter(middleware.RateLimiterDependencies{
+			Store:  rateCounterStore,
+			Config: config.RateLimits,
+		}),
 		idempotency,
 	)
 	handler := proxyTrust.Middleware(middleware.Logging(applicationLogger)(secureHandler))

@@ -59,6 +59,7 @@ app.*.map.json
 !/.env.example
 !/apps/passenger/.env.example
 !/apps/driver/.env.example
+!/web/admin/.env.example
 
 #Metadata
 .metadata

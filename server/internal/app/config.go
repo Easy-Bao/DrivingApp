@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/email"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	rideconfig "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/config"
@@ -29,6 +31,9 @@ type Config struct {
 	TrustedProxyCIDRs string
 	AdminUserIDs      string
 	Security          middleware.SecurityConfig
+	RateLimits        middleware.RateLimitConfig
+	PostgresPool      database.PostgresNativePoolConfig
+	Mail              email.Config
 	Pricing           rideapplication.PricingConfig
 	RideLifecycle     ridelifecycle.Config
 	Bidding           ridebidding.Config
@@ -81,11 +86,14 @@ func LoadConfig() (Config, error) {
 		Port:              port,
 		TrustedProxyCIDRs: os.Getenv("TRUSTED_PROXY_CIDRS"),
 		AdminUserIDs:      os.Getenv("ADMIN_USER_IDS"),
-		Security:          middleware.SecurityConfigFromEnv(),
+		Security:          middleware.SecurityConfigFrom(os.Getenv),
 		Pricing:           pricing,
 		RideLifecycle:     rideLifecycle,
 		Bidding:           bidding,
 		ReportingLocation: reportingLocation,
+		RateLimits:        middleware.RateLimitConfigFrom(os.Getenv),
+		PostgresPool:      database.PostgresNativePoolConfigFrom(os.Getenv),
+		Mail:              email.ConfigFrom(os.Getenv),
 	}, nil
 }
 

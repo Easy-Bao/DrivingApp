@@ -5,69 +5,34 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:foundation/foundation.dart';
 
 class PassengerEnvConfig._() {
-  static const _appEnvironment = String.fromEnvironment('APP_ENV');
-  static const _apiBaseUrl = String.fromEnvironment('API_BASE_URL');
-  static const _mapboxPublicToken = String.fromEnvironment(
-    'MAPBOX_PUBLIC_TOKEN',
+  static const _buildValues = <String, String>{
+    'APP_ENV': String.fromEnvironment('APP_ENV'),
+    'API_BASE_URL': String.fromEnvironment('API_BASE_URL'),
+    'MAPBOX_PUBLIC_TOKEN': String.fromEnvironment('MAPBOX_PUBLIC_TOKEN'),
+    'SENTRY_DSN': String.fromEnvironment('SENTRY_DSN'),
+    'PHYSICAL_DEVICE': String.fromEnvironment('PHYSICAL_DEVICE'),
+    'ANDROID_USE_ADB_REVERSE': String.fromEnvironment(
+      'ANDROID_USE_ADB_REVERSE',
+    ),
+    'ANDROID_EMULATOR_LOOPBACK_HOST': String.fromEnvironment(
+      'ANDROID_EMULATOR_LOOPBACK_HOST',
+    ),
+  };
+
+  static ClientEnvironment get _config => ClientEnvironment(
+    environment: dotenv.env,
+    buildValues: _buildValues,
+    allowInsecureHttp: !kReleaseMode,
+    isAndroid: !kIsWeb && Platform.isAndroid,
   );
-  static const _sentryDsn = String.fromEnvironment('SENTRY_DSN');
-  static const _physicalDevice = String.fromEnvironment('PHYSICAL_DEVICE');
-  static const _usesAdbReverse = String.fromEnvironment(
-    'ANDROID_USE_ADB_REVERSE',
-  );
-  static const _androidEmulatorLoopbackHost = String.fromEnvironment(
-    'ANDROID_EMULATOR_LOOPBACK_HOST',
-  );
 
-  static String? get mapboxPublicToken {
-    final token = _value('MAPBOX_PUBLIC_TOKEN', _mapboxPublicToken)?.trim();
-    return token == null || token.isEmpty ? null : token;
-  }
+  static String? get mapboxPublicToken => _config.mapboxPublicToken;
 
-  static String get appEnvironment {
-    final environment = _value('APP_ENV', _appEnvironment)?.trim();
-    return environment == null || environment.isEmpty
-        ? 'development'
-        : environment;
-  }
+  static String get appEnvironment => _config.appEnvironment;
 
-  static String get sentryDsn => _value('SENTRY_DSN', _sentryDsn) ?? '';
+  static String get sentryDsn => _config.sentryDsn;
 
-  static Uri get apiBaseUri {
-    final rawUrl = _value('API_BASE_URL', _apiBaseUrl);
-    if (rawUrl == null || rawUrl.trim().isEmpty) {
-      throw StateError(
-        'Security Configuration Error: API_BASE_URL is required.',
-      );
-    }
+  static Uri get apiBaseUri => _config.apiBaseUri;
 
-    try {
-      return resolveMobileApiBaseUri(
-        rawUrl: rawUrl,
-        allowInsecureHttp: !kReleaseMode,
-        isAndroid: !kIsWeb && Platform.isAndroid,
-        isPhysicalDevice: _flag('PHYSICAL_DEVICE', _physicalDevice),
-        usesAdbReverse: _flag('ANDROID_USE_ADB_REVERSE', _usesAdbReverse),
-        androidEmulatorLoopbackHost: _value(
-          'ANDROID_EMULATOR_LOOPBACK_HOST',
-          _androidEmulatorLoopbackHost,
-        ),
-      );
-    } on FormatException catch (error) {
-      throw StateError('Security Configuration Error: ${error.message}');
-    }
-  }
-
-  static Uri get webSocketBaseUri {
-    final uri = apiBaseUri;
-    return uri.replace(scheme: uri.scheme == 'https' ? 'wss' : 'ws');
-  }
-
-  static bool _flag(String key, String dartDefineValue) =>
-      _value(key, dartDefineValue)?.toLowerCase() == 'true';
-
-  static String? _value(String key, String dartDefineValue) {
-    if (dartDefineValue.trim().isNotEmpty) return dartDefineValue;
-    return dotenv.env[key];
-  }
+  static Uri get webSocketBaseUri => _config.webSocketBaseUri;
 }

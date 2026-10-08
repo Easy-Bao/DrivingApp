@@ -5,9 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -163,22 +161,19 @@ func NewRateLimiter(dependencies RateLimiterDependencies) *RateLimiter {
 	}
 }
 
-func NewRateLimiterFromEnv(store CounterStore) *RateLimiter {
+func RateLimitConfigFrom(getenv func(string) string) RateLimitConfig {
 	defaults := DefaultRateLimitConfig()
-	return NewRateLimiter(RateLimiterDependencies{
-		Store: store,
-		Config: RateLimitConfig{
-			Authentication: positiveInt64EnvValue("AUTH_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Authentication),
-			Refresh:        positiveInt64EnvValue("REFRESH_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Refresh),
-			Location:       positiveInt64EnvValue("LOCATION_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Location),
-			Fare:           positiveInt64EnvValue("FARE_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Fare),
-			Connection:     positiveInt64EnvValue("CONNECTION_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Connection),
-			Telemetry:      positiveInt64EnvValue("TELEMETRY_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Telemetry),
-			Mutation:       positiveInt64EnvValue("MUTATION_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Mutation),
-			Read:           positiveInt64EnvValue("READ_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Read),
-			Window:         time.Minute,
-		},
-	})
+	return RateLimitConfig{
+		Authentication: positiveInt64Value(getenv, "AUTH_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Authentication),
+		Refresh:        positiveInt64Value(getenv, "REFRESH_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Refresh),
+		Location:       positiveInt64Value(getenv, "LOCATION_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Location),
+		Fare:           positiveInt64Value(getenv, "FARE_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Fare),
+		Connection:     positiveInt64Value(getenv, "CONNECTION_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Connection),
+		Telemetry:      positiveInt64Value(getenv, "TELEMETRY_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Telemetry),
+		Mutation:       positiveInt64Value(getenv, "MUTATION_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Mutation),
+		Read:           positiveInt64Value(getenv, "READ_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Read),
+		Window:         time.Minute,
+	}
 }
 
 func (limiter *RateLimiter) Middleware(next http.Handler) http.Handler {
@@ -313,12 +308,4 @@ func maxInt64(left, right int64) int64 {
 		return left
 	}
 	return right
-}
-
-func positiveInt64EnvValue(key string, fallback int64) int64 {
-	value, err := strconv.ParseInt(strings.TrimSpace(os.Getenv(key)), 10, 64)
-	if err != nil || value <= 0 {
-		return fallback
-	}
-	return value
 }

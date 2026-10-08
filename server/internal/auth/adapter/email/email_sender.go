@@ -30,10 +30,6 @@ type GoMailGateway struct {
 
 var _ authports.OTPSender = (*GoMailGateway)(nil)
 
-func NewGoMailGatewayFromEnv() *GoMailGateway {
-	return NewGoMailGateway(NewConfigFromEnv())
-}
-
 func NewGoMailGateway(config Config, options ...GoMailGatewayOption) *GoMailGateway {
 	gateway := newGoMailGateway(config)
 	for _, option := range options {

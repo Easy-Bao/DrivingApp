@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -35,24 +34,16 @@ func DefaultPostgresNativePoolConfig() PostgresNativePoolConfig {
 	}
 }
 
-func PostgresNativePoolConfigFromEnv() PostgresNativePoolConfig {
+func PostgresNativePoolConfigFrom(getenv func(string) string) PostgresNativePoolConfig {
 	defaults := DefaultPostgresNativePoolConfig()
 	return PostgresNativePoolConfig{
-		MaxConnections:        positiveInt32Env("POSTGRES_MAX_OPEN_CONNECTIONS", defaults.MaxConnections),
-		MinConnections:        nonNegativeInt32Env("POSTGRES_MIN_CONNECTIONS", defaults.MinConnections),
-		MinIdleConnections:    nonNegativeInt32Env("POSTGRES_MIN_IDLE_CONNECTIONS", defaults.MinIdleConnections),
-		ConnectionMaxLifetime: positiveDurationEnv("POSTGRES_CONNECTION_MAX_LIFETIME", defaults.ConnectionMaxLifetime),
-		ConnectionMaxIdleTime: positiveDurationEnv("POSTGRES_CONNECTION_MAX_IDLE_TIME", defaults.ConnectionMaxIdleTime),
-		PingTimeout:           positiveDurationEnv("POSTGRES_PING_TIMEOUT", defaults.PingTimeout),
+		MaxConnections:        positiveInt32Env(getenv, "POSTGRES_MAX_OPEN_CONNECTIONS", defaults.MaxConnections),
+		MinConnections:        nonNegativeInt32Env(getenv, "POSTGRES_MIN_CONNECTIONS", defaults.MinConnections),
+		MinIdleConnections:    nonNegativeInt32Env(getenv, "POSTGRES_MIN_IDLE_CONNECTIONS", defaults.MinIdleConnections),
+		ConnectionMaxLifetime: positiveDurationEnv(getenv, "POSTGRES_CONNECTION_MAX_LIFETIME", defaults.ConnectionMaxLifetime),
+		ConnectionMaxIdleTime: positiveDurationEnv(getenv, "POSTGRES_CONNECTION_MAX_IDLE_TIME", defaults.ConnectionMaxIdleTime),
+		PingTimeout:           positiveDurationEnv(getenv, "POSTGRES_PING_TIMEOUT", defaults.PingTimeout),
 	}
-}
-
-func OpenPostgresPool(databaseURL string) (*pgxpool.Pool, error) {
-	return OpenPostgresPoolWithContext(
-		context.Background(),
-		databaseURL,
-		PostgresNativePoolConfigFromEnv(),
-	)
 }
 
 func OpenPostgresPoolWithConfig(databaseURL string, config PostgresNativePoolConfig) (*pgxpool.Pool, error) {
@@ -130,16 +121,16 @@ func (config PostgresNativePoolConfig) validate() error {
 	return nil
 }
 
-func positiveInt32Env(key string, fallback int32) int32 {
-	value := int64(positiveIntEnv(key, int(fallback)))
+func positiveInt32Env(getenv func(string) string, key string, fallback int32) int32 {
+	value := int64(positiveIntEnv(getenv, key, int(fallback)))
 	if value > 1<<31-1 {
 		return fallback
 	}
 	return int32(value)
 }
 
-func nonNegativeInt32Env(key string, fallback int32) int32 {
-	value := strings.TrimSpace(os.Getenv(key))
+func nonNegativeInt32Env(getenv func(string) string, key string, fallback int32) int32 {
+	value := strings.TrimSpace(getenv(key))
 	if value == "" {
 		return fallback
 	}
@@ -150,16 +141,16 @@ func nonNegativeInt32Env(key string, fallback int32) int32 {
 	return int32(parsed)
 }
 
-func positiveIntEnv(key string, fallback int) int {
-	value, err := strconv.Atoi(strings.TrimSpace(os.Getenv(key)))
+func positiveIntEnv(getenv func(string) string, key string, fallback int) int {
+	value, err := strconv.Atoi(strings.TrimSpace(getenv(key)))
 	if err != nil || value <= 0 {
 		return fallback
 	}
 	return value
 }
 
-func positiveDurationEnv(key string, fallback time.Duration) time.Duration {
-	value, err := time.ParseDuration(strings.TrimSpace(os.Getenv(key)))
+func positiveDurationEnv(getenv func(string) string, key string, fallback time.Duration) time.Duration {
+	value, err := time.ParseDuration(strings.TrimSpace(getenv(key)))
 	if err != nil || value <= 0 {
 		return fallback
 	}

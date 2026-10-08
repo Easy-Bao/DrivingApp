@@ -3,6 +3,7 @@ package email_test
 import (
 	"context"
 	"errors"
+	"os"
 	"testing"
 	"time"
 
@@ -23,7 +24,7 @@ func TestMailConfigUsesEnvironmentContract(t *testing.T) {
 		"MAIL_TIMEOUT":   "4s",
 	})
 
-	config := email.NewConfigFromEnv()
+	config := email.ConfigFrom(os.Getenv)
 	if err := config.Validate(); err != nil {
 		t.Fatalf("config should validate: %v", err)
 	}
@@ -50,7 +51,7 @@ func TestMailConfigRejectsInvalidSecurityAndNumbers(t *testing.T) {
 		"MAIL_TIMEOUT":  "not-a-duration",
 	})
 
-	if err := email.NewConfigFromEnv().Validate(); !errors.Is(err, email.ErrInvalidConfig) {
+	if err := email.ConfigFrom(os.Getenv).Validate(); !errors.Is(err, email.ErrInvalidConfig) {
 		t.Fatalf("expected ErrInvalidConfig, got %v", err)
 	}
 }

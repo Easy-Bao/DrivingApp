@@ -101,7 +101,7 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 		authverification.Dependencies{
 			Users:    authStore,
 			Store:    authredis.NewOTPStore(redisClient),
-			Gateway:  email.NewGoMailGatewayFromEnv(),
+			Gateway:  email.NewGoMailGateway(config.Mail),
 			Tokens:   verifier,
 			Sessions: sessionStore,
 		},
