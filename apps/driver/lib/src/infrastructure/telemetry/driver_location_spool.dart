@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final class DriverLocationPoint {
@@ -41,6 +42,7 @@ typedef DriverLocationSender = Future<bool> Function(DriverLocationPoint point);
 final class DriverLocationSpool {
   static const _storageKey = 'driver_location_spool_v1';
   static const _maximumPoints = 3600;
+  static const _flushCommitBatchSize = 10;
 
   DriverLocationSpool({SharedPreferencesAsync? preferences})
     : _preferences = preferences ?? SharedPreferencesAsync();
@@ -49,26 +51,44 @@ final class DriverLocationSpool {
   Future<void> _operation = Future<void>.value();
 
   Future<void> enqueue(DriverLocationPoint point) {
-    return _serialize(() async {
-      final points = await _read();
-      points.add(point);
-      if (points.length > _maximumPoints) {
-        points.removeRange(0, points.length - _maximumPoints);
-      }
-      await _write(points);
-    });
+    return _serialize(
+      () => traceTimelineStage('driver.location_spool.enqueue', () async {
+        final points = await _read();
+        points.add(point);
+        if (points.length > _maximumPoints) {
+          points.removeRange(0, points.length - _maximumPoints);
+        }
+        await _write(points);
+      }),
+    );
   }
 
   Future<bool> flush(DriverLocationSender send) {
-    return _serialize(() async {
-      final points = await _read();
-      while (points.isNotEmpty) {
-        if (!await send(points.first)) return false;
-        points.removeAt(0);
-        await _write(points);
-      }
-      return true;
-    });
+    return _serialize(
+      () => traceTimelineStage('driver.location_spool.flush', () async {
+        final points = await _read();
+        while (points.isNotEmpty) {
+          var acknowledgedCount = 0;
+          while (acknowledgedCount < _flushCommitBatchSize &&
+              acknowledgedCount < points.length) {
+            if (!await send(points[acknowledgedCount])) {
+              if (acknowledgedCount > 0) {
+                points.removeRange(0, acknowledgedCount);
+                await _write(points);
+              }
+              return false;
+            }
+            acknowledgedCount++;
+          }
+
+          // A process restart may replay one acknowledged batch; the server
+          // treats already-seen timestamps as successful stale-point no-ops.
+          points.removeRange(0, acknowledgedCount);
+          await _write(points);
+        }
+        return true;
+      }),
+    );
   }
 
   Future<List<DriverLocationPoint>> _read() async {
