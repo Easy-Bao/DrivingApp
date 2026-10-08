@@ -3,11 +3,13 @@ import 'dart:developer' as dev;
 import 'dart:ui';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver/src/infrastructure/telemetry/driver_battery_optimization.dart';
+import 'package:driver/src/infrastructure/telemetry/driver_location_point_mapper.dart';
 import 'package:driver/src/infrastructure/telemetry/driver_location_spool.dart';
 import 'package:foundation/foundation.dart';
 
@@ -201,6 +203,7 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
   var batteryOptimizationWarning = false;
   var isConfigured = false;
   var activeRequestIds = <String>{};
+  DateTime? previousLocationSampleAt;
   Timer? locationTimer;
   Timer? presenceTimer;
   Timer? requestTimer;
@@ -339,20 +342,15 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
           timeLimit: Duration(seconds: 5),
         ),
       );
-      await locationSpool.enqueue(
-        DriverLocationPoint(
-          latitude: position.latitude,
-          longitude: position.longitude,
-          observedAt: DateTime.now().toUtc(),
-          heading: position.heading.isFinite && position.heading >= 0
-              ? position.heading.clamp(0, 360)
-              : 0,
-          speed: position.speed.isFinite && position.speed >= 0
-              ? position.speed.clamp(0, 200)
-              : 0,
-        ),
-      );
-      await locationSpool.flush((point) async {
+      final point = driverLocationPointFromPosition(position);
+      final receivedAt = DateTime.now().toUtc();
+      final sampleInterval = previousLocationSampleAt == null
+          ? null
+          : point.observedAt.difference(previousLocationSampleAt!);
+      previousLocationSampleAt = point.observedAt;
+      await locationSpool.enqueue(point);
+      var acknowledgedPointCount = 0;
+      final flushSucceeded = await locationSpool.flush((point) async {
         try {
           final response = await client.post<void>(
             '/api/v1/telemetry/location',
@@ -365,9 +363,12 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
             },
             options: Options(headers: {'Authorization': 'Bearer $token'}),
           );
-          return response.statusCode == 200 ||
+          final acknowledged =
+              response.statusCode == 200 ||
               response.statusCode == 201 ||
               response.statusCode == 202;
+          if (acknowledged) acknowledgedPointCount++;
+          return acknowledged;
         } on DioException catch (error) {
           dev.log(
             'Driver telemetry request failed: ${error.type.name}/${error.response?.statusCode ?? 'network'}',
@@ -375,6 +376,17 @@ void backgroundTelemetryOnStart(ServiceInstance service) {
           return false;
         }
       });
+      if (!kReleaseMode) {
+        dev.log(
+          'sample_interval_ms=${sampleInterval?.inMilliseconds ?? -1} '
+          'sample_age_ms=${receivedAt.difference(point.observedAt).inMilliseconds} '
+          'accuracy_m=${position.accuracy.toStringAsFixed(1)} '
+          'acknowledged_points=$acknowledgedPointCount '
+          'flush_succeeded=$flushSucceeded',
+          name: 'easyride.performance.driver.location',
+          time: receivedAt,
+        );
+      }
     } on DioException catch (error) {
       dev.log(
         'Driver telemetry request failed: ${error.type.name}/${error.response?.statusCode ?? 'network'}',
