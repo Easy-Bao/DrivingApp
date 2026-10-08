@@ -28,7 +28,10 @@ void main() {
       socket.add(_eventJson('event-1'));
       await Future<void>.delayed(Duration.zero);
 
-      expect(connector.headers, {'Authorization': 'Bearer access-token'});
+      expect(connector.headers, {
+        'Authorization': 'Bearer access-token',
+        'X-Request-ID': matches(RegExp(r'^[0-9a-f]{32}$')),
+      });
       expect(events, hasLength(1));
       await subscription.cancel();
       await client.dispose();
@@ -74,6 +77,11 @@ void main() {
 
     expect(firstSocket.wasClosed, isTrue);
     expect(client.isConnected, isTrue);
+    expect(connector.headers, hasLength(2));
+    expect(
+      connector.headers.map((headers) => headers['X-Request-ID']).toSet(),
+      hasLength(2),
+    );
     await client.dispose();
     await network.dispose();
   });
@@ -126,7 +134,10 @@ void main() {
       await connected.future.timeout(const Duration(seconds: 1));
 
       expect(refreshCount, 1);
-      expect(connector.headers.last, {'Authorization': 'Bearer new-token'});
+      expect(connector.headers.last, {
+        'Authorization': 'Bearer new-token',
+        'X-Request-ID': matches(RegExp(r'^[0-9a-f]{32}$')),
+      });
       await client.dispose();
     },
   );
@@ -299,6 +310,7 @@ final class _SequenceConnector implements RealtimeSocketConnector {
   _SequenceConnector(this._sockets);
 
   final List<RealtimeSocket> _sockets;
+  final headers = <Map<String, String>>[];
   final secondConnection = Completer<void>();
   var _connectionCount = 0;
 
@@ -307,6 +319,7 @@ final class _SequenceConnector implements RealtimeSocketConnector {
     Uri _, {
     required Map<String, String> headers,
   }) async {
+    this.headers.add(headers);
     final socket = _sockets[_connectionCount++];
     if (_connectionCount == 2) {
       if (!secondConnection.isCompleted) secondConnection.complete();

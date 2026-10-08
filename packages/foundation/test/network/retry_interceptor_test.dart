@@ -101,6 +101,9 @@ void main() {
 
       expect(response.statusCode, 200);
       expect(adapter.attempts, 2);
+      expect(adapter.requestIds, hasLength(2));
+      expect(adapter.requestIds.toSet(), hasLength(1));
+      expect(adapter.requestIds.first, matches(RegExp(r'^[0-9a-f]{32}$')));
       expect(metrics.snapshot(), [
         isA<HttpRequestMetric>()
             .having((metric) => metric.count, 'attempt count', 2)
@@ -154,6 +157,7 @@ class _FailingHttpClientAdapter(this.onAttempt) implements HttpClientAdapter {
 
 class _RecoveringHttpClientAdapter implements HttpClientAdapter {
   int attempts = 0;
+  final requestIds = <String>[];
 
   @override
   Future<ResponseBody> fetch(
@@ -162,6 +166,8 @@ class _RecoveringHttpClientAdapter implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     attempts++;
+    final requestId = options.headers['X-Request-ID'];
+    if (requestId is String) requestIds.add(requestId);
     if (attempts == 1) {
       throw DioException(
         requestOptions: options,

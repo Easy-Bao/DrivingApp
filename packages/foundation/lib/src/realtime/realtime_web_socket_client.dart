@@ -7,6 +7,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:foundation/src/network/network_availability_coordinator.dart';
 import 'package:foundation/src/realtime/realtime_event.dart';
+import 'package:foundation/src/telemetry/request_correlation_id.dart';
 
 typedef RealtimeTokenProvider = FutureOr<String?> Function();
 typedef RealtimeTokenRefresher = Future<String?> Function();
@@ -120,6 +121,7 @@ final class RealtimeWebSocketClient({
   StreamSubscription<NetworkAvailabilityStatus>? _networkSubscription;
   Future<void>? _reconnecting;
   int _attempt = 0;
+  String? _connectionRequestId;
 
   Stream<RealtimeEvent> get events => _events.stream;
   Stream<RealtimeConnectionState> get states => _states.stream;
@@ -281,16 +283,17 @@ final class RealtimeWebSocketClient({
     if (!_wanted || _disposed || _socket != null) {
       return;
     }
+    _connectionRequestId = kReleaseMode ? null : newRequestCorrelationId();
     _emitState(RealtimeConnecting(_attempt));
     try {
       final token = await _tokenProvider();
       if (token == null || token.trim().isEmpty) {
         throw StateError('Realtime authentication token is unavailable.');
       }
-      final socket = await _connector.connect(
-        _uri,
-        headers: {'Authorization': 'Bearer ${token.trim()}'},
-      );
+      final headers = {'Authorization': 'Bearer ${token.trim()}'};
+      final requestId = _connectionRequestId;
+      if (requestId != null) headers['X-Request-ID'] = requestId;
+      final socket = await _connector.connect(_uri, headers: headers);
       if (!_wanted || _disposed) {
         await socket.close();
         return;
@@ -334,9 +337,13 @@ final class RealtimeWebSocketClient({
       );
       final duplicate = !_remember(realtimeEvent.envelope.id);
       if (!kReleaseMode) {
+        final requestId = _connectionRequestId;
         developer.Timeline.instantSync(
           'realtime.event_delivery',
-          arguments: {'duplicate': duplicate},
+          arguments: {
+            'duplicate': duplicate,
+            if (requestId != null) 'connection_request_id': requestId,
+          },
         );
       }
       if (!duplicate) {
@@ -423,6 +430,8 @@ final class RealtimeWebSocketClient({
         } else if (state is RealtimeDisconnected && state.reconnectIn != null) {
           arguments['reconnect_delay_ms'] = state.reconnectIn!.inMilliseconds;
         }
+        final requestId = _connectionRequestId;
+        if (requestId != null) arguments['request_id'] = requestId;
         developer.Timeline.instantSync(
           'realtime.connection_state',
           arguments: arguments,

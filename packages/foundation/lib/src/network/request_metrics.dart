@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:foundation/src/telemetry/request_correlation_id.dart';
 
 final class const HttpRequestMetric({
   required this.method,
@@ -134,21 +135,23 @@ final class RequestMetricsInterceptor(this._metrics) extends Interceptor {
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    final requestId = kReleaseMode
+        ? null
+        : _ensureRequestCorrelationId(options.headers);
     _metrics.record(options);
     if (!kReleaseMode) {
+      final arguments = <String, Object?>{
+        'method': options.method.toUpperCase(),
+        'path': _normalizePath(options.uri.path),
+        'retry_attempt': options.extra['retryAttempt'] as int? ?? 0,
+        'request_bytes':
+            _knownBodyBytes(options.data) ??
+            _contentLength(options.headers) ??
+            -1,
+      };
+      if (requestId != null) arguments['request_id'] = requestId;
       final task = developer.TimelineTask()
-        ..start(
-          'http.request',
-          arguments: {
-            'method': options.method.toUpperCase(),
-            'path': _normalizePath(options.uri.path),
-            'retry_attempt': options.extra['retryAttempt'] as int? ?? 0,
-            'request_bytes':
-                _knownBodyBytes(options.data) ??
-                _contentLength(options.headers) ??
-                -1,
-          },
-        );
+        ..start('http.request', arguments: arguments);
       options.extra[_requestTimelineTaskKey] = task;
     }
     handler.next(options);
@@ -165,6 +168,7 @@ final class RequestMetricsInterceptor(this._metrics) extends Interceptor {
       outcome: 'response',
       statusCode: response.statusCode,
       responseBytes: _contentLength(response.headers.map),
+      requestId: _requestCorrelationId(response.requestOptions.headers),
     );
     handler.next(response);
   }
@@ -179,6 +183,7 @@ final class RequestMetricsInterceptor(this._metrics) extends Interceptor {
       responseBytes: error.response == null
           ? null
           : _contentLength(error.response!.headers.map),
+      requestId: _requestCorrelationId(error.requestOptions.headers),
     );
     handler.next(error);
   }
@@ -188,16 +193,17 @@ final class RequestMetricsInterceptor(this._metrics) extends Interceptor {
     required String outcome,
     required int? statusCode,
     required int? responseBytes,
+    required String? requestId,
   }) {
     final task = options.extra.remove(_requestTimelineTaskKey);
     if (task is! developer.TimelineTask) return;
-    task.finish(
-      arguments: {
-        'outcome': outcome,
-        'status_code': statusCode ?? -1,
-        'response_bytes': responseBytes ?? -1,
-      },
-    );
+    final arguments = <String, Object?>{
+      'outcome': outcome,
+      'status_code': statusCode ?? -1,
+      'response_bytes': responseBytes ?? -1,
+    };
+    if (requestId != null) arguments['request_id'] = requestId;
+    task.finish(arguments: arguments);
   }
 }
 
@@ -271,6 +277,28 @@ final class _RequestMetricAccumulator {
 
 const _requestTimerKey = 'foundation.requestMetrics.stopwatch';
 const _requestTimelineTaskKey = 'foundation.requestMetrics.timelineTask';
+const _requestIdHeader = 'X-Request-ID';
+
+String? _ensureRequestCorrelationId(Map<String, dynamic> headers) {
+  final existingId = _requestCorrelationId(headers);
+  if (existingId != null) return existingId;
+
+  headers.removeWhere(
+    (key, _) => key.toLowerCase() == _requestIdHeader.toLowerCase(),
+  );
+  final requestId = newRequestCorrelationId();
+  headers[_requestIdHeader] = requestId;
+  return requestId;
+}
+
+String? _requestCorrelationId(Map<String, dynamic> headers) {
+  for (final entry in headers.entries) {
+    if (entry.key.toLowerCase() != _requestIdHeader.toLowerCase()) continue;
+    final value = entry.value;
+    if (value is String && _safeRequestId.hasMatch(value)) return value;
+  }
+  return null;
+}
 
 int? _knownBodyBytes(Object? body) {
   if (body is List<int>) return body.length;
@@ -316,3 +344,4 @@ final RegExp _uuidIdentifier = RegExp(
   r'^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
   caseSensitive: false,
 );
+final RegExp _safeRequestId = RegExp(r'^[A-Za-z0-9._-]{8,128}$');
