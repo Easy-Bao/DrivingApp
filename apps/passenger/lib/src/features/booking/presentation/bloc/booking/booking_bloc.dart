@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:bloc_concurrency/bloc_concurrency.dart';
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
@@ -458,7 +459,7 @@ class BookingBloc({
         return;
       }
       if (_realtimeWasConnected) {
-        unawaited(_loadOfferSnapshot(sessionId));
+        unawaited(_loadOfferSnapshot(sessionId, source: 'reconnect'));
       }
       _realtimeWasConnected = true;
     });
@@ -480,14 +481,17 @@ class BookingBloc({
     final task = AppLifecyclePeriodicTask(
       lifecycleCoordinator: _lifecycleCoordinator,
       interval: _offerRefreshInterval,
-      onTick: () => _loadOfferSnapshot(sessionId),
+      onTick: () => _loadOfferSnapshot(sessionId, source: 'periodic'),
       runImmediately: true,
     );
     _offerRefreshTask = task;
     task.start();
   }
 
-  Future<void> _loadOfferSnapshot(String sessionId) async {
+  Future<void> _loadOfferSnapshot(
+    String sessionId, {
+    required String source,
+  }) async {
     if (isClosed ||
         !_lifecycleCoordinator.isForeground ||
         _activeBidSessionId != sessionId ||
@@ -495,6 +499,15 @@ class BookingBloc({
       return;
     }
     _isRefreshingOffers = true;
+    if (!kReleaseMode) {
+      dev.Timeline.instantSync(
+        'passenger.booking.offer_snapshot',
+        arguments: {
+          'source': source,
+          'realtime_connected': _realtimeClient?.isConnected ?? false,
+        },
+      );
+    }
     try {
       (await _bookingRepository.fetchOffersResult(sessionId)).fold(
         (failure) =>

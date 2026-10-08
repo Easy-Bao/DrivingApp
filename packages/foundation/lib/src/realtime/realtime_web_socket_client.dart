@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:foundation/src/network/network_availability_coordinator.dart';
 import 'package:foundation/src/realtime/realtime_event.dart';
 
@@ -330,7 +332,14 @@ final class RealtimeWebSocketClient({
       final realtimeEvent = RealtimeEvent.fromEnvelope(
         RealtimeEnvelope.fromJson(Map<String, dynamic>.from(decoded)),
       );
-      if (_remember(realtimeEvent.envelope.id)) {
+      final duplicate = !_remember(realtimeEvent.envelope.id);
+      if (!kReleaseMode) {
+        developer.Timeline.instantSync(
+          'realtime.event_delivery',
+          arguments: {'duplicate': duplicate},
+        );
+      }
+      if (!duplicate) {
         _events.add(realtimeEvent);
       }
     } on FormatException {
@@ -401,6 +410,24 @@ final class RealtimeWebSocketClient({
 
   void _emitState(RealtimeConnectionState state) {
     if (!_states.isClosed) {
+      if (!kReleaseMode) {
+        final arguments = <String, Object?>{
+          'state': switch (state) {
+            RealtimeConnecting() => 'connecting',
+            RealtimeConnected() => 'connected',
+            RealtimeDisconnected() => 'disconnected',
+          },
+        };
+        if (state is RealtimeConnecting) {
+          arguments['attempt'] = state.attempt;
+        } else if (state is RealtimeDisconnected && state.reconnectIn != null) {
+          arguments['reconnect_delay_ms'] = state.reconnectIn!.inMilliseconds;
+        }
+        developer.Timeline.instantSync(
+          'realtime.connection_state',
+          arguments: arguments,
+        );
+      }
       _states.add(state);
     }
   }

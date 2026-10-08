@@ -1,5 +1,8 @@
+import 'dart:developer' as developer;
+
 import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart' show kReleaseMode;
 
 final class const HttpRequestMetric({
   required this.method,
@@ -132,6 +135,22 @@ final class RequestMetricsInterceptor(this._metrics) extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     _metrics.record(options);
+    if (!kReleaseMode) {
+      final task = developer.TimelineTask()
+        ..start(
+          'http.request',
+          arguments: {
+            'method': options.method.toUpperCase(),
+            'path': _normalizePath(options.uri.path),
+            'retry_attempt': options.extra['retryAttempt'] as int? ?? 0,
+            'request_bytes':
+                _knownBodyBytes(options.data) ??
+                _contentLength(options.headers) ??
+                -1,
+          },
+        );
+      options.extra[_requestTimelineTaskKey] = task;
+    }
     handler.next(options);
   }
 
@@ -141,13 +160,44 @@ final class RequestMetricsInterceptor(this._metrics) extends Interceptor {
     ResponseInterceptorHandler handler,
   ) {
     _metrics.recordResponse(response);
+    _finishRequestTimeline(
+      response.requestOptions,
+      outcome: 'response',
+      statusCode: response.statusCode,
+      responseBytes: _contentLength(response.headers.map),
+    );
     handler.next(response);
   }
 
   @override
   void onError(DioException error, ErrorInterceptorHandler handler) {
     _metrics.recordError(error);
+    _finishRequestTimeline(
+      error.requestOptions,
+      outcome: error.type == DioExceptionType.cancel ? 'cancelled' : 'error',
+      statusCode: error.response?.statusCode,
+      responseBytes: error.response == null
+          ? null
+          : _contentLength(error.response!.headers.map),
+    );
     handler.next(error);
+  }
+
+  void _finishRequestTimeline(
+    RequestOptions options, {
+    required String outcome,
+    required int? statusCode,
+    required int? responseBytes,
+  }) {
+    final task = options.extra.remove(_requestTimelineTaskKey);
+    if (task is! developer.TimelineTask) return;
+    task.finish(
+      arguments: {
+        'outcome': outcome,
+        'status_code': statusCode ?? -1,
+        'response_bytes': responseBytes ?? -1,
+      },
+    );
   }
 }
 
@@ -220,6 +270,7 @@ final class _RequestMetricAccumulator {
 }
 
 const _requestTimerKey = 'foundation.requestMetrics.stopwatch';
+const _requestTimelineTaskKey = 'foundation.requestMetrics.timelineTask';
 
 int? _knownBodyBytes(Object? body) {
   if (body is List<int>) return body.length;
