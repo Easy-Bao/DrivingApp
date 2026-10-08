@@ -15,8 +15,7 @@ abstract interface class TrackRepository {
 
   Future<Result<RideCounterparty, Failure>> fetchCounterparty(String rideId);
 
-  Future<Result<(double latitude, double longitude), Failure>>
-  fetchDriverLocation(String rideId);
+  Future<Result<DriverLocation, Failure>> fetchDriverLocation(String rideId);
 
   Future<Result<void, Failure>> updateRideStatus(
     String rideId,
@@ -113,20 +112,18 @@ extension TrackRepositoryResultAdapters on TrackRepository {
     }
   }
 
-  /// Converts the legacy location contract into a strict domain result so a
-  /// telemetry gap cannot surface as an untyped exception in the UI layer.
-  Future<Result<(double latitude, double longitude), DomainFailure>>
-  fetchDriverLocationResult(String rideId) async {
+  /// Converts a location read into a strict result for active-trip recovery.
+  Future<Result<DriverLocation, DomainFailure>> fetchDriverLocationResult(
+    String rideId,
+  ) async {
     try {
       final result = await fetchDriverLocation(rideId);
       return await result.fold(
-        (failure) =>
-            Err<(double latitude, double longitude), DomainFailure>(failure),
-        (value) =>
-            Ok<(double latitude, double longitude), DomainFailure>(value),
+        (failure) => Err<DriverLocation, DomainFailure>(failure),
+        (value) => Ok<DriverLocation, DomainFailure>(value),
       );
     } catch (error) {
-      return Err<(double latitude, double longitude), DomainFailure>(
+      return Err<DriverLocation, DomainFailure>(
         FailureMapper.fromException(
           error,
           serverMessage:

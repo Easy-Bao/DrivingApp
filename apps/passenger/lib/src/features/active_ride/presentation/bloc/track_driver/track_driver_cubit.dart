@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer' as dev;
 
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
@@ -63,6 +64,7 @@ class TrackDriverCubit({
     double progress = 0.0;
     var lastDriverLat = startLat;
     var lastDriverLng = startLng;
+    DateTime? lastDriverLocationObservedAt;
     DateTime? pickupRouteLastAttempt;
     DateTime? destinationRouteLastAttempt;
     var trackingCompleted = false;
@@ -129,6 +131,7 @@ class TrackDriverCubit({
 
             double? driverLat;
             double? driverLng;
+            DateTime? driverLocationObservedAt;
             bool locationFetched = false;
 
             final locResult = await _repository.fetchDriverLocationResult(
@@ -142,8 +145,9 @@ class TrackDriverCubit({
                 );
               },
               (coordinate) {
-                driverLat = coordinate.$1;
-                driverLng = coordinate.$2;
+                driverLat = coordinate.latitude;
+                driverLng = coordinate.longitude;
+                driverLocationObservedAt = coordinate.observedAt;
                 locationFetched = true;
               },
             );
@@ -156,6 +160,7 @@ class TrackDriverCubit({
             if (locationFetched) {
               lastDriverLat = driverLat!;
               lastDriverLng = driverLng!;
+              lastDriverLocationObservedAt = driverLocationObservedAt;
             }
 
             final targetLat =
@@ -203,6 +208,17 @@ class TrackDriverCubit({
 
             if (_isCurrentTrackingOperation(trackingGeneration) &&
                 _lifecycleCoordinator.isForeground) {
+              if (!kReleaseMode) {
+                final observedAt = lastDriverLocationObservedAt;
+                dev.Timeline.instantSync(
+                  'passenger.active_trip.displayed_location',
+                  arguments: {
+                    'location_age_ms': observedAt == null
+                        ? null
+                        : DateTime.now().difference(observedAt).inMilliseconds,
+                  },
+                );
+              }
               final trackingState = rideUpdate.status == RideStatus.inTransit
                   ? TrackDriverTripInProgress(
                       driverLat: driverLat!,

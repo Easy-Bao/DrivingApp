@@ -184,8 +184,10 @@ void main() {
             ),
           ),
         );
-        when(() => repo.fetchDriverLocation('ride-1'))
-            .thenAnswer((_) async => const Ok((7.828, 123.434)));
+        when(() => repo.fetchDriverLocation('ride-1')).thenAnswer(
+          (_) async =>
+              const Ok(DriverLocation(latitude: 7.828, longitude: 123.434)),
+        );
         when(() => session.readActiveRideId())
             .thenAnswer((_) async => 'ride-1');
         final cubit = _makeCubit(repo, session);
@@ -233,12 +235,13 @@ void main() {
               ),
             );
           });
-      when(() => repo.fetchDriverLocation(any())).thenAnswer((
-        invocation,
-      ) async {
-        final rideId = invocation.positionalArguments.first as String;
-        return rideId == 'ride-1' ? const Ok((1.0, 1.0)) : const Ok((2.0, 2.0));
-      });
+      when(() => repo.fetchDriverLocation(any()))
+          .thenAnswer((invocation) async {
+            final rideId = invocation.positionalArguments.first as String;
+            return rideId == 'ride-1'
+                ? const Ok(DriverLocation(latitude: 1, longitude: 1))
+                : const Ok(DriverLocation(latitude: 2, longitude: 2));
+          });
       when(
         () => repo.getRoutePolyline(
           startLat: any(named: 'startLat'),
@@ -325,8 +328,10 @@ void main() {
             ),
           ),
         );
-        when(() => repo.fetchDriverLocation('ride-1'))
-            .thenAnswer((_) async => const Ok((7.828, 123.434)));
+        when(() => repo.fetchDriverLocation('ride-1')).thenAnswer(
+          (_) async =>
+              const Ok(DriverLocation(latitude: 7.828, longitude: 123.434)),
+        );
         when(() => session.readActiveRideId())
             .thenAnswer((_) async => 'ride-1');
         return _makeCubit(repo, session);
@@ -371,8 +376,10 @@ void main() {
             ),
           ),
         );
-        when(() => repo.fetchDriverLocation('ride-1'))
-            .thenAnswer((_) async => const Ok((7.828, 123.434)));
+        when(() => repo.fetchDriverLocation('ride-1')).thenAnswer(
+          (_) async =>
+              const Ok(DriverLocation(latitude: 7.828, longitude: 123.434)),
+        );
         when(() => session.readActiveRideId())
             .thenAnswer((_) async => 'ride-1');
         return _makeCubit(repo, session);

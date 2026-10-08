@@ -107,8 +107,9 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
   }
 
   @override
-  Future<Result<(double latitude, double longitude), Failure>>
-  fetchDriverLocation(String rideId) async {
+  Future<Result<DriverLocation, Failure>> fetchDriverLocation(
+    String rideId,
+  ) async {
     try {
       final locData = await _remoteDataSource.fetchDriverLocation(rideId);
       final latitude = SafeParse.toNullableDouble(
@@ -118,7 +119,17 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
         locData?['longitude'] ?? locData?['lng'],
       );
       if (latitude != null && longitude != null) {
-        return Ok((latitude.toDouble(), longitude.toDouble()));
+        final rawObservedAt = locData?['observed_at'];
+        final observedAt = rawObservedAt is String
+            ? DateTime.tryParse(rawObservedAt)
+            : null;
+        return Ok(
+          DriverLocation(
+            latitude: latitude.toDouble(),
+            longitude: longitude.toDouble(),
+            observedAt: observedAt,
+          ),
+        );
       }
       return const Err(
         ServerFailure('Driver location coordinates unavailable.'),

@@ -42,16 +42,45 @@ void main() {
     },
   );
 
-  test('parses the realtime service latitude and longitude fields', () async {
+  test('parses driver coordinates and their source timestamp', () async {
+    final observedAt = DateTime.utc(2026, 10, 8, 12, 30);
     when(() => dataSource.fetchDriverLocation('303')).thenAnswer(
-      (_) async => {'driver_id': '42', 'latitude': 7.828, 'longitude': 123.434},
+      (_) async => {
+        'driver_id': '42',
+        'latitude': 7.828,
+        'longitude': 123.434,
+        'observed_at': observedAt.toIso8601String(),
+      },
     );
 
     final result = await repository.fetchDriverLocation('303');
 
     expect(result.isOk, isTrue);
-    expect(result.getOrElse((_) => (0.0, 0.0)), (7.828, 123.434));
+    final location = result.getOrElse(
+      (_) => const DriverLocation(latitude: 0, longitude: 0),
+    );
+    expect(location.latitude, 7.828);
+    expect(location.longitude, 123.434);
+    expect(location.observedAt, observedAt);
   });
+
+  test(
+    'keeps valid coordinates when a legacy response omits its timestamp',
+    () async {
+      when(() => dataSource.fetchDriverLocation('303'))
+          .thenAnswer((_) async => {'latitude': 7.828, 'longitude': 123.434});
+
+      final result = await repository.fetchDriverLocation('303');
+
+      expect(result.isOk, isTrue);
+      expect(
+        result.getOrElse(
+          (_) => const DriverLocation(latitude: 0, longitude: 0),
+        ),
+        const DriverLocation(latitude: 7.828, longitude: 123.434),
+      );
+    },
+  );
 
   test('adapts ride detail reads into strict domain results', () async {
     when(() => dataSource.fetchRide('303')).thenAnswer(
