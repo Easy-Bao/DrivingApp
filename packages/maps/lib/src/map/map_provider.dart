@@ -156,19 +156,22 @@ class MapProvider._() {
       excludePoints: excludePoints,
     );
 
-    return _routeCache.getOrLoad(
-      key,
-      () => _requestRoute(
-        nativeService,
-        originLat: originLat,
-        originLng: originLng,
-        destLat: destLat,
-        destLng: destLng,
-        preference: preference,
-        profile: profile,
-        excludePoints: excludePoints,
+    return traceTimelineStage(
+      'maps.route.cache_lookup',
+      () => _routeCache.getOrLoad(
+        key,
+        () => _requestRoute(
+          nativeService,
+          originLat: originLat,
+          originLng: originLng,
+          destLat: destLat,
+          destLng: destLng,
+          preference: preference,
+          profile: profile,
+          excludePoints: excludePoints,
+        ),
+        shouldCache: (route) => route != null,
       ),
-      shouldCache: (route) => route != null,
     );
   }
 
@@ -184,14 +187,17 @@ class MapProvider._() {
   }) async {
     for (var attempt = 0; attempt < 2; attempt++) {
       try {
-        final result = await nativeService.getRoute(
-          originLat: originLat,
-          originLng: originLng,
-          destLat: destLat,
-          destLng: destLng,
-          preference: preference,
-          profile: profile,
-          excludePoints: excludePoints,
+        final result = await traceTimelineStage(
+          'maps.route.provider_request',
+          () => nativeService.getRoute(
+            originLat: originLat,
+            originLng: originLng,
+            destLat: destLat,
+            destLng: destLng,
+            preference: preference,
+            profile: profile,
+            excludePoints: excludePoints,
+          ),
         );
         Route? route;
         var retryable = false;
