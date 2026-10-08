@@ -9,7 +9,6 @@ import 'package:passenger/src/features/auth/auth_routes.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
 import 'package:passenger/src/features/auth/presentation/validation/auth_form_validator.dart';
-import 'package:passenger/src/features/auth/presentation/widgets/social_login_widget.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 
 class const SigninPage({super.key, required this.signInBloc})
@@ -433,15 +432,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 24),
-                              SocialLoginWidget(
-                                onGoogleTap: () {
-                                  CustomToast.show(
-                                    context,
-                                    'Google Sign-In coming soon',
-                                  );
-                                },
-                              ),
+
                               const SizedBox(height: 24),
                               Center(
                                 child: Row(

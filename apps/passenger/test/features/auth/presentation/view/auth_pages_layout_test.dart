@@ -115,16 +115,16 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final socialText = find.text('Continue with Google');
+    final primaryButton = find.text('Sign In');
     final footerText = find.text('Sign up');
     final tallGap =
-        tester.getTopLeft(footerText).dy - tester.getBottomRight(socialText).dy;
+        tester.getTopLeft(footerText).dy - tester.getBottomRight(primaryButton).dy;
 
     await tester.binding.setSurfaceSize(const Size(800, 400));
     await tester.pumpAndSettle();
 
     final compactGap =
-        tester.getTopLeft(footerText).dy - tester.getBottomRight(socialText).dy;
+        tester.getTopLeft(footerText).dy - tester.getBottomRight(primaryButton).dy;
     expect(compactGap, closeTo(tallGap, 0.1));
   });
 }

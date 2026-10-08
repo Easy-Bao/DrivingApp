@@ -67,17 +67,8 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
 
   void _triggerVerify(String code) {
     FocusScope.of(context).unfocus();
-    if (widget.isForgotPassword) {
-      unawaited(
-        context.pushNamed(
-          AuthRoutes.resetPasswordConfirm,
-          extra: {'email': widget.email, 'code': code},
-        ),
-      );
-    } else {
-      BlocProvider.of<VerifyOtpBloc>(context)
-          .add(VerifyOtpSubmitted(email: widget.email, code: code));
-    }
+    BlocProvider.of<VerifyOtpBloc>(context)
+        .add(VerifyOtpSubmitted(email: widget.email, code: code));
   }
 
   @override

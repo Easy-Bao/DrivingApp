@@ -77,6 +77,52 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
     return (amount * 100).round();
   }
 
+  void _onCashReceivedChanged(String value) {
+    if (_error != null) setState(() => _error = null);
+    if (_cashOutcome != 'paid') return;
+    final receivedCents = _parseCashInput(value);
+    if (receivedCents != null && receivedCents >= _fareAmountCents) {
+      final changeCents = receivedCents - _fareAmountCents;
+      _cashChangeController.text = _formatCashInput(changeCents);
+    } else {
+      _cashChangeController.text = '0.00';
+    }
+  }
+
+  void _applyDenomination(int amountInPesos) {
+    if (_isSubmitting) return;
+    final amountCents = amountInPesos * 100;
+    _cashReceivedController.text = _formatCashInput(amountCents);
+    if (_cashOutcome == 'paid') {
+      final changeCents =
+          amountCents >= _fareAmountCents ? amountCents - _fareAmountCents : 0;
+      _cashChangeController.text = _formatCashInput(changeCents);
+    }
+    if (_error != null) {
+      setState(() => _error = null);
+    }
+  }
+
+  void _applyExactAmount() {
+    if (_isSubmitting) return;
+    _cashReceivedController.text = _formatCashInput(_fareAmountCents);
+    _cashChangeController.text = '0.00';
+    if (_error != null) {
+      setState(() => _error = null);
+    }
+  }
+
+  List<int> get _suggestedBills {
+    final farePesos = widget.fare;
+    final standardBills = [50, 100, 200, 500, 1000];
+    final bills = standardBills.where((b) => b >= farePesos).toList();
+    if (bills.isEmpty) {
+      final nextThousand = ((farePesos / 500).ceil()) * 500;
+      bills.add(nextThousand);
+    }
+    return bills.take(4).toList();
+  }
+
   String? _validateCashEntry({
     required int? receivedAmount,
     required int? changeAmount,
@@ -403,10 +449,30 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
                 labelText: 'Cash received',
                 prefixText: '₱ ',
               ),
-              onChanged: (_) {
-                if (_error != null) setState(() => _error = null);
-              },
+              onChanged: _onCashReceivedChanged,
             ),
+            if (_cashOutcome == 'paid') ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  ActionChip(
+                    key: const ValueKey('chip-exact-fare'),
+                    label: const Text('Exact'),
+                    onPressed: _isSubmitting ? null : _applyExactAmount,
+                    avatar: const Icon(LucideIcons.check, size: 14),
+                  ),
+                  for (final bill in _suggestedBills)
+                    ActionChip(
+                      key: ValueKey('chip-bill-$bill'),
+                      label: Text('₱$bill'),
+                      onPressed:
+                          _isSubmitting ? null : () => _applyDenomination(bill),
+                    ),
+                ],
+              ),
+            ],
           ],
           if (_cashOutcome == 'paid') ...[
             const SizedBox(height: 12),

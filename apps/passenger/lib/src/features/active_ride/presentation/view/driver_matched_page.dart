@@ -47,7 +47,8 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _scaleCtrl;
   late Animation<double> _scaleAnim;
-  Timer? _autoNav;
+  Timer? _countdownTimer;
+  int _secondsLeft = 4;
   RideHistory? _createdRide;
 
   @override
@@ -67,14 +68,35 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
     if (ride == null || ride.id.isEmpty) return;
     if (mounted) {
       setState(() => _createdRide = ride);
-      _autoNav = Timer(const Duration(seconds: 1), _goToTracking);
+      _startCountdown();
     }
+  }
+
+  void _startCountdown() {
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_secondsLeft <= 1) {
+        timer.cancel();
+        _goToTracking();
+      } else {
+        setState(() => _secondsLeft--);
+      }
+    });
+  }
+
+  void _pauseCountdown() {
+    _countdownTimer?.cancel();
+    _countdownTimer = null;
   }
 
   @override
   void dispose() {
     _scaleCtrl.dispose();
-    _autoNav?.cancel();
+    _countdownTimer?.cancel();
     super.dispose();
   }
 
@@ -164,24 +186,26 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                         label: 'View driver details',
                         hint: 'Opens the driver profile',
                         child: GestureDetector(
-                          onTap: () {
-                            unawaited(
-                              showModalBottomSheet(
-                                context: context,
-                                isScrollControlled: true,
-                                backgroundColor: context.colorScheme.surface
-                                    .withValues(alpha: 0),
-                                builder: (BuildContext sheetContext) =>
-                                    DriverProfileDetailsSheet(
-                                      driverId: widget.driverId ?? '',
-                                      driverName: widget.driverName ?? '—',
-                                      vehicleType: widget.vehicleType ?? '—',
-                                      plateNumber: widget.plateNumber ?? '—',
-                                      rating: widget.driverRating ?? '—',
-                                      repository: widget.profileRepository,
-                                    ),
-                              ),
+                          onTap: () async {
+                            _pauseCountdown();
+                            await showModalBottomSheet<void>(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: context.colorScheme.surface
+                                  .withValues(alpha: 0),
+                              builder: (BuildContext sheetContext) =>
+                                  DriverProfileDetailsSheet(
+                                    driverId: widget.driverId ?? '',
+                                    driverName: widget.driverName ?? '—',
+                                    vehicleType: widget.vehicleType ?? '—',
+                                    plateNumber: widget.plateNumber ?? '—',
+                                    rating: widget.driverRating ?? '—',
+                                    repository: widget.profileRepository,
+                                  ),
                             );
+                            if (mounted && _createdRide != null) {
+                              _startCountdown();
+                            }
                           },
                           child: Container(
                             padding: const EdgeInsets.all(EasyRideSpacing.lg),
@@ -367,7 +391,9 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Opening live tracking…',
+                        _createdRide != null
+                            ? 'Opening live tracking in ${_secondsLeft}s…'
+                            : 'Tap above to open live tracking',
                         style: TextStyle(
                           fontSize: 12,
                           color: context.colorScheme.onSurfaceVariant,

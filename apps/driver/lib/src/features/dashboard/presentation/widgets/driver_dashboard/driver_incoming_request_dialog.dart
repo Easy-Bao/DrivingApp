@@ -40,7 +40,8 @@ class DriverIncomingRequestDialog extends StatefulWidget {
   }) {
     return showDialog<void>(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
+      barrierColor: Colors.black38,
       builder: (dialogContext) => DriverIncomingRequestDialog(
         bid: bid,
         submittingBidId: submittingBidId,
@@ -157,7 +158,8 @@ class _DriverIncomingRequestDialogState
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      alignment: Alignment.bottomCenter,
+      insetPadding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
       child: Container(
         constraints: BoxConstraints(maxWidth: 420, maxHeight: maxDialogHeight),
         decoration: BoxDecoration(

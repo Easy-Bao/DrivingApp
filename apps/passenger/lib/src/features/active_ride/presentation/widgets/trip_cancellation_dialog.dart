@@ -187,18 +187,16 @@ class _TripCancellationDialogState extends State<TripCancellationDialog> {
               ),
             ),
           ),
-          TextButton(
+          FilledButton(
             key: const ValueKey('confirm-cancel-ride-button'),
+            style: FilledButton.styleFrom(
+              backgroundColor: context.colorScheme.error,
+              foregroundColor: context.colorScheme.onError,
+            ),
             onPressed: _selectedReason == null
                 ? null
                 : () => Navigator.pop(context, _selectedReason),
-            child: Text(
-              'Cancel ride',
-              style: TextStyle(
-                color: context.colorScheme.error,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+            child: const Text('Cancel ride'),
           ),
         ],
       ),

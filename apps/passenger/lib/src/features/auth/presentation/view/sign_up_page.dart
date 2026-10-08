@@ -11,7 +11,6 @@ import 'package:passenger/src/features/auth/domain/validators/phone_number_valid
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/sign_up/sign_up_bloc.dart';
 import 'package:passenger/src/features/auth/presentation/validation/auth_form_validator.dart';
-import 'package:passenger/src/features/auth/presentation/widgets/social_login_widget.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 
 class const SignupPage({super.key, required this.signUpBloc})
@@ -595,16 +594,7 @@ class _SignupPageContentState extends State<_SignupPageContent> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 24),
-                            SocialLoginWidget(
-                              label: 'Sign up with Google',
-                              onGoogleTap: () {
-                                CustomToast.show(
-                                  context,
-                                  'Google Sign-In coming soon',
-                                );
-                              },
-                            ),
+
                             const SizedBox(height: 24),
                             Center(
                               child: Row(

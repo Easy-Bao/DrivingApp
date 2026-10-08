@@ -1,4 +1,3 @@
-import 'package:driver/src/features/auth/presentation/widgets/social_login_widget.dart';
 
 import 'dart:async';
 
@@ -372,15 +371,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 24),
-                        SocialLoginWidget(
-                          onGoogleTap: () {
-                            CustomToast.show(
-                              context,
-                              'Google Sign-In coming soon',
-                            );
-                          },
-                        ),
+
                         const Spacer(),
                       ],
                     ),
