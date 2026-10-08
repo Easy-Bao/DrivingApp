@@ -29,6 +29,7 @@ type IdentityAuthenticator interface {
 type Handler struct {
 	hub            *Hub
 	authenticator  IdentityAuthenticator
+	logger         *slog.Logger
 	allowedOrigins map[string]struct{}
 	upgrader       websocket.Upgrader
 }
@@ -40,6 +41,14 @@ type HandlerOption func(*Handler)
 type HandlerDependencies struct {
 	Hub           *Hub
 	Authenticator IdentityAuthenticator
+}
+
+func WithLogger(logger *slog.Logger) HandlerOption {
+	return func(handler *Handler) {
+		if logger != nil {
+			handler.logger = logger
+		}
+	}
 }
 
 func WithAllowedOrigins(origins []string) HandlerOption {
@@ -56,6 +65,7 @@ func NewHandler(dependencies HandlerDependencies, options ...HandlerOption) *Han
 	handler := &Handler{
 		hub:            dependencies.Hub,
 		authenticator:  dependencies.Authenticator,
+		logger:         slog.Default(),
 		allowedOrigins: make(map[string]struct{}),
 	}
 	for _, option := range options {
@@ -97,6 +107,13 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 		return
 	}
 	var closeOnce sync.Once
+	debugMetricsEnabled := handler.logger.Enabled(request.Context(), slog.LevelDebug)
+	var startedAt time.Time
+	var stats *connectionWriteStats
+	if debugMetricsEnabled {
+		startedAt = time.Now()
+		stats = &connectionWriteStats{}
+	}
 	closeConnection := func() {
 		closeOnce.Do(func() {
 			if err := connection.Close(); err != nil {
@@ -107,7 +124,14 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 
 	stopWriter := make(chan struct{})
 	writerDone := make(chan struct{})
-	go handler.writePump(connection, subscription.Events(), stopWriter, writerDone, closeConnection)
+	go handler.writePump(
+		connection,
+		subscription.Events(),
+		stopWriter,
+		writerDone,
+		closeConnection,
+		stats,
+	)
 	readDone := make(chan struct{})
 	go func() {
 		handler.readPump(connection)
@@ -123,6 +147,17 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 	closeConnection()
 	<-readDone
 	<-writerDone
+	if debugMetricsEnabled {
+		handler.logger.DebugContext(
+			request.Context(),
+			"realtime websocket closed",
+			"request_id", middleware.RequestIDFromRequest(request),
+			"role", identity.Role,
+			"connection_duration_ms", time.Since(startedAt).Milliseconds(),
+			"events_sent", stats.eventsSent,
+			"pings_sent", stats.pingsSent,
+		)
+	}
 }
 
 func (handler *Handler) identity(request *http.Request) (security.Identity, bool) {
@@ -164,6 +199,7 @@ func (handler *Handler) writePump(
 	stop <-chan struct{},
 	done chan<- struct{},
 	closeConnection func(),
+	stats *connectionWriteStats,
 ) {
 	defer close(done)
 	defer closeConnection()
@@ -184,6 +220,9 @@ func (handler *Handler) writePump(
 			if err := connection.WriteJSON(envelope); err != nil {
 				return
 			}
+			if stats != nil {
+				stats.eventsSent++
+			}
 		case <-ticker.C:
 			if err := connection.SetWriteDeadline(time.Now().Add(_writeWait)); err != nil {
 				return
@@ -191,8 +230,17 @@ func (handler *Handler) writePump(
 			if err := connection.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
+			if stats != nil {
+				stats.pingsSent++
+			}
 		}
 	}
+}
+
+// writePump owns these counters; ServeHTTP reads them after writerDone closes.
+type connectionWriteStats struct {
+	eventsSent int
+	pingsSent  int
 }
 
 func topicsForIdentity(identity security.Identity) ([]string, error) {

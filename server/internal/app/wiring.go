@@ -291,6 +291,7 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 				Authenticator: verifier,
 			},
 			websockethub.WithAllowedOrigins(config.Security.AllowedOrigins),
+			websockethub.WithLogger(applicationLogger),
 		),
 	)
 	tracking.NewRouter(tracking.Dependencies{

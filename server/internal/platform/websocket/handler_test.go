@@ -1,7 +1,10 @@
 package hub
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -10,6 +13,7 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/gorilla/websocket"
 )
@@ -79,12 +83,29 @@ func TestHandlerConfiguresAllowedOrigins(t *testing.T) {
 
 func TestHandlerStreamsEventsOnlyToTheVerifiedIdentity(t *testing.T) {
 	hub := NewHub()
-	handler := newTestHandler(hub, authenticatorStub{identity: security.Identity{Subject: "7", Role: "driver"}})
-	server := newIPv4TestServer(t, handler)
+	var logOutput bytes.Buffer
+	logger := slog.New(
+		slog.NewJSONHandler(
+			&logOutput,
+			&slog.HandlerOptions{Level: slog.LevelDebug},
+		),
+	)
+	handler := newTestHandler(
+		hub,
+		authenticatorStub{identity: security.Identity{Subject: "7", Role: "driver"}},
+		WithLogger(logger),
+	)
+	server := newIPv4TestServer(t, middleware.RequestID(handler))
 	defer server.Close()
 
 	url := "ws" + strings.TrimPrefix(server.URL, "http")
-	connection, _, err := websocket.DefaultDialer.Dial(url, http.Header{"Authorization": []string{"Bearer valid"}})
+	connection, _, err := websocket.DefaultDialer.Dial(
+		url,
+		http.Header{
+			"Authorization": []string{"Bearer valid"},
+			"X-Request-ID":  []string{"correlation-1"},
+		},
+	)
 	if err != nil {
 		t.Fatalf("Dial() error = %v", err)
 	}
@@ -109,6 +130,34 @@ func TestHandlerStreamsEventsOnlyToTheVerifiedIdentity(t *testing.T) {
 	}
 	if received.ID != envelope.ID || received.Scope.DriverID != "7" {
 		t.Fatalf("received event = %#v", received)
+	}
+	if err := connection.Close(); err != nil {
+		t.Fatalf("Close() error = %v", err)
+	}
+	deadline := time.Now().Add(time.Second)
+	for hub.topicSubscriberCount("driver:7") != 0 && time.Now().Before(deadline) {
+		time.Sleep(10 * time.Millisecond)
+	}
+	if hub.topicSubscriberCount("driver:7") != 0 {
+		t.Fatal("subscription remained after closing the event connection")
+	}
+	var logEntry map[string]any
+	if err := json.Unmarshal(logOutput.Bytes(), &logEntry); err != nil {
+		t.Fatalf("decode websocket connection log: %v", err)
+	}
+	if logEntry["request_id"] != "correlation-1" {
+		t.Fatalf("request_id = %v, want correlation-1", logEntry["request_id"])
+	}
+	if logEntry["events_sent"] != float64(1) {
+		t.Fatalf("events_sent = %v, want 1", logEntry["events_sent"])
+	}
+	if logEntry["role"] != "driver" {
+		t.Fatalf("role = %v, want driver", logEntry["role"])
+	}
+	logOutputString := logOutput.String()
+	if strings.Contains(logOutputString, "ride-1") ||
+		strings.Contains(logOutputString, "Subject") {
+		t.Fatal("websocket payload or user identity was included in the connection log")
 	}
 }
 
