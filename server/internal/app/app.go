@@ -169,16 +169,23 @@ func (application *Application) Run(ctx context.Context) error {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	defer application.close()
+	applicationLogger := application.log()
+	monitorContext, stopMonitoring := context.WithCancel(ctx)
+	monitorDone := make(chan struct{})
+	go func() {
+		defer close(monitorDone)
+		monitorPostgresPool(monitorContext, applicationLogger, application.postgresPool)
+	}()
+	defer func() {
+		stopMonitoring()
+		<-monitorDone
+		application.close()
+	}()
 
 	serverErrors := make(chan error, 1)
 	go func() {
 		serverErrors <- application.server.ListenAndServe()
 	}()
-	applicationLogger := application.logger
-	if applicationLogger == nil {
-		applicationLogger = slog.Default()
-	}
 	applicationLogger.InfoContext(ctx, "api listening", "address", application.server.Addr)
 
 	select {
