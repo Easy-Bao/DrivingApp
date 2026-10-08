@@ -62,6 +62,7 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable
       API_HOST: 0.0.0.0
       API_PORT: ${API_PORT}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
       ADMIN_USER_IDS: ${ADMIN_USER_IDS-}
       JWT_SECRET: ${JWT_SECRET}
       MAPBOX_ACCESS_TOKEN: ${MAPBOX_ACCESS_TOKEN-}
