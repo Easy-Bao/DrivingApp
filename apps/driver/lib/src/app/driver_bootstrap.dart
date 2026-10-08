@@ -1,3 +1,6 @@
+import 'dart:developer' as developer;
+import 'dart:ui' as ui;
+
 import 'package:design_system/design_system.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -16,64 +19,117 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> bootstrapDriverApp() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  configureClientErrorBoundary(appName: 'driver-app');
+  final startupTask = developer.TimelineTask()..start('driver.startup');
+  var firstFrameCallbackRegistered = false;
+
+  void captureFirstFrameTiming() {
+    if (firstFrameCallbackRegistered) return;
+    firstFrameCallbackRegistered = true;
+
+    late final ui.TimingsCallback callback;
+    callback = (timings) {
+      if (timings.isEmpty) return;
+      WidgetsBinding.instance.removeTimingsCallback(callback);
+      final timing = timings.first;
+      developer.Timeline.instantSync(
+        'driver.startup.first_frame',
+        arguments: {
+          'build_duration_us': timing.buildDuration.inMicroseconds,
+          'raster_duration_us': timing.rasterDuration.inMicroseconds,
+        },
+      );
+    };
+    WidgetsBinding.instance.addTimingsCallback(callback);
+  }
 
   try {
-    await DriverBackgroundTelemetry.stopExistingServiceForStartup();
-    final prefs = await SharedPreferences.getInstance();
-    final sessionService = DriverSessionStore();
-    final hasDriverSession = await _hasDriverSession(sessionService);
+    WidgetsFlutterBinding.ensureInitialized();
+    configureClientErrorBoundary(appName: 'driver-app');
 
-    await dotenv.load(fileName: '.env', isOptional: true);
+    try {
+      await traceTimelineStage(
+        'driver.startup.stop_background_service',
+        DriverBackgroundTelemetry.stopExistingServiceForStartup,
+      );
+      final prefs = await traceTimelineStage(
+        'driver.startup.load_preferences',
+        SharedPreferences.getInstance,
+      );
+      final sessionService = DriverSessionStore();
+      final hasDriverSession = await traceTimelineStage(
+        'driver.startup.restore_session',
+        () => _hasDriverSession(sessionService),
+      );
 
-    await SentryFlutter.init(
-      (options) {
-        options.dsn = DriverEnvConfig.sentryDsn;
-        options.tracesSampleRate = 0.1;
-        options.environment = DriverEnvConfig.appEnvironment;
-      },
-      appRunner: () async {
-        await Modular.configure(
-          appModule: DriverDependencies(
-            prefs: prefs,
-            sessionService: sessionService,
-          ),
-          initialRoute: hasDriverSession
-              ? DashboardRoutes.fullDashboardPath
-              : AuthRoutes.signinPath,
-          debugLogDiagnostics: true,
-          debugLogDiagnosticsGoRouter: true,
-          debugLogEventBus: true,
-        );
-        await Future<void>.delayed(Duration.zero);
+      await traceTimelineStage(
+        'driver.startup.load_environment',
+        () => dotenv.load(fileName: '.env', isOptional: true),
+      );
 
-        final nativeService = MapNativeService(
-          placeServiceBaseUri: DriverEnvConfig.apiBaseUri,
-          dio: Modular.get<Dio>(),
-        );
-        LocationService.nativeService = nativeService;
-        final mapboxToken = DriverEnvConfig.mapboxPublicToken;
-        if (mapboxToken == null) {
-          debugPrint(
-            'Mapbox is disabled because MAPBOX_PUBLIC_TOKEN is missing.',
-          );
-        }
-        await MapProvider.initialize(
-          token: mapboxToken,
-          nativeService: nativeService,
-        );
+      await traceTimelineStage(
+        'driver.startup.sentry_and_app_runner',
+        () => SentryFlutter.init(
+          (options) {
+            options.dsn = DriverEnvConfig.sentryDsn;
+            options.tracesSampleRate = 0.1;
+            options.environment = DriverEnvConfig.appEnvironment;
+          },
+          appRunner: () async {
+            await traceTimelineStage(
+              'driver.startup.configure_dependencies_and_router',
+              () => Modular.configure(
+                appModule: DriverDependencies(
+                  prefs: prefs,
+                  sessionService: sessionService,
+                ),
+                initialRoute: hasDriverSession
+                    ? DashboardRoutes.fullDashboardPath
+                    : AuthRoutes.signinPath,
+                debugLogDiagnostics: true,
+                debugLogDiagnosticsGoRouter: true,
+                debugLogEventBus: true,
+              ),
+            );
+            developer.Timeline.instantSync(
+              'driver.startup.initial_route_configured',
+            );
+            await Future<void>.delayed(Duration.zero);
 
-        runApp(const DriverApp());
-      },
-    );
-  } catch (error, stackTrace) {
-    runApp(
-      SafeClientErrorApp(
-        theme: EasyRideTheme.main,
-        message: ErrorHandler.getErrorMessage(error, stackTrace),
-      ),
-    );
+            final nativeService = MapNativeService(
+              placeServiceBaseUri: DriverEnvConfig.apiBaseUri,
+              dio: Modular.get<Dio>(),
+            );
+            LocationService.nativeService = nativeService;
+            final mapboxToken = DriverEnvConfig.mapboxPublicToken;
+            if (mapboxToken == null) {
+              debugPrint(
+                'Mapbox is disabled because MAPBOX_PUBLIC_TOKEN is missing.',
+              );
+            }
+            await traceTimelineStage(
+              'driver.startup.initialize_map_provider',
+              () => MapProvider.initialize(
+                token: mapboxToken,
+                nativeService: nativeService,
+              ),
+            );
+
+            captureFirstFrameTiming();
+            runApp(const DriverApp());
+          },
+        ),
+      );
+    } catch (error, stackTrace) {
+      captureFirstFrameTiming();
+      runApp(
+        SafeClientErrorApp(
+          theme: EasyRideTheme.main,
+          message: ErrorHandler.getErrorMessage(error, stackTrace),
+        ),
+      );
+    }
+  } finally {
+    startupTask.finish();
   }
 }
 

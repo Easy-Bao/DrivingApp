@@ -1,3 +1,6 @@
+import 'dart:developer' as developer;
+import 'dart:ui' as ui;
+
 import 'package:design_system/design_system.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -15,59 +18,109 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> bootstrapPassengerApp() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  configureClientErrorBoundary(appName: 'passenger-app');
+  final startupTask = developer.TimelineTask()..start('passenger.startup');
+  var firstFrameCallbackRegistered = false;
+
+  void captureFirstFrameTiming() {
+    if (firstFrameCallbackRegistered) return;
+    firstFrameCallbackRegistered = true;
+
+    late final ui.TimingsCallback callback;
+    callback = (timings) {
+      if (timings.isEmpty) return;
+      WidgetsBinding.instance.removeTimingsCallback(callback);
+      final timing = timings.first;
+      developer.Timeline.instantSync(
+        'passenger.startup.first_frame',
+        arguments: {
+          'build_duration_us': timing.buildDuration.inMicroseconds,
+          'raster_duration_us': timing.rasterDuration.inMicroseconds,
+        },
+      );
+    };
+    WidgetsBinding.instance.addTimingsCallback(callback);
+  }
 
   try {
-    await PassengerBackgroundTelemetry.stopExistingServiceForStartup();
-    final prefs = await SharedPreferences.getInstance();
+    WidgetsFlutterBinding.ensureInitialized();
+    configureClientErrorBoundary(appName: 'passenger-app');
 
-    await dotenv.load(fileName: '.env', isOptional: true);
+    try {
+      await traceTimelineStage(
+        'passenger.startup.stop_background_service',
+        PassengerBackgroundTelemetry.stopExistingServiceForStartup,
+      );
+      final prefs = await traceTimelineStage(
+        'passenger.startup.load_preferences',
+        SharedPreferences.getInstance,
+      );
 
-    await SentryFlutter.init(
-      (options) {
-        options.dsn = PassengerEnvConfig.sentryDsn;
-        options.tracesSampleRate = 0.1;
-        options.environment = PassengerEnvConfig.appEnvironment;
-      },
-      appRunner: () async {
-        AppTransitions.configure();
+      await traceTimelineStage(
+        'passenger.startup.load_environment',
+        () => dotenv.load(fileName: '.env', isOptional: true),
+      );
 
-        await Modular.configure(
-          appModule: PassengerDependencies(prefs: prefs),
-          initialRoute: HomeRoutes.fullHomePath,
-          debugLogDiagnostics: true,
-          debugLogDiagnosticsGoRouter: true,
-          debugLogEventBus: true,
-          observers: [passengerNavigationObserver],
-        );
-        await Future<void>.delayed(Duration.zero);
+      await traceTimelineStage(
+        'passenger.startup.sentry_and_app_runner',
+        () => SentryFlutter.init(
+          (options) {
+            options.dsn = PassengerEnvConfig.sentryDsn;
+            options.tracesSampleRate = 0.1;
+            options.environment = PassengerEnvConfig.appEnvironment;
+          },
+          appRunner: () async {
+            AppTransitions.configure();
 
-        final nativeService = MapNativeService(
-          placeServiceBaseUri: PassengerEnvConfig.apiBaseUri,
-          dio: Modular.get<Dio>(),
-        );
-        LocationService.nativeService = nativeService;
-        final mapboxToken = PassengerEnvConfig.mapboxPublicToken;
-        if (mapboxToken == null) {
-          debugPrint(
-            'Mapbox is disabled because MAPBOX_PUBLIC_TOKEN is missing.',
-          );
-        }
-        await MapProvider.initialize(
-          token: mapboxToken,
-          nativeService: nativeService,
-        );
+            await traceTimelineStage(
+              'passenger.startup.configure_dependencies_and_router',
+              () => Modular.configure(
+                appModule: PassengerDependencies(prefs: prefs),
+                initialRoute: HomeRoutes.fullHomePath,
+                debugLogDiagnostics: true,
+                debugLogDiagnosticsGoRouter: true,
+                debugLogEventBus: true,
+                observers: [passengerNavigationObserver],
+              ),
+            );
+            developer.Timeline.instantSync(
+              'passenger.startup.initial_route_configured',
+            );
+            await Future<void>.delayed(Duration.zero);
 
-        runApp(const PassengerApp());
-      },
-    );
-  } catch (error, stackTrace) {
-    runApp(
-      SafeClientErrorApp(
-        theme: EasyRideTheme.main,
-        message: ErrorHandler.getErrorMessage(error, stackTrace),
-      ),
-    );
+            final nativeService = MapNativeService(
+              placeServiceBaseUri: PassengerEnvConfig.apiBaseUri,
+              dio: Modular.get<Dio>(),
+            );
+            LocationService.nativeService = nativeService;
+            final mapboxToken = PassengerEnvConfig.mapboxPublicToken;
+            if (mapboxToken == null) {
+              debugPrint(
+                'Mapbox is disabled because MAPBOX_PUBLIC_TOKEN is missing.',
+              );
+            }
+            await traceTimelineStage(
+              'passenger.startup.initialize_map_provider',
+              () => MapProvider.initialize(
+                token: mapboxToken,
+                nativeService: nativeService,
+              ),
+            );
+
+            captureFirstFrameTiming();
+            runApp(const PassengerApp());
+          },
+        ),
+      );
+    } catch (error, stackTrace) {
+      captureFirstFrameTiming();
+      runApp(
+        SafeClientErrorApp(
+          theme: EasyRideTheme.main,
+          message: ErrorHandler.getErrorMessage(error, stackTrace),
+        ),
+      );
+    }
+  } finally {
+    startupTask.finish();
   }
 }

@@ -24,6 +24,7 @@ export 'src/route_data.dart';
 export 'src/ride/ride_booking_state.dart';
 export 'src/ride/ride_identifiers.dart';
 export 'src/ride/ride_session_access.dart';
+export 'src/telemetry/timeline_stage.dart';
 export 'src/utils/async_ttl_cache.dart';
 export 'src/utils/currency_formatter.dart';
 export 'src/utils/distance_formatter.dart';
