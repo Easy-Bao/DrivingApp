@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:foundation/foundation.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
 class const LatLng(this.latitude, this.longitude) {
@@ -19,48 +20,55 @@ class MapCameraService._() {
     double lng, {
     double? zoom,
     bool animate = true,
-  }) async {
+  }) => traceTimelineStage('maps.camera.move', () async {
     final camera = mapbox.CameraOptions(
       center: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
       zoom: zoom,
     );
 
     if (animate) {
-      await controller.native.flyTo(
-        camera,
-        mapbox.MapAnimationOptions(duration: 800),
+      await traceTimelineStage(
+        'maps.camera.fly_to',
+        () => controller.native.flyTo(
+          camera,
+          mapbox.MapAnimationOptions(duration: 800),
+        ),
       );
     } else {
-      await controller.native.setCamera(camera);
+      await traceTimelineStage(
+        'maps.camera.set',
+        () => controller.native.setCamera(camera),
+      );
     }
-  }
+  });
 
-  static Future<LatLng> getCameraCenter(AppMapController controller) async {
-    final camera = await controller.native.getCameraState();
-    final center = camera.center;
-    return LatLng(
-      center.coordinates.lat.toDouble(),
-      center.coordinates.lng.toDouble(),
-    );
-  }
+  static Future<LatLng> getCameraCenter(AppMapController controller) =>
+      traceTimelineStage('maps.camera.get_center', () async {
+        final camera = await controller.native.getCameraState();
+        final center = camera.center;
+        return LatLng(
+          center.coordinates.lat.toDouble(),
+          center.coordinates.lng.toDouble(),
+        );
+      });
 
   static Future<Offset> getScreenCoordinate(
     AppMapController controller,
     double lat,
     double lng,
-  ) async {
+  ) => traceTimelineStage('maps.camera.project_coordinate', () async {
     final coordinate = await controller.native.pixelForCoordinate(
       mapbox.Point(coordinates: mapbox.Position(lng, lat)),
     );
     return Offset(coordinate.x, coordinate.y);
-  }
+  });
 
   static Future<void> fitBounds(
     AppMapController controller,
     List<LatLng> points, {
     double padding = 80.0,
     double? maxZoom,
-  }) async {
+  }) => traceTimelineStage('maps.camera.fit_bounds', () async {
     if (points.isEmpty) return;
 
     var minLat = points.first.latitude;
@@ -81,27 +89,33 @@ class MapCameraService._() {
       infiniteBounds: false,
     );
 
-    final camera = await controller.native.cameraForCoordinateBounds(
-      bounds,
-      mapbox.MbxEdgeInsets(
-        top: padding,
-        left: padding,
-        bottom: padding + 100,
-        right: padding,
+    final camera = await traceTimelineStage(
+      'maps.camera.calculate_bounds',
+      () => controller.native.cameraForCoordinateBounds(
+        bounds,
+        mapbox.MbxEdgeInsets(
+          top: padding,
+          left: padding,
+          bottom: padding + 100,
+          right: padding,
+        ),
+        null,
+        null,
+        null,
+        null,
       ),
-      null,
-      null,
-      null,
-      null,
     );
 
     final cameraToShow = _limitZoom(camera, maxZoom);
 
-    await controller.native.flyTo(
-      cameraToShow,
-      mapbox.MapAnimationOptions(duration: 1000),
+    await traceTimelineStage(
+      'maps.camera.fly_to_bounds',
+      () => controller.native.flyTo(
+        cameraToShow,
+        mapbox.MapAnimationOptions(duration: 1000),
+      ),
     );
-  }
+  });
 
   static mapbox.CameraOptions _limitZoom(
     mapbox.CameraOptions camera,

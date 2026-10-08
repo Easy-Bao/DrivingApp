@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:foundation/foundation.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
 import 'package:maps/src/map/map_camera_service.dart';
@@ -66,26 +67,28 @@ class MapAnnotationService._() {
     Color? color,
     double? bearing,
     VoidCallback? onTap,
-  }) async {
+  }) => traceTimelineStage('maps.marker.add', () async {
     final mapCtrl = controller.native;
     final annotationManager = await mapCtrl.annotations
         .createPointAnnotationManager();
 
-    await annotationManager.create(
-      await _markerOptions(
-        lat,
-        lng,
-        label: label,
-        isOrigin: isOrigin,
-        color: color,
-        bearing: bearing ?? 0,
-      ),
+    final options = await _markerOptions(
+      lat,
+      lng,
+      label: label,
+      isOrigin: isOrigin,
+      color: color,
+      bearing: bearing ?? 0,
+    );
+    await traceTimelineStage(
+      'maps.marker.platform_create',
+      () => annotationManager.create(options),
     );
     if (onTap != null) {
       annotationManager.tapEvents(onTap: (_) => onTap());
     }
     return annotationManager;
-  }
+  });
 
   static Future<void> replaceMarker(
     mapbox.PointAnnotationManager annotationManager,
@@ -96,18 +99,23 @@ class MapAnnotationService._() {
     Color? color,
     double? bearing,
     bool animate = false,
-  }) async {
-    final annotations = await annotationManager.getAnnotations();
+  }) => traceTimelineStage('maps.marker.replace', () async {
+    final annotations = await traceTimelineStage(
+      'maps.marker.read_annotations',
+      annotationManager.getAnnotations,
+    );
     if (annotations.isEmpty) {
-      await annotationManager.create(
-        await _markerOptions(
-          lat,
-          lng,
-          label: label,
-          isOrigin: isOrigin,
-          color: color,
-          bearing: bearing ?? 0,
-        ),
+      final options = await _markerOptions(
+        lat,
+        lng,
+        label: label,
+        isOrigin: isOrigin,
+        color: color,
+        bearing: bearing ?? 0,
+      );
+      await traceTimelineStage(
+        'maps.marker.platform_create',
+        () => annotationManager.create(options),
       );
       return;
     }
@@ -140,22 +148,31 @@ class MapAnnotationService._() {
     annotation.iconRotate = options.iconRotate;
     annotation.symbolSortKey = options.symbolSortKey;
     if (animate) {
-      await _animateMarker(
-        annotationManager,
-        annotation,
-        startBearing: startBearing,
-        targetLat: lat,
-        targetLng: lng,
-        targetBearing: targetBearing,
+      await traceTimelineStage(
+        'maps.marker.animate_18_updates',
+        () => _animateMarker(
+          annotationManager,
+          annotation,
+          startBearing: startBearing,
+          targetLat: lat,
+          targetLng: lng,
+          targetBearing: targetBearing,
+        ),
       );
     } else {
       annotation.geometry = options.geometry;
-      await annotationManager.update(annotation);
+      await traceTimelineStage(
+        'maps.marker.platform_update',
+        () => annotationManager.update(annotation),
+      );
     }
     if (annotations.length > 1) {
-      await annotationManager.deleteMulti(annotations.skip(1).toList());
+      await traceTimelineStage(
+        'maps.marker.platform_delete_extras',
+        () => annotationManager.deleteMulti(annotations.skip(1).toList()),
+      );
     }
-  }
+  });
 
   static Future<void> _animateMarker(
     mapbox.PointAnnotationManager annotationManager,
@@ -208,7 +225,13 @@ class MapAnnotationService._() {
     );
   }
 
-  static Future<Uint8List> _createMarkerImage(
+  static Future<Uint8List> _createMarkerImage(Color color, {String? label}) =>
+      traceTimelineStage(
+        'maps.marker.rasterize_png',
+        () => _renderMarkerImage(color, label: label),
+      );
+
+  static Future<Uint8List> _renderMarkerImage(
     Color color, {
     String? label,
   }) async {
