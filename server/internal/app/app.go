@@ -102,6 +102,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	rideStore, err := ridepostgres.NewRideStore(
 		ridepostgres.RideStoreConfig{
 			Pool:                  postgresPool,
+			Logger:                applicationLogger,
 			PlatformCommissionBPS: config.Pricing.PlatformCommissionBPS,
 			OnlinePresenceMaxAge:  config.RideLifecycle.DriverLocationMaxAge,
 		},

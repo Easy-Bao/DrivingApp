@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
@@ -21,12 +22,14 @@ const _defaultOnlinePresenceMaxAge = 45 * time.Second
 type RideRepository struct {
 	pool                  *pgxpool.Pool
 	queries               *databasepostgres.Queries
+	logger                *slog.Logger
 	platformCommissionBPS int64
 	onlinePresenceMaxAge  time.Duration
 }
 
 type RideStoreConfig struct {
 	Pool                  *pgxpool.Pool
+	Logger                *slog.Logger
 	PlatformCommissionBPS int64
 	OnlinePresenceMaxAge  time.Duration
 }
@@ -47,9 +50,14 @@ func NewRideRepository(config RideStoreConfig) (*RideRepository, error) {
 	if onlinePresenceMaxAge <= 0 {
 		onlinePresenceMaxAge = _defaultOnlinePresenceMaxAge
 	}
+	logger := config.Logger
+	if logger == nil {
+		logger = slog.Default()
+	}
 	return &RideRepository{
 		pool:                  config.Pool,
 		queries:               databasepostgres.New(config.Pool),
+		logger:                logger,
 		platformCommissionBPS: config.PlatformCommissionBPS,
 		onlinePresenceMaxAge:  onlinePresenceMaxAge,
 	}, nil
