@@ -133,16 +133,70 @@ func (repository *DriverLocationStore) Nearby(
 	if err := repository.validate(); err != nil {
 		return nil, err
 	}
+	logger := repository.log()
+	timingsEnabled := ctx != nil && logger.Enabled(ctx, slog.LevelDebug)
+	startTiming := func() time.Time {
+		if !timingsEnabled {
+			return time.Time{}
+		}
+		return time.Now()
+	}
+	measure := func(startedAt time.Time) time.Duration {
+		if startedAt.IsZero() {
+			return 0
+		}
+		return time.Since(startedAt)
+	}
+	totalStartedAt := startTiming()
+	var (
+		cleanupDuration      time.Duration
+		geoSearchDuration    time.Duration
+		payloadFetchDuration time.Duration
+		decodeDuration       time.Duration
+		staleCleanupDuration time.Duration
+		expiredCount         int
+		candidateCount       int
+		validCount           int
+		staleCount           int
+		cleanupSucceeded     bool
+		outcome              = "failed"
+	)
+	defer func() {
+		if !timingsEnabled {
+			return
+		}
+		logger.LogAttrs(ctx, slog.LevelDebug, "nearby driver lookup stage timings",
+			slog.String("outcome", outcome),
+			slog.Int64("total_us", measure(totalStartedAt).Microseconds()),
+			slog.Int64("expiry_cleanup_us", cleanupDuration.Microseconds()),
+			slog.Int64("geo_search_us", geoSearchDuration.Microseconds()),
+			slog.Int64("payload_fetch_us", payloadFetchDuration.Microseconds()),
+			slog.Int64("decode_us", decodeDuration.Microseconds()),
+			slog.Int64("stale_member_cleanup_us", staleCleanupDuration.Microseconds()),
+			slog.Int("expired_count", expiredCount),
+			slog.Int("candidate_count", candidateCount),
+			slog.Int("valid_count", validCount),
+			slog.Int("stale_count", staleCount),
+			slog.Bool("expiry_cleanup_succeeded", cleanupSucceeded),
+		)
+	}()
+
 	// GEO members do not support individual TTLs. Sweep the companion expiry
 	// index before searching so expired payloads cannot consume result slots.
-	if err := repository.cleanupExpiredDrivers(ctx); err != nil {
-		repository.log().WarnContext(ctx, "clean up expired driver locations failed", "error", err)
+	cleanupStartedAt := startTiming()
+	var cleanupErr error
+	expiredCount, cleanupErr = repository.cleanupExpiredDrivers(ctx)
+	cleanupDuration = measure(cleanupStartedAt)
+	cleanupSucceeded = cleanupErr == nil
+	if cleanupErr != nil {
+		logger.WarnContext(ctx, "clean up expired driver locations failed", "error", cleanupErr)
 	}
 
 	// Only the member IDs are needed here. GeoSearchLocation expects a nested
 	// location response when using RESP3, but Redis returns a flat member list
 	// when coordinates are not requested. GeoSearch matches that response shape
 	// and keeps this lookup compatible with the native Redis/Valkey setup.
+	geoSearchStartedAt := startTiming()
 	locationIDs, err := repository.client.GeoSearch(ctx, _driverLocationsKey, &redis.GeoSearchQuery{
 		Longitude:  longitude,
 		Latitude:   latitude,
@@ -151,10 +205,13 @@ func (repository *DriverLocationStore) Nearby(
 		Sort:       "ASC",
 		Count:      20,
 	}).Result()
+	geoSearchDuration = measure(geoSearchStartedAt)
 	if err != nil {
 		return nil, fmt.Errorf("search nearby driver locations: %w", err)
 	}
+	candidateCount = len(locationIDs)
 	if len(locationIDs) == 0 {
+		outcome = "no_candidates"
 		return []domain.DriverPoint{}, nil
 	}
 
@@ -162,13 +219,16 @@ func (repository *DriverLocationStore) Nearby(
 	for _, locationID := range locationIDs {
 		keys = append(keys, driverLocationKey(locationID))
 	}
+	payloadFetchStartedAt := startTiming()
 	payloads, err := repository.client.MGet(ctx, keys...).Result()
+	payloadFetchDuration = measure(payloadFetchStartedAt)
 	if err != nil {
 		return nil, fmt.Errorf("load nearby driver locations: %w", err)
 	}
 
 	result := make([]domain.DriverPoint, 0, len(locationIDs))
 	staleLocations := make([]string, 0, len(locationIDs))
+	decodeStartedAt := startTiming()
 	for index, locationID := range locationIDs {
 		if index >= len(payloads) {
 			staleLocations = append(staleLocations, locationID)
@@ -189,25 +249,35 @@ func (repository *DriverLocationStore) Nearby(
 		}
 		result = append(result, point)
 	}
+	decodeDuration = measure(decodeStartedAt)
+	validCount = len(result)
+	staleCount = len(staleLocations)
 	if len(staleLocations) > 0 {
 		// Expired payloads leave geo members behind; cleanup is best effort so a
 		// transient Redis write failure does not hide valid nearby drivers.
+		staleCleanupStartedAt := startTiming()
 		if _, err := repository.client.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
 			pipe.ZRem(ctx, _driverLocationsKey, staleLocations)
 			pipe.ZRem(ctx, _driverLocationExpiryKey, staleLocations)
 			return nil
 		}); err != nil {
 			repository.log().WarnContext(ctx, "remove stale driver locations failed", "error", err)
+			outcome = "stale_cleanup_failed"
+		} else {
+			outcome = "stale_candidates_removed"
 		}
+		staleCleanupDuration = measure(staleCleanupStartedAt)
+	} else {
+		outcome = "success"
 	}
 	return result, nil
 }
 
-func (repository *DriverLocationStore) cleanupExpiredDrivers(ctx context.Context) error {
+func (repository *DriverLocationStore) cleanupExpiredDrivers(ctx context.Context) (int, error) {
 	if err := repository.validate(); err != nil {
-		return err
+		return 0, err
 	}
-	if err := repository.client.Eval(
+	expiredCount, err := repository.client.Eval(
 		ctx,
 		_cleanupExpiredDriversScript,
 		[]string{_driverLocationExpiryKey, _driverLocationsKey},
@@ -215,10 +285,11 @@ func (repository *DriverLocationStore) cleanupExpiredDrivers(ctx context.Context
 		_locationCleanupBatchSize,
 		_driverLocationKeyPrefix,
 		_driverLocationObservedAtPrefix,
-	).Err(); err != nil {
-		return fmt.Errorf("clean up expired driver locations: %w", err)
+	).Int()
+	if err != nil {
+		return 0, fmt.Errorf("clean up expired driver locations: %w", err)
 	}
-	return nil
+	return expiredCount, nil
 }
 
 func (repository *DriverLocationStore) Get(ctx context.Context, driverID string) (domain.DriverPoint, error) {

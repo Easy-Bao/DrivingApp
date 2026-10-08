@@ -113,16 +113,16 @@ func (service *LocationTrackingService) Ingest(ctx context.Context, point domain
 		if validationDuration == 0 {
 			validationDuration = measure(validationStartedAt)
 		}
-		logger.DebugContext(ctx, "location ingest stage timings",
-			"outcome", outcome,
-			"total_us", measure(totalStartedAt).Microseconds(),
-			"validation_us", validationDuration.Microseconds(),
-			"pre_write_presence_us", preWritePresenceDuration.Microseconds(),
-			"persistence_us", persistenceDuration.Microseconds(),
-			"post_write_presence_us", postWritePresenceDuration.Microseconds(),
-			"assignment_lookup_us", assignmentLookupDuration.Microseconds(),
-			"event_publication_us", eventPublicationDuration.Microseconds(),
-			"assignment_count", assignmentCount,
+		logger.LogAttrs(ctx, slog.LevelDebug, "location ingest stage timings",
+			slog.String("outcome", outcome),
+			slog.Int64("total_us", measure(totalStartedAt).Microseconds()),
+			slog.Int64("validation_us", validationDuration.Microseconds()),
+			slog.Int64("pre_write_presence_us", preWritePresenceDuration.Microseconds()),
+			slog.Int64("persistence_us", persistenceDuration.Microseconds()),
+			slog.Int64("post_write_presence_us", postWritePresenceDuration.Microseconds()),
+			slog.Int64("assignment_lookup_us", assignmentLookupDuration.Microseconds()),
+			slog.Int64("event_publication_us", eventPublicationDuration.Microseconds()),
+			slog.Int("assignment_count", assignmentCount),
 		)
 	}()
 
