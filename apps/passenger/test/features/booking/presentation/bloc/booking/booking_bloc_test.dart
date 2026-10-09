@@ -37,6 +37,7 @@ BookingBloc _makeBookingBloc({
   required DriverProfileRepository driverProfileRepository,
   required PassengerSessionStore secureSessionService,
   InboxCubit? inboxCubit,
+  AppLifecycleCoordinator? lifecycleCoordinator,
   int nearestDriverMaxAttempts = 5,
   Duration nearestDriverRetryDelay = const Duration(seconds: 2),
   Duration offerRefreshInterval = const Duration(seconds: 3),
@@ -46,7 +47,7 @@ BookingBloc _makeBookingBloc({
   driverProfileRepository: driverProfileRepository,
   secureSessionService: secureSessionService,
   inboxCubit: inboxCubit,
-  lifecycleCoordinator: AppLifecycleCoordinator(),
+  lifecycleCoordinator: lifecycleCoordinator ?? AppLifecycleCoordinator(),
   nearestDriverMaxAttempts: nearestDriverMaxAttempts,
   nearestDriverRetryDelay: nearestDriverRetryDelay,
   offerRefreshInterval: offerRefreshInterval,
@@ -601,6 +602,59 @@ void main() {
   });
 
   group('BookingBloc — CancelBookingEvent', () {
+    test('stops offer polling after the booking session is canceled', () async {
+      final lifecycleCoordinator = AppLifecycleCoordinator();
+      var fetchCount = 0;
+      when(() => bookingRepository.createSession(any()))
+          .thenAnswer((_) async => const Ok('cancel-session'));
+      when(() => bookingRepository.fetchOffers('cancel-session'))
+          .thenAnswer((_) async {
+            fetchCount++;
+            return const Ok([]);
+          });
+      final bloc = _makeBookingBloc(
+        driverRepo: driverRepo,
+        bookingRepository: bookingRepository,
+        driverProfileRepository: driverProfileRepository,
+        secureSessionService: secureSessionService,
+        lifecycleCoordinator: lifecycleCoordinator,
+        offerRefreshInterval: const Duration(milliseconds: 5),
+      );
+      var blocClosed = false;
+      addTearDown(() async {
+        if (!blocClosed) await bloc.close();
+        await lifecycleCoordinator.dispose();
+      });
+
+      final offersReceived = bloc.stream.firstWhere(
+        (state) => state is BookingOffersReceived,
+      );
+      bloc.add(
+        const StartOpenBookingEvent(
+          trip: testTrip,
+          pickupLat: 7.82,
+          pickupLng: 123.43,
+          distanceKm: 2,
+          durationMinutes: 5,
+        ),
+      );
+      await offersReceived.timeout(const Duration(milliseconds: 500));
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      expect(fetchCount, greaterThan(1));
+
+      final bookingCanceled = bloc.stream.firstWhere(
+        (state) => state is BookingCanceled,
+      );
+      bloc.add(const CancelBookingEvent());
+      await bookingCanceled.timeout(const Duration(milliseconds: 500));
+      final fetchCountAtCancellation = fetchCount;
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      expect(fetchCount, fetchCountAtCancellation);
+      await bloc.close();
+      blocClosed = true;
+    });
+
     test(
       'does not report a deliberate cancellation as no driver found',
       () async {
