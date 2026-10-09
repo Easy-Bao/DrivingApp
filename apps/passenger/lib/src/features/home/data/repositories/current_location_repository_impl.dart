@@ -1,17 +1,21 @@
 import 'package:foundation/foundation.dart';
-import 'package:passenger/src/features/home/data/data_sources/current_location_data_source.dart';
+import 'package:passenger/src/features/home/data/data_sources/current_location_remote_data_source.dart';
 import 'package:passenger/src/features/home/domain/entities/current_location.dart';
 import 'package:passenger/src/features/home/domain/failures/current_location_failure.dart';
 import 'package:passenger/src/features/home/domain/repositories/current_location_repository.dart';
 
-final class const CurrentLocationRepositoryImpl({required this._dataSource})
+final class CurrentLocationRepositoryImpl
     implements CurrentLocationRepository {
-  final CurrentLocationDataSource _dataSource;
+  const CurrentLocationRepositoryImpl({
+    required this.dataSource,
+  });
+
+  final CurrentLocationDataSource dataSource;
 
   @override
   Future<Result<CurrentLocation, Failure>> getCurrentLocation() async {
     try {
-      final position = await _dataSource.getCurrentPosition();
+      final position = await dataSource.getCurrentPosition();
       if (position == null) {
         return const Err(CurrentLocationFailure());
       }
@@ -29,7 +33,7 @@ final class const CurrentLocationRepositoryImpl({required this._dataSource})
   @override
   Stream<Result<CurrentLocation, Failure>> watchCurrentLocation() async* {
     try {
-      await for (final position in _dataSource.watchCurrentPosition()) {
+      await for (final position in dataSource.watchCurrentPosition()) {
         yield Ok(
           CurrentLocation(
             latitude: position.latitude,

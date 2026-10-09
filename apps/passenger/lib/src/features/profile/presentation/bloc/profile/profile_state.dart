@@ -1,18 +1,19 @@
 import 'package:equatable/equatable.dart';
 
-class const ProfileState({
-  this.name = '',
-  this.phone = '',
-  this.email = '',
-  this.address = '',
-  this.gender = '',
-  this.avatarPath = '',
-  this.avatarUrl = '',
-  this.avatarData = '',
-  this.isLoading = false,
-  this.isSaving = false,
-  this.errorMessage,
-}) extends Equatable {
+class ProfileState extends Equatable {
+  const ProfileState({
+    this.name = '',
+    this.phone = '',
+    this.email = '',
+    this.address = '',
+    this.gender = '',
+    this.avatarPath = '',
+    this.avatarUrl = '',
+    this.avatarData = '',
+    this.isLoading = false,
+    this.isSaving = false,
+    this.errorMessage,
+  });
   final String name;
   final String phone;
   final String email;

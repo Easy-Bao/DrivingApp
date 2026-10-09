@@ -1,12 +1,12 @@
 import 'package:foundation/foundation.dart';
-import 'package:passenger/src/features/profile/domain/entities/profile_model.dart';
+import 'package:passenger/src/features/profile/domain/entities/passenger_profile.dart';
 
 abstract interface class PassengerProfileRepository {
-  ProfileModel getCachedProfile();
+  PassengerProfile getCachedProfile();
 
-  Future<Result<ProfileModel, Failure>> refreshProfile();
+  Future<Result<PassengerProfile, Failure>> refreshProfile();
 
-  Future<Result<ProfileModel, Failure>> updateProfile({
+  Future<Result<PassengerProfile, Failure>> updateProfile({
     required String name,
     required String phone,
     required String email,

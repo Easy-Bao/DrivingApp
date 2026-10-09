@@ -7,12 +7,13 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/profile/presentation/bloc/profile/profile_cubit.dart';
-import 'package:passenger/src/features/profile/presentation/widgets/profile_avatar_widget.dart';
+import 'package:passenger/src/features/profile/presentation/widgets/profile_avatar.dart';
 import 'package:passenger/src/features/profile/profile_routes.dart';
 import 'package:passenger/src/features/saved_places/saved_places_routes.dart';
 import 'package:passenger/src/features/settings/settings_routes.dart';
 
-class const AccountPage({super.key, this.onLogout}) extends StatelessWidget {
+class AccountPage extends StatelessWidget {
+  const AccountPage({super.key, this.onLogout});
   final VoidCallback? onLogout;
 
   @override
@@ -114,7 +115,7 @@ class const AccountPage({super.key, this.onLogout}) extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
           children: [
-            ProfileAvatarWidget(
+            ProfileAvatar(
               initials: _getInitials(displayName),
               imagePath: state.avatarPath,
               imageData: state.avatarData,

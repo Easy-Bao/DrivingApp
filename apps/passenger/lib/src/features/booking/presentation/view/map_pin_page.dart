@@ -7,7 +7,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/booking/presentation/map_pin_address_formatter.dart';
-import 'package:passenger/src/features/booking/presentation/widgets/map_selection_marker_widget.dart';
+import 'package:passenger/src/features/booking/presentation/widgets/map_selection_marker.dart';
 
 enum MapPinFlow { pickup, savedPlace }
 
@@ -302,16 +302,16 @@ class _MapPinPageState()
                 return Transform.translate(
                   offset: Offset(
                     0,
-                    -(MapSelectionMarkerWidget.height / 2) - (5 * lift),
+                    -(MapSelectionMarker.height / 2) - (5 * lift),
                   ),
                   child: child,
                 );
               },
               child: widget.flow == MapPinFlow.savedPlace
-                  ? const MapSelectionMarkerWidget()
+                  ? const MapSelectionMarker()
                   : const Hero(
                       tag: BookingRoutes.mapPinHeroTag,
-                      child: MapSelectionMarkerWidget(),
+                      child: MapSelectionMarker(),
                     ),
             ),
           ),

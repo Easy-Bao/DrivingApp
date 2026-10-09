@@ -19,12 +19,12 @@ import 'package:passenger/src/features/booking/presentation/bloc/booking/booking
 import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/home/presentation/bloc/home/home_cubit.dart';
-import 'package:passenger/src/features/home/presentation/widgets/active_ride_banner_widget.dart';
-import 'package:passenger/src/features/home/presentation/widgets/home_destination_search_hint_widget.dart';
-import 'package:passenger/src/features/home/presentation/widgets/pending_booking_banner_widget.dart';
-import 'package:passenger/src/features/home/presentation/widgets/recent_ride_history_empty_state_widget.dart';
-import 'package:passenger/src/features/home/presentation/widgets/recent_ride_history_preview_widget.dart';
-import 'package:passenger/src/features/home/presentation/widgets/saved_place_quick_actions_widget.dart';
+import 'package:passenger/src/features/home/presentation/widgets/active_ride_banner.dart';
+import 'package:passenger/src/features/home/presentation/widgets/home_destination_search_hint.dart';
+import 'package:passenger/src/features/home/presentation/widgets/pending_booking_banner.dart';
+import 'package:passenger/src/features/home/presentation/widgets/recent_ride_history_empty_state.dart';
+import 'package:passenger/src/features/home/presentation/widgets/recent_ride_history_preview.dart';
+import 'package:passenger/src/features/home/presentation/widgets/saved_place_quick_actions.dart';
 import 'package:passenger/src/features/location/presentation/bloc/location_access/location_access_cubit.dart';
 import 'package:passenger/src/features/location/presentation/bloc/location_access/location_access_state.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
@@ -270,7 +270,7 @@ class _HomePageState extends State<HomePage> {
           );
         }
 
-        return SavedPlaceQuickActionsWidget(
+        return SavedPlaceQuickActions(
           places: state.places,
           onPlaceTap: (place) => unawaited(_handleSavedPlaceTap(place)),
           onPlaceLongPress: (place) {
@@ -298,7 +298,7 @@ class _HomePageState extends State<HomePage> {
 
         return Padding(
           padding: const EdgeInsets.only(top: 12),
-          child: PendingBookingBannerWidget(
+          child: PendingBookingBanner(
             isAuthenticated: isAuthenticated,
             destinationName: draft.destination.name,
             onContinue: () {
@@ -393,7 +393,7 @@ class _HomePageState extends State<HomePage> {
           return _buildRecentRideHistoryError();
         }
         if (state is! RideHistoryLoaded) {
-          return RecentRideHistoryEmptyStateWidget(isGuest: isGuest);
+          return RecentRideHistoryEmptyState(isGuest: isGuest);
         }
         final seenDestinations = <String>{};
         final recentRides = <RideHistory>[];
@@ -407,9 +407,9 @@ class _HomePageState extends State<HomePage> {
           }
         }
         if (recentRides.isEmpty) {
-          return RecentRideHistoryEmptyStateWidget(isGuest: isGuest);
+          return RecentRideHistoryEmptyState(isGuest: isGuest);
         }
-        return RecentRideHistoryPreviewWidget(
+        return RecentRideHistoryPreview(
           rides: recentRides,
           onRideTap: (ride) => unawaited(
             context.pushNamed(RideHistoryRoutes.rideDetails, extra: ride),
@@ -498,7 +498,7 @@ class _HomePageState extends State<HomePage> {
                 ? 'Driver Has Arrived'
                 : 'Driver is Picking You Up';
 
-            return ActiveRideBannerWidget(
+            return ActiveRideBanner(
               statusText: statusText,
               driverName: driverName,
               vehicleInfo: vehicleInfo,
@@ -512,7 +512,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildRestoredRideBanner(RideHistory? ride) {
     if (ride == null) return const SizedBox.shrink();
-    return ActiveRideBannerWidget(
+    return ActiveRideBanner(
       statusText: _activeRideStatusText(ride),
       driverName: ride.displayDriverName,
       vehicleInfo: ride.displayVehicleSummary,
@@ -643,7 +643,7 @@ class _HomePageState extends State<HomePage> {
                     size: 20,
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(child: HomeDestinationSearchHintWidget()),
+                  const Expanded(child: HomeDestinationSearchHint()),
                 ],
               ),
             ),

@@ -1,4 +1,4 @@
-import 'package:driver/src/features/profile/domain/entities/profile_model.dart';
+import 'package:driver/src/features/profile/domain/entities/driver_profile.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver/src/features/profile/data/data_sources/driver_profile_remote_data_source.dart';
 import 'package:driver/src/features/profile/domain/entities/driver_account_snapshot.dart';

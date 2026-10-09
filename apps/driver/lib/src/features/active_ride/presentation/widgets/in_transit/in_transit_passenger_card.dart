@@ -1,0 +1,73 @@
+import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
+import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:design_system/design_system.dart';
+
+class const InTransitPassengerCard({super.key}) extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final passengerName = context.select<RideFlowCubit, String>(
+      (cubit) => cubit.state.passengerNameOr('Passenger'),
+    );
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: context.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        border: Border.all(color: context.colorScheme.outlineVariant),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: context.colorScheme.primaryContainer,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              LucideIcons.user,
+              color: context.colorScheme.onSurface,
+              size: 16,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  passengerName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: context.colorScheme.onSurface,
+                  ),
+                ),
+                Text(
+                  'Passenger Onboard',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            LucideIcons.user_round,
+            size: 16,
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+typedef InTransitPassengerCardWidget = InTransitPassengerCard;

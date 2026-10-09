@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger/src/features/booking/domain/entities/bid_session_trip.dart';
-import 'package:passenger/src/features/booking/domain/entities/driver_model.dart';
+import 'package:passenger/src/features/booking/domain/entities/driver.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 
 void main() {

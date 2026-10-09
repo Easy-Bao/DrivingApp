@@ -8,7 +8,7 @@ import 'package:driver/src/features/dashboard/presentation/formatters/driver_das
 import 'package:foundation/foundation.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_state.dart';
-import 'package:driver/src/features/dashboard/presentation/widgets/driver_dashboard/driver_dashboard_stats_row_widget.dart';
+import 'package:driver/src/features/dashboard/presentation/widgets/driver_dashboard/driver_dashboard_stats_row.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/driver_dashboard/driver_dashboard_feed_widgets.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_cubit.dart';
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_state.dart';
@@ -1302,7 +1302,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   Widget _buildStatsRow(DashboardState state) {
-    return DriverDashboardStatsRowWidget(
+    return DriverDashboardStatsRow(
       isLoadingStats: state.isLoadingStats,
       hasExistingStats: state.hasLoadedStats,
       earnings: state.earnings,

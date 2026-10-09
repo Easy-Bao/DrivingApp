@@ -17,9 +17,9 @@ import 'package:passenger/src/features/booking/domain/repositories/fare_reposito
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/fare_estimate/fare_estimate_cubit.dart';
-import 'package:passenger/src/features/booking/presentation/widgets/booking_auth_bottom_sheet_widget.dart';
-import 'package:passenger/src/features/booking/presentation/widgets/ride_options_panel_widget.dart';
-import 'package:passenger/src/features/booking/presentation/widgets/ride_tip_selector_widget.dart';
+import 'package:passenger/src/features/booking/presentation/widgets/booking_auth_bottom_sheet.dart';
+import 'package:passenger/src/features/booking/presentation/widgets/ride_options_panel.dart';
+import 'package:passenger/src/features/booking/presentation/widgets/ride_tip_selector.dart';
 import 'package:passenger/src/features/profile/domain/repositories/passenger_profile_repository.dart';
 
 class const RideSelectionPage({
@@ -139,7 +139,7 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
     _panelController = DraggableScrollableController()
       ..addListener(_onPanelExtentChanged);
     _selectedTipAmount =
-        RideTipSelectorWidget.tipOptions.contains(widget.initialTipAmount)
+        RideTipSelector.tipOptions.contains(widget.initialTipAmount)
         ? widget.initialTipAmount
         : 0;
     _notesController.text = widget.initialNotes.length > 160
@@ -611,7 +611,7 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
                       snapAnimationDuration: _panelAnimationDuration,
                       shouldCloseOnMinExtent: false,
                       builder: (context, scrollController) {
-                        return RideOptionsPanelWidget(
+                        return RideOptionsPanel(
                           passengerName: passengerName,
                           pickupLabel: _pickupLabel,
                           destinationName: widget.destination.name,

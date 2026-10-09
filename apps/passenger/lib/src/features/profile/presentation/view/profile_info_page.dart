@@ -13,10 +13,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:passenger/src/features/auth/auth_routes.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/profile/presentation/bloc/profile/profile_cubit.dart';
-import 'package:passenger/src/features/profile/presentation/widgets/profile_avatar_widget.dart';
+import 'package:passenger/src/features/profile/presentation/widgets/profile_avatar.dart';
 
-class const ProfileInfoPage({super.key, this.pickPhoto})
-    extends StatefulWidget {
+class ProfileInfoPage extends StatefulWidget {
+  const ProfileInfoPage({super.key, this.pickPhoto});
+
   final Future<XFile?> Function()? pickPhoto;
 
   @override
@@ -389,7 +390,7 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Center(
-          child: ProfileAvatarWidget(
+          child: ProfileAvatar(
             key: const ValueKey<String>('passenger-profile-avatar'),
             initials: _getInitials(_nameController.text),
             imagePath: _avatarPath,

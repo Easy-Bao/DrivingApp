@@ -19,7 +19,7 @@ import 'package:passenger/src/features/home/presentation/bloc/home/home_cubit.da
 import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_cubit.dart';
 import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_state.dart';
 import 'package:passenger/src/features/home/presentation/view/home_page.dart';
-import 'package:passenger/src/features/home/presentation/widgets/recent_ride_history_preview_widget.dart';
+import 'package:passenger/src/features/home/presentation/widgets/recent_ride_history_preview.dart';
 import 'package:passenger/src/features/location/presentation/bloc/location_access/location_access_cubit.dart';
 import 'package:passenger/src/features/location/presentation/bloc/location_access/location_access_state.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
@@ -504,9 +504,9 @@ void main() {
 
       expect(find.text('SM City'), findsOneWidget);
       expect(find.text('City Hall'), findsOneWidget);
-      expect(find.byType(RecentRideHistoryPreviewWidget), findsOneWidget);
-      final previewWidget = tester.widget<RecentRideHistoryPreviewWidget>(
-        find.byType(RecentRideHistoryPreviewWidget),
+      expect(find.byType(RecentRideHistoryPreview), findsOneWidget);
+      final previewWidget = tester.widget<RecentRideHistoryPreview>(
+        find.byType(RecentRideHistoryPreview),
       );
       expect(previewWidget.rides.length, 2);
     },

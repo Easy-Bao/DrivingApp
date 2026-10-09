@@ -10,21 +10,22 @@ import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
-import 'package:passenger/src/features/ride_history/presentation/widgets/ride_history_header_widget.dart';
-import 'package:passenger/src/features/ride_history/presentation/widgets/ride_history_widget.dart';
+import 'package:passenger/src/features/ride_history/presentation/widgets/ride_history_header.dart';
+import 'package:passenger/src/features/ride_history/presentation/widgets/ride_history_list_view.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
 import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-class const RideHistoryPage({
-  this.title = 'Activity',
-  this.subtitle = 'Tap a ride to see details',
-  this.showBackButton = false,
-  this.showHeaderSubtitle = true,
-  this.showSummary = true,
-  this.showFilters = true,
-  super.key,
-}) extends StatefulWidget {
+class RideHistoryPage extends StatefulWidget {
+  const RideHistoryPage({
+    this.title = 'Activity',
+    this.subtitle = 'Tap a ride to see details',
+    this.showBackButton = false,
+    this.showHeaderSubtitle = true,
+    this.showSummary = true,
+    this.showFilters = true,
+    super.key,
+  });
   final String title;
   final String subtitle;
   final bool showBackButton;
@@ -160,7 +161,7 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
                         :final weeklyFareAmount,
                         :final weeklyRideCount,
                       ) =>
-                        RideHistoryWidget(
+                        RideHistoryListView(
                           headerTitle: widget.title,
                           headerSubtitle: widget.subtitle,
                           showBackButton: widget.showBackButton,
@@ -222,17 +223,18 @@ double _rideHistoryBottomClearance(BuildContext context) {
   return AppFloatingTabBar.height + MediaQuery.paddingOf(context).bottom + 10;
 }
 
-class const _RideHistoryMessageView({
-  required this.subtitle,
-  required this.title,
-  required this.message,
-  this.headerTitle = 'Activity',
-  this.showBackButton = false,
-  this.showSubtitle = true,
-  this.icon = LucideIcons.route,
-  this.actionLabel,
-  this.onAction,
-}) extends StatelessWidget {
+class _RideHistoryMessageView extends StatelessWidget {
+  const _RideHistoryMessageView({
+    required this.subtitle,
+    required this.title,
+    required this.message,
+    this.headerTitle = 'Activity',
+    this.showBackButton = false,
+    this.showSubtitle = true,
+    this.icon = LucideIcons.route,
+    this.actionLabel,
+    this.onAction,
+  });
   final String subtitle;
   final String title;
   final String message;
@@ -256,7 +258,7 @@ class const _RideHistoryMessageView({
             18,
           ),
           sliver: SliverToBoxAdapter(
-            child: RideHistoryHeaderWidget(
+            child: RideHistoryHeader(
               title: headerTitle,
               subtitle: showSubtitle ? subtitle : null,
               showBackButton: showBackButton,
@@ -345,15 +347,16 @@ class const _RideHistoryMessageView({
   }
 }
 
-class const _RideHistoryLoadingView({
-  required this.itemCount,
-  this.title = 'Activity',
-  this.subtitle = 'Tap a ride to see details',
-  this.showBackButton = false,
-  this.showSubtitle = true,
-  this.showSummary = true,
-  this.showFilters = true,
-}) extends StatelessWidget {
+class _RideHistoryLoadingView extends StatelessWidget {
+  const _RideHistoryLoadingView({
+    required this.itemCount,
+    this.title = 'Activity',
+    this.subtitle = 'Tap a ride to see details',
+    this.showBackButton = false,
+    this.showSubtitle = true,
+    this.showSummary = true,
+    this.showFilters = true,
+  });
   final int itemCount;
   final String title;
   final String subtitle;
@@ -375,7 +378,7 @@ class const _RideHistoryLoadingView({
             18,
           ),
           sliver: SliverToBoxAdapter(
-            child: RideHistoryHeaderWidget(
+            child: RideHistoryHeader(
               title: title,
               subtitle: showSubtitle ? subtitle : null,
               showBackButton: showBackButton,
@@ -424,7 +427,9 @@ class const _RideHistoryLoadingView({
   }
 }
 
-class const _ActivitySkeletonSummary() extends StatelessWidget {
+class _ActivitySkeletonSummary extends StatelessWidget {
+  const _ActivitySkeletonSummary();
+
   @override
   Widget build(BuildContext context) {
     return const Row(
@@ -437,8 +442,9 @@ class const _ActivitySkeletonSummary() extends StatelessWidget {
   }
 }
 
-class const _ActivitySkeletonSummaryCard({required this.valueWidth})
-    extends StatelessWidget {
+class _ActivitySkeletonSummaryCard extends StatelessWidget {
+  const _ActivitySkeletonSummaryCard({required this.valueWidth});
+
   final double valueWidth;
 
   @override
@@ -463,7 +469,9 @@ class const _ActivitySkeletonSummaryCard({required this.valueWidth})
   }
 }
 
-class const _ActivitySkeletonFilters() extends StatelessWidget {
+class _ActivitySkeletonFilters extends StatelessWidget {
+  const _ActivitySkeletonFilters();
+
   @override
   Widget build(BuildContext context) {
     return const Row(
@@ -490,7 +498,8 @@ class const _ActivitySkeletonFilters() extends StatelessWidget {
   }
 }
 
-class const _ActivitySkeletonRideCard() extends StatelessWidget {
+class _ActivitySkeletonRideCard extends StatelessWidget {
+  const _ActivitySkeletonRideCard();
   @override
   Widget build(BuildContext context) {
     return Container(

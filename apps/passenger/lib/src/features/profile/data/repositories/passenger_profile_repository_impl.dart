@@ -5,48 +5,51 @@ import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/profile/data/data_sources/passenger_profile_remote_data_source.dart';
-import 'package:passenger/src/features/profile/domain/entities/profile_model.dart';
+import 'package:passenger/src/features/profile/domain/entities/passenger_profile.dart';
 import 'package:passenger/src/features/profile/domain/repositories/passenger_profile_repository.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final class PassengerProfileRepositoryImpl({
-  required this._remoteDataSource,
-  required this._sessionService,
-  required this._preferences,
-}) implements PassengerProfileRepository {
-  final PassengerProfileRemoteDataSource _remoteDataSource;
-  final PassengerSessionStore _sessionService;
-  final SharedPreferences _preferences;
+final class PassengerProfileRepositoryImpl
+    implements PassengerProfileRepository {
+  PassengerProfileRepositoryImpl({
+    required this.remoteDataSource,
+    required this.sessionService,
+    required this.preferences,
+  });
+
+  final PassengerProfileRemoteDataSource remoteDataSource;
+  final PassengerSessionStore sessionService;
+  final SharedPreferences preferences;
   String _avatarData = '';
 
   @override
-  ProfileModel getCachedProfile() {
-    return ProfileModel(
-      name: _preferences.getString('passenger_name') ?? '',
-      phone: _preferences.getString('passenger_phone') ?? '',
-      email: _preferences.getString('passenger_email') ?? '',
-      address: _preferences.getString('passenger_address') ?? '',
-      gender: _preferences.getString('passenger_gender') ?? '',
-      avatarPath: _preferences.getString('passenger_avatar_path') ?? '',
+  PassengerProfile getCachedProfile() {
+    return PassengerProfile(
+      name: preferences.getString('passenger_name') ?? '',
+      phone: preferences.getString('passenger_phone') ?? '',
+      email: preferences.getString('passenger_email') ?? '',
+      address: preferences.getString('passenger_address') ?? '',
+      gender: preferences.getString('passenger_gender') ?? '',
+      avatarPath: preferences.getString('passenger_avatar_path') ?? '',
       avatarData: _avatarData,
     );
   }
 
   @override
-  Future<Result<ProfileModel, Failure>> refreshProfile() async {
+  Future<Result<PassengerProfile, Failure>> refreshProfile() async {
     try {
       final passengerId = await _passengerId();
       final cached = getCachedProfile();
-      final remote = ProfileModel.fromJson(
-        await _remoteDataSource.fetchProfile(passengerId),
+      final remote = PassengerProfile.fromJson(
+        await remoteDataSource.fetchProfile(passengerId),
       );
       var avatarData = _avatarData;
       if (remote.avatarUrl.isEmpty) {
         avatarData = '';
       } else {
         try {
-          final bytes = await _remoteDataSource.fetchProfileAvatar(passengerId);
+          final bytes = await remoteDataSource.fetchProfileAvatar(passengerId);
           avatarData = bytes.isEmpty ? '' : base64Encode(bytes);
         } catch (_) {
           // A profile should remain usable when its optional photo is unavailable.
@@ -60,7 +63,7 @@ final class PassengerProfileRepositoryImpl({
           : (cachedName.isNotEmpty && !cachedName.contains('@')
               ? cachedName
               : (remoteName.isNotEmpty ? remoteName : cachedName));
-      final profile = ProfileModel(
+      final profile = PassengerProfile(
         id: remote.id,
         userId: remote.userId,
         role: remote.role,
@@ -82,7 +85,7 @@ final class PassengerProfileRepositoryImpl({
   }
 
   @override
-  Future<Result<ProfileModel, Failure>> updateProfile({
+  Future<Result<PassengerProfile, Failure>> updateProfile({
     required String name,
     required String phone,
     required String email,
@@ -112,14 +115,14 @@ final class PassengerProfileRepositoryImpl({
             ValidationFailure('Choose a profile photo under 2 MB.'),
           );
         }
-        await _remoteDataSource.uploadProfileAvatar(
+        await remoteDataSource.uploadProfileAvatar(
           passengerId: passengerId,
           bytes: bytes,
           fileName: _avatarFileName(normalizedAvatarPath),
         );
         avatarData = base64Encode(bytes);
       }
-      final response = await _remoteDataSource.updateProfile(
+      final response = await remoteDataSource.updateProfile(
         passengerId: passengerId,
         data: {
           'name': normalizedName,
@@ -129,11 +132,11 @@ final class PassengerProfileRepositoryImpl({
           'gender': gender.trim(),
         },
       );
-      final remote = ProfileModel.fromJson(response);
+      final remote = PassengerProfile.fromJson(response);
       if (normalizedAvatarPath == cached.avatarPath &&
           remote.avatarUrl.isNotEmpty) {
         try {
-          final bytes = await _remoteDataSource.fetchProfileAvatar(passengerId);
+          final bytes = await remoteDataSource.fetchProfileAvatar(passengerId);
           avatarData = bytes.isEmpty ? '' : base64Encode(bytes);
         } catch (_) {
           // Keep the last usable in-memory image when a refresh is transient.
@@ -142,7 +145,7 @@ final class PassengerProfileRepositoryImpl({
         avatarData = '';
       }
       _avatarData = avatarData;
-      final profile = ProfileModel(
+      final profile = PassengerProfile(
         id: remote.id,
         userId: remote.userId,
         role: remote.role,
@@ -164,21 +167,21 @@ final class PassengerProfileRepositoryImpl({
   }
 
   Future<String> _passengerId() async {
-    final passengerId = await _sessionService.readPassengerId() ?? '';
+    final passengerId = await sessionService.readPassengerId() ?? '';
     if (passengerId.isEmpty) {
       throw CacheException(message: 'Passenger ID is not registered.');
     }
     return passengerId;
   }
 
-  Future<void> _cache(ProfileModel profile) async {
+  Future<void> _cache(PassengerProfile profile) async {
     await Future.wait<void>([
-      _preferences.setString('passenger_name', profile.name),
-      _preferences.setString('passenger_phone', profile.phone),
-      _preferences.setString('passenger_email', profile.email),
-      _preferences.setString('passenger_address', profile.address),
-      _preferences.setString('passenger_gender', profile.gender),
-      _preferences.setString('passenger_avatar_path', profile.avatarPath),
+      preferences.setString('passenger_name', profile.name),
+      preferences.setString('passenger_phone', profile.phone),
+      preferences.setString('passenger_email', profile.email),
+      preferences.setString('passenger_address', profile.address),
+      preferences.setString('passenger_gender', profile.gender),
+      preferences.setString('passenger_avatar_path', profile.avatarPath),
     ]);
   }
 

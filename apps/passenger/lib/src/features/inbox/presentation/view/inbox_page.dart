@@ -10,16 +10,18 @@ import 'package:passenger/src/features/chat/chat_routes.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_state.dart';
-import 'package:passenger/src/features/inbox/presentation/widgets/inbox_empty_state_widget.dart';
-import 'package:passenger/src/features/inbox/presentation/widgets/inbox_notification_card_widget.dart';
+import 'package:passenger/src/features/inbox/presentation/widgets/inbox_empty_state.dart';
+import 'package:passenger/src/features/inbox/presentation/widgets/inbox_notification_card.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-class const InboxPage({
-  super.key,
-  required this.inboxCubit,
-  required this.sessionService,
-}) extends StatefulWidget {
+class InboxPage extends StatefulWidget {
+  const InboxPage({
+    super.key,
+    required this.inboxCubit,
+    required this.sessionService,
+  });
+
   final InboxCubit inboxCubit;
   final PassengerSessionStore sessionService;
 
@@ -209,7 +211,7 @@ class _InboxPageState extends State<InboxPage> {
         if (notifications.isEmpty)
           SliverFillRemaining(
             hasScrollBody: false,
-            child: InboxEmptyStateWidget(isGuest: isGuest),
+            child: InboxEmptyState(isGuest: isGuest),
           )
         else
           SliverPadding(
@@ -237,7 +239,7 @@ class _InboxPageState extends State<InboxPage> {
                       size: 20,
                     ),
                   ),
-                  child: InboxNotificationCardWidget(
+                  child: InboxNotificationCard(
                     notification: notification,
                     onTap: () =>
                         unawaited(_openNotification(notification, index)),

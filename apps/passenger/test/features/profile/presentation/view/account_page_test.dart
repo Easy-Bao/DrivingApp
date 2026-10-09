@@ -7,7 +7,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/profile/presentation/bloc/profile/profile_cubit.dart';
 import 'package:passenger/src/features/profile/presentation/view/account_page.dart';
-import 'package:passenger/src/features/profile/presentation/widgets/profile_avatar_widget.dart';
+import 'package:passenger/src/features/profile/presentation/widgets/profile_avatar.dart';
 
 class MockProfileCubit extends MockCubit<ProfileState>
     implements ProfileCubit {}
@@ -50,7 +50,7 @@ void main() {
     await tester.pumpWidget(buildSubject());
 
     await tester.tap(find.text('Test Passenger'));
-    await tester.tap(find.byType(ProfileAvatarWidget));
+    await tester.tap(find.byType(ProfileAvatar));
 
     expect(find.text('Profile Info'), findsNothing);
     expect(find.byIcon(Icons.edit), findsNothing);

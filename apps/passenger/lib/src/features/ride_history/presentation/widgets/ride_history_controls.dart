@@ -1,0 +1,262 @@
+import 'package:design_system/design_system.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:foundation/foundation.dart';
+
+enum RideHistoryFilter { all, completed, cancelled }
+
+class RideHistorySummary extends StatelessWidget {
+  const RideHistorySummary({
+    required this.weeklyFare,
+    required this.weeklyRideCount,
+    super.key,
+  });
+
+  final double weeklyFare;
+  final int weeklyRideCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _SummaryCard(
+            label: 'This week',
+            value: formatPesoAmount(weeklyFare),
+            valueKey: const ValueKey<String>('activity-weekly-fare'),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _SummaryCard(
+            label: 'Rides taken',
+            value: weeklyRideCount.toString(),
+            valueKey: const ValueKey<String>('activity-weekly-ride-count'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class RideHistoryFilters extends StatelessWidget {
+  const RideHistoryFilters({
+    required this.selectedFilter,
+    required this.onSelected,
+    super.key,
+  });
+  final RideHistoryFilter selectedFilter;
+  final ValueChanged<RideHistoryFilter> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final filter in RideHistoryFilter.values)
+          _RideHistoryFilterChip(
+            filter: filter,
+            isSelected: filter == selectedFilter,
+            onTap: () => onSelected(filter),
+          ),
+      ],
+    );
+  }
+}
+
+class RideHistorySectionLabel extends StatelessWidget {
+  const RideHistorySectionLabel({required this.label, super.key});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+        color: context.colorScheme.onSurfaceVariant,
+        fontWeight: FontWeight.w600,
+      ),
+    );
+  }
+}
+
+class RideHistoryFilteredEmpty extends StatelessWidget {
+  const RideHistoryFilteredEmpty({required this.filter, super.key});
+  final RideHistoryFilter filter;
+
+  @override
+  Widget build(BuildContext context) {
+    final message = switch (filter) {
+      RideHistoryFilter.all =>
+        'Your completed and cancelled rides will appear here.',
+      RideHistoryFilter.completed => 'No completed rides yet.',
+      RideHistoryFilter.cancelled => 'No cancelled rides.',
+    };
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(32, 28, 32, 112),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            LucideIcons.route,
+            size: 34,
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SummaryCard extends StatelessWidget {
+  const _SummaryCard({
+    required this.label,
+    required this.value,
+    required this.valueKey,
+  });
+  final String label;
+  final String value;
+  final Key valueKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      height: 88,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: context.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        border: Border.all(color: context.colorScheme.outlineVariant),
+        boxShadow: [
+          BoxShadow(
+            color: context.colorScheme.shadow.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: textTheme.labelMedium?.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            key: valueKey,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: textTheme.titleLarge?.copyWith(
+              color: context.colorScheme.onSurface,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RideHistoryFilterChip extends StatelessWidget {
+  const _RideHistoryFilterChip({
+    required this.filter,
+    required this.isSelected,
+    required this.onTap,
+  });
+  final RideHistoryFilter filter;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  String get _label => switch (filter) {
+    RideHistoryFilter.all => 'All',
+    RideHistoryFilter.completed => 'Completed',
+    RideHistoryFilter.cancelled => 'Cancelled',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(EasyRideRadius.pill);
+
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          key: ValueKey<String>('activity-filter-${filter.name}'),
+          onTap: onTap,
+          borderRadius: radius,
+          splashColor: context.colorScheme.primary.withValues(alpha: 0.12),
+          highlightColor: context.colorScheme.primary.withValues(alpha: 0.06),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            constraints: const BoxConstraints(minHeight: 38, minWidth: 64),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? context.colorScheme.primary
+                  : context.colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.35,
+                    ),
+              borderRadius: radius,
+              border: Border.all(
+                color: isSelected
+                    ? context.colorScheme.primary
+                    : context.colorScheme.outlineVariant.withValues(alpha: 0.6),
+                width: 1.0,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: context.colorScheme.primary.withValues(
+                          alpha: 0.2,
+                        ),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Text(
+              _label,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: isSelected
+                    ? context.colorScheme.onPrimary
+                    : context.colorScheme.onSurfaceVariant,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+typedef RideHistorySummaryWidget = RideHistorySummary;
+typedef RideHistoryFiltersWidget = RideHistoryFilters;
+typedef RideHistoryFilteredEmptyWidget = RideHistoryFilteredEmpty;
+

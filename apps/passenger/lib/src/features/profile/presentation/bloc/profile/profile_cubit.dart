@@ -2,23 +2,23 @@ import 'dart:developer' as dev;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
-import 'package:passenger/src/features/profile/domain/entities/profile_model.dart';
+import 'package:passenger/src/features/profile/domain/entities/passenger_profile.dart';
 import 'package:passenger/src/features/profile/domain/repositories/passenger_profile_repository.dart';
 import 'package:passenger/src/features/profile/presentation/bloc/profile/profile_state.dart';
 
 export 'package:passenger/src/features/profile/presentation/bloc/profile/profile_state.dart';
 
-class ProfileCubit({required this._repository}) extends Cubit<ProfileState> {
-  final PassengerProfileRepository _repository;
+class ProfileCubit extends Cubit<ProfileState> {
+  ProfileCubit({required this.repository}) : super(const ProfileState());
 
-  this : super(const ProfileState());
+  final PassengerProfileRepository repository;
 
   Future<void> loadProfile() async {
     if (isClosed || state.isLoading) return;
     emit(state.copyWith(isLoading: true, clearError: true));
 
     try {
-      final cached = _repository.getCachedProfile();
+      final cached = repository.getCachedProfile();
 
       emit(
         ProfileState(
@@ -34,24 +34,25 @@ class ProfileCubit({required this._repository}) extends Cubit<ProfileState> {
         ),
       );
 
-      ProfileModel? profile;
+      PassengerProfile? profile;
       Failure? failure;
-      (await _repository.refreshProfile()).fold(
+      (await repository.refreshProfile()).fold(
         (value) => failure = value,
         (value) => profile = value,
       );
       if (profile == null) throw failure!;
+      final resolvedProfile = profile!;
 
       emit(
         ProfileState(
-          name: profile!.name,
-          phone: profile!.phone,
-          email: profile!.email,
-          address: profile!.address,
-          gender: profile!.gender,
-          avatarPath: profile!.avatarPath,
-          avatarUrl: profile!.avatarUrl,
-          avatarData: profile!.avatarData,
+          name: resolvedProfile.name,
+          phone: resolvedProfile.phone,
+          email: resolvedProfile.email,
+          address: resolvedProfile.address,
+          gender: resolvedProfile.gender,
+          avatarPath: resolvedProfile.avatarPath,
+          avatarUrl: resolvedProfile.avatarUrl,
+          avatarData: resolvedProfile.avatarData,
           isLoading: false,
         ),
       );
@@ -81,7 +82,7 @@ class ProfileCubit({required this._repository}) extends Cubit<ProfileState> {
     if (isClosed) return false;
     emit(state.copyWith(isSaving: true, clearError: true));
 
-    final result = await _repository.updateProfile(
+    final result = await repository.updateProfile(
       name: name,
       phone: phone,
       email: email,

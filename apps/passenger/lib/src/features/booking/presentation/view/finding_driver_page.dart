@@ -13,12 +13,12 @@ import 'package:passenger/src/features/active_ride/presentation/bloc/live_map/li
 import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/domain/entities/bid_session_trip.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
-import 'package:passenger/src/features/booking/presentation/widgets/driver_dropdown_card_widget.dart';
-import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_availability_error_panel_widget.dart';
-import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_bids_panel_widget.dart';
-import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_nearest_panel_widget.dart';
-import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_no_driver_panel_widget.dart';
-import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_searching_panel_widget.dart';
+import 'package:passenger/src/features/booking/presentation/widgets/driver_dropdown_card.dart';
+import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_availability_error_panel.dart';
+import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_bids_panel.dart';
+import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_nearest_panel.dart';
+import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_no_driver_panel.dart';
+import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_searching_panel.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 
@@ -568,7 +568,7 @@ class _FindingDriverPageContentState()
                                   ),
                                 if (showDriverDiscovery &&
                                     _selectedDriver != null)
-                                  DriverDropdownCardWidget(
+                                  DriverDropdownCard(
                                     driver: _selectedDriver!,
                                     isNearestDriver:
                                         _nearbyDrivers.isNotEmpty &&
@@ -604,7 +604,7 @@ class _FindingDriverPageContentState()
                       child: BlocBuilder<BookingBloc, BookingState>(
                         builder: (context, state) {
                           if (state is FindingNearestDriver) {
-                            return FindingDriverSearchingPanelWidget(
+                            return FindingDriverSearchingPanel(
                               message: state.statusMessage,
                               fare: widget.fare,
                               destination: widget.destination,
@@ -616,7 +616,7 @@ class _FindingDriverPageContentState()
                           } else if (_isNoDriverFound &&
                               state is BookingFailure &&
                               state.isNoDriverFound) {
-                            return FindingDriverNoDriverPanelWidget(
+                            return FindingDriverNoDriverPanel(
                               fare: widget.fare,
                               destination: widget.destination,
                               onRetryPressed: _retryFindingDriver,
@@ -626,7 +626,7 @@ class _FindingDriverPageContentState()
                           } else if (_driverSearchError != null &&
                               state is BookingFailure &&
                               !AppNetworkStatusScope.isUnavailableOf(context)) {
-                            return FindingDriverAvailabilityErrorPanelWidget(
+                            return FindingDriverAvailabilityErrorPanel(
                               message: _driverSearchError!,
                               fare: widget.fare,
                               destination: widget.destination,
@@ -639,7 +639,7 @@ class _FindingDriverPageContentState()
                                 _nearbyDrivers.length <= 1) {
                               return const SizedBox.shrink();
                             }
-                            return FindingDriverNearestPanelWidget(
+                            return FindingDriverNearestPanel(
                               state: state,
                               fare: widget.fare,
                               onViewFullProfilePressed: () =>
@@ -651,7 +651,7 @@ class _FindingDriverPageContentState()
                               isCanceling: _isLeaving,
                             );
                           } else if (state is BookingSearching) {
-                            return FindingDriverSearchingPanelWidget(
+                            return FindingDriverSearchingPanel(
                               message: state.statusMessage,
                               fare: widget.fare,
                               destination: widget.destination,
@@ -662,7 +662,7 @@ class _FindingDriverPageContentState()
                             );
                           } else if (state is BookingOffersReceived) {
                             if (state.offers.isEmpty) {
-                              return FindingDriverSearchingPanelWidget(
+                              return FindingDriverSearchingPanel(
                                 message: state.statusMessage,
                                 fare: widget.fare,
                                 destination: widget.destination,
@@ -672,7 +672,7 @@ class _FindingDriverPageContentState()
                                 isCanceling: _isLeaving,
                               );
                             }
-                            return FindingDriverBidsPanelWidget(
+                            return FindingDriverBidsPanel(
                               offers: state.offers,
                               onAcceptOfferPressed: (offer) {
                                 if (_isLeaving || _acceptingOfferId != null) {

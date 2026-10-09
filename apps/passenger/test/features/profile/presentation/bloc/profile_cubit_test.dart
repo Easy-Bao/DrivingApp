@@ -1,18 +1,18 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
-import 'package:passenger/src/features/profile/domain/entities/profile_model.dart';
+import 'package:passenger/src/features/profile/domain/entities/passenger_profile.dart';
 import 'package:passenger/src/features/profile/domain/repositories/passenger_profile_repository.dart';
 import 'package:passenger/src/features/profile/presentation/bloc/profile/profile_cubit.dart';
 
 class _FakeProfileRepository implements PassengerProfileRepository {
-  ProfileModel cached = const ProfileModel(
+  PassengerProfile cached = const PassengerProfile(
     name: 'Cached Passenger',
     phone: '+63 900 000 0000',
     email: 'cached@example.com',
     address: 'Cached address',
     gender: 'Prefer not to say',
   );
-  ProfileModel remote = const ProfileModel(
+  PassengerProfile remote = const PassengerProfile(
     name: 'Remote Passenger',
     phone: '+63 911 111 1111',
     email: 'remote@example.com',
@@ -21,16 +21,16 @@ class _FakeProfileRepository implements PassengerProfileRepository {
   );
 
   @override
-  ProfileModel getCachedProfile() => cached;
+  PassengerProfile getCachedProfile() => cached;
 
   @override
-  Future<Result<ProfileModel, Failure>> refreshProfile() async {
+  Future<Result<PassengerProfile, Failure>> refreshProfile() async {
     cached = remote;
     return Ok(remote);
   }
 
   @override
-  Future<Result<ProfileModel, Failure>> updateProfile({
+  Future<Result<PassengerProfile, Failure>> updateProfile({
     required String name,
     required String phone,
     required String email,
@@ -38,7 +38,7 @@ class _FakeProfileRepository implements PassengerProfileRepository {
     required String gender,
     required String avatarPath,
   }) async {
-    cached = ProfileModel(
+    cached = PassengerProfile(
       name: name,
       phone: phone,
       email: email,

@@ -7,8 +7,8 @@ import 'package:driver/src/features/active_ride/presentation/bloc/live_map/live_
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
-import 'package:driver/src/features/active_ride/presentation/widgets/in_transit/in_transit_complete_button_widget.dart';
-import 'package:driver/src/features/active_ride/presentation/widgets/in_transit/in_transit_passenger_card_widget.dart';
+import 'package:driver/src/features/active_ride/presentation/widgets/in_transit/in_transit_complete_button.dart';
+import 'package:driver/src/features/active_ride/presentation/widgets/in_transit/in_transit_passenger_card.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_safety_report_sheet.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_emergency_button.dart';
 import 'package:driver/src/features/dashboard/dashboard_routes.dart';
@@ -378,9 +378,9 @@ class _InTransitPageState extends State<InTransitPage> {
                               dropoffLabel: 'Drop Off',
                             ),
                             const SizedBox(height: 8),
-                            const InTransitPassengerCardWidget(),
+                            const InTransitPassengerCard(),
                             const SizedBox(height: 12),
-                            InTransitCompleteButtonWidget(
+                            InTransitCompleteButton(
                               isCompletingTrip: _isCompletingTrip,
                               onCompleteTripPressed: () =>
                                   _completeTrip(context),

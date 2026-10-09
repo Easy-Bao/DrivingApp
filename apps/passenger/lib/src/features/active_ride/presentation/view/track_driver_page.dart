@@ -17,7 +17,7 @@ import 'package:passenger/src/features/active_ride/presentation/bloc/track_drive
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_state.dart';
 import 'package:passenger/src/features/active_ride/presentation/widgets/active_trip_exit_dialog.dart';
 import 'package:passenger/src/features/active_ride/presentation/widgets/passenger_emergency_button.dart';
-import 'package:passenger/src/features/active_ride/presentation/widgets/track_driver_panel_widget.dart';
+import 'package:passenger/src/features/active_ride/presentation/widgets/track_driver_panel.dart';
 import 'package:passenger/src/features/active_ride/presentation/widgets/trip_cancellation_dialog.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/chat/chat.dart';
@@ -626,7 +626,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                             constraints: BoxConstraints(
                               maxWidth: isWide ? 600.0 : double.infinity,
                             ),
-                            child: TrackDriverPanelWidget(
+                            child: TrackDriverPanel(
                               ride: widget.ride,
                               statusTitle: statusTitle,
                               statusSubtitle: statusSubtitle,
