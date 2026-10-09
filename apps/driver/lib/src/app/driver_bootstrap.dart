@@ -47,24 +47,35 @@ Future<void> bootstrapDriverApp() async {
     configureClientErrorBoundary(appName: 'driver-app');
 
     try {
-      await traceTimelineStage(
+      final sessionService = DriverSessionStore();
+      final stopServiceTask = traceTimelineStage<void>(
         'driver.startup.stop_background_service',
         DriverBackgroundTelemetry.stopExistingServiceForStartup,
       );
-      final prefs = await traceTimelineStage(
+      final prefsTask = traceTimelineStage(
         'driver.startup.load_preferences',
         SharedPreferences.getInstance,
       );
-      final sessionService = DriverSessionStore();
-      final hasDriverSession = await traceTimelineStage(
+      final sessionTask = traceTimelineStage(
         'driver.startup.restore_session',
         () => _hasDriverSession(sessionService),
       );
-
-      await traceTimelineStage(
+      final environmentTask = traceTimelineStage<void>(
         'driver.startup.load_environment',
-        () => dotenv.load(fileName: '.env', isOptional: true),
+        () async {
+          await dotenv.load(fileName: '.env', isOptional: true);
+        },
       );
+
+      // Finish independent platform and storage work before configuring routes.
+      await Future.wait<void>([
+        stopServiceTask,
+        prefsTask.then<void>((_) {}),
+        sessionTask.then<void>((_) {}),
+        environmentTask,
+      ]);
+      final prefs = await prefsTask;
+      final hasDriverSession = await sessionTask;
 
       await traceTimelineStage(
         'driver.startup.sentry_and_app_runner',
