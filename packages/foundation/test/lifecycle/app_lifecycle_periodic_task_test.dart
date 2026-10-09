@@ -61,6 +61,32 @@ void main() {
     await Future<void>.delayed(Duration.zero);
   });
 
+  test('releases its timer and resume listener when disposed', () async {
+    final lifecycleCoordinator = AppLifecycleCoordinator();
+    var calls = 0;
+    final task = AppLifecyclePeriodicTask(
+      lifecycleCoordinator: lifecycleCoordinator,
+      interval: const Duration(milliseconds: 1),
+      onTick: () => calls++,
+    );
+    addTearDown(() async {
+      await task.dispose();
+      await lifecycleCoordinator.dispose();
+    });
+
+    task.start();
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(calls, greaterThan(0));
+
+    final callsAtDisposal = calls;
+    await task.dispose();
+    lifecycleCoordinator.update(isForeground: false);
+    lifecycleCoordinator.update(isForeground: true);
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+
+    expect(calls, callsAtDisposal);
+  });
+
   test(
     'runs a requested resume refresh after the current refresh completes',
     () async {
