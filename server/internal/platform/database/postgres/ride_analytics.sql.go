@@ -21,7 +21,7 @@ WITH rating_stats AS (
         COUNT(*) FILTER (WHERE review.rating >= 4 AND review.rating < 5)::bigint AS four_star_count,
         COUNT(*) FILTER (WHERE review.rating = 5)::bigint AS five_star_count
     FROM reviews AS review
-    WHERE review.driver_id = $3
+    WHERE review.driver_id = $3::int
 )
 SELECT
     COUNT(*)::bigint AS total_trips,
@@ -91,13 +91,13 @@ SELECT
 FROM rides AS r
 LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = r.id
 CROSS JOIN rating_stats
-WHERE r.driver_id = $3
+WHERE r.driver_id = $3::int
 `
 
 type GetDriverStatsParams struct {
 	DayStart pgtype.Timestamptz `db:"day_start"`
 	DayEnd   pgtype.Timestamptz `db:"day_end"`
-	DriverID pgtype.Int4        `db:"driver_id"`
+	DriverID int32              `db:"driver_id"`
 }
 
 type GetDriverStatsRow struct {

@@ -8,7 +8,7 @@ WITH rating_stats AS (
         COUNT(*) FILTER (WHERE review.rating >= 4 AND review.rating < 5)::bigint AS four_star_count,
         COUNT(*) FILTER (WHERE review.rating = 5)::bigint AS five_star_count
     FROM reviews AS review
-    WHERE review.driver_id = sqlc.arg('driver_id')
+    WHERE review.driver_id = sqlc.arg('driver_id')::int
 )
 SELECT
     COUNT(*)::bigint AS total_trips,
@@ -78,7 +78,7 @@ SELECT
 FROM rides AS r
 LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = r.id
 CROSS JOIN rating_stats
-WHERE r.driver_id = sqlc.arg('driver_id');
+WHERE r.driver_id = sqlc.arg('driver_id')::int;
 
 -- name: ListDriverEarnings :many
 SELECT ride.created_at, ride.completed_at,
