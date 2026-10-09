@@ -21,3 +21,7 @@ CREATE INDEX driver_document_driver_type_created_at
 
 CREATE INDEX driver_document_status_created_at
     ON driver_documents (status, created_at);
+
+CREATE INDEX driver_document_reviewer_id_idx
+    ON driver_documents (reviewed_by)
+    WHERE reviewed_by IS NOT NULL;

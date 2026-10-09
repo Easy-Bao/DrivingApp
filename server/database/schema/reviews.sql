@@ -23,6 +23,9 @@ CREATE UNIQUE INDEX review_ride_id
 CREATE INDEX review_driver_id_created_at
     ON reviews (driver_id, created_at);
 
+CREATE INDEX review_passenger_id_idx
+    ON reviews (passenger_id);
+
 CREATE TABLE passenger_reviews (
     id serial PRIMARY KEY,
     ride_id integer NOT NULL,
@@ -45,3 +48,6 @@ CREATE UNIQUE INDEX passengerreview_ride_id
 
 CREATE INDEX passengerreview_passenger_id_created_at
     ON passenger_reviews (passenger_id, created_at);
+
+CREATE INDEX passengerreview_driver_id_idx
+    ON passenger_reviews (driver_id);

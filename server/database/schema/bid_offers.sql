@@ -18,6 +18,9 @@ CREATE TABLE bid_offers (
 CREATE INDEX bidoffer_session_id_created_at
     ON bid_offers (session_id, created_at);
 
+CREATE INDEX bidoffer_driver_id_idx
+    ON bid_offers (driver_id);
+
 CREATE UNIQUE INDEX bidoffer_session_id_driver_id
     ON bid_offers (session_id, driver_id)
     WHERE status = 'pending';

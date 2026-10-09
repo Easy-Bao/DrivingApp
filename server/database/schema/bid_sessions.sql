@@ -39,6 +39,13 @@ CREATE INDEX bidsession_expires_at_created_at
 CREATE INDEX bidsession_target_driver_id_created_at
     ON bid_sessions (target_driver_id, created_at);
 
+CREATE INDEX bidsession_passenger_id_status_expires_at
+    ON bid_sessions (passenger_id, status, expires_at);
+
+CREATE INDEX bidsession_accepted_driver_id_idx
+    ON bid_sessions (accepted_driver_id)
+    WHERE accepted_driver_id IS NOT NULL;
+
 CREATE UNIQUE INDEX bidsession_passenger_id
     ON bid_sessions (passenger_id)
     WHERE status = 'open';

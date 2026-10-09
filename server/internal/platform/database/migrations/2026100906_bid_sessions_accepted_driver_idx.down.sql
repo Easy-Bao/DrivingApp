@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS bidsession_accepted_driver_id_idx;

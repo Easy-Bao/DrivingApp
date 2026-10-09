@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS bidsession_passenger_id_status_expires_at;
