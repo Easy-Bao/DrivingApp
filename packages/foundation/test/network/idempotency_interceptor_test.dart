@@ -52,6 +52,8 @@ void main() {
     '/api/v1/location/route',
     '/api/v1/bids/fare',
     '/api/v1/driver/documents',
+    '/api/v1/drivers/me/documents',
+    '/api/v1/drivers/me/documents/driver_license',
     '/api/v1/drivers/42/online',
   ]) {
     test('does not add a key to $path', () async {

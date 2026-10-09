@@ -34,6 +34,7 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 			legacyPath := api.V1Prefix + "/driver/documents"
 			canonicalPath := api.V1Prefix + "/drivers/me/documents"
 			driver.Post(canonicalPath, router.handler.Upload)
+			driver.Post(canonicalPath+"/{type}", router.handler.UploadMultipart)
 			driver.Get(canonicalPath+"/status", router.handler.Status)
 			driver.Get(canonicalPath+"/{id}/content", router.handler.DriverContent)
 			driver.With(middleware.Deprecation(canonicalPath)).Post(legacyPath, router.handler.Upload)

@@ -22,11 +22,26 @@ final class DriverDocumentRemoteDataSourceImpl
     required List<int> bytes,
     required String contentType,
   }) async {
+    final path = Uri(
+      pathSegments: <String>[
+        '',
+        'api',
+        'v1',
+        'drivers',
+        'me',
+        'documents',
+        type.apiValue,
+      ],
+    ).toString();
     final response = await _dio.post<Map<String, dynamic>>(
-      '/api/v1/drivers/me/documents',
-      queryParameters: <String, dynamic>{'type': type.queryValue},
-      data: bytes,
-      options: Options(contentType: contentType),
+      path,
+      data: FormData.fromMap(<String, dynamic>{
+        'document': MultipartFile.fromBytes(
+          bytes,
+          filename: type.apiValue,
+          contentType: DioMediaType.parse(contentType),
+        ),
+      }),
     );
     return DriverDocument.fromJson(response.data ?? const <String, dynamic>{});
   }

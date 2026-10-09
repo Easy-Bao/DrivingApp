@@ -15,6 +15,8 @@ import (
 const (
 	_defaultJSONBodyLimit   int64 = 16 << 10
 	_defaultUploadBodyLimit int64 = 10 << 20
+	_multipartEnvelopeLimit int64 = 64 << 10
+	_maxInt64               int64 = 1<<63 - 1
 )
 
 type SecurityConfig struct {
@@ -107,7 +109,13 @@ func RequestBodyLimit(jsonLimit, uploadLimit int64) func(http.Handler) http.Hand
 
 			limit := jsonLimit
 			contentType := strings.ToLower(request.Header.Get("Content-Type"))
-			if strings.HasPrefix(contentType, "multipart/") || classifyEndpoint(request) == _endpointDocumentUpload {
+			if strings.HasPrefix(contentType, "multipart/") {
+				limit = uploadLimit
+				if classifyEndpoint(request) == _endpointDocumentUpload &&
+					limit <= _maxInt64-_multipartEnvelopeLimit {
+					limit += _multipartEnvelopeLimit
+				}
+			} else if classifyEndpoint(request) == _endpointDocumentUpload {
 				limit = uploadLimit
 			}
 			if request.ContentLength > limit {

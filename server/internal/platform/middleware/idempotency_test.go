@@ -172,6 +172,7 @@ func TestIdempotencySkipsQueriesSensitiveAuthAndPresenceUpdates(t *testing.T) {
 		{name: "fare query", path: "/api/v1/fares/estimate"},
 		{name: "document upload", path: "/api/v1/driver/documents"},
 		{name: "canonical document upload", path: "/api/v1/drivers/me/documents"},
+		{name: "typed document upload", path: "/api/v1/drivers/me/documents/driver_license"},
 		{name: "online presence", path: "/api/v1/drivers/12/online"},
 	} {
 		t.Run(test.name, func(t *testing.T) {

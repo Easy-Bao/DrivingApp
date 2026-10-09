@@ -6,20 +6,14 @@ import 'package:mocktail/mocktail.dart';
 
 class _MockDio extends Mock implements Dio {}
 
-class _FakeOptions extends Fake implements Options {}
-
 void main() {
-  setUpAll(() => registerFallbackValue(_FakeOptions()));
-
   test('uploads documents through the canonical driver route', () async {
     final dio = _MockDio();
     final dataSource = DriverDocumentRemoteDataSourceImpl(dio);
     when(
       () => dio.post<Map<String, dynamic>>(
         any(),
-        queryParameters: any<Map<String, dynamic>>(named: 'queryParameters'),
         data: any<dynamic>(named: 'data'),
-        options: any<Options>(named: 'options'),
       ),
     ).thenAnswer(
       (_) async => Response<Map<String, dynamic>>(
@@ -42,13 +36,20 @@ void main() {
     );
 
     expect(result.id, 12);
-    verify(
-      () => dio.post<Map<String, dynamic>>(
-        '/api/v1/drivers/me/documents',
-        queryParameters: <String, dynamic>{'type': 'driver_license'},
-        data: bytes,
-        options: any<Options>(named: 'options'),
-      ),
-    ).called(1);
+    final captured =
+        verify(
+              () => dio.post<Map<String, dynamic>>(
+                '/api/v1/drivers/me/documents/driver_license',
+                data: captureAny(named: 'data'),
+              ),
+            ).captured.single
+            as FormData;
+    expect(captured.files, hasLength(1));
+    expect(captured.files.single.key, 'document');
+    expect(captured.files.single.value.length, bytes.length);
+    expect(
+      captured.files.single.value.contentType.toString(),
+      'application/pdf',
+    );
   });
 }

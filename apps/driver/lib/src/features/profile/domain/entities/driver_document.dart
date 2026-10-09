@@ -3,7 +3,7 @@ import 'package:equatable/equatable.dart';
 enum DriverDocumentType { driverLicense, vehicleRegistration }
 
 extension DriverDocumentTypeValues on DriverDocumentType {
-  String get queryValue => switch (this) {
+  String get apiValue => switch (this) {
     DriverDocumentType.driverLicense => 'driver_license',
     DriverDocumentType.vehicleRegistration => 'vehicle_registration',
   };

@@ -16,6 +16,7 @@ import (
 )
 
 const _maxReviewPayloadBytes int64 = 1 << 10
+const _maxInt64 int64 = 1<<63 - 1
 
 type Handler struct {
 	service *DocumentService
@@ -32,7 +33,7 @@ func (handler *Handler) Upload(writer http.ResponseWriter, request *http.Request
 		return
 	}
 	limit := handler.service.MaxDocumentBytes()
-	content, err := io.ReadAll(io.LimitReader(request.Body, limit+1))
+	content, err := io.ReadAll(io.LimitReader(request.Body, limitWithLookahead(limit)))
 	if err != nil {
 		var maxBytesError *http.MaxBytesError
 		if errors.As(err, &maxBytesError) {
@@ -46,11 +47,57 @@ func (handler *Handler) Upload(writer http.ResponseWriter, request *http.Request
 		response.Error(writer, http.StatusRequestEntityTooLarge, "The document is too large.")
 		return
 	}
-	item, err := handler.service.Upload(
-		request.Context(),
+	handler.upload(
+		writer,
+		request,
 		driverID,
 		request.URL.Query().Get("type"),
 		request.Header.Get("Content-Type"),
+		content,
+	)
+}
+
+func (handler *Handler) UploadMultipart(writer http.ResponseWriter, request *http.Request) {
+	driverID, ok := actorID(request)
+	if !ok {
+		response.Error(writer, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	content, contentType, tooLarge, err := readMultipartDocument(
+		request,
+		handler.service.MaxDocumentBytes(),
+	)
+	if tooLarge {
+		response.Error(writer, http.StatusRequestEntityTooLarge, "The document is too large.")
+		return
+	}
+	if err != nil {
+		response.Error(writer, http.StatusBadRequest, "invalid document upload")
+		return
+	}
+	handler.upload(
+		writer,
+		request,
+		driverID,
+		chi.URLParam(request, "type"),
+		contentType,
+		content,
+	)
+}
+
+func (handler *Handler) upload(
+	writer http.ResponseWriter,
+	request *http.Request,
+	driverID int,
+	rawType string,
+	claimedContentType string,
+	content []byte,
+) {
+	item, err := handler.service.Upload(
+		request.Context(),
+		driverID,
+		rawType,
+		claimedContentType,
 		content,
 	)
 	if err != nil {
@@ -58,6 +105,53 @@ func (handler *Handler) Upload(writer http.ResponseWriter, request *http.Request
 		return
 	}
 	response.JSON(writer, http.StatusCreated, item)
+}
+
+func readMultipartDocument(request *http.Request, limit int64) ([]byte, string, bool, error) {
+	reader, err := request.MultipartReader()
+	if err != nil {
+		return nil, "", false, err
+	}
+	part, err := reader.NextPart()
+	if err != nil {
+		return nil, "", false, err
+	}
+	defer part.Close()
+	if part.FormName() != "document" || part.FileName() == "" {
+		return nil, "", false, errors.New("document file part is required")
+	}
+	contentType := part.Header.Get("Content-Type")
+	content, err := io.ReadAll(io.LimitReader(part, limitWithLookahead(limit)))
+	if err != nil {
+		var maxBytesError *http.MaxBytesError
+		if errors.As(err, &maxBytesError) {
+			return nil, "", true, nil
+		}
+		return nil, "", false, err
+	}
+	if int64(len(content)) > limit {
+		return nil, "", true, nil
+	}
+	nextPart, err := reader.NextPart()
+	if err == nil {
+		_ = nextPart.Close()
+		return nil, "", false, errors.New("unexpected multipart field")
+	}
+	if !errors.Is(err, io.EOF) {
+		var maxBytesError *http.MaxBytesError
+		if errors.As(err, &maxBytesError) {
+			return nil, "", true, nil
+		}
+		return nil, "", false, err
+	}
+	return content, contentType, false, nil
+}
+
+func limitWithLookahead(limit int64) int64 {
+	if limit >= _maxInt64 {
+		return limit
+	}
+	return limit + 1
 }
 
 func (handler *Handler) Status(writer http.ResponseWriter, request *http.Request) {

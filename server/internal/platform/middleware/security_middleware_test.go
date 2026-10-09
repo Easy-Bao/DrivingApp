@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -55,6 +56,27 @@ func TestRequestBodyLimitRejectsOversizedBody(t *testing.T) {
 
 	if response.Code != http.StatusRequestEntityTooLarge {
 		t.Fatalf("status = %d, want %d", response.Code, http.StatusRequestEntityTooLarge)
+	}
+}
+
+func TestRequestBodyLimitAllowsMultipartEnvelopeForDriverDocuments(t *testing.T) {
+	handler := RequestBodyLimit(16, 32)(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if _, err := io.ReadAll(request.Body); err != nil {
+			t.Errorf("read multipart body: %v", err)
+		}
+		writer.WriteHeader(http.StatusNoContent)
+	}))
+	request := httptest.NewRequest(
+		http.MethodPost,
+		"/api/v1/drivers/me/documents/driver_license",
+		strings.NewReader(strings.Repeat("x", 33)),
+	)
+	request.Header.Set("Content-Type", "multipart/form-data; boundary=test")
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusNoContent)
 	}
 }
 

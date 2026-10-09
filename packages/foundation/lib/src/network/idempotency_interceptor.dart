@@ -41,6 +41,7 @@ class IdempotencyInterceptor extends Interceptor {
     }
     if (method == 'POST' &&
         (path == '/api/v1/driver/documents' ||
+            _hasPathPrefix(path, '/api/v1/drivers/me/documents') ||
             (_hasPathPrefix(path, '/api/v1/drivers') &&
                 path.endsWith('/online')))) {
       return false;

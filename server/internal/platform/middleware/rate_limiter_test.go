@@ -166,6 +166,7 @@ func TestRateLimiterClassifiesEveryWorkload(t *testing.T) {
 		{name: "location", method: http.MethodGet, path: "/api/v1/location/search", limit: "22"},
 		{name: "fare", method: http.MethodPost, path: "/api/v1/fares/estimate", limit: "33"},
 		{name: "canonical document upload", method: http.MethodPost, path: "/api/v1/drivers/me/documents", limit: "66"},
+		{name: "typed document upload", method: http.MethodPost, path: "/api/v1/drivers/me/documents/driver_license", limit: "66"},
 		{name: "connection", method: http.MethodGet, path: "/api/v1/realtime/ws", limit: "44"},
 		{name: "telemetry", method: http.MethodPost, path: "/api/v1/telemetry/location", limit: "55"},
 		{name: "mutation", method: http.MethodPost, path: "/api/v1/rides", limit: "66"},

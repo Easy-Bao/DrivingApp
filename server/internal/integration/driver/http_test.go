@@ -5,8 +5,10 @@ package driver_test
 import (
 	"bytes"
 	"encoding/json"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"net/textproto"
 	"sort"
 	"strconv"
 	"strings"
@@ -151,6 +153,66 @@ func TestPrivateDocumentContentIsOwnerOrAdminOnly(t *testing.T) {
 				t.Fatalf("cache control = %q", response.Header().Get("Cache-Control"))
 			}
 		})
+	}
+}
+
+func TestDocumentMultipartUploadUsesTypedDriverRoute(t *testing.T) {
+	tokenManager := security.NewTokenManager("document-multipart-test-secret")
+	driverToken, _ := tokenManager.IssueWithRole("7", security.RoleDriver)
+	repository := newDocumentRepositoryFake()
+	storage := newDocumentStorageFake()
+	service := newDocumentService(
+		repository,
+		storage,
+		documents.WithContentTypeDetector(http.DetectContentType),
+		documents.WithMaxDocumentBytes(1024),
+	)
+	router := chi.NewRouter()
+	documents.NewRouter(documents.RouterDependencies{
+		Service:    service,
+		Verifier:   tokenManager,
+		Authorizer: security.NewAdminAuthorizer("42"),
+	}).RegisterRoutes(router)
+
+	var body bytes.Buffer
+	multipartWriter := multipart.NewWriter(&body)
+	header := make(textproto.MIMEHeader)
+	header.Set("Content-Disposition", `form-data; name="document"; filename="license.pdf"`)
+	header.Set("Content-Type", "application/pdf")
+	part, err := multipartWriter.CreatePart(header)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := part.Write(validPDF); err != nil {
+		t.Fatal(err)
+	}
+	if err := multipartWriter.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	request := httptest.NewRequest(
+		http.MethodPost,
+		"/api/v1/drivers/me/documents/driver_license",
+		&body,
+	)
+	request.Header.Set("Authorization", "Bearer "+driverToken)
+	request.Header.Set("Content-Type", multipartWriter.FormDataContentType())
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+	if response.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want %d; body = %s", response.Code, http.StatusCreated, response.Body.String())
+	}
+	var document struct {
+		Type string `json:"document_type"`
+	}
+	if err := json.Unmarshal(response.Body.Bytes(), &document); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if document.Type != "driver_license" {
+		t.Fatalf("document type = %q, want driver_license", document.Type)
+	}
+	if got := storage.objects["v1/object-1"]; !bytes.Equal(got, validPDF) {
+		t.Fatalf("stored content = %q, want uploaded PDF", got)
 	}
 }
 
