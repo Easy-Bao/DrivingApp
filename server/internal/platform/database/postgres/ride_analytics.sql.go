@@ -12,6 +12,17 @@ import (
 )
 
 const getDriverStats = `-- name: GetDriverStats :one
+WITH rating_stats AS (
+    SELECT
+        AVG(review.rating) AS average_rating,
+        COUNT(*) FILTER (WHERE review.rating >= 1 AND review.rating < 2)::bigint AS one_star_count,
+        COUNT(*) FILTER (WHERE review.rating >= 2 AND review.rating < 3)::bigint AS two_star_count,
+        COUNT(*) FILTER (WHERE review.rating >= 3 AND review.rating < 4)::bigint AS three_star_count,
+        COUNT(*) FILTER (WHERE review.rating >= 4 AND review.rating < 5)::bigint AS four_star_count,
+        COUNT(*) FILTER (WHERE review.rating = 5)::bigint AS five_star_count
+    FROM reviews AS review
+    WHERE review.driver_id = $3
+)
 SELECT
     COUNT(*)::bigint AS total_trips,
     COUNT(*) FILTER (WHERE r.status = 'completed')::bigint AS completed_trips,
@@ -42,110 +53,51 @@ SELECT
               )
           )
     ), 0)::bigint AS today_earnings_amount,
-    COALESCE((
-        SELECT AVG(review.rating)
-        FROM reviews AS review
-        WHERE review.driver_id = $3
-    ), 0)::double precision AS average_rating
-    ,(
-        SELECT COUNT(*)::bigint
-        FROM reviews AS review
-        WHERE review.driver_id = $3
-          AND review.rating >= 1
-          AND review.rating < 2
-    ) AS one_star_count
-    ,(
-        SELECT COUNT(*)::bigint
-        FROM reviews AS review
-        WHERE review.driver_id = $3
-          AND review.rating >= 2
-          AND review.rating < 3
-    ) AS two_star_count
-    ,(
-        SELECT COUNT(*)::bigint
-        FROM reviews AS review
-        WHERE review.driver_id = $3
-          AND review.rating >= 3
-          AND review.rating < 4
-    ) AS three_star_count
-    ,(
-        SELECT COUNT(*)::bigint
-        FROM reviews AS review
-        WHERE review.driver_id = $3
-          AND review.rating >= 4
-          AND review.rating < 5
-    ) AS four_star_count
-    ,(
-        SELECT COUNT(*)::bigint
-        FROM reviews AS review
-        WHERE review.driver_id = $3
-          AND review.rating >= 5
-          AND review.rating <= 5
-    ) AS five_star_count
-    ,(
-        SELECT COUNT(*)::bigint
-        FROM rides AS standing_ride
-        WHERE standing_ride.driver_id = $3
-          AND standing_ride.status IN ('completed', 'cancelled')
-    ) AS standing_settled_trips
-    ,(
-        SELECT COUNT(*)::bigint
-        FROM rides AS standing_ride
-        WHERE standing_ride.driver_id = $3
-          AND standing_ride.status = 'cancelled'
-          AND standing_ride.cancellation_responsibility = 'driver_fault'
-    ) AS driver_fault_cancellation_count
-    ,(
-        SELECT COUNT(*)::bigint
-        FROM rides AS standing_ride
-        WHERE standing_ride.driver_id = $3
-          AND standing_ride.status = 'cancelled'
-          AND standing_ride.cancellation_responsibility = 'passenger_fault'
-    ) AS passenger_fault_cancellation_count
-    ,(
-        SELECT COUNT(*)::bigint
-        FROM rides AS standing_ride
-        WHERE standing_ride.driver_id = $3
-          AND standing_ride.status = 'cancelled'
-          AND standing_ride.cancellation_responsibility = 'system_fault'
-    ) AS system_fault_cancellation_count
-    ,(
-        SELECT COUNT(*)::bigint
-        FROM rides AS standing_ride
-        WHERE standing_ride.driver_id = $3
-          AND standing_ride.status = 'cancelled'
-          AND standing_ride.cancellation_responsibility = 'no_fault'
-    ) AS no_fault_cancellation_count
-    ,(
-        SELECT COUNT(*)::bigint
-        FROM rides AS standing_ride
-        WHERE standing_ride.driver_id = $3
-          AND standing_ride.status = 'cancelled'
-          AND standing_ride.cancellation_responsibility = 'safety_related'
-    ) AS safety_related_cancellation_count
-    ,(
-        SELECT COUNT(*)::bigint
-        FROM rides AS standing_ride
-        WHERE standing_ride.driver_id = $3
-          AND standing_ride.status = 'cancelled'
-          AND standing_ride.cancellation_responsibility = 'pending_review'
-    ) AS pending_review_cancellation_count
-    ,(
-        SELECT COUNT(*)::bigint
-        FROM rides AS standing_ride
-        WHERE standing_ride.driver_id = $3
-          AND standing_ride.status = 'cancelled'
-          AND standing_ride.cancellation_responsibility = 'admin_override'
-    ) AS admin_override_cancellation_count
+    COALESCE(rating_stats.average_rating, 0)::double precision AS average_rating,
+    rating_stats.one_star_count,
+    rating_stats.two_star_count,
+    rating_stats.three_star_count,
+    rating_stats.four_star_count,
+    rating_stats.five_star_count,
+    COUNT(*) FILTER (WHERE r.status IN ('completed', 'cancelled'))::bigint AS standing_settled_trips,
+    COUNT(*) FILTER (
+        WHERE r.status = 'cancelled'
+          AND r.cancellation_responsibility = 'driver_fault'
+    )::bigint AS driver_fault_cancellation_count,
+    COUNT(*) FILTER (
+        WHERE r.status = 'cancelled'
+          AND r.cancellation_responsibility = 'passenger_fault'
+    )::bigint AS passenger_fault_cancellation_count,
+    COUNT(*) FILTER (
+        WHERE r.status = 'cancelled'
+          AND r.cancellation_responsibility = 'system_fault'
+    )::bigint AS system_fault_cancellation_count,
+    COUNT(*) FILTER (
+        WHERE r.status = 'cancelled'
+          AND r.cancellation_responsibility = 'no_fault'
+    )::bigint AS no_fault_cancellation_count,
+    COUNT(*) FILTER (
+        WHERE r.status = 'cancelled'
+          AND r.cancellation_responsibility = 'safety_related'
+    )::bigint AS safety_related_cancellation_count,
+    COUNT(*) FILTER (
+        WHERE r.status = 'cancelled'
+          AND r.cancellation_responsibility = 'pending_review'
+    )::bigint AS pending_review_cancellation_count,
+    COUNT(*) FILTER (
+        WHERE r.status = 'cancelled'
+          AND r.cancellation_responsibility = 'admin_override'
+    )::bigint AS admin_override_cancellation_count
 FROM rides AS r
 LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = r.id
+CROSS JOIN rating_stats
 WHERE r.driver_id = $3
 `
 
 type GetDriverStatsParams struct {
 	DayStart pgtype.Timestamptz `db:"day_start"`
 	DayEnd   pgtype.Timestamptz `db:"day_end"`
-	DriverID int32              `db:"driver_id"`
+	DriverID pgtype.Int4        `db:"driver_id"`
 }
 
 type GetDriverStatsRow struct {
