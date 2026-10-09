@@ -3,9 +3,9 @@ WORKDIR /src
 COPY server/go.mod server/go.sum ./
 RUN go mod download
 COPY server ./
-RUN CGO_ENABLED=0 go build -o /out/api ./internal/cmd/api
-RUN CGO_ENABLED=0 go build -o /out/migrate ./internal/cmd/migrate
-RUN CGO_ENABLED=0 go build -o /out/objectstorage-migrate ./internal/cmd/objectstorage-migrate
+RUN CGO_ENABLED=0 go build -o /out/api ./cmd/api
+RUN CGO_ENABLED=0 go build -o /out/migrate ./cmd/migrate
+RUN CGO_ENABLED=0 go build -o /out/objectstorage-migrate ./cmd/objectstorage-migrate
 
 FROM gcr.io/distroless/static-debian12
 COPY --from=build /out/api /app/api

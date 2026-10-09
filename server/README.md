@@ -1,16 +1,17 @@
 # Go backend
 
 This directory contains the Go modular monolith. The `internal/*` packages
-own the business modules and their ports/adapters; `internal/cmd/api` is the single
+own the business modules and their ports/adapters; `cmd/api` is the single
 long-running application process that composes HTTP, WebSocket, persistence,
 transient event delivery, and infrastructure adapters.
 
 The other commands are one-shot developer tools:
 
-- `internal/cmd/migrate` applies the embedded, versioned PostgreSQL migration stream.
+- `cmd/migrate` applies the embedded, versioned PostgreSQL migration stream.
+- `cmd/objectstorage-migrate` copies, verifies, and contracts private objects in MinIO.
 
 The SQL boundary is intentionally explicit. `internal/platform/database/migrations/`
-is the runtime schema history applied by `internal/cmd/migrate`; applied migrations
+is the runtime schema history applied by `cmd/migrate`; applied migrations
 are immutable.
 `database/schema/` is the compile-time schema input used by sqlc and must be updated
 alongside a schema migration. `database/queries/` contains handwritten queries, and
@@ -80,7 +81,7 @@ This runs the equivalent of:
 
 ```sh
 cd server
-go run ./internal/cmd/api
+go run ./cmd/api
 ```
 
 The public client URL is configured by `API_BASE_URL`. Its host and listening
