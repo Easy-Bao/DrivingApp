@@ -173,7 +173,7 @@ INSERT INTO reviews (id, driver_id, rating) VALUES
 	stats, err := queries.GetDriverStats(ctx, databasepostgres.GetDriverStatsParams{
 		DayStart: pgtype.Timestamptz{Time: dayStart, Valid: true},
 		DayEnd:   pgtype.Timestamptz{Time: dayEnd, Valid: true},
-		DriverID: pgtype.Int4{Int32: 11, Valid: true},
+		DriverID: 11,
 	})
 	if err != nil {
 		t.Fatalf("get driver statistics: %v", err)
