@@ -2,6 +2,8 @@ package domain
 
 import "errors"
 
+const MaxOTPVerificationAttempts int64 = 5
+
 var (
 	ErrInvalidCredentials          = errors.New("invalid credentials")
 	ErrUserNotFound                = errors.New("user not found")
@@ -12,6 +14,7 @@ var (
 	ErrInvalidRole                 = errors.New("invalid account role")
 	ErrOTPRequired                 = errors.New("otp is required")
 	ErrInvalidOTP                  = errors.New("invalid or expired otp")
+	ErrOTPMaxAttemptsExceeded      = errors.New("maximum otp verification attempts exceeded")
 	ErrOTPUnavailable              = errors.New("otp delivery is unavailable")
 	ErrPendingRegistrationNotFound = errors.New("pending registration not found")
 )

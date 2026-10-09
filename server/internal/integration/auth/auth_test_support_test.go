@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
+	authports "github.com/Easy-Bao/DrivingApp/server/internal/auth/ports"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 )
 
@@ -46,6 +47,47 @@ func (repository *repository) UpdatePassword(_ context.Context, id int, password
 			repository.users[email] = account
 		}
 	}
+	return nil
+}
+
+func (repository *repository) MarkVerified(_ context.Context, id int) error {
+	for email, account := range repository.users {
+		if account.ID == id {
+			account.IsVerified = true
+			repository.users[email] = account
+			return nil
+		}
+	}
+	return domain.ErrUserNotFound
+}
+
+type resetOTPStore struct {
+	code     string
+	attempts int64
+}
+
+var _ authports.OTPStore = (*resetOTPStore)(nil)
+
+func (store *resetOTPStore) Put(_ context.Context, _, _, code string, _ time.Duration) error {
+	store.code = code
+	store.attempts = 0
+	return nil
+}
+
+func (store *resetOTPStore) Consume(_ context.Context, _, _, code string) error {
+	if store.code == "" {
+		return domain.ErrInvalidOTP
+	}
+	if code != store.code {
+		store.attempts++
+		if store.attempts >= domain.MaxOTPVerificationAttempts {
+			store.code = ""
+			return domain.ErrOTPMaxAttemptsExceeded
+		}
+		return domain.ErrInvalidOTP
+	}
+	store.code = ""
+	store.attempts = 0
 	return nil
 }
 

@@ -158,8 +158,8 @@ func (service *OTPService) VerifyPassenger(ctx context.Context, email, code stri
 		return domain.User{}, "", domain.ErrOTPUnavailable
 	}
 	if err := service.store.Consume(ctx, "verification", email, strings.TrimSpace(code)); err != nil {
-		if errors.Is(err, domain.ErrInvalidOTP) {
-			return domain.User{}, "", domain.ErrInvalidOTP
+		if errors.Is(err, domain.ErrInvalidOTP) || errors.Is(err, domain.ErrOTPMaxAttemptsExceeded) {
+			return domain.User{}, "", err
 		}
 		service.log().WarnContext(ctx, "consume passenger verification otp failed", "error", err)
 		return domain.User{}, "", domain.ErrOTPUnavailable
@@ -265,8 +265,8 @@ func (service *OTPService) ResetPasswordForRole(
 		return domain.ErrOTPUnavailable
 	}
 	if err := service.store.Consume(ctx, "reset", account.Email, strings.TrimSpace(code)); err != nil {
-		if errors.Is(err, domain.ErrInvalidOTP) {
-			return domain.ErrInvalidOTP
+		if errors.Is(err, domain.ErrInvalidOTP) || errors.Is(err, domain.ErrOTPMaxAttemptsExceeded) {
+			return err
 		}
 		service.log().WarnContext(ctx, "consume password reset otp failed", "error", err)
 		return domain.ErrOTPUnavailable

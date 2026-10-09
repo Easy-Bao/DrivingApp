@@ -61,13 +61,28 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 	mux.Post(api.V1Prefix+"/auth/refresh", router.handler.RefreshToken)
 	mux.Post(api.V1Prefix+"/auth/logout", router.handler.Logout)
 	mux.Post(api.V1Prefix+"/auth/passenger/otp", router.handler.RequestOTP)
-	verificationHandler := http.Handler(http.HandlerFunc(router.handler.VerifyOTP))
-	if router.otpVerificationLimit != nil {
-		verificationHandler = router.otpVerificationLimit.Middleware(verificationHandler)
-	}
-	mux.Method(http.MethodPost, api.V1Prefix+"/auth/passenger/verify-otp", verificationHandler)
+	mux.Method(
+		http.MethodPost,
+		api.V1Prefix+"/auth/passenger/verify-otp",
+		router.limitOTPAttempts(router.handler.VerifyOTP),
+	)
 	mux.Post(api.V1Prefix+"/auth/passenger/forgot-password", router.handler.ForgotPassword)
-	mux.Post(api.V1Prefix+"/auth/passenger/reset-password", router.handler.ResetPassword)
+	mux.Method(
+		http.MethodPost,
+		api.V1Prefix+"/auth/passenger/reset-password",
+		router.limitOTPAttempts(router.handler.ResetPassword),
+	)
 	mux.Post(api.V1Prefix+"/auth/driver/forgot-password", router.handler.DriverForgotPassword)
-	mux.Post(api.V1Prefix+"/auth/driver/reset-password", router.handler.DriverResetPassword)
+	mux.Method(
+		http.MethodPost,
+		api.V1Prefix+"/auth/driver/reset-password",
+		router.limitOTPAttempts(router.handler.DriverResetPassword),
+	)
+}
+
+func (router *Router) limitOTPAttempts(next http.HandlerFunc) http.Handler {
+	if router.otpVerificationLimit == nil {
+		return next
+	}
+	return router.otpVerificationLimit.Middleware(next)
 }

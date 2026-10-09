@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"net/http"
 	"testing"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
@@ -58,5 +59,14 @@ func TestAuthSessionResponseVerificationState(t *testing.T) {
 				t.Fatalf("verified key present = %t, want %t", hasVerifiedKey, test.wantKey)
 			}
 		})
+	}
+}
+
+func TestOTPMaxAttemptsReturnTooManyRequests(t *testing.T) {
+	if status := otpErrorStatus(domain.ErrOTPMaxAttemptsExceeded); status != http.StatusTooManyRequests {
+		t.Fatalf("status = %d, want %d", status, http.StatusTooManyRequests)
+	}
+	if message := safeAuthError(domain.ErrOTPMaxAttemptsExceeded); message == "" {
+		t.Fatal("expected an informative OTP lockout message")
 	}
 }

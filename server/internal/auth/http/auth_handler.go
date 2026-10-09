@@ -191,7 +191,7 @@ func (handler *Handler) RequestOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := handler.otp.RequestVerification(r.Context(), input.Email); err != nil {
-		response.Error(w, otpErrorStatus(err), safeAuthError(err))
+		writeOTPError(w, err)
 		return
 	}
 	response.JSON(w, http.StatusAccepted, map[string]any{"success": true, "data": map[string]bool{"sent": true}})
@@ -210,7 +210,7 @@ func (handler *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	account, token, err := handler.otp.VerifyPassenger(r.Context(), input.Email, input.Code)
 
 	if err != nil {
-		response.Error(w, otpErrorStatus(err), safeAuthError(err))
+		writeOTPError(w, err)
 		return
 	}
 	refreshToken, err := handler.otp.IssueRefreshToken(r.Context(), account)
@@ -244,7 +244,7 @@ func (handler *Handler) forgotPasswordForRole(w http.ResponseWriter, r *http.Req
 		return
 	}
 	if err := handler.otp.RequestPasswordResetForRole(r.Context(), input.Email, role); err != nil {
-		response.Error(w, otpErrorStatus(err), safeAuthError(err))
+		writeOTPError(w, err)
 		return
 	}
 	response.JSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]bool{"success": true}})
@@ -274,7 +274,7 @@ func (handler *Handler) resetPasswordForRole(w http.ResponseWriter, r *http.Requ
 		input.NewPassword,
 		role,
 	); err != nil {
-		response.Error(w, otpErrorStatus(err), safeAuthError(err))
+		writeOTPError(w, err)
 		return
 	}
 	response.JSON(w, http.StatusOK, map[string]any{"success": true, "message": "password reset successful"})
@@ -312,6 +312,8 @@ func safeAuthError(err error) string {
 		return "Enter the verification code to continue."
 	case errors.Is(err, domain.ErrInvalidOTP):
 		return "That verification code is invalid or expired."
+	case errors.Is(err, domain.ErrOTPMaxAttemptsExceeded):
+		return "Too many code attempts. Request a new verification code to try again."
 	case errors.Is(err, domain.ErrOTPUnavailable):
 		return "Verification is temporarily unavailable. Please try again."
 	case errors.Is(err, domain.ErrPendingRegistrationNotFound):
@@ -341,10 +343,20 @@ func registrationErrorStatus(err error) int {
 }
 
 func otpErrorStatus(err error) int {
+	if errors.Is(err, domain.ErrOTPMaxAttemptsExceeded) {
+		return http.StatusTooManyRequests
+	}
 	if errors.Is(err, domain.ErrOTPUnavailable) {
 		return http.StatusServiceUnavailable
 	}
 	return http.StatusBadRequest
+}
+
+func writeOTPError(writer http.ResponseWriter, err error) {
+	if errors.Is(err, domain.ErrOTPMaxAttemptsExceeded) {
+		writer.Header().Set("Retry-After", "900")
+	}
+	response.Error(writer, otpErrorStatus(err), safeAuthError(err))
 }
 
 func authSessionResponse(

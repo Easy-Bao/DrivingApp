@@ -7,22 +7,29 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
 )
 
 const (
-	_maxOTPVerificationAttempts int64 = 5
-	_otpVerificationWindow            = 15 * time.Minute
-	_otpVerificationBodyLimit   int64 = 16 << 10
+	_otpVerificationWindow          = 15 * time.Minute
+	_otpVerificationBodyLimit int64 = 16 << 10
 )
 
 type OTPVerificationRateLimiter struct {
 	store middleware.CounterStore
+}
+
+type otpAttemptBucket struct {
+	scope string
+	key   string
+	count int64
 }
 
 func NewOTPVerificationRateLimiter(store middleware.CounterStore) *OTPVerificationRateLimiter {
@@ -51,14 +58,21 @@ func (limiter *OTPVerificationRateLimiter) Middleware(next http.Handler) http.Ha
 			return
 		}
 
-		keys := []string{counterKey("ip", middleware.ClientIPFromRequest(request))}
+		buckets := []otpAttemptBucket{{
+			scope: "ip",
+			key:   counterKey("ip", middleware.ClientIPFromRequest(request)),
+		}}
 		if email := strings.ToLower(strings.TrimSpace(input.Email)); email != "" {
-			keys = append(keys, counterKey("email", email))
+			buckets = append(buckets, otpAttemptBucket{
+				scope: "email",
+				key:   counterKey("email", email),
+			})
 		}
-		for _, key := range keys {
+		for index := range buckets {
+			bucket := &buckets[index]
 			count, err := limiter.store.Increment(
 				request.Context(),
-				key,
+				bucket.key,
 				_otpVerificationWindow,
 			)
 			if err != nil {
@@ -70,11 +84,24 @@ func (limiter *OTPVerificationRateLimiter) Middleware(next http.Handler) http.Ha
 				)
 				return
 			}
-			if count > _maxOTPVerificationAttempts {
+			bucket.count = count
+		}
+		for _, bucket := range buckets {
+			if bucket.count > domain.MaxOTPVerificationAttempts {
+				if bucket.count == domain.MaxOTPVerificationAttempts+1 {
+					slog.WarnContext(
+						request.Context(),
+						"OTP verification attempts throttled",
+						"scope",
+						bucket.scope,
+						"attempt_count",
+						bucket.count,
+					)
+				}
 				writer.Header().Set("Retry-After", "900")
 				writer.Header().Set(
 					"X-RateLimit-Limit",
-					fmt.Sprintf("%d", _maxOTPVerificationAttempts),
+					fmt.Sprintf("%d", domain.MaxOTPVerificationAttempts),
 				)
 				response.Error(writer, http.StatusTooManyRequests, "too many verification attempts")
 				return

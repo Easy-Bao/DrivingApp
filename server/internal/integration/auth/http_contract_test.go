@@ -12,6 +12,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/authentication"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/auth/http"
+	"github.com/Easy-Bao/DrivingApp/server/internal/auth/verification"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
@@ -195,5 +196,122 @@ func TestLoginRejectsFieldsOutsideTheRequestContract(t *testing.T) {
 		if err := json.Unmarshal(response.Body.Bytes(), &problem); err != nil || problem.Code != "validation_error" {
 			t.Fatalf("problem = %#v, error = %v", problem, err)
 		}
+	}
+}
+
+func TestResetPasswordRoutesEnforceOTPAttemptLimit(t *testing.T) {
+	tests := []struct {
+		name string
+		path string
+		role domain.Role
+	}{
+		{name: "passenger", path: "/api/v1/auth/passenger/reset-password", role: domain.Passenger},
+		{name: "driver", path: "/api/v1/auth/driver/reset-password", role: domain.Driver},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			email := test.name + "-otp-lockout@example.test"
+			repository := &repository{users: map[string]domain.User{
+				email: {
+					ID:           71,
+					Email:        email,
+					Role:         test.role,
+					PasswordHash: testPasswordHash(t, "old-password"),
+				},
+			}}
+			otpStore := &resetOTPStore{code: "123456"}
+			otp := verification.NewOTPService(verification.Dependencies{
+				Users:    repository,
+				Store:    otpStore,
+				Sessions: newTestRefreshSessionStore(),
+			})
+			mux := chi.NewRouter()
+			authhttp.NewRouter(
+				authhttp.RouterDependencies{OTP: otp},
+				authhttp.WithOTPAttemptStore(middleware.NewMemoryCounterStore()),
+			).RegisterRoutes(mux)
+
+			for attempt := int64(1); attempt <= domain.MaxOTPVerificationAttempts; attempt++ {
+				request := httptest.NewRequest(
+					http.MethodPost,
+					test.path,
+					bytes.NewBufferString(`{"email":"`+email+`","code":"000000","newPassword":"new-password"}`),
+				)
+				request.RemoteAddr = "192.0.2.20:4321"
+				request.Header.Set("Content-Type", "application/json")
+				response := httptest.NewRecorder()
+				mux.ServeHTTP(response, request)
+
+				wantStatus := http.StatusBadRequest
+				if attempt == domain.MaxOTPVerificationAttempts {
+					wantStatus = http.StatusTooManyRequests
+				}
+				if response.Code != wantStatus {
+					t.Fatalf("attempt %d status = %d, want %d", attempt, response.Code, wantStatus)
+				}
+				if attempt == domain.MaxOTPVerificationAttempts && response.Header().Get("Retry-After") != "900" {
+					t.Fatalf("lockout Retry-After = %q, want 900", response.Header().Get("Retry-After"))
+				}
+			}
+			if otpStore.code != "" {
+				t.Fatal("OTP remained usable after the maximum invalid attempts")
+			}
+
+			request := httptest.NewRequest(
+				http.MethodPost,
+				test.path,
+				bytes.NewBufferString(`{"email":"`+email+`","code":"000000","newPassword":"new-password"}`),
+			)
+			request.RemoteAddr = "192.0.2.20:4321"
+			request.Header.Set("Content-Type", "application/json")
+			response := httptest.NewRecorder()
+			mux.ServeHTTP(response, request)
+
+			if response.Code != http.StatusTooManyRequests {
+				t.Fatalf("blocked status = %d, want %d", response.Code, http.StatusTooManyRequests)
+			}
+			if response.Header().Get("Retry-After") != "900" {
+				t.Fatalf("Retry-After = %q, want 900", response.Header().Get("Retry-After"))
+			}
+		})
+	}
+}
+
+func TestResetPasswordRoutesAcceptValidOTP(t *testing.T) {
+	const email = "passenger-reset@example.test"
+	repository := &repository{users: map[string]domain.User{
+		email: {
+			ID:           72,
+			Email:        email,
+			Role:         domain.Passenger,
+			PasswordHash: testPasswordHash(t, "old-password"),
+		},
+	}}
+	otp := verification.NewOTPService(verification.Dependencies{
+		Users:    repository,
+		Store:    &resetOTPStore{code: "654321"},
+		Sessions: newTestRefreshSessionStore(),
+	})
+	mux := chi.NewRouter()
+	authhttp.NewRouter(
+		authhttp.RouterDependencies{OTP: otp},
+		authhttp.WithOTPAttemptStore(middleware.NewMemoryCounterStore()),
+	).RegisterRoutes(mux)
+
+	request := httptest.NewRequest(
+		http.MethodPost,
+		"/api/v1/auth/passenger/reset-password",
+		bytes.NewBufferString(`{"email":"`+email+`","code":"654321","newPassword":"new-password"}`),
+	)
+	request.RemoteAddr = "192.0.2.21:4321"
+	response := httptest.NewRecorder()
+	mux.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("reset status = %d, want %d, body = %s", response.Code, http.StatusOK, response.Body.String())
+	}
+	if !security.VerifyPassword(repository.users[email].PasswordHash, "new-password") {
+		t.Fatal("password reset did not store the new password")
 	}
 }
