@@ -48,34 +48,58 @@ func TestRoleSpecificLoginRoutes(t *testing.T) {
 		name           string
 		path           string
 		email          string
+		role           string
 		wantStatusCode int
+		wantSuccessor  string
 	}{
 		{
 			name:           "driver route accepts driver account",
 			path:           "/api/v1/auth/driver/login",
 			email:          "driver@example.test",
 			wantStatusCode: http.StatusOK,
+			wantSuccessor:  "/api/v1/auth/login",
 		},
 		{
 			name:           "driver route rejects passenger account",
 			path:           "/api/v1/auth/driver/login",
 			email:          "passenger@example.test",
 			wantStatusCode: http.StatusUnauthorized,
+			wantSuccessor:  "/api/v1/auth/login",
 		},
 		{
 			name:           "passenger route rejects driver account",
 			path:           "/api/v1/auth/passenger/login",
 			email:          "driver@example.test",
 			wantStatusCode: http.StatusUnauthorized,
+			wantSuccessor:  "/api/v1/auth/login",
+		},
+		{
+			name:           "canonical route accepts matching role",
+			path:           "/api/v1/auth/login",
+			email:          "driver@example.test",
+			role:           "driver",
+			wantStatusCode: http.StatusOK,
+		},
+		{
+			name:           "canonical route rejects a different role",
+			path:           "/api/v1/auth/login",
+			email:          "driver@example.test",
+			role:           "passenger",
+			wantStatusCode: http.StatusUnauthorized,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			body := `{"email":"` + test.email + `","password":"secret"`
+			if test.role != "" {
+				body += `,"role":"` + test.role + `"`
+			}
+			body += `}`
 			request := httptest.NewRequest(
 				http.MethodPost,
 				test.path,
-				bytes.NewBufferString(`{"email":"`+test.email+`","password":"secret"}`),
+				bytes.NewBufferString(body),
 			)
 			request.Header.Set("Content-Type", "application/json")
 			response := httptest.NewRecorder()
@@ -84,6 +108,80 @@ func TestRoleSpecificLoginRoutes(t *testing.T) {
 
 			if response.Code != test.wantStatusCode {
 				t.Fatalf("status = %d, want %d", response.Code, test.wantStatusCode)
+			}
+			if test.wantSuccessor == "" {
+				if response.Header().Get("Deprecation") != "" {
+					t.Fatalf("canonical route has Deprecation header %q", response.Header().Get("Deprecation"))
+				}
+				return
+			}
+			if response.Header().Get("Deprecation") != "true" {
+				t.Fatalf("Deprecation = %q, want true", response.Header().Get("Deprecation"))
+			}
+			if got := response.Header().Get("Link"); got != "<"+test.wantSuccessor+">; rel=\"successor-version\"" {
+				t.Fatalf("Link = %q", got)
+			}
+		})
+	}
+}
+
+func TestRoleSpecificRegistrationRoutesRemainCompatibleAliases(t *testing.T) {
+	mux := chi.NewRouter()
+	authhttp.NewRouter(authhttp.RouterDependencies{}).RegisterRoutes(mux)
+
+	tests := []struct {
+		name          string
+		legacyPath    string
+		canonicalBody string
+		legacyBody    string
+	}{
+		{
+			name:          "passenger",
+			legacyPath:    "/api/v1/auth/passenger/register",
+			canonicalBody: `{"email":"passenger@example.test","phone":"+639171234567","name":"Passenger","password":"secret123","role":"passenger"}`,
+			legacyBody:    `{"email":"passenger@example.test","phone":"+639171234567","name":"Passenger","password":"secret123"}`,
+		},
+		{
+			name:          "driver",
+			legacyPath:    "/api/v1/auth/driver/register",
+			canonicalBody: `{"email":"driver@example.test","phone":"+639171234568","name":"Driver","password":"secret123","vehicle_type":"Sedan","plate_number":"ABC-1234","role":"driver"}`,
+			legacyBody:    `{"email":"driver@example.test","phone":"+639171234568","name":"Driver","password":"secret123","vehicle_type":"Sedan","plate_number":"ABC-1234"}`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			canonicalRequest := httptest.NewRequest(
+				http.MethodPost,
+				"/api/v1/auth/register",
+				bytes.NewBufferString(test.canonicalBody),
+			)
+			canonicalResponse := httptest.NewRecorder()
+			mux.ServeHTTP(canonicalResponse, canonicalRequest)
+
+			legacyRequest := httptest.NewRequest(
+				http.MethodPost,
+				test.legacyPath,
+				bytes.NewBufferString(test.legacyBody),
+			)
+			legacyResponse := httptest.NewRecorder()
+			mux.ServeHTTP(legacyResponse, legacyRequest)
+
+			if legacyResponse.Code != canonicalResponse.Code || legacyResponse.Body.String() != canonicalResponse.Body.String() {
+				t.Fatalf(
+					"legacy registration = %d %s; canonical = %d %s",
+					legacyResponse.Code,
+					legacyResponse.Body.String(),
+					canonicalResponse.Code,
+					canonicalResponse.Body.String(),
+				)
+			}
+			if canonicalResponse.Header().Get("Deprecation") != "" {
+				t.Fatalf("canonical registration has Deprecation header %q", canonicalResponse.Header().Get("Deprecation"))
+			}
+			if legacyResponse.Header().Get("Deprecation") != "true" ||
+				legacyResponse.Header().Get("Link") != "</api/v1/auth/register>; rel=\"successor-version\"" {
+				t.Fatalf("legacy registration headers = %v", legacyResponse.Header())
 			}
 		})
 	}

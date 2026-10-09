@@ -146,8 +146,9 @@ func TestAuthenticatedDashboardFiltersRecentDestinations(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Fatalf("status = %d, want %d", response.Code, http.StatusOK)
 	}
+	legacyBody := response.Body.String()
 	var snapshot rideContextResponse
-	if err := json.NewDecoder(response.Body).Decode(&snapshot); err != nil {
+	if err := json.Unmarshal([]byte(legacyBody), &snapshot); err != nil {
 		t.Fatalf("decode snapshot: %v", err)
 	}
 	if destinations.passengerID != 42 || destinations.limit != 25 {
@@ -160,6 +161,25 @@ func TestAuthenticatedDashboardFiltersRecentDestinations(t *testing.T) {
 	invalidSecondLocation := snapshot.RecentLocations[1].Title != "Park, Pagadian City"
 	if invalidFirstLocation || invalidSecondLocation {
 		t.Fatalf("shortened destinations = %#v", snapshot.RecentLocations)
+	}
+	if response.Header().Get("Deprecation") != "true" ||
+		response.Header().Get("Link") != "</api/v1/passengers/me/home>; rel=\"successor-version\"" {
+		t.Fatalf("legacy dashboard headers = %v", response.Header())
+	}
+
+	canonicalRequest := httptest.NewRequest(
+		http.MethodGet,
+		api.V1Prefix+"/passengers/me/home",
+		nil,
+	)
+	canonicalRequest.Header.Set("Authorization", "Bearer "+accessToken)
+	canonicalResponse := httptest.NewRecorder()
+	router.ServeHTTP(canonicalResponse, canonicalRequest)
+	if canonicalResponse.Code != http.StatusOK || canonicalResponse.Body.String() != legacyBody {
+		t.Fatalf("canonical dashboard = %d %s; legacy = %d %s", canonicalResponse.Code, canonicalResponse.Body.String(), response.Code, legacyBody)
+	}
+	if canonicalResponse.Header().Get("Deprecation") != "" {
+		t.Fatalf("canonical dashboard has Deprecation header %q", canonicalResponse.Header().Get("Deprecation"))
 	}
 }
 

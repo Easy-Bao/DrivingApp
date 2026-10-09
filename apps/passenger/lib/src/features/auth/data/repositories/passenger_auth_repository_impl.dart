@@ -24,7 +24,7 @@ final class PassengerAuthRepositoryImpl({
     try {
       final responseData = await _remoteDataSource.postData(
         PassengerAuthEndpoints.login,
-        requestBody: {'email': email, 'password': password},
+        requestBody: {'email': email, 'password': password, 'role': 'passenger'},
       );
       final credentials = _credentialsFromResponse(
         responseData,
@@ -72,6 +72,7 @@ final class PassengerAuthRepositoryImpl({
           'email': email,
           'phone': phone,
           'password': password,
+          'role': 'passenger',
         },
       );
       if (responseData['needsVerification'] != true) {

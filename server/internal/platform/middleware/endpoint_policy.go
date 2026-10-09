@@ -47,7 +47,8 @@ func classifyEndpoint(request *http.Request) endpointKind {
 	if isFareQuery(path) {
 		return _endpointFareQuery
 	}
-	if request.Method == http.MethodPost && path == "/api/v1/driver/documents" {
+	if request.Method == http.MethodPost &&
+		(path == "/api/v1/driver/documents" || path == "/api/v1/drivers/me/documents") {
 		return _endpointDocumentUpload
 	}
 	if request.Method == http.MethodPost &&

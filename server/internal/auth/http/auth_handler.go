@@ -172,6 +172,15 @@ func (handler *Handler) login(w http.ResponseWriter, r *http.Request, role domai
 	if !decode(w, r, &input) {
 		return
 	}
+	if input.Role != "" {
+		requestedRole := domain.Role(input.Role)
+		if (requestedRole != domain.Passenger && requestedRole != domain.Driver) ||
+			(role != "" && role != requestedRole) {
+			response.Error(w, http.StatusBadRequest, "role must match the login endpoint")
+			return
+		}
+		role = requestedRole
+	}
 	account, tokens, err := handler.authenticate.ExecuteSessionAs(r.Context(), input.Email, input.Password, role)
 	if err != nil {
 		response.Error(w, http.StatusUnauthorized, "email or password is incorrect")

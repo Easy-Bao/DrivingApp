@@ -25,7 +25,7 @@ class FareRemoteDataSourceImpl(this._dio) implements FareRemoteDataSource {
     required double destinationLongitude,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/api/v1/bids/fare',
+      '/api/v1/fares/estimate',
       data: {
         'distance_km': distanceKm,
         'duration_minutes': durationMinutes,

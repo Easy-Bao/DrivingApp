@@ -22,7 +22,7 @@ final class DriverAuthRepositoryImpl({
     try {
       final responseData = await _remoteDataSource.postData(
         DriverAuthEndpoints.login,
-        requestBody: {'email': email, 'password': password},
+        requestBody: {'email': email, 'password': password, 'role': 'driver'},
       );
 
       final authenticationData =

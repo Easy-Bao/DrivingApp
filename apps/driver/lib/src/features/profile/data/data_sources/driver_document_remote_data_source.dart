@@ -23,7 +23,7 @@ final class DriverDocumentRemoteDataSourceImpl
     required String contentType,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/api/v1/driver/documents',
+      '/api/v1/drivers/me/documents',
       queryParameters: <String, dynamic>{'type': type.queryValue},
       data: bytes,
       options: Options(contentType: contentType),

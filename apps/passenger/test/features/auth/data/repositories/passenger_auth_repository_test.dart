@@ -48,6 +48,7 @@ void main() {
             requestBody: {
               'email': 'passenger@example.com',
               'password': 'secret-password',
+              'role': 'passenger',
             },
           ),
         ).thenAnswer(
@@ -201,6 +202,7 @@ void main() {
             'email': 'passenger@example.com',
             'phone': '+639170000001',
             'password': 'secret-password',
+            'role': 'passenger',
           },
         ),
       ).thenAnswer(

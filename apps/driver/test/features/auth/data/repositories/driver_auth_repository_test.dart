@@ -42,6 +42,7 @@ void main() {
         requestBody: {
           'email': 'driver@example.com',
           'password': 'secret-password',
+          'role': 'driver',
         },
       ),
     ).thenAnswer(
@@ -87,6 +88,7 @@ void main() {
           requestBody: {
             'email': 'driver@example.com',
             'password': 'secret-password',
+            'role': 'driver',
           },
         ),
       ).thenAnswer(

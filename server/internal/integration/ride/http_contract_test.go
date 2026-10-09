@@ -143,6 +143,32 @@ func TestFareRoutesExposeEstimateAndFinalCalculation(t *testing.T) {
 	if test.Code != http.StatusBadRequest {
 		t.Fatalf("invalid final fare status = %d", test.Code)
 	}
+
+	canonical := httptest.NewRecorder()
+	canonicalRequest := httptest.NewRequest(
+		http.MethodPost,
+		"/api/v1/fares/estimate",
+		strings.NewReader(`{"distance_km":3,"duration_minutes":12}`),
+	)
+	mux.ServeHTTP(canonical, canonicalRequest)
+	if canonical.Code != http.StatusOK {
+		t.Fatalf("canonical fare estimate status = %d; body = %s", canonical.Code, canonical.Body.String())
+	}
+
+	legacy := httptest.NewRecorder()
+	legacyRequest := httptest.NewRequest(
+		http.MethodPost,
+		"/api/v1/bids/fare",
+		strings.NewReader(`{"distance_km":3,"duration_minutes":12}`),
+	)
+	mux.ServeHTTP(legacy, legacyRequest)
+	if legacy.Code != canonical.Code || legacy.Body.String() != canonical.Body.String() {
+		t.Fatalf("legacy fare response = %d %s; canonical = %d %s", legacy.Code, legacy.Body.String(), canonical.Code, canonical.Body.String())
+	}
+	if legacy.Header().Get("Deprecation") != "true" ||
+		legacy.Header().Get("Link") != "</api/v1/fares/estimate>; rel=\"successor-version\"" {
+		t.Fatalf("legacy fare headers = %v", legacy.Header())
+	}
 }
 
 func TestBookingMutationRoutesRejectTheWrongAccountRole(t *testing.T) {

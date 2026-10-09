@@ -177,6 +177,18 @@ destinations and returns `distances_km` and `durations_min`; it performs one
 provider matrix request for multiple destinations and a directions request for
 one destination.
 
+### Canonical routes and compatibility aliases
+
+New clients use `POST /api/v1/auth/register` with a `role`, `POST
+/api/v1/auth/login` with a `role`, `POST /api/v1/fares/estimate`, `GET
+/api/v1/passengers/me/home`, and the driver document routes under
+`/api/v1/drivers/me/documents`. Role-specific auth routes, `POST
+/api/v1/bids/fare`, `GET /api/v1/passenger/home`, and the singular
+`/api/v1/driver/documents` routes remain available for existing clients. These
+legacy routes return the same handler response with `Deprecation: true` and a
+`Link` header pointing to the successor route. Upload query parameters are
+preserved by the successor link.
+
 ### Verified email changes
 
 Profile updates cannot change the account's email or phone number. Authenticated
@@ -215,18 +227,20 @@ a local filesystem directory or Redis as a source of truth. Authorized
 endpoints read objects only after the owning feature verifies the requesting
 identity.
 
-`POST /api/v1/driver/documents?type=driver_license` accepts a raw PDF, JPEG, or
+`POST /api/v1/drivers/me/documents?type=driver_license` accepts a raw PDF, JPEG, or
 PNG body. The supported type values are `driver_license`,
 `vehicle_registration`, `vehicle_insurance`, and `government_id`. The declared
 media type must match the detected file signature; object size and checksum are
 recorded with the immutable revision.
 
 Drivers can list their own status and download only their own revisions.
+The singular `/api/v1/driver/documents` routes remain deprecated aliases for
+older clients.
 Configured administrators can page the review queue, download a private object,
 and make one final approve-or-reject decision:
 
-- `GET /api/v1/driver/documents/status`
-- `GET /api/v1/driver/documents/{id}/content`
+- `GET /api/v1/drivers/me/documents/status`
+- `GET /api/v1/drivers/me/documents/{id}/content`
 - `GET /api/v1/admin/documents?status=pending&limit=25&offset=0`
 - `GET /api/v1/admin/documents/{id}/content`
 - `PATCH /api/v1/admin/documents/{id}/review` with

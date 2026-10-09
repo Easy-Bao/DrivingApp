@@ -55,12 +55,26 @@ func NewRouter(
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {
-	mux.Post(api.V1Prefix+"/auth/register", router.handler.GenericRegister)
-	mux.Post(api.V1Prefix+"/auth/login", router.handler.Login)
-	mux.Post(api.V1Prefix+"/auth/passenger/register", router.handler.PassengerRegister)
-	mux.Post(api.V1Prefix+"/auth/driver/register", router.handler.DriverRegister)
-	mux.Post(api.V1Prefix+"/auth/passenger/login", router.handler.PassengerLogin)
-	mux.Post(api.V1Prefix+"/auth/driver/login", router.handler.DriverLogin)
+	registerPath := api.V1Prefix + "/auth/register"
+	loginPath := api.V1Prefix + "/auth/login"
+	mux.Post(registerPath, router.handler.GenericRegister)
+	mux.Post(loginPath, router.handler.Login)
+	mux.With(middleware.Deprecation(registerPath)).Post(
+		api.V1Prefix+"/auth/passenger/register",
+		router.handler.PassengerRegister,
+	)
+	mux.With(middleware.Deprecation(registerPath)).Post(
+		api.V1Prefix+"/auth/driver/register",
+		router.handler.DriverRegister,
+	)
+	mux.With(middleware.Deprecation(loginPath)).Post(
+		api.V1Prefix+"/auth/passenger/login",
+		router.handler.PassengerLogin,
+	)
+	mux.With(middleware.Deprecation(loginPath)).Post(
+		api.V1Prefix+"/auth/driver/login",
+		router.handler.DriverLogin,
+	)
 	mux.Post(api.V1Prefix+"/auth/refresh", router.handler.RefreshToken)
 	mux.Post(api.V1Prefix+"/auth/logout", router.handler.Logout)
 	mux.Post(api.V1Prefix+"/auth/passenger/otp", router.handler.RequestOTP)

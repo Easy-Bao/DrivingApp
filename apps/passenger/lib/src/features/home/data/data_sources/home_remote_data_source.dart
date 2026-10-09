@@ -16,7 +16,7 @@ class HomeRemoteDataSourceImpl(this._dio) implements HomeRemoteDataSource {
     required double lng,
   }) async {
     final response = await _dio.get<Map<String, dynamic>>(
-      '/api/v1/passenger/home',
+      '/api/v1/passengers/me/home',
       queryParameters: {'lat': lat, 'lng': lng},
     );
     return response.data ?? {};

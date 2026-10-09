@@ -21,7 +21,10 @@ func NewRouter(dependencies Dependencies) *Router {
 
 func (router *Router) RegisterRoutes(mux chi.Router) {
 	apiPrefix := api.V1Prefix
-	mux.Post(apiPrefix+"/bids/fare", router.handler.Estimate)
+	mux.With(middleware.Deprecation(apiPrefix + "/fares/estimate")).Post(
+		apiPrefix+"/bids/fare",
+		router.handler.Estimate,
+	)
 	mux.Get(apiPrefix+"/drivers/public/summaries", router.handler.PublicDriverSummaries)
 	mux.Post(apiPrefix+"/fares/estimate", router.handler.Estimate)
 	mux.Get(apiPrefix+"/fares/configs", router.handler.FareConfigs)

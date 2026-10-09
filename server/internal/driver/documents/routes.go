@@ -31,9 +31,20 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 	mux.Group(func(protected chi.Router) {
 		protected.Use(middleware.RequireAuth(router.verifier))
 		protected.With(middleware.RequireRole(security.RoleDriver)).Group(func(driver chi.Router) {
-			driver.Post(api.V1Prefix+"/driver/documents", router.handler.Upload)
-			driver.Get(api.V1Prefix+"/driver/documents/status", router.handler.Status)
-			driver.Get(api.V1Prefix+"/driver/documents/{id}/content", router.handler.DriverContent)
+			legacyPath := api.V1Prefix + "/driver/documents"
+			canonicalPath := api.V1Prefix + "/drivers/me/documents"
+			driver.Post(canonicalPath, router.handler.Upload)
+			driver.Get(canonicalPath+"/status", router.handler.Status)
+			driver.Get(canonicalPath+"/{id}/content", router.handler.DriverContent)
+			driver.With(middleware.Deprecation(canonicalPath)).Post(legacyPath, router.handler.Upload)
+			driver.With(middleware.Deprecation(canonicalPath+"/status")).Get(
+				legacyPath+"/status",
+				router.handler.Status,
+			)
+			driver.With(middleware.DeprecationPrefix(legacyPath+"/", canonicalPath+"/")).Get(
+				legacyPath+"/{id}/content",
+				router.handler.DriverContent,
+			)
 		})
 		protected.With(middleware.RequireAdmin(router.authorizer)).Group(func(admin chi.Router) {
 			admin.Get(api.V1Prefix+"/admin/documents", router.handler.ReviewQueue)
