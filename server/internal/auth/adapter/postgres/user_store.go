@@ -26,6 +26,7 @@ type UserRepository struct {
 }
 
 var _ authports.VerifiedUserStore = (*UserRepository)(nil)
+var _ authports.EmailChangeStore = (*UserRepository)(nil)
 
 func NewUserRepository(pool *pgxpool.Pool) (*UserRepository, error) {
 	if pool == nil {
@@ -190,6 +191,36 @@ func (repository *UserRepository) UpdatePassword(ctx context.Context, userID int
 	}
 	if rows == 0 {
 		return fmt.Errorf("update password for user %d: %w", userID, pgx.ErrNoRows)
+	}
+	return nil
+}
+
+func (repository *UserRepository) UpdateEmail(
+	ctx context.Context,
+	userID int,
+	expectedEmail string,
+	newEmail string,
+) error {
+	if err := repository.validate(); err != nil {
+		return fmt.Errorf("validate user repository: %w", err)
+	}
+	dbUserID, err := toPostgresUserID(userID)
+	if err != nil {
+		return fmt.Errorf("convert user id: %w", err)
+	}
+	rows, err := repository.queries.UpdateUserEmail(ctx, databasepostgres.UpdateUserEmailParams{
+		UserID:        dbUserID,
+		ExpectedEmail: expectedEmail,
+		NewEmail:      newEmail,
+	})
+	if err != nil {
+		if isPostgresUniqueViolation(err) {
+			return domain.ErrEmailTaken
+		}
+		return fmt.Errorf("update email for user %d: %w", userID, err)
+	}
+	if rows == 0 {
+		return domain.ErrEmailChangeStale
 	}
 	return nil
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/verification"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -20,6 +21,7 @@ type RouterDependencies struct {
 	Register     *registration.RegisterService
 	Authenticate *authentication.AuthenticateService
 	OTP          *verification.OTPService
+	Verifier     *security.TokenManager
 }
 
 type RouterOption func(*Router)
@@ -41,6 +43,7 @@ func NewRouter(
 			Register:     dependencies.Register,
 			Authenticate: dependencies.Authenticate,
 			OTP:          dependencies.OTP,
+			Verifier:     dependencies.Verifier,
 		}),
 	}
 	for _, option := range options {
@@ -77,6 +80,17 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 		http.MethodPost,
 		api.V1Prefix+"/auth/driver/reset-password",
 		router.limitOTPAttempts(router.handler.DriverResetPassword),
+	)
+	protected := middleware.RequireAuth(router.handler.verifier)
+	mux.With(protected).Method(
+		http.MethodPost,
+		api.V1Prefix+"/users/me/email/request",
+		router.limitOTPAttempts(router.handler.RequestEmailChange),
+	)
+	mux.With(protected).Method(
+		http.MethodPost,
+		api.V1Prefix+"/users/me/email/confirm",
+		router.limitOTPAttempts(router.handler.ConfirmEmailChange),
 	)
 }
 

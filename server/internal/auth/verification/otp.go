@@ -3,9 +3,12 @@ package verification
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/mail"
 	"strconv"
 	"strings"
 	"time"
@@ -21,6 +24,8 @@ const _otpLifetime = 10 * time.Minute
 
 type OTPService struct {
 	users         authports.VerifiedUserStore
+	emailChanges  authports.EmailChangeStore
+	emailNotifier authports.EmailChangeNotifier
 	store         authports.OTPStore
 	gateway       authports.OTPSender
 	tokens        authports.TokenIssuer
@@ -33,11 +38,13 @@ type OTPService struct {
 type OTPServiceOption func(*OTPService)
 
 type Dependencies struct {
-	Users    authports.VerifiedUserStore
-	Store    authports.OTPStore
-	Gateway  authports.OTPSender
-	Tokens   authports.TokenIssuer
-	Sessions authports.SessionStore
+	Users         authports.VerifiedUserStore
+	EmailChanges  authports.EmailChangeStore
+	EmailNotifier authports.EmailChangeNotifier
+	Store         authports.OTPStore
+	Gateway       authports.OTPSender
+	Tokens        authports.TokenIssuer
+	Sessions      authports.SessionStore
 }
 
 func WithPendingRegistration(
@@ -55,12 +62,14 @@ func NewOTPService(
 	options ...OTPServiceOption,
 ) *OTPService {
 	service := &OTPService{
-		users:    dependencies.Users,
-		store:    dependencies.Store,
-		gateway:  dependencies.Gateway,
-		tokens:   dependencies.Tokens,
-		sessions: dependencies.Sessions,
-		logger:   slog.Default(),
+		users:         dependencies.Users,
+		emailChanges:  dependencies.EmailChanges,
+		emailNotifier: dependencies.EmailNotifier,
+		store:         dependencies.Store,
+		gateway:       dependencies.Gateway,
+		tokens:        dependencies.Tokens,
+		sessions:      dependencies.Sessions,
+		logger:        slog.Default(),
 	}
 	for _, option := range options {
 		if option != nil {
@@ -285,6 +294,153 @@ func (service *OTPService) ResetPasswordForRole(
 		return fmt.Errorf("update reset password: %w", err)
 	}
 	return nil
+}
+
+func (service *OTPService) RequestEmailChange(
+	ctx context.Context,
+	userID int,
+	currentPassword string,
+	newEmail string,
+) error {
+	if service == nil || service.users == nil || service.emailChanges == nil ||
+		service.store == nil || service.gateway == nil {
+		return domain.ErrOTPUnavailable
+	}
+	if userID <= 0 || currentPassword == "" {
+		return domain.ErrInvalidCredentials
+	}
+	newEmail, err := normalizeChangeEmail(newEmail)
+	if err != nil {
+		return err
+	}
+	account, err := service.users.FindByID(ctx, userID)
+	if err != nil {
+		if !errors.Is(err, domain.ErrUserNotFound) {
+			service.log().WarnContext(ctx, "load account for email change failed", "error", err)
+			return domain.ErrOTPUnavailable
+		}
+		return domain.ErrInvalidCredentials
+	}
+	if account.ID != userID || !account.IsVerified || !authpassword.Verify(account.PasswordHash, currentPassword) {
+		return domain.ErrInvalidCredentials
+	}
+	if strings.EqualFold(strings.TrimSpace(account.Email), newEmail) {
+		return domain.ErrEmailUnchanged
+	}
+	if err := service.ensureEmailAvailable(ctx, userID, newEmail); err != nil {
+		return err
+	}
+
+	code, err := generateOTP()
+	if err != nil {
+		return fmt.Errorf("generate email change otp: %w", err)
+	}
+	purpose := emailChangePurpose(userID, account.Email, newEmail)
+	userKey := strconv.Itoa(userID)
+	if err := service.store.Put(ctx, purpose, userKey, code, _otpLifetime); err != nil {
+		service.log().WarnContext(ctx, "store email change otp failed", "error", err)
+		return domain.ErrOTPUnavailable
+	}
+	if err := service.gateway.Send(ctx, newEmail, code); err != nil {
+		service.log().WarnContext(ctx, "send email change otp failed", "error", err)
+		return domain.ErrOTPUnavailable
+	}
+	return nil
+}
+
+func (service *OTPService) ConfirmEmailChange(
+	ctx context.Context,
+	userID int,
+	newEmail string,
+	code string,
+) error {
+	if service == nil || service.users == nil || service.emailChanges == nil || service.store == nil {
+		return domain.ErrOTPUnavailable
+	}
+	if userID <= 0 {
+		return domain.ErrInvalidCredentials
+	}
+	newEmail, err := normalizeChangeEmail(newEmail)
+	if err != nil {
+		return err
+	}
+	code = strings.TrimSpace(code)
+	if code == "" {
+		return domain.ErrOTPRequired
+	}
+	account, err := service.users.FindByID(ctx, userID)
+	if err != nil {
+		if !errors.Is(err, domain.ErrUserNotFound) {
+			service.log().WarnContext(ctx, "load account to confirm email change failed", "error", err)
+			return domain.ErrOTPUnavailable
+		}
+		return domain.ErrInvalidCredentials
+	}
+	if account.ID != userID || !account.IsVerified {
+		return domain.ErrInvalidCredentials
+	}
+	if strings.EqualFold(strings.TrimSpace(account.Email), newEmail) {
+		return domain.ErrEmailUnchanged
+	}
+	if err := service.ensureEmailAvailable(ctx, userID, newEmail); err != nil {
+		return err
+	}
+
+	purpose := emailChangePurpose(userID, account.Email, newEmail)
+	userKey := strconv.Itoa(userID)
+	if err := service.store.Consume(ctx, purpose, userKey, code); err != nil {
+		if errors.Is(err, domain.ErrInvalidOTP) || errors.Is(err, domain.ErrOTPMaxAttemptsExceeded) {
+			return err
+		}
+		service.log().WarnContext(ctx, "consume email change otp failed", "error", err)
+		return domain.ErrOTPUnavailable
+	}
+	if err := service.emailChanges.UpdateEmail(ctx, userID, account.Email, newEmail); err != nil {
+		if errors.Is(err, domain.ErrEmailTaken) || errors.Is(err, domain.ErrEmailChangeStale) {
+			return err
+		}
+		service.log().WarnContext(ctx, "update verified account email failed", "error", err)
+		return domain.ErrOTPUnavailable
+	}
+	if service.emailNotifier != nil {
+		if err := service.emailNotifier.NotifyEmailChanged(ctx, account.Email, newEmail); err != nil {
+			service.log().WarnContext(ctx, "notify previous email after account change failed", "error", err)
+		}
+	}
+	return nil
+}
+
+func (service *OTPService) ensureEmailAvailable(ctx context.Context, userID int, email string) error {
+	account, err := service.users.FindByEmail(ctx, email)
+	if err == nil {
+		if account.ID != 0 && account.ID != userID {
+			return domain.ErrEmailTaken
+		}
+		return nil
+	}
+	if errors.Is(err, domain.ErrUserNotFound) {
+		return nil
+	}
+	service.log().WarnContext(ctx, "check email availability failed", "error", err)
+	return domain.ErrOTPUnavailable
+}
+
+func normalizeChangeEmail(email string) (string, error) {
+	email = strings.ToLower(strings.TrimSpace(email))
+	if email == "" || len(email) > 254 {
+		return "", domain.ErrInvalidEmail
+	}
+	address, err := mail.ParseAddress(email)
+	if err != nil || !strings.EqualFold(address.Address, email) {
+		return "", domain.ErrInvalidEmail
+	}
+	return email, nil
+}
+
+func emailChangePurpose(userID int, currentEmail, newEmail string) string {
+	change := strings.ToLower(strings.TrimSpace(currentEmail)) + "\x00" + newEmail
+	digest := sha256.Sum256([]byte(change))
+	return "email-change:" + strconv.Itoa(userID) + ":" + hex.EncodeToString(digest[:])
 }
 
 func (service *OTPService) requestCode(ctx context.Context, purpose, email string) error {

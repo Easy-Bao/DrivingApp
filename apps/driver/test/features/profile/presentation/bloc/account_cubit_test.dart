@@ -26,16 +26,14 @@ class const _FakeDriverProfileRepository() implements DriverProfileRepository {
   Future<Result<DriverAccountSnapshot, Failure>> updateAccount({
     required DriverAccountSnapshot currentAccount,
     required String name,
-    required String phone,
-    required String email,
     required String vehicleType,
     required String plateNumber,
   }) async {
     return Ok(
       DriverAccountSnapshot(
         name: name,
-        phone: phone,
-        email: email,
+        phone: currentAccount.phone,
+        email: currentAccount.email,
         vehicleType: vehicleType,
         plateNumber: plateNumber,
         totalTrips: currentAccount.totalTrips,

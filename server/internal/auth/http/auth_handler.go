@@ -11,18 +11,21 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/verification"
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 )
 
 type Handler struct {
 	register     *registration.RegisterService
 	authenticate *authentication.AuthenticateService
 	otp          *verification.OTPService
+	verifier     *security.TokenManager
 }
 
 type Dependencies struct {
 	Register     *registration.RegisterService
 	Authenticate *authentication.AuthenticateService
 	OTP          *verification.OTPService
+	Verifier     *security.TokenManager
 }
 
 func NewHandler(dependencies Dependencies) *Handler {
@@ -30,6 +33,7 @@ func NewHandler(dependencies Dependencies) *Handler {
 		register:     dependencies.Register,
 		authenticate: dependencies.Authenticate,
 		otp:          dependencies.OTP,
+		verifier:     dependencies.Verifier,
 	}
 }
 func (handler *Handler) PassengerRegister(w http.ResponseWriter, r *http.Request) {

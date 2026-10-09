@@ -25,15 +25,13 @@ class _FakeDriverProfileRepository(this.account)
   Future<Result<DriverAccountSnapshot, Failure>> updateAccount({
     required DriverAccountSnapshot currentAccount,
     required String name,
-    required String phone,
-    required String email,
     required String vehicleType,
     required String plateNumber,
   }) async {
     account = DriverAccountSnapshot(
       name: name,
-      phone: phone,
-      email: email,
+      phone: currentAccount.phone,
+      email: currentAccount.email,
       vehicleType: vehicleType,
       plateNumber: plateNumber,
       ratingLabel: currentAccount.ratingLabel,

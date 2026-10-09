@@ -43,8 +43,6 @@ class DriverAccountCubit({required this._repository})
 
   Future<bool> updateAccount({
     required String name,
-    required String phone,
-    required String email,
     required String vehicleType,
     required String plateNumber,
   }) async {
@@ -54,8 +52,6 @@ class DriverAccountCubit({required this._repository})
     final result = await _repository.updateAccount(
       currentAccount: state.account,
       name: name,
-      phone: phone,
-      email: email,
       vehicleType: vehicleType,
       plateNumber: plateNumber,
     );

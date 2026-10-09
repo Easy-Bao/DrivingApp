@@ -2,7 +2,6 @@ import 'package:driver/src/features/profile/presentation/bloc/account/account_cu
 import 'package:driver/src/features/profile/presentation/bloc/account/account_state.dart';
 import 'package:driver/src/features/profile/domain/entities/driver_account_snapshot.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -36,8 +35,6 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
   bool _isApplyingAccount = false;
   bool _isDirty = false;
   String? _nameError;
-  String? _phoneError;
-  String? _emailError;
   String? _vehicleTypeError;
   String? _plateNumberError;
 
@@ -86,10 +83,7 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
   bool get _draftHasChanges {
     return switch (widget.section) {
       DriverAccountDetailsSection.personal =>
-        _nameController.text.trim() != _initialAccount.name.trim() ||
-            _formatPhone(_phoneController.text) !=
-                _formatPhone(_initialAccount.phone) ||
-            _emailController.text.trim() != _initialAccount.email.trim(),
+        _nameController.text.trim() != _initialAccount.name.trim(),
       DriverAccountDetailsSection.vehicle =>
         _vehicleTypeController.text.trim() !=
                 _initialAccount.vehicleType.trim() ||
@@ -113,12 +107,6 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
       name: widget.section == DriverAccountDetailsSection.personal
           ? _nameController.text.trim()
           : current.name,
-      phone: widget.section == DriverAccountDetailsSection.personal
-          ? _formatPhone(_phoneController.text)
-          : current.phone,
-      email: widget.section == DriverAccountDetailsSection.personal
-          ? _emailController.text.trim()
-          : current.email,
       vehicleType: widget.section == DriverAccountDetailsSection.vehicle
           ? _vehicleTypeController.text.trim()
           : current.vehicleType,
@@ -147,16 +135,6 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
         if (_nameController.text.trim().isEmpty) {
           _nameError = 'Enter your name.';
         }
-        if (_phoneController.text.replaceAll(RegExp(r'[^0-9]'), '').length <
-            10) {
-          _phoneError = 'Enter a valid phone number.';
-        }
-        final email = _emailController.text.trim();
-        if (email.isEmpty) {
-          _emailError = 'Enter your email address.';
-        } else if (!email.contains('@')) {
-          _emailError = 'Enter a valid email address.';
-        }
       case DriverAccountDetailsSection.vehicle:
         if (_vehicleTypeController.text.trim().isEmpty) {
           _vehicleTypeError = 'Enter your vehicle type.';
@@ -167,8 +145,6 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
     }
     return [
       _nameError,
-      _phoneError,
-      _emailError,
       _vehicleTypeError,
       _plateNumberError,
     ].every((error) => error == null);
@@ -176,8 +152,6 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
 
   void _clearErrors() {
     _nameError = null;
-    _phoneError = null;
-    _emailError = null;
     _vehicleTypeError = null;
     _plateNumberError = null;
   }
@@ -186,14 +160,6 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
-  }
-
-  String _formatPhone(String value) {
-    final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
-    if (digits.isEmpty) return '';
-    if (digits.startsWith('63')) return '+$digits';
-    if (digits.startsWith('0')) return '$_phonePrefix${digits.substring(1)}';
-    return '$_phonePrefix$digits';
   }
 
   String _localPhoneNumber(String value) {
@@ -337,10 +303,16 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
       _DriverProfileTextField(
         label: 'Email',
         controller: _emailController,
+        readOnly: true,
         keyboardType: TextInputType.emailAddress,
-        errorText: _emailError,
         textInputAction: TextInputAction.done,
         textCapitalization: TextCapitalization.none,
+      ),
+      const SizedBox(height: 10),
+      Text(
+        'Email and phone changes require verification.',
+        style: Theme.of(context).textTheme.bodySmall
+            ?.copyWith(color: context.colorScheme.onSurfaceVariant),
       ),
     ];
   }
@@ -394,17 +366,14 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
               child: TextField(
                 key: const ValueKey<String>('driver-personal-phone-number'),
                 controller: _phoneController,
+                readOnly: true,
+                showCursor: false,
                 keyboardType: TextInputType.phone,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   fontFeatures: const [FontFeature.tabularFigures()],
                 ),
                 textInputAction: TextInputAction.next,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: _fieldDecoration(
-                  context,
-                  hintText: '917 000 0001',
-                  errorText: _phoneError,
-                ),
+                decoration: _fieldDecoration(context, hintText: '917 000 0001'),
               ),
             ),
           ],
@@ -424,6 +393,7 @@ class const _DriverProfileTextField({
   required this.label,
   required this.controller,
   this.errorText,
+  this.readOnly = false,
   this.keyboardType,
   this.textInputAction,
   this.textCapitalization = TextCapitalization.words,
@@ -431,6 +401,7 @@ class const _DriverProfileTextField({
   final String label;
   final TextEditingController controller;
   final String? errorText;
+  final bool readOnly;
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
   final TextCapitalization textCapitalization;
@@ -445,6 +416,8 @@ class const _DriverProfileTextField({
         TextField(
           key: ValueKey<String>('driver-account-field-$label'),
           controller: controller,
+          readOnly: readOnly,
+          showCursor: !readOnly,
           keyboardType: keyboardType,
           textInputAction: textInputAction,
           textCapitalization: textCapitalization,

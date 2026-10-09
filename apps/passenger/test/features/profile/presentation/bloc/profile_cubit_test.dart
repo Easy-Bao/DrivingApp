@@ -32,16 +32,14 @@ class _FakeProfileRepository implements PassengerProfileRepository {
   @override
   Future<Result<PassengerProfile, Failure>> updateProfile({
     required String name,
-    required String phone,
-    required String email,
     required String address,
     required String gender,
     required String avatarPath,
   }) async {
     cached = PassengerProfile(
       name: name,
-      phone: phone,
-      email: email,
+      phone: cached.phone,
+      email: cached.email,
       address: address,
       gender: gender,
       avatarPath: avatarPath,
@@ -60,8 +58,6 @@ void main() {
 
     final saved = await cubit.updateProfile(
       name: 'Updated Passenger',
-      phone: '+63 922 222 2222',
-      email: 'updated@example.com',
       address: 'Updated address',
       gender: 'Male',
       avatarPath: '',
@@ -69,6 +65,8 @@ void main() {
 
     expect(saved, isTrue);
     expect(cubit.state.name, 'Updated Passenger');
+    expect(cubit.state.phone, '+63 911 111 1111');
+    expect(cubit.state.email, 'remote@example.com');
     expect(cubit.state.address, 'Updated address');
     expect(cubit.state.gender, 'Male');
     expect(cubit.state.isSaving, isFalse);

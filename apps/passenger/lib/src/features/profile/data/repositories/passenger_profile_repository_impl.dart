@@ -61,8 +61,8 @@ final class PassengerProfileRepositoryImpl
       final resolvedName = remoteName.isNotEmpty && !remoteName.contains('@')
           ? remoteName
           : (cachedName.isNotEmpty && !cachedName.contains('@')
-              ? cachedName
-              : (remoteName.isNotEmpty ? remoteName : cachedName));
+                ? cachedName
+                : (remoteName.isNotEmpty ? remoteName : cachedName));
       final profile = PassengerProfile(
         id: remote.id,
         userId: remote.userId,
@@ -87,19 +87,12 @@ final class PassengerProfileRepositoryImpl
   @override
   Future<Result<PassengerProfile, Failure>> updateProfile({
     required String name,
-    required String phone,
-    required String email,
     required String address,
     required String gender,
     required String avatarPath,
   }) async {
     final normalizedName = name.trim();
-    final normalizedPhone = phone.trim();
-    final normalizedEmail = email.trim();
-    if (normalizedName.isEmpty ||
-        normalizedPhone.isEmpty ||
-        normalizedEmail.isEmpty ||
-        !normalizedEmail.contains('@')) {
+    if (normalizedName.isEmpty) {
       return const Err(ValidationFailure('Profile values are invalid.'));
     }
     try {
@@ -126,8 +119,6 @@ final class PassengerProfileRepositoryImpl
         passengerId: passengerId,
         data: {
           'name': normalizedName,
-          'phone': normalizedPhone,
-          'email': normalizedEmail,
           'address': address.trim(),
           'gender': gender.trim(),
         },
@@ -150,8 +141,8 @@ final class PassengerProfileRepositoryImpl
         userId: remote.userId,
         role: remote.role,
         name: remote.name.isEmpty ? normalizedName : remote.name,
-        phone: remote.phone.isEmpty ? normalizedPhone : remote.phone,
-        email: remote.email.isEmpty ? normalizedEmail : remote.email,
+        phone: remote.phone.isEmpty ? cached.phone : remote.phone,
+        email: remote.email.isEmpty ? cached.email : remote.email,
         address: remote.address.isEmpty ? address.trim() : remote.address,
         gender: remote.gender.isEmpty ? gender.trim() : remote.gender,
         avatarPath: normalizedAvatarPath,

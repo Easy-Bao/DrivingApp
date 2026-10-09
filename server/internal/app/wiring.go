@@ -54,12 +54,17 @@ type rideRuntimeStore interface {
 	ActiveRidesForDriver(context.Context, int) ([]ridedomain.Ride, error)
 }
 
+type authRuntimeStore interface {
+	authports.VerifiedUserStore
+	authports.EmailChangeStore
+}
+
 type httpRouterDependencies struct {
 	config             Config
 	postgresPool       *pgxpool.Pool
 	redisClient        *redisclient.Client
 	applicationLogger  *slog.Logger
-	authStore          authports.VerifiedUserStore
+	authStore          authRuntimeStore
 	sessionStore       authports.SessionStore
 	rideStore          rideRuntimeStore
 	profileStore       userports.ProfileStore
@@ -97,13 +102,16 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 			Sessions:   sessionStore,
 		},
 	).WithLogger(applicationLogger)
+	emailGateway := email.NewGoMailGateway(config.Mail)
 	otpService := authverification.NewOTPService(
 		authverification.Dependencies{
-			Users:    authStore,
-			Store:    authredis.NewOTPStore(redisClient),
-			Gateway:  email.NewGoMailGateway(config.Mail),
-			Tokens:   verifier,
-			Sessions: sessionStore,
+			Users:         authStore,
+			EmailChanges:  authStore,
+			EmailNotifier: emailGateway,
+			Store:         authredis.NewOTPStore(redisClient),
+			Gateway:       emailGateway,
+			Tokens:        verifier,
+			Sessions:      sessionStore,
 		},
 		authverification.WithPendingRegistration(
 			authredis.NewPendingRegistrationStore(redisClient),
@@ -115,6 +123,7 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 			Register:     registerService,
 			Authenticate: authenticateService,
 			OTP:          otpService,
+			Verifier:     verifier,
 		},
 		authhttp.WithOTPAttemptStore(dependencies.otpAttemptStore),
 	)

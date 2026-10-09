@@ -73,8 +73,6 @@ class ProfileCubit extends Cubit<ProfileState> {
 
   Future<bool> updateProfile({
     required String name,
-    required String phone,
-    required String email,
     required String address,
     required String gender,
     required String avatarPath,
@@ -84,8 +82,6 @@ class ProfileCubit extends Cubit<ProfileState> {
 
     final result = await repository.updateProfile(
       name: name,
-      phone: phone,
-      email: email,
       address: address,
       gender: gender,
       avatarPath: avatarPath,

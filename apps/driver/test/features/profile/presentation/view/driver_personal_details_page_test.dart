@@ -25,15 +25,13 @@ class _FakeDriverProfileRepository(this.account)
   Future<Result<DriverAccountSnapshot, Failure>> updateAccount({
     required DriverAccountSnapshot currentAccount,
     required String name,
-    required String phone,
-    required String email,
     required String vehicleType,
     required String plateNumber,
   }) async {
     account = DriverAccountSnapshot(
       name: name,
-      phone: phone,
-      email: email,
+      phone: currentAccount.phone,
+      email: currentAccount.email,
       vehicleType: vehicleType,
       plateNumber: plateNumber,
       ratingLabel: currentAccount.ratingLabel,
@@ -75,6 +73,22 @@ void main() {
 
     expect(find.text('Personal Details'), findsOneWidget);
     expect(find.text('Vehicle Type'), findsNothing);
+    expect(
+      tester
+          .widget<TextField>(
+            find.byKey(const ValueKey<String>('driver-personal-phone-number')),
+          )
+          .readOnly,
+      isTrue,
+    );
+    expect(
+      tester
+          .widget<TextField>(
+            find.byKey(const ValueKey<String>('driver-account-field-Email')),
+          )
+          .readOnly,
+      isTrue,
+    );
     expect(
       find.byKey(const ValueKey<String>('driver-account-details-save')),
       findsNothing,

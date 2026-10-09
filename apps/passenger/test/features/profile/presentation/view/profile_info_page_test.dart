@@ -38,8 +38,6 @@ void main() {
     when(
       () => profileCubit.updateProfile(
         name: any(named: 'name'),
-        phone: any(named: 'phone'),
-        email: any(named: 'email'),
         address: any(named: 'address'),
         gender: any(named: 'gender'),
         avatarPath: any(named: 'avatarPath'),
@@ -105,8 +103,6 @@ void main() {
     verify(
       () => profileCubit.updateProfile(
         name: 'Updated Passenger',
-        phone: '+639170000001',
-        email: 'passenger@example.com',
         address: 'Legacy fixed address',
         gender: 'Female',
         avatarPath: '',
@@ -185,22 +181,22 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('filters non-numeric characters from phone number input', (
-    tester,
-  ) async {
+  testWidgets('keeps email and phone fields read-only', (tester) async {
     await tester.pumpWidget(buildSubject());
 
     final phoneFinder = find.byKey(
       const ValueKey<String>('passenger-profile-phone-number'),
     );
     expect(phoneFinder, findsOneWidget);
+    final phoneField = tester.widget<TextField>(phoneFinder);
+    expect(phoneField.readOnly, isTrue);
 
-    await tester.enterText(phoneFinder, '');
-    await tester.enterText(phoneFinder, '+1 (555) 123-4567');
-    await tester.pump();
-
-    final textField = tester.widget<TextField>(phoneFinder);
-    expect(textField.controller?.text, '15551234567');
+    final emailFinder = find.byKey(
+      const ValueKey<String>('passenger-profile-field-Email'),
+    );
+    expect(emailFinder, findsOneWidget);
+    final emailField = tester.widget<TextField>(emailFinder);
+    expect(emailField.readOnly, isTrue);
   });
 
   testWidgets('renders fields within a single container card with dividers', (

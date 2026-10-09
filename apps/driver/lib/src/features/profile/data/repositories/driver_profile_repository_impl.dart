@@ -68,22 +68,14 @@ final class DriverProfileRepositoryImpl({
   Future<Result<DriverAccountSnapshot, Failure>> updateAccount({
     required DriverAccountSnapshot currentAccount,
     required String name,
-    required String phone,
-    required String email,
     required String vehicleType,
     required String plateNumber,
   }) async {
     final normalizedName = name.trim();
-    final normalizedPhone = _normalizePhone(phone);
-    final normalizedEmail = email.trim();
     final normalizedVehicleType = vehicleType.trim();
     final normalizedPlateNumber = plateNumber.trim();
 
     if (normalizedName.isEmpty ||
-        normalizedPhone.isEmpty ||
-        normalizedPhone.replaceAll(RegExp(r'[^0-9]'), '').length < 12 ||
-        normalizedEmail.isEmpty ||
-        !normalizedEmail.contains('@') ||
         normalizedVehicleType.isEmpty ||
         normalizedPlateNumber.isEmpty) {
       return const Err(ValidationFailure('Please verify your driver details.'));
@@ -93,8 +85,6 @@ final class DriverProfileRepositoryImpl({
       final response = await _profileDataSource.updateProfile(
         data: {
           'name': normalizedName,
-          'phone': normalizedPhone,
-          'email': normalizedEmail,
           'vehicle_type': normalizedVehicleType,
           'plate_number': normalizedPlateNumber,
         },
@@ -102,8 +92,8 @@ final class DriverProfileRepositoryImpl({
       final profile = ProfileModel.fromJson(response);
       final updated = DriverAccountSnapshot(
         name: profile.name.isEmpty ? normalizedName : profile.name,
-        phone: profile.phone.isEmpty ? normalizedPhone : profile.phone,
-        email: profile.email.isEmpty ? normalizedEmail : profile.email,
+        phone: profile.phone.isEmpty ? currentAccount.phone : profile.phone,
+        email: profile.email.isEmpty ? currentAccount.email : profile.email,
         vehicleType: profile.vehicleType.isEmpty
             ? normalizedVehicleType
             : profile.vehicleType,
@@ -132,13 +122,6 @@ final class DriverProfileRepositoryImpl({
       _preferences.setString('plate_number', account.plateNumber),
       _preferences.setString('rating', account.ratingLabel),
     ]);
-  }
-
-  String _normalizePhone(String value) {
-    final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
-    if (digits.startsWith('63')) return '+$digits';
-    if (digits.startsWith('0')) return '+63${digits.substring(1)}';
-    return digits.isEmpty ? '' : '+63$digits';
   }
 }
 

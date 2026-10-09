@@ -177,6 +177,35 @@ destinations and returns `distances_km` and `durations_min`; it performs one
 provider matrix request for multiple destinations and a directions request for
 one destination.
 
+### Verified email changes
+
+Profile updates cannot change the account's email or phone number. Authenticated
+email changes use the dedicated request and confirmation endpoints below; both
+require the current bearer token.
+
+`POST /api/v1/users/me/email/request` requires the current password and sends a
+verification code to the proposed address:
+
+```json
+{"current_password":"current-password","email":"new@example.com"}
+```
+
+The endpoint returns `202 Accepted`. The current email remains active until the
+code is confirmed. Codes expire after 10 minutes and are subject to the shared
+OTP attempt limit.
+
+`POST /api/v1/users/me/email/confirm` applies the change only after the code is
+verified:
+
+```json
+{"email":"new@example.com","code":"123456"}
+```
+
+It returns `204 No Content` and sends a security notification to the previous
+email address. A concurrent change or an address already assigned to another
+account is rejected. Phone changes do not have a verification flow and remain
+unavailable.
+
 ### Private uploads
 
 Driver documents and passenger avatars are immutable private objects stored in

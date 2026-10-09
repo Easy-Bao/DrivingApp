@@ -60,3 +60,27 @@ func (q *Queries) GetUserByID(ctx context.Context, id int32) (User, error) {
 	)
 	return i, err
 }
+
+const updateUserEmail = `-- name: UpdateUserEmail :execrows
+UPDATE users
+SET email = $1,
+    is_verified = TRUE,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $2
+  AND email = $3
+  AND is_verified = TRUE
+`
+
+type UpdateUserEmailParams struct {
+	NewEmail      string `db:"new_email"`
+	UserID        int32  `db:"user_id"`
+	ExpectedEmail string `db:"expected_email"`
+}
+
+func (q *Queries) UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateUserEmail, arg.NewEmail, arg.UserID, arg.ExpectedEmail)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}

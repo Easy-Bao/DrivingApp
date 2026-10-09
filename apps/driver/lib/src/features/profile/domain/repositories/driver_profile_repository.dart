@@ -9,8 +9,6 @@ abstract interface class DriverProfileRepository {
   Future<Result<DriverAccountSnapshot, Failure>> updateAccount({
     required DriverAccountSnapshot currentAccount,
     required String name,
-    required String phone,
-    required String email,
     required String vehicleType,
     required String plateNumber,
   });

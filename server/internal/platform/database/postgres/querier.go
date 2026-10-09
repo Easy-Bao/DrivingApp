@@ -118,6 +118,7 @@ type Querier interface {
 	UpdatePassengerProfile(ctx context.Context, arg UpdatePassengerProfileParams) (PassengerProfile, error)
 	UpdateRideSettlementEconomics(ctx context.Context, arg UpdateRideSettlementEconomicsParams) (RideSettlement, error)
 	UpdateRideStatus(ctx context.Context, arg UpdateRideStatusParams) (Ride, error)
+	UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) (int64, error)
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) (int64, error)
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error)
 }

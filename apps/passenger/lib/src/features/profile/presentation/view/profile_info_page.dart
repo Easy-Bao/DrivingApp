@@ -5,7 +5,6 @@ import 'dart:io';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
@@ -43,8 +42,6 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   String _savedAddress = '';
 
   String _initialName = '';
-  String _initialPhone = '';
-  String _initialEmail = '';
   String _initialGender = 'Prefer not to say';
   String _initialAvatarPath = '';
 
@@ -52,16 +49,12 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   bool _isDirty = false;
   bool _isSaving = false;
   String? _nameError;
-  String? _phoneError;
-  String? _emailError;
 
   @override
   void initState() {
     super.initState();
     _applyProfile(BlocProvider.of<ProfileCubit>(context).state);
     _nameController.addListener(_updateDirtyState);
-    _phoneNumberController.addListener(_updateDirtyState);
-    _emailController.addListener(_updateDirtyState);
   }
 
   @override
@@ -73,7 +66,6 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
   }
 
   void _applyProfile(ProfileState profile) {
-    final phone = _splitPhone(profile.phone);
     _isApplyingProfile = true;
     var name = profile.name.trim();
     final email = profile.email.trim();
@@ -92,15 +84,13 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     }
 
     _nameController.text = name;
-    _phoneNumberController.text = phone.number;
+    _phoneNumberController.text = _localPhoneNumber(profile.phone);
     _emailController.text = email;
     _gender = _normalizeGender(profile.gender);
     _avatarPath = profile.avatarPath;
     _avatarData = profile.avatarData;
     _savedAddress = profile.address;
     _initialName = name;
-    _initialPhone = _formatPhone(_phonePrefix, phone.number);
-    _initialEmail = email;
     _initialGender = _gender;
     _initialAvatarPath = _avatarPath;
     _isDirty = false;
@@ -116,36 +106,18 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
 
   bool get _draftHasChanges =>
       _nameController.text.trim() != _initialName ||
-      _currentPhone != _initialPhone ||
-      _emailController.text.trim() != _initialEmail ||
       _gender != _initialGender ||
       _avatarPath != _initialAvatarPath;
-
-  String get _currentPhone =>
-      _formatPhone(_phonePrefix, _phoneNumberController.text);
 
   Future<void> _saveProfile() async {
     if (!_isDirty || _isSaving) return;
     _clearErrors();
 
     final name = _nameController.text.trim();
-    final phoneNumber = _phoneNumberController.text.trim();
-    final email = _emailController.text.trim();
     var hasError = false;
 
     if (name.isEmpty) {
       _nameError = 'Enter your name.';
-      hasError = true;
-    }
-    if (phoneNumber.length < 7) {
-      _phoneError = 'Enter a valid phone number.';
-      hasError = true;
-    }
-    if (email.isEmpty) {
-      _emailError = 'Enter your email address.';
-      hasError = true;
-    } else if (!email.contains('@')) {
-      _emailError = 'Enter a valid email address.';
       hasError = true;
     }
     if (hasError) {
@@ -157,8 +129,6 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     final didUpdate = await BlocProvider.of<ProfileCubit>(context)
         .updateProfile(
           name: name,
-          phone: _currentPhone,
-          email: email,
           address: _savedAddress,
           gender: _gender,
           avatarPath: _avatarPath,
@@ -182,8 +152,6 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
 
   void _clearErrors() {
     _nameError = null;
-    _phoneError = null;
-    _emailError = null;
   }
 
   Future<void> _pickPhoto() async {
@@ -383,8 +351,9 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
 
   Widget _buildProfileHeader() {
     final rawName = _nameController.text.trim();
-    final displayName =
-        rawName.isEmpty || rawName.contains('@') ? 'Your profile' : rawName;
+    final displayName = rawName.isEmpty || rawName.contains('@')
+        ? 'Your profile'
+        : rawName;
     final displayEmail = _emailController.text.trim();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -432,6 +401,20 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
           _buildPhoneTile(),
           _buildDivider(),
           _buildEmailTile(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              EasyRideSpacing.lg,
+              0,
+              EasyRideSpacing.lg,
+              EasyRideSpacing.md,
+            ),
+            child: Text(
+              'Email and phone changes require verification.',
+              style: context.textStyles.bodySmall?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
           _buildDivider(),
           _buildGenderTile(),
         ],
@@ -563,11 +546,10 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                           'passenger-profile-phone-number',
                         ),
                         controller: _phoneNumberController,
+                        readOnly: true,
+                        showCursor: false,
                         keyboardType: TextInputType.phone,
                         textInputAction: TextInputAction.next,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
                         style: context.textStyles.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w600,
                           fontFeatures: const [FontFeature.tabularFigures()],
@@ -593,17 +575,6 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                     ),
                   ],
                 ),
-                if (_phoneError != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    _phoneError!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: context.colorScheme.error,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
@@ -637,6 +608,8 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                 TextField(
                   key: const ValueKey<String>('passenger-profile-field-Email'),
                   controller: _emailController,
+                  readOnly: true,
+                  showCursor: false,
                   keyboardType: TextInputType.emailAddress,
                   textCapitalization: TextCapitalization.none,
                   textInputAction: TextInputAction.done,
@@ -661,17 +634,6 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
                     ),
                   ),
                 ),
-                if (_emailError != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    _emailError!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: context.colorScheme.error,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
@@ -782,21 +744,15 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
     return parts.first[0].toUpperCase();
   }
 
-  _PhoneParts _splitPhone(String phone) {
+  String _localPhoneNumber(String phone) {
     final digits = phone.replaceAll(RegExp(r'\D'), '');
     if (digits.startsWith('63')) {
-      return _PhoneParts(prefix: _phonePrefix, number: digits.substring(2));
+      return digits.substring(2);
     }
     if (digits.startsWith('0')) {
-      return _PhoneParts(prefix: _phonePrefix, number: digits.substring(1));
+      return digits.substring(1);
     }
-    return _PhoneParts(prefix: _phonePrefix, number: digits);
-  }
-
-  String _formatPhone(String prefix, String number) {
-    final digits = number.replaceAll(RegExp(r'\D'), '');
-    if (digits.isEmpty) return '';
-    return '$prefix$digits';
+    return digits;
   }
 
   String _normalizeGender(String gender) {
@@ -805,9 +761,4 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
         ? normalized
         : 'Prefer not to say';
   }
-}
-
-class const _PhoneParts({required this.prefix, required this.number}) {
-  final String prefix;
-  final String number;
 }

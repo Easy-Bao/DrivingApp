@@ -29,6 +29,7 @@ type GoMailGateway struct {
 }
 
 var _ authports.OTPSender = (*GoMailGateway)(nil)
+var _ authports.EmailChangeNotifier = (*GoMailGateway)(nil)
 
 func NewGoMailGateway(config Config, options ...GoMailGatewayOption) *GoMailGateway {
 	gateway := newGoMailGateway(config)
@@ -86,6 +87,38 @@ func (gateway *GoMailGateway) Send(ctx context.Context, recipient, code string) 
 		)
 	}); err != nil {
 		return fmt.Errorf("send verification email: %w", err)
+	}
+	return nil
+}
+
+func (gateway *GoMailGateway) NotifyEmailChanged(ctx context.Context, previousEmail, newEmail string) error {
+	if gateway == nil || gateway.deliver == nil || gateway.breaker == nil {
+		return fmt.Errorf("%w: mail gateway is not configured", ErrInvalidConfig)
+	}
+	if err := gateway.config.Validate(); err != nil {
+		return fmt.Errorf("validate mail gateway configuration: %w", err)
+	}
+	if ctx == nil {
+		return errors.New("mail delivery context is nil")
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	previousEmail = strings.TrimSpace(previousEmail)
+	newEmail = strings.TrimSpace(newEmail)
+	if previousEmail == "" || newEmail == "" {
+		return fmt.Errorf("%w: email change notification address is empty", ErrInvalidConfig)
+	}
+	const subject = "Your DriveApp email address changed"
+	body := fmt.Sprintf(
+		"The email address for your DriveApp account was changed to %s.\n\n"+
+			"If you did not make this change, reset your password and contact support.",
+		newEmail,
+	)
+	if err := gateway.breaker.Do(ctx, func(ctx context.Context) error {
+		return gateway.deliver(ctx, gateway.config, previousEmail, subject, body)
+	}); err != nil {
+		return fmt.Errorf("send email change notification: %w", err)
 	}
 	return nil
 }

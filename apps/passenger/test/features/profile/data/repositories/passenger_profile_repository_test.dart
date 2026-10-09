@@ -62,8 +62,6 @@ void main() {
     );
     final result = await repository.updateProfile(
       name: 'Updated Passenger',
-      phone: '+639170000001',
-      email: 'passenger@example.com',
       address: '',
       gender: 'Female',
       avatarPath: avatarFile.path,
@@ -83,6 +81,19 @@ void main() {
         fileName: 'passenger-profile-test.png',
       ),
     ).called(1);
+    final updatePayload =
+        verify(
+              () => remoteDataSource.updateProfile(
+                passengerId: '42',
+                data: captureAny<Map<String, dynamic>>(named: 'data'),
+              ),
+            ).captured.single
+            as Map<String, dynamic>;
+    expect(updatePayload, {
+      'name': 'Updated Passenger',
+      'address': '',
+      'gender': 'Female',
+    });
   });
 
   test(
@@ -116,8 +127,6 @@ void main() {
       );
       final result = await repository.updateProfile(
         name: 'Passenger',
-        phone: '+639170000001',
-        email: 'passenger@example.com',
         address: '',
         gender: 'Female',
         avatarPath: '',

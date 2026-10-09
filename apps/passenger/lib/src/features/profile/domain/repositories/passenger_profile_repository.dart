@@ -8,8 +8,6 @@ abstract interface class PassengerProfileRepository {
 
   Future<Result<PassengerProfile, Failure>> updateProfile({
     required String name,
-    required String phone,
-    required String email,
     required String address,
     required String gender,
     required String avatarPath,
