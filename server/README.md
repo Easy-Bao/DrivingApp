@@ -178,10 +178,11 @@ request for multiple destinations and a directions request for one destination.
 ### Private uploads
 
 Driver documents and passenger avatars are immutable private objects stored in
-PostgreSQL through the native object-store adapter. Feature tables retain only
-ownership, workflow, and content metadata; the binary data never uses a local
-filesystem directory or Redis as a source of truth. Authorized endpoints read
-objects only after the owning feature verifies the requesting identity.
+MinIO. PostgreSQL retains the opaque object keys and integrity metadata, while
+feature tables retain ownership and workflow state. The binary data never uses
+a local filesystem directory or Redis as a source of truth. Authorized
+endpoints read objects only after the owning feature verifies the requesting
+identity.
 
 `POST /api/v1/driver/documents?type=driver_license` accepts a raw PDF, JPEG, or
 PNG body. The supported type values are `driver_license`,
@@ -202,6 +203,28 @@ and make one final approve-or-reject decision:
 
 Content responses are attachments with `Cache-Control: private, no-store`.
 Metadata responses never expose private object keys or checksums.
+
+#### Migrating existing objects
+
+Before the first MinIO-only release, stop API instances that can still write
+objects to PostgreSQL. Start PostgreSQL and MinIO, then run:
+
+```sh
+just objectstorage-migrate
+```
+
+The command applies the verification migration, copies legacy bytes to MinIO,
+reads each copy back to verify its size, detected MIME type, and SHA-256, then
+applies the guarded migration that drops PostgreSQL `content`. It refuses to
+contract the table while any object lacks an external key or verification
+timestamp. It can be rerun before contraction; failures leave the PostgreSQL
+bytes available for another attempt.
+
+After contraction, PostgreSQL backups no longer contain file copies. The
+content down migration refuses to recreate an empty `content` column as if it
+restored the bytes; restore objects from MinIO backups. Runtime reads validate
+size, MIME type, and checksum and fail if MinIO is unavailable or an object is
+invalid.
 
 ## Optional Docker Compose workflow
 

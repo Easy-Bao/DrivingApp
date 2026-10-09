@@ -7,12 +7,11 @@ import (
 )
 
 type Config struct {
-	Endpoint     string
-	AccessKey    string
-	SecretKey    string
-	Bucket       string
-	Secure       bool
-	WriteEnabled bool
+	Endpoint  string
+	AccessKey string
+	SecretKey string
+	Bucket    string
+	Secure    bool
 }
 
 func ConfigFromEnv(getenv func(string) string) (Config, error) {
@@ -41,18 +40,12 @@ func ConfigFromEnv(getenv func(string) string) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
-	writeEnabled, err := optionalBoolEnv(getenv, "MINIO_WRITE_ENABLED")
-	if err != nil {
-		return Config{}, err
-	}
-
 	config := Config{
-		Endpoint:     endpoint,
-		AccessKey:    accessKey,
-		SecretKey:    secretKey,
-		Bucket:       bucket,
-		Secure:       secure,
-		WriteEnabled: writeEnabled,
+		Endpoint:  endpoint,
+		AccessKey: accessKey,
+		SecretKey: secretKey,
+		Bucket:    bucket,
+		Secure:    secure,
 	}
 	if err := config.validate(); err != nil {
 		return Config{}, err

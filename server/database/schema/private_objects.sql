@@ -1,8 +1,8 @@
 CREATE TABLE private_objects (
     id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     storage_key text NOT NULL,
-    content bytea,
-    external_storage_key text,
+    external_storage_key text NOT NULL,
+    external_verified_at timestamptz,
     content_type text NOT NULL,
     size_bytes bigint NOT NULL,
     checksum_sha256 text NOT NULL,
@@ -13,11 +13,5 @@ CREATE TABLE private_objects (
         length(checksum_sha256) = 64
         AND checksum_sha256 ~ '^[0-9a-fA-F]{64}$'
     ),
-    CONSTRAINT private_objects_storage_location_check CHECK (
-        content IS NOT NULL OR external_storage_key IS NOT NULL
-    )
+    CONSTRAINT private_objects_external_storage_key_check CHECK (length(external_storage_key) > 0)
 );
-
-CREATE INDEX private_objects_external_storage_pending_idx
-    ON private_objects (id)
-    WHERE external_storage_key IS NULL;

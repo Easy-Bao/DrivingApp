@@ -9,17 +9,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"strings"
 	"time"
 
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
 	platformstorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage"
-	storagepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage/postgres"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	miniosdk "github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -35,8 +32,8 @@ const (
 
 type ObjectStore struct {
 	client  *miniosdk.Client
+	pool    *pgxpool.Pool
 	queries *databasepostgres.Queries
-	legacy  platformstorage.ObjectStore
 	config  Config
 }
 
@@ -63,14 +60,10 @@ func NewObjectStore(ctx context.Context, pool *pgxpool.Pool, config Config) (*Ob
 	if err != nil {
 		return nil, fmt.Errorf("create MinIO client: %w", err)
 	}
-	legacy, err := storagepostgres.NewObjectStore(pool)
-	if err != nil {
-		return nil, fmt.Errorf("create PostgreSQL object store: %w", err)
-	}
 	store := &ObjectStore{
 		client:  client,
+		pool:    pool,
 		queries: databasepostgres.New(pool),
-		legacy:  legacy,
 		config:  config,
 	}
 	if err := store.ensureBucket(ctx); err != nil {
@@ -89,10 +82,6 @@ func (store *ObjectStore) Store(ctx context.Context, content []byte) (string, er
 	if len(content) == 0 || len(content) > MaxObjectBytes {
 		return "", errors.New("private object has an invalid size")
 	}
-	if !store.config.WriteEnabled {
-		return store.legacy.Store(ctx, content)
-	}
-
 	checksum := sha256.Sum256(content)
 	checksumText := hex.EncodeToString(checksum[:])
 	contentType := http.DetectContentType(content)
@@ -123,10 +112,9 @@ func (store *ObjectStore) Store(ctx context.Context, content []byte) (string, er
 			}
 			return "", storeErr
 		}
-
 		err = store.queries.CreateExternalPrivateObject(ctx, databasepostgres.CreateExternalPrivateObjectParams{
 			StorageKey:         key,
-			ExternalStorageKey: textValue(externalKey),
+			ExternalStorageKey: externalKey,
 			ContentType:        contentType,
 			SizeBytes:          int64(len(content)),
 			ChecksumSha256:     checksumText,
@@ -172,8 +160,8 @@ func (store *ObjectStore) Read(ctx context.Context, key string, maxBytes int64) 
 		return nil, errors.New("private object has an invalid size")
 	}
 
-	if object.ExternalStorageKey.Valid {
-		externalKey := object.ExternalStorageKey.String
+	if object.ExternalStorageKey != "" {
+		externalKey := object.ExternalStorageKey
 		if err := validateStorageObjectKey(externalKey); err != nil {
 			return nil, fmt.Errorf("private object has an invalid MinIO key: %w", err)
 		}
@@ -193,26 +181,9 @@ func (store *ObjectStore) Read(ctx context.Context, key string, maxBytes int64) 
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
-		if len(object.Content) > 0 {
-			slog.WarnContext(ctx, "MinIO private object read failed; using PostgreSQL copy", "error", externalErr)
-			return validateContent(
-				object.Content,
-				object.ContentType,
-				object.SizeBytes,
-				object.ChecksumSha256,
-				maxBytes,
-			)
-		}
 		return nil, fmt.Errorf("read private object from MinIO: %w", externalErr)
 	}
-
-	return validateContent(
-		object.Content,
-		object.ContentType,
-		object.SizeBytes,
-		object.ChecksumSha256,
-		maxBytes,
-	)
+	return nil, errors.New("private object has no MinIO storage key")
 }
 
 func (store *ObjectStore) Delete(ctx context.Context, key string) error {
@@ -233,8 +204,8 @@ func (store *ObjectStore) Delete(ctx context.Context, key string) error {
 	if err != nil {
 		return fmt.Errorf("query private object before deletion: %w", err)
 	}
-	if object.ExternalStorageKey.Valid {
-		externalKey := object.ExternalStorageKey.String
+	if object.ExternalStorageKey != "" {
+		externalKey := object.ExternalStorageKey
 		if err := validateStorageObjectKey(externalKey); err != nil {
 			return fmt.Errorf("private object has an invalid MinIO key: %w", err)
 		}
@@ -250,7 +221,7 @@ func (store *ObjectStore) Delete(ctx context.Context, key string) error {
 
 // MigrateLegacyObjects copies PostgreSQL-backed objects to MinIO one at a time.
 // Each pointer is updated only after the stored bytes pass size, MIME, and
-// checksum verification; the PostgreSQL copy remains available for fallback.
+// checksum verification.
 func (store *ObjectStore) MigrateLegacyObjects(ctx context.Context) (int64, error) {
 	if err := store.validate(); err != nil {
 		return 0, err
@@ -271,8 +242,12 @@ func (store *ObjectStore) MigrateLegacyObjects(ctx context.Context) (int64, erro
 		if !strings.HasPrefix(legacyObject.StorageKey, _postgresObjectPrefix) {
 			return migrated, errors.New("pending private object does not use a PostgreSQL storage key")
 		}
-		content, err := validateContent(
-			legacyObject.Content,
+		content, err := store.readLegacyForMigration(ctx, legacyObject.StorageKey)
+		if err != nil {
+			return migrated, fmt.Errorf("read PostgreSQL object before migration: %w", err)
+		}
+		content, err = validateContent(
+			content,
 			legacyObject.ContentType,
 			legacyObject.SizeBytes,
 			legacyObject.ChecksumSha256,
@@ -305,7 +280,7 @@ func (store *ObjectStore) MigrateLegacyObjects(ctx context.Context) (int64, erro
 			return migrated, fmt.Errorf("verify copied MinIO object integrity: %w", err)
 		}
 		updated, err := store.queries.SetPrivateObjectExternalStorageKey(ctx, databasepostgres.SetPrivateObjectExternalStorageKeyParams{
-			ExternalStorageKey: textValue(legacyObject.StorageKey),
+			ExternalStorageKey: legacyObject.StorageKey,
 			ID:                 legacyObject.ID,
 			SizeBytes:          legacyObject.SizeBytes,
 			ChecksumSha256:     legacyObject.ChecksumSha256,
@@ -315,13 +290,78 @@ func (store *ObjectStore) MigrateLegacyObjects(ctx context.Context) (int64, erro
 		}
 		if updated == 0 {
 			current, err := store.queries.GetPrivateObjectByStorageKey(ctx, legacyObject.StorageKey)
-			if err != nil || !current.ExternalStorageKey.Valid || current.ExternalStorageKey.String != legacyObject.StorageKey {
+			if err != nil || current.ExternalStorageKey != legacyObject.StorageKey {
 				return migrated, fmt.Errorf("mark copied MinIO object: metadata changed during migration")
 			}
 			continue
 		}
 		migrated++
 	}
+}
+
+// VerifyExternalObjects reads every external object back and records the
+// verification time used by the guarded PostgreSQL content contraction.
+func (store *ObjectStore) VerifyExternalObjects(ctx context.Context) (int64, error) {
+	if err := store.validate(); err != nil {
+		return 0, err
+	}
+	if err := ctx.Err(); err != nil {
+		return 0, err
+	}
+
+	var verified int64
+	var afterID int64
+	for {
+		object, err := store.queries.GetNextExternalPrivateObjectForVerification(ctx, afterID)
+		if errors.Is(err, pgx.ErrNoRows) {
+			break
+		}
+		if err != nil {
+			return verified, fmt.Errorf("find next external private object to verify: %w", err)
+		}
+		if err := validateStorageObjectKey(object.StorageKey); err != nil {
+			return verified, fmt.Errorf("private object has an invalid storage key: %w", err)
+		}
+		if err := validateStorageObjectKey(object.ExternalStorageKey); err != nil {
+			return verified, fmt.Errorf("private object has an invalid MinIO key: %w", err)
+		}
+		content, err := store.readMinIO(ctx, object.ExternalStorageKey, object.SizeBytes)
+		if err != nil {
+			return verified, fmt.Errorf("read MinIO object for verification: %w", err)
+		}
+		if _, err := validateContent(
+			content,
+			object.ContentType,
+			object.SizeBytes,
+			object.ChecksumSha256,
+			MaxObjectBytes,
+		); err != nil {
+			return verified, fmt.Errorf("verify MinIO object integrity: %w", err)
+		}
+		updated, err := store.queries.SetPrivateObjectExternalStorageVerifiedAt(ctx, databasepostgres.SetPrivateObjectExternalStorageVerifiedAtParams{
+			ID:                 object.ID,
+			ExternalStorageKey: object.ExternalStorageKey,
+			SizeBytes:          object.SizeBytes,
+			ChecksumSha256:     object.ChecksumSha256,
+		})
+		if err != nil {
+			return verified, fmt.Errorf("record MinIO object verification: %w", err)
+		}
+		if updated != 1 {
+			return verified, errors.New("private object metadata changed during verification")
+		}
+		verified++
+		afterID = object.ID
+	}
+
+	pending, err := store.queries.CountPrivateObjectsPendingExternalStorage(ctx)
+	if err != nil {
+		return verified, fmt.Errorf("count unverified private objects: %w", err)
+	}
+	if pending != 0 {
+		return verified, fmt.Errorf("%d private objects still need MinIO migration or verification", pending)
+	}
+	return verified, nil
 }
 
 func (store *ObjectStore) ensureBucket(ctx context.Context) error {
@@ -378,10 +418,23 @@ func (store *ObjectStore) readMinIO(ctx context.Context, key string, expectedSiz
 }
 
 func (store *ObjectStore) validate() error {
-	if store == nil || store.client == nil || store.queries == nil || store.legacy == nil {
+	if store == nil || store.client == nil || store.pool == nil || store.queries == nil {
 		return errors.New("MinIO object store is not configured")
 	}
 	return nil
+}
+
+func (store *ObjectStore) readLegacyForMigration(ctx context.Context, key string) ([]byte, error) {
+	var content []byte
+	err := store.pool.QueryRow(ctx, `
+SELECT content
+FROM private_objects
+WHERE storage_key = $1
+  AND external_storage_key IS NULL`, key).Scan(&content)
+	if err != nil {
+		return nil, err
+	}
+	return content, nil
 }
 
 func validateContent(content []byte, contentType string, sizeBytes int64, checksumText string, maxBytes int64) ([]byte, error) {
@@ -422,10 +475,6 @@ func newMinIOObjectKey() (string, error) {
 		return "", fmt.Errorf("generate MinIO object key: %w", err)
 	}
 	return _minioObjectKeyPrefix + hex.EncodeToString(random), nil
-}
-
-func textValue(value string) pgtype.Text {
-	return pgtype.Text{String: value, Valid: true}
 }
 
 func isPostgresObjectUniqueViolation(err error) bool {

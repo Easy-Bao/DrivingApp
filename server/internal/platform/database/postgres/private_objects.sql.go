@@ -7,45 +7,25 @@ package postgres
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const countPrivateObjectsPendingExternalStorage = `-- name: CountPrivateObjectsPendingExternalStorage :one
+SELECT count(*)::bigint
+FROM private_objects
+WHERE external_storage_key IS NULL OR external_verified_at IS NULL
+`
+
+func (q *Queries) CountPrivateObjectsPendingExternalStorage(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countPrivateObjectsPendingExternalStorage)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
 
 const createExternalPrivateObject = `-- name: CreateExternalPrivateObject :exec
 INSERT INTO private_objects (
     storage_key,
-    content,
     external_storage_key,
-    content_type,
-    size_bytes,
-    checksum_sha256
-)
-VALUES ($1, NULL, $2, $3, $4, $5)
-`
-
-type CreateExternalPrivateObjectParams struct {
-	StorageKey         string      `db:"storage_key"`
-	ExternalStorageKey pgtype.Text `db:"external_storage_key"`
-	ContentType        string      `db:"content_type"`
-	SizeBytes          int64       `db:"size_bytes"`
-	ChecksumSha256     string      `db:"checksum_sha256"`
-}
-
-func (q *Queries) CreateExternalPrivateObject(ctx context.Context, arg CreateExternalPrivateObjectParams) error {
-	_, err := q.db.Exec(ctx, createExternalPrivateObject,
-		arg.StorageKey,
-		arg.ExternalStorageKey,
-		arg.ContentType,
-		arg.SizeBytes,
-		arg.ChecksumSha256,
-	)
-	return err
-}
-
-const createPrivateObject = `-- name: CreatePrivateObject :exec
-INSERT INTO private_objects (
-    storage_key,
-    content,
     content_type,
     size_bytes,
     checksum_sha256
@@ -53,18 +33,18 @@ INSERT INTO private_objects (
 VALUES ($1, $2, $3, $4, $5)
 `
 
-type CreatePrivateObjectParams struct {
-	StorageKey     string `db:"storage_key"`
-	Content        []byte `db:"content"`
-	ContentType    string `db:"content_type"`
-	SizeBytes      int64  `db:"size_bytes"`
-	ChecksumSha256 string `db:"checksum_sha256"`
+type CreateExternalPrivateObjectParams struct {
+	StorageKey         string `db:"storage_key"`
+	ExternalStorageKey string `db:"external_storage_key"`
+	ContentType        string `db:"content_type"`
+	SizeBytes          int64  `db:"size_bytes"`
+	ChecksumSha256     string `db:"checksum_sha256"`
 }
 
-func (q *Queries) CreatePrivateObject(ctx context.Context, arg CreatePrivateObjectParams) error {
-	_, err := q.db.Exec(ctx, createPrivateObject,
+func (q *Queries) CreateExternalPrivateObject(ctx context.Context, arg CreateExternalPrivateObjectParams) error {
+	_, err := q.db.Exec(ctx, createExternalPrivateObject,
 		arg.StorageKey,
-		arg.Content,
+		arg.ExternalStorageKey,
 		arg.ContentType,
 		arg.SizeBytes,
 		arg.ChecksumSha256,
@@ -82,8 +62,41 @@ func (q *Queries) DeletePrivateObjectByStorageKey(ctx context.Context, storageKe
 	return err
 }
 
+const getNextExternalPrivateObjectForVerification = `-- name: GetNextExternalPrivateObjectForVerification :one
+SELECT id, storage_key, external_storage_key, content_type, size_bytes,
+    checksum_sha256
+FROM private_objects
+WHERE id > $1
+  AND external_storage_key IS NOT NULL
+ORDER BY id
+LIMIT 1
+`
+
+type GetNextExternalPrivateObjectForVerificationRow struct {
+	ID                 int64  `db:"id"`
+	StorageKey         string `db:"storage_key"`
+	ExternalStorageKey string `db:"external_storage_key"`
+	ContentType        string `db:"content_type"`
+	SizeBytes          int64  `db:"size_bytes"`
+	ChecksumSha256     string `db:"checksum_sha256"`
+}
+
+func (q *Queries) GetNextExternalPrivateObjectForVerification(ctx context.Context, afterID int64) (GetNextExternalPrivateObjectForVerificationRow, error) {
+	row := q.db.QueryRow(ctx, getNextExternalPrivateObjectForVerification, afterID)
+	var i GetNextExternalPrivateObjectForVerificationRow
+	err := row.Scan(
+		&i.ID,
+		&i.StorageKey,
+		&i.ExternalStorageKey,
+		&i.ContentType,
+		&i.SizeBytes,
+		&i.ChecksumSha256,
+	)
+	return i, err
+}
+
 const getNextPrivateObjectForExternalStorageMigration = `-- name: GetNextPrivateObjectForExternalStorageMigration :one
-SELECT id, storage_key, content, content_type, size_bytes, checksum_sha256
+SELECT id, storage_key, content_type, size_bytes, checksum_sha256
 FROM private_objects
 WHERE external_storage_key IS NULL
 ORDER BY id
@@ -93,7 +106,6 @@ LIMIT 1
 type GetNextPrivateObjectForExternalStorageMigrationRow struct {
 	ID             int64  `db:"id"`
 	StorageKey     string `db:"storage_key"`
-	Content        []byte `db:"content"`
 	ContentType    string `db:"content_type"`
 	SizeBytes      int64  `db:"size_bytes"`
 	ChecksumSha256 string `db:"checksum_sha256"`
@@ -105,7 +117,6 @@ func (q *Queries) GetNextPrivateObjectForExternalStorageMigration(ctx context.Co
 	err := row.Scan(
 		&i.ID,
 		&i.StorageKey,
-		&i.Content,
 		&i.ContentType,
 		&i.SizeBytes,
 		&i.ChecksumSha256,
@@ -114,19 +125,19 @@ func (q *Queries) GetNextPrivateObjectForExternalStorageMigration(ctx context.Co
 }
 
 const getPrivateObjectByStorageKey = `-- name: GetPrivateObjectByStorageKey :one
-SELECT storage_key, content, external_storage_key, content_type, size_bytes, checksum_sha256
+SELECT storage_key, COALESCE(external_storage_key, '')::text AS external_storage_key,
+    content_type, size_bytes, checksum_sha256
 FROM private_objects
 WHERE storage_key = $1
 LIMIT 1
 `
 
 type GetPrivateObjectByStorageKeyRow struct {
-	StorageKey         string      `db:"storage_key"`
-	Content            []byte      `db:"content"`
-	ExternalStorageKey pgtype.Text `db:"external_storage_key"`
-	ContentType        string      `db:"content_type"`
-	SizeBytes          int64       `db:"size_bytes"`
-	ChecksumSha256     string      `db:"checksum_sha256"`
+	StorageKey         string `db:"storage_key"`
+	ExternalStorageKey string `db:"external_storage_key"`
+	ContentType        string `db:"content_type"`
+	SizeBytes          int64  `db:"size_bytes"`
+	ChecksumSha256     string `db:"checksum_sha256"`
 }
 
 func (q *Queries) GetPrivateObjectByStorageKey(ctx context.Context, storageKey string) (GetPrivateObjectByStorageKeyRow, error) {
@@ -134,7 +145,6 @@ func (q *Queries) GetPrivateObjectByStorageKey(ctx context.Context, storageKey s
 	var i GetPrivateObjectByStorageKeyRow
 	err := row.Scan(
 		&i.StorageKey,
-		&i.Content,
 		&i.ExternalStorageKey,
 		&i.ContentType,
 		&i.SizeBytes,
@@ -145,7 +155,8 @@ func (q *Queries) GetPrivateObjectByStorageKey(ctx context.Context, storageKey s
 
 const setPrivateObjectExternalStorageKey = `-- name: SetPrivateObjectExternalStorageKey :execrows
 UPDATE private_objects
-SET external_storage_key = $1
+SET external_storage_key = $1,
+    external_verified_at = now()
 WHERE id = $2
   AND external_storage_key IS NULL
   AND size_bytes = $3
@@ -153,16 +164,45 @@ WHERE id = $2
 `
 
 type SetPrivateObjectExternalStorageKeyParams struct {
-	ExternalStorageKey pgtype.Text `db:"external_storage_key"`
-	ID                 int64       `db:"id"`
-	SizeBytes          int64       `db:"size_bytes"`
-	ChecksumSha256     string      `db:"checksum_sha256"`
+	ExternalStorageKey string `db:"external_storage_key"`
+	ID                 int64  `db:"id"`
+	SizeBytes          int64  `db:"size_bytes"`
+	ChecksumSha256     string `db:"checksum_sha256"`
 }
 
 func (q *Queries) SetPrivateObjectExternalStorageKey(ctx context.Context, arg SetPrivateObjectExternalStorageKeyParams) (int64, error) {
 	result, err := q.db.Exec(ctx, setPrivateObjectExternalStorageKey,
 		arg.ExternalStorageKey,
 		arg.ID,
+		arg.SizeBytes,
+		arg.ChecksumSha256,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const setPrivateObjectExternalStorageVerifiedAt = `-- name: SetPrivateObjectExternalStorageVerifiedAt :execrows
+UPDATE private_objects
+SET external_verified_at = now()
+WHERE id = $1
+  AND external_storage_key = $2
+  AND size_bytes = $3
+  AND checksum_sha256 = $4
+`
+
+type SetPrivateObjectExternalStorageVerifiedAtParams struct {
+	ID                 int64  `db:"id"`
+	ExternalStorageKey string `db:"external_storage_key"`
+	SizeBytes          int64  `db:"size_bytes"`
+	ChecksumSha256     string `db:"checksum_sha256"`
+}
+
+func (q *Queries) SetPrivateObjectExternalStorageVerifiedAt(ctx context.Context, arg SetPrivateObjectExternalStorageVerifiedAtParams) (int64, error) {
+	result, err := q.db.Exec(ctx, setPrivateObjectExternalStorageVerifiedAt,
+		arg.ID,
+		arg.ExternalStorageKey,
 		arg.SizeBytes,
 		arg.ChecksumSha256,
 	)

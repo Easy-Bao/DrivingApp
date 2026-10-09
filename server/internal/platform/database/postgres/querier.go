@@ -18,6 +18,7 @@ type Querier interface {
 	CountActiveRidesForAcceptance(ctx context.Context, driverID pgtype.Int4) (int64, error)
 	CountActiveRidesForDriver(ctx context.Context, driverID pgtype.Int4) (int64, error)
 	CountDriverDocuments(ctx context.Context) (int64, error)
+	CountPrivateObjectsPendingExternalStorage(ctx context.Context) (int64, error)
 	CountRides(ctx context.Context) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
 	CreateAcceptedRide(ctx context.Context, arg CreateAcceptedRideParams) (Ride, error)
@@ -30,7 +31,6 @@ type Querier interface {
 	CreateExternalPrivateObject(ctx context.Context, arg CreateExternalPrivateObjectParams) error
 	CreatePassengerProfile(ctx context.Context, arg CreatePassengerProfileParams) error
 	CreatePassengerReview(ctx context.Context, arg CreatePassengerReviewParams) (PassengerReview, error)
-	CreatePrivateObject(ctx context.Context, arg CreatePrivateObjectParams) error
 	CreateRefreshSession(ctx context.Context, arg CreateRefreshSessionParams) error
 	CreateReview(ctx context.Context, arg CreateReviewParams) (Review, error)
 	CreateRide(ctx context.Context, arg CreateRideParams) (Ride, error)
@@ -52,6 +52,7 @@ type Querier interface {
 	GetDriverProfileByUserIDFull(ctx context.Context, userID int32) (DriverProfile, error)
 	GetDriverStats(ctx context.Context, arg GetDriverStatsParams) (GetDriverStatsRow, error)
 	GetDriverWalletAccountForUpdate(ctx context.Context, driverID int32) (DriverWalletAccount, error)
+	GetNextExternalPrivateObjectForVerification(ctx context.Context, afterID int64) (GetNextExternalPrivateObjectForVerificationRow, error)
 	GetNextPrivateObjectForExternalStorageMigration(ctx context.Context) (GetNextPrivateObjectForExternalStorageMigrationRow, error)
 	GetOnlineDriverProfileForBidding(ctx context.Context, arg GetOnlineDriverProfileForBiddingParams) (GetOnlineDriverProfileForBiddingRow, error)
 	GetPassengerActivitySummary(ctx context.Context, arg GetPassengerActivitySummaryParams) (GetPassengerActivitySummaryRow, error)
@@ -109,6 +110,7 @@ type Querier interface {
 	RevokeRefreshSessionByID(ctx context.Context, arg RevokeRefreshSessionByIDParams) (int64, error)
 	RevokeUserRefreshSessions(ctx context.Context, arg RevokeUserRefreshSessionsParams) error
 	SetPrivateObjectExternalStorageKey(ctx context.Context, arg SetPrivateObjectExternalStorageKeyParams) (int64, error)
+	SetPrivateObjectExternalStorageVerifiedAt(ctx context.Context, arg SetPrivateObjectExternalStorageVerifiedAtParams) (int64, error)
 	StartRide(ctx context.Context, arg StartRideParams) (Ride, error)
 	UpdateDriverOnlineStatus(ctx context.Context, arg UpdateDriverOnlineStatusParams) (DriverProfile, error)
 	UpdateDriverProfile(ctx context.Context, arg UpdateDriverProfileParams) (DriverProfile, error)

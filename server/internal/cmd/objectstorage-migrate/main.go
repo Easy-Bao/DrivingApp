@@ -11,7 +11,14 @@ import (
 	"syscall"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/migrations"
 	miniostorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage/minio"
+	"github.com/golang-migrate/migrate/v4"
+)
+
+const (
+	_externalVerificationVersion uint = 2026100915
+	_contentContractionVersion   uint = 2026100916
 )
 
 func main() {
@@ -24,11 +31,39 @@ func main() {
 	}
 }
 
-func run(ctx context.Context) error {
+func run(ctx context.Context) (runErr error) {
 	databaseURL := strings.TrimSpace(os.Getenv("DATABASE_URL"))
 	if databaseURL == "" {
 		return errors.New("database URL is required")
 	}
+	migrationDatabase, err := database.OpenPostgresMigrationDatabaseWithContext(
+		ctx,
+		databaseURL,
+		database.PostgresNativePoolConfigFrom(os.Getenv).PingTimeout,
+	)
+	if err != nil {
+		return fmt.Errorf("open migration database: %w", err)
+	}
+	migrator, err := database.NewPostgresMigrator(database.PostgresMigratorDependencies{
+		Migrations:    migrations.FS,
+		MigrationPath: ".",
+		Database:      migrationDatabase,
+		Config:        database.DefaultPostgresMigratorConfig(),
+	})
+	if err != nil {
+		if closeErr := migrationDatabase.Close(); closeErr != nil {
+			return errors.Join(fmt.Errorf("create migrator: %w", err), closeErr)
+		}
+		return fmt.Errorf("create migrator: %w", err)
+	}
+	defer func() {
+		sourceErr, databaseErr := migrator.Close()
+		runErr = errors.Join(runErr, sourceErr, databaseErr)
+	}()
+	if err := migrateUpTo(migrator, _externalVerificationVersion); err != nil {
+		return fmt.Errorf("apply private object verification schema: %w", err)
+	}
+
 	config, err := miniostorage.ConfigFromEnv(os.Getenv)
 	if err != nil {
 		return fmt.Errorf("load MinIO configuration: %w", err)
@@ -42,7 +77,6 @@ func run(ctx context.Context) error {
 		return fmt.Errorf("open PostgreSQL pool: %w", err)
 	}
 	defer pool.Close()
-
 	store, err := miniostorage.NewObjectStore(ctx, pool, config)
 	if err != nil {
 		return fmt.Errorf("create MinIO object store: %w", err)
@@ -51,6 +85,34 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("copy PostgreSQL objects to MinIO: %w", err)
 	}
-	slog.InfoContext(ctx, "copied PostgreSQL objects to MinIO", "object_count", migrated)
+	verified, err := store.VerifyExternalObjects(ctx)
+	if err != nil {
+		return fmt.Errorf("verify MinIO objects: %w", err)
+	}
+	if err := migrateUpTo(migrator, _contentContractionVersion); err != nil {
+		return fmt.Errorf("contract PostgreSQL private object storage: %w", err)
+	}
+	slog.InfoContext(ctx, "copied and verified private objects in MinIO", "migrated_count", migrated, "verified_count", verified)
+	return nil
+}
+
+func migrateUpTo(migrator *migrate.Migrate, target uint) error {
+	version, dirty, err := migrator.Version()
+	if errors.Is(err, migrate.ErrNilVersion) {
+		version = 0
+		err = nil
+	}
+	if err != nil {
+		return fmt.Errorf("read current migration version: %w", err)
+	}
+	if dirty {
+		return fmt.Errorf("database migration version %d is dirty", version)
+	}
+	if version >= target {
+		return nil
+	}
+	if err := migrator.Migrate(target); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		return err
+	}
 	return nil
 }

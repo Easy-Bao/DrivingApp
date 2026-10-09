@@ -72,6 +72,10 @@ db-migrate:
 docker-db-migrate: infra-up
     @./scripts/database/migrate.sh
 
+# Copy, verify, and contract PostgreSQL-backed private objects into MinIO.
+objectstorage-migrate:
+    docker compose --profile ops run --rm objectstorage-migrate
+
 test-services:
     cd server && go test ./...
 

@@ -124,8 +124,8 @@ type PassengerReview struct {
 type PrivateObject struct {
 	ID                 int64              `db:"id"`
 	StorageKey         string             `db:"storage_key"`
-	Content            []byte             `db:"content"`
-	ExternalStorageKey pgtype.Text        `db:"external_storage_key"`
+	ExternalStorageKey string             `db:"external_storage_key"`
+	ExternalVerifiedAt pgtype.Timestamptz `db:"external_verified_at"`
 	ContentType        string             `db:"content_type"`
 	SizeBytes          int64              `db:"size_bytes"`
 	ChecksumSha256     string             `db:"checksum_sha256"`
