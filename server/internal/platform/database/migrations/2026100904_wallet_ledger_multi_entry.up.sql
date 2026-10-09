@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS walletledger_ride_id;

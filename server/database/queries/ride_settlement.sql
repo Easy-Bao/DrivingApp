@@ -117,6 +117,9 @@ SET balance = balance + $2,
 WHERE id = $1
 RETURNING id, driver_id, balance, version, updated_at;
 
--- name: CreateWalletLedger :exec
-INSERT INTO wallet_ledgers (driver_id, ride_id, amount, commission_amount, kind)
-VALUES ($1, $2, $3, $4, $5);
+-- name: CreateWalletLedger :execrows
+INSERT INTO wallet_ledgers (
+    driver_id, ride_id, amount, commission_amount, kind, idempotency_key
+)
+VALUES ($1, $2, $3, $4, $5, $6)
+ON CONFLICT (idempotency_key) DO NOTHING;

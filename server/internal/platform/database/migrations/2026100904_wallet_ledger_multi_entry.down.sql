@@ -1,0 +1,2 @@
+-- The active migration history never created walletledger_ride_id. Its removal
+-- is retained as an IF EXISTS compatibility cleanup for databases with drift.

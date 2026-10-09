@@ -38,7 +38,7 @@ type Querier interface {
 	CreateRideSettlement(ctx context.Context, arg CreateRideSettlementParams) error
 	CreateRideSettlementForCash(ctx context.Context, arg CreateRideSettlementForCashParams) (RideSettlement, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
-	CreateWalletLedger(ctx context.Context, arg CreateWalletLedgerParams) error
+	CreateWalletLedger(ctx context.Context, arg CreateWalletLedgerParams) (int64, error)
 	CreditDriverWalletAccount(ctx context.Context, arg CreditDriverWalletAccountParams) (DriverWalletAccount, error)
 	DeleteNotification(ctx context.Context, arg DeleteNotificationParams) (int64, error)
 	DeletePrivateObjectByStorageKey(ctx context.Context, storageKey string) error

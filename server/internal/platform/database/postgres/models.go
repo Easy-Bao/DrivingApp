@@ -247,5 +247,6 @@ type WalletLedger struct {
 	Amount           int64              `db:"amount"`
 	CommissionAmount int64              `db:"commission_amount"`
 	Kind             string             `db:"kind"`
+	IdempotencyKey   string             `db:"idempotency_key"`
 	CreatedAt        pgtype.Timestamptz `db:"created_at"`
 }

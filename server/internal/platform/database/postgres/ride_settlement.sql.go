@@ -103,9 +103,12 @@ func (q *Queries) CreateRideSettlementForCash(ctx context.Context, arg CreateRid
 	return i, err
 }
 
-const createWalletLedger = `-- name: CreateWalletLedger :exec
-INSERT INTO wallet_ledgers (driver_id, ride_id, amount, commission_amount, kind)
-VALUES ($1, $2, $3, $4, $5)
+const createWalletLedger = `-- name: CreateWalletLedger :execrows
+INSERT INTO wallet_ledgers (
+    driver_id, ride_id, amount, commission_amount, kind, idempotency_key
+)
+VALUES ($1, $2, $3, $4, $5, $6)
+ON CONFLICT (idempotency_key) DO NOTHING
 `
 
 type CreateWalletLedgerParams struct {
@@ -114,17 +117,22 @@ type CreateWalletLedgerParams struct {
 	Amount           int64  `db:"amount"`
 	CommissionAmount int64  `db:"commission_amount"`
 	Kind             string `db:"kind"`
+	IdempotencyKey   string `db:"idempotency_key"`
 }
 
-func (q *Queries) CreateWalletLedger(ctx context.Context, arg CreateWalletLedgerParams) error {
-	_, err := q.db.Exec(ctx, createWalletLedger,
+func (q *Queries) CreateWalletLedger(ctx context.Context, arg CreateWalletLedgerParams) (int64, error) {
+	result, err := q.db.Exec(ctx, createWalletLedger,
 		arg.DriverID,
 		arg.RideID,
 		arg.Amount,
 		arg.CommissionAmount,
 		arg.Kind,
+		arg.IdempotencyKey,
 	)
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const creditDriverWalletAccount = `-- name: CreditDriverWalletAccount :one

@@ -114,14 +114,23 @@ func (repository *RideRepository) SettleCash(
 		if validated.Outcome == domain.CashOutcomePartial {
 			ledgerKind = "cash_trip_partial"
 		}
-		if err := transactionQueries.CreateWalletLedger(ctx, databasepostgres.CreateWalletLedgerParams{
+		ledgerIdempotencyKey := "ride:" + strconv.FormatInt(int64(rideItem.ID), 10) + ":cash-settlement"
+		insertedLedgerCount, err := transactionQueries.CreateWalletLedger(ctx, databasepostgres.CreateWalletLedgerParams{
 			DriverID:         dbDriverID,
 			RideID:           rideItem.ID,
 			Amount:           validated.Snapshot.DriverPayoutAmount,
 			CommissionAmount: validated.Snapshot.CommissionAmount,
 			Kind:             ledgerKind,
-		}); err != nil {
+			IdempotencyKey:   ledgerIdempotencyKey,
+		})
+		if err != nil {
 			return domain.Ride{}, fmt.Errorf("create cash settlement ledger: %w", err)
+		}
+		if insertedLedgerCount != 1 {
+			return domain.Ride{}, fmt.Errorf(
+				"create cash settlement ledger: idempotency key %q already exists",
+				ledgerIdempotencyKey,
+			)
 		}
 		if err := creditNativeDriverWallet(ctx, transactionQueries, profile, validated.Snapshot.DriverPayoutAmount); err != nil {
 			return domain.Ride{}, fmt.Errorf("credit driver wallet: %w", err)

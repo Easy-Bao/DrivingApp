@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS wallet_ledgers_idempotency_key_uidx;
