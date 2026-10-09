@@ -35,8 +35,6 @@ LIMIT 1;
 -- name: UpdateUserProfile :one
 UPDATE users
 SET name = $2,
-    phone = $3,
-    email = $4,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING id, name, phone, email, password_hash, role, is_verified,

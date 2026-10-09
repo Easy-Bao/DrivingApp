@@ -129,10 +129,8 @@ func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Pr
 
 	transactionQueries := repository.queries.WithTx(transaction)
 	account, err := transactionQueries.UpdateUserProfile(ctx, databasepostgres.UpdateUserProfileParams{
-		ID:    dbUserID,
-		Name:  toPostgresProfileText(profile.Name),
-		Phone: profile.Phone,
-		Email: profile.Email,
+		ID:   dbUserID,
+		Name: toPostgresProfileText(profile.Name),
 	})
 	if err != nil {
 		return domain.Profile{}, fmt.Errorf("update profile account: %w", err)

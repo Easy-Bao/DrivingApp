@@ -349,8 +349,6 @@ func (q *Queries) UpdatePassengerProfile(ctx context.Context, arg UpdatePassenge
 const updateUserProfile = `-- name: UpdateUserProfile :one
 UPDATE users
 SET name = $2,
-    phone = $3,
-    email = $4,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING id, name, phone, email, password_hash, role, is_verified,
@@ -358,19 +356,12 @@ RETURNING id, name, phone, email, password_hash, role, is_verified,
 `
 
 type UpdateUserProfileParams struct {
-	ID    int32       `db:"id"`
-	Name  pgtype.Text `db:"name"`
-	Phone string      `db:"phone"`
-	Email string      `db:"email"`
+	ID   int32       `db:"id"`
+	Name pgtype.Text `db:"name"`
 }
 
 func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error) {
-	row := q.db.QueryRow(ctx, updateUserProfile,
-		arg.ID,
-		arg.Name,
-		arg.Phone,
-		arg.Email,
-	)
+	row := q.db.QueryRow(ctx, updateUserProfile, arg.ID, arg.Name)
 	var i User
 	err := row.Scan(
 		&i.ID,
