@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
@@ -63,6 +64,14 @@ func (handler *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		writeProfileReadError(w, err)
 		return
 	}
+	if input.Email != nil && !strings.EqualFold(strings.TrimSpace(*input.Email), strings.TrimSpace(current.Email)) {
+		response.Error(w, http.StatusUnprocessableEntity, "Use the email verification flow to change your email.")
+		return
+	}
+	if input.Phone != nil && strings.TrimSpace(*input.Phone) != strings.TrimSpace(current.Phone) {
+		response.Error(w, http.StatusUnprocessableEntity, "Phone changes require verification and cannot be made here.")
+		return
+	}
 	if input.Gender != nil {
 		normalizedGender, valid := domain.NormalizeGender(*input.Gender)
 		if !valid {
@@ -86,12 +95,6 @@ func (handler *Handler) Update(w http.ResponseWriter, r *http.Request) {
 func applyProfileUpdate(current domain.Profile, input dto.UpdateProfileRequest) domain.Profile {
 	if input.Name != nil {
 		current.Name = *input.Name
-	}
-	if input.Phone != nil {
-		current.Phone = *input.Phone
-	}
-	if input.Email != nil {
-		current.Email = *input.Email
 	}
 	if input.Address != nil {
 		current.Address = *input.Address

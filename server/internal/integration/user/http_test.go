@@ -233,7 +233,14 @@ func TestProfileReturnsAccountContactFieldsForPassengerInfo(t *testing.T) {
 
 func TestProfileUpdateUsesAuthenticatedIdentityAndPersistsAddress(t *testing.T) {
 	repository := &onlineRepository{
-		profile: domain.Profile{ID: 7, UserID: 42, Role: "passenger", Name: "Before"},
+		profile: domain.Profile{
+			ID:     7,
+			UserID: 42,
+			Role:   "passenger",
+			Name:   "Before",
+			Phone:  "+639170000001",
+			Email:  "passenger@example.test",
+		},
 	}
 	tokenManager := security.NewTokenManager("users-http-test-secret")
 	token, err := tokenManager.IssueWithRole("42", "passenger")
@@ -255,7 +262,7 @@ func TestProfileUpdateUsesAuthenticatedIdentityAndPersistsAddress(t *testing.T) 
 		strings.NewReader(`{
             "name":"After",
             "phone":"+639170000001",
-            "email":"after@example.test",
+            "email":"passenger@example.test",
             "address":"Home",
             "gender":"Male"
         }`),
@@ -270,7 +277,11 @@ func TestProfileUpdateUsesAuthenticatedIdentityAndPersistsAddress(t *testing.T) 
 	if repository.saved.ID != 7 || repository.saved.UserID != 42 || repository.saved.Role != "passenger" {
 		t.Fatalf("profile identity changed during update = %#v", repository.saved)
 	}
-	if repository.saved.Name != "After" || repository.saved.Address != "Home" || repository.saved.Gender != "Male" {
+	if repository.saved.Name != "After" ||
+		repository.saved.Address != "Home" ||
+		repository.saved.Gender != "Male" ||
+		repository.saved.Phone != "+639170000001" ||
+		repository.saved.Email != "passenger@example.test" {
 		t.Fatalf("profile values were not persisted = %#v", repository.saved)
 	}
 
@@ -284,6 +295,55 @@ func TestProfileUpdateUsesAuthenticatedIdentityAndPersistsAddress(t *testing.T) 
 	router.ServeHTTP(response, request)
 	if response.Code != http.StatusBadRequest {
 		t.Fatalf("identity-field status = %d, want %d", response.Code, http.StatusBadRequest)
+	}
+}
+
+func TestProfileUpdateRejectsEmailAndPhoneChanges(t *testing.T) {
+	for _, endpoint := range []struct {
+		method string
+		path   string
+	}{
+		{method: http.MethodPatch, path: "/api/v1/users/me"},
+		{method: http.MethodPut, path: "/api/v1/passengers/42"},
+	} {
+		for _, change := range []struct {
+			name    string
+			payload string
+		}{
+			{name: "email", payload: `{"email":"new@example.test"}`},
+			{name: "phone", payload: `{"phone":"+639170000002"}`},
+		} {
+			t.Run(endpoint.method+"/"+change.name, func(t *testing.T) {
+				repository := &onlineRepository{
+					profile: domain.Profile{
+						ID:     7,
+						UserID: 42,
+						Role:   "passenger",
+						Email:  "passenger@example.test",
+						Phone:  "+639170000001",
+					},
+				}
+				tokenManager := security.NewTokenManager("users-http-test-secret")
+				token, err := tokenManager.IssueWithRole("42", "passenger")
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				router := chi.NewRouter()
+				newUserRouter(newProfileService(repository), tokenManager).RegisterRoutes(router)
+				request := httptest.NewRequest(endpoint.method, endpoint.path, strings.NewReader(change.payload))
+				request.Header.Set("Authorization", "Bearer "+token)
+				response := httptest.NewRecorder()
+				router.ServeHTTP(response, request)
+
+				if response.Code != http.StatusUnprocessableEntity {
+					t.Fatalf("status = %d, want %d; body = %s", response.Code, http.StatusUnprocessableEntity, response.Body.String())
+				}
+				if repository.saved.UserID != 0 {
+					t.Fatalf("profile was saved despite a %s change: %#v", change.name, repository.saved)
+				}
+			})
+		}
 	}
 }
 
@@ -319,8 +379,6 @@ func TestDriverProfileUpdatePersistsAccountAndVehicleFields(t *testing.T) {
 		"/api/v1/users/me",
 		strings.NewReader(`{
             "name":"After",
-            "phone":"+639170000001",
-            "email":"after@example.test",
             "vehicle_type":"Sedan",
             "plate_number":"ABC-1234"
         }`),
@@ -336,8 +394,8 @@ func TestDriverProfileUpdatePersistsAccountAndVehicleFields(t *testing.T) {
 		t.Fatalf("profile identity changed during driver update = %#v", repository.saved)
 	}
 	if repository.saved.Name != "After" ||
-		repository.saved.Phone != "+639170000001" ||
-		repository.saved.Email != "after@example.test" ||
+		repository.saved.Phone != "+639000000000" ||
+		repository.saved.Email != "before@example.test" ||
 		repository.saved.VehicleType != "Sedan" ||
 		repository.saved.PlateNumber != "ABC-1234" {
 		t.Fatalf("driver profile values were not persisted = %#v", repository.saved)
