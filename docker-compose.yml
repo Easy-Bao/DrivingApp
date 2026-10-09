@@ -32,9 +32,15 @@ services:
       - --maxmemory
       - 256mb
       - --maxmemory-policy
-      - allkeys-lru
+      - volatile-lru
+      - --appendonly
+      - "yes"
+      - --dir
+      - /data
     ports:
       - "127.0.0.1:${REDIS_HOST_PORT}:${REDIS_PORT}"
+    volumes:
+      - redis-data:/data
     healthcheck:
       test: ["CMD-SHELL", "redis-cli -p $${REDIS_PORT} ping"]
       interval: 5s
@@ -128,3 +134,4 @@ services:
 
 volumes:
   postgres-data:
+  redis-data:
