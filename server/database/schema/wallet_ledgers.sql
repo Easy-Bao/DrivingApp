@@ -5,7 +5,11 @@ CREATE TABLE wallet_ledgers (
     amount bigint NOT NULL,
     commission_amount bigint NOT NULL,
     kind text NOT NULL DEFAULT 'cash_trip',
-    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT wallet_ledgers_driver_fk
+        FOREIGN KEY (driver_id) REFERENCES users (id) ON DELETE RESTRICT,
+    CONSTRAINT wallet_ledgers_ride_fk
+        FOREIGN KEY (ride_id) REFERENCES rides (id) ON DELETE RESTRICT
 );
 
 CREATE UNIQUE INDEX walletledger_ride_id

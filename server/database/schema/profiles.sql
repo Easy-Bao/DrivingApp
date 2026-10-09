@@ -6,7 +6,9 @@ CREATE TABLE driver_profiles (
     plate_number text NOT NULL,
     rating double precision NOT NULL DEFAULT 0 CHECK (rating BETWEEN 0 AND 5),
     is_online boolean NOT NULL DEFAULT false,
-    online_last_seen_at timestamptz
+    online_last_seen_at timestamptz,
+    CONSTRAINT driver_profiles_user_fk
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
 CREATE TABLE passenger_profiles (
@@ -17,7 +19,9 @@ CREATE TABLE passenger_profiles (
     gender text NOT NULL DEFAULT 'Prefer not to say',
     avatar_storage_key text,
     avatar_content_type text,
-    preferred_ride_type text
+    preferred_ride_type text,
+    CONSTRAINT passenger_profiles_user_fk
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
 CREATE INDEX driver_profiles_online_last_seen_at_idx

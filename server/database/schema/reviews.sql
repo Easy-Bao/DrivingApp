@@ -7,7 +7,13 @@ CREATE TABLE reviews (
     rating double precision NOT NULL,
     comment text,
     created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT reviews_rating_check CHECK (rating BETWEEN 0 AND 5)
+    CONSTRAINT reviews_rating_check CHECK (rating BETWEEN 0 AND 5),
+    CONSTRAINT reviews_ride_fk
+        FOREIGN KEY (ride_id) REFERENCES rides (id) ON DELETE CASCADE,
+    CONSTRAINT reviews_driver_fk
+        FOREIGN KEY (driver_id) REFERENCES users (id) ON DELETE RESTRICT,
+    CONSTRAINT reviews_passenger_fk
+        FOREIGN KEY (passenger_id) REFERENCES users (id) ON DELETE RESTRICT
 );
 
 CREATE UNIQUE INDEX review_ride_id
@@ -25,7 +31,13 @@ CREATE TABLE passenger_reviews (
     rating double precision NOT NULL,
     comment text,
     created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT passenger_reviews_rating_check CHECK (rating BETWEEN 0 AND 5)
+    CONSTRAINT passenger_reviews_rating_check CHECK (rating BETWEEN 0 AND 5),
+    CONSTRAINT passenger_reviews_ride_fk
+        FOREIGN KEY (ride_id) REFERENCES rides (id) ON DELETE CASCADE,
+    CONSTRAINT passenger_reviews_driver_fk
+        FOREIGN KEY (driver_id) REFERENCES users (id) ON DELETE RESTRICT,
+    CONSTRAINT passenger_reviews_passenger_fk
+        FOREIGN KEY (passenger_id) REFERENCES users (id) ON DELETE RESTRICT
 );
 
 CREATE UNIQUE INDEX passengerreview_ride_id

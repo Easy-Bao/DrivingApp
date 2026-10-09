@@ -24,7 +24,13 @@ CREATE TABLE bid_sessions (
         AND pickup_longitude BETWEEN -180 AND 180
         AND dropoff_latitude BETWEEN -90 AND 90
         AND dropoff_longitude BETWEEN -180 AND 180
-    )
+    ),
+    CONSTRAINT bid_sessions_passenger_fk
+        FOREIGN KEY (passenger_id) REFERENCES users (id) ON DELETE RESTRICT,
+    CONSTRAINT bid_sessions_target_driver_fk
+        FOREIGN KEY (target_driver_id) REFERENCES users (id) ON DELETE RESTRICT,
+    CONSTRAINT bid_sessions_accepted_driver_fk
+        FOREIGN KEY (accepted_driver_id) REFERENCES users (id) ON DELETE RESTRICT
 );
 
 CREATE INDEX bidsession_expires_at_created_at

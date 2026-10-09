@@ -69,7 +69,11 @@ CREATE TABLE rides (
         OR dropoff_longitude IS NULL
         OR pickup_latitude <> dropoff_latitude
         OR pickup_longitude <> dropoff_longitude
-    )
+    ),
+    CONSTRAINT rides_passenger_fk
+        FOREIGN KEY (passenger_id) REFERENCES users (id) ON DELETE RESTRICT,
+    CONSTRAINT rides_driver_fk
+        FOREIGN KEY (driver_id) REFERENCES users (id) ON DELETE RESTRICT
 );
 
 CREATE INDEX ride_passenger_id_created_at

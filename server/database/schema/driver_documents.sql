@@ -9,7 +9,11 @@ CREATE TABLE driver_documents (
     checksum_sha256 varchar(64) NOT NULL DEFAULT '',
     created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
     reviewed_at timestamptz,
-    reviewed_by integer
+    reviewed_by integer,
+    CONSTRAINT driver_documents_driver_fk
+        FOREIGN KEY (driver_id) REFERENCES users (id) ON DELETE RESTRICT,
+    CONSTRAINT driver_documents_reviewer_fk
+        FOREIGN KEY (reviewed_by) REFERENCES users (id) ON DELETE SET NULL
 );
 
 CREATE INDEX driver_document_driver_type_created_at

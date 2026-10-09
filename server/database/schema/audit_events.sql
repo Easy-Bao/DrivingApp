@@ -6,7 +6,9 @@ CREATE TABLE audit_events (
     target_id text,
     outcome text NOT NULL,
     request_id text NOT NULL UNIQUE,
-    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT audit_events_actor_fk
+        FOREIGN KEY (actor_id) REFERENCES users (id) ON DELETE RESTRICT
 );
 
 CREATE INDEX auditevent_actor_id_created_at

@@ -8,7 +8,11 @@ CREATE TABLE bid_offers (
     proposed_fare bigint NOT NULL,
     status text NOT NULL DEFAULT 'pending',
     created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT bid_offers_fare_check CHECK (proposed_fare >= 0)
+    CONSTRAINT bid_offers_fare_check CHECK (proposed_fare >= 0),
+    CONSTRAINT bid_offers_session_fk
+        FOREIGN KEY (session_id) REFERENCES bid_sessions (id) ON DELETE CASCADE,
+    CONSTRAINT bid_offers_driver_fk
+        FOREIGN KEY (driver_id) REFERENCES users (id) ON DELETE RESTRICT
 );
 
 CREATE INDEX bidoffer_session_id_created_at
