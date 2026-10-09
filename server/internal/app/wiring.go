@@ -72,6 +72,7 @@ type httpRouterDependencies struct {
 	documentStore      documents.DocumentStore
 	privateObjectStore platformstorage.ObjectStore
 	otpAttemptStore    middleware.CounterStore
+	routeSecurity      *middleware.RouteSecurity
 }
 
 func newHTTPRouter(
@@ -88,6 +89,7 @@ func newHTTPRouter(
 	statsReader := dependencies.statsReader
 	documentStore := dependencies.documentStore
 	privateObjectStore := dependencies.privateObjectStore
+	routeSecurity := dependencies.routeSecurity
 
 	verifier := security.NewTokenManager(config.JWTSecret)
 	adminAuthorizer := security.NewAdminAuthorizer(config.AdminUserIDs)
@@ -122,10 +124,11 @@ func newHTTPRouter(
 	).WithLogger(applicationLogger)
 	authRouter := authhttp.NewRouter(
 		authhttp.RouterDependencies{
-			Register:     registerService,
-			Authenticate: authenticateService,
-			OTP:          otpService,
-			Verifier:     verifier,
+			Register:      registerService,
+			Authenticate:  authenticateService,
+			OTP:           otpService,
+			Verifier:      verifier,
+			RouteSecurity: routeSecurity,
 		},
 		authhttp.WithOTPAttemptStore(dependencies.otpAttemptStore),
 	)
@@ -136,7 +139,8 @@ func newHTTPRouter(
 				userapplication.ProfileServiceDependencies{Repository: profileStore},
 				userapplication.WithContentTypeDetector(http.DetectContentType),
 			),
-			Verifier: verifier,
+			Verifier:      verifier,
+			RouteSecurity: routeSecurity,
 		},
 	)
 	documentRouter := documents.NewRouter(documents.RouterDependencies{
@@ -148,8 +152,9 @@ func newHTTPRouter(
 			documents.WithContentTypeDetector(http.DetectContentType),
 			documents.WithMaxDocumentBytes(config.Security.UploadBodyLimit),
 		),
-		Verifier:   verifier,
-		Authorizer: adminAuthorizer,
+		Verifier:      verifier,
+		Authorizer:    adminAuthorizer,
+		RouteSecurity: routeSecurity,
 	})
 
 	mapboxProvider := mapbox.NewMapboxProvider(config.MapboxAccessToken)
@@ -246,8 +251,9 @@ func newHTTPRouter(
 	).WithReportingLocation(config.ReportingLocation).WithLogger(applicationLogger)
 
 	ridesRouter := ridehttp.NewRouter(ridehttp.Dependencies{
-		Service:  ridesService,
-		Verifier: verifier,
+		Service:       ridesService,
+		Verifier:      verifier,
+		RouteSecurity: routeSecurity,
 	})
 	adminRouter := adminhttp.NewRouter(adminhttp.RouterDependencies{
 		Service:    adminapplication.NewStatsService(statsReader),
@@ -266,15 +272,24 @@ func newHTTPRouter(
 	).WithLogger(applicationLogger)
 
 	router := chi.NewRouter()
+	router.NotFound(routeSecurity.Middleware(middleware.RouteDefault)(http.NotFoundHandler()).ServeHTTP)
+	router.MethodNotAllowed(routeSecurity.Middleware(middleware.RouteDefault)(http.HandlerFunc(
+		func(writer http.ResponseWriter, _ *http.Request) {
+			writer.WriteHeader(http.StatusMethodNotAllowed)
+		},
+	)).ServeHTTP)
 	authRouter.RegisterRoutes(router)
 	usersRouter.RegisterRoutes(router)
 	documentRouter.RegisterRoutes(router)
 	ridesRouter.RegisterRoutes(router)
-	adminRouter.RegisterRoutes(router)
-	locationhttp.NewRouter(locationService, verifier).RegisterRoutes(router)
+	router.With(routeSecurity.Middleware(middleware.RouteRead)).Group(func(admin chi.Router) {
+		adminRouter.RegisterRoutes(admin)
+	})
+	locationhttp.NewRouter(locationService, verifier, routeSecurity).RegisterRoutes(router)
 	passengerridecontext.NewRouter(passengerridecontext.Dependencies{
-		Query:    passengerRideContextQuery,
-		Verifier: verifier,
+		Query:         passengerRideContextQuery,
+		Verifier:      verifier,
+		RouteSecurity: routeSecurity,
 	}).RegisterRoutes(router)
 
 	chatRoomStore := chatadapter.NewChatHistoryStore(redisClient)
@@ -286,7 +301,7 @@ func newHTTPRouter(
 	chatProtocol := chatws.NewConnectionProtocol(chatEventHandler, chatService)
 	router.Handle(
 		api.V1Prefix+"/chat/ws",
-		websockethub.NewHandler(
+		routeSecurity.Middleware(middleware.RouteRealtimeConnection)(websockethub.NewHandler(
 			websockethub.HandlerDependencies{
 				Hub:           eventHub,
 				Authenticator: verifier,
@@ -294,28 +309,30 @@ func newHTTPRouter(
 			},
 			websockethub.WithAllowedOrigins(config.Security.AllowedOrigins),
 			websockethub.WithLogger(applicationLogger),
-		),
+		)),
 	)
 	router.Handle(
 		api.V1Prefix+"/realtime/ws",
-		websockethub.NewHandler(
+		routeSecurity.Middleware(middleware.RouteRealtimeConnection)(websockethub.NewHandler(
 			websockethub.HandlerDependencies{
 				Hub:           eventHub,
 				Authenticator: verifier,
 			},
 			websockethub.WithAllowedOrigins(config.Security.AllowedOrigins),
 			websockethub.WithLogger(applicationLogger),
-		),
+		)),
 	)
 	tracking.NewRouter(tracking.Dependencies{
-		Service: trackingService,
-		Auth:    verifier,
+		Service:       trackingService,
+		Auth:          verifier,
+		RouteSecurity: routeSecurity,
 	}).RegisterRoutes(router)
 	chathttp.NewRouter(chathttp.Dependencies{
-		Service:  chatService,
-		Verifier: verifier,
+		Service:       chatService,
+		Verifier:      verifier,
+		RouteSecurity: routeSecurity,
 	}).RegisterRoutes(router)
-	registerHealthRoutes(router, redisClient, postgresPool)
+	registerHealthRoutes(router, redisClient, postgresPool, routeSecurity)
 
 	return router, eventHub, eventSubscriber
 }

@@ -19,8 +19,9 @@ type Handler struct {
 }
 
 type Dependencies struct {
-	Service  *application.ChatService
-	Verifier *security.TokenManager
+	Service       *application.ChatService
+	Verifier      *security.TokenManager
+	RouteSecurity *middleware.RouteSecurity
 }
 
 func NewHandler(dependencies Dependencies) *Handler {

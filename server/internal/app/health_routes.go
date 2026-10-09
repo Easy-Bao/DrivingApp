@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -18,8 +19,18 @@ const (
 	_readinessReady
 )
 
-func registerHealthRoutes(router chi.Router, redisClient *redisclient.Client, postgresPool *pgxpool.Pool) {
-	router.Get("/health", func(writer http.ResponseWriter, _ *http.Request) {
+func registerHealthRoutes(
+	router chi.Router,
+	redisClient *redisclient.Client,
+	postgresPool *pgxpool.Pool,
+	routeSecurity ...*middleware.RouteSecurity,
+) {
+	var security *middleware.RouteSecurity
+	if len(routeSecurity) > 0 {
+		security = routeSecurity[0]
+	}
+	health := security.Middleware(middleware.RouteHealth)
+	router.With(health).Get("/health", func(writer http.ResponseWriter, _ *http.Request) {
 		response.JSON(writer, http.StatusOK, map[string]string{
 			"status":  "ok",
 			"service": _serviceName,
@@ -38,8 +49,8 @@ func registerHealthRoutes(router chi.Router, redisClient *redisclient.Client, po
 		}
 		writeReadinessResponse(writer, http.StatusOK, _readinessReady)
 	}
-	router.Get("/healthz", readinessHandler)
-	router.Get("/readyz", readinessHandler)
+	router.With(health).Get("/healthz", readinessHandler)
+	router.With(health).Get("/readyz", readinessHandler)
 }
 
 func writeReadinessResponse(writer http.ResponseWriter, status int, state readinessState) {

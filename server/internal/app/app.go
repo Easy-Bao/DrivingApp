@@ -113,6 +113,21 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 		return nil, fmt.Errorf("create ride store: %w", err)
 	}
 	rateCounterStore := middleware.NewRedisCounterStore(redisClient)
+	rateLimiter := middleware.NewRateLimiter(middleware.RateLimiterDependencies{
+		Store:  rateCounterStore,
+		Config: config.RateLimits,
+	})
+	idempotency := middleware.NewIdempotency(
+		middleware.IdempotencyDependencies{
+			Store: middleware.NewRedisIdempotencyStore(redisClient),
+		},
+		middleware.WithIdempotencyExpiration(10*time.Minute),
+	).WithLogger(applicationLogger)
+	routeSecurity := middleware.NewRouteSecurity(middleware.RouteSecurityDependencies{
+		Config:      config.Security,
+		RateLimiter: rateLimiter,
+		Idempotency: idempotency,
+	})
 	router, eventHub, eventSubscriber := newHTTPRouter(httpRouterDependencies{
 		config:             config,
 		postgresPool:       postgresPool,
@@ -126,22 +141,9 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 		documentStore:      documentStore,
 		privateObjectStore: privateObjectStore,
 		otpAttemptStore:    rateCounterStore,
+		routeSecurity:      routeSecurity,
 	})
-	idempotency := middleware.NewIdempotency(
-		middleware.IdempotencyDependencies{
-			Store: middleware.NewRedisIdempotencyStore(redisClient),
-		},
-		middleware.WithIdempotencyExpiration(10*time.Minute),
-	).WithLogger(applicationLogger)
-	secureHandler := middleware.SecureHTTPWithIdempotency(
-		router,
-		config.Security,
-		middleware.NewRateLimiter(middleware.RateLimiterDependencies{
-			Store:  rateCounterStore,
-			Config: config.RateLimits,
-		}),
-		idempotency,
-	)
+	secureHandler := middleware.SecureHTTP(router, config.Security)
 	handler := proxyTrust.Middleware(middleware.Logging(applicationLogger)(secureHandler))
 
 	application := &Application{

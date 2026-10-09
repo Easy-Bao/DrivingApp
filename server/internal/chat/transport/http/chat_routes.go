@@ -8,22 +8,31 @@ import (
 )
 
 type Router struct {
-	handler  *Handler
-	verifier *security.TokenManager
+	handler       *Handler
+	verifier      *security.TokenManager
+	routeSecurity *middleware.RouteSecurity
 }
 
 func NewRouter(dependencies Dependencies) *Router {
 	return &Router{
-		handler:  NewHandler(dependencies),
-		verifier: dependencies.Verifier,
+		handler:       NewHandler(dependencies),
+		verifier:      dependencies.Verifier,
+		routeSecurity: dependencies.RouteSecurity,
 	}
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {
-	mux.Group(func(protected chi.Router) {
-		protected.Use(middleware.RequireAuth(router.verifier))
-		protected.Post(api.V1Prefix+"/chat/rooms", router.handler.CreateRoom)
-		protected.Get(api.V1Prefix+"/chat/rooms/{roomID}/messages", router.handler.Messages)
-		protected.Post(api.V1Prefix+"/chat/rooms/{roomID}/resolve", router.handler.Resolve)
-	})
+	authenticate := middleware.RequireAuth(router.verifier)
+	mux.With(router.routeSecurity.Middleware(middleware.RouteCommand), authenticate).Post(
+		api.V1Prefix+"/chat/rooms",
+		router.handler.CreateRoom,
+	)
+	mux.With(router.routeSecurity.Middleware(middleware.RouteRead), authenticate).Get(
+		api.V1Prefix+"/chat/rooms/{roomID}/messages",
+		router.handler.Messages,
+	)
+	mux.With(router.routeSecurity.Middleware(middleware.RouteCommand), authenticate).Post(
+		api.V1Prefix+"/chat/rooms/{roomID}/resolve",
+		router.handler.Resolve,
+	)
 }

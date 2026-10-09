@@ -20,8 +20,9 @@ type Handler struct {
 }
 
 type Dependencies struct {
-	Service *LocationTrackingService
-	Auth    *security.TokenManager
+	Service       *LocationTrackingService
+	Auth          *security.TokenManager
+	RouteSecurity *middleware.RouteSecurity
 }
 
 func NewHandler(dependencies Dependencies) *Handler {

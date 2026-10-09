@@ -20,15 +20,23 @@ func newTestRateLimiter(store CounterStore, config RateLimitConfig) *RateLimiter
 	return NewRateLimiter(RateLimiterDependencies{Store: store, Config: config})
 }
 
-func TestEndpointClassificationUsesNonZeroKinds(t *testing.T) {
-	requests := []*http.Request{
-		nil,
-		httptest.NewRequest(http.MethodGet, "/api/v1/rides/1", nil),
-		httptest.NewRequest(http.MethodPost, "/api/v1/rides", nil),
-	}
-	for _, request := range requests {
-		if kind := classifyEndpoint(request); kind == 0 {
-			t.Fatalf("endpoint kind for %#v used the zero value", request)
+func TestRoutePoliciesUseNonZeroValues(t *testing.T) {
+	for _, policy := range []RoutePolicy{
+		RouteDefault,
+		RouteHealth,
+		RouteAuthentication,
+		RouteRefresh,
+		RouteRealtimeConnection,
+		RouteTelemetry,
+		RouteLocationQuery,
+		RouteFareQuery,
+		RouteDocumentUpload,
+		RouteOnlinePresence,
+		RouteCommand,
+		RouteRead,
+	} {
+		if policy == 0 {
+			t.Fatal("route policy used the zero value")
 		}
 	}
 }
@@ -37,7 +45,7 @@ func TestRateLimiterRejectsReadRequestsAfterTheirLimit(t *testing.T) {
 	config := DefaultRateLimitConfig()
 	config.Read = 2
 	limiter := newTestRateLimiter(NewMemoryCounterStore(), config)
-	handler := limiter.Middleware(noContentHandler())
+	handler := limiter.MiddlewareFor(RouteRead)(noContentHandler())
 
 	for index := 0; index < 2; index++ {
 		response := serveRateLimitedRequest(handler, http.MethodGet, "/api/v1/rides/1", "192.0.2.10:1234")
@@ -60,27 +68,30 @@ func TestRateLimiterUsesSeparateAuthenticationLimit(t *testing.T) {
 	config.Authentication = 1
 	config.Refresh = 1
 	config.Mutation = 10
-	handler := newTestRateLimiter(NewMemoryCounterStore(), config).Middleware(noContentHandler())
+	limiter := newTestRateLimiter(NewMemoryCounterStore(), config)
+	authenticationHandler := limiter.MiddlewareFor(RouteAuthentication)(noContentHandler())
+	refreshHandler := limiter.MiddlewareFor(RouteRefresh)(noContentHandler())
+	mutationHandler := limiter.MiddlewareFor(RouteCommand)(noContentHandler())
 
-	first := serveRateLimitedRequest(handler, http.MethodPost, "/api/v1/auth/login", "192.0.2.11:1234")
+	first := serveRateLimitedRequest(authenticationHandler, http.MethodPost, "/api/v1/auth/login", "192.0.2.11:1234")
 	if first.Code != http.StatusNoContent {
 		t.Fatalf("first auth status = %d, want %d", first.Code, http.StatusNoContent)
 	}
-	second := serveRateLimitedRequest(handler, http.MethodPost, "/api/v1/auth/login", "192.0.2.11:1234")
+	second := serveRateLimitedRequest(authenticationHandler, http.MethodPost, "/api/v1/auth/login", "192.0.2.11:1234")
 	if second.Code != http.StatusTooManyRequests {
 		t.Fatalf("second auth status = %d, want %d", second.Code, http.StatusTooManyRequests)
 	}
 
-	refresh := serveRateLimitedRequest(handler, http.MethodPost, "/api/v1/auth/refresh", "192.0.2.11:1234")
+	refresh := serveRateLimitedRequest(refreshHandler, http.MethodPost, "/api/v1/auth/refresh", "192.0.2.11:1234")
 	if refresh.Code != http.StatusNoContent {
 		t.Fatalf("first refresh status = %d, want %d", refresh.Code, http.StatusNoContent)
 	}
-	secondRefresh := serveRateLimitedRequest(handler, http.MethodPost, "/api/v1/auth/refresh", "192.0.2.11:1234")
+	secondRefresh := serveRateLimitedRequest(refreshHandler, http.MethodPost, "/api/v1/auth/refresh", "192.0.2.11:1234")
 	if secondRefresh.Code != http.StatusTooManyRequests {
 		t.Fatalf("second refresh status = %d, want %d", secondRefresh.Code, http.StatusTooManyRequests)
 	}
 
-	mutation := serveRateLimitedRequest(handler, http.MethodPost, "/api/v1/rides", "192.0.2.11:1234")
+	mutation := serveRateLimitedRequest(mutationHandler, http.MethodPost, "/api/v1/rides", "192.0.2.11:1234")
 	if mutation.Code != http.StatusNoContent {
 		t.Fatalf("mutation status = %d, want independent bucket", mutation.Code)
 	}
@@ -89,7 +100,7 @@ func TestRateLimiterUsesSeparateAuthenticationLimit(t *testing.T) {
 func TestRateLimiterProtectsFareCalculationRequests(t *testing.T) {
 	config := DefaultRateLimitConfig()
 	config.Fare = 1
-	handler := newTestRateLimiter(NewMemoryCounterStore(), config).Middleware(noContentHandler())
+	handler := newTestRateLimiter(NewMemoryCounterStore(), config).MiddlewareFor(RouteFareQuery)(noContentHandler())
 
 	first := serveRateLimitedRequest(handler, http.MethodPost, "/api/v1/bids/fare", "192.0.2.12:1234")
 	if first.Code != http.StatusNoContent {
@@ -109,11 +120,13 @@ func TestRateLimiterKeepsTelemetrySeparateFromMutations(t *testing.T) {
 	config := DefaultRateLimitConfig()
 	config.Telemetry = 1
 	config.Mutation = 1
-	handler := newTestRateLimiter(NewMemoryCounterStore(), config).Middleware(noContentHandler())
+	limiter := newTestRateLimiter(NewMemoryCounterStore(), config)
+	telemetryHandler := limiter.MiddlewareFor(RouteTelemetry)(noContentHandler())
+	mutationHandler := limiter.MiddlewareFor(RouteCommand)(noContentHandler())
 	remoteAddr := "192.0.2.13:1234"
 
 	telemetryResponse := serveRateLimitedRequest(
-		handler,
+		telemetryHandler,
 		http.MethodPost,
 		"/api/v1/telemetry/location",
 		remoteAddr,
@@ -122,7 +135,7 @@ func TestRateLimiterKeepsTelemetrySeparateFromMutations(t *testing.T) {
 		t.Fatalf("telemetry status = %d", telemetryResponse.Code)
 	}
 	mutationResponse := serveRateLimitedRequest(
-		handler,
+		mutationHandler,
 		http.MethodPost,
 		"/api/v1/rides",
 		remoteAddr,
@@ -131,7 +144,7 @@ func TestRateLimiterKeepsTelemetrySeparateFromMutations(t *testing.T) {
 		t.Fatalf("mutation status = %d", mutationResponse.Code)
 	}
 	secondTelemetryResponse := serveRateLimitedRequest(
-		handler,
+		telemetryHandler,
 		http.MethodPost,
 		"/api/v1/telemetry/location",
 		remoteAddr,
@@ -153,27 +166,27 @@ func TestRateLimiterClassifiesEveryWorkload(t *testing.T) {
 		Read:           77,
 		Window:         time.Minute,
 	}
-	handler := newTestRateLimiter(NewMemoryCounterStore(), config).Middleware(noContentHandler())
+	limiter := newTestRateLimiter(NewMemoryCounterStore(), config)
 	for _, test := range []struct {
 		name   string
+		policy RoutePolicy
 		method string
-		path   string
 		limit  string
 	}{
-		{name: "authentication", method: http.MethodPost, path: "/api/v1/auth/login", limit: "11"},
-		{name: "password reset request", method: http.MethodPost, path: "/api/v1/auth/passenger/forgot-password", limit: "11"},
-		{name: "refresh", method: http.MethodPost, path: "/api/v1/auth/refresh", limit: "12"},
-		{name: "location", method: http.MethodGet, path: "/api/v1/location/search", limit: "22"},
-		{name: "fare", method: http.MethodPost, path: "/api/v1/fares/estimate", limit: "33"},
-		{name: "canonical document upload", method: http.MethodPost, path: "/api/v1/drivers/me/documents", limit: "66"},
-		{name: "typed document upload", method: http.MethodPost, path: "/api/v1/drivers/me/documents/driver_license", limit: "66"},
-		{name: "connection", method: http.MethodGet, path: "/api/v1/realtime/ws", limit: "44"},
-		{name: "telemetry", method: http.MethodPost, path: "/api/v1/telemetry/location", limit: "55"},
-		{name: "mutation", method: http.MethodPost, path: "/api/v1/rides", limit: "66"},
-		{name: "read", method: http.MethodGet, path: "/api/v1/rides/1", limit: "77"},
+		{name: "authentication", policy: RouteAuthentication, method: http.MethodPost, limit: "11"},
+		{name: "refresh", policy: RouteRefresh, method: http.MethodPost, limit: "12"},
+		{name: "location", policy: RouteLocationQuery, method: http.MethodGet, limit: "22"},
+		{name: "fare", policy: RouteFareQuery, method: http.MethodPost, limit: "33"},
+		{name: "document upload", policy: RouteDocumentUpload, method: http.MethodPost, limit: "66"},
+		{name: "online presence", policy: RouteOnlinePresence, method: http.MethodPost, limit: "66"},
+		{name: "connection", policy: RouteRealtimeConnection, method: http.MethodGet, limit: "44"},
+		{name: "telemetry", policy: RouteTelemetry, method: http.MethodPost, limit: "55"},
+		{name: "mutation", policy: RouteCommand, method: http.MethodPost, limit: "66"},
+		{name: "read", policy: RouteRead, method: http.MethodGet, limit: "77"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			response := serveRateLimitedRequest(handler, test.method, test.path, "192.0.2.18:1234")
+			handler := limiter.MiddlewareFor(test.policy)(noContentHandler())
+			response := serveRateLimitedRequest(handler, test.method, "/route", "192.0.2.18:1234")
 			if value := response.Header().Get("X-RateLimit-Limit"); value != test.limit {
 				t.Fatalf("limit = %q, want %q", value, test.limit)
 			}
@@ -184,7 +197,7 @@ func TestRateLimiterClassifiesEveryWorkload(t *testing.T) {
 func TestRateLimiterDoesNotTrustRawForwardedAddress(t *testing.T) {
 	config := DefaultRateLimitConfig()
 	config.Read = 1
-	handler := newTestRateLimiter(NewMemoryCounterStore(), config).Middleware(noContentHandler())
+	handler := newTestRateLimiter(NewMemoryCounterStore(), config).MiddlewareFor(RouteRead)(noContentHandler())
 
 	firstRequest := httptest.NewRequest(http.MethodGet, "/api/v1/rides/1", nil)
 	firstRequest.RemoteAddr = "192.0.2.14:1234"
@@ -204,7 +217,7 @@ func TestRateLimiterDoesNotTrustRawForwardedAddress(t *testing.T) {
 
 func TestRateLimiterFailsClosedForPublicProtection(t *testing.T) {
 	called := false
-	handler := newTestRateLimiter(failingCounterStore{}, DefaultRateLimitConfig()).Middleware(
+	handler := newTestRateLimiter(failingCounterStore{}, DefaultRateLimitConfig()).MiddlewareFor(RouteAuthentication)(
 		http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
 			called = true
 		}),
@@ -221,16 +234,16 @@ func TestRateLimiterFailsClosedForPublicProtection(t *testing.T) {
 func TestRateLimiterFailsOpenForAuthenticatedTraffic(t *testing.T) {
 	for _, test := range []struct {
 		name   string
+		policy RoutePolicy
 		method string
-		path   string
 	}{
-		{name: "telemetry", method: http.MethodPost, path: "/api/v1/telemetry/location"},
-		{name: "command", method: http.MethodPost, path: "/api/v1/rides"},
-		{name: "read", method: http.MethodGet, path: "/api/v1/rides/1"},
+		{name: "telemetry", policy: RouteTelemetry, method: http.MethodPost},
+		{name: "command", policy: RouteCommand, method: http.MethodPost},
+		{name: "read", policy: RouteRead, method: http.MethodGet},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			handler := newTestRateLimiter(failingCounterStore{}, DefaultRateLimitConfig()).Middleware(noContentHandler())
-			response := serveRateLimitedRequest(handler, test.method, test.path, "192.0.2.16:1234")
+			handler := newTestRateLimiter(failingCounterStore{}, DefaultRateLimitConfig()).MiddlewareFor(test.policy)(noContentHandler())
+			response := serveRateLimitedRequest(handler, test.method, "/route", "192.0.2.16:1234")
 			if response.Code != http.StatusNoContent {
 				t.Fatalf("status = %d, want request to continue", response.Code)
 			}
@@ -239,16 +252,19 @@ func TestRateLimiterFailsOpenForAuthenticatedTraffic(t *testing.T) {
 }
 
 func TestRateLimiterBypassesHealthAndPreflight(t *testing.T) {
-	handler := newTestRateLimiter(failingCounterStore{}, DefaultRateLimitConfig()).Middleware(noContentHandler())
+	limiter := newTestRateLimiter(failingCounterStore{}, DefaultRateLimitConfig())
 	for _, request := range []struct {
 		method string
 		path   string
 	}{
 		{method: http.MethodGet, path: "/health"},
-		{method: http.MethodGet, path: "/healthz"},
-		{method: http.MethodGet, path: "/readyz"},
 		{method: http.MethodOptions, path: "/api/v1/auth/login"},
 	} {
+		policy := RouteDefault
+		if request.path == "/health" {
+			policy = RouteHealth
+		}
+		handler := limiter.MiddlewareFor(policy)(noContentHandler())
 		response := serveRateLimitedRequest(handler, request.method, request.path, "192.0.2.17:1234")
 		if response.Code != http.StatusNoContent {
 			t.Fatalf("%s %s status = %d", request.method, request.path, response.Code)

@@ -177,13 +177,40 @@ func RateLimitConfigFrom(getenv func(string) string) RateLimitConfig {
 }
 
 func (limiter *RateLimiter) Middleware(next http.Handler) http.Handler {
+	return limiter.MiddlewareFor(RouteDefault)(next)
+}
+
+func (limiter *RateLimiter) MiddlewareFor(routePolicy RoutePolicy) func(http.Handler) http.Handler {
+	if routePolicy == RouteDefault {
+		return func(next http.Handler) http.Handler {
+			readHandler := limiter.policyMiddleware(RouteRead, next)
+			commandHandler := limiter.policyMiddleware(RouteCommand, next)
+			return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+				if isStateChangingMethod(request.Method) {
+					commandHandler.ServeHTTP(writer, request)
+					return
+				}
+				readHandler.ServeHTTP(writer, request)
+			})
+		}
+	}
+	return func(next http.Handler) http.Handler {
+		return limiter.policyMiddleware(routePolicy, next)
+	}
+}
+
+func (limiter *RateLimiter) policyMiddleware(routePolicy RoutePolicy, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		if limiter == nil || limiter.store == nil {
 			next.ServeHTTP(writer, request)
 			return
 		}
 
-		policy, enabled := limiter.policy(request)
+		if request.Method == http.MethodOptions {
+			next.ServeHTTP(writer, request)
+			return
+		}
+		policy, enabled := limiter.policy(routePolicy)
 		if !enabled {
 			next.ServeHTTP(writer, request)
 			return
@@ -224,29 +251,28 @@ type rateLimitPolicy struct {
 	failClosed bool
 }
 
-func (limiter *RateLimiter) policy(request *http.Request) (rateLimitPolicy, bool) {
-	if request.Method == http.MethodOptions {
+func (limiter *RateLimiter) policy(routePolicy RoutePolicy) (rateLimitPolicy, bool) {
+	switch routePolicy {
+	case RouteHealth:
 		return rateLimitPolicy{}, false
-	}
-	switch classifyEndpoint(request) {
-	case _endpointHealth:
-		return rateLimitPolicy{}, false
-	case _endpointAuthentication:
+	case RouteAuthentication:
 		return rateLimitPolicy{scope: "authentication", limit: limiter.config.Authentication, failClosed: true}, true
-	case _endpointRefresh:
+	case RouteRefresh:
 		return rateLimitPolicy{scope: "refresh", limit: limiter.config.Refresh, failClosed: true}, true
-	case _endpointLocationQuery:
+	case RouteLocationQuery:
 		return rateLimitPolicy{scope: "location", limit: limiter.config.Location, failClosed: true}, true
-	case _endpointFareQuery:
+	case RouteFareQuery:
 		return rateLimitPolicy{scope: "fare", limit: limiter.config.Fare, failClosed: true}, true
-	case _endpointRealtimeConnection:
+	case RouteRealtimeConnection:
 		return rateLimitPolicy{scope: "connection", limit: limiter.config.Connection, failClosed: true}, true
-	case _endpointTelemetry:
+	case RouteTelemetry:
 		return rateLimitPolicy{scope: "telemetry", limit: limiter.config.Telemetry}, true
-	case _endpointCommand, _endpointDocumentUpload, _endpointOnlinePresence:
+	case RouteCommand, RouteDocumentUpload, RouteOnlinePresence:
 		return rateLimitPolicy{scope: "mutation", limit: limiter.config.Mutation}, true
-	default:
+	case RouteRead:
 		return rateLimitPolicy{scope: "read", limit: limiter.config.Read}, true
+	default:
+		return rateLimitPolicy{}, false
 	}
 }
 

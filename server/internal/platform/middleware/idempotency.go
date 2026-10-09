@@ -270,7 +270,7 @@ func (idempotency *Idempotency) Middleware(next http.Handler) http.Handler {
 			next.ServeHTTP(writer, request)
 			return
 		}
-		if idempotency.store == nil || !supportsIdempotency(request) {
+		if idempotency.store == nil || !isStateChangingMethod(request.Method) {
 			next.ServeHTTP(writer, request)
 			return
 		}
@@ -446,10 +446,6 @@ func replayIdempotentResponse(writer http.ResponseWriter, encoded []byte, finger
 	if _, err := writer.Write(response.Body); err != nil {
 		slog.Debug("replay idempotent response failed", "error", err)
 	}
-}
-
-func supportsIdempotency(request *http.Request) bool {
-	return classifyEndpoint(request) == _endpointCommand
 }
 
 func authorizationScope(request *http.Request) string {

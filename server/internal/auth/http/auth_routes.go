@@ -15,13 +15,15 @@ import (
 type Router struct {
 	handler              *Handler
 	otpVerificationLimit *OTPVerificationRateLimiter
+	routeSecurity        *middleware.RouteSecurity
 }
 
 type RouterDependencies struct {
-	Register     *registration.RegisterService
-	Authenticate *authentication.AuthenticateService
-	OTP          *verification.OTPService
-	Verifier     *security.TokenManager
+	Register      *registration.RegisterService
+	Authenticate  *authentication.AuthenticateService
+	OTP           *verification.OTPService
+	Verifier      *security.TokenManager
+	RouteSecurity *middleware.RouteSecurity
 }
 
 type RouterOption func(*Router)
@@ -45,6 +47,7 @@ func NewRouter(
 			OTP:          dependencies.OTP,
 			Verifier:     dependencies.Verifier,
 		}),
+		routeSecurity: dependencies.RouteSecurity,
 	}
 	for _, option := range options {
 		if option != nil {
@@ -57,51 +60,54 @@ func NewRouter(
 func (router *Router) RegisterRoutes(mux chi.Router) {
 	registerPath := api.V1Prefix + "/auth/register"
 	loginPath := api.V1Prefix + "/auth/login"
-	mux.Post(registerPath, router.handler.GenericRegister)
-	mux.Post(loginPath, router.handler.Login)
-	mux.With(middleware.Deprecation(registerPath)).Post(
+	authentication := router.routeSecurity.Middleware(middleware.RouteAuthentication)
+	refresh := router.routeSecurity.Middleware(middleware.RouteRefresh)
+	command := router.routeSecurity.Middleware(middleware.RouteCommand)
+	mux.With(authentication).Post(registerPath, router.handler.GenericRegister)
+	mux.With(authentication).Post(loginPath, router.handler.Login)
+	mux.With(authentication, middleware.Deprecation(registerPath)).Post(
 		api.V1Prefix+"/auth/passenger/register",
 		router.handler.PassengerRegister,
 	)
-	mux.With(middleware.Deprecation(registerPath)).Post(
+	mux.With(authentication, middleware.Deprecation(registerPath)).Post(
 		api.V1Prefix+"/auth/driver/register",
 		router.handler.DriverRegister,
 	)
-	mux.With(middleware.Deprecation(loginPath)).Post(
+	mux.With(authentication, middleware.Deprecation(loginPath)).Post(
 		api.V1Prefix+"/auth/passenger/login",
 		router.handler.PassengerLogin,
 	)
-	mux.With(middleware.Deprecation(loginPath)).Post(
+	mux.With(authentication, middleware.Deprecation(loginPath)).Post(
 		api.V1Prefix+"/auth/driver/login",
 		router.handler.DriverLogin,
 	)
-	mux.Post(api.V1Prefix+"/auth/refresh", router.handler.RefreshToken)
-	mux.Post(api.V1Prefix+"/auth/logout", router.handler.Logout)
-	mux.Post(api.V1Prefix+"/auth/passenger/otp", router.handler.RequestOTP)
-	mux.Method(
+	mux.With(refresh).Post(api.V1Prefix+"/auth/refresh", router.handler.RefreshToken)
+	mux.With(authentication).Post(api.V1Prefix+"/auth/logout", router.handler.Logout)
+	mux.With(authentication).Post(api.V1Prefix+"/auth/passenger/otp", router.handler.RequestOTP)
+	mux.With(authentication).Method(
 		http.MethodPost,
 		api.V1Prefix+"/auth/passenger/verify-otp",
 		router.limitOTPAttempts(router.handler.VerifyOTP),
 	)
-	mux.Post(api.V1Prefix+"/auth/passenger/forgot-password", router.handler.ForgotPassword)
-	mux.Method(
+	mux.With(authentication).Post(api.V1Prefix+"/auth/passenger/forgot-password", router.handler.ForgotPassword)
+	mux.With(authentication).Method(
 		http.MethodPost,
 		api.V1Prefix+"/auth/passenger/reset-password",
 		router.limitOTPAttempts(router.handler.ResetPassword),
 	)
-	mux.Post(api.V1Prefix+"/auth/driver/forgot-password", router.handler.DriverForgotPassword)
-	mux.Method(
+	mux.With(authentication).Post(api.V1Prefix+"/auth/driver/forgot-password", router.handler.DriverForgotPassword)
+	mux.With(authentication).Method(
 		http.MethodPost,
 		api.V1Prefix+"/auth/driver/reset-password",
 		router.limitOTPAttempts(router.handler.DriverResetPassword),
 	)
 	protected := middleware.RequireAuth(router.handler.verifier)
-	mux.With(protected).Method(
+	mux.With(command, protected).Method(
 		http.MethodPost,
 		api.V1Prefix+"/users/me/email/request",
 		router.limitOTPAttempts(router.handler.RequestEmailChange),
 	)
-	mux.With(protected).Method(
+	mux.With(command, protected).Method(
 		http.MethodPost,
 		api.V1Prefix+"/users/me/email/confirm",
 		router.limitOTPAttempts(router.handler.ConfirmEmailChange),

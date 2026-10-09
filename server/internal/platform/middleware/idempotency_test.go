@@ -59,10 +59,12 @@ func TestMemoryIdempotencyStoreOnlyReleasesTheCurrentLockOwner(t *testing.T) {
 
 func TestIdempotencyReplaysSuccessfulResponse(t *testing.T) {
 	var calls atomic.Int32
-	handler := newTestIdempotency(
+	idempotency := newTestIdempotency(
 		NewMemoryIdempotencyStore(),
 		WithIdempotencyExpiration(time.Minute),
-	).Middleware(
+	)
+	security := NewRouteSecurity(RouteSecurityDependencies{Idempotency: idempotency})
+	handler := security.Middleware(RouteCommand)(
 		http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
 			calls.Add(1)
 			writer.Header().Set("Content-Type", "application/json")
@@ -134,10 +136,12 @@ func TestIdempotencyFailsClosedWhenStoreIsUnavailable(t *testing.T) {
 
 func TestIdempotencySkipsHighThroughputTelemetryUpdates(t *testing.T) {
 	var calls atomic.Int32
-	handler := newTestIdempotency(
+	idempotency := newTestIdempotency(
 		NewMemoryIdempotencyStore(),
 		WithIdempotencyExpiration(time.Minute),
-	).Middleware(
+	)
+	security := NewRouteSecurity(RouteSecurityDependencies{Idempotency: idempotency})
+	handler := security.Middleware(RouteTelemetry)(
 		http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
 			calls.Add(1)
 			writer.WriteHeader(http.StatusAccepted)
@@ -162,32 +166,33 @@ func TestIdempotencySkipsHighThroughputTelemetryUpdates(t *testing.T) {
 	}
 }
 
-func TestIdempotencySkipsQueriesSensitiveAuthAndPresenceUpdates(t *testing.T) {
+func TestRoutePoliciesExcludeNonCommandRequestsFromIdempotency(t *testing.T) {
 	for _, test := range []struct {
-		name string
-		path string
+		name   string
+		policy RoutePolicy
+		method string
 	}{
-		{name: "authentication", path: "/api/v1/auth/login"},
-		{name: "location query", path: "/api/v1/location/route"},
-		{name: "fare query", path: "/api/v1/fares/estimate"},
-		{name: "document upload", path: "/api/v1/driver/documents"},
-		{name: "canonical document upload", path: "/api/v1/drivers/me/documents"},
-		{name: "typed document upload", path: "/api/v1/drivers/me/documents/driver_license"},
-		{name: "online presence", path: "/api/v1/drivers/12/online"},
+		{name: "authentication", policy: RouteAuthentication, method: http.MethodPost},
+		{name: "location query", policy: RouteLocationQuery, method: http.MethodPost},
+		{name: "fare query", policy: RouteFareQuery, method: http.MethodPost},
+		{name: "document upload", policy: RouteDocumentUpload, method: http.MethodPost},
+		{name: "online presence", policy: RouteOnlinePresence, method: http.MethodPost},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			var calls atomic.Int32
-			handler := newTestIdempotency(
+			idempotency := newTestIdempotency(
 				NewMemoryIdempotencyStore(),
 				WithIdempotencyExpiration(time.Minute),
-			).Middleware(
+			)
+			security := NewRouteSecurity(RouteSecurityDependencies{Idempotency: idempotency})
+			handler := security.Middleware(test.policy)(
 				http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
 					calls.Add(1)
 					writer.WriteHeader(http.StatusOK)
 				}),
 			)
 			for index := 0; index < 2; index++ {
-				request := httptest.NewRequest(http.MethodPost, test.path, strings.NewReader(`{"value":true}`))
+				request := httptest.NewRequest(test.method, "/route", strings.NewReader(`{"value":true}`))
 				request.Header.Set("Idempotency-Key", "excluded-request-key")
 				handler.ServeHTTP(httptest.NewRecorder(), request)
 			}

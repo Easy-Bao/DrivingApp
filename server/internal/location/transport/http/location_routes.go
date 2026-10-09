@@ -9,18 +9,29 @@ import (
 )
 
 type Router struct {
-	handler  *Handler
-	verifier *security.TokenManager
+	handler       *Handler
+	verifier      *security.TokenManager
+	routeSecurity *middleware.RouteSecurity
 }
 
-func NewRouter(service *application.LocationService, verifier *security.TokenManager) *Router {
-	return &Router{handler: NewHandler(service), verifier: verifier}
+func NewRouter(
+	service *application.LocationService,
+	verifier *security.TokenManager,
+	routeSecurity ...*middleware.RouteSecurity,
+) *Router {
+	var security *middleware.RouteSecurity
+	if len(routeSecurity) > 0 {
+		security = routeSecurity[0]
+	}
+	return &Router{handler: NewHandler(service), verifier: verifier, routeSecurity: security}
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {
-	mux.Get(api.V1Prefix+"/location/search", router.handler.Search)
-	mux.Get(api.V1Prefix+"/location/nearby", router.handler.Nearby)
-	mux.Get(api.V1Prefix+"/location/reverse", router.handler.Reverse)
-	mux.With(middleware.RequireAuth(router.verifier)).Post(api.V1Prefix+"/location/route", router.handler.Route)
-	mux.With(middleware.RequireAuth(router.verifier)).Post(api.V1Prefix+"/location/matrix", router.handler.Matrix)
+	locationPolicy := router.routeSecurity.Middleware(middleware.RouteLocationQuery)
+	authenticate := middleware.RequireAuth(router.verifier)
+	mux.With(locationPolicy).Get(api.V1Prefix+"/location/search", router.handler.Search)
+	mux.With(locationPolicy).Get(api.V1Prefix+"/location/nearby", router.handler.Nearby)
+	mux.With(locationPolicy).Get(api.V1Prefix+"/location/reverse", router.handler.Reverse)
+	mux.With(locationPolicy, authenticate).Post(api.V1Prefix+"/location/route", router.handler.Route)
+	mux.With(locationPolicy, authenticate).Post(api.V1Prefix+"/location/matrix", router.handler.Matrix)
 }

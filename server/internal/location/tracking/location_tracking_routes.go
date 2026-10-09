@@ -8,20 +8,24 @@ import (
 )
 
 type Router struct {
-	handler *Handler
-	auth    *security.TokenManager
+	handler       *Handler
+	auth          *security.TokenManager
+	routeSecurity *middleware.RouteSecurity
 }
 
 func NewRouter(dependencies Dependencies) *Router {
 	return &Router{
-		handler: NewHandler(dependencies),
-		auth:    dependencies.Auth,
+		handler:       NewHandler(dependencies),
+		auth:          dependencies.Auth,
+		routeSecurity: dependencies.RouteSecurity,
 	}
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {
-	mux.Group(func(protected chi.Router) {
-		protected.Use(middleware.RequireAuth(router.auth))
+	mux.With(
+		router.routeSecurity.Middleware(middleware.RouteTelemetry),
+		middleware.RequireAuth(router.auth),
+	).Group(func(protected chi.Router) {
 		driverOnly := middleware.RequireRole(security.RoleDriver)
 		passengerOnly := middleware.RequireRole(security.RolePassenger)
 		protected.With(driverOnly).Get(api.V1Prefix+"/telemetry/location/{driverID}", router.handler.GetDriverLocation)

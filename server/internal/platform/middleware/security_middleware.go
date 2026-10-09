@@ -42,31 +42,8 @@ func SecurityConfigFrom(getenv func(string) string) SecurityConfig {
 	}
 }
 
-func SecureHTTP(next http.Handler, config SecurityConfig, limiter *RateLimiter) http.Handler {
-	return SecureHTTPWithIdempotency(next, config, limiter, nil)
-}
-
-func SecureHTTPWithIdempotency(
-	next http.Handler,
-	config SecurityConfig,
-	limiter *RateLimiter,
-	idempotency *Idempotency,
-) http.Handler {
-	if config.JSONBodyLimit <= 0 {
-		config.JSONBodyLimit = _defaultJSONBodyLimit
-	}
-	if config.UploadBodyLimit <= 0 {
-		config.UploadBodyLimit = _defaultUploadBodyLimit
-	}
-
+func SecureHTTP(next http.Handler, config SecurityConfig) http.Handler {
 	handler := next
-	if limiter != nil {
-		handler = limiter.Middleware(handler)
-	}
-	if idempotency != nil {
-		handler = idempotency.Middleware(handler)
-	}
-	handler = RequestBodyLimit(config.JSONBodyLimit, config.UploadBodyLimit)(handler)
 	handler = RejectControlCharacters(handler)
 	handler = CORS(config.AllowedOrigins)(handler)
 	hstsMode := HSTSDisabled
@@ -75,6 +52,17 @@ func SecureHTTPWithIdempotency(
 	}
 	handler = SecurityHeaders(hstsMode)(handler)
 	return RequestID(handler)
+}
+
+func normalizedSecurityConfig(config SecurityConfig) SecurityConfig {
+	if config.JSONBodyLimit <= 0 {
+		config.JSONBodyLimit = _defaultJSONBodyLimit
+	}
+	if config.UploadBodyLimit <= 0 {
+		config.UploadBodyLimit = _defaultUploadBodyLimit
+	}
+
+	return config
 }
 
 func RequestID(next http.Handler) http.Handler {
@@ -100,6 +88,18 @@ func RequestIDFromRequest(request *http.Request) string {
 }
 
 func RequestBodyLimit(jsonLimit, uploadLimit int64) func(http.Handler) http.Handler {
+	return requestBodyLimit(jsonLimit, uploadLimit, false)
+}
+
+func DocumentUploadBodyLimit(jsonLimit, uploadLimit int64) func(http.Handler) http.Handler {
+	return requestBodyLimit(jsonLimit, uploadLimit, true)
+}
+
+func requestBodyLimit(jsonLimit, uploadLimit int64, documentUpload bool) func(http.Handler) http.Handler {
+	config := normalizedSecurityConfig(SecurityConfig{
+		JSONBodyLimit:   jsonLimit,
+		UploadBodyLimit: uploadLimit,
+	})
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			if request.Body == nil || request.Body == http.NoBody {
@@ -107,16 +107,15 @@ func RequestBodyLimit(jsonLimit, uploadLimit int64) func(http.Handler) http.Hand
 				return
 			}
 
-			limit := jsonLimit
+			limit := config.JSONBodyLimit
 			contentType := strings.ToLower(request.Header.Get("Content-Type"))
 			if strings.HasPrefix(contentType, "multipart/") {
-				limit = uploadLimit
-				if classifyEndpoint(request) == _endpointDocumentUpload &&
-					limit <= _maxInt64-_multipartEnvelopeLimit {
+				limit = config.UploadBodyLimit
+				if documentUpload && limit <= _maxInt64-_multipartEnvelopeLimit {
 					limit += _multipartEnvelopeLimit
 				}
-			} else if classifyEndpoint(request) == _endpointDocumentUpload {
-				limit = uploadLimit
+			} else if documentUpload {
+				limit = config.UploadBodyLimit
 			}
 			if request.ContentLength > limit {
 				writeSecurityError(writer, http.StatusRequestEntityTooLarge, "request body is too large")

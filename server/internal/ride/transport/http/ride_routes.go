@@ -1,6 +1,8 @@
 package http
 
 import (
+	"net/http"
+
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
@@ -8,67 +10,79 @@ import (
 )
 
 type Router struct {
-	handler  *Handler
-	verifier *security.TokenManager
+	handler       *Handler
+	verifier      *security.TokenManager
+	routeSecurity *middleware.RouteSecurity
 }
 
 func NewRouter(dependencies Dependencies) *Router {
 	return &Router{
-		handler:  NewHandler(dependencies),
-		verifier: dependencies.Verifier,
+		handler:       NewHandler(dependencies),
+		verifier:      dependencies.Verifier,
+		routeSecurity: dependencies.RouteSecurity,
 	}
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {
 	apiPrefix := api.V1Prefix
-	mux.With(middleware.Deprecation(apiPrefix + "/fares/estimate")).Post(
+	read := router.routeSecurity.Middleware(middleware.RouteRead)
+	fare := router.routeSecurity.Middleware(middleware.RouteFareQuery)
+	command := router.routeSecurity.Middleware(middleware.RouteCommand)
+	authenticate := middleware.RequireAuth(router.verifier)
+	passengerOnly := middleware.RequireRole(security.RolePassenger)
+	driverOnly := middleware.RequireRole(security.RoleDriver)
+	withAuthenticatedPolicy := func(
+		policy func(http.Handler) http.Handler,
+		guards ...func(http.Handler) http.Handler,
+	) chi.Router {
+		chain := []func(http.Handler) http.Handler{policy, authenticate}
+		chain = append(chain, guards...)
+		return mux.With(chain...)
+	}
+
+	mux.With(fare, middleware.Deprecation(apiPrefix+"/fares/estimate")).Post(
 		apiPrefix+"/bids/fare",
 		router.handler.Estimate,
 	)
-	mux.Get(apiPrefix+"/drivers/public/summaries", router.handler.PublicDriverSummaries)
-	mux.Post(apiPrefix+"/fares/estimate", router.handler.Estimate)
-	mux.Get(apiPrefix+"/fares/configs", router.handler.FareConfigs)
-	mux.Get(apiPrefix+"/fares/rating-config", router.handler.RatingConfig)
-	mux.Post(apiPrefix+"/fares/calculate-final", router.handler.CalculateFinal)
+	mux.With(read).Get(apiPrefix+"/drivers/public/summaries", router.handler.PublicDriverSummaries)
+	mux.With(fare).Post(apiPrefix+"/fares/estimate", router.handler.Estimate)
+	mux.With(read).Get(apiPrefix+"/fares/configs", router.handler.FareConfigs)
+	mux.With(read).Get(apiPrefix+"/fares/rating-config", router.handler.RatingConfig)
+	mux.With(fare).Post(apiPrefix+"/fares/calculate-final", router.handler.CalculateFinal)
 
-	mux.Group(func(protected chi.Router) {
-		protected.Use(middleware.RequireAuth(router.verifier))
-		passengerOnly := middleware.RequireRole(security.RolePassenger)
-		driverOnly := middleware.RequireRole(security.RoleDriver)
-		protected.Post(apiPrefix+"/rides/{id}/status", router.handler.UpdateStatus)
-		protected.Post(apiPrefix+"/rides/{id}/cancel", router.handler.CancelRide)
-		protected.Post(apiPrefix+"/rides/{id}/emergency-stop", router.handler.EmergencyStop)
-		protected.Post(apiPrefix+"/rides/{id}/reports", router.handler.CreateSafetyReport)
-		protected.Get(apiPrefix+"/rides/{id}", router.handler.GetRide)
-		protected.Get(apiPrefix+"/rides/{id}/counterparty", router.handler.Counterparty)
-		protected.Get(apiPrefix+"/bids/{sessionID}", router.handler.Session)
-		protected.Get(apiPrefix+"/drivers/{id}/reviews", router.handler.DriverReviews)
+	withAuthenticatedPolicy(command).Post(apiPrefix+"/rides/{id}/status", router.handler.UpdateStatus)
+	withAuthenticatedPolicy(command).Post(apiPrefix+"/rides/{id}/cancel", router.handler.CancelRide)
+	withAuthenticatedPolicy(command).Post(apiPrefix+"/rides/{id}/emergency-stop", router.handler.EmergencyStop)
+	withAuthenticatedPolicy(command).Post(apiPrefix+"/rides/{id}/reports", router.handler.CreateSafetyReport)
+	withAuthenticatedPolicy(read).Get(apiPrefix+"/rides/{id}", router.handler.GetRide)
+	withAuthenticatedPolicy(read).Get(apiPrefix+"/rides/{id}/counterparty", router.handler.Counterparty)
+	withAuthenticatedPolicy(read).Get(apiPrefix+"/bids/{sessionID}", router.handler.Session)
+	withAuthenticatedPolicy(read).Get(apiPrefix+"/drivers/{id}/reviews", router.handler.DriverReviews)
 
-		protected.With(passengerOnly).Post(apiPrefix+"/rides", router.handler.CreateRide)
-		protected.With(passengerOnly).Post(apiPrefix+"/bids", router.handler.CreateSession)
-		protected.With(passengerOnly).Get(apiPrefix+"/bids/{sessionID}/offers", router.handler.Offers)
-		protected.With(passengerOnly).Post(apiPrefix+"/bids/{sessionID}/offers/{offerID}/accept", router.handler.AcceptOffer)
-		protected.With(passengerOnly).Post(apiPrefix+"/bids/{sessionID}/cancel", router.handler.CancelSession)
-		protected.With(passengerOnly).Get(apiPrefix+"/passengers/{id}/rides", router.handler.PassengerRides)
-		protected.With(passengerOnly).Get(
-			apiPrefix+"/passengers/{id}/activity-summary",
-			router.handler.PassengerActivitySummary,
-		)
-		protected.With(passengerOnly).Get(apiPrefix+"/drivers/online", router.handler.OnlineDrivers)
-		protected.With(passengerOnly).Post(apiPrefix+"/drivers/{id}/reviews", router.handler.CreateReview)
+	withAuthenticatedPolicy(command, passengerOnly).Post(apiPrefix+"/rides", router.handler.CreateRide)
+	withAuthenticatedPolicy(command, passengerOnly).Post(apiPrefix+"/bids", router.handler.CreateSession)
+	withAuthenticatedPolicy(read, passengerOnly).Get(apiPrefix+"/bids/{sessionID}/offers", router.handler.Offers)
+	withAuthenticatedPolicy(command, passengerOnly).Post(apiPrefix+"/bids/{sessionID}/offers/{offerID}/accept", router.handler.AcceptOffer)
+	withAuthenticatedPolicy(command, passengerOnly).Post(apiPrefix+"/bids/{sessionID}/cancel", router.handler.CancelSession)
+	withAuthenticatedPolicy(read, passengerOnly).Get(apiPrefix+"/passengers/{id}/rides", router.handler.PassengerRides)
+	withAuthenticatedPolicy(read, passengerOnly).Get(
+		apiPrefix+"/passengers/{id}/activity-summary",
+		router.handler.PassengerActivitySummary,
+	)
+	withAuthenticatedPolicy(read, passengerOnly).Get(apiPrefix+"/drivers/online", router.handler.OnlineDrivers)
+	withAuthenticatedPolicy(command, passengerOnly).Post(apiPrefix+"/drivers/{id}/reviews", router.handler.CreateReview)
 
-		protected.With(driverOnly).Post(apiPrefix+"/rides/{id}/accept", router.handler.AcceptRide)
-		protected.With(driverOnly).Post(apiPrefix+"/rides/{id}/arrived", router.handler.MarkArrived)
-		protected.With(driverOnly).Post(apiPrefix+"/rides/{id}/start", router.handler.StartTrip)
-		protected.With(driverOnly).Post(apiPrefix+"/rides/{id}/complete", router.handler.CompleteTrip)
-		protected.With(driverOnly).Post(apiPrefix+"/rides/{id}/no-show", router.handler.MarkPassengerNoShow)
-		protected.With(driverOnly).Post(apiPrefix+"/rides/{id}/cash-settle", router.handler.SettleCash)
-		protected.With(driverOnly).Get(apiPrefix+"/bids/active", router.handler.ActiveSessions)
-		protected.With(driverOnly).Post(apiPrefix+"/bids/{sessionID}/offer", router.handler.PlaceOffer)
-		protected.With(driverOnly).Post(apiPrefix+"/bids/{sessionID}/cancel-offer", router.handler.CancelOffer)
-		protected.With(driverOnly).Post(apiPrefix+"/passengers/{id}/reviews", router.handler.CreatePassengerReview)
-		protected.With(driverOnly).Get(apiPrefix+"/drivers/{id}/stats", router.handler.DriverStats)
-		protected.With(driverOnly).Get(apiPrefix+"/drivers/{id}/earnings", router.handler.DriverEarnings)
-		protected.With(driverOnly).Get(apiPrefix+"/drivers/{id}/trips", router.handler.DriverTrips)
-	})
+	withAuthenticatedPolicy(command, driverOnly).Post(apiPrefix+"/rides/{id}/accept", router.handler.AcceptRide)
+	withAuthenticatedPolicy(command, driverOnly).Post(apiPrefix+"/rides/{id}/arrived", router.handler.MarkArrived)
+	withAuthenticatedPolicy(command, driverOnly).Post(apiPrefix+"/rides/{id}/start", router.handler.StartTrip)
+	withAuthenticatedPolicy(command, driverOnly).Post(apiPrefix+"/rides/{id}/complete", router.handler.CompleteTrip)
+	withAuthenticatedPolicy(command, driverOnly).Post(apiPrefix+"/rides/{id}/no-show", router.handler.MarkPassengerNoShow)
+	withAuthenticatedPolicy(command, driverOnly).Post(apiPrefix+"/rides/{id}/cash-settle", router.handler.SettleCash)
+	withAuthenticatedPolicy(read, driverOnly).Get(apiPrefix+"/bids/active", router.handler.ActiveSessions)
+	withAuthenticatedPolicy(command, driverOnly).Post(apiPrefix+"/bids/{sessionID}/offer", router.handler.PlaceOffer)
+	withAuthenticatedPolicy(command, driverOnly).Post(apiPrefix+"/bids/{sessionID}/cancel-offer", router.handler.CancelOffer)
+	withAuthenticatedPolicy(command, driverOnly).Post(apiPrefix+"/passengers/{id}/reviews", router.handler.CreatePassengerReview)
+	withAuthenticatedPolicy(read, driverOnly).Get(apiPrefix+"/drivers/{id}/stats", router.handler.DriverStats)
+	withAuthenticatedPolicy(read, driverOnly).Get(apiPrefix+"/drivers/{id}/earnings", router.handler.DriverEarnings)
+	withAuthenticatedPolicy(read, driverOnly).Get(apiPrefix+"/drivers/{id}/trips", router.handler.DriverTrips)
 }

@@ -17,8 +17,9 @@ type Handler struct {
 }
 
 type Dependencies struct {
-	Query    Query
-	Verifier *security.TokenManager
+	Query         Query
+	Verifier      *security.TokenManager
+	RouteSecurity *middleware.RouteSecurity
 }
 
 func NewHandler(dependencies Dependencies) *Handler {

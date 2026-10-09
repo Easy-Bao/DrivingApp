@@ -22,8 +22,9 @@ type Handler struct {
 }
 
 type Dependencies struct {
-	Service  *application.RideService
-	Verifier *security.TokenManager
+	Service       *application.RideService
+	Verifier      *security.TokenManager
+	RouteSecurity *middleware.RouteSecurity
 }
 
 func NewHandler(dependencies Dependencies) *Handler {
