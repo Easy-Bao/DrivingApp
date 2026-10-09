@@ -47,6 +47,25 @@ services:
       timeout: 5s
       retries: 12
 
+  minio:
+    container_name: minio
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    restart: always
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-driveapp}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-driveapp-local-only-secret}
+    ports:
+      - "127.0.0.1:${MINIO_HOST_PORT:-9000}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_HOST_PORT:-9001}:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9000/minio/health/ready || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   migrate:
     build:
       context: .
@@ -73,6 +92,12 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       MAPBOX_ACCESS_TOKEN: ${MAPBOX_ACCESS_TOKEN-}
       REDIS_URL: redis://redis:${REDIS_PORT}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-driveapp}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-driveapp-local-only-secret}
+      MINIO_BUCKET: ${MINIO_BUCKET:-private-objects}
+      MINIO_USE_SSL: ${MINIO_USE_SSL:-false}
+      MINIO_WRITE_ENABLED: ${MINIO_WRITE_ENABLED:-false}
       MAIL_HOST: ${MAIL_HOST-}
       MAIL_PORT: ${MAIL_PORT}
       MAIL_USERNAME: ${MAIL_USERNAME-}
@@ -112,10 +137,41 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      minio:
+        condition: service_healthy
       migrate:
         condition: service_completed_successfully
     ports:
       - "${GATEWAY_HOST:-127.0.0.1}:${GATEWAY_PORT}:${API_PORT}"
+
+  objectstorage-migrate:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    restart: "no"
+    entrypoint: ["/app/objectstorage-migrate"]
+    profiles: ["ops"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-driveapp}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-driveapp-local-only-secret}
+      MINIO_BUCKET: ${MINIO_BUCKET:-private-objects}
+      MINIO_USE_SSL: ${MINIO_USE_SSL:-false}
+      MINIO_WRITE_ENABLED: "false"
+      POSTGRES_MAX_OPEN_CONNECTIONS: ${POSTGRES_MAX_OPEN_CONNECTIONS-}
+      POSTGRES_MIN_CONNECTIONS: ${POSTGRES_MIN_CONNECTIONS-}
+      POSTGRES_MIN_IDLE_CONNECTIONS: ${POSTGRES_MIN_IDLE_CONNECTIONS-}
+      POSTGRES_CONNECTION_MAX_LIFETIME: ${POSTGRES_CONNECTION_MAX_LIFETIME-}
+      POSTGRES_CONNECTION_MAX_IDLE_TIME: ${POSTGRES_CONNECTION_MAX_IDLE_TIME-}
+      POSTGRES_PING_TIMEOUT: ${POSTGRES_PING_TIMEOUT-}
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      minio:
+        condition: service_healthy
 
   admin-app:
     build:
@@ -135,3 +191,4 @@ services:
 volumes:
   postgres-data:
   redis-data:
+  minio-data:

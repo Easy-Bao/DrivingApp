@@ -5,9 +5,11 @@ RUN go mod download
 COPY server ./
 RUN CGO_ENABLED=0 go build -o /out/api ./internal/cmd/api
 RUN CGO_ENABLED=0 go build -o /out/migrate ./internal/cmd/migrate
+RUN CGO_ENABLED=0 go build -o /out/objectstorage-migrate ./internal/cmd/objectstorage-migrate
 
 FROM gcr.io/distroless/static-debian12
 COPY --from=build /out/api /app/api
 COPY --from=build /out/migrate /app/migrate
+COPY --from=build /out/objectstorage-migrate /app/objectstorage-migrate
 USER 65532:65532
 ENTRYPOINT ["/app/api"]

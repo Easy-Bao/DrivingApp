@@ -27,6 +27,7 @@ type Querier interface {
 	CreateDriverDocument(ctx context.Context, arg CreateDriverDocumentParams) (DriverDocument, error)
 	CreateDriverProfile(ctx context.Context, arg CreateDriverProfileParams) error
 	CreateDriverWalletAccount(ctx context.Context, arg CreateDriverWalletAccountParams) (DriverWalletAccount, error)
+	CreateExternalPrivateObject(ctx context.Context, arg CreateExternalPrivateObjectParams) error
 	CreatePassengerProfile(ctx context.Context, arg CreatePassengerProfileParams) error
 	CreatePassengerReview(ctx context.Context, arg CreatePassengerReviewParams) (PassengerReview, error)
 	CreatePrivateObject(ctx context.Context, arg CreatePrivateObjectParams) error
@@ -51,6 +52,7 @@ type Querier interface {
 	GetDriverProfileByUserIDFull(ctx context.Context, userID int32) (DriverProfile, error)
 	GetDriverStats(ctx context.Context, arg GetDriverStatsParams) (GetDriverStatsRow, error)
 	GetDriverWalletAccountForUpdate(ctx context.Context, driverID int32) (DriverWalletAccount, error)
+	GetNextPrivateObjectForExternalStorageMigration(ctx context.Context) (GetNextPrivateObjectForExternalStorageMigrationRow, error)
 	GetOnlineDriverProfileForBidding(ctx context.Context, arg GetOnlineDriverProfileForBiddingParams) (DriverProfile, error)
 	GetPassengerActivitySummary(ctx context.Context, arg GetPassengerActivitySummaryParams) (GetPassengerActivitySummaryRow, error)
 	GetPassengerName(ctx context.Context, passengerID int32) (string, error)
@@ -106,6 +108,7 @@ type Querier interface {
 	RevokeRefreshSession(ctx context.Context, arg RevokeRefreshSessionParams) error
 	RevokeRefreshSessionByID(ctx context.Context, arg RevokeRefreshSessionByIDParams) (int64, error)
 	RevokeUserRefreshSessions(ctx context.Context, arg RevokeUserRefreshSessionsParams) error
+	SetPrivateObjectExternalStorageKey(ctx context.Context, arg SetPrivateObjectExternalStorageKeyParams) (int64, error)
 	StartRide(ctx context.Context, arg StartRideParams) (Ride, error)
 	UpdateDriverOnlineStatus(ctx context.Context, arg UpdateDriverOnlineStatusParams) (DriverProfile, error)
 	UpdateDriverProfile(ctx context.Context, arg UpdateDriverProfileParams) (DriverProfile, error)

@@ -1,53 +1,34 @@
-# Architectural Roadmap: Object Storage Migration
+# Private Object Storage Migration
 
-This document outlines the planned phased migration from inline relational binary storage to dedicated cloud/distributed object storage (S3 / MinIO / Google Cloud Storage) for driver verification documents and private avatars.
+## Current rollout
 
----
+MinIO is the selected backend. `storage.ObjectStore` remains the feature boundary; the MinIO adapter stores new objects in the private bucket and keeps their key, MIME type, size, and SHA-256 in PostgreSQL. PostgreSQL-backed objects remain readable, and migrated objects continue to keep their original `BYTEA` copy for fallback.
 
-## 1. Current Architecture (Single-Process / Local Mode)
+The authenticated avatar and KYC endpoints still proxy bounded uploads through the API. They do not expose bucket URLs or MinIO credentials. Direct client uploads and pre-signed URLs would change the mobile API contract and are outside this migration.
 
-* **Storage Location**: PostgreSQL `private_objects` table (`content BYTEA`).
-* **Metadata Location**: `driver_documents` table (`storage_key`, `checksum_sha256`, `size_bytes`, `status`).
-* **Access Boundary**: Mediated strictly by backend services; no direct browser/client access.
-* **Limitations at Scale**:
-  - Binary payloads (up to 10MB per KYC document) inflate PostgreSQL write-ahead logs (WAL).
-  - Database backup snapshots become excessively large.
-  - Read queries for large documents evict hot relational rows from the PostgreSQL buffer pool (`shared_buffers`).
+## Rollout steps
 
----
+1. Apply `2026100913_private_objects_external_storage` and deploy the API with MinIO configured and `MINIO_WRITE_ENABLED=false`. During a rolling deployment, this keeps writes readable by older API instances.
+2. After all PostgreSQL-only API instances are stopped, set `MINIO_WRITE_ENABLED=true`. New objects are then stored in MinIO with metadata in PostgreSQL.
+3. Copy legacy objects after the application rollout:
 
-## 2. Target Scaled Architecture (S3 / MinIO Object Storage)
+   ```sh
+   docker compose --profile ops run --rm objectstorage-migrate
+   ```
 
-```
-┌─────────────────┐       1. Request Upload URL        ┌─────────────────────────┐
-│  Mobile Client  ├───────────────────────────────────►│  Backend API Gateway   │
-│ (Passenger/     │                                    │  (Validates KYC Scope)  │
-│  Driver App)    │◄───────────────────────────────────┤                         │
-└────────┬────────┘       2. Pre-signed PUT URL        └───────────┬─────────────┘
-         │                                                         │
-         │ 3. Direct Binary Upload (S3/MinIO)                      │ 4. Persist
-         ▼                                                         │    Metadata
-┌─────────────────────────┐                                        ▼
-│  S3 / MinIO Bucket      │                              ┌───────────────────┐
-│ (Encrypted at Rest,     │◄─────────────────────────────┤  PostgreSQL 16    │
-│  Private Bucket Access) │   Verify Checksum on Review  │ (Metadata Only,   │
-└─────────────────────────┘                              │  Zero BYTEA Blobs)│
-                                                         └───────────────────┘
-```
+   The command processes one object at a time, validates its PostgreSQL size, MIME type, and checksum, copies it under the same key, reads it back, verifies the copy, and only then records the external key. It is safe to rerun after interruption. The original PostgreSQL bytes remain as a fallback.
+4. Check migration progress with:
 
----
+   ```sql
+   SELECT count(*)
+   FROM private_objects
+   WHERE external_storage_key IS NULL;
+   ```
 
-## 3. Phased Migration Plan
+   Run this after new writes have been switched to MinIO and the copy command has completed.
 
-### Phase A: Adapter Seam Preservation
-- The outbound port `ObjectStore` interface in `internal/platform/storage/object_store.go` remains the single contract.
-- Introduce an `s3` adapter implementing `ObjectStore` alongside the current `postgres` adapter.
+## Data retention and rollback
 
-### Phase B: Schema Transition
-1. Introduce bucket URI / external key column to `private_objects` (or `driver_documents`).
-2. Dual-write or direct upload: New document uploads stream to S3/MinIO; historical objects read from PostgreSQL fallback.
-3. Background worker syncs historical binary rows to object storage.
+This rollout adds an external key and makes `content` nullable so MinIO-only writes can be represented. It does not drop the `content` column or clear legacy bytes. The down migration refuses to run while any row has no PostgreSQL copy. Removing `BYTEA` is a separate contraction and requires separate authorization after external copies have been verified and the rollback window has closed.
 
-### Phase C: Dropping Binary Blobs
-- Execute an additive database migration to drop the `content BYTEA` column from `private_objects`.
-- Reclaim table disk space via `VACUUM FULL`.
+The application prefers a verified MinIO read when an external key exists. If MinIO is unavailable or the external copy fails integrity checks, it uses the retained PostgreSQL copy when one exists. MinIO-only objects return an error when the external object is unavailable.

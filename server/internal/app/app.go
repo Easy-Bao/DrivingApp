@@ -15,7 +15,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/logger"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	redisplatform "github.com/Easy-Bao/DrivingApp/server/internal/platform/redis"
-	storagepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage/postgres"
+	miniostorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage/minio"
 	websockethub "github.com/Easy-Bao/DrivingApp/server/internal/platform/websocket"
 	ridepostgres "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/postgres"
 	userpostgres "github.com/Easy-Bao/DrivingApp/server/internal/user/adapter/postgres"
@@ -88,9 +88,9 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create driver document store: %w", err)
 	}
-	privateObjectStore, err := storagepostgres.NewObjectStore(postgresPool)
+	privateObjectStore, err := miniostorage.NewObjectStore(ctx, postgresPool, config.MinIO)
 	if err != nil {
-		return nil, fmt.Errorf("create private object store: %w", err)
+		return nil, fmt.Errorf("create MinIO private object store: %w", err)
 	}
 	profileStore, err := userpostgres.NewProfileStore(userpostgres.ProfileRepositoryDependencies{
 		Pool:          postgresPool,

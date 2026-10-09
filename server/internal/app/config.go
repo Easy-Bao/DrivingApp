@@ -13,6 +13,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
+	miniostorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage/minio"
 	rideconfig "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/config"
 	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
 	ridebidding "github.com/Easy-Bao/DrivingApp/server/internal/ride/bidding"
@@ -38,6 +39,7 @@ type Config struct {
 	RideLifecycle     ridelifecycle.Config
 	Bidding           ridebidding.Config
 	ReportingLocation *time.Location
+	MinIO             miniostorage.Config
 }
 
 func LoadConfig() (Config, error) {
@@ -53,6 +55,10 @@ func LoadConfig() (Config, error) {
 	redisURL, err := requiredEnv("REDIS_URL")
 	if err != nil {
 		return Config{}, fmt.Errorf("load redis URL: %w", err)
+	}
+	minioConfig, err := miniostorage.ConfigFromEnv(os.Getenv)
+	if err != nil {
+		return Config{}, fmt.Errorf("load MinIO configuration: %w", err)
 	}
 
 	port, err := requiredPortEnv("API_PORT")
@@ -91,6 +97,7 @@ func LoadConfig() (Config, error) {
 		RideLifecycle:     rideLifecycle,
 		Bidding:           bidding,
 		ReportingLocation: reportingLocation,
+		MinIO:             minioConfig,
 		RateLimits:        middleware.RateLimitConfigFrom(os.Getenv),
 		PostgresPool:      database.PostgresNativePoolConfigFrom(os.Getenv),
 		Mail:              email.ConfigFrom(os.Getenv),
