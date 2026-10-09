@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
-	authpassword "github.com/Easy-Bao/DrivingApp/server/internal/auth/password"
 	authports "github.com/Easy-Bao/DrivingApp/server/internal/auth/ports"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/session"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 )
 
 type RegisterInput struct {
@@ -189,7 +189,7 @@ func normalizeInput(input RegisterInput, role domain.Role) (normalizedRegistrati
 	if role == domain.Driver && (invalidVehicleType || invalidPlateNumber) {
 		return normalizedRegistration{}, domain.ErrInvalidCredentials
 	}
-	passwordHash, err := authpassword.Hash(input.Password)
+	passwordHash, err := security.HashPassword(input.Password)
 	if err != nil {
 		return normalizedRegistration{}, fmt.Errorf("hash registration password: %w", err)
 	}

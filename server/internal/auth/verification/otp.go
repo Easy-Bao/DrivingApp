@@ -14,10 +14,10 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
-	authpassword "github.com/Easy-Bao/DrivingApp/server/internal/auth/password"
 	authports "github.com/Easy-Bao/DrivingApp/server/internal/auth/ports"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/registration"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/session"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 )
 
 const _otpLifetime = 10 * time.Minute
@@ -286,7 +286,7 @@ func (service *OTPService) ResetPasswordForRole(
 	if err := service.sessions.RevokeAll(ctx, account.ID, time.Now().UTC()); err != nil {
 		return session.UnavailableError(err)
 	}
-	passwordHash, err := authpassword.Hash(password)
+	passwordHash, err := security.HashPassword(password)
 	if err != nil {
 		return fmt.Errorf("hash reset password: %w", err)
 	}
@@ -321,7 +321,7 @@ func (service *OTPService) RequestEmailChange(
 		}
 		return domain.ErrInvalidCredentials
 	}
-	if account.ID != userID || !account.IsVerified || !authpassword.Verify(account.PasswordHash, currentPassword) {
+	if account.ID != userID || !account.IsVerified || !security.VerifyPassword(account.PasswordHash, currentPassword) {
 		return domain.ErrInvalidCredentials
 	}
 	if strings.EqualFold(strings.TrimSpace(account.Email), newEmail) {

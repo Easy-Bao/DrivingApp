@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
-	authpassword "github.com/Easy-Bao/DrivingApp/server/internal/auth/password"
 	authports "github.com/Easy-Bao/DrivingApp/server/internal/auth/ports"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/session"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 )
 
 type AuthenticateService struct {
@@ -93,14 +93,14 @@ func (service *AuthenticateService) execute(
 		}
 		return domain.User{}, session.SessionTokens{}, domain.ErrInvalidCredentials
 	}
-	if !authpassword.Verify(account.PasswordHash, password) {
+	if !security.VerifyPassword(account.PasswordHash, password) {
 		return domain.User{}, session.SessionTokens{}, domain.ErrInvalidCredentials
 	}
 	if role != "" && account.Role != role {
 		return domain.User{}, session.SessionTokens{}, domain.ErrInvalidCredentials
 	}
-	if authpassword.IsLegacyHash(account.PasswordHash) {
-		upgradedHash, hashErr := authpassword.Hash(password)
+	if security.IsLegacyPasswordHash(account.PasswordHash) {
+		upgradedHash, hashErr := security.HashPassword(password)
 		if hashErr != nil {
 			service.log().WarnContext(ctx, "upgrade legacy password hash failed", "error", hashErr)
 		} else if err := service.repository.UpdatePassword(ctx, account.ID, upgradedHash); err != nil {

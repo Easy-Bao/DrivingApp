@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
-	authpassword "github.com/Easy-Bao/DrivingApp/server/internal/auth/password"
 	authports "github.com/Easy-Bao/DrivingApp/server/internal/auth/ports"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/verification"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 )
 
 type emailChangeUsers struct {
@@ -136,7 +136,7 @@ var _ authports.EmailChangeNotifier = (*emailChangeNotifier)(nil)
 
 func newEmailChangeService(t *testing.T) (*verification.OTPService, *emailChangeUsers, *emailChangeSender, *emailChangeNotifier) {
 	t.Helper()
-	passwordHash, err := authpassword.Hash("current-password")
+	passwordHash, err := security.HashPassword("current-password")
 	if err != nil {
 		t.Fatalf("hash current password: %v", err)
 	}
