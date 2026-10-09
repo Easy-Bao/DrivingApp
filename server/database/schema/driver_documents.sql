@@ -10,6 +10,10 @@ CREATE TABLE driver_documents (
     created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
     reviewed_at timestamptz,
     reviewed_by integer,
+    CONSTRAINT driver_documents_status_check
+        CHECK (status IN ('pending', 'approved', 'rejected')),
+    CONSTRAINT driver_documents_type_check
+        CHECK (document_type ~ '^[a-z][a-z0-9_]{0,63}$'),
     CONSTRAINT driver_documents_driver_fk
         FOREIGN KEY (driver_id) REFERENCES users (id) ON DELETE RESTRICT,
     CONSTRAINT driver_documents_reviewer_fk

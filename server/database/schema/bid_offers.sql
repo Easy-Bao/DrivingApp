@@ -8,6 +8,7 @@ CREATE TABLE bid_offers (
     proposed_fare bigint NOT NULL,
     status text NOT NULL DEFAULT 'pending',
     created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT bid_offers_status_check CHECK (status IN ('pending', 'accepted', 'rejected')),
     CONSTRAINT bid_offers_fare_check CHECK (proposed_fare >= 0),
     CONSTRAINT bid_offers_session_fk
         FOREIGN KEY (session_id) REFERENCES bid_sessions (id) ON DELETE CASCADE,

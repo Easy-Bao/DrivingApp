@@ -26,6 +26,9 @@ CREATE TABLE rides (
     cancellation_reason text NOT NULL DEFAULT '',
     cancellation_responsibility text NOT NULL DEFAULT '',
     cancellation_details text NOT NULL DEFAULT '',
+    CONSTRAINT rides_status_check CHECK (
+        status IN ('requested', 'assigned', 'accepted', 'arrived', 'in_transit', 'completed', 'cancelled')
+    ),
     CONSTRAINT rides_money_check CHECK (
         fare_amount >= 0
         AND cancellation_details IS NOT NULL
