@@ -7,6 +7,8 @@ CREATE TABLE driver_profiles (
     rating double precision NOT NULL DEFAULT 0 CHECK (rating BETWEEN 0 AND 5),
     is_online boolean NOT NULL DEFAULT false,
     online_last_seen_at timestamptz,
+    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT driver_profiles_user_fk
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
@@ -20,6 +22,8 @@ CREATE TABLE passenger_profiles (
     avatar_storage_key text,
     avatar_content_type text,
     preferred_ride_type text,
+    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT passenger_profiles_user_fk
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );

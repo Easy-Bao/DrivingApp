@@ -2,16 +2,18 @@
 INSERT INTO users (name, phone, email, password_hash, role, is_verified)
 VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING id, name, phone, email, password_hash, role, is_verified,
-    account_status;
+    account_status, created_at, updated_at;
 
 -- name: MarkUserVerified :execrows
 UPDATE users
-SET is_verified = true
+SET is_verified = true,
+    updated_at = CURRENT_TIMESTAMP
 WHERE id = $1;
 
 -- name: UpdateUserPassword :execrows
 UPDATE users
-SET password_hash = $2
+SET password_hash = $2,
+    updated_at = CURRENT_TIMESTAMP
 WHERE id = $1;
 
 -- name: CreateDriverProfile :exec

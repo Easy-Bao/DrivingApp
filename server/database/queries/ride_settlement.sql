@@ -54,7 +54,7 @@ RETURNING id, ride_id, gross_fare, commission_bps, commission_amount,
     created_at, updated_at;
 
 -- name: GetDriverWalletAccountForUpdate :one
-SELECT id, driver_id, balance, version, updated_at
+SELECT id, driver_id, balance, version, created_at, updated_at
 FROM driver_wallet_accounts
 WHERE driver_id = $1
 LIMIT 1
@@ -63,15 +63,15 @@ FOR UPDATE;
 -- name: CreateDriverWalletAccount :one
 INSERT INTO driver_wallet_accounts (driver_id, balance)
 VALUES ($1, $2)
-RETURNING id, driver_id, balance, version, updated_at;
+RETURNING id, driver_id, balance, version, created_at, updated_at;
 
 -- name: CreditDriverWalletAccount :one
 UPDATE driver_wallet_accounts
 SET balance = balance + $2,
     version = version + 1,
-    updated_at = CURRENT_TIMESTAMP
+    updated_at = GREATEST(CURRENT_TIMESTAMP, created_at + interval '1 microsecond')
 WHERE id = $1
-RETURNING id, driver_id, balance, version, updated_at;
+RETURNING id, driver_id, balance, version, created_at, updated_at;
 
 -- name: CreateWalletLedger :execrows
 INSERT INTO wallet_ledgers (

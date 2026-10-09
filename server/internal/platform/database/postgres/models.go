@@ -75,6 +75,8 @@ type DriverProfile struct {
 	Rating           float64            `db:"rating"`
 	IsOnline         bool               `db:"is_online"`
 	OnlineLastSeenAt pgtype.Timestamptz `db:"online_last_seen_at"`
+	CreatedAt        pgtype.Timestamptz `db:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `db:"updated_at"`
 }
 
 type DriverWalletAccount struct {
@@ -82,6 +84,7 @@ type DriverWalletAccount struct {
 	DriverID  int32              `db:"driver_id"`
 	Balance   int64              `db:"balance"`
 	Version   int64              `db:"version"`
+	CreatedAt pgtype.Timestamptz `db:"created_at"`
 	UpdatedAt pgtype.Timestamptz `db:"updated_at"`
 }
 
@@ -96,14 +99,16 @@ type Notification struct {
 }
 
 type PassengerProfile struct {
-	ID                int32       `db:"id"`
-	UserID            int32       `db:"user_id"`
-	Name              string      `db:"name"`
-	Address           pgtype.Text `db:"address"`
-	Gender            string      `db:"gender"`
-	AvatarStorageKey  pgtype.Text `db:"avatar_storage_key"`
-	AvatarContentType pgtype.Text `db:"avatar_content_type"`
-	PreferredRideType pgtype.Text `db:"preferred_ride_type"`
+	ID                int32              `db:"id"`
+	UserID            int32              `db:"user_id"`
+	Name              string             `db:"name"`
+	Address           pgtype.Text        `db:"address"`
+	Gender            string             `db:"gender"`
+	AvatarStorageKey  pgtype.Text        `db:"avatar_storage_key"`
+	AvatarContentType pgtype.Text        `db:"avatar_content_type"`
+	PreferredRideType pgtype.Text        `db:"preferred_ride_type"`
+	CreatedAt         pgtype.Timestamptz `db:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `db:"updated_at"`
 }
 
 type PassengerReview struct {
@@ -223,14 +228,16 @@ type RideSettlement struct {
 }
 
 type User struct {
-	ID            int32       `db:"id"`
-	Name          pgtype.Text `db:"name"`
-	Phone         string      `db:"phone"`
-	Email         string      `db:"email"`
-	PasswordHash  string      `db:"password_hash"`
-	Role          string      `db:"role"`
-	IsVerified    bool        `db:"is_verified"`
-	AccountStatus string      `db:"account_status"`
+	ID            int32              `db:"id"`
+	Name          pgtype.Text        `db:"name"`
+	Phone         string             `db:"phone"`
+	Email         string             `db:"email"`
+	PasswordHash  string             `db:"password_hash"`
+	Role          string             `db:"role"`
+	IsVerified    bool               `db:"is_verified"`
+	AccountStatus string             `db:"account_status"`
+	CreatedAt     pgtype.Timestamptz `db:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `db:"updated_at"`
 }
 
 type WalletLedger struct {

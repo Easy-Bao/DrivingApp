@@ -264,9 +264,20 @@ type GetOnlineDriverProfileForBiddingParams struct {
 	OnlineCutoff pgtype.Timestamptz `db:"online_cutoff"`
 }
 
-func (q *Queries) GetOnlineDriverProfileForBidding(ctx context.Context, arg GetOnlineDriverProfileForBiddingParams) (DriverProfile, error) {
+type GetOnlineDriverProfileForBiddingRow struct {
+	ID               int32              `db:"id"`
+	UserID           int32              `db:"user_id"`
+	Name             string             `db:"name"`
+	VehicleType      string             `db:"vehicle_type"`
+	PlateNumber      string             `db:"plate_number"`
+	Rating           float64            `db:"rating"`
+	IsOnline         bool               `db:"is_online"`
+	OnlineLastSeenAt pgtype.Timestamptz `db:"online_last_seen_at"`
+}
+
+func (q *Queries) GetOnlineDriverProfileForBidding(ctx context.Context, arg GetOnlineDriverProfileForBiddingParams) (GetOnlineDriverProfileForBiddingRow, error) {
 	row := q.db.QueryRow(ctx, getOnlineDriverProfileForBidding, arg.UserID, arg.OnlineCutoff)
-	var i DriverProfile
+	var i GetOnlineDriverProfileForBiddingRow
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
@@ -619,9 +630,20 @@ type LockOnlineDriverProfileForBiddingParams struct {
 	OnlineCutoff pgtype.Timestamptz `db:"online_cutoff"`
 }
 
-func (q *Queries) LockOnlineDriverProfileForBidding(ctx context.Context, arg LockOnlineDriverProfileForBiddingParams) (DriverProfile, error) {
+type LockOnlineDriverProfileForBiddingRow struct {
+	ID               int32              `db:"id"`
+	UserID           int32              `db:"user_id"`
+	Name             string             `db:"name"`
+	VehicleType      string             `db:"vehicle_type"`
+	PlateNumber      string             `db:"plate_number"`
+	Rating           float64            `db:"rating"`
+	IsOnline         bool               `db:"is_online"`
+	OnlineLastSeenAt pgtype.Timestamptz `db:"online_last_seen_at"`
+}
+
+func (q *Queries) LockOnlineDriverProfileForBidding(ctx context.Context, arg LockOnlineDriverProfileForBiddingParams) (LockOnlineDriverProfileForBiddingRow, error) {
 	row := q.db.QueryRow(ctx, lockOnlineDriverProfileForBidding, arg.UserID, arg.OnlineCutoff)
-	var i DriverProfile
+	var i LockOnlineDriverProfileForBiddingRow
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,

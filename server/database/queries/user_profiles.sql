@@ -1,13 +1,13 @@
 -- name: GetDriverProfileByUserIDFull :one
 SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online,
-    online_last_seen_at
+    online_last_seen_at, created_at, updated_at
 FROM driver_profiles
 WHERE user_id = $1
 LIMIT 1;
 
 -- name: LockDriverProfileByUserID :one
 SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online,
-    online_last_seen_at
+    online_last_seen_at, created_at, updated_at
 FROM driver_profiles
 WHERE user_id = $1
 LIMIT 1
@@ -15,7 +15,7 @@ FOR UPDATE;
 
 -- name: LockDriverProfileForOnlineStatus :one
 SELECT id, user_id, name, vehicle_type, plate_number, rating, is_online,
-    online_last_seen_at
+    online_last_seen_at, created_at, updated_at
 FROM driver_profiles
 WHERE user_id = sqlc.arg('user_id')
   AND (
@@ -27,26 +27,30 @@ FOR UPDATE;
 
 -- name: GetPassengerProfileByUserIDFull :one
 SELECT id, user_id, name, address, gender, avatar_storage_key,
-    avatar_content_type, preferred_ride_type
+    avatar_content_type, preferred_ride_type, created_at, updated_at
 FROM passenger_profiles
 WHERE user_id = $1
 LIMIT 1;
 
 -- name: UpdateUserProfile :one
 UPDATE users
-SET name = $2, phone = $3, email = $4
+SET name = $2,
+    phone = $3,
+    email = $4,
+    updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING id, name, phone, email, password_hash, role, is_verified,
-    account_status;
+    account_status, created_at, updated_at;
 
 -- name: UpdateDriverProfile :one
 UPDATE driver_profiles
 SET name = $2,
     vehicle_type = $3,
-    plate_number = $4
+    plate_number = $4,
+    updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING id, user_id, name, vehicle_type, plate_number, rating, is_online,
-    online_last_seen_at;
+    online_last_seen_at, created_at, updated_at;
 
 -- name: UpdateDriverOnlineStatus :one
 UPDATE driver_profiles
@@ -54,7 +58,8 @@ SET is_online = sqlc.arg('is_online'),
     online_last_seen_at = CASE
         WHEN sqlc.arg('is_online')::boolean THEN CURRENT_TIMESTAMP
         ELSE NULL
-    END
+    END,
+    updated_at = CURRENT_TIMESTAMP
 FROM users AS account
 WHERE driver_profiles.user_id = sqlc.arg('user_id')
   AND (
@@ -72,18 +77,25 @@ WHERE driver_profiles.user_id = sqlc.arg('user_id')
 RETURNING driver_profiles.id, driver_profiles.user_id, driver_profiles.name,
     driver_profiles.vehicle_type, driver_profiles.plate_number,
     driver_profiles.rating, driver_profiles.is_online,
-    driver_profiles.online_last_seen_at;
+    driver_profiles.online_last_seen_at, driver_profiles.created_at,
+    driver_profiles.updated_at;
 
 -- name: UpdatePassengerProfile :one
 UPDATE passenger_profiles
-SET name = $2, address = $3, gender = $4, preferred_ride_type = $5
+SET name = $2,
+    address = $3,
+    gender = $4,
+    preferred_ride_type = $5,
+    updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING id, user_id, name, address, gender, avatar_storage_key,
-    avatar_content_type, preferred_ride_type;
+    avatar_content_type, preferred_ride_type, created_at, updated_at;
 
 -- name: UpdatePassengerAvatar :execrows
 UPDATE passenger_profiles
-SET avatar_storage_key = $2, avatar_content_type = $3
+SET avatar_storage_key = $2,
+    avatar_content_type = $3,
+    updated_at = CURRENT_TIMESTAMP
 WHERE id = $1;
 
 -- name: ListNotifications :many

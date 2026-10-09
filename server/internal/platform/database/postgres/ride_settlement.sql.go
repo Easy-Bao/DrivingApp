@@ -14,7 +14,7 @@ import (
 const createDriverWalletAccount = `-- name: CreateDriverWalletAccount :one
 INSERT INTO driver_wallet_accounts (driver_id, balance)
 VALUES ($1, $2)
-RETURNING id, driver_id, balance, version, updated_at
+RETURNING id, driver_id, balance, version, created_at, updated_at
 `
 
 type CreateDriverWalletAccountParams struct {
@@ -30,6 +30,7 @@ func (q *Queries) CreateDriverWalletAccount(ctx context.Context, arg CreateDrive
 		&i.DriverID,
 		&i.Balance,
 		&i.Version,
+		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
@@ -71,9 +72,9 @@ const creditDriverWalletAccount = `-- name: CreditDriverWalletAccount :one
 UPDATE driver_wallet_accounts
 SET balance = balance + $2,
     version = version + 1,
-    updated_at = CURRENT_TIMESTAMP
+    updated_at = GREATEST(CURRENT_TIMESTAMP, created_at + interval '1 microsecond')
 WHERE id = $1
-RETURNING id, driver_id, balance, version, updated_at
+RETURNING id, driver_id, balance, version, created_at, updated_at
 `
 
 type CreditDriverWalletAccountParams struct {
@@ -89,13 +90,14 @@ func (q *Queries) CreditDriverWalletAccount(ctx context.Context, arg CreditDrive
 		&i.DriverID,
 		&i.Balance,
 		&i.Version,
+		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getDriverWalletAccountForUpdate = `-- name: GetDriverWalletAccountForUpdate :one
-SELECT id, driver_id, balance, version, updated_at
+SELECT id, driver_id, balance, version, created_at, updated_at
 FROM driver_wallet_accounts
 WHERE driver_id = $1
 LIMIT 1
@@ -110,6 +112,7 @@ func (q *Queries) GetDriverWalletAccountForUpdate(ctx context.Context, driverID 
 		&i.DriverID,
 		&i.Balance,
 		&i.Version,
+		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
