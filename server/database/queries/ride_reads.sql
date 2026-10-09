@@ -26,5 +26,5 @@ SELECT id, passenger_id, driver_id, status, fare_amount, ride_type,
     driver_payout_amount
 FROM rides
 WHERE driver_id = $1
-  AND status IN ('requested', 'assigned', 'accepted', 'arrived', 'in_transit')
+  AND status IN ('assigned', 'accepted', 'arrived', 'in_transit')
 ORDER BY id;
