@@ -255,7 +255,7 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 	documentRouter.RegisterRoutes(router)
 	ridesRouter.RegisterRoutes(router)
 	adminRouter.RegisterRoutes(router)
-	locationhttp.NewRouter(locationService).RegisterRoutes(router)
+	locationhttp.NewRouter(locationService, verifier).RegisterRoutes(router)
 	passengerridecontext.NewRouter(passengerridecontext.Dependencies{
 		Query:    passengerRideContextQuery,
 		Verifier: verifier,

@@ -171,9 +171,11 @@ when ride cards span multiple pages.
 
 Passenger nearby-driver lookup first reads the bounded telemetry candidates,
 then requests profiles for those IDs through `GET /api/v1/drivers/online?ids=`.
-`POST /api/v1/location/matrix` accepts one origin and at most ten destinations
-and returns `distances_km` and `durations_min`; it performs one provider matrix
-request for multiple destinations and a directions request for one destination.
+Authenticated `POST /api/v1/location/route` calculates a driving route.
+Authenticated `POST /api/v1/location/matrix` accepts one origin and at most ten
+destinations and returns `distances_km` and `durations_min`; it performs one
+provider matrix request for multiple destinations and a directions request for
+one destination.
 
 ### Private uploads
 
