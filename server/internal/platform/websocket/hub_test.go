@@ -2,6 +2,7 @@ package hub
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -92,15 +93,71 @@ func TestHubCloseTerminatesOpenSubscriptions(t *testing.T) {
 	}
 }
 
-func TestHubDropsOldestEventWhenSubscriptionQueueIsFull(t *testing.T) {
+func TestHubBurstDelivery(t *testing.T) {
 	t.Parallel()
 
 	hub := NewHub()
 	subscription := hub.Subscribe("driver:10")
 	defer subscription.Close()
 
-	totalEvents := _outboundQueueSize + 8
+	const totalEvents = 30
+	var publishers sync.WaitGroup
 	for i := 0; i < totalEvents; i++ {
+		envelope, err := event.New(
+			fmt.Sprintf("event-%d", i),
+			event.DriverLocationUpdated,
+			time.Now().UTC(),
+			event.Scope{DriverID: "10"},
+			map[string]any{"seq": i},
+		)
+		if err != nil {
+			t.Fatalf("New() error = %v", err)
+		}
+		publishers.Add(1)
+		go func(envelope event.Envelope) {
+			defer publishers.Done()
+			hub.Publish(envelope)
+		}(envelope)
+	}
+	publishers.Wait()
+
+	receivedEvents := make(map[string]struct{}, totalEvents)
+	for len(receivedEvents) < totalEvents {
+		select {
+		case received, ok := <-subscription.Events():
+			if !ok {
+				t.Fatal("subscription channel closed prematurely")
+			}
+			if _, exists := receivedEvents[received.ID]; exists {
+				t.Fatalf("received duplicate event %q", received.ID)
+			}
+			receivedEvents[received.ID] = struct{}{}
+		case <-time.After(time.Second):
+			t.Fatalf("timed out waiting for burst, received %d of %d events", len(receivedEvents), totalEvents)
+		}
+	}
+	for expected := 0; expected < totalEvents; expected++ {
+		expectedID := fmt.Sprintf("event-%d", expected)
+		if _, exists := receivedEvents[expectedID]; !exists {
+			t.Fatalf("event %q was not delivered", expectedID)
+		}
+	}
+
+	select {
+	case unexpected := <-subscription.Events():
+		t.Fatalf("unexpected event remaining in channel: %#v", unexpected)
+	default:
+	}
+}
+
+func TestHubClosesSlowSubscriptionWhenQueueIsFull(t *testing.T) {
+	t.Parallel()
+
+	hub := NewHub()
+	subscription := hub.Subscribe("driver:10")
+	defer subscription.Close()
+
+	for i := 0; i <= _outboundQueueSize; i++ {
 		envelope, err := event.New(
 			fmt.Sprintf("event-%d", i),
 			event.DriverLocationUpdated,
@@ -114,25 +171,11 @@ func TestHubDropsOldestEventWhenSubscriptionQueueIsFull(t *testing.T) {
 		hub.Publish(envelope)
 	}
 
-	firstExpected := totalEvents - _outboundQueueSize
-	for expected := firstExpected; expected < totalEvents; expected++ {
-		select {
-		case received, ok := <-subscription.Events():
-			if !ok {
-				t.Fatal("subscription channel closed prematurely")
-			}
-			expectedID := fmt.Sprintf("event-%d", expected)
-			if received.ID != expectedID {
-				t.Fatalf("expected event %q, got %q", expectedID, received.ID)
-			}
-		case <-time.After(time.Second):
-			t.Fatalf("timed out waiting for event-%d", expected)
-		}
+	delivered := 0
+	for range subscription.Events() {
+		delivered++
 	}
-
-	select {
-	case unexpected := <-subscription.Events():
-		t.Fatalf("unexpected event remaining in channel: %#v", unexpected)
-	default:
+	if delivered != _outboundQueueSize {
+		t.Fatalf("events delivered before slow subscription closed = %d, want %d", delivered, _outboundQueueSize)
 	}
 }

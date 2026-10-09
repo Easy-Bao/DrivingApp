@@ -1,8 +1,11 @@
 package ws
 
-import "sync"
+import (
+	"log/slog"
+	"sync"
+)
 
-const _roomOutboundQueueSize = 1
+const _roomOutboundQueueSize = 64
 
 type RoomHub struct {
 	mu      sync.RWMutex
@@ -43,14 +46,28 @@ func (hub *RoomHub) Remove(id string, channels ...chan []byte) {
 
 func (hub *RoomHub) Broadcast(roomID string, message []byte) {
 	hub.mu.RLock()
-	defer hub.mu.RUnlock()
-	for _, existing := range hub.clients {
+	type slowClient struct {
+		id      string
+		channel chan []byte
+	}
+	var slowClients []slowClient
+	for id, existing := range hub.clients {
 		if existing.roomID != roomID {
 			continue
 		}
 		select {
 		case existing.channel <- message:
 		default:
+			slowClients = append(slowClients, slowClient{id: id, channel: existing.channel})
 		}
+	}
+	hub.mu.RUnlock()
+
+	for _, client := range slowClients {
+		slog.Warn(
+			"closing chat websocket client with a full outbound queue",
+			"queue_capacity", cap(client.channel),
+		)
+		hub.Remove(client.id, client.channel)
 	}
 }

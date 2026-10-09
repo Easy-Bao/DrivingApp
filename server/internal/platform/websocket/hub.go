@@ -1,16 +1,18 @@
 package hub
 
 import (
+	"log/slog"
 	"strings"
 	"sync"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
-const _outboundQueueSize = 1
+const _outboundQueueSize = 64
 
-// Hub owns local WebSocket queues. Dropping an overflowed event is safe because
-// realtime delivery is transient and the client resynchronizes from REST.
+// Hub owns local WebSocket queues. A saturated queue closes the subscription so
+// the connection exposes delivery interruption instead of silently evicting
+// events.
 type Hub struct {
 	mu     sync.RWMutex
 	topics map[string]map[*Subscription]struct{}
@@ -72,31 +74,30 @@ func (hub *Hub) Close() {
 
 func (hub *Hub) Publish(envelope event.Envelope) {
 	hub.mu.RLock()
-	defer hub.mu.RUnlock()
-
 	delivered := make(map[*Subscription]struct{})
+	var slowSubscriptions []*Subscription
 	for _, topic := range envelope.Topics() {
 		for subscription := range hub.topics[topic] {
 			if _, duplicate := delivered[subscription]; duplicate {
 				continue
 			}
 			delivered[subscription] = struct{}{}
-			enqueueDropOldest(subscription.events, envelope)
-		}
-	}
-}
-
-func enqueueDropOldest(queue chan event.Envelope, envelope event.Envelope) {
-	for {
-		select {
-		case queue <- envelope:
-			return
-		default:
 			select {
-			case <-queue:
+			case subscription.events <- envelope:
 			default:
+				slowSubscriptions = append(slowSubscriptions, subscription)
 			}
 		}
+	}
+	hub.mu.RUnlock()
+
+	for _, subscription := range slowSubscriptions {
+		slog.Warn(
+			"closing realtime subscription with a full outbound queue",
+			"queue_capacity", cap(subscription.events),
+			"topic_count", len(subscription.topics),
+		)
+		subscription.Close()
 	}
 }
 
