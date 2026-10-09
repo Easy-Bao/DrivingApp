@@ -125,6 +125,26 @@ void main() {
     expect(route, isNotNull);
     expect(apiClient.routeCallCount, callsBeforeRetry + 2);
   });
+
+  test('evicts old route results after the bounded cache fills', () async {
+    MapProvider.clearLookupCaches();
+    final callsBeforeLookup = apiClient.routeCallCount;
+
+    for (var index = 0; index < 25; index++) {
+      final route = await MapProvider.getRoute(
+        1 + index * 0.001,
+        2,
+        3,
+        4,
+      );
+      expect(route, isNotNull);
+    }
+    expect(apiClient.routeCallCount, callsBeforeLookup + 25);
+
+    await MapProvider.getRoute(1, 2, 3, 4);
+    expect(apiClient.routeCallCount, callsBeforeLookup + 26);
+    MapProvider.clearLookupCaches();
+  });
 }
 
 class _DelayedLocationRemoteDataSource extends MockLocationRemoteDataSource {
