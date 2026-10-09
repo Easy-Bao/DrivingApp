@@ -210,6 +210,68 @@ void main() {
       },
     );
 
+    test('stops periodic reconciliation when the cubit closes', () async {
+      final lifecycleCoordinator = AppLifecycleCoordinator();
+      final cubit = TrackDriverCubit(
+        repository: repo,
+        sessionService: session,
+        lifecycleCoordinator: lifecycleCoordinator,
+      );
+      var cubitClosed = false;
+      addTearDown(() async {
+        if (!cubitClosed) await cubit.close();
+        await lifecycleCoordinator.dispose();
+      });
+
+      when(() => repo.getRideStatusUpdate('ride-1')).thenAnswer(
+        (_) async => const Ok(
+          RideUpdate(
+            status: RideStatus.accepted,
+            driverId: 'drv-1',
+            driverName: 'Driver',
+            vehiclePlate: 'ABC-123',
+            vehicleType: 'Sedan',
+          ),
+        ),
+      );
+      when(() => repo.fetchDriverLocation('ride-1')).thenAnswer(
+        (_) async =>
+            const Ok(DriverLocation(latitude: 7.828, longitude: 123.434)),
+      );
+      when(
+        () => repo.getRoutePolyline(
+          startLat: any(named: 'startLat'),
+          startLng: any(named: 'startLng'),
+          endLat: any(named: 'endLat'),
+          endLng: any(named: 'endLng'),
+        ),
+      ).thenAnswer((_) async => null);
+      when(() => session.readActiveRideId())
+          .thenAnswer((_) async => 'ride-1');
+
+      await cubit.startTracking(
+        startLat: 7.828,
+        startLng: 123.434,
+        endLat: 7.830,
+        endLng: 123.436,
+        rideId: 'ride-1',
+        driverId: 'drv-1',
+        driverName: 'Driver',
+        vehiclePlate: 'ABC-123',
+        vehicleType: 'Sedan',
+      );
+      await cubit.close();
+      cubitClosed = true;
+
+      lifecycleCoordinator.update(isForeground: false);
+      lifecycleCoordinator.update(isForeground: true);
+      await Future<void>.delayed(
+        const Duration(seconds: 2, milliseconds: 100),
+      );
+
+      verify(() => repo.getRideStatusUpdate('ride-1')).called(1);
+    });
+
     test('ignores a stale synchronization after a newer trip starts', () async {
       final firstStatusStarted = Completer<void>();
       final releaseFirstStatus = Completer<Result<RideUpdate, Failure>>();
