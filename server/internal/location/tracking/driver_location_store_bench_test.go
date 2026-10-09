@@ -54,6 +54,54 @@ func BenchmarkDriverLocationStoreNearby(b *testing.B) {
 	}
 }
 
+func BenchmarkDriverLocationStoreNearbyStalePayloads(b *testing.B) {
+	const driverCount = 20
+	for _, staleCount := range []int{5, driverCount} {
+		b.Run(fmt.Sprintf("stale=%d_of_%d", staleCount, driverCount), func(b *testing.B) {
+			client := openDriverLocationBenchmarkRedis(b)
+			ctx := context.Background()
+			store := NewDriverLocationStore(client)
+			b.ReportAllocs()
+			b.ResetTimer()
+			for b.Loop() {
+				b.StopTimer()
+				driverIDs := seedDriverLocationBenchmarkData(b, ctx, client, driverCount, false)
+				stalePayloadKeys := make([]string, staleCount)
+				// Seeded coordinates are ordered by distance, so these missing
+				// payloads occupy the first nearby-result slots.
+				for index := range staleCount {
+					stalePayloadKeys[index] = driverLocationKey(driverIDs[index])
+				}
+				if err := client.Del(ctx, stalePayloadKeys...).Err(); err != nil {
+					_ = removeDriverLocationBenchmarkData(ctx, client, driverIDs)
+					b.Fatalf("remove stale benchmark payloads: %v", err)
+				}
+				b.StartTimer()
+
+				points, err := store.Nearby(
+					ctx,
+					_benchmarkLatitude,
+					_benchmarkLongitude,
+					5,
+				)
+				b.StopTimer()
+				if err != nil {
+					_ = removeDriverLocationBenchmarkData(ctx, client, driverIDs)
+					b.Fatalf("Nearby() error = %v", err)
+				}
+				if got, want := len(points), driverCount-staleCount; got != want {
+					_ = removeDriverLocationBenchmarkData(ctx, client, driverIDs)
+					b.Fatalf("Nearby() returned %d valid drivers, want %d", got, want)
+				}
+				if err := removeDriverLocationBenchmarkData(ctx, client, driverIDs); err != nil {
+					b.Fatalf("remove benchmark data: %v", err)
+				}
+				b.StartTimer()
+			}
+		})
+	}
+}
+
 func BenchmarkCleanupExpiredDrivers(b *testing.B) {
 	for _, expiredCount := range []int{_locationCleanupBatchSize, 1000} {
 		b.Run(fmt.Sprintf("expired=%d", expiredCount), func(b *testing.B) {
