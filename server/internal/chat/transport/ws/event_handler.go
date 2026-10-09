@@ -18,19 +18,37 @@ func NewEventHandler(service *application.ChatService) *EventHandler {
 }
 
 func (handler *EventHandler) Handle(ctx context.Context, message []byte) error {
-	var event struct {
+	var header struct {
 		Type string `json:"type"`
-		domain.Message
-		Text string `json:"text"`
 	}
-	invalidJSON := json.Unmarshal(message, &event) != nil
-	invalidEventType := event.Type != "CHAT_MESSAGE" && event.Type != "message"
-	if invalidJSON || invalidEventType {
+	if json.Unmarshal(message, &header) != nil {
 		return nil
 	}
-	if event.Message.Body == "" {
-		event.Message.Body = event.Text
+	switch header.Type {
+	case "CHAT_MESSAGE", "message":
+		var event struct {
+			domain.Message
+			Text string `json:"text"`
+		}
+		if json.Unmarshal(message, &event) != nil {
+			return nil
+		}
+		if event.Message.Body == "" {
+			event.Message.Body = event.Text
+		}
+		event.Message.CreatedAt = time.Now().UTC().Format(time.RFC3339Nano)
+		return handler.service.Relay(ctx, event.Message)
+	case "typing":
+		var event struct {
+			RoomID   string `json:"room_id"`
+			SenderID string `json:"sender_id"`
+			IsTyping *bool  `json:"is_typing"`
+		}
+		if json.Unmarshal(message, &event) != nil || event.IsTyping == nil {
+			return nil
+		}
+		return handler.service.PublishTyping(ctx, event.RoomID, event.SenderID, *event.IsTyping)
+	default:
+		return nil
 	}
-	event.Message.CreatedAt = time.Now().UTC().Format(time.RFC3339Nano)
-	return handler.service.Relay(ctx, event.Message)
 }

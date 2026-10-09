@@ -218,6 +218,61 @@ func TestChatRelayPublishesPassengerScopedNotification(t *testing.T) {
 	}
 }
 
+func TestChatTypingPublishesAnAuthorizedRoomEvent(t *testing.T) {
+	history := &chatHistory{passengerID: "passenger-1", driverID: "driver-1"}
+	publisher := &chatEventPublisher{}
+	service := newChatService(history).
+		WithEventPublisher(publisher).
+		WithRideAssignmentLookup(chatAssignmentLookup{
+			assignment: assignment.Assignment{
+				RideID:      "ride-1",
+				PassengerID: "passenger-1",
+				DriverID:    "driver-1",
+				Status:      "assigned",
+				ContactOpen: true,
+			},
+			found: true,
+		})
+
+	if err := service.PublishTyping(context.Background(), "ride-1", "driver-1", true); err != nil {
+		t.Fatalf("PublishTyping() error = %v", err)
+	}
+	if len(publisher.events) != 1 {
+		t.Fatalf("published events = %d, want 1", len(publisher.events))
+	}
+	envelope := publisher.events[0]
+	if envelope.Type != event.ChatTypingChanged || envelope.Scope != (event.Scope{RoomID: "ride-1"}) {
+		t.Fatalf("typing event route = %#v", envelope)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(envelope.Payload, &payload); err != nil {
+		t.Fatalf("decode typing payload: %v", err)
+	}
+	if payload["sender_id"] != "driver-1" || payload["is_typing"] != true {
+		t.Fatalf("typing payload = %#v", payload)
+	}
+}
+
+func TestChatTypingRejectsAnUnassignedSender(t *testing.T) {
+	history := &chatHistory{passengerID: "passenger-1", driverID: "driver-1"}
+	service := newChatService(history).
+		WithRideAssignmentLookup(chatAssignmentLookup{
+			assignment: assignment.Assignment{
+				RideID:      "ride-1",
+				PassengerID: "passenger-1",
+				DriverID:    "driver-1",
+				Status:      "assigned",
+				ContactOpen: true,
+			},
+			found: true,
+		})
+
+	err := service.PublishTyping(context.Background(), "ride-1", "other-user", true)
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Fatalf("PublishTyping() error = %v, want %v", err, domain.ErrForbidden)
+	}
+}
+
 func TestChatMessagesReturnsACopy(t *testing.T) {
 	history := &chatHistory{messages: []domain.Message{{RoomID: "ride-1", Body: "original"}}}
 	service := newChatService(history)

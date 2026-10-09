@@ -126,6 +126,35 @@ func TestEnvelopeTopicsAreDerivedFromValidatedScope(t *testing.T) {
 	}
 }
 
+func TestRoomTopicRequiresAValidIdentifier(t *testing.T) {
+	t.Parallel()
+
+	topic, err := RoomTopic("ride-1")
+	if err != nil {
+		t.Fatalf("RoomTopic() error = %v", err)
+	}
+	if topic != "room:ride-1" {
+		t.Fatalf("RoomTopic() = %q, want room:ride-1", topic)
+	}
+	if _, err := RoomTopic(" room-1 "); err == nil {
+		t.Fatal("RoomTopic() accepted an identifier with surrounding whitespace")
+	}
+}
+
+func TestChatTypingChangedIsAValidRoomEvent(t *testing.T) {
+	t.Parallel()
+
+	if _, err := New(
+		"typing-event-1",
+		ChatTypingChanged,
+		time.Now().UTC(),
+		Scope{RoomID: "room-1"},
+		map[string]any{"sender_id": "driver-1", "is_typing": true},
+	); err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+}
+
 func TestDecodeRejectsDuplicateObjectMembers(t *testing.T) {
 	t.Parallel()
 

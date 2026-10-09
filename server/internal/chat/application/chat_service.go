@@ -95,6 +95,37 @@ func (service *ChatService) Relay(ctx context.Context, message domain.Message) e
 	return nil
 }
 
+func (service *ChatService) PublishTyping(ctx context.Context, roomID, senderID string, isTyping bool) error {
+	if !validRoomID(roomID) || !validParticipantID(senderID) {
+		return domain.ErrInvalidMessage
+	}
+	allowed, err := service.CanAccessRoom(ctx, roomID, senderID)
+	if err != nil {
+		return fmt.Errorf("authorize chat typing event: %w", err)
+	}
+	if !allowed {
+		return domain.ErrForbidden
+	}
+	if service.events == nil {
+		return nil
+	}
+
+	envelope, err := event.New(
+		event.NewID(),
+		event.ChatTypingChanged,
+		time.Now().UTC(),
+		event.Scope{RoomID: roomID},
+		map[string]any{"sender_id": senderID, "is_typing": isTyping},
+	)
+	if err != nil {
+		return fmt.Errorf("construct chat typing event: %w", err)
+	}
+	if err := service.events.Publish(ctx, envelope); err != nil {
+		service.log().WarnContext(ctx, "publish chat typing event failed", "error", err)
+	}
+	return nil
+}
+
 func (service *ChatService) publishRealtimeMessage(ctx context.Context, message domain.Message) {
 	if service.events == nil || service.history == nil {
 		return

@@ -176,13 +176,11 @@ func newHTTPRouter(
 		},
 	)
 	eventHub := websockethub.NewHub()
-	chatRoomHub := chatws.NewRoomHub()
 	assignmentProjection := assignment.NewMemoryProjection()
 	eventPublisher, eventSubscriber := eventadapter.NewRedisEventTransport(
 		redisClient,
 		assignmentProjection,
 		eventHub,
-		chatRoomHub,
 	)
 	eventSubscriber.WithLogger(applicationLogger)
 	rideAssignments := assignment.NewResolver(
@@ -284,22 +282,19 @@ func newHTTPRouter(
 		WithEventPublisher(eventPublisher).
 		WithRideAssignmentLookup(rideAssignments).
 		WithLogger(applicationLogger)
-	chatEventRouter := chatws.NewEventRouter()
 	chatEventHandler := chatws.NewEventHandler(chatService)
-	chatEventRouter.Register("CHAT_MESSAGE", chatEventHandler)
-	chatEventRouter.Register("message", chatEventHandler)
-	chatEventRouter.Register("typing", chatEventHandler)
+	chatProtocol := chatws.NewConnectionProtocol(chatEventHandler, chatService)
 	router.Handle(
 		api.V1Prefix+"/chat/ws",
-		chatws.NewHandler(
-			chatws.HandlerDependencies{
-				Hub:           chatRoomHub,
+		websockethub.NewHandler(
+			websockethub.HandlerDependencies{
+				Hub:           eventHub,
 				Authenticator: verifier,
+				Protocol:      chatProtocol,
 			},
-			chatws.WithEventSink(chatEventRouter),
-			chatws.WithRoomAuthorizer(chatService),
-		).
-			WithAllowedOrigins(config.Security.AllowedOrigins),
+			websockethub.WithAllowedOrigins(config.Security.AllowedOrigins),
+			websockethub.WithLogger(applicationLogger),
+		),
 	)
 	router.Handle(
 		api.V1Prefix+"/realtime/ws",

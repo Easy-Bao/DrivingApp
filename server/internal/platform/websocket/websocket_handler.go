@@ -1,6 +1,7 @@
 package hub
 
 import (
+	"context"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -16,7 +17,7 @@ import (
 )
 
 const (
-	_maximumMessageSize = 8 << 10
+	_maximumMessageSize = 16 << 10
 	_pongWait           = 60 * time.Second
 	_pingPeriod         = 54 * time.Second
 	_writeWait          = 10 * time.Second
@@ -26,10 +27,46 @@ type IdentityAuthenticator interface {
 	VerifyIdentity(token string) (security.Identity, error)
 }
 
+type ConnectionProtocol interface {
+	ResolveTopics(ctx context.Context, request *http.Request, identity security.Identity) ([]string, error)
+	HandleMessage(
+		ctx context.Context,
+		request *http.Request,
+		identity security.Identity,
+		isText bool,
+		message []byte,
+	) ([]byte, error)
+	EncodeEnvelope(envelope event.Envelope) ([]byte, error)
+}
+
+type HandshakeError struct {
+	StatusCode int
+	Message    string
+	Cause      error
+}
+
+func (handshakeError *HandshakeError) Error() string {
+	if handshakeError == nil {
+		return "websocket handshake rejected"
+	}
+	if handshakeError.Cause != nil {
+		return handshakeError.Cause.Error()
+	}
+	return handshakeError.Message
+}
+
+func (handshakeError *HandshakeError) Unwrap() error {
+	if handshakeError == nil {
+		return nil
+	}
+	return handshakeError.Cause
+}
+
 type Handler struct {
 	hub            *Hub
 	authenticator  IdentityAuthenticator
 	logger         *slog.Logger
+	protocol       ConnectionProtocol
 	allowedOrigins map[string]struct{}
 	upgrader       websocket.Upgrader
 }
@@ -41,6 +78,7 @@ type HandlerOption func(*Handler)
 type HandlerDependencies struct {
 	Hub           *Hub
 	Authenticator IdentityAuthenticator
+	Protocol      ConnectionProtocol
 }
 
 func WithLogger(logger *slog.Logger) HandlerOption {
@@ -65,6 +103,7 @@ func NewHandler(dependencies HandlerDependencies, options ...HandlerOption) *Han
 	handler := &Handler{
 		hub:            dependencies.Hub,
 		authenticator:  dependencies.Authenticator,
+		protocol:       dependencies.Protocol,
 		logger:         slog.Default(),
 		allowedOrigins: make(map[string]struct{}),
 	}
@@ -94,8 +133,20 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 		response.Error(writer, http.StatusUnauthorized, "Your session has expired. Please sign in again to continue.")
 		return
 	}
-	topics, err := topicsForIdentity(identity)
+	var topics []string
+	var err error
+	if handler.protocol == nil {
+		topics, err = topicsForIdentity(identity)
+	} else {
+		topics, err = handler.protocol.ResolveTopics(request.Context(), request, identity)
+	}
 	if err != nil {
+		var handshakeError *HandshakeError
+		if errors.As(err, &handshakeError) {
+			response.Error(writer, handshakeError.StatusCode, handshakeError.Message)
+			return
+		}
+		handler.logger.WarnContext(request.Context(), "resolve websocket subscription topics failed", "error", err)
 		response.Error(writer, http.StatusForbidden, "You do not have permission to receive these live updates.")
 		return
 	}
@@ -124,9 +175,11 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 
 	stopWriter := make(chan struct{})
 	writerDone := make(chan struct{})
+	serverMessages := make(chan []byte, 1)
 	go handler.writePump(
 		connection,
 		subscription.Events(),
+		serverMessages,
 		stopWriter,
 		writerDone,
 		closeConnection,
@@ -134,7 +187,7 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 	)
 	readDone := make(chan struct{})
 	go func() {
-		handler.readPump(connection)
+		handler.readPump(connection, request, identity, serverMessages, writerDone)
 		close(readDone)
 	}()
 	select {
@@ -178,7 +231,13 @@ func (handler *Handler) originAllowed(request *http.Request) bool {
 	return allowed
 }
 
-func (handler *Handler) readPump(connection *websocket.Conn) {
+func (handler *Handler) readPump(
+	connection *websocket.Conn,
+	request *http.Request,
+	identity security.Identity,
+	serverMessages chan<- []byte,
+	writerDone <-chan struct{},
+) {
 	connection.SetReadLimit(_maximumMessageSize)
 	if err := connection.SetReadDeadline(time.Now().Add(_pongWait)); err != nil {
 		return
@@ -187,8 +246,32 @@ func (handler *Handler) readPump(connection *websocket.Conn) {
 		return connection.SetReadDeadline(time.Now().Add(_pongWait))
 	})
 	for {
-		if _, _, err := connection.ReadMessage(); err != nil {
+		messageType, message, err := connection.ReadMessage()
+		if err != nil {
 			return
+		}
+		if handler.protocol == nil {
+			continue
+		}
+		responseMessage, protocolErr := handler.protocol.HandleMessage(
+			request.Context(),
+			request,
+			identity,
+			messageType == websocket.TextMessage,
+			message,
+		)
+		if protocolErr != nil {
+			handler.logger.WarnContext(request.Context(), "handle websocket client message failed", "error", protocolErr)
+			if len(responseMessage) == 0 {
+				responseMessage = []byte(`{"error":"event rejected"}`)
+			}
+		}
+		if len(responseMessage) > 0 {
+			select {
+			case serverMessages <- responseMessage:
+			case <-writerDone:
+				return
+			}
 		}
 	}
 }
@@ -196,6 +279,7 @@ func (handler *Handler) readPump(connection *websocket.Conn) {
 func (handler *Handler) writePump(
 	connection *websocket.Conn,
 	events <-chan event.Envelope,
+	serverMessages <-chan []byte,
 	stop <-chan struct{},
 	done chan<- struct{},
 	closeConnection func(),
@@ -214,14 +298,35 @@ func (handler *Handler) writePump(
 			if !ok {
 				return
 			}
+			var message []byte
+			var err error
+			if handler.protocol == nil {
+				message, err = envelope.Encode()
+			} else {
+				message, err = handler.protocol.EncodeEnvelope(envelope)
+			}
+			if err != nil {
+				handler.logger.Warn("encode websocket event failed", "error", err, "event_type", envelope.Type)
+				continue
+			}
+			if len(message) == 0 {
+				continue
+			}
 			if err := connection.SetWriteDeadline(time.Now().Add(_writeWait)); err != nil {
 				return
 			}
-			if err := connection.WriteJSON(envelope); err != nil {
+			if err := connection.WriteMessage(websocket.TextMessage, message); err != nil {
 				return
 			}
 			if stats != nil {
 				stats.eventsSent++
+			}
+		case message := <-serverMessages:
+			if err := connection.SetWriteDeadline(time.Now().Add(_writeWait)); err != nil {
+				return
+			}
+			if err := connection.WriteMessage(websocket.TextMessage, message); err != nil {
+				return
 			}
 		case <-ticker.C:
 			if err := connection.SetWriteDeadline(time.Now().Add(_writeWait)); err != nil {

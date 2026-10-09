@@ -39,6 +39,7 @@ const (
 	DriverLocationUpdated    Type = "driver.location.updated"
 	PassengerLocationUpdated Type = "passenger.location.updated"
 	ChatMessageCreated       Type = "chat.message.created"
+	ChatTypingChanged        Type = "chat.typing.changed"
 	PresenceUpdated          Type = "presence.updated"
 )
 
@@ -203,6 +204,13 @@ func PassengerTopic(passengerID string) (string, error) {
 	return "passenger:" + passengerID, nil
 }
 
+func RoomTopic(roomID string) (string, error) {
+	if err := validateIdentifier("room id", roomID, _identifierRequired); err != nil {
+		return "", err
+	}
+	return "room:" + roomID, nil
+}
+
 func (eventType Type) valid() bool {
 	switch eventType {
 	case RideOfferCreated,
@@ -212,6 +220,7 @@ func (eventType Type) valid() bool {
 		DriverLocationUpdated,
 		PassengerLocationUpdated,
 		ChatMessageCreated,
+		ChatTypingChanged,
 		PresenceUpdated:
 		return true
 	default:
