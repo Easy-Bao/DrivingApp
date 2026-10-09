@@ -353,12 +353,13 @@ func (q *Queries) HasActivePassengerRide(ctx context.Context, passengerID int32)
 const hasOverdueCashSettlementForDriver = `-- name: HasOverdueCashSettlementForDriver :one
 SELECT EXISTS (
     SELECT 1
-    FROM rides
-    WHERE driver_id = $1
-      AND status = 'completed'
-      AND payment_status = 'unpaid'
-      AND completed_at IS NOT NULL
-      AND completed_at <= $2
+    FROM rides AS ride
+    LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = ride.id
+    WHERE ride.driver_id = $1
+      AND ride.status = 'completed'
+      AND COALESCE(settlement.payment_status, 'unpaid') = 'unpaid'
+      AND ride.completed_at IS NOT NULL
+      AND ride.completed_at <= $2
 )
 `
 

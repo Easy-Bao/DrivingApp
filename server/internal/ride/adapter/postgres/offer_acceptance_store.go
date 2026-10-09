@@ -63,10 +63,10 @@ func (repository *RideRepository) AcceptOffer(
 						})
 						if ridesErr == nil {
 							for _, candidateRide := range activeRides {
-								if candidateRide.PassengerID == dbPassengerID {
+								if candidateRide.Ride.PassengerID == dbPassengerID {
 									sessionValue, sessionErr := fromPostgresBidSession(existingSession)
 									offerValue, offerErr := fromPostgresBidOffer(candidateOffer)
-									rideValue, rideErr := fromPostgresRide(candidateRide)
+									rideValue, rideErr := fromPostgresActiveRideRow(candidateRide)
 									if sessionErr == nil && offerErr == nil && rideErr == nil {
 										return domain.OfferAcceptance{
 											Session: sessionValue,
@@ -206,35 +206,33 @@ func (repository *RideRepository) AcceptOffer(
 		return domain.OfferAcceptance{}, err
 	}
 	createdRide, err := transactionQueries.CreateAcceptedRide(ctx, databasepostgres.CreateAcceptedRideParams{
-		PassengerID:        session.PassengerID,
-		DriverID:           pgtype.Int4{Int32: dbAcceptedDriverID, Valid: true},
-		FareAmount:         acceptedRide.FareAmount,
-		RideType:           acceptedRide.RideType,
-		PickupLatitude:     rideFloat(acceptedRide.PickupLatitude),
-		PickupLongitude:    rideFloat(acceptedRide.PickupLongitude),
-		PickupName:         rideText(acceptedRide.PickupName),
-		DropoffLatitude:    rideFloat(acceptedRide.DropoffLatitude),
-		DropoffLongitude:   rideFloat(acceptedRide.DropoffLongitude),
-		DropoffName:        rideText(acceptedRide.DropoffName),
-		DistanceKm:         rideFloat(acceptedRide.DistanceKm),
-		DurationMinutes:    rideFloat(acceptedRide.DurationMinutes),
-		DriverName:         rideText(acceptedRide.DriverName),
-		VehicleType:        rideText(acceptedRide.VehicleType),
-		PlateNumber:        rideText(acceptedRide.PlateNumber),
-		CommissionBps:      pgtype.Int4{Int32: int32(*acceptedRide.CommissionBPS), Valid: true},
-		CommissionAmount:   acceptedRide.CommissionAmount,
-		DriverPayoutAmount: acceptedRide.DriverPayoutAmount,
+		PassengerID:      session.PassengerID,
+		DriverID:         pgtype.Int4{Int32: dbAcceptedDriverID, Valid: true},
+		FareAmount:       acceptedRide.FareAmount,
+		RideType:         acceptedRide.RideType,
+		PickupLatitude:   rideFloat(acceptedRide.PickupLatitude),
+		PickupLongitude:  rideFloat(acceptedRide.PickupLongitude),
+		PickupName:       rideText(acceptedRide.PickupName),
+		DropoffLatitude:  rideFloat(acceptedRide.DropoffLatitude),
+		DropoffLongitude: rideFloat(acceptedRide.DropoffLongitude),
+		DropoffName:      rideText(acceptedRide.DropoffName),
+		DistanceKm:       rideFloat(acceptedRide.DistanceKm),
+		DurationMinutes:  rideFloat(acceptedRide.DurationMinutes),
+		DriverName:       rideText(acceptedRide.DriverName),
+		VehicleType:      rideText(acceptedRide.VehicleType),
+		PlateNumber:      rideText(acceptedRide.PlateNumber),
 	})
 	if err != nil {
 		return domain.OfferAcceptance{}, acceptedRideConflictError("create accepted ride", err)
 	}
-	if err := transactionQueries.CreateRideSettlement(ctx, databasepostgres.CreateRideSettlementParams{
+	settlementRecord, err := transactionQueries.CreateRideSettlement(ctx, databasepostgres.CreateRideSettlementParams{
 		RideID:             createdRide.ID,
 		GrossFare:          acceptedRide.FareAmount,
 		CommissionBps:      pgtype.Int4{Int32: int32(*acceptedRide.CommissionBPS), Valid: true},
 		CommissionAmount:   acceptedRide.CommissionAmount,
 		DriverPayoutAmount: acceptedRide.DriverPayoutAmount,
-	}); err != nil {
+	})
+	if err != nil {
 		return domain.OfferAcceptance{}, fmt.Errorf("create ride settlement: %w", err)
 	}
 	if err := transaction.Commit(ctx); err != nil {
@@ -248,7 +246,10 @@ func (repository *RideRepository) AcceptOffer(
 	if err != nil {
 		return domain.OfferAcceptance{}, fmt.Errorf("map accepted bid offer: %w", err)
 	}
-	resultRide, err := fromPostgresRide(createdRide)
+	resultRide, err := fromPostgresRideProjection(
+		createdRide,
+		rideSettlementProjectionFromRecord(settlementRecord),
+	)
 	if err != nil {
 		return domain.OfferAcceptance{}, fmt.Errorf("map accepted ride: %w", err)
 	}

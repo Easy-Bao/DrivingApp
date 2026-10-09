@@ -18,7 +18,7 @@ SELECT
     COUNT(*) FILTER (
         WHERE r.status IN ('requested', 'assigned', 'accepted', 'arrived', 'in_transit')
     )::bigint AS active_trips,
-    COALESCE(SUM(r.driver_payout_amount) FILTER (WHERE r.status = 'completed'), 0)::bigint
+    COALESCE(SUM(settlement.driver_payout_amount) FILTER (WHERE r.status = 'completed'), 0)::bigint
         AS total_earnings_amount,
     COUNT(*) FILTER (
         WHERE r.status = 'completed'
@@ -31,7 +31,7 @@ SELECT
               )
           )
     )::bigint AS today_completed_trips,
-    COALESCE(SUM(r.driver_payout_amount) FILTER (
+    COALESCE(SUM(settlement.driver_payout_amount) FILTER (
         WHERE r.status = 'completed'
           AND (
               (r.completed_at >= $1 AND r.completed_at < $2)
@@ -138,6 +138,7 @@ SELECT
           AND standing_ride.cancellation_responsibility = 'admin_override'
     ) AS admin_override_cancellation_count
 FROM rides AS r
+LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = r.id
 WHERE r.driver_id = $3
 `
 
@@ -245,20 +246,22 @@ func (q *Queries) GetPassengerActivitySummary(ctx context.Context, arg GetPassen
 }
 
 const listDriverEarnings = `-- name: ListDriverEarnings :many
-SELECT created_at, completed_at, driver_payout_amount
-FROM rides
-WHERE driver_id = $1
-  AND status = 'completed'
+SELECT ride.created_at, ride.completed_at,
+    COALESCE(settlement.driver_payout_amount, 0)::bigint AS driver_payout_amount
+FROM rides AS ride
+LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = ride.id
+WHERE ride.driver_id = $1
+  AND ride.status = 'completed'
   AND (
       (
-          completed_at IS NOT NULL
-          AND completed_at >= $2
-          AND completed_at < $3
+          ride.completed_at IS NOT NULL
+          AND ride.completed_at >= $2
+          AND ride.completed_at < $3
       )
       OR (
-          completed_at IS NULL
-          AND created_at >= $2
-          AND created_at < $3
+          ride.completed_at IS NULL
+          AND ride.created_at >= $2
+          AND ride.created_at < $3
       )
   )
 `

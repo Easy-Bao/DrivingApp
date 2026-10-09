@@ -40,8 +40,6 @@ func TestFromPostgresRideMapsOptionalFieldsAndTimestamps(t *testing.T) {
 			Time:  time.Date(2026, time.January, 2, 3, 4, 5, 0, time.FixedZone("PHT", 8*60*60)),
 			Valid: true,
 		},
-		PaymentStatus: "unpaid",
-		CommissionBps: pgtype.Int4{Int32: 1500, Valid: true},
 	}
 
 	ride, err := fromPostgresRide(item)
@@ -58,8 +56,42 @@ func TestFromPostgresRideMapsOptionalFieldsAndTimestamps(t *testing.T) {
 	if ride.CreatedAt == nil || *ride.CreatedAt != "2026-01-01T19:04:05Z" {
 		t.Fatalf("mapped creation time = %v", ride.CreatedAt)
 	}
-	if ride.CommissionBPS == nil || *ride.CommissionBPS != 1500 {
-		t.Fatalf("mapped commission = %v", ride.CommissionBPS)
+	if ride.PaymentStatus != "unpaid" || ride.CashOutcome != "unpaid" ||
+		ride.CashReceivedAmount != 0 || ride.CommissionBPS != nil {
+		t.Fatalf("base ride settlement defaults = %+v", ride)
+	}
+}
+
+func TestFromPostgresRideRowMapsSettlementProjection(t *testing.T) {
+	item := databasepostgres.GetRideByIDRow{
+		Ride: databasepostgres.Ride{
+			ID:          19,
+			PassengerID: 7,
+			Status:      "completed",
+			FareAmount:  3200,
+			CreatedAt: pgtype.Timestamptz{
+				Time:  time.Date(2026, time.January, 2, 3, 4, 5, 0, time.UTC),
+				Valid: true,
+			},
+		},
+		PaymentStatus:      "paid",
+		CashReceivedAmount: 3500,
+		CashChangeAmount:   300,
+		CashOutcome:        "paid",
+		CommissionBps:      pgtype.Int4{Int32: 1500, Valid: true},
+		CommissionAmount:   480,
+		DriverPayoutAmount: 2720,
+	}
+
+	ride, err := fromPostgresRideRow(item)
+	if err != nil {
+		t.Fatalf("fromPostgresRideRow() error = %v", err)
+	}
+	if ride.PaymentStatus != "paid" || ride.CashOutcome != "paid" ||
+		ride.CashReceivedAmount != 3500 || ride.CashChangeAmount != 300 ||
+		ride.CommissionBPS == nil || *ride.CommissionBPS != 1500 ||
+		ride.CommissionAmount != 480 || ride.DriverPayoutAmount != 2720 {
+		t.Fatalf("mapped ride with settlement = %+v", ride)
 	}
 }
 

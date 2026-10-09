@@ -132,7 +132,15 @@ func (repository *RideRepository) PassengerRecentRides(
 }
 
 func fromPostgresDriverRide(item databasepostgres.ListDriverRidesRow) (domain.Ride, error) {
-	ride, err := fromPostgresRide(item.Ride)
+	ride, err := fromPostgresRideProjection(item.Ride, rideSettlementProjection{
+		PaymentStatus:      item.PaymentStatus,
+		CashReceivedAmount: item.CashReceivedAmount,
+		CashChangeAmount:   item.CashChangeAmount,
+		CashOutcome:        item.CashOutcome,
+		CommissionBps:      item.CommissionBps,
+		CommissionAmount:   item.CommissionAmount,
+		DriverPayoutAmount: item.DriverPayoutAmount,
+	})
 	if err != nil {
 		return domain.Ride{}, err
 	}
@@ -150,6 +158,15 @@ func fromPostgresDriverRide(item databasepostgres.ListDriverRidesRow) (domain.Ri
 func fromPostgresPassengerRide(item databasepostgres.ListPassengerRidesRow) (domain.Ride, error) {
 	return fromPostgresRideWithDriverProfile(
 		item.Ride,
+		rideSettlementProjection{
+			PaymentStatus:      item.PaymentStatus,
+			CashReceivedAmount: item.CashReceivedAmount,
+			CashChangeAmount:   item.CashChangeAmount,
+			CashOutcome:        item.CashOutcome,
+			CommissionBps:      item.CommissionBps,
+			CommissionAmount:   item.CommissionAmount,
+			DriverPayoutAmount: item.DriverPayoutAmount,
+		},
 		item.DriverProfileName,
 		item.DriverProfileVehicleType,
 		item.DriverProfilePlateNumber,
@@ -159,6 +176,15 @@ func fromPostgresPassengerRide(item databasepostgres.ListPassengerRidesRow) (dom
 func fromPostgresRecentPassengerRide(item databasepostgres.ListRecentPassengerRidesRow) (domain.Ride, error) {
 	return fromPostgresRideWithDriverProfile(
 		item.Ride,
+		rideSettlementProjection{
+			PaymentStatus:      item.PaymentStatus,
+			CashReceivedAmount: item.CashReceivedAmount,
+			CashChangeAmount:   item.CashChangeAmount,
+			CashOutcome:        item.CashOutcome,
+			CommissionBps:      item.CommissionBps,
+			CommissionAmount:   item.CommissionAmount,
+			DriverPayoutAmount: item.DriverPayoutAmount,
+		},
 		item.DriverProfileName,
 		item.DriverProfileVehicleType,
 		item.DriverProfilePlateNumber,
@@ -167,9 +193,10 @@ func fromPostgresRecentPassengerRide(item databasepostgres.ListRecentPassengerRi
 
 func fromPostgresRideWithDriverProfile(
 	item databasepostgres.Ride,
+	projection rideSettlementProjection,
 	driverName, vehicleType, plateNumber string,
 ) (domain.Ride, error) {
-	ride, err := fromPostgresRide(item)
+	ride, err := fromPostgresRideProjection(item, projection)
 	if err != nil {
 		return domain.Ride{}, err
 	}

@@ -12,21 +12,29 @@ import (
 )
 
 const listDriverRides = `-- name: ListDriverRides :many
-SELECT r.id, r.passenger_id, r.driver_id, r.status, r.fare_amount, r.ride_type, r.pickup_latitude, r.pickup_longitude, r.pickup_name, r.dropoff_latitude, r.dropoff_longitude, r.dropoff_name, r.distance_km, r.duration_minutes, r.driver_name, r.vehicle_type, r.plate_number, r.driver_rating, r.created_at, r.completed_at, r.arrived_at, r.waiting_until, r.payment_status, r.cash_received_at, r.cash_received_amount, r.cash_change_amount, r.cash_outcome, r.cancelled_by, r.cancellation_reason, r.cancellation_responsibility, r.cancellation_details, r.commission_bps, r.commission_amount, r.driver_payout_amount,
+SELECT ride.id, ride.passenger_id, ride.driver_id, ride.status, ride.fare_amount, ride.ride_type, ride.pickup_latitude, ride.pickup_longitude, ride.pickup_name, ride.dropoff_latitude, ride.dropoff_longitude, ride.dropoff_name, ride.distance_km, ride.duration_minutes, ride.driver_name, ride.vehicle_type, ride.plate_number, ride.driver_rating, ride.created_at, ride.completed_at, ride.arrived_at, ride.waiting_until, ride.cancelled_by, ride.cancellation_reason, ride.cancellation_responsibility, ride.cancellation_details,
+    COALESCE(settlement.payment_status, 'unpaid') AS payment_status,
+    COALESCE(settlement.cash_received_amount, 0)::bigint AS cash_received_amount,
+    COALESCE(settlement.cash_change_amount, 0)::bigint AS cash_change_amount,
+    COALESCE(settlement.cash_outcome, 'unpaid') AS cash_outcome,
+    settlement.commission_bps,
+    COALESCE(settlement.commission_amount, 0)::bigint AS commission_amount,
+    COALESCE(settlement.driver_payout_amount, 0)::bigint AS driver_payout_amount,
     COALESCE(NULLIF(passenger_profile.name, ''), user_account.name, '') AS passenger_name,
     COALESCE(user_account.phone, '') AS passenger_phone,
     passenger_review.rating AS passenger_rating,
     passenger_review.comment AS passenger_feedback
-FROM rides AS r
-LEFT JOIN users AS user_account ON user_account.id = r.passenger_id
-LEFT JOIN passenger_profiles AS passenger_profile ON passenger_profile.user_id = r.passenger_id
-LEFT JOIN reviews AS passenger_review ON passenger_review.ride_id = r.id
-WHERE r.driver_id = $1
+FROM rides AS ride
+LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = ride.id
+LEFT JOIN users AS user_account ON user_account.id = ride.passenger_id
+LEFT JOIN passenger_profiles AS passenger_profile ON passenger_profile.user_id = ride.passenger_id
+LEFT JOIN reviews AS passenger_review ON passenger_review.ride_id = ride.id
+WHERE ride.driver_id = $1
   AND (
       $2::boolean = false
-      OR r.status IN ('assigned', 'accepted', 'arrived', 'in_transit')
+      OR ride.status IN ('assigned', 'accepted', 'arrived', 'in_transit')
   )
-ORDER BY r.created_at DESC, r.id DESC
+ORDER BY ride.created_at DESC, ride.id DESC
 LIMIT $4::int
 OFFSET $3::int
 `
@@ -39,11 +47,18 @@ type ListDriverRidesParams struct {
 }
 
 type ListDriverRidesRow struct {
-	Ride              Ride          `db:"ride"`
-	PassengerName     string        `db:"passenger_name"`
-	PassengerPhone    string        `db:"passenger_phone"`
-	PassengerRating   pgtype.Float8 `db:"passenger_rating"`
-	PassengerFeedback pgtype.Text   `db:"passenger_feedback"`
+	Ride               Ride          `db:"ride"`
+	PaymentStatus      string        `db:"payment_status"`
+	CashReceivedAmount int64         `db:"cash_received_amount"`
+	CashChangeAmount   int64         `db:"cash_change_amount"`
+	CashOutcome        string        `db:"cash_outcome"`
+	CommissionBps      pgtype.Int4   `db:"commission_bps"`
+	CommissionAmount   int64         `db:"commission_amount"`
+	DriverPayoutAmount int64         `db:"driver_payout_amount"`
+	PassengerName      string        `db:"passenger_name"`
+	PassengerPhone     string        `db:"passenger_phone"`
+	PassengerRating    pgtype.Float8 `db:"passenger_rating"`
+	PassengerFeedback  pgtype.Text   `db:"passenger_feedback"`
 }
 
 func (q *Queries) ListDriverRides(ctx context.Context, arg ListDriverRidesParams) ([]ListDriverRidesRow, error) {
@@ -83,18 +98,17 @@ func (q *Queries) ListDriverRides(ctx context.Context, arg ListDriverRidesParams
 			&i.Ride.CompletedAt,
 			&i.Ride.ArrivedAt,
 			&i.Ride.WaitingUntil,
-			&i.Ride.PaymentStatus,
-			&i.Ride.CashReceivedAt,
-			&i.Ride.CashReceivedAmount,
-			&i.Ride.CashChangeAmount,
-			&i.Ride.CashOutcome,
 			&i.Ride.CancelledBy,
 			&i.Ride.CancellationReason,
 			&i.Ride.CancellationResponsibility,
 			&i.Ride.CancellationDetails,
-			&i.Ride.CommissionBps,
-			&i.Ride.CommissionAmount,
-			&i.Ride.DriverPayoutAmount,
+			&i.PaymentStatus,
+			&i.CashReceivedAmount,
+			&i.CashChangeAmount,
+			&i.CashOutcome,
+			&i.CommissionBps,
+			&i.CommissionAmount,
+			&i.DriverPayoutAmount,
 			&i.PassengerName,
 			&i.PassengerPhone,
 			&i.PassengerRating,
@@ -111,14 +125,22 @@ func (q *Queries) ListDriverRides(ctx context.Context, arg ListDriverRidesParams
 }
 
 const listPassengerRides = `-- name: ListPassengerRides :many
-SELECT r.id, r.passenger_id, r.driver_id, r.status, r.fare_amount, r.ride_type, r.pickup_latitude, r.pickup_longitude, r.pickup_name, r.dropoff_latitude, r.dropoff_longitude, r.dropoff_name, r.distance_km, r.duration_minutes, r.driver_name, r.vehicle_type, r.plate_number, r.driver_rating, r.created_at, r.completed_at, r.arrived_at, r.waiting_until, r.payment_status, r.cash_received_at, r.cash_received_amount, r.cash_change_amount, r.cash_outcome, r.cancelled_by, r.cancellation_reason, r.cancellation_responsibility, r.cancellation_details, r.commission_bps, r.commission_amount, r.driver_payout_amount,
+SELECT ride.id, ride.passenger_id, ride.driver_id, ride.status, ride.fare_amount, ride.ride_type, ride.pickup_latitude, ride.pickup_longitude, ride.pickup_name, ride.dropoff_latitude, ride.dropoff_longitude, ride.dropoff_name, ride.distance_km, ride.duration_minutes, ride.driver_name, ride.vehicle_type, ride.plate_number, ride.driver_rating, ride.created_at, ride.completed_at, ride.arrived_at, ride.waiting_until, ride.cancelled_by, ride.cancellation_reason, ride.cancellation_responsibility, ride.cancellation_details,
+    COALESCE(settlement.payment_status, 'unpaid') AS payment_status,
+    COALESCE(settlement.cash_received_amount, 0)::bigint AS cash_received_amount,
+    COALESCE(settlement.cash_change_amount, 0)::bigint AS cash_change_amount,
+    COALESCE(settlement.cash_outcome, 'unpaid') AS cash_outcome,
+    settlement.commission_bps,
+    COALESCE(settlement.commission_amount, 0)::bigint AS commission_amount,
+    COALESCE(settlement.driver_payout_amount, 0)::bigint AS driver_payout_amount,
     COALESCE(driver_profile.name, '') AS driver_profile_name,
     COALESCE(driver_profile.vehicle_type, '') AS driver_profile_vehicle_type,
     COALESCE(driver_profile.plate_number, '') AS driver_profile_plate_number
-FROM rides AS r
-LEFT JOIN driver_profiles AS driver_profile ON driver_profile.user_id = r.driver_id
-WHERE r.passenger_id = $1
-ORDER BY r.created_at DESC, r.id DESC
+FROM rides AS ride
+LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = ride.id
+LEFT JOIN driver_profiles AS driver_profile ON driver_profile.user_id = ride.driver_id
+WHERE ride.passenger_id = $1
+ORDER BY ride.created_at DESC, ride.id DESC
 LIMIT $3::int
 OFFSET $2::int
 `
@@ -130,10 +152,17 @@ type ListPassengerRidesParams struct {
 }
 
 type ListPassengerRidesRow struct {
-	Ride                     Ride   `db:"ride"`
-	DriverProfileName        string `db:"driver_profile_name"`
-	DriverProfileVehicleType string `db:"driver_profile_vehicle_type"`
-	DriverProfilePlateNumber string `db:"driver_profile_plate_number"`
+	Ride                     Ride        `db:"ride"`
+	PaymentStatus            string      `db:"payment_status"`
+	CashReceivedAmount       int64       `db:"cash_received_amount"`
+	CashChangeAmount         int64       `db:"cash_change_amount"`
+	CashOutcome              string      `db:"cash_outcome"`
+	CommissionBps            pgtype.Int4 `db:"commission_bps"`
+	CommissionAmount         int64       `db:"commission_amount"`
+	DriverPayoutAmount       int64       `db:"driver_payout_amount"`
+	DriverProfileName        string      `db:"driver_profile_name"`
+	DriverProfileVehicleType string      `db:"driver_profile_vehicle_type"`
+	DriverProfilePlateNumber string      `db:"driver_profile_plate_number"`
 }
 
 func (q *Queries) ListPassengerRides(ctx context.Context, arg ListPassengerRidesParams) ([]ListPassengerRidesRow, error) {
@@ -168,18 +197,17 @@ func (q *Queries) ListPassengerRides(ctx context.Context, arg ListPassengerRides
 			&i.Ride.CompletedAt,
 			&i.Ride.ArrivedAt,
 			&i.Ride.WaitingUntil,
-			&i.Ride.PaymentStatus,
-			&i.Ride.CashReceivedAt,
-			&i.Ride.CashReceivedAmount,
-			&i.Ride.CashChangeAmount,
-			&i.Ride.CashOutcome,
 			&i.Ride.CancelledBy,
 			&i.Ride.CancellationReason,
 			&i.Ride.CancellationResponsibility,
 			&i.Ride.CancellationDetails,
-			&i.Ride.CommissionBps,
-			&i.Ride.CommissionAmount,
-			&i.Ride.DriverPayoutAmount,
+			&i.PaymentStatus,
+			&i.CashReceivedAmount,
+			&i.CashChangeAmount,
+			&i.CashOutcome,
+			&i.CommissionBps,
+			&i.CommissionAmount,
+			&i.DriverPayoutAmount,
 			&i.DriverProfileName,
 			&i.DriverProfileVehicleType,
 			&i.DriverProfilePlateNumber,
@@ -195,14 +223,22 @@ func (q *Queries) ListPassengerRides(ctx context.Context, arg ListPassengerRides
 }
 
 const listRecentPassengerRides = `-- name: ListRecentPassengerRides :many
-SELECT r.id, r.passenger_id, r.driver_id, r.status, r.fare_amount, r.ride_type, r.pickup_latitude, r.pickup_longitude, r.pickup_name, r.dropoff_latitude, r.dropoff_longitude, r.dropoff_name, r.distance_km, r.duration_minutes, r.driver_name, r.vehicle_type, r.plate_number, r.driver_rating, r.created_at, r.completed_at, r.arrived_at, r.waiting_until, r.payment_status, r.cash_received_at, r.cash_received_amount, r.cash_change_amount, r.cash_outcome, r.cancelled_by, r.cancellation_reason, r.cancellation_responsibility, r.cancellation_details, r.commission_bps, r.commission_amount, r.driver_payout_amount,
+SELECT ride.id, ride.passenger_id, ride.driver_id, ride.status, ride.fare_amount, ride.ride_type, ride.pickup_latitude, ride.pickup_longitude, ride.pickup_name, ride.dropoff_latitude, ride.dropoff_longitude, ride.dropoff_name, ride.distance_km, ride.duration_minutes, ride.driver_name, ride.vehicle_type, ride.plate_number, ride.driver_rating, ride.created_at, ride.completed_at, ride.arrived_at, ride.waiting_until, ride.cancelled_by, ride.cancellation_reason, ride.cancellation_responsibility, ride.cancellation_details,
+    COALESCE(settlement.payment_status, 'unpaid') AS payment_status,
+    COALESCE(settlement.cash_received_amount, 0)::bigint AS cash_received_amount,
+    COALESCE(settlement.cash_change_amount, 0)::bigint AS cash_change_amount,
+    COALESCE(settlement.cash_outcome, 'unpaid') AS cash_outcome,
+    settlement.commission_bps,
+    COALESCE(settlement.commission_amount, 0)::bigint AS commission_amount,
+    COALESCE(settlement.driver_payout_amount, 0)::bigint AS driver_payout_amount,
     COALESCE(driver_profile.name, '') AS driver_profile_name,
     COALESCE(driver_profile.vehicle_type, '') AS driver_profile_vehicle_type,
     COALESCE(driver_profile.plate_number, '') AS driver_profile_plate_number
-FROM rides AS r
-LEFT JOIN driver_profiles AS driver_profile ON driver_profile.user_id = r.driver_id
-WHERE r.passenger_id = $1
-ORDER BY r.id DESC
+FROM rides AS ride
+LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = ride.id
+LEFT JOIN driver_profiles AS driver_profile ON driver_profile.user_id = ride.driver_id
+WHERE ride.passenger_id = $1
+ORDER BY ride.id DESC
 LIMIT $2::int
 `
 
@@ -212,10 +248,17 @@ type ListRecentPassengerRidesParams struct {
 }
 
 type ListRecentPassengerRidesRow struct {
-	Ride                     Ride   `db:"ride"`
-	DriverProfileName        string `db:"driver_profile_name"`
-	DriverProfileVehicleType string `db:"driver_profile_vehicle_type"`
-	DriverProfilePlateNumber string `db:"driver_profile_plate_number"`
+	Ride                     Ride        `db:"ride"`
+	PaymentStatus            string      `db:"payment_status"`
+	CashReceivedAmount       int64       `db:"cash_received_amount"`
+	CashChangeAmount         int64       `db:"cash_change_amount"`
+	CashOutcome              string      `db:"cash_outcome"`
+	CommissionBps            pgtype.Int4 `db:"commission_bps"`
+	CommissionAmount         int64       `db:"commission_amount"`
+	DriverPayoutAmount       int64       `db:"driver_payout_amount"`
+	DriverProfileName        string      `db:"driver_profile_name"`
+	DriverProfileVehicleType string      `db:"driver_profile_vehicle_type"`
+	DriverProfilePlateNumber string      `db:"driver_profile_plate_number"`
 }
 
 func (q *Queries) ListRecentPassengerRides(ctx context.Context, arg ListRecentPassengerRidesParams) ([]ListRecentPassengerRidesRow, error) {
@@ -250,18 +293,17 @@ func (q *Queries) ListRecentPassengerRides(ctx context.Context, arg ListRecentPa
 			&i.Ride.CompletedAt,
 			&i.Ride.ArrivedAt,
 			&i.Ride.WaitingUntil,
-			&i.Ride.PaymentStatus,
-			&i.Ride.CashReceivedAt,
-			&i.Ride.CashReceivedAmount,
-			&i.Ride.CashChangeAmount,
-			&i.Ride.CashOutcome,
 			&i.Ride.CancelledBy,
 			&i.Ride.CancellationReason,
 			&i.Ride.CancellationResponsibility,
 			&i.Ride.CancellationDetails,
-			&i.Ride.CommissionBps,
-			&i.Ride.CommissionAmount,
-			&i.Ride.DriverPayoutAmount,
+			&i.PaymentStatus,
+			&i.CashReceivedAmount,
+			&i.CashChangeAmount,
+			&i.CashOutcome,
+			&i.CommissionBps,
+			&i.CommissionAmount,
+			&i.DriverPayoutAmount,
 			&i.DriverProfileName,
 			&i.DriverProfileVehicleType,
 			&i.DriverProfilePlateNumber,

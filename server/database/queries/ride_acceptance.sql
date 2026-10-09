@@ -3,12 +3,9 @@ SELECT id, passenger_id, driver_id, status, fare_amount, ride_type,
     pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name,
     distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
-    driver_rating, created_at, completed_at, arrived_at, waiting_until, payment_status,
-    cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
+    driver_rating, created_at, completed_at, arrived_at, waiting_until,
     cancelled_by, cancellation_reason, cancellation_responsibility,
-    cancellation_details,
-    commission_bps, commission_amount,
-    driver_payout_amount
+    cancellation_details
 FROM rides
 WHERE id = $1
   AND status = 'requested'
@@ -79,23 +76,13 @@ INSERT INTO rides (
     passenger_id, driver_id, status, fare_amount, ride_type,
     pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name,
-    distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
-    commission_bps, commission_amount, driver_payout_amount
+    distance_km, duration_minutes, driver_name, vehicle_type, plate_number
 )
 VALUES (
     $1, $2, 'accepted', $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
-    $13, $14, $15, $16, $17, $18
+    $13, $14, $15
 )
-RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
-    pickup_latitude, pickup_longitude, pickup_name,
-    dropoff_latitude, dropoff_longitude, dropoff_name,
-    distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
-    driver_rating, created_at, completed_at, arrived_at, waiting_until, payment_status,
-    cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
-    cancelled_by, cancellation_reason, cancellation_responsibility,
-    cancellation_details,
-    commission_bps, commission_amount,
-    driver_payout_amount;
+RETURNING *;
 
 -- name: AssignRideFromAcceptance :one
 UPDATE rides
@@ -103,22 +90,10 @@ SET status = 'assigned',
     driver_id = $2,
     driver_name = $3,
     vehicle_type = $4,
-    plate_number = $5,
-    commission_bps = $6,
-    commission_amount = $7,
-    driver_payout_amount = $8
+    plate_number = $5
 WHERE id = $1
   AND status = 'requested'
-RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
-    pickup_latitude, pickup_longitude, pickup_name,
-    dropoff_latitude, dropoff_longitude, dropoff_name,
-    distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
-    driver_rating, created_at, completed_at, arrived_at, waiting_until, payment_status,
-    cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
-    cancelled_by, cancellation_reason, cancellation_responsibility,
-    cancellation_details,
-    commission_bps, commission_amount,
-    driver_payout_amount;
+RETURNING *;
 
 -- name: AcceptRideFromRequest :one
 UPDATE rides
@@ -126,26 +101,18 @@ SET status = 'accepted',
     driver_id = $2,
     driver_name = $3,
     vehicle_type = $4,
-    plate_number = $5,
-    commission_bps = $6,
-    commission_amount = $7,
-    driver_payout_amount = $8
+    plate_number = $5
 WHERE id = $1
   AND status = 'requested'
-RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
-    pickup_latitude, pickup_longitude, pickup_name,
-    dropoff_latitude, dropoff_longitude, dropoff_name,
-    distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
-    driver_rating, created_at, completed_at, arrived_at, waiting_until, payment_status,
-    cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
-    cancelled_by, cancellation_reason, cancellation_responsibility,
-    cancellation_details,
-    commission_bps, commission_amount,
-    driver_payout_amount;
+RETURNING *;
 
--- name: CreateRideSettlement :exec
+-- name: CreateRideSettlement :one
 INSERT INTO ride_settlements (
     ride_id, gross_fare, commission_bps, commission_amount,
     driver_payout_amount, payment_status
 )
-VALUES ($1, $2, $3, $4, $5, 'unpaid');
+VALUES ($1, $2, $3, $4, $5, 'unpaid')
+RETURNING id, ride_id, gross_fare, commission_bps, commission_amount,
+    driver_payout_amount, payment_status, cash_received_at,
+    cash_received_amount, cash_change_amount, cash_outcome, settled_at,
+    created_at, updated_at;

@@ -12,56 +12,65 @@ import (
 )
 
 const getRideByID = `-- name: GetRideByID :one
-SELECT id, passenger_id, driver_id, status, fare_amount, ride_type,
-    pickup_latitude, pickup_longitude, pickup_name,
-    dropoff_latitude, dropoff_longitude, dropoff_name,
-    distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
-    driver_rating, created_at, completed_at, arrived_at, waiting_until, payment_status,
-    cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
-    cancelled_by, cancellation_reason, cancellation_responsibility,
-    cancellation_details,
-    commission_bps, commission_amount,
-    driver_payout_amount
-FROM rides
-WHERE id = $1
+SELECT ride.id, ride.passenger_id, ride.driver_id, ride.status, ride.fare_amount, ride.ride_type, ride.pickup_latitude, ride.pickup_longitude, ride.pickup_name, ride.dropoff_latitude, ride.dropoff_longitude, ride.dropoff_name, ride.distance_km, ride.duration_minutes, ride.driver_name, ride.vehicle_type, ride.plate_number, ride.driver_rating, ride.created_at, ride.completed_at, ride.arrived_at, ride.waiting_until, ride.cancelled_by, ride.cancellation_reason, ride.cancellation_responsibility, ride.cancellation_details,
+    COALESCE(settlement.payment_status, 'unpaid') AS payment_status,
+    COALESCE(settlement.cash_received_amount, 0)::bigint AS cash_received_amount,
+    COALESCE(settlement.cash_change_amount, 0)::bigint AS cash_change_amount,
+    COALESCE(settlement.cash_outcome, 'unpaid') AS cash_outcome,
+    settlement.commission_bps,
+    COALESCE(settlement.commission_amount, 0)::bigint AS commission_amount,
+    COALESCE(settlement.driver_payout_amount, 0)::bigint AS driver_payout_amount
+FROM rides AS ride
+LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = ride.id
+WHERE ride.id = $1
 LIMIT 1
 `
 
-func (q *Queries) GetRideByID(ctx context.Context, id int32) (Ride, error) {
+type GetRideByIDRow struct {
+	Ride               Ride        `db:"ride"`
+	PaymentStatus      string      `db:"payment_status"`
+	CashReceivedAmount int64       `db:"cash_received_amount"`
+	CashChangeAmount   int64       `db:"cash_change_amount"`
+	CashOutcome        string      `db:"cash_outcome"`
+	CommissionBps      pgtype.Int4 `db:"commission_bps"`
+	CommissionAmount   int64       `db:"commission_amount"`
+	DriverPayoutAmount int64       `db:"driver_payout_amount"`
+}
+
+func (q *Queries) GetRideByID(ctx context.Context, id int32) (GetRideByIDRow, error) {
 	row := q.db.QueryRow(ctx, getRideByID, id)
-	var i Ride
+	var i GetRideByIDRow
 	err := row.Scan(
-		&i.ID,
-		&i.PassengerID,
-		&i.DriverID,
-		&i.Status,
-		&i.FareAmount,
-		&i.RideType,
-		&i.PickupLatitude,
-		&i.PickupLongitude,
-		&i.PickupName,
-		&i.DropoffLatitude,
-		&i.DropoffLongitude,
-		&i.DropoffName,
-		&i.DistanceKm,
-		&i.DurationMinutes,
-		&i.DriverName,
-		&i.VehicleType,
-		&i.PlateNumber,
-		&i.DriverRating,
-		&i.CreatedAt,
-		&i.CompletedAt,
-		&i.ArrivedAt,
-		&i.WaitingUntil,
+		&i.Ride.ID,
+		&i.Ride.PassengerID,
+		&i.Ride.DriverID,
+		&i.Ride.Status,
+		&i.Ride.FareAmount,
+		&i.Ride.RideType,
+		&i.Ride.PickupLatitude,
+		&i.Ride.PickupLongitude,
+		&i.Ride.PickupName,
+		&i.Ride.DropoffLatitude,
+		&i.Ride.DropoffLongitude,
+		&i.Ride.DropoffName,
+		&i.Ride.DistanceKm,
+		&i.Ride.DurationMinutes,
+		&i.Ride.DriverName,
+		&i.Ride.VehicleType,
+		&i.Ride.PlateNumber,
+		&i.Ride.DriverRating,
+		&i.Ride.CreatedAt,
+		&i.Ride.CompletedAt,
+		&i.Ride.ArrivedAt,
+		&i.Ride.WaitingUntil,
+		&i.Ride.CancelledBy,
+		&i.Ride.CancellationReason,
+		&i.Ride.CancellationResponsibility,
+		&i.Ride.CancellationDetails,
 		&i.PaymentStatus,
-		&i.CashReceivedAt,
 		&i.CashReceivedAmount,
 		&i.CashChangeAmount,
 		&i.CashOutcome,
-		&i.CancelledBy,
-		&i.CancellationReason,
-		&i.CancellationResponsibility,
-		&i.CancellationDetails,
 		&i.CommissionBps,
 		&i.CommissionAmount,
 		&i.DriverPayoutAmount,
@@ -70,63 +79,72 @@ func (q *Queries) GetRideByID(ctx context.Context, id int32) (Ride, error) {
 }
 
 const listActiveRidesForDriver = `-- name: ListActiveRidesForDriver :many
-SELECT id, passenger_id, driver_id, status, fare_amount, ride_type,
-    pickup_latitude, pickup_longitude, pickup_name,
-    dropoff_latitude, dropoff_longitude, dropoff_name,
-    distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
-    driver_rating, created_at, completed_at, arrived_at, waiting_until, payment_status,
-    cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
-    cancelled_by, cancellation_reason, cancellation_responsibility,
-    cancellation_details,
-    commission_bps, commission_amount,
-    driver_payout_amount
-FROM rides
-WHERE driver_id = $1
-  AND status IN ('assigned', 'accepted', 'arrived', 'in_transit')
-ORDER BY id
+SELECT ride.id, ride.passenger_id, ride.driver_id, ride.status, ride.fare_amount, ride.ride_type, ride.pickup_latitude, ride.pickup_longitude, ride.pickup_name, ride.dropoff_latitude, ride.dropoff_longitude, ride.dropoff_name, ride.distance_km, ride.duration_minutes, ride.driver_name, ride.vehicle_type, ride.plate_number, ride.driver_rating, ride.created_at, ride.completed_at, ride.arrived_at, ride.waiting_until, ride.cancelled_by, ride.cancellation_reason, ride.cancellation_responsibility, ride.cancellation_details,
+    COALESCE(settlement.payment_status, 'unpaid') AS payment_status,
+    COALESCE(settlement.cash_received_amount, 0)::bigint AS cash_received_amount,
+    COALESCE(settlement.cash_change_amount, 0)::bigint AS cash_change_amount,
+    COALESCE(settlement.cash_outcome, 'unpaid') AS cash_outcome,
+    settlement.commission_bps,
+    COALESCE(settlement.commission_amount, 0)::bigint AS commission_amount,
+    COALESCE(settlement.driver_payout_amount, 0)::bigint AS driver_payout_amount
+FROM rides AS ride
+LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = ride.id
+WHERE ride.driver_id = $1
+  AND ride.status IN ('assigned', 'accepted', 'arrived', 'in_transit')
+ORDER BY ride.id
 `
 
-func (q *Queries) ListActiveRidesForDriver(ctx context.Context, driverID pgtype.Int4) ([]Ride, error) {
+type ListActiveRidesForDriverRow struct {
+	Ride               Ride        `db:"ride"`
+	PaymentStatus      string      `db:"payment_status"`
+	CashReceivedAmount int64       `db:"cash_received_amount"`
+	CashChangeAmount   int64       `db:"cash_change_amount"`
+	CashOutcome        string      `db:"cash_outcome"`
+	CommissionBps      pgtype.Int4 `db:"commission_bps"`
+	CommissionAmount   int64       `db:"commission_amount"`
+	DriverPayoutAmount int64       `db:"driver_payout_amount"`
+}
+
+func (q *Queries) ListActiveRidesForDriver(ctx context.Context, driverID pgtype.Int4) ([]ListActiveRidesForDriverRow, error) {
 	rows, err := q.db.Query(ctx, listActiveRidesForDriver, driverID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Ride{}
+	items := []ListActiveRidesForDriverRow{}
 	for rows.Next() {
-		var i Ride
+		var i ListActiveRidesForDriverRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.PassengerID,
-			&i.DriverID,
-			&i.Status,
-			&i.FareAmount,
-			&i.RideType,
-			&i.PickupLatitude,
-			&i.PickupLongitude,
-			&i.PickupName,
-			&i.DropoffLatitude,
-			&i.DropoffLongitude,
-			&i.DropoffName,
-			&i.DistanceKm,
-			&i.DurationMinutes,
-			&i.DriverName,
-			&i.VehicleType,
-			&i.PlateNumber,
-			&i.DriverRating,
-			&i.CreatedAt,
-			&i.CompletedAt,
-			&i.ArrivedAt,
-			&i.WaitingUntil,
+			&i.Ride.ID,
+			&i.Ride.PassengerID,
+			&i.Ride.DriverID,
+			&i.Ride.Status,
+			&i.Ride.FareAmount,
+			&i.Ride.RideType,
+			&i.Ride.PickupLatitude,
+			&i.Ride.PickupLongitude,
+			&i.Ride.PickupName,
+			&i.Ride.DropoffLatitude,
+			&i.Ride.DropoffLongitude,
+			&i.Ride.DropoffName,
+			&i.Ride.DistanceKm,
+			&i.Ride.DurationMinutes,
+			&i.Ride.DriverName,
+			&i.Ride.VehicleType,
+			&i.Ride.PlateNumber,
+			&i.Ride.DriverRating,
+			&i.Ride.CreatedAt,
+			&i.Ride.CompletedAt,
+			&i.Ride.ArrivedAt,
+			&i.Ride.WaitingUntil,
+			&i.Ride.CancelledBy,
+			&i.Ride.CancellationReason,
+			&i.Ride.CancellationResponsibility,
+			&i.Ride.CancellationDetails,
 			&i.PaymentStatus,
-			&i.CashReceivedAt,
 			&i.CashReceivedAmount,
 			&i.CashChangeAmount,
 			&i.CashOutcome,
-			&i.CancelledBy,
-			&i.CancellationReason,
-			&i.CancellationResponsibility,
-			&i.CancellationDetails,
 			&i.CommissionBps,
 			&i.CommissionAmount,
 			&i.DriverPayoutAmount,

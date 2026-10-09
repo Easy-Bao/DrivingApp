@@ -35,74 +35,6 @@ func (q *Queries) CreateDriverWalletAccount(ctx context.Context, arg CreateDrive
 	return i, err
 }
 
-const createRideSettlementForCash = `-- name: CreateRideSettlementForCash :one
-INSERT INTO ride_settlements (
-    ride_id, gross_fare, commission_bps, commission_amount,
-    driver_payout_amount, payment_status, cash_received_at,
-    cash_received_amount, cash_change_amount, cash_outcome, settled_at
-)
-VALUES (
-    $1, $2,
-    $3, $4,
-    $5, $6,
-    $7, $8,
-    $9, $10,
-    $11
-)
-RETURNING id, ride_id, gross_fare, commission_bps, commission_amount,
-    driver_payout_amount, payment_status, cash_received_at,
-    cash_received_amount, cash_change_amount, cash_outcome, settled_at,
-    created_at, updated_at
-`
-
-type CreateRideSettlementForCashParams struct {
-	RideID             int32              `db:"ride_id"`
-	GrossFare          int64              `db:"gross_fare"`
-	CommissionBps      pgtype.Int4        `db:"commission_bps"`
-	CommissionAmount   int64              `db:"commission_amount"`
-	DriverPayoutAmount int64              `db:"driver_payout_amount"`
-	PaymentStatus      string             `db:"payment_status"`
-	CashReceivedAt     pgtype.Timestamptz `db:"cash_received_at"`
-	CashReceivedAmount int64              `db:"cash_received_amount"`
-	CashChangeAmount   int64              `db:"cash_change_amount"`
-	CashOutcome        string             `db:"cash_outcome"`
-	SettledAt          pgtype.Timestamptz `db:"settled_at"`
-}
-
-func (q *Queries) CreateRideSettlementForCash(ctx context.Context, arg CreateRideSettlementForCashParams) (RideSettlement, error) {
-	row := q.db.QueryRow(ctx, createRideSettlementForCash,
-		arg.RideID,
-		arg.GrossFare,
-		arg.CommissionBps,
-		arg.CommissionAmount,
-		arg.DriverPayoutAmount,
-		arg.PaymentStatus,
-		arg.CashReceivedAt,
-		arg.CashReceivedAmount,
-		arg.CashChangeAmount,
-		arg.CashOutcome,
-		arg.SettledAt,
-	)
-	var i RideSettlement
-	err := row.Scan(
-		&i.ID,
-		&i.RideID,
-		&i.GrossFare,
-		&i.CommissionBps,
-		&i.CommissionAmount,
-		&i.DriverPayoutAmount,
-		&i.PaymentStatus,
-		&i.CashReceivedAt,
-		&i.CashReceivedAmount,
-		&i.CashChangeAmount,
-		&i.CashOutcome,
-		&i.SettledAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
 const createWalletLedger = `-- name: CreateWalletLedger :execrows
 INSERT INTO wallet_ledgers (
     driver_id, ride_id, amount, commission_amount, kind, idempotency_key
@@ -221,12 +153,9 @@ SELECT id, passenger_id, driver_id, status, fare_amount, ride_type,
     pickup_latitude, pickup_longitude, pickup_name,
     dropoff_latitude, dropoff_longitude, dropoff_name,
     distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
-    driver_rating, created_at, completed_at, arrived_at, waiting_until, payment_status,
-    cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
+    driver_rating, created_at, completed_at, arrived_at, waiting_until,
     cancelled_by, cancellation_reason, cancellation_responsibility,
-    cancellation_details,
-    commission_bps, commission_amount,
-    driver_payout_amount
+    cancellation_details
 FROM rides
 WHERE id = $1
   AND driver_id = $2
@@ -266,105 +195,10 @@ func (q *Queries) LockCompletedRideForCashSettlement(ctx context.Context, arg Lo
 		&i.CompletedAt,
 		&i.ArrivedAt,
 		&i.WaitingUntil,
-		&i.PaymentStatus,
-		&i.CashReceivedAt,
-		&i.CashReceivedAmount,
-		&i.CashChangeAmount,
-		&i.CashOutcome,
 		&i.CancelledBy,
 		&i.CancellationReason,
 		&i.CancellationResponsibility,
 		&i.CancellationDetails,
-		&i.CommissionBps,
-		&i.CommissionAmount,
-		&i.DriverPayoutAmount,
-	)
-	return i, err
-}
-
-const markRideCashOutcome = `-- name: MarkRideCashOutcome :one
-UPDATE rides
-SET payment_status = $1,
-    cash_received_at = $2,
-    cash_received_amount = $3,
-    cash_change_amount = $4,
-    cash_outcome = $5,
-    commission_bps = $6,
-    commission_amount = $7,
-    driver_payout_amount = $8
-WHERE id = $9
-RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
-    pickup_latitude, pickup_longitude, pickup_name,
-    dropoff_latitude, dropoff_longitude, dropoff_name,
-    distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
-    driver_rating, created_at, completed_at, arrived_at, waiting_until, payment_status,
-    cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
-    cancelled_by, cancellation_reason, cancellation_responsibility,
-    cancellation_details,
-    commission_bps, commission_amount,
-    driver_payout_amount
-`
-
-type MarkRideCashOutcomeParams struct {
-	PaymentStatus      string             `db:"payment_status"`
-	CashReceivedAt     pgtype.Timestamptz `db:"cash_received_at"`
-	CashReceivedAmount int64              `db:"cash_received_amount"`
-	CashChangeAmount   int64              `db:"cash_change_amount"`
-	CashOutcome        string             `db:"cash_outcome"`
-	CommissionBps      pgtype.Int4        `db:"commission_bps"`
-	CommissionAmount   int64              `db:"commission_amount"`
-	DriverPayoutAmount int64              `db:"driver_payout_amount"`
-	RideID             int32              `db:"ride_id"`
-}
-
-func (q *Queries) MarkRideCashOutcome(ctx context.Context, arg MarkRideCashOutcomeParams) (Ride, error) {
-	row := q.db.QueryRow(ctx, markRideCashOutcome,
-		arg.PaymentStatus,
-		arg.CashReceivedAt,
-		arg.CashReceivedAmount,
-		arg.CashChangeAmount,
-		arg.CashOutcome,
-		arg.CommissionBps,
-		arg.CommissionAmount,
-		arg.DriverPayoutAmount,
-		arg.RideID,
-	)
-	var i Ride
-	err := row.Scan(
-		&i.ID,
-		&i.PassengerID,
-		&i.DriverID,
-		&i.Status,
-		&i.FareAmount,
-		&i.RideType,
-		&i.PickupLatitude,
-		&i.PickupLongitude,
-		&i.PickupName,
-		&i.DropoffLatitude,
-		&i.DropoffLongitude,
-		&i.DropoffName,
-		&i.DistanceKm,
-		&i.DurationMinutes,
-		&i.DriverName,
-		&i.VehicleType,
-		&i.PlateNumber,
-		&i.DriverRating,
-		&i.CreatedAt,
-		&i.CompletedAt,
-		&i.ArrivedAt,
-		&i.WaitingUntil,
-		&i.PaymentStatus,
-		&i.CashReceivedAt,
-		&i.CashReceivedAmount,
-		&i.CashChangeAmount,
-		&i.CashOutcome,
-		&i.CancelledBy,
-		&i.CancellationReason,
-		&i.CancellationResponsibility,
-		&i.CancellationDetails,
-		&i.CommissionBps,
-		&i.CommissionAmount,
-		&i.DriverPayoutAmount,
 	)
 	return i, err
 }

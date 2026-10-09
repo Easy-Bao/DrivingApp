@@ -62,29 +62,13 @@ func (repository *RideRepository) SettleCash(
 		if !cashSettlementMatchesRecord(settlementRecord, request) {
 			return domain.Ride{}, domain.ErrInvalidSettlement
 		}
-		if rideItem.PaymentStatus != settlementRecord.PaymentStatus ||
-			rideItem.CashReceivedAmount != settlementRecord.CashReceivedAmount ||
-			rideItem.CashChangeAmount != settlementRecord.CashChangeAmount ||
-			rideItem.CashOutcome != settlementRecord.CashOutcome {
-			rideItem, err = transactionQueries.MarkRideCashOutcome(ctx, databasepostgres.MarkRideCashOutcomeParams{
-				PaymentStatus:      settlementRecord.PaymentStatus,
-				CashReceivedAt:     settlementRecord.CashReceivedAt,
-				CashReceivedAmount: settlementRecord.CashReceivedAmount,
-				CashChangeAmount:   settlementRecord.CashChangeAmount,
-				CashOutcome:        settlementRecord.CashOutcome,
-				CommissionBps:      settlementRecord.CommissionBps,
-				CommissionAmount:   settlementRecord.CommissionAmount,
-				DriverPayoutAmount: settlementRecord.DriverPayoutAmount,
-				RideID:             rideItem.ID,
-			})
-			if err != nil {
-				return domain.Ride{}, fmt.Errorf("synchronize recorded cash outcome: %w", err)
-			}
-		}
 		if err := transaction.Commit(ctx); err != nil {
 			return domain.Ride{}, fmt.Errorf("commit already-recorded cash outcome: %w", err)
 		}
-		ride, err := fromPostgresRide(rideItem)
+		ride, err := fromPostgresRideProjection(
+			rideItem,
+			rideSettlementProjectionFromRecord(settlementRecord),
+		)
 		if err != nil {
 			return domain.Ride{}, fmt.Errorf("map already-recorded cash outcome: %w", err)
 		}
@@ -141,7 +125,7 @@ func (repository *RideRepository) SettleCash(
 	if validated.PaymentStatus == "paid" {
 		settledAt = collectedAt
 	}
-	if _, err := transactionQueries.MarkRideSettlementOutcome(ctx, databasepostgres.MarkRideSettlementOutcomeParams{
+	settlementRecord, err = transactionQueries.MarkRideSettlementOutcome(ctx, databasepostgres.MarkRideSettlementOutcomeParams{
 		PaymentStatus:      validated.PaymentStatus,
 		CashReceivedAt:     collectedAt,
 		CashReceivedAmount: validated.ReceivedAmount,
@@ -152,22 +136,9 @@ func (repository *RideRepository) SettleCash(
 		CommissionAmount:   validated.Snapshot.CommissionAmount,
 		DriverPayoutAmount: validated.Snapshot.DriverPayoutAmount,
 		SettlementID:       settlementRecord.ID,
-	}); err != nil {
-		return domain.Ride{}, fmt.Errorf("record cash settlement outcome: %w", err)
-	}
-	rideItem, err = transactionQueries.MarkRideCashOutcome(ctx, databasepostgres.MarkRideCashOutcomeParams{
-		PaymentStatus:      validated.PaymentStatus,
-		CashReceivedAt:     collectedAt,
-		CashReceivedAmount: validated.ReceivedAmount,
-		CashChangeAmount:   validated.ChangeAmount,
-		CashOutcome:        string(validated.Outcome),
-		CommissionBps:      pgtype.Int4{Int32: int32(settlement.CommissionBPS), Valid: true},
-		CommissionAmount:   validated.Snapshot.CommissionAmount,
-		DriverPayoutAmount: validated.Snapshot.DriverPayoutAmount,
-		RideID:             rideItem.ID,
 	})
 	if err != nil {
-		return domain.Ride{}, fmt.Errorf("mark ride cash outcome: %w", err)
+		return domain.Ride{}, fmt.Errorf("record cash settlement outcome: %w", err)
 	}
 	auditRequestID, err := newAuditRequestID()
 	if err != nil {
@@ -186,7 +157,10 @@ func (repository *RideRepository) SettleCash(
 	if err := transaction.Commit(ctx); err != nil {
 		return domain.Ride{}, fmt.Errorf("commit cash settlement transaction: %w", err)
 	}
-	ride, err := fromPostgresRide(rideItem)
+	ride, err := fromPostgresRideProjection(
+		rideItem,
+		rideSettlementProjectionFromRecord(settlementRecord),
+	)
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("map settled ride: %w", err)
 	}
@@ -208,40 +182,23 @@ func (repository *RideRepository) ensureNativeRideSettlement(
 	rideItem databasepostgres.Ride,
 ) (databasepostgres.RideSettlement, domain.SettlementSnapshot, error) {
 	settlementRecord, err := queries.GetRideSettlementByRideID(ctx, rideItem.ID)
-	hasSettlement := true
 	if errors.Is(err, pgx.ErrNoRows) {
-		hasSettlement = false
-	} else if err != nil {
+		return databasepostgres.RideSettlement{}, domain.SettlementSnapshot{}, fmt.Errorf(
+			"required settlement record is missing for completed ride %d: %w",
+			rideItem.ID,
+			err,
+		)
+	}
+	if err != nil {
 		return databasepostgres.RideSettlement{}, domain.SettlementSnapshot{}, fmt.Errorf("find ride settlement: %w", err)
 	}
 	commissionBPS := repository.platformCommissionBPS
-	if hasSettlement && settlementRecord.CommissionBps.Valid {
+	if settlementRecord.CommissionBps.Valid {
 		commissionBPS = int64(settlementRecord.CommissionBps.Int32)
-	} else if rideItem.CommissionBps.Valid {
-		commissionBPS = int64(rideItem.CommissionBps.Int32)
 	}
 	settlement, err := domain.NewSettlementSnapshot(rideItem.FareAmount, commissionBPS)
 	if err != nil {
 		return databasepostgres.RideSettlement{}, domain.SettlementSnapshot{}, err
-	}
-	if !hasSettlement {
-		settlementRecord, err = queries.CreateRideSettlementForCash(ctx, databasepostgres.CreateRideSettlementForCashParams{
-			RideID:             rideItem.ID,
-			GrossFare:          settlement.FareAmount,
-			CommissionBps:      pgtype.Int4{Int32: int32(settlement.CommissionBPS), Valid: true},
-			CommissionAmount:   settlement.CommissionAmount,
-			DriverPayoutAmount: settlement.DriverPayoutAmount,
-			PaymentStatus:      rideItem.PaymentStatus,
-			CashReceivedAt:     rideItem.CashReceivedAt,
-			CashReceivedAmount: rideItem.CashReceivedAmount,
-			CashChangeAmount:   rideItem.CashChangeAmount,
-			CashOutcome:        rideItem.CashOutcome,
-			SettledAt:          rideItem.CashReceivedAt,
-		})
-		if err != nil {
-			return databasepostgres.RideSettlement{}, domain.SettlementSnapshot{}, fmt.Errorf("create ride settlement: %w", err)
-		}
-		return settlementRecord, settlement, nil
 	}
 	if settlementRecord.GrossFare != settlement.FareAmount {
 		return databasepostgres.RideSettlement{}, domain.SettlementSnapshot{}, domain.ErrInvalidSettlement

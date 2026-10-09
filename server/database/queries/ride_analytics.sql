@@ -5,7 +5,7 @@ SELECT
     COUNT(*) FILTER (
         WHERE r.status IN ('requested', 'assigned', 'accepted', 'arrived', 'in_transit')
     )::bigint AS active_trips,
-    COALESCE(SUM(r.driver_payout_amount) FILTER (WHERE r.status = 'completed'), 0)::bigint
+    COALESCE(SUM(settlement.driver_payout_amount) FILTER (WHERE r.status = 'completed'), 0)::bigint
         AS total_earnings_amount,
     COUNT(*) FILTER (
         WHERE r.status = 'completed'
@@ -18,7 +18,7 @@ SELECT
               )
           )
     )::bigint AS today_completed_trips,
-    COALESCE(SUM(r.driver_payout_amount) FILTER (
+    COALESCE(SUM(settlement.driver_payout_amount) FILTER (
         WHERE r.status = 'completed'
           AND (
               (r.completed_at >= sqlc.arg('day_start') AND r.completed_at < sqlc.arg('day_end'))
@@ -125,23 +125,26 @@ SELECT
           AND standing_ride.cancellation_responsibility = 'admin_override'
     ) AS admin_override_cancellation_count
 FROM rides AS r
+LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = r.id
 WHERE r.driver_id = sqlc.arg('driver_id');
 
 -- name: ListDriverEarnings :many
-SELECT created_at, completed_at, driver_payout_amount
-FROM rides
-WHERE driver_id = sqlc.arg('driver_id')
-  AND status = 'completed'
+SELECT ride.created_at, ride.completed_at,
+    COALESCE(settlement.driver_payout_amount, 0)::bigint AS driver_payout_amount
+FROM rides AS ride
+LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = ride.id
+WHERE ride.driver_id = sqlc.arg('driver_id')
+  AND ride.status = 'completed'
   AND (
       (
-          completed_at IS NOT NULL
-          AND completed_at >= sqlc.arg('month_start')
-          AND completed_at < sqlc.arg('month_end')
+          ride.completed_at IS NOT NULL
+          AND ride.completed_at >= sqlc.arg('month_start')
+          AND ride.completed_at < sqlc.arg('month_end')
       )
       OR (
-          completed_at IS NULL
-          AND created_at >= sqlc.arg('month_start')
-          AND created_at < sqlc.arg('month_end')
+          ride.completed_at IS NULL
+          AND ride.created_at >= sqlc.arg('month_start')
+          AND ride.created_at < sqlc.arg('month_end')
       )
   );
 

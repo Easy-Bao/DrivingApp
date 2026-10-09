@@ -49,7 +49,7 @@ func (repository *RideRepository) MarkArrived(
 		return domain.Ride{}, fmt.Errorf("begin ride arrival transaction: %w", err)
 	}
 	transactionQueries := repository.queries.WithTx(transaction)
-	item, err := transactionQueries.MarkRideArrived(ctx, databasepostgres.MarkRideArrivedParams{
+	_, err = transactionQueries.MarkRideArrived(ctx, databasepostgres.MarkRideArrivedParams{
 		RideID:        dbRideID,
 		DriverID:      pgtype.Int4{Int32: dbDriverID, Valid: true},
 		CurrentStatus: string(current),
@@ -84,16 +84,20 @@ func (repository *RideRepository) MarkArrived(
 			fmt.Errorf("create ride arrival event: %w", err),
 		)
 	}
+	ride, err := readRideProjection(ctx, transactionQueries, dbRideID)
+	if err != nil {
+		return domain.Ride{}, rollbackRideStatusTransaction(
+			ctx,
+			transaction,
+			fmt.Errorf("read arrived ride: %w", err),
+		)
+	}
 	if err := transaction.Commit(ctx); err != nil {
 		return domain.Ride{}, rollbackRideStatusTransaction(
 			ctx,
 			transaction,
 			fmt.Errorf("commit ride arrival transaction: %w", err),
 		)
-	}
-	ride, err := fromPostgresRide(item)
-	if err != nil {
-		return domain.Ride{}, fmt.Errorf("map arrived ride: %w", err)
 	}
 	return ride, nil
 }
@@ -119,7 +123,7 @@ func (repository *RideRepository) StartTrip(
 		return domain.Ride{}, fmt.Errorf("begin trip start transaction: %w", err)
 	}
 	transactionQueries := repository.queries.WithTx(transaction)
-	item, err := transactionQueries.StartRide(ctx, databasepostgres.StartRideParams{
+	_, err = transactionQueries.StartRide(ctx, databasepostgres.StartRideParams{
 		RideID:   dbRideID,
 		DriverID: pgtype.Int4{Int32: dbDriverID, Valid: true},
 	})
@@ -134,7 +138,6 @@ func (repository *RideRepository) StartTrip(
 		ctx,
 		transaction,
 		transactionQueries,
-		item,
 		dbRideID,
 		dbDriverID,
 		domain.RideArrived,
@@ -164,7 +167,7 @@ func (repository *RideRepository) CompleteTrip(
 		return domain.Ride{}, fmt.Errorf("begin trip completion transaction: %w", err)
 	}
 	transactionQueries := repository.queries.WithTx(transaction)
-	item, err := transactionQueries.CompleteRide(ctx, databasepostgres.CompleteRideParams{
+	_, err = transactionQueries.CompleteRide(ctx, databasepostgres.CompleteRideParams{
 		RideID:   dbRideID,
 		DriverID: pgtype.Int4{Int32: dbDriverID, Valid: true},
 	})
@@ -179,7 +182,6 @@ func (repository *RideRepository) CompleteTrip(
 		ctx,
 		transaction,
 		transactionQueries,
-		item,
 		dbRideID,
 		dbDriverID,
 		domain.RideInTransit,
@@ -209,7 +211,7 @@ func (repository *RideRepository) MarkPassengerNoShow(
 		return domain.Ride{}, fmt.Errorf("begin passenger no-show transaction: %w", err)
 	}
 	transactionQueries := repository.queries.WithTx(transaction)
-	item, err := transactionQueries.MarkRidePassengerNoShow(ctx, databasepostgres.MarkRidePassengerNoShowParams{
+	_, err = transactionQueries.MarkRidePassengerNoShow(ctx, databasepostgres.MarkRidePassengerNoShowParams{
 		DriverID: pgtype.Int4{Int32: dbDriverID, Valid: true},
 		RideID:   dbRideID,
 	})
@@ -259,16 +261,20 @@ func (repository *RideRepository) MarkPassengerNoShow(
 			fmt.Errorf("create passenger no-show audit event: %w", err),
 		)
 	}
+	ride, err := readRideProjection(ctx, transactionQueries, dbRideID)
+	if err != nil {
+		return domain.Ride{}, rollbackRideStatusTransaction(
+			ctx,
+			transaction,
+			fmt.Errorf("read passenger no-show ride: %w", err),
+		)
+	}
 	if err := transaction.Commit(ctx); err != nil {
 		return domain.Ride{}, rollbackRideStatusTransaction(
 			ctx,
 			transaction,
 			fmt.Errorf("commit passenger no-show transaction: %w", err),
 		)
-	}
-	ride, err := fromPostgresRide(item)
-	if err != nil {
-		return domain.Ride{}, fmt.Errorf("map passenger no-show ride: %w", err)
 	}
 	return ride, nil
 }
@@ -277,7 +283,6 @@ func (repository *RideRepository) commitLifecycleCommand(
 	ctx context.Context,
 	transaction pgx.Tx,
 	transactionQueries *databasepostgres.Queries,
-	item databasepostgres.Ride,
 	rideID int32,
 	driverID int32,
 	fromStatus domain.RideStatus,
@@ -320,16 +325,20 @@ func (repository *RideRepository) commitLifecycleCommand(
 			fmt.Errorf("create lifecycle audit event: %w", err),
 		)
 	}
+	ride, err := readRideProjection(ctx, transactionQueries, rideID)
+	if err != nil {
+		return domain.Ride{}, rollbackRideStatusTransaction(
+			ctx,
+			transaction,
+			fmt.Errorf("read lifecycle ride: %w", err),
+		)
+	}
 	if err := transaction.Commit(ctx); err != nil {
 		return domain.Ride{}, rollbackRideStatusTransaction(
 			ctx,
 			transaction,
 			fmt.Errorf("commit lifecycle transaction: %w", err),
 		)
-	}
-	ride, err := fromPostgresRide(item)
-	if err != nil {
-		return domain.Ride{}, fmt.Errorf("map lifecycle ride: %w", err)
 	}
 	return ride, nil
 }
@@ -367,7 +376,7 @@ func (repository *RideRepository) UpdateStatus(
 		return domain.Ride{}, fmt.Errorf("begin ride status transaction: %w", err)
 	}
 	transactionQueries := repository.queries.WithTx(transaction)
-	item, err := transactionQueries.UpdateRideStatus(ctx, databasepostgres.UpdateRideStatusParams{
+	_, err = transactionQueries.UpdateRideStatus(ctx, databasepostgres.UpdateRideStatusParams{
 		NextStatus:                 string(next),
 		CancelledBy:                cancellationActorID(next, dbActorID),
 		CancellationReason:         cancellationText(next, string(transition.Reason)),
@@ -433,16 +442,20 @@ func (repository *RideRepository) UpdateStatus(
 			)
 		}
 	}
+	ride, err := readRideProjection(ctx, transactionQueries, dbRideID)
+	if err != nil {
+		return domain.Ride{}, rollbackRideStatusTransaction(
+			ctx,
+			transaction,
+			fmt.Errorf("read updated ride: %w", err),
+		)
+	}
 	if err := transaction.Commit(ctx); err != nil {
 		return domain.Ride{}, rollbackRideStatusTransaction(
 			ctx,
 			transaction,
 			fmt.Errorf("commit ride status transaction: %w", err),
 		)
-	}
-	ride, err := fromPostgresRide(item)
-	if err != nil {
-		return domain.Ride{}, fmt.Errorf("map updated ride: %w", err)
 	}
 	return ride, nil
 }

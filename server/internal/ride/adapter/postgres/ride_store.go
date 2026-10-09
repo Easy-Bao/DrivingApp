@@ -99,7 +99,7 @@ func (repository *RideRepository) Get(ctx context.Context, rideID int) (domain.R
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("find ride: %w", err)
 	}
-	ride, err := fromPostgresRide(item)
+	ride, err := fromPostgresRideRow(item)
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("map ride: %w", err)
 	}
@@ -140,7 +140,7 @@ func (repository *RideRepository) ActiveRidesForDriver(ctx context.Context, driv
 	}
 	result := make([]domain.Ride, 0, len(items))
 	for _, item := range items {
-		ride, mappingErr := fromPostgresRide(item)
+		ride, mappingErr := fromPostgresActiveRideRow(item)
 		if mappingErr != nil {
 			return nil, fmt.Errorf("map active ride: %w", mappingErr)
 		}
@@ -179,11 +179,6 @@ func fromPostgresRide(item databasepostgres.Ride) (domain.Ride, error) {
 		value := int(item.DriverID.Int32)
 		driverID = &value
 	}
-	var commissionBPS *int64
-	if item.CommissionBps.Valid {
-		value := int64(item.CommissionBps.Int32)
-		commissionBPS = &value
-	}
 	return domain.Ride{
 		ID:                         int(item.ID),
 		PassengerID:                int(item.PassengerID),
@@ -207,18 +202,96 @@ func fromPostgresRide(item databasepostgres.Ride) (domain.Ride, error) {
 		CompletedAt:                rideTimestamp(item.CompletedAt),
 		ArrivedAt:                  rideTimestamp(item.ArrivedAt),
 		WaitingUntil:               rideTimestamp(item.WaitingUntil),
-		PaymentStatus:              item.PaymentStatus,
-		CashReceivedAmount:         item.CashReceivedAmount,
-		CashChangeAmount:           item.CashChangeAmount,
-		CashOutcome:                item.CashOutcome,
+		PaymentStatus:              "unpaid",
+		CashOutcome:                string(domain.CashOutcomeUnpaid),
 		CancelledBy:                rideOptionalInt(item.CancelledBy),
 		CancellationReason:         item.CancellationReason,
 		CancellationResponsibility: item.CancellationResponsibility,
 		CancellationDetails:        item.CancellationDetails,
-		CommissionBPS:              commissionBPS,
-		CommissionAmount:           item.CommissionAmount,
-		DriverPayoutAmount:         item.DriverPayoutAmount,
 	}, nil
+}
+
+type rideSettlementProjection struct {
+	PaymentStatus      string
+	CashReceivedAmount int64
+	CashChangeAmount   int64
+	CashOutcome        string
+	CommissionBps      pgtype.Int4
+	CommissionAmount   int64
+	DriverPayoutAmount int64
+}
+
+func fromPostgresRideRow(item databasepostgres.GetRideByIDRow) (domain.Ride, error) {
+	return fromPostgresRideProjection(item.Ride, rideSettlementProjection{
+		PaymentStatus:      item.PaymentStatus,
+		CashReceivedAmount: item.CashReceivedAmount,
+		CashChangeAmount:   item.CashChangeAmount,
+		CashOutcome:        item.CashOutcome,
+		CommissionBps:      item.CommissionBps,
+		CommissionAmount:   item.CommissionAmount,
+		DriverPayoutAmount: item.DriverPayoutAmount,
+	})
+}
+
+func readRideProjection(
+	ctx context.Context,
+	queries *databasepostgres.Queries,
+	rideID int32,
+) (domain.Ride, error) {
+	item, err := queries.GetRideByID(ctx, rideID)
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("load ride with settlement: %w", err)
+	}
+	return fromPostgresRideRow(item)
+}
+
+func fromPostgresActiveRideRow(item databasepostgres.ListActiveRidesForDriverRow) (domain.Ride, error) {
+	return fromPostgresRideProjection(item.Ride, rideSettlementProjection{
+		PaymentStatus:      item.PaymentStatus,
+		CashReceivedAmount: item.CashReceivedAmount,
+		CashChangeAmount:   item.CashChangeAmount,
+		CashOutcome:        item.CashOutcome,
+		CommissionBps:      item.CommissionBps,
+		CommissionAmount:   item.CommissionAmount,
+		DriverPayoutAmount: item.DriverPayoutAmount,
+	})
+}
+
+func fromPostgresRideProjection(
+	item databasepostgres.Ride,
+	projection rideSettlementProjection,
+) (domain.Ride, error) {
+	ride, err := fromPostgresRide(item)
+	if err != nil {
+		return domain.Ride{}, err
+	}
+	if projection.PaymentStatus != "" {
+		ride.PaymentStatus = projection.PaymentStatus
+	}
+	ride.CashReceivedAmount = projection.CashReceivedAmount
+	ride.CashChangeAmount = projection.CashChangeAmount
+	if projection.CashOutcome != "" {
+		ride.CashOutcome = projection.CashOutcome
+	}
+	if projection.CommissionBps.Valid {
+		commissionBps := int64(projection.CommissionBps.Int32)
+		ride.CommissionBPS = &commissionBps
+	}
+	ride.CommissionAmount = projection.CommissionAmount
+	ride.DriverPayoutAmount = projection.DriverPayoutAmount
+	return ride, nil
+}
+
+func rideSettlementProjectionFromRecord(item databasepostgres.RideSettlement) rideSettlementProjection {
+	return rideSettlementProjection{
+		PaymentStatus:      item.PaymentStatus,
+		CashReceivedAmount: item.CashReceivedAmount,
+		CashChangeAmount:   item.CashChangeAmount,
+		CashOutcome:        item.CashOutcome,
+		CommissionBps:      item.CommissionBps,
+		CommissionAmount:   item.CommissionAmount,
+		DriverPayoutAmount: item.DriverPayoutAmount,
+	}
 }
 
 func rideTimestamp(value pgtype.Timestamptz) *string {

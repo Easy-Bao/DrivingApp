@@ -74,31 +74,32 @@ func (repository *RideRepository) AcceptRide(ctx context.Context, rideID, driver
 		return domain.Ride{}, err
 	}
 	updatedRide, err := transactionQueries.AcceptRideFromRequest(ctx, databasepostgres.AcceptRideFromRequestParams{
-		ID:                 trip.ID,
-		DriverID:           pgtype.Int4{Int32: profile.UserID, Valid: true},
-		DriverName:         rideText(profile.Name),
-		VehicleType:        rideText(profile.VehicleType),
-		PlateNumber:        rideText(profile.PlateNumber),
-		CommissionBps:      pgtype.Int4{Int32: int32(settlement.CommissionBPS), Valid: true},
-		CommissionAmount:   settlement.CommissionAmount,
-		DriverPayoutAmount: settlement.DriverPayoutAmount,
+		ID:          trip.ID,
+		DriverID:    pgtype.Int4{Int32: profile.UserID, Valid: true},
+		DriverName:  rideText(profile.Name),
+		VehicleType: rideText(profile.VehicleType),
+		PlateNumber: rideText(profile.PlateNumber),
 	})
 	if err != nil {
 		return domain.Ride{}, driverActiveRideConflictError("accept ride", err)
 	}
-	if err := transactionQueries.CreateRideSettlement(ctx, databasepostgres.CreateRideSettlementParams{
+	settlementRecord, err := transactionQueries.CreateRideSettlement(ctx, databasepostgres.CreateRideSettlementParams{
 		RideID:             updatedRide.ID,
 		GrossFare:          settlement.FareAmount,
 		CommissionBps:      pgtype.Int4{Int32: int32(settlement.CommissionBPS), Valid: true},
 		CommissionAmount:   settlement.CommissionAmount,
 		DriverPayoutAmount: settlement.DriverPayoutAmount,
-	}); err != nil {
+	})
+	if err != nil {
 		return domain.Ride{}, fmt.Errorf("create ride settlement: %w", err)
 	}
 	if err := transaction.Commit(ctx); err != nil {
 		return domain.Ride{}, fmt.Errorf("commit ride acceptance transaction: %w", err)
 	}
-	ride, err := fromPostgresRide(updatedRide)
+	ride, err := fromPostgresRideProjection(
+		updatedRide,
+		rideSettlementProjectionFromRecord(settlementRecord),
+	)
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("map accepted ride: %w", err)
 	}

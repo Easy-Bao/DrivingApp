@@ -22,29 +22,13 @@ CREATE TABLE rides (
     completed_at timestamptz,
     arrived_at timestamptz,
     waiting_until timestamptz,
-    payment_status text NOT NULL DEFAULT 'unpaid',
-    cash_received_at timestamptz,
-    cash_received_amount bigint NOT NULL DEFAULT 0,
-    cash_change_amount bigint NOT NULL DEFAULT 0,
-    cash_outcome text NOT NULL DEFAULT 'unpaid',
     cancelled_by integer,
     cancellation_reason text NOT NULL DEFAULT '',
     cancellation_responsibility text NOT NULL DEFAULT '',
     cancellation_details text NOT NULL DEFAULT '',
-    commission_bps integer,
-    commission_amount bigint NOT NULL DEFAULT 0,
-    driver_payout_amount bigint NOT NULL DEFAULT 0,
     CONSTRAINT rides_money_check CHECK (
         fare_amount >= 0
-        AND cash_received_amount >= 0
-        AND cash_change_amount >= 0
-        AND cash_change_amount <= cash_received_amount
         AND cancellation_details IS NOT NULL
-        AND commission_amount >= 0
-        AND driver_payout_amount >= 0
-    ),
-    CONSTRAINT rides_cash_outcome_check CHECK (
-        cash_outcome IN ('paid', 'partial', 'refused', 'unpaid', 'disputed')
     ),
     CONSTRAINT rides_cancellation_responsibility_check CHECK (
         cancellation_responsibility IN (

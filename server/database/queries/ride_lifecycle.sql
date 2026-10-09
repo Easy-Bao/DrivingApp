@@ -12,16 +12,7 @@ SET status = sqlc.arg('next_status'),
 WHERE id = sqlc.arg('ride_id')
   AND status = sqlc.arg('current_status')
   AND (passenger_id = sqlc.arg('actor_id') OR driver_id = sqlc.arg('actor_id'))
-RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
-    pickup_latitude, pickup_longitude, pickup_name,
-    dropoff_latitude, dropoff_longitude, dropoff_name,
-    distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
-    driver_rating, created_at, completed_at, arrived_at, waiting_until, payment_status,
-    cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
-    cancelled_by, cancellation_reason, cancellation_responsibility,
-    cancellation_details,
-    commission_bps, commission_amount,
-    driver_payout_amount;
+RETURNING *;
 
 -- name: MarkRideArrived :one
 UPDATE rides
@@ -35,16 +26,7 @@ WHERE id = sqlc.arg('ride_id')
   AND driver_id = sqlc.arg('driver_id')
   AND status = sqlc.arg('current_status')
   AND sqlc.arg('current_status') IN ('assigned', 'accepted')
-RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
-    pickup_latitude, pickup_longitude, pickup_name,
-    dropoff_latitude, dropoff_longitude, dropoff_name,
-    distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
-    driver_rating, created_at, completed_at, arrived_at, waiting_until, payment_status,
-    cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
-    cancelled_by, cancellation_reason, cancellation_responsibility,
-    cancellation_details,
-    commission_bps, commission_amount,
-    driver_payout_amount;
+RETURNING *;
 
 -- name: MarkRidePassengerNoShow :one
 UPDATE rides
@@ -61,16 +43,7 @@ WHERE id = sqlc.arg('ride_id')
   AND status = 'arrived'
   AND waiting_until IS NOT NULL
   AND waiting_until <= CURRENT_TIMESTAMP
-RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
-    pickup_latitude, pickup_longitude, pickup_name,
-    dropoff_latitude, dropoff_longitude, dropoff_name,
-    distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
-    driver_rating, created_at, completed_at, arrived_at, waiting_until, payment_status,
-    cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
-    cancelled_by, cancellation_reason, cancellation_responsibility,
-    cancellation_details,
-    commission_bps, commission_amount,
-    driver_payout_amount;
+RETURNING *;
 
 -- name: StartRide :one
 UPDATE rides
@@ -78,16 +51,7 @@ SET status = 'in_transit'
 WHERE id = sqlc.arg('ride_id')
   AND driver_id = sqlc.arg('driver_id')
   AND status = 'arrived'
-RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
-    pickup_latitude, pickup_longitude, pickup_name,
-    dropoff_latitude, dropoff_longitude, dropoff_name,
-    distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
-    driver_rating, created_at, completed_at, arrived_at, waiting_until, payment_status,
-    cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
-    cancelled_by, cancellation_reason, cancellation_responsibility,
-    cancellation_details,
-    commission_bps, commission_amount,
-    driver_payout_amount;
+RETURNING *;
 
 -- name: CompleteRide :one
 UPDATE rides
@@ -96,16 +60,7 @@ SET status = 'completed',
 WHERE id = sqlc.arg('ride_id')
   AND driver_id = sqlc.arg('driver_id')
   AND status = 'in_transit'
-RETURNING id, passenger_id, driver_id, status, fare_amount, ride_type,
-    pickup_latitude, pickup_longitude, pickup_name,
-    dropoff_latitude, dropoff_longitude, dropoff_name,
-    distance_km, duration_minutes, driver_name, vehicle_type, plate_number,
-    driver_rating, created_at, completed_at, arrived_at, waiting_until, payment_status,
-    cash_received_at, cash_received_amount, cash_change_amount, cash_outcome,
-    cancelled_by, cancellation_reason, cancellation_responsibility,
-    cancellation_details,
-    commission_bps, commission_amount,
-    driver_payout_amount;
+RETURNING *;
 
 -- name: CreateRideEvent :exec
 INSERT INTO ride_events (

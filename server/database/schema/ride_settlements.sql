@@ -24,6 +24,9 @@ CREATE TABLE ride_settlements (
     CONSTRAINT ride_settlements_cash_outcome_check CHECK (
         cash_outcome IN ('paid', 'partial', 'refused', 'unpaid', 'disputed')
     ),
+    CONSTRAINT ride_settlements_payment_status_check CHECK (
+        payment_status IN ('unpaid', 'paid')
+    ),
     CONSTRAINT ride_settlements_ride_fk
         FOREIGN KEY (ride_id) REFERENCES rides (id) ON DELETE RESTRICT
 );
