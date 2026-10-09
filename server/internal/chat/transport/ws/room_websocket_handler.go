@@ -191,7 +191,7 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 				continue
 			}
 		}
-		if isChatEvent(eventMessage) {
+		if isTypingEvent(eventMessage) || (handler.sink == nil && isChatEvent(eventMessage)) {
 			handler.hub.Broadcast(roomID, eventMessage)
 		}
 	}
@@ -263,6 +263,16 @@ func isChatEvent(message []byte) bool {
 		return false
 	}
 	return event.Type == "CHAT_MESSAGE" || event.Type == "message" || event.Type == "typing"
+}
+
+func isTypingEvent(message []byte) bool {
+	var event struct {
+		Type string `json:"type"`
+	}
+	if json.Unmarshal(message, &event) != nil {
+		return false
+	}
+	return event.Type == "typing"
 }
 
 func validEvent(message []byte) bool {

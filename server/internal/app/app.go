@@ -12,6 +12,7 @@ import (
 	authpostgres "github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/postgres"
 	documents "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
+	eventadapter "github.com/Easy-Bao/DrivingApp/server/internal/platform/events/adapter"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/logger"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	redisplatform "github.com/Easy-Bao/DrivingApp/server/internal/platform/redis"
@@ -23,11 +24,12 @@ import (
 )
 
 type Application struct {
-	server       *http.Server
-	postgresPool *pgxpool.Pool
-	redisClient  redisClient
-	eventHub     *websockethub.Hub
-	logger       *slog.Logger
+	server          *http.Server
+	postgresPool    *pgxpool.Pool
+	redisClient     redisClient
+	eventHub        *websockethub.Hub
+	eventSubscriber *eventadapter.RedisEventSubscriber
+	logger          *slog.Logger
 }
 
 type redisClient interface {
@@ -111,7 +113,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 		return nil, fmt.Errorf("create ride store: %w", err)
 	}
 	rateCounterStore := middleware.NewRedisCounterStore(redisClient)
-	router, eventHub := newHTTPRouter(httpRouterDependencies{
+	router, eventHub, eventSubscriber := newHTTPRouter(httpRouterDependencies{
 		config:             config,
 		postgresPool:       postgresPool,
 		redisClient:        redisClient,
@@ -151,10 +153,11 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 			WriteTimeout:      15 * time.Second,
 			IdleTimeout:       60 * time.Second,
 		},
-		postgresPool: postgresPool,
-		redisClient:  redisClient,
-		eventHub:     eventHub,
-		logger:       applicationLogger,
+		postgresPool:    postgresPool,
+		redisClient:     redisClient,
+		eventHub:        eventHub,
+		eventSubscriber: eventSubscriber,
+		logger:          applicationLogger,
 	}
 	application.server.RegisterOnShutdown(eventHub.Close)
 	closePostgresPool = false
@@ -163,13 +166,43 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 }
 
 func (application *Application) Run(ctx context.Context) error {
-	if application == nil || application.server == nil {
+	if application == nil || application.server == nil || application.eventSubscriber == nil {
 		return errors.New("application is not configured")
 	}
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	applicationLogger := application.log()
+	subscriberContext, stopSubscriber := context.WithCancel(ctx)
+	subscriberDone := make(chan error, 1)
+	go func() {
+		subscriberDone <- application.eventSubscriber.Run(subscriberContext)
+	}()
+	subscriberStopped := false
+	defer func() {
+		stopSubscriber()
+		if !subscriberStopped {
+			if err := <-subscriberDone; err != nil {
+				applicationLogger.Warn("stop realtime event subscriber", "error", err)
+			}
+		}
+		application.close()
+	}()
+	select {
+	case <-application.eventSubscriber.Ready():
+	case subscriberErr := <-subscriberDone:
+		subscriberStopped = true
+		if subscriberErr != nil {
+			return fmt.Errorf("run realtime event subscriber: %w", subscriberErr)
+		}
+		if ctx.Err() != nil {
+			return nil
+		}
+		return errors.New("realtime event subscriber stopped before subscribing")
+	case <-ctx.Done():
+		return nil
+	}
+
 	monitorContext, stopMonitoring := context.WithCancel(ctx)
 	monitorDone := make(chan struct{})
 	go func() {
@@ -179,7 +212,6 @@ func (application *Application) Run(ctx context.Context) error {
 	defer func() {
 		stopMonitoring()
 		<-monitorDone
-		application.close()
 	}()
 
 	serverErrors := make(chan error, 1)
@@ -201,6 +233,15 @@ func (application *Application) Run(ctx context.Context) error {
 			return fmt.Errorf("api shutdown failed: %w", err)
 		}
 		return nil
+	case subscriberErr := <-subscriberDone:
+		subscriberStopped = true
+		if ctx.Err() != nil {
+			return nil
+		}
+		if subscriberErr != nil {
+			return fmt.Errorf("realtime event subscriber stopped: %w", subscriberErr)
+		}
+		return errors.New("realtime event subscriber stopped unexpectedly")
 	}
 }
 

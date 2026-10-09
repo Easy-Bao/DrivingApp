@@ -74,7 +74,9 @@ type httpRouterDependencies struct {
 	otpAttemptStore    middleware.CounterStore
 }
 
-func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub.Hub) {
+func newHTTPRouter(
+	dependencies httpRouterDependencies,
+) (*chi.Mux, *websockethub.Hub, *eventadapter.RedisEventSubscriber) {
 	config := dependencies.config
 	postgresPool := dependencies.postgresPool
 	redisClient := dependencies.redisClient
@@ -174,8 +176,15 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 		},
 	)
 	eventHub := websockethub.NewHub()
+	chatRoomHub := chatws.NewRoomHub()
 	assignmentProjection := assignment.NewMemoryProjection()
-	eventPublisher := eventadapter.NewMemoryPublisher(assignmentProjection, eventHub)
+	eventPublisher, eventSubscriber := eventadapter.NewRedisEventTransport(
+		redisClient,
+		assignmentProjection,
+		eventHub,
+		chatRoomHub,
+	)
+	eventSubscriber.WithLogger(applicationLogger)
 	rideAssignments := assignment.NewResolver(
 		assignment.ResolverDependencies{
 			Routing:   assignmentProjection,
@@ -284,7 +293,7 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 		api.V1Prefix+"/chat/ws",
 		chatws.NewHandler(
 			chatws.HandlerDependencies{
-				Hub:           chatws.NewRoomHub(),
+				Hub:           chatRoomHub,
 				Authenticator: verifier,
 			},
 			chatws.WithEventSink(chatEventRouter),
@@ -313,5 +322,5 @@ func newHTTPRouter(dependencies httpRouterDependencies) (*chi.Mux, *websockethub
 	}).RegisterRoutes(router)
 	registerHealthRoutes(router, redisClient, postgresPool)
 
-	return router, eventHub
+	return router, eventHub, eventSubscriber
 }
