@@ -49,9 +49,10 @@ services:
 
   minio:
     container_name: minio
-    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    build:
+      context: server
+      dockerfile: Dockerfile.minio
     restart: always
-    command: ["server", "/data", "--console-address", ":9001"]
     environment:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-driveapp}
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-driveapp-local-only-secret}

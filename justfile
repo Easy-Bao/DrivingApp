@@ -4,6 +4,7 @@ set dotenv-load
 set export
 
 api-port := env_var("API_PORT")
+minio-host-port := env_var_or_default("MINIO_HOST_PORT", "9000")
 
 default:
     @just --list
@@ -124,7 +125,7 @@ native-server:
             exit 1; \
         fi; \
     fi
-    cd server && MINIO_ENDPOINT="127.0.0.1:$${MINIO_HOST_PORT:-9000}" go run ./cmd/api
+    cd server && MINIO_ENDPOINT="127.0.0.1:{{ minio-host-port }}" go run ./cmd/api
 
 # Backward-compatible local startup alias.
 start-all: native-server
