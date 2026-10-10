@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:design_system/design_system.dart';
+import 'package:shared_pages/shared_pages.dart';
 
 void main() {
   testWidgets('searches topics and exposes only configured contact actions', (

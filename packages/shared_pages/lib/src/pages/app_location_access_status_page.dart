@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:design_system/src/theme/design_system_context.dart';
-import 'package:design_system/src/tokens/radius.dart';
-import 'package:design_system/src/widgets/easy_ride_layout.dart';
+import 'package:design_system/design_system.dart';
 
 enum AppLocationAccessTone { neutral, success, warning, error }
 

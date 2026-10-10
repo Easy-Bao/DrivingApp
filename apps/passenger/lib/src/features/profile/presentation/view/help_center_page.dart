@@ -1,6 +1,6 @@
-import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:shared_pages/shared_pages.dart';
 
 class const HelpCenterPage({super.key, this.onBack}) extends StatelessWidget {
   final VoidCallback? onBack;

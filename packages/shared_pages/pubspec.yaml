@@ -1,0 +1,23 @@
+name: shared_pages
+description: Shared user-facing pages used by the passenger and driver apps.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: '>=3.13.0 <4.0.0'
+  flutter: '>=3.47.2'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_lucide: ^1.8.2
+  design_system:
+    path: ../design_system
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

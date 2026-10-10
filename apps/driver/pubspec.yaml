@@ -34,6 +34,8 @@ dependencies:
 
   design_system:
     path: ../../packages/design_system
+  shared_pages:
+    path: ../../packages/shared_pages
 
   dio: ^5.10.0
   sentry_flutter: ^9.30.0
