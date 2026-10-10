@@ -1,3 +1,4 @@
+import 'package:core_domain/core_domain.dart';
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/active_ride/domain/entities/accepted_booking.dart';

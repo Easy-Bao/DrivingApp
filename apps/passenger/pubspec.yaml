@@ -10,6 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  core_domain:
+    path: ../../packages/core_domain
 
   go_router_modular: ^5.0.5
 

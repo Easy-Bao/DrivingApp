@@ -1,3 +1,4 @@
+import 'package:core_domain/core_domain.dart';
 import 'package:foundation/foundation.dart';
 
 class const BookingOffer({

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:foundation/foundation.dart';
+import 'package:core_domain/core_domain.dart';
 
 void main() {
   group('typed ride values', () {

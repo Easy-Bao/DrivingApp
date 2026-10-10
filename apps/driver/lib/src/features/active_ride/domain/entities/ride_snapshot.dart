@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:core_domain/core_domain.dart';
 import 'package:foundation/foundation.dart';
 
 final class const RideSnapshot({

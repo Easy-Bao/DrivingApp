@@ -1,4 +1,4 @@
-import 'package:foundation/foundation.dart';
+import 'package:core_domain/core_domain.dart';
 
 class const BookingSessionRequest({
   required this.rideType,
