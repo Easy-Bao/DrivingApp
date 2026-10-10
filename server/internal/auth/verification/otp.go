@@ -33,6 +33,7 @@ type OTPService struct {
 	pending       authports.PendingRegistrationStore
 	registrations *registration.RegisterService
 	logger        *slog.Logger
+	hashPassword  func(string) (string, error)
 }
 
 type OTPServiceOption func(*OTPService)
@@ -45,6 +46,7 @@ type Dependencies struct {
 	Gateway       authports.OTPSender
 	Tokens        authports.TokenIssuer
 	Sessions      authports.SessionStore
+	HashPassword  func(string) (string, error)
 }
 
 func WithPendingRegistration(
@@ -61,6 +63,10 @@ func NewOTPService(
 	dependencies Dependencies,
 	options ...OTPServiceOption,
 ) *OTPService {
+	hashPassword := dependencies.HashPassword
+	if hashPassword == nil {
+		hashPassword = security.HashPassword
+	}
 	service := &OTPService{
 		users:         dependencies.Users,
 		emailChanges:  dependencies.EmailChanges,
@@ -70,6 +76,7 @@ func NewOTPService(
 		tokens:        dependencies.Tokens,
 		sessions:      dependencies.Sessions,
 		logger:        slog.Default(),
+		hashPassword:  hashPassword,
 	}
 	for _, option := range options {
 		if option != nil {
@@ -286,7 +293,7 @@ func (service *OTPService) ResetPasswordForRole(
 	if err := service.sessions.RevokeAll(ctx, account.ID, time.Now().UTC()); err != nil {
 		return session.UnavailableError(err)
 	}
-	passwordHash, err := security.HashPassword(password)
+	passwordHash, err := service.hashPassword(password)
 	if err != nil {
 		return fmt.Errorf("hash reset password: %w", err)
 	}

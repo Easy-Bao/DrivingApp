@@ -10,7 +10,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 	authports "github.com/Easy-Bao/DrivingApp/server/internal/auth/ports"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/verification"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type emailChangeUsers struct {
@@ -136,10 +136,11 @@ var _ authports.EmailChangeNotifier = (*emailChangeNotifier)(nil)
 
 func newEmailChangeService(t *testing.T) (*verification.OTPService, *emailChangeUsers, *emailChangeSender, *emailChangeNotifier) {
 	t.Helper()
-	passwordHash, err := security.HashPassword("current-password")
+	hash, err := bcrypt.GenerateFromPassword([]byte("current-password"), bcrypt.MinCost)
 	if err != nil {
 		t.Fatalf("hash current password: %v", err)
 	}
+	passwordHash := string(hash)
 	users := &emailChangeUsers{accounts: map[int]domain.User{
 		42: {
 			ID:           42,

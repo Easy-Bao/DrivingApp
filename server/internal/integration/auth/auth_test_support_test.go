@@ -12,7 +12,7 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 	authports "github.com/Easy-Bao/DrivingApp/server/internal/auth/ports"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type repository struct {
@@ -97,11 +97,16 @@ func (issuer) Issue(subject string) (string, error) { return "token:" + subject,
 
 func testPasswordHash(t *testing.T, password string) string {
 	t.Helper()
-	hash, err := security.HashPassword(password)
+	hash, err := testHashPassword(password)
 	if err != nil {
 		t.Fatalf("hash test password: %v", err)
 	}
 	return hash
+}
+
+func testHashPassword(password string) (string, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+	return string(hash), err
 }
 
 type testRefreshSessionStore struct {

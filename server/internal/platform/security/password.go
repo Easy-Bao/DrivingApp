@@ -16,10 +16,14 @@ var ErrPasswordTooLong = errors.New("password exceeds bcrypt's 72-byte limit")
 const _bcryptCost = 12
 
 func HashPassword(password string) (string, error) {
+	return hashPasswordAtCost(password, _bcryptCost)
+}
+
+func hashPasswordAtCost(password string, cost int) (string, error) {
 	if len([]byte(password)) > 72 {
 		return "", ErrPasswordTooLong
 	}
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), _bcryptCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), cost)
 	if err != nil {
 		return "", fmt.Errorf("generate password hash: %w", err)
 	}

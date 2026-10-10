@@ -16,24 +16,31 @@ import (
 )
 
 type AuthenticateService struct {
-	repository authports.UserStore
-	tokens     authports.TokenIssuer
-	sessions   authports.SessionStore
-	logger     *slog.Logger
+	repository   authports.UserStore
+	tokens       authports.TokenIssuer
+	sessions     authports.SessionStore
+	logger       *slog.Logger
+	hashPassword func(string) (string, error)
 }
 
 type Dependencies struct {
-	Repository authports.UserStore
-	Tokens     authports.TokenIssuer
-	Sessions   authports.SessionStore
+	Repository   authports.UserStore
+	Tokens       authports.TokenIssuer
+	Sessions     authports.SessionStore
+	HashPassword func(string) (string, error)
 }
 
 func NewAuthenticateService(dependencies Dependencies) *AuthenticateService {
+	hashPassword := dependencies.HashPassword
+	if hashPassword == nil {
+		hashPassword = security.HashPassword
+	}
 	return &AuthenticateService{
-		repository: dependencies.Repository,
-		tokens:     dependencies.Tokens,
-		sessions:   dependencies.Sessions,
-		logger:     slog.Default(),
+		repository:   dependencies.Repository,
+		tokens:       dependencies.Tokens,
+		sessions:     dependencies.Sessions,
+		logger:       slog.Default(),
+		hashPassword: hashPassword,
 	}
 }
 
@@ -100,7 +107,7 @@ func (service *AuthenticateService) execute(
 		return domain.User{}, session.SessionTokens{}, domain.ErrInvalidCredentials
 	}
 	if security.IsLegacyPasswordHash(account.PasswordHash) {
-		upgradedHash, hashErr := security.HashPassword(password)
+		upgradedHash, hashErr := service.hashPassword(password)
 		if hashErr != nil {
 			service.log().WarnContext(ctx, "upgrade legacy password hash failed", "error", hashErr)
 		} else if err := service.repository.UpdatePassword(ctx, account.ID, upgradedHash); err != nil {

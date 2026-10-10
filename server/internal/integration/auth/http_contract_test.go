@@ -34,9 +34,10 @@ func TestRoleSpecificLoginRoutes(t *testing.T) {
 		},
 	}}
 	authenticate := authentication.NewAuthenticateService(authentication.Dependencies{
-		Repository: repository,
-		Tokens:     issuer{},
-		Sessions:   newTestRefreshSessionStore(),
+		Repository:   repository,
+		Tokens:       issuer{},
+		Sessions:     newTestRefreshSessionStore(),
+		HashPassword: testHashPassword,
 	})
 	mux := chi.NewRouter()
 	authhttp.NewRouter(
@@ -198,9 +199,10 @@ func TestLoginAndRefreshIssueRotatingSessionTokens(t *testing.T) {
 	}}
 	manager := security.NewTokenManager("refresh-http-test-secret")
 	authenticate := authentication.NewAuthenticateService(authentication.Dependencies{
-		Repository: repository,
-		Tokens:     manager,
-		Sessions:   newTestRefreshSessionStore(),
+		Repository:   repository,
+		Tokens:       manager,
+		Sessions:     newTestRefreshSessionStore(),
+		HashPassword: testHashPassword,
 	})
 	mux := chi.NewRouter()
 	authhttp.NewRouter(authhttp.RouterDependencies{Authenticate: authenticate}).RegisterRoutes(mux)
@@ -266,9 +268,10 @@ func TestLoginRejectsFieldsOutsideTheRequestContract(t *testing.T) {
 	authhttp.NewRouter(
 		authhttp.RouterDependencies{
 			Authenticate: authentication.NewAuthenticateService(authentication.Dependencies{
-				Repository: repository,
-				Tokens:     issuer{},
-				Sessions:   newTestRefreshSessionStore(),
+				Repository:   repository,
+				Tokens:       issuer{},
+				Sessions:     newTestRefreshSessionStore(),
+				HashPassword: testHashPassword,
 			}),
 		},
 	).RegisterRoutes(mux)
@@ -320,9 +323,10 @@ func TestResetPasswordRoutesEnforceOTPAttemptLimit(t *testing.T) {
 			}}
 			otpStore := &resetOTPStore{code: "123456"}
 			otp := verification.NewOTPService(verification.Dependencies{
-				Users:    repository,
-				Store:    otpStore,
-				Sessions: newTestRefreshSessionStore(),
+				Users:        repository,
+				Store:        otpStore,
+				Sessions:     newTestRefreshSessionStore(),
+				HashPassword: testHashPassword,
 			})
 			mux := chi.NewRouter()
 			authhttp.NewRouter(
@@ -387,9 +391,10 @@ func TestResetPasswordRoutesAcceptValidOTP(t *testing.T) {
 		},
 	}}
 	otp := verification.NewOTPService(verification.Dependencies{
-		Users:    repository,
-		Store:    &resetOTPStore{code: "654321"},
-		Sessions: newTestRefreshSessionStore(),
+		Users:        repository,
+		Store:        &resetOTPStore{code: "654321"},
+		Sessions:     newTestRefreshSessionStore(),
+		HashPassword: testHashPassword,
 	})
 	mux := chi.NewRouter()
 	authhttp.NewRouter(

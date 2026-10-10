@@ -23,7 +23,7 @@ func TestRefreshSessionsAreOpaqueAndRotateOnce(t *testing.T) {
 		},
 	}}
 	sessions := newTestRefreshSessionStore()
-	service := authentication.NewAuthenticateService(authentication.Dependencies{
+	service := newTestAuthenticateService(authentication.Dependencies{
 		Repository: repository,
 		Tokens:     security.NewTokenManager("session-test-secret"),
 		Sessions:   sessions,
@@ -65,7 +65,7 @@ func TestLogoutRevokesRefreshSession(t *testing.T) {
 		},
 	}}
 	sessions := newTestRefreshSessionStore()
-	service := authentication.NewAuthenticateService(authentication.Dependencies{
+	service := newTestAuthenticateService(authentication.Dependencies{
 		Repository: repository,
 		Tokens:     security.NewTokenManager("logout-test-secret"),
 		Sessions:   sessions,
@@ -88,7 +88,7 @@ func TestLogoutRevokesRefreshSession(t *testing.T) {
 }
 
 func TestLogoutRejectsMalformedRefreshToken(t *testing.T) {
-	service := authentication.NewAuthenticateService(authentication.Dependencies{
+	service := newTestAuthenticateService(authentication.Dependencies{
 		Sessions: newTestRefreshSessionStore(),
 	})
 
@@ -111,7 +111,7 @@ func TestRefreshAllowsParallelRequestsDuringRotationGrace(t *testing.T) {
 		},
 	}}
 	sessions := newTestRefreshSessionStore()
-	service := authentication.NewAuthenticateService(authentication.Dependencies{
+	service := newTestAuthenticateService(authentication.Dependencies{
 		Repository: repository,
 		Tokens:     security.NewTokenManager("parallel-refresh-test-secret"),
 		Sessions:   sessions,

@@ -16,7 +16,7 @@ func TestPassengerRegistrationCreatesAccountOnlyAfterOTP(t *testing.T) {
 	pending := &pendingRegistrationStore{}
 	gateway := &otpGateway{}
 	sessions := newTestRefreshSessionStore()
-	register := authregistration.NewRegisterService(authregistration.Dependencies{
+	register := newTestRegisterService(authregistration.Dependencies{
 		Repository: repository,
 		Tokens:     otpIssuer{},
 		Sessions:   sessions,
@@ -66,7 +66,7 @@ func TestRetryingUnverifiedPassengerRegistrationReplacesPendingData(t *testing.T
 	pending := &pendingRegistrationStore{}
 	gateway := &otpGateway{}
 	sessions := newTestRefreshSessionStore()
-	register := authregistration.NewRegisterService(authregistration.Dependencies{
+	register := newTestRegisterService(authregistration.Dependencies{
 		Repository: repository,
 		Tokens:     otpIssuer{},
 		Sessions:   sessions,
@@ -112,7 +112,7 @@ func TestPassengerVerificationSucceedsWhenPendingCleanupFails(t *testing.T) {
 	pending := &pendingRegistrationStore{deleteErr: errors.New("temporary cleanup failure")}
 	gateway := &otpGateway{}
 	sessions := newTestRefreshSessionStore()
-	register := authregistration.NewRegisterService(authregistration.Dependencies{
+	register := newTestRegisterService(authregistration.Dependencies{
 		Repository: repository,
 		Tokens:     otpIssuer{},
 		Sessions:   sessions,
@@ -151,7 +151,7 @@ func TestPassengerRegistrationRejectsVerifiedEmail(t *testing.T) {
 	}
 	pending := &pendingRegistrationStore{}
 	sessions := newTestRefreshSessionStore()
-	register := authregistration.NewRegisterService(authregistration.Dependencies{
+	register := newTestRegisterService(authregistration.Dependencies{
 		Repository: repository,
 		Tokens:     otpIssuer{},
 		Sessions:   sessions,

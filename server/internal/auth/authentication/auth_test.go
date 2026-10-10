@@ -50,7 +50,7 @@ func (issuer) Issue(subject string) (string, error) { return "token:" + subject,
 
 func TestPassengerAndDriverRegistrationUseCases(t *testing.T) {
 	repository := &repository{users: map[string]domain.User{}}
-	service := authregistration.NewRegisterService(authregistration.Dependencies{
+	service := newTestRegisterService(authregistration.Dependencies{
 		Repository: repository,
 		Tokens:     issuer{},
 		Sessions:   newTestRefreshSessionStore(),
@@ -86,7 +86,7 @@ func TestPassengerAndDriverRegistrationUseCases(t *testing.T) {
 func TestAuthenticationRejectsWrongPassword(t *testing.T) {
 	repository := &repository{users: map[string]domain.User{}}
 	sessions := newTestRefreshSessionStore()
-	register := authregistration.NewRegisterService(authregistration.Dependencies{
+	register := newTestRegisterService(authregistration.Dependencies{
 		Repository: repository,
 		Tokens:     issuer{},
 		Sessions:   sessions,
@@ -100,7 +100,7 @@ func TestAuthenticationRejectsWrongPassword(t *testing.T) {
 			Password: "secret-8",
 		},
 	)
-	authenticate := authentication.NewAuthenticateService(authentication.Dependencies{
+	authenticate := newTestAuthenticateService(authentication.Dependencies{
 		Repository: repository,
 		Tokens:     issuer{},
 		Sessions:   sessions,
@@ -116,7 +116,7 @@ func TestAuthenticationRejectsWrongPassword(t *testing.T) {
 }
 
 func TestRegistrationRejectsIncompleteRoleContracts(t *testing.T) {
-	service := authregistration.NewRegisterService(authregistration.Dependencies{
+	service := newTestRegisterService(authregistration.Dependencies{
 		Repository: &repository{users: map[string]domain.User{}},
 		Tokens:     issuer{},
 		Sessions:   newTestRefreshSessionStore(),
@@ -143,7 +143,7 @@ func TestAuthenticationNormalizesEmailBeforeLookup(t *testing.T) {
 			PasswordHash: testPasswordHash(t, "secret-8"),
 		},
 	}}
-	authenticate := authentication.NewAuthenticateService(authentication.Dependencies{
+	authenticate := newTestAuthenticateService(authentication.Dependencies{
 		Repository: repository,
 		Tokens:     issuer{},
 		Sessions:   newTestRefreshSessionStore(),
@@ -165,7 +165,7 @@ func TestAuthenticationUpgradesLegacyPasswordHashAfterSuccessfulLogin(t *testing
 			PasswordHash: legacyHash,
 		},
 	}}
-	authenticate := authentication.NewAuthenticateService(authentication.Dependencies{
+	authenticate := newTestAuthenticateService(authentication.Dependencies{
 		Repository: repository,
 		Tokens:     issuer{},
 		Sessions:   newTestRefreshSessionStore(),

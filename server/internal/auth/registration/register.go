@@ -25,24 +25,31 @@ type RegisterInput struct {
 }
 
 type RegisterService struct {
-	repository authports.UserStore
-	tokens     authports.TokenIssuer
-	sessions   authports.SessionStore
+	repository   authports.UserStore
+	tokens       authports.TokenIssuer
+	sessions     authports.SessionStore
+	hashPassword func(string) (string, error)
 }
 
 var ErrRegistrationUnavailable = errors.New("registration is unavailable")
 
 type Dependencies struct {
-	Repository authports.UserStore
-	Tokens     authports.TokenIssuer
-	Sessions   authports.SessionStore
+	Repository   authports.UserStore
+	Tokens       authports.TokenIssuer
+	Sessions     authports.SessionStore
+	HashPassword func(string) (string, error)
 }
 
 func NewRegisterService(dependencies Dependencies) *RegisterService {
+	hashPassword := dependencies.HashPassword
+	if hashPassword == nil {
+		hashPassword = security.HashPassword
+	}
 	return &RegisterService{
-		repository: dependencies.Repository,
-		tokens:     dependencies.Tokens,
-		sessions:   dependencies.Sessions,
+		repository:   dependencies.Repository,
+		tokens:       dependencies.Tokens,
+		sessions:     dependencies.Sessions,
+		hashPassword: hashPassword,
 	}
 }
 
@@ -73,7 +80,7 @@ func (service *RegisterService) PreparePassenger(
 	if service == nil || service.repository == nil {
 		return domain.PendingRegistration{}, ErrRegistrationUnavailable
 	}
-	normalized, err := normalizeInput(input, domain.Passenger)
+	normalized, err := normalizeInput(input, domain.Passenger, service.hashPassword)
 	if err != nil {
 		return domain.PendingRegistration{}, fmt.Errorf("normalize passenger registration input: %w", err)
 	}
@@ -137,7 +144,7 @@ func (service *RegisterService) register(
 	if service == nil || service.repository == nil {
 		return domain.User{}, "", ErrRegistrationUnavailable
 	}
-	normalized, err := normalizeInput(input, role)
+	normalized, err := normalizeInput(input, role, service.hashPassword)
 	if err != nil {
 		return domain.User{}, "", fmt.Errorf("normalize registration input: %w", err)
 	}
@@ -171,7 +178,11 @@ type normalizedRegistration struct {
 	PreferredRideType string
 }
 
-func normalizeInput(input RegisterInput, role domain.Role) (normalizedRegistration, error) {
+func normalizeInput(
+	input RegisterInput,
+	role domain.Role,
+	hashPassword func(string) (string, error),
+) (normalizedRegistration, error) {
 	email := strings.ToLower(strings.TrimSpace(input.Email))
 	name := strings.TrimSpace(input.Name)
 	phone := strings.TrimSpace(input.Phone)
@@ -189,7 +200,7 @@ func normalizeInput(input RegisterInput, role domain.Role) (normalizedRegistrati
 	if role == domain.Driver && (invalidVehicleType || invalidPlateNumber) {
 		return normalizedRegistration{}, domain.ErrInvalidCredentials
 	}
-	passwordHash, err := security.HashPassword(input.Password)
+	passwordHash, err := hashPassword(input.Password)
 	if err != nil {
 		return normalizedRegistration{}, fmt.Errorf("hash registration password: %w", err)
 	}

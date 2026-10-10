@@ -1,27 +1,31 @@
 package logger
 
 import (
+	"context"
 	"log/slog"
 	"testing"
 )
 
-func TestLevelFromEnvironment(t *testing.T) {
+func TestNewConfiguresMinimumLevel(t *testing.T) {
 	tests := []struct {
-		name  string
-		value string
-		want  slog.Level
+		name          string
+		level         slog.Level
+		enabledLevel  slog.Level
+		disabledLevel slog.Level
 	}{
-		{name: "default", want: slog.LevelInfo},
-		{name: "debug", value: "debug", want: slog.LevelDebug},
-		{name: "warning alias", value: "warning", want: slog.LevelWarn},
-		{name: "error", value: "error", want: slog.LevelError},
-		{name: "invalid defaults to info", value: "verbose", want: slog.LevelInfo},
+		{name: "info", level: slog.LevelInfo, enabledLevel: slog.LevelInfo, disabledLevel: slog.LevelDebug},
+		{name: "debug", level: slog.LevelDebug, enabledLevel: slog.LevelDebug, disabledLevel: slog.Level(-8)},
+		{name: "warn", level: slog.LevelWarn, enabledLevel: slog.LevelWarn, disabledLevel: slog.LevelInfo},
+		{name: "error", level: slog.LevelError, enabledLevel: slog.LevelError, disabledLevel: slog.LevelWarn},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			t.Setenv("LOG_LEVEL", test.value)
-			if got := levelFromEnvironment(); got != test.want {
-				t.Fatalf("levelFromEnvironment() = %s, want %s", got, test.want)
+			logger := New("logger-test", test.level)
+			if !logger.Enabled(context.Background(), test.enabledLevel) {
+				t.Errorf("logger.Enabled(%s) = false, want true", test.enabledLevel)
+			}
+			if logger.Enabled(context.Background(), test.disabledLevel) {
+				t.Errorf("logger.Enabled(%s) = true, want false", test.disabledLevel)
 			}
 		})
 	}
