@@ -2,221 +2,37 @@ package app
 
 import (
 	"fmt"
-	"math"
 	"net"
-	"os"
-	"strconv"
 	"strings"
-	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/email"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
-	miniostorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage/minio"
+	environmentconfig "github.com/Easy-Bao/DrivingApp/server/internal/config"
 	rideconfig "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/config"
 	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
-	ridebidding "github.com/Easy-Bao/DrivingApp/server/internal/ride/bidding"
-	ridelifecycle "github.com/Easy-Bao/DrivingApp/server/internal/ride/lifecycle"
 )
 
 const _serviceName = "api"
 
 type Config struct {
-	JWTSecret         string
-	DatabaseURL       string
-	RedisURL          string
-	MapboxAccessToken string
-	Host              string
-	Port              string
-	TrustedProxyCIDRs string
-	AdminUserIDs      string
-	Security          middleware.SecurityConfig
-	RateLimits        middleware.RateLimitConfig
-	PostgresPool      database.PostgresNativePoolConfig
-	Mail              email.Config
-	Pricing           rideapplication.PricingConfig
-	RideLifecycle     ridelifecycle.Config
-	Bidding           ridebidding.Config
-	ReportingLocation *time.Location
-	MinIO             miniostorage.Config
+	environmentconfig.Application
+	Pricing rideapplication.PricingConfig
 }
 
 func LoadConfig() (Config, error) {
-	jwtSecret := strings.TrimSpace(os.Getenv("JWT_SECRET"))
-	if err := security.ValidateTokenSecret(jwtSecret); err != nil {
-		return Config{}, fmt.Errorf("validate JWT secret: %w", err)
-	}
-
-	databaseURL, err := requiredEnv("DATABASE_URL")
+	applicationConfig, err := environmentconfig.LoadApplication()
 	if err != nil {
-		return Config{}, fmt.Errorf("load database URL: %w", err)
+		return Config{}, err
 	}
-	redisURL, err := requiredEnv("REDIS_URL")
+	pricingConfig, err := rideconfig.LoadPricingConfig()
 	if err != nil {
-		return Config{}, fmt.Errorf("load redis URL: %w", err)
+		return Config{}, fmt.Errorf("load ride pricing configuration: %w", err)
 	}
-	minioConfig, err := miniostorage.ConfigFromEnv(os.Getenv)
-	if err != nil {
-		return Config{}, fmt.Errorf("load MinIO configuration: %w", err)
-	}
-
-	port, err := requiredPortEnv("API_PORT")
-	if err != nil {
-		return Config{}, fmt.Errorf("load API port: %w", err)
-	}
-
-	pricing, err := rideconfig.LoadPricingConfig()
-	if err != nil {
-		return Config{}, fmt.Errorf("load pricing configuration: %w", err)
-	}
-	rideLifecycle, err := loadRideLifecycleConfig(os.Getenv)
-	if err != nil {
-		return Config{}, fmt.Errorf("load ride lifecycle configuration: %w", err)
-	}
-	bidding, err := loadRideBiddingConfig(os.Getenv)
-	if err != nil {
-		return Config{}, fmt.Errorf("load bidding configuration: %w", err)
-	}
-	reportingLocation, err := rideapplication.LoadReportingLocation(os.Getenv("REPORTING_TIMEZONE"))
-	if err != nil {
-		return Config{}, fmt.Errorf("load reporting timezone: %w", err)
-	}
-
-	return Config{
-		JWTSecret:         jwtSecret,
-		DatabaseURL:       databaseURL,
-		RedisURL:          redisURL,
-		MapboxAccessToken: os.Getenv("MAPBOX_ACCESS_TOKEN"),
-		Host:              apiHost(),
-		Port:              port,
-		TrustedProxyCIDRs: os.Getenv("TRUSTED_PROXY_CIDRS"),
-		AdminUserIDs:      os.Getenv("ADMIN_USER_IDS"),
-		Security:          middleware.SecurityConfigFrom(os.Getenv),
-		Pricing:           pricing,
-		RideLifecycle:     rideLifecycle,
-		Bidding:           bidding,
-		ReportingLocation: reportingLocation,
-		MinIO:             minioConfig,
-		RateLimits:        middleware.RateLimitConfigFrom(os.Getenv),
-		PostgresPool:      database.PostgresNativePoolConfigFrom(os.Getenv),
-		Mail:              email.ConfigFrom(os.Getenv),
-	}, nil
-}
-
-func loadRideLifecycleConfig(getenv func(string) string) (ridelifecycle.Config, error) {
-	config := ridelifecycle.DefaultConfig()
-	passengerWait, err := positiveWholeSecondDurationEnv(
-		getenv,
-		"PASSENGER_NO_SHOW_WAIT",
-		config.PassengerWaitDuration,
-	)
-	if err != nil {
-		return ridelifecycle.Config{}, err
-	}
-
-	arrivalRadius, err := positiveFloatEnv(
-		getenv,
-		"RIDE_ARRIVAL_RADIUS_METERS",
-		config.ArrivalRadiusMeters,
-	)
-	if err != nil {
-		return ridelifecycle.Config{}, err
-	}
-	completionRadius, err := positiveFloatEnv(
-		getenv,
-		"RIDE_COMPLETION_RADIUS_METERS",
-		config.CompletionRadiusMeters,
-	)
-	if err != nil {
-		return ridelifecycle.Config{}, err
-	}
-	locationMaxAge, err := positiveWholeSecondDurationEnv(
-		getenv,
-		"DRIVER_LOCATION_MAX_AGE",
-		config.DriverLocationMaxAge,
-	)
-	if err != nil {
-		return ridelifecycle.Config{}, err
-	}
-	config.ArrivalRadiusMeters = arrivalRadius
-	config.CompletionRadiusMeters = completionRadius
-	config.PassengerWaitDuration = passengerWait
-	config.DriverLocationMaxAge = locationMaxAge
-	return config, nil
-}
-
-func loadRideBiddingConfig(getenv func(string) string) (ridebidding.Config, error) {
-	config := ridebidding.DefaultConfig()
-	duration, err := positiveWholeSecondDurationEnv(
-		getenv,
-		"BID_SESSION_DURATION",
-		config.SessionDuration,
-	)
-	if err != nil {
-		return ridebidding.Config{}, err
-	}
-	config.SessionDuration = duration
-	return config, nil
-}
-
-func positiveWholeSecondDurationEnv(
-	getenv func(string) string,
-	key string,
-	fallback time.Duration,
-) (time.Duration, error) {
-	raw := strings.TrimSpace(getenv(key))
-	if raw == "" {
-		return fallback, nil
-	}
-	duration, err := time.ParseDuration(raw)
-	seconds := duration / time.Second
-	if err != nil || duration <= 0 || duration%time.Second != 0 || seconds > 1<<31-1 {
-		return 0, fmt.Errorf("%s must be a positive whole-second duration", key)
-	}
-	return duration, nil
-}
-
-func positiveFloatEnv(getenv func(string) string, key string, fallback float64) (float64, error) {
-	raw := strings.TrimSpace(getenv(key))
-	if raw == "" {
-		return fallback, nil
-	}
-	value, err := strconv.ParseFloat(raw, 64)
-	if err != nil || value <= 0 || math.IsNaN(value) || math.IsInf(value, 0) {
-		return 0, fmt.Errorf("%s must be a positive finite number", key)
-	}
-	return value, nil
-}
-
-func apiHost() string {
-	if value := strings.TrimSpace(os.Getenv("API_HOST")); value != "" {
-		return value
-	}
-	return "127.0.0.1"
+	return Config{Application: applicationConfig, Pricing: pricingConfig}, nil
 }
 
 func apiAddress(host, port string) string {
+	host = strings.TrimSpace(host)
+	if host == "" {
+		host = "127.0.0.1"
+	}
 	return net.JoinHostPort(host, port)
-}
-
-func requiredPortEnv(key string) (string, error) {
-	value := strings.TrimSpace(os.Getenv(key))
-	if value == "" {
-		return "", fmt.Errorf("%s is required", key)
-	}
-	port, err := strconv.Atoi(value)
-	invalidPort := err != nil || port < 1 || port > 65535
-	if invalidPort {
-		return "", fmt.Errorf("%s must be between 1 and 65535", key)
-	}
-	return value, nil
-}
-
-func requiredEnv(key string) (string, error) {
-	value := strings.TrimSpace(os.Getenv(key))
-	if value == "" {
-		return "", fmt.Errorf("%s is required", key)
-	}
-	return value, nil
 }

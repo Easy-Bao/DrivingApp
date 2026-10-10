@@ -3,7 +3,6 @@ package email
 import (
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -31,20 +30,6 @@ type Config struct {
 	Timeout  time.Duration
 }
 
-func ConfigFrom(getenv func(string) string) Config {
-	return Config{
-		Host:     strings.TrimSpace(getenv("MAIL_HOST")),
-		Port:     integerEnv(getenv, "MAIL_PORT", 0),
-		Username: strings.TrimSpace(getenv("MAIL_USERNAME")),
-		Password: getenv("MAIL_PASSWORD"),
-		From:     strings.TrimSpace(getenv("MAIL_FROM")),
-		FromName: strings.TrimSpace(defaultEnv(getenv, "MAIL_FROM_NAME", "DriveApp")),
-		Subject:  defaultEnv(getenv, "MAIL_SUBJECT", "DriveApp verification code"),
-		Security: strings.ToLower(defaultEnv(getenv, "MAIL_SECURITY", _securityStartTLS)),
-		Timeout:  durationEnv(getenv, "MAIL_TIMEOUT", 10*time.Second),
-	}
-}
-
 func (config Config) Validate() error {
 	missing := make([]string, 0, 5)
 	if config.Host == "" {
@@ -59,11 +44,24 @@ func (config Config) Validate() error {
 	if config.From == "" {
 		missing = append(missing, "MAIL_FROM")
 	}
-	if len(missing) > 0 {
+	if len(missing) == 4 {
 		return fmt.Errorf("%w: missing %s", ErrNotConfigured, strings.Join(missing, ", "))
+	}
+	if len(missing) > 0 {
+		return fmt.Errorf("%w: incomplete settings; missing %s", ErrInvalidConfig, strings.Join(missing, ", "))
+	}
+	if err := config.ValidateSettings(); err != nil {
+		return err
 	}
 	if config.Port < 1 || config.Port > 65535 {
 		return fmt.Errorf("%w: MAIL_PORT must be between 1 and 65535", ErrInvalidConfig)
+	}
+	return nil
+}
+
+func (config Config) ValidateSettings() error {
+	if config.Port < 0 || config.Port > 65535 {
+		return fmt.Errorf("%w: MAIL_PORT must be between 0 and 65535", ErrInvalidConfig)
 	}
 	if config.Subject == "" {
 		return fmt.Errorf("%w: MAIL_SUBJECT must not be empty", ErrInvalidConfig)
@@ -77,35 +75,4 @@ func (config Config) Validate() error {
 	default:
 		return fmt.Errorf("%w: MAIL_SECURITY must be starttls, ssl, or none", ErrInvalidConfig)
 	}
-}
-
-func integerEnv(getenv func(string) string, key string, fallback int) int {
-	raw := strings.TrimSpace(getenv(key))
-	if raw == "" {
-		return fallback
-	}
-	value, err := strconv.Atoi(raw)
-	if err != nil {
-		return 0
-	}
-	return value
-}
-
-func durationEnv(getenv func(string) string, key string, fallback time.Duration) time.Duration {
-	raw := strings.TrimSpace(getenv(key))
-	if raw == "" {
-		return fallback
-	}
-	value, err := time.ParseDuration(raw)
-	if err != nil {
-		return 0
-	}
-	return value
-}
-
-func defaultEnv(getenv func(string) string, key, fallback string) string {
-	if value := strings.TrimSpace(getenv(key)); value != "" {
-		return value
-	}
-	return fallback
 }

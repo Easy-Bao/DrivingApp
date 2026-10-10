@@ -43,7 +43,7 @@ func NewObjectStore(ctx context.Context, pool *pgxpool.Pool, config Config) (*Ob
 	if pool == nil {
 		return nil, errors.New("postgresql pool is required")
 	}
-	if err := config.validate(); err != nil {
+	if err := config.Validate(); err != nil {
 		return nil, err
 	}
 	if ctx == nil {

@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	serverconfig "github.com/Easy-Bao/DrivingApp/server/internal/config"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/migrations"
 	"github.com/golang-migrate/migrate/v4"
@@ -25,14 +26,14 @@ func main() {
 }
 
 func run(ctx context.Context) error {
-	databaseURL := os.Getenv("DATABASE_URL")
-	if databaseURL == "" {
-		return errors.New("database url is required")
+	config, err := serverconfig.LoadMigration()
+	if err != nil {
+		return err
 	}
 	sqlDatabase, err := database.OpenPostgresMigrationDatabaseWithContext(
 		ctx,
-		databaseURL,
-		database.PostgresNativePoolConfigFrom(os.Getenv).PingTimeout,
+		config.DatabaseURL,
+		config.PostgresPool.PingTimeout,
 	)
 	if err != nil {
 		return fmt.Errorf("open migration database: %w", err)

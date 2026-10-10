@@ -161,21 +161,6 @@ func NewRateLimiter(dependencies RateLimiterDependencies) *RateLimiter {
 	}
 }
 
-func RateLimitConfigFrom(getenv func(string) string) RateLimitConfig {
-	defaults := DefaultRateLimitConfig()
-	return RateLimitConfig{
-		Authentication: positiveInt64Value(getenv, "AUTH_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Authentication),
-		Refresh:        positiveInt64Value(getenv, "REFRESH_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Refresh),
-		Location:       positiveInt64Value(getenv, "LOCATION_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Location),
-		Fare:           positiveInt64Value(getenv, "FARE_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Fare),
-		Connection:     positiveInt64Value(getenv, "CONNECTION_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Connection),
-		Telemetry:      positiveInt64Value(getenv, "TELEMETRY_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Telemetry),
-		Mutation:       positiveInt64Value(getenv, "MUTATION_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Mutation),
-		Read:           positiveInt64Value(getenv, "READ_RATE_LIMIT_REQUESTS_PER_MINUTE", defaults.Read),
-		Window:         time.Minute,
-	}
-}
-
 func (limiter *RateLimiter) Middleware(next http.Handler) http.Handler {
 	return limiter.MiddlewareFor(RouteDefault)(next)
 }

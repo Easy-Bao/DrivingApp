@@ -7,9 +7,9 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 
+	serverconfig "github.com/Easy-Bao/DrivingApp/server/internal/config"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/migrations"
 	miniostorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage/minio"
@@ -32,14 +32,14 @@ func main() {
 }
 
 func run(ctx context.Context) (runErr error) {
-	databaseURL := strings.TrimSpace(os.Getenv("DATABASE_URL"))
-	if databaseURL == "" {
-		return errors.New("database URL is required")
+	config, err := serverconfig.LoadObjectStorageMigration()
+	if err != nil {
+		return fmt.Errorf("load object storage migration configuration: %w", err)
 	}
 	migrationDatabase, err := database.OpenPostgresMigrationDatabaseWithContext(
 		ctx,
-		databaseURL,
-		database.PostgresNativePoolConfigFrom(os.Getenv).PingTimeout,
+		config.DatabaseURL,
+		config.PostgresPool.PingTimeout,
 	)
 	if err != nil {
 		return fmt.Errorf("open migration database: %w", err)
@@ -64,20 +64,16 @@ func run(ctx context.Context) (runErr error) {
 		return fmt.Errorf("apply private object verification schema: %w", err)
 	}
 
-	config, err := miniostorage.ConfigFromEnv(os.Getenv)
-	if err != nil {
-		return fmt.Errorf("load MinIO configuration: %w", err)
-	}
 	pool, err := database.OpenPostgresPoolWithContext(
 		ctx,
-		databaseURL,
-		database.PostgresNativePoolConfigFrom(os.Getenv),
+		config.DatabaseURL,
+		config.PostgresPool,
 	)
 	if err != nil {
 		return fmt.Errorf("open PostgreSQL pool: %w", err)
 	}
 	defer pool.Close()
-	store, err := miniostorage.NewObjectStore(ctx, pool, config)
+	store, err := miniostorage.NewObjectStore(ctx, pool, config.MinIO)
 	if err != nil {
 		return fmt.Errorf("create MinIO object store: %w", err)
 	}

@@ -3,35 +3,12 @@ package email_test
 import (
 	"context"
 	"errors"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/email"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/resilience"
 )
-
-func TestMailConfigUsesEnvironmentContract(t *testing.T) {
-	setMailEnvironment(t, map[string]string{
-		"MAIL_HOST":      "mail.example.test",
-		"MAIL_PORT":      "465",
-		"MAIL_USERNAME":  "mailer@example.test",
-		"MAIL_PASSWORD":  "secret",
-		"MAIL_FROM":      "noreply@example.test",
-		"MAIL_FROM_NAME": "EasyRide",
-		"MAIL_SUBJECT":   "Sign in to EasyRide",
-		"MAIL_SECURITY":  "ssl",
-		"MAIL_TIMEOUT":   "4s",
-	})
-
-	config := email.ConfigFrom(os.Getenv)
-	if err := config.Validate(); err != nil {
-		t.Fatalf("config should validate: %v", err)
-	}
-	if config.Port != 465 || config.Security != "ssl" || config.Timeout != 4*time.Second {
-		t.Fatalf("unexpected parsed config: %+v", config)
-	}
-}
 
 func TestMailConfigRequiresCredentials(t *testing.T) {
 	err := (email.Config{}).Validate()
@@ -40,18 +17,9 @@ func TestMailConfigRequiresCredentials(t *testing.T) {
 	}
 }
 
-func TestMailConfigRejectsInvalidSecurityAndNumbers(t *testing.T) {
-	setMailEnvironment(t, map[string]string{
-		"MAIL_HOST":     "mail.example.test",
-		"MAIL_PORT":     "not-a-port",
-		"MAIL_USERNAME": "mailer",
-		"MAIL_PASSWORD": "secret",
-		"MAIL_FROM":     "noreply@example.test",
-		"MAIL_SECURITY": "plain",
-		"MAIL_TIMEOUT":  "not-a-duration",
-	})
-
-	if err := email.ConfigFrom(os.Getenv).Validate(); !errors.Is(err, email.ErrInvalidConfig) {
+func TestMailConfigRejectsPartialSettings(t *testing.T) {
+	err := (email.Config{Host: "mail.example.test"}).Validate()
+	if !errors.Is(err, email.ErrInvalidConfig) {
 		t.Fatalf("expected ErrInvalidConfig, got %v", err)
 	}
 }
@@ -168,12 +136,5 @@ func validMailConfig() email.Config {
 		Host: "mail.example.test", Port: 587, Username: "mailer", Password: "secret",
 		From: "noreply@example.test", FromName: "DriveApp", Subject: "Verification code",
 		Security: "starttls", Timeout: 10 * time.Second,
-	}
-}
-
-func setMailEnvironment(t *testing.T, values map[string]string) {
-	t.Helper()
-	for key, value := range values {
-		t.Setenv(key, value)
 	}
 }

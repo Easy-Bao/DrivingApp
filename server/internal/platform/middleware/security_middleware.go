@@ -33,12 +33,10 @@ const (
 	HSTSEnabled
 )
 
-func SecurityConfigFrom(getenv func(string) string) SecurityConfig {
+func DefaultSecurityConfig() SecurityConfig {
 	return SecurityConfig{
-		AllowedOrigins:  parseOrigins(getenv("CORS_ALLOWED_ORIGINS")),
-		EnableHSTS:      strings.EqualFold(strings.TrimSpace(getenv("ENABLE_HSTS")), "true"),
-		JSONBodyLimit:   positiveInt64Value(getenv, "JSON_BODY_LIMIT_BYTES", _defaultJSONBodyLimit),
-		UploadBodyLimit: positiveInt64Value(getenv, "UPLOAD_BODY_LIMIT_BYTES", _defaultUploadBodyLimit),
+		JSONBodyLimit:   _defaultJSONBodyLimit,
+		UploadBodyLimit: _defaultUploadBodyLimit,
 	}
 }
 
@@ -55,11 +53,12 @@ func SecureHTTP(next http.Handler, config SecurityConfig) http.Handler {
 }
 
 func normalizedSecurityConfig(config SecurityConfig) SecurityConfig {
+	defaults := DefaultSecurityConfig()
 	if config.JSONBodyLimit <= 0 {
-		config.JSONBodyLimit = _defaultJSONBodyLimit
+		config.JSONBodyLimit = defaults.JSONBodyLimit
 	}
 	if config.UploadBodyLimit <= 0 {
-		config.UploadBodyLimit = _defaultUploadBodyLimit
+		config.UploadBodyLimit = defaults.UploadBodyLimit
 	}
 
 	return config
@@ -185,17 +184,6 @@ func CORS(allowedOrigins []string) func(http.Handler) http.Handler {
 			next.ServeHTTP(writer, request)
 		})
 	}
-}
-
-func parseOrigins(raw string) []string {
-	values := strings.Split(raw, ",")
-	origins := make([]string, 0, len(values))
-	for _, value := range values {
-		if origin := strings.TrimSpace(value); origin != "" {
-			origins = append(origins, origin)
-		}
-	}
-	return origins
 }
 
 func validRequestID(value string) bool {

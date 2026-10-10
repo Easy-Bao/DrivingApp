@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -34,18 +33,6 @@ func DefaultPostgresNativePoolConfig() PostgresNativePoolConfig {
 	}
 }
 
-func PostgresNativePoolConfigFrom(getenv func(string) string) PostgresNativePoolConfig {
-	defaults := DefaultPostgresNativePoolConfig()
-	return PostgresNativePoolConfig{
-		MaxConnections:        positiveInt32Env(getenv, "POSTGRES_MAX_OPEN_CONNECTIONS", defaults.MaxConnections),
-		MinConnections:        nonNegativeInt32Env(getenv, "POSTGRES_MIN_CONNECTIONS", defaults.MinConnections),
-		MinIdleConnections:    nonNegativeInt32Env(getenv, "POSTGRES_MIN_IDLE_CONNECTIONS", defaults.MinIdleConnections),
-		ConnectionMaxLifetime: positiveDurationEnv(getenv, "POSTGRES_CONNECTION_MAX_LIFETIME", defaults.ConnectionMaxLifetime),
-		ConnectionMaxIdleTime: positiveDurationEnv(getenv, "POSTGRES_CONNECTION_MAX_IDLE_TIME", defaults.ConnectionMaxIdleTime),
-		PingTimeout:           positiveDurationEnv(getenv, "POSTGRES_PING_TIMEOUT", defaults.PingTimeout),
-	}
-}
-
 func OpenPostgresPoolWithConfig(databaseURL string, config PostgresNativePoolConfig) (*pgxpool.Pool, error) {
 	return OpenPostgresPoolWithContext(context.Background(), databaseURL, config)
 }
@@ -66,7 +53,7 @@ func OpenPostgresPoolWithContext(
 	if strings.TrimSpace(databaseURL) == "" {
 		return nil, fmt.Errorf("database URL is required")
 	}
-	if err := config.validate(); err != nil {
+	if err := config.Validate(); err != nil {
 		return nil, err
 	}
 
@@ -96,7 +83,7 @@ func OpenPostgresPoolWithContext(
 	return pool, nil
 }
 
-func (config PostgresNativePoolConfig) validate() error {
+func (config PostgresNativePoolConfig) Validate() error {
 	if config.MaxConnections <= 0 {
 		return fmt.Errorf("postgresql max connections must be positive")
 	}
@@ -119,40 +106,4 @@ func (config PostgresNativePoolConfig) validate() error {
 		return fmt.Errorf("postgresql connection durations must be positive")
 	}
 	return nil
-}
-
-func positiveInt32Env(getenv func(string) string, key string, fallback int32) int32 {
-	value := int64(positiveIntEnv(getenv, key, int(fallback)))
-	if value > 1<<31-1 {
-		return fallback
-	}
-	return int32(value)
-}
-
-func nonNegativeInt32Env(getenv func(string) string, key string, fallback int32) int32 {
-	value := strings.TrimSpace(getenv(key))
-	if value == "" {
-		return fallback
-	}
-	parsed, err := strconv.ParseInt(value, 10, 32)
-	if err != nil || parsed < 0 {
-		return fallback
-	}
-	return int32(parsed)
-}
-
-func positiveIntEnv(getenv func(string) string, key string, fallback int) int {
-	value, err := strconv.Atoi(strings.TrimSpace(getenv(key)))
-	if err != nil || value <= 0 {
-		return fallback
-	}
-	return value
-}
-
-func positiveDurationEnv(getenv func(string) string, key string, fallback time.Duration) time.Duration {
-	value, err := time.ParseDuration(strings.TrimSpace(getenv(key)))
-	if err != nil || value <= 0 {
-		return fallback
-	}
-	return value
 }
