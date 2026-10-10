@@ -85,8 +85,10 @@ this repository and are intentionally absent from `.env.example`.
 ### Run the Go backend natively
 
 The default local backend workflow runs the API natively and starts the
-configured PostgreSQL and Redis containers as dependencies. Copy `.env.example`
-to `.env`, configure the native credentials, and run:
+configured PostgreSQL, Redis, and MinIO containers as dependencies. The native
+API connects to MinIO through its published loopback port; the containerized API
+uses the Compose service name. Copy `.env.example` to `.env`, configure the
+native credentials, and run:
 
 ```bash
 just server

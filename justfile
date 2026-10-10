@@ -62,7 +62,7 @@ db-down:
 
 # Docker-only infrastructure helper for the native API workflow.
 infra-up:
-    docker compose up -d --remove-orphans --wait --wait-timeout 60 postgres-db redis
+    docker compose up -d --remove-orphans --wait --wait-timeout 60 postgres-db redis minio
 
 # Apply the ordered additive migration plan to configured native PostgreSQL.
 db-migrate:
@@ -90,7 +90,7 @@ server action="":
     esac
 
 # Start the API natively while keeping the Compose API container out of the way.
-# PostgreSQL and Redis remain containerized dependencies for local development.
+# PostgreSQL, Redis, and MinIO remain containerized dependencies for local development.
 native-server:
     @docker compose stop api >/dev/null 2>&1 || true
     @just infra-up
@@ -124,7 +124,7 @@ native-server:
             exit 1; \
         fi; \
     fi
-    cd server && go run ./cmd/api
+    cd server && MINIO_ENDPOINT="127.0.0.1:$${MINIO_HOST_PORT:-9000}" go run ./cmd/api
 
 # Backward-compatible local startup alias.
 start-all: native-server
