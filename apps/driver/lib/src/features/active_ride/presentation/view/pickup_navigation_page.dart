@@ -286,7 +286,8 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
       if (!rideCubit.state.isWaitingAtPickup) {
         CustomToast.show(
           this.context,
-          'Unable to confirm arrival. Please try again.',
+          rideCubit.state.failureMessage ??
+              'Unable to confirm arrival. Please try again.',
           isError: true,
         );
         return;
@@ -305,7 +306,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
       if (mounted) {
         CustomToast.show(
           this.context,
-          'Unable to confirm arrival. Please try again.',
+          rideCubit.state.failureMessage ?? ErrorHandler.getErrorMessage(error),
           isError: true,
         );
       }
