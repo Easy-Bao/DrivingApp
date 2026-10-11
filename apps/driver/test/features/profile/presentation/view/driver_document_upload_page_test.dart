@@ -33,8 +33,8 @@ class _FakeDriverDocumentRepository implements DriverDocumentRepository {
 }
 
 class _CountingXFile extends XFile {
-  _CountingXFile(Uint8List bytes)
-    : super.fromData(bytes, name: 'license.png', mimeType: 'image/png');
+  _CountingXFile(super.bytes)
+    : super.fromData(name: 'license.png', mimeType: 'image/png');
 
   int readCount = 0;
 

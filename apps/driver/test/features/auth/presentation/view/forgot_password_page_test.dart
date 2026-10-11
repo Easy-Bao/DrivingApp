@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:mocktail/mocktail.dart';
 
 class _MockDriverAuthRepository extends Mock implements DriverAuthRepository {}
 
