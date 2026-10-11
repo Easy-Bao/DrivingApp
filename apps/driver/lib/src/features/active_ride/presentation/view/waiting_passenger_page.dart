@@ -9,6 +9,7 @@ import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/waiting_passenger_panel.dart';
+import 'package:driver/src/features/active_ride/presentation/widgets/driver_active_ride_header.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_safety_report_sheet.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_emergency_button.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_ride_cancellation_sheet.dart';
@@ -323,9 +324,12 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                     child: Column(
                       children: [
                         const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
+                        DriverActiveRideHeader(
+                          backButton: _buildTripBackButton(
+                            context,
+                            () => context.pop(),
+                          ),
+                          actions: [
                             DriverEmergencyButton(
                               onEmergencyStop: _emergencyStop,
                               onEmergencyStopCompleted: () {
@@ -339,7 +343,6 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
                                   .activeRideId,
                               rideRepository: widget.rideRepository,
                             ),
-                            _buildTripBackButton(context, () => context.pop()),
                           ],
                         ),
                         const SizedBox(height: 16),
