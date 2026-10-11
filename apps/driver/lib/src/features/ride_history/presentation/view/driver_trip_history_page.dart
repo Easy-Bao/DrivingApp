@@ -273,11 +273,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
         ),
         padding: const EdgeInsets.fromLTRB(28, 120, 28, 120),
         children: [
-          Icon(
-            icon,
-            size: 56,
-            color: context.colorScheme.onSurface.withValues(alpha: 0.2),
-          ),
+          Icon(icon, size: 56, color: context.colorScheme.onSurfaceVariant),
           const SizedBox(height: 18),
           Text(
             title,

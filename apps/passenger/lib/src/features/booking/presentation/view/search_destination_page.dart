@@ -700,8 +700,8 @@ class _SearchDestinationPageState()
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w800,
-                                      color: context.colorScheme.onSurface
-                                          .withValues(alpha: 0.4),
+                                      color:
+                                          context.colorScheme.onSurfaceVariant,
                                       letterSpacing: 0.5,
                                     ),
                                   ),
@@ -772,8 +772,7 @@ class _SearchDestinationPageState()
                                                 style: TextStyle(
                                                   color: context
                                                       .colorScheme
-                                                      .onSurface
-                                                      .withValues(alpha: 0.4),
+                                                      .onSurfaceVariant,
                                                   fontWeight: FontWeight.w600,
                                                 ),
                                               ),
@@ -904,10 +903,7 @@ class _SearchDestinationPageState()
                                                     style: TextStyle(
                                                       color: context
                                                           .colorScheme
-                                                          .onSurface
-                                                          .withValues(
-                                                            alpha: 0.4,
-                                                          ),
+                                                          .onSurfaceVariant,
                                                       fontSize: 13,
                                                     ),
                                                   ),
@@ -1027,8 +1023,7 @@ class _SearchDestinationPageState()
                                                 fontSize: 15,
                                                 color: context
                                                     .colorScheme
-                                                    .onSurface
-                                                    .withValues(alpha: 0.4),
+                                                    .onSurfaceVariant,
                                                 fontWeight: FontWeight.w400,
                                               ),
                                               border: InputBorder.none,
@@ -1058,8 +1053,7 @@ class _SearchDestinationPageState()
                                                   size: 18,
                                                   color: context
                                                       .colorScheme
-                                                      .onSurface
-                                                      .withValues(alpha: 0.5),
+                                                      .onSurfaceVariant,
                                                 ),
                                               ),
                                             ),

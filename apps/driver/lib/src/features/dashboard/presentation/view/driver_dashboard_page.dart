@@ -1186,9 +1186,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                     decoration: BoxDecoration(
                       color: isOnline
                           ? context.semanticColors.success
-                          : context.colorScheme.onSurfaceVariant.withValues(
-                              alpha: 0.4,
-                            ),
+                          : context.semanticColors.offline,
                       shape: BoxShape.circle,
                     ),
                   ),

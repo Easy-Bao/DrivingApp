@@ -187,7 +187,7 @@ class _DriverDropdownCardState()
                   size: 12,
                   color: filled
                       ? context.semanticColors.warning
-                      : context.colorScheme.onSurface.withValues(alpha: 0.2),
+                      : context.colorScheme.onSurfaceVariant,
                 );
               }),
               const SizedBox(width: 4),

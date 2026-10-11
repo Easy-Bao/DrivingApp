@@ -337,8 +337,7 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                                       ? 'Type a message...'
                                       : 'Reconnect to send a message',
                                   hintStyle: TextStyle(
-                                    color: context.colorScheme.onSurface
-                                        .withValues(alpha: 0.4),
+                                    color: context.colorScheme.onSurfaceVariant,
                                     fontSize: 14,
                                   ),
                                   border: InputBorder.none,

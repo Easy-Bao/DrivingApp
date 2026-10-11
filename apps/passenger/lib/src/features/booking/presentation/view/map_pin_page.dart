@@ -544,9 +544,7 @@ class _MapPinPageState()
                   Text(
                     'Search destination',
                     style: TextStyle(
-                      color: context.colorScheme.onSurface.withValues(
-                        alpha: 0.4,
-                      ),
+                      color: context.colorScheme.onSurfaceVariant,
                       fontSize: 15,
                       fontWeight: FontWeight.w400,
                     ),
