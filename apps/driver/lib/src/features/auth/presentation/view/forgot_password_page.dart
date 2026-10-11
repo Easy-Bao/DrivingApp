@@ -170,8 +170,7 @@ class _ForgotPasswordPageContentState
                                         EasyRideRadius.lg,
                                       ),
                                       borderSide: BorderSide(
-                                        color: context.colorScheme.onSurface
-                                            .withValues(alpha: 0.2),
+                                        color: context.colorScheme.outline,
                                       ),
                                     ),
                                     focusedBorder: OutlineInputBorder(

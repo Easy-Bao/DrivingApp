@@ -17,7 +17,7 @@ class const SocialLoginButtons({
           children: [
             Expanded(
               child: Divider(
-                color: context.colorScheme.onSurface.withValues(alpha: 0.15),
+                color: context.colorScheme.outlineVariant,
                 thickness: 1,
               ),
             ),
@@ -34,7 +34,7 @@ class const SocialLoginButtons({
             ),
             Expanded(
               child: Divider(
-                color: context.colorScheme.onSurface.withValues(alpha: 0.15),
+                color: context.colorScheme.outlineVariant,
                 thickness: 1,
               ),
             ),
@@ -50,7 +50,7 @@ class const SocialLoginButtons({
                 backgroundColor: context.colorScheme.surface,
                 minimumSize: const Size.fromHeight(56),
                 side: BorderSide(
-                  color: context.colorScheme.onSurface.withValues(alpha: 0.2),
+                  color: context.colorScheme.outline,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(EasyRideRadius.lg),
