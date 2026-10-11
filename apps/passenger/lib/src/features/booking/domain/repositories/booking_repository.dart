@@ -1,5 +1,5 @@
 import 'package:foundation/foundation.dart';
-import 'package:passenger/src/features/active_ride/domain/entities/accepted_booking.dart';
+import 'package:passenger/src/features/booking/domain/entities/accepted_booking.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_offer.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_session_request.dart';
 

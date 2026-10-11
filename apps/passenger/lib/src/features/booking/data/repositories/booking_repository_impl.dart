@@ -1,7 +1,7 @@
 import 'package:core_domain/core_domain.dart';
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
-import 'package:passenger/src/features/active_ride/domain/entities/accepted_booking.dart';
+import 'package:passenger/src/features/booking/domain/entities/accepted_booking.dart';
 import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/booking/data/data_sources/booking_remote_data_source.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_offer.dart';
