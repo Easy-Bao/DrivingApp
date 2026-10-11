@@ -165,7 +165,7 @@ class MapAnnotationService._() {
     annotation.symbolSortKey = options.symbolSortKey;
     if (animate) {
       await traceTimelineStage(
-        'maps.marker.animate_18_updates',
+        'maps.marker.animate_8_updates',
         () => _animateMarker(
           annotationManager,
           annotation,
@@ -200,7 +200,7 @@ class MapAnnotationService._() {
   }) async {
     final startLat = annotation.geometry.coordinates.lat.toDouble();
     final startLng = annotation.geometry.coordinates.lng.toDouble();
-    const frameCount = 18;
+    const frameCount = 8;
     for (var frame = 1; frame <= frameCount; frame++) {
       final progress = Curves.easeInOut.transform(frame / frameCount);
       annotation.geometry = mapbox.Point(
@@ -216,7 +216,7 @@ class MapAnnotationService._() {
       );
       await annotationManager.update(annotation);
       if (frame < frameCount) {
-        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
       }
     }
   }
