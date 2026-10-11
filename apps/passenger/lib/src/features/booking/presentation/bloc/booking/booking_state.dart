@@ -24,24 +24,48 @@ final class const FindingNearestDriver({
   final double pickupLng;
 }
 
-final class const NearestDriverFound({
-  required this.driver,
-  this.nearbyDrivers = const [],
-  required this.totalTrips,
-  required this.reviews,
-  required this.isLoadingReviews,
-  required this.trip,
-  required this.pickupLat,
-  required this.pickupLng,
-}) extends BookingState {
+final class NearestDriverFound extends BookingState {
+  const NearestDriverFound({
+    required this.driver,
+    this.nearbyDrivers = const [],
+    required this.totalTrips,
+    String? reviewsDriverId,
+    required this.reviews,
+    required this.isLoadingReviews,
+    required this.trip,
+    required this.pickupLat,
+    required this.pickupLng,
+  }) : _reviewsDriverId = reviewsDriverId;
+
   final DriverModel driver;
   final List<DriverModel> nearbyDrivers;
   final int? totalTrips;
-  final List<Map<String, dynamic>> reviews;
+  final String? _reviewsDriverId;
+  String get reviewsDriverId => _reviewsDriverId ?? driver.id;
+  final List<DriverReview> reviews;
   final bool isLoadingReviews;
   final BidSessionTrip trip;
   final double pickupLat;
   final double pickupLng;
+
+  NearestDriverFound copyWith({
+    int? totalTrips,
+    String? reviewsDriverId,
+    List<DriverReview>? reviews,
+    bool? isLoadingReviews,
+  }) {
+    return NearestDriverFound(
+      driver: driver,
+      nearbyDrivers: nearbyDrivers,
+      totalTrips: totalTrips ?? this.totalTrips,
+      reviewsDriverId: reviewsDriverId ?? this.reviewsDriverId,
+      reviews: reviews ?? this.reviews,
+      isLoadingReviews: isLoadingReviews ?? this.isLoadingReviews,
+      trip: trip,
+      pickupLat: pickupLat,
+      pickupLng: pickupLng,
+    );
+  }
 }
 
 final class const BookingSearching({required this.isDirect, this.targetDriver})

@@ -50,8 +50,6 @@ class _InTransitPageState extends State<InTransitPage> {
   bool _isCompletingTrip = false;
   double? _destLat;
   double? _destLng;
-  double? _passengerLat;
-  double? _passengerLng;
   late final AppLifecyclePeriodicTask _trackingTask;
   late final LiveMapBloc _liveMapBloc;
   bool _isTracking = false;
@@ -87,10 +85,8 @@ class _InTransitPageState extends State<InTransitPage> {
     _isTracking = true;
 
     try {
-      final rideId = BlocProvider.of<RideFlowCubit>(context).activeRideId;
-      if (rideId != null && rideId.isNotEmpty) {
-        await _refreshPassengerLocation(rideId);
-      }
+      final rideCubit = BlocProvider.of<RideFlowCubit>(context);
+      await rideCubit.refreshPassengerLocation();
       final pos =
           LocationService.lastPosition ??
           await LocationService.getCurrentPosition();
@@ -104,12 +100,13 @@ class _InTransitPageState extends State<InTransitPage> {
           );
         }
         if (mounted) {
+          final rideState = rideCubit.state;
           _liveMapBloc.add(
             UpdateLocationsAndDrawRouteEvent(
               driverLat: pos.latitude,
               driverLng: pos.longitude,
-              passengerLat: _passengerLat,
-              passengerLng: _passengerLng,
+              passengerLat: rideState.passengerLatitude,
+              passengerLng: rideState.passengerLongitude,
               routeTargetLat: _destLat,
               routeTargetLng: _destLng,
             ),
@@ -127,7 +124,7 @@ class _InTransitPageState extends State<InTransitPage> {
   Future<void> _loadRoute() async {
     try {
       final rideCubit = BlocProvider.of<RideFlowCubit>(context);
-      final rideState = rideCubit.state;
+      var rideState = rideCubit.state;
       // Resolve the destination before waiting on driver location so a
       // delayed permission response cannot prevent the destination leg from
       // being rendered.
@@ -143,13 +140,13 @@ class _InTransitPageState extends State<InTransitPage> {
           _destLng = places.first.longitude;
         }
       }
-      _passengerLat = rideState.passengerLatitude;
-      _passengerLng = rideState.passengerLongitude;
-
       final rideId = rideCubit.activeRideId;
-      if (_passengerLat == null && rideId != null && rideId.isNotEmpty) {
+      if (rideState.passengerLatitude == null &&
+          rideId != null &&
+          rideId.isNotEmpty) {
         try {
-          await _refreshPassengerLocation(rideId);
+          await rideCubit.refreshPassengerLocation();
+          rideState = rideCubit.state;
         } catch (_) {}
       }
 
@@ -170,25 +167,17 @@ class _InTransitPageState extends State<InTransitPage> {
     }
   }
 
-  Future<void> _refreshPassengerLocation(String rideId) async {
-    (await widget.rideRepository.fetchPassengerLocationResult(rideId))
-        .fold((_) {}, (location) {
-          if (location == null) return;
-          _passengerLat = location.$1;
-          _passengerLng = location.$2;
-        });
-  }
-
   void _triggerDrawRoute(double dLat, double dLng) {
     final destinationLat = _destLat;
     final destinationLng = _destLng;
     if (destinationLat == null || destinationLng == null) return;
+    final rideState = BlocProvider.of<RideFlowCubit>(context).state;
     _liveMapBloc.add(
       UpdateLocationsAndDrawRouteEvent(
         driverLat: dLat,
         driverLng: dLng,
-        passengerLat: _passengerLat,
-        passengerLng: _passengerLng,
+        passengerLat: rideState.passengerLatitude,
+        passengerLng: rideState.passengerLongitude,
         routeTargetLat: destinationLat,
         routeTargetLng: destinationLng,
       ),

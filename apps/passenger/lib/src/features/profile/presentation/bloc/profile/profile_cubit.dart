@@ -13,7 +13,7 @@ class ProfileCubit extends Cubit<ProfileState> {
 
   final PassengerProfileRepository repository;
 
-  Future<void> loadProfile() async {
+  Future<void> loadProfile({bool refreshRemote = true}) async {
     if (isClosed || state.isLoading) return;
     emit(state.copyWith(isLoading: true, clearError: true));
 
@@ -33,6 +33,8 @@ class ProfileCubit extends Cubit<ProfileState> {
           isLoading: false,
         ),
       );
+
+      if (!refreshRemote) return;
 
       PassengerProfile? profile;
       Failure? failure;

@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger/src/features/booking/booking.dart';
+import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/driver_profile/domain/entities/driver_review.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/driver_profile/presentation/driver_profile_details_sheet.dart';
@@ -39,8 +41,6 @@ class _DriverDropdownCardState()
   late final AnimationController _dropdownAnimationController;
   late final Animation<Offset> _slideAnimation;
   late final Animation<double> _fadeAnimation;
-  List<DriverReview> _recentReviews = const [];
-  bool _isLoadingFeedback = true;
 
   @override
   void initState() {
@@ -64,77 +64,116 @@ class _DriverDropdownCardState()
     );
 
     unawaited(_dropdownAnimationController.forward());
-    unawaited(_loadRecentFeedback());
+    _requestDriverReviews();
   }
 
-  Future<void> _loadRecentFeedback() async {
-    List<DriverReview> reviews = const [];
-    (await widget.profileRepository.fetchReviewsResult(
-      widget.driver.id,
-      page: 1,
-      limit: 6,
-    )).fold((_) {}, (value) => reviews = value);
-    if (!mounted) return;
-    final visibleReviews = reviews
+  @override
+  void didUpdateWidget(covariant DriverDropdownCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.driver.id != widget.driver.id) _requestDriverReviews();
+  }
+
+  void _requestDriverReviews() {
+    context.read<BookingBloc>().add(
+      LoadDriverReviewsEvent(driverId: widget.driver.id),
+    );
+  }
+
+  ({List<DriverReview> reviews, bool isLoading}) _feedbackForState(
+    BookingState state,
+  ) {
+    if (state is! NearestDriverFound ||
+        state.reviewsDriverId != widget.driver.id) {
+      return (reviews: const [], isLoading: true);
+    }
+
+    final visibleReviews = state.reviews
         .where((review) => review.comment.isNotEmpty)
         .take(6)
         .toList(growable: false);
-    setState(() {
-      _recentReviews =
-          visibleReviews.isEmpty &&
-              widget.driver.recentFeedback?.trim().isNotEmpty == true
-          ? [
-              DriverReview(
-                passengerName: 'Passenger',
-                comment: widget.driver.recentFeedback!.trim(),
-                rating: widget.driver.rating,
-              ),
-            ]
-          : visibleReviews;
-      _isLoadingFeedback = false;
-    });
+    if (state.isLoadingReviews || visibleReviews.isNotEmpty) {
+      return (reviews: visibleReviews, isLoading: state.isLoadingReviews);
+    }
+
+    final fallbackFeedback = widget.driver.recentFeedback?.trim();
+    if (fallbackFeedback == null || fallbackFeedback.isEmpty) {
+      return (reviews: const [], isLoading: false);
+    }
+    return (
+      reviews: [
+        DriverReview(
+          passengerName: 'Passenger',
+          comment: fallbackFeedback,
+          rating: widget.driver.rating,
+        ),
+      ],
+      isLoading: false,
+    );
   }
 
-  String get _reviewCountLabel {
-    if (_isLoadingFeedback) return 'Reviews';
-    if (_recentReviews.isEmpty) return '0 reviews';
-    return _recentReviews.length == 6
-        ? '6+ reviews'
-        : '${_recentReviews.length} reviews';
+  Widget _buildReviewCountLabel() {
+    return BlocBuilder<BookingBloc, BookingState>(
+      builder: (context, state) {
+        final feedback = _feedbackForState(state);
+        final label = feedback.isLoading
+            ? 'Reviews'
+            : feedback.reviews.isEmpty
+            ? '0 reviews'
+            : feedback.reviews.length == 6
+            ? '6+ reviews'
+            : '${feedback.reviews.length} reviews';
+        return Text(
+          label,
+          style: TextStyle(
+            fontSize: 11.0,
+            fontWeight: FontWeight.w600,
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildRecentFeedbackList() {
-    return SizedBox(
-      width: double.infinity,
-      height: _isLoadingFeedback || _recentReviews.isEmpty ? null : 190,
-      child: _isLoadingFeedback
-          ? const Skeletonizer.zone(
-              key: ValueKey('driver-feedback-loading-skeleton'),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Bone.multiText(lines: 2, fontSize: 12),
-                  SizedBox(height: 8),
-                  Bone.multiText(lines: 2, fontSize: 12),
-                ],
-              ),
-            )
-          : _recentReviews.isEmpty
-          ? Text(
-              'No Passenger Feedback Yet.',
-              style: TextStyle(
-                fontSize: 12,
-                color: context.colorScheme.onSurface.withValues(alpha: 0.65),
-              ),
-            )
-          : ListView.separated(
-              primary: false,
-              padding: EdgeInsets.zero,
-              physics: const AlwaysScrollableScrollPhysics(),
-              itemCount: _recentReviews.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 8),
-              itemBuilder: (_, index) => _buildReviewRow(_recentReviews[index]),
-            ),
+    return BlocBuilder<BookingBloc, BookingState>(
+      builder: (context, state) {
+        final feedback = _feedbackForState(state);
+        return SizedBox(
+          width: double.infinity,
+          height: feedback.isLoading || feedback.reviews.isEmpty ? null : 190,
+          child: feedback.isLoading
+              ? const Skeletonizer.zone(
+                  key: ValueKey('driver-feedback-loading-skeleton'),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Bone.multiText(lines: 2, fontSize: 12),
+                      SizedBox(height: 8),
+                      Bone.multiText(lines: 2, fontSize: 12),
+                    ],
+                  ),
+                )
+              : feedback.reviews.isEmpty
+              ? Text(
+                  'No Passenger Feedback Yet.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: context.colorScheme.onSurface.withValues(
+                      alpha: 0.65,
+                    ),
+                  ),
+                )
+              : ListView.separated(
+                  primary: false,
+                  padding: EdgeInsets.zero,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  itemCount: feedback.reviews.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  itemBuilder: (_, index) =>
+                      _buildReviewRow(feedback.reviews[index]),
+                ),
+        );
+      },
     );
   }
 
@@ -500,16 +539,7 @@ class _DriverDropdownCardState()
                                           ),
                                         ),
                                         const SizedBox(width: 5.0),
-                                        Text(
-                                          _reviewCountLabel,
-                                          style: TextStyle(
-                                            fontSize: 11.0,
-                                            fontWeight: FontWeight.w600,
-                                            color: context
-                                                .colorScheme
-                                                .onSurfaceVariant,
-                                          ),
-                                        ),
+                                        _buildReviewCountLabel(),
                                       ],
                                     ),
                                   ),

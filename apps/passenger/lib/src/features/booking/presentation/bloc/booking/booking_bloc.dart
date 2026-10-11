@@ -15,6 +15,7 @@ import 'package:passenger/src/features/booking/domain/entities/booking_offer.dar
 import 'package:passenger/src/features/booking/domain/entities/booking_session_request.dart';
 import 'package:passenger/src/features/booking/domain/repositories/booking_repository.dart';
 import 'package:passenger/src/features/booking/domain/repositories/driver_repository.dart';
+import 'package:passenger/src/features/driver_profile/domain/entities/driver_review.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
@@ -55,8 +56,7 @@ class BookingBloc({
   AppLifecyclePeriodicTask? _offerRefreshTask;
 
   int? _totalTrips;
-  List<Map<String, dynamic>> _reviews = [];
-  bool _isLoadingReviews = false;
+  int _reviewsRequestGeneration = 0;
   bool _nearestSearchCancelled = false;
   bool _noDriverNotificationSent = false;
   bool _isAutoAcceptingOffer = false;
@@ -81,6 +81,10 @@ class BookingBloc({
     on<LocateNearestDriverEvent>(
       _onLocateNearestDriver,
       transformer: droppable(),
+    );
+    on<LoadDriverReviewsEvent>(
+      _onLoadDriverReviews,
+      transformer: restartable(),
     );
     on<StartDirectBookingEvent>(
       _onStartDirectBooking,
@@ -131,8 +135,7 @@ class BookingBloc({
     _noDriverNotificationSent = false;
     _isAutoAcceptingOffer = false;
     _totalTrips = null;
-    _reviews = const [];
-    _isLoadingReviews = false;
+    ++_reviewsRequestGeneration;
     _activeTrip = event.trip;
     _pickupLat = event.pickupLat;
     _pickupLng = event.pickupLng;
@@ -207,12 +210,13 @@ class BookingBloc({
         closestDriver = d;
       }
     }
-    _isLoadingReviews = true;
+    final reviewsRequestGeneration = ++_reviewsRequestGeneration;
     emit(
       NearestDriverFound(
         driver: closestDriver,
         nearbyDrivers: nearbyDrivers,
         totalTrips: null,
+        reviewsDriverId: closestDriver.id,
         reviews: const [],
         isLoadingReviews: true,
         trip: event.trip,
@@ -222,7 +226,7 @@ class BookingBloc({
     );
 
     int? loadedTotalTrips;
-    List<Map<String, dynamic>> loadedReviews = const [];
+    List<DriverReview> loadedReviews = const [];
     await Future.wait<void>([
       _loadDriverTripCount(closestDriver.id).then((value) {
         loadedTotalTrips = value;
@@ -233,21 +237,18 @@ class BookingBloc({
     ]);
     if (isClosed || _nearestSearchCancelled) return;
     _totalTrips = loadedTotalTrips;
-    _reviews = loadedReviews;
-    _isLoadingReviews = false;
-
-    emit(
-      NearestDriverFound(
-        driver: closestDriver,
-        nearbyDrivers: nearbyDrivers,
-        totalTrips: _totalTrips,
-        reviews: _reviews,
-        isLoadingReviews: _isLoadingReviews,
-        trip: event.trip,
-        pickupLat: event.pickupLat,
-        pickupLng: event.pickupLng,
-      ),
-    );
+    final currentState = state;
+    if (currentState is NearestDriverFound) {
+      final reviewsAreCurrent =
+          reviewsRequestGeneration == _reviewsRequestGeneration;
+      emit(
+        currentState.copyWith(
+          totalTrips: _totalTrips,
+          reviews: reviewsAreCurrent ? loadedReviews : null,
+          isLoadingReviews: reviewsAreCurrent ? false : null,
+        ),
+      );
+    }
   }
 
   Future<int?> _loadDriverTripCount(String driverId) async {
@@ -259,22 +260,46 @@ class BookingBloc({
     return totalTrips;
   }
 
-  Future<List<Map<String, dynamic>>> _loadDriverReviews(String driverId) async {
-    List<Map<String, dynamic>> reviews = const [];
-    (await _driverProfileRepository.fetchReviewsResult(driverId)).fold(
+  Future<List<DriverReview>> _loadDriverReviews(String driverId) async {
+    List<DriverReview> reviews = const [];
+    (await _driverProfileRepository.fetchReviewsResult(
+      driverId,
+      page: 1,
+      limit: 6,
+    )).fold(
       (failure) => dev.log('Failed to process reviews: ${failure.message}'),
-      (values) => reviews = values
-          .map(
-            (review) => <String, dynamic>{
-              'passengerName': review.passengerName,
-              'comment': review.comment,
-              'rating': review.rating,
-              'date': review.displayDate,
-            },
-          )
-          .toList(growable: false),
+      (values) => reviews = List<DriverReview>.unmodifiable(values),
     );
     return reviews;
+  }
+
+  Future<void> _onLoadDriverReviews(
+    LoadDriverReviewsEvent event,
+    Emitter<BookingState> emit,
+  ) async {
+    final driverId = event.driverId.trim();
+    final currentState = state;
+    if (driverId.isEmpty || currentState is! NearestDriverFound) return;
+    if (currentState.reviewsDriverId == driverId) return;
+
+    final requestGeneration = ++_reviewsRequestGeneration;
+    emit(
+      currentState.copyWith(
+        reviewsDriverId: driverId,
+        reviews: const [],
+        isLoadingReviews: true,
+      ),
+    );
+
+    final reviews = await _loadDriverReviews(driverId);
+    if (isClosed || requestGeneration != _reviewsRequestGeneration) return;
+    final latestState = state;
+    if (latestState is! NearestDriverFound ||
+        latestState.reviewsDriverId != driverId) {
+      return;
+    }
+
+    emit(latestState.copyWith(reviews: reviews, isLoadingReviews: false));
   }
 
   void _notifyNoDriverFound() {
@@ -740,8 +765,7 @@ class BookingBloc({
     _dropoffLng = null;
     _dropoffName = null;
     _totalTrips = null;
-    _reviews = [];
-    _isLoadingReviews = false;
+    ++_reviewsRequestGeneration;
     _isAutoAcceptingOffer = false;
     emit(const BookingInitial());
   }

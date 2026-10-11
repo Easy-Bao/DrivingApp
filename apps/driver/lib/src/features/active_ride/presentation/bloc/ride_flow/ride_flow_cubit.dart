@@ -28,12 +28,55 @@ class RideFlowCubit({
   DateTime? _waitStartedAt;
   bool _isActionInFlight = false;
   int _actionGeneration = 0;
+  Future<void>? _passengerLocationRefresh;
 
   this : super(const RideFlowInitial());
 
   String? get activeRideId => _activeRideId;
   String? get activePassengerId => _activePassengerId;
   String get activePassengerName => _activePassengerName ?? 'Passenger';
+
+  Future<void> refreshPassengerLocation() async {
+    final rideId = _activeRideId;
+    if (rideId == null || state is! RideFlowInTransit) return;
+
+    final inFlight = _passengerLocationRefresh;
+    if (inFlight != null) return inFlight;
+
+    late final Future<void> request;
+    request = _refreshPassengerLocation(rideId).whenComplete(() {
+      if (identical(_passengerLocationRefresh, request)) {
+        _passengerLocationRefresh = null;
+      }
+    });
+    _passengerLocationRefresh = request;
+    return request;
+  }
+
+  Future<void> _refreshPassengerLocation(String rideId) async {
+    try {
+      final result = await _rideRepository.fetchPassengerLocationResult(rideId);
+      if (isClosed || _activeRideId != rideId) return;
+
+      result.fold((_) {}, (location) {
+        if (location == null) return;
+        final currentState = state;
+        if (currentState is! RideFlowInTransit) return;
+        emit(
+          RideFlowInTransit(
+            passengerName: currentState.passengerName,
+            destLat: currentState.destLat,
+            destLng: currentState.destLng,
+            distanceKm: currentState.distanceKm,
+            passengerLat: location.$1,
+            passengerLng: location.$2,
+          ),
+        );
+      });
+    } catch (_) {
+      // A later tracking refresh can recover from a transient location error.
+    }
+  }
 
   bool resumeRide({
     required String rideId,

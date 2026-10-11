@@ -20,7 +20,7 @@ import 'package:passenger/src/features/booking/presentation/bloc/fare_estimate/f
 import 'package:passenger/src/features/booking/presentation/widgets/booking_auth_bottom_sheet.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_options_panel.dart';
 import 'package:passenger/src/features/booking/presentation/widgets/ride_tip_selector.dart';
-import 'package:passenger/src/features/profile/domain/repositories/passenger_profile_repository.dart';
+import 'package:passenger/src/features/profile/presentation/bloc/profile/profile_cubit.dart';
 
 class const RideSelectionPage({
   super.key,
@@ -35,7 +35,6 @@ class const RideSelectionPage({
   this.initialTipAmount = 0,
   this.initialNotes = '',
   required this.fareRepository,
-  required this.profileRepository,
 }) extends StatefulWidget {
   final Place destination;
   final String? distance;
@@ -48,7 +47,6 @@ class const RideSelectionPage({
   final int initialTipAmount;
   final String initialNotes;
   final FareRepository fareRepository;
-  final PassengerProfileRepository profileRepository;
 
   @override
   State<RideSelectionPage> createState() => _RideSelectionPageState();
@@ -76,7 +74,6 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
   bool _isResolvingPickup = true;
   bool _isPanelExpanded = false;
   ({double lat, double lng})? _resolvedPickup;
-  String _profilePassengerName = '';
 
   ({double lat, double lng})? get _pickupCoordinate {
     final latitude = widget.pickupLatitude;
@@ -145,28 +142,19 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
     _notesController.text = widget.initialNotes.length > 160
         ? widget.initialNotes.substring(0, 160)
         : widget.initialNotes;
-    _profilePassengerName = widget.profileRepository
-        .getCachedProfile()
-        .name
-        .trim();
-    if (BlocProvider.of<SessionBloc>(context).state is AuthenticatedSession) {
-      unawaited(_refreshPassengerProfile());
-    }
+    final shouldRefreshProfile =
+        BlocProvider.of<SessionBloc>(context).state is AuthenticatedSession;
+    unawaited(
+      BlocProvider.of<ProfileCubit>(context).loadProfile(
+        refreshRemote: shouldRefreshProfile,
+      ),
+    );
     if (_pickupCoordinate != null) {
       _isResolvingPickup = false;
       unawaited(_initializeTripDetails());
     } else {
       unawaited(_resolvePickupLocation());
     }
-  }
-
-  Future<void> _refreshPassengerProfile() async {
-    final result = await widget.profileRepository.refreshProfile();
-    if (!mounted) return;
-    result.fold((_) {}, (profile) {
-      final name = profile.name.trim();
-      if (name.isNotEmpty) setState(() => _profilePassengerName = name);
-    });
   }
 
   void _onPanelExtentChanged() {
@@ -522,8 +510,11 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
         _ => '',
       },
     );
-    final passengerName = _profilePassengerName.isNotEmpty
-        ? _profilePassengerName
+    final profilePassengerName = context.select<ProfileCubit, String>(
+      (cubit) => cubit.state.name.trim(),
+    );
+    final passengerName = profilePassengerName.isNotEmpty
+        ? profilePassengerName
         : sessionPassengerName;
 
     return BlocListener<FareEstimateCubit, FareEstimateState>(

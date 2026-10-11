@@ -12,6 +12,11 @@ final class const LocateNearestDriverEvent({
   final BidSessionTrip trip;
 }
 
+final class const LoadDriverReviewsEvent({required this.driverId})
+    extends BookingEvent {
+  final String driverId;
+}
+
 final class const StartDirectBookingEvent({
   required this.targetDriver,
   required this.trip,
