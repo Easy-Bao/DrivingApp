@@ -580,11 +580,11 @@ class RideFlowCubit({
         );
         if (!_isCurrentAction(actionGeneration)) return null;
         if (completionFailure != null || completedRide == null) {
+          // The repository maps completion failures to safe user-facing messages.
           emit(
             RideFlowError(
-              ErrorHandler.getErrorMessage(
-                completionFailure ?? const ServerFailure(),
-              ),
+              completionFailure?.message ??
+                  ErrorHandler.getErrorMessage(const ServerFailure()),
             ),
           );
           return null;

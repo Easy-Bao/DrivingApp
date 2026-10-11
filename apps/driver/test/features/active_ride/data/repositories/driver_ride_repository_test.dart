@@ -130,6 +130,8 @@ void main() {
         'fare_amount': 2764,
       },
     );
+    when(() => telemetryDataSource.sendLocationUpdate(lat: 7.85, lng: 123.45))
+        .thenAnswer((_) async => true);
 
     final started = await repository.startRide(
       rideId: 'ride-7',

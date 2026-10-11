@@ -219,9 +219,7 @@ class _InTransitPageState extends State<InTransitPage> {
     final rideCubit = BlocProvider.of<RideFlowCubit>(context);
     setState(() => _isCompletingTrip = true);
     try {
-      final position =
-          LocationService.lastPosition ??
-          await LocationService.getCurrentPosition();
+      final position = await LocationService.getCurrentPosition();
       if (!mounted) return;
       if (position == null) {
         CustomToast.show(
@@ -237,9 +235,12 @@ class _InTransitPageState extends State<InTransitPage> {
       );
       if (finalFare == null) {
         if (mounted) {
+          final state = rideCubit.state;
           CustomToast.show(
             this.context,
-            'Unable to complete the trip. Please try again.',
+            state is RideFlowError
+                ? state.message
+                : 'Unable to complete the trip. Please try again.',
             isError: true,
           );
         }
@@ -322,22 +323,27 @@ class _InTransitPageState extends State<InTransitPage> {
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          DriverEmergencyButton(
-                            onEmergencyStop: _emergencyStop,
-                            onEmergencyStopCompleted: () {
-                              if (mounted) {
-                                context.goNamed(DashboardRoutes.dashboard);
-                              }
-                            },
-                          ),
-                          DriverSafetyReportButton(
-                            rideId: BlocProvider.of<RideFlowCubit>(context)
-                                .activeRideId,
-                            rideRepository: widget.rideRepository,
-                          ),
                           _buildTripBackButton(context, () => context.pop()),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              DriverEmergencyButton(
+                                onEmergencyStop: _emergencyStop,
+                                onEmergencyStopCompleted: () {
+                                  if (mounted) {
+                                    context.goNamed(DashboardRoutes.dashboard);
+                                  }
+                                },
+                              ),
+                              DriverSafetyReportButton(
+                                rideId: BlocProvider.of<RideFlowCubit>(context)
+                                    .activeRideId,
+                                rideRepository: widget.rideRepository,
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),

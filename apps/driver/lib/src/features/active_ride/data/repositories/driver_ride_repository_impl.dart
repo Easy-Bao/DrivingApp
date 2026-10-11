@@ -195,6 +195,22 @@ final class DriverRideRepositoryImpl({
     required double longitude,
   }) async {
     try {
+      final locationSent = await _telemetryDataSource.sendLocationUpdate(
+        lat: latitude,
+        lng: longitude,
+      );
+      if (!locationSent) {
+        return const Err(
+          NetworkFailure(
+            'Your live location could not be updated. Keep location sharing on and try again.',
+          ),
+        );
+      }
+    } catch (error) {
+      return Err(_mapFailure(error, action: 'share driver location'));
+    }
+
+    try {
       final data = await _rideDataSource.completeRide(
         rideId: rideId,
         latitude: latitude,
@@ -344,8 +360,33 @@ Failure _mapFailure(Object error, {required String action}) {
   if (error is Failure) return error;
   if (error is DioException) {
     final statusCode = error.response?.statusCode;
-    if (statusCode == 401 || statusCode == 403) {
+    if (statusCode == 401) {
       return const AuthFailure('Your driver session has ended. Sign in again.');
+    }
+    if (action == 'complete this trip' && statusCode == 403) {
+      return const AuthFailure(
+        'This trip is not assigned to your driver account.',
+      );
+    }
+    if (statusCode == 403) {
+      return const AuthFailure('Your driver session has ended. Sign in again.');
+    }
+    if (action == 'complete this trip' && statusCode == 409) {
+      return const ServerFailure.withStatusCode(
+        'This trip is no longer active. Refresh your ride and try again.',
+        409,
+      );
+    }
+    if (action == 'complete this trip' && statusCode == 422) {
+      return const ValidationFailure(
+        'Move closer to the destination before completing the trip.',
+      );
+    }
+    if (action == 'complete this trip' && statusCode == 503) {
+      return const ServerFailure.withStatusCode(
+        'Your live location is unavailable or out of date. Keep location sharing on and try again.',
+        503,
+      );
     }
     if (statusCode == 400 || statusCode == 404 || statusCode == 422) {
       return ValidationFailure('Unable to $action with the supplied ride.');

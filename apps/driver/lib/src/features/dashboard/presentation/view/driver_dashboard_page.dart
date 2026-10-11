@@ -18,6 +18,7 @@ import 'package:driver/src/features/profile/profile_routes.dart';
 import 'package:driver/src/infrastructure/notifications/driver_incoming_request_alert.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
+import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver/src/features/dashboard/dashboard_routes.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:flutter/material.dart';
@@ -856,9 +857,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     if (mounted) setState(() => _completingTripId = rideId);
     try {
       final cubit = BlocProvider.of<RideFlowCubit>(context);
-      final position =
-          LocationService.lastPosition ??
-          await LocationService.getCurrentPosition();
+      final position = await LocationService.getCurrentPosition();
       if (!mounted) return;
       if (position == null) {
         CustomToast.show(
@@ -889,9 +888,12 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       );
       if (finalFare == null) {
         if (mounted) {
+          final state = cubit.state;
           CustomToast.show(
             context,
-            'Unable to complete the trip. Please try again.',
+            state is RideFlowError
+                ? state.message
+                : 'Unable to complete the trip. Please try again.',
             isError: true,
           );
         }
