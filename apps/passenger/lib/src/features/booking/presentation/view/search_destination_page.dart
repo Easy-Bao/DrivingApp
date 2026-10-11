@@ -9,7 +9,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:maps/maps.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/booking/presentation/search_destination_formatters.dart';
-import 'package:skeletonizer/skeletonizer.dart';
+import 'package:passenger/src/features/booking/presentation/widgets/search_destination_results.dart';
 
 class const SearchDestinationPage({
   super.key,
@@ -487,50 +487,6 @@ class _SearchDestinationPageState()
     }
   }
 
-  IconData _determinePlaceIcon(String name) {
-    final lower = name.toLowerCase();
-
-    if (lower.contains('school') ||
-        lower.contains('university') ||
-        lower.contains('college') ||
-        lower.contains('high')) {
-      return LucideIcons.graduation_cap;
-    }
-
-    if (lower.contains('hospital') ||
-        lower.contains('clinic') ||
-        lower.contains('doctor')) {
-      return LucideIcons.hospital;
-    }
-
-    if (lower.contains('resort') ||
-        lower.contains('hotel') ||
-        lower.contains('casa') ||
-        lower.contains('hostel')) {
-      return LucideIcons.building;
-    }
-
-    if (lower.contains('bank') ||
-        lower.contains('bpi') ||
-        lower.contains('bdo')) {
-      return LucideIcons.landmark;
-    }
-
-    if (lower.contains('cafe') ||
-        lower.contains('coffee') ||
-        lower.contains('tea')) {
-      return LucideIcons.coffee;
-    }
-
-    if (lower.contains('store') ||
-        lower.contains('robinsons') ||
-        lower.contains('mall')) {
-      return LucideIcons.store;
-    }
-
-    return LucideIcons.map_pin;
-  }
-
   Widget? _cachedMapView;
   AppMapController? _mapController;
   mapbox.PointAnnotationManager? _currentLocationMarker;
@@ -573,29 +529,6 @@ class _SearchDestinationPageState()
     } else {
       await MapProvider.clearAnnotations(marker);
     }
-  }
-
-  Widget _buildResultsLoadingState() {
-    return Skeletonizer.zone(
-      child: ListView.separated(
-        padding: EdgeInsets.fromLTRB(
-          16,
-          4,
-          16,
-          MediaQuery.paddingOf(context).bottom + 16,
-        ),
-        itemCount: 8,
-        separatorBuilder: (_, _) =>
-            Divider(height: 1, color: context.colorScheme.outlineVariant),
-        itemBuilder: (_, _) => const ListTile(
-          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          leading: Bone.circle(size: 44),
-          title: Bone.text(width: 130, fontSize: 15),
-          subtitle: Bone.text(width: 90, fontSize: 13),
-          trailing: Bone.icon(size: 18),
-        ),
-      ),
-    );
   }
 
   @override
@@ -713,212 +646,19 @@ class _SearchDestinationPageState()
                                     child: Material(
                                       color: context.colorScheme.surface
                                           .withValues(alpha: 0),
-                                      child: shouldShowLoading
-                                          ? displayList.isEmpty
-                                                ? _buildResultsLoadingState()
-                                                : Skeletonizer.zone(
-                                                    child: ListView.separated(
-                                                      padding:
-                                                          EdgeInsets.fromLTRB(
-                                                            16,
-                                                            4,
-                                                            16,
-                                                            bottomPadding + 16,
-                                                          ),
-                                                      physics:
-                                                          const AlwaysScrollableScrollPhysics(
-                                                            parent:
-                                                                BouncingScrollPhysics(),
-                                                          ),
-                                                      itemCount: 8,
-                                                      separatorBuilder:
-                                                          (_, _) => Divider(
-                                                            height: 1,
-                                                            color: context
-                                                                .colorScheme
-                                                                .outlineVariant,
-                                                          ),
-                                                      itemBuilder: (_, _) =>
-                                                          const ListTile(
-                                                            contentPadding:
-                                                                EdgeInsets.symmetric(
-                                                                  horizontal: 8,
-                                                                  vertical: 4,
-                                                                ),
-                                                            leading:
-                                                                Bone.circle(
-                                                                  size: 44,
-                                                                ),
-                                                            title: Bone.text(
-                                                              width: 130,
-                                                              fontSize: 15,
-                                                            ),
-                                                            subtitle: Bone.text(
-                                                              width: 90,
-                                                              fontSize: 13,
-                                                            ),
-                                                            trailing: Bone.icon(
-                                                              size: 18,
-                                                            ),
-                                                          ),
-                                                    ),
-                                                  )
-                                          : displayList.isEmpty
-                                          ? Center(
-                                              child: Text(
-                                                hasQuery
-                                                    ? 'No places found'
-                                                    : 'No nearby places found',
-                                                style: TextStyle(
-                                                  color: context
-                                                      .colorScheme
-                                                      .onSurfaceVariant,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                            )
-                                          : ListView.separated(
-                                              controller: _scrollController,
-                                              padding: EdgeInsets.fromLTRB(
-                                                16,
-                                                4,
-                                                16,
-                                                bottomPadding + 16,
-                                              ),
-                                              physics:
-                                                  const AlwaysScrollableScrollPhysics(
-                                                    parent:
-                                                        BouncingScrollPhysics(),
-                                                  ),
-                                              itemCount:
-                                                  displayList.length +
-                                                  (!hasQuery &&
-                                                          _isLoadingMoreNearby
-                                                      ? 1
-                                                      : 0),
-                                              separatorBuilder: (_, _) =>
-                                                  Divider(
-                                                    height: 1,
-                                                    color: context
-                                                        .colorScheme
-                                                        .outlineVariant,
-                                                  ),
-                                              itemBuilder: (context, index) {
-                                                if (index ==
-                                                    displayList.length) {
-                                                  return Padding(
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          horizontal: 8,
-                                                          vertical: 12,
-                                                        ),
-                                                    child: Row(
-                                                      children: [
-                                                        SizedBox(
-                                                          width: 44,
-                                                          height: 44,
-                                                          child: Center(
-                                                            child: SizedBox(
-                                                              width: 20,
-                                                              height: 20,
-                                                              child: CircularProgressIndicator(
-                                                                strokeWidth:
-                                                                    2.0,
-                                                                color: context
-                                                                    .colorScheme
-                                                                    .onSurface,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        const SizedBox(
-                                                          width: 14,
-                                                        ),
-                                                        Expanded(
-                                                          child: Text(
-                                                            'Loading more nearby places...',
-                                                            style: TextStyle(
-                                                              color: context
-                                                                  .colorScheme
-                                                                  .outlineVariant,
-                                                              fontSize: 13,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w600,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  );
-                                                }
-                                                final place =
-                                                    displayList[index];
-                                                final icon =
-                                                    _determinePlaceIcon(
-                                                      place.name,
-                                                    );
-                                                return ListTile(
-                                                  contentPadding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 4,
-                                                      ),
-                                                  leading: Container(
-                                                    width: 44,
-                                                    height: 44,
-                                                    decoration: BoxDecoration(
-                                                      color: context
-                                                          .colorScheme
-                                                          .surfaceContainerHighest,
-                                                      shape: BoxShape.circle,
-                                                    ),
-                                                    child: Center(
-                                                      child: Icon(
-                                                        icon,
-                                                        color: context
-                                                            .colorScheme
-                                                            .onSurface,
-                                                        size: 20,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  title: Text(
-                                                    place.name,
-                                                    style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                      fontSize: 15,
-                                                      color: context
-                                                          .colorScheme
-                                                          .onSurface,
-                                                    ),
-                                                  ),
-                                                  subtitle: Text(
-                                                    formatDestinationPlaceDistance(
-                                                      place,
-                                                      _drivingDistances,
-                                                      _drivingDistanceRequests,
-                                                    ),
-                                                    style: TextStyle(
-                                                      color: context
-                                                          .colorScheme
-                                                          .onSurfaceVariant,
-                                                      fontSize: 13,
-                                                    ),
-                                                  ),
-                                                  trailing: Icon(
-                                                    LucideIcons.map_pin,
-                                                    size: 18,
-                                                    color: context
-                                                        .colorScheme
-                                                        .onSurface,
-                                                  ),
-                                                  onTap: () =>
-                                                      _onPlaceSelected(place),
-                                                );
-                                              },
-                                            ),
+                                      child: SearchDestinationResults(
+                                        places: displayList,
+                                        hasQuery: hasQuery,
+                                        isLoading: shouldShowLoading,
+                                        isLoadingMoreNearby:
+                                            _isLoadingMoreNearby,
+                                        bottomPadding: bottomPadding,
+                                        scrollController: _scrollController,
+                                        drivingDistances: _drivingDistances,
+                                        drivingDistanceRequests:
+                                            _drivingDistanceRequests,
+                                        onPlaceSelected: _onPlaceSelected,
+                                      ),
                                     ),
                                   ),
                                 ),
