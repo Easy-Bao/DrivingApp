@@ -170,7 +170,6 @@ class _DriverChatPageState extends State<DriverChatPage> {
             backgroundColor: context.colorScheme.surface,
             appBar: AppBar(
               backgroundColor: context.colorScheme.surface,
-              elevation: 0,
               scrolledUnderElevation: 0,
               leading: IconButton(
                 style: IconButton.styleFrom(shape: const CircleBorder()),

@@ -121,7 +121,6 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: context.canvasColor,
-        elevation: 0,
         scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
         title: const Text('Trip History'),
