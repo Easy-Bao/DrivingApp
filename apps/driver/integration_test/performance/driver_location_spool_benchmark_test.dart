@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:driver/src/infrastructure/telemetry/driver_location_spool.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,7 +36,7 @@ void main() {
           storedPoints,
           hasLength(depth == maximumPoints ? maximumPoints : depth + 1),
         );
-        print(
+        debugPrint(
           'driver_location_spool.enqueue depth=$depth '
           'elapsed_us=${stopwatch.elapsedMicroseconds}',
         );
@@ -50,7 +51,7 @@ void main() {
 
         expect(flushed, isTrue);
         expect(await preferences.getString(storageKey), isNull);
-        print(
+        debugPrint(
           'driver_location_spool.flush points=$depth '
           'elapsed_us=${stopwatch.elapsedMicroseconds}',
         );
