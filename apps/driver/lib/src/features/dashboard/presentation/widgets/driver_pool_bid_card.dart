@@ -1,5 +1,5 @@
 import 'package:design_system/design_system.dart';
-import 'package:driver/src/features/dashboard/presentation/formatters/driver_dashboard_value_formatters.dart';
+import 'package:driver/src/presentation/formatters/driver_value_formatters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
@@ -10,7 +10,7 @@ double? _distanceInKm(Map<String, dynamic> value) {
 }
 
 int? remainingBidSeconds(Map<String, dynamic> bid) {
-  final rawExpiry = dashboardValueAsString(bid['expires_at']);
+  final rawExpiry = driverValueAsString(bid['expires_at']);
   final expiresAt = rawExpiry == null ? null : DateTime.tryParse(rawExpiry);
   if (expiresAt == null) return null;
   final seconds = expiresAt.difference(DateTime.now()).inSeconds;
@@ -41,12 +41,12 @@ class DriverPoolBidCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final pickup = bid['pickup_name']?.toString() ?? '—';
     final dropoff = bid['dropoff_name']?.toString() ?? '—';
-    final fare = dashboardFareInPesos(bid);
+    final fare = driverFareInPesos(bid);
     final distance = _distanceInKm(bid);
-    final bidId = dashboardValueAsString(bid['id']);
+    final bidId = driverValueAsString(bid['id']);
     final isSubmitting = bidId != null && submittingBidId == bidId;
     final remainingSeconds = remainingBidSeconds(bid);
-    final passengerNote = dashboardValueAsString(bid['passenger_note']);
+    final passengerNote = driverValueAsString(bid['passenger_note']);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),

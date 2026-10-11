@@ -1,4 +1,4 @@
-import 'package:driver/src/features/ride_history/presentation/formatters/driver_value_formatters.dart';
+import 'package:driver/src/presentation/formatters/driver_value_formatters.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver/src/features/chat/chat_routes.dart';
 import 'package:flutter/material.dart';

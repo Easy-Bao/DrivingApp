@@ -1,5 +1,5 @@
 import 'package:design_system/design_system.dart';
-import 'package:driver/src/features/dashboard/presentation/formatters/driver_dashboard_value_formatters.dart';
+import 'package:driver/src/presentation/formatters/driver_value_formatters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
@@ -36,7 +36,7 @@ class DriverActiveTripCard extends StatelessWidget {
     }
     final hasCurrentTransitRide = this.hasCurrentTransitRide;
     final isQueued = hasCurrentTransitRide && status != 'in_transit';
-    final tripId = dashboardValueAsString(trip['id']);
+    final tripId = driverValueAsString(trip['id']);
     final isCompleting = tripId != null && isCompletingTrip;
 
     return Container(
@@ -75,9 +75,9 @@ class DriverActiveTripCard extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                dashboardFareInPesos(trip) == null
+                driverFareInPesos(trip) == null
                     ? '—'
-                    : formatPesoAmount(dashboardFareInPesos(trip)!),
+                    : formatPesoAmount(driverFareInPesos(trip)!),
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
@@ -112,7 +112,7 @@ class DriverActiveTripCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  dashboardValueAsString(trip['passenger_name']) ?? '—',
+                  driverValueAsString(trip['passenger_name']) ?? '—',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -126,8 +126,8 @@ class DriverActiveTripCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           CompactRouteTimeline(
-            pickup: dashboardValueAsString(trip['pickup_name']) ?? '—',
-            dropoff: dashboardValueAsString(trip['dropoff_name']) ?? '—',
+            pickup: driverValueAsString(trip['pickup_name']) ?? '—',
+            dropoff: driverValueAsString(trip['dropoff_name']) ?? '—',
           ),
           const SizedBox(height: 14),
           if (status == 'in_transit')

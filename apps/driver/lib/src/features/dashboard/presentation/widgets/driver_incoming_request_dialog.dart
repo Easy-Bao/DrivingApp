@@ -1,5 +1,5 @@
 import 'package:design_system/design_system.dart';
-import 'package:driver/src/features/dashboard/presentation/formatters/driver_dashboard_value_formatters.dart';
+import 'package:driver/src/presentation/formatters/driver_value_formatters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
@@ -100,7 +100,7 @@ class _DriverIncomingRequestDialogState
   }
 
   Duration _calculateRemainingDuration() {
-    final rawExpiry = dashboardValueAsString(widget.bid['expires_at']);
+    final rawExpiry = driverValueAsString(widget.bid['expires_at']);
     final expiresAt = rawExpiry == null ? null : DateTime.tryParse(rawExpiry);
     if (expiresAt == null) return widget.totalDuration;
     final diff = expiresAt.difference(DateTime.now());
@@ -149,12 +149,12 @@ class _DriverIncomingRequestDialogState
         : viewport.height - 48;
     final pickup = widget.bid['pickup_name']?.toString() ?? '—';
     final dropoff = widget.bid['dropoff_name']?.toString() ?? '—';
-    final fare = dashboardFareInPesos(widget.bid);
+    final fare = driverFareInPesos(widget.bid);
     final distance = _extractDistanceInKm(widget.bid);
-    final bidId = dashboardValueAsString(widget.bid['id']);
+    final bidId = driverValueAsString(widget.bid['id']);
     final isSubmitting =
         _isAccepting || (bidId != null && widget.submittingBidId == bidId);
-    final passengerNote = dashboardValueAsString(widget.bid['passenger_note']);
+    final passengerNote = driverValueAsString(widget.bid['passenger_note']);
 
     return Dialog(
       backgroundColor: Colors.transparent,

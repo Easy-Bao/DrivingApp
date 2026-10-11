@@ -4,7 +4,7 @@ import 'dart:async';
 import 'dart:developer' as dev;
 
 import 'package:maps/maps.dart';
-import 'package:driver/src/features/dashboard/presentation/formatters/driver_dashboard_value_formatters.dart';
+import 'package:driver/src/presentation/formatters/driver_value_formatters.dart';
 import 'package:foundation/foundation.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_state.dart';
@@ -34,7 +34,7 @@ bool _isActiveDriverTripStatus(Object? value) {
     'accepted',
     'arrived',
     'in_transit',
-  }.contains(dashboardValueAsString(value));
+  }.contains(driverValueAsString(value));
 }
 
 bool shouldAnimateDriverStatusPulse({
@@ -519,10 +519,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
     final ride = Map<String, dynamic>.from(rawRide);
     final rideId =
-        dashboardValueAsString(ride['id']) ?? event.envelope.scope.rideId;
+        driverValueAsString(ride['id']) ?? event.envelope.scope.rideId;
     if (rideId == null) return;
 
-    final status = dashboardValueAsString(ride['status']) ?? 'accepted';
+    final status = driverValueAsString(ride['status']) ?? 'accepted';
     if (!_isActiveDriverTripStatus(status)) return;
     ride['id'] = rideId;
     ride['status'] = status;
@@ -534,12 +534,12 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     final rawRide = event.envelope.payload['ride'];
     final ride = rawRide is Map ? Map<String, dynamic>.from(rawRide) : null;
     final status =
-        dashboardValueAsString(ride?['status']) ??
-        dashboardValueAsString(event.envelope.payload['status']);
+        driverValueAsString(ride?['status']) ??
+        driverValueAsString(event.envelope.payload['status']);
     if (status != 'canceled' && status != 'cancelled') return;
 
     final rideId =
-        event.envelope.scope.rideId ?? dashboardValueAsString(ride?['id']);
+        event.envelope.scope.rideId ?? driverValueAsString(ride?['id']);
     final rideFlowCubit = BlocProvider.of<RideFlowCubit>(context);
     if (rideId == null ||
         (rideFlowCubit.activeRideId != null &&
@@ -745,8 +745,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       return;
     }
 
-    final sessionId = dashboardValueAsString(bid['id']);
-    final fare = dashboardFareInPesos(bid);
+    final sessionId = driverValueAsString(bid['id']);
+    final fare = driverFareInPesos(bid);
     if (sessionId == null || fare == null) return;
 
     if (mounted) setState(() => _submittingBidId = sessionId);
@@ -790,7 +790,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   }
 
   Future<void> _resumeTrip(Map<String, dynamic> trip) async {
-    final rideId = dashboardValueAsString(trip['id']);
+    final rideId = driverValueAsString(trip['id']);
     if (rideId == null) return;
 
     final resolvedTrip = await _authoritativeTrip(trip, rideId);
@@ -844,7 +844,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   Future<void> _completeTripFromDashboard(Map<String, dynamic> trip) async {
     if (_completingTripId != null) return;
-    final rideId = dashboardValueAsString(trip['id']);
+    final rideId = driverValueAsString(trip['id']);
     if (rideId == null) return;
     final resolvedTrip = await _authoritativeTrip(trip, rideId);
     if (!mounted) return;
@@ -1074,7 +1074,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                                         ),
                                         isCompletingTrip:
                                             _completingTripId ==
-                                            dashboardValueAsString(
+                                            driverValueAsString(
                                               entry.value['id'],
                                             ),
                                         onResume: () =>
@@ -1100,7 +1100,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                                             BlocProvider.of<DashboardCubit>(
                                               context,
                                             ).removeActiveBid(
-                                              dashboardValueAsString(bid['id']),
+                                              driverValueAsString(bid['id']),
                                             ),
                                         onAccept: () => _acceptBid(bid),
                                       ),
