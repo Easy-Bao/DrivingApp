@@ -168,10 +168,10 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
       );
 
       final initialBuffer = Float64List.fromList([
-        ride.pickupLat,
         ride.pickupLng,
-        ride.destLat,
+        ride.pickupLat,
         ride.destLng,
+        ride.destLat,
       ]);
       await MapProvider.addPolylineBuffer(
         controller,
