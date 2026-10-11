@@ -169,7 +169,7 @@ final class RideHistoryRepositoryImpl({required this._remoteDataSource})
     );
   }
 
-  String _formatCreatedAt(dynamic createdAt) {
+  String _formatCreatedAt(Object? createdAt) {
     if (createdAt == null) return '';
     try {
       final dt = DateTime.parse(createdAt.toString()).toLocal();
@@ -182,7 +182,7 @@ final class RideHistoryRepositoryImpl({required this._remoteDataSource})
     }
   }
 
-  String _formatPrice(dynamic price, dynamic fareAmount) {
+  String _formatPrice(Object? price, Object? fareAmount) {
     final fareDouble = price != null
         ? SafeParse.toDouble(price)
         : SafeParse.toDouble(fareAmount) / 100;
