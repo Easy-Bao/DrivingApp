@@ -226,7 +226,6 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
         if (!didPop) unawaited(_showCashOutcomeRequired());
       },
       child: Scaffold(
-        backgroundColor: context.canvasColor,
         body: SafeArea(
           child: Center(
             child: ConstrainedBox(

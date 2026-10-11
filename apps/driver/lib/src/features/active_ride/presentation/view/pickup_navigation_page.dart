@@ -384,7 +384,6 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
           return PopScope(
             canPop: false,
             child: Scaffold(
-              backgroundColor: context.colorScheme.surface,
               body: Stack(
                 children: [
                   Positioned.fill(

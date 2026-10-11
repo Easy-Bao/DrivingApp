@@ -307,7 +307,6 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
     return PopScope(
       canPop: false,
       child: Scaffold(
-        backgroundColor: context.canvasColor,
         body: SafeArea(
           child: LayoutBuilder(
             builder: (ctx, constraints) {

@@ -307,7 +307,6 @@ class _InTransitPageState extends State<InTransitPage> {
           return PopScope(
             canPop: false,
             child: Scaffold(
-              backgroundColor: context.colorScheme.surface,
               body: Stack(
                 children: [
                   Positioned.fill(
