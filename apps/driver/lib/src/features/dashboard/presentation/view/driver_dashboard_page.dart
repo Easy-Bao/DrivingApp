@@ -120,7 +120,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         _startLocationAccessMonitoring();
         unawaited(_loadActiveTrips());
         unawaited(_restorePendingCashSettlement());
-        if (s.isOnline) {
+        if (s.isOnline && _isForeground) {
           _startShiftDurationTimer();
           unawaited(_resumeOnlineTelemetry());
         }
@@ -173,6 +173,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       if (_isForeground) {
         _isForeground = false;
         _pulseCtrl.stop();
+        _stopShiftDurationTimer();
         _suspendForegroundWork();
       }
       return;
@@ -180,9 +181,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
     if (_isForeground || !mounted) return;
     _isForeground = true;
-    _syncPulseAnimation(
-      BlocProvider.of<DashboardCubit>(context).state.isOnline,
-    );
+    final isOnline = BlocProvider.of<DashboardCubit>(context).state.isOnline;
+    _syncPulseAnimation(isOnline);
+    if (isOnline) _startShiftDurationTimer();
     _startRequestCountdownTimer();
     unawaited(_resumeForegroundWork());
   }
@@ -946,7 +947,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
           listener: (context, state) {
             _syncPulseAnimation(state.isOnline);
             if (state.isOnline) {
-              _startShiftDurationTimer();
+              if (_isForeground) _startShiftDurationTimer();
               _availabilityCtrl.forward();
               // A user-triggered transition already establishes telemetry and
               // starts the background service in the repository. Re-running
