@@ -1,4 +1,4 @@
-import 'package:driver/src/features/dashboard/presentation/widgets/driver_dashboard/driver_dashboard_stats_row.dart';
+import 'package:driver/src/features/dashboard/presentation/widgets/driver_dashboard_stats_row.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:skeletonizer/skeletonizer.dart';
