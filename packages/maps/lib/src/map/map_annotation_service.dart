@@ -64,6 +64,9 @@ class MapAnnotationService._() {
   static const _markerImageCacheCapacity = 32;
   static final LinkedHashMap<String, Uint8List> _markerImageCache =
       LinkedHashMap();
+  static final Expando<mapbox.MapboxMap> _annotationManagerOwners = Expando(
+    'MapAnnotationService.annotationManagerOwners',
+  );
 
   static Future<mapbox.PointAnnotationManager> addMarker(
     AppMapController controller,
@@ -78,23 +81,29 @@ class MapAnnotationService._() {
     final mapCtrl = controller.native;
     final annotationManager = await mapCtrl.annotations
         .createPointAnnotationManager();
+    _annotationManagerOwners[annotationManager] = mapCtrl;
 
-    final options = await _markerOptions(
-      lat,
-      lng,
-      label: label,
-      isOrigin: isOrigin,
-      color: color,
-      bearing: bearing ?? 0,
-    );
-    await traceTimelineStage(
-      'maps.marker.platform_create',
-      () => annotationManager.create(options),
-    );
-    if (onTap != null) {
-      annotationManager.tapEvents(onTap: (_) => onTap());
+    try {
+      final options = await _markerOptions(
+        lat,
+        lng,
+        label: label,
+        isOrigin: isOrigin,
+        color: color,
+        bearing: bearing ?? 0,
+      );
+      await traceTimelineStage(
+        'maps.marker.platform_create',
+        () => annotationManager.create(options),
+      );
+      if (onTap != null) {
+        annotationManager.tapEvents(onTap: (_) => onTap());
+      }
+      return annotationManager;
+    } catch (_) {
+      await clearAnnotations(annotationManager);
+      rethrow;
     }
-    return annotationManager;
   });
 
   static Future<void> replaceMarker(
@@ -415,20 +424,26 @@ class MapAnnotationService._() {
     final mapCtrl = controller.native;
     final annotationManager = await mapCtrl.annotations
         .createPolylineAnnotationManager();
+    _annotationManagerOwners[annotationManager] = mapCtrl;
 
     final coordinates = validPoints
         .map((point) => mapbox.Position(point[0], point[1]))
         .toList();
 
-    await annotationManager.create(
-      mapbox.PolylineAnnotationOptions(
-        geometry: mapbox.LineString(coordinates: coordinates),
-        lineWidth: width,
-        lineColor: color.toARGB32(),
-        lineJoin: mapbox.LineJoin.ROUND,
-      ),
-    );
-    return annotationManager;
+    try {
+      await annotationManager.create(
+        mapbox.PolylineAnnotationOptions(
+          geometry: mapbox.LineString(coordinates: coordinates),
+          lineWidth: width,
+          lineColor: color.toARGB32(),
+          lineJoin: mapbox.LineJoin.ROUND,
+        ),
+      );
+      return annotationManager;
+    } catch (_) {
+      await clearAnnotations(annotationManager);
+      rethrow;
+    }
   }
 
   static Future<mapbox.PolylineAnnotationManager> addPolylineBuffer(
@@ -441,16 +456,22 @@ class MapAnnotationService._() {
     final mapCtrl = controller.native;
     final annotationManager = await mapCtrl.annotations
         .createPolylineAnnotationManager();
+    _annotationManagerOwners[annotationManager] = mapCtrl;
 
-    await annotationManager.create(
-      mapbox.PolylineAnnotationOptions(
-        geometry: mapbox.LineString(coordinates: positions),
-        lineWidth: width,
-        lineColor: color.toARGB32(),
-        lineJoin: mapbox.LineJoin.ROUND,
-      ),
-    );
-    return annotationManager;
+    try {
+      await annotationManager.create(
+        mapbox.PolylineAnnotationOptions(
+          geometry: mapbox.LineString(coordinates: positions),
+          lineWidth: width,
+          lineColor: color.toARGB32(),
+          lineJoin: mapbox.LineJoin.ROUND,
+        ),
+      );
+      return annotationManager;
+    } catch (_) {
+      await clearAnnotations(annotationManager);
+      rethrow;
+    }
   }
 
   static Future<void> replacePolyline(
@@ -560,6 +581,13 @@ class MapAnnotationService._() {
   ) async {
     if (manager == null) return;
     try {
+      final owner = _annotationManagerOwners[manager];
+      if (owner != null) {
+        await owner.annotations.removeAnnotationManager(manager);
+        _annotationManagerOwners[manager] = null;
+        return;
+      }
+
       switch (manager) {
         case final mapbox.PointAnnotationManager pointManager:
           await pointManager.deleteAll();
