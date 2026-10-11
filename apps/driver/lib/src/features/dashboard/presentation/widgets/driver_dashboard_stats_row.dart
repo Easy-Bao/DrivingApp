@@ -74,7 +74,7 @@ class DriverDashboardStatsRow extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: context.textStyles.labelSmall?.copyWith(
                     letterSpacing: 0.5,

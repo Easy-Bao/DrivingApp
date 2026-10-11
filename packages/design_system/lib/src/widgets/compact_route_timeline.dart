@@ -16,16 +16,18 @@ class const CompactRouteTimeline({
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final textScale = MediaQuery.textScalerOf(context).scale(14) / 14;
+    final layoutScale = textScale > 1 ? textScale : 1.0;
     return SizedBox(
-      height: 82,
+      height: 82 * layoutScale,
       child: Stack(
         children: [
           Positioned(
             left: 9.5,
-            top: 20,
-            bottom: 20,
+            top: 20 * layoutScale,
+            bottom: 20 * layoutScale,
             child: CustomPaint(
-              size: const Size(1, 42),
+              size: Size(1, 42 * layoutScale),
               painter: _DashedLinePainter(color: colors.outlineVariant),
             ),
           ),
@@ -37,6 +39,7 @@ class const CompactRouteTimeline({
                   color: colors.primary,
                   label: pickupLabel,
                   value: pickup,
+                  layoutScale: layoutScale,
                 ),
               ),
               Expanded(
@@ -45,6 +48,7 @@ class const CompactRouteTimeline({
                   color: colors.tertiary,
                   label: dropoffLabel,
                   value: dropoff,
+                  layoutScale: layoutScale,
                 ),
               ),
             ],
@@ -60,11 +64,13 @@ class const _RouteStopRow({
   required this.color,
   required this.label,
   required this.value,
+  required this.layoutScale,
 }) extends StatelessWidget {
   final IconData icon;
   final Color color;
   final String label;
   final String value;
+  final double layoutScale;
 
   @override
   Widget build(BuildContext context) {
@@ -76,8 +82,12 @@ class const _RouteStopRow({
           child: Align(
             alignment: Alignment.topCenter,
             child: Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: _StopIcon(icon: icon, color: color),
+              padding: EdgeInsets.only(top: 2 * layoutScale),
+              child: _StopIcon(
+                icon: icon,
+                color: color,
+                size: 18 * layoutScale,
+              ),
             ),
           ),
         ),
@@ -90,14 +100,18 @@ class const _RouteStopRow({
   }
 }
 
-class const _StopIcon({required this.icon, required this.color})
-    extends StatelessWidget {
+class const _StopIcon({
+  required this.icon,
+  required this.color,
+  required this.size,
+}) extends StatelessWidget {
   final IconData icon;
   final Color color;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
-    return Icon(icon, size: 18, color: color);
+    return Icon(icon, size: size, color: color);
   }
 }
 

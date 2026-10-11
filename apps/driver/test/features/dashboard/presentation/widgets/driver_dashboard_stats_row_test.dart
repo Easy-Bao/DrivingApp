@@ -117,4 +117,29 @@ void main() {
     expect(find.text('Trips Today'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('wraps stat labels on compact screens with large text', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(320, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(textScaler: TextScaler.linear(1.5)),
+          child: const Scaffold(
+            body: DriverDashboardStatsRow(
+              isLoadingStats: false,
+              earnings: 12500.5,
+              completedTrips: 18,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text("Today's Net Earnings"), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

@@ -31,4 +31,27 @@ void main() {
     expect((pickupIcon.dy - pickupLabel.dy).abs(), lessThan(8));
     expect((destinationIcon.dy - destinationLabel.dy).abs(), lessThan(8));
   });
+
+  testWidgets('grows to fit scaled route labels and values', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: EasyRideTheme.main,
+        home: MediaQuery(
+          data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+          child: const Scaffold(
+            body: CompactRouteTimeline(
+              pickup: 'Mountain View',
+              dropoff: 'Pasadena Inn',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      tester.getSize(find.byType(CompactRouteTimeline)).height,
+      greaterThan(82),
+    );
+    expect(tester.takeException(), isNull);
+  });
 }

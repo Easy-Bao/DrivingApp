@@ -691,7 +691,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
   Widget _buildMetric({required IconData icon, required String value}) {
     return Expanded(
       child: Container(
-        height: 42,
+        constraints: const BoxConstraints(minHeight: 42),
         decoration: BoxDecoration(
           color: context.colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(EasyRideRadius.md),

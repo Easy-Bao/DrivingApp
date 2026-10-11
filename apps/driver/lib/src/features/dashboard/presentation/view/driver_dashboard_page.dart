@@ -1215,7 +1215,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                           isOnline
                               ? 'Available for ride requests nearby'
                               : 'Switch online to start receiving rides',
-                          maxLines: 1,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: context.textStyles.bodySmall?.copyWith(
                             color: isOnline

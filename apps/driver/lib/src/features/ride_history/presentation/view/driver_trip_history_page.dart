@@ -507,27 +507,28 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
                 const SizedBox(height: 14),
                 const Divider(height: 1),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(child: _tripMeta('Ride type', rideType)),
-                    Container(
-                      width: 1,
-                      height: 28,
-                      color: context.colorScheme.outlineVariant,
-                    ),
-                    Expanded(child: _tripMeta('Distance', distance)),
-                    Container(
-                      width: 1,
-                      height: 28,
-                      color: context.colorScheme.outlineVariant,
-                    ),
-                    Expanded(
-                      child: _tripMeta(
-                        'Fare',
-                        fareAmt == null ? '—' : formatPesoAmount(fareAmt),
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(child: _tripMeta('Ride type', rideType)),
+                      Container(
+                        width: 1,
+                        color: context.colorScheme.outlineVariant,
                       ),
-                    ),
-                  ],
+                      Expanded(child: _tripMeta('Distance', distance)),
+                      Container(
+                        width: 1,
+                        color: context.colorScheme.outlineVariant,
+                      ),
+                      Expanded(
+                        child: _tripMeta(
+                          'Fare',
+                          fareAmt == null ? '—' : formatPesoAmount(fareAmt),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -561,13 +562,13 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
 
   Widget _tripMeta(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 11,
@@ -578,7 +579,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
           const SizedBox(height: 3),
           Text(
             value,
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 12,
