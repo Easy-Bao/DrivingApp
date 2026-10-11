@@ -1,8 +1,7 @@
 import 'dart:async';
 
-import 'package:maps/maps.dart';
-import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver/src/features/dashboard/dashboard_routes.dart';
+import 'package:driver/src/features/active_ride/domain/services/ride_payment_completion_handler.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -25,14 +24,14 @@ class const FareSummaryPage({
   required this.distance,
   required this.fare,
   required this.duration,
-  required this.dashboardCubit,
+  required this.ridePaymentCompletionHandler,
 }) extends StatefulWidget {
   final String pickup;
   final String dropoff;
   final String duration;
   final double distance;
   final double fare;
-  final DashboardCubit dashboardCubit;
+  final RidePaymentCompletionHandler ridePaymentCompletionHandler;
 
   @override
   State<FareSummaryPage> createState() => _FareSummaryPageState();
@@ -188,21 +187,8 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
       }
 
       setState(() => _canLeavePage = true);
-      final dashboardCubit = widget.dashboardCubit;
-      final wasOnline = dashboardCubit.state.isOnline;
       cubit.reset();
-      if (wasOnline) {
-        final position =
-            LocationService.lastPosition ??
-            await LocationService.getCurrentPosition();
-        if (position != null) {
-          await dashboardCubit.refreshOnlinePresence(
-            lat: position.latitude,
-            lng: position.longitude,
-          );
-        }
-      }
-      await dashboardCubit.loadStats();
+      await widget.ridePaymentCompletionHandler.afterCashPayment();
       if (!mounted) return;
       context.goNamed(DashboardRoutes.dashboard);
     } catch (_) {

@@ -13,6 +13,7 @@ import 'package:driver/src/app/navigation/driver_navigation_shell.dart';
 import 'package:driver/src/features/profile/profile_module.dart';
 import 'package:driver/src/features/settings/settings_module.dart';
 import 'package:driver/src/features/active_ride/active_ride_module.dart';
+import 'package:driver/src/features/active_ride/domain/services/ride_payment_completion_handler.dart';
 import 'package:driver/src/features/earnings/earnings_module.dart';
 import 'package:driver/src/features/performance/performance_module.dart';
 import 'package:driver/src/features/ride_history/ride_history_module.dart';
@@ -29,6 +30,11 @@ class DriverRouter extends Module {
     ProfileModule.binds(i);
 
     i
+      ..addLazySingleton<RidePaymentCompletionHandler>(
+        (i) => _DashboardRidePaymentCompletionHandler(
+          dashboardCubit: i.get<DashboardCubit>(),
+        ),
+      )
       ..addLazySingleton<DriverLogoutCoordinator>(
         (i) => DriverLogoutCoordinator(
           forceOffline: () async {
@@ -82,4 +88,27 @@ class DriverRouter extends Module {
       ],
     ),
   ];
+}
+
+final class _DashboardRidePaymentCompletionHandler
+    implements RidePaymentCompletionHandler {
+  const _DashboardRidePaymentCompletionHandler({required this.dashboardCubit});
+
+  final DashboardCubit dashboardCubit;
+
+  @override
+  Future<void> afterCashPayment() async {
+    if (dashboardCubit.state.isOnline) {
+      final position =
+          LocationService.lastPosition ??
+          await LocationService.getCurrentPosition();
+      if (position != null) {
+        await dashboardCubit.refreshOnlinePresence(
+          lat: position.latitude,
+          lng: position.longitude,
+        );
+      }
+    }
+    await dashboardCubit.loadStats();
+  }
 }
