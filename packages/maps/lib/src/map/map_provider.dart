@@ -480,6 +480,8 @@ class _AppMapViewState extends State<_AppMapView> {
   Widget build(BuildContext context) {
     return mapbox.MapWidget(
       key: ValueKey<String>(widget.styleUri),
+      // ignore: experimental_member_use
+      androidHostingMode: mapbox.AndroidPlatformViewHostingMode.TLHC_HC,
       styleUri: widget.styleUri,
       viewport: mapbox.CameraViewportState(
         center: mapbox.Point(
