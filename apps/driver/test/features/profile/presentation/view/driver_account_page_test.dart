@@ -127,8 +127,9 @@ void main() {
     final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
     final title = tester.widget<Text>(find.text('Account'));
 
+    expect(scaffold.backgroundColor, isNull);
     expect(
-      scaffold.backgroundColor,
+      Theme.of(tester.element(find.byType(Scaffold))).scaffoldBackgroundColor,
       EasyRideTheme.main.scaffoldBackgroundColor,
     );
     expect(title.style?.color, EasyRideTheme.main.colorScheme.onSurface);
