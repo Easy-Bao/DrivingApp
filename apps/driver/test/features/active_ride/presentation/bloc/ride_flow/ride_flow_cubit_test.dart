@@ -49,6 +49,7 @@ void main() {
         rideId: any(named: 'rideId'),
         latitude: any(named: 'latitude'),
         longitude: any(named: 'longitude'),
+        observedAt: any(named: 'observedAt'),
       ),
     ).thenAnswer(
       (_) async => const Ok(
@@ -66,6 +67,7 @@ void main() {
         rideId: any(named: 'rideId'),
         latitude: any(named: 'latitude'),
         longitude: any(named: 'longitude'),
+        observedAt: any(named: 'observedAt'),
       ),
     ).thenAnswer(
       (_) async => const Ok(
@@ -157,6 +159,7 @@ void main() {
           'Juan Dela Cruz',
           driverLat: 7.82,
           driverLng: 123.43,
+          observedAt: DateTime.utc(2026, 10, 11, 10),
         );
       },
       expect: () => [
@@ -186,6 +189,7 @@ void main() {
           distanceKm: 3.2,
           driverLat: 7.82,
           driverLng: 123.43,
+          observedAt: DateTime.utc(2026, 10, 11, 10),
         );
       },
       expect: () => [
@@ -234,6 +238,7 @@ void main() {
           distanceKm: 3.2,
           driverLat: 7.82,
           driverLng: 123.43,
+          observedAt: DateTime.utc(2026, 10, 11, 10),
           passengerLat: 7.82,
           passengerLng: 123.43,
         );

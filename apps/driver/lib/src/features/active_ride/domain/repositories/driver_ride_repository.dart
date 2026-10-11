@@ -11,12 +11,14 @@ abstract interface class DriverRideRepository {
     required String rideId,
     required double latitude,
     required double longitude,
+    required DateTime observedAt,
   });
 
   Future<Result<RideSnapshot, Failure>> startRide({
     required String rideId,
     required double latitude,
     required double longitude,
+    required DateTime observedAt,
   });
 
   Future<Result<RideSnapshot, Failure>> completeRide({
@@ -84,10 +86,15 @@ extension DriverRideRepositoryResultAdapters on DriverRideRepository {
     required String rideId,
     required double latitude,
     required double longitude,
+    required DateTime observedAt,
   }) {
     return _captureResult(
-      () =>
-          markArrived(rideId: rideId, latitude: latitude, longitude: longitude),
+      () => markArrived(
+        rideId: rideId,
+        latitude: latitude,
+        longitude: longitude,
+        observedAt: observedAt,
+      ),
       message: 'Unable to confirm arrival at the pickup point.',
     );
   }
@@ -142,9 +149,15 @@ extension DriverRideRepositoryResultAdapters on DriverRideRepository {
     required String rideId,
     required double latitude,
     required double longitude,
+    required DateTime observedAt,
   }) {
     return _captureResult(
-      () => startRide(rideId: rideId, latitude: latitude, longitude: longitude),
+      () => startRide(
+        rideId: rideId,
+        latitude: latitude,
+        longitude: longitude,
+        observedAt: observedAt,
+      ),
       message: 'Unable to start this trip right now.',
     );
   }

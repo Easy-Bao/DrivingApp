@@ -262,9 +262,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
     setState(() => _isConfirmingArrival = true);
     final rideCubit = BlocProvider.of<RideFlowCubit>(context);
     try {
-      final position =
-          LocationService.lastPosition ??
-          await LocationService.getCurrentPosition();
+      final position = await LocationService.getCurrentPosition();
       if (!mounted) return;
       if (position == null) {
         CustomToast.show(
@@ -278,6 +276,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
         passengerName,
         driverLat: position.latitude,
         driverLng: position.longitude,
+        observedAt: position.timestamp,
         pickupLat: pickupLat,
         pickupLng: pickupLng,
         destLat: state.destinationLatitude,

@@ -164,9 +164,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
 
     setState(() => _isStartingTrip = true);
     try {
-      final position =
-          LocationService.lastPosition ??
-          await LocationService.getCurrentPosition();
+      final position = await LocationService.getCurrentPosition();
       if (!mounted) return;
       if (position == null) {
         _showError(
@@ -182,6 +180,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
         distanceKm: widget.distance,
         driverLat: position.latitude,
         driverLng: position.longitude,
+        observedAt: position.timestamp,
         passengerLat: state.pickupLatitude,
         passengerLng: state.pickupLongitude,
       );

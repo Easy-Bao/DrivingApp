@@ -69,6 +69,14 @@ void main() {
   test(
     'requires the server arrival response to include its wait timer',
     () async {
+      final observedAt = DateTime.utc(2026, 10, 11, 10);
+      when(
+        () => telemetryDataSource.sendLocationUpdate(
+          lat: 7.82,
+          lng: 123.43,
+          observedAt: observedAt,
+        ),
+      ).thenAnswer((_) async => true);
       when(
         () => rideDataSource.markArrived(
           rideId: 'ride-7',
@@ -90,6 +98,7 @@ void main() {
         rideId: 'ride-7',
         latitude: 7.82,
         longitude: 123.43,
+        observedAt: observedAt,
       );
 
       expect(result, isA<Ok<RideSnapshot, Failure>>());
@@ -101,6 +110,7 @@ void main() {
   );
 
   test('uses dedicated server commands for start and completion', () async {
+    final observedAt = DateTime.utc(2026, 10, 11, 10);
     when(
       () => rideDataSource.startRide(
         rideId: 'ride-7',
@@ -115,6 +125,13 @@ void main() {
         'dropoff_name': 'Vista Slope',
       },
     );
+    when(
+      () => telemetryDataSource.sendLocationUpdate(
+        lat: 7.82,
+        lng: 123.43,
+        observedAt: observedAt,
+      ),
+    ).thenAnswer((_) async => true);
     when(
       () => rideDataSource.completeRide(
         rideId: 'ride-7',
@@ -137,6 +154,7 @@ void main() {
       rideId: 'ride-7',
       latitude: 7.82,
       longitude: 123.43,
+      observedAt: observedAt,
     );
     final completed = await repository.completeRide(
       rideId: 'ride-7',

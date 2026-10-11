@@ -42,7 +42,15 @@ final class DriverRideRepositoryImpl({
     required String rideId,
     required double latitude,
     required double longitude,
+    required DateTime observedAt,
   }) async {
+    final locationFailure = await _publishTransitionLocation(
+      latitude: latitude,
+      longitude: longitude,
+      observedAt: observedAt,
+    );
+    if (locationFailure != null) return Err(locationFailure);
+
     try {
       final data = await _rideDataSource.markArrived(
         rideId: rideId,
@@ -169,7 +177,15 @@ final class DriverRideRepositoryImpl({
     required String rideId,
     required double latitude,
     required double longitude,
+    required DateTime observedAt,
   }) async {
+    final locationFailure = await _publishTransitionLocation(
+      latitude: latitude,
+      longitude: longitude,
+      observedAt: observedAt,
+    );
+    if (locationFailure != null) return Err(locationFailure);
+
     try {
       final data = await _rideDataSource.startRide(
         rideId: rideId,
@@ -352,6 +368,27 @@ final class DriverRideRepositoryImpl({
           : const Err(ServerFailure('Driver location was not removed.'));
     } catch (error) {
       return Err(_mapFailure(error, action: 'remove driver location'));
+    }
+  }
+
+  Future<Failure?> _publishTransitionLocation({
+    required double latitude,
+    required double longitude,
+    required DateTime observedAt,
+  }) async {
+    try {
+      final sent = await _telemetryDataSource.sendLocationUpdate(
+        lat: latitude,
+        lng: longitude,
+        observedAt: observedAt,
+      );
+      return sent
+          ? null
+          : const NetworkFailure(
+              'Your live location could not be updated. Keep location sharing on and try again.',
+            );
+    } catch (error) {
+      return _mapFailure(error, action: 'share driver location');
     }
   }
 }

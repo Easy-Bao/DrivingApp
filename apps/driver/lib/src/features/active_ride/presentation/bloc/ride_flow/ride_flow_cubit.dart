@@ -199,6 +199,7 @@ class RideFlowCubit({
     String passengerName, {
     required double driverLat,
     required double driverLng,
+    required DateTime observedAt,
     double? pickupLat,
     double? pickupLng,
     double? destLat,
@@ -223,6 +224,7 @@ class RideFlowCubit({
         rideId: activeRideId,
         latitude: driverLat,
         longitude: driverLng,
+        observedAt: observedAt,
       )).fold(
         (failure) => arrivalFailure = failure,
         (value) => arrivedRide = value,
@@ -417,6 +419,7 @@ class RideFlowCubit({
     required double distanceKm,
     required double driverLat,
     required double driverLng,
+    required DateTime observedAt,
     double? passengerLat,
     double? passengerLng,
   }) async {
@@ -464,6 +467,7 @@ class RideFlowCubit({
         rideId: activeRideId,
         latitude: driverLat,
         longitude: driverLng,
+        observedAt: observedAt,
       )).fold(
         (failure) => startFailure = failure,
         (value) => startedRide = value,
