@@ -4,6 +4,7 @@ import 'package:driver/src/features/active_ride/data/data_sources/ride_remote_da
 import 'package:driver/src/features/active_ride/data/data_sources/telemetry_remote_data_source.dart';
 import 'package:driver/src/features/active_ride/data/repositories/driver_ride_repository_impl.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:foundation/foundation.dart';
@@ -108,6 +109,129 @@ void main() {
       );
     },
   );
+
+  test(
+    'explains when the driver is outside the pickup arrival radius',
+    () async {
+      final observedAt = DateTime.utc(2026, 10, 11, 10);
+      when(
+        () => telemetryDataSource.sendLocationUpdate(
+          lat: 7.82,
+          lng: 123.43,
+          observedAt: observedAt,
+        ),
+      ).thenAnswer((_) async => true);
+      when(
+        () => rideDataSource.markArrived(
+          rideId: 'ride-7',
+          latitude: 7.82,
+          longitude: 123.43,
+        ),
+      ).thenThrow(_responseException(422));
+
+      final result = await repository.markArrived(
+        rideId: 'ride-7',
+        latitude: 7.82,
+        longitude: 123.43,
+        observedAt: observedAt,
+      );
+
+      expect(
+        result.fold((failure) => failure.message, (_) => ''),
+        'Move closer to the pickup location before confirming arrival.',
+      );
+    },
+  );
+
+  test('explains when location telemetry is stale during arrival', () async {
+    final observedAt = DateTime.utc(2026, 10, 11, 10);
+    when(
+      () => telemetryDataSource.sendLocationUpdate(
+        lat: 7.82,
+        lng: 123.43,
+        observedAt: observedAt,
+      ),
+    ).thenAnswer((_) async => true);
+    when(
+      () => rideDataSource.markArrived(
+        rideId: 'ride-7',
+        latitude: 7.82,
+        longitude: 123.43,
+      ),
+    ).thenThrow(_responseException(503));
+
+    final result = await repository.markArrived(
+      rideId: 'ride-7',
+      latitude: 7.82,
+      longitude: 123.43,
+      observedAt: observedAt,
+    );
+
+    expect(
+      result.fold((failure) => failure.message, (_) => ''),
+      'Your live location is unavailable or out of date. Keep location sharing on and try again.',
+    );
+  });
+
+  test('explains when the driver is outside the pickup start radius', () async {
+    final observedAt = DateTime.utc(2026, 10, 11, 10);
+    when(
+      () => telemetryDataSource.sendLocationUpdate(
+        lat: 7.82,
+        lng: 123.43,
+        observedAt: observedAt,
+      ),
+    ).thenAnswer((_) async => true);
+    when(
+      () => rideDataSource.startRide(
+        rideId: 'ride-7',
+        latitude: 7.82,
+        longitude: 123.43,
+      ),
+    ).thenThrow(_responseException(422));
+
+    final result = await repository.startRide(
+      rideId: 'ride-7',
+      latitude: 7.82,
+      longitude: 123.43,
+      observedAt: observedAt,
+    );
+
+    expect(
+      result.fold((failure) => failure.message, (_) => ''),
+      'Move closer to the pickup location before starting the trip.',
+    );
+  });
+
+  test('explains when location telemetry is stale during trip start', () async {
+    final observedAt = DateTime.utc(2026, 10, 11, 10);
+    when(
+      () => telemetryDataSource.sendLocationUpdate(
+        lat: 7.82,
+        lng: 123.43,
+        observedAt: observedAt,
+      ),
+    ).thenAnswer((_) async => true);
+    when(
+      () => rideDataSource.startRide(
+        rideId: 'ride-7',
+        latitude: 7.82,
+        longitude: 123.43,
+      ),
+    ).thenThrow(_responseException(503));
+
+    final result = await repository.startRide(
+      rideId: 'ride-7',
+      latitude: 7.82,
+      longitude: 123.43,
+      observedAt: observedAt,
+    );
+
+    expect(
+      result.fold((failure) => failure.message, (_) => ''),
+      'Your live location is unavailable or out of date. Keep location sharing on and try again.',
+    );
+  });
 
   test('uses dedicated server commands for start and completion', () async {
     final observedAt = DateTime.utc(2026, 10, 11, 10);
@@ -297,5 +421,13 @@ void main() {
         (7.828, 123.434),
       );
     },
+  );
+}
+
+DioException _responseException(int statusCode) {
+  final requestOptions = RequestOptions(path: '/api/v1/rides/ride-7');
+  return DioException(
+    requestOptions: requestOptions,
+    response: Response(requestOptions: requestOptions, statusCode: statusCode),
   );
 }

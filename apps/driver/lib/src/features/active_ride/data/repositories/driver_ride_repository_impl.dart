@@ -425,6 +425,23 @@ Failure _mapFailure(Object error, {required String action}) {
         503,
       );
     }
+    if (action == 'confirm arrival' && statusCode == 422) {
+      return const ValidationFailure(
+        'Move closer to the pickup location before confirming arrival.',
+      );
+    }
+    if (action == 'start this trip' && statusCode == 422) {
+      return const ValidationFailure(
+        'Move closer to the pickup location before starting the trip.',
+      );
+    }
+    if ((action == 'confirm arrival' || action == 'start this trip') &&
+        statusCode == 503) {
+      return const ServerFailure.withStatusCode(
+        'Your live location is unavailable or out of date. Keep location sharing on and try again.',
+        503,
+      );
+    }
     if (statusCode == 400 || statusCode == 404 || statusCode == 422) {
       return ValidationFailure('Unable to $action with the supplied ride.');
     }
