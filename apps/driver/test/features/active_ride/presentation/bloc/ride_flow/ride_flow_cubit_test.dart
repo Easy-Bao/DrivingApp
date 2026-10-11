@@ -146,6 +146,8 @@ void main() {
   });
 
   group('RideFlowCubit — arriveAtPickup()', () {
+    final observedAt = DateTime.utc(2026, 10, 11, 10);
+
     blocTest<RideFlowCubit, RideFlowState>(
       'emits RideFlowWaitingPassenger starting at 0 seconds',
       build: () => _makeCubit(mockRideRepository, mockSessionService),
@@ -159,7 +161,7 @@ void main() {
           'Juan Dela Cruz',
           driverLat: 7.82,
           driverLng: 123.43,
-          observedAt: DateTime.utc(2026, 10, 11, 10),
+          observedAt: observedAt,
         );
       },
       expect: () => [
@@ -169,10 +171,51 @@ void main() {
           waitTimeSeconds: 0,
         ),
       ],
+      verify: (_) {
+        verify(
+          () => mockRideRepository.markArrived(
+            rideId: 'test-ride-id',
+            latitude: 7.82,
+            longitude: 123.43,
+            observedAt: observedAt,
+          ),
+        ).called(1);
+      },
     );
+
+    test('preserves the repository arrival failure message', () async {
+      const message =
+          'Move closer to the pickup location before confirming arrival.';
+      when(
+        () => mockRideRepository.markArrived(
+          rideId: 'test-ride-id',
+          latitude: 7.82,
+          longitude: 123.43,
+          observedAt: observedAt,
+        ),
+      ).thenAnswer((_) async => const Err(ValidationFailure(message)));
+
+      final cubit = _makeCubit(mockRideRepository, mockSessionService);
+      cubit.resumeRide(
+        rideId: 'test-ride-id',
+        status: 'accepted',
+        passengerName: 'Juan Dela Cruz',
+      );
+      await cubit.arriveAtPickup(
+        'Juan Dela Cruz',
+        driverLat: 7.82,
+        driverLng: 123.43,
+        observedAt: observedAt,
+      );
+
+      expect(cubit.state, const RideFlowError(message));
+      await cubit.close();
+    });
   });
 
   group('RideFlowCubit — startRide()', () {
+    final observedAt = DateTime.utc(2026, 10, 11, 10);
+
     blocTest<RideFlowCubit, RideFlowState>(
       'emits RideFlowInTransit with correct trip data',
       build: () => _makeCubit(mockRideRepository, mockSessionService),
@@ -189,7 +232,7 @@ void main() {
           distanceKm: 3.2,
           driverLat: 7.82,
           driverLng: 123.43,
-          observedAt: DateTime.utc(2026, 10, 11, 10),
+          observedAt: observedAt,
         );
       },
       expect: () => [
@@ -204,7 +247,52 @@ void main() {
           distanceKm: 3.2,
         ),
       ],
+      verify: (_) {
+        verify(
+          () => mockRideRepository.startRide(
+            rideId: 'test-ride-id',
+            latitude: 7.82,
+            longitude: 123.43,
+            observedAt: observedAt,
+          ),
+        ).called(1);
+      },
     );
+
+    test('preserves the repository trip start failure message', () async {
+      const message =
+          'Your live location is unavailable or out of date. Keep location sharing on and try again.';
+      when(
+        () => mockRideRepository.startRide(
+          rideId: 'test-ride-id',
+          latitude: 7.82,
+          longitude: 123.43,
+          observedAt: observedAt,
+        ),
+      ).thenAnswer(
+        (_) async => const Err(ServerFailure.withStatusCode(message, 503)),
+      );
+
+      final cubit = _makeCubit(mockRideRepository, mockSessionService);
+      cubit.resumeRide(
+        rideId: 'test-ride-id',
+        status: 'arrived',
+        passengerName: 'Juan Dela Cruz',
+      );
+      final started = await cubit.startRide(
+        passengerName: 'Juan Dela Cruz',
+        destLat: 7.85,
+        destLng: 123.45,
+        distanceKm: 3.2,
+        driverLat: 7.82,
+        driverLng: 123.43,
+        observedAt: observedAt,
+      );
+
+      expect(started, isFalse);
+      expect(cubit.state, const RideFlowError(message));
+      await cubit.close();
+    });
 
     test(
       'recovers missing destination coordinates from the active ride',

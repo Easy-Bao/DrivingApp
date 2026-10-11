@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:driver/src/features/active_ride/active_ride.dart';
 import 'package:driver/src/features/active_ride/data/data_sources/ride_counterparty_remote_data_source.dart';
 import 'package:driver/src/features/active_ride/data/data_sources/ride_remote_data_source.dart';
@@ -109,6 +111,84 @@ void main() {
       );
     },
   );
+
+  test('waits for fresh telemetry before confirming arrival', () async {
+    const latitude = 7.82;
+    const longitude = 123.43;
+    final observedAt = DateTime.utc(2026, 10, 11, 10);
+    final telemetryStarted = Completer<void>();
+    final completeTelemetry = Completer<bool>();
+    var transitionCalled = false;
+    when(
+      () => telemetryDataSource.sendLocationUpdate(
+        lat: latitude,
+        lng: longitude,
+        observedAt: observedAt,
+      ),
+    ).thenAnswer((_) {
+      telemetryStarted.complete();
+      return completeTelemetry.future;
+    });
+    when(
+      () => rideDataSource.markArrived(
+        rideId: 'ride-7',
+        latitude: latitude,
+        longitude: longitude,
+      ),
+    ).thenAnswer((_) async {
+      transitionCalled = true;
+      return <String, dynamic>{
+        'id': 'ride-7',
+        'status': 'arrived',
+        'arrived_at': '2026-10-11T10:00:00Z',
+        'waiting_until': '2026-10-11T10:05:00Z',
+      };
+    });
+
+    final result = repository.markArrived(
+      rideId: 'ride-7',
+      latitude: latitude,
+      longitude: longitude,
+      observedAt: observedAt,
+    );
+    await telemetryStarted.future;
+
+    expect(transitionCalled, isFalse);
+    completeTelemetry.complete(true);
+    await result;
+
+    expect(transitionCalled, isTrue);
+  });
+
+  test('does not confirm arrival when fresh telemetry is rejected', () async {
+    final observedAt = DateTime.utc(2026, 10, 11, 10);
+    when(
+      () => telemetryDataSource.sendLocationUpdate(
+        lat: 7.82,
+        lng: 123.43,
+        observedAt: observedAt,
+      ),
+    ).thenAnswer((_) async => false);
+
+    final result = await repository.markArrived(
+      rideId: 'ride-7',
+      latitude: 7.82,
+      longitude: 123.43,
+      observedAt: observedAt,
+    );
+
+    expect(
+      result.fold((failure) => failure.message, (_) => ''),
+      'Your live location could not be updated. Keep location sharing on and try again.',
+    );
+    verifyNever(
+      () => rideDataSource.markArrived(
+        rideId: 'ride-7',
+        latitude: 7.82,
+        longitude: 123.43,
+      ),
+    );
+  });
 
   test(
     'explains when the driver is outside the pickup arrival radius',
@@ -230,6 +310,79 @@ void main() {
     expect(
       result.fold((failure) => failure.message, (_) => ''),
       'Your live location is unavailable or out of date. Keep location sharing on and try again.',
+    );
+  });
+
+  test('waits for fresh telemetry before starting the trip', () async {
+    const latitude = 7.82;
+    const longitude = 123.43;
+    final observedAt = DateTime.utc(2026, 10, 11, 10);
+    final telemetryStarted = Completer<void>();
+    final completeTelemetry = Completer<bool>();
+    var transitionCalled = false;
+    when(
+      () => telemetryDataSource.sendLocationUpdate(
+        lat: latitude,
+        lng: longitude,
+        observedAt: observedAt,
+      ),
+    ).thenAnswer((_) {
+      telemetryStarted.complete();
+      return completeTelemetry.future;
+    });
+    when(
+      () => rideDataSource.startRide(
+        rideId: 'ride-7',
+        latitude: latitude,
+        longitude: longitude,
+      ),
+    ).thenAnswer((_) async {
+      transitionCalled = true;
+      return <String, dynamic>{'id': 'ride-7', 'status': 'in_transit'};
+    });
+
+    final result = repository.startRide(
+      rideId: 'ride-7',
+      latitude: latitude,
+      longitude: longitude,
+      observedAt: observedAt,
+    );
+    await telemetryStarted.future;
+
+    expect(transitionCalled, isFalse);
+    completeTelemetry.complete(true);
+    await result;
+
+    expect(transitionCalled, isTrue);
+  });
+
+  test('does not start the trip when fresh telemetry is rejected', () async {
+    final observedAt = DateTime.utc(2026, 10, 11, 10);
+    when(
+      () => telemetryDataSource.sendLocationUpdate(
+        lat: 7.82,
+        lng: 123.43,
+        observedAt: observedAt,
+      ),
+    ).thenAnswer((_) async => false);
+
+    final result = await repository.startRide(
+      rideId: 'ride-7',
+      latitude: 7.82,
+      longitude: 123.43,
+      observedAt: observedAt,
+    );
+
+    expect(
+      result.fold((failure) => failure.message, (_) => ''),
+      'Your live location could not be updated. Keep location sharing on and try again.',
+    );
+    verifyNever(
+      () => rideDataSource.startRide(
+        rideId: 'ride-7',
+        latitude: 7.82,
+        longitude: 123.43,
+      ),
     );
   });
 

@@ -232,9 +232,8 @@ class RideFlowCubit({
       if (arrivalFailure != null || arrivedRide == null) {
         emit(
           RideFlowError(
-            ErrorHandler.getErrorMessage(
-              arrivalFailure ?? const ServerFailure(),
-            ),
+            arrivalFailure?.message ??
+                ErrorHandler.getErrorMessage(const ServerFailure()),
           ),
         );
         return;
@@ -476,7 +475,8 @@ class RideFlowCubit({
       if (startFailure != null || startedRide == null) {
         emit(
           RideFlowError(
-            ErrorHandler.getErrorMessage(startFailure ?? const ServerFailure()),
+            startFailure?.message ??
+                ErrorHandler.getErrorMessage(const ServerFailure()),
           ),
         );
         return false;
