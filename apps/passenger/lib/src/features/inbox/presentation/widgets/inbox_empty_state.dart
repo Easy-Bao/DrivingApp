@@ -41,4 +41,3 @@ class InboxEmptyState extends StatelessWidget {
 }
 
 typedef InboxEmptyStateWidget = InboxEmptyState;
-

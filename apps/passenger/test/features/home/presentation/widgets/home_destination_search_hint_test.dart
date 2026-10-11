@@ -5,9 +5,7 @@ import 'package:passenger/src/features/home/presentation/widgets/home_destinatio
 void main() {
   testWidgets('shows five common destination search examples', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(body: HomeDestinationSearchHint()),
-      ),
+      const MaterialApp(home: Scaffold(body: HomeDestinationSearchHint())),
     );
 
     expect(HomeDestinationSearchHint.searchExamples, hasLength(5));

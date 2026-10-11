@@ -120,4 +120,3 @@ class ProfileAvatar extends StatelessWidget {
 }
 
 typedef ProfileAvatarWidget = ProfileAvatar;
-

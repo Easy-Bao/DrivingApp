@@ -132,4 +132,3 @@ class PassengerProfile {
 }
 
 typedef ProfileModel = PassengerProfile;
-

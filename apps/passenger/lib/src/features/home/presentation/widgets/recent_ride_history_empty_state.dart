@@ -1,10 +1,8 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 
-class const RecentRideHistoryEmptyState({
-  required this.isGuest,
-  super.key,
-}) extends StatelessWidget {
+class const RecentRideHistoryEmptyState({required this.isGuest, super.key})
+    extends StatelessWidget {
   final bool isGuest;
 
   @override

@@ -18,10 +18,7 @@ void main() {
     expect(marker, findsOneWidget);
     expect(
       tester.getSize(marker),
-      const Size(
-        MapSelectionMarker.width,
-        MapSelectionMarker.height,
-      ),
+      const Size(MapSelectionMarker.width, MapSelectionMarker.height),
     );
     expect(
       MapSelectionMarker.markerColor,

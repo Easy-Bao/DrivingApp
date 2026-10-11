@@ -30,8 +30,7 @@ class const DriverDropdownCard({
   final DriverProfileRepository profileRepository;
 
   @override
-  State<DriverDropdownCard> createState() =>
-      _DriverDropdownCardState();
+  State<DriverDropdownCard> createState() => _DriverDropdownCardState();
 }
 
 class _DriverDropdownCardState()

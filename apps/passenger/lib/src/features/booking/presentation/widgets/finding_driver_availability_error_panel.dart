@@ -38,4 +38,5 @@ class const FindingDriverAvailabilityErrorPanel({
   }
 }
 
-typedef FindingDriverAvailabilityErrorPanelWidget = FindingDriverAvailabilityErrorPanel;
+typedef FindingDriverAvailabilityErrorPanelWidget =
+    FindingDriverAvailabilityErrorPanel;

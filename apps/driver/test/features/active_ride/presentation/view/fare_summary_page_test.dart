@@ -172,7 +172,10 @@ void main() {
     if (bill100Chip.evaluate().isNotEmpty) {
       await tester.tap(bill100Chip);
       await tester.pumpAndSettle();
-      expect(tester.widget<TextField>(receivedField).controller?.text, '100.00');
+      expect(
+        tester.widget<TextField>(receivedField).controller?.text,
+        '100.00',
+      );
       expect(tester.widget<TextField>(changeField).controller?.text, '50.00');
     }
   });

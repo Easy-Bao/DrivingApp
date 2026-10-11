@@ -94,8 +94,9 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
     final amountCents = amountInPesos * 100;
     _cashReceivedController.text = _formatCashInput(amountCents);
     if (_cashOutcome == 'paid') {
-      final changeCents =
-          amountCents >= _fareAmountCents ? amountCents - _fareAmountCents : 0;
+      final changeCents = amountCents >= _fareAmountCents
+          ? amountCents - _fareAmountCents
+          : 0;
       _cashChangeController.text = _formatCashInput(changeCents);
     }
     if (_error != null) {
@@ -467,8 +468,9 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
                     ActionChip(
                       key: ValueKey('chip-bill-$bill'),
                       label: Text('₱$bill'),
-                      onPressed:
-                          _isSubmitting ? null : () => _applyDenomination(bill),
+                      onPressed: _isSubmitting
+                          ? null
+                          : () => _applyDenomination(bill),
                     ),
                 ],
               ),

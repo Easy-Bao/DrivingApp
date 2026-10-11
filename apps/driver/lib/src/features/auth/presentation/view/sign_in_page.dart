@@ -1,4 +1,3 @@
-
 import 'dart:async';
 
 import 'package:driver/src/features/auth/auth_routes.dart';

@@ -34,9 +34,7 @@ void main() {
     );
     final effectiveNotesController = notesController ?? TextEditingController();
 
-    RideOptionsPanel buildPanelWidget(
-      ScrollController? scrollController,
-    ) {
+    RideOptionsPanel buildPanelWidget(ScrollController? scrollController) {
       return RideOptionsPanel(
         passengerName: passengerName,
         pickupLabel: 'Current location',

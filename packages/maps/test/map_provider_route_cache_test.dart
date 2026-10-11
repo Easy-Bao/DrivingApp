@@ -131,12 +131,7 @@ void main() {
     final callsBeforeLookup = apiClient.routeCallCount;
 
     for (var index = 0; index < 25; index++) {
-      final route = await MapProvider.getRoute(
-        1 + index * 0.001,
-        2,
-        3,
-        4,
-      );
+      final route = await MapProvider.getRoute(1 + index * 0.001, 2, 3, 4);
       expect(route, isNotNull);
     }
     expect(apiClient.routeCallCount, callsBeforeLookup + 25);

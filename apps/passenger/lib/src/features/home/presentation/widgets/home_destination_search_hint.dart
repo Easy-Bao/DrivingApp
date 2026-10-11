@@ -25,8 +25,7 @@ class const HomeDestinationSearchHint({
       _HomeDestinationSearchHintState();
 }
 
-class _HomeDestinationSearchHintState
-    extends State<HomeDestinationSearchHint>
+class _HomeDestinationSearchHintState extends State<HomeDestinationSearchHint>
     with SingleTickerProviderStateMixin {
   static const _viewportHeight = 22.0;
 

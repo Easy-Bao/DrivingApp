@@ -297,4 +297,3 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
 }
 
 typedef RideHistoryWidget = RideHistoryListView;
-

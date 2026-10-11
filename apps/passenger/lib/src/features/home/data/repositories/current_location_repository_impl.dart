@@ -4,11 +4,8 @@ import 'package:passenger/src/features/home/domain/entities/current_location.dar
 import 'package:passenger/src/features/home/domain/failures/current_location_failure.dart';
 import 'package:passenger/src/features/home/domain/repositories/current_location_repository.dart';
 
-final class CurrentLocationRepositoryImpl
-    implements CurrentLocationRepository {
-  const CurrentLocationRepositoryImpl({
-    required this.dataSource,
-  });
+final class CurrentLocationRepositoryImpl implements CurrentLocationRepository {
+  const CurrentLocationRepositoryImpl({required this.dataSource});
 
   final CurrentLocationDataSource dataSource;
 

@@ -165,4 +165,3 @@ class InboxNotificationCard extends StatelessWidget {
 }
 
 typedef InboxNotificationCardWidget = InboxNotificationCard;
-

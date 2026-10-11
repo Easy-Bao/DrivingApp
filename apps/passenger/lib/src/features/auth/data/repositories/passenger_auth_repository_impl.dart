@@ -24,7 +24,11 @@ final class PassengerAuthRepositoryImpl({
     try {
       final responseData = await _remoteDataSource.postData(
         PassengerAuthEndpoints.login,
-        requestBody: {'email': email, 'password': password, 'role': 'passenger'},
+        requestBody: {
+          'email': email,
+          'password': password,
+          'role': 'passenger',
+        },
       );
       final credentials = _credentialsFromResponse(
         responseData,

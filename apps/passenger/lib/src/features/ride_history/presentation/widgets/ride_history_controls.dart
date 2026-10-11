@@ -259,4 +259,3 @@ class _RideHistoryFilterChip extends StatelessWidget {
 typedef RideHistorySummaryWidget = RideHistorySummary;
 typedef RideHistoryFiltersWidget = RideHistoryFilters;
 typedef RideHistoryFilteredEmptyWidget = RideHistoryFilteredEmpty;
-

@@ -54,4 +54,3 @@ class RideHistoryHeader extends StatelessWidget {
 }
 
 typedef RideHistoryHeaderWidget = RideHistoryHeader;
-

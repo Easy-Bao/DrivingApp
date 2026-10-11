@@ -246,8 +246,7 @@ void main() {
           endLng: any(named: 'endLng'),
         ),
       ).thenAnswer((_) async => null);
-      when(() => session.readActiveRideId())
-          .thenAnswer((_) async => 'ride-1');
+      when(() => session.readActiveRideId()).thenAnswer((_) async => 'ride-1');
 
       await cubit.startTracking(
         startLat: 7.828,
@@ -265,9 +264,7 @@ void main() {
 
       lifecycleCoordinator.update(isForeground: false);
       lifecycleCoordinator.update(isForeground: true);
-      await Future<void>.delayed(
-        const Duration(seconds: 2, milliseconds: 100),
-      );
+      await Future<void>.delayed(const Duration(seconds: 2, milliseconds: 100));
 
       verify(() => repo.getRideStatusUpdate('ride-1')).called(1);
     });
