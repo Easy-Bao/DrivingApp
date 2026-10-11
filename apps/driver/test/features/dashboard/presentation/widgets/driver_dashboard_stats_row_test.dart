@@ -68,7 +68,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('keeps the stats skeleton during a refresh with existing data', (
+  testWidgets('keeps existing stats visible during a background refresh', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -85,10 +85,13 @@ void main() {
     );
 
     expect(find.text("Today's Net Earnings"), findsOneWidget);
+    expect(find.text('₱386'), findsOneWidget);
+    expect(find.text('7'), findsOneWidget);
     expect(
       find.byKey(const ValueKey<String>('driver-dashboard-stats-skeleton')),
-      findsOneWidget,
+      findsNothing,
     );
+    expect(find.byWidgetPredicate((widget) => widget is Bone), findsNothing);
   });
 
   testWidgets('renders stats row on narrow 360px screen without overflow', (

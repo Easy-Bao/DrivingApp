@@ -24,36 +24,30 @@ class DriverDashboardStatsRow extends StatelessWidget {
       return _buildInitialLoadingState(context);
     }
 
-    return Skeletonizer.zone(
-      key: const ValueKey<String>('driver-dashboard-stats-skeleton'),
-      enabled: isLoadingStats && hasExistingStats,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: EasyRideLayout.pagePadding,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: _buildStatCard(
-                context,
-                label: "Today's Net Earnings",
-                value: formatPesoAmount(earnings),
-                skeletonWidth: 84,
-                icon: LucideIcons.wallet,
-              ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: EasyRideLayout.pagePadding,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildStatCard(
+              context,
+              label: "Today's Net Earnings",
+              value: formatPesoAmount(earnings),
+              icon: LucideIcons.wallet,
             ),
-            const SizedBox(width: EasyRideSpacing.sm),
-            Expanded(
-              child: _buildStatCard(
-                context,
-                label: 'Trips Today',
-                value: '$completedTrips',
-                skeletonWidth: 32,
-                icon: LucideIcons.car,
-              ),
+          ),
+          const SizedBox(width: EasyRideSpacing.sm),
+          Expanded(
+            child: _buildStatCard(
+              context,
+              label: 'Trips Today',
+              value: '$completedTrips',
+              icon: LucideIcons.car,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -62,7 +56,6 @@ class DriverDashboardStatsRow extends StatelessWidget {
     BuildContext context, {
     required String label,
     required String value,
-    required double skeletonWidth,
     required IconData icon,
   }) {
     return Container(
@@ -106,20 +99,17 @@ class DriverDashboardStatsRow extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          if (isLoadingStats && hasExistingStats)
-            Bone.text(width: skeletonWidth, fontSize: 24)
-          else
-            Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: context.textStyles.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: context.colorScheme.onSurface,
-                letterSpacing: -0.5,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.textStyles.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: context.colorScheme.onSurface,
+              letterSpacing: -0.5,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
+          ),
         ],
       ),
     );
