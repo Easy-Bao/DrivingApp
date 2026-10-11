@@ -449,7 +449,6 @@ class const _AppMapView({
   required this.interactive,
   required this.showUserLocation,
   this.zoom = 14.0,
-  super.key,
 }) extends StatefulWidget {
   final double latitude;
   final double longitude;
