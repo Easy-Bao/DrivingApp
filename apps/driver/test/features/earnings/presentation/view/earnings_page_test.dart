@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver/src/features/earnings/presentation/bloc/earnings_cubit.dart';
@@ -10,6 +12,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class _MockSecureStorage extends Mock implements FlutterSecureStorage {}
 
@@ -39,6 +42,21 @@ class _FakeEarningsRepository implements DriverEarningsRepository {
         {'start_date': '2026-08-29', 'earnings_amount': 0},
       ],
     });
+  }
+}
+
+class _ReloadingEarningsRepository extends _FakeEarningsRepository {
+  final reload = Completer<Result<Map<String, dynamic>, Failure>>();
+  var _requestCount = 0;
+
+  @override
+  Future<Result<Map<String, dynamic>, Failure>> fetchEarningsSummary(
+    String driverId,
+  ) {
+    if (_requestCount++ == 0) {
+      return super.fetchEarningsSummary(driverId);
+    }
+    return reload.future;
   }
 }
 
@@ -107,6 +125,52 @@ void main() {
       expect(find.byType(BarChart), findsOneWidget);
       expect(tester.takeException(), isNull, reason: '$period layout failed');
     }
+  });
+
+  testWidgets('keeps loaded earnings visible while refreshing', (tester) async {
+    final repository = _ReloadingEarningsRepository();
+    late final DriverEarningsCubit cubit;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: EasyRideTheme.main,
+        home: BlocProvider(
+          create: (_) => cubit = DriverEarningsCubit(
+            repository: repository,
+            sessionService: sessionService,
+          )..load(),
+          child: const DriverEarningsPage(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BarChart), findsOneWidget);
+    expect(find.text('Average per trip'), findsOneWidget);
+
+    final refresh = cubit.load();
+    await tester.pump();
+
+    expect(cubit.state.isLoading, isTrue);
+    expect(find.byType(BarChart), findsOneWidget);
+    expect(
+      tester
+          .widgetList<Skeletonizer>(find.byType(Skeletonizer))
+          .where((skeletonizer) => skeletonizer.enabled),
+      isEmpty,
+    );
+
+    repository.reload.complete(
+      const Ok({
+        'today': {'earnings_amount': 2973, 'completed_trips': 1},
+        'this_week': {'earnings_amount': 2973, 'completed_trips': 1},
+        'this_month': {'earnings_amount': 2973, 'completed_trips': 1},
+        'weekdays': <Map<String, Object>>[],
+        'month_weeks': <Map<String, Object>>[],
+      }),
+    );
+    await refresh;
+    await tester.pumpAndSettle();
   });
 
   testWidgets(

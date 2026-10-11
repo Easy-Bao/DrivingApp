@@ -93,7 +93,7 @@ void main() {
         'status': 'completed',
         'completed_at': DateTime.now()
             .toUtc()
-            .subtract(const Duration(hours: 49))
+            .subtract(const Duration(hours: 25))
             .toIso8601String(),
       },
     ];

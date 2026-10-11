@@ -20,7 +20,7 @@ class const DriverTripDetailPage({
 }
 
 class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
-  static const _passengerContactWindow = Duration(hours: 48);
+  static const _passengerContactWindow = Duration(hours: 24);
 
   bool _isContactingPassenger = false;
   String? _chatFeedbackMessage;

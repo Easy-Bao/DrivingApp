@@ -210,18 +210,15 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                       Center(
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 720),
-                          child: Skeletonizer(
-                            enabled: state.isLoading,
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  _buildSummaryCard(summary),
-                                  const SizedBox(height: 12),
-                                  _buildBarChart(summary.days),
-                                ],
-                              ),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _buildSummaryCard(summary),
+                                const SizedBox(height: 12),
+                                _buildBarChart(summary.days),
+                              ],
                             ),
                           ),
                         ),
