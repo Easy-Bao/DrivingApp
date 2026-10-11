@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
 abstract final class EasyRidePalette {
-  static const blue = Color(0xFF315E8A);
-  static const navy = Color(0xFF1E293B);
   static const amber = Color(0xFFF59E0B);
 
   static const white = Color(0xFFFFFFFF);
