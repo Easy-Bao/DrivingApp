@@ -108,7 +108,7 @@ func completedWithinContactWindow(completedAt *string) bool {
 		return false
 	}
 	age := time.Since(completed)
-	return age >= 0 && age <= 48*time.Hour
+	return age >= 0 && age <= 24*time.Hour
 }
 
 func parseID(value string) (int, error) {

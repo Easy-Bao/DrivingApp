@@ -5,8 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger/src/features/active_ride/active_ride.dart';
-import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/chat/presentation/bloc/chat/chat_cubit.dart';
 import 'package:passenger/src/infrastructure/config/passenger_env_config.dart';
@@ -17,7 +15,6 @@ class const PassengerChatPage({
   this.userId,
   this.peerId,
   this.peerName,
-  required this.trackRepository,
   required this.chatRepositoryFactory,
   this.token,
 }) extends StatefulWidget {
@@ -25,7 +22,6 @@ class const PassengerChatPage({
   final String? userId;
   final String? peerId;
   final String? peerName;
-  final TrackRepository trackRepository;
   final ChatRepositoryFactory chatRepositoryFactory;
   final String? token;
 
@@ -38,41 +34,7 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
   final ScrollController _scrollCtrl = ScrollController();
   Timer? _typingStopTimer;
   bool _isTyping = false;
-  bool _isTripFinished = false;
-  bool _isResolvingChat = false;
-
   late ChatCubit _chatCubit;
-
-  Future<void> _checkTripStatus() async {
-    final rId = widget.roomId ?? '';
-    if (rId.isEmpty) return;
-    try {
-      RideSnapshot? ride;
-      (await widget.trackRepository.fetchRideResult(rId))
-          .fold((_) {}, (value) => ride = value);
-      if (ride?.isTerminal == true && mounted) {
-        setState(() => _isTripFinished = true);
-      }
-    } catch (error) {
-      debugPrint('Error checking trip status in chat screen: $error');
-    }
-  }
-
-  Future<void> _resolveChatRoom() async {
-    if (_isResolvingChat) return;
-
-    final chatRoomId = widget.roomId;
-    if (chatRoomId == null || chatRoomId.isEmpty) {
-      return;
-    }
-
-    setState(() => _isResolvingChat = true);
-    try {
-      await _chatCubit.resolveChatRoom(chatRoomId);
-    } finally {
-      if (mounted) setState(() => _isResolvingChat = false);
-    }
-  }
 
   final _quickReplies = [
     'Where are you?',
@@ -106,7 +68,6 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
       ),
     );
     unawaited(_connectChat(currentRoomId, currentUserId));
-    unawaited(_checkTripStatus());
   }
 
   Future<void> _connectChat(String roomId, String userId) async {
@@ -209,17 +170,7 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
         },
         builder: (context, state) {
           final chatHistoryMessages = state.messages;
-          final statusLabel = state.isRoomLocked
-              ? 'Resolved'
-              : state.isConnecting
-              ? 'Connecting...'
-              : state.isConnected
-              ? 'Connected'
-              : 'Offline';
-          final statusColor = state.isRoomLocked || state.isConnected
-              ? context.semanticColors.success
-              : context.colorScheme.error;
-          final canSendMessage = !state.isRoomLocked;
+          final canSendMessage = state.isConnected && !state.isRoomLocked;
 
           return Scaffold(
             backgroundColor: context.colorScheme.surface,
@@ -227,21 +178,6 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
               backgroundColor: context.colorScheme.surface,
               elevation: 0,
               scrolledUnderElevation: 0,
-              actions: [
-                if (_isTripFinished && !state.isRoomLocked)
-                  TextButton(
-                    onPressed: _isResolvingChat ? null : _resolveChatRoom,
-                    child: Text(
-                      _isResolvingChat ? 'Resolving...' : 'Resolve',
-                      style: TextStyle(
-                        color: _isResolvingChat
-                            ? context.colorScheme.onSurfaceVariant
-                            : context.colorScheme.error,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-              ],
               leading: Center(
                 child: IconButton(
                   onPressed: () => context.pop(),
@@ -255,73 +191,27 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                   ),
                 ),
               ),
-              title: Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: context.colorScheme.secondaryContainer,
-                      borderRadius: BorderRadius.circular(EasyRideRadius.md),
-                    ),
-                    child: Icon(
-                      LucideIcons.user,
-                      color: context.colorScheme.onSurface,
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.peerName ?? 'Driver',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: context.colorScheme.onSurface,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16,
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: BoxDecoration(
-                                color: statusColor,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              statusLabel,
-                              style: TextStyle(
-                                color: statusColor,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              title: Text(
+                widget.peerName ?? 'Driver',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: context.colorScheme.onSurface,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 17,
+                ),
               ),
             ),
             body: Column(
               children: [
                 Divider(height: 1, color: context.colorScheme.outlineVariant),
+                if (state.isRoomLocked && chatHistoryMessages.isNotEmpty)
+                  _buildClosedBanner(),
                 if (!state.isRoomLocked &&
                     state.errorMessage != null &&
                     !AppNetworkStatusScope.isUnavailableOf(context) &&
                     chatHistoryMessages.isNotEmpty)
                   _buildErrorBanner(state),
-                if (state.isRoomLocked && chatHistoryMessages.isNotEmpty)
-                  _buildResolvedBanner(state),
                 Expanded(
                   child: chatHistoryMessages.isEmpty && !state.isPeerTyping
                       ? _buildEmptyState(state)
@@ -347,7 +237,7 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                           },
                         ),
                 ),
-                if (canSendMessage)
+                if (canSendMessage && state.errorMessage == null)
                   SizedBox(
                     height: EasyRideSize.minimumTouchTarget,
                     child: ListView.separated(
@@ -396,103 +286,107 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                     ),
                   ),
                 const SizedBox(height: 8),
-                SafeArea(
-                  child: Container(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    decoration: BoxDecoration(
-                      color: context.colorScheme.surface,
-                      border: Border(
-                        top: BorderSide(
-                          color: context.colorScheme.outlineVariant.withValues(
-                            alpha: 0.5,
+                if (state.isRoomLocked)
+                  _buildEndedFooter(context)
+                else
+                  SafeArea(
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                      decoration: BoxDecoration(
+                        color: context.colorScheme.surface,
+                        border: Border(
+                          top: BorderSide(
+                            color: context.colorScheme.outlineVariant
+                                .withValues(alpha: 0.5),
                           ),
                         ),
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            height: 48,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              color:
-                                  context.colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(
-                                EasyRideRadius.lg,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              height: 48,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
                               ),
-                              border: Border.all(
-                                color: context.colorScheme.outlineVariant,
+                              decoration: BoxDecoration(
+                                color:
+                                    context.colorScheme.surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(
+                                  EasyRideRadius.lg,
+                                ),
+                                border: Border.all(
+                                  color: context.colorScheme.outlineVariant,
+                                ),
                               ),
-                            ),
-                            child: TextField(
-                              controller: _msgCtrl,
-                              readOnly: !canSendMessage,
-                              textInputAction: TextInputAction.send,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: context.colorScheme.onSurface,
-                              ),
-                              decoration: InputDecoration(
-                                isDense: true,
-                                filled: false,
-                                fillColor: context.colorScheme.surface
-                                    .withValues(alpha: 0),
-                                hintText: state.isRoomLocked
-                                    ? state.lockReasonMessage
-                                    : state.isConnected
-                                    ? 'Type a message...'
-                                    : 'Reconnect to send a message',
-                                hintStyle: TextStyle(
-                                  color: context.colorScheme.onSurface
-                                      .withValues(alpha: 0.4),
+                              child: TextField(
+                                controller: _msgCtrl,
+                                readOnly: !canSendMessage,
+                                textInputAction: TextInputAction.send,
+                                style: TextStyle(
                                   fontSize: 14,
+                                  color: context.colorScheme.onSurface,
                                 ),
-                                border: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                disabledBorder: InputBorder.none,
-                                errorBorder: InputBorder.none,
-                                focusedErrorBorder: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 11,
+                                decoration: InputDecoration(
+                                  isDense: true,
+                                  filled: false,
+                                  fillColor: context.colorScheme.surface
+                                      .withValues(alpha: 0),
+                                  hintText: state.isRoomLocked
+                                      ? state.lockReasonMessage
+                                      : state.isConnected
+                                      ? 'Type a message...'
+                                      : 'Reconnect to send a message',
+                                  hintStyle: TextStyle(
+                                    color: context.colorScheme.onSurface
+                                        .withValues(alpha: 0.4),
+                                    fontSize: 14,
+                                  ),
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  disabledBorder: InputBorder.none,
+                                  errorBorder: InputBorder.none,
+                                  focusedErrorBorder: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 11,
+                                  ),
                                 ),
+                                onChanged: _onDraftChanged,
+                                onSubmitted: (_) =>
+                                    unawaited(_send(_msgCtrl.text)),
                               ),
-                              onChanged: _onDraftChanged,
-                              onSubmitted: (_) =>
-                                  unawaited(_send(_msgCtrl.text)),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: canSendMessage
-                                ? context.colorScheme.onSurface
-                                : context.colorScheme.surfaceContainerHighest,
-                            shape: BoxShape.circle,
-                          ),
-                          child: IconButton(
-                            icon: const Icon(
-                              LucideIcons.send_horizontal,
-                              size: 20,
+                          const SizedBox(width: 12),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: canSendMessage
+                                  ? context.colorScheme.onSurface
+                                  : context.colorScheme.surfaceContainerHighest,
+                              shape: BoxShape.circle,
                             ),
-                            constraints: const BoxConstraints(
-                              minWidth: EasyRideSize.minimumTouchTarget,
-                              minHeight: EasyRideSize.minimumTouchTarget,
+                            child: IconButton(
+                              icon: const Icon(
+                                LucideIcons.send_horizontal,
+                                size: 20,
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: EasyRideSize.minimumTouchTarget,
+                                minHeight: EasyRideSize.minimumTouchTarget,
+                              ),
+                              color: !canSendMessage
+                                  ? context.colorScheme.onSurfaceVariant
+                                  : context.colorScheme.onPrimary,
+                              onPressed: !canSendMessage
+                                  ? null
+                                  : () => unawaited(_send(_msgCtrl.text)),
                             ),
-                            color: !canSendMessage
-                                ? context.colorScheme.onSurfaceVariant
-                                : context.colorScheme.onPrimary,
-                            onPressed: !canSendMessage
-                                ? null
-                                : () => unawaited(_send(_msgCtrl.text)),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           );
@@ -501,9 +395,33 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
     );
   }
 
+  Widget _buildEndedFooter(BuildContext context) {
+    return SafeArea(
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: context.colorScheme.surface,
+          border: Border(
+            top: BorderSide(
+              color: context.colorScheme.outlineVariant.withValues(alpha: 0.3),
+            ),
+          ),
+        ),
+        child: Text(
+          'This conversation has ended',
+          textAlign: TextAlign.center,
+          style: context.textStyles.bodyMedium?.copyWith(
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildEmptyState(ChatState state) {
     if (state.isRoomLocked) {
-      return _buildResolvedEmptyState(state);
+      return _buildClosedEmptyState();
     }
     if (state.isConnecting) {
       return const Center(child: CircularProgressIndicator());
@@ -516,18 +434,10 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                LucideIcons.message_circle_off,
-                color: context.colorScheme.error,
-                size: 32,
-              ),
-              const SizedBox(height: 12),
               Text(
                 state.errorMessage!,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: context.colorScheme.onSurface.withValues(alpha: 0.65),
-                ),
+                style: TextStyle(color: context.colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: 16),
               OutlinedButton(
@@ -541,50 +451,35 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
     }
     return Center(
       child: Text(
-        'No messages yet. Start the conversation.',
+        'No messages yet',
         style: TextStyle(color: context.colorScheme.onSurfaceVariant),
       ),
     );
   }
 
-  Widget _buildResolvedBanner(ChatState state) {
+  Widget _buildClosedBanner() {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: context.colorScheme.secondaryContainer.withValues(alpha: 0.45),
+        color: context.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(EasyRideRadius.md),
-        border: Border.all(
-          color: context.semanticColors.success.withValues(alpha: 0.25),
-        ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            LucideIcons.circle_check,
-            color: context.semanticColors.success,
-            size: 20,
+          Text(
+            'Chat is closed for this trip',
+            style: context.textStyles.bodyMedium?.copyWith(
+              color: context.colorScheme.onSurface,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Chat resolved',
-                  style: TextStyle(
-                    color: context.colorScheme.onSurface,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                Text(
-                  state.lockReasonMessage,
-                  style: TextStyle(
-                    color: context.colorScheme.onSurface.withValues(alpha: 0.6),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
+          const SizedBox(height: 4),
+          Text(
+            'Messages are available during active trips and up to 24 hours after completion.',
+            style: context.textStyles.bodySmall?.copyWith(
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -592,33 +487,26 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
     );
   }
 
-  Widget _buildResolvedEmptyState(ChatState state) {
+  Widget _buildClosedEmptyState() {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              LucideIcons.circle_check,
-              color: context.semanticColors.success,
-              size: 36,
-            ),
-            const SizedBox(height: 12),
             Text(
-              'Chat resolved',
-              style: TextStyle(
+              'Chat is closed for this trip',
+              style: context.textStyles.titleMedium?.copyWith(
                 color: context.colorScheme.onSurface,
-                fontWeight: FontWeight.w800,
-                fontSize: 16,
+                fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 6),
             Text(
-              state.lockReasonMessage,
+              'Messages are available during active trips and up to 24 hours after completion.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: context.colorScheme.onSurface.withValues(alpha: 0.6),
+              style: context.textStyles.bodyMedium?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -643,12 +531,6 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
       ),
       child: Row(
         children: [
-          Icon(
-            LucideIcons.circle_alert,
-            color: context.colorScheme.error,
-            size: 20,
-          ),
-          const SizedBox(width: 10),
           Expanded(
             child: Text(
               state.errorMessage!,

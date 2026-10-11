@@ -77,7 +77,7 @@ final class ChatRepositoryImpl({
       if (response.statusCode == 200 || response.statusCode == 201) {
         return const Ok(null);
       }
-      if (response.statusCode == 423) {
+      if (_isClosedStatusCode(response.statusCode)) {
         return const Err(ChatRoomLockedFailure());
       }
       return Err(
@@ -87,9 +87,6 @@ final class ChatRepositoryImpl({
         ),
       );
     } on DioException catch (error) {
-      if (error.response?.statusCode == 423) {
-        return const Err(ChatRoomLockedFailure());
-      }
       return Err(_mapChatFailure(error, 'Unable to initialize chat room.'));
     } catch (error) {
       return Err(_mapChatFailure(error, 'Unable to initialize chat room.'));
@@ -139,30 +136,22 @@ final class ChatRepositoryImpl({
         '/api/v1/chat/rooms/${Uri.encodeComponent(roomId)}/messages',
       );
 
-      if (response.statusCode != 200) return const Ok([]);
+      if (response.statusCode != 200) {
+        if (_isClosedStatusCode(response.statusCode)) {
+          return const Err(ChatRoomLockedFailure());
+        }
+        return Err(
+          ServerFailure.withStatusCode(
+            'Unable to load chat history.',
+            response.statusCode ?? 500,
+          ),
+        );
+      }
       final dataMap = decodeObjectMap(response.data);
       final rawMessages = dataMap['messages'] ?? dataMap['data'] ?? const [];
       return Ok(_decodeMessages(rawMessages));
     } catch (error) {
       return Err(_mapChatFailure(error, 'Unable to load chat history.'));
-    }
-  }
-
-  @override
-  Future<Result<void, Failure>> resolveChatRoom(String roomId) async {
-    try {
-      final response = await clientDio.post<void>(
-        '/api/v1/chat/rooms/${Uri.encodeComponent(roomId)}/resolve',
-      );
-      if (response.statusCode == 200) return const Ok(null);
-      return Err(
-        ServerFailure.withStatusCode(
-          'Unable to resolve chat room.',
-          response.statusCode ?? 500,
-        ),
-      );
-    } catch (error) {
-      return Err(_mapChatFailure(error, 'Unable to resolve chat room.'));
     }
   }
 
@@ -247,6 +236,10 @@ final class ChatRepositoryImpl({
 }
 
 Failure _mapChatFailure(Object error, String message) {
+  if (error is DioException &&
+      _isClosedStatusCode(error.response?.statusCode)) {
+    return const ChatRoomLockedFailure();
+  }
   return FailureMapper.fromException(
     error,
     serverMessage: message,
@@ -255,3 +248,6 @@ Failure _mapChatFailure(Object error, String message) {
     timeoutMessage: 'Chat request timed out. Please try again.',
   );
 }
+
+bool _isClosedStatusCode(int? statusCode) =>
+    statusCode == 403 || statusCode == 423;

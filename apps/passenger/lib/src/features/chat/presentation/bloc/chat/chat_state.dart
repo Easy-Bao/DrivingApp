@@ -7,7 +7,7 @@ class const ChatState({
   this.isConnected = false,
   this.isRoomLocked = false,
   this.isPeerTyping = false,
-  this.lockReasonMessage = 'This chat room has been resolved.',
+  this.lockReasonMessage = 'Chat is closed for this trip.',
   this.errorMessage,
   this.lastDeliveredMessage,
 }) extends Equatable {

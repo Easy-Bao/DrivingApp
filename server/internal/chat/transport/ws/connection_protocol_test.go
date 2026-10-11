@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/chat/domain"
 	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	websockethub "github.com/Easy-Bao/DrivingApp/server/internal/platform/websocket"
@@ -20,6 +21,38 @@ type protocolAuthenticatorStub struct{ identity security.Identity }
 
 func (stub protocolAuthenticatorStub) VerifyIdentity(string) (security.Identity, error) {
 	return stub.identity, nil
+}
+
+func TestConnectionProtocolReportsClosedRideChatToTheSender(t *testing.T) {
+	protocol := NewConnectionProtocol(
+		protocolEventSinkStub{err: domain.ErrRoomLocked},
+		protocolRoomAuthorizerStub{allowed: true},
+	)
+	request, err := http.NewRequest(http.MethodGet, "/api/v1/chat/ws?roomId=ride-1", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	response, err := protocol.HandleMessage(
+		context.Background(),
+		request,
+		security.Identity{Subject: "7"},
+		true,
+		[]byte(`{"type":"message","text":"hello"}`),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var event struct {
+		Type   string `json:"type"`
+		Reason string `json:"reason"`
+	}
+	if err := json.Unmarshal(response, &event); err != nil {
+		t.Fatal(err)
+	}
+	if event.Type != "room_locked" || event.Reason != "Chat is closed for this trip." {
+		t.Fatalf("closed event = %#v", event)
+	}
 }
 
 type protocolRoomAuthorizerStub struct {

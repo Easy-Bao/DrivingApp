@@ -7,6 +7,7 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/chat/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/chat/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment"
 )
 
 type roomRepositoryStub struct {
@@ -30,9 +31,23 @@ func (*roomRepositoryStub) IsMember(context.Context, string, string) (bool, erro
 }
 func (*roomRepositoryStub) IsLocked(context.Context, string) (bool, error) { return false, nil }
 
+type assignmentLookupStub struct{}
+
+func (assignmentLookupStub) ForDriver(context.Context, string) ([]assignment.Assignment, error) {
+	return nil, nil
+}
+
+func (assignmentLookupStub) ForRide(_ context.Context, rideID string) (assignment.Assignment, bool, error) {
+	return assignment.Assignment{
+		RideID: rideID, PassengerID: "7", DriverID: "8", Status: "assigned",
+	}, true, nil
+}
+
 func TestEventHandlerKeepsServerIdentityAndTimestamp(t *testing.T) {
 	history := &roomRepositoryStub{}
-	handler := NewEventHandler(application.NewChatService(application.ChatServiceDependencies{History: history}))
+	service := application.NewChatService(application.ChatServiceDependencies{History: history}).
+		WithRideAssignmentLookup(assignmentLookupStub{})
+	handler := NewEventHandler(service)
 	before := time.Now().UTC()
 
 	err := handler.Handle(context.Background(), []byte(`{

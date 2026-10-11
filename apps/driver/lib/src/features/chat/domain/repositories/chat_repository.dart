@@ -22,8 +22,6 @@ abstract interface class ChatRepository {
 
   Future<Result<List<ChatMessage>, Failure>> fetchRoomMessages(String roomId);
 
-  Future<Result<void, Failure>> resolveChatRoom(String roomId);
-
   Future<void> dispose();
 
   Stream<Result<ChatEvent, Failure>> get chatEventsStream;
@@ -85,13 +83,6 @@ extension ChatRepositoryResultApi on ChatRepository {
     return _captureChatResult(
       () => fetchRoomMessages(roomId),
       message: 'Unable to load chat history right now.',
-    );
-  }
-
-  Future<Result<void, DomainFailure>> resolveChatRoomResult(String roomId) {
-    return _captureChatResult(
-      () => resolveChatRoom(roomId),
-      message: 'Unable to resolve chat room right now.',
     );
   }
 

@@ -9,7 +9,7 @@ import 'package:passenger/src/features/chat/presentation/bloc/chat/chat_cubit.da
 class MockChatRepository extends Mock implements ChatRepository {}
 
 void main() {
-  test('keeps a message pending while the connection is offline', () async {
+  test('does not send a message while the connection is offline', () async {
     final repository = MockChatRepository();
     when(() => repository.sendChatMessage('I have arrived'))
         .thenAnswer((_) async => const Ok(null));
@@ -19,6 +19,41 @@ void main() {
 
     final cubit = ChatCubit(chatRepository: repository, currentUserId: '7');
 
+    expect(await cubit.sendMessage('I have arrived'), isFalse);
+    expect(cubit.state.messages, isEmpty);
+    verifyNever(() => repository.sendChatMessage(any()));
+
+    await cubit.close();
+  });
+
+  test('sends a message only after the connection is established', () async {
+    final repository = MockChatRepository();
+    when(() => repository.connectionStateStream)
+        .thenAnswer((_) => const Stream<ChatConnectionState>.empty());
+    when(
+      () => repository.establishChatConnection(
+        roomId: 'ride-1',
+        chatUri: Uri.parse('wss://example.test/chat/ride-1'),
+        token: any(named: 'token'),
+      ),
+    ).thenAnswer((_) async => const Ok(null));
+    when(() => repository.chatEventsStream)
+        .thenAnswer((_) => const Stream.empty());
+    when(() => repository.fetchRoomMessages('ride-1'))
+        .thenAnswer((_) async => const Ok(<ChatMessage>[]));
+    when(() => repository.sendChatMessage('I have arrived'))
+        .thenAnswer((_) async => const Ok(null));
+    when(() => repository.terminateChatConnection())
+        .thenAnswer((_) async => const Ok(null));
+    when(() => repository.dispose()).thenAnswer((_) async {});
+
+    final cubit = ChatCubit(chatRepository: repository, currentUserId: '7');
+    await cubit.connectToChatRoom(
+      roomId: 'ride-1',
+      wsUri: Uri.parse('wss://example.test/chat/ride-1'),
+    );
+
+    expect(cubit.state.isConnected, isTrue);
     expect(await cubit.sendMessage('I have arrived'), isTrue);
     expect(cubit.state.messages.single.text, 'I have arrived');
     expect(
@@ -29,7 +64,7 @@ void main() {
     await cubit.close();
   });
 
-  test('shows a resolved state when the room is already locked', () async {
+  test('shows a closed state when room initialization is forbidden', () async {
     final repository = MockChatRepository();
     when(() => repository.terminateChatConnection())
         .thenAnswer((_) async => const Ok(null));
@@ -44,10 +79,7 @@ void main() {
     expect(initialized, isFalse);
     expect(cubit.state.isRoomLocked, isTrue);
     expect(cubit.state.isConnected, isFalse);
-    expect(
-      cubit.state.lockReasonMessage,
-      'This chat has already been resolved.',
-    );
+    expect(cubit.state.lockReasonMessage, 'Chat is closed for this trip.');
     expect(cubit.state.errorMessage, isNull);
 
     await cubit.close();
@@ -88,11 +120,9 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       expect(cubit.state.isRoomLocked, isTrue);
-      expect(
-        cubit.state.lockReasonMessage,
-        'This chat has already been resolved.',
-      );
+      expect(cubit.state.lockReasonMessage, 'Chat is closed for this trip.');
       expect(cubit.state.lockReasonMessage, isNot(contains('pq')));
+      verify(() => repository.terminateChatConnection()).called(1);
 
       await cubit.close();
     },

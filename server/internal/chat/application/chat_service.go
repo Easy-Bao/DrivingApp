@@ -74,6 +74,9 @@ func (service *ChatService) Relay(ctx context.Context, message domain.Message) e
 	if service.history == nil {
 		return domain.ErrRoomUnavailable
 	}
+	if _, err := service.communicationAssignment(ctx, message.RoomID, message.SenderID); err != nil {
+		return err
+	}
 	locked, err := service.history.IsLocked(ctx, message.RoomID)
 	if err != nil {
 		return fmt.Errorf("check chat room lock: %w", err)
@@ -215,10 +218,15 @@ func (service *ChatService) communicationAssignment(
 		service.log().WarnContext(ctx, "load ride assignment for chat authorization failed", "error", err)
 		return assignment.Assignment{}, domain.ErrRoomUnavailable
 	}
-	communicationNotAllowed := !rideAssignment.AllowsCommunication()
-	actorIsNotParticipant := actorID != rideAssignment.PassengerID && actorID != rideAssignment.DriverID
-	if !found || communicationNotAllowed || actorIsNotParticipant {
+	if !found {
 		return assignment.Assignment{}, domain.ErrForbidden
+	}
+	actorIsNotParticipant := actorID != rideAssignment.PassengerID && actorID != rideAssignment.DriverID
+	if actorIsNotParticipant {
+		return assignment.Assignment{}, domain.ErrForbidden
+	}
+	if !rideAssignment.AllowsCommunication() {
+		return assignment.Assignment{}, domain.ErrRoomLocked
 	}
 	return rideAssignment, nil
 }
@@ -260,7 +268,7 @@ func (service *ChatService) CanAccessRoom(ctx context.Context, roomID, userID st
 		return false, domain.ErrRoomUnavailable
 	}
 	if _, err := service.communicationAssignment(ctx, roomID, userID); err != nil {
-		if errors.Is(err, domain.ErrForbidden) {
+		if errors.Is(err, domain.ErrForbidden) || errors.Is(err, domain.ErrRoomLocked) {
 			return false, nil
 		}
 		return false, err

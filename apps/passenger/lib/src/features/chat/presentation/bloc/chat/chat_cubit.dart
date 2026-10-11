@@ -28,24 +28,7 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
     );
     return result.fold((failure) {
       if (!isClosed) {
-        if (failure is ChatRoomLockedFailure) {
-          emit(
-            state.copyWith(
-              isConnecting: false,
-              isConnected: false,
-              isRoomLocked: true,
-              lockReasonMessage: ErrorHandler.getErrorMessage(failure),
-              errorMessage: null,
-            ),
-          );
-        } else {
-          emit(
-            state.copyWith(
-              isConnecting: false,
-              errorMessage: ErrorHandler.getErrorMessage(failure),
-            ),
-          );
-        }
+        _handleChatFailure(failure);
       }
       return false;
     }, (_) => true);
@@ -75,21 +58,10 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
         token: token,
       );
 
-      connResult.fold(
-        (failure) {
-          emit(
-            state.copyWith(
-              isConnecting: false,
-              isConnected: false,
-              errorMessage: ErrorHandler.getErrorMessage(failure),
-            ),
-          );
-        },
-        (_) {
-          emit(state.copyWith(isConnecting: false, isConnected: true));
-          _requestHistory(roomId);
-        },
-      );
+      connResult.fold(_handleChatFailure, (_) {
+        emit(state.copyWith(isConnecting: false, isConnected: true));
+        _requestHistory(roomId);
+      });
     } catch (error, stackTrace) {
       if (isClosed) return;
       emit(
@@ -106,9 +78,7 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
     final result = await _chatRepository.fetchRoomMessagesResult(roomId);
     if (isClosed) return;
     result.fold(
-      (failure) => emit(
-        state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)),
-      ),
+      _handleChatFailure,
       (messages) => emit(
         state.copyWith(
           messages: _mergeIncomingMessages(state.messages, messages),
@@ -160,15 +130,8 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
               _updatePeerTyping(chatEvent.isTyping);
             } else if (chatEvent is ChatRoomLocked) {
               _peerTypingTimer?.cancel();
-              emit(
-                state.copyWith(
-                  isRoomLocked: true,
-                  isPeerTyping: false,
-                  lockReasonMessage: ErrorHandler.getErrorMessage(
-                    const ChatRoomLockedFailure(),
-                  ),
-                ),
-              );
+              _handleChatFailure(const ChatRoomLockedFailure());
+              unawaited(_chatRepository.terminateChatConnectionResult());
             }
           },
         );
@@ -185,7 +148,9 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
   }
 
   Future<bool> sendMessage(String text) async {
-    if (state.isRoomLocked || text.trim().isEmpty) return false;
+    if (!state.isConnected || state.isRoomLocked || text.trim().isEmpty) {
+      return false;
+    }
 
     final trimmed = text.trim();
     final pendingMessage = ChatMessage(
@@ -267,7 +232,9 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
           state.copyWith(
             isConnecting: false,
             isConnected: false,
-            errorMessage: _everConnected
+            errorMessage: state.isRoomLocked
+                ? null
+                : _everConnected
                 ? 'Connection lost. Reconnecting automatically...'
                 : state.errorMessage,
           ),
@@ -334,37 +301,23 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
     return message.identityKey;
   }
 
-  Future<void> resolveChatRoom(String roomId) async {
-    try {
-      final result = await _chatRepository.resolveChatRoomResult(roomId);
-      await result.fold(
-        (failure) async => emit(
-          state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)),
+  void _handleChatFailure(Failure failure) {
+    if (isClosed) return;
+    final message = ErrorHandler.getErrorMessage(failure);
+    if (failure is ChatRoomLockedFailure) {
+      emit(
+        state.copyWith(
+          isConnecting: false,
+          isConnected: false,
+          isRoomLocked: true,
+          isPeerTyping: false,
+          lockReasonMessage: message,
+          errorMessage: null,
         ),
-        (_) async {
-          await _chatSubscription?.cancel();
-          await _chatRepository.terminateChatConnectionResult();
-          if (!isClosed) {
-            emit(
-              state.copyWith(
-                isConnected: false,
-                isRoomLocked: true,
-                lockReasonMessage: 'This chat is closed.',
-                errorMessage: null,
-              ),
-            );
-          }
-        },
       );
-    } catch (error, stackTrace) {
-      if (!isClosed) {
-        emit(
-          state.copyWith(
-            errorMessage: ErrorHandler.getErrorMessage(error, stackTrace),
-          ),
-        );
-      }
+      return;
     }
+    emit(state.copyWith(isConnecting: false, errorMessage: message));
   }
 
   @override

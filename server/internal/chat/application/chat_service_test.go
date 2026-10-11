@@ -21,7 +21,13 @@ type chatHistory struct {
 }
 
 func newChatService(history chatports.RoomStore) *application.ChatService {
-	return application.NewChatService(application.ChatServiceDependencies{History: history})
+	return application.NewChatService(application.ChatServiceDependencies{History: history}).
+		WithRideAssignmentLookup(chatAssignmentLookup{
+			assignment: assignment.Assignment{
+				RideID: "ride-1", PassengerID: "7", DriverID: "8", Status: "assigned",
+			},
+			found: true,
+		})
 }
 
 type chatAssignmentLookup struct {
@@ -152,7 +158,7 @@ func TestChatRelayRejectsResolvedRoom(t *testing.T) {
 
 	err := service.Relay(context.Background(), domain.Message{
 		RoomID:   "ride-1",
-		SenderID: "driver-1",
+		SenderID: "8",
 		Body:     "This message must not be stored.",
 	})
 	if !errors.Is(err, domain.ErrRoomLocked) {
@@ -192,7 +198,13 @@ func TestChatRelayPublishesPassengerScopedNotification(t *testing.T) {
 	history := &chatHistory{passengerID: "passenger-1", driverID: "driver-1"}
 	events := &chatEventPublisher{}
 	service := newChatService(history).
-		WithEventPublisher(events)
+		WithEventPublisher(events).
+		WithRideAssignmentLookup(chatAssignmentLookup{
+			assignment: assignment.Assignment{
+				RideID: "ride-1", PassengerID: "passenger-1", DriverID: "driver-1", Status: "assigned",
+			},
+			found: true,
+		})
 
 	if err := service.Relay(context.Background(), domain.Message{
 		RoomID:    "ride-1",
@@ -215,6 +227,29 @@ func TestChatRelayPublishesPassengerScopedNotification(t *testing.T) {
 	}
 	if payload["sender_id"] != "driver-1" || payload["text"] != "I am at the pickup point." {
 		t.Fatalf("event payload = %#v", payload)
+	}
+}
+
+func TestChatRelayRejectsMessagesAfterTheRideContactWindowCloses(t *testing.T) {
+	history := &chatHistory{passengerID: "passenger-1", driverID: "driver-1"}
+	service := newChatService(history).
+		WithRideAssignmentLookup(chatAssignmentLookup{
+			assignment: assignment.Assignment{
+				RideID: "ride-1", PassengerID: "passenger-1", DriverID: "driver-1", Status: "completed",
+			},
+			found: true,
+		})
+
+	err := service.Relay(context.Background(), domain.Message{
+		RoomID:   "ride-1",
+		SenderID: "driver-1",
+		Body:     "This message is outside the contact window.",
+	})
+	if !errors.Is(err, domain.ErrRoomLocked) {
+		t.Fatalf("relay error = %v, want %v", err, domain.ErrRoomLocked)
+	}
+	if len(history.messages) != 0 {
+		t.Fatalf("closed room stored %d messages", len(history.messages))
 	}
 }
 

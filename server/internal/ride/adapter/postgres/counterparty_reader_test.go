@@ -27,13 +27,29 @@ func TestCounterpartyIdentityFromNativeRideUsesOptionalDriver(t *testing.T) {
 }
 
 func TestNativeRideContactAvailabilityHandlesCompletedTimestamp(t *testing.T) {
-	completedAt := time.Now().Add(-time.Hour).UTC().Format(time.RFC3339)
-	active, until := rideContactAvailabilityFromRide(domain.Ride{Status: "completed", CompletedAt: &completedAt})
-	if !active || until == nil {
-		t.Fatalf("recent native ride availability = %t/%v", active, until)
+	tests := []struct {
+		name string
+		age  time.Duration
+		want bool
+	}{
+		{name: "inside contact window", age: 23 * time.Hour, want: true},
+		{name: "outside contact window", age: 25 * time.Hour, want: false},
 	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			completedAt := time.Now().Add(-test.age).UTC().Format(time.RFC3339)
+			active, until := rideContactAvailabilityFromRide(domain.Ride{
+				Status: "completed", CompletedAt: &completedAt,
+			})
+			if active != test.want || until == nil {
+				t.Fatalf("native ride availability = %t/%v, want active %t", active, until, test.want)
+			}
+		})
+	}
+
 	invalid := "not-a-timestamp"
-	active, until = rideContactAvailabilityFromRide(domain.Ride{Status: "completed", CompletedAt: &invalid})
+	active, until := rideContactAvailabilityFromRide(domain.Ride{Status: "completed", CompletedAt: &invalid})
 	if active || until != nil {
 		t.Fatalf("invalid native ride availability = %t/%v", active, until)
 	}

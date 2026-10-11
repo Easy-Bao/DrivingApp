@@ -1,11 +1,9 @@
-import 'package:driver/src/features/active_ride/active_ride.dart';
 import 'package:driver/src/features/chat/chat.dart';
 
 import 'dart:async';
 
 import 'package:driver/src/infrastructure/config/driver_env_config.dart';
 import 'package:driver/src/features/chat/presentation/bloc/chat/chat_cubit.dart';
-import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -19,14 +17,12 @@ class const DriverChatPage({
   this.userId,
   this.peerId,
   this.peerName,
-  required this.rideRepository,
   required this.chatRepositoryFactory,
 }) extends StatefulWidget {
   final String? roomId;
   final String? userId;
   final String? peerId;
   final String? peerName;
-  final DriverRideRepository rideRepository;
   final ChatRepositoryFactory chatRepositoryFactory;
 
   @override
@@ -38,32 +34,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
   final ScrollController _scrollCtrl = ScrollController();
   Timer? _typingStopTimer;
   bool _isTyping = false;
-  bool _isTripFinished = false;
-
   late ChatCubit _chatCubit;
-
-  Future<void> _checkTripStatus() async {
-    final rId = widget.roomId ?? '';
-    if (rId.isEmpty) return;
-    try {
-      RideSnapshot? ride;
-      (await widget.rideRepository.fetchRideResult(rId))
-          .fold((_) {}, (value) => ride = value);
-      if (ride?.isTerminal == true && mounted) {
-        setState(() => _isTripFinished = true);
-      }
-    } catch (error) {
-      debugPrint('Error checking trip status in driver chat: $error');
-    }
-  }
-
-  Future<void> _resolveChatRoom() async {
-    final chatRoomId = widget.roomId;
-    if (chatRoomId == null || chatRoomId.isEmpty) {
-      return;
-    }
-    await _chatCubit.resolveChatRoom(chatRoomId);
-  }
 
   static const _quickReplies = [
     'I have arrived',
@@ -95,7 +66,6 @@ class _DriverChatPageState extends State<DriverChatPage> {
       ),
     );
     unawaited(_connectChat(currentRoomId, currentUserId));
-    unawaited(_checkTripStatus());
   }
 
   Future<void> _connectChat(String roomId, String userId) async {
@@ -194,17 +164,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
         },
         builder: (context, state) {
           final chatHistoryMessages = state.messages;
-          final statusLabel = state.isRoomLocked
-              ? 'Resolved'
-              : state.isConnecting
-              ? 'Connecting...'
-              : state.isConnected
-              ? 'Connected'
-              : 'Offline';
-          final statusColor = state.isRoomLocked || state.isConnected
-              ? context.semanticColors.success
-              : context.colorScheme.error;
-          final canSendMessage = !state.isRoomLocked;
+          final canSendMessage = state.isConnected && !state.isRoomLocked;
 
           return Scaffold(
             backgroundColor: context.colorScheme.surface,
@@ -212,19 +172,6 @@ class _DriverChatPageState extends State<DriverChatPage> {
               backgroundColor: context.colorScheme.surface,
               elevation: 0,
               scrolledUnderElevation: 0,
-              actions: [
-                if (_isTripFinished && !state.isRoomLocked)
-                  TextButton(
-                    onPressed: _resolveChatRoom,
-                    child: Text(
-                      'Resolve',
-                      style: TextStyle(
-                        color: context.colorScheme.error,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-              ],
               leading: IconButton(
                 style: IconButton.styleFrom(shape: const CircleBorder()),
                 icon: Icon(
@@ -233,96 +180,51 @@ class _DriverChatPageState extends State<DriverChatPage> {
                 ),
                 onPressed: () => context.pop(),
               ),
-              title: Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: context.colorScheme.secondaryContainer,
-                      borderRadius: BorderRadius.circular(EasyRideRadius.md),
-                    ),
-                    child: Icon(
-                      LucideIcons.user,
-                      color: context.colorScheme.onSurface,
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.peerName ?? 'Passenger',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: context.colorScheme.onSurface,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16,
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: BoxDecoration(
-                                color: state.isConnected
-                                    ? context.semanticColors.success
-                                    : statusColor,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              statusLabel,
-                              style: TextStyle(
-                                color: statusColor,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              title: Text(
+                widget.peerName ?? 'Passenger',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: context.colorScheme.onSurface,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 17,
+                ),
               ),
             ),
             body: Column(
               children: [
                 Divider(height: 1, color: context.colorScheme.outlineVariant),
-                if (state.isRoomLocked ||
-                    (state.errorMessage != null &&
-                        !AppNetworkStatusScope.isUnavailableOf(context)))
+                if (chatHistoryMessages.isNotEmpty &&
+                    (state.isRoomLocked ||
+                        (state.errorMessage != null &&
+                            !AppNetworkStatusScope.isUnavailableOf(context))))
                   _buildChatStatusBanner(state),
                 Expanded(
-                  child: ListView.builder(
-                    controller: _scrollCtrl,
-                    padding: const EdgeInsets.all(16),
-                    physics: const BouncingScrollPhysics(),
-                    itemCount:
-                        chatHistoryMessages.length +
-                        (state.isPeerTyping ? 1 : 0),
-                    itemBuilder: (ctx, i) {
-                      if (i == chatHistoryMessages.length &&
-                          state.isPeerTyping) {
-                        return _buildTyping();
-                      }
-                      return _buildBubble(
-                        chatHistoryMessages[i],
-                        animate: identical(
-                          state.lastDeliveredMessage,
-                          chatHistoryMessages[i],
+                  child: chatHistoryMessages.isEmpty && !state.isPeerTyping
+                      ? _buildEmptyState(state)
+                      : ListView.builder(
+                          controller: _scrollCtrl,
+                          padding: const EdgeInsets.all(16),
+                          physics: const BouncingScrollPhysics(),
+                          itemCount:
+                              chatHistoryMessages.length +
+                              (state.isPeerTyping ? 1 : 0),
+                          itemBuilder: (ctx, i) {
+                            if (i == chatHistoryMessages.length &&
+                                state.isPeerTyping) {
+                              return _buildTyping();
+                            }
+                            return _buildBubble(
+                              chatHistoryMessages[i],
+                              animate: identical(
+                                state.lastDeliveredMessage,
+                                chatHistoryMessages[i],
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
                 ),
-                if (canSendMessage)
+                if (canSendMessage && state.errorMessage == null)
                   SizedBox(
                     height: EasyRideSize.minimumTouchTarget,
                     child: ListView.separated(
@@ -371,102 +273,106 @@ class _DriverChatPageState extends State<DriverChatPage> {
                     ),
                   ),
                 const SizedBox(height: 8),
-                SafeArea(
-                  child: Container(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    decoration: BoxDecoration(
-                      color: context.colorScheme.surface,
-                      border: Border(
-                        top: BorderSide(
-                          color: context.colorScheme.outlineVariant.withValues(
-                            alpha: 0.5,
+                if (state.isRoomLocked)
+                  _buildEndedFooter(context)
+                else
+                  SafeArea(
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                      decoration: BoxDecoration(
+                        color: context.colorScheme.surface,
+                        border: Border(
+                          top: BorderSide(
+                            color: context.colorScheme.outlineVariant
+                                .withValues(alpha: 0.5),
                           ),
                         ),
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            height: 48,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              color:
-                                  context.colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(
-                                EasyRideRadius.lg,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              height: 48,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
                               ),
-                              border: Border.all(
-                                color: context.colorScheme.outlineVariant,
+                              decoration: BoxDecoration(
+                                color:
+                                    context.colorScheme.surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(
+                                  EasyRideRadius.lg,
+                                ),
+                                border: Border.all(
+                                  color: context.colorScheme.outlineVariant,
+                                ),
                               ),
-                            ),
-                            child: TextField(
-                              controller: _msgCtrl,
-                              readOnly: !canSendMessage,
-                              textInputAction: TextInputAction.send,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: context.colorScheme.onSurface,
-                              ),
-                              decoration: InputDecoration(
-                                isDense: true,
-                                filled: false,
-                                fillColor: context.colorScheme.surface
-                                    .withValues(alpha: 0),
-                                hintText: state.isRoomLocked
-                                    ? state.lockReasonMessage
-                                    : canSendMessage
-                                    ? 'Type a message...'
-                                    : 'Chat Is Unavailable Right Now.',
-                                hintStyle: TextStyle(
-                                  color: context.colorScheme.onSurfaceVariant,
+                              child: TextField(
+                                controller: _msgCtrl,
+                                readOnly: !canSendMessage,
+                                textInputAction: TextInputAction.send,
+                                style: TextStyle(
                                   fontSize: 14,
+                                  color: context.colorScheme.onSurface,
                                 ),
-                                border: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                disabledBorder: InputBorder.none,
-                                errorBorder: InputBorder.none,
-                                focusedErrorBorder: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 11,
+                                decoration: InputDecoration(
+                                  isDense: true,
+                                  filled: false,
+                                  fillColor: context.colorScheme.surface
+                                      .withValues(alpha: 0),
+                                  hintText: state.isRoomLocked
+                                      ? state.lockReasonMessage
+                                      : canSendMessage
+                                      ? 'Type a message...'
+                                      : 'Chat Is Unavailable Right Now.',
+                                  hintStyle: TextStyle(
+                                    color: context.colorScheme.onSurfaceVariant,
+                                    fontSize: 14,
+                                  ),
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  disabledBorder: InputBorder.none,
+                                  errorBorder: InputBorder.none,
+                                  focusedErrorBorder: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 11,
+                                  ),
                                 ),
+                                onChanged: _onDraftChanged,
+                                onSubmitted: (_) =>
+                                    unawaited(_send(_msgCtrl.text)),
                               ),
-                              onChanged: _onDraftChanged,
-                              onSubmitted: (_) =>
-                                  unawaited(_send(_msgCtrl.text)),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: !canSendMessage
-                                ? context.colorScheme.surfaceContainerHighest
-                                : context.colorScheme.onSurface,
-                            shape: BoxShape.circle,
-                          ),
-                          child: IconButton(
-                            constraints: const BoxConstraints(
-                              minWidth: EasyRideSize.minimumTouchTarget,
-                              minHeight: EasyRideSize.minimumTouchTarget,
+                          const SizedBox(width: 12),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: !canSendMessage
+                                  ? context.colorScheme.surfaceContainerHighest
+                                  : context.colorScheme.onSurface,
+                              shape: BoxShape.circle,
                             ),
-                            icon: const Icon(
-                              LucideIcons.send_horizontal,
-                              size: 20,
+                            child: IconButton(
+                              constraints: const BoxConstraints(
+                                minWidth: EasyRideSize.minimumTouchTarget,
+                                minHeight: EasyRideSize.minimumTouchTarget,
+                              ),
+                              icon: const Icon(
+                                LucideIcons.send_horizontal,
+                                size: 20,
+                              ),
+                              color: !canSendMessage
+                                  ? context.colorScheme.onSurfaceVariant
+                                  : context.colorScheme.onPrimary,
+                              onPressed: !canSendMessage
+                                  ? null
+                                  : () => unawaited(_send(_msgCtrl.text)),
                             ),
-                            color: !canSendMessage
-                                ? context.colorScheme.onSurfaceVariant
-                                : context.colorScheme.onPrimary,
-                            onPressed: !canSendMessage
-                                ? null
-                                : () => unawaited(_send(_msgCtrl.text)),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           );
@@ -475,43 +381,146 @@ class _DriverChatPageState extends State<DriverChatPage> {
     );
   }
 
+  Widget _buildEndedFooter(BuildContext context) {
+    return SafeArea(
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: context.colorScheme.surface,
+          border: Border(
+            top: BorderSide(
+              color: context.colorScheme.outlineVariant.withValues(alpha: 0.3),
+            ),
+          ),
+        ),
+        child: Text(
+          'This conversation has ended',
+          textAlign: TextAlign.center,
+          style: context.textStyles.bodyMedium?.copyWith(
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(ChatState state) {
+    if (state.isRoomLocked) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Chat is closed for this trip',
+                style: context.textStyles.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: context.colorScheme.onSurface,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Messages are available during active trips and up to 24 hours after completion.',
+                style: context.textStyles.bodyMedium?.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    if (state.isConnecting) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (state.errorMessage != null &&
+        !AppNetworkStatusScope.isUnavailableOf(context)) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                state.errorMessage!,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: context.colorScheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 16),
+              OutlinedButton(
+                onPressed: _retryConnection,
+                child: const Text('Try again'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return Center(
+      child: Text(
+        'No messages yet',
+        style: TextStyle(color: context.colorScheme.onSurfaceVariant),
+      ),
+    );
+  }
+
   Widget _buildChatStatusBanner(ChatState state) {
-    final isResolved = state.isRoomLocked;
-    final color = isResolved
-        ? context.semanticColors.success
-        : context.colorScheme.error;
-    final message = isResolved
-        ? state.lockReasonMessage
-        : state.errorMessage ?? 'Chat Is Unavailable Right Now.';
+    if (state.isRoomLocked) {
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: context.colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(EasyRideRadius.md),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Chat is closed for this trip',
+              style: context.textStyles.bodyMedium?.copyWith(
+                color: context.colorScheme.onSurface,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Messages are available during active trips and up to 24 hours after completion.',
+              style: context.textStyles.bodySmall?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
+        color: context.colorScheme.errorContainer,
         borderRadius: BorderRadius.circular(EasyRideRadius.md),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Row(
         children: [
-          Icon(
-            isResolved ? LucideIcons.circle_check : LucideIcons.info,
-            size: 18,
-            color: color,
-          ),
-          const SizedBox(width: 10),
           Expanded(
             child: Text(
-              isResolved ? 'Chat Resolved. $message' : message,
+              state.errorMessage ?? 'Chat is unavailable right now.',
               style: TextStyle(
-                color: color,
+                color: context.colorScheme.onErrorContainer,
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ),
-          if (!isResolved)
-            TextButton(onPressed: _retryConnection, child: const Text('Retry')),
+          TextButton(onPressed: _retryConnection, child: const Text('Retry')),
         ],
       ),
     );

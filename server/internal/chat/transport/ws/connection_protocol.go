@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/chat/domain"
 	events "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	websockethub "github.com/Easy-Bao/DrivingApp/server/internal/platform/websocket"
@@ -96,6 +97,9 @@ func (protocol *ConnectionProtocol) HandleMessage(
 		return []byte(`{"error":"event rejected"}`), nil
 	}
 	if err := protocol.sink.Handle(ctx, enriched); err != nil {
+		if errors.Is(err, domain.ErrRoomLocked) {
+			return []byte(`{"type":"room_locked","reason":"Chat is closed for this trip."}`), nil
+		}
 		return []byte(`{"error":"event rejected"}`), nil
 	}
 	return nil, nil

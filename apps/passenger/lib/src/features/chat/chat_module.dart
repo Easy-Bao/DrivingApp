@@ -3,7 +3,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/chat/chat_routes.dart';
 import 'package:passenger/src/features/chat/presentation/view/passenger_chat_page.dart';
@@ -38,7 +37,6 @@ class ChatModule._() {
           peerId: _asNonEmptyString(extra['peerId']),
           token: _asNonEmptyString(extra['token']),
           peerName: _asNonEmptyString(extra['peerName']),
-          trackRepository: Modular.get<TrackRepository>(),
           chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
         );
       },

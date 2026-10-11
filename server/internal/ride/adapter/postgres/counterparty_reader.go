@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-const _rideContactWindow = 48 * time.Hour
+const _rideContactWindow = 24 * time.Hour
 
 var _ ports.CounterpartyReader = (*RideRepository)(nil)
 

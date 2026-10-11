@@ -11,22 +11,29 @@ import (
 )
 
 func TestCompletedRideCommunicationWindow(t *testing.T) {
-	driverID := 42
-	recent := time.Now().Add(-time.Hour).UTC().Format(time.RFC3339)
-	expired := time.Now().Add(-49 * time.Hour).UTC().Format(time.RFC3339)
-
-	recentAssignment, found := fromRide(ridedomain.Ride{
-		ID: 303, PassengerID: 99, DriverID: &driverID, Status: "completed", CompletedAt: &recent,
-	})
-	if !found || !recentAssignment.AllowsCommunication() {
-		t.Fatalf("recent assignment = %#v, found = %t", recentAssignment, found)
+	tests := []struct {
+		name string
+		age  time.Duration
+		want bool
+	}{
+		{name: "inside contact window", age: 23 * time.Hour, want: true},
+		{name: "outside contact window", age: 25 * time.Hour, want: false},
+		{name: "future completion", age: -time.Hour, want: false},
 	}
 
-	expiredAssignment, found := fromRide(ridedomain.Ride{
-		ID: 304, PassengerID: 99, DriverID: &driverID, Status: "completed", CompletedAt: &expired,
-	})
-	if !found || expiredAssignment.AllowsCommunication() {
-		t.Fatalf("expired assignment = %#v, found = %t", expiredAssignment, found)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			driverID := 42
+			completedAt := time.Now().Add(-test.age).UTC().Format(time.RFC3339)
+			ride := ridedomain.Ride{
+				ID: 303, PassengerID: 99, DriverID: &driverID,
+				Status: "completed", CompletedAt: &completedAt,
+			}
+			got, found := fromRide(ride)
+			if !found || got.AllowsCommunication() != test.want {
+				t.Fatalf("assignment = %#v, found = %t, want communication %t", got, found, test.want)
+			}
+		})
 	}
 }
 

@@ -53,6 +53,61 @@ class FakeChatRemoteDataSource implements ChatRemoteDataSource {
 }
 
 void main() {
+  for (final statusCode in [403, 423]) {
+    test(
+      'maps HTTP $statusCode room initialization to a closed chat',
+      () async {
+        final dio = Dio(BaseOptions(baseUrl: 'http://localhost'))
+          ..httpClientAdapter = _StubHttpClientAdapter(
+            (_) => ResponseBody.fromString(
+              '{}',
+              statusCode,
+              headers: {
+                Headers.contentTypeHeader: [Headers.jsonContentType],
+              },
+            ),
+          );
+        final repository = ChatRepositoryImpl(
+          remoteDataSource: FakeChatRemoteDataSource(),
+          currentUserId: '7',
+          clientDio: dio,
+        );
+
+        final result = await repository.initializeChatRoom(roomId: '303');
+
+        result.fold(
+          (failure) => expect(failure, isA<ChatRoomLockedFailure>()),
+          (_) => fail('Expected the closed chat failure.'),
+        );
+      },
+    );
+
+    test('maps HTTP $statusCode message history to a closed chat', () async {
+      final dio = Dio(BaseOptions(baseUrl: 'http://localhost'))
+        ..httpClientAdapter = _StubHttpClientAdapter(
+          (_) => ResponseBody.fromString(
+            '{}',
+            statusCode,
+            headers: {
+              Headers.contentTypeHeader: [Headers.jsonContentType],
+            },
+          ),
+        );
+      final repository = ChatRepositoryImpl(
+        remoteDataSource: FakeChatRemoteDataSource(),
+        currentUserId: '7',
+        clientDio: dio,
+      );
+
+      final result = await repository.fetchRoomMessages('303');
+
+      result.fold(
+        (failure) => expect(failure, isA<ChatRoomLockedFailure>()),
+        (_) => fail('Expected the closed chat failure.'),
+      );
+    });
+  }
+
   test('opens a chat room with only the authoritative ride id', () async {
     RequestOptions? capturedRequest;
     final dio = Dio(BaseOptions(baseUrl: 'http://localhost'))

@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	_chatRoomTTL       = 48 * time.Hour
+	_chatRoomTTL       = 24 * time.Hour
 	_maxHistoryEntries = 100
 )
 
@@ -32,7 +32,7 @@ func (repository *ChatHistoryStore) CreateRoom(ctx context.Context, roomID, pass
 	if err := repository.validate(); err != nil {
 		return err
 	}
-	// A room is a fixed 48-hour conversation window. Re-opening the same ride
+	// A room is a fixed 24-hour conversation window. Re-opening the same ride
 	// must not reset its lock state or extend its expiry.
 	exists, err := repository.client.Exists(ctx, roomKey(roomID)).Result()
 	if err != nil {
