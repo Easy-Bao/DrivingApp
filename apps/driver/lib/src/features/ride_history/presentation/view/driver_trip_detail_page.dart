@@ -20,6 +20,8 @@ class const DriverTripDetailPage({
 }
 
 class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
+  static const _passengerContactWindow = Duration(hours: 48);
+
   bool _isContactingPassenger = false;
   String? _chatFeedbackMessage;
 
@@ -39,8 +41,27 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
     return double.tryParse(driverValueAsString(value) ?? '');
   }
 
+  bool get _canContactPassenger {
+    final status = (driverValueAsString(widget.trip['status']) ?? '')
+        .toLowerCase();
+    if (status == 'assigned' ||
+        status == 'accepted' ||
+        status == 'arrived' ||
+        status == 'in_transit') {
+      return true;
+    }
+    if (status != 'completed') return false;
+
+    final completedAtValue = driverValueAsString(widget.trip['completed_at']);
+    if (completedAtValue == null) return false;
+    final completedAt = DateTime.tryParse(completedAtValue);
+    if (completedAt == null) return false;
+    final age = DateTime.now().toUtc().difference(completedAt.toUtc());
+    return !age.isNegative && age <= _passengerContactWindow;
+  }
+
   Future<void> _contactPassenger() async {
-    if (_isContactingPassenger) return;
+    if (_isContactingPassenger || !_canContactPassenger) return;
 
     final passengerId = driverValueAsString(widget.trip['passenger_id']);
     final tripId = driverValueAsString(widget.trip['id']);
@@ -116,6 +137,7 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
   Widget build(BuildContext context) {
     final status = (driverValueAsString(widget.trip['status']) ?? 'completed')
         .toLowerCase();
+    final canContactPassenger = _canContactPassenger;
     final isCompleted = status == 'completed';
     final isCanceled = status == 'canceled' || status == 'cancelled';
     final statusColor = isCompleted
@@ -217,9 +239,12 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                   ],
                   const SizedBox(height: 16),
                   FilledButton.icon(
+                    key: const ValueKey('driver-trip-contact-passenger'),
                     onPressed: _isContactingPassenger
                         ? null
-                        : _contactPassenger,
+                        : canContactPassenger
+                        ? _contactPassenger
+                        : null,
                     icon: _isContactingPassenger
                         ? SizedBox.square(
                             dimension: 18,
@@ -228,9 +253,16 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
                               color: context.colorScheme.onPrimary,
                             ),
                           )
-                        : const Icon(LucideIcons.message_square, size: 18),
+                        : Icon(
+                            canContactPassenger
+                                ? LucideIcons.message_square
+                                : LucideIcons.clock,
+                            size: 18,
+                          ),
                     label: Text(
-                      _isContactingPassenger
+                      !canContactPassenger
+                          ? 'Contact window closed'
+                          : _isContactingPassenger
                           ? 'Opening Chat...'
                           : 'Contact Passenger',
                     ),

@@ -21,6 +21,10 @@ void main() {
             'passenger_id': 7,
             'status': 'completed',
             'created_at': '2026-08-19T10:00:00Z',
+            'completed_at': DateTime.now()
+                .toUtc()
+                .subtract(const Duration(hours: 1))
+                .toIso8601String(),
             'pickup_name': 'Mountain View',
             'dropoff_name': 'Aikido of Mountain View',
             'ride_type': 'solo',
@@ -39,6 +43,15 @@ void main() {
 
     expect(find.text('Trip route'), findsOneWidget);
     expect(find.text('Passenger profile'), findsOneWidget);
+    expect(find.text('Contact Passenger'), findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.byKey(const ValueKey('driver-trip-contact-passenger')),
+          )
+          .onPressed,
+      isNotNull,
+    );
     expect(
       find.byKey(const ValueKey('driver-trip-route-dashes')),
       findsOneWidget,
@@ -68,6 +81,51 @@ void main() {
     expect(tester.widget<Text>(find.text('Solo')).textAlign, TextAlign.center);
     expect(find.text('RIDE TYPE'), findsNothing);
     expect(find.text('TOTAL FARE'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('closes passenger contact for cancelled or expired trips', (
+    tester,
+  ) async {
+    final closedTrips = [
+      <String, dynamic>{'status': 'cancelled'},
+      <String, dynamic>{
+        'status': 'completed',
+        'completed_at': DateTime.now()
+            .toUtc()
+            .subtract(const Duration(hours: 49))
+            .toIso8601String(),
+      },
+    ];
+
+    for (final trip in closedTrips) {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: EasyRideTheme.main,
+          home: DriverTripDetailPage(
+            sessionService: DriverSessionStore(),
+            trip: {
+              'id': 42,
+              'passenger_id': 7,
+              'created_at': '2026-08-19T10:00:00Z',
+              ...trip,
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Contact window closed'), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.byKey(const ValueKey('driver-trip-contact-passenger')),
+            )
+            .onPressed,
+        isNull,
+      );
+    }
+
     expect(tester.takeException(), isNull);
   });
 }
