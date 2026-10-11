@@ -8,7 +8,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 
 class const DriverDocumentUploadPage({super.key, this.pickPhoto, this.onBack})
     extends StatefulWidget {
@@ -23,34 +22,46 @@ class const DriverDocumentUploadPage({super.key, this.pickPhoto, this.onBack})
 class _DriverDocumentUploadPageState extends State<DriverDocumentUploadPage> {
   DriverDocumentType _type = DriverDocumentType.driverLicense;
   XFile? _draft;
+  Uint8List? _draftBytes;
   String? _draftError;
 
   Future<void> _choosePhoto() async {
-    final picked = widget.pickPhoto == null
-        ? await ImagePicker().pickImage(
-            source: ImageSource.camera,
-            maxWidth: 1800,
-            imageQuality: 90,
-          )
-        : await widget.pickPhoto!();
-    if (!mounted || picked == null) return;
-    setState(() {
-      _draft = picked;
-      _draftError = null;
-    });
-    BlocProvider.of<DriverDocumentUploadCubit>(context).reset();
+    try {
+      final picked = widget.pickPhoto == null
+          ? await ImagePicker().pickImage(
+              source: ImageSource.camera,
+              maxWidth: 1800,
+              imageQuality: 90,
+            )
+          : await widget.pickPhoto!();
+      if (!mounted || picked == null) return;
+      final bytes = await picked.readAsBytes();
+      if (!mounted) return;
+      setState(() {
+        _draft = picked;
+        _draftBytes = bytes;
+        _draftError = null;
+      });
+      BlocProvider.of<DriverDocumentUploadCubit>(context).reset();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _draft = null;
+        _draftBytes = null;
+        _draftError = 'The selected photo could not be loaded. Choose another.';
+      });
+    }
   }
 
   Future<void> _submit() async {
     final draft = _draft;
-    if (draft == null) return;
+    final bytes = _draftBytes;
+    if (draft == null || bytes == null) return;
     final contentType = _contentType(draft);
     if (contentType == null) {
       setState(() => _draftError = 'Choose a JPEG or PNG photo.');
       return;
     }
-    final bytes = await draft.readAsBytes();
-    if (!mounted) return;
     await BlocProvider.of<DriverDocumentUploadCubit>(context)
         .submit(type: _type, bytes: bytes, contentType: contentType);
   }
@@ -74,7 +85,10 @@ class _DriverDocumentUploadPageState extends State<DriverDocumentUploadPage> {
             ..showSnackBar(
               const SnackBar(content: Text('Document submitted for review.')),
             );
-          setState(() => _draft = null);
+          setState(() {
+            _draft = null;
+            _draftBytes = null;
+          });
         } else if (state.status == DriverDocumentUploadStatus.failed) {
           setState(() => _draftError = state.message);
         }
@@ -181,7 +195,8 @@ class _DriverDocumentUploadPageState extends State<DriverDocumentUploadPage> {
 
   Widget _buildPreview(BuildContext context) {
     final draft = _draft;
-    if (draft == null) {
+    final bytes = _draftBytes;
+    if (draft == null || bytes == null) {
       return Container(
         key: const ValueKey('driver-document-empty-preview'),
         height: 220,
@@ -199,45 +214,20 @@ class _DriverDocumentUploadPageState extends State<DriverDocumentUploadPage> {
         ),
       );
     }
-    return FutureBuilder<Uint8List>(
+    return ClipRRect(
       key: const ValueKey('driver-document-photo-preview'),
-      future: draft.readAsBytes(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return Skeletonizer.zone(
-            key: const ValueKey('driver-document-photo-loading-skeleton'),
-            child: Container(
-              height: 220,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: context.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-                border: Border.all(color: context.colorScheme.outlineVariant),
-              ),
-              child: const Bone.square(
-                size: 150,
-                borderRadius: BorderRadius.all(
-                  Radius.circular(EasyRideRadius.md),
-                ),
-              ),
-            ),
-          );
-        }
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-          child: Image.memory(
-            snapshot.data!,
-            height: 220,
-            fit: BoxFit.contain,
-            errorBuilder: (_, _, _) => Container(
-              height: 220,
-              alignment: Alignment.center,
-              color: context.colorScheme.surfaceContainerHighest,
-              child: const Text('Preview unavailable'),
-            ),
-          ),
-        );
-      },
+      borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+      child: Image.memory(
+        bytes,
+        height: 220,
+        fit: BoxFit.contain,
+        errorBuilder: (_, _, _) => Container(
+          height: 220,
+          alignment: Alignment.center,
+          color: context.colorScheme.surfaceContainerHighest,
+          child: const Text('Preview unavailable'),
+        ),
+      ),
     );
   }
 }

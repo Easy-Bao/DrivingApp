@@ -32,15 +32,26 @@ class _FakeDriverDocumentRepository implements DriverDocumentRepository {
   }
 }
 
+class _CountingXFile extends XFile {
+  _CountingXFile(Uint8List bytes)
+    : super.fromData(bytes, name: 'license.png', mimeType: 'image/png');
+
+  int readCount = 0;
+
+  @override
+  Future<Uint8List> readAsBytes() {
+    readCount++;
+    return super.readAsBytes();
+  }
+}
+
 void main() {
   testWidgets('previews a captured photo before upload', (tester) async {
     final repository = _FakeDriverDocumentRepository();
     final cubit = DriverDocumentUploadCubit(repository);
     addTearDown(cubit.close);
-    final photo = XFile.fromData(
+    final photo = _CountingXFile(
       Uint8List.fromList(<int>[0x89, 0x50, 0x4e, 0x47]),
-      name: 'license.png',
-      mimeType: 'image/png',
     );
 
     await tester.pumpWidget(
@@ -56,15 +67,19 @@ void main() {
     await tester.tap(
       find.byKey(const ValueKey('driver-document-choose-photo')),
     );
-    await tester.pump();
+    await tester.pumpAndSettle();
+    expect(photo.readCount, 1);
     expect(
       find.byKey(const ValueKey('driver-document-photo-preview')),
       findsOneWidget,
     );
     expect(repository.uploadCount, 0);
 
+    await tester.pump();
+    expect(photo.readCount, 1);
     await tester.tap(find.byKey(const ValueKey('driver-document-submit')));
     await tester.pumpAndSettle();
     expect(repository.uploadCount, 1);
+    expect(photo.readCount, 1);
   });
 }
