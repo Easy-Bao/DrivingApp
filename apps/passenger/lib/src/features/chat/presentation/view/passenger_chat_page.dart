@@ -176,7 +176,6 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
             backgroundColor: context.colorScheme.surface,
             appBar: AppBar(
               backgroundColor: context.colorScheme.surface,
-              elevation: 0,
               scrolledUnderElevation: 0,
               leading: Center(
                 child: IconButton(

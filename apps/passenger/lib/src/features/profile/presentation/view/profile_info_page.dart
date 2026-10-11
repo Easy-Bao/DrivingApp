@@ -228,7 +228,6 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
         child: Scaffold(
           appBar: AppBar(
             backgroundColor: context.canvasColor,
-            elevation: 0,
             scrolledUnderElevation: 0,
             leading: IconButton(
               onPressed: () => Navigator.of(context).maybePop(),

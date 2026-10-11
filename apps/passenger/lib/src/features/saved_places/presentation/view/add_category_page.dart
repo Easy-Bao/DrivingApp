@@ -215,7 +215,6 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
       backgroundColor: context.colorScheme.surface,
       appBar: AppBar(
         backgroundColor: context.colorScheme.surface,
-        elevation: 0,
         leading: IconButton(
           icon: Icon(LucideIcons.x, color: context.colorScheme.onSurface),
           onPressed: () => context.pop(),

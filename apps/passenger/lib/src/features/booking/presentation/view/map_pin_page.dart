@@ -276,8 +276,6 @@ class _MapPinPageState()
       return Scaffold(
         backgroundColor: context.colorScheme.surface,
         appBar: AppBar(
-          backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
-          elevation: 0,
           leading: Center(child: _buildTripBackButton(context, _popOnce)),
         ),
         body: Center(

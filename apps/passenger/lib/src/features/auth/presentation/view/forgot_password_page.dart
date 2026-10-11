@@ -59,8 +59,6 @@ class _ForgotPasswordPageContentState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
-        elevation: 0,
         leading: Center(
           child: IconButton(
             onPressed: () => context.pop(),

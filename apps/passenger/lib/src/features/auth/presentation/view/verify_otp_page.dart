@@ -77,8 +77,6 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
-        elevation: 0,
         leading: Center(
           child: IconButton(
             onPressed: () => context.pop(),
