@@ -41,7 +41,7 @@ class DriverIncomingRequestDialog extends StatefulWidget {
     return showDialog<void>(
       context: context,
       barrierDismissible: true,
-      barrierColor: Colors.black38,
+      barrierColor: context.colorScheme.scrim,
       builder: (dialogContext) => DriverIncomingRequestDialog(
         bid: bid,
         submittingBidId: submittingBidId,
