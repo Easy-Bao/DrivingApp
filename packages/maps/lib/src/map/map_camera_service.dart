@@ -14,6 +14,8 @@ class const AppMapController(this.native) {
 }
 
 class MapCameraService._() {
+  static const _defaultFitBoundsMaxZoom = 15.5;
+
   static Future<void> moveCamera(
     AppMapController controller,
     double lat,
@@ -106,7 +108,10 @@ class MapCameraService._() {
       ),
     );
 
-    final cameraToShow = _limitZoom(camera, maxZoom);
+    final cameraToShow = _limitZoom(
+      camera,
+      maxZoom ?? _defaultFitBoundsMaxZoom,
+    );
 
     await traceTimelineStage(
       'maps.camera.fly_to_bounds',
