@@ -9,6 +9,7 @@ import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/in_transit/in_transit_complete_button.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/in_transit/in_transit_passenger_card.dart';
+import 'package:driver/src/features/active_ride/presentation/widgets/driver_active_ride_header.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_safety_report_sheet.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_emergency_button.dart';
 import 'package:driver/src/features/dashboard/dashboard_routes.dart';
@@ -320,32 +321,27 @@ class _InTransitPageState extends State<InTransitPage> {
                     ),
                   ),
                   SafeArea(
-                    child: Padding(
+                    child: DriverActiveRideHeader(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _buildTripBackButton(context, () => context.pop()),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              DriverEmergencyButton(
-                                onEmergencyStop: _emergencyStop,
-                                onEmergencyStopCompleted: () {
-                                  if (mounted) {
-                                    context.goNamed(DashboardRoutes.dashboard);
-                                  }
-                                },
-                              ),
-                              DriverSafetyReportButton(
-                                rideId: BlocProvider.of<RideFlowCubit>(context)
-                                    .activeRideId,
-                                rideRepository: widget.rideRepository,
-                              ),
-                            ],
-                          ),
-                        ],
+                      backButton: _buildTripBackButton(
+                        context,
+                        () => context.pop(),
                       ),
+                      actions: [
+                        DriverEmergencyButton(
+                          onEmergencyStop: _emergencyStop,
+                          onEmergencyStopCompleted: () {
+                            if (mounted) {
+                              context.goNamed(DashboardRoutes.dashboard);
+                            }
+                          },
+                        ),
+                        DriverSafetyReportButton(
+                          rideId: BlocProvider.of<RideFlowCubit>(context)
+                              .activeRideId,
+                          rideRepository: widget.rideRepository,
+                        ),
+                      ],
                     ),
                   ),
                   Align(
