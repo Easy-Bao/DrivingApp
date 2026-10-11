@@ -583,9 +583,13 @@ class MapAnnotationService._() {
     try {
       final owner = _annotationManagerOwners[manager];
       if (owner != null) {
-        await owner.annotations.removeAnnotationManager(manager);
-        _annotationManagerOwners[manager] = null;
-        return;
+        try {
+          await owner.annotations.removeAnnotationManager(manager);
+          _annotationManagerOwners[manager] = null;
+          return;
+        } catch (error) {
+          debugPrint('Error removing annotation manager: $error');
+        }
       }
 
       switch (manager) {
