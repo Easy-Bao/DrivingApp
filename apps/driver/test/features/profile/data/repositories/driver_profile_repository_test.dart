@@ -176,4 +176,79 @@ void main() {
       ),
     );
   });
+
+  test('sends only the changed vehicle field in a profile patch', () async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = await SharedPreferences.getInstance();
+    final profileDataSource = _MockProfileDataSource();
+    when(
+      () => profileDataSource.updateProfile(
+        data: any<Map<String, dynamic>>(named: 'data'),
+      ),
+    ).thenAnswer((_) async => const {'plate_number': 'XYZ-789'});
+
+    final repository = DriverProfileRepositoryImpl(
+      profileDataSource: profileDataSource,
+      sessionService: _MockSessionService(),
+      preferences: preferences,
+    );
+    const currentAccount = DriverAccountSnapshot(
+      name: 'Driver',
+      vehicleType: 'Motorcycle',
+      plateNumber: 'ABC-123',
+    );
+
+    final result = await repository.updateAccount(
+      currentAccount: currentAccount,
+      name: currentAccount.name,
+      vehicleType: currentAccount.vehicleType,
+      plateNumber: 'XYZ-789',
+    );
+
+    result.fold((failure) => fail('profile update failed: $failure'), (
+      account,
+    ) {
+      expect(account.name, currentAccount.name);
+      expect(account.vehicleType, currentAccount.vehicleType);
+      expect(account.plateNumber, 'XYZ-789');
+    });
+    final updatePayload =
+        verify(
+              () => profileDataSource.updateProfile(
+                data: captureAny<Map<String, dynamic>>(named: 'data'),
+              ),
+            ).captured.single
+            as Map<String, dynamic>;
+    expect(updatePayload, {'plate_number': 'XYZ-789'});
+  });
+
+  test('skips a profile patch when no account fields changed', () async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = await SharedPreferences.getInstance();
+    final profileDataSource = _MockProfileDataSource();
+    final repository = DriverProfileRepositoryImpl(
+      profileDataSource: profileDataSource,
+      sessionService: _MockSessionService(),
+      preferences: preferences,
+    );
+    const currentAccount = DriverAccountSnapshot(
+      name: 'Driver',
+      vehicleType: 'Motorcycle',
+      plateNumber: 'ABC-123',
+    );
+
+    final result = await repository.updateAccount(
+      currentAccount: currentAccount,
+      name: currentAccount.name,
+      vehicleType: currentAccount.vehicleType,
+      plateNumber: currentAccount.plateNumber,
+    );
+
+    expect(result.fold((_) => null, (account) => account), currentAccount);
+    verifyNever(
+      () => profileDataSource.updateProfile(
+        data: any<Map<String, dynamic>>(named: 'data'),
+      ),
+    );
+  });
 }

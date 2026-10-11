@@ -90,8 +90,10 @@ final class DriverProfileRepositoryImpl({
       final response = await _profileDataSource.updateProfile(
         data: {
           if (nameChanged) 'name': normalizedName,
-          if (vehicleChanged) 'vehicle_type': normalizedVehicleType,
-          if (vehicleChanged) 'plate_number': normalizedPlateNumber,
+          if (normalizedVehicleType != currentAccount.vehicleType.trim())
+            'vehicle_type': normalizedVehicleType,
+          if (normalizedPlateNumber != currentAccount.plateNumber.trim())
+            'plate_number': normalizedPlateNumber,
         },
       );
       final profile = ProfileModel.fromJson(response);
