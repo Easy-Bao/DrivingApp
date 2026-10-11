@@ -90,10 +90,7 @@ class _SigninPageContentState extends State<_SigninPageContent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: const EasyRideAuthBrand(),
-      ),
+      appBar: AppBar(centerTitle: true, title: const EasyRideAuthBrand()),
       body: SafeArea(
         child: BlocConsumer<SignInBloc, SignInState>(
           listener: (context, state) {
