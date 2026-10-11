@@ -19,7 +19,6 @@ import 'package:passenger/src/features/active_ride/presentation/widgets/active_t
 import 'package:passenger/src/features/active_ride/presentation/widgets/passenger_emergency_button.dart';
 import 'package:passenger/src/features/active_ride/presentation/widgets/track_driver_panel.dart';
 import 'package:passenger/src/features/active_ride/presentation/widgets/trip_cancellation_dialog.dart';
-import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/chat/chat_routes.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
@@ -49,7 +48,7 @@ class const TrackDriverPage({
   required this.sessionService,
   required this.lifecycleCoordinator,
   required this.liveMapBloc,
-  required this.bookingBloc,
+  required this.onRideTerminated,
   this.realtimeClient,
 }) extends StatefulWidget {
   final RideSnapshot ride;
@@ -58,7 +57,7 @@ class const TrackDriverPage({
   final PassengerSessionStore sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;
   final LiveMapBloc liveMapBloc;
-  final BookingBloc bookingBloc;
+  final VoidCallback onRideTerminated;
   final RealtimeWebSocketClient? realtimeClient;
 
   @override
@@ -522,7 +521,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
           case TripCompleted(:final driverId, :final driverName):
             if (_hasHandledTerminalState) return;
             _hasHandledTerminalState = true;
-            widget.bookingBloc.add(const ResetBookingEvent());
+            widget.onRideTerminated();
             context.pushReplacementNamed(
               RideHistoryRoutes.passengerPayment,
               extra: widget.ride.copyWith(
@@ -533,7 +532,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
           case RideFailed():
             if (_hasHandledTerminalState) return;
             _hasHandledTerminalState = true;
-            widget.bookingBloc.add(const ResetBookingEvent());
+            widget.onRideTerminated();
             if (mounted) {
               context.goNamed(HomeRoutes.home);
             }

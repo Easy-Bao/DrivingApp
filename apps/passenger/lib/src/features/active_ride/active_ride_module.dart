@@ -14,7 +14,6 @@ import 'package:passenger/src/features/active_ride/presentation/bloc/track_drive
 import 'package:passenger/src/features/active_ride/presentation/view/driver_matched_page.dart';
 import 'package:passenger/src/features/active_ride/presentation/view/track_driver_page.dart';
 import 'package:passenger/src/features/active_ride/presentation/view/track_driver_page_loader.dart';
-import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
@@ -44,7 +43,9 @@ class ActiveRideModule._() {
       );
   }
 
-  static List<ModularRoute> routes = [
+  static List<ModularRoute> routes({
+    required VoidCallback onRideTerminated,
+  }) => [
     ChildRoute(
       name: ActiveRideRoutes.driverMatched,
       ActiveRideRoutes.driverMatchedPath,
@@ -104,7 +105,7 @@ class ActiveRideModule._() {
             sessionService: Modular.get<PassengerSessionStore>(),
             lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
             liveMapBloc: Modular.get<LiveMapBloc>(),
-            bookingBloc: Modular.get<BookingBloc>(),
+            onRideTerminated: onRideTerminated,
             realtimeClient: Modular.get<RealtimeWebSocketClient>(),
           );
         }
@@ -115,7 +116,7 @@ class ActiveRideModule._() {
           sessionService: Modular.get<PassengerSessionStore>(),
           lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
           liveMapBloc: Modular.get<LiveMapBloc>(),
-          bookingBloc: Modular.get<BookingBloc>(),
+          onRideTerminated: onRideTerminated,
           realtimeClient: Modular.get<RealtimeWebSocketClient>(),
         );
       },

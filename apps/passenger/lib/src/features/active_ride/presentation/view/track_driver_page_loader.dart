@@ -7,7 +7,6 @@ import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:passenger/src/features/active_ride/presentation/view/track_driver_page.dart';
-import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
@@ -20,7 +19,7 @@ class TrackDriverPageLoader extends StatefulWidget {
     required this.sessionService,
     required this.lifecycleCoordinator,
     required this.liveMapBloc,
-    required this.bookingBloc,
+    required this.onRideTerminated,
     this.rideId,
     this.realtimeClient,
   });
@@ -30,7 +29,7 @@ class TrackDriverPageLoader extends StatefulWidget {
   final PassengerSessionStore sessionService;
   final AppLifecycleCoordinator lifecycleCoordinator;
   final LiveMapBloc liveMapBloc;
-  final BookingBloc bookingBloc;
+  final VoidCallback onRideTerminated;
   final String? rideId;
   final RealtimeWebSocketClient? realtimeClient;
 
@@ -117,7 +116,7 @@ class _TrackDriverPageLoaderState extends State<TrackDriverPageLoader> {
       sessionService: widget.sessionService,
       lifecycleCoordinator: widget.lifecycleCoordinator,
       liveMapBloc: widget.liveMapBloc,
-      bookingBloc: widget.bookingBloc,
+      onRideTerminated: widget.onRideTerminated,
       realtimeClient: widget.realtimeClient,
     );
   }

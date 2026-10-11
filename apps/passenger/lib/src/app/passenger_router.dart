@@ -7,6 +7,7 @@ import 'package:passenger/src/app/navigation/passenger_navigation_shell.dart';
 import 'package:passenger/src/features/active_ride/active_ride_module.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/booking_module.dart';
+import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/chat/chat_module.dart';
 import 'package:passenger/src/features/driver_profile/driver_profile_module.dart';
 import 'package:passenger/src/features/home/home_module.dart';
@@ -23,7 +24,11 @@ class PassengerRouter extends Module {
   List<ModularRoute> get routes => <ModularRoute>[
     ...RideHistoryModule.routes,
     ...HomeModule.routes,
-    ...ActiveRideModule.routes,
+    ...ActiveRideModule.routes(
+      onRideTerminated: () {
+        Modular.get<BookingBloc>().add(const ResetBookingEvent());
+      },
+    ),
     ...BookingModule.routes,
     ...SavedPlacesModule.routes,
     ...ChatModule.routes,
