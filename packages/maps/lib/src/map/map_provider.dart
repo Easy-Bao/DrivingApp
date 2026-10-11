@@ -299,80 +299,16 @@ class MapProvider._() {
     bool showUserLocation = false,
     EdgeInsets? padding,
   }) {
-    return Builder(
-      builder: (context) {
-        AppMapController? mapController;
-        final styleUri = styleUriFor();
-
-        return mapbox.MapWidget(
-          key: ValueKey<String>(styleUri),
-          styleUri: styleUri,
-          viewport: mapbox.CameraViewportState(
-            center: mapbox.Point(
-              coordinates: mapbox.Position(longitude, latitude),
-            ),
-            zoom: zoom,
-          ),
-          onCameraChangeListener: (cameraChangedEventData) {
-            final currentController = mapController;
-            if (currentController != null) {
-              onCameraChanged?.call(currentController);
-            }
-          },
-          onMapIdleListener: (mapIdleEventData) {
-            final currentController = mapController;
-            if (currentController != null) {
-              onMapIdle?.call(currentController);
-            }
-          },
-          onMapCreated: (controller) {
-            unawaited(
-              controller.logo.updateSettings(
-                mapbox.LogoSettings(enabled: false),
-              ),
-            );
-            unawaited(
-              controller.attribution.updateSettings(
-                mapbox.AttributionSettings(enabled: false),
-              ),
-            );
-            unawaited(
-              controller.scaleBar.updateSettings(
-                mapbox.ScaleBarSettings(enabled: false),
-              ),
-            );
-
-            if (!interactive) {
-              unawaited(
-                controller.gestures.updateSettings(
-                  mapbox.GesturesSettings(
-                    scrollEnabled: false,
-                    rotateEnabled: false,
-                    pitchEnabled: false,
-                    doubleTapToZoomInEnabled: false,
-                    quickZoomEnabled: false,
-                  ),
-                ),
-              );
-            }
-
-            final currentController = AppMapController(controller);
-            mapController = currentController;
-            if (showUserLocation) {
-              unawaited(
-                controller.location.updateSettings(
-                  mapbox.LocationComponentSettings(
-                    enabled: true,
-                    pulsingEnabled: false,
-                    showAccuracyRing: false,
-                  ),
-                ),
-              );
-            }
-            onMapCreated?.call(currentController);
-          },
-        );
-      },
+    return _AppMapView(
+      latitude: latitude,
+      longitude: longitude,
+      zoom: zoom,
+      styleUri: styleUriFor(),
+      onMapCreated: onMapCreated,
+      onCameraChanged: onCameraChanged,
+      onMapIdle: onMapIdle,
+      interactive: interactive,
+      showUserLocation: showUserLocation,
     );
   }
 
@@ -501,6 +437,114 @@ class MapProvider._() {
 
   static Future<void> clearAnnotations(mapbox.BaseAnnotationManager? manager) =>
       MapAnnotationService.clearAnnotations(manager);
+}
+
+class const _AppMapView({
+  required this.latitude,
+  required this.longitude,
+  required this.styleUri,
+  required this.onMapCreated,
+  required this.onCameraChanged,
+  required this.onMapIdle,
+  required this.interactive,
+  required this.showUserLocation,
+  this.zoom = 14.0,
+  super.key,
+}) extends StatefulWidget {
+  final double latitude;
+  final double longitude;
+  final double zoom;
+  final String styleUri;
+  final void Function(AppMapController controller)? onMapCreated;
+  final void Function(AppMapController controller)? onCameraChanged;
+  final void Function(AppMapController controller)? onMapIdle;
+  final bool interactive;
+  final bool showUserLocation;
+
+  @override
+  State<_AppMapView> createState() => _AppMapViewState();
+}
+
+class _AppMapViewState extends State<_AppMapView> {
+  AppMapController? _mapController;
+
+  @override
+  void didUpdateWidget(_AppMapView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.styleUri != oldWidget.styleUri) {
+      _mapController = null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return mapbox.MapWidget(
+      key: ValueKey<String>(widget.styleUri),
+      styleUri: widget.styleUri,
+      viewport: mapbox.CameraViewportState(
+        center: mapbox.Point(
+          coordinates: mapbox.Position(widget.longitude, widget.latitude),
+        ),
+        zoom: widget.zoom,
+      ),
+      onCameraChangeListener: (cameraChangedEventData) {
+        final currentController = _mapController;
+        if (currentController != null) {
+          widget.onCameraChanged?.call(currentController);
+        }
+      },
+      onMapIdleListener: (mapIdleEventData) {
+        final currentController = _mapController;
+        if (currentController != null) {
+          widget.onMapIdle?.call(currentController);
+        }
+      },
+      onMapCreated: (controller) {
+        unawaited(
+          controller.logo.updateSettings(mapbox.LogoSettings(enabled: false)),
+        );
+        unawaited(
+          controller.attribution.updateSettings(
+            mapbox.AttributionSettings(enabled: false),
+          ),
+        );
+        unawaited(
+          controller.scaleBar.updateSettings(
+            mapbox.ScaleBarSettings(enabled: false),
+          ),
+        );
+
+        if (!widget.interactive) {
+          unawaited(
+            controller.gestures.updateSettings(
+              mapbox.GesturesSettings(
+                scrollEnabled: false,
+                rotateEnabled: false,
+                pitchEnabled: false,
+                doubleTapToZoomInEnabled: false,
+                quickZoomEnabled: false,
+              ),
+            ),
+          );
+        }
+
+        final currentController = AppMapController(controller);
+        _mapController = currentController;
+        if (widget.showUserLocation) {
+          unawaited(
+            controller.location.updateSettings(
+              mapbox.LocationComponentSettings(
+                enabled: true,
+                pulsingEnabled: false,
+                showAccuracyRing: false,
+              ),
+            ),
+          );
+        }
+        widget.onMapCreated?.call(currentController);
+      },
+    );
+  }
 }
 
 String _searchRequestKey(String query, double? lat, double? lng) =>
