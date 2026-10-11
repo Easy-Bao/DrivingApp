@@ -11,7 +11,7 @@ WITH rating_stats AS (
     WHERE review.driver_id = sqlc.arg('driver_id')::int
 )
 SELECT
-    COUNT(*)::bigint AS total_trips,
+    COUNT(r.id)::bigint AS total_trips,
     COUNT(*) FILTER (WHERE r.status = 'completed')::bigint AS completed_trips,
     COUNT(*) FILTER (
         WHERE r.status IN ('requested', 'assigned', 'accepted', 'arrived', 'in_transit')
@@ -75,10 +75,9 @@ SELECT
         WHERE r.status = 'cancelled'
           AND r.cancellation_responsibility = 'admin_override'
     )::bigint AS admin_override_cancellation_count
-FROM rides AS r
-LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = r.id
-CROSS JOIN rating_stats
-WHERE r.driver_id = sqlc.arg('driver_id')::int;
+FROM rating_stats
+LEFT JOIN rides AS r ON r.driver_id = sqlc.arg('driver_id')::int
+LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = r.id;
 
 -- name: ListDriverEarnings :many
 SELECT ride.created_at, ride.completed_at,

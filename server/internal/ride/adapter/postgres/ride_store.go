@@ -20,18 +20,20 @@ const _maxPostgresWaitSeconds = 1<<31 - 1
 const _defaultOnlinePresenceMaxAge = 45 * time.Second
 
 type RideRepository struct {
-	pool                  *pgxpool.Pool
-	queries               *databasepostgres.Queries
-	logger                *slog.Logger
-	platformCommissionBPS int64
-	onlinePresenceMaxAge  time.Duration
+	pool                       *pgxpool.Pool
+	queries                    *databasepostgres.Queries
+	logger                     *slog.Logger
+	platformCommissionBPS      int64
+	onlinePresenceMaxAge       time.Duration
+	allowUnverifiedTestDrivers bool
 }
 
 type RideStoreConfig struct {
-	Pool                  *pgxpool.Pool
-	Logger                *slog.Logger
-	PlatformCommissionBPS int64
-	OnlinePresenceMaxAge  time.Duration
+	Pool                       *pgxpool.Pool
+	Logger                     *slog.Logger
+	PlatformCommissionBPS      int64
+	OnlinePresenceMaxAge       time.Duration
+	AllowUnverifiedTestDrivers bool
 }
 
 var (
@@ -55,11 +57,12 @@ func NewRideRepository(config RideStoreConfig) (*RideRepository, error) {
 		logger = slog.Default()
 	}
 	return &RideRepository{
-		pool:                  config.Pool,
-		queries:               databasepostgres.New(config.Pool),
-		logger:                logger,
-		platformCommissionBPS: config.PlatformCommissionBPS,
-		onlinePresenceMaxAge:  onlinePresenceMaxAge,
+		pool:                       config.Pool,
+		queries:                    databasepostgres.New(config.Pool),
+		logger:                     logger,
+		platformCommissionBPS:      config.PlatformCommissionBPS,
+		onlinePresenceMaxAge:       onlinePresenceMaxAge,
+		allowUnverifiedTestDrivers: config.AllowUnverifiedTestDrivers,
 	}, nil
 }
 

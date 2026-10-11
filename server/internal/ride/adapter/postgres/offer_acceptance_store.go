@@ -103,8 +103,9 @@ func (repository *RideRepository) AcceptOffer(
 	profile, err := transactionQueries.LockOnlineDriverProfileForBidding(
 		ctx,
 		databasepostgres.LockOnlineDriverProfileForBiddingParams{
-			UserID:       offerDriverID,
-			OnlineCutoff: repository.onlinePresenceCutoff(),
+			UserID:                     offerDriverID,
+			OnlineCutoff:               repository.onlinePresenceCutoff(),
+			AllowUnverifiedTestDrivers: repository.allowUnverifiedTestDrivers,
 		},
 	)
 	if err != nil {

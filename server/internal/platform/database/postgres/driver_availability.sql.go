@@ -23,12 +23,15 @@ WITH eligible_profiles AS (
     FROM driver_profiles AS profile
     JOIN users AS account ON account.id = profile.user_id
     WHERE account.account_status = 'active'
-      AND account.is_verified = true
+      AND (
+          account.is_verified = true
+          OR $1::boolean
+      )
       AND profile.is_online = true
-      AND profile.online_last_seen_at >= $1::timestamptz
-      AND profile.user_id = ANY($2::int[])
+      AND profile.online_last_seen_at >= $2::timestamptz
+      AND profile.user_id = ANY($3::int[])
     ORDER BY profile.id
-    LIMIT $3::int
+    LIMIT $4::int
 ), review_ratings AS (
     SELECT review.driver_id, AVG(review.rating) AS rating
     FROM reviews AS review
@@ -59,9 +62,10 @@ ORDER BY profile.id
 `
 
 type ListOnlineDriversParams struct {
-	OnlineCutoff pgtype.Timestamptz `db:"online_cutoff"`
-	DriverIds    []int32            `db:"driver_ids"`
-	Limit        int32              `db:"limit"`
+	AllowUnverifiedTestDrivers bool               `db:"allow_unverified_test_drivers"`
+	OnlineCutoff               pgtype.Timestamptz `db:"online_cutoff"`
+	DriverIds                  []int32            `db:"driver_ids"`
+	Limit                      int32              `db:"limit"`
 }
 
 type ListOnlineDriversRow struct {
@@ -75,7 +79,12 @@ type ListOnlineDriversRow struct {
 }
 
 func (q *Queries) ListOnlineDrivers(ctx context.Context, arg ListOnlineDriversParams) ([]ListOnlineDriversRow, error) {
-	rows, err := q.db.Query(ctx, listOnlineDrivers, arg.OnlineCutoff, arg.DriverIds, arg.Limit)
+	rows, err := q.db.Query(ctx, listOnlineDrivers,
+		arg.AllowUnverifiedTestDrivers,
+		arg.OnlineCutoff,
+		arg.DriverIds,
+		arg.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -113,11 +122,14 @@ WITH eligible_profiles AS (
     FROM driver_profiles AS profile
     JOIN users AS account ON account.id = profile.user_id
     WHERE account.account_status = 'active'
-      AND account.is_verified = true
+      AND (
+          account.is_verified = true
+          OR $1::boolean
+      )
       AND profile.is_online = true
-      AND profile.online_last_seen_at >= $1::timestamptz
+      AND profile.online_last_seen_at >= $2::timestamptz
     ORDER BY profile.id
-    LIMIT $2::int
+    LIMIT $3::int
 ), review_ratings AS (
     SELECT review.driver_id, AVG(review.rating) AS rating
     FROM reviews AS review
@@ -135,8 +147,9 @@ ORDER BY profile.id
 `
 
 type ListPublicDriverSummariesParams struct {
-	OnlineCutoff pgtype.Timestamptz `db:"online_cutoff"`
-	Limit        int32              `db:"limit"`
+	AllowUnverifiedTestDrivers bool               `db:"allow_unverified_test_drivers"`
+	OnlineCutoff               pgtype.Timestamptz `db:"online_cutoff"`
+	Limit                      int32              `db:"limit"`
 }
 
 type ListPublicDriverSummariesRow struct {
@@ -147,7 +160,7 @@ type ListPublicDriverSummariesRow struct {
 }
 
 func (q *Queries) ListPublicDriverSummaries(ctx context.Context, arg ListPublicDriverSummariesParams) ([]ListPublicDriverSummariesRow, error) {
-	rows, err := q.db.Query(ctx, listPublicDriverSummaries, arg.OnlineCutoff, arg.Limit)
+	rows, err := q.db.Query(ctx, listPublicDriverSummaries, arg.AllowUnverifiedTestDrivers, arg.OnlineCutoff, arg.Limit)
 	if err != nil {
 		return nil, err
 	}

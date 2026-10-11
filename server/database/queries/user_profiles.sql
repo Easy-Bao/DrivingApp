@@ -69,7 +69,10 @@ WHERE driver_profiles.user_id = sqlc.arg('user_id')
       sqlc.arg('is_online')::boolean = false
       OR (
           account.account_status = 'active'
-          AND account.is_verified = true
+          AND (
+              account.is_verified = true
+              OR sqlc.arg('allow_unverified_test_drivers')::boolean
+          )
       )
   )
 RETURNING driver_profiles.id, driver_profiles.user_id, driver_profiles.name,

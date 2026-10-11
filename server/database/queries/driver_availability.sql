@@ -10,7 +10,10 @@ WITH eligible_profiles AS (
     FROM driver_profiles AS profile
     JOIN users AS account ON account.id = profile.user_id
     WHERE account.account_status = 'active'
-      AND account.is_verified = true
+      AND (
+          account.is_verified = true
+          OR sqlc.arg('allow_unverified_test_drivers')::boolean
+      )
       AND profile.is_online = true
       AND profile.online_last_seen_at >= sqlc.arg('online_cutoff')::timestamptz
       AND profile.user_id = ANY(sqlc.arg('driver_ids')::int[])
@@ -55,7 +58,10 @@ WITH eligible_profiles AS (
     FROM driver_profiles AS profile
     JOIN users AS account ON account.id = profile.user_id
     WHERE account.account_status = 'active'
-      AND account.is_verified = true
+      AND (
+          account.is_verified = true
+          OR sqlc.arg('allow_unverified_test_drivers')::boolean
+      )
       AND profile.is_online = true
       AND profile.online_last_seen_at >= sqlc.arg('online_cutoff')::timestamptz
     ORDER BY profile.id

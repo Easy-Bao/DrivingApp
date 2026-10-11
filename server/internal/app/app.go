@@ -95,18 +95,20 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 		return nil, fmt.Errorf("create MinIO private object store: %w", err)
 	}
 	profileStore, err := userpostgres.NewProfileStore(userpostgres.ProfileRepositoryDependencies{
-		Pool:          postgresPool,
-		AvatarStorage: privateObjectStore,
+		Pool:                       postgresPool,
+		AvatarStorage:              privateObjectStore,
+		AllowUnverifiedTestDrivers: config.AllowUnverifiedTestDrivers,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("create profile store: %w", err)
 	}
 	rideStore, err := ridepostgres.NewRideStore(
 		ridepostgres.RideStoreConfig{
-			Pool:                  postgresPool,
-			Logger:                applicationLogger,
-			PlatformCommissionBPS: config.Pricing.PlatformCommissionBPS,
-			OnlinePresenceMaxAge:  config.RideLifecycle.DriverLocationMaxAge,
+			Pool:                       postgresPool,
+			Logger:                     applicationLogger,
+			PlatformCommissionBPS:      config.Pricing.PlatformCommissionBPS,
+			OnlinePresenceMaxAge:       config.RideLifecycle.DriverLocationMaxAge,
+			AllowUnverifiedTestDrivers: config.AllowUnverifiedTestDrivers,
 		},
 	)
 	if err != nil {

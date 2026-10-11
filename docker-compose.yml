@@ -86,6 +86,8 @@ services:
     restart: always
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable
+      APP_ENV: ${APP_ENV:-production}
+      ALLOW_UNVERIFIED_TEST_DRIVERS: ${ALLOW_UNVERIFIED_TEST_DRIVERS:-false}
       API_HOST: 0.0.0.0
       API_PORT: ${API_PORT}
       LOG_LEVEL: ${LOG_LEVEL:-info}

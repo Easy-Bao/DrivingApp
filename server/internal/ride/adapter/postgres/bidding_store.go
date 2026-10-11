@@ -184,8 +184,9 @@ func (repository *RideRepository) ActiveSessions(ctx context.Context, driverID *
 		if _, profileErr := repository.queries.GetOnlineDriverProfileForBidding(
 			ctx,
 			databasepostgres.GetOnlineDriverProfileForBiddingParams{
-				UserID:       dbDriverID,
-				OnlineCutoff: repository.onlinePresenceCutoff(),
+				UserID:                     dbDriverID,
+				OnlineCutoff:               repository.onlinePresenceCutoff(),
+				AllowUnverifiedTestDrivers: repository.allowUnverifiedTestDrivers,
 			},
 		); profileErr != nil {
 			profileLookupDuration = measure(profileLookupStartedAt)
@@ -319,8 +320,9 @@ func (repository *RideRepository) PlaceOffer(ctx context.Context, value domain.B
 	profile, err := transactionQueries.LockOnlineDriverProfileForBidding(
 		ctx,
 		databasepostgres.LockOnlineDriverProfileForBiddingParams{
-			UserID:       driverID,
-			OnlineCutoff: repository.onlinePresenceCutoff(),
+			UserID:                     driverID,
+			OnlineCutoff:               repository.onlinePresenceCutoff(),
+			AllowUnverifiedTestDrivers: repository.allowUnverifiedTestDrivers,
 		},
 	)
 	if err != nil {

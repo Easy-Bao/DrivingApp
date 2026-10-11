@@ -253,15 +253,19 @@ FROM driver_profiles
 JOIN users AS account ON account.id = driver_profiles.user_id
 WHERE driver_profiles.user_id = $1
   AND account.account_status = 'active'
-  AND account.is_verified = true
+  AND (
+      account.is_verified = true
+      OR $2::boolean
+  )
   AND driver_profiles.is_online = true
-  AND driver_profiles.online_last_seen_at >= $2::timestamptz
+  AND driver_profiles.online_last_seen_at >= $3::timestamptz
 LIMIT 1
 `
 
 type GetOnlineDriverProfileForBiddingParams struct {
-	UserID       int32              `db:"user_id"`
-	OnlineCutoff pgtype.Timestamptz `db:"online_cutoff"`
+	UserID                     int32              `db:"user_id"`
+	AllowUnverifiedTestDrivers bool               `db:"allow_unverified_test_drivers"`
+	OnlineCutoff               pgtype.Timestamptz `db:"online_cutoff"`
 }
 
 type GetOnlineDriverProfileForBiddingRow struct {
@@ -276,7 +280,7 @@ type GetOnlineDriverProfileForBiddingRow struct {
 }
 
 func (q *Queries) GetOnlineDriverProfileForBidding(ctx context.Context, arg GetOnlineDriverProfileForBiddingParams) (GetOnlineDriverProfileForBiddingRow, error) {
-	row := q.db.QueryRow(ctx, getOnlineDriverProfileForBidding, arg.UserID, arg.OnlineCutoff)
+	row := q.db.QueryRow(ctx, getOnlineDriverProfileForBidding, arg.UserID, arg.AllowUnverifiedTestDrivers, arg.OnlineCutoff)
 	var i GetOnlineDriverProfileForBiddingRow
 	err := row.Scan(
 		&i.ID,
@@ -618,16 +622,20 @@ FROM driver_profiles
 JOIN users AS account ON account.id = driver_profiles.user_id
 WHERE driver_profiles.user_id = $1
   AND account.account_status = 'active'
-  AND account.is_verified = true
+  AND (
+      account.is_verified = true
+      OR $2::boolean
+  )
   AND driver_profiles.is_online = true
-  AND driver_profiles.online_last_seen_at >= $2::timestamptz
+  AND driver_profiles.online_last_seen_at >= $3::timestamptz
 LIMIT 1
 FOR UPDATE
 `
 
 type LockOnlineDriverProfileForBiddingParams struct {
-	UserID       int32              `db:"user_id"`
-	OnlineCutoff pgtype.Timestamptz `db:"online_cutoff"`
+	UserID                     int32              `db:"user_id"`
+	AllowUnverifiedTestDrivers bool               `db:"allow_unverified_test_drivers"`
+	OnlineCutoff               pgtype.Timestamptz `db:"online_cutoff"`
 }
 
 type LockOnlineDriverProfileForBiddingRow struct {
@@ -642,7 +650,7 @@ type LockOnlineDriverProfileForBiddingRow struct {
 }
 
 func (q *Queries) LockOnlineDriverProfileForBidding(ctx context.Context, arg LockOnlineDriverProfileForBiddingParams) (LockOnlineDriverProfileForBiddingRow, error) {
-	row := q.db.QueryRow(ctx, lockOnlineDriverProfileForBidding, arg.UserID, arg.OnlineCutoff)
+	row := q.db.QueryRow(ctx, lockOnlineDriverProfileForBidding, arg.UserID, arg.AllowUnverifiedTestDrivers, arg.OnlineCutoff)
 	var i LockOnlineDriverProfileForBiddingRow
 	err := row.Scan(
 		&i.ID,

@@ -23,10 +23,11 @@ import (
 const _maxPostgresProfileID = 1<<31 - 1
 
 type ProfileRepository struct {
-	pool          *pgxpool.Pool
-	queries       *databasepostgres.Queries
-	avatarStorage platformstorage.ObjectStore
-	logger        *slog.Logger
+	pool                       *pgxpool.Pool
+	queries                    *databasepostgres.Queries
+	avatarStorage              platformstorage.ObjectStore
+	allowUnverifiedTestDrivers bool
+	logger                     *slog.Logger
 }
 
 var (
@@ -36,8 +37,9 @@ var (
 )
 
 type ProfileRepositoryDependencies struct {
-	Pool          *pgxpool.Pool
-	AvatarStorage platformstorage.ObjectStore
+	Pool                       *pgxpool.Pool
+	AvatarStorage              platformstorage.ObjectStore
+	AllowUnverifiedTestDrivers bool
 }
 
 func NewProfileRepository(dependencies ProfileRepositoryDependencies) (*ProfileRepository, error) {
@@ -45,10 +47,11 @@ func NewProfileRepository(dependencies ProfileRepositoryDependencies) (*ProfileR
 		return nil, errors.New("postgresql pool is required")
 	}
 	return &ProfileRepository{
-		pool:          dependencies.Pool,
-		queries:       databasepostgres.New(dependencies.Pool),
-		avatarStorage: dependencies.AvatarStorage,
-		logger:        slog.Default(),
+		pool:                       dependencies.Pool,
+		queries:                    databasepostgres.New(dependencies.Pool),
+		avatarStorage:              dependencies.AvatarStorage,
+		allowUnverifiedTestDrivers: dependencies.AllowUnverifiedTestDrivers,
+		logger:                     slog.Default(),
 	}, nil
 }
 
@@ -234,9 +237,10 @@ func (repository *ProfileRepository) UpdateOnlineStatus(
 	profile, err := transactionQueries.UpdateDriverOnlineStatus(
 		ctx,
 		databasepostgres.UpdateDriverOnlineStatusParams{
-			UserID:   dbUserID,
-			IsOnline: isOnline,
-			TargetID: dbTargetID,
+			UserID:                     dbUserID,
+			IsOnline:                   isOnline,
+			TargetID:                   dbTargetID,
+			AllowUnverifiedTestDrivers: repository.allowUnverifiedTestDrivers,
 		},
 	)
 	if err != nil {

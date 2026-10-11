@@ -53,7 +53,10 @@ FROM driver_profiles
 JOIN users AS account ON account.id = driver_profiles.user_id
 WHERE driver_profiles.user_id = $1
   AND account.account_status = 'active'
-  AND account.is_verified = true
+  AND (
+      account.is_verified = true
+      OR sqlc.arg('allow_unverified_test_drivers')::boolean
+  )
   AND driver_profiles.is_online = true
   AND driver_profiles.online_last_seen_at >= sqlc.arg('online_cutoff')::timestamptz
 LIMIT 1;
@@ -67,7 +70,10 @@ FROM driver_profiles
 JOIN users AS account ON account.id = driver_profiles.user_id
 WHERE driver_profiles.user_id = $1
   AND account.account_status = 'active'
-  AND account.is_verified = true
+  AND (
+      account.is_verified = true
+      OR sqlc.arg('allow_unverified_test_drivers')::boolean
+  )
   AND driver_profiles.is_online = true
   AND driver_profiles.online_last_seen_at >= sqlc.arg('online_cutoff')::timestamptz
 LIMIT 1

@@ -21,23 +21,24 @@ import (
 )
 
 type Application struct {
-	JWTSecret         string
-	DatabaseURL       string
-	RedisURL          string
-	MapboxAccessToken string
-	Host              string
-	Port              string
-	LogLevel          slog.Level
-	TrustedProxyCIDRs string
-	AdminUserIDs      string
-	Security          middleware.SecurityConfig
-	RateLimits        middleware.RateLimitConfig
-	PostgresPool      database.PostgresNativePoolConfig
-	Mail              email.Config
-	RideLifecycle     ridelifecycle.Config
-	Bidding           ridebidding.Config
-	ReportingLocation *time.Location
-	MinIO             miniostorage.Config
+	JWTSecret                  string
+	DatabaseURL                string
+	RedisURL                   string
+	AllowUnverifiedTestDrivers bool
+	MapboxAccessToken          string
+	Host                       string
+	Port                       string
+	LogLevel                   slog.Level
+	TrustedProxyCIDRs          string
+	AdminUserIDs               string
+	Security                   middleware.SecurityConfig
+	RateLimits                 middleware.RateLimitConfig
+	PostgresPool               database.PostgresNativePoolConfig
+	Mail                       email.Config
+	RideLifecycle              ridelifecycle.Config
+	Bidding                    ridebidding.Config
+	ReportingLocation          *time.Location
+	MinIO                      miniostorage.Config
 }
 
 type Migration struct {
@@ -67,6 +68,20 @@ func LoadObjectStorageMigration() (ObjectStorageMigration, error) {
 func loadApplication(getenv environmentReader) (Application, error) {
 	if getenv == nil {
 		return Application{}, fmt.Errorf("environment reader is required")
+	}
+	appEnvironment := strings.ToLower(strings.TrimSpace(getenv("APP_ENV")))
+	allowUnverifiedTestDrivers, err := optionalBool(
+		getenv,
+		"ALLOW_UNVERIFIED_TEST_DRIVERS",
+		false,
+	)
+	if err != nil {
+		return Application{}, err
+	}
+	if allowUnverifiedTestDrivers && appEnvironment != "development" && appEnvironment != "test" {
+		return Application{}, fmt.Errorf(
+			"ALLOW_UNVERIFIED_TEST_DRIVERS is only allowed when APP_ENV is development or test",
+		)
 	}
 
 	databaseURL, err := requiredDatabaseURL(getenv)
@@ -123,23 +138,24 @@ func loadApplication(getenv environmentReader) (Application, error) {
 	}
 
 	return Application{
-		JWTSecret:         jwtSecret,
-		DatabaseURL:       databaseURL,
-		RedisURL:          redisURL,
-		MapboxAccessToken: strings.TrimSpace(getenv("MAPBOX_ACCESS_TOKEN")),
-		Host:              valueOrDefault(getenv, "API_HOST", "127.0.0.1"),
-		Port:              port,
-		LogLevel:          logLevel(getenv("LOG_LEVEL")),
-		TrustedProxyCIDRs: strings.TrimSpace(getenv("TRUSTED_PROXY_CIDRS")),
-		AdminUserIDs:      strings.TrimSpace(getenv("ADMIN_USER_IDS")),
-		Security:          securityConfig,
-		RateLimits:        rateLimitConfig,
-		PostgresPool:      poolConfig,
-		Mail:              mailConfig,
-		RideLifecycle:     rideLifecycleConfig,
-		Bidding:           biddingConfig,
-		ReportingLocation: reportingLocation,
-		MinIO:             minioConfig,
+		JWTSecret:                  jwtSecret,
+		DatabaseURL:                databaseURL,
+		RedisURL:                   redisURL,
+		AllowUnverifiedTestDrivers: allowUnverifiedTestDrivers,
+		MapboxAccessToken:          strings.TrimSpace(getenv("MAPBOX_ACCESS_TOKEN")),
+		Host:                       valueOrDefault(getenv, "API_HOST", "127.0.0.1"),
+		Port:                       port,
+		LogLevel:                   logLevel(getenv("LOG_LEVEL")),
+		TrustedProxyCIDRs:          strings.TrimSpace(getenv("TRUSTED_PROXY_CIDRS")),
+		AdminUserIDs:               strings.TrimSpace(getenv("ADMIN_USER_IDS")),
+		Security:                   securityConfig,
+		RateLimits:                 rateLimitConfig,
+		PostgresPool:               poolConfig,
+		Mail:                       mailConfig,
+		RideLifecycle:              rideLifecycleConfig,
+		Bidding:                    biddingConfig,
+		ReportingLocation:          reportingLocation,
+		MinIO:                      minioConfig,
 	}, nil
 }
 

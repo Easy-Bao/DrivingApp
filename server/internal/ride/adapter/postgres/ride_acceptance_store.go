@@ -45,8 +45,9 @@ func (repository *RideRepository) AcceptRide(ctx context.Context, rideID, driver
 	profile, err := transactionQueries.LockOnlineDriverProfileForBidding(
 		ctx,
 		databasepostgres.LockOnlineDriverProfileForBiddingParams{
-			UserID:       dbDriverID,
-			OnlineCutoff: repository.onlinePresenceCutoff(),
+			UserID:                     dbDriverID,
+			OnlineCutoff:               repository.onlinePresenceCutoff(),
+			AllowUnverifiedTestDrivers: repository.allowUnverifiedTestDrivers,
 		},
 	)
 	if err != nil {

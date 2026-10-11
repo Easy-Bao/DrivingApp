@@ -205,7 +205,10 @@ WHERE driver_profiles.user_id = $2
       $1::boolean = false
       OR (
           account.account_status = 'active'
-          AND account.is_verified = true
+          AND (
+              account.is_verified = true
+              OR $4::boolean
+          )
       )
   )
 RETURNING driver_profiles.id, driver_profiles.user_id, driver_profiles.name,
@@ -216,13 +219,19 @@ RETURNING driver_profiles.id, driver_profiles.user_id, driver_profiles.name,
 `
 
 type UpdateDriverOnlineStatusParams struct {
-	IsOnline bool  `db:"is_online"`
-	UserID   int32 `db:"user_id"`
-	TargetID int32 `db:"target_id"`
+	IsOnline                   bool  `db:"is_online"`
+	UserID                     int32 `db:"user_id"`
+	TargetID                   int32 `db:"target_id"`
+	AllowUnverifiedTestDrivers bool  `db:"allow_unverified_test_drivers"`
 }
 
 func (q *Queries) UpdateDriverOnlineStatus(ctx context.Context, arg UpdateDriverOnlineStatusParams) (DriverProfile, error) {
-	row := q.db.QueryRow(ctx, updateDriverOnlineStatus, arg.IsOnline, arg.UserID, arg.TargetID)
+	row := q.db.QueryRow(ctx, updateDriverOnlineStatus,
+		arg.IsOnline,
+		arg.UserID,
+		arg.TargetID,
+		arg.AllowUnverifiedTestDrivers,
+	)
 	var i DriverProfile
 	err := row.Scan(
 		&i.ID,
