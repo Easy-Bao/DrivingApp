@@ -21,7 +21,7 @@ import (
 	chatadapter "github.com/Easy-Bao/DrivingApp/server/internal/chat/adapter"
 	chatapplication "github.com/Easy-Bao/DrivingApp/server/internal/chat/application"
 	chathttp "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/http"
-	chatws "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/ws"
+	chatwebsocket "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/websocket"
 	assignment "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment"
 	documents "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/mapbox"
@@ -297,8 +297,8 @@ func newHTTPRouter(
 		WithEventPublisher(eventPublisher).
 		WithRideAssignmentLookup(rideAssignments).
 		WithLogger(applicationLogger)
-	chatEventHandler := chatws.NewEventHandler(chatService)
-	chatProtocol := chatws.NewConnectionProtocol(chatEventHandler, chatService)
+	chatEventHandler := chatwebsocket.NewEventHandler(chatService)
+	chatProtocol := chatwebsocket.NewConnectionProtocol(chatEventHandler, chatService)
 	router.Handle(
 		api.V1Prefix+"/chat/ws",
 		routeSecurity.Middleware(middleware.RouteRealtimeConnection)(websockethub.NewHandler(
