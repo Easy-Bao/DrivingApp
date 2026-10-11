@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:design_system/design_system.dart'
     show EasyRidePalette, EasyRideStatusColors;
+import 'package:flutter_test/flutter_test.dart';
 import 'package:maps/maps.dart';
 
 void main() {
