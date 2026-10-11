@@ -3,43 +3,43 @@ package domain
 import "time"
 
 type Ride struct {
-	ID                         int     `json:"id"`
-	PassengerID                int     `json:"passenger_id"`
-	DriverID                   *int    `json:"driver_id,omitempty"`
-	Status                     string  `json:"status"`
-	FareAmount                 int64   `json:"fare_amount"`
-	RideType                   string  `json:"ride_type,omitempty"`
-	PickupLatitude             float64 `json:"pickup_latitude,omitempty"`
-	PickupLongitude            float64 `json:"pickup_longitude,omitempty"`
-	PickupName                 string  `json:"pickup_name,omitempty"`
-	DropoffLatitude            float64 `json:"dropoff_latitude,omitempty"`
-	DropoffLongitude           float64 `json:"dropoff_longitude,omitempty"`
-	DropoffName                string  `json:"dropoff_name,omitempty"`
-	DistanceKm                 float64 `json:"distance_km,omitempty"`
-	DurationMinutes            float64 `json:"duration_minutes,omitempty"`
-	DriverName                 string  `json:"driver_name,omitempty"`
-	VehicleType                string  `json:"vehicle_type,omitempty"`
-	PlateNumber                string  `json:"plate_number,omitempty"`
-	DriverRating               float64 `json:"driver_rating,omitempty"`
-	PassengerName              string  `json:"passenger_name,omitempty"`
-	PassengerPhone             string  `json:"passenger_phone,omitempty"`
-	PassengerRating            float64 `json:"passenger_rating,omitempty"`
-	PassengerFeedback          string  `json:"passenger_feedback,omitempty"`
-	CreatedAt                  *string `json:"created_at,omitempty"`
-	CompletedAt                *string `json:"completed_at,omitempty"`
-	ArrivedAt                  *string `json:"arrived_at,omitempty"`
-	WaitingUntil               *string `json:"waiting_until,omitempty"`
-	PaymentStatus              string  `json:"payment_status"`
-	CashReceivedAmount         int64   `json:"cash_received_amount"`
-	CashChangeAmount           int64   `json:"cash_change_amount"`
-	CashOutcome                string  `json:"cash_outcome"`
-	CancelledBy                *int    `json:"cancelled_by,omitempty"`
-	CancellationReason         string  `json:"cancellation_reason,omitempty"`
-	CancellationResponsibility string  `json:"cancellation_responsibility,omitempty"`
-	CancellationDetails        string  `json:"cancellation_details,omitempty"`
-	CommissionBPS              *int64  `json:"commission_bps,omitempty"`
-	CommissionAmount           int64   `json:"commission_amount"`
-	DriverPayoutAmount         int64   `json:"driver_payout_amount"`
+	ID                         int
+	PassengerID                int
+	DriverID                   *int
+	Status                     string
+	FareAmount                 int64
+	RideType                   string
+	PickupLatitude             float64
+	PickupLongitude            float64
+	PickupName                 string
+	DropoffLatitude            float64
+	DropoffLongitude           float64
+	DropoffName                string
+	DistanceKm                 float64
+	DurationMinutes            float64
+	DriverName                 string
+	VehicleType                string
+	PlateNumber                string
+	DriverRating               float64
+	PassengerName              string
+	PassengerPhone             string
+	PassengerRating            float64
+	PassengerFeedback          string
+	CreatedAt                  *string
+	CompletedAt                *string
+	ArrivedAt                  *string
+	WaitingUntil               *string
+	PaymentStatus              string
+	CashReceivedAmount         int64
+	CashChangeAmount           int64
+	CashOutcome                string
+	CancelledBy                *int
+	CancellationReason         string
+	CancellationResponsibility string
+	CancellationDetails        string
+	CommissionBPS              *int64
+	CommissionAmount           int64
+	DriverPayoutAmount         int64
 }
 type BidSession struct {
 	ID                int        `json:"id"`

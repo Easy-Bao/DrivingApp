@@ -49,7 +49,7 @@ func (handler *Handler) CreateRide(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
-	response.JSON(w, 201, ride)
+	response.JSON(w, 201, rideResponseFromDomain(ride))
 }
 
 func (handler *Handler) AcceptRide(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +68,7 @@ func (handler *Handler) AcceptRide(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 409, "ride cannot be accepted")
 		return
 	}
-	response.JSON(w, 200, item)
+	response.JSON(w, 200, rideResponseFromDomain(item))
 }
 
 func (handler *Handler) MarkArrived(w http.ResponseWriter, r *http.Request) {
@@ -101,7 +101,7 @@ func (handler *Handler) MarkArrived(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
-	response.JSON(w, http.StatusOK, ride)
+	response.JSON(w, http.StatusOK, rideResponseFromDomain(ride))
 }
 
 func (handler *Handler) StartTrip(w http.ResponseWriter, r *http.Request) {
@@ -132,7 +132,7 @@ func (handler *Handler) StartTrip(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
-	response.JSON(w, http.StatusOK, ride)
+	response.JSON(w, http.StatusOK, rideResponseFromDomain(ride))
 }
 
 func (handler *Handler) CompleteTrip(w http.ResponseWriter, r *http.Request) {
@@ -163,7 +163,7 @@ func (handler *Handler) CompleteTrip(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
-	response.JSON(w, http.StatusOK, ride)
+	response.JSON(w, http.StatusOK, rideResponseFromDomain(ride))
 }
 
 func (handler *Handler) MarkPassengerNoShow(w http.ResponseWriter, r *http.Request) {
@@ -182,7 +182,7 @@ func (handler *Handler) MarkPassengerNoShow(w http.ResponseWriter, r *http.Reque
 		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
-	response.JSON(w, http.StatusOK, ride)
+	response.JSON(w, http.StatusOK, rideResponseFromDomain(ride))
 }
 
 func (handler *Handler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
@@ -211,7 +211,7 @@ func (handler *Handler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 409, safeRideError(err))
 		return
 	}
-	response.JSON(w, 200, item)
+	response.JSON(w, 200, rideResponseFromDomain(item))
 }
 
 func (handler *Handler) CancelRide(w http.ResponseWriter, r *http.Request) {
@@ -240,7 +240,7 @@ func (handler *Handler) CancelRide(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
-	response.JSON(w, http.StatusOK, ride)
+	response.JSON(w, http.StatusOK, rideResponseFromDomain(ride))
 }
 
 func (handler *Handler) EmergencyStop(w http.ResponseWriter, r *http.Request) {
@@ -269,7 +269,7 @@ func (handler *Handler) EmergencyStop(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
-	response.JSON(w, http.StatusOK, ride)
+	response.JSON(w, http.StatusOK, rideResponseFromDomain(ride))
 }
 
 func (handler *Handler) SettleCash(w http.ResponseWriter, r *http.Request) {
@@ -299,7 +299,7 @@ func (handler *Handler) SettleCash(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
-	response.JSON(w, http.StatusOK, ride)
+	response.JSON(w, http.StatusOK, rideResponseFromDomain(ride))
 }
 func (handler *Handler) GetRide(w http.ResponseWriter, r *http.Request) {
 	actorID, ok := handler.identity(r)
@@ -323,7 +323,7 @@ func (handler *Handler) GetRide(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 403, "forbidden")
 		return
 	}
-	response.JSON(w, 200, ride)
+	response.JSON(w, 200, rideResponseFromDomain(ride))
 }
 
 func (handler *Handler) Counterparty(w http.ResponseWriter, r *http.Request) {
@@ -375,7 +375,15 @@ func (handler *Handler) PassengerRides(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 500, "Your trip history is temporarily unavailable.")
 		return
 	}
-	response.JSON(w, 200, response.NewOffsetPage(items, page.Limit, page.Offset))
+	response.JSON(
+		w,
+		200,
+		response.NewOffsetPage(
+			rideResponsesFromDomain(items),
+			page.Limit,
+			page.Offset,
+		),
+	)
 }
 
 func (handler *Handler) PassengerActivitySummary(w http.ResponseWriter, r *http.Request) {
@@ -479,7 +487,15 @@ func (handler *Handler) DriverTrips(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 500, "Driver trip history is temporarily unavailable.")
 		return
 	}
-	response.JSON(w, 200, response.NewOffsetPage(items, page.Limit, page.Offset))
+	response.JSON(
+		w,
+		200,
+		response.NewOffsetPage(
+			rideResponsesFromDomain(items),
+			page.Limit,
+			page.Offset,
+		),
+	)
 }
 
 func (handler *Handler) DriverReviews(w http.ResponseWriter, r *http.Request) {
@@ -885,7 +901,7 @@ func (handler *Handler) AcceptOffer(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, 200, map[string]any{
 		"session": session,
 		"offer":   offer,
-		"ride":    ride,
+		"ride":    rideResponseFromDomain(ride),
 		"ride_id": ride.ID,
 	})
 }
