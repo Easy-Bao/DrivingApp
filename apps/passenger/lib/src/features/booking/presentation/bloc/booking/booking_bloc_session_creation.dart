@@ -22,7 +22,6 @@ extension _BookingBlocSessionCreation on BookingBloc {
     _pickupName = this._pickupNameForTrip(event.trip);
     _dropoffLat = event.trip.destination.latitude;
     _dropoffLng = event.trip.destination.longitude;
-    _dropoffName = event.trip.destination.name;
     emit(BookingSearching(isDirect: true, targetDriver: targetDriver));
 
     final passengerId = await _secureSessionService.readPassengerId() ?? '';
@@ -66,7 +65,6 @@ extension _BookingBlocSessionCreation on BookingBloc {
     _pickupName = this._pickupNameForTrip(event.trip);
     _dropoffLat = event.trip.destination.latitude;
     _dropoffLng = event.trip.destination.longitude;
-    _dropoffName = event.trip.destination.name;
     emit(const BookingSearching(isDirect: false));
 
     final passengerId = await _secureSessionService.readPassengerId() ?? '';

@@ -17,7 +17,6 @@ extension _BookingBlocDriverDiscovery on BookingBloc {
     _pickupName = this._pickupNameForTrip(event.trip);
     _dropoffLat = event.trip.destination.latitude;
     _dropoffLng = event.trip.destination.longitude;
-    _dropoffName = event.trip.destination.name;
     emit(
       FindingNearestDriver(
         trip: event.trip,

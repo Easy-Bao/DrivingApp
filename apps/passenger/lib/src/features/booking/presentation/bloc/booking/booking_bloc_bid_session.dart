@@ -233,8 +233,6 @@ extension _BookingBlocBidSession on BookingBloc {
           dropoffLng == null) {
         throw StateError('Booking coordinates are unavailable');
       }
-      final fareAmount =
-          acceptedBooking!.fareAmount ?? (event.proposedFare * 100).round();
       await _secureSessionService.saveActiveRideId(rideId);
       await _secureSessionService.deleteActiveBidSessionId();
       _activeBidSessionId = null;
@@ -250,22 +248,7 @@ extension _BookingBlocBidSession on BookingBloc {
             proposedFare: event.proposedFare,
             driverRating: event.driverRating,
           ),
-          createdRide: RideHistory(
-            id: rideId,
-            pickup: _pickupName ?? '',
-            destination: _dropoffName ?? '',
-            pickupLat: pickupLat,
-            pickupLng: pickupLng,
-            destLat: dropoffLat,
-            destLng: dropoffLng,
-            date: DateTime.now().toLocal().toString(),
-            price: formatPesoAmount(fareAmount / 100),
-            status: RideStatus.accepted.value,
-            driverId: event.driverId,
-            driverName: event.driverName,
-            vehiclePlate: event.plateNumber,
-            vehicleType: event.vehicleType,
-          ),
+          rideId: rideId,
         ),
       );
       // Telemetry is supplementary to the accepted-ride transition. Keep it
@@ -314,7 +297,6 @@ extension _BookingBlocBidSession on BookingBloc {
     _pickupName = null;
     _dropoffLat = null;
     _dropoffLng = null;
-    _dropoffName = null;
     _totalTrips = null;
     ++_reviewsRequestGeneration;
     _isAutoAcceptingOffer = false;

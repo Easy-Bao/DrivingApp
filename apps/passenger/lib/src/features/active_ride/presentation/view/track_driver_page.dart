@@ -23,7 +23,6 @@ import 'package:passenger/src/features/booking/presentation/bloc/booking/booking
 import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/chat/chat_routes.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
-import 'package:passenger/src/features/ride_history/ride_history.dart';
 import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -53,7 +52,7 @@ class const TrackDriverPage({
   required this.bookingBloc,
   this.realtimeClient,
 }) extends StatefulWidget {
-  final RideHistory ride;
+  final RideSnapshot ride;
   final TrackRepository trackRepository;
   final ChatRepositoryFactory chatRepositoryFactory;
   final PassengerSessionStore sessionService;
@@ -102,10 +101,6 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
     );
     unawaited(_initializeChatRepository());
     _chatMessagesPollingTask.start();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      BlocProvider.of<TrackDriverCubit>(context).currentRide = widget.ride;
-    });
   }
 
   Future<void> _initializeChatRepository() async {
@@ -199,8 +194,8 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
     _flushPendingMapUpdate();
     if (!_initialized) {
       _initialized = true;
-      final passengerLat = widget.ride.pickupLat;
-      final passengerLng = widget.ride.pickupLng;
+      final passengerLat = widget.ride.pickupLatitude ?? 0.0;
+      final passengerLng = widget.ride.pickupLongitude ?? 0.0;
 
       if (_locationSubscription != null) {
         unawaited(_locationSubscription!.cancel());
@@ -222,12 +217,12 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
           endLat: passengerLat,
           endLng: passengerLng,
           rideId: widget.ride.id,
-          driverId: widget.ride.driverId,
-          driverName: widget.ride.driverName,
-          vehiclePlate: widget.ride.vehiclePlate,
-          vehicleType: widget.ride.vehicleType,
-          destinationLat: widget.ride.destLat,
-          destinationLng: widget.ride.destLng,
+          driverId: widget.ride.driverId ?? '',
+          driverName: widget.ride.driverName ?? '',
+          vehiclePlate: widget.ride.plateNumber ?? '',
+          vehicleType: widget.ride.vehicleType ?? '',
+          destinationLat: widget.ride.dropoffLatitude ?? 0.0,
+          destinationLng: widget.ride.dropoffLongitude ?? 0.0,
         ),
       );
     }
@@ -253,13 +248,17 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
       return;
     }
     _isUpdatingMap = true;
-    final passengerLat = widget.ride.pickupLat;
-    final passengerLng = widget.ride.pickupLng;
+    final passengerLat = widget.ride.pickupLatitude ?? 0.0;
+    final passengerLng = widget.ride.pickupLongitude ?? 0.0;
 
     try {
       final isInTransit = status == RideStatus.inTransit;
-      final targetLat = isInTransit ? widget.ride.destLat : passengerLat;
-      final targetLng = isInTransit ? widget.ride.destLng : passengerLng;
+      final targetLat = isInTransit
+          ? (widget.ride.dropoffLatitude ?? 0.0)
+          : passengerLat;
+      final targetLng = isInTransit
+          ? (widget.ride.dropoffLongitude ?? 0.0)
+          : passengerLng;
       if (routeCoordinates != null && routeCoordinates.length >= 4) {
         _routeLineManager = await _upsertRoute(
           _routeLineManager,
@@ -482,8 +481,8 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
 
   @override
   Widget build(BuildContext context) {
-    final passengerLat = widget.ride.pickupLat;
-    final passengerLng = widget.ride.pickupLng;
+    final passengerLat = widget.ride.pickupLatitude ?? 0.0;
+    final passengerLng = widget.ride.pickupLongitude ?? 0.0;
 
     return BlocListener<TrackDriverCubit, TrackDriverState>(
       listener: (context, state) {
@@ -601,7 +600,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                           ? 'Driver Is Picking You Up'
                           : 'Driver Assigned';
                       final statusSubtitle = isInTransit
-                          ? 'Heading To ${widget.ride.destination}'
+                          ? 'Heading To ${widget.ride.dropoffName}'
                           : hasArrived
                           ? 'Driver is waiting at pickup location'
                           : state.isTracking
@@ -678,7 +677,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                                     extra: {
                                       'roomId': widget.ride.id,
                                       'userId': passengerId,
-                                      'peerId': widget.ride.driverId,
+                                      'peerId': widget.ride.driverId ?? '',
                                       'peerName': dName,
                                     },
                                   );

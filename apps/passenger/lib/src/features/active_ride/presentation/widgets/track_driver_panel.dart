@@ -1,7 +1,7 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:passenger/src/features/ride_history/ride_history.dart';
+import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot.dart';
 
 class const TrackDriverPanel({
   super.key,
@@ -20,7 +20,7 @@ class const TrackDriverPanel({
   required this.onReportDriverPressed,
   required this.onCancelTripPressed,
 }) extends StatelessWidget {
-  final RideHistory ride;
+  final RideSnapshot ride;
   final String statusTitle;
   final String statusSubtitle;
   final String etaText;

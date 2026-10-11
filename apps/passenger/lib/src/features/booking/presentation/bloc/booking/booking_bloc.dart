@@ -6,7 +6,6 @@ import 'package:core_domain/core_domain.dart';
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
-import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/domain/entities/accepted_booking.dart';
@@ -19,7 +18,6 @@ import 'package:passenger/src/features/driver_profile/domain/entities/driver_rev
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
-import 'package:passenger/src/features/ride_history/ride_history.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger/src/infrastructure/telemetry/passenger_background_telemetry.dart';
 
@@ -73,7 +71,6 @@ class BookingBloc({
   String? _pickupName;
   double? _dropoffLat;
   double? _dropoffLng;
-  String? _dropoffName;
 
   this
     : assert(nearestDriverMaxAttempts > 0),

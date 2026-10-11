@@ -3,13 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:passenger/src/features/active_ride/presentation/view/track_driver_page.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
-import 'package:passenger/src/features/ride_history/domain/entities/ride_history.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 
 class TrackDriverPageLoader extends StatefulWidget {
@@ -21,6 +21,7 @@ class TrackDriverPageLoader extends StatefulWidget {
     required this.lifecycleCoordinator,
     required this.liveMapBloc,
     required this.bookingBloc,
+    this.rideId,
     this.realtimeClient,
   });
 
@@ -30,6 +31,7 @@ class TrackDriverPageLoader extends StatefulWidget {
   final AppLifecycleCoordinator lifecycleCoordinator;
   final LiveMapBloc liveMapBloc;
   final BookingBloc bookingBloc;
+  final String? rideId;
   final RealtimeWebSocketClient? realtimeClient;
 
   @override
@@ -38,7 +40,7 @@ class TrackDriverPageLoader extends StatefulWidget {
 
 class _TrackDriverPageLoaderState extends State<TrackDriverPageLoader> {
   bool _isLoading = true;
-  RideHistory? _ride;
+  RideSnapshot? _ride;
 
   @override
   void initState() {
@@ -47,7 +49,10 @@ class _TrackDriverPageLoaderState extends State<TrackDriverPageLoader> {
   }
 
   Future<void> _restoreRide() async {
-    final activeRideId = await widget.sessionService.readActiveRideId();
+    final requestedRideId = widget.rideId?.trim();
+    final activeRideId = requestedRideId == null || requestedRideId.isEmpty
+        ? await widget.sessionService.readActiveRideId()
+        : requestedRideId;
     if (activeRideId == null || activeRideId.trim().isEmpty) {
       if (mounted) setState(() => _isLoading = false);
       return;
@@ -69,7 +74,7 @@ class _TrackDriverPageLoaderState extends State<TrackDriverPageLoader> {
             setState(() => _isLoading = false);
           } else {
             setState(() {
-              _ride = snapshot.toRideHistory();
+              _ride = snapshot;
               _isLoading = false;
             });
           }

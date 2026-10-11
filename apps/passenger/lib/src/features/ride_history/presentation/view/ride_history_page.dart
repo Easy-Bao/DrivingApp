@@ -207,7 +207,9 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
   void _openRide(RideHistory ride) {
     switch (RideStatus.fromString(ride.status)) {
       case RideStatus.accepted || RideStatus.arrived || RideStatus.inTransit:
-        unawaited(context.pushNamed(ActiveRideRoutes.trackDriver, extra: ride));
+        unawaited(
+          context.pushNamed(ActiveRideRoutes.trackDriver, extra: ride.id),
+        );
       case RideStatus.completed || RideStatus.cancelled:
         unawaited(
           context.pushNamed(RideHistoryRoutes.rideDetails, extra: ride),

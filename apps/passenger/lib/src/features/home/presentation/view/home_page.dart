@@ -186,14 +186,9 @@ class _HomePageState extends State<HomePage> {
             await session?.saveActiveRideId('');
             return;
           }
-          final ride = snapshot.toRideHistory();
-          final trackDriverCubit = _getTrackDriverCubit();
-          if (trackDriverCubit != null) {
-            trackDriverCubit.currentRide = ride;
-          }
           if (mounted) {
             unawaited(
-              context.pushNamed(ActiveRideRoutes.trackDriver, extra: ride),
+              context.pushNamed(ActiveRideRoutes.trackDriver, extra: snapshot),
             );
           }
         },
@@ -549,12 +544,35 @@ class _HomePageState extends State<HomePage> {
         null;
   }
 
-  void _resumeActiveRide() {
+  void _resumeActiveRide() => unawaited(_resumeActiveRideById());
+
+  Future<void> _resumeActiveRideById() async {
     final trackDriverCubit = _getTrackDriverCubit();
     if (trackDriverCubit?.state.isTerminal == true) return;
-    final ride = trackDriverCubit?.currentRide;
-    if (ride != null) {
-      unawaited(context.pushNamed(ActiveRideRoutes.trackDriver, extra: ride));
+
+    PassengerSessionStore? session = widget.sessionService;
+    if (session == null) {
+      try {
+        session = Modular.get<PassengerSessionStore>();
+      } catch (_) {
+        // Ride-history fallback remains available if session storage is absent.
+      }
+    }
+
+    String? activeRideId;
+    try {
+      activeRideId = await session?.readActiveRideId();
+    } catch (_) {
+      // Fall back to the latest active ride from history.
+    }
+    if (!mounted) return;
+    if (activeRideId != null && activeRideId.trim().isNotEmpty) {
+      unawaited(
+        context.pushNamed(
+          ActiveRideRoutes.trackDriver,
+          extra: activeRideId.trim(),
+        ),
+      );
       return;
     }
 
@@ -563,7 +581,7 @@ class _HomePageState extends State<HomePage> {
       unawaited(
         context.pushNamed(
           ActiveRideRoutes.trackDriver,
-          extra: historyState.upcoming.first,
+          extra: historyState.upcoming.first.id,
         ),
       );
       return;

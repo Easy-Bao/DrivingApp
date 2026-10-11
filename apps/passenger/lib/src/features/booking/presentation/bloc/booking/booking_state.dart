@@ -100,13 +100,10 @@ final class const DriverMatchResult({
   final String? driverRating;
 }
 
-final class const BookingDriverMatched({
-  required this.matchResult,
-  this.createdRide,
-}) extends BookingState {
+final class const BookingDriverMatched({required this.matchResult, this.rideId})
+    extends BookingState {
   final DriverMatchResult matchResult;
-
-  final RideHistory? createdRide;
+  final String? rideId;
 }
 
 final class const BookingCanceled() extends BookingState {}

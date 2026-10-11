@@ -7,7 +7,6 @@ import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_state.dart';
-import 'package:passenger/src/features/ride_history/domain/entities/ride_history.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger/src/infrastructure/telemetry/passenger_background_telemetry.dart';
 
@@ -28,7 +27,6 @@ class TrackDriverCubit({
   int _trackingGeneration = 0;
   bool _isCancellingTrip = false;
   bool _isEmergencyStopping = false;
-  RideHistory? currentRide;
 
   this : super(const TrackDriverInitial());
 
@@ -110,7 +108,6 @@ class TrackDriverCubit({
               if (!_isCurrentTrackingOperation(trackingGeneration)) return;
               await _stopBackgroundTelemetry();
               if (!_isCurrentTrackingOperation(trackingGeneration)) return;
-              currentRide = null;
               return;
             }
             if (rideUpdate.status == RideStatus.cancelled) {
@@ -124,7 +121,6 @@ class TrackDriverCubit({
               if (!_isCurrentTrackingOperation(trackingGeneration)) return;
               await _stopBackgroundTelemetry();
               if (!_isCurrentTrackingOperation(trackingGeneration)) return;
-              currentRide = null;
               emit(const TrackDriverCanceled());
               return;
             }
@@ -351,7 +347,6 @@ class TrackDriverCubit({
       _trackingTask = null;
       _activeTripResync = null;
       await _stopBackgroundTelemetry();
-      currentRide = null;
       if (!isClosed) emit(const TrackDriverCanceled());
       return true;
     } catch (error) {
@@ -410,7 +405,6 @@ class TrackDriverCubit({
         );
       }
       await _stopBackgroundTelemetry();
-      currentRide = null;
       if (!isClosed) emit(const TrackDriverEmergencyStopped());
       return true;
     } catch (error, stackTrace) {

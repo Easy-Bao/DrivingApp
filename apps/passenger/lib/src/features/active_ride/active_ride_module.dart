@@ -7,6 +7,7 @@ import 'package:maps/maps.dart';
 import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger/src/features/active_ride/data/data_sources/ride_remote_data_source.dart';
 import 'package:passenger/src/features/active_ride/data/repositories/track_repository_impl.dart';
+import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_cubit.dart';
@@ -16,7 +17,6 @@ import 'package:passenger/src/features/active_ride/presentation/view/track_drive
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
-import 'package:passenger/src/features/ride_history/ride_history.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger/src/infrastructure/telemetry/passenger_background_telemetry.dart';
 
@@ -75,7 +75,9 @@ class ActiveRideModule._() {
           vehicleType: data.string('vehicleType'),
           plateNumber: data.string('plateNumber'),
           pickupAddress: data.string('pickupAddress'),
-          createdRide: data.object<RideHistory>('createdRide'),
+          pickupLatitude: data.doubleValue('pickupLatitude'),
+          pickupLongitude: data.doubleValue('pickupLongitude'),
+          rideId: data.string('rideId'),
           profileRepository: Modular.get<DriverProfileRepository>(),
         );
       },
@@ -86,11 +88,17 @@ class ActiveRideModule._() {
       name: ActiveRideRoutes.trackDriver,
       ActiveRideRoutes.trackDriverPath,
       child: (context, GoRouterState state) {
-        final ride = state.extra is RideHistory
-            ? state.extra as RideHistory
-            : null;
+        final extra = state.extra;
+        final ride = switch (extra) {
+          RideSnapshot snapshot => snapshot,
+          Map payload => RideSnapshot.fromJson(
+            Map<String, dynamic>.from(payload),
+          ),
+          _ => null,
+        };
         if (ride == null) {
           return TrackDriverPageLoader(
+            rideId: extra is String ? extra : null,
             trackRepository: Modular.get<TrackRepository>(),
             chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
             sessionService: Modular.get<PassengerSessionStore>(),

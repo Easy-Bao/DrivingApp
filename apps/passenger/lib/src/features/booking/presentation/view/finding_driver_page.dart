@@ -471,7 +471,9 @@ class _FindingDriverPageContentState()
                 'vehicleType': match.vehicleType,
                 'plateNumber': match.plateNumber,
                 'fare': match.proposedFare,
-                'createdRide': state.createdRide,
+                'pickupLatitude': widget.pickupLatitude,
+                'pickupLongitude': widget.pickupLongitude,
+                'rideId': state.rideId,
               };
               context.pushReplacementNamed(
                 ActiveRideRoutes.driverMatched,

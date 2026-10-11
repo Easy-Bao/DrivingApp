@@ -9,7 +9,6 @@ import 'package:maps/maps.dart';
 import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/driver_profile/presentation/driver_profile_details_sheet.dart';
-import 'package:passenger/src/features/ride_history/ride_history.dart';
 
 class const DriverMatchedPage({
   super.key,
@@ -23,7 +22,9 @@ class const DriverMatchedPage({
   this.vehicleType,
   this.plateNumber,
   this.pickupAddress,
-  this.createdRide,
+  this.pickupLatitude,
+  this.pickupLongitude,
+  this.rideId,
   required this.profileRepository,
 }) extends StatefulWidget {
   final double fare;
@@ -36,7 +37,9 @@ class const DriverMatchedPage({
   final String? vehicleType;
   final String? plateNumber;
   final String? pickupAddress;
-  final RideHistory? createdRide;
+  final double? pickupLatitude;
+  final double? pickupLongitude;
+  final String? rideId;
   final DriverProfileRepository profileRepository;
 
   @override
@@ -49,7 +52,8 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
   late Animation<double> _scaleAnim;
   Timer? _countdownTimer;
   int _secondsLeft = 4;
-  RideHistory? _createdRide;
+
+  String? get _rideId => widget.rideId?.trim();
 
   @override
   void initState() {
@@ -60,16 +64,7 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
     );
     _scaleAnim = CurvedAnimation(parent: _scaleCtrl, curve: Curves.elasticOut);
     unawaited(_scaleCtrl.forward());
-    unawaited(_saveRideAndStartTimer());
-  }
-
-  Future<void> _saveRideAndStartTimer() async {
-    final ride = widget.createdRide;
-    if (ride == null || ride.id.isEmpty) return;
-    if (mounted) {
-      setState(() => _createdRide = ride);
-      _startCountdown();
-    }
+    if (_rideId?.isNotEmpty == true) _startCountdown();
   }
 
   void _startCountdown() {
@@ -102,9 +97,30 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
 
   void _goToTracking() {
     if (!mounted) return;
-    final ride = _createdRide;
-    if (ride == null || ride.id.isEmpty) return;
-    context.goNamed(ActiveRideRoutes.trackDriver, extra: ride);
+    final rideId = _rideId;
+    if (rideId == null || rideId.isEmpty) return;
+
+    final pickupName = widget.pickupAddress?.trim();
+    context.goNamed(
+      ActiveRideRoutes.trackDriver,
+      extra: {
+        'id': rideId,
+        'status': 'accepted',
+        'pickup_name': pickupName == null || pickupName.isEmpty
+            ? 'Current Location'
+            : pickupName,
+        'dropoff_name': widget.destination.name,
+        'driver_id': widget.driverId ?? '',
+        'driver_name': widget.driverName ?? '',
+        'vehicle_type': widget.vehicleType ?? '',
+        'plate_number': widget.plateNumber ?? '',
+        'pickup_latitude': widget.pickupLatitude,
+        'pickup_longitude': widget.pickupLongitude,
+        'dropoff_latitude': widget.destination.latitude,
+        'dropoff_longitude': widget.destination.longitude,
+        'fare_amount': (widget.fare * 100).round(),
+      },
+    );
   }
 
   @override
@@ -203,7 +219,7 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                                     repository: widget.profileRepository,
                                   ),
                             );
-                            if (mounted && _createdRide != null) {
+                            if (mounted && _rideId?.isNotEmpty == true) {
                               _startCountdown();
                             }
                           },
@@ -391,7 +407,7 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        _createdRide != null
+                        _rideId?.isNotEmpty == true
                             ? 'Opening live tracking in ${_secondsLeft}s…'
                             : 'Tap above to open live tracking',
                         style: TextStyle(
