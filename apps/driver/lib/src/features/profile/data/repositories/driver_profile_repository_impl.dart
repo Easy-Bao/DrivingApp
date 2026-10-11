@@ -74,19 +74,24 @@ final class DriverProfileRepositoryImpl({
     final normalizedName = name.trim();
     final normalizedVehicleType = vehicleType.trim();
     final normalizedPlateNumber = plateNumber.trim();
+    final nameChanged = normalizedName != currentAccount.name.trim();
+    final vehicleChanged =
+        normalizedVehicleType != currentAccount.vehicleType.trim() ||
+        normalizedPlateNumber != currentAccount.plateNumber.trim();
 
-    if (normalizedName.isEmpty ||
-        normalizedVehicleType.isEmpty ||
-        normalizedPlateNumber.isEmpty) {
+    if ((nameChanged && normalizedName.isEmpty) ||
+        (vehicleChanged &&
+            (normalizedVehicleType.isEmpty || normalizedPlateNumber.isEmpty))) {
       return const Err(ValidationFailure('Please verify your driver details.'));
     }
+    if (!nameChanged && !vehicleChanged) return Ok(currentAccount);
 
     try {
       final response = await _profileDataSource.updateProfile(
         data: {
-          'name': normalizedName,
-          'vehicle_type': normalizedVehicleType,
-          'plate_number': normalizedPlateNumber,
+          if (nameChanged) 'name': normalizedName,
+          if (vehicleChanged) 'vehicle_type': normalizedVehicleType,
+          if (vehicleChanged) 'plate_number': normalizedPlateNumber,
         },
       );
       final profile = ProfileModel.fromJson(response);

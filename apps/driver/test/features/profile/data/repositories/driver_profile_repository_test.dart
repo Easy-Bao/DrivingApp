@@ -98,10 +98,82 @@ void main() {
               ),
             ).captured.single
             as Map<String, dynamic>;
-    expect(updatePayload, {
-      'name': 'Updated Driver',
-      'vehicle_type': 'Motorcycle',
-      'plate_number': 'ABC-123',
-    });
+    expect(updatePayload, {'name': 'Updated Driver'});
+  });
+
+  test(
+    'updates a contact name before the driver has a registered vehicle',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final preferences = await SharedPreferences.getInstance();
+      final profileDataSource = _MockProfileDataSource();
+      when(
+        () => profileDataSource.updateProfile(
+          data: any<Map<String, dynamic>>(named: 'data'),
+        ),
+      ).thenAnswer((_) async => const {'name': 'Updated Driver'});
+
+      final repository = DriverProfileRepositoryImpl(
+        profileDataSource: profileDataSource,
+        sessionService: _MockSessionService(),
+        preferences: preferences,
+      );
+      const currentAccount = DriverAccountSnapshot(
+        name: 'Driver',
+        phone: '+639170000001',
+        email: 'driver@example.com',
+      );
+
+      final result = await repository.updateAccount(
+        currentAccount: currentAccount,
+        name: 'Updated Driver',
+        vehicleType: '',
+        plateNumber: '',
+      );
+
+      result.fold((failure) => fail('profile update failed: $failure'), (
+        account,
+      ) {
+        expect(account.name, 'Updated Driver');
+        expect(account.vehicleType, isEmpty);
+        expect(account.plateNumber, isEmpty);
+      });
+      final updatePayload =
+          verify(
+                () => profileDataSource.updateProfile(
+                  data: captureAny<Map<String, dynamic>>(named: 'data'),
+                ),
+              ).captured.single
+              as Map<String, dynamic>;
+      expect(updatePayload, {'name': 'Updated Driver'});
+    },
+  );
+
+  test('rejects incomplete vehicle details before making a request', () async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = await SharedPreferences.getInstance();
+    final profileDataSource = _MockProfileDataSource();
+    final repository = DriverProfileRepositoryImpl(
+      profileDataSource: profileDataSource,
+      sessionService: _MockSessionService(),
+      preferences: preferences,
+    );
+
+    final result = await repository.updateAccount(
+      currentAccount: const DriverAccountSnapshot(name: 'Driver'),
+      name: 'Driver',
+      vehicleType: 'Motorcycle',
+      plateNumber: '',
+    );
+
+    expect(
+      result.fold((failure) => failure.message, (_) => ''),
+      'Please verify your driver details.',
+    );
+    verifyNever(
+      () => profileDataSource.updateProfile(
+        data: any<Map<String, dynamic>>(named: 'data'),
+      ),
+    );
   });
 }
