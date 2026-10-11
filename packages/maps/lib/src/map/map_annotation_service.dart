@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -60,6 +61,10 @@ abstract final class MapMarkerMotion {
 }
 
 class MapAnnotationService._() {
+  static const _markerImageCacheCapacity = 32;
+  static final LinkedHashMap<String, Uint8List> _markerImageCache =
+      LinkedHashMap();
+
   static Future<mapbox.PointAnnotationManager> addMarker(
     AppMapController controller,
     double lat,
@@ -227,11 +232,28 @@ class MapAnnotationService._() {
     );
   }
 
-  static Future<Uint8List> _createMarkerImage(Color color, {String? label}) =>
-      traceTimelineStage(
-        'maps.marker.rasterize_png',
-        () => _renderMarkerImage(color, label: label),
-      );
+  static Future<Uint8List> _createMarkerImage(
+    Color color, {
+    String? label,
+  }) async {
+    final cacheLabel = label == null || label.trim().isEmpty ? '' : label;
+    final cacheKey = '${color.toARGB32()}_$cacheLabel';
+    final cachedImage = _markerImageCache.remove(cacheKey);
+    if (cachedImage != null) {
+      _markerImageCache[cacheKey] = cachedImage;
+      return cachedImage;
+    }
+
+    final image = await traceTimelineStage(
+      'maps.marker.rasterize_png',
+      () => _renderMarkerImage(color, label: label),
+    );
+    if (_markerImageCache.length >= _markerImageCacheCapacity) {
+      _markerImageCache.remove(_markerImageCache.keys.first);
+    }
+    _markerImageCache[cacheKey] = image;
+    return image;
+  }
 
   static Future<Uint8List> _renderMarkerImage(
     Color color, {
