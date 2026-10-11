@@ -63,14 +63,6 @@ func NewQueryService(dependencies QueryDependencies) *RideContextQueryService {
 	}
 }
 
-// NewRideContextQueryService preserves the feature's established constructor
-// name for callers while the implementation remains local to this slice.
-func NewRideContextQueryService(
-	dependencies QueryDependencies,
-) *RideContextQueryService {
-	return NewQueryService(dependencies)
-}
-
 func (service *RideContextQueryService) WithLogger(logger *slog.Logger) *RideContextQueryService {
 	if logger != nil {
 		service.logger = logger

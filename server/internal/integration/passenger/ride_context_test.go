@@ -191,7 +191,7 @@ func TestAuthenticatedDashboardLoadsLocationAndHistoryConcurrently(t *testing.T)
 	releaseAll := func() {
 		releaseOnce.Do(func() { close(release) })
 	}
-	service := ridecontext.NewRideContextQueryService(
+	service := ridecontext.NewQueryService(
 		ridecontext.QueryDependencies{
 			RecentDestinations: coordinatedRecentDestinationReader{
 				started: destinationsStarted,
@@ -243,7 +243,7 @@ func TestAuthenticatedDashboardLoadsLocationAndHistoryConcurrently(t *testing.T)
 
 func TestAuthenticatedDashboardDoesNotWaitForUnboundedAddressResolution(t *testing.T) {
 	addressStarted := make(chan struct{})
-	service := ridecontext.NewRideContextQueryService(
+	service := ridecontext.NewQueryService(
 		ridecontext.QueryDependencies{
 			RecentDestinations: &recentDestinationReader{destinations: []ridecontext.RecentDestination{{
 				Status: "completed",
@@ -366,7 +366,7 @@ func newRouter(
 ) *chi.Mux {
 	router := chi.NewRouter()
 	verifier := security.NewTokenManager("test-secret")
-	query := ridecontext.NewRideContextQueryService(ridecontext.QueryDependencies{
+	query := ridecontext.NewQueryService(ridecontext.QueryDependencies{
 		RecentDestinations: destinations,
 		AddressResolver:    resolver,
 	})
