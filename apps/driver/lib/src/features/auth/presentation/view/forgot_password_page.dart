@@ -75,8 +75,6 @@ class _ForgotPasswordPageContentState
                 'Reset link sent to ${_emailController.text.trim()}',
               );
               context.pop();
-            } else if (state is ForgotPasswordFailure) {
-              CustomToast.show(context, state.errorMessage);
             }
           },
           builder: (context, state) {
