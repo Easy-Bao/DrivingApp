@@ -196,6 +196,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
 
   void _onMapCreated(AppMapController controller) {
     _mapController = controller;
+    _flushPendingMapUpdate();
     if (!_initialized) {
       _initialized = true;
       final passengerLat = widget.ride.pickupLat;
@@ -310,20 +311,24 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
       debugPrint('Error updating track map: $error');
     } finally {
       _isUpdatingMap = false;
-      final pending = _pendingMapUpdate;
-      _pendingMapUpdate = null;
-      if (pending != null && mounted) {
-        unawaited(
-          _updateMapElements(
-            pending.driverLat,
-            pending.driverLng,
-            pending.routeCoordinates,
-            pending.status,
-            pending.driverName,
-          ),
-        );
-      }
+      _flushPendingMapUpdate();
     }
+  }
+
+  void _flushPendingMapUpdate() {
+    if (_mapController == null || _isUpdatingMap || !mounted) return;
+    final pending = _pendingMapUpdate;
+    if (pending == null) return;
+    _pendingMapUpdate = null;
+    unawaited(
+      _updateMapElements(
+        pending.driverLat,
+        pending.driverLng,
+        pending.routeCoordinates,
+        pending.status,
+        pending.driverName,
+      ),
+    );
   }
 
   Future<mapbox.PointAnnotationManager> _upsertMarker(
