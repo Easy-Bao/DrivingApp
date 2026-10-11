@@ -28,7 +28,6 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
   Widget build(BuildContext context) {
     return BlocBuilder<DriverAccountCubit, DriverAccountState>(
       builder: (context, state) => Scaffold(
-        backgroundColor: context.canvasColor,
         body: SafeArea(
           child: Align(
             alignment: Alignment.topCenter,

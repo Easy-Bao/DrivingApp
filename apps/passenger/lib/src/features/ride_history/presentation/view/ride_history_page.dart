@@ -54,7 +54,6 @@ class _RideHistoryPageState extends State<RideHistoryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: context.canvasColor,
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(

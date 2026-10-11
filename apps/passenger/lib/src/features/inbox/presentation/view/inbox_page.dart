@@ -84,7 +84,6 @@ class _InboxPageState extends State<InboxPage> {
     return BlocProvider<InboxCubit>.value(
       value: _inboxCubit,
       child: Scaffold(
-        backgroundColor: context.canvasColor,
         body: SafeArea(
           child: BlocListener<SessionBloc, SessionState>(
             listenWhen: (_, current) => current is AuthenticatedSession,

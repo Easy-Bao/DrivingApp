@@ -81,7 +81,6 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
         ? 'Your driver'
         : widget.driverName.trim();
     return Scaffold(
-      backgroundColor: context.canvasColor,
       body: SafeArea(
         child: SingleChildScrollView(
           key: const ValueKey('passenger-rating-scroll-view'),

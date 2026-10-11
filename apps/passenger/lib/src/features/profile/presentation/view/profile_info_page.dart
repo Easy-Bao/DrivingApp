@@ -226,7 +226,6 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
           if (!_isDirty && !_isSaving) _applyProfile(state);
         },
         child: Scaffold(
-          backgroundColor: context.canvasColor,
           appBar: AppBar(
             backgroundColor: context.canvasColor,
             elevation: 0,

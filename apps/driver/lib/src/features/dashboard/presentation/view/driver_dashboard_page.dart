@@ -1001,7 +1001,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
             fit: StackFit.expand,
             children: [
               Scaffold(
-                backgroundColor: context.canvasColor,
                 appBar: AppBar(
                   automaticallyImplyLeading: false,
                   backgroundColor: context.canvasColor,

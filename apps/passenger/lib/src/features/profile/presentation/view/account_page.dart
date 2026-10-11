@@ -25,7 +25,6 @@ class AccountPage extends StatelessWidget {
         );
         final visibleState = isAuthenticated ? state : const ProfileState();
         return Scaffold(
-          backgroundColor: context.canvasColor,
           body: SafeArea(
             child: Align(
               alignment: Alignment.topCenter,

@@ -76,7 +76,6 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
     final text = _otpController.text;
 
     return Scaffold(
-      backgroundColor: context.canvasColor,
       appBar: AppBar(
         backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
         elevation: 0,

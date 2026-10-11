@@ -88,7 +88,6 @@ class _ResetPasswordConfirmPageContentState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: context.canvasColor,
       appBar: AppBar(
         backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
         elevation: 0,

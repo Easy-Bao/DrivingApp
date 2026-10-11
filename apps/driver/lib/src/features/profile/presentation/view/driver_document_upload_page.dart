@@ -94,7 +94,6 @@ class _DriverDocumentUploadPageState extends State<DriverDocumentUploadPage> {
         }
       },
       child: Scaffold(
-        backgroundColor: context.canvasColor,
         appBar: AppBar(
           leading: IconButton(
             tooltip: MaterialLocalizations.of(context).backButtonTooltip,

@@ -267,7 +267,6 @@ class _SavedPlacePageState extends State<SavedPlacePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: context.canvasColor,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {

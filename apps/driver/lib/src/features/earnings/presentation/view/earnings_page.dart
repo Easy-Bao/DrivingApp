@@ -172,7 +172,6 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     final isNetworkUnavailable = AppNetworkStatusScope.isUnavailableOf(context);
 
     return Scaffold(
-      backgroundColor: context.canvasColor,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: context.canvasColor,

@@ -83,7 +83,6 @@ class _HomePageState extends State<HomePage> {
         ),
       ],
       child: Scaffold(
-        backgroundColor: context.canvasColor,
         body: SafeArea(
           child: Center(
             child: ConstrainedBox(

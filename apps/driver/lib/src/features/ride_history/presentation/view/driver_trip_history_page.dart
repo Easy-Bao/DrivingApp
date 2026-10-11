@@ -119,7 +119,6 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
         (state.loadMoreError != null && !isNetworkUnavailable);
 
     return Scaffold(
-      backgroundColor: context.canvasColor,
       appBar: AppBar(
         backgroundColor: context.canvasColor,
         elevation: 0,

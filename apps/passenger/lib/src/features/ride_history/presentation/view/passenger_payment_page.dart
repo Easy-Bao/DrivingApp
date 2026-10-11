@@ -14,7 +14,6 @@ class const PassengerPaymentPage({super.key, required this.ride})
     final fare =
         double.tryParse(ride.price.replaceAll(RegExp(r'[^0-9.\-]'), '')) ?? 0;
     return Scaffold(
-      backgroundColor: context.canvasColor,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
