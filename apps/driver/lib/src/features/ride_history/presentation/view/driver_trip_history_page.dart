@@ -167,53 +167,49 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
               color: context.colorScheme.onSurface,
               onRefresh: () =>
                   BlocProvider.of<DriverTripHistoryCubit>(context).load(),
-              child: Skeletonizer(
-                enabled: state.isLoading,
-                child: ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(
-                    EasyRideLayout.pagePadding,
-                    4,
-                    EasyRideLayout.pagePadding,
-                    AppFloatingTabBar.height + EasyRideSpacing.xxl,
-                  ),
-                  physics: const AlwaysScrollableScrollPhysics(
-                    parent: BouncingScrollPhysics(),
-                  ),
-                  itemCount:
-                      grouped.keys.length +
-                      (hasRefreshError ? 1 : 0) +
-                      (hasLoadMoreItem ? 1 : 0),
-                  itemBuilder: (context, groupIndex) {
-                    if (hasRefreshError && groupIndex == 0) {
-                      return _buildRefreshError(state.errorMessage!);
-                    }
-                    final contentIndex = groupIndex - (hasRefreshError ? 1 : 0);
-                    if (hasLoadMoreItem &&
-                        contentIndex == grouped.keys.length) {
-                      return _buildLoadMore(state);
-                    }
-                    final date = grouped.keys.elementAt(contentIndex);
-                    final trips = grouped[date]!;
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 20, bottom: 12),
-                          child: Text(
-                            date,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                              color: context.colorScheme.onSurfaceVariant,
-                              letterSpacing: 0.5,
-                            ),
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(
+                  EasyRideLayout.pagePadding,
+                  4,
+                  EasyRideLayout.pagePadding,
+                  AppFloatingTabBar.height + EasyRideSpacing.xxl,
+                ),
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
+                itemCount:
+                    grouped.keys.length +
+                    (hasRefreshError ? 1 : 0) +
+                    (hasLoadMoreItem ? 1 : 0),
+                itemBuilder: (context, groupIndex) {
+                  if (hasRefreshError && groupIndex == 0) {
+                    return _buildRefreshError(state.errorMessage!);
+                  }
+                  final contentIndex = groupIndex - (hasRefreshError ? 1 : 0);
+                  if (hasLoadMoreItem && contentIndex == grouped.keys.length) {
+                    return _buildLoadMore(state);
+                  }
+                  final date = grouped.keys.elementAt(contentIndex);
+                  final trips = grouped[date]!;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 20, bottom: 12),
+                        child: Text(
+                          date,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: context.colorScheme.onSurfaceVariant,
+                            letterSpacing: 0.5,
                           ),
                         ),
-                        ...trips.map(_buildTripCard),
-                      ],
-                    );
-                  },
-                ),
+                      ),
+                      ...trips.map(_buildTripCard),
+                    ],
+                  );
+                },
               ),
             ),
     );
