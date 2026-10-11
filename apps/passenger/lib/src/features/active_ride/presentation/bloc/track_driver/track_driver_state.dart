@@ -121,6 +121,11 @@ final class TrackDriverEmergencyStopped extends RideFailed {
 }
 
 extension TrackDriverRideStatePresentation on RideState {
+  bool get isTerminal => switch (this) {
+    TripCompleted() || RideFailed() => true,
+    Idle() || SearchingDriver() || DriverEnRoute() || TripInProgress() => false,
+  };
+
   bool get isTracking => switch (this) {
     DriverEnRoute() || TripInProgress() => true,
     Idle() || SearchingDriver() || TripCompleted() || RideFailed() => false,

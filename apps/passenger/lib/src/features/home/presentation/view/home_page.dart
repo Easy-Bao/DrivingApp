@@ -481,6 +481,7 @@ class _HomePageState extends State<HomePage> {
         return BlocBuilder<TrackDriverCubit, TrackDriverState>(
           bloc: cubit,
           builder: (context, state) {
+            if (state.isTerminal) return const SizedBox.shrink();
             if (!state.isTracking) {
               return _buildRestoredRideBanner(historyRide);
             }
@@ -542,6 +543,7 @@ class _HomePageState extends State<HomePage> {
   bool _hasActiveRide() {
     final trackDriverCubit = _getTrackDriverCubit();
     if (trackDriverCubit?.state.isTracking == true) return true;
+    if (trackDriverCubit?.state.isTerminal == true) return false;
     return _activeRideFromHistory(
           BlocProvider.of<RideHistoryBloc>(context).state,
         ) !=
@@ -550,6 +552,7 @@ class _HomePageState extends State<HomePage> {
 
   void _resumeActiveRide() {
     final trackDriverCubit = _getTrackDriverCubit();
+    if (trackDriverCubit?.state.isTerminal == true) return;
     final ride = trackDriverCubit?.currentRide;
     if (ride != null) {
       unawaited(context.pushNamed(ActiveRideRoutes.trackDriver, extra: ride));
