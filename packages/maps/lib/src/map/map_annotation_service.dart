@@ -2,6 +2,8 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:design_system/design_system.dart'
+    show EasyRidePalette, EasyRideStatusColors;
 import 'package:flutter/material.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
@@ -10,10 +12,10 @@ import 'package:maps/src/map/map_camera_service.dart';
 
 class TripMapMarkerStyle._() {
   static const double pinIconSize = 1.22;
-  static const Color ownLocation = Color(0xFF100E11);
-  static const Color tripLocation = Color(0xFF198754);
-  static const Color markerSurface = Color(0xFFFFFFFF);
-  static const Color labelForeground = Color(0xFF100E11);
+  static const Color ownLocation = EasyRidePalette.obsidian;
+  static const Color tripLocation = EasyRideStatusColors.success;
+  static const Color markerSurface = EasyRidePalette.white;
+  static const Color labelForeground = EasyRidePalette.obsidian;
 
   static Color colorFor({required bool isOrigin}) {
     return isOrigin ? ownLocation : tripLocation;

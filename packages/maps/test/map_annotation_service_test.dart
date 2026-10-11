@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:design_system/design_system.dart'
+    show EasyRidePalette, EasyRideStatusColors;
 import 'package:maps/maps.dart';
 
 void main() {
@@ -7,11 +9,11 @@ void main() {
     expect(TripMapMarkerStyle.pinIconSize, greaterThan(1.0));
     expect(
       TripMapMarkerStyle.colorFor(isOrigin: true),
-      const Color(0xFF100E11),
+      EasyRidePalette.obsidian,
     );
     expect(
       TripMapMarkerStyle.colorFor(isOrigin: false),
-      const Color(0xFF198754),
+      EasyRideStatusColors.success,
     );
   });
 

@@ -1,6 +1,7 @@
 export 'package:design_system/src/navigation/tab_navigation_coordinator.dart';
 export 'package:design_system/src/router/safe_route_extra.dart';
 export 'package:design_system/src/tokens/layout.dart';
+export 'package:design_system/src/tokens/palette.dart';
 export 'package:design_system/src/tokens/radius.dart';
 export 'package:design_system/src/tokens/size.dart';
 export 'package:design_system/src/tokens/spacing.dart';
