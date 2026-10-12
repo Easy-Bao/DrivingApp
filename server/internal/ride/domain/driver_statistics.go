@@ -6,16 +6,16 @@ import (
 )
 
 type DriverStats struct {
-	DriverID            int            `json:"driver_id"`
-	TotalTrips          int            `json:"total_trips"`
-	CompletedTrips      int            `json:"completed_trips"`
-	ActiveTrips         int            `json:"active_trips"`
-	TotalEarnings       int64          `json:"total_earnings_amount"`
-	TodayCompletedTrips int            `json:"today_completed_trips"`
-	TodayEarnings       int64          `json:"today_earnings_amount"`
-	AverageRating       float64        `json:"average_rating"`
-	RatingDistribution  [5]int         `json:"rating_distribution"`
-	Standing            DriverStanding `json:"standing"`
+	DriverID            int
+	TotalTrips          int
+	CompletedTrips      int
+	ActiveTrips         int
+	TotalEarnings       int64
+	TodayCompletedTrips int
+	TodayEarnings       int64
+	AverageRating       float64
+	RatingDistribution  [5]int
+	Standing            DriverStanding
 }
 
 // DriverStanding exposes independent, evidence-based reliability metrics.
@@ -23,16 +23,16 @@ type DriverStats struct {
 // let future policy distinguish driver fault from passenger, system, safety,
 // and unresolved outcomes.
 type DriverStanding struct {
-	SettledTrips                       int     `json:"settled_trips"`
-	DriverFaultCancellations           int     `json:"driver_fault_cancellations"`
-	PassengerFaultCancellations        int     `json:"passenger_fault_cancellations"`
-	SystemFaultCancellations           int     `json:"system_fault_cancellations"`
-	NoFaultCancellations               int     `json:"no_fault_cancellations"`
-	SafetyRelatedCancellations         int     `json:"safety_related_cancellations"`
-	PendingReviewCancellations         int     `json:"pending_review_cancellations"`
-	AdminOverrideCancellations         int     `json:"admin_override_cancellations"`
-	CompletionRatePercent              float64 `json:"completion_rate_percent"`
-	DriverFaultCancellationRatePercent float64 `json:"driver_fault_cancellation_rate_percent"`
+	SettledTrips                       int
+	DriverFaultCancellations           int
+	PassengerFaultCancellations        int
+	SystemFaultCancellations           int
+	NoFaultCancellations               int
+	SafetyRelatedCancellations         int
+	PendingReviewCancellations         int
+	AdminOverrideCancellations         int
+	CompletionRatePercent              float64
+	DriverFaultCancellationRatePercent float64
 }
 
 func BuildDriverStanding(

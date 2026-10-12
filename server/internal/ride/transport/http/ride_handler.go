@@ -402,7 +402,7 @@ func (handler *Handler) PassengerActivitySummary(w http.ResponseWriter, r *http.
 		response.Error(w, http.StatusServiceUnavailable, "Passenger activity is temporarily unavailable.")
 		return
 	}
-	response.JSON(w, http.StatusOK, summary)
+	response.JSON(w, http.StatusOK, dto.NewPassengerActivitySummaryResponse(summary))
 }
 
 func (handler *Handler) DriverStats(w http.ResponseWriter, r *http.Request) {
@@ -425,7 +425,7 @@ func (handler *Handler) DriverStats(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 500, "Driver statistics are temporarily unavailable.")
 		return
 	}
-	response.JSON(w, 200, stats)
+	response.JSON(w, 200, dto.NewDriverStatsResponse(stats))
 }
 
 func (handler *Handler) DriverEarnings(w http.ResponseWriter, r *http.Request) {
@@ -444,7 +444,7 @@ func (handler *Handler) DriverEarnings(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusServiceUnavailable, "Driver earnings are temporarily unavailable.")
 		return
 	}
-	response.JSON(w, http.StatusOK, summary)
+	response.JSON(w, http.StatusOK, dto.NewDriverEarningsResponse(summary))
 }
 
 func (handler *Handler) DriverTrips(w http.ResponseWriter, r *http.Request) {

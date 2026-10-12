@@ -11,23 +11,23 @@ type DriverEarning struct {
 }
 
 type EarningsPeriod struct {
-	EarningsAmount int64 `json:"earnings_amount"`
-	CompletedTrips int   `json:"completed_trips"`
+	EarningsAmount int64
+	CompletedTrips int
 }
 
 type EarningsBucket struct {
-	StartDate      string `json:"start_date"`
-	EarningsAmount int64  `json:"earnings_amount"`
-	CompletedTrips int    `json:"completed_trips"`
+	StartDate      string
+	EarningsAmount int64
+	CompletedTrips int
 }
 
 type DriverEarningsSummary struct {
-	Timezone   string           `json:"timezone"`
-	Today      EarningsPeriod   `json:"today"`
-	ThisWeek   EarningsPeriod   `json:"this_week"`
-	ThisMonth  EarningsPeriod   `json:"this_month"`
-	Weekdays   []EarningsBucket `json:"weekdays"`
-	MonthWeeks []EarningsBucket `json:"month_weeks"`
+	Timezone   string
+	Today      EarningsPeriod
+	ThisWeek   EarningsPeriod
+	ThisMonth  EarningsPeriod
+	Weekdays   []EarningsBucket
+	MonthWeeks []EarningsBucket
 }
 
 type DriverEarningsReader interface {

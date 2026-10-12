@@ -6,8 +6,8 @@ import (
 )
 
 type PassengerActivitySummary struct {
-	ThisWeekFareAmount     int64 `json:"this_week_fare_amount"`
-	ThisWeekCompletedRides int   `json:"this_week_completed_rides"`
+	ThisWeekFareAmount     int64
+	ThisWeekCompletedRides int
 }
 
 type PassengerActivityReader interface {
