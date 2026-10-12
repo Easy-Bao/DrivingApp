@@ -349,7 +349,7 @@ func (handler *Handler) Counterparty(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	response.JSON(w, http.StatusOK, result)
+	response.JSON(w, http.StatusOK, dto.NewCounterpartyResponse(result))
 }
 
 func (handler *Handler) PassengerRides(w http.ResponseWriter, r *http.Request) {
@@ -518,7 +518,7 @@ func (handler *Handler) DriverReviews(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 500, "Driver reviews are temporarily unavailable.")
 		return
 	}
-	response.JSON(w, 200, items)
+	response.JSON(w, 200, dto.NewReviewResponses(items))
 }
 
 func (handler *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
@@ -548,7 +548,7 @@ func (handler *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 400, safeRideError(err))
 		return
 	}
-	response.JSON(w, 201, item)
+	response.JSON(w, 201, dto.NewReviewResponse(item))
 }
 
 func (handler *Handler) CreatePassengerReview(w http.ResponseWriter, r *http.Request) {
@@ -578,7 +578,7 @@ func (handler *Handler) CreatePassengerReview(w http.ResponseWriter, r *http.Req
 		response.Error(w, 400, safeRideError(err))
 		return
 	}
-	response.JSON(w, 201, item)
+	response.JSON(w, 201, dto.NewPassengerReviewResponse(item))
 }
 
 func (handler *Handler) CreateSafetyReport(w http.ResponseWriter, r *http.Request) {
@@ -608,7 +608,7 @@ func (handler *Handler) CreateSafetyReport(w http.ResponseWriter, r *http.Reques
 		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
-	response.JSON(w, http.StatusCreated, item)
+	response.JSON(w, http.StatusCreated, dto.NewSafetyReportResponse(item))
 }
 
 func (handler *Handler) OnlineDrivers(w http.ResponseWriter, r *http.Request) {
@@ -626,7 +626,7 @@ func (handler *Handler) OnlineDrivers(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusServiceUnavailable, "driver availability unavailable")
 		return
 	}
-	response.JSON(w, 200, items)
+	response.JSON(w, 200, dto.NewOnlineDriverResponses(items))
 }
 
 func (handler *Handler) PublicDriverSummaries(w http.ResponseWriter, r *http.Request) {
@@ -645,7 +645,7 @@ func (handler *Handler) PublicDriverSummaries(w http.ResponseWriter, r *http.Req
 		response.Error(w, http.StatusServiceUnavailable, "driver availability unavailable")
 		return
 	}
-	response.JSON(w, 200, summaries)
+	response.JSON(w, 200, dto.NewPublicDriverSummaryResponses(summaries))
 }
 
 func driverIDsFromQuery(request *http.Request) ([]int, error) {

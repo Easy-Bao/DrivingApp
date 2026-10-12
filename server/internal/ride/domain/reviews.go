@@ -1,22 +1,22 @@
 package domain
 
 type Review struct {
-	ID            int     `json:"id"`
-	RideID        int     `json:"ride_id"`
-	DriverID      int     `json:"driver_id"`
-	PassengerID   int     `json:"passenger_id"`
-	PassengerName string  `json:"passenger_name,omitempty"`
-	Rating        float64 `json:"rating"`
-	Comment       string  `json:"comment,omitempty"`
-	CreatedAt     string  `json:"created_at"`
+	ID            int
+	RideID        int
+	DriverID      int
+	PassengerID   int
+	PassengerName string
+	Rating        float64
+	Comment       string
+	CreatedAt     string
 }
 
 type PassengerReview struct {
-	ID          int     `json:"id"`
-	RideID      int     `json:"ride_id"`
-	DriverID    int     `json:"driver_id"`
-	PassengerID int     `json:"passenger_id"`
-	Rating      float64 `json:"rating"`
-	Comment     string  `json:"comment,omitempty"`
-	CreatedAt   string  `json:"created_at"`
+	ID          int
+	RideID      int
+	DriverID    int
+	PassengerID int
+	Rating      float64
+	Comment     string
+	CreatedAt   string
 }

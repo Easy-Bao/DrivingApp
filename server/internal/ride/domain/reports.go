@@ -34,16 +34,16 @@ type SafetyReportStatus string
 const SafetyReportSubmitted SafetyReportStatus = "submitted"
 
 type SafetyReport struct {
-	ID             int                  `json:"id"`
-	RideID         int                  `json:"ride_id"`
-	ReporterID     int                  `json:"reporter_id"`
-	ReportedUserID int                  `json:"reported_user_id"`
-	ReporterRole   string               `json:"reporter_role"`
-	Category       SafetyReportCategory `json:"category"`
-	Severity       SafetyReportSeverity `json:"severity"`
-	Description    string               `json:"description"`
-	Status         SafetyReportStatus   `json:"status"`
-	CreatedAt      string               `json:"created_at"`
+	ID             int
+	RideID         int
+	ReporterID     int
+	ReportedUserID int
+	ReporterRole   string
+	Category       SafetyReportCategory
+	Severity       SafetyReportSeverity
+	Description    string
+	Status         SafetyReportStatus
+	CreatedAt      string
 }
 
 func ValidateSafetyReport(reporterRole string, category SafetyReportCategory, description string) (SafetyReportSeverity, bool) {
