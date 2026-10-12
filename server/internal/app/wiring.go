@@ -23,7 +23,8 @@ import (
 	chathttp "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/http"
 	chatwebsocket "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/websocket"
 	assignment "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment"
-	documents "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents"
+	documentapplication "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/application"
+	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/mapbox"
 	locationredis "github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/redis"
 	locationapplication "github.com/Easy-Bao/DrivingApp/server/internal/location/application"
@@ -69,7 +70,7 @@ type httpRouterDependencies struct {
 	rideStore          rideRuntimeStore
 	profileStore       userports.ProfileStore
 	statsReader        adminports.StatsReader
-	documentStore      documents.DocumentStore
+	documentStore      documentapplication.DocumentStore
 	privateObjectStore platformstorage.ObjectStore
 	otpAttemptStore    middleware.CounterStore
 	routeSecurity      *middleware.RouteSecurity
@@ -143,14 +144,14 @@ func newHTTPRouter(
 			RouteSecurity: routeSecurity,
 		},
 	)
-	documentRouter := documents.NewRouter(documents.RouterDependencies{
-		Service: documents.NewDocumentService(
-			documents.DocumentServiceDependencies{
+	documentRouter := documenthttp.NewRouter(documenthttp.RouterDependencies{
+		Service: documentapplication.NewDocumentService(
+			documentapplication.DocumentServiceDependencies{
 				Repository: documentStore,
 				Storage:    privateObjectStore,
 			},
-			documents.WithContentTypeDetector(http.DetectContentType),
-			documents.WithMaxDocumentBytes(config.Security.UploadBodyLimit),
+			documentapplication.WithContentTypeDetector(http.DetectContentType),
+			documentapplication.WithMaxDocumentBytes(config.Security.UploadBodyLimit),
 		),
 		Verifier:      verifier,
 		Authorizer:    adminAuthorizer,

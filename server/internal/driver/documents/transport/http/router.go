@@ -1,8 +1,9 @@
-package documents
+package http
 
 import (
 	"net/http"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
@@ -17,7 +18,7 @@ type Router struct {
 }
 
 type RouterDependencies struct {
-	Service       *DocumentService
+	Service       *application.DocumentService
 	Verifier      *security.TokenManager
 	Authorizer    *security.AdminAuthorizer
 	RouteSecurity *middleware.RouteSecurity

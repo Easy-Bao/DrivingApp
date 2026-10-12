@@ -14,18 +14,19 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents"
+	documentapplication "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/application"
+	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )
 
 func newDocumentService(
-	repository documents.DocumentStore,
-	storage documents.ObjectStore,
-	options ...documents.DocumentServiceOption,
-) *documents.DocumentService {
-	return documents.NewDocumentService(
-		documents.DocumentServiceDependencies{Repository: repository, Storage: storage},
+	repository documentapplication.DocumentStore,
+	storage documentapplication.ObjectStore,
+	options ...documentapplication.DocumentServiceOption,
+) *documentapplication.DocumentService {
+	return documentapplication.NewDocumentService(
+		documentapplication.DocumentServiceDependencies{Repository: repository, Storage: storage},
 		options...,
 	)
 }
@@ -45,8 +46,8 @@ func TestDocumentAdministrationRequiresConfiguredAdministrator(t *testing.T) {
 	service := newDocumentService(
 		repository,
 		storage,
-		documents.WithContentTypeDetector(http.DetectContentType),
-		documents.WithMaxDocumentBytes(1024),
+		documentapplication.WithContentTypeDetector(http.DetectContentType),
+		documentapplication.WithMaxDocumentBytes(1024),
 	)
 	document, err := service.Upload(t.Context(), 7, "driver_license", "application/pdf", validPDF)
 	if err != nil {
@@ -54,7 +55,7 @@ func TestDocumentAdministrationRequiresConfiguredAdministrator(t *testing.T) {
 	}
 
 	router := chi.NewRouter()
-	documents.NewRouter(documents.RouterDependencies{
+	documenthttp.NewRouter(documenthttp.RouterDependencies{
 		Service:    service,
 		Verifier:   tokenManager,
 		Authorizer: security.NewAdminAuthorizer("42"),
@@ -96,15 +97,15 @@ func TestPrivateDocumentContentIsOwnerOrAdminOnly(t *testing.T) {
 	service := newDocumentService(
 		repository,
 		storage,
-		documents.WithContentTypeDetector(http.DetectContentType),
-		documents.WithMaxDocumentBytes(1024),
+		documentapplication.WithContentTypeDetector(http.DetectContentType),
+		documentapplication.WithMaxDocumentBytes(1024),
 	)
 	document, err := service.Upload(t.Context(), 7, "driver_license", "application/pdf", validPDF)
 	if err != nil {
 		t.Fatal(err)
 	}
 	router := chi.NewRouter()
-	documents.NewRouter(documents.RouterDependencies{
+	documenthttp.NewRouter(documenthttp.RouterDependencies{
 		Service:    service,
 		Verifier:   tokenManager,
 		Authorizer: security.NewAdminAuthorizer("42"),
@@ -164,11 +165,11 @@ func TestDocumentMultipartUploadUsesTypedDriverRoute(t *testing.T) {
 	service := newDocumentService(
 		repository,
 		storage,
-		documents.WithContentTypeDetector(http.DetectContentType),
-		documents.WithMaxDocumentBytes(1024),
+		documentapplication.WithContentTypeDetector(http.DetectContentType),
+		documentapplication.WithMaxDocumentBytes(1024),
 	)
 	router := chi.NewRouter()
-	documents.NewRouter(documents.RouterDependencies{
+	documenthttp.NewRouter(documenthttp.RouterDependencies{
 		Service:    service,
 		Verifier:   tokenManager,
 		Authorizer: security.NewAdminAuthorizer("42"),
@@ -224,11 +225,11 @@ func TestDocumentUploadRequiresCanonicalTypeAndMatchingSignature(t *testing.T) {
 	service := newDocumentService(
 		repository,
 		storage,
-		documents.WithContentTypeDetector(http.DetectContentType),
-		documents.WithMaxDocumentBytes(1024),
+		documentapplication.WithContentTypeDetector(http.DetectContentType),
+		documentapplication.WithMaxDocumentBytes(1024),
 	)
 	router := chi.NewRouter()
-	documents.NewRouter(documents.RouterDependencies{
+	documenthttp.NewRouter(documenthttp.RouterDependencies{
 		Service:    service,
 		Verifier:   tokenManager,
 		Authorizer: security.NewAdminAuthorizer("42"),

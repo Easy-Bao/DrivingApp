@@ -10,7 +10,7 @@ import (
 
 	adminpostgres "github.com/Easy-Bao/DrivingApp/server/internal/admin/adapter/postgres"
 	authpostgres "github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/postgres"
-	documents "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents"
+	documentpostgres "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/adapter/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	eventadapter "github.com/Easy-Bao/DrivingApp/server/internal/platform/events/adapter"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/logger"
@@ -86,7 +86,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create admin stats reader: %w", err)
 	}
-	documentStore, err := documents.NewDocumentStore(postgresPool)
+	documentStore, err := documentpostgres.NewDocumentRepository(postgresPool)
 	if err != nil {
 		return nil, fmt.Errorf("create driver document store: %w", err)
 	}

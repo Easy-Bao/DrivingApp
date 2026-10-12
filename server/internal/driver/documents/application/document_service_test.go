@@ -1,4 +1,4 @@
-package documents_test
+package application_test
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents"
+	documentapplication "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/domain"
 )
 
@@ -18,12 +18,12 @@ var validPDF = []byte("%PDF-1.7\nprivate driver document")
 func testContentTypeDetector([]byte) string { return "application/pdf" }
 
 func newDocumentService(
-	repository documents.DocumentStore,
-	storage documents.ObjectStore,
-	options ...documents.DocumentServiceOption,
-) *documents.DocumentService {
-	return documents.NewDocumentService(
-		documents.DocumentServiceDependencies{Repository: repository, Storage: storage},
+	repository documentapplication.DocumentStore,
+	storage documentapplication.ObjectStore,
+	options ...documentapplication.DocumentServiceOption,
+) *documentapplication.DocumentService {
+	return documentapplication.NewDocumentService(
+		documentapplication.DocumentServiceDependencies{Repository: repository, Storage: storage},
 		options...,
 	)
 }
@@ -32,11 +32,11 @@ func TestDocumentUploadRequiresContentTypeDetector(t *testing.T) {
 	service := newDocumentService(
 		newDocumentRepositoryFake(),
 		newDocumentStorageFake(),
-		documents.WithMaxDocumentBytes(1024),
+		documentapplication.WithMaxDocumentBytes(1024),
 	)
 
 	_, err := service.Upload(context.Background(), 3, "driver_license", "application/pdf", validPDF)
-	if !errors.Is(err, documents.ErrServiceUnavailable) {
+	if !errors.Is(err, documentapplication.ErrServiceUnavailable) {
 		t.Fatalf("error = %v, want unavailable service", err)
 	}
 }
@@ -163,8 +163,8 @@ func TestUploadCreatesAnImmutablePendingRevision(t *testing.T) {
 	service := newDocumentService(
 		repository,
 		storage,
-		documents.WithContentTypeDetector(testContentTypeDetector),
-		documents.WithMaxDocumentBytes(1024),
+		documentapplication.WithContentTypeDetector(testContentTypeDetector),
+		documentapplication.WithMaxDocumentBytes(1024),
 	)
 
 	document, err := service.Upload(context.Background(), 3, "driver_license", "application/pdf", validPDF)
@@ -196,8 +196,8 @@ func TestUploadRejectsMismatchedContentBeforeStorage(t *testing.T) {
 	service := newDocumentService(
 		newDocumentRepositoryFake(),
 		storage,
-		documents.WithContentTypeDetector(testContentTypeDetector),
-		documents.WithMaxDocumentBytes(1024),
+		documentapplication.WithContentTypeDetector(testContentTypeDetector),
+		documentapplication.WithMaxDocumentBytes(1024),
 	)
 
 	_, err := service.Upload(context.Background(), 3, "driver_license", "image/png", validPDF)
@@ -216,8 +216,8 @@ func TestUploadRemovesObjectWhenMetadataCreationFails(t *testing.T) {
 	service := newDocumentService(
 		repository,
 		storage,
-		documents.WithContentTypeDetector(testContentTypeDetector),
-		documents.WithMaxDocumentBytes(1024),
+		documentapplication.WithContentTypeDetector(testContentTypeDetector),
+		documentapplication.WithMaxDocumentBytes(1024),
 	)
 
 	_, err := service.Upload(context.Background(), 3, "driver_license", "application/pdf", validPDF)
@@ -232,8 +232,8 @@ func TestDocumentContentEnforcesOwnershipAndIntegrity(t *testing.T) {
 	service := newDocumentService(
 		repository,
 		storage,
-		documents.WithContentTypeDetector(testContentTypeDetector),
-		documents.WithMaxDocumentBytes(1024),
+		documentapplication.WithContentTypeDetector(testContentTypeDetector),
+		documentapplication.WithMaxDocumentBytes(1024),
 	)
 	document, err := service.Upload(context.Background(), 3, "driver_license", "application/pdf", validPDF)
 	if err != nil {
@@ -255,8 +255,8 @@ func TestReviewCannotRewriteAFinalDecision(t *testing.T) {
 	service := newDocumentService(
 		repository,
 		storage,
-		documents.WithContentTypeDetector(testContentTypeDetector),
-		documents.WithMaxDocumentBytes(1024),
+		documentapplication.WithContentTypeDetector(testContentTypeDetector),
+		documentapplication.WithMaxDocumentBytes(1024),
 	)
 	document, err := service.Upload(context.Background(), 3, "driver_license", "application/pdf", validPDF)
 	if err != nil {
