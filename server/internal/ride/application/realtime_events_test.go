@@ -7,15 +7,16 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
 )
 
 type eventPublisherStub struct {
-	envelopes []event.Envelope
-	err       error
+	events []ports.RealtimeEvent
+	err    error
 }
 
-func (stub *eventPublisherStub) Publish(_ context.Context, envelope event.Envelope) error {
-	stub.envelopes = append(stub.envelopes, envelope)
+func (stub *eventPublisherStub) Publish(_ context.Context, realtimeEvent ports.RealtimeEvent) error {
+	stub.events = append(stub.events, realtimeEvent)
 	return stub.err
 }
 
@@ -40,10 +41,10 @@ func TestStartTripPublishesToBothRideParticipants(t *testing.T) {
 	if updated.Status != "in_transit" {
 		t.Fatalf("updated status = %q, want in_transit", updated.Status)
 	}
-	if len(publisher.envelopes) != 1 {
-		t.Fatalf("published event count = %d, want 1", len(publisher.envelopes))
+	if len(publisher.events) != 1 {
+		t.Fatalf("published event count = %d, want 1", len(publisher.events))
 	}
-	published := publisher.envelopes[0]
+	published := publisher.events[0]
 	if published.Type != event.RideStatusChanged {
 		t.Fatalf("event type = %q, want %q", published.Type, event.RideStatusChanged)
 	}
@@ -68,10 +69,10 @@ func TestCreateSessionPublishesToPassengerAndTargetDriver(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateSession() error = %v", err)
 	}
-	if len(publisher.envelopes) != 1 {
-		t.Fatalf("published event count = %d, want 1", len(publisher.envelopes))
+	if len(publisher.events) != 1 {
+		t.Fatalf("published event count = %d, want 1", len(publisher.events))
 	}
-	published := publisher.envelopes[0]
+	published := publisher.events[0]
 	if published.Type != event.RideOfferCreated {
 		t.Fatalf("event type = %q, want %q", published.Type, event.RideOfferCreated)
 	}
@@ -95,15 +96,12 @@ func TestCreateOpenSessionPublishesToTheDriverPool(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateSession() error = %v", err)
 	}
-	if len(publisher.envelopes) != 1 {
-		t.Fatalf("published event count = %d, want 1", len(publisher.envelopes))
+	if len(publisher.events) != 1 {
+		t.Fatalf("published event count = %d, want 1", len(publisher.events))
 	}
-	published := publisher.envelopes[0]
+	published := publisher.events[0]
 	if !published.Scope.DriverPool || published.Scope.PassengerID != "7" {
 		t.Fatalf("event scope = %#v, want passenger and driver pool", published.Scope)
-	}
-	if got := published.Topics(); len(got) != 2 || got[1] != event.DriverPoolTopic {
-		t.Fatalf("event topics = %v, want passenger and driver pool topics", got)
 	}
 }
 

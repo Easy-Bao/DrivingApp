@@ -42,6 +42,7 @@ import (
 	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	rideports "github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
 	ridehttp "github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/http"
+	ridewebsocket "github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/websocket"
 	userapplication "github.com/Easy-Bao/DrivingApp/server/internal/user/application"
 	userports "github.com/Easy-Bao/DrivingApp/server/internal/user/ports"
 	userhttp "github.com/Easy-Bao/DrivingApp/server/internal/user/transport/http"
@@ -189,6 +190,7 @@ func newHTTPRouter(
 		eventHub,
 	)
 	eventSubscriber.WithLogger(applicationLogger)
+	rideEventPublisher := ridewebsocket.NewEventPublisher(eventPublisher)
 	rideAssignments := assignment.NewResolver(
 		assignment.ResolverDependencies{
 			Routing:   assignmentProjection,
@@ -228,7 +230,7 @@ func newHTTPRouter(
 		rideapplication.RideServiceDependencies{
 			Repository:      rideStore,
 			PricingConfig:   config.Pricing,
-			EventPublisher:  eventPublisher,
+			EventPublisher:  rideEventPublisher,
 			LifecycleConfig: config.RideLifecycle,
 			BiddingConfig:   config.Bidding,
 			DriverLocation: rideports.DriverLocationReaderFunc(

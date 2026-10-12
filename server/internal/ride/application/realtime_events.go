@@ -3,10 +3,10 @@ package application
 import (
 	"context"
 	"strconv"
-	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
 )
 
 const (
@@ -81,18 +81,11 @@ func (service *RideService) publish(
 	if service.eventPublisher == nil {
 		return
 	}
-	envelope, err := event.New(
-		event.NewID(),
-		eventType,
-		time.Now(),
-		scope,
-		payload,
-	)
-	if err != nil {
-		service.log().ErrorContext(ctx, "construct realtime ride event failed", "error", err, "event_type", eventType)
-		return
-	}
-	if err := service.eventPublisher.Publish(ctx, envelope); err != nil {
+	if err := service.eventPublisher.Publish(ctx, ports.RealtimeEvent{
+		Type:    eventType,
+		Scope:   scope,
+		Payload: payload,
+	}); err != nil {
 		service.log().WarnContext(ctx, "publish realtime ride event failed", "error", err, "event_type", eventType)
 	}
 }
