@@ -1,4 +1,4 @@
-package bidding
+package application
 
 import "time"
 

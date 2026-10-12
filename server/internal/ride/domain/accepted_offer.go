@@ -6,46 +6,29 @@ type DriverAssignmentSnapshot struct {
 	PlateNumber string
 }
 
-func NewRideFromAcceptedOffer(
-	session BidSession,
-	offer BidOffer,
+func NewAcceptedRide(
+	ride Ride,
 	driver DriverAssignmentSnapshot,
 	commissionBPS int64,
 ) (Ride, error) {
-	invalidSession := session.ID <= 0 || session.PassengerID <= 0
-	invalidOffer := offer.DriverID <= 0 || offer.SessionID != session.ID
-	if invalidSession || invalidOffer {
+	if ride.PassengerID <= 0 || ride.DriverID == nil || *ride.DriverID <= 0 || ride.FareAmount <= 0 {
 		return Ride{}, ErrInvalidTrip
 	}
 
 	settlement, err := NewSettlementSnapshot(
-		offer.ProposedFareAmount,
+		ride.FareAmount,
 		commissionBPS,
 	)
 	if err != nil {
 		return Ride{}, err
 	}
 
-	driverID := offer.DriverID
-	return Ride{
-		PassengerID:        session.PassengerID,
-		DriverID:           &driverID,
-		Status:             "accepted",
-		FareAmount:         settlement.FareAmount,
-		RideType:           session.RideType,
-		PickupLatitude:     session.PickupLatitude,
-		PickupLongitude:    session.PickupLongitude,
-		PickupName:         session.PickupName,
-		DropoffLatitude:    session.DropoffLatitude,
-		DropoffLongitude:   session.DropoffLongitude,
-		DropoffName:        session.DropoffName,
-		DistanceKm:         session.DistanceKm,
-		DurationMinutes:    session.DurationMinutes,
-		DriverName:         driver.Name,
-		VehicleType:        driver.VehicleType,
-		PlateNumber:        driver.PlateNumber,
-		CommissionBPS:      &settlement.CommissionBPS,
-		CommissionAmount:   settlement.CommissionAmount,
-		DriverPayoutAmount: settlement.DriverPayoutAmount,
-	}, nil
+	ride.Status = "accepted"
+	ride.DriverName = driver.Name
+	ride.VehicleType = driver.VehicleType
+	ride.PlateNumber = driver.PlateNumber
+	ride.CommissionBPS = &settlement.CommissionBPS
+	ride.CommissionAmount = settlement.CommissionAmount
+	ride.DriverPayoutAmount = settlement.DriverPayoutAmount
+	return ride, nil
 }

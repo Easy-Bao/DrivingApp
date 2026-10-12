@@ -7,29 +7,27 @@ import (
 	"log/slog"
 	"time"
 
+	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/domain"
 	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-var _ ports.BiddingStore = (*RideRepository)(nil)
-
 func (repository *RideRepository) CreateSession(
 	ctx context.Context,
-	value domain.BidSession,
-) (domain.BidSession, error) {
+	value dispatchdomain.BidSession,
+) (dispatchdomain.BidSession, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
-		return domain.BidSession{}, err
+		return dispatchdomain.BidSession{}, err
 	}
 	passengerID, err := toPostgresRideID(value.PassengerID, "passenger id")
 	if err != nil {
-		return domain.BidSession{}, err
+		return dispatchdomain.BidSession{}, err
 	}
 	if value.ExpiresAt.IsZero() {
-		return domain.BidSession{}, errors.New("bid session expiration is required")
+		return dispatchdomain.BidSession{}, errors.New("bid session expiration is required")
 	}
 	if value.Status == "" {
 		value.Status = "open"
@@ -38,7 +36,7 @@ func (repository *RideRepository) CreateSession(
 	if value.TargetDriverID != nil {
 		targetID, targetErr := toPostgresRideID(*value.TargetDriverID, "target driver id")
 		if targetErr != nil {
-			return domain.BidSession{}, targetErr
+			return dispatchdomain.BidSession{}, targetErr
 		}
 		targetDriverID = pgtype.Int4{Int32: targetID, Valid: true}
 	}
@@ -49,7 +47,7 @@ func (repository *RideRepository) CreateSession(
 
 	transaction, err := repository.pool.Begin(ctx)
 	if err != nil {
-		return domain.BidSession{}, fmt.Errorf("begin bid session transaction: %w", err)
+		return dispatchdomain.BidSession{}, fmt.Errorf("begin bid session transaction: %w", err)
 	}
 	defer func() {
 		platformdatabase.Rollback(ctx, transaction)
@@ -57,31 +55,31 @@ func (repository *RideRepository) CreateSession(
 
 	transactionQueries := repository.queries.WithTx(transaction)
 	if _, err := transactionQueries.LockUserForBidSession(ctx, passengerID); err != nil {
-		return domain.BidSession{}, fmt.Errorf("lock passenger for bid session: %w", err)
+		return dispatchdomain.BidSession{}, fmt.Errorf("lock passenger for bid session: %w", err)
 	}
 	now := bidTimestamp(time.Now().UTC())
 	if err := transactionQueries.ExpireBidSessions(ctx, databasepostgres.ExpireBidSessionsParams{
 		PassengerID: passengerID,
 		ExpiresAt:   now,
 	}); err != nil {
-		return domain.BidSession{}, fmt.Errorf("expire previous bid sessions: %w", err)
+		return dispatchdomain.BidSession{}, fmt.Errorf("expire previous bid sessions: %w", err)
 	}
 	activeSession, err := transactionQueries.HasActiveBidSession(ctx, databasepostgres.HasActiveBidSessionParams{
 		PassengerID: passengerID,
 		ExpiresAt:   now,
 	})
 	if err != nil {
-		return domain.BidSession{}, fmt.Errorf("check active bid session: %w", err)
+		return dispatchdomain.BidSession{}, fmt.Errorf("check active bid session: %w", err)
 	}
 	if activeSession {
-		return domain.BidSession{}, domain.ErrActiveBooking
+		return dispatchdomain.BidSession{}, domain.ErrActiveBooking
 	}
 	activeRide, err := transactionQueries.HasActivePassengerRide(ctx, passengerID)
 	if err != nil {
-		return domain.BidSession{}, fmt.Errorf("check active passenger ride: %w", err)
+		return dispatchdomain.BidSession{}, fmt.Errorf("check active passenger ride: %w", err)
 	}
 	if activeRide {
-		return domain.BidSession{}, domain.ErrActiveBooking
+		return dispatchdomain.BidSession{}, domain.ErrActiveBooking
 	}
 
 	created, err := transactionQueries.CreateBidSession(ctx, databasepostgres.CreateBidSessionParams{
@@ -104,21 +102,21 @@ func (repository *RideRepository) CreateSession(
 	})
 	if err != nil {
 		if isPostgresUniqueViolation(err) {
-			return domain.BidSession{}, domain.ErrActiveBooking
+			return dispatchdomain.BidSession{}, domain.ErrActiveBooking
 		}
-		return domain.BidSession{}, fmt.Errorf("create bid session: %w", err)
+		return dispatchdomain.BidSession{}, fmt.Errorf("create bid session: %w", err)
 	}
 	if err := transaction.Commit(ctx); err != nil {
-		return domain.BidSession{}, fmt.Errorf("commit bid session transaction: %w", err)
+		return dispatchdomain.BidSession{}, fmt.Errorf("commit bid session transaction: %w", err)
 	}
 	session, err := fromPostgresBidSession(created)
 	if err != nil {
-		return domain.BidSession{}, fmt.Errorf("map created bid session: %w", err)
+		return dispatchdomain.BidSession{}, fmt.Errorf("map created bid session: %w", err)
 	}
 	return session, nil
 }
 
-func (repository *RideRepository) ActiveSessions(ctx context.Context, driverID *int) ([]domain.BidSession, error) {
+func (repository *RideRepository) ActiveSessions(ctx context.Context, driverID *int) ([]dispatchdomain.BidSession, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return nil, err
 	}
@@ -191,7 +189,11 @@ func (repository *RideRepository) ActiveSessions(ctx context.Context, driverID *
 		); profileErr != nil {
 			profileLookupDuration = measure(profileLookupStartedAt)
 			outcome = "driver_unavailable"
-			return nil, driverUnavailableError("find online driver profile for active sessions", profileErr)
+			return nil, driverUnavailableError(
+				"find online driver profile for active sessions",
+				profileErr,
+				dispatchdomain.ErrDriverUnavailable,
+			)
 		}
 		profileLookupDuration = measure(profileLookupStartedAt)
 
@@ -206,7 +208,7 @@ func (repository *RideRepository) ActiveSessions(ctx context.Context, driverID *
 		}
 		if activeRides > 0 {
 			outcome = "active_ride_gate"
-			return []domain.BidSession{}, nil
+			return []dispatchdomain.BidSession{}, nil
 		}
 
 		settlementCheckStartedAt := startTiming()
@@ -223,7 +225,7 @@ func (repository *RideRepository) ActiveSessions(ctx context.Context, driverID *
 		}
 		if overdueSettlement {
 			outcome = "settlement_gate"
-			return []domain.BidSession{}, nil
+			return []dispatchdomain.BidSession{}, nil
 		}
 
 		sessionListStartedAt := startTiming()
@@ -239,7 +241,7 @@ func (repository *RideRepository) ActiveSessions(ctx context.Context, driverID *
 	if err != nil {
 		return nil, fmt.Errorf("list active bid sessions: %w", err)
 	}
-	result := make([]domain.BidSession, 0, len(items))
+	result := make([]dispatchdomain.BidSession, 0, len(items))
 	mappingStartedAt := startTiming()
 	for _, item := range items {
 		session, mappingErr := fromPostgresBidSession(item)
@@ -256,7 +258,7 @@ func (repository *RideRepository) ActiveSessions(ctx context.Context, driverID *
 	return result, nil
 }
 
-func (repository *RideRepository) Offers(ctx context.Context, sessionID int) ([]domain.BidOffer, error) {
+func (repository *RideRepository) Offers(ctx context.Context, sessionID int) ([]dispatchdomain.BidOffer, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
 		return nil, err
 	}
@@ -268,7 +270,7 @@ func (repository *RideRepository) Offers(ctx context.Context, sessionID int) ([]
 	if err != nil {
 		return nil, fmt.Errorf("list bid offers: %w", err)
 	}
-	result := make([]domain.BidOffer, 0, len(items))
+	result := make([]dispatchdomain.BidOffer, 0, len(items))
 	for _, item := range items {
 		offer, mappingErr := fromPostgresBidOffer(item)
 		if mappingErr != nil {
@@ -279,25 +281,25 @@ func (repository *RideRepository) Offers(ctx context.Context, sessionID int) ([]
 	return result, nil
 }
 
-func (repository *RideRepository) PlaceOffer(ctx context.Context, value domain.BidOffer) (domain.BidOffer, error) {
+func (repository *RideRepository) PlaceOffer(ctx context.Context, value dispatchdomain.BidOffer) (dispatchdomain.BidOffer, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
-		return domain.BidOffer{}, err
+		return dispatchdomain.BidOffer{}, err
 	}
 	if value.ProposedFareAmount <= 0 {
-		return domain.BidOffer{}, domain.ErrInvalidFareOffer
+		return dispatchdomain.BidOffer{}, dispatchdomain.ErrInvalidFareOffer
 	}
 	sessionID, err := toPostgresRideID(value.SessionID, "session id")
 	if err != nil {
-		return domain.BidOffer{}, err
+		return dispatchdomain.BidOffer{}, err
 	}
 	driverID, err := toPostgresRideID(value.DriverID, "driver id")
 	if err != nil {
-		return domain.BidOffer{}, err
+		return dispatchdomain.BidOffer{}, err
 	}
 
 	transaction, err := repository.pool.Begin(ctx)
 	if err != nil {
-		return domain.BidOffer{}, fmt.Errorf("begin bid offer transaction: %w", err)
+		return dispatchdomain.BidOffer{}, fmt.Errorf("begin bid offer transaction: %w", err)
 	}
 	defer func() {
 		platformdatabase.Rollback(ctx, transaction)
@@ -312,10 +314,14 @@ func (repository *RideRepository) PlaceOffer(ctx context.Context, value domain.B
 		},
 	)
 	if err != nil {
-		return domain.BidOffer{}, driverUnavailableError("lock active bid session for offer", err)
+		return dispatchdomain.BidOffer{}, driverUnavailableError(
+			"lock active bid session for offer",
+			err,
+			dispatchdomain.ErrDriverUnavailable,
+		)
 	}
 	if session.TargetDriverID.Valid && session.TargetDriverID.Int32 != driverID {
-		return domain.BidOffer{}, domain.ErrDriverUnavailable
+		return dispatchdomain.BidOffer{}, dispatchdomain.ErrDriverUnavailable
 	}
 	profile, err := transactionQueries.LockOnlineDriverProfileForBidding(
 		ctx,
@@ -326,14 +332,18 @@ func (repository *RideRepository) PlaceOffer(ctx context.Context, value domain.B
 		},
 	)
 	if err != nil {
-		return domain.BidOffer{}, driverUnavailableError("lock online driver profile for offer", err)
+		return dispatchdomain.BidOffer{}, driverUnavailableError(
+			"lock online driver profile for offer",
+			err,
+			dispatchdomain.ErrDriverUnavailable,
+		)
 	}
 	activeRides, err := transactionQueries.CountActiveRidesForDriver(ctx, pgtype.Int4{Int32: profile.UserID, Valid: true})
 	if err != nil {
-		return domain.BidOffer{}, fmt.Errorf("count active driver rides: %w", err)
+		return dispatchdomain.BidOffer{}, fmt.Errorf("count active driver rides: %w", err)
 	}
 	if activeRides > 0 {
-		return domain.BidOffer{}, domain.ErrDriverHasActiveRide
+		return dispatchdomain.BidOffer{}, domain.ErrDriverHasActiveRide
 	}
 	overdueSettlement, err := transactionQueries.HasOverdueCashSettlementForDriver(
 		ctx,
@@ -343,20 +353,20 @@ func (repository *RideRepository) PlaceOffer(ctx context.Context, value domain.B
 		},
 	)
 	if err != nil {
-		return domain.BidOffer{}, fmt.Errorf("check overdue cash settlement: %w", err)
+		return dispatchdomain.BidOffer{}, fmt.Errorf("check overdue cash settlement: %w", err)
 	}
 	if overdueSettlement {
-		return domain.BidOffer{}, domain.ErrDriverSettlementOverdue
+		return dispatchdomain.BidOffer{}, domain.ErrDriverSettlementOverdue
 	}
 	existing, err := transactionQueries.HasPendingBidOffer(ctx, databasepostgres.HasPendingBidOfferParams{
 		SessionID: sessionID,
 		DriverID:  driverID,
 	})
 	if err != nil {
-		return domain.BidOffer{}, fmt.Errorf("check duplicate bid offer: %w", err)
+		return dispatchdomain.BidOffer{}, fmt.Errorf("check duplicate bid offer: %w", err)
 	}
 	if existing {
-		return domain.BidOffer{}, domain.ErrDuplicateBid
+		return dispatchdomain.BidOffer{}, dispatchdomain.ErrDuplicateBid
 	}
 	created, err := transactionQueries.CreateBidOffer(ctx, databasepostgres.CreateBidOfferParams{
 		SessionID:    sessionID,
@@ -368,16 +378,16 @@ func (repository *RideRepository) PlaceOffer(ctx context.Context, value domain.B
 	})
 	if err != nil {
 		if isPostgresUniqueViolation(err) {
-			return domain.BidOffer{}, domain.ErrDuplicateBid
+			return dispatchdomain.BidOffer{}, dispatchdomain.ErrDuplicateBid
 		}
-		return domain.BidOffer{}, fmt.Errorf("create bid offer: %w", err)
+		return dispatchdomain.BidOffer{}, fmt.Errorf("create bid offer: %w", err)
 	}
 	if err := transaction.Commit(ctx); err != nil {
-		return domain.BidOffer{}, fmt.Errorf("commit bid offer transaction: %w", err)
+		return dispatchdomain.BidOffer{}, fmt.Errorf("commit bid offer transaction: %w", err)
 	}
 	offer, err := fromPostgresBidOffer(created)
 	if err != nil {
-		return domain.BidOffer{}, fmt.Errorf("map created bid offer: %w", err)
+		return dispatchdomain.BidOffer{}, fmt.Errorf("map created bid offer: %w", err)
 	}
 	return offer, nil
 }
@@ -386,87 +396,87 @@ func (repository *RideRepository) CancelSession(
 	ctx context.Context,
 	sessionID int,
 	passengerID int,
-) (domain.BidSession, error) {
+) (dispatchdomain.BidSession, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
-		return domain.BidSession{}, err
+		return dispatchdomain.BidSession{}, err
 	}
 	dbSessionID, err := toPostgresRideID(sessionID, "session id")
 	if err != nil {
-		return domain.BidSession{}, err
+		return dispatchdomain.BidSession{}, err
 	}
 	dbPassengerID, err := toPostgresRideID(passengerID, "passenger id")
 	if err != nil {
-		return domain.BidSession{}, err
+		return dispatchdomain.BidSession{}, err
 	}
 	item, err := repository.queries.CancelBidSession(ctx, databasepostgres.CancelBidSessionParams{
 		ID:          dbSessionID,
 		PassengerID: dbPassengerID,
 	})
 	if err != nil {
-		return domain.BidSession{}, fmt.Errorf("cancel bid session: %w", err)
+		return dispatchdomain.BidSession{}, fmt.Errorf("cancel bid session: %w", err)
 	}
 	session, err := fromPostgresBidSession(item)
 	if err != nil {
-		return domain.BidSession{}, fmt.Errorf("map canceled bid session: %w", err)
+		return dispatchdomain.BidSession{}, fmt.Errorf("map canceled bid session: %w", err)
 	}
 	return session, nil
 }
 
-func (repository *RideRepository) CancelOffer(ctx context.Context, sessionID, driverID int) (domain.BidOffer, error) {
+func (repository *RideRepository) CancelOffer(ctx context.Context, sessionID, driverID int) (dispatchdomain.BidOffer, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
-		return domain.BidOffer{}, err
+		return dispatchdomain.BidOffer{}, err
 	}
 	dbSessionID, err := toPostgresRideID(sessionID, "session id")
 	if err != nil {
-		return domain.BidOffer{}, err
+		return dispatchdomain.BidOffer{}, err
 	}
 	dbDriverID, err := toPostgresRideID(driverID, "driver id")
 	if err != nil {
-		return domain.BidOffer{}, err
+		return dispatchdomain.BidOffer{}, err
 	}
 	pending, err := repository.queries.GetPendingBidOffer(ctx, databasepostgres.GetPendingBidOfferParams{
 		SessionID: dbSessionID,
 		DriverID:  dbDriverID,
 	})
 	if err != nil {
-		return domain.BidOffer{}, fmt.Errorf("find pending bid offer: %w", err)
+		return dispatchdomain.BidOffer{}, fmt.Errorf("find pending bid offer: %w", err)
 	}
 	item, err := repository.queries.RejectBidOffer(ctx, pending.ID)
 	if err != nil {
-		return domain.BidOffer{}, fmt.Errorf("reject bid offer: %w", err)
+		return dispatchdomain.BidOffer{}, fmt.Errorf("reject bid offer: %w", err)
 	}
 	offer, err := fromPostgresBidOffer(item)
 	if err != nil {
-		return domain.BidOffer{}, fmt.Errorf("map canceled bid offer: %w", err)
+		return dispatchdomain.BidOffer{}, fmt.Errorf("map canceled bid offer: %w", err)
 	}
 	return offer, nil
 }
 
-func (repository *RideRepository) Session(ctx context.Context, sessionID int) (domain.BidSession, error) {
+func (repository *RideRepository) Session(ctx context.Context, sessionID int) (dispatchdomain.BidSession, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
-		return domain.BidSession{}, err
+		return dispatchdomain.BidSession{}, err
 	}
 	dbSessionID, err := toPostgresRideID(sessionID, "session id")
 	if err != nil {
-		return domain.BidSession{}, err
+		return dispatchdomain.BidSession{}, err
 	}
 	item, err := repository.queries.GetBidSessionByID(ctx, dbSessionID)
 	if err != nil {
-		return domain.BidSession{}, fmt.Errorf("find bid session: %w", err)
+		return dispatchdomain.BidSession{}, fmt.Errorf("find bid session: %w", err)
 	}
 	session, err := fromPostgresBidSession(item)
 	if err != nil {
-		return domain.BidSession{}, fmt.Errorf("map bid session: %w", err)
+		return dispatchdomain.BidSession{}, fmt.Errorf("map bid session: %w", err)
 	}
 	return session, nil
 }
 
-func fromPostgresBidSession(item databasepostgres.BidSession) (domain.BidSession, error) {
+func fromPostgresBidSession(item databasepostgres.BidSession) (dispatchdomain.BidSession, error) {
 	if !item.ExpiresAt.Valid {
-		return domain.BidSession{}, errors.New("bid session expiration time is null")
+		return dispatchdomain.BidSession{}, errors.New("bid session expiration time is null")
 	}
 	if !item.CreatedAt.Valid {
-		return domain.BidSession{}, errors.New("bid session creation time is null")
+		return dispatchdomain.BidSession{}, errors.New("bid session creation time is null")
 	}
 	var targetDriverID, acceptedDriverID *int
 	if item.TargetDriverID.Valid && item.TargetDriverID.Int32 > 0 {
@@ -477,7 +487,7 @@ func fromPostgresBidSession(item databasepostgres.BidSession) (domain.BidSession
 		value := int(item.AcceptedDriverID.Int32)
 		acceptedDriverID = &value
 	}
-	return domain.BidSession{
+	return dispatchdomain.BidSession{
 		ID:                int(item.ID),
 		PassengerID:       int(item.PassengerID),
 		RideType:          item.RideType,
@@ -499,11 +509,11 @@ func fromPostgresBidSession(item databasepostgres.BidSession) (domain.BidSession
 	}, nil
 }
 
-func fromPostgresBidOffer(item databasepostgres.BidOffer) (domain.BidOffer, error) {
+func fromPostgresBidOffer(item databasepostgres.BidOffer) (dispatchdomain.BidOffer, error) {
 	if !item.CreatedAt.Valid {
-		return domain.BidOffer{}, errors.New("bid offer creation time is null")
+		return dispatchdomain.BidOffer{}, errors.New("bid offer creation time is null")
 	}
-	return domain.BidOffer{
+	return dispatchdomain.BidOffer{
 		ID:                 int64(item.ID),
 		SessionID:          int(item.SessionID),
 		DriverID:           int(item.DriverID),

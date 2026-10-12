@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"time"
 
+	dispatchports "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/ports"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
@@ -38,6 +39,7 @@ type RideStoreConfig struct {
 
 var (
 	_ ports.RideStore                  = (*RideRepository)(nil)
+	_ dispatchports.BiddingStore       = (*RideRepository)(nil)
 	_ ports.PassengerActiveRideChecker = (*RideRepository)(nil)
 	_ interface {
 		ActiveRidesForDriver(context.Context, int) ([]domain.Ride, error)

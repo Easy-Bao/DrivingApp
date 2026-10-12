@@ -3,6 +3,7 @@ package dto
 import (
 	"time"
 
+	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 )
 
@@ -85,9 +86,9 @@ func NewPayload(payload map[string]any) map[string]any {
 	result := make(map[string]any, len(payload))
 	for name, value := range payload {
 		switch value := value.(type) {
-		case domain.BidSession:
+		case dispatchdomain.BidSession:
 			result[name] = newBidSessionPayload(value)
-		case domain.BidOffer:
+		case dispatchdomain.BidOffer:
 			result[name] = newBidOfferPayload(value)
 		case domain.Ride:
 			result[name] = newRidePayload(value)
@@ -98,7 +99,7 @@ func NewPayload(payload map[string]any) map[string]any {
 	return result
 }
 
-func newBidSessionPayload(session domain.BidSession) bidSessionPayload {
+func newBidSessionPayload(session dispatchdomain.BidSession) bidSessionPayload {
 	return bidSessionPayload{
 		ID:                session.ID,
 		PassengerID:       session.PassengerID,
@@ -123,7 +124,7 @@ func newBidSessionPayload(session domain.BidSession) bidSessionPayload {
 	}
 }
 
-func newBidOfferPayload(offer domain.BidOffer) bidOfferPayload {
+func newBidOfferPayload(offer dispatchdomain.BidOffer) bidOfferPayload {
 	return bidOfferPayload{
 		ID:                 offer.ID,
 		SessionID:          offer.SessionID,
@@ -137,7 +138,7 @@ func newBidOfferPayload(offer domain.BidOffer) bidOfferPayload {
 	}
 }
 
-func newBidOfferPayloads(offers []domain.BidOffer) []bidOfferPayload {
+func newBidOfferPayloads(offers []dispatchdomain.BidOffer) []bidOfferPayload {
 	if offers == nil {
 		return nil
 	}

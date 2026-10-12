@@ -11,8 +11,6 @@ import (
 
 const (
 	_rideCreatedEvent       = event.RideOfferCreated
-	_rideOfferUpdatedEvent  = event.RideOfferUpdated
-	_rideMatchedEvent       = event.RideMatched
 	_rideStatusChangedEvent = event.RideStatusChanged
 )
 
@@ -33,41 +31,6 @@ func (service *RideService) publishRide(
 		ctx,
 		eventType,
 		scope,
-		payload,
-	)
-}
-
-func (service *RideService) publishSession(
-	ctx context.Context,
-	eventType event.Type,
-	session domain.BidSession,
-	payload map[string]any,
-) {
-	// A bid session is not yet an authoritative ride. Its identifier belongs in
-	// the payload, while the event itself is scoped to the verified participants.
-	scope := event.Scope{
-		PassengerID: positiveIdentifier(session.PassengerID),
-		DriverPool:  session.TargetDriverID == nil && session.AcceptedDriverID == nil,
-	}
-	if session.TargetDriverID != nil {
-		scope.DriverID = positiveIdentifier(*session.TargetDriverID)
-	}
-	if session.AcceptedDriverID != nil {
-		scope.DriverID = positiveIdentifier(*session.AcceptedDriverID)
-	}
-	service.publish(
-		ctx,
-		eventType,
-		scope,
-		payload,
-	)
-}
-
-func (service *RideService) publishDriverOffer(ctx context.Context, offer domain.BidOffer, payload map[string]any) {
-	service.publish(
-		ctx,
-		_rideOfferUpdatedEvent,
-		event.Scope{DriverID: positiveIdentifier(offer.DriverID)},
 		payload,
 	)
 }

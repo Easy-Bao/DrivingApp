@@ -1,52 +1,42 @@
 package domain
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
-func TestNewRideFromAcceptedOfferUsesAcceptedDriverFare(t *testing.T) {
-	const (
-		passengerFare = int64(2500)
-		driverFare    = int64(3200)
-	)
-
-	ride, err := NewRideFromAcceptedOffer(
-		BidSession{
-			ID:                17,
-			PassengerID:       7,
-			OfferedFareAmount: passengerFare,
+func TestNewAcceptedRideSnapshotsAssignmentAndSettlement(t *testing.T) {
+	driverID := 9
+	ride, err := NewAcceptedRide(
+		Ride{
+			PassengerID:     7,
+			DriverID:        &driverID,
+			FareAmount:      5200,
+			PickupName:      "Pickup",
+			DropoffName:     "Dropoff",
+			DistanceKm:      4.5,
+			DurationMinutes: 16,
 		},
-		BidOffer{
-			SessionID:          17,
-			DriverID:           11,
-			ProposedFareAmount: driverFare,
-		},
-		DriverAssignmentSnapshot{},
+		DriverAssignmentSnapshot{Name: "Ada", VehicleType: "sedan", PlateNumber: "ABC 123"},
 		1500,
 	)
 	if err != nil {
-		t.Fatalf("NewRideFromAcceptedOffer() error = %v", err)
+		t.Fatalf("NewAcceptedRide() error = %v", err)
 	}
-
-	if ride.FareAmount != driverFare {
-		t.Fatalf(
-			"accepted ride fare = %d, want selected driver offer %d",
-			ride.FareAmount,
-			driverFare,
-		)
+	if ride.Status != "accepted" || ride.PassengerID != 7 || ride.DriverID == nil || *ride.DriverID != driverID {
+		t.Fatalf("accepted ride identity = %+v", ride)
 	}
-	if ride.CommissionBPS == nil || *ride.CommissionBPS != 1500 ||
-		ride.CommissionAmount != 480 || ride.DriverPayoutAmount != 2720 {
-		t.Fatalf("accepted ride settlement = %#v", ride)
+	if ride.FareAmount != 5200 || ride.CommissionAmount != 780 || ride.DriverPayoutAmount != 4420 {
+		t.Fatalf("accepted ride settlement = %+v", ride)
+	}
+	if ride.DriverName != "Ada" || ride.VehicleType != "sedan" || ride.PlateNumber != "ABC 123" {
+		t.Fatalf("accepted ride driver snapshot = %+v", ride)
 	}
 }
 
-func TestNewRideFromAcceptedOfferRejectsMismatchedSession(t *testing.T) {
-	_, err := NewRideFromAcceptedOffer(
-		BidSession{ID: 17, PassengerID: 7},
-		BidOffer{SessionID: 18, DriverID: 11, ProposedFareAmount: 3200},
-		DriverAssignmentSnapshot{},
-		1500,
-	)
-	if err == nil {
-		t.Fatal("expected mismatched bid session to be rejected")
+func TestNewAcceptedRideRejectsIncompleteRide(t *testing.T) {
+	_, err := NewAcceptedRide(Ride{PassengerID: 7, FareAmount: 1000}, DriverAssignmentSnapshot{}, 1500)
+	if !errors.Is(err, ErrInvalidTrip) {
+		t.Fatalf("NewAcceptedRide() error = %v, want %v", err, ErrInvalidTrip)
 	}
 }

@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	biddingapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/bidding"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/booking"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	lifecycleapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/lifecycle"
@@ -36,10 +35,8 @@ type RideService struct {
 	repository        ports.RideStore
 	routeCalculator   RouteCalculator
 	pricingConfig     PricingConfig
-	biddingConfig     biddingapplication.Config
 	eventPublisher    ports.EventPublisher
 	bookingService    *booking.Service
-	biddingService    *biddingapplication.Service
 	lifecycleService  *lifecycleapplication.Service
 	settlementService *settlementapplication.Service
 	reportingLocation *time.Location
@@ -51,7 +48,6 @@ type RideServiceDependencies struct {
 	PricingConfig   PricingConfig
 	EventPublisher  ports.EventPublisher
 	LifecycleConfig lifecycleapplication.Config
-	BiddingConfig   biddingapplication.Config
 	DriverLocation  ports.DriverLocationReader
 }
 
@@ -65,7 +61,6 @@ func NewRideService(
 	service := &RideService{
 		repository:        repository,
 		pricingConfig:     pricingConfig,
-		biddingConfig:     dependencies.BiddingConfig,
 		eventPublisher:    dependencies.EventPublisher,
 		reportingLocation: _defaultReportingLocation,
 		logger:            slog.Default(),
@@ -83,7 +78,6 @@ func NewRideService(
 		PublishRide:       service.publishRide,
 		HasRouteProvider:  service.routeCalculator != nil,
 	})
-	service.biddingService = newBiddingService(service)
 	service.lifecycleService = lifecycleapplication.NewService(lifecycleapplication.Dependencies{
 		Store:          lifecycleStore,
 		DriverLocation: dependencies.DriverLocation,

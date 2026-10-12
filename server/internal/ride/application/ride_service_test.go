@@ -6,6 +6,9 @@ import (
 	"testing"
 	"time"
 
+	dispatchapplication "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/application"
+	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/domain"
+	dispatchports "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/ports"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
 )
@@ -14,7 +17,7 @@ type ridesRepositoryStub struct {
 	ride          domain.Ride
 	created       domain.Ride
 	updated       domain.Ride
-	session       domain.BidSession
+	session       dispatchdomain.BidSession
 	updateNext    string
 	hasActiveRide bool
 }
@@ -22,7 +25,7 @@ type ridesRepositoryStub struct {
 var (
 	_ ports.RideStore                  = (*ridesRepositoryStub)(nil)
 	_ ports.PassengerActiveRideChecker = (*ridesRepositoryStub)(nil)
-	_ ports.BiddingStore               = (*ridesRepositoryStub)(nil)
+	_ dispatchports.BiddingStore       = (*ridesRepositoryStub)(nil)
 	_ ports.RideLifecycleStore         = (*ridesRepositoryStub)(nil)
 	_ ports.SafetyReportStore          = (*ridesRepositoryStub)(nil)
 )
@@ -66,6 +69,45 @@ func newTestRideService(
 		},
 		options...,
 	)
+}
+
+func newTestDispatchService(
+	store dispatchports.BiddingStore,
+	rideService *RideService,
+	pricingConfig PricingConfig,
+	config dispatchapplication.Config,
+) *dispatchapplication.Service {
+	return dispatchapplication.NewService(dispatchapplication.Dependencies{
+		Store: store,
+		ResolveRoute: func(
+			ctx context.Context,
+			pickupLatitude float64,
+			pickupLongitude float64,
+			dropoffLatitude float64,
+			dropoffLongitude float64,
+			distanceKm float64,
+			durationMinutes float64,
+		) (dispatchports.RouteMetrics, error) {
+			metrics, _, err := rideService.Fare(
+				ctx,
+				&pickupLatitude,
+				&pickupLongitude,
+				&dropoffLatitude,
+				&dropoffLongitude,
+				distanceKm,
+				durationMinutes,
+			)
+			if err != nil {
+				return dispatchports.RouteMetrics{}, err
+			}
+			return dispatchports.RouteMetrics{
+				DistanceKm:      metrics.DistanceKm,
+				DurationMinutes: metrics.DurationMinutes,
+			}, nil
+		},
+		CalculateFare: pricingConfig.FareAmount,
+		Config:        config,
+	})
 }
 
 func (stub *ridesRepositoryStub) CreateRide(_ context.Context, ride domain.Ride) (domain.Ride, error) {
@@ -156,22 +198,22 @@ func (stub *ridesRepositoryStub) UpdateStatus(
 
 func (stub *ridesRepositoryStub) CreateSession(
 	_ context.Context,
-	session domain.BidSession,
-) (domain.BidSession, error) {
+	session dispatchdomain.BidSession,
+) (dispatchdomain.BidSession, error) {
 	stub.session = session
 	return session, nil
 }
 
-func (stub *ridesRepositoryStub) ActiveSessions(context.Context, *int) ([]domain.BidSession, error) {
+func (stub *ridesRepositoryStub) ActiveSessions(context.Context, *int) ([]dispatchdomain.BidSession, error) {
 	return nil, nil
 }
 
-func (stub *ridesRepositoryStub) Offers(context.Context, int) ([]domain.BidOffer, error) {
+func (stub *ridesRepositoryStub) Offers(context.Context, int) ([]dispatchdomain.BidOffer, error) {
 	return nil, nil
 }
 
-func (stub *ridesRepositoryStub) PlaceOffer(context.Context, domain.BidOffer) (domain.BidOffer, error) {
-	return domain.BidOffer{}, nil
+func (stub *ridesRepositoryStub) PlaceOffer(context.Context, dispatchdomain.BidOffer) (dispatchdomain.BidOffer, error) {
+	return dispatchdomain.BidOffer{}, nil
 }
 
 func (stub *ridesRepositoryStub) AcceptOffer(
@@ -179,19 +221,19 @@ func (stub *ridesRepositoryStub) AcceptOffer(
 	int,
 	int,
 	int,
-) (domain.OfferAcceptance, error) {
-	return domain.OfferAcceptance{}, nil
+) (dispatchports.OfferAcceptance, error) {
+	return dispatchports.OfferAcceptance{}, nil
 }
 
-func (stub *ridesRepositoryStub) CancelSession(context.Context, int, int) (domain.BidSession, error) {
-	return domain.BidSession{}, nil
+func (stub *ridesRepositoryStub) CancelSession(context.Context, int, int) (dispatchdomain.BidSession, error) {
+	return dispatchdomain.BidSession{}, nil
 }
 
-func (stub *ridesRepositoryStub) CancelOffer(context.Context, int, int) (domain.BidOffer, error) {
-	return domain.BidOffer{}, nil
+func (stub *ridesRepositoryStub) CancelOffer(context.Context, int, int) (dispatchdomain.BidOffer, error) {
+	return dispatchdomain.BidOffer{}, nil
 }
 
-func (stub *ridesRepositoryStub) Session(context.Context, int) (domain.BidSession, error) {
+func (stub *ridesRepositoryStub) Session(context.Context, int) (dispatchdomain.BidSession, error) {
 	return stub.session, nil
 }
 
@@ -234,9 +276,10 @@ func TestCreateSafetyReportNormalizesAndDerivesSeverity(t *testing.T) {
 
 func TestCreateSessionUsesServerMinimumAndAcceptsValidCustomFare(t *testing.T) {
 	stub := &ridesRepositoryStub{}
-	service := newTestRideService(stub, testPricingConfig(t), nil)
+	rideService := newTestRideService(stub, testPricingConfig(t), nil)
+	service := newTestDispatchService(stub, rideService, testPricingConfig(t), dispatchapplication.Config{})
 	custom := int64(5000)
-	session, err := service.CreateSession(context.Background(), domain.BidSession{
+	session, err := service.CreateSession(context.Background(), dispatchdomain.BidSession{
 		PassengerID:      7,
 		PickupLatitude:   6.7,
 		PickupLongitude:  122.1,
@@ -256,7 +299,7 @@ func TestCreateSessionUsesServerMinimumAndAcceptsValidCustomFare(t *testing.T) {
 
 func TestCreateSessionUsesAuthoritativeRouteMetrics(t *testing.T) {
 	stub := &ridesRepositoryStub{}
-	service := newTestRideService(
+	rideService := newTestRideService(
 		stub,
 		testPricingConfig(t),
 		nil,
@@ -270,8 +313,9 @@ func TestCreateSessionUsesAuthoritativeRouteMetrics(t *testing.T) {
 			return RouteMetrics{DistanceKm: 4, DurationMinutes: 20}, nil
 		})),
 	)
+	service := newTestDispatchService(stub, rideService, testPricingConfig(t), dispatchapplication.Config{})
 	custom := int64(4000)
-	session, err := service.CreateSession(context.Background(), domain.BidSession{
+	session, err := service.CreateSession(context.Background(), dispatchdomain.BidSession{
 		PassengerID:      7,
 		PickupLatitude:   6.7,
 		PickupLongitude:  122.1,
@@ -294,7 +338,7 @@ func TestCreateSessionUsesAuthoritativeRouteMetrics(t *testing.T) {
 
 func TestCreateSessionFailsWhenAuthoritativeRouteIsUnavailable(t *testing.T) {
 	stub := &ridesRepositoryStub{}
-	service := newTestRideService(
+	rideService := newTestRideService(
 		stub,
 		testPricingConfig(t),
 		nil,
@@ -308,7 +352,8 @@ func TestCreateSessionFailsWhenAuthoritativeRouteIsUnavailable(t *testing.T) {
 			return RouteMetrics{}, errors.New("mapbox timeout")
 		})),
 	)
-	_, err := service.CreateSession(context.Background(), domain.BidSession{
+	service := newTestDispatchService(stub, rideService, testPricingConfig(t), dispatchapplication.Config{})
+	_, err := service.CreateSession(context.Background(), dispatchdomain.BidSession{
 		PassengerID:      7,
 		PickupLatitude:   6.7,
 		PickupLongitude:  122.1,
@@ -324,7 +369,7 @@ func TestCreateSessionPreservesRouteContextCancellation(t *testing.T) {
 	stub := &ridesRepositoryStub{}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	service := newTestRideService(
+	rideService := newTestRideService(
 		stub,
 		testPricingConfig(t),
 		nil,
@@ -333,8 +378,9 @@ func TestCreateSessionPreservesRouteContextCancellation(t *testing.T) {
 			return RouteMetrics{DistanceKm: 4, DurationMinutes: 20}, nil
 		})),
 	)
+	service := newTestDispatchService(stub, rideService, testPricingConfig(t), dispatchapplication.Config{})
 
-	_, err := service.CreateSession(ctx, domain.BidSession{
+	_, err := service.CreateSession(ctx, dispatchdomain.BidSession{
 		PassengerID:      7,
 		PickupLatitude:   6.7,
 		PickupLongitude:  122.1,
@@ -351,9 +397,10 @@ func TestCreateSessionPreservesRouteContextCancellation(t *testing.T) {
 
 func TestCreateSessionRejectsOfferBelowCalculatedMinimum(t *testing.T) {
 	stub := &ridesRepositoryStub{}
-	service := newTestRideService(stub, testPricingConfig(t), nil)
+	rideService := newTestRideService(stub, testPricingConfig(t), nil)
+	service := newTestDispatchService(stub, rideService, testPricingConfig(t), dispatchapplication.Config{})
 	custom := int64(1)
-	_, err := service.CreateSession(context.Background(), domain.BidSession{
+	_, err := service.CreateSession(context.Background(), dispatchdomain.BidSession{
 		PassengerID:      7,
 		PickupLatitude:   6.7,
 		PickupLongitude:  122.1,
@@ -363,15 +410,16 @@ func TestCreateSessionRejectsOfferBelowCalculatedMinimum(t *testing.T) {
 		DurationMinutes:  10,
 		CustomFareAmount: &custom,
 	})
-	if !errors.Is(err, domain.ErrInvalidFareOffer) {
+	if !errors.Is(err, dispatchdomain.ErrInvalidFareOffer) {
 		t.Fatalf("expected ErrInvalidFareOffer, got %v", err)
 	}
 }
 
 func TestCreateSessionRejectsPassengerWithActiveRide(t *testing.T) {
 	stub := &ridesRepositoryStub{hasActiveRide: true}
-	service := newTestRideService(stub, testPricingConfig(t), nil)
-	_, err := service.CreateSession(context.Background(), domain.BidSession{
+	rideService := newTestRideService(stub, testPricingConfig(t), nil)
+	service := newTestDispatchService(stub, rideService, testPricingConfig(t), dispatchapplication.Config{})
+	_, err := service.CreateSession(context.Background(), dispatchdomain.BidSession{
 		PassengerID:      7,
 		PickupLatitude:   6.7,
 		PickupLongitude:  122.1,
@@ -391,7 +439,7 @@ func TestCreateSessionRejectsPassengerWithActiveRide(t *testing.T) {
 func TestCreateSessionRejectsPassengerWithActiveRideBeforeRouteCalculation(t *testing.T) {
 	stub := &ridesRepositoryStub{hasActiveRide: true}
 	routeResolved := false
-	service := newTestRideService(
+	rideService := newTestRideService(
 		stub,
 		testPricingConfig(t),
 		nil,
@@ -406,7 +454,8 @@ func TestCreateSessionRejectsPassengerWithActiveRideBeforeRouteCalculation(t *te
 			return RouteMetrics{DistanceKm: 4, DurationMinutes: 20}, nil
 		})),
 	)
-	_, err := service.CreateSession(context.Background(), domain.BidSession{
+	service := newTestDispatchService(stub, rideService, testPricingConfig(t), dispatchapplication.Config{})
+	_, err := service.CreateSession(context.Background(), dispatchdomain.BidSession{
 		PassengerID:      7,
 		PickupLatitude:   6.7,
 		PickupLongitude:  122.1,

@@ -6,20 +6,21 @@ import (
 	"testing"
 	"time"
 
+	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 )
 
 func TestNewPayloadMapsRideModelsToWireNames(t *testing.T) {
 	createdAt := time.Date(2026, 10, 12, 14, 0, 0, 0, time.UTC)
 	payload := NewPayload(map[string]any{
-		"session": domain.BidSession{
+		"session": dispatchdomain.BidSession{
 			ID: 31, PassengerID: 7, Status: "open", CreatedAt: createdAt,
-			Offers: []domain.BidOffer{{
+			Offers: []dispatchdomain.BidOffer{{
 				ID: 45, SessionID: 31, DriverID: 9,
 				ProposedFareAmount: 1300, Status: "pending", CreatedAt: createdAt,
 			}},
 		},
-		"offer": domain.BidOffer{
+		"offer": dispatchdomain.BidOffer{
 			ID: 45, SessionID: 31, DriverID: 9,
 			ProposedFareAmount: 1300, Status: "pending", CreatedAt: createdAt,
 		},

@@ -12,8 +12,4 @@ type EventPublisher interface {
 	Publish(ctx context.Context, realtimeEvent RealtimeEvent) error
 }
 
-type RealtimeEvent struct {
-	Type    event.Type
-	Scope   event.Scope
-	Payload map[string]any
-}
+type RealtimeEvent = event.RealtimeEvent

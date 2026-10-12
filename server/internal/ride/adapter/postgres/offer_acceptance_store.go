@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/domain"
+	dispatchports "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/ports"
 	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
@@ -16,26 +18,26 @@ func (repository *RideRepository) AcceptOffer(
 	sessionID int,
 	offerID int,
 	passengerID int,
-) (domain.OfferAcceptance, error) {
+) (dispatchports.OfferAcceptance, error) {
 	if err := repository.validateNativeReadRepository(); err != nil {
-		return domain.OfferAcceptance{}, err
+		return dispatchports.OfferAcceptance{}, err
 	}
 	dbSessionID, err := toPostgresRideID(sessionID, "session id")
 	if err != nil {
-		return domain.OfferAcceptance{}, err
+		return dispatchports.OfferAcceptance{}, err
 	}
 	dbOfferID, err := toPostgresRideID(offerID, "offer id")
 	if err != nil {
-		return domain.OfferAcceptance{}, err
+		return dispatchports.OfferAcceptance{}, err
 	}
 	dbPassengerID, err := toPostgresRideID(passengerID, "passenger id")
 	if err != nil {
-		return domain.OfferAcceptance{}, err
+		return dispatchports.OfferAcceptance{}, err
 	}
 
 	transaction, err := repository.pool.Begin(ctx)
 	if err != nil {
-		return domain.OfferAcceptance{}, fmt.Errorf("begin offer acceptance transaction: %w", err)
+		return dispatchports.OfferAcceptance{}, fmt.Errorf("begin offer acceptance transaction: %w", err)
 	}
 	defer func() {
 		platformdatabase.Rollback(ctx, transaction)
@@ -68,7 +70,7 @@ func (repository *RideRepository) AcceptOffer(
 									offerValue, offerErr := fromPostgresBidOffer(candidateOffer)
 									rideValue, rideErr := fromPostgresActiveRideRow(candidateRide)
 									if sessionErr == nil && offerErr == nil && rideErr == nil {
-										return domain.OfferAcceptance{
+										return dispatchports.OfferAcceptance{
 											Session: sessionValue,
 											Offer:   offerValue,
 											Ride:    rideValue,
@@ -81,10 +83,10 @@ func (repository *RideRepository) AcceptOffer(
 				}
 			}
 		}
-		return domain.OfferAcceptance{}, fmt.Errorf("find active bid session: %w", err)
+		return dispatchports.OfferAcceptance{}, fmt.Errorf("find active bid session: %w", err)
 	}
 	if session.PassengerID != dbPassengerID {
-		return domain.OfferAcceptance{}, domain.ErrUnauthorizedSession
+		return dispatchports.OfferAcceptance{}, dispatchdomain.ErrUnauthorizedSession
 	}
 	// Resolve the immutable driver ID without locking the offer, then serialize
 	// all acceptances for that driver before locking any pending offer rows. This
@@ -98,7 +100,7 @@ func (repository *RideRepository) AcceptOffer(
 		},
 	)
 	if err != nil {
-		return domain.OfferAcceptance{}, fmt.Errorf("find bid offer driver: %w", err)
+		return dispatchports.OfferAcceptance{}, fmt.Errorf("find bid offer driver: %w", err)
 	}
 	profile, err := transactionQueries.LockOnlineDriverProfileForBidding(
 		ctx,
@@ -109,9 +111,10 @@ func (repository *RideRepository) AcceptOffer(
 		},
 	)
 	if err != nil {
-		return domain.OfferAcceptance{}, driverUnavailableError(
+		return dispatchports.OfferAcceptance{}, driverUnavailableError(
 			"lock online driver profile for offer acceptance",
 			err,
+			dispatchdomain.ErrDriverUnavailable,
 		)
 	}
 	offer, err := transactionQueries.LockPendingBidOfferForAcceptance(
@@ -122,40 +125,40 @@ func (repository *RideRepository) AcceptOffer(
 		},
 	)
 	if err != nil {
-		return domain.OfferAcceptance{}, fmt.Errorf("find pending bid offer: %w", err)
+		return dispatchports.OfferAcceptance{}, fmt.Errorf("find pending bid offer: %w", err)
 	}
 	if session.TargetDriverID.Valid && session.TargetDriverID.Int32 != offer.DriverID {
-		return domain.OfferAcceptance{}, domain.ErrUnauthorizedSession
+		return dispatchports.OfferAcceptance{}, dispatchdomain.ErrUnauthorizedSession
 	}
 	if profile.UserID != offer.DriverID {
-		return domain.OfferAcceptance{}, domain.ErrUnauthorizedSession
+		return dispatchports.OfferAcceptance{}, dispatchdomain.ErrUnauthorizedSession
 	}
 	activeDriverRides, err := transactionQueries.CountActiveRidesForAcceptance(
 		ctx,
 		pgtype.Int4{Int32: profile.UserID, Valid: true},
 	)
 	if err != nil {
-		return domain.OfferAcceptance{}, fmt.Errorf("count active driver rides: %w", err)
+		return dispatchports.OfferAcceptance{}, fmt.Errorf("count active driver rides: %w", err)
 	}
 	if activeDriverRides > 0 {
-		return domain.OfferAcceptance{}, domain.ErrDriverHasActiveRide
+		return dispatchports.OfferAcceptance{}, domain.ErrDriverHasActiveRide
 	}
 	activePassengerRide, err := transactionQueries.HasActivePassengerRide(ctx, session.PassengerID)
 	if err != nil {
-		return domain.OfferAcceptance{}, fmt.Errorf("check active passenger ride: %w", err)
+		return dispatchports.OfferAcceptance{}, fmt.Errorf("check active passenger ride: %w", err)
 	}
 	if activePassengerRide {
-		return domain.OfferAcceptance{}, domain.ErrActiveBooking
+		return dispatchports.OfferAcceptance{}, domain.ErrActiveBooking
 	}
 	updatedOffer, err := transactionQueries.MarkBidOfferAccepted(ctx, offer.ID)
 	if err != nil {
-		return domain.OfferAcceptance{}, fmt.Errorf("accept bid offer: %w", err)
+		return dispatchports.OfferAcceptance{}, fmt.Errorf("accept bid offer: %w", err)
 	}
 	if err := transactionQueries.RejectOtherPendingBidOffers(ctx, databasepostgres.RejectOtherPendingBidOffersParams{
 		SessionID: session.ID,
 		ID:        offer.ID,
 	}); err != nil {
-		return domain.OfferAcceptance{}, fmt.Errorf("reject competing bid offers: %w", err)
+		return dispatchports.OfferAcceptance{}, fmt.Errorf("reject competing bid offers: %w", err)
 	}
 	withdrawnRows, err := transactionQueries.RejectDriverPendingBidOffers(
 		ctx,
@@ -165,30 +168,47 @@ func (repository *RideRepository) AcceptOffer(
 		},
 	)
 	if err != nil {
-		return domain.OfferAcceptance{}, fmt.Errorf("reject driver's outstanding offers: %w", err)
+		return dispatchports.OfferAcceptance{}, fmt.Errorf("reject driver's outstanding offers: %w", err)
 	}
 	withdrawnOffers, err := mapBidOfferWithdrawals(ctx, transactionQueries, withdrawnRows)
 	if err != nil {
-		return domain.OfferAcceptance{}, err
+		return dispatchports.OfferAcceptance{}, err
 	}
 	updatedSession, err := transactionQueries.MarkBidSessionAccepted(ctx, databasepostgres.MarkBidSessionAcceptedParams{
 		ID:               session.ID,
 		AcceptedDriverID: pgtype.Int4{Int32: offer.DriverID, Valid: true},
 	})
 	if err != nil {
-		return domain.OfferAcceptance{}, fmt.Errorf("accept bid session: %w", err)
+		return dispatchports.OfferAcceptance{}, fmt.Errorf("accept bid session: %w", err)
 	}
 	sessionValue, err := fromPostgresBidSession(session)
 	if err != nil {
-		return domain.OfferAcceptance{}, fmt.Errorf("map bid session for offer acceptance: %w", err)
+		return dispatchports.OfferAcceptance{}, fmt.Errorf("map bid session for offer acceptance: %w", err)
 	}
 	offerValue, err := fromPostgresBidOffer(offer)
 	if err != nil {
-		return domain.OfferAcceptance{}, fmt.Errorf("map bid offer for offer acceptance: %w", err)
+		return dispatchports.OfferAcceptance{}, fmt.Errorf("map bid offer for offer acceptance: %w", err)
 	}
-	acceptedRide, err := domain.NewRideFromAcceptedOffer(
-		sessionValue,
-		offerValue,
+	if sessionValue.ID <= 0 || sessionValue.PassengerID <= 0 ||
+		offerValue.DriverID <= 0 || offerValue.SessionID != sessionValue.ID {
+		return dispatchports.OfferAcceptance{}, domain.ErrInvalidTrip
+	}
+	driverID := offerValue.DriverID
+	acceptedRide, err := domain.NewAcceptedRide(
+		domain.Ride{
+			PassengerID:      sessionValue.PassengerID,
+			DriverID:         &driverID,
+			FareAmount:       offerValue.ProposedFareAmount,
+			RideType:         sessionValue.RideType,
+			PickupLatitude:   sessionValue.PickupLatitude,
+			PickupLongitude:  sessionValue.PickupLongitude,
+			PickupName:       sessionValue.PickupName,
+			DropoffLatitude:  sessionValue.DropoffLatitude,
+			DropoffLongitude: sessionValue.DropoffLongitude,
+			DropoffName:      sessionValue.DropoffName,
+			DistanceKm:       sessionValue.DistanceKm,
+			DurationMinutes:  sessionValue.DurationMinutes,
+		},
 		domain.DriverAssignmentSnapshot{
 			Name:        profile.Name,
 			VehicleType: profile.VehicleType,
@@ -197,14 +217,14 @@ func (repository *RideRepository) AcceptOffer(
 		repository.platformCommissionBPS,
 	)
 	if err != nil {
-		return domain.OfferAcceptance{}, err
+		return dispatchports.OfferAcceptance{}, err
 	}
 	if acceptedRide.DriverID == nil || acceptedRide.CommissionBPS == nil {
-		return domain.OfferAcceptance{}, domain.ErrInvalidSettlement
+		return dispatchports.OfferAcceptance{}, domain.ErrInvalidSettlement
 	}
 	dbAcceptedDriverID, err := toPostgresRideID(*acceptedRide.DriverID, "driver id")
 	if err != nil {
-		return domain.OfferAcceptance{}, err
+		return dispatchports.OfferAcceptance{}, err
 	}
 	createdRide, err := transactionQueries.CreateAcceptedRide(ctx, databasepostgres.CreateAcceptedRideParams{
 		PassengerID:      session.PassengerID,
@@ -224,7 +244,7 @@ func (repository *RideRepository) AcceptOffer(
 		PlateNumber:      rideText(acceptedRide.PlateNumber),
 	})
 	if err != nil {
-		return domain.OfferAcceptance{}, acceptedRideConflictError("create accepted ride", err)
+		return dispatchports.OfferAcceptance{}, acceptedRideConflictError("create accepted ride", err)
 	}
 	settlementRecord, err := transactionQueries.CreateRideSettlement(ctx, databasepostgres.CreateRideSettlementParams{
 		RideID:             createdRide.ID,
@@ -234,27 +254,27 @@ func (repository *RideRepository) AcceptOffer(
 		DriverPayoutAmount: acceptedRide.DriverPayoutAmount,
 	})
 	if err != nil {
-		return domain.OfferAcceptance{}, fmt.Errorf("create ride settlement: %w", err)
+		return dispatchports.OfferAcceptance{}, fmt.Errorf("create ride settlement: %w", err)
 	}
 	if err := transaction.Commit(ctx); err != nil {
-		return domain.OfferAcceptance{}, fmt.Errorf("commit offer acceptance transaction: %w", err)
+		return dispatchports.OfferAcceptance{}, fmt.Errorf("commit offer acceptance transaction: %w", err)
 	}
 	resultSession, err := fromPostgresBidSession(updatedSession)
 	if err != nil {
-		return domain.OfferAcceptance{}, fmt.Errorf("map accepted bid session: %w", err)
+		return dispatchports.OfferAcceptance{}, fmt.Errorf("map accepted bid session: %w", err)
 	}
 	resultOffer, err := fromPostgresBidOffer(updatedOffer)
 	if err != nil {
-		return domain.OfferAcceptance{}, fmt.Errorf("map accepted bid offer: %w", err)
+		return dispatchports.OfferAcceptance{}, fmt.Errorf("map accepted bid offer: %w", err)
 	}
 	resultRide, err := fromPostgresRideProjection(
 		createdRide,
 		rideSettlementProjectionFromRecord(settlementRecord),
 	)
 	if err != nil {
-		return domain.OfferAcceptance{}, fmt.Errorf("map accepted ride: %w", err)
+		return dispatchports.OfferAcceptance{}, fmt.Errorf("map accepted ride: %w", err)
 	}
-	return domain.OfferAcceptance{
+	return dispatchports.OfferAcceptance{
 		Session:         resultSession,
 		Offer:           resultOffer,
 		Ride:            resultRide,
@@ -266,8 +286,8 @@ func mapBidOfferWithdrawals(
 	ctx context.Context,
 	queries *databasepostgres.Queries,
 	offers []databasepostgres.BidOffer,
-) ([]domain.BidOfferWithdrawal, error) {
-	withdrawals := make([]domain.BidOfferWithdrawal, 0, len(offers))
+) ([]dispatchdomain.BidOfferWithdrawal, error) {
+	withdrawals := make([]dispatchdomain.BidOfferWithdrawal, 0, len(offers))
 	for _, item := range offers {
 		offer, err := fromPostgresBidOffer(item)
 		if err != nil {
@@ -281,7 +301,7 @@ func mapBidOfferWithdrawals(
 		if err != nil {
 			return nil, fmt.Errorf("map withdrawn offer session: %w", err)
 		}
-		withdrawals = append(withdrawals, domain.BidOfferWithdrawal{
+		withdrawals = append(withdrawals, dispatchdomain.BidOfferWithdrawal{
 			Session: session,
 			Offer:   offer,
 		})

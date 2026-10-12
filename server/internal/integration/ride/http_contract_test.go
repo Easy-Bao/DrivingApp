@@ -11,6 +11,9 @@ import (
 	"strings"
 	"testing"
 
+	dispatchapplication "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/application"
+	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/domain"
+	dispatchports "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/ports"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	rideconfig "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/config"
@@ -44,8 +47,17 @@ func newRideService(repository ports.RideStore, config rideapplication.PricingCo
 func newRideRouter(
 	service *rideapplication.RideService,
 	verifier *security.TokenManager,
+	stores ...dispatchports.BiddingStore,
 ) *ridehttp.Router {
-	return ridehttp.NewRouter(ridehttp.Dependencies{Service: service, Verifier: verifier})
+	var store dispatchports.BiddingStore
+	if len(stores) > 0 {
+		store = stores[0]
+	}
+	return ridehttp.NewRouter(ridehttp.Dependencies{
+		Service:         service,
+		DispatchService: dispatchapplication.NewService(dispatchapplication.Dependencies{Store: store}),
+		Verifier:        verifier,
+	})
 }
 
 func (repository *activeSessionsRepository) CreateRide(context.Context, domain.Ride) (domain.Ride, error) {
@@ -56,25 +68,25 @@ func (repository *activeSessionsRepository) Get(context.Context, int) (domain.Ri
 }
 func (repository *activeSessionsRepository) CreateSession(
 	context.Context,
-	domain.BidSession,
-) (domain.BidSession, error) {
-	return domain.BidSession{}, nil
+	dispatchdomain.BidSession,
+) (dispatchdomain.BidSession, error) {
+	return dispatchdomain.BidSession{}, nil
 }
 func (repository *activeSessionsRepository) ActiveSessions(
 	_ context.Context,
 	driverID *int,
-) ([]domain.BidSession, error) {
+) ([]dispatchdomain.BidSession, error) {
 	repository.requestedDriverID = driverID
-	return []domain.BidSession{{ID: 101, Status: "open"}}, nil
+	return []dispatchdomain.BidSession{{ID: 101, Status: "open"}}, nil
 }
-func (repository *activeSessionsRepository) Offers(_ context.Context, sessionID int) ([]domain.BidOffer, error) {
+func (repository *activeSessionsRepository) Offers(_ context.Context, sessionID int) ([]dispatchdomain.BidOffer, error) {
 	repository.requestedSessionID = sessionID
-	return []domain.BidOffer{}, nil
+	return []dispatchdomain.BidOffer{}, nil
 }
 func (repository *activeSessionsRepository) PlaceOffer(
 	_ context.Context,
-	offer domain.BidOffer,
-) (domain.BidOffer, error) {
+	offer dispatchdomain.BidOffer,
+) (dispatchdomain.BidOffer, error) {
 	repository.requestedSessionID = offer.SessionID
 	return offer, nil
 }
@@ -83,33 +95,33 @@ func (repository *activeSessionsRepository) AcceptOffer(
 	sessionID int,
 	offerID int,
 	passengerID int,
-) (domain.OfferAcceptance, error) {
+) (dispatchports.OfferAcceptance, error) {
 	repository.requestedSessionID = sessionID
 	repository.requestedOfferID = offerID
-	session := domain.BidSession{ID: sessionID, PassengerID: passengerID}
-	offer := domain.BidOffer{ID: int64(offerID), SessionID: sessionID}
+	session := dispatchdomain.BidSession{ID: sessionID, PassengerID: passengerID}
+	offer := dispatchdomain.BidOffer{ID: int64(offerID), SessionID: sessionID}
 	ride := domain.Ride{ID: 303, PassengerID: passengerID}
-	return domain.OfferAcceptance{Session: session, Offer: offer, Ride: ride}, nil
+	return dispatchports.OfferAcceptance{Session: session, Offer: offer, Ride: ride}, nil
 }
 func (repository *activeSessionsRepository) CancelSession(
 	_ context.Context,
 	sessionID int,
 	passengerID int,
-) (domain.BidSession, error) {
+) (dispatchdomain.BidSession, error) {
 	repository.requestedSessionID = sessionID
-	return domain.BidSession{ID: sessionID, PassengerID: passengerID}, nil
+	return dispatchdomain.BidSession{ID: sessionID, PassengerID: passengerID}, nil
 }
 func (repository *activeSessionsRepository) CancelOffer(
 	_ context.Context,
 	sessionID int,
 	driverID int,
-) (domain.BidOffer, error) {
+) (dispatchdomain.BidOffer, error) {
 	repository.requestedSessionID = sessionID
-	return domain.BidOffer{SessionID: sessionID, DriverID: driverID}, nil
+	return dispatchdomain.BidOffer{SessionID: sessionID, DriverID: driverID}, nil
 }
-func (repository *activeSessionsRepository) Session(_ context.Context, sessionID int) (domain.BidSession, error) {
+func (repository *activeSessionsRepository) Session(_ context.Context, sessionID int) (dispatchdomain.BidSession, error) {
 	repository.requestedSessionID = sessionID
-	return domain.BidSession{ID: sessionID, PassengerID: 42}, nil
+	return dispatchdomain.BidSession{ID: sessionID, PassengerID: 42}, nil
 }
 
 func TestFareRoutesExposeEstimateAndFinalCalculation(t *testing.T) {
@@ -427,7 +439,7 @@ func TestOnlineDriverReceivesPassengerBookingThroughActiveSessions(t *testing.T)
 	}
 
 	mux := chi.NewRouter()
-	newRideRouter(newRideService(repository, config), verifier).RegisterRoutes(mux)
+	newRideRouter(newRideService(repository, config), verifier, repository).RegisterRoutes(mux)
 	request := httptest.NewRequest(http.MethodGet, api.V1Prefix+"/bids/active", nil)
 	request.Header.Set("Authorization", "Bearer "+driverToken)
 	response := httptest.NewRecorder()
@@ -464,7 +476,7 @@ func TestSessionRoutesBindSessionAndOfferIdentifiers(t *testing.T) {
 		t.Fatalf("Issue() returned error: %v", err)
 	}
 	mux := chi.NewRouter()
-	newRideRouter(newRideService(repository, config), verifier).RegisterRoutes(mux)
+	newRideRouter(newRideService(repository, config), verifier, repository).RegisterRoutes(mux)
 
 	tests := []struct {
 		name            string

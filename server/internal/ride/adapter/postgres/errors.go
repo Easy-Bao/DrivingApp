@@ -9,9 +9,9 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-func driverUnavailableError(operation string, err error) error {
+func driverUnavailableError(operation string, err error, unavailable error) error {
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.ErrDriverUnavailable
+		return unavailable
 	}
 	return fmt.Errorf("%s: %w", operation, err)
 }

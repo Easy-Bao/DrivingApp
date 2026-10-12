@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	dispatchapplication "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/application"
+	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
@@ -17,18 +19,24 @@ import (
 )
 
 type Handler struct {
-	service  *application.RideService
-	verifier *security.TokenManager
+	service         *application.RideService
+	dispatchService *dispatchapplication.Service
+	verifier        *security.TokenManager
 }
 
 type Dependencies struct {
-	Service       *application.RideService
-	Verifier      *security.TokenManager
-	RouteSecurity *middleware.RouteSecurity
+	Service         *application.RideService
+	DispatchService *dispatchapplication.Service
+	Verifier        *security.TokenManager
+	RouteSecurity   *middleware.RouteSecurity
 }
 
 func NewHandler(dependencies Dependencies) *Handler {
-	return &Handler{service: dependencies.Service, verifier: dependencies.Verifier}
+	return &Handler{
+		service:         dependencies.Service,
+		dispatchService: dependencies.DispatchService,
+		verifier:        dependencies.Verifier,
+	}
 }
 func (handler *Handler) identity(r *http.Request) (int, bool) {
 	return middleware.AuthenticatedUserID(r, handler.verifier)
@@ -758,7 +766,7 @@ func (handler *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 400, "invalid bid session")
 		return
 	}
-	session, err := handler.service.CreateSession(r.Context(), domain.BidSession{
+	session, err := handler.dispatchService.CreateSession(r.Context(), dispatchdomain.BidSession{
 		PassengerID:      passengerID,
 		RideType:         input.RideType,
 		PickupLatitude:   input.PickupLatitude,
@@ -786,7 +794,7 @@ func (handler *Handler) ActiveSessions(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 401, "unauthorized")
 		return
 	}
-	sessions, err := handler.service.ActiveSessions(r.Context(), &driverID)
+	sessions, err := handler.dispatchService.ActiveSessions(r.Context(), &driverID)
 	if err != nil {
 		response.Error(w, 500, "Incoming ride requests are temporarily unavailable.")
 		return
@@ -805,7 +813,7 @@ func (handler *Handler) Session(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 400, "invalid session id")
 		return
 	}
-	item, err := handler.service.Session(r.Context(), id)
+	item, err := handler.dispatchService.Session(r.Context(), id)
 	if err != nil {
 		response.Error(w, 404, "bid session not found")
 		return
@@ -828,12 +836,12 @@ func (handler *Handler) Offers(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 400, "invalid session id")
 		return
 	}
-	session, err := handler.service.Session(r.Context(), id)
+	session, err := handler.dispatchService.Session(r.Context(), id)
 	if err != nil || session.PassengerID != actorID {
 		response.Error(w, http.StatusForbidden, "forbidden")
 		return
 	}
-	items, err := handler.service.Offers(r.Context(), id)
+	items, err := handler.dispatchService.Offers(r.Context(), id)
 	if err != nil {
 		response.Error(w, 404, "bid session not found")
 		return
@@ -861,7 +869,7 @@ func (handler *Handler) PlaceOffer(w http.ResponseWriter, r *http.Request) {
 	if fare == 0 && input.OfferPrice > 0 {
 		fare = int64(input.OfferPrice * 100)
 	}
-	offer, err := handler.service.PlaceOffer(r.Context(), domain.BidOffer{
+	offer, err := handler.dispatchService.PlaceOffer(r.Context(), dispatchdomain.BidOffer{
 		SessionID:          sessionID,
 		DriverID:           driverID,
 		DriverName:         input.DriverName,
@@ -888,7 +896,7 @@ func (handler *Handler) AcceptOffer(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 400, "invalid bid id")
 		return
 	}
-	session, offer, ride, err := handler.service.AcceptOffer(
+	session, offer, ride, err := handler.dispatchService.AcceptOffer(
 		r.Context(),
 		sessionID,
 		offerID,
@@ -917,7 +925,7 @@ func (handler *Handler) CancelSession(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 400, "invalid session id")
 		return
 	}
-	item, err := handler.service.CancelSession(r.Context(), id, passengerID)
+	item, err := handler.dispatchService.CancelSession(r.Context(), id, passengerID)
 	if err != nil {
 		response.Error(w, 409, "session cannot be canceled")
 		return
@@ -936,7 +944,7 @@ func (handler *Handler) CancelOffer(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 400, "invalid session id")
 		return
 	}
-	item, err := handler.service.CancelOffer(r.Context(), id, driverID)
+	item, err := handler.dispatchService.CancelOffer(r.Context(), id, driverID)
 	if err != nil {
 		response.Error(w, 404, "offer not found")
 		return
@@ -967,7 +975,7 @@ func domainRide(passengerID int, input dto.CreateRideRequest) domain.Ride {
 
 func rideErrorStatus(err error) int {
 	switch {
-	case errors.Is(err, domain.ErrInvalidTrip), errors.Is(err, domain.ErrInvalidFareOffer):
+	case errors.Is(err, domain.ErrInvalidTrip), errors.Is(err, dispatchdomain.ErrInvalidFareOffer):
 		return 400
 	case errors.Is(err, domain.ErrInvalidSettlement):
 		return http.StatusBadRequest
@@ -989,13 +997,14 @@ func rideErrorStatus(err error) int {
 		return http.StatusConflict
 	case errors.Is(err, domain.ErrRouteUnavailable):
 		return 503
-	case errors.Is(err, domain.ErrUnauthorizedRide), errors.Is(err, domain.ErrUnauthorizedSession):
+	case errors.Is(err, domain.ErrUnauthorizedRide), errors.Is(err, dispatchdomain.ErrUnauthorizedSession):
 		return 403
 	case errors.Is(err, domain.ErrActiveBooking),
 		errors.Is(err, domain.ErrDriverHasActiveRide),
 		errors.Is(err, domain.ErrDriverSettlementOverdue),
 		errors.Is(err, domain.ErrDriverUnavailable),
-		errors.Is(err, domain.ErrDuplicateBid),
+		errors.Is(err, dispatchdomain.ErrDriverUnavailable),
+		errors.Is(err, dispatchdomain.ErrDuplicateBid),
 		errors.Is(err, domain.ErrInvalidStatusTransition),
 		errors.Is(err, domain.ErrCancellationCommand),
 		errors.Is(err, domain.ErrArrivalCommand),
@@ -1016,7 +1025,7 @@ func safeRideError(err error) string {
 		return "The route details are invalid."
 	case errors.Is(err, domain.ErrInvalidSettlement):
 		return "The cash amount or payment outcome is invalid."
-	case errors.Is(err, domain.ErrInvalidFareOffer):
+	case errors.Is(err, dispatchdomain.ErrInvalidFareOffer):
 		return "The custom offer cannot be lower than the calculated minimum fare."
 	case errors.Is(err, domain.ErrRouteUnavailable):
 		return "The route service is temporarily unavailable."
@@ -1026,11 +1035,11 @@ func safeRideError(err error) string {
 		return "This driver is already handling another ride."
 	case errors.Is(err, domain.ErrDriverSettlementOverdue):
 		return "Settle the overdue cash ride before accepting another request."
-	case errors.Is(err, domain.ErrUnauthorizedRide), errors.Is(err, domain.ErrUnauthorizedSession):
+	case errors.Is(err, domain.ErrUnauthorizedRide), errors.Is(err, dispatchdomain.ErrUnauthorizedSession):
 		return "You do not have access to this ride."
-	case errors.Is(err, domain.ErrDriverUnavailable):
+	case errors.Is(err, domain.ErrDriverUnavailable), errors.Is(err, dispatchdomain.ErrDriverUnavailable):
 		return "This driver is no longer available."
-	case errors.Is(err, domain.ErrDuplicateBid):
+	case errors.Is(err, dispatchdomain.ErrDuplicateBid):
 		return "You already sent an offer for this ride."
 	case errors.Is(err, domain.ErrInvalidStatusTransition):
 		return "That ride status cannot be changed right now."
@@ -1075,7 +1084,7 @@ func safeRideError(err error) string {
 	}
 }
 
-func canViewSession(actorID int, session domain.BidSession) bool {
+func canViewSession(actorID int, session dispatchdomain.BidSession) bool {
 	if session.PassengerID == actorID {
 		return true
 	}

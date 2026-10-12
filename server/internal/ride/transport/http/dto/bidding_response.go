@@ -3,7 +3,7 @@ package dto
 import (
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/dispatch/domain"
 )
 
 type BidSessionResponse struct {

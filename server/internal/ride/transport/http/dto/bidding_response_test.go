@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/dispatch/domain"
 )
 
 func TestBiddingResponseMappersPreserveWireShapes(t *testing.T) {

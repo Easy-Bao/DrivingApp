@@ -51,7 +51,11 @@ func (repository *RideRepository) AcceptRide(ctx context.Context, rideID, driver
 		},
 	)
 	if err != nil {
-		return domain.Ride{}, driverUnavailableError("lock online driver profile for ride acceptance", err)
+		return domain.Ride{}, driverUnavailableError(
+			"lock online driver profile for ride acceptance",
+			err,
+			domain.ErrDriverUnavailable,
+		)
 	}
 	activeRides, err := transactionQueries.CountActiveRidesForAcceptance(
 		ctx,

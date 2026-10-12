@@ -22,7 +22,9 @@ import (
 	chatapplication "github.com/Easy-Bao/DrivingApp/server/internal/chat/application"
 	chathttp "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/http"
 	chatwebsocket "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/websocket"
+	dispatchapplication "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/application"
 	assignment "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment"
+	dispatchports "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/ports"
 	documentapplication "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/application"
 	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/mapbox"
@@ -53,6 +55,7 @@ import (
 
 type rideRuntimeStore interface {
 	rideports.RideStore
+	dispatchports.BiddingStore
 	ActiveRidesForDriver(context.Context, int) ([]ridedomain.Ride, error)
 }
 
@@ -232,7 +235,6 @@ func newHTTPRouter(
 			PricingConfig:   config.Pricing,
 			EventPublisher:  rideEventPublisher,
 			LifecycleConfig: config.RideLifecycle,
-			BiddingConfig:   config.Bidding,
 			DriverLocation: rideports.DriverLocationReaderFunc(
 				func(ctx context.Context, driverID int) (rideports.DriverLocation, error) {
 					point, err := trackingService.Get(ctx, strconv.Itoa(driverID))
@@ -252,11 +254,44 @@ func newHTTPRouter(
 		},
 		rideapplication.WithRouteCalculator(routeCalculator),
 	).WithReportingLocation(config.ReportingLocation).WithLogger(applicationLogger)
+	dispatchService := dispatchapplication.NewService(dispatchapplication.Dependencies{
+		Store: rideStore,
+		ResolveRoute: func(
+			ctx context.Context,
+			pickupLatitude float64,
+			pickupLongitude float64,
+			dropoffLatitude float64,
+			dropoffLongitude float64,
+			distanceKm float64,
+			durationMinutes float64,
+		) (dispatchports.RouteMetrics, error) {
+			metrics, _, err := ridesService.Fare(
+				ctx,
+				&pickupLatitude,
+				&pickupLongitude,
+				&dropoffLatitude,
+				&dropoffLongitude,
+				distanceKm,
+				durationMinutes,
+			)
+			if err != nil {
+				return dispatchports.RouteMetrics{}, err
+			}
+			return dispatchports.RouteMetrics{
+				DistanceKm:      metrics.DistanceKm,
+				DurationMinutes: metrics.DurationMinutes,
+			}, nil
+		},
+		CalculateFare:  config.Pricing.FareAmount,
+		EventPublisher: rideEventPublisher,
+		Config:         config.Bidding,
+	}).WithLogger(applicationLogger)
 
 	ridesRouter := ridehttp.NewRouter(ridehttp.Dependencies{
-		Service:       ridesService,
-		Verifier:      verifier,
-		RouteSecurity: routeSecurity,
+		Service:         ridesService,
+		DispatchService: dispatchService,
+		Verifier:        verifier,
+		RouteSecurity:   routeSecurity,
 	})
 	adminRouter := adminhttp.NewRouter(adminhttp.RouterDependencies{
 		Service:    adminapplication.NewStatsService(statsReader),

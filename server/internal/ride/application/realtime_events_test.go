@@ -53,58 +53,6 @@ func TestStartTripPublishesToBothRideParticipants(t *testing.T) {
 	}
 }
 
-func TestCreateSessionPublishesToPassengerAndTargetDriver(t *testing.T) {
-	repository := &ridesRepositoryStub{}
-	publisher := &eventPublisherStub{}
-	service := newTestRideService(repository, testPricingConfig(t), publisher)
-
-	_, err := service.CreateSession(context.Background(), domain.BidSession{
-		ID:             31,
-		PassengerID:    7,
-		TargetDriverID: intPointer(11),
-		PickupLatitude: 6.7, PickupLongitude: 122.1,
-		DropoffLatitude: 6.71, DropoffLongitude: 122.11,
-		DistanceKm: 2, DurationMinutes: 10,
-	})
-	if err != nil {
-		t.Fatalf("CreateSession() error = %v", err)
-	}
-	if len(publisher.events) != 1 {
-		t.Fatalf("published event count = %d, want 1", len(publisher.events))
-	}
-	published := publisher.events[0]
-	if published.Type != event.RideOfferCreated {
-		t.Fatalf("event type = %q, want %q", published.Type, event.RideOfferCreated)
-	}
-	if published.Scope.RideID != "" || published.Scope.PassengerID != "7" || published.Scope.DriverID != "11" {
-		t.Fatalf("event scope = %#v", published.Scope)
-	}
-}
-
-func TestCreateOpenSessionPublishesToTheDriverPool(t *testing.T) {
-	repository := &ridesRepositoryStub{}
-	publisher := &eventPublisherStub{}
-	service := newTestRideService(repository, testPricingConfig(t), publisher)
-
-	_, err := service.CreateSession(context.Background(), domain.BidSession{
-		ID:             32,
-		PassengerID:    7,
-		PickupLatitude: 6.7, PickupLongitude: 122.1,
-		DropoffLatitude: 6.71, DropoffLongitude: 122.11,
-		DistanceKm: 2, DurationMinutes: 10,
-	})
-	if err != nil {
-		t.Fatalf("CreateSession() error = %v", err)
-	}
-	if len(publisher.events) != 1 {
-		t.Fatalf("published event count = %d, want 1", len(publisher.events))
-	}
-	published := publisher.events[0]
-	if !published.Scope.DriverPool || published.Scope.PassengerID != "7" {
-		t.Fatalf("event scope = %#v, want passenger and driver pool", published.Scope)
-	}
-}
-
 func TestPublishingFailureDoesNotRollbackPersistedStatus(t *testing.T) {
 	repository := &ridesRepositoryStub{
 		ride: domain.Ride{

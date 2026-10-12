@@ -11,12 +11,12 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/email"
+	dispatchapplication "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	miniostorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage/minio"
 	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
-	ridebidding "github.com/Easy-Bao/DrivingApp/server/internal/ride/bidding"
 	ridelifecycle "github.com/Easy-Bao/DrivingApp/server/internal/ride/lifecycle"
 )
 
@@ -36,7 +36,7 @@ type Application struct {
 	PostgresPool               database.PostgresNativePoolConfig
 	Mail                       email.Config
 	RideLifecycle              ridelifecycle.Config
-	Bidding                    ridebidding.Config
+	Bidding                    dispatchapplication.Config
 	ReportingLocation          *time.Location
 	MinIO                      miniostorage.Config
 }
@@ -334,11 +334,11 @@ func loadRideLifecycleConfig(getenv environmentReader) (ridelifecycle.Config, er
 	return config, nil
 }
 
-func loadBiddingConfig(getenv environmentReader) (ridebidding.Config, error) {
-	config := ridebidding.DefaultConfig()
+func loadBiddingConfig(getenv environmentReader) (dispatchapplication.Config, error) {
+	config := dispatchapplication.DefaultConfig()
 	duration, err := optionalWholeSecondDuration(getenv, "BID_SESSION_DURATION", config.SessionDuration)
 	if err != nil {
-		return ridebidding.Config{}, err
+		return dispatchapplication.Config{}, err
 	}
 	config.SessionDuration = duration
 	return config, nil
