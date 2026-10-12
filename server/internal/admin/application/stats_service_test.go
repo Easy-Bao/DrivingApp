@@ -8,11 +8,14 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/admin/domain"
 )
 
-type repository struct{}
+type statsReader struct{}
 
-func (repository) Stats(context.Context) (domain.Stats, error) { return domain.Stats{Users: 2}, nil }
-func TestStatsDelegatesToRepository(t *testing.T) {
-	stats, err := application.NewStatsService(repository{}).Stats(context.Background())
+func (statsReader) Stats(context.Context) (domain.Stats, error) {
+	return domain.Stats{Users: 2}, nil
+}
+
+func TestStatsDelegatesToReader(t *testing.T) {
+	stats, err := application.NewStatsService(statsReader{}).Stats(context.Background())
 	if err != nil || stats.Users != 2 {
 		t.Fatalf("stats = %#v, %v", stats, err)
 	}

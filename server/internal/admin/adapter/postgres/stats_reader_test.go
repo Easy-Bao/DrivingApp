@@ -2,8 +2,8 @@ package postgres
 
 import "testing"
 
-func TestNewStatsRepositoryRejectsNilPool(t *testing.T) {
-	if _, err := NewStatsRepository(nil); err == nil {
+func TestNewStatsReaderRejectsNilPool(t *testing.T) {
+	if _, err := NewStatsReader(nil); err == nil {
 		t.Fatal("expected nil PostgreSQL pool to be rejected")
 	}
 }

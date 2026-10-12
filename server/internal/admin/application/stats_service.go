@@ -9,12 +9,12 @@ import (
 
 // StatsService serves administrative read models without coupling the use case
 // to a storage technology.
-type StatsService struct{ repository ports.StatsReader }
+type StatsService struct{ reader ports.StatsReader }
 
-func NewStatsService(repository ports.StatsReader) *StatsService {
-	return &StatsService{repository: repository}
+func NewStatsService(reader ports.StatsReader) *StatsService {
+	return &StatsService{reader: reader}
 }
 
 func (service *StatsService) Stats(ctx context.Context) (domain.Stats, error) {
-	return service.repository.Stats(ctx)
+	return service.reader.Stats(ctx)
 }

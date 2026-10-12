@@ -11,45 +11,37 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type StatsRepository struct {
+type StatsReader struct {
 	pool    *pgxpool.Pool
 	queries *databasepostgres.Queries
 }
 
-var _ adminports.StatsReader = (*StatsRepository)(nil)
+var _ adminports.StatsReader = (*StatsReader)(nil)
 
-func NewStatsRepository(pool *pgxpool.Pool) (*StatsRepository, error) {
+func NewStatsReader(pool *pgxpool.Pool) (*StatsReader, error) {
 	if pool == nil {
 		return nil, errors.New("postgresql pool is required")
 	}
-	return &StatsRepository{
+	return &StatsReader{
 		pool:    pool,
 		queries: databasepostgres.New(pool),
 	}, nil
 }
 
-// StatsReader is the canonical adapter name used by the admin composition
-// root. The repository constructor remains for existing internal callers.
-type StatsReader = StatsRepository
-
-func NewStatsReader(pool *pgxpool.Pool) (*StatsReader, error) {
-	return NewStatsRepository(pool)
-}
-
-func (repository *StatsRepository) Stats(ctx context.Context) (domain.Stats, error) {
-	if err := repository.validate(); err != nil {
+func (reader *StatsReader) Stats(ctx context.Context) (domain.Stats, error) {
+	if err := reader.validate(); err != nil {
 		return domain.Stats{}, err
 	}
 
-	users, err := repository.queries.CountUsers(ctx)
+	users, err := reader.queries.CountUsers(ctx)
 	if err != nil {
 		return domain.Stats{}, fmt.Errorf("count users: %w", err)
 	}
-	rides, err := repository.queries.CountRides(ctx)
+	rides, err := reader.queries.CountRides(ctx)
 	if err != nil {
 		return domain.Stats{}, fmt.Errorf("count rides: %w", err)
 	}
-	documents, err := repository.queries.CountDriverDocuments(ctx)
+	documents, err := reader.queries.CountDriverDocuments(ctx)
 	if err != nil {
 		return domain.Stats{}, fmt.Errorf("count driver documents: %w", err)
 	}
@@ -74,12 +66,12 @@ func (repository *StatsRepository) Stats(ctx context.Context) (domain.Stats, err
 	}, nil
 }
 
-func (repository *StatsRepository) validate() error {
-	if repository == nil {
-		return errors.New("postgresql stats repository is not initialized")
+func (reader *StatsReader) validate() error {
+	if reader == nil {
+		return errors.New("postgresql stats reader is not initialized")
 	}
-	if repository.pool == nil || repository.queries == nil {
-		return errors.New("postgresql stats repository is not initialized")
+	if reader.pool == nil || reader.queries == nil {
+		return errors.New("postgresql stats reader is not initialized")
 	}
 	return nil
 }
