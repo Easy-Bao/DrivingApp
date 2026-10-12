@@ -9,7 +9,6 @@ import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
-import 'package:passenger/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/domain/entities/bid_session_trip.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
@@ -21,6 +20,7 @@ import 'package:passenger/src/features/booking/presentation/widgets/finding_driv
 import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_searching_panel.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
+import 'package:passenger/src/features/live_map/live_map.dart';
 
 bool shouldRebuildDriverDiscoveryOverlay(
   BookingState previous,

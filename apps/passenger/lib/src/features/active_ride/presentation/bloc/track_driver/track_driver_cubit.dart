@@ -25,6 +25,8 @@ class TrackDriverCubit({
   bool _isSyncing = false;
   int? _syncGeneration;
   int _trackingGeneration = 0;
+  String? _activeRideId;
+  DateTime? _lastPassengerLocationPublishedAt;
   bool _isCancellingTrip = false;
   bool _isEmergencyStopping = false;
 
@@ -45,17 +47,29 @@ class TrackDriverCubit({
   }) async {
     if (isClosed) return;
     final trackingGeneration = ++_trackingGeneration;
+    _activeRideId = rideId.isEmpty ? null : rideId;
+    _lastPassengerLocationPublishedAt = null;
     unawaited(_trackingTask?.dispose());
     _trackingTask = null;
     _activeTripResync = null;
 
     final session = _sessionService;
-    if (rideId.isNotEmpty) {
-      await session.saveActiveRideId(rideId);
-      if (!_isCurrentTrackingOperation(trackingGeneration)) return;
+    late final String activeRideId;
+    try {
+      if (rideId.isNotEmpty) {
+        await session.saveActiveRideId(rideId);
+        if (!_isCurrentTrackingOperation(trackingGeneration)) return;
+      }
+      activeRideId = await session.readActiveRideId() ?? '';
+    } catch (error) {
+      if (_isCurrentTrackingOperation(trackingGeneration)) {
+        _activeRideId = null;
+        _lastPassengerLocationPublishedAt = null;
+      }
+      rethrow;
     }
-    final activeRideId = await session.readActiveRideId() ?? '';
     if (!_isCurrentTrackingOperation(trackingGeneration)) return;
+    _activeRideId = activeRideId.isEmpty ? null : activeRideId;
 
     List<List<double>>? routePoints;
 
@@ -91,6 +105,8 @@ class TrackDriverCubit({
             if (!_isCurrentTrackingOperation(trackingGeneration)) return;
             if (rideUpdate.status == RideStatus.completed) {
               trackingCompleted = true;
+              _activeRideId = null;
+              _lastPassengerLocationPublishedAt = null;
               unawaited(_trackingTask?.dispose());
               _trackingTask = null;
               if (identical(_activeTripResync, activeTripResync)) {
@@ -112,6 +128,8 @@ class TrackDriverCubit({
             }
             if (rideUpdate.status == RideStatus.cancelled) {
               trackingCompleted = true;
+              _activeRideId = null;
+              _lastPassengerLocationPublishedAt = null;
               unawaited(_trackingTask?.dispose());
               _trackingTask = null;
               if (identical(_activeTripResync, activeTripResync)) {
@@ -283,6 +301,48 @@ class TrackDriverCubit({
     await resync();
   }
 
+  Future<void> publishPassengerLocation({
+    required String rideId,
+    required double latitude,
+    required double longitude,
+  }) async {
+    final activeRideId = _activeRideId;
+    if (isClosed ||
+        _isCancellingTrip ||
+        _isEmergencyStopping ||
+        activeRideId == null ||
+        rideId != activeRideId) {
+      return;
+    }
+
+    final now = DateTime.now();
+    final lastPublishedAt = _lastPassengerLocationPublishedAt;
+    if (lastPublishedAt != null &&
+        now.difference(lastPublishedAt) < const Duration(seconds: 5)) {
+      return;
+    }
+    _lastPassengerLocationPublishedAt = now;
+
+    try {
+      final result = await _repository.publishPassengerLocationResult(
+        rideId: activeRideId,
+        latitude: latitude,
+        longitude: longitude,
+      );
+      result.fold(
+        (failure) =>
+            dev.log('Passenger telemetry update failed: ${failure.message}'),
+        (_) {},
+      );
+    } catch (error, stackTrace) {
+      dev.log(
+        'Passenger telemetry update failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
   bool _canRetryRoute(DateTime? lastAttempt, DateTime now) {
     return lastAttempt == null ||
         now.difference(lastAttempt) >= const Duration(seconds: 6);
@@ -346,6 +406,8 @@ class TrackDriverCubit({
       unawaited(_trackingTask?.dispose());
       _trackingTask = null;
       _activeTripResync = null;
+      _activeRideId = null;
+      _lastPassengerLocationPublishedAt = null;
       await _stopBackgroundTelemetry();
       if (!isClosed) emit(const TrackDriverCanceled());
       return true;
@@ -395,6 +457,8 @@ class TrackDriverCubit({
       unawaited(_trackingTask?.dispose());
       _trackingTask = null;
       _activeTripResync = null;
+      _activeRideId = null;
+      _lastPassengerLocationPublishedAt = null;
       try {
         await _sessionService.saveActiveRideId('');
       } catch (error, stackTrace) {
@@ -435,6 +499,8 @@ class TrackDriverCubit({
   @override
   Future<void> close() {
     ++_trackingGeneration;
+    _activeRideId = null;
+    _lastPassengerLocationPublishedAt = null;
     unawaited(_trackingTask?.dispose());
     _trackingTask = null;
     _activeTripResync = null;

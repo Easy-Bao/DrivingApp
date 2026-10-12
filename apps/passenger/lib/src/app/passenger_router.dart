@@ -13,6 +13,7 @@ import 'package:passenger/src/features/driver_profile/driver_profile_module.dart
 import 'package:passenger/src/features/home/home_module.dart';
 import 'package:passenger/src/features/inbox/inbox_module.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
+import 'package:passenger/src/features/live_map/live_map.dart';
 import 'package:passenger/src/features/profile/profile_module.dart';
 import 'package:passenger/src/features/ride_history/ride_history_module.dart';
 import 'package:passenger/src/features/saved_places/saved_places_module.dart';
@@ -81,6 +82,7 @@ class PassengerRouter extends Module {
     BookingModule.binds(i);
 
     i
+      ..addFactory<LiveMapBloc>((_) => LiveMapBloc())
       ..addLazySingleton<PassengerTabNavigationCoordinator>(
         (_) => PassengerTabNavigationCoordinator(),
       )

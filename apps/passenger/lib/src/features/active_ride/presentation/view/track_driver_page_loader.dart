@@ -5,10 +5,10 @@ import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
-import 'package:passenger/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:passenger/src/features/active_ride/presentation/view/track_driver_page.dart';
 import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
+import 'package:passenger/src/features/live_map/live_map.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 
 class TrackDriverPageLoader extends StatefulWidget {

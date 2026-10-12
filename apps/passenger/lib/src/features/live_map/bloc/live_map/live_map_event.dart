@@ -30,9 +30,3 @@ final class const FitMapToCoordinatesEvent({
   required final List<LatLng> coordinates,
   final double? maxZoom,
 }) extends LiveMapEvent;
-
-final class const DispatchTelemetryLocationEvent({
-  required final double lat,
-  required final double lng,
-  required final String rideId,
-}) extends LiveMapEvent;

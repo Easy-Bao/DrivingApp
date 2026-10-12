@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:developer' as dev;
 import 'dart:typed_data';
 import 'dart:ui' show Color;
@@ -7,16 +6,11 @@ import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:maps/maps.dart';
-import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
-import 'package:rxdart/rxdart.dart';
 
 part 'live_map_event.dart';
 part 'live_map_state.dart';
 
-class LiveMapBloc({required this._trackRepository})
-    extends Bloc<LiveMapEvent, LiveMapState> {
-  final TrackRepository _trackRepository;
-
+class LiveMapBloc() extends Bloc<LiveMapEvent, LiveMapState> {
   AppMapController? _mapController;
   mapbox.PointAnnotationManager? _riderMarkerManager;
   mapbox.PointAnnotationManager? _driverMarkerManager;
@@ -29,11 +23,6 @@ class LiveMapBloc({required this._trackRepository})
   int _mapViewGeneration = 0;
   int _routeOperationGeneration = 0;
 
-  final PublishSubject<DispatchTelemetryLocationEvent> _locationSubject =
-      PublishSubject<DispatchTelemetryLocationEvent>();
-  late final StreamSubscription<DispatchTelemetryLocationEvent>
-  _locationSubscription;
-
   this : super(LiveMapInitial()) {
     on<InitializeMapEvent>(_onInitializeMap);
     on<DrawDriverToRiderRouteEvent>(
@@ -43,35 +32,6 @@ class LiveMapBloc({required this._trackRepository})
     on<AddMapMarkerEvent>(_onAddMapMarker);
     on<ClearMapAnnotationsEvent>(_onClearMapAnnotations);
     on<FitMapToCoordinatesEvent>(_onFitMapToCoordinates);
-    _locationSubscription = _locationSubject
-        .throttleTime(const Duration(seconds: 5))
-        .listen((event) => unawaited(_publishPassengerLocation(event)));
-    on<DispatchTelemetryLocationEvent>((event, emit) {
-      _locationSubject.add(event);
-    });
-  }
-
-  Future<void> _publishPassengerLocation(
-    DispatchTelemetryLocationEvent event,
-  ) async {
-    try {
-      final result = await _trackRepository.publishPassengerLocationResult(
-        rideId: event.rideId,
-        latitude: event.lat,
-        longitude: event.lng,
-      );
-      result.fold(
-        (failure) =>
-            dev.log('Passenger telemetry update failed: ${failure.message}'),
-        (_) {},
-      );
-    } catch (error, stackTrace) {
-      dev.log(
-        'Passenger telemetry update failed',
-        error: error,
-        stackTrace: stackTrace,
-      );
-    }
   }
 
   Future<void> _onInitializeMap(
@@ -376,8 +336,6 @@ class LiveMapBloc({required this._trackRepository})
   @override
   Future<void> close() async {
     _invalidateMapOperations();
-    await _locationSubscription.cancel();
-    await _locationSubject.close();
     await _clearAllMarkers();
     return super.close();
   }

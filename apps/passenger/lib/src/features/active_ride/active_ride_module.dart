@@ -9,13 +9,13 @@ import 'package:passenger/src/features/active_ride/data/data_sources/ride_remote
 import 'package:passenger/src/features/active_ride/data/repositories/track_repository_impl.dart';
 import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
-import 'package:passenger/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger/src/features/active_ride/presentation/view/driver_matched_page.dart';
 import 'package:passenger/src/features/active_ride/presentation/view/track_driver_page.dart';
 import 'package:passenger/src/features/active_ride/presentation/view/track_driver_page_loader.dart';
 import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
+import 'package:passenger/src/features/live_map/live_map.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:passenger/src/infrastructure/telemetry/passenger_background_telemetry.dart';
 
@@ -29,9 +29,6 @@ class ActiveRideModule._() {
         (i) => TrackRepositoryImpl(
           remoteDataSource: i.get<RideRemoteDataSource>(),
         ),
-      )
-      ..addFactory<LiveMapBloc>(
-        (i) => LiveMapBloc(trackRepository: i.get<TrackRepository>()),
       )
       ..addFactory<TrackDriverCubit>(
         (i) => TrackDriverCubit(
