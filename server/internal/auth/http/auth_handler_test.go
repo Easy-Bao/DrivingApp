@@ -62,6 +62,52 @@ func TestAuthSessionResponseVerificationState(t *testing.T) {
 	}
 }
 
+func TestAuthSessionResponseKeepsAccountFieldsAtTheHTTPBoundary(t *testing.T) {
+	payload := authSessionResponse(
+		domain.User{
+			ID:                7,
+			Email:             "driver@example.com",
+			Phone:             "+639171234567",
+			Name:              "Ada Driver",
+			Role:              domain.Driver,
+			PasswordHash:      "must-not-leak",
+			IsVerified:        true,
+			VehicleType:       "Motorcycle",
+			PlateNumber:       "ABC123",
+			PreferredRideType: "solo",
+		},
+		session.SessionTokens{AccessToken: "access", RefreshToken: "refresh"},
+		false,
+		true,
+	)
+	encoded, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatalf("marshal session response: %v", err)
+	}
+
+	var body map[string]any
+	if err := json.Unmarshal(encoded, &body); err != nil {
+		t.Fatalf("unmarshal session response: %v", err)
+	}
+	data, ok := body["data"].(map[string]any)
+	if !ok {
+		t.Fatal("session response data is not an object")
+	}
+	user, ok := data["user"].(map[string]any)
+	if !ok {
+		t.Fatal("session response user is not an object")
+	}
+	if user["isVerified"] != true || user["vehicleType"] != "Motorcycle" ||
+		user["plateNumber"] != "ABC123" || user["preferred_ride_type"] != "solo" {
+		t.Fatalf("unexpected account response fields: %#v", user)
+	}
+	for _, field := range []string{"PasswordHash", "password_hash", "passwordHash"} {
+		if _, exists := user[field]; exists {
+			t.Fatalf("account response leaked %q: %#v", field, user)
+		}
+	}
+}
+
 func TestOTPMaxAttemptsReturnTooManyRequests(t *testing.T) {
 	if status := otpErrorStatus(domain.ErrOTPMaxAttemptsExceeded); status != http.StatusTooManyRequests {
 		t.Fatalf("status = %d, want %d", status, http.StatusTooManyRequests)
