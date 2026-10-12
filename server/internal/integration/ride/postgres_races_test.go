@@ -4,6 +4,7 @@ package ride_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,6 +15,7 @@ import (
 	dispatchpostgres "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/adapter/postgres"
 	ridepostgres "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
+	ridelifecycle "github.com/Easy-Bao/DrivingApp/server/internal/ride/lifecycle"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -198,6 +200,136 @@ WHERE rides.passenger_id = $1`, passengerID, 0)
 	default:
 		t.Fatalf("session status = %q, want accepted or cancelled", status)
 	}
+}
+
+func TestRideCancellationRacingWithAcceptancePreservesAtomicState(t *testing.T) {
+	fixture := newPostgresRideFixture(t)
+	ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
+	defer cancel()
+
+	const passengerID = 108
+	const driverID = 210
+	fixture.seedPassenger(t, ctx, passengerID)
+	fixture.seedDriver(t, ctx, driverID)
+	rideID := fixture.createRide(t, ctx, passengerID, 0, "requested", 2000)
+	service := ridelifecycle.NewService(ridelifecycle.Dependencies{Store: fixture.store})
+
+	start := make(chan struct{})
+	type commandResult struct {
+		name string
+		err  error
+	}
+	results := make(chan commandResult, 2)
+	go func() {
+		<-start
+		_, err := service.AcceptRide(ctx, rideID, driverID)
+		results <- commandResult{name: "accept", err: err}
+	}()
+	go func() {
+		<-start
+		_, err := service.Cancel(ctx, domain.CancellationRequest{
+			RideID:  rideID,
+			ActorID: passengerID,
+			Reason:  domain.CancellationReasonPassengerChangedMind,
+		})
+		results <- commandResult{name: "cancel", err: err}
+	}()
+	close(start)
+
+	var acceptErr, cancelErr error
+	for range 2 {
+		result := <-results
+		if result.name == "accept" {
+			acceptErr = result.err
+		} else {
+			cancelErr = result.err
+		}
+	}
+
+	var status string
+	var assignedDriverID pgtype.Int4
+	if err := fixture.pool.QueryRow(ctx, `
+SELECT status, driver_id
+FROM rides
+WHERE id = $1`, rideID).Scan(&status, &assignedDriverID); err != nil {
+		t.Fatalf("read ride state: %v", err)
+	}
+	var wantSettlements int
+	switch status {
+	case "accepted":
+		if acceptErr != nil || cancelErr == nil || !errors.Is(cancelErr, pgx.ErrNoRows) {
+			t.Fatalf("accepted state has inconsistent outcomes: acceptance=%v cancellation=%v", acceptErr, cancelErr)
+		}
+		if !assignedDriverID.Valid || assignedDriverID.Int32 != driverID {
+			t.Fatalf("assigned driver = %v, want %d", assignedDriverID, driverID)
+		}
+		wantSettlements = 1
+	case "cancelled":
+		if cancelErr != nil {
+			t.Fatalf("cancellation failed with cancelled state: %v", cancelErr)
+		}
+		if assignedDriverID.Valid {
+			if assignedDriverID.Int32 != driverID || acceptErr != nil {
+				t.Fatalf("cancelled accepted ride has inconsistent outcomes: driver=%v acceptance=%v", assignedDriverID, acceptErr)
+			}
+			wantSettlements = 1
+		} else if acceptErr == nil || !errors.Is(acceptErr, pgx.ErrNoRows) {
+			t.Fatalf("unassigned cancelled ride has inconsistent acceptance result: %v", acceptErr)
+		}
+	default:
+		t.Fatalf("ride status = %q, want accepted or cancelled", status)
+	}
+	assertRowCount(t, ctx, fixture.pool, `
+SELECT count(*) FROM ride_settlements WHERE ride_id = $1`, rideID, wantSettlements)
+	wantCancellationRecords := 0
+	if status == "cancelled" {
+		wantCancellationRecords = 1
+	}
+	assertRowCount(t, ctx, fixture.pool, `
+SELECT count(*) FROM ride_events WHERE ride_id = $1 AND to_status = 'cancelled'`, rideID, wantCancellationRecords)
+	assertRowCount(t, ctx, fixture.pool, `
+SELECT count(*) FROM audit_events WHERE action = 'ride.cancelled' AND target_id = $1`, fmt.Sprint(rideID), wantCancellationRecords)
+}
+
+func TestStaleRideStateTransitionCannotOverwriteCancellation(t *testing.T) {
+	fixture := newPostgresRideFixture(t)
+	ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
+	defer cancel()
+
+	const passengerID = 109
+	fixture.seedPassenger(t, ctx, passengerID)
+	rideID := fixture.createRide(t, ctx, passengerID, 0, "requested", 2000)
+	service := ridelifecycle.NewService(ridelifecycle.Dependencies{Store: fixture.store})
+	if _, err := service.Cancel(ctx, domain.CancellationRequest{
+		RideID:  rideID,
+		ActorID: passengerID,
+		Reason:  domain.CancellationReasonPassengerChangedMind,
+	}); err != nil {
+		t.Fatalf("cancel requested ride: %v", err)
+	}
+
+	_, err := fixture.store.UpdateStatus(
+		ctx,
+		rideID,
+		passengerID,
+		string(domain.RideRequested),
+		string(domain.RideAccepted),
+		domain.RideTransition{EventType: domain.RideEventStatusChanged},
+	)
+	if !errors.Is(err, pgx.ErrNoRows) {
+		t.Fatalf("stale transition error = %v, want no matching current-state row", err)
+	}
+
+	var status string
+	if err := fixture.pool.QueryRow(ctx, `SELECT status FROM rides WHERE id = $1`, rideID).Scan(&status); err != nil {
+		t.Fatalf("read ride after stale transition: %v", err)
+	}
+	if status != "cancelled" {
+		t.Fatalf("ride status = %q, want cancelled", status)
+	}
+	assertRowCount(t, ctx, fixture.pool, `SELECT count(*) FROM ride_events WHERE ride_id = $1`, rideID, 1)
+	assertRowCount(t, ctx, fixture.pool, `
+SELECT count(*) FROM audit_events WHERE action = 'ride.cancelled' AND target_id = $1`, fmt.Sprint(rideID), 1)
 }
 
 func TestConcurrentRideCompletionWritesOneLifecycleEvent(t *testing.T) {
@@ -489,6 +621,10 @@ func (fixture *postgresRideFixture) createRide(
 	fare int64,
 ) int {
 	t.Helper()
+	dbDriverID := pgtype.Int4{}
+	if driverID > 0 {
+		dbDriverID = pgtype.Int4{Int32: int32(driverID), Valid: true}
+	}
 	var rideID int
 	if err := fixture.pool.QueryRow(ctx, `
 INSERT INTO rides (
@@ -501,7 +637,7 @@ VALUES ($1, $2, $3, $4, 'Solo Ride', 14.5, 121.0, 'Origin',
     14.6, 121.1, 'Destination', 2.0, 10.0, $5, 'motorcycle', $6)
 RETURNING id`,
 		passengerID,
-		driverID,
+		dbDriverID,
 		status,
 		fare,
 		fmt.Sprintf("Driver %d", driverID),
