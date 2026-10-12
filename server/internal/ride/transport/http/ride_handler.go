@@ -614,67 +614,6 @@ func (handler *Handler) CreateSafetyReport(w http.ResponseWriter, r *http.Reques
 	response.JSON(w, http.StatusCreated, dto.NewSafetyReportResponse(item))
 }
 
-func (handler *Handler) OnlineDrivers(w http.ResponseWriter, r *http.Request) {
-	if _, ok := handler.identity(r); !ok {
-		response.Error(w, 401, "unauthorized")
-		return
-	}
-	driverIDs, err := driverIDsFromQuery(r)
-	if err != nil {
-		response.Error(w, http.StatusBadRequest, "driver ids are required")
-		return
-	}
-	items, err := handler.service.OnlineDrivers(r.Context(), driverIDs)
-	if err != nil {
-		response.Error(w, http.StatusServiceUnavailable, "driver availability unavailable")
-		return
-	}
-	response.JSON(w, 200, dto.NewOnlineDriverResponses(items))
-}
-
-func (handler *Handler) PublicDriverSummaries(w http.ResponseWriter, r *http.Request) {
-	limit := 5
-	if r.URL.Query().Has("limit") {
-		var err error
-		limit, err = strconv.Atoi(r.URL.Query().Get("limit"))
-		invalidLimit := err != nil || limit <= 0 || limit > 20
-		if invalidLimit {
-			response.Error(w, http.StatusBadRequest, "invalid limit")
-			return
-		}
-	}
-	summaries, err := handler.service.PublicDriverSummaries(r.Context(), limit)
-	if err != nil {
-		response.Error(w, http.StatusServiceUnavailable, "driver availability unavailable")
-		return
-	}
-	response.JSON(w, 200, dto.NewPublicDriverSummaryResponses(summaries))
-}
-
-func driverIDsFromQuery(request *http.Request) ([]int, error) {
-	values := strings.Split(request.URL.Query().Get("ids"), ",")
-	if len(values) == 0 || len(values) > 20 {
-		return nil, errors.New("invalid driver ids")
-	}
-	ids := make([]int, 0, len(values))
-	seen := make(map[int]struct{}, len(values))
-	for _, value := range values {
-		id, err := strconv.Atoi(strings.TrimSpace(value))
-		if err != nil || id <= 0 {
-			return nil, errors.New("invalid driver id")
-		}
-		if _, exists := seen[id]; exists {
-			continue
-		}
-		seen[id] = struct{}{}
-		ids = append(ids, id)
-	}
-	if len(ids) == 0 {
-		return nil, errors.New("driver ids are required")
-	}
-	return ids, nil
-}
-
 func (handler *Handler) Estimate(w http.ResponseWriter, r *http.Request) {
 	var input dto.FareEstimateRequest
 	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil {

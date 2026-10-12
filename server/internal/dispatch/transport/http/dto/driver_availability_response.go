@@ -1,6 +1,6 @@
 package dto
 
-import "github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
+import "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/domain"
 
 type OnlineDriverResponse struct {
 	ID                    int     `json:"id"`

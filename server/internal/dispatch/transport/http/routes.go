@@ -40,6 +40,7 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 	}
 
 	withAuthenticatedPolicy(read).Get(apiPrefix+"/bids/{sessionID}", router.handler.Session)
+	mux.With(read).Get(apiPrefix+"/drivers/public/summaries", router.handler.PublicDriverSummaries)
 	withAuthenticatedPolicy(command, passengerOnly).Post(apiPrefix+"/bids", router.handler.CreateSession)
 	withAuthenticatedPolicy(read, passengerOnly).Get(apiPrefix+"/bids/{sessionID}/offers", router.handler.Offers)
 	withAuthenticatedPolicy(command, passengerOnly).Post(
@@ -48,6 +49,7 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 	)
 	withAuthenticatedPolicy(command, passengerOnly).Post(apiPrefix+"/bids/{sessionID}/cancel", router.handler.CancelSession)
 	withAuthenticatedPolicy(read, driverOnly).Get(apiPrefix+"/bids/active", router.handler.ActiveSessions)
+	withAuthenticatedPolicy(read, passengerOnly).Get(apiPrefix+"/drivers/online", router.handler.OnlineDrivers)
 	withAuthenticatedPolicy(command, driverOnly).Post(apiPrefix+"/bids/{sessionID}/offer", router.handler.PlaceOffer)
 	withAuthenticatedPolicy(command, driverOnly).Post(apiPrefix+"/bids/{sessionID}/cancel-offer", router.handler.CancelOffer)
 }

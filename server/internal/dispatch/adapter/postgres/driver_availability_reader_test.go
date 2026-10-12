@@ -26,11 +26,11 @@ func TestOnlineDriverMappingPreservesAvailabilityDetails(t *testing.T) {
 	}
 }
 
-func TestToPostgresRideIDsRejectsInvalidIDs(t *testing.T) {
-	if ids, err := toPostgresRideIDs([]int{7, 11}, "driver id"); err != nil || len(ids) != 2 || ids[1] != 11 {
-		t.Fatalf("toPostgresRideIDs() = %v, %v", ids, err)
+func TestToPostgresDriverIDsRejectsInvalidIDs(t *testing.T) {
+	if ids, err := toPostgresDriverIDs([]int{7, 11}); err != nil || len(ids) != 2 || ids[1] != 11 {
+		t.Fatalf("toPostgresDriverIDs() = %v, %v", ids, err)
 	}
-	if _, err := toPostgresRideIDs([]int{7, 0}, "driver id"); err == nil {
+	if _, err := toPostgresDriverIDs([]int{7, 0}); err == nil {
 		t.Fatal("expected invalid driver id to be rejected")
 	}
 }

@@ -75,21 +75,6 @@ func TestResponseMappersPreserveWireShapes(t *testing.T) {
 			}),
 			want: `{"id":8,"ride_id":17,"reporter_id":4,"reported_user_id":9,"reporter_role":"passenger","category":"unsafe_driving","severity":"high","description":"Unsafe driving","status":"submitted","created_at":"2026-10-12T14:00:00Z"}`,
 		},
-		{
-			name: "online drivers",
-			value: NewOnlineDriverResponses([]domain.OnlineDriver{{
-				ID: 9, UserID: 4, Name: "Ada Driver", VehicleType: "Motorcycle",
-				PlateNumber: "ABC123", Rating: 4.8, OnboardPassengerCount: 1,
-			}}),
-			want: `[{"id":9,"user_id":4,"name":"Ada Driver","vehicle_type":"Motorcycle","plate_number":"ABC123","rating":4.8,"onboard_passenger_count":1}]`,
-		},
-		{
-			name: "public driver summaries",
-			value: NewPublicDriverSummaryResponses([]domain.PublicDriverSummary{{
-				ID: 9, Name: "Ada Driver", VehicleType: "Motorcycle", Rating: 4.8,
-			}}),
-			want: `[{"id":9,"name":"Ada Driver","vehicle_type":"Motorcycle","rating":4.8}]`,
-		},
 	}
 
 	for _, test := range tests {
@@ -108,11 +93,5 @@ func TestResponseMappersPreserveWireShapes(t *testing.T) {
 func TestResponseSliceMappersPreserveNil(t *testing.T) {
 	if NewReviewResponses(nil) != nil {
 		t.Fatal("NewReviewResponses(nil) returned a non-nil slice")
-	}
-	if NewOnlineDriverResponses(nil) != nil {
-		t.Fatal("NewOnlineDriverResponses(nil) returned a non-nil slice")
-	}
-	if NewPublicDriverSummaryResponses(nil) != nil {
-		t.Fatal("NewPublicDriverSummaryResponses(nil) returned a non-nil slice")
 	}
 }

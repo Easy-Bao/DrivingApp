@@ -5,7 +5,6 @@ package ride_test
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -25,12 +24,6 @@ import (
 	ridehttp "github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/http"
 	"github.com/go-chi/chi/v5"
 )
-
-type failingOnlineDriversRepository struct{ analyticsRepository }
-
-func (failingOnlineDriversRepository) OnlineDrivers(context.Context, []int) ([]domain.OnlineDriver, error) {
-	return nil, errors.New("database password leaked")
-}
 
 type activeSessionsRepository struct {
 	requestedDriverID  *int
@@ -383,81 +376,6 @@ func TestPassengerActivitySummaryUsesAnAuthoritativeAggregate(t *testing.T) {
 	}
 	if summary["this_week_fare_amount"] != float64(2817) || summary["this_week_completed_rides"] != float64(1) {
 		t.Fatalf("unexpected passenger activity summary: %#v", summary)
-	}
-}
-
-func TestPublicDriverSummariesExposeRatingsWithoutSensitiveDriverData(t *testing.T) {
-	config, err := rideconfig.LoadPricingConfig()
-	if err != nil {
-		t.Fatalf("LoadPricingConfig returned error: %v", err)
-	}
-	mux := chi.NewRouter()
-	newRideRouter(newRideService(analyticsRepository{}, config), nil).RegisterRoutes(mux)
-
-	request := httptest.NewRequest(
-		http.MethodGet,
-		api.V1Prefix+"/drivers/public/summaries?limit=1",
-		nil,
-	)
-	response := httptest.NewRecorder()
-	mux.ServeHTTP(response, request)
-
-	if response.Code != http.StatusOK {
-		t.Fatalf("status = %d, want %d", response.Code, http.StatusOK)
-	}
-	var summaries []map[string]any
-	if err := json.NewDecoder(response.Body).Decode(&summaries); err != nil {
-		t.Fatalf("decode public driver summaries: %v", err)
-	}
-	if len(summaries) != 1 {
-		t.Fatalf("summaries = %#v, want one item", summaries)
-	}
-	invalidName := summaries[0]["name"] != "Ada Driver"
-	invalidVehicleType := summaries[0]["vehicle_type"] != "Motorcycle"
-	invalidRating := summaries[0]["rating"] != 4.8
-	if invalidName || invalidVehicleType || invalidRating {
-		t.Fatalf("unexpected public summary: %#v", summaries[0])
-	}
-	for _, field := range []string{"user_id", "plate_number", "onboard_passenger_count", "latitude", "longitude"} {
-		if _, exists := summaries[0][field]; exists {
-			t.Fatalf("public summary leaked %q: %#v", field, summaries[0])
-		}
-	}
-
-	protectedRequest := httptest.NewRequest(http.MethodGet, api.V1Prefix+"/drivers/online", nil)
-	protectedResponse := httptest.NewRecorder()
-	mux.ServeHTTP(protectedResponse, protectedRequest)
-	if protectedResponse.Code != http.StatusUnauthorized {
-		t.Fatalf("protected online-driver status = %d, want %d", protectedResponse.Code, http.StatusUnauthorized)
-	}
-}
-
-func TestDriverAvailabilityHidesPersistenceErrors(t *testing.T) {
-	config, err := rideconfig.LoadPricingConfig()
-	if err != nil {
-		t.Fatalf("LoadPricingConfig returned error: %v", err)
-	}
-	verifier := security.NewTokenManager("test-secret")
-	accessToken, err := verifier.IssueWithRole("42", security.RolePassenger)
-	if err != nil {
-		t.Fatalf("Issue() returned error: %v", err)
-	}
-
-	mux := chi.NewRouter()
-	newRideRouter(
-		newRideService(failingOnlineDriversRepository{}, config),
-		verifier,
-	).RegisterRoutes(mux)
-	request := httptest.NewRequest(http.MethodGet, api.V1Prefix+"/drivers/online?ids=7", nil)
-	request.Header.Set("Authorization", "Bearer "+accessToken)
-	response := httptest.NewRecorder()
-	mux.ServeHTTP(response, request)
-
-	if response.Code != http.StatusServiceUnavailable {
-		t.Fatalf("status = %d, want %d", response.Code, http.StatusServiceUnavailable)
-	}
-	if strings.Contains(response.Body.String(), "database password") {
-		t.Fatalf("response leaked persistence details: %s", response.Body.String())
 	}
 }
 

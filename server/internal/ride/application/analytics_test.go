@@ -17,8 +17,7 @@ type passengerReviewRepository struct{ analyticsRepository }
 
 type mutableAnalyticsRepository struct {
 	analyticsRepository
-	rides   []domain.Ride
-	drivers []domain.OnlineDriver
+	rides []domain.Ride
 }
 
 func newAnalyticsRideService(repository ports.RideStore, config application.PricingConfig) *application.RideService {
@@ -67,22 +66,6 @@ func (analyticsRepository) CreateReview(_ context.Context, review domain.Review)
 	review.ID = 1
 	return review, nil
 }
-func (analyticsRepository) OnlineDrivers(context.Context, []int) ([]domain.OnlineDriver, error) {
-	return []domain.OnlineDriver{{
-		ID:                    7,
-		UserID:                7,
-		Name:                  "Ada Driver",
-		VehicleType:           "Motorcycle",
-		PlateNumber:           "XYZ-123",
-		Rating:                4.8,
-		OnboardPassengerCount: 1,
-	}}, nil
-}
-func (analyticsRepository) PublicDriverSummaries(context.Context, int) ([]domain.PublicDriverSummary, error) {
-	return []domain.PublicDriverSummary{{
-		ID: 7, Name: "Ada Driver", VehicleType: "Motorcycle", Rating: 4.8,
-	}}, nil
-}
 func (passengerReviewRepository) CreatePassengerReview(
 	_ context.Context,
 	review domain.PassengerReview,
@@ -97,13 +80,6 @@ func (repository *mutableAnalyticsRepository) PassengerRides(
 	domain.TripHistoryQuery,
 ) ([]domain.Ride, error) {
 	return repository.rides, nil
-}
-
-func (repository *mutableAnalyticsRepository) OnlineDrivers(
-	context.Context,
-	[]int,
-) ([]domain.OnlineDriver, error) {
-	return repository.drivers, nil
 }
 
 func TestAnalyticsUseCasesDelegateToTheRideAdapter(t *testing.T) {
@@ -149,15 +125,12 @@ func TestPassengerReviewUseCaseValidatesRatingAndDelegates(t *testing.T) {
 	}
 }
 
-func TestAnalyticsReadsReturnCopiesAtTheApplicationBoundary(t *testing.T) {
+func TestRideHistoryReadsReturnCopiesAtTheApplicationBoundary(t *testing.T) {
 	config, err := rideconfig.LoadPricingConfig()
 	if err != nil {
 		t.Fatalf("LoadPricingConfig returned error: %v", err)
 	}
-	repository := &mutableAnalyticsRepository{
-		rides:   []domain.Ride{{ID: 2}},
-		drivers: []domain.OnlineDriver{{ID: 7}},
-	}
+	repository := &mutableAnalyticsRepository{rides: []domain.Ride{{ID: 2}}}
 	service := newAnalyticsRideService(repository, config)
 
 	rides, err := service.PassengerRides(context.Background(), 8, domain.TripHistoryQuery{Limit: 25})
@@ -169,12 +142,4 @@ func TestAnalyticsReadsReturnCopiesAtTheApplicationBoundary(t *testing.T) {
 		t.Fatalf("repository rides were mutated through returned values: %#v", repository.rides)
 	}
 
-	drivers, err := service.OnlineDrivers(context.Background(), []int{7})
-	if err != nil {
-		t.Fatalf("OnlineDrivers() error = %v", err)
-	}
-	drivers[0].ID = 99
-	if repository.drivers[0].ID != 7 {
-		t.Fatalf("repository drivers were mutated through returned values: %#v", repository.drivers)
-	}
 }

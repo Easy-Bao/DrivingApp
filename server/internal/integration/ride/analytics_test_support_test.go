@@ -61,24 +61,6 @@ func (analyticsRepository) CreateReview(_ context.Context, review domain.Review)
 	return review, nil
 }
 
-func (analyticsRepository) OnlineDrivers(context.Context, []int) ([]domain.OnlineDriver, error) {
-	return []domain.OnlineDriver{{
-		ID:                    7,
-		UserID:                7,
-		Name:                  "Ada Driver",
-		VehicleType:           "Motorcycle",
-		PlateNumber:           "XYZ-123",
-		Rating:                4.8,
-		OnboardPassengerCount: 1,
-	}}, nil
-}
-
-func (analyticsRepository) PublicDriverSummaries(context.Context, int) ([]domain.PublicDriverSummary, error) {
-	return []domain.PublicDriverSummary{{
-		ID: 7, Name: "Ada Driver", VehicleType: "Motorcycle", Rating: 4.8,
-	}}, nil
-}
-
 func (passengerReviewRepository) CreatePassengerReview(
 	_ context.Context,
 	review domain.PassengerReview,

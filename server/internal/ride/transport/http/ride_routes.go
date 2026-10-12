@@ -44,7 +44,6 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 		apiPrefix+"/bids/fare",
 		router.handler.Estimate,
 	)
-	mux.With(read).Get(apiPrefix+"/drivers/public/summaries", router.handler.PublicDriverSummaries)
 	mux.With(fare).Post(apiPrefix+"/fares/estimate", router.handler.Estimate)
 	mux.With(read).Get(apiPrefix+"/fares/configs", router.handler.FareConfigs)
 	mux.With(read).Get(apiPrefix+"/fares/rating-config", router.handler.RatingConfig)
@@ -64,7 +63,6 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 		apiPrefix+"/passengers/{id}/activity-summary",
 		router.handler.PassengerActivitySummary,
 	)
-	withAuthenticatedPolicy(read, passengerOnly).Get(apiPrefix+"/drivers/online", router.handler.OnlineDrivers)
 	withAuthenticatedPolicy(command, passengerOnly).Post(apiPrefix+"/drivers/{id}/reviews", router.handler.CreateReview)
 
 	withAuthenticatedPolicy(command, driverOnly).Post(apiPrefix+"/rides/{id}/accept", router.handler.AcceptRide)

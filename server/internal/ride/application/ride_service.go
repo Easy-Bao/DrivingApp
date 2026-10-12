@@ -566,39 +566,6 @@ func (service *RideService) CreateSafetyReport(
 	return created, nil
 }
 
-func (service *RideService) OnlineDrivers(ctx context.Context, driverIDs []int) ([]domain.OnlineDriver, error) {
-	repository, ok := service.repository.(ports.DriverAvailabilityReader)
-	if !ok {
-		return nil, errors.New("online driver persistence is unavailable")
-	}
-	if len(driverIDs) == 0 || len(driverIDs) > 20 {
-		return nil, errors.New("driver availability ids are invalid")
-	}
-	drivers, err := repository.OnlineDrivers(ctx, driverIDs)
-	if err != nil {
-		return nil, fmt.Errorf("load online drivers: %w", err)
-	}
-	return slices.Clone(drivers), nil
-}
-
-func (service *RideService) PublicDriverSummaries(
-	ctx context.Context,
-	limit int,
-) ([]domain.PublicDriverSummary, error) {
-	repository, ok := service.repository.(ports.DriverAvailabilityReader)
-	if !ok {
-		return nil, errors.New("public driver summaries are unavailable")
-	}
-	if limit <= 0 || limit > 20 {
-		return nil, errors.New("public driver summary limit is invalid")
-	}
-	drivers, err := repository.PublicDriverSummaries(ctx, limit)
-	if err != nil {
-		return nil, fmt.Errorf("load public driver summaries: %w", err)
-	}
-	return slices.Clone(drivers), nil
-}
-
 func validateTripHistoryQuery(query domain.TripHistoryQuery) error {
 	invalidLimit := query.Limit <= 0 || query.Limit > 100
 	invalidOffset := query.Offset < 0 || query.Offset > 1_000_000

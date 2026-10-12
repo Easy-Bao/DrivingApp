@@ -59,6 +59,11 @@ type rideRuntimeStore interface {
 	ActiveRidesForDriver(context.Context, int) ([]ridedomain.Ride, error)
 }
 
+type dispatchRuntimeStore interface {
+	dispatchports.BiddingStore
+	dispatchports.DriverAvailabilityReader
+}
+
 type authRuntimeStore interface {
 	authports.VerifiedUserStore
 	authports.EmailChangeStore
@@ -72,7 +77,7 @@ type httpRouterDependencies struct {
 	authStore          authRuntimeStore
 	sessionStore       authports.SessionStore
 	rideStore          rideRuntimeStore
-	dispatchStore      dispatchports.BiddingStore
+	dispatchStore      dispatchRuntimeStore
 	profileStore       userports.ProfileStore
 	statsReader        adminports.StatsReader
 	documentStore      documentapplication.DocumentStore
@@ -287,6 +292,7 @@ func newHTTPRouter(
 		EventPublisher: rideEventPublisher,
 		Config:         config.Bidding,
 	}).WithLogger(applicationLogger)
+	dispatchAvailability := dispatchapplication.NewAvailabilityService(dependencies.dispatchStore)
 
 	ridesRouter := ridehttp.NewRouter(ridehttp.Dependencies{
 		Service:       ridesService,
@@ -295,6 +301,7 @@ func newHTTPRouter(
 	})
 	dispatchRouter := dispatchhttp.NewRouter(dispatchhttp.Dependencies{
 		Service:       dispatchService,
+		Availability:  dispatchAvailability,
 		Verifier:      verifier,
 		RouteSecurity: routeSecurity,
 	})

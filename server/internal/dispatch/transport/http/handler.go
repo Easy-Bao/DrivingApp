@@ -19,18 +19,24 @@ import (
 )
 
 type Handler struct {
-	service  *dispatchapplication.Service
-	verifier *security.TokenManager
+	service      *dispatchapplication.Service
+	availability *dispatchapplication.AvailabilityService
+	verifier     *security.TokenManager
 }
 
 type Dependencies struct {
 	Service       *dispatchapplication.Service
+	Availability  *dispatchapplication.AvailabilityService
 	Verifier      *security.TokenManager
 	RouteSecurity *middleware.RouteSecurity
 }
 
 func NewHandler(dependencies Dependencies) *Handler {
-	return &Handler{service: dependencies.Service, verifier: dependencies.Verifier}
+	return &Handler{
+		service:      dependencies.Service,
+		availability: dependencies.Availability,
+		verifier:     dependencies.Verifier,
+	}
 }
 
 func (handler *Handler) identity(r *http.Request) (int, bool) {
