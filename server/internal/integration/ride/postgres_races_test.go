@@ -1,0 +1,521 @@
+//go:build integration
+
+package ride_test
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"path/filepath"
+	"sync"
+	"testing"
+	"time"
+
+	ridepostgres "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/postgres"
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+func TestConcurrentOfferAcceptanceCreatesOneRideAndSettlement(t *testing.T) {
+	fixture := newPostgresRideFixture(t)
+	ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
+	defer cancel()
+
+	const passengerID = 101
+	const firstDriverID = 201
+	const secondDriverID = 202
+	fixture.seedPassenger(t, ctx, passengerID)
+	fixture.seedDriver(t, ctx, firstDriverID)
+	fixture.seedDriver(t, ctx, secondDriverID)
+	sessionID := fixture.createBidSession(t, ctx, passengerID)
+	firstOfferID := fixture.createBidOffer(t, ctx, sessionID, firstDriverID)
+	secondOfferID := fixture.createBidOffer(t, ctx, sessionID, secondDriverID)
+
+	start := make(chan struct{})
+	results := make(chan error, 2)
+	for _, offerID := range []int{firstOfferID, secondOfferID} {
+		go func(offerID int) {
+			<-start
+			_, err := fixture.store.AcceptOffer(ctx, sessionID, offerID, passengerID)
+			results <- err
+		}(offerID)
+	}
+	close(start)
+	firstErr := <-results
+	secondErr := <-results
+	if (firstErr == nil) == (secondErr == nil) {
+		t.Fatalf("offer acceptances returned (%v, %v), want exactly one success", firstErr, secondErr)
+	}
+
+	var sessionStatus string
+	var acceptedDriverID pgtype.Int4
+	if err := fixture.pool.QueryRow(ctx, `
+SELECT status, accepted_driver_id
+FROM bid_sessions
+WHERE id = $1`, sessionID).Scan(&sessionStatus, &acceptedDriverID); err != nil {
+		t.Fatalf("read accepted session: %v", err)
+	}
+	if sessionStatus != "accepted" || !acceptedDriverID.Valid {
+		t.Fatalf("session state = (%q, %v), want accepted session with a driver", sessionStatus, acceptedDriverID)
+	}
+	assertRowCount(t, ctx, fixture.pool, `
+SELECT count(*)
+FROM bid_offers
+WHERE session_id = $1 AND status = 'accepted'`, sessionID, 1)
+	assertRowCount(t, ctx, fixture.pool, `
+SELECT count(*)
+FROM bid_offers
+WHERE session_id = $1 AND status = 'rejected'`, sessionID, 1)
+	assertRowCount(t, ctx, fixture.pool, `
+SELECT count(*) FROM rides WHERE passenger_id = $1`, passengerID, 1)
+	assertRowCount(t, ctx, fixture.pool, `
+SELECT count(*)
+FROM ride_settlements AS settlement
+JOIN rides ON rides.id = settlement.ride_id
+WHERE rides.passenger_id = $1`, passengerID, 1)
+}
+
+func TestConcurrentOfferAcceptanceAssignsDriverToOneSession(t *testing.T) {
+	fixture := newPostgresRideFixture(t)
+	ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
+	defer cancel()
+
+	const firstPassengerID = 105
+	const secondPassengerID = 106
+	const driverID = 207
+	fixture.seedPassenger(t, ctx, firstPassengerID)
+	fixture.seedPassenger(t, ctx, secondPassengerID)
+	fixture.seedDriver(t, ctx, driverID)
+	firstSessionID := fixture.createBidSession(t, ctx, firstPassengerID)
+	secondSessionID := fixture.createBidSession(t, ctx, secondPassengerID)
+	firstOfferID := fixture.createBidOffer(t, ctx, firstSessionID, driverID)
+	secondOfferID := fixture.createBidOffer(t, ctx, secondSessionID, driverID)
+
+	start := make(chan struct{})
+	results := make(chan error, 2)
+	for _, offer := range []struct{ sessionID, offerID, passengerID int }{
+		{firstSessionID, firstOfferID, firstPassengerID},
+		{secondSessionID, secondOfferID, secondPassengerID},
+	} {
+		go func(sessionID, offerID, passengerID int) {
+			<-start
+			_, err := fixture.store.AcceptOffer(ctx, sessionID, offerID, passengerID)
+			results <- err
+		}(offer.sessionID, offer.offerID, offer.passengerID)
+	}
+	close(start)
+	firstErr := <-results
+	secondErr := <-results
+	if (firstErr == nil) == (secondErr == nil) {
+		t.Fatalf("driver assignment attempts returned (%v, %v), want exactly one success", firstErr, secondErr)
+	}
+	assertRowCount(t, ctx, fixture.pool, `
+SELECT count(*)
+FROM rides
+WHERE driver_id = $1 AND status IN ('assigned', 'accepted', 'arrived', 'in_transit')`, driverID, 1)
+	assertRowCount(t, ctx, fixture.pool, `
+SELECT count(*)
+FROM bid_offers
+WHERE driver_id = $1 AND status = 'accepted'`, driverID, 1)
+	assertRowCount(t, ctx, fixture.pool, `
+SELECT count(*)
+FROM ride_settlements AS settlement
+JOIN rides ON rides.id = settlement.ride_id
+WHERE rides.driver_id = $1`, driverID, 1)
+}
+
+func TestSessionCancellationRacingOfferAcceptanceHasOneCommittedOutcome(t *testing.T) {
+	fixture := newPostgresRideFixture(t)
+	ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
+	defer cancel()
+
+	const passengerID = 102
+	const driverID = 203
+	fixture.seedPassenger(t, ctx, passengerID)
+	fixture.seedDriver(t, ctx, driverID)
+	sessionID := fixture.createBidSession(t, ctx, passengerID)
+	offerID := fixture.createBidOffer(t, ctx, sessionID, driverID)
+
+	start := make(chan struct{})
+	type commandResult struct {
+		name string
+		err  error
+	}
+	results := make(chan commandResult, 2)
+	go func() {
+		<-start
+		_, err := fixture.store.AcceptOffer(ctx, sessionID, offerID, passengerID)
+		results <- commandResult{name: "accept", err: err}
+	}()
+	go func() {
+		<-start
+		_, err := fixture.store.CancelSession(ctx, sessionID, passengerID)
+		results <- commandResult{name: "cancel", err: err}
+	}()
+	close(start)
+
+	var acceptanceErr, cancellationErr error
+	for range 2 {
+		result := <-results
+		if result.name == "accept" {
+			acceptanceErr = result.err
+		} else {
+			cancellationErr = result.err
+		}
+	}
+	if (acceptanceErr == nil) == (cancellationErr == nil) {
+		t.Fatalf("acceptance and cancellation returned (%v, %v), want exactly one success", acceptanceErr, cancellationErr)
+	}
+
+	var status string
+	if err := fixture.pool.QueryRow(ctx, `SELECT status FROM bid_sessions WHERE id = $1`, sessionID).Scan(&status); err != nil {
+		t.Fatalf("read session status: %v", err)
+	}
+	switch status {
+	case "accepted":
+		if acceptanceErr != nil || cancellationErr == nil {
+			t.Fatalf("accepted state has inconsistent command results: acceptance=%v cancellation=%v", acceptanceErr, cancellationErr)
+		}
+		assertRowCount(t, ctx, fixture.pool, `SELECT count(*) FROM rides WHERE passenger_id = $1`, passengerID, 1)
+		assertRowCount(t, ctx, fixture.pool, `
+SELECT count(*)
+FROM ride_settlements AS settlement
+JOIN rides ON rides.id = settlement.ride_id
+WHERE rides.passenger_id = $1`, passengerID, 1)
+	case "cancelled":
+		if cancellationErr != nil || acceptanceErr == nil {
+			t.Fatalf("cancelled state has inconsistent command results: acceptance=%v cancellation=%v", acceptanceErr, cancellationErr)
+		}
+		assertRowCount(t, ctx, fixture.pool, `SELECT count(*) FROM rides WHERE passenger_id = $1`, passengerID, 0)
+		assertRowCount(t, ctx, fixture.pool, `
+SELECT count(*)
+FROM ride_settlements AS settlement
+JOIN rides ON rides.id = settlement.ride_id
+WHERE rides.passenger_id = $1`, passengerID, 0)
+	default:
+		t.Fatalf("session status = %q, want accepted or cancelled", status)
+	}
+}
+
+func TestConcurrentRideCompletionWritesOneLifecycleEvent(t *testing.T) {
+	fixture := newPostgresRideFixture(t)
+	ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
+	defer cancel()
+
+	const passengerID = 103
+	const driverID = 204
+	fixture.seedPassenger(t, ctx, passengerID)
+	fixture.seedDriver(t, ctx, driverID)
+	rideID := fixture.createRide(t, ctx, passengerID, driverID, "in_transit", 2000)
+
+	start := make(chan struct{})
+	results := make(chan error, 2)
+	var workers sync.WaitGroup
+	for range 2 {
+		workers.Add(1)
+		go func() {
+			defer workers.Done()
+			<-start
+			_, err := fixture.store.CompleteTrip(ctx, rideID, driverID)
+			results <- err
+		}()
+	}
+	close(start)
+	workers.Wait()
+	firstErr := <-results
+	secondErr := <-results
+	if (firstErr == nil) == (secondErr == nil) {
+		t.Fatalf("ride completions returned (%v, %v), want exactly one success", firstErr, secondErr)
+	}
+
+	var status string
+	if err := fixture.pool.QueryRow(ctx, `SELECT status FROM rides WHERE id = $1`, rideID).Scan(&status); err != nil {
+		t.Fatalf("read completed ride: %v", err)
+	}
+	if status != "completed" {
+		t.Fatalf("ride status = %q, want completed", status)
+	}
+	assertRowCount(t, ctx, fixture.pool, `
+SELECT count(*) FROM ride_events WHERE ride_id = $1 AND to_status = 'completed'`, rideID, 1)
+	assertRowCount(t, ctx, fixture.pool, `
+SELECT count(*)
+FROM audit_events
+WHERE action = 'ride.completed' AND target_id = $1`, fmt.Sprint(rideID), 1)
+}
+
+func TestConcurrentCashSettlementCreditsWalletOnce(t *testing.T) {
+	fixture := newPostgresRideFixture(t)
+	ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
+	defer cancel()
+
+	const passengerID = 104
+	const driverID = 205
+	fixture.seedPassenger(t, ctx, passengerID)
+	fixture.seedDriver(t, ctx, driverID)
+	rideID := fixture.createRide(t, ctx, passengerID, driverID, "completed", 2000)
+	if _, err := fixture.pool.Exec(ctx, `
+INSERT INTO ride_settlements (
+    ride_id, gross_fare, commission_bps, commission_amount, driver_payout_amount
+)
+VALUES ($1, 2000, 1500, 300, 1700)`, rideID); err != nil {
+		t.Fatalf("create ride settlement: %v", err)
+	}
+	request := domain.CashSettlementRequest{
+		RideID:         rideID,
+		DriverID:       driverID,
+		ReceivedAmount: 2000,
+		Outcome:        domain.CashOutcomePaid,
+	}
+
+	start := make(chan struct{})
+	results := make(chan error, 2)
+	var workers sync.WaitGroup
+	for range 2 {
+		workers.Add(1)
+		go func() {
+			defer workers.Done()
+			<-start
+			_, err := fixture.store.SettleCash(ctx, request)
+			results <- err
+		}()
+	}
+	close(start)
+	workers.Wait()
+	firstErr := <-results
+	secondErr := <-results
+	if firstErr != nil || secondErr != nil {
+		t.Fatalf("cash settlement retries returned (%v, %v), want both successful", firstErr, secondErr)
+	}
+
+	assertRowCount(t, ctx, fixture.pool, `
+SELECT count(*) FROM wallet_ledgers WHERE ride_id = $1 AND kind = 'cash_trip'`, rideID, 1)
+	assertRowCount(t, ctx, fixture.pool, `
+SELECT count(*) FROM audit_events WHERE action = 'ride.cash_settled' AND target_id = $1`, fmt.Sprint(rideID), 1)
+	var balance int64
+	if err := fixture.pool.QueryRow(ctx, `
+SELECT balance FROM driver_wallet_accounts WHERE driver_id = $1`, driverID).Scan(&balance); err != nil {
+		t.Fatalf("read driver wallet balance: %v", err)
+	}
+	if balance != 1700 {
+		t.Fatalf("driver wallet balance = %d, want 1700", balance)
+	}
+	var paymentStatus, cashOutcome string
+	if err := fixture.pool.QueryRow(ctx, `
+SELECT payment_status, cash_outcome
+FROM ride_settlements
+WHERE ride_id = $1`, rideID).Scan(&paymentStatus, &cashOutcome); err != nil {
+		t.Fatalf("read settled outcome: %v", err)
+	}
+	if paymentStatus != "paid" || cashOutcome != string(domain.CashOutcomePaid) {
+		t.Fatalf("settlement state = (%q, %q), want paid", paymentStatus, cashOutcome)
+	}
+}
+
+type postgresRideFixture struct {
+	pool  *pgxpool.Pool
+	store *ridepostgres.RideStore
+}
+
+func newPostgresRideFixture(t *testing.T) *postgresRideFixture {
+	t.Helper()
+	databaseURL := os.Getenv("TEST_DATABASE_URL")
+	if databaseURL == "" {
+		t.Skip("TEST_DATABASE_URL is not set")
+	}
+
+	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
+	defer cancel()
+	admin, err := pgx.Connect(ctx, databaseURL)
+	if err != nil {
+		t.Fatalf("connect to test PostgreSQL database: %v", err)
+	}
+	schemaName := fmt.Sprintf("ride_race_it_%d", time.Now().UnixNano())
+	quotedSchema := pgx.Identifier{schemaName}.Sanitize()
+	if _, err := admin.Exec(ctx, "CREATE SCHEMA "+quotedSchema); err != nil {
+		_ = admin.Close(context.Background())
+		t.Fatalf("create isolated test schema: %v", err)
+	}
+
+	var pool *pgxpool.Pool
+	t.Cleanup(func() {
+		if pool != nil {
+			pool.Close()
+		}
+		cleanupContext, cleanupCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cleanupCancel()
+		_, _ = admin.Exec(cleanupContext, "DROP SCHEMA "+quotedSchema+" CASCADE")
+		_ = admin.Close(cleanupContext)
+	})
+
+	if _, err := admin.Exec(ctx, "SET search_path TO "+quotedSchema); err != nil {
+		t.Fatalf("set isolated schema search path: %v", err)
+	}
+	for _, filename := range []string{
+		"users.sql",
+		"profiles.sql",
+		"rides.sql",
+		"bid_sessions.sql",
+		"bid_offers.sql",
+		"ride_settlements.sql",
+		"ride_events.sql",
+		"driver_wallet_accounts.sql",
+		"wallet_ledgers.sql",
+		"audit_events.sql",
+	} {
+		schema, err := os.ReadFile(filepath.Join("../../../database/schema", filename))
+		if err != nil {
+			t.Fatalf("read canonical schema %s: %v", filename, err)
+		}
+		if _, err := admin.Exec(ctx, string(schema)); err != nil {
+			t.Fatalf("apply canonical schema %s: %v", filename, err)
+		}
+	}
+
+	poolConfig, err := pgxpool.ParseConfig(databaseURL)
+	if err != nil {
+		t.Fatalf("parse test PostgreSQL connection: %v", err)
+	}
+	poolConfig.ConnConfig.RuntimeParams["search_path"] = quotedSchema
+	poolConfig.MaxConns = 8
+	pool, err = pgxpool.NewWithConfig(ctx, poolConfig)
+	if err != nil {
+		t.Fatalf("connect to isolated ride schema: %v", err)
+	}
+	if err := pool.Ping(ctx); err != nil {
+		t.Fatalf("ping isolated ride schema: %v", err)
+	}
+	store, err := ridepostgres.NewRideStore(ridepostgres.RideStoreConfig{
+		Pool:                  pool,
+		PlatformCommissionBPS: 1500,
+		OnlinePresenceMaxAge:  time.Minute,
+	})
+	if err != nil {
+		t.Fatalf("create ride persistence adapter: %v", err)
+	}
+	return &postgresRideFixture{pool: pool, store: store}
+}
+
+func (fixture *postgresRideFixture) seedPassenger(t *testing.T, ctx context.Context, userID int) {
+	t.Helper()
+	fixture.seedUser(t, ctx, userID, "passenger")
+}
+
+func (fixture *postgresRideFixture) seedDriver(t *testing.T, ctx context.Context, userID int) {
+	t.Helper()
+	fixture.seedUser(t, ctx, userID, "driver")
+	if _, err := fixture.pool.Exec(ctx, `
+INSERT INTO driver_profiles (
+    user_id, name, vehicle_type, plate_number, rating, is_online, online_last_seen_at
+)
+VALUES ($1, $2, 'motorcycle', $3, 4.8, true, CURRENT_TIMESTAMP)`,
+		userID,
+		fmt.Sprintf("Driver %d", userID),
+		fmt.Sprintf("PLATE-%d", userID),
+	); err != nil {
+		t.Fatalf("seed driver profile %d: %v", userID, err)
+	}
+}
+
+func (fixture *postgresRideFixture) seedUser(t *testing.T, ctx context.Context, userID int, role string) {
+	t.Helper()
+	if _, err := fixture.pool.Exec(ctx, `
+INSERT INTO users (id, name, phone, email, password_hash, role, is_verified)
+VALUES ($1, $2, $3, $4, 'test-hash', $5, true)`,
+		userID,
+		fmt.Sprintf("User %d", userID),
+		fmt.Sprintf("phone-%d", userID),
+		fmt.Sprintf("user-%d@example.test", userID),
+		role,
+	); err != nil {
+		t.Fatalf("seed user %d: %v", userID, err)
+	}
+}
+
+func (fixture *postgresRideFixture) createBidSession(t *testing.T, ctx context.Context, passengerID int) int {
+	t.Helper()
+	var sessionID int
+	if err := fixture.pool.QueryRow(ctx, `
+INSERT INTO bid_sessions (
+    passenger_id, ride_type, pickup_latitude, pickup_longitude, pickup_name,
+    dropoff_latitude, dropoff_longitude, dropoff_name, distance_km,
+    duration_minutes, offered_fare, expires_at
+)
+VALUES ($1, 'Solo Ride', 14.5, 121.0, 'Origin', 14.6, 121.1, 'Destination',
+    2.0, 10.0, 2000, CURRENT_TIMESTAMP + interval '10 minutes')
+RETURNING id`, passengerID).Scan(&sessionID); err != nil {
+		t.Fatalf("create bid session: %v", err)
+	}
+	return sessionID
+}
+
+func (fixture *postgresRideFixture) createBidOffer(
+	t *testing.T,
+	ctx context.Context,
+	sessionID, driverID int,
+) int {
+	t.Helper()
+	var offerID int
+	if err := fixture.pool.QueryRow(ctx, `
+INSERT INTO bid_offers (session_id, driver_id, driver_name, plate_number, vehicle_type, proposed_fare)
+VALUES ($1, $2, $3, $4, 'motorcycle', 2000)
+RETURNING id`,
+		sessionID,
+		driverID,
+		fmt.Sprintf("Driver %d", driverID),
+		fmt.Sprintf("PLATE-%d", driverID),
+	).Scan(&offerID); err != nil {
+		t.Fatalf("create bid offer: %v", err)
+	}
+	return offerID
+}
+
+func (fixture *postgresRideFixture) createRide(
+	t *testing.T,
+	ctx context.Context,
+	passengerID, driverID int,
+	status string,
+	fare int64,
+) int {
+	t.Helper()
+	var rideID int
+	if err := fixture.pool.QueryRow(ctx, `
+INSERT INTO rides (
+    passenger_id, driver_id, status, fare_amount, ride_type,
+    pickup_latitude, pickup_longitude, pickup_name,
+    dropoff_latitude, dropoff_longitude, dropoff_name,
+    distance_km, duration_minutes, driver_name, vehicle_type, plate_number
+)
+VALUES ($1, $2, $3, $4, 'Solo Ride', 14.5, 121.0, 'Origin',
+    14.6, 121.1, 'Destination', 2.0, 10.0, $5, 'motorcycle', $6)
+RETURNING id`,
+		passengerID,
+		driverID,
+		status,
+		fare,
+		fmt.Sprintf("Driver %d", driverID),
+		fmt.Sprintf("PLATE-%d", driverID),
+	).Scan(&rideID); err != nil {
+		t.Fatalf("create ride: %v", err)
+	}
+	return rideID
+}
+
+func assertRowCount(
+	t *testing.T,
+	ctx context.Context,
+	pool *pgxpool.Pool,
+	query string,
+	argument any,
+	want int,
+) {
+	t.Helper()
+	var count int
+	if err := pool.QueryRow(ctx, query, argument).Scan(&count); err != nil {
+		t.Fatalf("count rows: %v", err)
+	}
+	if count != want {
+		t.Fatalf("row count = %d, want %d", count, want)
+	}
+}
