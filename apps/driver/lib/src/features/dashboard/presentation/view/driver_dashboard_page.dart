@@ -528,7 +528,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     ride['id'] = rideId;
     ride['status'] = status;
 
-    BlocProvider.of<DashboardCubit>(context).mergeActiveTrip(ride);
+    BlocProvider.of<DashboardCubit>(context)
+        .mergeActiveRide(RideSnapshot.fromJson(ride, fallbackId: rideId));
   }
 
   void _handleRideStatusChanged(RideStatusChangedEvent event) {
@@ -549,7 +550,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     }
 
     final dashboardCubit = BlocProvider.of<DashboardCubit>(context);
-    dashboardCubit.removeActiveTrip(rideId);
+    dashboardCubit.removeActiveRide(rideId);
     rideFlowCubit.reset();
     if (_isHandlingPassengerCancellation) return;
     _isHandlingPassengerCancellation = true;
@@ -718,29 +719,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   Future<void> _acceptBid(Map<String, dynamic> bid) async {
     if (_submittingBidId != null) return;
     final cubit = BlocProvider.of<DashboardCubit>(context);
-    final activeTrips = cubit.state.activeTrips;
-    if (activeTrips.length >= DriverDashboardSectionLabel.maximumActiveRides) {
+    if (cubit.state.hasActiveRide) {
       CustomToast.show(
         context,
-        'You cannot accept more than '
-        '${DriverDashboardSectionLabel.maximumActiveRides} concurrent rides.',
-        isError: true,
-      );
-      return;
-    }
-    final hasPriority = activeTrips.any((t) => t['ride_type'] == 'Bao Premium');
-    if (hasPriority) {
-      CustomToast.show(
-        context,
-        'You are locked into a Priority Ride.',
-        isError: true,
-      );
-      return;
-    }
-    if (bid['ride_type'] == 'Bao Premium' && activeTrips.isNotEmpty) {
-      CustomToast.show(
-        context,
-        'Cannot accept a Priority Ride while having other active rides.',
+        'Finish your current trip before submitting another offer.',
         isError: true,
       );
       return;
@@ -780,21 +762,15 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     }
   }
 
-  Future<RideSnapshot> _authoritativeTrip(
-    Map<String, dynamic> trip,
-    String rideId,
-  ) async {
+  Future<RideSnapshot> _authoritativeTrip(RideSnapshot trip) async {
     final ride = await BlocProvider.of<DashboardCubit>(context)
-        .fetchAuthoritativeRide(rideId);
-    if (ride != null) return ride;
-    return RideDto.fromJson(trip, fallbackId: rideId).toDomain();
+        .fetchAuthoritativeRide(trip.id);
+    return ride ?? trip;
   }
 
-  Future<void> _resumeTrip(Map<String, dynamic> trip) async {
-    final rideId = driverValueAsString(trip['id']);
-    if (rideId == null) return;
-
-    final resolvedTrip = await _authoritativeTrip(trip, rideId);
+  Future<void> _resumeTrip(RideSnapshot trip) async {
+    final rideId = trip.id;
+    final resolvedTrip = await _authoritativeTrip(trip);
     if (!mounted) return;
     if (_discardTerminalTrip(resolvedTrip, rideId)) return;
     final fare = resolvedTrip.farePesos;
@@ -843,11 +819,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     );
   }
 
-  Future<void> _completeTripFromDashboard(Map<String, dynamic> trip) async {
+  Future<void> _completeTripFromDashboard(RideSnapshot trip) async {
     if (_completingTripId != null) return;
-    final rideId = driverValueAsString(trip['id']);
-    if (rideId == null) return;
-    final resolvedTrip = await _authoritativeTrip(trip, rideId);
+    final rideId = trip.id;
+    final resolvedTrip = await _authoritativeTrip(trip);
     if (!mounted) return;
     if (_discardTerminalTrip(resolvedTrip, rideId)) return;
     final fare = resolvedTrip.farePesos;
@@ -920,7 +895,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   bool _discardTerminalTrip(RideSnapshot trip, String rideId) {
     if (!trip.isTerminal) return false;
 
-    BlocProvider.of<DashboardCubit>(context).removeActiveTrip(rideId);
+    BlocProvider.of<DashboardCubit>(context).removeActiveRide(rideId);
     final rideFlowCubit = BlocProvider.of<RideFlowCubit>(context);
     if (rideFlowCubit.activeRideId == rideId) {
       rideFlowCubit.reset();
@@ -983,18 +958,19 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
             previous.completedTrips != current.completedTrips ||
             previous.errorMessage != current.errorMessage ||
             previous.statsErrorMessage != current.statsErrorMessage ||
-            previous.activeTrips != current.activeTrips ||
+            previous.activeRide != current.activeRide ||
             previous.activeBids != current.activeBids,
         builder: (context, state) {
-          final activeTrips = state.activeTrips;
-          final activeBids = state.activeBids;
+          final activeRide = state.activeRide;
+          final activeBids = state.hasActiveRide
+              ? const <Map<String, dynamic>>[]
+              : state.activeBids;
           final dashboardMessage = state.errorMessage;
           final showDashboardError =
               dashboardMessage != null &&
               !AppNetworkStatusScope.isUnavailableOf(context);
           final showFeed =
-              activeTrips.isNotEmpty ||
-              (state.isOnline && activeBids.isNotEmpty);
+              state.hasActiveRide || (state.isOnline && activeBids.isNotEmpty);
           return Stack(
             fit: StackFit.expand,
             children: [
@@ -1055,32 +1031,21 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                                 ),
                                 physics: const BouncingScrollPhysics(),
                                 children: [
-                                  if (activeTrips.isNotEmpty) ...[
-                                    DriverDashboardSectionLabel.activeRides(
-                                      activeRideCount: activeTrips.length,
+                                  if (activeRide != null) ...[
+                                    const DriverDashboardSectionLabel(
+                                      label: 'Current Active Trip',
                                     ),
                                     const SizedBox(height: 10),
-                                    ...activeTrips.asMap().entries.map(
-                                      (entry) => DriverActiveTripCard(
-                                        trip: entry.value,
-                                        queueIndex: entry.key,
-                                        hasCurrentTransitRide: activeTrips.any(
-                                          (activeTrip) =>
-                                              activeTrip['status'] ==
-                                              'in_transit',
-                                        ),
-                                        isCompletingTrip:
-                                            _completingTripId ==
-                                            driverValueAsString(
-                                              entry.value['id'],
-                                            ),
-                                        onResume: () =>
-                                            _resumeTrip(entry.value),
-                                        onComplete: () =>
-                                            _completeTripFromDashboard(
-                                              entry.value,
-                                            ),
-                                      ),
+                                    DriverActiveTripCard(
+                                      key: ValueKey<String>(activeRide.id),
+                                      trip: activeRide,
+                                      isCompletingTrip:
+                                          _completingTripId == activeRide.id,
+                                      onResume: () => _resumeTrip(activeRide),
+                                      onComplete: () =>
+                                          _completeTripFromDashboard(
+                                            activeRide,
+                                          ),
                                     ),
                                     const SizedBox(height: 24),
                                   ],

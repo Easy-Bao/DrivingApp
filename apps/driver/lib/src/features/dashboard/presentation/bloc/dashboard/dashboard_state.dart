@@ -1,17 +1,21 @@
 import 'package:equatable/equatable.dart';
+import 'package:driver/src/features/active_ride/domain/entities/ride_snapshot.dart';
 
-class const DashboardState({
-  this.isOnline = false,
-  this.isLoadingStats = false,
-  this.hasLoadedStats = false,
-  this.earnings = 0.0,
-  this.completedTrips = 0,
-  this.errorMessage,
-  this.statsErrorMessage,
-  this.activeTrips = const <Map<String, dynamic>>[],
-  this.activeBids = const <Map<String, dynamic>>[],
-  this.isLoadingDispatch = false,
-}) extends Equatable {
+class DashboardState extends Equatable {
+  const DashboardState({
+    this.isOnline = false,
+    this.isLoadingStats = false,
+    this.hasLoadedStats = false,
+    this.earnings = 0.0,
+    this.completedTrips = 0,
+    this.errorMessage,
+    this.statsErrorMessage,
+    this.activeRide,
+    List<Map<String, dynamic>> activeBids = const <Map<String, dynamic>>[],
+    this.isLoadingDispatch = false,
+  }) : activeBids = activeRide == null
+           ? activeBids
+           : const <Map<String, dynamic>>[];
   static const _unset = Object();
 
   final bool isOnline;
@@ -21,9 +25,11 @@ class const DashboardState({
   final int completedTrips;
   final String? errorMessage;
   final String? statsErrorMessage;
-  final List<Map<String, dynamic>> activeTrips;
+  final RideSnapshot? activeRide;
   final List<Map<String, dynamic>> activeBids;
   final bool isLoadingDispatch;
+
+  bool get hasActiveRide => activeRide != null;
 
   DashboardState copyWith({
     bool? isOnline,
@@ -33,7 +39,7 @@ class const DashboardState({
     int? completedTrips,
     Object? errorMessage = _unset,
     Object? statsErrorMessage = _unset,
-    List<Map<String, dynamic>>? activeTrips,
+    Object? activeRide = _unset,
     List<Map<String, dynamic>>? activeBids,
     bool? isLoadingDispatch,
   }) {
@@ -49,7 +55,9 @@ class const DashboardState({
       statsErrorMessage: identical(statsErrorMessage, _unset)
           ? this.statsErrorMessage
           : statsErrorMessage as String?,
-      activeTrips: activeTrips ?? this.activeTrips,
+      activeRide: identical(activeRide, _unset)
+          ? this.activeRide
+          : activeRide as RideSnapshot?,
       activeBids: activeBids ?? this.activeBids,
       isLoadingDispatch: isLoadingDispatch ?? this.isLoadingDispatch,
     );
@@ -64,7 +72,7 @@ class const DashboardState({
     completedTrips,
     errorMessage,
     statsErrorMessage,
-    activeTrips,
+    activeRide,
     activeBids,
     isLoadingDispatch,
   ];

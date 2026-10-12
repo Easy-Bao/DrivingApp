@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
+import 'package:driver/src/features/active_ride/domain/entities/ride_snapshot.dart';
 import 'package:foundation/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -257,9 +258,12 @@ void main() {
             }
             return const Ok(
               DriverDispatchSnapshot(
-                activeTrips: [
-                  {'id': 'trip-1', 'status': 'in_transit'},
-                ],
+                activeRide: RideSnapshot(
+                  id: 'trip-1',
+                  status: 'in_transit',
+                  pickupName: 'Pickup',
+                  dropoffName: 'Dropoff',
+                ),
                 rideOffers: [],
               ),
             );
@@ -272,7 +276,7 @@ void main() {
       expect(await cubit.loadDispatchSnapshot(silent: true), isFalse);
       await cubit.resyncActiveTrip();
 
-      expect(cubit.state.activeTrips.single['id'], 'trip-1');
+      expect(cubit.state.activeRide?.id, 'trip-1');
       verify(() => repo.getDispatchSnapshot(includeOffers: true)).called(2);
       await cubit.close();
     });
@@ -298,23 +302,17 @@ void main() {
     );
 
     blocTest<DashboardCubit, DashboardState>(
-      'loads and sorts active trips while keeping offers in cubit state',
+      'keeps one active ride and clears offers returned with that ride',
       build: () {
         when(() => repo.getDispatchSnapshot(includeOffers: true)).thenAnswer(
           (_) async => const Ok(
             DriverDispatchSnapshot(
-              activeTrips: [
-                {
-                  'id': 'accepted-trip',
-                  'status': 'accepted',
-                  'created_at': '2026-08-26T10:00:00Z',
-                },
-                {
-                  'id': 'transit-trip',
-                  'status': 'in_transit',
-                  'created_at': '2026-08-26T11:00:00Z',
-                },
-              ],
+              activeRide: RideSnapshot(
+                id: 'transit-trip',
+                status: 'in_transit',
+                pickupName: 'Pickup',
+                dropoffName: 'Dropoff',
+              ),
               rideOffers: [
                 {'id': 'offer-1', 'expires_at': '2099-01-01T00:00:00Z'},
               ],
@@ -327,58 +325,169 @@ void main() {
       expect: () => [
         const DashboardState(isLoadingDispatch: true),
         const DashboardState(
-          activeTrips: [
-            {
-              'id': 'transit-trip',
-              'status': 'in_transit',
-              'created_at': '2026-08-26T11:00:00Z',
-            },
-            {
-              'id': 'accepted-trip',
-              'status': 'accepted',
-              'created_at': '2026-08-26T10:00:00Z',
-            },
-          ],
-          activeBids: [
-            {'id': 'offer-1', 'expires_at': '2099-01-01T00:00:00Z'},
-          ],
+          activeRide: RideSnapshot(
+            id: 'transit-trip',
+            status: 'in_transit',
+            pickupName: 'Pickup',
+            dropoffName: 'Dropoff',
+          ),
         ),
       ],
     );
 
-    test('merges realtime trips without mutating existing state', () async {
-      when(() => repo.getDispatchSnapshot(includeOffers: true)).thenAnswer(
-        (_) async => const Ok(
+    test(
+      'realtime active ride clears offers and replaces the current ride',
+      () async {
+        when(() => repo.getDispatchSnapshot(includeOffers: true)).thenAnswer(
+          (_) async => const Ok(
+            DriverDispatchSnapshot(
+              rideOffers: [
+                {'id': 'offer-1', 'expires_at': '2099-01-01T00:00:00Z'},
+              ],
+            ),
+          ),
+        );
+        final cubit = _makeCubit(repo);
+        await cubit.loadDispatchSnapshot();
+
+        cubit.mergeActiveRide(
+          const RideSnapshot(
+            id: 'trip-1',
+            status: 'accepted',
+            pickupName: 'Pickup',
+            dropoffName: 'Dropoff',
+          ),
+        );
+        cubit.mergeActiveRide(
+          const RideSnapshot(
+            id: 'trip-2',
+            status: 'arrived',
+            pickupName: 'Pickup 2',
+            dropoffName: 'Dropoff 2',
+          ),
+        );
+
+        expect(cubit.state.activeRide?.id, 'trip-2');
+        expect(cubit.state.activeBids, isEmpty);
+        await cubit.close();
+      },
+    );
+
+    test(
+      'does not fetch incoming offers while an active ride exists',
+      () async {
+        when(() => repo.getDispatchSnapshot(includeOffers: false)).thenAnswer(
+          (_) async => const Ok(
+            DriverDispatchSnapshot(
+              activeRide: RideSnapshot(
+                id: 'trip-1',
+                status: 'in_transit',
+                pickupName: 'Pickup',
+                dropoffName: 'Dropoff',
+              ),
+              rideOffers: [
+                {'id': 'offer-1', 'expires_at': '2099-01-01T00:00:00Z'},
+              ],
+            ),
+          ),
+        );
+        final cubit = _makeCubit(repo);
+        cubit.mergeActiveRide(
+          const RideSnapshot(
+            id: 'trip-1',
+            status: 'accepted',
+            pickupName: 'Pickup',
+            dropoffName: 'Dropoff',
+          ),
+        );
+
+        await cubit.loadDispatchSnapshot();
+
+        verify(() => repo.getDispatchSnapshot(includeOffers: false)).called(1);
+        verifyNever(() => repo.getDispatchSnapshot(includeOffers: true));
+        expect(cubit.state.activeBids, isEmpty);
+        await cubit.close();
+      },
+    );
+
+    test('ignores a stale snapshot after a realtime ride is matched', () async {
+      final response = Completer<Result<DriverDispatchSnapshot, Failure>>();
+      when(() => repo.getDispatchSnapshot(includeOffers: true))
+          .thenAnswer((_) => response.future);
+      final cubit = _makeCubit(repo);
+      final pendingSnapshot = cubit.loadDispatchSnapshot();
+
+      const matchedRide = RideSnapshot(
+        id: 'matched-trip',
+        status: 'accepted',
+        pickupName: 'Pickup',
+        dropoffName: 'Dropoff',
+      );
+      cubit.mergeActiveRide(matchedRide);
+      response.complete(
+        const Ok(
           DriverDispatchSnapshot(
-            activeTrips: [
-              {'id': 'trip-1', 'status': 'accepted'},
+            rideOffers: [
+              {'id': 'stale-offer'},
             ],
-            rideOffers: [],
           ),
         ),
       );
-      final cubit = _makeCubit(repo);
-      await cubit.loadDispatchSnapshot();
-      final initialTrips = cubit.state.activeTrips;
+      await pendingSnapshot;
 
-      cubit.mergeActiveTrip(const {'id': 'trip-1', 'status': 'in_transit'});
-
-      expect(initialTrips.single['status'], 'accepted');
-      expect(cubit.state.activeTrips.single['status'], 'in_transit');
-      expect(() => cubit.state.activeTrips.add({}), throwsUnsupportedError);
+      expect(cubit.state.activeRide, matchedRide);
+      expect(cubit.state.activeBids, isEmpty);
       await cubit.close();
     });
 
-    test('removes a canceled realtime trip from dispatch state', () async {
+    test(
+      'does not restore a ride removed while a snapshot is pending',
+      () async {
+        final response = Completer<Result<DriverDispatchSnapshot, Failure>>();
+        when(() => repo.getDispatchSnapshot(includeOffers: false))
+            .thenAnswer((_) => response.future);
+        final cubit = _makeCubit(repo);
+        const activeRide = RideSnapshot(
+          id: 'finished-trip',
+          status: 'in_transit',
+          pickupName: 'Pickup',
+          dropoffName: 'Dropoff',
+        );
+        cubit.mergeActiveRide(activeRide);
+        final pendingSnapshot = cubit.loadDispatchSnapshot();
+
+        cubit.removeActiveRide(activeRide.id);
+        response.complete(
+          const Ok(
+            DriverDispatchSnapshot(activeRide: activeRide, rideOffers: []),
+          ),
+        );
+        await pendingSnapshot;
+
+        expect(cubit.state.activeRide, isNull);
+        expect(cubit.state.activeBids, isEmpty);
+        await cubit.close();
+      },
+    );
+
+    test('removes only the matching active ride', () async {
       final cubit = _makeCubit(repo);
-      cubit.mergeActiveTrip(const {'id': 'trip-1', 'status': 'accepted'});
-      cubit.mergeActiveTrip(const {'id': 'trip-2', 'status': 'arrived'});
+      cubit.mergeActiveRide(
+        const RideSnapshot(
+          id: 'trip-1',
+          status: 'accepted',
+          pickupName: 'Pickup',
+          dropoffName: 'Dropoff',
+        ),
+      );
 
-      cubit.removeActiveTrip('trip-1');
+      cubit.removeActiveRide('stale-trip');
+      expect(cubit.state.activeRide?.id, 'trip-1');
 
-      expect(cubit.state.activeTrips, [
-        const {'id': 'trip-2', 'status': 'arrived'},
-      ]);
+      cubit.removeActiveRide('trip-1');
+
+      expect(cubit.state.activeRide, isNull);
+      expect(cubit.state.activeBids, isEmpty);
       await cubit.close();
     });
   });

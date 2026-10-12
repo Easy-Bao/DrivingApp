@@ -1,7 +1,9 @@
+import 'package:driver/src/features/active_ride/domain/entities/ride_snapshot.dart';
+
 class const DriverDispatchSnapshot({
-  required this.activeTrips,
+  this.activeRide,
   required this.rideOffers,
 }) {
-  final List<Map<String, dynamic>> activeTrips;
+  final RideSnapshot? activeRide;
   final List<Map<String, dynamic>> rideOffers;
 }

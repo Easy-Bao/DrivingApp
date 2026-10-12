@@ -350,12 +350,19 @@ final class DashboardRepositoryImpl({
           : Future.value(const <Map<String, dynamic>>[]);
       final tripResult = await tripsFuture;
       final offers = await offersFuture;
-      return await tripResult.fold(
-        Err.new,
-        (page) => Ok(
-          DriverDispatchSnapshot(activeTrips: page.items, rideOffers: offers),
-        ),
-      );
+      return await tripResult.fold(Err.new, (page) {
+        if (page.items.length > 1) {
+          return const Err(
+            ServerFailure('The server returned multiple active trips.'),
+          );
+        }
+        final activeRide = page.items.isEmpty
+            ? null
+            : RideSnapshot.fromJson(page.items.single);
+        return Ok(
+          DriverDispatchSnapshot(activeRide: activeRide, rideOffers: offers),
+        );
+      });
     } catch (error) {
       return Err(_mapExceptionToFailure(error));
     }

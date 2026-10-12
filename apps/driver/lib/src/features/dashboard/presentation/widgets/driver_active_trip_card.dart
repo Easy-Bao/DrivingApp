@@ -1,30 +1,26 @@
 import 'package:design_system/design_system.dart';
-import 'package:driver/src/presentation/formatters/driver_value_formatters.dart';
+import 'package:driver/src/features/active_ride/domain/entities/ride_snapshot.dart';
+import 'package:foundation/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:foundation/foundation.dart';
 
 class DriverActiveTripCard extends StatelessWidget {
   const DriverActiveTripCard({
     super.key,
     required this.trip,
-    required this.queueIndex,
-    required this.hasCurrentTransitRide,
     required this.isCompletingTrip,
     required this.onResume,
     required this.onComplete,
   });
 
-  final Map<String, dynamic> trip;
-  final int queueIndex;
-  final bool hasCurrentTransitRide;
+  final RideSnapshot trip;
   final bool isCompletingTrip;
   final VoidCallback onResume;
   final VoidCallback onComplete;
 
   @override
   Widget build(BuildContext context) {
-    final status = trip['status'] as String? ?? 'accepted';
+    final status = trip.status;
     String statusLabel = 'Heading To Passenger';
     Color statusColor = context.colorScheme.primary;
     if (status == 'arrived') {
@@ -34,10 +30,7 @@ class DriverActiveTripCard extends StatelessWidget {
       statusLabel = 'Driving Passenger';
       statusColor = context.semanticColors.success;
     }
-    final hasCurrentTransitRide = this.hasCurrentTransitRide;
-    final isQueued = hasCurrentTransitRide && status != 'in_transit';
-    final tripId = driverValueAsString(trip['id']);
-    final isCompleting = tripId != null && isCompletingTrip;
+    final fare = trip.farePesos;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -75,9 +68,7 @@ class DriverActiveTripCard extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                driverFareInPesos(trip) == null
-                    ? '—'
-                    : formatPesoAmount(driverFareInPesos(trip)!),
+                fare == null ? '—' : formatPesoAmount(fare),
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
@@ -87,20 +78,6 @@ class DriverActiveTripCard extends StatelessWidget {
               ),
             ],
           ),
-          if (isQueued) ...[
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Queued passenger ${queueIndex + 1} • Start after the current trip',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: context.colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
           const SizedBox(height: 12),
           Row(
             children: [
@@ -112,7 +89,7 @@ class DriverActiveTripCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  driverValueAsString(trip['passenger_name']) ?? '—',
+                  trip.passengerName ?? '—',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -126,8 +103,8 @@ class DriverActiveTripCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           CompactRouteTimeline(
-            pickup: driverValueAsString(trip['pickup_name']) ?? '—',
-            dropoff: driverValueAsString(trip['dropoff_name']) ?? '—',
+            pickup: trip.pickupName,
+            dropoff: trip.dropoffName,
           ),
           const SizedBox(height: 14),
           if (status == 'in_transit')
@@ -163,7 +140,7 @@ class DriverActiveTripCard extends StatelessWidget {
                   child: SizedBox(
                     height: EasyRideSize.minimumTouchTarget,
                     child: ElevatedButton(
-                      onPressed: isCompleting ? null : onComplete,
+                      onPressed: isCompletingTrip ? null : onComplete,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: context.semanticColors.success,
                         foregroundColor: context.semanticColors.onSuccess,
@@ -174,7 +151,7 @@ class DriverActiveTripCard extends StatelessWidget {
                         ),
                         elevation: 0,
                       ),
-                      child: isCompleting
+                      child: isCompletingTrip
                           ? SizedBox(
                               width: 18,
                               height: 18,
@@ -200,7 +177,7 @@ class DriverActiveTripCard extends StatelessWidget {
               width: double.infinity,
               height: EasyRideSize.minimumTouchTarget,
               child: ElevatedButton(
-                onPressed: isQueued ? null : onResume,
+                onPressed: onResume,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: context.colorScheme.primary,
                   foregroundColor: context.colorScheme.onPrimary,

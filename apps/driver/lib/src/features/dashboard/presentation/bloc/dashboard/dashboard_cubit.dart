@@ -16,6 +16,7 @@ class DashboardCubit({
   final DateTime Function() _now;
   final Duration _silentDispatchFailureCooldown;
   bool _isDispatchRequestInFlight = false;
+  int _activeRideRevision = 0;
   Future<void>? _initialization;
   Future<void>? _statsRequestInFlight;
   DateTime? _silentDispatchRetryAfter;
@@ -144,10 +145,12 @@ class DashboardCubit({
     if (!silent) {
       emit(state.copyWith(isLoadingDispatch: true, errorMessage: null));
     }
+    final activeRideRevision = _activeRideRevision;
 
     try {
+      final shouldIncludeOffers = includeOffers && !state.hasActiveRide;
       final result = await _repository.getDispatchSnapshotResult(
-        includeOffers: includeOffers,
+        includeOffers: shouldIncludeOffers,
       );
       if (isClosed) return false;
       return await result.fold(
@@ -170,12 +173,18 @@ class DashboardCubit({
         },
         (snapshot) {
           if (isClosed) return false;
+          if (activeRideRevision != _activeRideRevision) {
+            emit(state.copyWith(isLoadingDispatch: false, errorMessage: null));
+            return true;
+          }
           _silentDispatchRetryAfter = null;
           emit(
             state.copyWith(
               isLoadingDispatch: false,
-              activeTrips: _sortedActiveTrips(snapshot.activeTrips),
-              activeBids: includeOffers
+              activeRide: snapshot.activeRide,
+              activeBids: snapshot.activeRide != null
+                  ? const <Map<String, dynamic>>[]
+                  : shouldIncludeOffers
                   ? _immutableMaps(snapshot.rideOffers)
                   : null,
               errorMessage: null,
@@ -227,35 +236,28 @@ class DashboardCubit({
       (failure is ServerFailure &&
           (failure.statusCode == null || failure.statusCode! >= 500));
 
-  void mergeActiveTrip(Map<String, dynamic> ride) {
-    final rideId = _stringValue(ride['id']);
-    if (rideId == null) return;
-
-    final updatedTrips = <Map<String, dynamic>>[
-      for (final trip in state.activeTrips) Map<String, dynamic>.from(trip),
-    ];
-    final existingIndex = updatedTrips.indexWhere(
-      (trip) => _stringValue(trip['id']) == rideId,
+  void mergeActiveRide(RideSnapshot ride) {
+    if (ride.id.isEmpty || ride.isTerminal) return;
+    _activeRideRevision++;
+    emit(
+      state.copyWith(
+        activeRide: ride,
+        activeBids: const <Map<String, dynamic>>[],
+      ),
     );
-    final normalizedRide = Map<String, dynamic>.from(ride)..['id'] = rideId;
-    if (existingIndex >= 0) {
-      updatedTrips[existingIndex] = {
-        ...updatedTrips[existingIndex],
-        ...normalizedRide,
-      };
-    } else {
-      updatedTrips.insert(0, normalizedRide);
-    }
-    emit(state.copyWith(activeTrips: _sortedActiveTrips(updatedTrips)));
   }
 
-  void removeActiveTrip(String? rideId) {
-    if (rideId == null || rideId.isEmpty) return;
-    final remaining = state.activeTrips
-        .where((trip) => _stringValue(trip['id']) != rideId)
-        .toList(growable: false);
-    if (remaining.length == state.activeTrips.length) return;
-    emit(state.copyWith(activeTrips: remaining));
+  void removeActiveRide(String? rideId) {
+    if (rideId == null || rideId.isEmpty || state.activeRide?.id != rideId) {
+      return;
+    }
+    _activeRideRevision++;
+    emit(
+      state.copyWith(
+        activeRide: null,
+        activeBids: const <Map<String, dynamic>>[],
+      ),
+    );
   }
 
   void removeActiveBid(String? bidId) {
@@ -458,27 +460,6 @@ class DashboardCubit({
   bool _isAuthoritativeAvailabilityRejection(Failure failure) {
     return failure is ServerFailure &&
         (failure.statusCode == 403 || failure.statusCode == 404);
-  }
-
-  static List<Map<String, dynamic>> _sortedActiveTrips(
-    Iterable<Map<String, dynamic>> trips,
-  ) {
-    final sorted = trips.map(Map<String, dynamic>.from).toList();
-    sorted.sort((a, b) {
-      const statusPriority = <String, int>{
-        'in_transit': 0,
-        'arrived': 1,
-        'accepted': 2,
-        'assigned': 2,
-      };
-      final aPriority = statusPriority[_stringValue(a['status'])] ?? 3;
-      final bPriority = statusPriority[_stringValue(b['status'])] ?? 3;
-      if (aPriority != bPriority) return aPriority.compareTo(bPriority);
-      return (_stringValue(a['created_at']) ?? '').compareTo(
-        _stringValue(b['created_at']) ?? '',
-      );
-    });
-    return _immutableMaps(sorted);
   }
 
   static List<Map<String, dynamic>> _immutableMaps(
