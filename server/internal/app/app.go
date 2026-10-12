@@ -19,6 +19,7 @@ import (
 	redisplatform "github.com/Easy-Bao/DrivingApp/server/internal/platform/redis"
 	miniostorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage/minio"
 	websockethub "github.com/Easy-Bao/DrivingApp/server/internal/platform/websocket"
+	reviewpostgres "github.com/Easy-Bao/DrivingApp/server/internal/review/adapter/postgres"
 	ridepostgres "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/postgres"
 	userpostgres "github.com/Easy-Bao/DrivingApp/server/internal/user/adapter/postgres"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -125,6 +126,10 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create dispatch store: %w", err)
 	}
+	reviewStore, err := reviewpostgres.NewReviewRepository(postgresPool)
+	if err != nil {
+		return nil, fmt.Errorf("create review repository: %w", err)
+	}
 	rateCounterStore := middleware.NewRedisCounterStore(redisClient)
 	rateLimiter := middleware.NewRateLimiter(middleware.RateLimiterDependencies{
 		Store:  rateCounterStore,
@@ -150,6 +155,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 		sessionStore:       sessionStore,
 		rideStore:          rideStore,
 		dispatchStore:      dispatchStore,
+		reviewStore:        reviewStore,
 		profileStore:       profileStore,
 		statsReader:        statsReader,
 		documentStore:      documentStore,

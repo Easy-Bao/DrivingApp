@@ -1,3 +1,9 @@
+-- name: GetRideReviewContext :one
+SELECT id, passenger_id, driver_id, status
+FROM rides
+WHERE id = sqlc.arg('ride_id')
+LIMIT 1;
+
 -- name: ListDriverReviews :many
 SELECT
     review.id,

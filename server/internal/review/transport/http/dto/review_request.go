@@ -5,8 +5,3 @@ type ReviewRequest struct {
 	Rating  float64 `json:"rating"`
 	Comment string  `json:"comment"`
 }
-
-type SafetyReportRequest struct {
-	Category    string `json:"category"`
-	Description string `json:"description"`
-}

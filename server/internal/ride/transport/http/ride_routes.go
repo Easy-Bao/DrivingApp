@@ -55,7 +55,6 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 	withAuthenticatedPolicy(command).Post(apiPrefix+"/rides/{id}/reports", router.handler.CreateSafetyReport)
 	withAuthenticatedPolicy(read).Get(apiPrefix+"/rides/{id}", router.handler.GetRide)
 	withAuthenticatedPolicy(read).Get(apiPrefix+"/rides/{id}/counterparty", router.handler.Counterparty)
-	withAuthenticatedPolicy(read).Get(apiPrefix+"/drivers/{id}/reviews", router.handler.DriverReviews)
 
 	withAuthenticatedPolicy(command, passengerOnly).Post(apiPrefix+"/rides", router.handler.CreateRide)
 	withAuthenticatedPolicy(read, passengerOnly).Get(apiPrefix+"/passengers/{id}/rides", router.handler.PassengerRides)
@@ -63,7 +62,6 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 		apiPrefix+"/passengers/{id}/activity-summary",
 		router.handler.PassengerActivitySummary,
 	)
-	withAuthenticatedPolicy(command, passengerOnly).Post(apiPrefix+"/drivers/{id}/reviews", router.handler.CreateReview)
 
 	withAuthenticatedPolicy(command, driverOnly).Post(apiPrefix+"/rides/{id}/accept", router.handler.AcceptRide)
 	withAuthenticatedPolicy(command, driverOnly).Post(apiPrefix+"/rides/{id}/arrived", router.handler.MarkArrived)
@@ -71,7 +69,6 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 	withAuthenticatedPolicy(command, driverOnly).Post(apiPrefix+"/rides/{id}/complete", router.handler.CompleteTrip)
 	withAuthenticatedPolicy(command, driverOnly).Post(apiPrefix+"/rides/{id}/no-show", router.handler.MarkPassengerNoShow)
 	withAuthenticatedPolicy(command, driverOnly).Post(apiPrefix+"/rides/{id}/cash-settle", router.handler.SettleCash)
-	withAuthenticatedPolicy(command, driverOnly).Post(apiPrefix+"/passengers/{id}/reviews", router.handler.CreatePassengerReview)
 	withAuthenticatedPolicy(read, driverOnly).Get(apiPrefix+"/drivers/{id}/stats", router.handler.DriverStats)
 	withAuthenticatedPolicy(read, driverOnly).Get(apiPrefix+"/drivers/{id}/earnings", router.handler.DriverEarnings)
 	withAuthenticatedPolicy(read, driverOnly).Get(apiPrefix+"/drivers/{id}/trips", router.handler.DriverTrips)

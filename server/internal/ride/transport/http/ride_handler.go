@@ -501,89 +501,6 @@ func (handler *Handler) DriverTrips(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-func (handler *Handler) DriverReviews(w http.ResponseWriter, r *http.Request) {
-	if _, ok := handler.identity(r); !ok {
-		response.Error(w, 401, "unauthorized")
-		return
-	}
-	driverID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		response.Error(w, 400, "invalid driver id")
-		return
-	}
-	page, err := sharedrequest.ParseOffsetPagination(r.URL.Query(), 20, 100)
-	if err != nil {
-		response.Error(w, http.StatusBadRequest, "invalid pagination")
-		return
-	}
-	items, err := handler.service.DriverReviews(r.Context(), driverID, page.Limit, page.Offset)
-	if err != nil {
-		response.Error(w, 500, "Driver reviews are temporarily unavailable.")
-		return
-	}
-	response.JSON(w, 200, dto.NewReviewResponses(items))
-}
-
-func (handler *Handler) CreateReview(w http.ResponseWriter, r *http.Request) {
-	passengerID, ok := handler.identity(r)
-	if !ok {
-		response.Error(w, 401, "unauthorized")
-		return
-	}
-	driverID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		response.Error(w, 400, "invalid driver id")
-		return
-	}
-	var input dto.ReviewRequest
-	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil || input.RideID <= 0 {
-		response.Error(w, 400, "invalid review")
-		return
-	}
-	item, err := handler.service.CreateReview(r.Context(), domain.Review{
-		RideID:      input.RideID,
-		DriverID:    driverID,
-		PassengerID: passengerID,
-		Rating:      input.Rating,
-		Comment:     input.Comment,
-	})
-	if err != nil {
-		response.Error(w, 400, safeRideError(err))
-		return
-	}
-	response.JSON(w, 201, dto.NewReviewResponse(item))
-}
-
-func (handler *Handler) CreatePassengerReview(w http.ResponseWriter, r *http.Request) {
-	driverID, ok := handler.identity(r)
-	if !ok {
-		response.Error(w, 401, "unauthorized")
-		return
-	}
-	passengerID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil {
-		response.Error(w, 400, "invalid passenger id")
-		return
-	}
-	var input dto.ReviewRequest
-	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil || input.RideID <= 0 {
-		response.Error(w, 400, "invalid review")
-		return
-	}
-	item, err := handler.service.CreatePassengerReview(r.Context(), domain.PassengerReview{
-		RideID:      input.RideID,
-		DriverID:    driverID,
-		PassengerID: passengerID,
-		Rating:      input.Rating,
-		Comment:     input.Comment,
-	})
-	if err != nil {
-		response.Error(w, 400, safeRideError(err))
-		return
-	}
-	response.JSON(w, 201, dto.NewPassengerReviewResponse(item))
-}
-
 func (handler *Handler) CreateSafetyReport(w http.ResponseWriter, r *http.Request) {
 	principal, ok := middleware.PrincipalFromRequest(r)
 	if !ok {
@@ -800,10 +717,6 @@ func safeRideError(err error) string {
 		return "Keep waiting until the pickup timer finishes before marking a no-show."
 	case errors.Is(err, domain.ErrNoShowCommand):
 		return "Use the passenger no-show action after the waiting period."
-	case errors.Is(err, domain.ErrReviewNotAllowed):
-		return "Reviews are available after a completed ride."
-	case errors.Is(err, domain.ErrReviewAlreadySubmitted):
-		return "You already submitted a review for this ride."
 	case errors.Is(err, domain.ErrSafetyReportInvalid):
 		return "Choose a valid report category and describe what happened."
 	case errors.Is(err, domain.ErrSafetyReportNotAllowed):

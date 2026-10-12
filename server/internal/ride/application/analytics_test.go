@@ -13,8 +13,6 @@ import (
 
 type analyticsRepository struct{}
 
-type passengerReviewRepository struct{ analyticsRepository }
-
 type mutableAnalyticsRepository struct {
 	analyticsRepository
 	rides []domain.Ride
@@ -59,21 +57,6 @@ func (analyticsRepository) PassengerActivitySummary(
 ) (domain.PassengerActivitySummary, error) {
 	return domain.PassengerActivitySummary{ThisWeekFareAmount: 2817, ThisWeekCompletedRides: 1}, nil
 }
-func (analyticsRepository) DriverReviews(context.Context, int, int, int) ([]domain.Review, error) {
-	return []domain.Review{{Rating: 5}}, nil
-}
-func (analyticsRepository) CreateReview(_ context.Context, review domain.Review) (domain.Review, error) {
-	review.ID = 1
-	return review, nil
-}
-func (passengerReviewRepository) CreatePassengerReview(
-	_ context.Context,
-	review domain.PassengerReview,
-) (domain.PassengerReview, error) {
-	review.ID = 1
-	return review, nil
-}
-
 func (repository *mutableAnalyticsRepository) PassengerRides(
 	context.Context,
 	int,
@@ -96,32 +79,6 @@ func TestAnalyticsUseCasesDelegateToTheRideAdapter(t *testing.T) {
 	trips, err := service.PassengerRides(context.Background(), 8, domain.TripHistoryQuery{Limit: 25})
 	if err != nil || len(trips) != 1 || trips[0].ID != 2 {
 		t.Fatalf("passenger rides = %#v, %v", trips, err)
-	}
-	review, err := service.CreateReview(context.Background(), domain.Review{DriverID: 7, Rating: 5})
-	if err != nil || review.ID != 1 {
-		t.Fatalf("review = %#v, %v", review, err)
-	}
-	if _, err := service.CreateReview(context.Background(), domain.Review{DriverID: 7, Rating: 6}); err == nil {
-		t.Fatal("expected out-of-range rating to be rejected")
-	}
-}
-
-func TestPassengerReviewUseCaseValidatesRatingAndDelegates(t *testing.T) {
-	config, err := rideconfig.LoadPricingConfig()
-	if err != nil {
-		t.Fatalf("LoadPricingConfig returned error: %v", err)
-	}
-	service := newAnalyticsRideService(passengerReviewRepository{}, config)
-	review, err := service.CreatePassengerReview(context.Background(), domain.PassengerReview{RideID: 9, Rating: 5})
-	if err != nil || review.ID != 1 {
-		t.Fatalf("passenger review = %#v, %v", review, err)
-	}
-	_, err = service.CreatePassengerReview(
-		context.Background(),
-		domain.PassengerReview{RideID: 9, Rating: 0},
-	)
-	if err == nil {
-		t.Fatal("expected out-of-range passenger rating to be rejected")
 	}
 }
 

@@ -1,6 +1,6 @@
 package dto
 
-import "github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
+import "github.com/Easy-Bao/DrivingApp/server/internal/review/domain"
 
 type ReviewResponse struct {
 	ID            int     `json:"id"`
@@ -27,7 +27,6 @@ func NewReviewResponses(reviews []domain.Review) []ReviewResponse {
 	if reviews == nil {
 		return nil
 	}
-
 	responses := make([]ReviewResponse, 0, len(reviews))
 	for _, review := range reviews {
 		responses = append(responses, NewReviewResponse(review))

@@ -41,6 +41,9 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	platformstorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage"
 	websockethub "github.com/Easy-Bao/DrivingApp/server/internal/platform/websocket"
+	reviewapplication "github.com/Easy-Bao/DrivingApp/server/internal/review/application"
+	reviewports "github.com/Easy-Bao/DrivingApp/server/internal/review/ports"
+	reviewhttp "github.com/Easy-Bao/DrivingApp/server/internal/review/transport/http"
 	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
 	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	rideports "github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
@@ -78,6 +81,7 @@ type httpRouterDependencies struct {
 	sessionStore       authports.SessionStore
 	rideStore          rideRuntimeStore
 	dispatchStore      dispatchRuntimeStore
+	reviewStore        reviewports.ReviewRepository
 	profileStore       userports.ProfileStore
 	statsReader        adminports.StatsReader
 	documentStore      documentapplication.DocumentStore
@@ -305,6 +309,11 @@ func newHTTPRouter(
 		Verifier:      verifier,
 		RouteSecurity: routeSecurity,
 	})
+	reviewRouter := reviewhttp.NewRouter(reviewhttp.Dependencies{
+		Service:       reviewapplication.NewService(dependencies.reviewStore),
+		Verifier:      verifier,
+		RouteSecurity: routeSecurity,
+	})
 	adminRouter := adminhttp.NewRouter(adminhttp.RouterDependencies{
 		Service:    adminapplication.NewStatsService(statsReader),
 		Verifier:   verifier,
@@ -333,6 +342,7 @@ func newHTTPRouter(
 	documentRouter.RegisterRoutes(router)
 	ridesRouter.RegisterRoutes(router)
 	dispatchRouter.RegisterRoutes(router)
+	reviewRouter.RegisterRoutes(router)
 	router.With(routeSecurity.Middleware(middleware.RouteRead)).Group(func(admin chi.Router) {
 		adminRouter.RegisterRoutes(admin)
 	})

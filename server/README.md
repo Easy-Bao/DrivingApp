@@ -46,8 +46,9 @@ envelopes, WebSocket hub, security, middleware, and resilience helpers.
 The current module ownership is:
 
 - `dispatch`: driver availability, bidding, offer acceptance, and assignment.
-- `ride`: booking, lifecycle, settlement, ride reporting, and ride transport;
+- `ride`: booking, lifecycle, settlement, and ride-scoped safety reports;
   the use-case groups live under `internal/ride/{booking,lifecycle,settlement}`.
+- `review`: completed-ride driver and passenger ratings, eligibility, and submission.
 - `auth`, `user`, `admin`, and `driver/documents`: identity, profiles,
   administration, and driver-document workflows with feature-owned ports.
 - `location` and `location/tracking`: provider-backed location queries and

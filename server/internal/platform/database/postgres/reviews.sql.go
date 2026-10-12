@@ -173,6 +173,32 @@ func (q *Queries) GetReviewByRide(ctx context.Context, rideID pgtype.Int4) (Revi
 	return i, err
 }
 
+const getRideReviewContext = `-- name: GetRideReviewContext :one
+SELECT id, passenger_id, driver_id, status
+FROM rides
+WHERE id = $1
+LIMIT 1
+`
+
+type GetRideReviewContextRow struct {
+	ID          int32       `db:"id"`
+	PassengerID int32       `db:"passenger_id"`
+	DriverID    pgtype.Int4 `db:"driver_id"`
+	Status      string      `db:"status"`
+}
+
+func (q *Queries) GetRideReviewContext(ctx context.Context, rideID int32) (GetRideReviewContextRow, error) {
+	row := q.db.QueryRow(ctx, getRideReviewContext, rideID)
+	var i GetRideReviewContextRow
+	err := row.Scan(
+		&i.ID,
+		&i.PassengerID,
+		&i.DriverID,
+		&i.Status,
+	)
+	return i, err
+}
+
 const hasPassengerReviewForRide = `-- name: HasPassengerReviewForRide :one
 SELECT EXISTS(
     SELECT 1

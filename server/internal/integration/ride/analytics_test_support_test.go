@@ -11,8 +11,6 @@ import (
 
 type analyticsRepository struct{}
 
-type passengerReviewRepository struct{ analyticsRepository }
-
 func (analyticsRepository) CreateRide(context.Context, domain.Ride) (domain.Ride, error) {
 	return domain.Ride{}, nil
 }
@@ -50,21 +48,4 @@ func (analyticsRepository) PassengerActivitySummary(
 	time.Time,
 ) (domain.PassengerActivitySummary, error) {
 	return domain.PassengerActivitySummary{ThisWeekFareAmount: 2817, ThisWeekCompletedRides: 1}, nil
-}
-
-func (analyticsRepository) DriverReviews(context.Context, int, int, int) ([]domain.Review, error) {
-	return []domain.Review{{Rating: 5}}, nil
-}
-
-func (analyticsRepository) CreateReview(_ context.Context, review domain.Review) (domain.Review, error) {
-	review.ID = 1
-	return review, nil
-}
-
-func (passengerReviewRepository) CreatePassengerReview(
-	_ context.Context,
-	review domain.PassengerReview,
-) (domain.PassengerReview, error) {
-	review.ID = 1
-	return review, nil
 }

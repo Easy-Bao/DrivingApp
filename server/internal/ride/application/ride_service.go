@@ -487,56 +487,6 @@ func (service *RideService) PassengerRecentRides(ctx context.Context, passengerI
 	return slices.Clone(rides), nil
 }
 
-func (service *RideService) DriverReviews(ctx context.Context, driverID, limit, offset int) ([]domain.Review, error) {
-	repository, ok := service.repository.(ports.ReviewStore)
-	if !ok {
-		return nil, errors.New("driver review persistence is unavailable")
-	}
-	reviews, err := repository.DriverReviews(
-		ctx,
-		driverID,
-		limit,
-		offset,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("load driver reviews: %w", err)
-	}
-	return slices.Clone(reviews), nil
-}
-
-func (service *RideService) CreateReview(ctx context.Context, review domain.Review) (domain.Review, error) {
-	repository, ok := service.repository.(ports.ReviewStore)
-	if !ok {
-		return domain.Review{}, errors.New("driver review persistence is unavailable")
-	}
-	if review.Rating < 1 || review.Rating > 5 {
-		return domain.Review{}, errors.New("rating must be between 1 and 5")
-	}
-	created, err := repository.CreateReview(ctx, review)
-	if err != nil {
-		return domain.Review{}, fmt.Errorf("create driver review: %w", err)
-	}
-	return created, nil
-}
-
-func (service *RideService) CreatePassengerReview(
-	ctx context.Context,
-	review domain.PassengerReview,
-) (domain.PassengerReview, error) {
-	repository, ok := service.repository.(ports.PassengerReviewStore)
-	if !ok {
-		return domain.PassengerReview{}, errors.New("passenger review persistence is unavailable")
-	}
-	if review.Rating < 1 || review.Rating > 5 {
-		return domain.PassengerReview{}, errors.New("rating must be between 1 and 5")
-	}
-	created, err := repository.CreatePassengerReview(ctx, review)
-	if err != nil {
-		return domain.PassengerReview{}, fmt.Errorf("create passenger review: %w", err)
-	}
-	return created, nil
-}
-
 func (service *RideService) CreateSafetyReport(
 	ctx context.Context,
 	report domain.SafetyReport,

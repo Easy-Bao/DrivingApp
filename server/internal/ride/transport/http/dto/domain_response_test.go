@@ -44,28 +44,6 @@ func TestResponseMappersPreserveWireShapes(t *testing.T) {
 			want: `{"ride_id":17,"user_id":9,"role":"passenger","name":"Ada Passenger","ride_status":"completed","contact_allowed":false}`,
 		},
 		{
-			name: "driver review",
-			value: NewReviewResponse(domain.Review{
-				ID: 2, RideID: 17, DriverID: 9, PassengerID: 4,
-				PassengerName: "Ada Passenger", Rating: 5,
-				Comment: "Great trip", CreatedAt: "2026-10-12T14:00:00Z",
-			}),
-			want: `{"id":2,"ride_id":17,"driver_id":9,"passenger_id":4,"passenger_name":"Ada Passenger","rating":5,"comment":"Great trip","created_at":"2026-10-12T14:00:00Z"}`,
-		},
-		{
-			name:  "driver review omits optional fields",
-			value: NewReviewResponses([]domain.Review{{ID: 2, RideID: 17, Rating: 5}}),
-			want:  `[{"id":2,"ride_id":17,"driver_id":0,"passenger_id":0,"rating":5,"created_at":""}]`,
-		},
-		{
-			name: "passenger review",
-			value: NewPassengerReviewResponse(domain.PassengerReview{
-				ID: 3, RideID: 17, DriverID: 9, PassengerID: 4,
-				Rating: 4, Comment: "Friendly passenger", CreatedAt: "2026-10-12T14:00:00Z",
-			}),
-			want: `{"id":3,"ride_id":17,"driver_id":9,"passenger_id":4,"rating":4,"comment":"Friendly passenger","created_at":"2026-10-12T14:00:00Z"}`,
-		},
-		{
 			name: "safety report",
 			value: NewSafetyReportResponse(domain.SafetyReport{
 				ID: 8, RideID: 17, ReporterID: 4, ReportedUserID: 9,
@@ -87,11 +65,5 @@ func TestResponseMappersPreserveWireShapes(t *testing.T) {
 				t.Fatalf("response = %s, want %s", encoded, test.want)
 			}
 		})
-	}
-}
-
-func TestResponseSliceMappersPreserveNil(t *testing.T) {
-	if NewReviewResponses(nil) != nil {
-		t.Fatal("NewReviewResponses(nil) returned a non-nil slice")
 	}
 }
