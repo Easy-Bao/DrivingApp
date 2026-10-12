@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:maps/maps.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:passenger/src/features/active_ride/domain/entities/accepted_booking.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/domain/entities/bid_session_trip.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_offer.dart';
@@ -587,7 +586,7 @@ void main() {
         expect(state.matchResult.driverName, 'Target Driver');
         expect(state.matchResult.vehicleType, 'Sedan');
         expect(state.matchResult.plateNumber, 'ABC 1234');
-        expect(state.createdRide?.id, '24');
+        expect(state.rideId, '24');
         expect(fetchCount, greaterThanOrEqualTo(2));
         final fetchCountAtMatch = fetchCount;
         await Future<void>.delayed(const Duration(milliseconds: 20));
