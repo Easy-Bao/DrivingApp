@@ -42,7 +42,7 @@ func (handler *Handler) Nearby(writer http.ResponseWriter, request *http.Request
 		writeServiceError(writer, err)
 		return
 	}
-	response.JSON(writer, http.StatusOK, map[string]any{"places": places, "page": page})
+	response.JSON(writer, http.StatusOK, map[string]any{"places": dto.NewPlaceResponses(places), "page": page})
 }
 
 func (handler *Handler) Search(writer http.ResponseWriter, request *http.Request) {
@@ -61,7 +61,7 @@ func (handler *Handler) Search(writer http.ResponseWriter, request *http.Request
 		writeServiceError(writer, err)
 		return
 	}
-	response.JSON(writer, http.StatusOK, map[string]any{"places": places})
+	response.JSON(writer, http.StatusOK, map[string]any{"places": dto.NewPlaceResponses(places)})
 }
 
 func (handler *Handler) Reverse(writer http.ResponseWriter, request *http.Request) {
@@ -75,7 +75,7 @@ func (handler *Handler) Reverse(writer http.ResponseWriter, request *http.Reques
 		writeServiceError(writer, err)
 		return
 	}
-	response.JSON(writer, http.StatusOK, place)
+	response.JSON(writer, http.StatusOK, dto.NewPlaceResponse(place))
 }
 
 func (handler *Handler) Route(writer http.ResponseWriter, request *http.Request) {
@@ -91,15 +91,15 @@ func (handler *Handler) Route(writer http.ResponseWriter, request *http.Request)
 	}
 	route, err := handler.service.Route(
 		request.Context(),
-		payload.Origin,
-		payload.Destination,
+		payload.Origin.ToDomain(),
+		payload.Destination.ToDomain(),
 		options,
 	)
 	if err != nil {
 		writeServiceError(writer, err)
 		return
 	}
-	response.JSON(writer, http.StatusOK, route)
+	response.JSON(writer, http.StatusOK, dto.NewRouteResponse(route))
 }
 
 func (handler *Handler) Matrix(writer http.ResponseWriter, request *http.Request) {
@@ -108,12 +108,16 @@ func (handler *Handler) Matrix(writer http.ResponseWriter, request *http.Request
 		response.Error(writer, http.StatusBadRequest, "invalid matrix payload")
 		return
 	}
-	matrix, err := handler.service.Matrix(request.Context(), payload.Origin, payload.Destinations)
+	matrix, err := handler.service.Matrix(
+		request.Context(),
+		payload.DomainOrigin(),
+		payload.DomainDestinations(),
+	)
 	if err != nil {
 		writeServiceError(writer, err)
 		return
 	}
-	response.JSON(writer, http.StatusOK, matrix)
+	response.JSON(writer, http.StatusOK, dto.NewMatrixResponse(matrix))
 }
 
 func decodeRouteRequest(writer http.ResponseWriter, request *http.Request, payload *dto.RouteRequest) error {

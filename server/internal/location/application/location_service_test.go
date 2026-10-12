@@ -32,32 +32,54 @@ func (providerStub) Nearby(context.Context, domain.Coordinates, int) ([]domain.P
 
 type cacheStub struct{ values map[string]any }
 
-func (cache *cacheStub) Get(_ context.Context, key string, target any) error {
+func (cache *cacheStub) GetPlaces(_ context.Context, key string) ([]domain.Place, error) {
 	value, ok := cache.values[key]
 	if !ok {
-		return context.Canceled
+		return nil, context.Canceled
 	}
-	if places, ok := target.(*[]domain.Place); ok {
-		placesValue, ok := value.([]domain.Place)
-		if !ok {
-			return context.Canceled
-		}
-		*places = placesValue
-		return nil
+	places, ok := value.([]domain.Place)
+	if !ok {
+		return nil, context.Canceled
 	}
-	if place, ok := target.(*domain.Place); ok {
-		placeValue, ok := value.(*domain.Place)
-		if !ok || placeValue == nil {
-			return context.Canceled
-		}
-		*place = *placeValue
-		return nil
-	}
-	return context.Canceled
+	return places, nil
 }
 
-func (cache *cacheStub) Set(_ context.Context, key string, value any) error {
-	cache.values[key] = value
+func (cache *cacheStub) SetPlaces(_ context.Context, key string, places []domain.Place) error {
+	cache.values[key] = places
+	return nil
+}
+
+func (cache *cacheStub) GetPlace(_ context.Context, key string) (*domain.Place, error) {
+	value, ok := cache.values[key]
+	if !ok {
+		return nil, context.Canceled
+	}
+	place, ok := value.(*domain.Place)
+	if !ok {
+		return nil, context.Canceled
+	}
+	return place, nil
+}
+
+func (cache *cacheStub) SetPlace(_ context.Context, key string, place *domain.Place) error {
+	cache.values[key] = place
+	return nil
+}
+
+func (cache *cacheStub) GetMatrix(_ context.Context, key string) (*domain.Matrix, error) {
+	value, ok := cache.values[key]
+	if !ok {
+		return nil, context.Canceled
+	}
+	matrix, ok := value.(*domain.Matrix)
+	if !ok {
+		return nil, context.Canceled
+	}
+	return matrix, nil
+}
+
+func (cache *cacheStub) SetMatrix(_ context.Context, key string, matrix *domain.Matrix) error {
+	cache.values[key] = matrix
 	return nil
 }
 

@@ -86,15 +86,14 @@ func (service *LocationService) Search(
 		return nil, ErrProviderUnavailable
 	}
 	key := fmt.Sprintf("search:%s:%.4f:%.4f", query, origin.Latitude, origin.Longitude)
-	places := []domain.Place{}
-	if service.cacheHit(ctx, key, &places) {
+	if places, ok := service.cachedPlaces(ctx, key); ok {
 		return clonePlaces(places), nil
 	}
 	places, err := service.provider.Search(ctx, query, origin)
 	if err != nil {
 		return nil, fmt.Errorf("search locations: %w", err)
 	}
-	service.cacheSet(ctx, key, clonePlaces(places))
+	service.storePlaces(ctx, key, clonePlaces(places))
 	return clonePlaces(places), nil
 }
 
@@ -113,15 +112,14 @@ func (service *LocationService) Nearby(
 		return nil, ErrProviderUnavailable
 	}
 	key := fmt.Sprintf("nearby:%.4f:%.4f:%d", origin.Latitude, origin.Longitude, page)
-	places := []domain.Place{}
-	if service.cacheHit(ctx, key, &places) {
+	if places, ok := service.cachedPlaces(ctx, key); ok {
 		return clonePlaces(places), nil
 	}
 	places, err := service.provider.Nearby(ctx, origin, page)
 	if err != nil {
 		return nil, fmt.Errorf("load nearby locations: %w", err)
 	}
-	service.cacheSet(ctx, key, clonePlaces(places))
+	service.storePlaces(ctx, key, clonePlaces(places))
 	return clonePlaces(places), nil
 }
 
@@ -136,16 +134,15 @@ func (service *LocationService) ReverseGeocode(
 		return nil, ErrProviderUnavailable
 	}
 	key := fmt.Sprintf("reverse:%.4f:%.4f", coordinates.Latitude, coordinates.Longitude)
-	var place domain.Place
-	if service.cacheHit(ctx, key, &place) {
-		return clonePlace(&place), nil
+	if place, ok := service.cachedPlace(ctx, key); ok {
+		return clonePlace(place), nil
 	}
 	result, err := service.provider.ReverseGeocode(ctx, coordinates)
 	if err != nil {
 		return nil, fmt.Errorf("reverse geocode location: %w", err)
 	}
 	if result != nil {
-		service.cacheSet(ctx, key, clonePlace(result))
+		service.storePlace(ctx, key, clonePlace(result))
 	}
 	return clonePlace(result), nil
 }
@@ -197,15 +194,14 @@ func (service *LocationService) Matrix(
 		}
 	}
 	key := matrixCacheKey(origin, destinations)
-	var matrix domain.Matrix
-	if service.cacheHit(ctx, key, &matrix) {
-		return cloneMatrix(&matrix), nil
+	if matrix, ok := service.cachedMatrix(ctx, key); ok {
+		return cloneMatrix(matrix), nil
 	}
 	result, err := service.provider.Matrix(ctx, origin, slices.Clone(destinations))
 	if err != nil {
 		return nil, fmt.Errorf("calculate location matrix: %w", err)
 	}
-	service.cacheSet(ctx, key, cloneMatrix(result))
+	service.storeMatrix(ctx, key, cloneMatrix(result))
 	return cloneMatrix(result), nil
 }
 
@@ -254,26 +250,77 @@ func cloneMatrix(value *domain.Matrix) *domain.Matrix {
 	return &cloned
 }
 
-func (service *LocationService) cacheHit(ctx context.Context, key string, target any) bool {
+func (service *LocationService) cachedPlaces(ctx context.Context, key string) ([]domain.Place, bool) {
 	if service.cache == nil {
-		return false
+		return nil, false
 	}
-	if err := service.cache.Get(ctx, key, target); err != nil {
-		if !errors.Is(err, locationports.ErrCacheMiss) {
-			service.log().DebugContext(ctx, "load location cache entry failed", "error", err, "operation", "get")
-		}
-		return false
+	places, err := service.cache.GetPlaces(ctx, key)
+	if err != nil {
+		service.logCacheReadFailure(ctx, err)
+		return nil, false
 	}
-	return true
+	return places, true
 }
 
-func (service *LocationService) cacheSet(ctx context.Context, key string, value any) {
+func (service *LocationService) storePlaces(ctx context.Context, key string, places []domain.Place) {
 	if service.cache == nil {
 		return
 	}
-	if err := service.cache.Set(ctx, key, value); err != nil {
-		service.log().DebugContext(ctx, "store location cache entry failed", "error", err, "operation", "set")
+	if err := service.cache.SetPlaces(ctx, key, places); err != nil {
+		service.logCacheWriteFailure(ctx, err)
 	}
+}
+
+func (service *LocationService) cachedPlace(ctx context.Context, key string) (*domain.Place, bool) {
+	if service.cache == nil {
+		return nil, false
+	}
+	place, err := service.cache.GetPlace(ctx, key)
+	if err != nil {
+		service.logCacheReadFailure(ctx, err)
+		return nil, false
+	}
+	return place, true
+}
+
+func (service *LocationService) storePlace(ctx context.Context, key string, place *domain.Place) {
+	if service.cache == nil {
+		return
+	}
+	if err := service.cache.SetPlace(ctx, key, place); err != nil {
+		service.logCacheWriteFailure(ctx, err)
+	}
+}
+
+func (service *LocationService) cachedMatrix(ctx context.Context, key string) (*domain.Matrix, bool) {
+	if service.cache == nil {
+		return nil, false
+	}
+	matrix, err := service.cache.GetMatrix(ctx, key)
+	if err != nil {
+		service.logCacheReadFailure(ctx, err)
+		return nil, false
+	}
+	return matrix, true
+}
+
+func (service *LocationService) storeMatrix(ctx context.Context, key string, matrix *domain.Matrix) {
+	if service.cache == nil {
+		return
+	}
+	if err := service.cache.SetMatrix(ctx, key, matrix); err != nil {
+		service.logCacheWriteFailure(ctx, err)
+	}
+}
+
+func (service *LocationService) logCacheReadFailure(ctx context.Context, err error) {
+	if !errors.Is(err, locationports.ErrCacheMiss) {
+		service.log().DebugContext(ctx, "load location cache entry failed", "error", err, "operation", "get")
+	}
+}
+
+func (service *LocationService) logCacheWriteFailure(ctx context.Context, err error) {
+	service.log().DebugContext(ctx, "store location cache entry failed", "error", err, "operation", "set")
 }
 
 func (service *LocationService) log() *slog.Logger {
