@@ -10,7 +10,6 @@ import 'package:passenger/src/features/ride_history/data/repositories/ride_histo
 import 'package:passenger/src/features/ride_history/domain/repositories/ride_history_repository.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_details/ride_details_cubit.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
-import 'package:passenger/src/features/ride_history/presentation/view/passenger_payment_page.dart';
 import 'package:passenger/src/features/ride_history/presentation/view/passenger_rating_page.dart';
 import 'package:passenger/src/features/ride_history/presentation/view/recent_activity_page.dart';
 import 'package:passenger/src/features/ride_history/presentation/view/ride_details_page.dart';
@@ -82,22 +81,6 @@ class RideHistoryModule._() {
           rideId: rideId,
           profileRepository: Modular.get<DriverProfileRepository>(),
         );
-      },
-      transition: AppTransitions.modal.toTop,
-      transitionDuration: AppTransitions.modalDuration,
-    ),
-    ChildRoute(
-      name: RideHistoryRoutes.passengerPayment,
-      RideHistoryRoutes.passengerPaymentPath,
-      child: (context, GoRouterState state) {
-        final ride = state.extra is RideHistory
-            ? state.extra as RideHistory
-            : null;
-        return ride == null
-            ? const Scaffold(
-                body: Center(child: Text('Payment data unavailable.')),
-              )
-            : PassengerPaymentPage(ride: ride);
       },
       transition: AppTransitions.modal.toTop,
       transitionDuration: AppTransitions.modalDuration,

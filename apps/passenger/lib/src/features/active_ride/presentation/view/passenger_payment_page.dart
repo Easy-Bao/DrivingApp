@@ -2,17 +2,16 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger/src/features/ride_history/ride_history.dart';
+import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot.dart';
 import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
 
 class const PassengerPaymentPage({super.key, required this.ride})
     extends StatelessWidget {
-  final RideHistory ride;
+  final RideSnapshot ride;
 
   @override
   Widget build(BuildContext context) {
-    final fare =
-        double.tryParse(ride.price.replaceAll(RegExp(r'[^0-9.\-]'), '')) ?? 0;
+    final fare = (ride.fareAmount ?? 0) / 100;
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -165,8 +164,9 @@ class const PassengerPaymentPage({super.key, required this.ride})
                               onPressed: () => context.goNamed(
                                 RideHistoryRoutes.passengerRating,
                                 queryParameters: {
-                                  'driverId': ride.driverId,
-                                  'driverName': ride.driverName,
+                                  'driverId': ride.driverId ?? '',
+                                  'driverName':
+                                      ride.driverName ?? ride.displayDriverName,
                                   'rideId': ride.id,
                                 },
                               ),

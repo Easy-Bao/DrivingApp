@@ -55,4 +55,46 @@ void main() {
     expect(snapshot.fareAmount, isNull);
     expect(snapshot.isTerminal, isFalse);
   });
+
+  test('copyWith updates terminal ride details and preserves the snapshot', () {
+    const ride = RideSnapshot(
+      id: 'ride-123',
+      status: 'in_transit',
+      pickupName: 'Ayala Center',
+      dropoffName: 'IT Park',
+      passengerId: 'passenger-1',
+      passengerName: 'Alex',
+      pickupLatitude: 10.3157,
+      pickupLongitude: 123.8854,
+      dropoffLatitude: 10.3290,
+      dropoffLongitude: 123.9062,
+      distanceKm: 3.2,
+      durationMinutes: 12,
+      fareAmount: 18500,
+    );
+
+    final completedRide = ride.copyWith(
+      status: 'completed',
+      driverId: 'driver-456',
+      driverName: 'Juan Dela Cruz',
+    );
+
+    expect(completedRide.id, ride.id);
+    expect(completedRide.status, 'completed');
+    expect(completedRide.pickupName, ride.pickupName);
+    expect(completedRide.dropoffName, ride.dropoffName);
+    expect(completedRide.passengerId, ride.passengerId);
+    expect(completedRide.passengerName, ride.passengerName);
+    expect(completedRide.driverId, 'driver-456');
+    expect(completedRide.driverName, 'Juan Dela Cruz');
+    expect(completedRide.pickupLatitude, ride.pickupLatitude);
+    expect(completedRide.pickupLongitude, ride.pickupLongitude);
+    expect(completedRide.dropoffLatitude, ride.dropoffLatitude);
+    expect(completedRide.dropoffLongitude, ride.dropoffLongitude);
+    expect(completedRide.distanceKm, ride.distanceKm);
+    expect(completedRide.durationMinutes, ride.durationMinutes);
+    expect(completedRide.fareAmount, ride.fareAmount);
+    expect(ride.driverId, isNull);
+    expect(ride.status, 'in_transit');
+  });
 }

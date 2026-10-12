@@ -11,6 +11,7 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:maps/maps.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
+import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_state.dart';
@@ -22,7 +23,6 @@ import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/chat/chat_routes.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/live_map/live_map.dart';
-import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
 import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -524,7 +524,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
             _hasHandledTerminalState = true;
             widget.onRideTerminated();
             context.pushReplacementNamed(
-              RideHistoryRoutes.passengerPayment,
+              ActiveRideRoutes.passengerPayment,
               extra: widget.ride.copyWith(
                 driverId: driverId,
                 driverName: driverName,

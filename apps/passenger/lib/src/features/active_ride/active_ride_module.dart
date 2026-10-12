@@ -11,6 +11,7 @@ import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_cubit.dart';
 import 'package:passenger/src/features/active_ride/presentation/view/driver_matched_page.dart';
+import 'package:passenger/src/features/active_ride/presentation/view/passenger_payment_page.dart';
 import 'package:passenger/src/features/active_ride/presentation/view/track_driver_page.dart';
 import 'package:passenger/src/features/active_ride/presentation/view/track_driver_page_loader.dart';
 import 'package:passenger/src/features/chat/chat.dart';
@@ -119,6 +120,20 @@ class ActiveRideModule._() {
       },
       transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
+    ),
+    ChildRoute(
+      name: ActiveRideRoutes.passengerPayment,
+      ActiveRideRoutes.passengerPaymentPath,
+      child: (context, GoRouterState state) {
+        final extra = state.extra;
+        return extra is! RideSnapshot
+            ? const Scaffold(
+                body: Center(child: Text('Payment data unavailable.')),
+              )
+            : PassengerPaymentPage(ride: extra);
+      },
+      transition: AppTransitions.modal.toTop,
+      transitionDuration: AppTransitions.modalDuration,
     ),
   ];
 

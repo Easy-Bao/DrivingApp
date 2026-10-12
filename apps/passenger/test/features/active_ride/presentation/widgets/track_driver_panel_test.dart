@@ -1,8 +1,8 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:passenger/src/features/active_ride/domain/entities/ride_snapshot.dart';
 import 'package:passenger/src/features/active_ride/presentation/widgets/track_driver_panel.dart';
-import 'package:passenger/src/features/ride_history/domain/entities/ride_history.dart';
 
 void main() {
   testWidgets('exposes an accessible emergency action for active rides', (
@@ -16,20 +16,18 @@ void main() {
         theme: EasyRideTheme.main,
         home: Scaffold(
           body: TrackDriverPanel(
-            ride: const RideHistory(
+            ride: const RideSnapshot(
               id: 'ride-1',
-              pickup: 'Pickup',
-              destination: 'Destination',
-              pickupLat: 14.6,
-              pickupLng: 120.98,
-              destLat: 14.61,
-              destLng: 120.99,
-              date: '2026-09-18',
-              price: '₱100',
+              pickupName: 'Pickup',
+              dropoffName: 'Destination',
+              pickupLatitude: 14.6,
+              pickupLongitude: 120.98,
+              dropoffLatitude: 14.61,
+              dropoffLongitude: 120.99,
               status: 'accepted',
               driverId: 'driver-1',
               driverName: 'Alex',
-              vehiclePlate: 'ABC 123',
+              plateNumber: 'ABC 123',
               vehicleType: 'Sedan',
             ),
             statusTitle: 'Driver assigned',
@@ -70,20 +68,18 @@ void main() {
         theme: EasyRideTheme.main,
         home: Scaffold(
           body: TrackDriverPanel(
-            ride: const RideHistory(
+            ride: const RideSnapshot(
               id: 'ride-1',
-              pickup: 'Pickup',
-              destination: 'Destination',
-              pickupLat: 14.6,
-              pickupLng: 120.98,
-              destLat: 14.61,
-              destLng: 120.99,
-              date: '2026-09-18',
-              price: '₱100',
+              pickupName: 'Pickup',
+              dropoffName: 'Destination',
+              pickupLatitude: 14.6,
+              pickupLongitude: 120.98,
+              dropoffLatitude: 14.61,
+              dropoffLongitude: 120.99,
               status: 'in_transit',
               driverId: 'driver-1',
               driverName: 'Alex',
-              vehiclePlate: 'ABC 123',
+              plateNumber: 'ABC 123',
               vehicleType: 'Sedan',
             ),
             statusTitle: 'Heading to destination',
