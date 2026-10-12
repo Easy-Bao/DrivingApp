@@ -29,7 +29,7 @@ func (store *PendingRegistrationStore) Put(
 	if err := store.validate(); err != nil {
 		return err
 	}
-	payload, err := json.Marshal(registration)
+	payload, err := encodePendingRegistration(registration)
 	if err != nil {
 		return fmt.Errorf("marshal pending registration: %w", err)
 	}
@@ -55,8 +55,8 @@ func (store *PendingRegistrationStore) Get(ctx context.Context, email string) (d
 	if err != nil {
 		return domain.PendingRegistration{}, fmt.Errorf("get pending registration: %w", err)
 	}
-	var registration domain.PendingRegistration
-	if err := json.Unmarshal(payload, &registration); err != nil {
+	registration, err := decodePendingRegistration(payload)
+	if err != nil {
 		return domain.PendingRegistration{}, fmt.Errorf("decode pending registration: %w", err)
 	}
 	return registration, nil
@@ -81,4 +81,45 @@ func (store *PendingRegistrationStore) validate() error {
 
 func pendingKey(email string) string {
 	return "auth:registration:pending:" + strings.ToLower(strings.TrimSpace(email))
+}
+
+type pendingRegistrationRecord struct {
+	Email             string      `json:"email"`
+	Phone             string      `json:"phone"`
+	Name              string      `json:"name"`
+	PasswordHash      string      `json:"password_hash"`
+	Role              domain.Role `json:"role"`
+	VehicleType       string      `json:"vehicle_type,omitempty"`
+	PlateNumber       string      `json:"plate_number,omitempty"`
+	PreferredRideType string      `json:"preferred_ride_type,omitempty"`
+}
+
+func encodePendingRegistration(registration domain.PendingRegistration) ([]byte, error) {
+	return json.Marshal(pendingRegistrationRecord{
+		Email:             registration.Email,
+		Phone:             registration.Phone,
+		Name:              registration.Name,
+		PasswordHash:      registration.PasswordHash,
+		Role:              registration.Role,
+		VehicleType:       registration.VehicleType,
+		PlateNumber:       registration.PlateNumber,
+		PreferredRideType: registration.PreferredRideType,
+	})
+}
+
+func decodePendingRegistration(payload []byte) (domain.PendingRegistration, error) {
+	var record pendingRegistrationRecord
+	if err := json.Unmarshal(payload, &record); err != nil {
+		return domain.PendingRegistration{}, err
+	}
+	return domain.PendingRegistration{
+		Email:             record.Email,
+		Phone:             record.Phone,
+		Name:              record.Name,
+		PasswordHash:      record.PasswordHash,
+		Role:              record.Role,
+		VehicleType:       record.VehicleType,
+		PlateNumber:       record.PlateNumber,
+		PreferredRideType: record.PreferredRideType,
+	}, nil
 }
