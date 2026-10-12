@@ -12,8 +12,8 @@ var (
 )
 
 type Message struct {
-	RoomID    string `json:"room_id"`
-	SenderID  string `json:"sender_id"`
-	Body      string `json:"body"`
-	CreatedAt string `json:"created_at"`
+	RoomID    string
+	SenderID  string
+	Body      string
+	CreatedAt string
 }

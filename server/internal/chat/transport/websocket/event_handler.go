@@ -7,6 +7,7 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/chat/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/chat/domain"
+	chatdto "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/websocket/dto"
 )
 
 type EventHandler struct{ service *application.ChatService }
@@ -26,18 +27,20 @@ func (handler *EventHandler) Handle(ctx context.Context, message []byte) error {
 	}
 	switch header.Type {
 	case "CHAT_MESSAGE", "message":
-		var event struct {
-			domain.Message
-			Text string `json:"text"`
-		}
+		var event chatdto.MessageEvent
 		if json.Unmarshal(message, &event) != nil {
 			return nil
 		}
-		if event.Message.Body == "" {
-			event.Message.Body = event.Text
+		body := event.Body
+		if body == "" {
+			body = event.Text
 		}
-		event.Message.CreatedAt = time.Now().UTC().Format(time.RFC3339Nano)
-		return handler.service.Relay(ctx, event.Message)
+		return handler.service.Relay(ctx, domain.Message{
+			RoomID:    event.RoomID,
+			SenderID:  event.SenderID,
+			Body:      body,
+			CreatedAt: time.Now().UTC().Format(time.RFC3339Nano),
+		})
 	case "typing":
 		var event struct {
 			RoomID   string `json:"room_id"`

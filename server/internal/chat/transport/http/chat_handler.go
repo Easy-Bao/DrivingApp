@@ -6,6 +6,7 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/chat/application"
 	"github.com/Easy-Bao/DrivingApp/server/internal/chat/domain"
+	chatdto "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/http/dto"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
@@ -63,18 +64,7 @@ func (handler *Handler) Messages(writer http.ResponseWriter, request *http.Reque
 		response.Error(writer, chatErrorStatus(err), "could not load chat messages")
 		return
 	}
-	result := make([]map[string]string, 0, len(items))
-	for _, item := range items {
-		result = append(result, map[string]string{
-			"text":       item.Body,
-			"message":    item.Body,
-			"sender_id":  item.SenderID,
-			"senderId":   item.SenderID,
-			"created_at": item.CreatedAt,
-			"createdAt":  item.CreatedAt,
-		})
-	}
-	response.JSON(writer, http.StatusOK, map[string]any{"messages": result})
+	response.JSON(writer, http.StatusOK, map[string]any{"messages": chatdto.NewMessageResponses(items)})
 }
 
 func (handler *Handler) Resolve(writer http.ResponseWriter, request *http.Request) {
