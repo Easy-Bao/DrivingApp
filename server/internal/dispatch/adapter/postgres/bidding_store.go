@@ -165,15 +165,17 @@ func (repository *Store) ActiveSessions(ctx context.Context, driverID *int) ([]d
 
 	now := bidTimestamp(time.Now().UTC())
 	var (
-		items []databasepostgres.BidSession
-		err   error
+		items      []databasepostgres.BidSession
+		dbDriverID int32
+		err        error
 	)
 	if driverID == nil {
 		sessionListStartedAt := startTiming()
 		items, err = repository.queries.ListActiveBidSessions(ctx, now)
 		sessionListDuration = measure(sessionListStartedAt)
 	} else {
-		dbDriverID, idErr := toPostgresRideID(*driverID, "driver id")
+		var idErr error
+		dbDriverID, idErr = toPostgresRideID(*driverID, "driver id")
 		if idErr != nil {
 			return nil, idErr
 		}
@@ -252,6 +254,36 @@ func (repository *Store) ActiveSessions(ctx context.Context, driverID *int) ([]d
 		result = append(result, session)
 	}
 	mappingDuration = measure(mappingStartedAt)
+	if driverID != nil {
+		pendingStartedAt := startTiming()
+		pendingRows, pendingErr := repository.queries.ListPendingBidOffersForDriver(
+			ctx,
+			databasepostgres.ListPendingBidOffersForDriverParams{
+				DriverID:  dbDriverID,
+				ExpiresAt: now,
+			},
+		)
+		if pendingErr != nil {
+			return nil, fmt.Errorf("list driver's pending bid offers: %w", pendingErr)
+		}
+		sessionListDuration += measure(pendingStartedAt)
+		pendingMappingStartedAt := startTiming()
+		pendingBySession := make(map[int][]dispatchdomain.BidOffer, len(pendingRows))
+		for _, row := range pendingRows {
+			offer, mappingErr := fromPostgresBidOffer(row)
+			if mappingErr != nil {
+				return nil, fmt.Errorf("map driver's pending bid offer: %w", mappingErr)
+			}
+			pendingBySession[offer.SessionID] = append(
+				pendingBySession[offer.SessionID],
+				offer,
+			)
+		}
+		for index := range result {
+			result[index].Offers = pendingBySession[result[index].ID]
+		}
+		mappingDuration += measure(pendingMappingStartedAt)
+	}
 	sessionCount = len(result)
 	outcome = "success"
 	return result, nil

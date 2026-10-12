@@ -490,6 +490,122 @@ void main() {
       expect(cubit.state.activeBids, isEmpty);
       await cubit.close();
     });
+
+    test(
+      'keeps submitted offers pending and ignores stale snapshots',
+      () async {
+        final now = DateTime.utc(2026, 10, 12, 10);
+        final expiresAt = now
+            .add(const Duration(seconds: 90))
+            .toIso8601String();
+        var snapshot = DriverDispatchSnapshot(
+          rideOffers: [
+            {'id': 'session-1', 'offered_fare': 25000, 'expires_at': expiresAt},
+          ],
+        );
+        final staleResponse =
+            Completer<Result<DriverDispatchSnapshot, Failure>>();
+        final staleRequestStarted = Completer<void>();
+        var snapshotRequestCount = 0;
+        when(() => repo.getDispatchSnapshot(includeOffers: true))
+            .thenAnswer((_) {
+              snapshotRequestCount++;
+              if (snapshotRequestCount == 2) {
+                staleRequestStarted.complete();
+                return staleResponse.future;
+              }
+              return Future.value(Ok(snapshot));
+            });
+        when(() => repo.submitRideOffer(sessionId: 'session-1', farePesos: 250))
+            .thenAnswer((_) async => const Ok(null));
+        final cubit = DashboardCubit(repository: repo, now: () => now);
+
+        await cubit.loadDispatchSnapshot();
+        expect(cubit.state.activeBids, hasLength(1));
+
+        final staleLoad = cubit.loadDispatchSnapshot();
+        await staleRequestStarted.future;
+        expect(
+          await cubit.submitRideOffer(sessionId: 'session-1', farePesos: 250),
+          isTrue,
+        );
+        expect(cubit.state.activeBids, isEmpty);
+        expect(
+          cubit.state.submittedOffers.single['local_offer_submitted'],
+          isTrue,
+        );
+        staleResponse.complete(
+          Ok(
+            DriverDispatchSnapshot(
+              rideOffers: [
+                {
+                  'id': 'session-1',
+                  'offered_fare': 25000,
+                  'expires_at': expiresAt,
+                },
+              ],
+            ),
+          ),
+        );
+        await staleLoad;
+        expect(cubit.state.submittedOffers, hasLength(1));
+        expect(cubit.state.activeBids, isEmpty);
+
+        snapshot = DriverDispatchSnapshot(
+          rideOffers: [
+            {
+              'id': 'session-1',
+              'offered_fare': 25000,
+              'expires_at': expiresAt,
+              'offers': [
+                {'status': 'pending', 'proposed_fare': 25000},
+              ],
+            },
+          ],
+        );
+        await cubit.loadDispatchSnapshot();
+        expect(cubit.state.submittedOffers, hasLength(1));
+        expect(cubit.state.activeBids, isEmpty);
+
+        expect(cubit.resolveSubmittedOffer('session-1'), isTrue);
+        expect(cubit.state.submittedOffers, isEmpty);
+
+        await cubit.loadDispatchSnapshot();
+        expect(cubit.state.submittedOffers, isEmpty);
+        expect(cubit.state.activeBids, isEmpty);
+        await cubit.close();
+      },
+    );
+
+    test('reports when a submitted offer expires', () async {
+      var now = DateTime.utc(2026, 10, 12, 10);
+      final expiresAt = now.add(const Duration(seconds: 30));
+      when(() => repo.getDispatchSnapshot(includeOffers: true)).thenAnswer(
+        (_) async => Ok(
+          DriverDispatchSnapshot(
+            rideOffers: [
+              {
+                'id': 'session-2',
+                'expires_at': expiresAt.toIso8601String(),
+                'offers': [
+                  {'status': 'pending', 'proposed_fare': 20000},
+                ],
+              },
+            ],
+          ),
+        ),
+      );
+      final cubit = DashboardCubit(repository: repo, now: () => now);
+
+      await cubit.loadDispatchSnapshot();
+      expect(cubit.state.submittedOffers, hasLength(1));
+
+      now = expiresAt.add(const Duration(seconds: 1));
+      expect(cubit.removeExpiredRideOffers(), isTrue);
+      expect(cubit.state.submittedOffers, isEmpty);
+      expect(cubit.removeExpiredRideOffers(), isFalse);
+      await cubit.close();
+    });
   });
 
   group('DashboardCubit — toggleOnline()', () {

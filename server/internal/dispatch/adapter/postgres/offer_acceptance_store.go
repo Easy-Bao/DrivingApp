@@ -154,11 +154,20 @@ func (repository *Store) AcceptOffer(
 	if err != nil {
 		return dispatchports.OfferAcceptance{}, fmt.Errorf("accept bid offer: %w", err)
 	}
-	if err := transactionQueries.RejectOtherPendingBidOffers(ctx, databasepostgres.RejectOtherPendingBidOffersParams{
+	rejectedRows, err := transactionQueries.RejectOtherPendingBidOffers(ctx, databasepostgres.RejectOtherPendingBidOffersParams{
 		SessionID: session.ID,
 		ID:        offer.ID,
-	}); err != nil {
+	})
+	if err != nil {
 		return dispatchports.OfferAcceptance{}, fmt.Errorf("reject competing bid offers: %w", err)
+	}
+	rejectedOffers := make([]dispatchdomain.BidOffer, 0, len(rejectedRows))
+	for _, row := range rejectedRows {
+		rejectedOffer, mappingErr := fromPostgresBidOffer(row)
+		if mappingErr != nil {
+			return dispatchports.OfferAcceptance{}, fmt.Errorf("map rejected competing bid offer: %w", mappingErr)
+		}
+		rejectedOffers = append(rejectedOffers, rejectedOffer)
 	}
 	withdrawnRows, err := transactionQueries.RejectDriverPendingBidOffers(
 		ctx,
@@ -275,6 +284,7 @@ func (repository *Store) AcceptOffer(
 		Session:         resultSession,
 		Offer:           resultOffer,
 		Ride:            resultRide,
+		RejectedOffers:  rejectedOffers,
 		WithdrawnOffers: withdrawnOffers,
 	}, nil
 }

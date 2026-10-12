@@ -503,6 +503,55 @@ func (q *Queries) ListBidOffersBySession(ctx context.Context, sessionID int32) (
 	return items, nil
 }
 
+const listPendingBidOffersForDriver = `-- name: ListPendingBidOffersForDriver :many
+SELECT offers.id, offers.session_id, offers.driver_id, offers.driver_name,
+    offers.plate_number, offers.vehicle_type, offers.proposed_fare,
+    offers.status, offers.created_at
+FROM bid_offers AS offers
+JOIN bid_sessions AS sessions ON sessions.id = offers.session_id
+WHERE offers.driver_id = $1
+  AND offers.status = 'pending'
+  AND sessions.status = 'open'
+  AND sessions.expires_at > $2
+  AND (sessions.target_driver_id IS NULL OR sessions.target_driver_id = $1)
+ORDER BY sessions.created_at
+`
+
+type ListPendingBidOffersForDriverParams struct {
+	DriverID  int32              `db:"driver_id"`
+	ExpiresAt pgtype.Timestamptz `db:"expires_at"`
+}
+
+func (q *Queries) ListPendingBidOffersForDriver(ctx context.Context, arg ListPendingBidOffersForDriverParams) ([]BidOffer, error) {
+	rows, err := q.db.Query(ctx, listPendingBidOffersForDriver, arg.DriverID, arg.ExpiresAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []BidOffer{}
+	for rows.Next() {
+		var i BidOffer
+		if err := rows.Scan(
+			&i.ID,
+			&i.SessionID,
+			&i.DriverID,
+			&i.DriverName,
+			&i.PlateNumber,
+			&i.VehicleType,
+			&i.ProposedFare,
+			&i.Status,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listTargetedActiveBidSessions = `-- name: ListTargetedActiveBidSessions :many
 SELECT sessions.id, sessions.passenger_id, sessions.ride_type,
     sessions.pickup_latitude, sessions.pickup_longitude, sessions.pickup_name,
@@ -514,14 +563,13 @@ FROM bid_sessions AS sessions
 WHERE sessions.status = 'open'
   AND sessions.expires_at > $1
   AND (sessions.target_driver_id IS NULL OR sessions.target_driver_id = $2)
-  AND NOT EXISTS (
-      SELECT 1
-      FROM bid_offers AS offers
-      WHERE offers.session_id = sessions.id
-        AND offers.driver_id = $2
-        AND offers.status = 'pending'
-  )
-ORDER BY sessions.created_at
+ORDER BY EXISTS (
+    SELECT 1
+    FROM bid_offers AS offers
+    WHERE offers.session_id = sessions.id
+      AND offers.driver_id = $2
+      AND offers.status = 'pending'
+) DESC, sessions.created_at
 LIMIT 50
 `
 

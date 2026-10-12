@@ -29,22 +29,24 @@ class DriverPoolBidCard extends StatelessWidget {
     required this.bid,
     required this.submittingBidId,
     required this.onDecline,
-    required this.onAccept,
+    required this.onSubmitOffer,
   });
 
   final Map<String, dynamic> bid;
   final String? submittingBidId;
-  final VoidCallback onDecline;
-  final VoidCallback onAccept;
+  final VoidCallback? onDecline;
+  final VoidCallback? onSubmitOffer;
 
   @override
   Widget build(BuildContext context) {
     final pickup = bid['pickup_name']?.toString() ?? '—';
     final dropoff = bid['dropoff_name']?.toString() ?? '—';
     final fare = driverFareInPesos(bid);
+    final displayedFare = _offerFare(bid, fare);
     final distance = _distanceInKm(bid);
     final bidId = driverValueAsString(bid['id']);
     final isSubmitting = bidId != null && submittingBidId == bidId;
+    final hasSubmittedOffer = _hasPendingOffer(bid);
     final remainingSeconds = remainingBidSeconds(bid);
     final passengerNote = driverValueAsString(bid['passenger_note']);
 
@@ -62,7 +64,7 @@ class DriverPoolBidCard extends StatelessWidget {
           Row(
             children: [
               Text(
-                'Ride Request',
+                hasSubmittedOffer ? 'Offer Submitted' : 'Open Ride Offer',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
@@ -151,7 +153,7 @@ class DriverPoolBidCard extends StatelessWidget {
               ),
               const SizedBox(width: EasyRideSpacing.sm),
               Text(
-                fare == null ? '—' : formatPesoAmount(fare),
+                displayedFare == null ? '—' : formatPesoAmount(displayedFare),
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
@@ -161,70 +163,120 @@ class DriverPoolBidCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: submittingBidId != null ? null : onDecline,
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(0, EasyRideSize.minimumTouchTarget),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    side: BorderSide(color: context.colorScheme.outlineVariant),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+          if (hasSubmittedOffer) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: context.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(EasyRideRadius.md),
+              ),
+              child: const Text(
+                'Waiting for the passenger to accept your offer.',
+                key: ValueKey('submitted-offer-status'),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ] else ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: submittingBidId != null ? null : onDecline,
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(
+                        0,
+                        EasyRideSize.minimumTouchTarget,
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      side: BorderSide(
+                        color: context.colorScheme.outlineVariant,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                      ),
                     ),
-                  ),
-                  child: Text(
-                    'Decline',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: context.colorScheme.onSurface,
+                    child: Text(
+                      'Decline',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: context.colorScheme.onSurface,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: fare == null || submittingBidId != null
-                      ? null
-                      : onAccept,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: context.colorScheme.primary,
-                    foregroundColor: context.colorScheme.onPrimary,
-                    elevation: 0,
-                    minimumSize: const Size(0, EasyRideSize.minimumTouchTarget),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: fare == null || submittingBidId != null
+                        ? null
+                        : onSubmitOffer,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: context.colorScheme.primary,
+                      foregroundColor: context.colorScheme.onPrimary,
+                      elevation: 0,
+                      minimumSize: const Size(
+                        0,
+                        EasyRideSize.minimumTouchTarget,
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                      ),
                     ),
+                    child: isSubmitting
+                        ? SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: context.colorScheme.onPrimary,
+                            ),
+                          )
+                        : Text(
+                            'Submit Offer',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: context.colorScheme.onPrimary,
+                            ),
+                          ),
                   ),
-                  child: isSubmitting
-                      ? SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: context.colorScheme.onPrimary,
-                          ),
-                        )
-                      : Text(
-                          'Accept',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: context.colorScheme.onPrimary,
-                          ),
-                        ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  bool _hasPendingOffer(Map<String, dynamic> session) {
+    if (session['local_offer_submitted'] == true) return true;
+    final offers = session['offers'];
+    if (offers is! List) return false;
+    return offers.any(
+      (offer) =>
+          offer is Map &&
+          driverValueAsString(offer['status'])?.toLowerCase() == 'pending',
+    );
+  }
+
+  double? _offerFare(Map<String, dynamic> session, double? fallback) {
+    final offers = session['offers'];
+    if (offers is List) {
+      for (final offer in offers) {
+        if (offer is Map &&
+            driverValueAsString(offer['status'])?.toLowerCase() == 'pending') {
+          final amount = driverFareInPesos(Map<String, dynamic>.from(offer));
+          if (amount != null) return amount;
+        }
+      }
+    }
+    return fallback;
   }
 }
 

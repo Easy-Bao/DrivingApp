@@ -86,6 +86,7 @@ type Querier interface {
 	ListNotifications(ctx context.Context, arg ListNotificationsParams) ([]Notification, error)
 	ListOnlineDrivers(ctx context.Context, arg ListOnlineDriversParams) ([]ListOnlineDriversRow, error)
 	ListPassengerRides(ctx context.Context, arg ListPassengerRidesParams) ([]ListPassengerRidesRow, error)
+	ListPendingBidOffersForDriver(ctx context.Context, arg ListPendingBidOffersForDriverParams) ([]BidOffer, error)
 	ListPublicDriverSummaries(ctx context.Context, arg ListPublicDriverSummariesParams) ([]ListPublicDriverSummariesRow, error)
 	ListRecentPassengerRides(ctx context.Context, arg ListRecentPassengerRidesParams) ([]ListRecentPassengerRidesRow, error)
 	ListTargetedActiveBidSessions(ctx context.Context, arg ListTargetedActiveBidSessionsParams) ([]BidSession, error)
@@ -105,7 +106,7 @@ type Querier interface {
 	MarkUserVerified(ctx context.Context, id int32) (int64, error)
 	RejectBidOffer(ctx context.Context, id int32) (BidOffer, error)
 	RejectDriverPendingBidOffers(ctx context.Context, arg RejectDriverPendingBidOffersParams) ([]BidOffer, error)
-	RejectOtherPendingBidOffers(ctx context.Context, arg RejectOtherPendingBidOffersParams) error
+	RejectOtherPendingBidOffers(ctx context.Context, arg RejectOtherPendingBidOffersParams) ([]BidOffer, error)
 	ReviewDriverDocument(ctx context.Context, arg ReviewDriverDocumentParams) (DriverDocument, error)
 	RevokeRefreshSession(ctx context.Context, arg RevokeRefreshSessionParams) error
 	RevokeRefreshSessionByID(ctx context.Context, arg RevokeRefreshSessionByIDParams) (int64, error)

@@ -369,6 +369,48 @@ func TestAcceptOfferPublishesRideMatchedEvent(t *testing.T) {
 	}
 }
 
+func TestAcceptOfferPublishesRejectedCompetingOfferToItsDriver(t *testing.T) {
+	rejectedOffer := dispatchdomain.BidOffer{
+		ID:        21,
+		SessionID: 10,
+		DriverID:  404,
+		Status:    "rejected",
+	}
+	store := &biddingStoreStub{acceptance: dispatchports.OfferAcceptance{
+		Session:        dispatchdomain.BidSession{ID: 10, PassengerID: 101},
+		Offer:          dispatchdomain.BidOffer{ID: 20, SessionID: 10, DriverID: 303, Status: "accepted"},
+		Ride:           ridedomain.Ride{ID: 55, PassengerID: 101},
+		RejectedOffers: []dispatchdomain.BidOffer{rejectedOffer},
+	}}
+	publisher := &eventPublisherStub{}
+	service := dispatchapplication.NewService(dispatchapplication.Dependencies{
+		Store:          store,
+		EventPublisher: publisher,
+	})
+
+	if _, _, _, err := service.AcceptOffer(context.Background(), 10, 20, 101); err != nil {
+		t.Fatalf("AcceptOffer() error = %v", err)
+	}
+	if len(publisher.events) != 2 {
+		t.Fatalf("published events = %#v, want match and one competing-offer update", publisher.events)
+	}
+	updated := publisher.events[1]
+	if updated.Type != event.RideOfferUpdated || updated.Scope.DriverID != "404" ||
+		updated.Scope.PassengerID != "" || updated.Scope.DriverPool {
+		t.Fatalf("competing-offer event scope = %+v, want only driver 404", updated)
+	}
+	wantPayload := map[string]any{
+		"offer_id":   rejectedOffer.ID,
+		"session_id": rejectedOffer.SessionID,
+		"reason":     "another_driver_selected",
+	}
+	for key, want := range wantPayload {
+		if got := updated.Payload[key]; got != want {
+			t.Errorf("competing-offer payload[%q] = %#v, want %#v", key, got, want)
+		}
+	}
+}
+
 func TestAcceptOfferPublishesWithdrawnOutstandingOffers(t *testing.T) {
 	withdrawnSession := dispatchdomain.BidSession{ID: 33, PassengerID: 202}
 	withdrawnOffer := dispatchdomain.BidOffer{

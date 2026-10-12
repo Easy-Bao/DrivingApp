@@ -409,7 +409,11 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   void _refreshRequestCountdowns() {
     if (!mounted || !_isForeground) return;
-    BlocProvider.of<DashboardCubit>(context).removeExpiredRideOffers();
+    final offerExpired = BlocProvider.of<DashboardCubit>(context)
+        .removeExpiredRideOffers();
+    if (offerExpired && mounted) {
+      CustomToast.show(context, 'Your offer expired without being selected.');
+    }
   }
 
   void _startRequestCountdownTimer() {
@@ -506,6 +510,32 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       return;
     }
     if (event is RideOfferUpdatedEvent) {
+      final payload = event.envelope.payload;
+      final sessionId =
+          driverValueAsString(payload['session_id']) ??
+          (payload['session'] is Map
+              ? driverValueAsString((payload['session'] as Map)['id'])
+              : null);
+      final session = payload['session'];
+      final wasClosed =
+          session is Map &&
+          {
+            'cancelled',
+            'canceled',
+          }.contains(driverValueAsString(session['status'])?.toLowerCase());
+      final reason = driverValueAsString(payload['reason']);
+      final wasResolved = reason == 'another_driver_selected' || wasClosed
+          ? BlocProvider.of<DashboardCubit>(context)
+                .resolveSubmittedOffer(sessionId)
+          : false;
+      if (wasResolved && mounted) {
+        CustomToast.show(
+          context,
+          reason == 'another_driver_selected'
+              ? 'The passenger selected another driver for this ride.'
+              : 'The passenger closed this ride offer.',
+        );
+      }
       unawaited(_pollRideData(_pollGeneration));
       return;
     }
@@ -715,7 +745,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     }
   }
 
-  Future<void> _acceptBid(Map<String, dynamic> bid) async {
+  Future<void> _submitBid(Map<String, dynamic> bid) async {
     if (_submittingBidId != null) return;
     final cubit = BlocProvider.of<DashboardCubit>(context);
     if (cubit.state.hasActiveRide) {
@@ -885,18 +915,24 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
             previous.errorMessage != current.errorMessage ||
             previous.statsErrorMessage != current.statsErrorMessage ||
             previous.activeRide != current.activeRide ||
-            previous.activeBids != current.activeBids,
+            previous.activeBids != current.activeBids ||
+            previous.submittedOffers != current.submittedOffers,
         builder: (context, state) {
           final activeRide = state.activeRide;
           final activeBids = state.hasActiveRide
               ? const <Map<String, dynamic>>[]
               : state.activeBids;
+          final submittedOffers = state.hasActiveRide
+              ? const <Map<String, dynamic>>[]
+              : state.submittedOffers;
           final dashboardMessage = state.errorMessage;
           final showDashboardError =
               dashboardMessage != null &&
               !AppNetworkStatusScope.isUnavailableOf(context);
           final showFeed =
-              state.hasActiveRide || (state.isOnline && activeBids.isNotEmpty);
+              state.hasActiveRide ||
+              (state.isOnline &&
+                  (activeBids.isNotEmpty || submittedOffers.isNotEmpty));
           return Stack(
             fit: StackFit.expand,
             children: [
@@ -969,9 +1005,23 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                                     ),
                                     const SizedBox(height: 24),
                                   ],
+                                  if (submittedOffers.isNotEmpty) ...[
+                                    const DriverDashboardSectionLabel(
+                                      label: 'Your Submitted Offers',
+                                    ),
+                                    const SizedBox(height: 10),
+                                    ...submittedOffers.map(
+                                      (bid) => DriverPoolBidCard(
+                                        bid: bid,
+                                        submittingBidId: null,
+                                        onDecline: null,
+                                        onSubmitOffer: null,
+                                      ),
+                                    ),
+                                  ],
                                   if (activeBids.isNotEmpty) ...[
                                     const DriverDashboardSectionLabel(
-                                      label: 'Incoming Requests',
+                                      label: 'Open Ride Offers',
                                     ),
                                     const SizedBox(height: 10),
                                     ...activeBids.map(
@@ -984,7 +1034,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                                             ).removeActiveBid(
                                               driverValueAsString(bid['id']),
                                             ),
-                                        onAccept: () => _acceptBid(bid),
+                                        onSubmitOffer: () => _submitBid(bid),
                                       ),
                                     ),
                                   ],

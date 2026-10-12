@@ -25,6 +25,7 @@ type OfferAcceptance struct {
 	Session         domain.BidSession
 	Offer           domain.BidOffer
 	Ride            ridedomain.Ride
+	RejectedOffers  []domain.BidOffer
 	WithdrawnOffers []domain.BidOfferWithdrawal
 }
 

@@ -243,6 +243,17 @@ func (service *Service) AcceptOffer(
 			"session": accepted.Session,
 		},
 	)
+	for _, rejectedOffer := range accepted.RejectedOffers {
+		service.publishDriverOfferEvent(
+			ctx,
+			rejectedOffer,
+			map[string]any{
+				"offer_id":   rejectedOffer.ID,
+				"session_id": rejectedOffer.SessionID,
+				"reason":     "another_driver_selected",
+			},
+		)
+	}
 	for _, withdrawal := range accepted.WithdrawnOffers {
 		service.publishSessionEvent(
 			ctx,

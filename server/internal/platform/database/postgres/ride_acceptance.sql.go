@@ -492,12 +492,14 @@ func (q *Queries) RejectDriverPendingBidOffers(ctx context.Context, arg RejectDr
 	return items, nil
 }
 
-const rejectOtherPendingBidOffers = `-- name: RejectOtherPendingBidOffers :exec
+const rejectOtherPendingBidOffers = `-- name: RejectOtherPendingBidOffers :many
 UPDATE bid_offers
 SET status = 'rejected'
 WHERE session_id = $1
   AND status = 'pending'
   AND id <> $2
+RETURNING id, session_id, driver_id, driver_name, plate_number, vehicle_type,
+    proposed_fare, status, created_at
 `
 
 type RejectOtherPendingBidOffersParams struct {
@@ -505,7 +507,32 @@ type RejectOtherPendingBidOffersParams struct {
 	ID        int32 `db:"id"`
 }
 
-func (q *Queries) RejectOtherPendingBidOffers(ctx context.Context, arg RejectOtherPendingBidOffersParams) error {
-	_, err := q.db.Exec(ctx, rejectOtherPendingBidOffers, arg.SessionID, arg.ID)
-	return err
+func (q *Queries) RejectOtherPendingBidOffers(ctx context.Context, arg RejectOtherPendingBidOffersParams) ([]BidOffer, error) {
+	rows, err := q.db.Query(ctx, rejectOtherPendingBidOffers, arg.SessionID, arg.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []BidOffer{}
+	for rows.Next() {
+		var i BidOffer
+		if err := rows.Scan(
+			&i.ID,
+			&i.SessionID,
+			&i.DriverID,
+			&i.DriverName,
+			&i.PlateNumber,
+			&i.VehicleType,
+			&i.ProposedFare,
+			&i.Status,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

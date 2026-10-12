@@ -44,12 +44,14 @@ WHERE id = $1
 RETURNING id, session_id, driver_id, driver_name, plate_number, vehicle_type,
     proposed_fare, status, created_at;
 
--- name: RejectOtherPendingBidOffers :exec
+-- name: RejectOtherPendingBidOffers :many
 UPDATE bid_offers
 SET status = 'rejected'
 WHERE session_id = $1
   AND status = 'pending'
-  AND id <> $2;
+  AND id <> $2
+RETURNING id, session_id, driver_id, driver_name, plate_number, vehicle_type,
+    proposed_fare, status, created_at;
 
 -- name: RejectDriverPendingBidOffers :many
 UPDATE bid_offers

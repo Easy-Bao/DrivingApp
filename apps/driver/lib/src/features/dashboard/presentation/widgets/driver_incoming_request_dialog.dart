@@ -15,7 +15,7 @@ class DriverIncomingRequestDialog extends StatefulWidget {
     required this.bid,
     required this.submittingBidId,
     required this.onDecline,
-    required this.onAccept,
+    required this.onSubmitOffer,
     this.onTimeout,
     this.totalDuration = const Duration(seconds: 30),
     this.controller,
@@ -24,7 +24,7 @@ class DriverIncomingRequestDialog extends StatefulWidget {
   final Map<String, dynamic> bid;
   final String? submittingBidId;
   final VoidCallback onDecline;
-  final VoidCallback onAccept;
+  final VoidCallback onSubmitOffer;
   final VoidCallback? onTimeout;
   final Duration totalDuration;
   final AnimationController? controller;
@@ -34,7 +34,7 @@ class DriverIncomingRequestDialog extends StatefulWidget {
     required Map<String, dynamic> bid,
     String? submittingBidId,
     required VoidCallback onDecline,
-    required VoidCallback onAccept,
+    required VoidCallback onSubmitOffer,
     VoidCallback? onTimeout,
     Duration totalDuration = const Duration(seconds: 30),
   }) {
@@ -49,9 +49,9 @@ class DriverIncomingRequestDialog extends StatefulWidget {
           Navigator.of(dialogContext, rootNavigator: true).pop();
           onDecline();
         },
-        onAccept: () {
+        onSubmitOffer: () {
           Navigator.of(dialogContext, rootNavigator: true).pop();
-          onAccept();
+          onSubmitOffer();
         },
         onTimeout: () {
           Navigator.of(dialogContext, rootNavigator: true).pop();
@@ -72,7 +72,7 @@ class _DriverIncomingRequestDialogState
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final bool _isInternalController;
-  bool _isAccepting = false;
+  bool _isSubmittingOffer = false;
 
   @override
   void initState() {
@@ -121,14 +121,14 @@ class _DriverIncomingRequestDialogState
     super.didUpdateWidget(oldWidget);
     if (oldWidget.submittingBidId != widget.submittingBidId &&
         widget.submittingBidId == null) {
-      _isAccepting = false;
+      _isSubmittingOffer = false;
     }
   }
 
-  void _handleAccept() {
-    if (_isAccepting || widget.submittingBidId != null) return;
-    setState(() => _isAccepting = true);
-    widget.onAccept();
+  void _handleSubmit() {
+    if (_isSubmittingOffer || widget.submittingBidId != null) return;
+    setState(() => _isSubmittingOffer = true);
+    widget.onSubmitOffer();
   }
 
   @override
@@ -153,7 +153,8 @@ class _DriverIncomingRequestDialogState
     final distance = _extractDistanceInKm(widget.bid);
     final bidId = driverValueAsString(widget.bid['id']);
     final isSubmitting =
-        _isAccepting || (bidId != null && widget.submittingBidId == bidId);
+        _isSubmittingOffer ||
+        (bidId != null && widget.submittingBidId == bidId);
     final passengerNote = driverValueAsString(widget.bid['passenger_note']);
 
     return Dialog(
@@ -209,7 +210,7 @@ class _DriverIncomingRequestDialogState
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Ride Request',
+                                  'Open Ride Offer',
                                   style: TextStyle(
                                     fontSize: 19,
                                     fontWeight: FontWeight.w800,
@@ -219,7 +220,7 @@ class _DriverIncomingRequestDialogState
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  'Accept before timer expires',
+                                  'Submit an offer before this session expires',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: context.colorScheme.onSurfaceVariant,
@@ -369,7 +370,8 @@ class _DriverIncomingRequestDialogState
                                 'incoming-request-decline-button',
                               ),
                               onPressed:
-                                  widget.submittingBidId != null || _isAccepting
+                                  widget.submittingBidId != null ||
+                                      _isSubmittingOffer
                                   ? null
                                   : widget.onDecline,
                               style: OutlinedButton.styleFrom(
@@ -403,14 +405,14 @@ class _DriverIncomingRequestDialogState
                           Expanded(
                             child: ElevatedButton(
                               key: const ValueKey(
-                                'incoming-request-accept-button',
+                                'incoming-request-submit-button',
                               ),
                               onPressed:
                                   fare == null ||
                                       widget.submittingBidId != null ||
-                                      _isAccepting
+                                      _isSubmittingOffer
                                   ? null
-                                  : _handleAccept,
+                                  : _handleSubmit,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: context.colorScheme.primary,
                                 foregroundColor: context.colorScheme.onPrimary,
@@ -438,7 +440,7 @@ class _DriverIncomingRequestDialogState
                                       ),
                                     )
                                   : Text(
-                                      'Accept',
+                                      'Submit Offer',
                                       style: TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w700,

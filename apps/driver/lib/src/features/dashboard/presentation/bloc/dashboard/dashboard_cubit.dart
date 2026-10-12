@@ -17,10 +17,12 @@ class DashboardCubit({
   final Duration _silentDispatchFailureCooldown;
   bool _isDispatchRequestInFlight = false;
   int _activeRideRevision = 0;
+  int _submittedOfferRevision = 0;
   Future<void>? _initialization;
   Future<void>? _statsRequestInFlight;
   DateTime? _silentDispatchRetryAfter;
   DateTime? _onlineSince;
+  final Map<String, DateTime> _resolvedOfferSessions = <String, DateTime>{};
 
   this : _now = now ?? DateTime.now, super(const DashboardState());
 
@@ -146,6 +148,7 @@ class DashboardCubit({
       emit(state.copyWith(isLoadingDispatch: true, errorMessage: null));
     }
     final activeRideRevision = _activeRideRevision;
+    final submittedOfferRevision = _submittedOfferRevision;
 
     try {
       final shouldIncludeOffers = includeOffers && !state.hasActiveRide;
@@ -178,6 +181,44 @@ class DashboardCubit({
             return true;
           }
           _silentDispatchRetryAfter = null;
+          final offeredSessions = <Map<String, dynamic>>[];
+          final submittedOffers = <Map<String, dynamic>>[];
+          if (shouldIncludeOffers) {
+            for (final bid in snapshot.rideOffers) {
+              final sessionId = _stringValue(bid['id']);
+              if (sessionId != null && _isResolvedOfferSession(sessionId)) {
+                continue;
+              }
+              if (_hasSubmittedOffer(bid)) {
+                submittedOffers.add(bid);
+              } else {
+                offeredSessions.add(bid);
+              }
+            }
+          }
+          if (submittedOfferRevision != _submittedOfferRevision) {
+            final submittedSessionIds = submittedOffers
+                .map((offer) => _stringValue(offer['id']))
+                .whereType<String>()
+                .toSet();
+            for (final offer in state.submittedOffers) {
+              final sessionId = _stringValue(offer['id']);
+              if (offer['local_offer_submitted'] == true &&
+                  sessionId != null &&
+                  !submittedSessionIds.contains(sessionId) &&
+                  !_isResolvedOfferSession(sessionId)) {
+                submittedOffers.add(offer);
+              }
+            }
+            final preservedSessionIds = submittedOffers
+                .where((offer) => offer['local_offer_submitted'] == true)
+                .map((offer) => _stringValue(offer['id']))
+                .whereType<String>()
+                .toSet();
+            offeredSessions.removeWhere(
+              (bid) => preservedSessionIds.contains(_stringValue(bid['id'])),
+            );
+          }
           emit(
             state.copyWith(
               isLoadingDispatch: false,
@@ -185,7 +226,12 @@ class DashboardCubit({
               activeBids: snapshot.activeRide != null
                   ? const <Map<String, dynamic>>[]
                   : shouldIncludeOffers
-                  ? _immutableMaps(snapshot.rideOffers)
+                  ? _immutableMaps(offeredSessions)
+                  : null,
+              submittedOffers: snapshot.activeRide != null
+                  ? const <Map<String, dynamic>>[]
+                  : shouldIncludeOffers
+                  ? _immutableMaps(submittedOffers)
                   : null,
               errorMessage: null,
             ),
@@ -243,6 +289,7 @@ class DashboardCubit({
       state.copyWith(
         activeRide: ride,
         activeBids: const <Map<String, dynamic>>[],
+        submittedOffers: const <Map<String, dynamic>>[],
       ),
     );
   }
@@ -256,6 +303,7 @@ class DashboardCubit({
       state.copyWith(
         activeRide: null,
         activeBids: const <Map<String, dynamic>>[],
+        submittedOffers: const <Map<String, dynamic>>[],
       ),
     );
   }
@@ -269,8 +317,8 @@ class DashboardCubit({
     emit(state.copyWith(activeBids: remaining));
   }
 
-  void removeExpiredRideOffers() {
-    final now = DateTime.now();
+  bool removeExpiredRideOffers() {
+    final now = _now();
     final remaining = state.activeBids
         .where((bid) {
           final expiresAt = DateTime.tryParse(
@@ -279,13 +327,106 @@ class DashboardCubit({
           return expiresAt == null || expiresAt.isAfter(now);
         })
         .toList(growable: false);
-    if (remaining.length == state.activeBids.length) return;
-    emit(state.copyWith(activeBids: remaining));
+    final remainingSubmitted = state.submittedOffers
+        .where((offer) {
+          final expiresAt = DateTime.tryParse(
+            _stringValue(offer['expires_at']) ?? '',
+          );
+          return expiresAt == null || expiresAt.isAfter(now);
+        })
+        .toList(growable: false);
+    _resolvedOfferSessions.removeWhere(
+      (_, expiresAt) => !expiresAt.isAfter(now),
+    );
+    if (remaining.length == state.activeBids.length &&
+        remainingSubmitted.length == state.submittedOffers.length) {
+      return false;
+    }
+    final submittedOfferExpired =
+        remainingSubmitted.length < state.submittedOffers.length;
+    emit(
+      state.copyWith(
+        activeBids: remaining,
+        submittedOffers: remainingSubmitted,
+      ),
+    );
+    return submittedOfferExpired;
   }
 
   void clearActiveBids() {
-    if (state.activeBids.isEmpty) return;
-    emit(state.copyWith(activeBids: const <Map<String, dynamic>>[]));
+    _resolvedOfferSessions.clear();
+    if (state.activeBids.isEmpty && state.submittedOffers.isEmpty) return;
+    emit(
+      state.copyWith(
+        activeBids: const <Map<String, dynamic>>[],
+        submittedOffers: const <Map<String, dynamic>>[],
+      ),
+    );
+  }
+
+  void markOfferSubmitted(String? sessionId) {
+    if (sessionId == null || state.hasActiveRide) return;
+    if (_isResolvedOfferSession(sessionId)) {
+      removeActiveBid(sessionId);
+      return;
+    }
+    final matchingBid = state.activeBids.where(
+      (bid) => _stringValue(bid['id']) == sessionId,
+    );
+    if (matchingBid.isEmpty) return;
+
+    final submitted = Map<String, dynamic>.from(matchingBid.first)
+      ..['local_offer_submitted'] = true;
+    final activeBids = state.activeBids
+        .where((bid) => _stringValue(bid['id']) != sessionId)
+        .toList(growable: false);
+    final submittedOffers = [
+      ...state.submittedOffers.where(
+        (offer) => _stringValue(offer['id']) != sessionId,
+      ),
+      submitted,
+    ];
+    emit(
+      state.copyWith(
+        activeBids: _immutableMaps(activeBids),
+        submittedOffers: _immutableMaps(submittedOffers),
+      ),
+    );
+    _submittedOfferRevision++;
+  }
+
+  bool resolveSubmittedOffer(String? sessionId) {
+    if (sessionId == null) return false;
+    final candidates = [...state.submittedOffers, ...state.activeBids];
+    Map<String, dynamic>? matchingBid;
+    for (final bid in candidates) {
+      if (_stringValue(bid['id']) == sessionId) {
+        matchingBid = bid;
+        break;
+      }
+    }
+    if (matchingBid == null) return false;
+
+    final expiresAt = DateTime.tryParse(
+      _stringValue(matchingBid['expires_at']) ?? '',
+    );
+    if (expiresAt != null && expiresAt.isAfter(_now())) {
+      _resolvedOfferSessions[sessionId] = expiresAt;
+    }
+    emit(
+      state.copyWith(
+        activeBids: _immutableMaps(
+          state.activeBids.where((bid) => _stringValue(bid['id']) != sessionId),
+        ),
+        submittedOffers: _immutableMaps(
+          state.submittedOffers.where(
+            (offer) => _stringValue(offer['id']) != sessionId,
+          ),
+        ),
+      ),
+    );
+    _submittedOfferRevision++;
+    return true;
   }
 
   Future<bool> submitRideOffer({
@@ -307,7 +448,7 @@ class DashboardCubit({
           return false;
         },
         (_) {
-          removeActiveBid(sessionId);
+          markOfferSubmitted(sessionId);
           return true;
         },
       );
@@ -468,6 +609,25 @@ class DashboardCubit({
     return List<Map<String, dynamic>>.unmodifiable(
       values.map(Map<String, dynamic>.from),
     );
+  }
+
+  bool _hasSubmittedOffer(Map<String, dynamic> bid) {
+    if (bid['local_offer_submitted'] == true) return true;
+    final offers = bid['offers'];
+    if (offers is! List) return false;
+    return offers.any(
+      (offer) =>
+          offer is Map &&
+          _stringValue(offer['status'])?.toLowerCase() == 'pending',
+    );
+  }
+
+  bool _isResolvedOfferSession(String sessionId) {
+    final expiresAt = _resolvedOfferSessions[sessionId];
+    if (expiresAt == null) return false;
+    if (expiresAt.isAfter(_now())) return true;
+    _resolvedOfferSessions.remove(sessionId);
+    return false;
   }
 
   static String? _stringValue(Object? value) {

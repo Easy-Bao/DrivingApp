@@ -12,9 +12,13 @@ class DashboardState extends Equatable {
     this.statsErrorMessage,
     this.activeRide,
     List<Map<String, dynamic>> activeBids = const <Map<String, dynamic>>[],
+    List<Map<String, dynamic>> submittedOffers = const <Map<String, dynamic>>[],
     this.isLoadingDispatch = false,
   }) : activeBids = activeRide == null
            ? activeBids
+           : const <Map<String, dynamic>>[],
+       submittedOffers = activeRide == null
+           ? submittedOffers
            : const <Map<String, dynamic>>[];
   static const _unset = Object();
 
@@ -27,6 +31,7 @@ class DashboardState extends Equatable {
   final String? statsErrorMessage;
   final RideSnapshot? activeRide;
   final List<Map<String, dynamic>> activeBids;
+  final List<Map<String, dynamic>> submittedOffers;
   final bool isLoadingDispatch;
 
   bool get hasActiveRide => activeRide != null;
@@ -41,6 +46,7 @@ class DashboardState extends Equatable {
     Object? statsErrorMessage = _unset,
     Object? activeRide = _unset,
     List<Map<String, dynamic>>? activeBids,
+    List<Map<String, dynamic>>? submittedOffers,
     bool? isLoadingDispatch,
   }) {
     return DashboardState(
@@ -59,6 +65,7 @@ class DashboardState extends Equatable {
           ? this.activeRide
           : activeRide as RideSnapshot?,
       activeBids: activeBids ?? this.activeBids,
+      submittedOffers: submittedOffers ?? this.submittedOffers,
       isLoadingDispatch: isLoadingDispatch ?? this.isLoadingDispatch,
     );
   }
@@ -74,6 +81,7 @@ class DashboardState extends Equatable {
     statsErrorMessage,
     activeRide,
     activeBids,
+    submittedOffers,
     isLoadingDispatch,
   ];
 }

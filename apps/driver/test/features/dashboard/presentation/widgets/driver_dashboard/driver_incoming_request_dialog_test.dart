@@ -16,7 +16,7 @@ void main() {
         .toIso8601String(),
   };
 
-  testWidgets('renders incoming ride request details', (tester) async {
+  testWidgets('renders open ride offer details', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: EasyRideTheme.main,
@@ -25,13 +25,14 @@ void main() {
             bid: testBid,
             submittingBidId: null,
             onDecline: () {},
-            onAccept: () {},
+            onSubmitOffer: () {},
           ),
         ),
       ),
     );
 
-    expect(find.text('Ride Request'), findsOneWidget);
+    expect(find.text('Open Ride Offer'), findsOneWidget);
+    expect(find.text('Submit Offer'), findsOneWidget);
     expect(find.text('Ayala Center Cebu'), findsOneWidget);
     expect(find.text('IT Park Tower 1'), findsOneWidget);
     expect(find.text('₱250'), findsOneWidget);
@@ -63,7 +64,7 @@ void main() {
             bid: testBid,
             submittingBidId: null,
             onDecline: () {},
-            onAccept: () {},
+            onSubmitOffer: () {},
           ),
         ),
       ),
@@ -78,7 +79,7 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.byKey(const ValueKey('incoming-request-accept-button')),
+      find.byKey(const ValueKey('incoming-request-submit-button')),
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);
@@ -95,7 +96,7 @@ void main() {
               bid: testBid,
               submittingBidId: null,
               onDecline: () {},
-              onAccept: () {},
+              onSubmitOffer: () {},
               totalDuration: const Duration(seconds: 30),
             ),
           ),
@@ -126,9 +127,9 @@ void main() {
     },
   );
 
-  testWidgets('triggers onDecline and onAccept callbacks', (tester) async {
+  testWidgets('triggers onDecline and onSubmitOffer callbacks', (tester) async {
     var declined = false;
-    var accepted = false;
+    var submittedOffer = false;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -138,7 +139,7 @@ void main() {
             bid: testBid,
             submittingBidId: null,
             onDecline: () => declined = true,
-            onAccept: () => accepted = true,
+            onSubmitOffer: () => submittedOffer = true,
           ),
         ),
       ),
@@ -150,15 +151,15 @@ void main() {
     expect(declined, isTrue);
 
     await tester.tap(
-      find.byKey(const ValueKey('incoming-request-accept-button')),
+      find.byKey(const ValueKey('incoming-request-submit-button')),
     );
-    expect(accepted, isTrue);
+    expect(submittedOffer, isTrue);
   });
 
-  testWidgets('latches the accept action against rapid double taps', (
+  testWidgets('latches offer submission against rapid double taps', (
     tester,
   ) async {
-    var accepted = 0;
+    var submissions = 0;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -168,19 +169,19 @@ void main() {
             bid: testBid,
             submittingBidId: null,
             onDecline: () {},
-            onAccept: () => accepted++,
+            onSubmitOffer: () => submissions++,
           ),
         ),
       ),
     );
 
-    final acceptButton = find.byKey(
-      const ValueKey('incoming-request-accept-button'),
+    final submitButton = find.byKey(
+      const ValueKey('incoming-request-submit-button'),
     );
-    await tester.tap(acceptButton);
-    await tester.tap(acceptButton);
+    await tester.tap(submitButton);
+    await tester.tap(submitButton);
 
-    expect(accepted, 1);
+    expect(submissions, 1);
   });
 
   testWidgets('triggers onTimeout when countdown expires', (tester) async {
@@ -199,7 +200,7 @@ void main() {
             },
             submittingBidId: null,
             onDecline: () {},
-            onAccept: () {},
+            onSubmitOffer: () {},
             onTimeout: () => timedOut = true,
             totalDuration: const Duration(seconds: 2),
           ),

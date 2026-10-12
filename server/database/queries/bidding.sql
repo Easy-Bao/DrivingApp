@@ -121,15 +121,27 @@ FROM bid_sessions AS sessions
 WHERE sessions.status = 'open'
   AND sessions.expires_at > $1
   AND (sessions.target_driver_id IS NULL OR sessions.target_driver_id = $2)
-  AND NOT EXISTS (
-      SELECT 1
-      FROM bid_offers AS offers
-      WHERE offers.session_id = sessions.id
-        AND offers.driver_id = $2
-        AND offers.status = 'pending'
-  )
-ORDER BY sessions.created_at
+ORDER BY EXISTS (
+    SELECT 1
+    FROM bid_offers AS offers
+    WHERE offers.session_id = sessions.id
+      AND offers.driver_id = $2
+      AND offers.status = 'pending'
+) DESC, sessions.created_at
 LIMIT 50;
+
+-- name: ListPendingBidOffersForDriver :many
+SELECT offers.id, offers.session_id, offers.driver_id, offers.driver_name,
+    offers.plate_number, offers.vehicle_type, offers.proposed_fare,
+    offers.status, offers.created_at
+FROM bid_offers AS offers
+JOIN bid_sessions AS sessions ON sessions.id = offers.session_id
+WHERE offers.driver_id = $1
+  AND offers.status = 'pending'
+  AND sessions.status = 'open'
+  AND sessions.expires_at > $2
+  AND (sessions.target_driver_id IS NULL OR sessions.target_driver_id = $1)
+ORDER BY sessions.created_at;
 
 -- name: GetBidSessionByID :one
 SELECT id, passenger_id, ride_type, pickup_latitude, pickup_longitude,
