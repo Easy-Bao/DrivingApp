@@ -8,15 +8,11 @@ class DriverActiveTripCard extends StatelessWidget {
   const DriverActiveTripCard({
     super.key,
     required this.trip,
-    required this.isCompletingTrip,
     required this.onResume,
-    required this.onComplete,
   });
 
   final RideSnapshot trip;
-  final bool isCompletingTrip;
   final VoidCallback onResume;
-  final VoidCallback onComplete;
 
   @override
   Widget build(BuildContext context) {
@@ -107,91 +103,31 @@ class DriverActiveTripCard extends StatelessWidget {
             dropoff: trip.dropoffName,
           ),
           const SizedBox(height: 14),
-          if (status == 'in_transit')
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: EasyRideSize.minimumTouchTarget,
-                    child: ElevatedButton(
-                      onPressed: onResume,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: context.colorScheme.primary,
-                        foregroundColor: context.colorScheme.onPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            EasyRideRadius.lg,
-                          ),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Go to Trip Flow',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: SizedBox(
-                    height: EasyRideSize.minimumTouchTarget,
-                    child: ElevatedButton(
-                      onPressed: isCompletingTrip ? null : onComplete,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: context.semanticColors.success,
-                        foregroundColor: context.semanticColors.onSuccess,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            EasyRideRadius.lg,
-                          ),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: isCompletingTrip
-                          ? SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: context.semanticColors.onSuccess,
-                              ),
-                            )
-                          : const Text(
-                              'Complete Trip',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 13,
-                              ),
-                            ),
-                    ),
-                  ),
-                ),
-              ],
-            )
-          else
-            SizedBox(
-              width: double.infinity,
-              height: EasyRideSize.minimumTouchTarget,
-              child: ElevatedButton(
-                onPressed: onResume,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: context.colorScheme.primary,
-                  foregroundColor: context.colorScheme.onPrimary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-                  ),
-                  elevation: 0,
-                ),
-                child: const Text(
-                  'Go to Trip Flow',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+          SizedBox(
+            width: double.infinity,
+            height: EasyRideSize.minimumTouchTarget,
+            child: ElevatedButton.icon(
+              onPressed: onResume,
+              icon: const Icon(LucideIcons.navigation, size: 18),
+              label: Text(
+                status == 'in_transit'
+                    ? 'Continue Navigation'
+                    : 'Open Trip Details',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
                 ),
               ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: context.colorScheme.primary,
+                foregroundColor: context.colorScheme.onPrimary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+                ),
+                elevation: 0,
+              ),
             ),
+          ),
         ],
       ),
     );

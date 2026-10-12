@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:design_system/design_system.dart';
+import 'package:driver/src/features/active_ride/presentation/widgets/ride_confirmation_slider.dart';
 
 class const PickupNavigationPanel({
   super.key,
@@ -272,104 +273,15 @@ class const PickupNavigationPanel({
   }
 
   Widget _arrivalSlider() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const thumbSize = 52.0;
-        final travel = (constraints.maxWidth - thumbSize)
-            .clamp(0.0, double.infinity)
-            .toDouble();
-        return Container(
-          height: 52,
-          decoration: BoxDecoration(
-            color: context.semanticColors.success.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-          ),
-          child: Stack(
-            children: [
-              Center(
-                child: Text(
-                  isConfirmingArrival
-                      ? 'Confirming arrival…'
-                      : sliderValue > 0.8
-                      ? 'Release to confirm'
-                      : 'Slide when you arrive',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: context.semanticColors.success,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: travel * sliderValue,
-                top: 0,
-                child: Semantics(
-                  label: 'Confirm arrival',
-                  value: '${(sliderValue * 100).round()} percent',
-                  hint: 'Swipe right to confirm arrival',
-                  enabled: !isConfirmingArrival,
-                  onIncrease: isConfirmingArrival || travel == 0
-                      ? null
-                      : () {
-                          final nextValue = (sliderValue + 0.1)
-                              .clamp(0.0, 1.0)
-                              .toDouble();
-                          onSliderChanged(nextValue);
-                          if (nextValue >= 0.85) onSliderCompleted();
-                        },
-                  onDecrease: isConfirmingArrival || travel == 0
-                      ? null
-                      : () => onSliderChanged(
-                          (sliderValue - 0.1).clamp(0.0, 1.0).toDouble(),
-                        ),
-                  child: GestureDetector(
-                    onHorizontalDragUpdate: isConfirmingArrival || travel == 0
-                        ? null
-                        : (details) => onSliderChanged(
-                            (sliderValue + details.delta.dx / travel)
-                                .clamp(0.0, 1.0)
-                                .toDouble(),
-                          ),
-                    onHorizontalDragEnd: isConfirmingArrival
-                        ? null
-                        : (_) {
-                            if (sliderValue >= 0.85) {
-                              onSliderCompleted();
-                            } else {
-                              onSliderChanged(0);
-                            }
-                          },
-                    child: Container(
-                      width: thumbSize,
-                      height: thumbSize,
-                      decoration: BoxDecoration(
-                        color: context.semanticColors.success,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: isConfirmingArrival
-                            ? SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: context.semanticColors.onSuccess,
-                                ),
-                              )
-                            : Icon(
-                                LucideIcons.chevron_right,
-                                color: context.semanticColors.onSuccess,
-                                size: 22,
-                              ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+    return RideConfirmationSlider(
+      progress: sliderValue,
+      label: 'Slide when you arrive',
+      releaseLabel: 'Release to confirm',
+      processingLabel: 'Confirming arrival…',
+      hint: 'Swipe right to confirm arrival.',
+      isProcessing: isConfirmingArrival,
+      onProgressChanged: onSliderChanged,
+      onConfirmed: onSliderCompleted,
     );
   }
 }

@@ -7,7 +7,7 @@ import 'package:driver/src/features/active_ride/presentation/bloc/live_map/live_
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
-import 'package:driver/src/features/active_ride/presentation/widgets/in_transit/in_transit_complete_button.dart';
+import 'package:driver/src/features/active_ride/presentation/widgets/in_transit/in_transit_completion_slider.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/in_transit/in_transit_passenger_card.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_active_ride_header.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/driver_safety_report_sheet.dart';
@@ -48,6 +48,7 @@ class const InTransitPage({
 class _InTransitPageState extends State<InTransitPage> {
   bool _isLoading = true;
   bool _isCompletingTrip = false;
+  double _completionSliderProgress = 0;
   double? _destLat;
   double? _destLng;
   late final AppLifecyclePeriodicTask _trackingTask;
@@ -248,7 +249,12 @@ class _InTransitPageState extends State<InTransitPage> {
         },
       );
     } finally {
-      if (mounted) setState(() => _isCompletingTrip = false);
+      if (mounted) {
+        setState(() {
+          _isCompletingTrip = false;
+          _completionSliderProgress = 0;
+        });
+      }
     }
   }
 
@@ -370,7 +376,15 @@ class _InTransitPageState extends State<InTransitPage> {
                             const SizedBox(height: 8),
                             const InTransitPassengerCard(),
                             const SizedBox(height: 12),
-                            InTransitCompleteButton(
+                            InTransitCompletionSlider(
+                              progress: _completionSliderProgress,
+                              onProgressChanged: (progress) {
+                                if (mounted) {
+                                  setState(
+                                    () => _completionSliderProgress = progress,
+                                  );
+                                }
+                              },
                               isCompletingTrip: _isCompletingTrip,
                               onCompleteTripPressed: () =>
                                   _completeTrip(context),

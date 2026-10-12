@@ -75,7 +75,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   bool _isRefreshingPresence = false;
   bool? _pendingOnline;
   String? _submittingBidId;
-  String? _completingTripId;
   int _pollGeneration = 0;
   int _locationAccessFailures = 0;
   bool _isCheckingLocationAccess = false;
@@ -819,79 +818,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     );
   }
 
-  Future<void> _completeTripFromDashboard(RideSnapshot trip) async {
-    if (_completingTripId != null) return;
-    final rideId = trip.id;
-    final resolvedTrip = await _authoritativeTrip(trip);
-    if (!mounted) return;
-    if (_discardTerminalTrip(resolvedTrip, rideId)) return;
-    final fare = resolvedTrip.farePesos;
-    final distance = resolvedTrip.distanceKm;
-    final duration = resolvedTrip.durationMinutes;
-    if (fare == null || distance == null || duration == null) return;
-
-    if (mounted) setState(() => _completingTripId = rideId);
-    try {
-      final cubit = BlocProvider.of<RideFlowCubit>(context);
-      final position = await LocationService.getCurrentPosition();
-      if (!mounted) return;
-      if (position == null) {
-        CustomToast.show(
-          context,
-          'Your current location is unavailable. Enable location and try again.',
-          isError: true,
-        );
-        return;
-      }
-      final resumed = cubit.resumeRide(
-        rideId: rideId,
-        status: resolvedTrip.status.isEmpty ? 'accepted' : resolvedTrip.status,
-        passengerName: resolvedTrip.passengerName ?? 'Passenger',
-        passengerId: resolvedTrip.passengerId,
-        distanceKm: resolvedTrip.distanceKm,
-        pickupLat: resolvedTrip.pickupLatitude,
-        pickupLng: resolvedTrip.pickupLongitude,
-        destLat: resolvedTrip.dropoffLatitude,
-        destLng: resolvedTrip.dropoffLongitude,
-        arrivedAt: resolvedTrip.arrivedAt,
-        waitingUntil: resolvedTrip.waitingUntil,
-      );
-      if (!resumed || !mounted) return;
-
-      final finalFare = await cubit.completeRide(
-        driverLat: position.latitude,
-        driverLng: position.longitude,
-      );
-      if (finalFare == null) {
-        if (mounted) {
-          final state = cubit.state;
-          CustomToast.show(
-            context,
-            state is RideFlowError
-                ? state.message
-                : 'Unable to complete the trip. Please try again.',
-            isError: true,
-          );
-        }
-        return;
-      }
-      if (!mounted) return;
-
-      context.pushReplacementNamed(
-        ActiveRideRoutes.fareSummary,
-        extra: {
-          'pickup': resolvedTrip.pickupName,
-          'dropoff': resolvedTrip.dropoffName,
-          'distance': distance,
-          'fare': finalFare,
-          'duration': '${duration.toStringAsFixed(0)} min',
-        },
-      );
-    } finally {
-      if (mounted) setState(() => _completingTripId = null);
-    }
-  }
-
   bool _discardTerminalTrip(RideSnapshot trip, String rideId) {
     if (!trip.isTerminal) return false;
 
@@ -1039,13 +965,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                                     DriverActiveTripCard(
                                       key: ValueKey<String>(activeRide.id),
                                       trip: activeRide,
-                                      isCompletingTrip:
-                                          _completingTripId == activeRide.id,
                                       onResume: () => _resumeTrip(activeRide),
-                                      onComplete: () =>
-                                          _completeTripFromDashboard(
-                                            activeRide,
-                                          ),
                                     ),
                                     const SizedBox(height: 24),
                                   ],

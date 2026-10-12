@@ -20,30 +20,32 @@ void main() {
     expect(find.textContaining('/5'), findsNothing);
   });
 
-  testWidgets('active trip card does not present a queued-passenger state', (
+  testWidgets('active trip card only offers navigation while in transit', (
     tester,
   ) async {
+    var resumeCount = 0;
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         home: Scaffold(
           body: DriverActiveTripCard(
-            trip: RideSnapshot(
+            trip: const RideSnapshot(
               id: 'ride-1',
-              status: 'accepted',
+              status: 'in_transit',
               pickupName: 'Central Station',
               dropoffName: 'Market Road',
             ),
-            isCompletingTrip: false,
-            onResume: _noop,
-            onComplete: _noop,
+            onResume: () => resumeCount++,
           ),
         ),
       ),
     );
 
     expect(find.textContaining('Queued passenger'), findsNothing);
-    expect(find.text('Go to Trip Flow'), findsOneWidget);
+    expect(find.text('Complete Trip'), findsNothing);
+    expect(find.text('Continue Navigation'), findsOneWidget);
+    expect(find.byType(ElevatedButton), findsOneWidget);
+
+    await tester.tap(find.text('Continue Navigation'));
+    expect(resumeCount, 1);
   });
 }
-
-void _noop() {}
