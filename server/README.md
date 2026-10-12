@@ -45,8 +45,9 @@ envelopes, WebSocket hub, security, middleware, and resilience helpers.
 
 The current module ownership is:
 
-- `ride`: booking, bidding, lifecycle, settlement, ride reporting, and ride
-	  transport; the use-case groups live under `internal/ride/{booking,bidding,lifecycle,settlement}`.
+- `dispatch`: driver availability, bidding, offer acceptance, and assignment.
+- `ride`: booking, lifecycle, settlement, ride reporting, and ride transport;
+  the use-case groups live under `internal/ride/{booking,lifecycle,settlement}`.
 - `auth`, `user`, `admin`, and `driver/documents`: identity, profiles,
   administration, and driver-document workflows with feature-owned ports.
 - `location` and `location/tracking`: provider-backed location queries and
@@ -93,8 +94,8 @@ requires it. Compose sets the container API host to `0.0.0.0` and publishes
 the gateway through `GATEWAY_HOST`, which also defaults to loopback. Set
 `GATEWAY_HOST` to an interface reachable by a physical development device
 when LAN testing is required.
-The API process owns REST, WebSocket, authentication, rides, location,
-realtime, chat, and admin routes.
+The API process owns REST, WebSocket, authentication, dispatch, rides,
+location, chat, and admin routes.
 
 Realtime events and the small assignment routing projection stay in memory for
 the single-process deployment. PostgreSQL remains the authorization authority;
