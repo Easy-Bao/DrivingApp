@@ -22,6 +22,37 @@ const (
 	_locationCleanupBatchSize       = 100
 )
 
+type driverLocationRecord struct {
+	DriverID   string    `json:"driver_id"`
+	Latitude   float64   `json:"latitude"`
+	Longitude  float64   `json:"longitude"`
+	Heading    float64   `json:"heading,omitempty"`
+	Speed      float64   `json:"speed,omitempty"`
+	ObservedAt time.Time `json:"observed_at"`
+}
+
+func newDriverLocationRecord(point domain.DriverPoint) driverLocationRecord {
+	return driverLocationRecord{
+		DriverID:   point.DriverID,
+		Latitude:   point.Latitude,
+		Longitude:  point.Longitude,
+		Heading:    point.Heading,
+		Speed:      point.Speed,
+		ObservedAt: point.ObservedAt,
+	}
+}
+
+func (record driverLocationRecord) point() domain.DriverPoint {
+	return domain.DriverPoint{
+		DriverID:   record.DriverID,
+		Latitude:   record.Latitude,
+		Longitude:  record.Longitude,
+		Heading:    record.Heading,
+		Speed:      record.Speed,
+		ObservedAt: record.ObservedAt,
+	}
+}
+
 const _cleanupExpiredDriversScript = `
 local expired = redis.call('ZRANGEBYSCORE', KEYS[1], '-inf', ARGV[1], 'LIMIT', '0', ARGV[2])
 for _, driver_id in ipairs(expired) do
@@ -74,7 +105,7 @@ func (repository *DriverLocationStore) Upsert(ctx context.Context, point domain.
 	if err := repository.validate(); err != nil {
 		return err
 	}
-	payload, err := jsonv2.Marshal(point)
+	payload, err := jsonv2.Marshal(newDriverLocationRecord(point))
 	if err != nil {
 		return fmt.Errorf("marshal driver location: %w", err)
 	}
@@ -240,13 +271,14 @@ func (repository *DriverLocationStore) Nearby(
 			staleLocations = append(staleLocations, locationID)
 			continue
 		}
-		var point domain.DriverPoint
-		if err := jsonv2.Unmarshal([]byte(payload), &point); err != nil ||
-			point.DriverID == "" ||
-			point.DriverID != locationID {
+		var record driverLocationRecord
+		if err := jsonv2.Unmarshal([]byte(payload), &record); err != nil ||
+			record.DriverID == "" ||
+			record.DriverID != locationID {
 			staleLocations = append(staleLocations, locationID)
 			continue
 		}
+		point := record.point()
 		result = append(result, point)
 	}
 	decodeDuration = measure(decodeStartedAt)
@@ -307,7 +339,7 @@ func (repository *DriverLocationStore) UpsertPassenger(
 	if err := repository.validate(); err != nil {
 		return err
 	}
-	payload, err := jsonv2.Marshal(point)
+	payload, err := jsonv2.Marshal(newDriverLocationRecord(point))
 	if err != nil {
 		return fmt.Errorf("marshal passenger location: %w", err)
 	}
@@ -337,11 +369,11 @@ func (repository *DriverLocationStore) get(ctx context.Context, key string) (dom
 	if err != nil {
 		return domain.DriverPoint{}, fmt.Errorf("read location: %w", err)
 	}
-	var point domain.DriverPoint
-	if err := jsonv2.Unmarshal(payload, &point); err != nil {
+	var record driverLocationRecord
+	if err := jsonv2.Unmarshal(payload, &record); err != nil {
 		return domain.DriverPoint{}, fmt.Errorf("decode location: %w", err)
 	}
-	return point, nil
+	return record.point(), nil
 }
 
 func (repository *DriverLocationStore) validate() error {

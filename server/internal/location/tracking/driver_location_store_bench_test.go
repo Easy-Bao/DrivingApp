@@ -200,7 +200,7 @@ func seedDriverLocationBenchmarkData(
 			Longitude:  _benchmarkLongitude + float64(index%50)*0.00005,
 			ObservedAt: now.Add(-time.Second),
 		}
-		payload, err := jsonv2.Marshal(point)
+		payload, err := jsonv2.Marshal(newDriverLocationRecord(point))
 		if err != nil {
 			b.Fatalf("marshal benchmark location: %v", err)
 		}

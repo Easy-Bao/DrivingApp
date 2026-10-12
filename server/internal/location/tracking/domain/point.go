@@ -16,10 +16,10 @@ var (
 )
 
 type DriverPoint struct {
-	DriverID   string    `json:"driver_id"`
-	Latitude   float64   `json:"latitude"`
-	Longitude  float64   `json:"longitude"`
-	Heading    float64   `json:"heading,omitempty"`
-	Speed      float64   `json:"speed,omitempty"`
-	ObservedAt time.Time `json:"observed_at"`
+	DriverID   string
+	Latitude   float64
+	Longitude  float64
+	Heading    float64
+	Speed      float64
+	ObservedAt time.Time
 }

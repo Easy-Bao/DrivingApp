@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/domain"
+	trackingdto "github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/transport/http/dto"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
@@ -30,7 +31,7 @@ func NewHandler(dependencies Dependencies) *Handler {
 }
 
 func (handler *Handler) UpdateDriverLocation(writer http.ResponseWriter, request *http.Request) {
-	var input LocationUpdate
+	var input trackingdto.LocationUpdate
 	if sharedrequest.DecodeJSONV2(writer, request, &input, 8<<10) != nil {
 		response.Error(writer, http.StatusBadRequest, "invalid location")
 		return
@@ -64,7 +65,10 @@ func (handler *Handler) UpdateDriverLocation(writer http.ResponseWriter, request
 		response.Error(writer, http.StatusInternalServerError, "could not save location")
 		return
 	}
-	response.JSON(writer, http.StatusAccepted, map[string]any{"success": true, "location": point})
+	response.JSON(writer, http.StatusAccepted, map[string]any{
+		"success":  true,
+		"location": trackingdto.NewDriverLocationResponse(point),
+	})
 }
 
 func (handler *Handler) GetDriverLocation(writer http.ResponseWriter, request *http.Request) {
@@ -82,7 +86,7 @@ func (handler *Handler) GetDriverLocation(writer http.ResponseWriter, request *h
 		response.Error(writer, http.StatusNotFound, "location not found")
 		return
 	}
-	response.JSON(writer, http.StatusOK, point)
+	response.JSON(writer, http.StatusOK, trackingdto.NewDriverLocationResponse(point))
 }
 
 func (handler *Handler) GetRideDriverLocation(writer http.ResponseWriter, request *http.Request) {
@@ -100,7 +104,7 @@ func (handler *Handler) GetRideDriverLocation(writer http.ResponseWriter, reques
 		writeRideLocationError(writer, err)
 		return
 	}
-	response.JSON(writer, http.StatusOK, point)
+	response.JSON(writer, http.StatusOK, trackingdto.NewDriverLocationResponse(point))
 }
 
 func (handler *Handler) DeleteDriverLocation(writer http.ResponseWriter, request *http.Request) {
@@ -130,7 +134,7 @@ func (handler *Handler) UpdatePassengerLocation(writer http.ResponseWriter, requ
 		response.Error(writer, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	var input PassengerLocationUpdate
+	var input trackingdto.PassengerLocationUpdate
 	if sharedrequest.DecodeJSONV2(writer, request, &input, 8<<10) != nil {
 		response.Error(writer, http.StatusBadRequest, "invalid location")
 		return
@@ -167,7 +171,7 @@ func (handler *Handler) GetPassengerLocation(writer http.ResponseWriter, request
 		writeRideLocationError(writer, err)
 		return
 	}
-	response.JSON(writer, http.StatusOK, point)
+	response.JSON(writer, http.StatusOK, trackingdto.NewDriverLocationResponse(point))
 }
 
 func (handler *Handler) NearbyDrivers(writer http.ResponseWriter, request *http.Request) {
@@ -193,7 +197,9 @@ func (handler *Handler) NearbyDrivers(writer http.ResponseWriter, request *http.
 		response.Error(writer, http.StatusServiceUnavailable, "driver availability unavailable")
 		return
 	}
-	response.JSON(writer, http.StatusOK, map[string]any{"drivers": points})
+	response.JSON(writer, http.StatusOK, map[string]any{
+		"drivers": trackingdto.NewDriverLocationResponses(points),
+	})
 }
 
 func (handler *Handler) identity(request *http.Request) (security.Identity, bool) {
