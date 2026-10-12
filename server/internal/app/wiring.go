@@ -55,7 +55,6 @@ import (
 
 type rideRuntimeStore interface {
 	rideports.RideStore
-	dispatchports.BiddingStore
 	ActiveRidesForDriver(context.Context, int) ([]ridedomain.Ride, error)
 }
 
@@ -72,6 +71,7 @@ type httpRouterDependencies struct {
 	authStore          authRuntimeStore
 	sessionStore       authports.SessionStore
 	rideStore          rideRuntimeStore
+	dispatchStore      dispatchports.BiddingStore
 	profileStore       userports.ProfileStore
 	statsReader        adminports.StatsReader
 	documentStore      documentapplication.DocumentStore
@@ -255,7 +255,7 @@ func newHTTPRouter(
 		rideapplication.WithRouteCalculator(routeCalculator),
 	).WithReportingLocation(config.ReportingLocation).WithLogger(applicationLogger)
 	dispatchService := dispatchapplication.NewService(dispatchapplication.Dependencies{
-		Store: rideStore,
+		Store: dependencies.dispatchStore,
 		ResolveRoute: func(
 			ctx context.Context,
 			pickupLatitude float64,

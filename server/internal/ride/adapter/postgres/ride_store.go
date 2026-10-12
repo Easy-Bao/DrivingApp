@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"time"
 
-	dispatchports "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/ports"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
@@ -39,7 +38,6 @@ type RideStoreConfig struct {
 
 var (
 	_ ports.RideStore                  = (*RideRepository)(nil)
-	_ dispatchports.BiddingStore       = (*RideRepository)(nil)
 	_ ports.PassengerActiveRideChecker = (*RideRepository)(nil)
 	_ interface {
 		ActiveRidesForDriver(context.Context, int) ([]domain.Ride, error)
@@ -73,7 +71,11 @@ func (repository *RideRepository) onlinePresenceCutoff() pgtype.Timestamptz {
 	if maxAge <= 0 {
 		maxAge = _defaultOnlinePresenceMaxAge
 	}
-	return bidTimestamp(time.Now().UTC().Add(-maxAge))
+	return postgresTimestamp(time.Now().UTC().Add(-maxAge))
+}
+
+func postgresTimestamp(value time.Time) pgtype.Timestamptz {
+	return pgtype.Timestamptz{Time: value, Valid: true}
 }
 
 // RideStore is the canonical adapter name used by the ride composition root.

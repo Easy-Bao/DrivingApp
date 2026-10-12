@@ -6,9 +6,6 @@ import (
 	"testing"
 	"time"
 
-	dispatchapplication "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/application"
-	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/domain"
-	dispatchports "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/ports"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
 )
@@ -17,7 +14,6 @@ type ridesRepositoryStub struct {
 	ride          domain.Ride
 	created       domain.Ride
 	updated       domain.Ride
-	session       dispatchdomain.BidSession
 	updateNext    string
 	hasActiveRide bool
 }
@@ -25,7 +21,6 @@ type ridesRepositoryStub struct {
 var (
 	_ ports.RideStore                  = (*ridesRepositoryStub)(nil)
 	_ ports.PassengerActiveRideChecker = (*ridesRepositoryStub)(nil)
-	_ dispatchports.BiddingStore       = (*ridesRepositoryStub)(nil)
 	_ ports.RideLifecycleStore         = (*ridesRepositoryStub)(nil)
 	_ ports.SafetyReportStore          = (*ridesRepositoryStub)(nil)
 )
@@ -69,45 +64,6 @@ func newTestRideService(
 		},
 		options...,
 	)
-}
-
-func newTestDispatchService(
-	store dispatchports.BiddingStore,
-	rideService *RideService,
-	pricingConfig PricingConfig,
-	config dispatchapplication.Config,
-) *dispatchapplication.Service {
-	return dispatchapplication.NewService(dispatchapplication.Dependencies{
-		Store: store,
-		ResolveRoute: func(
-			ctx context.Context,
-			pickupLatitude float64,
-			pickupLongitude float64,
-			dropoffLatitude float64,
-			dropoffLongitude float64,
-			distanceKm float64,
-			durationMinutes float64,
-		) (dispatchports.RouteMetrics, error) {
-			metrics, _, err := rideService.Fare(
-				ctx,
-				&pickupLatitude,
-				&pickupLongitude,
-				&dropoffLatitude,
-				&dropoffLongitude,
-				distanceKm,
-				durationMinutes,
-			)
-			if err != nil {
-				return dispatchports.RouteMetrics{}, err
-			}
-			return dispatchports.RouteMetrics{
-				DistanceKm:      metrics.DistanceKm,
-				DurationMinutes: metrics.DurationMinutes,
-			}, nil
-		},
-		CalculateFare: pricingConfig.FareAmount,
-		Config:        config,
-	})
 }
 
 func (stub *ridesRepositoryStub) CreateRide(_ context.Context, ride domain.Ride) (domain.Ride, error) {
@@ -196,47 +152,6 @@ func (stub *ridesRepositoryStub) UpdateStatus(
 	return stub.updated, nil
 }
 
-func (stub *ridesRepositoryStub) CreateSession(
-	_ context.Context,
-	session dispatchdomain.BidSession,
-) (dispatchdomain.BidSession, error) {
-	stub.session = session
-	return session, nil
-}
-
-func (stub *ridesRepositoryStub) ActiveSessions(context.Context, *int) ([]dispatchdomain.BidSession, error) {
-	return nil, nil
-}
-
-func (stub *ridesRepositoryStub) Offers(context.Context, int) ([]dispatchdomain.BidOffer, error) {
-	return nil, nil
-}
-
-func (stub *ridesRepositoryStub) PlaceOffer(context.Context, dispatchdomain.BidOffer) (dispatchdomain.BidOffer, error) {
-	return dispatchdomain.BidOffer{}, nil
-}
-
-func (stub *ridesRepositoryStub) AcceptOffer(
-	context.Context,
-	int,
-	int,
-	int,
-) (dispatchports.OfferAcceptance, error) {
-	return dispatchports.OfferAcceptance{}, nil
-}
-
-func (stub *ridesRepositoryStub) CancelSession(context.Context, int, int) (dispatchdomain.BidSession, error) {
-	return dispatchdomain.BidSession{}, nil
-}
-
-func (stub *ridesRepositoryStub) CancelOffer(context.Context, int, int) (dispatchdomain.BidOffer, error) {
-	return dispatchdomain.BidOffer{}, nil
-}
-
-func (stub *ridesRepositoryStub) Session(context.Context, int) (dispatchdomain.BidSession, error) {
-	return stub.session, nil
-}
-
 func TestCreateRideBuildsRequestedRide(t *testing.T) {
 	stub := &ridesRepositoryStub{}
 	service := newTestRideService(stub, testPricingConfig(t), nil)
@@ -271,202 +186,6 @@ func TestCreateSafetyReportNormalizesAndDerivesSeverity(t *testing.T) {
 	if report.ReporterRole != "passenger" || report.Category != domain.SafetyReportUnsafeDriving ||
 		report.Severity != domain.SafetyReportHigh || report.Status != domain.SafetyReportSubmitted {
 		t.Fatalf("created report = %+v", report)
-	}
-}
-
-func TestCreateSessionUsesServerMinimumAndAcceptsValidCustomFare(t *testing.T) {
-	stub := &ridesRepositoryStub{}
-	rideService := newTestRideService(stub, testPricingConfig(t), nil)
-	service := newTestDispatchService(stub, rideService, testPricingConfig(t), dispatchapplication.Config{})
-	custom := int64(5000)
-	session, err := service.CreateSession(context.Background(), dispatchdomain.BidSession{
-		PassengerID:      7,
-		PickupLatitude:   6.7,
-		PickupLongitude:  122.1,
-		DropoffLatitude:  6.71,
-		DropoffLongitude: 122.11,
-		DistanceKm:       2,
-		DurationMinutes:  10,
-		CustomFareAmount: &custom,
-	})
-	if err != nil {
-		t.Fatalf("CreateSession returned error: %v", err)
-	}
-	if session.OfferedFareAmount != custom || stub.session.OfferedFareAmount != custom {
-		t.Fatalf("expected custom fare %d, got %d", custom, session.OfferedFareAmount)
-	}
-}
-
-func TestCreateSessionUsesAuthoritativeRouteMetrics(t *testing.T) {
-	stub := &ridesRepositoryStub{}
-	rideService := newTestRideService(
-		stub,
-		testPricingConfig(t),
-		nil,
-		WithRouteCalculator(RouteCalculatorFunc(func(
-			context.Context,
-			float64,
-			float64,
-			float64,
-			float64,
-		) (RouteMetrics, error) {
-			return RouteMetrics{DistanceKm: 4, DurationMinutes: 20}, nil
-		})),
-	)
-	service := newTestDispatchService(stub, rideService, testPricingConfig(t), dispatchapplication.Config{})
-	custom := int64(4000)
-	session, err := service.CreateSession(context.Background(), dispatchdomain.BidSession{
-		PassengerID:      7,
-		PickupLatitude:   6.7,
-		PickupLongitude:  122.1,
-		DropoffLatitude:  6.71,
-		DropoffLongitude: 122.11,
-		DistanceKm:       0.01,
-		DurationMinutes:  0.01,
-		CustomFareAmount: &custom,
-	})
-	if err != nil {
-		t.Fatalf("CreateSession returned error: %v", err)
-	}
-	if session.DistanceKm != 4 || session.DurationMinutes != 20 {
-		t.Fatalf("expected server route metrics, got %.2f km and %.2f minutes", session.DistanceKm, session.DurationMinutes)
-	}
-	if session.OfferedFareAmount != custom {
-		t.Fatalf("expected custom fare %d, got %d", custom, session.OfferedFareAmount)
-	}
-}
-
-func TestCreateSessionFailsWhenAuthoritativeRouteIsUnavailable(t *testing.T) {
-	stub := &ridesRepositoryStub{}
-	rideService := newTestRideService(
-		stub,
-		testPricingConfig(t),
-		nil,
-		WithRouteCalculator(RouteCalculatorFunc(func(
-			context.Context,
-			float64,
-			float64,
-			float64,
-			float64,
-		) (RouteMetrics, error) {
-			return RouteMetrics{}, errors.New("mapbox timeout")
-		})),
-	)
-	service := newTestDispatchService(stub, rideService, testPricingConfig(t), dispatchapplication.Config{})
-	_, err := service.CreateSession(context.Background(), dispatchdomain.BidSession{
-		PassengerID:      7,
-		PickupLatitude:   6.7,
-		PickupLongitude:  122.1,
-		DropoffLatitude:  6.71,
-		DropoffLongitude: 122.11,
-	})
-	if !errors.Is(err, domain.ErrRouteUnavailable) {
-		t.Fatalf("expected ErrRouteUnavailable, got %v", err)
-	}
-}
-
-func TestCreateSessionPreservesRouteContextCancellation(t *testing.T) {
-	stub := &ridesRepositoryStub{}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	rideService := newTestRideService(
-		stub,
-		testPricingConfig(t),
-		nil,
-		WithRouteCalculator(RouteCalculatorFunc(func(context.Context, float64, float64, float64, float64) (RouteMetrics, error) {
-			cancel()
-			return RouteMetrics{DistanceKm: 4, DurationMinutes: 20}, nil
-		})),
-	)
-	service := newTestDispatchService(stub, rideService, testPricingConfig(t), dispatchapplication.Config{})
-
-	_, err := service.CreateSession(ctx, dispatchdomain.BidSession{
-		PassengerID:      7,
-		PickupLatitude:   6.7,
-		PickupLongitude:  122.1,
-		DropoffLatitude:  6.71,
-		DropoffLongitude: 122.11,
-	})
-	if !errors.Is(err, context.Canceled) {
-		t.Fatalf("expected context cancellation, got %v", err)
-	}
-	if stub.session.PassengerID != 0 {
-		t.Fatalf("canceled route must not persist a session: %#v", stub.session)
-	}
-}
-
-func TestCreateSessionRejectsOfferBelowCalculatedMinimum(t *testing.T) {
-	stub := &ridesRepositoryStub{}
-	rideService := newTestRideService(stub, testPricingConfig(t), nil)
-	service := newTestDispatchService(stub, rideService, testPricingConfig(t), dispatchapplication.Config{})
-	custom := int64(1)
-	_, err := service.CreateSession(context.Background(), dispatchdomain.BidSession{
-		PassengerID:      7,
-		PickupLatitude:   6.7,
-		PickupLongitude:  122.1,
-		DropoffLatitude:  6.71,
-		DropoffLongitude: 122.11,
-		DistanceKm:       2,
-		DurationMinutes:  10,
-		CustomFareAmount: &custom,
-	})
-	if !errors.Is(err, dispatchdomain.ErrInvalidFareOffer) {
-		t.Fatalf("expected ErrInvalidFareOffer, got %v", err)
-	}
-}
-
-func TestCreateSessionRejectsPassengerWithActiveRide(t *testing.T) {
-	stub := &ridesRepositoryStub{hasActiveRide: true}
-	rideService := newTestRideService(stub, testPricingConfig(t), nil)
-	service := newTestDispatchService(stub, rideService, testPricingConfig(t), dispatchapplication.Config{})
-	_, err := service.CreateSession(context.Background(), dispatchdomain.BidSession{
-		PassengerID:      7,
-		PickupLatitude:   6.7,
-		PickupLongitude:  122.1,
-		DropoffLatitude:  6.71,
-		DropoffLongitude: 122.11,
-		DistanceKm:       2,
-		DurationMinutes:  10,
-	})
-	if !errors.Is(err, domain.ErrActiveBooking) {
-		t.Fatalf("CreateSession error = %v, want %v", err, domain.ErrActiveBooking)
-	}
-	if stub.session.PassengerID != 0 {
-		t.Fatal("expected bid session NOT to be persisted when passenger has an active ride")
-	}
-}
-
-func TestCreateSessionRejectsPassengerWithActiveRideBeforeRouteCalculation(t *testing.T) {
-	stub := &ridesRepositoryStub{hasActiveRide: true}
-	routeResolved := false
-	rideService := newTestRideService(
-		stub,
-		testPricingConfig(t),
-		nil,
-		WithRouteCalculator(RouteCalculatorFunc(func(
-			context.Context,
-			float64,
-			float64,
-			float64,
-			float64,
-		) (RouteMetrics, error) {
-			routeResolved = true
-			return RouteMetrics{DistanceKm: 4, DurationMinutes: 20}, nil
-		})),
-	)
-	service := newTestDispatchService(stub, rideService, testPricingConfig(t), dispatchapplication.Config{})
-	_, err := service.CreateSession(context.Background(), dispatchdomain.BidSession{
-		PassengerID:      7,
-		PickupLatitude:   6.7,
-		PickupLongitude:  122.1,
-		DropoffLatitude:  6.71,
-		DropoffLongitude: 122.11,
-	})
-	if !errors.Is(err, domain.ErrActiveBooking) {
-		t.Fatalf("CreateSession error = %v, want %v", err, domain.ErrActiveBooking)
-	}
-	if routeResolved {
-		t.Fatal("expected route calculator NOT to be called when passenger has an active ride")
 	}
 }
 

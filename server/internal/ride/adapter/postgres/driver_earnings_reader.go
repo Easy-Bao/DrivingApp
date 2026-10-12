@@ -27,8 +27,8 @@ func (repository *RideRepository) DriverEarnings(
 	}
 	items, err := repository.queries.ListDriverEarnings(ctx, databasepostgres.ListDriverEarningsParams{
 		DriverID:   pgtype.Int4{Int32: dbDriverID, Valid: true},
-		MonthStart: bidTimestamp(monthStart.UTC()),
-		MonthEnd:   bidTimestamp(monthEnd.UTC()),
+		MonthStart: postgresTimestamp(monthStart.UTC()),
+		MonthEnd:   postgresTimestamp(monthEnd.UTC()),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("list driver earnings: %w", err)

@@ -10,6 +10,7 @@ import (
 
 	adminpostgres "github.com/Easy-Bao/DrivingApp/server/internal/admin/adapter/postgres"
 	authpostgres "github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/postgres"
+	dispatchpostgres "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/adapter/postgres"
 	documentpostgres "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/adapter/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	eventadapter "github.com/Easy-Bao/DrivingApp/server/internal/platform/events/adapter"
@@ -114,6 +115,16 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create ride store: %w", err)
 	}
+	dispatchStore, err := dispatchpostgres.NewStore(dispatchpostgres.StoreConfig{
+		Pool:                       postgresPool,
+		Logger:                     applicationLogger,
+		PlatformCommissionBPS:      config.Pricing.PlatformCommissionBPS,
+		OnlinePresenceMaxAge:       config.RideLifecycle.DriverLocationMaxAge,
+		AllowUnverifiedTestDrivers: config.AllowUnverifiedTestDrivers,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("create dispatch store: %w", err)
+	}
 	rateCounterStore := middleware.NewRedisCounterStore(redisClient)
 	rateLimiter := middleware.NewRateLimiter(middleware.RateLimiterDependencies{
 		Store:  rateCounterStore,
@@ -138,6 +149,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 		authStore:          authStore,
 		sessionStore:       sessionStore,
 		rideStore:          rideStore,
+		dispatchStore:      dispatchStore,
 		profileStore:       profileStore,
 		statsReader:        statsReader,
 		documentStore:      documentStore,

@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	dispatchpostgres "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/adapter/postgres"
 	ridepostgres "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/jackc/pgx/v5"
@@ -38,7 +39,7 @@ func TestConcurrentOfferAcceptanceCreatesOneRideAndSettlement(t *testing.T) {
 	for _, offerID := range []int{firstOfferID, secondOfferID} {
 		go func(offerID int) {
 			<-start
-			_, err := fixture.store.AcceptOffer(ctx, sessionID, offerID, passengerID)
+			_, err := fixture.dispatchStore.AcceptOffer(ctx, sessionID, offerID, passengerID)
 			results <- err
 		}(offerID)
 	}
@@ -101,7 +102,7 @@ func TestConcurrentOfferAcceptanceAssignsDriverToOneSession(t *testing.T) {
 	} {
 		go func(sessionID, offerID, passengerID int) {
 			<-start
-			_, err := fixture.store.AcceptOffer(ctx, sessionID, offerID, passengerID)
+			_, err := fixture.dispatchStore.AcceptOffer(ctx, sessionID, offerID, passengerID)
 			results <- err
 		}(offer.sessionID, offer.offerID, offer.passengerID)
 	}
@@ -146,12 +147,12 @@ func TestSessionCancellationRacingOfferAcceptanceHasOneCommittedOutcome(t *testi
 	results := make(chan commandResult, 2)
 	go func() {
 		<-start
-		_, err := fixture.store.AcceptOffer(ctx, sessionID, offerID, passengerID)
+		_, err := fixture.dispatchStore.AcceptOffer(ctx, sessionID, offerID, passengerID)
 		results <- commandResult{name: "accept", err: err}
 	}()
 	go func() {
 		<-start
-		_, err := fixture.store.CancelSession(ctx, sessionID, passengerID)
+		_, err := fixture.dispatchStore.CancelSession(ctx, sessionID, passengerID)
 		results <- commandResult{name: "cancel", err: err}
 	}()
 	close(start)
@@ -314,8 +315,9 @@ WHERE ride_id = $1`, rideID).Scan(&paymentStatus, &cashOutcome); err != nil {
 }
 
 type postgresRideFixture struct {
-	pool  *pgxpool.Pool
-	store *ridepostgres.RideStore
+	pool          *pgxpool.Pool
+	store         *ridepostgres.RideStore
+	dispatchStore *dispatchpostgres.Store
 }
 
 func newPostgresRideFixture(t *testing.T) *postgresRideFixture {
@@ -394,7 +396,15 @@ func newPostgresRideFixture(t *testing.T) *postgresRideFixture {
 	if err != nil {
 		t.Fatalf("create ride persistence adapter: %v", err)
 	}
-	return &postgresRideFixture{pool: pool, store: store}
+	dispatchStore, err := dispatchpostgres.NewStore(dispatchpostgres.StoreConfig{
+		Pool:                  pool,
+		PlatformCommissionBPS: 1500,
+		OnlinePresenceMaxAge:  time.Minute,
+	})
+	if err != nil {
+		t.Fatalf("create dispatch persistence adapter: %v", err)
+	}
+	return &postgresRideFixture{pool: pool, store: store, dispatchStore: dispatchStore}
 }
 
 func (fixture *postgresRideFixture) seedPassenger(t *testing.T, ctx context.Context, userID int) {

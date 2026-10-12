@@ -13,13 +13,13 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (repository *RideRepository) AcceptOffer(
+func (repository *Store) AcceptOffer(
 	ctx context.Context,
 	sessionID int,
 	offerID int,
 	passengerID int,
 ) (dispatchports.OfferAcceptance, error) {
-	if err := repository.validateNativeReadRepository(); err != nil {
+	if err := repository.validate(); err != nil {
 		return dispatchports.OfferAcceptance{}, err
 	}
 	dbSessionID, err := toPostgresRideID(sessionID, "session id")
@@ -267,10 +267,7 @@ func (repository *RideRepository) AcceptOffer(
 	if err != nil {
 		return dispatchports.OfferAcceptance{}, fmt.Errorf("map accepted bid offer: %w", err)
 	}
-	resultRide, err := fromPostgresRideProjection(
-		createdRide,
-		rideSettlementProjectionFromRecord(settlementRecord),
-	)
+	resultRide, err := fromPostgresAcceptedRideProjection(createdRide, settlementRecord)
 	if err != nil {
 		return dispatchports.OfferAcceptance{}, fmt.Errorf("map accepted ride: %w", err)
 	}

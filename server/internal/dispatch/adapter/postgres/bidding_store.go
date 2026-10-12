@@ -11,15 +11,14 @@ import (
 	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (repository *RideRepository) CreateSession(
+func (repository *Store) CreateSession(
 	ctx context.Context,
 	value dispatchdomain.BidSession,
 ) (dispatchdomain.BidSession, error) {
-	if err := repository.validateNativeReadRepository(); err != nil {
+	if err := repository.validate(); err != nil {
 		return dispatchdomain.BidSession{}, err
 	}
 	passengerID, err := toPostgresRideID(value.PassengerID, "passenger id")
@@ -116,8 +115,8 @@ func (repository *RideRepository) CreateSession(
 	return session, nil
 }
 
-func (repository *RideRepository) ActiveSessions(ctx context.Context, driverID *int) ([]dispatchdomain.BidSession, error) {
-	if err := repository.validateNativeReadRepository(); err != nil {
+func (repository *Store) ActiveSessions(ctx context.Context, driverID *int) ([]dispatchdomain.BidSession, error) {
+	if err := repository.validate(); err != nil {
 		return nil, err
 	}
 	logger := repository.logger
@@ -258,8 +257,8 @@ func (repository *RideRepository) ActiveSessions(ctx context.Context, driverID *
 	return result, nil
 }
 
-func (repository *RideRepository) Offers(ctx context.Context, sessionID int) ([]dispatchdomain.BidOffer, error) {
-	if err := repository.validateNativeReadRepository(); err != nil {
+func (repository *Store) Offers(ctx context.Context, sessionID int) ([]dispatchdomain.BidOffer, error) {
+	if err := repository.validate(); err != nil {
 		return nil, err
 	}
 	dbSessionID, err := toPostgresRideID(sessionID, "session id")
@@ -281,8 +280,8 @@ func (repository *RideRepository) Offers(ctx context.Context, sessionID int) ([]
 	return result, nil
 }
 
-func (repository *RideRepository) PlaceOffer(ctx context.Context, value dispatchdomain.BidOffer) (dispatchdomain.BidOffer, error) {
-	if err := repository.validateNativeReadRepository(); err != nil {
+func (repository *Store) PlaceOffer(ctx context.Context, value dispatchdomain.BidOffer) (dispatchdomain.BidOffer, error) {
+	if err := repository.validate(); err != nil {
 		return dispatchdomain.BidOffer{}, err
 	}
 	if value.ProposedFareAmount <= 0 {
@@ -392,12 +391,12 @@ func (repository *RideRepository) PlaceOffer(ctx context.Context, value dispatch
 	return offer, nil
 }
 
-func (repository *RideRepository) CancelSession(
+func (repository *Store) CancelSession(
 	ctx context.Context,
 	sessionID int,
 	passengerID int,
 ) (dispatchdomain.BidSession, error) {
-	if err := repository.validateNativeReadRepository(); err != nil {
+	if err := repository.validate(); err != nil {
 		return dispatchdomain.BidSession{}, err
 	}
 	dbSessionID, err := toPostgresRideID(sessionID, "session id")
@@ -422,8 +421,8 @@ func (repository *RideRepository) CancelSession(
 	return session, nil
 }
 
-func (repository *RideRepository) CancelOffer(ctx context.Context, sessionID, driverID int) (dispatchdomain.BidOffer, error) {
-	if err := repository.validateNativeReadRepository(); err != nil {
+func (repository *Store) CancelOffer(ctx context.Context, sessionID, driverID int) (dispatchdomain.BidOffer, error) {
+	if err := repository.validate(); err != nil {
 		return dispatchdomain.BidOffer{}, err
 	}
 	dbSessionID, err := toPostgresRideID(sessionID, "session id")
@@ -452,8 +451,8 @@ func (repository *RideRepository) CancelOffer(ctx context.Context, sessionID, dr
 	return offer, nil
 }
 
-func (repository *RideRepository) Session(ctx context.Context, sessionID int) (dispatchdomain.BidSession, error) {
-	if err := repository.validateNativeReadRepository(); err != nil {
+func (repository *Store) Session(ctx context.Context, sessionID int) (dispatchdomain.BidSession, error) {
+	if err := repository.validate(); err != nil {
 		return dispatchdomain.BidSession{}, err
 	}
 	dbSessionID, err := toPostgresRideID(sessionID, "session id")
@@ -469,79 +468,4 @@ func (repository *RideRepository) Session(ctx context.Context, sessionID int) (d
 		return dispatchdomain.BidSession{}, fmt.Errorf("map bid session: %w", err)
 	}
 	return session, nil
-}
-
-func fromPostgresBidSession(item databasepostgres.BidSession) (dispatchdomain.BidSession, error) {
-	if !item.ExpiresAt.Valid {
-		return dispatchdomain.BidSession{}, errors.New("bid session expiration time is null")
-	}
-	if !item.CreatedAt.Valid {
-		return dispatchdomain.BidSession{}, errors.New("bid session creation time is null")
-	}
-	var targetDriverID, acceptedDriverID *int
-	if item.TargetDriverID.Valid && item.TargetDriverID.Int32 > 0 {
-		value := int(item.TargetDriverID.Int32)
-		targetDriverID = &value
-	}
-	if item.AcceptedDriverID.Valid && item.AcceptedDriverID.Int32 > 0 {
-		value := int(item.AcceptedDriverID.Int32)
-		acceptedDriverID = &value
-	}
-	return dispatchdomain.BidSession{
-		ID:                int(item.ID),
-		PassengerID:       int(item.PassengerID),
-		RideType:          item.RideType,
-		PickupLatitude:    item.PickupLatitude,
-		PickupLongitude:   item.PickupLongitude,
-		PickupName:        item.PickupName,
-		DropoffLatitude:   item.DropoffLatitude,
-		DropoffLongitude:  item.DropoffLongitude,
-		DropoffName:       item.DropoffName,
-		PassengerNote:     bidTextValue(item.PassengerNote),
-		DistanceKm:        item.DistanceKm,
-		DurationMinutes:   item.DurationMinutes,
-		OfferedFareAmount: item.OfferedFare,
-		Status:            item.Status,
-		TargetDriverID:    targetDriverID,
-		AcceptedDriverID:  acceptedDriverID,
-		ExpiresAt:         item.ExpiresAt.Time,
-		CreatedAt:         item.CreatedAt.Time,
-	}, nil
-}
-
-func fromPostgresBidOffer(item databasepostgres.BidOffer) (dispatchdomain.BidOffer, error) {
-	if !item.CreatedAt.Valid {
-		return dispatchdomain.BidOffer{}, errors.New("bid offer creation time is null")
-	}
-	return dispatchdomain.BidOffer{
-		ID:                 int64(item.ID),
-		SessionID:          int(item.SessionID),
-		DriverID:           int(item.DriverID),
-		DriverName:         bidTextValue(item.DriverName),
-		PlateNumber:        bidTextValue(item.PlateNumber),
-		VehicleType:        bidTextValue(item.VehicleType),
-		ProposedFareAmount: item.ProposedFare,
-		Status:             item.Status,
-		CreatedAt:          item.CreatedAt.Time,
-	}, nil
-}
-
-func bidTimestamp(value time.Time) pgtype.Timestamptz {
-	return pgtype.Timestamptz{Time: value, Valid: true}
-}
-
-func toPostgresBidText(value string) pgtype.Text {
-	return pgtype.Text{String: value, Valid: true}
-}
-
-func bidTextValue(value pgtype.Text) string {
-	if !value.Valid {
-		return ""
-	}
-	return value.String
-}
-
-func isPostgresUniqueViolation(err error) bool {
-	var databaseError *pgconn.PgError
-	return errors.As(err, &databaseError) && databaseError.Code == "23505"
 }

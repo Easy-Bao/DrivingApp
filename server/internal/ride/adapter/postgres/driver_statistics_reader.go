@@ -25,8 +25,8 @@ func (repository *RideRepository) DriverStats(
 		return domain.DriverStats{}, err
 	}
 	row, err := repository.queries.GetDriverStats(ctx, databasepostgres.GetDriverStatsParams{
-		DayStart: bidTimestamp(dayStart.UTC()),
-		DayEnd:   bidTimestamp(dayEnd.UTC()),
+		DayStart: postgresTimestamp(dayStart.UTC()),
+		DayEnd:   postgresTimestamp(dayEnd.UTC()),
 		DriverID: dbDriverID,
 	})
 	if err != nil {

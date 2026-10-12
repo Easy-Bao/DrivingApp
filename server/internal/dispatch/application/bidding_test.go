@@ -167,6 +167,82 @@ func TestCreateSessionUsesServerOwnedStatusAndExpiration(t *testing.T) {
 	}
 }
 
+func TestCreateSessionUsesAuthoritativeRouteAndCustomFare(t *testing.T) {
+	store := &biddingStoreStub{}
+	customFare := int64(5000)
+	service := dispatchapplication.NewService(dispatchapplication.Dependencies{
+		Store: store,
+		ResolveRoute: func(
+			_ context.Context,
+			_, _, _, _ float64,
+			_, _ float64,
+		) (dispatchports.RouteMetrics, error) {
+			return dispatchports.RouteMetrics{DistanceKm: 4, DurationMinutes: 20}, nil
+		},
+		CalculateFare: func(distanceKm, durationMinutes float64) int64 {
+			if distanceKm != 4 || durationMinutes != 20 {
+				t.Fatalf("fare inputs = (%.2f km, %.2f min), want (4, 20)", distanceKm, durationMinutes)
+			}
+			return 4000
+		},
+	})
+
+	created, err := service.CreateSession(context.Background(), dispatchdomain.BidSession{
+		PassengerID:      101,
+		DistanceKm:       0.01,
+		DurationMinutes:  0.01,
+		CustomFareAmount: &customFare,
+	})
+	if err != nil {
+		t.Fatalf("CreateSession() error = %v", err)
+	}
+	if created.DistanceKm != 4 || created.DurationMinutes != 20 || created.OfferedFareAmount != customFare {
+		t.Fatalf("created session = %+v, want authoritative metrics and custom fare", created)
+	}
+}
+
+func TestCreateSessionRejectsCustomFareBelowMinimum(t *testing.T) {
+	store := &biddingStoreStub{}
+	customFare := int64(3999)
+	service := dispatchapplication.NewService(dispatchapplication.Dependencies{
+		Store: store,
+		ResolveRoute: func(context.Context, float64, float64, float64, float64, float64, float64) (dispatchports.RouteMetrics, error) {
+			return dispatchports.RouteMetrics{DistanceKm: 4, DurationMinutes: 20}, nil
+		},
+		CalculateFare: func(float64, float64) int64 { return 4000 },
+	})
+
+	_, err := service.CreateSession(context.Background(), dispatchdomain.BidSession{
+		PassengerID:      101,
+		CustomFareAmount: &customFare,
+	})
+	if !errors.Is(err, dispatchdomain.ErrInvalidFareOffer) {
+		t.Fatalf("CreateSession() error = %v, want %v", err, dispatchdomain.ErrInvalidFareOffer)
+	}
+	if store.session.ID != 0 {
+		t.Fatal("invalid custom fare must not persist a session")
+	}
+}
+
+func TestCreateSessionPreservesRouteResolutionError(t *testing.T) {
+	store := &biddingStoreStub{}
+	service := dispatchapplication.NewService(dispatchapplication.Dependencies{
+		Store: store,
+		ResolveRoute: func(context.Context, float64, float64, float64, float64, float64, float64) (dispatchports.RouteMetrics, error) {
+			return dispatchports.RouteMetrics{}, context.Canceled
+		},
+		CalculateFare: func(float64, float64) int64 { return 4000 },
+	})
+
+	_, err := service.CreateSession(context.Background(), dispatchdomain.BidSession{PassengerID: 101})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("CreateSession() error = %v, want context cancellation", err)
+	}
+	if store.session.ID != 0 {
+		t.Fatal("session must not be persisted when route resolution fails")
+	}
+}
+
 func TestCreateSessionPublishesToPassengerAndTargetDriver(t *testing.T) {
 	store := &biddingStoreStub{}
 	publisher := &eventPublisherStub{}
