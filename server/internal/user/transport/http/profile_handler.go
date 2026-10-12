@@ -47,7 +47,7 @@ func (handler *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		writeProfileReadError(w, err)
 		return
 	}
-	response.JSON(w, 200, profile)
+	response.JSON(w, 200, dto.NewProfileResponse(profile))
 }
 func (handler *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	id, ok := handler.identity(r)
@@ -90,7 +90,7 @@ func (handler *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusInternalServerError, "Your profile is temporarily unavailable. Please try again.")
 		return
 	}
-	response.JSON(w, 200, profile)
+	response.JSON(w, 200, dto.NewProfileResponse(profile))
 }
 
 func applyProfileUpdate(current domain.Profile, input dto.UpdateProfileRequest) domain.Profile {
@@ -131,7 +131,7 @@ func (handler *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 		writeProfileReadError(w, err)
 		return
 	}
-	response.JSON(w, 200, profile)
+	response.JSON(w, 200, dto.NewProfileResponse(profile))
 }
 
 func (handler *Handler) ProfileUpdate(w http.ResponseWriter, r *http.Request) {
@@ -220,7 +220,7 @@ func (handler *Handler) AvatarUpload(w http.ResponseWriter, r *http.Request) {
 		writeAvatarError(w, err)
 		return
 	}
-	response.JSON(w, http.StatusOK, profile)
+	response.JSON(w, http.StatusOK, dto.NewProfileResponse(profile))
 }
 
 func (handler *Handler) profileTarget(r *http.Request) (int, int, bool) {
@@ -359,5 +359,5 @@ func (handler *Handler) Online(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 500, "could not update online status")
 		return
 	}
-	response.JSON(w, 200, updated)
+	response.JSON(w, 200, dto.NewProfileResponse(updated))
 }
