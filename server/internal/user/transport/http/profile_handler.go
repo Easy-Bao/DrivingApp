@@ -281,7 +281,7 @@ func (handler *Handler) Notifications(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 500, "Notifications are temporarily unavailable.")
 		return
 	}
-	response.JSON(w, 200, response.NewOffsetPage(items, page.Limit, page.Offset))
+	response.JSON(w, 200, response.NewOffsetPage(dto.NewNotificationResponses(items), page.Limit, page.Offset))
 }
 
 func (handler *Handler) DeleteNotification(w http.ResponseWriter, r *http.Request) {
