@@ -1,5 +1,7 @@
 package dto
 
+import "github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
+
 type RideResponse struct {
 	ID                         int     `json:"id"`
 	PassengerID                int     `json:"passenger_id"`
@@ -38,4 +40,46 @@ type RideResponse struct {
 	CommissionBPS              *int64  `json:"commission_bps,omitempty"`
 	CommissionAmount           int64   `json:"commission_amount"`
 	DriverPayoutAmount         int64   `json:"driver_payout_amount"`
+}
+
+func NewRideResponse(ride domain.Ride) RideResponse {
+	return RideResponse{
+		ID:                         ride.ID,
+		PassengerID:                ride.PassengerID,
+		DriverID:                   ride.DriverID,
+		Status:                     ride.Status,
+		FareAmount:                 ride.FareAmount,
+		RideType:                   ride.RideType,
+		PickupLatitude:             ride.PickupLatitude,
+		PickupLongitude:            ride.PickupLongitude,
+		PickupName:                 ride.PickupName,
+		DropoffLatitude:            ride.DropoffLatitude,
+		DropoffLongitude:           ride.DropoffLongitude,
+		DropoffName:                ride.DropoffName,
+		DistanceKm:                 ride.DistanceKm,
+		DurationMinutes:            ride.DurationMinutes,
+		DriverName:                 ride.DriverName,
+		VehicleType:                ride.VehicleType,
+		PlateNumber:                ride.PlateNumber,
+		DriverRating:               ride.DriverRating,
+		PassengerName:              ride.PassengerName,
+		PassengerPhone:             ride.PassengerPhone,
+		PassengerRating:            ride.PassengerRating,
+		PassengerFeedback:          ride.PassengerFeedback,
+		CreatedAt:                  ride.CreatedAt,
+		CompletedAt:                ride.CompletedAt,
+		ArrivedAt:                  ride.ArrivedAt,
+		WaitingUntil:               ride.WaitingUntil,
+		PaymentStatus:              ride.PaymentStatus,
+		CashReceivedAmount:         ride.CashReceivedAmount,
+		CashChangeAmount:           ride.CashChangeAmount,
+		CashOutcome:                ride.CashOutcome,
+		CancelledBy:                ride.CancelledBy,
+		CancellationReason:         ride.CancellationReason,
+		CancellationResponsibility: ride.CancellationResponsibility,
+		CancellationDetails:        ride.CancellationDetails,
+		CommissionBPS:              ride.CommissionBPS,
+		CommissionAmount:           ride.CommissionAmount,
+		DriverPayoutAmount:         ride.DriverPayoutAmount,
+	}
 }

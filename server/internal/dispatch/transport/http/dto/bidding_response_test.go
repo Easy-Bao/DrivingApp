@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/dispatch/domain"
+	ridedto "github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/http/dto"
 )
 
 func TestBiddingResponseMappersPreserveWireShapes(t *testing.T) {
@@ -50,7 +51,7 @@ func TestBiddingResponseMappersPreserveWireShapes(t *testing.T) {
 			value: AcceptedOfferResponse{
 				Session: NewBidSessionResponse(domain.BidSession{ID: 31, PassengerID: 7, Status: "accepted"}),
 				Offer:   NewBidOfferResponse(domain.BidOffer{ID: 45, SessionID: 31, DriverID: 9, Status: "accepted"}),
-				Ride:    RideResponse{ID: 303, PassengerID: 7, Status: "accepted"},
+				Ride:    ridedto.RideResponse{ID: 303, PassengerID: 7, Status: "accepted"},
 				RideID:  303,
 			},
 			want: `{"session":{"id":31,"passenger_id":7,"ride_type":"","pickup_latitude":0,"pickup_longitude":0,"pickup_name":"","dropoff_latitude":0,"dropoff_longitude":0,"dropoff_name":"","distance_km":0,"duration_minutes":0,"offered_fare":0,"status":"accepted","expires_at":"0001-01-01T00:00:00Z","created_at":"0001-01-01T00:00:00Z"},"offer":{"id":45,"session_id":31,"driver_id":9,"proposed_fare":0,"status":"accepted","created_at":"0001-01-01T00:00:00Z"},"ride":{"id":303,"passenger_id":7,"status":"accepted","fare_amount":0,"payment_status":"","cash_received_amount":0,"cash_change_amount":0,"cash_outcome":"","commission_amount":0,"driver_payout_amount":0},"ride_id":303}`,

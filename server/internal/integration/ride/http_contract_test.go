@@ -14,6 +14,8 @@ import (
 	dispatchapplication "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/application"
 	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/domain"
 	dispatchports "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/ports"
+	dispatchhttp "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/transport/http"
+	dispatchdto "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/transport/http/dto"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	rideconfig "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/config"
@@ -21,7 +23,6 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
 	ridehttp "github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/http"
-	ridedto "github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/http/dto"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -44,20 +45,42 @@ func newRideService(repository ports.RideStore, config rideapplication.PricingCo
 	})
 }
 
+type rideAndDispatchRouter struct {
+	ride     *ridehttp.Router
+	dispatch *dispatchhttp.Router
+}
+
+func (router *rideAndDispatchRouter) RegisterRoutes(mux chi.Router) {
+	router.ride.RegisterRoutes(mux)
+	router.dispatch.RegisterRoutes(mux)
+}
+
 func newRideRouter(
 	service *rideapplication.RideService,
 	verifier *security.TokenManager,
 	stores ...dispatchports.BiddingStore,
-) *ridehttp.Router {
+) *rideAndDispatchRouter {
 	var store dispatchports.BiddingStore
 	if len(stores) > 0 {
 		store = stores[0]
 	}
-	return ridehttp.NewRouter(ridehttp.Dependencies{
-		Service:         service,
-		DispatchService: dispatchapplication.NewService(dispatchapplication.Dependencies{Store: store}),
-		Verifier:        verifier,
-	})
+	return &rideAndDispatchRouter{
+		ride: ridehttp.NewRouter(ridehttp.Dependencies{Service: service, Verifier: verifier}),
+		dispatch: dispatchhttp.NewRouter(dispatchhttp.Dependencies{
+			Service: dispatchapplication.NewService(dispatchapplication.Dependencies{
+				Store: store,
+				ResolveRoute: func(
+					_ context.Context,
+					_, _, _, _ float64,
+					distanceKm, durationMinutes float64,
+				) (dispatchports.RouteMetrics, error) {
+					return dispatchports.RouteMetrics{DistanceKm: distanceKm, DurationMinutes: durationMinutes}, nil
+				},
+				CalculateFare: func(float64, float64) int64 { return 3500 },
+			}),
+			Verifier: verifier,
+		}),
+	}
 }
 
 func (repository *activeSessionsRepository) CreateRide(context.Context, domain.Ride) (domain.Ride, error) {
@@ -216,6 +239,18 @@ func TestBookingMutationRoutesRejectTheWrongAccountRole(t *testing.T) {
 		{
 			name:   "passenger cannot accept ride as driver",
 			path:   api.V1Prefix + "/rides/1/accept",
+			token:  passengerToken,
+			method: http.MethodPost,
+		},
+		{
+			name:   "driver cannot create passenger bid session",
+			path:   api.V1Prefix + "/bids",
+			token:  driverToken,
+			method: http.MethodPost,
+		},
+		{
+			name:   "passenger cannot place driver offer",
+			path:   api.V1Prefix + "/bids/1/offer",
 			token:  passengerToken,
 			method: http.MethodPost,
 		},
@@ -451,7 +486,7 @@ func TestOnlineDriverReceivesPassengerBookingThroughActiveSessions(t *testing.T)
 	if repository.requestedDriverID == nil || *repository.requestedDriverID != 42 {
 		t.Fatalf("active session driver id = %#v, want 42", repository.requestedDriverID)
 	}
-	var sessions []ridedto.BidSessionResponse
+	var sessions []dispatchdto.BidSessionResponse
 	if err := json.NewDecoder(response.Body).Decode(&sessions); err != nil {
 		t.Fatalf("decode active sessions: %v", err)
 	}
@@ -485,6 +520,7 @@ func TestSessionRoutesBindSessionAndOfferIdentifiers(t *testing.T) {
 		body            string
 		role            string
 		expectedStatus  int
+		bindsSessionID  bool
 		expectedOfferID int
 	}{
 		{
@@ -493,6 +529,15 @@ func TestSessionRoutesBindSessionAndOfferIdentifiers(t *testing.T) {
 			path:           api.V1Prefix + "/bids/101",
 			role:           security.RolePassenger,
 			expectedStatus: http.StatusOK,
+			bindsSessionID: true,
+		},
+		{
+			name:           "create session",
+			method:         http.MethodPost,
+			path:           api.V1Prefix + "/bids",
+			body:           `{"pickup_latitude":14.5,"pickup_longitude":121,"dropoff_latitude":14.6,"dropoff_longitude":121.1,"distance_km":2,"duration_minutes":10}`,
+			role:           security.RolePassenger,
+			expectedStatus: http.StatusCreated,
 		},
 		{
 			name:           "offers",
@@ -500,6 +545,7 @@ func TestSessionRoutesBindSessionAndOfferIdentifiers(t *testing.T) {
 			path:           api.V1Prefix + "/bids/101/offers",
 			role:           security.RolePassenger,
 			expectedStatus: http.StatusOK,
+			bindsSessionID: true,
 		},
 		{
 			name:           "place offer",
@@ -508,6 +554,7 @@ func TestSessionRoutesBindSessionAndOfferIdentifiers(t *testing.T) {
 			body:           `{"offer_price":25}`,
 			role:           security.RoleDriver,
 			expectedStatus: http.StatusCreated,
+			bindsSessionID: true,
 		},
 		{
 			name:            "accept offer",
@@ -516,6 +563,7 @@ func TestSessionRoutesBindSessionAndOfferIdentifiers(t *testing.T) {
 			body:            `{}`,
 			role:            security.RolePassenger,
 			expectedStatus:  http.StatusOK,
+			bindsSessionID:  true,
 			expectedOfferID: 202,
 		},
 		{
@@ -525,6 +573,7 @@ func TestSessionRoutesBindSessionAndOfferIdentifiers(t *testing.T) {
 			body:           `{}`,
 			role:           security.RolePassenger,
 			expectedStatus: http.StatusOK,
+			bindsSessionID: true,
 		},
 		{
 			name:           "cancel offer",
@@ -533,6 +582,7 @@ func TestSessionRoutesBindSessionAndOfferIdentifiers(t *testing.T) {
 			body:           `{}`,
 			role:           security.RoleDriver,
 			expectedStatus: http.StatusOK,
+			bindsSessionID: true,
 		},
 	}
 
@@ -551,7 +601,7 @@ func TestSessionRoutesBindSessionAndOfferIdentifiers(t *testing.T) {
 			if response.Code != test.expectedStatus {
 				t.Fatalf("status = %d, want %d, body = %s", response.Code, test.expectedStatus, response.Body.String())
 			}
-			if repository.requestedSessionID != 101 {
+			if test.bindsSessionID && repository.requestedSessionID != 101 {
 				t.Fatalf("session id = %d, want 101", repository.requestedSessionID)
 			}
 			if test.expectedOfferID != 0 && repository.requestedOfferID != test.expectedOfferID {

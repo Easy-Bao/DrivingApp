@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/dispatch/domain"
+	ridedto "github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/http/dto"
 )
 
 type BidSessionResponse struct {
@@ -42,10 +43,10 @@ type BidOfferResponse struct {
 }
 
 type AcceptedOfferResponse struct {
-	Session BidSessionResponse `json:"session"`
-	Offer   BidOfferResponse   `json:"offer"`
-	Ride    RideResponse       `json:"ride"`
-	RideID  int                `json:"ride_id"`
+	Session BidSessionResponse   `json:"session"`
+	Offer   BidOfferResponse     `json:"offer"`
+	Ride    ridedto.RideResponse `json:"ride"`
+	RideID  int                  `json:"ride_id"`
 }
 
 func NewBidSessionResponse(session domain.BidSession) BidSessionResponse {

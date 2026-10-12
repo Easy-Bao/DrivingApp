@@ -25,6 +25,7 @@ import (
 	dispatchapplication "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/application"
 	assignment "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment"
 	dispatchports "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/ports"
+	dispatchhttp "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/transport/http"
 	documentapplication "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/application"
 	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/mapbox"
@@ -288,10 +289,14 @@ func newHTTPRouter(
 	}).WithLogger(applicationLogger)
 
 	ridesRouter := ridehttp.NewRouter(ridehttp.Dependencies{
-		Service:         ridesService,
-		DispatchService: dispatchService,
-		Verifier:        verifier,
-		RouteSecurity:   routeSecurity,
+		Service:       ridesService,
+		Verifier:      verifier,
+		RouteSecurity: routeSecurity,
+	})
+	dispatchRouter := dispatchhttp.NewRouter(dispatchhttp.Dependencies{
+		Service:       dispatchService,
+		Verifier:      verifier,
+		RouteSecurity: routeSecurity,
 	})
 	adminRouter := adminhttp.NewRouter(adminhttp.RouterDependencies{
 		Service:    adminapplication.NewStatsService(statsReader),
@@ -320,6 +325,7 @@ func newHTTPRouter(
 	usersRouter.RegisterRoutes(router)
 	documentRouter.RegisterRoutes(router)
 	ridesRouter.RegisterRoutes(router)
+	dispatchRouter.RegisterRoutes(router)
 	router.With(routeSecurity.Middleware(middleware.RouteRead)).Group(func(admin chi.Router) {
 		adminRouter.RegisterRoutes(admin)
 	})
