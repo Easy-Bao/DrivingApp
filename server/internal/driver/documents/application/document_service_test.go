@@ -2,10 +2,8 @@ package application_test
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
 	"testing"
 	"time"
 
@@ -179,15 +177,6 @@ func TestUploadCreatesAnImmutablePendingRevision(t *testing.T) {
 	}
 	if got := storage.objects[document.StorageKey]; string(got) != string(validPDF) {
 		t.Fatalf("stored content = %q", got)
-	}
-	encoded, err := json.Marshal(document)
-	if err != nil {
-		t.Fatal(err)
-	}
-	storageKeyExposed := strings.Contains(string(encoded), document.StorageKey)
-	checksumExposed := strings.Contains(string(encoded), document.ChecksumSHA256)
-	if storageKeyExposed || checksumExposed {
-		t.Fatalf("private object metadata leaked in %s", encoded)
 	}
 }
 

@@ -106,7 +106,7 @@ func (handler *Handler) upload(
 		writeServiceError(writer, err)
 		return
 	}
-	response.JSON(writer, http.StatusCreated, item)
+	response.JSON(writer, http.StatusCreated, dto.NewDocumentResponse(item))
 }
 
 func readMultipartDocument(request *http.Request, limit int64) ([]byte, string, bool, error) {
@@ -167,7 +167,9 @@ func (handler *Handler) Status(writer http.ResponseWriter, request *http.Request
 		writeServiceError(writer, err)
 		return
 	}
-	response.JSON(writer, http.StatusOK, map[string]any{"documents": items})
+	response.JSON(writer, http.StatusOK, map[string]any{
+		"documents": dto.NewDocumentResponses(items),
+	})
 }
 
 func (handler *Handler) DriverContent(writer http.ResponseWriter, request *http.Request) {
@@ -206,7 +208,11 @@ func (handler *Handler) ReviewQueue(writer http.ResponseWriter, request *http.Re
 		writeServiceError(writer, err)
 		return
 	}
-	response.JSON(writer, http.StatusOK, response.NewOffsetPage(items, page.Limit, page.Offset))
+	response.JSON(
+		writer,
+		http.StatusOK,
+		response.NewOffsetPage(dto.NewDocumentResponses(items), page.Limit, page.Offset),
+	)
 }
 
 func (handler *Handler) Review(writer http.ResponseWriter, request *http.Request) {
@@ -235,7 +241,7 @@ func (handler *Handler) Review(writer http.ResponseWriter, request *http.Request
 		writeServiceError(writer, err)
 		return
 	}
-	response.JSON(writer, http.StatusOK, item)
+	response.JSON(writer, http.StatusOK, dto.NewDocumentResponse(item))
 }
 
 func (handler *Handler) AdminContent(writer http.ResponseWriter, request *http.Request) {

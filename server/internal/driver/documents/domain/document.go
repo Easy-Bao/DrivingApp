@@ -51,17 +51,17 @@ func ParseReviewStatus(value string) (Status, error) {
 }
 
 type Document struct {
-	ID             int        `json:"id"`
-	DriverID       int        `json:"driver_id"`
-	Type           Type       `json:"document_type"`
-	StorageKey     string     `json:"-"`
-	Status         Status     `json:"status"`
-	ContentType    string     `json:"content_type"`
-	SizeBytes      int64      `json:"size_bytes"`
-	ChecksumSHA256 string     `json:"-"`
-	CreatedAt      time.Time  `json:"created_at"`
-	ReviewedAt     *time.Time `json:"reviewed_at,omitempty"`
-	ReviewedBy     *int       `json:"-"`
+	ID             int
+	DriverID       int
+	Type           Type
+	StorageKey     string
+	Status         Status
+	ContentType    string
+	SizeBytes      int64
+	ChecksumSHA256 string
+	CreatedAt      time.Time
+	ReviewedAt     *time.Time
+	ReviewedBy     *int
 }
 
 type Content struct {
