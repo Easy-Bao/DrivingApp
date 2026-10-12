@@ -777,7 +777,7 @@ func (handler *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
-	response.JSON(w, 201, session)
+	response.JSON(w, 201, dto.NewBidSessionResponse(session))
 }
 
 func (handler *Handler) ActiveSessions(w http.ResponseWriter, r *http.Request) {
@@ -791,7 +791,7 @@ func (handler *Handler) ActiveSessions(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 500, "Incoming ride requests are temporarily unavailable.")
 		return
 	}
-	response.JSON(w, 200, sessions)
+	response.JSON(w, 200, dto.NewBidSessionResponses(sessions))
 }
 
 func (handler *Handler) Session(w http.ResponseWriter, r *http.Request) {
@@ -814,7 +814,7 @@ func (handler *Handler) Session(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusForbidden, "forbidden")
 		return
 	}
-	response.JSON(w, 200, item)
+	response.JSON(w, 200, dto.NewBidSessionResponse(item))
 }
 
 func (handler *Handler) Offers(w http.ResponseWriter, r *http.Request) {
@@ -838,7 +838,7 @@ func (handler *Handler) Offers(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 404, "bid session not found")
 		return
 	}
-	response.JSON(w, 200, items)
+	response.JSON(w, 200, dto.NewBidOfferResponses(items))
 }
 
 func (handler *Handler) PlaceOffer(w http.ResponseWriter, r *http.Request) {
@@ -873,7 +873,7 @@ func (handler *Handler) PlaceOffer(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 409, safeRideError(err))
 		return
 	}
-	response.JSON(w, 201, offer)
+	response.JSON(w, 201, dto.NewBidOfferResponse(offer))
 }
 
 func (handler *Handler) AcceptOffer(w http.ResponseWriter, r *http.Request) {
@@ -898,11 +898,11 @@ func (handler *Handler) AcceptOffer(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 409, "offer cannot be accepted")
 		return
 	}
-	response.JSON(w, 200, map[string]any{
-		"session": session,
-		"offer":   offer,
-		"ride":    rideResponseFromDomain(ride),
-		"ride_id": ride.ID,
+	response.JSON(w, http.StatusOK, dto.AcceptedOfferResponse{
+		Session: dto.NewBidSessionResponse(session),
+		Offer:   dto.NewBidOfferResponse(offer),
+		Ride:    rideResponseFromDomain(ride),
+		RideID:  ride.ID,
 	})
 }
 
@@ -922,7 +922,7 @@ func (handler *Handler) CancelSession(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 409, "session cannot be canceled")
 		return
 	}
-	response.JSON(w, 200, item)
+	response.JSON(w, 200, dto.NewBidSessionResponse(item))
 }
 
 func (handler *Handler) CancelOffer(w http.ResponseWriter, r *http.Request) {
@@ -941,7 +941,7 @@ func (handler *Handler) CancelOffer(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 404, "offer not found")
 		return
 	}
-	response.JSON(w, 200, item)
+	response.JSON(w, 200, dto.NewBidOfferResponse(item))
 }
 
 func domainRide(passengerID int, input dto.CreateRideRequest) domain.Ride {

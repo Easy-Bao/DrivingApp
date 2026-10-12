@@ -18,6 +18,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
 	ridehttp "github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/http"
+	ridedto "github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/http/dto"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -438,7 +439,7 @@ func TestOnlineDriverReceivesPassengerBookingThroughActiveSessions(t *testing.T)
 	if repository.requestedDriverID == nil || *repository.requestedDriverID != 42 {
 		t.Fatalf("active session driver id = %#v, want 42", repository.requestedDriverID)
 	}
-	var sessions []domain.BidSession
+	var sessions []ridedto.BidSessionResponse
 	if err := json.NewDecoder(response.Body).Decode(&sessions); err != nil {
 		t.Fatalf("decode active sessions: %v", err)
 	}
