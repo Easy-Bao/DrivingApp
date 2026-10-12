@@ -988,10 +988,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         builder: (context, state) {
           final activeTrips = state.activeTrips;
           final activeBids = state.activeBids;
-          final dashboardMessage =
-              state.errorMessage ?? state.statsErrorMessage;
-          final canRetryStats =
-              state.errorMessage == null && state.statsErrorMessage != null;
+          final dashboardMessage = state.errorMessage;
           final showDashboardError =
               dashboardMessage != null &&
               !AppNetworkStatusScope.isUnavailableOf(context);
@@ -1048,7 +1045,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                           const SizedBox(height: 8),
                           _buildOnlineCardBanner(context, state),
                           const SizedBox(height: 16),
-                          _buildStatsRow(state),
+                          _buildStatsRow(context, state),
                           const SizedBox(height: 16),
                           if (showFeed)
                             Expanded(
@@ -1125,12 +1122,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                   isVisible: true,
                   message: dashboardMessage,
                   tone: AppStatusBannerTone.error,
-                  actionLabel: canRetryStats ? 'Try again' : null,
-                  onAction: canRetryStats
-                      ? () => unawaited(
-                          BlocProvider.of<DashboardCubit>(context).loadStats(),
-                        )
-                      : null,
                 ),
             ],
           );
@@ -1303,12 +1294,15 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     );
   }
 
-  Widget _buildStatsRow(DashboardState state) {
+  Widget _buildStatsRow(BuildContext context, DashboardState state) {
     return DriverDashboardStatsRow(
       isLoadingStats: state.isLoadingStats,
       hasExistingStats: state.hasLoadedStats,
       earnings: state.earnings,
       completedTrips: state.completedTrips,
+      hasError: state.statsErrorMessage != null,
+      onRetry: () =>
+          unawaited(BlocProvider.of<DashboardCubit>(context).loadStats()),
     );
   }
 

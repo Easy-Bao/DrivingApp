@@ -24,6 +24,63 @@ void main() {
     expect(find.text('Try again'), findsNothing);
   });
 
+  testWidgets('shows an inline retry when initial statistics fail', (
+    tester,
+  ) async {
+    var retryCount = 0;
+    await tester.binding.setSurfaceSize(const Size(320, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: DriverDashboardStatsRow(
+            isLoadingStats: false,
+            earnings: 0,
+            completedTrips: 0,
+            hasError: true,
+            onRetry: () => retryCount++,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('—'), findsNWidgets(2));
+    expect(find.text("Today's stats are unavailable."), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('driver-dashboard-stats-retry')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('driver-dashboard-stats-retry')),
+    );
+    expect(retryCount, 1);
+  });
+
+  testWidgets('keeps loaded values visible when statistics refresh fails', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: DriverDashboardStatsRow(
+            isLoadingStats: false,
+            hasExistingStats: true,
+            earnings: 385.5,
+            completedTrips: 7,
+            hasError: true,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('₱386'), findsOneWidget);
+    expect(find.text('7'), findsOneWidget);
+    expect(find.text('Showing last loaded stats.'), findsOneWidget);
+  });
+
   testWidgets('shows skeleton stats before data exists', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(

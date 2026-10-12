@@ -112,6 +112,52 @@ void main() {
     );
 
     blocTest<DashboardCubit, DashboardState>(
+      'keeps loaded statistics when a refresh fails',
+      build: () {
+        var requestCount = 0;
+        when(() => repo.getDashboardStats()).thenAnswer((_) async {
+          requestCount++;
+          if (requestCount == 1) {
+            return const Ok(
+              DriverDashboardStats(earnings: 385.50, completedTrips: 7),
+            );
+          }
+          return const Err(ServerFailure('network'));
+        });
+        return _makeCubit(repo);
+      },
+      act: (cubit) async {
+        await cubit.loadStats();
+        await cubit.loadStats();
+      },
+      expect: () => [
+        const DashboardState(isLoadingStats: true),
+        const DashboardState(
+          isLoadingStats: false,
+          hasLoadedStats: true,
+          earnings: 385.50,
+          completedTrips: 7,
+        ),
+        const DashboardState(
+          isLoadingStats: true,
+          hasLoadedStats: true,
+          earnings: 385.50,
+          completedTrips: 7,
+        ),
+        const DashboardState(
+          isLoadingStats: false,
+          hasLoadedStats: true,
+          earnings: 385.50,
+          completedTrips: 7,
+          statsErrorMessage: 'Something went wrong. Try again.',
+        ),
+      ],
+      verify: (_) {
+        verify(() => repo.getDashboardStats()).called(2);
+      },
+    );
+
+    blocTest<DashboardCubit, DashboardState>(
       'coalesces concurrent statistics loads',
       build: () {
         when(() => repo.getDashboardStats()).thenAnswer((_) async {

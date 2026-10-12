@@ -11,12 +11,16 @@ class DriverDashboardStatsRow extends StatelessWidget {
     required this.earnings,
     required this.completedTrips,
     this.hasExistingStats = false,
+    this.hasError = false,
+    this.onRetry,
   });
 
   final bool isLoadingStats;
   final double earnings;
   final int completedTrips;
   final bool hasExistingStats;
+  final bool hasError;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -24,28 +28,74 @@ class DriverDashboardStatsRow extends StatelessWidget {
       return _buildInitialLoadingState(context);
     }
 
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: EasyRideLayout.pagePadding,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  context,
+                  label: "Today's Net Earnings",
+                  value: hasError && !hasExistingStats
+                      ? '—'
+                      : formatPesoAmount(earnings),
+                  icon: LucideIcons.wallet,
+                ),
+              ),
+              const SizedBox(width: EasyRideSpacing.sm),
+              Expanded(
+                child: _buildStatCard(
+                  context,
+                  label: 'Trips Today',
+                  value: hasError && !hasExistingStats
+                      ? '—'
+                      : '$completedTrips',
+                  icon: LucideIcons.car,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (hasError) _buildErrorState(context),
+      ],
+    );
+  }
+
+  Widget _buildErrorState(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: EasyRideLayout.pagePadding,
+      padding: const EdgeInsets.only(
+        left: EasyRideLayout.pagePadding,
+        right: EasyRideLayout.pagePadding,
+        top: EasyRideSpacing.xs,
       ),
       child: Row(
         children: [
+          Icon(
+            LucideIcons.circle_alert,
+            size: 16,
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: EasyRideSpacing.xs),
           Expanded(
-            child: _buildStatCard(
-              context,
-              label: "Today's Net Earnings",
-              value: formatPesoAmount(earnings),
-              icon: LucideIcons.wallet,
+            child: Text(
+              hasExistingStats
+                  ? 'Showing last loaded stats.'
+                  : "Today's stats are unavailable.",
+              style: context.textStyles.bodySmall?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
-          const SizedBox(width: EasyRideSpacing.sm),
-          Expanded(
-            child: _buildStatCard(
-              context,
-              label: 'Trips Today',
-              value: '$completedTrips',
-              icon: LucideIcons.car,
-            ),
+          TextButton.icon(
+            key: const ValueKey<String>('driver-dashboard-stats-retry'),
+            onPressed: onRetry,
+            icon: const Icon(LucideIcons.refresh_cw, size: 16),
+            label: const Text('Retry'),
           ),
         ],
       ),
