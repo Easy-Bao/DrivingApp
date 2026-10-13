@@ -69,6 +69,18 @@ void main() {
     );
   });
 
+  test('preserves a missing ride as a terminal lookup failure', () async {
+    when(() => rideDataSource.getRideStatus('ride-7'))
+        .thenThrow(_responseException(404));
+
+    final result = await repository.fetchRide('ride-7');
+
+    expect(
+      result.fold((failure) => failure, (_) => null),
+      isA<RideNotFoundFailure>(),
+    );
+  });
+
   test(
     'requires the server arrival response to include its wait timer',
     () async {

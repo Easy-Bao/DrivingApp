@@ -397,6 +397,9 @@ Failure _mapFailure(Object error, {required String action}) {
   if (error is Failure) return error;
   if (error is DioException) {
     final statusCode = error.response?.statusCode;
+    if (action == 'load this ride' && statusCode == 404) {
+      return const RideNotFoundFailure();
+    }
     if (statusCode == 401) {
       return const AuthFailure('Your driver session has ended. Sign in again.');
     }
@@ -462,6 +465,9 @@ Failure _mapFailure(Object error, {required String action}) {
     );
   }
   if (error is ServerException) {
+    if (action == 'load this ride' && error.statusCode == 404) {
+      return const RideNotFoundFailure();
+    }
     return FailureMapper.fromException(
       error,
       serverMessage: 'Unable to $action right now.',

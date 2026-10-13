@@ -58,7 +58,7 @@ final class const TripCompleted({required final double fare})
   List<Object?> get props => [fare];
 }
 
-final class const RideFailed(final String message) extends RideState {
+sealed class const RideFailed(final String message) extends RideState {
   @override
   List<Object?> get props => [message];
 }
@@ -101,6 +101,20 @@ final class RideFlowComplete extends TripCompleted {
 
 final class RideFlowError extends RideFailed {
   const RideFlowError(super.message);
+}
+
+final class RideFlowTerminal extends RideFailed {
+  const RideFlowTerminal({
+    required this.rideId,
+    required this.status,
+    required String message,
+  }) : super(message);
+
+  final String rideId;
+  final String status;
+
+  @override
+  List<Object?> get props => [...super.props, rideId, status];
 }
 
 extension RideStatePresentation on RideState {

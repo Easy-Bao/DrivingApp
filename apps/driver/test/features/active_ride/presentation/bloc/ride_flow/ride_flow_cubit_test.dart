@@ -391,6 +391,135 @@ void main() {
     await cubit.close();
   });
 
+  test('evicts a ride canceled while the driver was disconnected', () async {
+    when(() => mockRideRepository.fetchRide('test-ride-id')).thenAnswer(
+      (_) async => const Ok(
+        RideSnapshot(
+          id: 'test-ride-id',
+          status: 'cancelled',
+          pickupName: 'Pickup',
+          dropoffName: 'Dropoff',
+        ),
+      ),
+    );
+    final cubit = _makeCubit(mockRideRepository, mockSessionService);
+    cubit.resumeRide(
+      rideId: 'test-ride-id',
+      status: 'accepted',
+      passengerName: 'Juan Dela Cruz',
+    );
+
+    await cubit.syncAuthoritativeRideState();
+
+    expect(cubit.activeRideId, isNull);
+    expect(
+      cubit.state,
+      const RideFlowTerminal(
+        rideId: 'test-ride-id',
+        status: 'cancelled',
+        message: 'This trip was canceled.',
+      ),
+    );
+    verify(() => mockSessionService.saveActiveRideId('')).called(1);
+    await cubit.close();
+  });
+
+  testWidgets('checks active ride status every 15 seconds', (tester) async {
+    when(() => mockRideRepository.fetchRide('test-ride-id')).thenAnswer(
+      (_) async => const Ok(
+        RideSnapshot(
+          id: 'test-ride-id',
+          status: 'accepted',
+          pickupName: 'Pickup',
+          dropoffName: 'Dropoff',
+        ),
+      ),
+    );
+    final cubit = _makeCubit(mockRideRepository, mockSessionService);
+    cubit.resumeRide(
+      rideId: 'test-ride-id',
+      status: 'accepted',
+      passengerName: 'Juan Dela Cruz',
+    );
+
+    await tester.pump(const Duration(seconds: 14));
+    verifyNever(() => mockRideRepository.fetchRide('test-ride-id'));
+
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+
+    verify(() => mockRideRepository.fetchRide('test-ride-id')).called(1);
+    await cubit.close();
+  });
+
+  test(
+    'keeps the active ride after a transient status lookup failure',
+    () async {
+      when(() => mockRideRepository.fetchRide('test-ride-id'))
+          .thenAnswer((_) async => const Err(NetworkFailure('offline')));
+      final cubit = _makeCubit(mockRideRepository, mockSessionService);
+      cubit.resumeRide(
+        rideId: 'test-ride-id',
+        status: 'accepted',
+        passengerName: 'Juan Dela Cruz',
+      );
+
+      await cubit.syncAuthoritativeRideState();
+
+      expect(cubit.activeRideId, 'test-ride-id');
+      expect(cubit.state, isA<RideFlowNavigatingToPickup>());
+      verifyNever(() => mockSessionService.saveActiveRideId(''));
+      await cubit.close();
+    },
+  );
+
+  test('evicts a ride completed outside the active flow', () async {
+    when(() => mockRideRepository.fetchRide('test-ride-id')).thenAnswer(
+      (_) async => const Ok(
+        RideSnapshot(
+          id: 'test-ride-id',
+          status: 'completed',
+          pickupName: 'Pickup',
+          dropoffName: 'Dropoff',
+        ),
+      ),
+    );
+    final cubit = _makeCubit(mockRideRepository, mockSessionService);
+    cubit.resumeRide(
+      rideId: 'test-ride-id',
+      status: 'in_transit',
+      passengerName: 'Juan Dela Cruz',
+    );
+
+    await cubit.syncAuthoritativeRideState();
+
+    expect(cubit.activeRideId, isNull);
+    expect(cubit.state, isA<RideFlowTerminal>());
+    expect((cubit.state as RideFlowTerminal).status, 'completed');
+    verify(() => mockSessionService.saveActiveRideId('')).called(1);
+    await cubit.close();
+  });
+
+  test(
+    'evicts a ride when the authoritative lookup returns not found',
+    () async {
+      when(() => mockRideRepository.fetchRide('test-ride-id'))
+          .thenAnswer((_) async => const Err(RideNotFoundFailure()));
+      final cubit = _makeCubit(mockRideRepository, mockSessionService);
+      cubit.resumeRide(
+        rideId: 'test-ride-id',
+        status: 'accepted',
+        passengerName: 'Juan Dela Cruz',
+      );
+
+      await cubit.syncAuthoritativeRideState();
+
+      expect(cubit.activeRideId, isNull);
+      expect((cubit.state as RideFlowTerminal).status, 'not_found');
+      await cubit.close();
+    },
+  );
+
   test('restores a completed ride that still needs a cash outcome', () async {
     when(() => mockSessionService.readActiveRideId())
         .thenAnswer((_) async => 'test-ride-id');

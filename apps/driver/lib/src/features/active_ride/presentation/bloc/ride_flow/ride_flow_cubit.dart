@@ -29,12 +29,125 @@ class RideFlowCubit({
   bool _isActionInFlight = false;
   int _actionGeneration = 0;
   Future<void>? _passengerLocationRefresh;
+  Future<void>? _rideStatusSync;
+  Timer? _rideStatusSyncTimer;
+  bool _isRideCompletionPending = false;
+
+  static const _rideStatusSyncInterval = Duration(seconds: 15);
 
   this : super(const RideFlowInitial());
 
   String? get activeRideId => _activeRideId;
   String? get activePassengerId => _activePassengerId;
   String get activePassengerName => _activePassengerName ?? 'Passenger';
+
+  Future<void> syncAuthoritativeRideState() async {
+    final rideId = _activeRideId;
+    if (rideId == null ||
+        rideId.isEmpty ||
+        _isActionInFlight ||
+        _isRideCompletionPending ||
+        state is RideFlowComplete) {
+      return;
+    }
+
+    final inFlight = _rideStatusSync;
+    if (inFlight != null) return inFlight;
+
+    late final Future<void> request;
+    request = _syncAuthoritativeRideState(rideId).whenComplete(() {
+      if (identical(_rideStatusSync, request)) _rideStatusSync = null;
+    });
+    _rideStatusSync = request;
+    return request;
+  }
+
+  void handleExternalTerminalRide({
+    required String rideId,
+    required String status,
+  }) {
+    if (_isRideCompletionPending || state is RideFlowComplete) return;
+    final normalizedStatus = status.trim().toLowerCase();
+    if (!const {
+      'completed',
+      'canceled',
+      'cancelled',
+    }.contains(normalizedStatus)) {
+      return;
+    }
+    _finishTerminalRide(rideId: rideId, status: normalizedStatus);
+  }
+
+  Future<void> _syncAuthoritativeRideState(String rideId) async {
+    final actionGeneration = _actionGeneration;
+    try {
+      Failure? failure;
+      RideSnapshot? ride;
+      (await _rideRepository.fetchRideResult(rideId))
+          .fold((value) => failure = value, (value) => ride = value);
+      if (!_isCurrentAction(actionGeneration) || _activeRideId != rideId) {
+        return;
+      }
+      if (failure is RideNotFoundFailure) {
+        _finishTerminalRide(rideId: rideId, status: 'not_found');
+        return;
+      }
+      if (ride case final RideSnapshot value when value.isTerminal) {
+        _finishTerminalRide(rideId: rideId, status: value.status);
+      }
+    } catch (error, stackTrace) {
+      dev.log(
+        'Unable to reconcile the active ride status.',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  void _startRideStatusSyncTimer() {
+    _rideStatusSyncTimer?.cancel();
+    _rideStatusSyncTimer = Timer.periodic(
+      _rideStatusSyncInterval,
+      (_) => unawaited(syncAuthoritativeRideState()),
+    );
+  }
+
+  void _stopRideStatusSyncTimer() {
+    _rideStatusSyncTimer?.cancel();
+    _rideStatusSyncTimer = null;
+    _rideStatusSync = null;
+  }
+
+  void _finishTerminalRide({required String rideId, required String status}) {
+    if (isClosed ||
+        (_activeRideId != null && _activeRideId != rideId) ||
+        rideId.trim().isEmpty) {
+      return;
+    }
+    ++_actionGeneration;
+    _waitTimer?.cancel();
+    _stopRideStatusSyncTimer();
+    _activeRideId = null;
+    _activePassengerId = null;
+    _activePassengerName = null;
+    _waitingUntil = null;
+    _waitStartedAt = null;
+    _elapsedWaitTime = 0;
+    _isActionInFlight = false;
+    _isRideCompletionPending = false;
+    unawaited(_clearActiveRideSession());
+    emit(
+      RideFlowTerminal(
+        rideId: rideId,
+        status: status,
+        message: switch (status) {
+          'completed' => 'This trip has already been completed.',
+          'not_found' => 'This trip is no longer available.',
+          _ => 'This trip was canceled.',
+        },
+      ),
+    );
+  }
 
   Future<void> refreshPassengerLocation() async {
     final rideId = _activeRideId;
@@ -99,6 +212,7 @@ class RideFlowCubit({
     }.contains(normalizedStatus)) {
       ++_actionGeneration;
       _waitTimer?.cancel();
+      _stopRideStatusSyncTimer();
       _activeRideId = null;
       _activePassengerId = null;
       _activePassengerName = null;
@@ -159,6 +273,8 @@ class RideFlowCubit({
         ),
       );
     }
+    _isRideCompletionPending = false;
+    _startRideStatusSyncTimer();
     return true;
   }
 
@@ -193,6 +309,7 @@ class RideFlowCubit({
     _isActionInFlight = true;
     _activeRideId = typedRideId.normalized;
     _activePassengerName = passengerName;
+    _isRideCompletionPending = false;
 
     final driverId = await _sessionService.readDriverId();
     if (!_isCurrentAction(actionGeneration)) return;
@@ -229,6 +346,7 @@ class RideFlowCubit({
           destLng: destLng,
         ),
       );
+      _startRideStatusSyncTimer();
     } catch (error) {
       if (!_isCurrentAction(actionGeneration)) return;
       dev.log('Error accepting ride on backend: $error');
@@ -315,6 +433,7 @@ class RideFlowCubit({
         return false;
       }
       _waitTimer?.cancel();
+      _stopRideStatusSyncTimer();
       _activeRideId = null;
       _activePassengerId = null;
       _activePassengerName = null;
@@ -351,6 +470,7 @@ class RideFlowCubit({
         return false;
       }
       _waitTimer?.cancel();
+      _stopRideStatusSyncTimer();
       _activeRideId = null;
       _activePassengerId = null;
       _activePassengerName = null;
@@ -393,6 +513,7 @@ class RideFlowCubit({
         return false;
       }
       _waitTimer?.cancel();
+      _stopRideStatusSyncTimer();
       _activeRideId = null;
       _activePassengerId = null;
       _activePassengerName = null;
@@ -670,6 +791,9 @@ class RideFlowCubit({
         );
         return null;
       }
+      _isRideCompletionPending = true;
+      _rideStatusSyncTimer?.cancel();
+      _rideStatusSyncTimer = null;
       return fareAmount / 100;
     } finally {
       if (_actionGeneration == actionGeneration) _isActionInFlight = false;
@@ -812,12 +936,14 @@ class RideFlowCubit({
   void reset() {
     ++_actionGeneration;
     _waitTimer?.cancel();
+    _stopRideStatusSyncTimer();
     _activeRideId = null;
     _activePassengerId = null;
     _activePassengerName = null;
     _waitingUntil = null;
     _waitStartedAt = null;
     _elapsedWaitTime = 0;
+    _isRideCompletionPending = false;
     unawaited(_clearActiveRideSession());
     _isActionInFlight = false;
     emit(const RideFlowInitial());
@@ -851,6 +977,7 @@ class RideFlowCubit({
   Future<void> close() {
     ++_actionGeneration;
     _waitTimer?.cancel();
+    _stopRideStatusSyncTimer();
     return super.close();
   }
 

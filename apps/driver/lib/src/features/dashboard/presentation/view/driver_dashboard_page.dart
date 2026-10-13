@@ -80,7 +80,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   bool _isCheckingLocationAccess = false;
   bool _isForcingOfflineForLocationLoss = false;
   bool _isForeground = true;
-  bool _isHandlingPassengerCancellation = false;
+  bool _isHandlingRideTerminal = false;
   bool _isRestoringPendingCashSettlement = false;
   bool _breakAlertShown = false;
 
@@ -143,7 +143,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   Future<void> _resyncActiveTrip() async {
     if (!mounted || !_isForeground) return;
-    await BlocProvider.of<DashboardCubit>(context).resyncActiveTrip();
+    await Future.wait<void>([
+      BlocProvider.of<DashboardCubit>(context).resyncActiveTrip(),
+      BlocProvider.of<RideFlowCubit>(context).syncAuthoritativeRideState(),
+    ]);
   }
 
   void _syncPulseAnimation(bool isOnline) {
@@ -217,6 +220,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   Future<void> _resumeForegroundWork() async {
     await _loadActiveTrips();
+    if (!mounted || !_isForeground) return;
+    await BlocProvider.of<RideFlowCubit>(context).syncAuthoritativeRideState();
     if (!mounted || !_isForeground) return;
     await _restorePendingCashSettlement();
     if (!mounted || !_isForeground) return;
@@ -572,25 +577,39 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       return;
     }
 
-    final dashboardCubit = BlocProvider.of<DashboardCubit>(context);
-    dashboardCubit.removeActiveRide(rideId);
-    rideFlowCubit.reset();
-    if (_isHandlingPassengerCancellation) return;
-    _isHandlingPassengerCancellation = true;
-    unawaited(_showPassengerCancellationDialog());
+    rideFlowCubit.handleExternalTerminalRide(rideId: rideId, status: status);
   }
 
-  Future<void> _showPassengerCancellationDialog() async {
+  void _handleRideFlowTerminal(RideFlowTerminal terminal) {
+    BlocProvider.of<DashboardCubit>(context).removeActiveRide(terminal.rideId);
+    if (_isHandlingRideTerminal) return;
+    _isHandlingRideTerminal = true;
+    unawaited(_showRideTerminalDialog(terminal));
+  }
+
+  Future<void> _showRideTerminalDialog(RideFlowTerminal terminal) async {
     try {
       if (!mounted) return;
+      final (title, message) = switch (terminal.status) {
+        'completed' => (
+          'Trip already complete',
+          'This trip has already been completed. You have been returned to the dispatch queue.',
+        ),
+        'not_found' => (
+          'Trip unavailable',
+          'This trip is no longer available. You have been returned to the dispatch queue.',
+        ),
+        _ => (
+          'Trip canceled',
+          'This trip was canceled. You have been returned to the dispatch queue.',
+        ),
+      };
       await showDialog<void>(
         context: context,
         barrierDismissible: false,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('Trip canceled'),
-          content: const Text(
-            'The passenger canceled this trip. You are back in the dispatch queue.',
-          ),
+          title: Text(title),
+          content: Text(message),
           actions: [
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
@@ -601,7 +620,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       );
       if (mounted) context.goNamed(DashboardRoutes.dashboard);
     } finally {
-      _isHandlingPassengerCancellation = false;
+      _isHandlingRideTerminal = false;
     }
   }
 
@@ -858,6 +877,14 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   Widget build(BuildContext context) {
     return MultiBlocListener(
       listeners: [
+        BlocListener<RideFlowCubit, RideFlowState>(
+          listenWhen: (_, current) => current is RideFlowTerminal,
+          listener: (context, state) {
+            if (state case final RideFlowTerminal terminal) {
+              _handleRideFlowTerminal(terminal);
+            }
+          },
+        ),
         BlocListener<DashboardCubit, DashboardState>(
           listenWhen: (previous, current) =>
               previous.isOnline != current.isOnline,
