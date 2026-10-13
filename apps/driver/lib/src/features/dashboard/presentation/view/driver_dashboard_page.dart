@@ -9,6 +9,7 @@ import 'package:foundation/foundation.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_cubit.dart';
 import 'package:driver/src/features/dashboard/presentation/bloc/dashboard/dashboard_state.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/driver_active_trip_card.dart';
+import 'package:driver/src/features/dashboard/presentation/widgets/driver_availability_card.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/driver_dashboard_section_label.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/driver_dashboard_stats_row.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/driver_pool_bid_card.dart';
@@ -59,7 +60,6 @@ class const DriverDashboardPage({
 class _DriverDashboardPageState extends State<DriverDashboardPage>
     with TickerProviderStateMixin {
   late final AnimationController _pulseCtrl;
-  late final AnimationController _availabilityCtrl;
   Timer? _rideTriggerTimer;
   Timer? _presenceHeartbeatTimer;
   Timer? _locationAccessPoller;
@@ -105,17 +105,12 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       vsync: this,
       duration: const Duration(seconds: 2),
     );
-    _availabilityCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 520),
-    );
     _startRequestCountdownTimer();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         final s = BlocProvider.of<DashboardCubit>(context).state;
         _syncPulseAnimation(s.isOnline);
-        _availabilityCtrl.value = s.isOnline ? 1 : 0;
         _startLocationAccessMonitoring();
         unawaited(_loadActiveTrips());
         unawaited(_restorePendingCashSettlement());
@@ -133,7 +128,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _realtimeClient.setActiveTripResyncHandler(null);
     unawaited(_lifecycleSubscription.cancel());
     _pulseCtrl.dispose();
-    _availabilityCtrl.dispose();
     _rideTriggerTimer?.cancel();
     _presenceHeartbeatTimer?.cancel();
     _locationAccessPoller?.cancel();
@@ -679,11 +673,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       _isTogglingOnline = true;
       _pendingOnline = requestedOnline;
     });
-    if (requestedOnline) {
-      _availabilityCtrl.forward();
-    } else {
-      _availabilityCtrl.reverse();
-    }
 
     try {
       if (requestedOnline && await _hasReadyLocationAccess(context) == false) {
@@ -711,13 +700,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
             .isOnline;
         _pendingOnline = null;
         if (resolvedOnline) {
-          _availabilityCtrl.forward();
           _startPolling();
           if (LocationService.lastPosition == null) {
             unawaited(_requestAndPublishCurrentLocation());
           }
-        } else {
-          _availabilityCtrl.reverse();
         }
         setState(() => _isTogglingOnline = false);
       }
@@ -879,7 +865,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
             _syncPulseAnimation(state.isOnline);
             if (state.isOnline) {
               if (_isForeground) _startShiftDurationTimer();
-              _availabilityCtrl.forward();
               // A user-triggered transition already establishes telemetry and
               // starts the background service in the repository. Re-running
               // the full online handshake here creates a duplicate request
@@ -891,7 +876,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
               }
             } else {
               _stopShiftDurationTimer();
-              _availabilityCtrl.reverse();
               _stopPolling();
             }
           },
@@ -1070,162 +1054,14 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     final locationReady = context.select<DriverLocationAccessCubit, bool>(
       (cubit) => cubit.state is DriverLocationAccessReady,
     );
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: EasyRideLayout.pagePadding,
-      ),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeInOut,
-        decoration: BoxDecoration(
-          color: isOnline
-              ? context.colorScheme.primary
-              : context.colorScheme.surface,
-          borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-          border: Border.all(
-            color: isOnline
-                ? context.colorScheme.primary
-                : context.colorScheme.outlineVariant,
-          ),
-          boxShadow: isOnline
-              ? [
-                  BoxShadow(
-                    color: context.colorScheme.primary.withValues(alpha: 0.18),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ]
-              : null,
-        ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: EasyRideSpacing.lg,
-          vertical: EasyRideSpacing.lg,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Row(
-                children: [
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: isOnline
-                          ? context.semanticColors.success
-                          : context.semanticColors.offline,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          isOnline ? "You're Online" : "You're Offline",
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: context.textStyles.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: isOnline
-                                ? context.colorScheme.onPrimary
-                                : context.colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          isOnline
-                              ? 'Available for ride requests nearby'
-                              : 'Switch online to start receiving rides',
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: context.textStyles.bodySmall?.copyWith(
-                            color: isOnline
-                                ? context.colorScheme.onPrimary.withValues(
-                                    alpha: 0.8,
-                                  )
-                                : context.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: EasyRideSpacing.sm),
-            _buildAvailabilitySwitch(
-              context,
-              isOnline,
-              _availabilityCtrl.value,
-              locationReady,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAvailabilitySwitch(
-    BuildContext context,
-    bool isOnline,
-    double animationProgress,
-    bool locationReady,
-  ) {
-    final trackColor = isOnline
-        ? Color.lerp(
-            context.colorScheme.primary.withValues(alpha: 0.16),
-            context.colorScheme.onPrimary.withValues(alpha: 0.28),
-            animationProgress,
-          )!
-        : context.colorScheme.outlineVariant;
-    final thumbColor = isOnline
-        ? Color.lerp(
-            context.colorScheme.primary,
-            context.colorScheme.onPrimary,
-            animationProgress,
-          )!
-        : context.colorScheme.onSurfaceVariant;
-
-    return SizedBox(
-      width: 56,
-      height: 32,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: trackColor,
-          borderRadius: BorderRadius.circular(EasyRideRadius.pill),
-        ),
-        child: _isTogglingOnline
-            ? Center(
-                child: SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: isOnline
-                        ? context.colorScheme.onPrimary
-                        : context.colorScheme.onSurface,
-                  ),
-                ),
-              )
-            : Switch(
-                value: isOnline,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                activeThumbColor: thumbColor,
-                activeTrackColor: context.colorScheme.onPrimary.withValues(
-                  alpha: 0,
-                ),
-                inactiveThumbColor: thumbColor,
-                inactiveTrackColor: context.colorScheme.onPrimary.withValues(
-                  alpha: 0,
-                ),
-                onChanged: (locationReady || isOnline)
-                    ? (value) => unawaited(_toggleOnline(context, value))
-                    : null,
-              ),
-      ),
+    return DriverAvailabilityCard(
+      isOnline: isOnline,
+      isToggling: _isTogglingOnline,
+      hasActiveRide: state.activeRide != null,
+      statusPulse: _pulseCtrl,
+      onChanged: (locationReady || isOnline)
+          ? (value) => unawaited(_toggleOnline(context, value))
+          : null,
     );
   }
 
