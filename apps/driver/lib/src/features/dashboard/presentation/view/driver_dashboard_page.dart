@@ -64,7 +64,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   Timer? _presenceHeartbeatTimer;
   Timer? _locationAccessPoller;
   Timer? _requestCountdownTimer;
-  Timer? _shiftDurationTimer;
   StreamSubscription<Position>? _locationSubscription;
   StreamSubscription<RealtimeEvent>? _realtimeEventsSubscription;
   late final StreamSubscription<AppLifecycleStatus> _lifecycleSubscription;
@@ -82,11 +81,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   bool _isForeground = true;
   bool _isHandlingRideTerminal = false;
   bool _isRestoringPendingCashSettlement = false;
-  bool _breakAlertShown = false;
 
   static const _locationAccessPollInterval = Duration(seconds: 5);
   static const _locationAccessFailureThreshold = 2;
-  static const _breakThreshold = Duration(hours: 8);
 
   @override
   void initState() {
@@ -115,7 +112,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         unawaited(_loadActiveTrips());
         unawaited(_restorePendingCashSettlement());
         if (s.isOnline && _isForeground) {
-          _startShiftDurationTimer();
           unawaited(_resumeOnlineTelemetry());
         }
       }
@@ -132,7 +128,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _presenceHeartbeatTimer?.cancel();
     _locationAccessPoller?.cancel();
     _requestCountdownTimer?.cancel();
-    _shiftDurationTimer?.cancel();
     _cancelLocationSubscription();
     unawaited(_realtimeEventsSubscription?.cancel());
     _realtimeEventsSubscription = null;
@@ -169,7 +164,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       if (_isForeground) {
         _isForeground = false;
         _pulseCtrl.stop();
-        _stopShiftDurationTimer();
         _suspendForegroundWork();
       }
       return;
@@ -179,43 +173,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _isForeground = true;
     final isOnline = BlocProvider.of<DashboardCubit>(context).state.isOnline;
     _syncPulseAnimation(isOnline);
-    if (isOnline) _startShiftDurationTimer();
     _startRequestCountdownTimer();
     unawaited(_resumeForegroundWork());
-  }
-
-  void _startShiftDurationTimer() {
-    _shiftDurationTimer?.cancel();
-    _breakAlertShown = false;
-    _updateShiftDuration();
-    _shiftDurationTimer = Timer.periodic(
-      const Duration(seconds: 30),
-      (_) => _updateShiftDuration(),
-    );
-  }
-
-  void _stopShiftDurationTimer() {
-    _shiftDurationTimer?.cancel();
-    _shiftDurationTimer = null;
-  }
-
-  void _updateShiftDuration() {
-    if (!mounted) return;
-    final cubit = BlocProvider.of<DashboardCubit>(context);
-    final onlineSince = cubit.onlineSince;
-    final duration = onlineSince == null
-        ? Duration.zero
-        : DateTime.now().toUtc().difference(onlineSince).isNegative
-        ? Duration.zero
-        : DateTime.now().toUtc().difference(onlineSince);
-    if (duration >= _breakThreshold && !_breakAlertShown) {
-      _breakAlertShown = true;
-      CustomToast.show(
-        context,
-        'You have been online for 8 hours. Take a break before continuing.',
-        isError: true,
-      );
-    }
   }
 
   Future<void> _resumeForegroundWork() async {
@@ -891,7 +850,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
           listener: (context, state) {
             _syncPulseAnimation(state.isOnline);
             if (state.isOnline) {
-              if (_isForeground) _startShiftDurationTimer();
               // A user-triggered transition already establishes telemetry and
               // starts the background service in the repository. Re-running
               // the full online handshake here creates a duplicate request
@@ -902,7 +860,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                 unawaited(_resumeOnlineTelemetry());
               }
             } else {
-              _stopShiftDurationTimer();
               _stopPolling();
             }
           },

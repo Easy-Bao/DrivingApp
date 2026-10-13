@@ -21,12 +21,9 @@ class DashboardCubit({
   Future<void>? _initialization;
   Future<void>? _statsRequestInFlight;
   DateTime? _silentDispatchRetryAfter;
-  DateTime? _onlineSince;
   final Map<String, DateTime> _resolvedOfferSessions = <String, DateTime>{};
 
   this : _now = now ?? DateTime.now, super(const DashboardState());
-
-  DateTime? get onlineSince => _onlineSince;
 
   Future<void> initialize() async {
     final existingInitialization = _initialization;
@@ -57,7 +54,6 @@ class DashboardCubit({
         (isOnline) {
           if (isClosed) return;
           emit(state.copyWith(isOnline: isOnline));
-          if (!isOnline) _onlineSince = null;
         },
       );
     } catch (error, stackTrace) {
@@ -68,16 +64,6 @@ class DashboardCubit({
       );
     }
     if (isClosed) return;
-    final onlineSinceResult = await _repository.getPersistedOnlineSinceResult();
-    if (isClosed) return;
-    onlineSinceResult.fold(
-      (failure) => dev.log(
-        'Unable to restore the driver shift timer: ${failure.message}',
-      ),
-      (value) {
-        _onlineSince = state.isOnline ? value ?? _now() : null;
-      },
-    );
     await loadStats();
   }
 
@@ -488,8 +474,6 @@ class DashboardCubit({
   }) async {
     final goingOnline = requestedOnline ?? !state.isOnline;
     final previousOnline = state.isOnline;
-    final previousOnlineSince = _onlineSince;
-    _onlineSince = goingOnline ? (_onlineSince ?? _now()) : null;
     emit(state.copyWith(isOnline: goingOnline, errorMessage: null));
 
     try {
@@ -529,9 +513,6 @@ class DashboardCubit({
         ),
       );
     }
-    if (state.isOnline == previousOnline && state.errorMessage != null) {
-      _onlineSince = previousOnlineSince;
-    }
   }
 
   Future<void> forceOffline({required double lat, required double lng}) async {
@@ -557,7 +538,6 @@ class DashboardCubit({
         emit(state.copyWith(isOnline: false, errorMessage: null));
       },
     );
-    _onlineSince = null;
   }
 
   Future<bool> refreshOnlinePresence({
@@ -583,7 +563,6 @@ class DashboardCubit({
         if (isClosed) return false;
         final reconciled = offlineResult.fold((_) => false, (_) => true);
         if (reconciled) {
-          _onlineSince = null;
           emit(
             state.copyWith(
               isOnline: false,

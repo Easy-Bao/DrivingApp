@@ -151,15 +151,6 @@ final class DashboardRepositoryImpl({
     }
   }
 
-  @override
-  Future<Result<DateTime?, Failure>> getPersistedOnlineSince() async {
-    try {
-      return Ok(await _sessionService.readDriverOnlineSince());
-    } catch (error) {
-      return Err(_mapExceptionToFailure(error));
-    }
-  }
-
   Future<void> _clearOnlinePresence({
     required String driverId,
     required bool markServerOffline,
@@ -169,7 +160,6 @@ final class DashboardRepositoryImpl({
     // must observe offline before it can send another heartbeat.
     try {
       await _sessionService.saveDriverOnlineStatus(false);
-      await _sessionService.clearDriverOnlineSince();
     } catch (error) {
       dev.log('Unable to persist offline driver status: $error');
     }
@@ -246,10 +236,6 @@ final class DashboardRepositoryImpl({
   Future<void> _persistOnlineState() async {
     try {
       await _sessionService.saveDriverOnlineStatus(true);
-      final onlineSince = await _sessionService.readDriverOnlineSince();
-      if (onlineSince == null) {
-        await _sessionService.saveDriverOnlineSince(DateTime.now().toUtc());
-      }
     } catch (error) {
       dev.log('Unable to persist driver online status: $error');
     }

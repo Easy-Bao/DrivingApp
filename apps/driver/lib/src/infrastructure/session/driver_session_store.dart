@@ -57,23 +57,6 @@ class DriverSessionStore({FlutterSecureStorage? storage}) {
     };
   }
 
-  Future<void> saveDriverOnlineSince(DateTime value) async {
-    await _storage.write(
-      key: DriverStorageKeys.driverOnlineSince,
-      value: value.toUtc().toIso8601String(),
-    );
-  }
-
-  Future<DateTime?> readDriverOnlineSince() async {
-    final value = await _storage.read(key: DriverStorageKeys.driverOnlineSince);
-    if (value == null || value.trim().isEmpty) return null;
-    return DateTime.tryParse(value)?.toUtc();
-  }
-
-  Future<void> clearDriverOnlineSince() async {
-    await _storage.delete(key: DriverStorageKeys.driverOnlineSince);
-  }
-
   Future<void> savePassengerId(String passengerId) async {
     await _storage.write(
       key: DriverStorageKeys.passengerId,

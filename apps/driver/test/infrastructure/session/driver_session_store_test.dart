@@ -58,22 +58,6 @@ void main() {
     expect(await sessionService.readRefreshToken(), 'refresh-jwt-token');
   });
 
-  test('persists the UTC shift start time', () async {
-    final startedAt = DateTime.utc(2026, 9, 23, 8);
-    when(() => storage.read(key: DriverStorageKeys.driverOnlineSince))
-        .thenAnswer((_) async => startedAt.toIso8601String());
-
-    await sessionService.saveDriverOnlineSince(startedAt);
-
-    verify(
-      () => storage.write(
-        key: DriverStorageKeys.driverOnlineSince,
-        value: startedAt.toIso8601String(),
-      ),
-    ).called(1);
-    expect(await sessionService.readDriverOnlineSince(), startedAt);
-  });
-
   test('clears only driver-owned session keys', () async {
     await sessionService.clearSession();
 
