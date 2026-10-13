@@ -40,23 +40,14 @@ class DriverIncomingRequestDialog extends StatefulWidget {
   }) {
     return showDialog<void>(
       context: context,
-      barrierDismissible: true,
+      barrierDismissible: false,
       barrierColor: context.colorScheme.scrim,
-      builder: (dialogContext) => DriverIncomingRequestDialog(
+      builder: (context) => _IncomingRequestDialogRoute(
         bid: bid,
         submittingBidId: submittingBidId,
-        onDecline: () {
-          Navigator.of(dialogContext, rootNavigator: true).pop();
-          onDecline();
-        },
-        onSubmitOffer: () {
-          Navigator.of(dialogContext, rootNavigator: true).pop();
-          onSubmitOffer();
-        },
-        onTimeout: () {
-          Navigator.of(dialogContext, rootNavigator: true).pop();
-          onTimeout?.call();
-        },
+        onDecline: onDecline,
+        onSubmitOffer: onSubmitOffer,
+        onTimeout: onTimeout,
         totalDuration: totalDuration,
       ),
     );
@@ -65,6 +56,57 @@ class DriverIncomingRequestDialog extends StatefulWidget {
   @override
   State<DriverIncomingRequestDialog> createState() =>
       _DriverIncomingRequestDialogState();
+}
+
+class _IncomingRequestDialogRoute extends StatefulWidget {
+  const _IncomingRequestDialogRoute({
+    required this.bid,
+    required this.submittingBidId,
+    required this.onDecline,
+    required this.onSubmitOffer,
+    required this.onTimeout,
+    required this.totalDuration,
+  });
+
+  final Map<String, dynamic> bid;
+  final String? submittingBidId;
+  final VoidCallback onDecline;
+  final VoidCallback onSubmitOffer;
+  final VoidCallback? onTimeout;
+  final Duration totalDuration;
+
+  @override
+  State<_IncomingRequestDialogRoute> createState() =>
+      _IncomingRequestDialogRouteState();
+}
+
+class _IncomingRequestDialogRouteState
+    extends State<_IncomingRequestDialogRoute> {
+  bool _isClosing = false;
+
+  void _close(VoidCallback? action) {
+    if (_isClosing) return;
+    setState(() => _isClosing = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context, rootNavigator: true).pop();
+      action?.call();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope<void>(
+      canPop: _isClosing,
+      child: DriverIncomingRequestDialog(
+        bid: widget.bid,
+        submittingBidId: widget.submittingBidId,
+        onDecline: () => _close(widget.onDecline),
+        onSubmitOffer: () => _close(widget.onSubmitOffer),
+        onTimeout: () => _close(widget.onTimeout),
+        totalDuration: widget.totalDuration,
+      ),
+    );
+  }
 }
 
 class _DriverIncomingRequestDialogState

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/dashboard/presentation/widgets/driver_incoming_request_dialog.dart';
 import 'package:flutter/material.dart';
@@ -153,6 +155,72 @@ void main() {
     await tester.tap(
       find.byKey(const ValueKey('incoming-request-submit-button')),
     );
+    expect(submittedOffer, isTrue);
+  });
+
+  testWidgets('show cannot dismiss from the barrier or system back', (
+    tester,
+  ) async {
+    var declined = false;
+    var submittedOffer = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: EasyRideTheme.main,
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: ElevatedButton(
+                onPressed: () => unawaited(
+                  DriverIncomingRequestDialog.show(
+                    context,
+                    bid: testBid,
+                    onDecline: () => declined = true,
+                    onSubmitOffer: () => submittedOffer = true,
+                  ),
+                ),
+                child: const Text('Show request'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Show request'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byType(DriverIncomingRequestDialog), findsOneWidget);
+
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byType(DriverIncomingRequestDialog), findsOneWidget);
+    expect(declined, isFalse);
+
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    expect(find.byType(DriverIncomingRequestDialog), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const ValueKey('incoming-request-decline-button')),
+    );
+    await tester.pump();
+    expect(declined, isTrue);
+    expect(
+      tester.widget<PopScope<void>>(find.byType(PopScope<void>)).canPop,
+      isTrue,
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(DriverIncomingRequestDialog), findsNothing);
+
+    await tester.tap(find.text('Show request'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(
+      find.byKey(const ValueKey('incoming-request-submit-button')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(DriverIncomingRequestDialog), findsNothing);
     expect(submittedOffer, isTrue);
   });
 
