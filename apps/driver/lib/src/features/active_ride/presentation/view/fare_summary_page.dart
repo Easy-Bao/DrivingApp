@@ -187,7 +187,7 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
       }
 
       setState(() => _canLeavePage = true);
-      cubit.reset();
+      await cubit.reset();
       await widget.ridePaymentCompletionHandler.afterCashPayment();
       if (!mounted) return;
       context.goNamed(DashboardRoutes.dashboard);

@@ -536,7 +536,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       return;
     }
 
-    rideFlowCubit.handleExternalTerminalRide(rideId: rideId, status: status);
+    unawaited(
+      rideFlowCubit.handleExternalTerminalRide(rideId: rideId, status: status),
+    );
   }
 
   void _handleRideFlowTerminal(RideFlowTerminal terminal) {
@@ -765,7 +767,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     final rideId = trip.id;
     final resolvedTrip = await _authoritativeTrip(trip);
     if (!mounted) return;
-    if (_discardTerminalTrip(resolvedTrip, rideId)) return;
+    if (await _discardTerminalTrip(resolvedTrip, rideId)) return;
     final fare = resolvedTrip.farePesos;
     final distance = resolvedTrip.distanceKm;
     final duration = resolvedTrip.durationMinutes;
@@ -785,7 +787,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       routeName = ActiveRideRoutes.inTransit;
     }
 
-    final resumed = BlocProvider.of<RideFlowCubit>(context).resumeRide(
+    final resumed = await BlocProvider.of<RideFlowCubit>(context).resumeRide(
       rideId: rideId,
       status: resolvedTrip.status.isEmpty ? 'accepted' : resolvedTrip.status,
       passengerName: resolvedTrip.passengerName ?? 'Passenger',
@@ -812,13 +814,13 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     );
   }
 
-  bool _discardTerminalTrip(RideSnapshot trip, String rideId) {
+  Future<bool> _discardTerminalTrip(RideSnapshot trip, String rideId) async {
     if (!trip.isTerminal) return false;
 
     BlocProvider.of<DashboardCubit>(context).removeActiveRide(rideId);
     final rideFlowCubit = BlocProvider.of<RideFlowCubit>(context);
     if (rideFlowCubit.activeRideId == rideId) {
-      rideFlowCubit.reset();
+      await rideFlowCubit.reset();
     }
     if (mounted) {
       CustomToast.show(

@@ -34,6 +34,7 @@ void main() {
         .thenAnswer((_) async => 'test-driver-id');
     when(() => mockSessionService.saveActiveRideId(any()))
         .thenAnswer((_) async {});
+    when(() => mockSessionService.clearActiveRideId()).thenAnswer((_) async {});
     when(() => mockSessionService.readActiveRideId())
         .thenAnswer((_) async => null);
 
@@ -133,7 +134,7 @@ void main() {
       );
       await acceptStarted.future;
 
-      cubit.reset();
+      await cubit.reset();
       releaseAccept.complete(const Ok(null));
       await pendingAccept;
 
@@ -152,7 +153,7 @@ void main() {
       'emits RideFlowWaitingPassenger starting at 0 seconds',
       build: () => _makeCubit(mockRideRepository, mockSessionService),
       act: (cubit) async {
-        cubit.resumeRide(
+        await cubit.resumeRide(
           rideId: 'test-ride-id',
           status: 'accepted',
           passengerName: 'Juan Dela Cruz',
@@ -196,7 +197,7 @@ void main() {
       ).thenAnswer((_) async => const Err(ValidationFailure(message)));
 
       final cubit = _makeCubit(mockRideRepository, mockSessionService);
-      cubit.resumeRide(
+      await cubit.resumeRide(
         rideId: 'test-ride-id',
         status: 'accepted',
         passengerName: 'Juan Dela Cruz',
@@ -220,7 +221,7 @@ void main() {
       'emits RideFlowInTransit with correct trip data',
       build: () => _makeCubit(mockRideRepository, mockSessionService),
       act: (cubit) async {
-        cubit.resumeRide(
+        await cubit.resumeRide(
           rideId: 'test-ride-id',
           status: 'arrived',
           passengerName: 'Juan Dela Cruz',
@@ -274,7 +275,7 @@ void main() {
       );
 
       final cubit = _makeCubit(mockRideRepository, mockSessionService);
-      cubit.resumeRide(
+      await cubit.resumeRide(
         rideId: 'test-ride-id',
         status: 'arrived',
         passengerName: 'Juan Dela Cruz',
@@ -311,7 +312,7 @@ void main() {
         );
 
         final cubit = _makeCubit(mockRideRepository, mockSessionService);
-        cubit.resumeRide(
+        await cubit.resumeRide(
           rideId: 'test-ride-id',
           status: 'arrived',
           passengerName: 'Juan Dela Cruz',
@@ -378,7 +379,7 @@ void main() {
   test('rejects terminal rides during recovery', () async {
     final cubit = _makeCubit(mockRideRepository, mockSessionService);
 
-    final resumed = cubit.resumeRide(
+    final resumed = await cubit.resumeRide(
       rideId: 'test-ride-id',
       status: 'cancelled',
       passengerName: 'Juan Dela Cruz',
@@ -387,7 +388,7 @@ void main() {
     expect(resumed, isFalse);
     expect(cubit.activeRideId, isNull);
     expect(cubit.state, isA<RideFlowError>());
-    verify(() => mockSessionService.saveActiveRideId('')).called(1);
+    verify(() => mockSessionService.clearActiveRideId()).called(1);
     await cubit.close();
   });
 
@@ -403,7 +404,7 @@ void main() {
       ),
     );
     final cubit = _makeCubit(mockRideRepository, mockSessionService);
-    cubit.resumeRide(
+    await cubit.resumeRide(
       rideId: 'test-ride-id',
       status: 'accepted',
       passengerName: 'Juan Dela Cruz',
@@ -420,7 +421,7 @@ void main() {
         message: 'This trip was canceled.',
       ),
     );
-    verify(() => mockSessionService.saveActiveRideId('')).called(1);
+    verify(() => mockSessionService.clearActiveRideId()).called(1);
     await cubit.close();
   });
 
@@ -436,7 +437,7 @@ void main() {
       ),
     );
     final cubit = _makeCubit(mockRideRepository, mockSessionService);
-    cubit.resumeRide(
+    await cubit.resumeRide(
       rideId: 'test-ride-id',
       status: 'accepted',
       passengerName: 'Juan Dela Cruz',
@@ -458,7 +459,7 @@ void main() {
       when(() => mockRideRepository.fetchRide('test-ride-id'))
           .thenAnswer((_) async => const Err(NetworkFailure('offline')));
       final cubit = _makeCubit(mockRideRepository, mockSessionService);
-      cubit.resumeRide(
+      await cubit.resumeRide(
         rideId: 'test-ride-id',
         status: 'accepted',
         passengerName: 'Juan Dela Cruz',
@@ -468,7 +469,7 @@ void main() {
 
       expect(cubit.activeRideId, 'test-ride-id');
       expect(cubit.state, isA<RideFlowNavigatingToPickup>());
-      verifyNever(() => mockSessionService.saveActiveRideId(''));
+      verifyNever(() => mockSessionService.clearActiveRideId());
       await cubit.close();
     },
   );
@@ -485,7 +486,7 @@ void main() {
       ),
     );
     final cubit = _makeCubit(mockRideRepository, mockSessionService);
-    cubit.resumeRide(
+    await cubit.resumeRide(
       rideId: 'test-ride-id',
       status: 'in_transit',
       passengerName: 'Juan Dela Cruz',
@@ -496,7 +497,7 @@ void main() {
     expect(cubit.activeRideId, isNull);
     expect(cubit.state, isA<RideFlowTerminal>());
     expect((cubit.state as RideFlowTerminal).status, 'completed');
-    verify(() => mockSessionService.saveActiveRideId('')).called(1);
+    verify(() => mockSessionService.clearActiveRideId()).called(1);
     await cubit.close();
   });
 
@@ -506,7 +507,7 @@ void main() {
       when(() => mockRideRepository.fetchRide('test-ride-id'))
           .thenAnswer((_) async => const Err(RideNotFoundFailure()));
       final cubit = _makeCubit(mockRideRepository, mockSessionService);
-      cubit.resumeRide(
+      await cubit.resumeRide(
         rideId: 'test-ride-id',
         status: 'accepted',
         passengerName: 'Juan Dela Cruz',
@@ -572,10 +573,25 @@ void main() {
 
       expect(ride, isNull);
       expect(cubit.activeRideId, isNull);
-      verify(() => mockSessionService.saveActiveRideId('')).called(1);
+      verify(() => mockSessionService.clearActiveRideId()).called(1);
       await cubit.close();
     },
   );
+
+  test('silently clears a cached ride that no longer exists', () async {
+    when(() => mockSessionService.readActiveRideId())
+        .thenAnswer((_) async => 'test-ride-id');
+    when(() => mockRideRepository.fetchRide('test-ride-id'))
+        .thenAnswer((_) async => const Err(RideNotFoundFailure()));
+
+    final cubit = _makeCubit(mockRideRepository, mockSessionService);
+    final ride = await cubit.restorePendingCashSettlement();
+
+    expect(ride, isNull);
+    expect(cubit.state, isA<RideFlowInitial>());
+    verify(() => mockSessionService.clearActiveRideId()).called(1);
+    await cubit.close();
+  });
 
   test(
     'keeps an active cached ride available for normal trip recovery',
@@ -598,7 +614,7 @@ void main() {
       final ride = await cubit.restorePendingCashSettlement();
 
       expect(ride, isNull);
-      verifyNever(() => mockSessionService.saveActiveRideId(''));
+      verifyNever(() => mockSessionService.clearActiveRideId());
       await cubit.close();
     },
   );
@@ -606,7 +622,7 @@ void main() {
   test('keeps no-show unavailable during the clock-skew buffer', () async {
     final now = DateTime.now().toUtc();
     final cubit = _makeCubit(mockRideRepository, mockSessionService);
-    cubit.resumeRide(
+    await cubit.resumeRide(
       rideId: 'test-ride-id',
       status: 'arrived',
       passengerName: 'Juan Dela Cruz',
@@ -623,7 +639,7 @@ void main() {
   test('enables no-show after the buffered server deadline', () async {
     final now = DateTime.now().toUtc();
     final cubit = _makeCubit(mockRideRepository, mockSessionService);
-    cubit.resumeRide(
+    await cubit.resumeRide(
       rideId: 'test-ride-id',
       status: 'arrived',
       passengerName: 'Juan Dela Cruz',
@@ -637,7 +653,7 @@ void main() {
   test('exposes the server-owned no-show time remaining', () async {
     final now = DateTime.now().toUtc();
     final cubit = _makeCubit(mockRideRepository, mockSessionService);
-    cubit.resumeRide(
+    await cubit.resumeRide(
       rideId: 'test-ride-id',
       status: 'arrived',
       passengerName: 'Juan Dela Cruz',
@@ -659,6 +675,65 @@ void main() {
       act: (cubit) => cubit.reset(),
       expect: () => [isA<RideFlowInitial>()],
     );
+
+    test(
+      'waits for active ride storage deletion before resetting state',
+      () async {
+        final deletion = Completer<void>();
+        when(() => mockSessionService.clearActiveRideId())
+            .thenAnswer((_) => deletion.future);
+        final cubit = _makeCubit(mockRideRepository, mockSessionService);
+        await cubit.resumeRide(
+          rideId: 'test-ride-id',
+          status: 'accepted',
+          passengerName: 'Juan Dela Cruz',
+        );
+
+        final reset = cubit.reset();
+        await untilCalled(() => mockSessionService.clearActiveRideId());
+        expect(cubit.state, isA<RideFlowNavigatingToPickup>());
+
+        deletion.complete();
+        await reset;
+
+        expect(cubit.state, isA<RideFlowInitial>());
+        await cubit.close();
+      },
+    );
+
+    test('clears after a ride ID save already in progress', () async {
+      final save = Completer<void>();
+      final operations = <String>[];
+      when(() => mockSessionService.saveActiveRideId('test-ride-id'))
+          .thenAnswer((_) async {
+            operations.add('save started');
+            await save.future;
+            operations.add('save completed');
+          });
+      when(() => mockSessionService.clearActiveRideId()).thenAnswer((_) async {
+        operations.add('clear');
+      });
+      final cubit = _makeCubit(mockRideRepository, mockSessionService);
+
+      final resume = cubit.resumeRide(
+        rideId: 'test-ride-id',
+        status: 'accepted',
+        passengerName: 'Juan Dela Cruz',
+      );
+      await untilCalled(
+        () => mockSessionService.saveActiveRideId('test-ride-id'),
+      );
+      final reset = cubit.reset();
+
+      expect(operations, ['save started']);
+      save.complete();
+      expect(await resume, isFalse);
+      await reset;
+
+      expect(operations, ['save started', 'save completed', 'clear']);
+      expect(cubit.state, isA<RideFlowInitial>());
+      await cubit.close();
+    });
   });
 
   test('cancels the server ride and clears the active flow', () async {
@@ -679,7 +754,7 @@ void main() {
       ),
     );
     final cubit = _makeCubit(mockRideRepository, mockSessionService);
-    cubit.resumeRide(
+    await cubit.resumeRide(
       rideId: 'test-ride-id',
       status: 'accepted',
       passengerName: 'Juan Dela Cruz',
@@ -690,7 +765,7 @@ void main() {
     expect(cancelled, isTrue);
     expect(cubit.activeRideId, isNull);
     expect(cubit.state, isA<RideFlowInitial>());
-    verify(() => mockSessionService.saveActiveRideId('')).called(1);
+    verify(() => mockSessionService.clearActiveRideId()).called(1);
     await cubit.close();
   });
 
@@ -712,7 +787,7 @@ void main() {
       ),
     );
     final cubit = _makeCubit(mockRideRepository, mockSessionService);
-    cubit.resumeRide(
+    await cubit.resumeRide(
       rideId: 'test-ride-id',
       status: 'in_transit',
       passengerName: 'Juan Dela Cruz',
@@ -726,7 +801,7 @@ void main() {
     expect(stopped, isTrue);
     expect(cubit.activeRideId, isNull);
     expect(cubit.state, isA<RideFlowInitial>());
-    verify(() => mockSessionService.saveActiveRideId('')).called(1);
+    verify(() => mockSessionService.clearActiveRideId()).called(1);
     await cubit.close();
   });
 
@@ -740,7 +815,7 @@ void main() {
       ),
     ).thenAnswer((_) async => const Ok(3000));
     final cubit = _makeCubit(mockRideRepository, mockSessionService);
-    cubit.resumeRide(
+    await cubit.resumeRide(
       rideId: 'test-ride-id',
       status: 'in_transit',
       passengerName: 'Juan Dela Cruz',

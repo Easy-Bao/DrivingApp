@@ -43,6 +43,18 @@ void main() {
     expect(await sessionService.hasValidDriverSession(), isFalse);
   });
 
+  test('deletes the cached active ride ID', () async {
+    await sessionService.clearActiveRideId();
+
+    verify(() => storage.delete(key: DriverStorageKeys.activeRideId)).called(1);
+    verifyNever(
+      () => storage.write(
+        key: DriverStorageKeys.activeRideId,
+        value: any(named: 'value'),
+      ),
+    );
+  });
+
   test('persists and reads the refresh token', () async {
     when(() => storage.read(key: DriverStorageKeys.refreshToken))
         .thenAnswer((_) async => 'refresh-jwt-token');

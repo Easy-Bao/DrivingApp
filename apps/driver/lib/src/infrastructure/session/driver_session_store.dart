@@ -76,6 +76,10 @@ class DriverSessionStore({FlutterSecureStorage? storage}) {
     return _storage.read(key: DriverStorageKeys.activeRideId);
   }
 
+  Future<void> clearActiveRideId() async {
+    await _storage.delete(key: DriverStorageKeys.activeRideId);
+  }
+
   Future<void> clearSession() async {
     await Future.wait(
       const [

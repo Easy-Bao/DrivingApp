@@ -23,6 +23,7 @@ class RideFlowCubit({
   String? _activePassengerId;
   String? _activePassengerName;
   Timer? _waitTimer;
+  Future<void> _activeRideIdWriteQueue = Future<void>.value();
   int _elapsedWaitTime = 0;
   DateTime? _waitingUntil;
   DateTime? _waitStartedAt;
@@ -65,10 +66,10 @@ class RideFlowCubit({
     return request;
   }
 
-  void handleExternalTerminalRide({
+  Future<void> handleExternalTerminalRide({
     required String rideId,
     required String status,
-  }) {
+  }) async {
     if (_isRideCompletionPending || state is RideFlowComplete) return;
     final normalizedStatus = status.trim().toLowerCase();
     if (!const {
@@ -78,7 +79,7 @@ class RideFlowCubit({
     }.contains(normalizedStatus)) {
       return;
     }
-    _finishTerminalRide(rideId: rideId, status: normalizedStatus);
+    await _finishTerminalRide(rideId: rideId, status: normalizedStatus);
   }
 
   Future<void> _syncAuthoritativeRideState(String rideId) async {
@@ -92,11 +93,11 @@ class RideFlowCubit({
         return;
       }
       if (failure is RideNotFoundFailure) {
-        _finishTerminalRide(rideId: rideId, status: 'not_found');
+        await _finishTerminalRide(rideId: rideId, status: 'not_found');
         return;
       }
       if (ride case final RideSnapshot value when value.isTerminal) {
-        _finishTerminalRide(rideId: rideId, status: value.status);
+        await _finishTerminalRide(rideId: rideId, status: value.status);
       }
     } catch (error, stackTrace) {
       dev.log(
@@ -121,13 +122,16 @@ class RideFlowCubit({
     _rideStatusSync = null;
   }
 
-  void _finishTerminalRide({required String rideId, required String status}) {
+  Future<void> _finishTerminalRide({
+    required String rideId,
+    required String status,
+  }) async {
     if (isClosed ||
         (_activeRideId != null && _activeRideId != rideId) ||
         rideId.trim().isEmpty) {
       return;
     }
-    ++_actionGeneration;
+    final actionGeneration = ++_actionGeneration;
     _waitTimer?.cancel();
     _stopRideStatusSyncTimer();
     _activeRideId = null;
@@ -136,9 +140,11 @@ class RideFlowCubit({
     _waitingUntil = null;
     _waitStartedAt = null;
     _elapsedWaitTime = 0;
-    _isActionInFlight = false;
+    _isActionInFlight = true;
     _isRideCompletionPending = false;
-    unawaited(_clearActiveRideSession());
+    await _clearActiveRideSession();
+    if (!_isCurrentAction(actionGeneration)) return;
+    _isActionInFlight = false;
     emit(
       RideFlowTerminal(
         rideId: rideId,
@@ -194,7 +200,7 @@ class RideFlowCubit({
     }
   }
 
-  bool resumeRide({
+  Future<bool> resumeRide({
     required String rideId,
     required String status,
     required String passengerName,
@@ -206,14 +212,14 @@ class RideFlowCubit({
     double? destLng,
     DateTime? arrivedAt,
     DateTime? waitingUntil,
-  }) {
+  }) async {
     final normalizedStatus = status.trim().toLowerCase();
     if (const {
       'completed',
       'canceled',
       'cancelled',
     }.contains(normalizedStatus)) {
-      ++_actionGeneration;
+      final actionGeneration = ++_actionGeneration;
       _waitTimer?.cancel();
       _stopRideStatusSyncTimer();
       _activeRideId = null;
@@ -222,7 +228,10 @@ class RideFlowCubit({
       _waitingUntil = null;
       _waitStartedAt = null;
       _elapsedWaitTime = 0;
-      unawaited(_clearActiveRideSession());
+      _isActionInFlight = true;
+      await _clearActiveRideSession();
+      if (!_isCurrentAction(actionGeneration)) return false;
+      _isActionInFlight = false;
       emit(const RideFlowError('This trip is no longer active.'));
       return false;
     }
@@ -232,13 +241,15 @@ class RideFlowCubit({
       emit(const RideFlowError('This trip is no longer active.'));
       return false;
     }
-    ++_actionGeneration;
+    final actionGeneration = ++_actionGeneration;
     _waitTimer?.cancel();
-    _isActionInFlight = false;
+    _isActionInFlight = true;
     _activeRideId = typedRideId.normalized;
     _activePassengerId = passengerId;
     _activePassengerName = passengerName;
-    unawaited(_saveActiveRideSession(typedRideId.normalized));
+    await _saveActiveRideSession(typedRideId.normalized);
+    if (!_isCurrentAction(actionGeneration)) return false;
+    _isActionInFlight = false;
     _waitingUntil = waitingUntil?.toUtc();
     if (status == 'arrived') {
       _waitStartedAt = arrivedAt?.toUtc() ?? DateTime.now().toUtc();
@@ -317,7 +328,8 @@ class RideFlowCubit({
     if (!_isCurrentAction(actionGeneration)) return;
     if (driverId == null || driverId.isEmpty) {
       _activeRideId = null;
-      unawaited(_clearActiveRideSession());
+      await _clearActiveRideSession();
+      if (!_isCurrentAction(actionGeneration)) return;
       _isActionInFlight = false;
       emit(RideFlowError(ErrorHandler.getErrorMessage(const AuthFailure())));
       return;
@@ -332,12 +344,15 @@ class RideFlowCubit({
       final failure = result.fold<Failure?>((value) => value, (_) => null);
       if (failure != null) {
         _activeRideId = null;
-        unawaited(_clearActiveRideSession());
+        await _clearActiveRideSession();
+        if (!_isCurrentAction(actionGeneration)) return;
+        _isActionInFlight = false;
         emit(RideFlowError(ErrorHandler.getErrorMessage(failure)));
         return;
       }
 
-      unawaited(_saveActiveRideSession(typedRideId.normalized));
+      await _saveActiveRideSession(typedRideId.normalized);
+      if (!_isCurrentAction(actionGeneration)) return;
 
       emit(
         RideFlowNavigatingToPickup(
@@ -891,6 +906,10 @@ class RideFlowCubit({
     }
 
     if (ride == null) {
+      if (loadFailure is RideNotFoundFailure) {
+        await _clearActiveRideSession();
+        return null;
+      }
       emit(
         RideFlowError(
           loadFailure == null
@@ -935,8 +954,8 @@ class RideFlowCubit({
     return confirmCashPayment();
   }
 
-  void reset() {
-    ++_actionGeneration;
+  Future<void> reset() async {
+    final actionGeneration = ++_actionGeneration;
     _waitTimer?.cancel();
     _stopRideStatusSyncTimer();
     _activeRideId = null;
@@ -946,33 +965,46 @@ class RideFlowCubit({
     _waitStartedAt = null;
     _elapsedWaitTime = 0;
     _isRideCompletionPending = false;
-    unawaited(_clearActiveRideSession());
+    _isActionInFlight = true;
+    await _clearActiveRideSession();
+    if (!_isCurrentAction(actionGeneration)) return;
     _isActionInFlight = false;
     emit(const RideFlowInitial());
   }
 
-  Future<void> _clearActiveRideSession() async {
-    try {
-      await _sessionService.saveActiveRideId('');
-    } catch (error, stackTrace) {
-      dev.log(
-        'Unable to clear the locally cached active ride',
-        error: error,
-        stackTrace: stackTrace,
-      );
-    }
-  }
+  Future<void> _clearActiveRideSession() =>
+      _serializeActiveRideIdWrite(() async {
+        try {
+          await _sessionService.clearActiveRideId();
+        } catch (error, stackTrace) {
+          dev.log(
+            'Unable to clear the locally cached active ride',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        }
+      });
 
-  Future<void> _saveActiveRideSession(String rideId) async {
-    try {
-      await _sessionService.saveActiveRideId(rideId);
-    } catch (error, stackTrace) {
-      dev.log(
-        'Unable to cache the active ride for recovery',
-        error: error,
-        stackTrace: stackTrace,
-      );
-    }
+  Future<void> _saveActiveRideSession(String rideId) =>
+      _serializeActiveRideIdWrite(() async {
+        try {
+          await _sessionService.saveActiveRideId(rideId);
+        } catch (error, stackTrace) {
+          dev.log(
+            'Unable to cache the active ride for recovery',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        }
+      });
+
+  Future<void> _serializeActiveRideIdWrite(Future<void> Function() write) {
+    final operation = _activeRideIdWriteQueue.then((_) => write());
+    _activeRideIdWriteQueue = operation.then<void>(
+      (_) {},
+      onError: (Object error, StackTrace stackTrace) {},
+    );
+    return operation;
   }
 
   @override
