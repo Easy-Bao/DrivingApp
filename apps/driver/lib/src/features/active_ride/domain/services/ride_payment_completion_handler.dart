@@ -1,3 +1,3 @@
 abstract interface class RidePaymentCompletionHandler {
-  Future<void> afterCashPayment();
+  Future<void> afterCashPayment({required String rideId});
 }

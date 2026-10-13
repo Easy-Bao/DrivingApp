@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 final class const _NoOpRidePaymentCompletionHandler()
     implements RidePaymentCompletionHandler {
   @override
-  Future<void> afterCashPayment() async {}
+  Future<void> afterCashPayment({required String rideId}) async {}
 }
 
 void main() {

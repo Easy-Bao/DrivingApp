@@ -71,15 +71,9 @@ class RideFlowCubit({
     required String status,
   }) async {
     if (_isRideCompletionPending || state is RideFlowComplete) return;
-    final normalizedStatus = status.trim().toLowerCase();
-    if (!const {
-      'completed',
-      'canceled',
-      'cancelled',
-    }.contains(normalizedStatus)) {
-      return;
-    }
-    await _finishTerminalRide(rideId: rideId, status: normalizedStatus);
+    final terminalStatus = RideStatus.fromString(status);
+    if (!terminalStatus.isTerminal) return;
+    await _finishTerminalRide(rideId: rideId, status: terminalStatus.value);
   }
 
   Future<void> _syncAuthoritativeRideState(String rideId) async {

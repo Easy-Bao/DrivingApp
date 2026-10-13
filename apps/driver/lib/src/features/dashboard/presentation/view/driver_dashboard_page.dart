@@ -525,19 +525,33 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     final status =
         driverValueAsString(ride?['status']) ??
         driverValueAsString(event.envelope.payload['status']);
-    if (status != 'canceled' && status != 'cancelled') return;
+    if (status == null) return;
+    final terminalStatus = RideStatus.fromString(status);
+    if (!terminalStatus.isTerminal) return;
 
     final rideId =
         event.envelope.scope.rideId ?? driverValueAsString(ride?['id']);
+    if (rideId == null) return;
+
+    final dashboardCubit = BlocProvider.of<DashboardCubit>(context);
     final rideFlowCubit = BlocProvider.of<RideFlowCubit>(context);
-    if (rideId == null ||
-        (rideFlowCubit.activeRideId != null &&
-            rideFlowCubit.activeRideId != rideId)) {
-      return;
-    }
+    final flowRideId = rideFlowCubit.activeRideId;
+    final dashboardRideId = dashboardCubit.state.activeRide?.id;
+
+    // Tombstone synchronously so an in-flight snapshot cannot win while the
+    // active-ride session cleanup is awaiting storage I/O.
+    dashboardCubit.removeActiveRide(rideId);
+
+    final isCurrentRide = flowRideId != null
+        ? flowRideId == rideId
+        : dashboardRideId == rideId;
+    if (!isCurrentRide) return;
 
     unawaited(
-      rideFlowCubit.handleExternalTerminalRide(rideId: rideId, status: status),
+      rideFlowCubit.handleExternalTerminalRide(
+        rideId: rideId,
+        status: terminalStatus.value,
+      ),
     );
   }
 

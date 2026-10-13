@@ -22,6 +22,7 @@ class DashboardCubit({
   Future<void>? _statsRequestInFlight;
   DateTime? _silentDispatchRetryAfter;
   final Map<String, DateTime> _resolvedOfferSessions = <String, DateTime>{};
+  final Set<String> _terminalRideIds = <String>{};
 
   this : _now = now ?? DateTime.now, super(const DashboardState());
 
@@ -166,6 +167,25 @@ class DashboardCubit({
             emit(state.copyWith(isLoadingDispatch: false, errorMessage: null));
             return true;
           }
+          final snapshotRide = snapshot.activeRide;
+          final currentRideId = state.activeRide?.id;
+          if (currentRideId != null &&
+              currentRideId.isNotEmpty &&
+              currentRideId != snapshotRide?.id) {
+            _terminalRideIds.add(currentRideId);
+          }
+          if (snapshotRide != null &&
+              snapshotRide.id.isNotEmpty &&
+              snapshotRide.isTerminal) {
+            _terminalRideIds.add(snapshotRide.id);
+          }
+          final activeRide =
+              snapshotRide != null &&
+                  snapshotRide.id.isNotEmpty &&
+                  !snapshotRide.isTerminal &&
+                  !_terminalRideIds.contains(snapshotRide.id)
+              ? snapshotRide
+              : null;
           _silentDispatchRetryAfter = null;
           final offeredSessions = <Map<String, dynamic>>[];
           final submittedOffers = <Map<String, dynamic>>[];
@@ -208,13 +228,13 @@ class DashboardCubit({
           emit(
             state.copyWith(
               isLoadingDispatch: false,
-              activeRide: snapshot.activeRide,
-              activeBids: snapshot.activeRide != null
+              activeRide: activeRide,
+              activeBids: activeRide != null
                   ? const <Map<String, dynamic>>[]
                   : shouldIncludeOffers
                   ? _immutableMaps(offeredSessions)
                   : null,
-              submittedOffers: snapshot.activeRide != null
+              submittedOffers: activeRide != null
                   ? const <Map<String, dynamic>>[]
                   : shouldIncludeOffers
                   ? _immutableMaps(submittedOffers)
@@ -269,7 +289,12 @@ class DashboardCubit({
           (failure.statusCode == null || failure.statusCode! >= 500));
 
   void mergeActiveRide(RideSnapshot ride) {
-    if (ride.id.isEmpty || ride.isTerminal) return;
+    if (ride.id.isEmpty) return;
+    if (ride.isTerminal) {
+      removeActiveRide(ride.id);
+      return;
+    }
+    if (_terminalRideIds.contains(ride.id)) return;
     _activeRideRevision++;
     emit(
       state.copyWith(
@@ -281,10 +306,12 @@ class DashboardCubit({
   }
 
   void removeActiveRide(String? rideId) {
-    if (rideId == null || rideId.isEmpty || state.activeRide?.id != rideId) {
-      return;
-    }
+    if (rideId == null || rideId.isEmpty) return;
+    final removesCurrentRide = state.activeRide?.id == rideId;
+    final addedTombstone = _terminalRideIds.add(rideId);
+    if (!addedTombstone && !removesCurrentRide) return;
     _activeRideRevision++;
+    if (!removesCurrentRide) return;
     emit(
       state.copyWith(
         activeRide: null,

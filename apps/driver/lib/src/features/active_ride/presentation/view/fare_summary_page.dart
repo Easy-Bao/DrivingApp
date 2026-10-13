@@ -186,9 +186,20 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
         return;
       }
 
+      final rideId = cubit.activeRideId;
+      if (rideId == null || rideId.isEmpty) {
+        setState(() {
+          _isSubmitting = false;
+          _error = 'Payment could not be confirmed. Please try again.';
+        });
+        return;
+      }
+
       setState(() => _canLeavePage = true);
       await cubit.reset();
-      await widget.ridePaymentCompletionHandler.afterCashPayment();
+      await widget.ridePaymentCompletionHandler.afterCashPayment(
+        rideId: rideId,
+      );
       if (!mounted) return;
       context.goNamed(DashboardRoutes.dashboard);
     } catch (_) {

@@ -97,7 +97,8 @@ final class _DashboardRidePaymentCompletionHandler
   final DashboardCubit dashboardCubit;
 
   @override
-  Future<void> afterCashPayment() async {
+  Future<void> afterCashPayment({required String rideId}) async {
+    dashboardCubit.removeActiveRide(rideId);
     if (dashboardCubit.state.isOnline) {
       final position =
           LocationService.lastPosition ??

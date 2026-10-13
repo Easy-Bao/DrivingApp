@@ -2,6 +2,8 @@ import 'package:equatable/equatable.dart';
 import 'package:core_domain/core_domain.dart';
 import 'package:foundation/foundation.dart';
 
+import 'ride_status.dart';
+
 final class const RideSnapshot({
   required final String id,
   required final String status,
@@ -99,8 +101,7 @@ final class const RideSnapshot({
   FareCents? get typedFare =>
       fareAmount == null ? null : FareCents(fareAmount!);
 
-  bool get isTerminal =>
-      const {'completed', 'canceled', 'cancelled'}.contains(status);
+  bool get isTerminal => RideStatus.fromString(status).isTerminal;
 
   bool get hasCashSettlement =>
       cashReceivedAt != null ||

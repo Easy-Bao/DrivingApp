@@ -7,6 +7,8 @@ enum RideStatus(final String value) {
   cancelled('cancelled'),
   unknown('unknown');
 
+  bool get isTerminal => this == completed || this == cancelled;
+
   static RideStatus fromString(String statusStr) {
     final normalized = statusStr.toLowerCase().trim();
     if (normalized == 'canceled') {

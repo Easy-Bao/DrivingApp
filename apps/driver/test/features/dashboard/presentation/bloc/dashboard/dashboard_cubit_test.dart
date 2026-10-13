@@ -449,6 +449,32 @@ void main() {
       },
     );
 
+    test(
+      'ignores a terminal ride in later realtime and snapshot updates',
+      () async {
+        const finishedRide = RideSnapshot(
+          id: 'finished-trip',
+          status: 'in_transit',
+          pickupName: 'Pickup',
+          dropoffName: 'Dropoff',
+        );
+        when(() => repo.getDispatchSnapshot(includeOffers: true)).thenAnswer(
+          (_) async => const Ok(
+            DriverDispatchSnapshot(activeRide: finishedRide, rideOffers: []),
+          ),
+        );
+        final cubit = _makeCubit(repo);
+        cubit.mergeActiveRide(finishedRide);
+
+        cubit.removeActiveRide(finishedRide.id);
+        cubit.mergeActiveRide(finishedRide);
+        await cubit.loadDispatchSnapshot();
+
+        expect(cubit.state.activeRide, isNull);
+        await cubit.close();
+      },
+    );
+
     test('removes only the matching active ride', () async {
       final cubit = _makeCubit(repo);
       cubit.mergeActiveRide(

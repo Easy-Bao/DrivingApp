@@ -502,6 +502,41 @@ void main() {
   });
 
   test(
+    'keeps cash settlement active for a completed realtime status',
+    () async {
+      when(() => mockRideRepository.fetchRide('test-ride-id')).thenAnswer(
+        (_) async => const Ok(
+          RideSnapshot(
+            id: 'test-ride-id',
+            status: 'completed',
+            pickupName: 'Pickup',
+            dropoffName: 'Dropoff',
+            fareAmount: 2700,
+          ),
+        ),
+      );
+      final cubit = _makeCubit(mockRideRepository, mockSessionService);
+      await cubit.resumeRide(
+        rideId: 'test-ride-id',
+        status: 'in_transit',
+        passengerName: 'Juan Dela Cruz',
+      );
+
+      final fare = await cubit.completeRide(driverLat: 7.82, driverLng: 123.43);
+      await cubit.handleExternalTerminalRide(
+        rideId: 'test-ride-id',
+        status: ' COMPLETED ',
+      );
+
+      expect(fare, 27);
+      expect(cubit.activeRideId, 'test-ride-id');
+      expect(cubit.state, isA<RideFlowInTransit>());
+      verifyNever(() => mockSessionService.clearActiveRideId());
+      await cubit.close();
+    },
+  );
+
+  test(
     'evicts a ride when the authoritative lookup returns not found',
     () async {
       when(() => mockRideRepository.fetchRide('test-ride-id'))

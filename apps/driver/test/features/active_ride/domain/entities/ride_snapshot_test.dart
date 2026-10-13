@@ -77,4 +77,22 @@ void main() {
     expect(snapshot.fareAmount, isNull);
     expect(snapshot.isTerminal, isFalse);
   });
+
+  test('recognizes terminal ride statuses and cancellation spelling', () {
+    const completedRide = RideSnapshot(
+      id: 'completed-trip',
+      status: 'completed',
+      pickupName: 'Pickup',
+      dropoffName: 'Dropoff',
+    );
+    const cancelledRide = RideSnapshot(
+      id: 'cancelled-trip',
+      status: 'CANCELED',
+      pickupName: 'Pickup',
+      dropoffName: 'Dropoff',
+    );
+
+    expect(completedRide.isTerminal, isTrue);
+    expect(cancelledRide.isTerminal, isTrue);
+  });
 }
