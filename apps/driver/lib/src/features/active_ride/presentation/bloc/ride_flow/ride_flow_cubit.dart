@@ -34,12 +34,15 @@ class RideFlowCubit({
   bool _isRideCompletionPending = false;
 
   static const _rideStatusSyncInterval = Duration(seconds: 15);
+  static const _noShowClockSkewBuffer = Duration(seconds: 5);
 
   this : super(const RideFlowInitial());
 
   String? get activeRideId => _activeRideId;
   String? get activePassengerId => _activePassengerId;
   String get activePassengerName => _activePassengerName ?? 'Passenger';
+  DateTime? get _passengerNoShowEligibleAt =>
+      _waitingUntil?.add(_noShowClockSkewBuffer);
 
   Future<void> syncAuthoritativeRideState() async {
     final rideId = _activeRideId;
@@ -279,15 +282,14 @@ class RideFlowCubit({
   }
 
   bool get canMarkPassengerNoShow {
-    final waitingUntil = _waitingUntil;
-    return waitingUntil != null &&
-        !DateTime.now().toUtc().isBefore(waitingUntil);
+    final eligibleAt = _passengerNoShowEligibleAt;
+    return eligibleAt != null && !DateTime.now().toUtc().isBefore(eligibleAt);
   }
 
   Duration? get passengerNoShowTimeRemaining {
-    final waitingUntil = _waitingUntil;
-    if (waitingUntil == null) return null;
-    final remaining = waitingUntil.difference(DateTime.now().toUtc());
+    final eligibleAt = _passengerNoShowEligibleAt;
+    if (eligibleAt == null) return null;
+    final remaining = eligibleAt.difference(DateTime.now().toUtc());
     return remaining.isNegative ? Duration.zero : remaining;
   }
 

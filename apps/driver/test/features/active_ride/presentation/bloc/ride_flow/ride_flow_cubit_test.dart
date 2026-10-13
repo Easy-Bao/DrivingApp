@@ -603,24 +603,36 @@ void main() {
     },
   );
 
-  test(
-    'uses the server arrival deadline after resuming a waiting ride',
-    () async {
-      final now = DateTime.now().toUtc();
-      final cubit = _makeCubit(mockRideRepository, mockSessionService);
-      cubit.resumeRide(
-        rideId: 'test-ride-id',
-        status: 'arrived',
-        passengerName: 'Juan Dela Cruz',
-        arrivedAt: now.subtract(const Duration(seconds: 30)),
-        waitingUntil: now.subtract(const Duration(seconds: 1)),
-      );
+  test('keeps no-show unavailable during the clock-skew buffer', () async {
+    final now = DateTime.now().toUtc();
+    final cubit = _makeCubit(mockRideRepository, mockSessionService);
+    cubit.resumeRide(
+      rideId: 'test-ride-id',
+      status: 'arrived',
+      passengerName: 'Juan Dela Cruz',
+      arrivedAt: now.subtract(const Duration(seconds: 30)),
+      waitingUntil: now.subtract(const Duration(seconds: 1)),
+    );
 
-      expect(cubit.canMarkPassengerNoShow, isTrue);
-      expect(cubit.state.waitTimeSecondsOr(0), greaterThanOrEqualTo(29));
-      await cubit.close();
-    },
-  );
+    expect(cubit.canMarkPassengerNoShow, isFalse);
+    expect(cubit.passengerNoShowTimeRemaining, greaterThan(Duration.zero));
+    expect(cubit.state.waitTimeSecondsOr(0), greaterThanOrEqualTo(29));
+    await cubit.close();
+  });
+
+  test('enables no-show after the buffered server deadline', () async {
+    final now = DateTime.now().toUtc();
+    final cubit = _makeCubit(mockRideRepository, mockSessionService);
+    cubit.resumeRide(
+      rideId: 'test-ride-id',
+      status: 'arrived',
+      passengerName: 'Juan Dela Cruz',
+      waitingUntil: now.subtract(const Duration(seconds: 10)),
+    );
+
+    expect(cubit.canMarkPassengerNoShow, isTrue);
+    await cubit.close();
+  });
 
   test('exposes the server-owned no-show time remaining', () async {
     final now = DateTime.now().toUtc();
@@ -635,7 +647,7 @@ void main() {
     final remaining = cubit.passengerNoShowTimeRemaining;
 
     expect(remaining, isNotNull);
-    expect(remaining!.inSeconds, inInclusiveRange(29, 30));
+    expect(remaining!.inSeconds, inInclusiveRange(34, 35));
     await cubit.close();
   });
 
