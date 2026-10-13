@@ -169,30 +169,7 @@ func TestAcceptRideIsIdempotentForTheSameDriverWithAnActiveRide(t *testing.T) {
 	}
 }
 
-func TestStartTripRequiresPickupProximity(t *testing.T) {
-	driverID := 42
-	store := &fakeLifecycleStore{
-		ride: domain.Ride{
-			ID:              1,
-			PassengerID:     10,
-			DriverID:        &driverID,
-			Status:          string(domain.RideArrived),
-			PickupLatitude:  6.7000,
-			PickupLongitude: 122.1000,
-		},
-	}
-	service, _ := newLifecycleServiceWithLocation(store, lifecycle.Config{}, 6.7005, 122.1005)
-
-	updated, err := service.StartTrip(context.Background(), 1, driverID, 6.7005, 122.1005)
-	if err != nil {
-		t.Fatalf("StartTrip() error = %v", err)
-	}
-	if updated.Status != string(domain.RideInTransit) {
-		t.Fatalf("expected status %q, got %q", domain.RideInTransit, updated.Status)
-	}
-}
-
-func TestStartTripUsesConfiguredArrivalRadius(t *testing.T) {
+func TestStartTripDoesNotRecheckPickupProximityAfterArrival(t *testing.T) {
 	driverID := 42
 	store := &fakeLifecycleStore{
 		ride: domain.Ride{
@@ -207,13 +184,39 @@ func TestStartTripUsesConfiguredArrivalRadius(t *testing.T) {
 	service, _ := newLifecycleServiceWithLocation(
 		store,
 		lifecycle.Config{ArrivalRadiusMeters: 25},
-		6.7005,
-		122.1005,
+		6.7100,
+		122.1100,
 	)
 
-	_, err := service.StartTrip(context.Background(), 1, driverID, 6.7005, 122.1005)
-	if !errors.Is(err, domain.ErrArrivalLocation) {
-		t.Fatalf("expected configured pickup proximity error, got %v", err)
+	updated, err := service.StartTrip(context.Background(), 1, driverID, 6.7100, 122.1100)
+	if err != nil {
+		t.Fatalf("StartTrip() error = %v", err)
+	}
+	if updated.Status != string(domain.RideInTransit) {
+		t.Fatalf("expected status %q, got %q", domain.RideInTransit, updated.Status)
+	}
+}
+
+func TestStartTripDoesNotRequireDriverLocationAfterArrival(t *testing.T) {
+	driverID := 42
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:              1,
+			PassengerID:     10,
+			DriverID:        &driverID,
+			Status:          string(domain.RideArrived),
+			PickupLatitude:  6.7000,
+			PickupLongitude: 122.1000,
+		},
+	}
+	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
+
+	updated, err := service.StartTrip(context.Background(), 1, driverID, 0, 0)
+	if err != nil {
+		t.Fatalf("StartTrip() without a live location reader error = %v", err)
+	}
+	if updated.Status != string(domain.RideInTransit) {
+		t.Fatalf("expected status %q, got %q", domain.RideInTransit, updated.Status)
 	}
 }
 

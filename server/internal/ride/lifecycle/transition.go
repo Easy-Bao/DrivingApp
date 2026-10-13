@@ -102,19 +102,6 @@ func (service *Service) StartTrip(
 	if status != domain.RideArrived {
 		return domain.Ride{}, domain.ErrInvalidStatusTransition
 	}
-	driverLatitude, driverLongitude, err := service.authoritativeDriverLocation(ctx, driverID)
-	if err != nil {
-		return domain.Ride{}, err
-	}
-	if err := domain.ValidateArrivalLocation(
-		current.PickupLatitude,
-		current.PickupLongitude,
-		driverLatitude,
-		driverLongitude,
-		service.config.arrivalRadiusMeters(),
-	); err != nil {
-		return domain.Ride{}, err
-	}
 	updated, err := service.store.StartTrip(ctx, rideID, driverID)
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("start ride: %w", err)
