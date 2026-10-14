@@ -32,6 +32,11 @@ class const AppFloatingTabBar({
   required this.indicatorKey,
   this.pagePosition,
   this.iconBuilder,
+
+  /// When true the widget renders only the inner tab-row content with no outer
+  /// container decoration, border, or shadow. Use when a parent supplies the
+  /// shared surface (e.g. a merged active-ride + tab bar layout).
+  this.bare = false,
 }) extends StatelessWidget {
   static const animationDuration = Duration(milliseconds: 280);
   static const height = EasyRideSize.navigationBarHeight;
@@ -43,6 +48,7 @@ class const AppFloatingTabBar({
   final AppTabIconBuilder? iconBuilder;
   final String itemKeyPrefix;
   final String indicatorKey;
+  final bool bare;
 
   this : assert(destinations.length > 0);
 
@@ -81,26 +87,8 @@ class const AppFloatingTabBar({
         .clamp(0.0, (destinations.length - 1).toDouble())
         .toDouble();
 
-    return Container(
+    final inner = SizedBox(
       height: height,
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(EasyRideRadius.pill),
-        border: Border.all(color: colorScheme.outlineVariant),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 6,
-            offset: Offset(0, 2),
-          ),
-          BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 20,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
       child: Material(
         type: MaterialType.transparency,
         child: Stack(
@@ -133,6 +121,31 @@ class const AppFloatingTabBar({
           ],
         ),
       ),
+    );
+
+    if (bare) return inner;
+
+    return Container(
+      height: height,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+        border: Border.all(color: colorScheme.outlineVariant),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 6,
+            offset: Offset(0, 2),
+          ),
+          BoxShadow(
+            color: Color(0x12000000),
+            blurRadius: 20,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: inner,
     );
   }
 }

@@ -2,6 +2,10 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
+/// Compact resume-trip strip that lives inside the floating tab bar surface.
+///
+/// Rendered as a single-row banner above the tab items when an active ride
+/// is in progress. Tapping anywhere on the strip calls [onResume].
 class const ActiveRideBanner({
   required this.statusText,
   required this.driverName,
@@ -16,132 +20,136 @@ class const ActiveRideBanner({
 
   @override
   Widget build(BuildContext context) {
-    final vehicleSummary = vehicleInfo.isEmpty ? '' : ' • $vehicleInfo';
-    final radius = BorderRadius.circular(EasyRideRadius.lg);
     final colors = context.colorScheme;
+    final vehicleSummary = vehicleInfo.isEmpty ? '' : ' • $vehicleInfo';
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final isCompact = constraints.maxWidth < 440;
-          final details = _buildRideDetails(context, vehicleSummary);
-          final resumeButton = FilledButton.icon(
-            onPressed: onResume,
-            icon: const Icon(LucideIcons.arrow_right, size: 18),
-            label: const Text('Resume Trip'),
-            style: FilledButton.styleFrom(
-              backgroundColor: colors.primary,
-              foregroundColor: colors.onPrimary,
-              padding: const EdgeInsets.symmetric(
-                horizontal: EasyRideSpacing.md,
-              ),
-              minimumSize: const Size(0, EasyRideSize.minimumTouchTarget),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(EasyRideRadius.pill),
-              ),
-            ),
-          );
-
-          return Material(
-            color: colors.surface,
-            shape: RoundedRectangleBorder(
-              borderRadius: radius,
-              side: BorderSide(color: colors.outlineVariant),
-            ),
-            child: InkWell(
-              key: const Key('active-ride-banner'),
-              borderRadius: radius,
-              excludeFromSemantics: true,
-              onTap: onResume,
-              child: Padding(
-                padding: const EdgeInsets.all(EasyRideSpacing.md),
-                child: isCompact
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildVehicleIcon(context),
-                              const SizedBox(width: EasyRideSpacing.md),
-                              Expanded(child: details),
-                            ],
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        key: const Key('active-ride-banner'),
+        onTap: onResume,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          child: Row(
+            children: [
+              _VehicleAvatarBadge(colorScheme: colors),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        _StatusIndicatorDot(
+                          color: context.semanticColors.success,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            statusText,
+                            style: context.textStyles.labelMedium?.copyWith(
+                              color: colors.onSurface,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: EasyRideSpacing.md),
-                          Align(
-                            alignment: AlignmentDirectional.centerEnd,
-                            child: resumeButton,
-                          ),
-                        ],
-                      )
-                    : Row(
-                        children: [
-                          _buildVehicleIcon(context),
-                          const SizedBox(width: EasyRideSpacing.md),
-                          Expanded(child: details),
-                          const SizedBox(width: EasyRideSpacing.md),
-                          resumeButton,
-                        ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '$driverName$vehicleSummary',
+                      style: context.textStyles.labelSmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                        fontSize: 12,
                       ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildVehicleIcon(BuildContext context) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: context.colorScheme.primaryContainer,
-        shape: BoxShape.circle,
-      ),
-      child: Icon(
-        LucideIcons.car,
-        color: context.colorScheme.primary,
-        size: 20,
-      ),
-    );
-  }
-
-  Widget _buildRideDetails(BuildContext context, String vehicleSummary) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: context.semanticColors.success,
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: EasyRideSpacing.xs),
-            Expanded(
-              child: Text(
-                statusText,
-                style: context.textStyles.labelMedium?.copyWith(
-                  color: context.colorScheme.onSurface,
-                  fontWeight: FontWeight.w700,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: EasyRideSpacing.xs),
-        Text(
-          '$driverName$vehicleSummary',
-          style: context.textStyles.bodyMedium?.copyWith(
-            color: context.colorScheme.onSurfaceVariant,
+              const SizedBox(width: 8),
+              _ResumeTripButton(onResume: onResume),
+            ],
           ),
         ),
-      ],
+      ),
+    );
+  }
+}
+
+class const _VehicleAvatarBadge({required this.colorScheme})
+    extends StatelessWidget {
+  final ColorScheme colorScheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: colorScheme.primaryContainer,
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: Icon(LucideIcons.car, color: colorScheme.primary, size: 18),
+    );
+  }
+}
+
+class const _StatusIndicatorDot({required this.color}) extends StatelessWidget {
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 7,
+      height: 7,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.35),
+            blurRadius: 4,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class const _ResumeTripButton({required this.onResume})
+    extends StatelessWidget {
+  final VoidCallback onResume;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colorScheme;
+    return FilledButton.icon(
+      onPressed: onResume,
+      icon: const Icon(LucideIcons.arrow_right, size: 14),
+      label: const Text('Resume Trip'),
+      style: FilledButton.styleFrom(
+        backgroundColor: colors.primary,
+        foregroundColor: colors.onPrimary,
+        padding: const EdgeInsets.symmetric(
+          horizontal: EasyRideSpacing.md,
+          vertical: 6,
+        ),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        textStyle: context.textStyles.labelSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+        ),
+      ),
     );
   }
 }

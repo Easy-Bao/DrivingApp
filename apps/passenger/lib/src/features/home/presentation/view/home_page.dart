@@ -8,7 +8,6 @@ import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger/src/app/navigation/passenger_navigation_observer.dart';
-import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver/track_driver_cubit.dart';
@@ -19,7 +18,6 @@ import 'package:passenger/src/features/booking/presentation/bloc/booking/booking
 import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/home/presentation/bloc/home/home_cubit.dart';
-import 'package:passenger/src/features/home/presentation/widgets/active_ride_banner.dart';
 import 'package:passenger/src/features/home/presentation/widgets/home_destination_search_hint.dart';
 import 'package:passenger/src/features/home/presentation/widgets/pending_booking_banner.dart';
 import 'package:passenger/src/features/home/presentation/widgets/recent_ride_history_empty_state.dart';
@@ -81,6 +79,33 @@ class _HomePageState extends State<HomePage> {
             _refreshLocationSnapshot();
           },
         ),
+        BlocListener<RideHistoryBloc, RideHistoryState>(
+          listener: (context, state) {
+            if (state is RideHistoryLoaded && state.upcoming.isNotEmpty) {
+              final upcoming = state.upcoming.first;
+              final trackCubit = _getTrackDriverCubit();
+              if (trackCubit != null &&
+                  !trackCubit.state.isTracking &&
+                  !trackCubit.state.isTerminal) {
+                unawaited(
+                  trackCubit.startTracking(
+                    startLat: upcoming.pickupLat,
+                    startLng: upcoming.pickupLng,
+                    endLat: upcoming.pickupLat,
+                    endLng: upcoming.pickupLng,
+                    rideId: upcoming.id,
+                    driverId: upcoming.driverId,
+                    driverName: upcoming.displayDriverName,
+                    vehiclePlate: upcoming.vehiclePlate,
+                    vehicleType: upcoming.vehicleType,
+                    destinationLat: upcoming.destLat,
+                    destinationLng: upcoming.destLng,
+                  ),
+                );
+              }
+            }
+          },
+        ),
       ],
       child: Scaffold(
         body: SafeArea(
@@ -100,7 +125,6 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         _buildHeader(),
                         const SizedBox(height: 20),
-                        _buildActiveRideBanner(),
                         _buildSearchBar(),
                         _buildPendingBookingBanner(),
                         const SizedBox(height: 16),
@@ -463,75 +487,11 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Widget _buildActiveRideBanner() {
-    final cubit = _getTrackDriverCubit();
-    return BlocBuilder<RideHistoryBloc, RideHistoryState>(
-      buildWhen: (previous, current) => previous != current,
-      builder: (context, historyState) {
-        final historyRide = _activeRideFromHistory(historyState);
-        if (cubit == null) {
-          return _buildRestoredRideBanner(historyRide);
-        }
-        return BlocBuilder<TrackDriverCubit, TrackDriverState>(
-          bloc: cubit,
-          builder: (context, state) {
-            if (state.isTerminal) return const SizedBox.shrink();
-            if (!state.isTracking) {
-              return _buildRestoredRideBanner(historyRide);
-            }
-
-            final driverName = state.activeDriverName.isNotEmpty
-                ? state.activeDriverName
-                : historyRide?.displayDriverName ?? 'Driver';
-            final vehicleInfo = [
-              state.activeVehicleType,
-              state.activeVehiclePlate,
-            ].where((value) => value.trim().isNotEmpty).join(' • ');
-            final statusText = state.isInTransit
-                ? 'Heading to Destination'
-                : state.hasArrived
-                ? 'Driver Has Arrived'
-                : 'Driver is Picking You Up';
-
-            return ActiveRideBanner(
-              statusText: statusText,
-              driverName: driverName,
-              vehicleInfo: vehicleInfo,
-              onResume: _resumeActiveRide,
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildRestoredRideBanner(RideHistory? ride) {
-    if (ride == null) return const SizedBox.shrink();
-    return ActiveRideBanner(
-      statusText: _activeRideStatusText(ride),
-      driverName: ride.displayDriverName,
-      vehicleInfo: ride.displayVehicleSummary,
-      onResume: _resumeActiveRide,
-    );
-  }
-
   RideHistory? _activeRideFromHistory(RideHistoryState state) {
     if (state is RideHistoryLoaded && state.upcoming.isNotEmpty) {
       return state.upcoming.first;
     }
     return null;
-  }
-
-  String _activeRideStatusText(RideHistory ride) {
-    return switch (RideStatus.fromString(ride.status)) {
-      RideStatus.inTransit => 'Heading to Destination',
-      RideStatus.arrived => 'Driver Has Arrived',
-      RideStatus.accepted => 'Driver is Picking You Up',
-      RideStatus.requested => 'Finding Your Driver',
-      RideStatus.completed ||
-      RideStatus.cancelled ||
-      RideStatus.unknown => 'Active Ride',
-    };
   }
 
   bool _hasActiveRide() {
@@ -651,9 +611,16 @@ class _HomePageState extends State<HomePage> {
             child: Container(
               padding: const EdgeInsets.all(EasyRideSpacing.lg),
               decoration: BoxDecoration(
-                color: context.colorScheme.surfaceContainerHighest,
+                color: context.colorScheme.surface,
                 borderRadius: BorderRadius.circular(EasyRideRadius.lg),
                 border: Border.all(color: context.colorScheme.outlineVariant),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x06000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
               ),
               child: Row(
                 children: [

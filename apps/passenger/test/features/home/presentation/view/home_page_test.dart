@@ -245,13 +245,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Resume Trip'), findsOneWidget);
     await tester.tap(find.text('Search Robinsons'));
     await tester.pumpAndSettle();
 
     expect(find.text('Active Ride in Progress'), findsOneWidget);
     expect(find.textContaining('Alex'), findsWidgets);
-    expect(find.text('Resume Trip'), findsNWidgets(2));
+    expect(find.text('Resume Trip'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

@@ -12,6 +12,7 @@ class const PassengerFloatingTabBar({
   required this.onDestinationSelected,
   required this.inboxCubit,
   this.pagePosition,
+  this.activeRideBanner,
 }) extends StatelessWidget {
   static const animationDuration = AppFloatingTabBar.animationDuration;
   static const height = AppFloatingTabBar.height;
@@ -28,24 +29,78 @@ class const PassengerFloatingTabBar({
   final InboxCubit inboxCubit;
   final ValueListenable<double>? pagePosition;
 
+  /// Optional inline active-ride strip rendered above the tab destinations
+  /// inside the same floating pill surface.
+  final Widget? activeRideBanner;
+
   @override
   Widget build(BuildContext context) {
-    return AppFloatingTabBar(
-      selectedIndex: selectedIndex,
-      onDestinationSelected: onDestinationSelected,
-      pagePosition: pagePosition,
-      destinations: destinations,
-      itemKeyPrefix: 'passenger-floating-tab-item',
-      indicatorKey: 'passenger-floating-tab-indicator',
-      iconBuilder: (context, index, destination, color) => index == 2
-          ? _InboxTabIcon(color: color, inboxCubit: inboxCubit)
-          : Icon(
-              destination.icon,
-              size: EasyRideSize.navigationIcon,
-              color: color,
-            ),
+    final banner = activeRideBanner;
+    if (banner == null) {
+      return AppFloatingTabBar(
+        selectedIndex: selectedIndex,
+        onDestinationSelected: onDestinationSelected,
+        pagePosition: pagePosition,
+        destinations: destinations,
+        itemKeyPrefix: 'passenger-floating-tab-item',
+        indicatorKey: 'passenger-floating-tab-indicator',
+        iconBuilder: _buildIcon,
+      );
+    }
+
+    // Merged layout: active-ride strip on top, tab bar below — all within
+    // a single pill-shaped surface so they share one visual container.
+    final colorScheme = context.colorScheme;
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(EasyRideRadius.sheet),
+        border: Border.all(color: colorScheme.outlineVariant),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+          BoxShadow(
+            color: Color(0x14000000),
+            blurRadius: 24,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Active-ride strip with a thin separator.
+          banner,
+          Divider(height: 1, thickness: 1, color: colorScheme.outlineVariant),
+          // Tab bar row without its own outer decoration — the parent
+          // container above is the shared pill surface.
+          AppFloatingTabBar(
+            bare: true,
+            selectedIndex: selectedIndex,
+            onDestinationSelected: onDestinationSelected,
+            pagePosition: pagePosition,
+            destinations: destinations,
+            itemKeyPrefix: 'passenger-floating-tab-item',
+            indicatorKey: 'passenger-floating-tab-indicator',
+            iconBuilder: _buildIcon,
+          ),
+        ],
+      ),
     );
   }
+
+  Widget _buildIcon(
+    BuildContext context,
+    int index,
+    AppTabDestination destination,
+    Color color,
+  ) => index == 2
+      ? _InboxTabIcon(color: color, inboxCubit: inboxCubit)
+      : Icon(destination.icon, size: EasyRideSize.navigationIcon, color: color);
 }
 
 class const PassengerNavigationRail({
