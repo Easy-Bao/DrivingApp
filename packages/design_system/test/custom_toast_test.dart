@@ -1,6 +1,6 @@
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:design_system/design_system.dart';
 
 void main() {
   testWidgets('replaces an active toast instead of stacking overlays', (
@@ -10,11 +10,13 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: Builder(
-          builder: (context) {
-            toastContext = context;
-            return const SizedBox.shrink();
-          },
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              toastContext = context;
+              return const SizedBox.shrink();
+            },
+          ),
         ),
       ),
     );
@@ -36,11 +38,13 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: ThemeData(useMaterial3: true),
-        home: Builder(
-          builder: (context) {
-            toastContext = context;
-            return const SizedBox.shrink();
-          },
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              toastContext = context;
+              return const SizedBox.shrink();
+            },
+          ),
         ),
       ),
     );
@@ -48,18 +52,10 @@ void main() {
     CustomToast.show(toastContext, 'error', isError: true);
     await tester.pump();
 
-    final toastContainer = tester.widget<Container>(
-      find
-          .descendant(
-            of: find.byType(MaterialApp),
-            matching: find.byType(Container),
-          )
-          .last,
-    );
-    final decoration = toastContainer.decoration! as BoxDecoration;
+    final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
     expect(
-      decoration.color,
-      ThemeData(useMaterial3: true).colorScheme.errorContainer,
+      snackBar.backgroundColor,
+      ThemeData(useMaterial3: true).colorScheme.error,
     );
 
     CustomToast.dismiss();
@@ -73,13 +69,15 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: AppNetworkStatusScope(
-          isUnavailable: true,
-          child: Builder(
-            builder: (context) {
-              toastContext = context;
-              return const SizedBox.shrink();
-            },
+        home: Scaffold(
+          body: AppNetworkStatusScope(
+            isUnavailable: true,
+            child: Builder(
+              builder: (context) {
+                toastContext = context;
+                return const SizedBox.shrink();
+              },
+            ),
           ),
         ),
       ),

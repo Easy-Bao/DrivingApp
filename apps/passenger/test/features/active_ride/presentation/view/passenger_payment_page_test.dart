@@ -35,7 +35,7 @@ void main() {
     expect(find.text('Cash Payment'), findsOneWidget);
     expect(find.text('Paid Cash to Driver'), findsOneWidget);
     expect(find.byKey(const ValueKey('payment-total-fare')), findsOneWidget);
-    expect(find.text('₱185'), findsOneWidget);
+    expect(find.text('₱185.00'), findsOneWidget);
 
     final button = tester.widget<ElevatedButton>(
       find.byKey(const ValueKey('confirm-cash-payment-button')),

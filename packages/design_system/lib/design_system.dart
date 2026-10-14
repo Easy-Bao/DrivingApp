@@ -28,6 +28,7 @@ export 'package:design_system/src/widgets/app_status_banner.dart';
 export 'package:design_system/src/widgets/app_settings_navigation.dart';
 export 'package:design_system/src/widgets/app_tab_branch_container.dart';
 export 'package:design_system/src/widgets/compact_route_timeline.dart';
+export 'package:design_system/src/widgets/app_snack_bar.dart';
 export 'package:design_system/src/widgets/custom_toast.dart';
 export 'package:design_system/src/widgets/location_access_overlay.dart';
 export 'package:design_system/src/widgets/safe_client_error_view.dart';
