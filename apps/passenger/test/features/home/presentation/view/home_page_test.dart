@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
@@ -508,6 +510,125 @@ void main() {
         find.byType(RecentRideHistoryPreview),
       );
       expect(previewWidget.rides.length, 2);
+    },
+  );
+
+  testWidgets(
+    'displays AppStatusBanner across the top safe area on error and dismisses on tap',
+    (tester) async {
+      final currentLocationRepository = _MockCurrentLocationRepository();
+      final homeRepository = _MockHomeRepository();
+      final bookingBloc = _MockBookingBloc();
+      final locationAccessCubit = _MockLocationAccessCubit();
+      final publicDriverSummaryCubit = _MockPublicDriverSummaryCubit();
+      final rideHistoryBloc = _MockRideHistoryBloc();
+      final savedPlacesCubit = _MockSavedPlacesCubit();
+      final sessionRepository = _MockSessionRepository();
+      final sessionStore = _MockPassengerSessionStore();
+      final trackRepository = _MockTrackRepository();
+      final lifecycleCoordinator = AppLifecycleCoordinator();
+
+      final homeCubit = HomeCubit(
+        repository: homeRepository,
+        currentLocationRepository: currentLocationRepository,
+      );
+      final bookingDraftCubit = BookingDraftCubit();
+      final sessionBloc = SessionBloc(sessionRepository: sessionRepository);
+
+      final savedPlacesController =
+          StreamController<SavedPlacesState>.broadcast();
+
+      when(() => currentLocationRepository.getCurrentLocation()).thenAnswer(
+        (_) async =>
+            const Ok(CurrentLocation(latitude: 37.3861, longitude: -122.0839)),
+      );
+      when(() => currentLocationRepository.watchCurrentLocation())
+          .thenAnswer((_) => const Stream.empty());
+      when(
+        () => homeRepository.loadHomeData(
+          lat: any(named: 'lat'),
+          lng: any(named: 'lng'),
+        ),
+      ).thenAnswer(
+        (_) async => const Ok(
+          HomeData(currentAddress: 'Mountain View', recentLocations: []),
+        ),
+      );
+      when(() => bookingBloc.activeDriverSearch).thenReturn(null);
+      when(sessionStore.readActiveRideId).thenAnswer((_) async => null);
+      when(() => locationAccessCubit.state)
+          .thenReturn(const LocationAccessReady());
+      when(() => locationAccessCubit.stream)
+          .thenAnswer((_) => const Stream.empty());
+      when(() => publicDriverSummaryCubit.state)
+          .thenReturn(const PublicDriverSummaryState());
+      when(() => publicDriverSummaryCubit.stream)
+          .thenAnswer((_) => const Stream.empty());
+      when(() => rideHistoryBloc.state)
+          .thenReturn(const RideHistoryLoaded(past: [], upcoming: []));
+      when(() => rideHistoryBloc.stream)
+          .thenAnswer((_) => const Stream.empty());
+      when(() => savedPlacesCubit.state)
+          .thenReturn(const SavedPlacesState(places: [], isLoading: false));
+      when(savedPlacesCubit.loadPlaces).thenAnswer((_) async {});
+      when(() => savedPlacesCubit.stream)
+          .thenAnswer((_) => savedPlacesController.stream);
+
+      addTearDown(() async {
+        await savedPlacesController.close();
+        await homeCubit.close();
+        await sessionBloc.close();
+        await bookingDraftCubit.close();
+        await lifecycleCoordinator.dispose();
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: EasyRideTheme.main,
+          home: MultiBlocProvider(
+            providers: [
+              BlocProvider<SessionBloc>.value(value: sessionBloc),
+              BlocProvider<LocationAccessCubit>.value(
+                value: locationAccessCubit,
+              ),
+              BlocProvider<HomeCubit>.value(value: homeCubit),
+              BlocProvider<BookingDraftCubit>.value(value: bookingDraftCubit),
+              BlocProvider<PublicDriverSummaryCubit>.value(
+                value: publicDriverSummaryCubit,
+              ),
+              BlocProvider<RideHistoryBloc>.value(value: rideHistoryBloc),
+              BlocProvider<SavedPlacesCubit>.value(value: savedPlacesCubit),
+            ],
+            child: HomePage(
+              bookingBloc: bookingBloc,
+              lifecycleCoordinator: lifecycleCoordinator,
+              sessionService: sessionStore,
+              trackRepository: trackRepository,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AppStatusBanner), findsNothing);
+
+      savedPlacesController.add(
+        const SavedPlacesState(
+          places: [],
+          isLoading: false,
+          errorMessage: 'Could not load saved places.',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AppStatusBanner), findsOneWidget);
+      expect(find.text('Could not load saved places.'), findsOneWidget);
+      expect(find.text('Dismiss'), findsOneWidget);
+
+      await tester.tap(find.text('Dismiss'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AppStatusBanner), findsNothing);
     },
   );
 }

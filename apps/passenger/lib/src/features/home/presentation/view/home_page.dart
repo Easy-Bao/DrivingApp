@@ -64,6 +64,7 @@ class _HomePageState extends State<HomePage> {
   late final StreamSubscription<AppLifecycleStatus> _lifecycleSubscription;
   bool _isSavedPlaceFlowOpen = false;
   bool _isNavigationInFlight = false;
+  String? _serverErrorMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -71,6 +72,14 @@ class _HomePageState extends State<HomePage> {
       listeners: [
         BlocListener<LocationAccessCubit, LocationAccessViewState>(
           listener: _handleLocationAccess,
+        ),
+        BlocListener<SavedPlacesCubit, SavedPlacesState>(
+          listenWhen: (previous, current) =>
+              previous.errorMessage != current.errorMessage &&
+              current.errorMessage != null,
+          listener: (context, state) {
+            setState(() => _serverErrorMessage = state.errorMessage);
+          },
         ),
         BlocListener<SessionBloc, SessionState>(
           listenWhen: (_, current) => current is AuthenticatedSession,
@@ -107,39 +116,52 @@ class _HomePageState extends State<HomePage> {
           },
         ),
       ],
-      child: Scaffold(
-        body: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: EasyRideLayout.pageMaxWidth,
-              ),
-              child: Stack(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: EasyRideLayout.pagePadding,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildHeader(),
-                        const SizedBox(height: 20),
-                        _buildSearchBar(),
-                        _buildPendingBookingBanner(),
-                        const SizedBox(height: 16),
-                        _buildChipRow(),
-                        const SizedBox(height: 24),
-                        _buildRecentRideHistoryHeader(),
-                        Expanded(child: _buildRecentRideHistoryList()),
-                      ],
-                    ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Scaffold(
+            body: SafeArea(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: EasyRideLayout.pageMaxWidth,
                   ),
-                ],
+                  child: Stack(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: EasyRideLayout.pagePadding,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildHeader(),
+                            const SizedBox(height: 20),
+                            _buildSearchBar(),
+                            _buildPendingBookingBanner(),
+                            const SizedBox(height: 16),
+                            _buildChipRow(),
+                            const SizedBox(height: 24),
+                            _buildRecentRideHistoryHeader(),
+                            Expanded(child: _buildRecentRideHistoryList()),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
-        ),
+          if (_serverErrorMessage != null)
+            AppStatusBanner(
+              isVisible: true,
+              message: _serverErrorMessage!,
+              tone: AppStatusBannerTone.error,
+              actionLabel: 'Dismiss',
+              onAction: () => setState(() => _serverErrorMessage = null),
+            ),
+        ],
       ),
     );
   }
@@ -469,10 +491,6 @@ class _HomePageState extends State<HomePage> {
       );
       if (newPlace != null && mounted) {
         await cubit.addPlace(newPlace);
-        final error = cubit.state.errorMessage;
-        if (mounted && error != null) {
-          CustomToast.show(context, error, isError: true);
-        }
       }
     } finally {
       _isSavedPlaceFlowOpen = false;
@@ -727,10 +745,6 @@ class _HomePageState extends State<HomePage> {
           await cubit.addPlace(updatedPlace);
         }
         await cubit.invalidateAndReload();
-        final error = cubit.state.errorMessage;
-        if (mounted && error != null) {
-          CustomToast.show(context, error, isError: true);
-        }
       }
     }
   }

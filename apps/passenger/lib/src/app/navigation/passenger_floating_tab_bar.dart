@@ -48,8 +48,6 @@ class const PassengerFloatingTabBar({
       );
     }
 
-    // Merged layout: active-ride strip on top, tab bar below — all within
-    // a single pill-shaped surface so they share one visual container.
     final colorScheme = context.colorScheme;
     return Container(
       clipBehavior: Clip.antiAlias,
@@ -73,11 +71,8 @@ class const PassengerFloatingTabBar({
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Active-ride strip with a thin separator.
           banner,
           Divider(height: 1, thickness: 1, color: colorScheme.outlineVariant),
-          // Tab bar row without its own outer decoration — the parent
-          // container above is the shared pill surface.
           AppFloatingTabBar(
             bare: true,
             selectedIndex: selectedIndex,
