@@ -352,6 +352,57 @@ func TestPlaceOfferKeepsDuplicateErrorForDifferentFare(t *testing.T) {
 	}
 }
 
+func TestPlaceOfferEnforcesFareBounds(t *testing.T) {
+	// Base fare 200: lower bound = max(50, 0.70*200) = 140, upper bound = min(5000, 2.0*200) = 400
+	session := dispatchdomain.BidSession{
+		ID:                10,
+		OfferedFareAmount: 200,
+	}
+	store := &biddingStoreStub{session: session}
+	service := dispatchapplication.NewService(dispatchapplication.Dependencies{Store: store})
+
+	// Offer below lower bound (100 < 140)
+	_, err := service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
+		SessionID:          10,
+		DriverID:           42,
+		ProposedFareAmount: 100,
+	})
+	if !errors.Is(err, dispatchdomain.ErrInvalidFareOffer) {
+		t.Fatalf("expected ErrInvalidFareOffer for low bid, got %v", err)
+	}
+
+	// Offer above upper bound (450 > 400)
+	_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
+		SessionID:          10,
+		DriverID:           42,
+		ProposedFareAmount: 450,
+	})
+	if !errors.Is(err, dispatchdomain.ErrInvalidFareOffer) {
+		t.Fatalf("expected ErrInvalidFareOffer for high bid, got %v", err)
+	}
+
+	// Offer within bounds (250)
+	_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
+		SessionID:          10,
+		DriverID:           42,
+		ProposedFareAmount: 250,
+	})
+	if err != nil {
+		t.Fatalf("expected success for valid bid, got %v", err)
+	}
+
+	// Absolute cap test: base fare 3000: upper bound = min(5000, 2.0*3000) = 5000
+	store.session.OfferedFareAmount = 3000
+	_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
+		SessionID:          10,
+		DriverID:           42,
+		ProposedFareAmount: 5500,
+	})
+	if !errors.Is(err, dispatchdomain.ErrInvalidFareOffer) {
+		t.Fatalf("expected ErrInvalidFareOffer for exceeding absolute 5000 cap, got %v", err)
+	}
+}
+
 func TestAcceptOfferPublishesRideMatchedEvent(t *testing.T) {
 	store := &biddingStoreStub{}
 	publisher := &eventPublisherStub{}

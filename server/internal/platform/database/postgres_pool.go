@@ -3,6 +3,9 @@ package database
 import (
 	"context"
 	"fmt"
+	"os"
+	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,10 +26,36 @@ type PostgresNativePoolConfig struct {
 }
 
 func DefaultPostgresNativePoolConfig() PostgresNativePoolConfig {
+	defaultMax := int32(50)
+	if cpuMax := int32(runtime.NumCPU() * 8); cpuMax > defaultMax {
+		defaultMax = cpuMax
+	}
+
+	maxConns := defaultMax
+	if val := strings.TrimSpace(os.Getenv("DATABASE_MAX_CONNS")); val != "" {
+		if n, err := strconv.Atoi(val); err == nil && n > 0 {
+			maxConns = int32(n)
+		}
+	}
+
+	minIdle := int32(10)
+	if val := strings.TrimSpace(os.Getenv("DATABASE_MIN_IDLE_CONNS")); val != "" {
+		if n, err := strconv.Atoi(val); err == nil && n >= 0 {
+			minIdle = int32(n)
+		}
+	} else if val := strings.TrimSpace(os.Getenv("DATABASE_MIN_CONNS")); val != "" {
+		if n, err := strconv.Atoi(val); err == nil && n >= 0 {
+			minIdle = int32(n)
+		}
+	}
+	if minIdle > maxConns {
+		minIdle = maxConns
+	}
+
 	return PostgresNativePoolConfig{
-		MaxConnections:        25,
-		MinConnections:        0,
-		MinIdleConnections:    0,
+		MaxConnections:        maxConns,
+		MinConnections:        minIdle,
+		MinIdleConnections:    minIdle,
 		ConnectionMaxLifetime: 30 * time.Minute,
 		ConnectionMaxIdleTime: 5 * time.Minute,
 		PingTimeout:           5 * time.Second,

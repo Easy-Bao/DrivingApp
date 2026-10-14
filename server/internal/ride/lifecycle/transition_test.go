@@ -169,7 +169,7 @@ func TestAcceptRideIsIdempotentForTheSameDriverWithAnActiveRide(t *testing.T) {
 	}
 }
 
-func TestStartTripDoesNotRecheckPickupProximityAfterArrival(t *testing.T) {
+func TestStartTripRejectsDriverOutOfPickupRange(t *testing.T) {
 	driverID := 42
 	store := &fakeLifecycleStore{
 		ride: domain.Ride{
@@ -188,17 +188,15 @@ func TestStartTripDoesNotRecheckPickupProximityAfterArrival(t *testing.T) {
 		122.1100,
 	)
 
-	updated, err := service.StartTrip(context.Background(), 1, driverID, 6.7100, 122.1100)
-	if err != nil {
-		t.Fatalf("StartTrip() error = %v", err)
-	}
-	if updated.Status != string(domain.RideInTransit) {
-		t.Fatalf("expected status %q, got %q", domain.RideInTransit, updated.Status)
+	_, err := service.StartTrip(context.Background(), 1, driverID, 6.7100, 122.1100)
+	if !errors.Is(err, domain.ErrArrivalLocation) {
+		t.Fatalf("expected ErrArrivalLocation, got %v", err)
 	}
 }
 
-func TestStartTripDoesNotRequireDriverLocationAfterArrival(t *testing.T) {
+func TestStartTripRequiresPickupProximityAndSucceedsWithinRange(t *testing.T) {
 	driverID := 42
+	arrivedAt := time.Now().UTC().Add(-10 * time.Second).Format(time.RFC3339)
 	store := &fakeLifecycleStore{
 		ride: domain.Ride{
 			ID:              1,
@@ -207,16 +205,49 @@ func TestStartTripDoesNotRequireDriverLocationAfterArrival(t *testing.T) {
 			Status:          string(domain.RideArrived),
 			PickupLatitude:  6.7000,
 			PickupLongitude: 122.1000,
+			ArrivedAt:       &arrivedAt,
 		},
 	}
-	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
+	service, _ := newLifecycleServiceWithLocation(
+		store,
+		lifecycle.Config{ArrivalRadiusMeters: 250},
+		6.7001,
+		122.1001,
+	)
 
-	updated, err := service.StartTrip(context.Background(), 1, driverID, 0, 0)
+	updated, err := service.StartTrip(context.Background(), 1, driverID, 6.7001, 122.1001)
 	if err != nil {
-		t.Fatalf("StartTrip() without a live location reader error = %v", err)
+		t.Fatalf("StartTrip() error = %v", err)
 	}
 	if updated.Status != string(domain.RideInTransit) {
 		t.Fatalf("expected status %q, got %q", domain.RideInTransit, updated.Status)
+	}
+}
+
+func TestStartTripRejectsWhenDwellTimeBelowThreshold(t *testing.T) {
+	driverID := 42
+	arrivedAt := time.Now().UTC().Format(time.RFC3339)
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:              1,
+			PassengerID:     10,
+			DriverID:        &driverID,
+			Status:          string(domain.RideArrived),
+			PickupLatitude:  6.7000,
+			PickupLongitude: 122.1000,
+			ArrivedAt:       &arrivedAt,
+		},
+	}
+	service, _ := newLifecycleServiceWithLocation(
+		store,
+		lifecycle.Config{ArrivalRadiusMeters: 250},
+		6.7000,
+		122.1000,
+	)
+
+	_, err := service.StartTrip(context.Background(), 1, driverID, 6.7000, 122.1000)
+	if !errors.Is(err, domain.ErrInvalidStatusTransition) {
+		t.Fatalf("expected ErrInvalidStatusTransition for dwell time below threshold, got %v", err)
 	}
 }
 
@@ -614,6 +645,29 @@ func TestMarkPassengerNoShowPersistsAfterTheDeadline(t *testing.T) {
 	}
 	if store.noShowCalls != 1 {
 		t.Fatalf("no-show transition writes = %d, want 1", store.noShowCalls)
+	}
+}
+
+func TestMarkPassengerNoShowAllowsCancellationWithinFiveSecondsBuffer(t *testing.T) {
+	driverID := 42
+	deadlineWithinBuffer := time.Now().UTC().Add(3 * time.Second).Format(time.RFC3339)
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:           1,
+			PassengerID:  10,
+			DriverID:     &driverID,
+			Status:       string(domain.RideArrived),
+			WaitingUntil: &deadlineWithinBuffer,
+		},
+	}
+	service := lifecycle.NewService(lifecycle.Dependencies{Store: store})
+
+	updated, err := service.MarkPassengerNoShow(context.Background(), 1, driverID)
+	if err != nil {
+		t.Fatalf("MarkPassengerNoShow() error = %v, expected success within 5s buffer", err)
+	}
+	if updated.Status != string(domain.RideCancelled) {
+		t.Fatalf("status = %q, want cancelled", updated.Status)
 	}
 }
 

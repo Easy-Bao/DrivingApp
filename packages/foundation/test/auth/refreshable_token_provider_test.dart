@@ -117,6 +117,44 @@ void main() {
     expect(refreshRequests, 1);
     expect(clearCount, 0);
   });
+
+  test('defers session expiration when an active mission is in flight, and flushes after mission ends', () async {
+    var clearCount = 0;
+    var sessionExpiredCalled = false;
+    var isMissionActive = true;
+
+    final refreshClient = Dio(BaseOptions(baseUrl: 'https://api.example.test'))
+      ..httpClientAdapter = _ResponseAdapter((_) {
+        return ResponseBody.fromString('Unauthorized', 401);
+      });
+
+    final provider = RefreshableTokenProvider(
+      readAccessToken: () async => 'expired-token',
+      readRefreshToken: () async => 'refresh-1',
+      saveAccessToken: (_) async {},
+      saveRefreshToken: (_) async {},
+      clearSession: () async => clearCount++,
+      refreshClient: refreshClient,
+      hasActiveMission: () => isMissionActive,
+      onSessionExpired: () => sessionExpiredCalled = true,
+    );
+
+    // Trigger 401 refresh failure during active mission
+    expect(await provider.refreshAccessToken(), isNull);
+
+    // Session must NOT be cleared, onSessionExpired must NOT be called
+    expect(clearCount, 0);
+    expect(sessionExpiredCalled, false);
+    expect(provider.isDeferredExpiryPending, true);
+
+    // End mission and flush deferred expiry
+    isMissionActive = false;
+    await provider.flushDeferredExpiry();
+
+    expect(clearCount, 1);
+    expect(sessionExpiredCalled, true);
+    expect(provider.isDeferredExpiryPending, false);
+  });
 }
 
 String _jwt(DateTime expiresAt) {

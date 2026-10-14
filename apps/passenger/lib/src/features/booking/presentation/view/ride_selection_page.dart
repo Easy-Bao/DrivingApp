@@ -145,9 +145,8 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
     final shouldRefreshProfile =
         BlocProvider.of<SessionBloc>(context).state is AuthenticatedSession;
     unawaited(
-      BlocProvider.of<ProfileCubit>(context).loadProfile(
-        refreshRemote: shouldRefreshProfile,
-      ),
+      BlocProvider.of<ProfileCubit>(context)
+          .loadProfile(refreshRemote: shouldRefreshProfile),
     );
     if (_pickupCoordinate != null) {
       _isResolvingPickup = false;

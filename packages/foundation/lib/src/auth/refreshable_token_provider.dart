@@ -19,6 +19,7 @@ final class RefreshableTokenProvider({
   required Future<void> Function() clearSession,
   Dio? refreshClient,
   FutureOr<void> Function()? onSessionExpired,
+  FutureOr<bool> Function()? hasActiveMission,
   Duration refreshSkew = const Duration(seconds: 30),
   Duration refreshFailureCooldown = const Duration(seconds: 5),
 }) {
@@ -30,12 +31,22 @@ final class RefreshableTokenProvider({
   final Future<void> Function() _clearSession = clearSession;
   final Dio? _refreshClient = refreshClient;
   final FutureOr<void> Function()? _onSessionExpired = onSessionExpired;
+  FutureOr<bool> Function()? _hasActiveMission = hasActiveMission;
   final Duration _refreshSkew = refreshSkew;
   final Duration _refreshFailureCooldown = refreshFailureCooldown;
 
   Future<String?>? _refreshInFlight;
   DateTime? _refreshBlockedUntil;
   bool _sessionExpiryNotified = false;
+  bool _deferredExpiryPending = false;
+
+  /// Whether session expiration has been deferred because an active mission is in flight.
+  bool get isDeferredExpiryPending => _deferredExpiryPending;
+
+  /// Registers or overrides the active mission checker.
+  void registerActiveMissionChecker(FutureOr<bool> Function() checker) {
+    _hasActiveMission = checker;
+  }
 
   /// Returns a usable token, refreshing it before it expires when possible.
   Future<String?> getToken() async {
@@ -130,6 +141,18 @@ final class RefreshableTokenProvider({
   }
 
   Future<void> _expireSession() async {
+    final checker = _hasActiveMission;
+    if (checker != null) {
+      var inProgress = false;
+      try {
+        inProgress = await checker();
+      } catch (_) {}
+      if (inProgress) {
+        _deferredExpiryPending = true;
+        return;
+      }
+    }
+    _deferredExpiryPending = false;
     try {
       await _clearSession();
     } catch (_) {
@@ -142,6 +165,12 @@ final class RefreshableTokenProvider({
     } catch (_) {
       // The session is already treated as expired by the caller.
     }
+  }
+
+  /// Flushes any deferred session expiration once the active mission has ended.
+  Future<void> flushDeferredExpiry() async {
+    if (!_deferredExpiryPending) return;
+    await _expireSession();
   }
 
   Duration _retryAfter(DioException error) {

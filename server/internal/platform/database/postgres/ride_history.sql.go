@@ -31,8 +31,9 @@ LEFT JOIN passenger_profiles AS passenger_profile ON passenger_profile.user_id =
 LEFT JOIN reviews AS passenger_review ON passenger_review.ride_id = ride.id
 WHERE ride.driver_id = $1
   AND (
-      $2::boolean = false
-      OR ride.status IN ('assigned', 'accepted', 'arrived', 'in_transit')
+      ($2::boolean = true AND ride.status IN ('assigned', 'accepted', 'arrived', 'in_transit'))
+      OR
+      ($2::boolean = false AND ride.status IN ('completed', 'cancelled'))
   )
 ORDER BY ride.created_at DESC, ride.id DESC
 LIMIT $4::int

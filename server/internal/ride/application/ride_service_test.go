@@ -11,11 +11,13 @@ import (
 )
 
 type ridesRepositoryStub struct {
-	ride          domain.Ride
-	created       domain.Ride
-	updated       domain.Ride
-	updateNext    string
-	hasActiveRide bool
+	ride             domain.Ride
+	created          domain.Ride
+	updated          domain.Ride
+	updateNext       string
+	hasActiveRide    bool
+	driverTrips      []domain.Ride
+	lastHistoryQuery domain.TripHistoryQuery
 }
 
 var (
@@ -23,6 +25,7 @@ var (
 	_ ports.PassengerActiveRideChecker = (*ridesRepositoryStub)(nil)
 	_ ports.RideLifecycleStore         = (*ridesRepositoryStub)(nil)
 	_ ports.SafetyReportStore          = (*ridesRepositoryStub)(nil)
+	_ ports.RideHistoryReader          = (*ridesRepositoryStub)(nil)
 )
 
 func testPricingConfig(t *testing.T) PricingConfig {
@@ -150,6 +153,35 @@ func (stub *ridesRepositoryStub) UpdateStatus(
 	stub.updated = stub.ride
 	stub.updated.Status = nextStatus
 	return stub.updated, nil
+}
+
+func (stub *ridesRepositoryStub) DriverTrips(
+	_ context.Context,
+	_ int,
+	query domain.TripHistoryQuery,
+) ([]domain.Ride, error) {
+	stub.lastHistoryQuery = query
+	var matched []domain.Ride
+	for _, ride := range stub.driverTrips {
+		if query.ActiveOnly {
+			if ride.Status == "assigned" || ride.Status == "accepted" || ride.Status == "arrived" || ride.Status == "in_transit" {
+				matched = append(matched, ride)
+			}
+		} else {
+			if ride.Status == "completed" || ride.Status == "cancelled" {
+				matched = append(matched, ride)
+			}
+		}
+	}
+	return matched, nil
+}
+
+func (stub *ridesRepositoryStub) PassengerRides(
+	_ context.Context,
+	_ int,
+	_ domain.TripHistoryQuery,
+) ([]domain.Ride, error) {
+	return nil, nil
 }
 
 func TestCreateRideBuildsRequestedRide(t *testing.T) {
@@ -280,6 +312,66 @@ func TestCalculateFareRejectsNonFiniteInput(t *testing.T) {
 	}
 	if got := service.CalculateFare(0, 0); got != 2500 {
 		t.Fatalf("expected minimum fare, got %d", got)
+	}
+}
+
+func TestDriverTripsQuarantinesActiveRidesFromHistory(t *testing.T) {
+	stub := &ridesRepositoryStub{
+		driverTrips: []domain.Ride{
+			{ID: 1, Status: "in_transit", DriverID: intPointer(11)},
+			{ID: 2, Status: "assigned", DriverID: intPointer(11)},
+			{ID: 3, Status: "completed", DriverID: intPointer(11)},
+			{ID: 4, Status: "cancelled", DriverID: intPointer(11)},
+		},
+	}
+	service := newTestRideService(stub, testPricingConfig(t), nil)
+
+	// Historical archive (ActiveOnly = false): must only contain terminal trips (completed, cancelled)
+	historyTrips, err := service.DriverTrips(context.Background(), 11, domain.TripHistoryQuery{
+		Limit:      10,
+		Offset:     0,
+		ActiveOnly: false,
+	})
+	if err != nil {
+		t.Fatalf("DriverTrips history query returned error: %v", err)
+	}
+	if len(historyTrips) != 2 {
+		t.Fatalf("got %d history trips, want 2", len(historyTrips))
+	}
+	for _, ride := range historyTrips {
+		if ride.Status != "completed" && ride.Status != "cancelled" {
+			t.Fatalf("unexpected non-terminal ride in history archive: %v", ride)
+		}
+	}
+
+	// Active dispatch query (ActiveOnly = true): must only contain active trips (in_transit, assigned)
+	activeTrips, err := service.DriverTrips(context.Background(), 11, domain.TripHistoryQuery{
+		Limit:      10,
+		Offset:     0,
+		ActiveOnly: true,
+	})
+	if err != nil {
+		t.Fatalf("DriverTrips active query returned error: %v", err)
+	}
+	if len(activeTrips) != 2 {
+		t.Fatalf("got %d active trips, want 2", len(activeTrips))
+	}
+	for _, ride := range activeTrips {
+		if ride.Status != "in_transit" && ride.Status != "assigned" {
+			t.Fatalf("unexpected non-active ride in active query: %v", ride)
+		}
+	}
+}
+
+func TestDriverTripsValidatesPaginationBounds(t *testing.T) {
+	stub := &ridesRepositoryStub{}
+	service := newTestRideService(stub, testPricingConfig(t), nil)
+
+	if _, err := service.DriverTrips(context.Background(), 11, domain.TripHistoryQuery{Limit: 0}); err == nil {
+		t.Fatal("expected error for non-positive limit")
+	}
+	if _, err := service.DriverTrips(context.Background(), 11, domain.TripHistoryQuery{Limit: 10, Offset: -1}); err == nil {
+		t.Fatal("expected error for negative offset")
 	}
 }
 

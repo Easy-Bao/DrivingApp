@@ -10,9 +10,9 @@ import (
 
 const _outboundQueueSize = 64
 
-// Hub owns local WebSocket queues. A saturated queue closes the subscription so
-// the connection exposes delivery interruption instead of silently evicting
-// events.
+// Hub owns local WebSocket queues. Priority buffer eviction drops telemetry and
+// chat events first when a queue reaches capacity to protect critical lifecycle events
+// and avoid terminating mobile connections during cellular network jitter.
 type Hub struct {
 	mu     sync.RWMutex
 	topics map[string]map[*Subscription]struct{}
@@ -20,10 +20,12 @@ type Hub struct {
 }
 
 type Subscription struct {
-	hub    *Hub
-	topics []string
-	events chan event.Envelope
-	once   sync.Once
+	hub     *Hub
+	topics  []string
+	events  chan event.Envelope
+	evictMu sync.Mutex
+	closed  bool
+	once    sync.Once
 }
 
 func NewHub() *Hub {
@@ -82,9 +84,7 @@ func (hub *Hub) Publish(envelope event.Envelope) {
 				continue
 			}
 			delivered[subscription] = struct{}{}
-			select {
-			case subscription.events <- envelope:
-			default:
+			if !subscription.deliver(envelope) {
 				slowSubscriptions = append(slowSubscriptions, subscription)
 			}
 		}
@@ -99,6 +99,90 @@ func (hub *Hub) Publish(envelope event.Envelope) {
 		)
 		subscription.Close()
 	}
+}
+
+func isDroppable(eventType event.Type) bool {
+	switch eventType {
+	case event.DriverLocationUpdated,
+		event.PassengerLocationUpdated,
+		event.ChatMessageCreated,
+		event.ChatTypingChanged,
+		event.PresenceUpdated:
+		return true
+	default:
+		return false
+	}
+}
+
+func (subscription *Subscription) deliver(envelope event.Envelope) bool {
+	// Fast path: enqueue without locking if channel has available capacity.
+	select {
+	case subscription.events <- envelope:
+		return true
+	default:
+	}
+
+	subscription.evictMu.Lock()
+	defer subscription.evictMu.Unlock()
+
+	if subscription.closed {
+		return true
+	}
+
+	// Retry non-blocking send in case consumer drained an event.
+	select {
+	case subscription.events <- envelope:
+		return true
+	default:
+	}
+
+	// Channel is saturated at capacity (_outboundQueueSize).
+	// Drain buffered items to perform priority eviction.
+	var drained []event.Envelope
+drainLoop:
+	for {
+		select {
+		case e := <-subscription.events:
+			drained = append(drained, e)
+		default:
+			break drainLoop
+		}
+	}
+
+	// Find the oldest droppable event (telemetry/chat) in the buffer.
+	droppableIndex := -1
+	for i, e := range drained {
+		if isDroppable(e.Type) {
+			droppableIndex = i
+			break
+		}
+	}
+
+	if droppableIndex != -1 {
+		// Evict the droppable event to make room for the new envelope.
+		drained = append(drained[:droppableIndex], drained[droppableIndex+1:]...)
+		drained = append(drained, envelope)
+		for _, e := range drained {
+			subscription.events <- e
+		}
+		return true
+	}
+
+	// No droppable events exist in buffer; all are critical.
+	// If incoming envelope is droppable, discard it to preserve critical queue and avoid closing connection.
+	if isDroppable(envelope.Type) {
+		for _, e := range drained {
+			subscription.events <- e
+		}
+		return true
+	}
+
+	// All buffered events are critical AND incoming envelope is critical.
+	// Queue is truly saturated with critical messages.
+	for _, e := range drained {
+		subscription.events <- e
+	}
+	return false
 }
 
 func (hub *Hub) topicSubscriberCount(topic string) int {
@@ -122,7 +206,10 @@ func (subscription *Subscription) Close() {
 				delete(subscription.hub.topics, topic)
 			}
 		}
+		subscription.evictMu.Lock()
+		subscription.closed = true
 		close(subscription.events)
+		subscription.evictMu.Unlock()
 	})
 }
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"math"
 	"slices"
 	"strconv"
 	"strings"
@@ -162,12 +163,27 @@ func (service *Service) PlaceOffer(ctx context.Context, offer dispatchdomain.Bid
 	if offer.DriverID <= 0 || offer.ProposedFareAmount < 0 {
 		return dispatchdomain.BidOffer{}, dispatchdomain.ErrInvalidFareOffer
 	}
+	session, err := service.store.Session(ctx, offer.SessionID)
+	if err != nil {
+		return dispatchdomain.BidOffer{}, fmt.Errorf("load bid session for offer: %w", err)
+	}
 	if offer.ProposedFareAmount == 0 {
-		session, err := service.store.Session(ctx, offer.SessionID)
-		if err != nil {
-			return dispatchdomain.BidOffer{}, fmt.Errorf("load bid session for offer: %w", err)
-		}
 		offer.ProposedFareAmount = session.OfferedFareAmount
+	}
+	baseFare := float64(session.OfferedFareAmount)
+	minFare := int64(math.Max(50, 0.70*baseFare))
+	maxFare := int64(math.Min(5000, 2.0*baseFare))
+	if maxFare < minFare {
+		maxFare = minFare
+	}
+	if baseFare > 0 {
+		if offer.ProposedFareAmount < minFare || offer.ProposedFareAmount > maxFare {
+			return dispatchdomain.BidOffer{}, dispatchdomain.ErrInvalidFareOffer
+		}
+	} else {
+		if offer.ProposedFareAmount < 50 || offer.ProposedFareAmount > 5000 {
+			return dispatchdomain.BidOffer{}, dispatchdomain.ErrInvalidFareOffer
+		}
 	}
 	if offer.Status == "" {
 		offer.Status = "pending"

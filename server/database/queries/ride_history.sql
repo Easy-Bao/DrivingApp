@@ -18,8 +18,9 @@ LEFT JOIN passenger_profiles AS passenger_profile ON passenger_profile.user_id =
 LEFT JOIN reviews AS passenger_review ON passenger_review.ride_id = ride.id
 WHERE ride.driver_id = sqlc.arg('driver_id')
   AND (
-      sqlc.arg('active_only')::boolean = false
-      OR ride.status IN ('assigned', 'accepted', 'arrived', 'in_transit')
+      (sqlc.arg('active_only')::boolean = true AND ride.status IN ('assigned', 'accepted', 'arrived', 'in_transit'))
+      OR
+      (sqlc.arg('active_only')::boolean = false AND ride.status IN ('completed', 'cancelled'))
   )
 ORDER BY ride.created_at DESC, ride.id DESC
 LIMIT sqlc.arg('limit')::int

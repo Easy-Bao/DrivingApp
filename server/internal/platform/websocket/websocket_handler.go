@@ -18,8 +18,8 @@ import (
 
 const (
 	_maximumMessageSize = 16 << 10
-	_pongWait           = 60 * time.Second
-	_pingPeriod         = 54 * time.Second
+	_pongWait           = 25 * time.Second
+	_pingPeriod         = 20 * time.Second
 	_writeWait          = 10 * time.Second
 )
 

@@ -34,3 +34,30 @@ func TestSummarizeDriverEarningsUsesReportingTimezoneAndDriverPayout(t *testing.
 		t.Fatalf("unexpected buckets: weekdays=%#v month=%#v", summary.Weekdays, summary.MonthWeeks)
 	}
 }
+
+func TestSummarizeDriverEarningsCrossMonthBoundary(t *testing.T) {
+	location := time.FixedZone("Asia/Manila", 8*60*60)
+	now := time.Date(2026, time.October, 2, 14, 0, 0, 0, location) // Friday Oct 2, 2026
+	entries := []domain.DriverEarning{
+		{CompletedAt: time.Date(2026, time.September, 28, 2, 0, 0, 0, location), PayoutAmount: 500},
+		{CompletedAt: time.Date(2026, time.September, 29, 2, 0, 0, 0, location), PayoutAmount: 500},
+		{CompletedAt: time.Date(2026, time.September, 30, 2, 0, 0, 0, location), PayoutAmount: 500},
+		{CompletedAt: time.Date(2026, time.October, 2, 2, 0, 0, 0, location), PayoutAmount: 500},
+	}
+
+	summary := summarizeDriverEarnings(entries, now, location)
+
+	if summary.ThisWeek.EarningsAmount != 2000 || summary.ThisWeek.CompletedTrips != 4 {
+		t.Fatalf("this week = %#v, want 2000 across 4 trips", summary.ThisWeek)
+	}
+	if summary.ThisMonth.EarningsAmount != 500 || summary.ThisMonth.CompletedTrips != 1 {
+		t.Fatalf("this month = %#v, want 500 across 1 trip", summary.ThisMonth)
+	}
+	if summary.Today.EarningsAmount != 500 || summary.Today.CompletedTrips != 1 {
+		t.Fatalf("today = %#v, want 500 across 1 trip", summary.Today)
+	}
+	if summary.Weekdays[0].EarningsAmount != 500 || summary.Weekdays[1].EarningsAmount != 500 ||
+		summary.Weekdays[2].EarningsAmount != 500 || summary.Weekdays[4].EarningsAmount != 500 {
+		t.Fatalf("unexpected weekday buckets: %#v", summary.Weekdays)
+	}
+}

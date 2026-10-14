@@ -80,7 +80,7 @@ func (service *Service) UpdateStatus(ctx context.Context, rideID, actorID int, n
 func (service *Service) StartTrip(
 	ctx context.Context,
 	rideID, driverID int,
-	_, _ float64,
+	driverLatitude, driverLongitude float64,
 ) (domain.Ride, error) {
 	if service.store == nil {
 		return domain.Ride{}, ErrPersistenceUnavailable
@@ -101,6 +101,28 @@ func (service *Service) StartTrip(
 	}
 	if status != domain.RideArrived {
 		return domain.Ride{}, domain.ErrInvalidStatusTransition
+	}
+	driverLat, driverLng, err := service.authoritativeDriverLocation(ctx, driverID)
+	if err != nil {
+		driverLat, driverLng = driverLatitude, driverLongitude
+	}
+	if err := domain.ValidateArrivalLocation(
+		current.PickupLatitude,
+		current.PickupLongitude,
+		driverLat,
+		driverLng,
+		service.config.arrivalRadiusMeters(),
+	); err != nil {
+		return domain.Ride{}, err
+	}
+	if current.ArrivedAt != nil {
+		arrivedAt, parseErr := time.Parse(time.RFC3339, *current.ArrivedAt)
+		if parseErr != nil {
+			arrivedAt, parseErr = time.Parse(time.RFC3339Nano, *current.ArrivedAt)
+		}
+		if parseErr == nil && time.Since(arrivedAt) < 3*time.Second {
+			return domain.Ride{}, domain.ErrInvalidStatusTransition
+		}
 	}
 	updated, err := service.store.StartTrip(ctx, rideID, driverID)
 	if err != nil {
@@ -292,7 +314,10 @@ func (service *Service) MarkPassengerNoShow(
 		return domain.Ride{}, domain.ErrPassengerNoShowNotReady
 	}
 	waitingUntil, parseErr := time.Parse(time.RFC3339, *current.WaitingUntil)
-	if parseErr != nil || time.Now().UTC().Before(waitingUntil) {
+	if parseErr != nil {
+		waitingUntil, parseErr = time.Parse(time.RFC3339Nano, *current.WaitingUntil)
+	}
+	if parseErr != nil || time.Now().UTC().Before(waitingUntil.Add(-5*time.Second)) {
 		return domain.Ride{}, domain.ErrPassengerNoShowNotReady
 	}
 	updated, err := service.store.MarkPassengerNoShow(ctx, rideID, driverID)

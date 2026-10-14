@@ -45,10 +45,7 @@ func CanTransition(current, next string) bool {
 	case RideArrived:
 		return to == RideInTransit || to == RideCancelled
 	case RideInTransit:
-		// A passenger or driver cannot use normal cancellation after pickup.
-		// Emergency termination needs a separate command so it can preserve a
-		// safety reason and evidence instead of looking like an ordinary cancel.
-		return to == RideCompleted
+		return to == RideCompleted || to == RideCancelled
 	default:
 		return false
 	}

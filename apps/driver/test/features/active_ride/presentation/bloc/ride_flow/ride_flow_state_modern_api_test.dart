@@ -10,7 +10,7 @@ void main() {
       DriverEnRoute(passengerName: 'Alex'),
       TripInProgress(passengerName: 'Alex', distanceKm: 1.2),
       TripCompleted(fare: 3.5),
-      RideFailed('Unable to update ride status.'),
+      RideFlowError('Unable to update ride status.'),
     ];
 
     expect(

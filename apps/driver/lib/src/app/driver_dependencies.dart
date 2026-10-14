@@ -58,6 +58,10 @@ class DriverDependencies({
           saveAccessToken: session.saveToken,
           saveRefreshToken: session.saveRefreshToken,
           clearSession: session.clearSession,
+          hasActiveMission: () async {
+            final activeRideId = await session.readActiveRideId();
+            return activeRideId != null && activeRideId.trim().isNotEmpty;
+          },
           refreshClient: Dio(
             BaseOptions(
               baseUrl: DriverEnvConfig.apiBaseUri.toString(),
@@ -66,7 +70,7 @@ class DriverDependencies({
               sendTimeout: const Duration(seconds: 15),
             ),
           ),
-          onSessionExpired: _navigateToDriverSignIn,
+          onSessionExpired: () => _navigateToDriverSignIn(session),
         );
       })
       ..addLazySingleton<DriverBackgroundTelemetry>(
@@ -123,7 +127,17 @@ class DriverDependencies({
   ];
 }
 
-Future<void> _navigateToDriverSignIn() async {
+Future<void> _navigateToDriverSignIn([
+  DriverSessionStore? sessionService,
+]) async {
+  try {
+    final session = sessionService ?? Modular.get<DriverSessionStore>();
+    final activeRideId = await session.readActiveRideId();
+    if (activeRideId != null && activeRideId.trim().isNotEmpty) {
+      // Active mission in transit: defer login redirect until trip completion.
+      return;
+    }
+  } catch (_) {}
   final router = Modular.routerConfig;
   if (router.routerDelegate.currentConfiguration.uri.path ==
       AuthRoutes.signinPath) {

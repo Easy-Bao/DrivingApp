@@ -32,17 +32,20 @@ func summarizeDriverEarnings(
 
 	for _, entry := range entries {
 		completedAt := entry.CompletedAt.In(location)
-		if completedAt.Before(monthStart) || !completedAt.Before(monthStart.AddDate(0, 1, 0)) {
-			continue
+		if !completedAt.Before(monthStart) && completedAt.Before(monthStart.AddDate(0, 1, 0)) {
+			addEarnings(&summary.ThisMonth, entry.PayoutAmount)
+			monthWeek := (completedAt.Day() - 1) / 7
+			if monthWeek >= 0 && monthWeek < len(summary.MonthWeeks) {
+				addEarningsBucket(&summary.MonthWeeks[monthWeek], entry.PayoutAmount)
+			}
 		}
-		addEarnings(&summary.ThisMonth, entry.PayoutAmount)
-		monthWeek := (completedAt.Day() - 1) / 7
-		addEarningsBucket(&summary.MonthWeeks[monthWeek], entry.PayoutAmount)
 
 		if !completedAt.Before(weekStart) && completedAt.Before(weekStart.AddDate(0, 0, 7)) {
 			addEarnings(&summary.ThisWeek, entry.PayoutAmount)
 			weekday := (int(completedAt.Weekday()) + 6) % 7
-			addEarningsBucket(&summary.Weekdays[weekday], entry.PayoutAmount)
+			if weekday >= 0 && weekday < len(summary.Weekdays) {
+				addEarningsBucket(&summary.Weekdays[weekday], entry.PayoutAmount)
+			}
 		}
 		if sameLocalDay(completedAt, today) {
 			addEarnings(&summary.Today, entry.PayoutAmount)

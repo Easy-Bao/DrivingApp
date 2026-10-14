@@ -164,7 +164,7 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 		routeSecurity:      routeSecurity,
 	})
 	secureHandler := middleware.SecureHTTP(router, config.Security)
-	handler := proxyTrust.Middleware(middleware.Logging(applicationLogger)(secureHandler))
+	handler := middleware.Recovery(applicationLogger)(proxyTrust.Middleware(middleware.Logging(applicationLogger)(secureHandler)))
 
 	application := &Application{
 		server: &http.Server{

@@ -665,3 +665,52 @@ func assertRowCount(
 		t.Fatalf("row count = %d, want %d", count, want)
 	}
 }
+
+func TestListDriverRidesFiltersActiveAndTerminalTrips(t *testing.T) {
+	fixture := newPostgresRideFixture(t)
+	ctx, cancel := context.WithTimeout(t.Context(), 15*time.Second)
+	defer cancel()
+
+	const passengerID = 101
+	const driverID = 201
+	fixture.seedPassenger(t, ctx, passengerID)
+	fixture.seedDriver(t, ctx, driverID)
+
+	fixture.createRide(t, ctx, passengerID, driverID, "in_transit", 2500)
+	fixture.createRide(t, ctx, passengerID, driverID, "completed", 3000)
+	fixture.createRide(t, ctx, passengerID, driverID, "cancelled", 1500)
+
+	// active_only = false (History query): should only return completed and cancelled rides
+	historyTrips, err := fixture.store.DriverTrips(ctx, driverID, domain.TripHistoryQuery{
+		Limit:      10,
+		Offset:     0,
+		ActiveOnly: false,
+	})
+	if err != nil {
+		t.Fatalf("DriverTrips(active_only=false) error: %v", err)
+	}
+	if len(historyTrips) != 2 {
+		t.Fatalf("historyTrips len = %d, want 2", len(historyTrips))
+	}
+	for _, trip := range historyTrips {
+		if trip.Status != "completed" && trip.Status != "cancelled" {
+			t.Fatalf("unexpected non-terminal ride status in history: %s", trip.Status)
+		}
+	}
+
+	// active_only = true (Active rides query): should only return active rides
+	activeTrips, err := fixture.store.DriverTrips(ctx, driverID, domain.TripHistoryQuery{
+		Limit:      10,
+		Offset:     0,
+		ActiveOnly: true,
+	})
+	if err != nil {
+		t.Fatalf("DriverTrips(active_only=true) error: %v", err)
+	}
+	if len(activeTrips) != 1 {
+		t.Fatalf("activeTrips len = %d, want 1", len(activeTrips))
+	}
+	if activeTrips[0].Status != "in_transit" {
+		t.Fatalf("activeTrips[0].Status = %s, want in_transit", activeTrips[0].Status)
+	}
+}
