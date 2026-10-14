@@ -50,17 +50,23 @@ class RideHistoryFilters extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final filter in RideHistoryFilter.values)
-          _RideHistoryFilterChip(
-            filter: filter,
-            isSelected: filter == selectedFilter,
-            onTap: () => onSelected(filter),
-          ),
-      ],
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final filter in RideHistoryFilter.values) ...[
+            _RideHistoryFilterChip(
+              filter: filter,
+              isSelected: filter == selectedFilter,
+              onTap: () => onSelected(filter),
+            ),
+            if (filter != RideHistoryFilter.values.last)
+              const SizedBox(width: 8),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -137,14 +143,14 @@ class _SummaryCard extends StatelessWidget {
       height: 88,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainerHighest,
+        color: context.colorScheme.surface,
         borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: context.colorScheme.shadow.withValues(alpha: 0.03),
+            color: Color(0x06000000),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -214,18 +220,15 @@ class _RideHistoryFilterChip extends StatelessWidget {
             curve: Curves.easeOutCubic,
             constraints: const BoxConstraints(minHeight: 38, minWidth: 64),
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-            alignment: Alignment.center,
             decoration: BoxDecoration(
               color: isSelected
                   ? context.colorScheme.primary
-                  : context.colorScheme.surfaceContainerHighest.withValues(
-                      alpha: 0.35,
-                    ),
+                  : context.colorScheme.surface,
               borderRadius: radius,
               border: Border.all(
                 color: isSelected
                     ? context.colorScheme.primary
-                    : context.colorScheme.outlineVariant.withValues(alpha: 0.6),
+                    : context.colorScheme.outlineVariant,
                 width: 1.0,
               ),
               boxShadow: isSelected
@@ -238,15 +241,24 @@ class _RideHistoryFilterChip extends StatelessWidget {
                         offset: const Offset(0, 2),
                       ),
                     ]
-                  : null,
+                  : const [
+                      BoxShadow(
+                        color: Color(0x06000000),
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
             ),
-            child: Text(
-              _label,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: isSelected
-                    ? context.colorScheme.onPrimary
-                    : context.colorScheme.onSurfaceVariant,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+            child: Center(
+              widthFactor: 1.0,
+              child: Text(
+                _label,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: isSelected
+                      ? context.colorScheme.onPrimary
+                      : context.colorScheme.onSurfaceVariant,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                ),
               ),
             ),
           ),

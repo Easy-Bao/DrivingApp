@@ -282,7 +282,7 @@ class _RideHistoryMessageView extends StatelessWidget {
                   width: 72,
                   height: 72,
                   decoration: BoxDecoration(
-                    color: context.colorScheme.surfaceContainerHighest,
+                    color: context.colorScheme.surface,
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: context.colorScheme.outlineVariant,
@@ -454,8 +454,9 @@ class _ActivitySkeletonSummaryCard extends StatelessWidget {
       height: 88,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainerHighest,
+        color: context.colorScheme.surface,
         borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        border: Border.all(color: context.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -248,14 +248,19 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
               height: 200,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: context.colorScheme.surfaceContainerHighest,
+                color: context.colorScheme.surface,
                 borderRadius: BorderRadius.circular(EasyRideRadius.lg),
                 border: Border.all(
-                  color: context.colorScheme.outlineVariant.withValues(
-                    alpha: 0.25,
-                  ),
+                  color: context.colorScheme.outlineVariant,
                   width: 1.0,
                 ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x06000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(EasyRideRadius.lg - 1),
@@ -273,16 +278,19 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: context.colorScheme.surfaceContainerHighest.withValues(
-                  alpha: 0.15,
-                ),
+                color: context.colorScheme.surface,
                 borderRadius: BorderRadius.circular(EasyRideRadius.lg),
                 border: Border.all(
-                  color: context.colorScheme.outlineVariant.withValues(
-                    alpha: 0.25,
-                  ),
+                  color: context.colorScheme.outlineVariant,
                   width: 1.0,
                 ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x06000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
@@ -393,16 +401,19 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: context.colorScheme.surfaceContainerHighest.withValues(
-                  alpha: 0.15,
-                ),
+                color: context.colorScheme.surface,
                 borderRadius: BorderRadius.circular(EasyRideRadius.lg),
                 border: Border.all(
-                  color: context.colorScheme.outlineVariant.withValues(
-                    alpha: 0.25,
-                  ),
+                  color: context.colorScheme.outlineVariant,
                   width: 1.0,
                 ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x06000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -463,16 +474,19 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: context.colorScheme.surfaceContainerHighest.withValues(
-                  alpha: 0.15,
-                ),
+                color: context.colorScheme.surface,
                 borderRadius: BorderRadius.circular(EasyRideRadius.lg),
                 border: Border.all(
-                  color: context.colorScheme.outlineVariant.withValues(
-                    alpha: 0.2,
-                  ),
+                  color: context.colorScheme.outlineVariant,
                   width: 1.0,
                 ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x06000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
