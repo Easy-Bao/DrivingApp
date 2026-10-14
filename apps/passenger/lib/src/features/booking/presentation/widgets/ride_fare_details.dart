@@ -98,7 +98,7 @@ class const RideFareDetails({
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: context.colorScheme.surfaceContainerHighest,
+                      color: context.colorScheme.surface,
                       border: Border.all(
                         color: context.colorScheme.outlineVariant,
                         width: 0.8,
@@ -145,9 +145,16 @@ class const RideFareDetails({
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: context.colorScheme.surfaceContainerHighest,
+                color: context.colorScheme.surface,
                 borderRadius: BorderRadius.circular(EasyRideRadius.md),
                 border: Border.all(color: context.colorScheme.outlineVariant),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x06000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
               ),
               child: _amountRow(context, 'Passenger', normalizedPassengerName),
             ),
@@ -157,9 +164,16 @@ class const RideFareDetails({
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: context.colorScheme.surfaceContainerHighest,
+              color: context.colorScheme.surface,
               borderRadius: BorderRadius.circular(EasyRideRadius.lg),
               border: Border.all(color: context.colorScheme.outlineVariant),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x06000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -223,12 +237,19 @@ class const RideFareDetails({
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: context.colorScheme.surfaceContainerHighest,
+              color: context.colorScheme.surface,
               borderRadius: BorderRadius.circular(EasyRideRadius.lg),
               border: Border.all(
                 color: context.colorScheme.outlineVariant,
                 width: 0.8,
               ),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x06000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
             ),
             child: Row(
               children: [

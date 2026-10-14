@@ -22,8 +22,8 @@ abstract final class EasyRideTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: colors,
-      scaffoldBackgroundColor: EasyRidePalette.gray50,
-      canvasColor: EasyRidePalette.gray50,
+      scaffoldBackgroundColor: EasyRidePalette.softWhite,
+      canvasColor: EasyRidePalette.softWhite,
       fontFamily: 'packages/design_system/ProductSans',
       textTheme: textTheme,
       extensions: const <ThemeExtension<dynamic>>[

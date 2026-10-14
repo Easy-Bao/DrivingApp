@@ -11,6 +11,9 @@ abstract final class EasyRidePalette {
   static const red800 = Color(0xFF7A2020);
 
   static const white = Color(0xFFFFFFFF);
+  static const offWhite = Color(0xFFFAFAFA);
+  static const softWhite = Color(0xFFF8FAFC);
+  static const subtleWhite = Color(0xFFF1F5F9);
 
   static const gray50 = Color(0xFFF8FAFC);
   static const gray100 = Color(0xFFF1F5F9);

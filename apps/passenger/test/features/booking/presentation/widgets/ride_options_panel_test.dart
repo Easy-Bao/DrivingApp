@@ -175,7 +175,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('custom-offer-input')), findsNothing);
-    expect(find.text('Your offer: ₱40'), findsOneWidget);
+    expect(find.text('Your offer: ₱40.00'), findsOneWidget);
   });
 
   testWidgets('keeps the current sheet extent when opening an editor', (
@@ -255,7 +255,7 @@ void main() {
     expect(find.text('Time'), findsOneWidget);
     expect(find.text('Calculated fare'), findsOneWidget);
     expect(find.text('Custom offer adjustment'), findsOneWidget);
-    expect(find.text('+₱7'), findsOneWidget);
+    expect(find.text('+₱6.83'), findsOneWidget);
     expect(find.text('No tip added'), findsOneWidget);
     expect(find.text('Pickup'), findsNothing);
     expect(find.text('Destination'), findsNothing);

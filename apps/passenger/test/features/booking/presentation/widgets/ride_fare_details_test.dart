@@ -35,7 +35,7 @@ void main() {
     await tester.pumpWidget(buildSubject(fareResult: fareWithSurge));
 
     expect(find.text('Dynamic surge (1.3x)'), findsOneWidget);
-    expect(find.text('₱12'), findsOneWidget);
+    expect(find.text('₱12.00'), findsOneWidget);
   });
 
   testWidgets('hides surge line when surge charge is zero', (tester) async {

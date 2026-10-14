@@ -43,9 +43,16 @@ class const RideOptionsLoadingView({super.key, this.showPrimaryAction = true})
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainerHighest,
+        color: context.colorScheme.surface,
         borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,9 +181,16 @@ class const RideOptionsLoadingView({super.key, this.showPrimaryAction = true})
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainerHighest,
+        color: context.colorScheme.surface,
         borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         border: Border.all(color: context.colorScheme.outlineVariant),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: const Row(
         children: [

@@ -48,7 +48,7 @@ class const RideTipSelector({
                   selected: selectedTipAmount == amount,
                   onSelected: (_) => onTipSelected(amount),
                   selectedColor: context.colorScheme.onSurface,
-                  backgroundColor: context.colorScheme.surfaceContainerHighest,
+                  backgroundColor: context.colorScheme.surface,
                   side: BorderSide(
                     color: selectedTipAmount == amount
                         ? context.colorScheme.onSurface
