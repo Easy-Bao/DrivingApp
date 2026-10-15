@@ -203,6 +203,9 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                           onRetry: () =>
                               BlocProvider.of<DriverEarningsCubit>(context)
                                   .load(),
+                          onDismiss: () =>
+                              BlocProvider.of<DriverEarningsCubit>(context)
+                                  .dismissError(),
                         ),
                       if (state.errorMessage != null && !isNetworkUnavailable)
                         const SizedBox(height: 12),

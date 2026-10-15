@@ -86,12 +86,23 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
   bool _isCancellingTrip = false;
   bool _isEmergencyStopping = false;
   bool _isPollingChat = false;
+  String? _errorMessage;
+  StreamSubscription<RealtimeConnectionState>? _realtimeStateSubscription;
+  bool _isTransportRetrying = false;
 
   @override
   void initState() {
     super.initState();
     _liveMapBloc = widget.liveMapBloc;
     widget.realtimeClient?.setActiveTripResyncHandler(_resyncActiveTrip);
+    _realtimeStateSubscription = widget.realtimeClient?.states.listen((state) {
+      if (!mounted) return;
+      final retrying =
+          state is RealtimeDisconnected || state is RealtimeConnecting;
+      if (_isTransportRetrying != retrying) {
+        setState(() => _isTransportRetrying = retrying);
+      }
+    });
     _chatMessagesPollingTask = AppLifecyclePeriodicTask(
       lifecycleCoordinator: widget.lifecycleCoordinator,
       interval: const Duration(seconds: 4),
@@ -117,6 +128,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
   @override
   void dispose() {
     widget.realtimeClient?.setActiveTripResyncHandler(null);
+    unawaited(_realtimeStateSubscription?.cancel());
     unawaited(_locationSubscription?.cancel());
     unawaited(_chatMessagesPollingTask.dispose());
     unawaited(_chatRepository?.dispose());
@@ -411,6 +423,10 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
       final stopped = await BlocProvider.of<TrackDriverCubit>(context)
           .emergencyStopRequest(reason: reason, details: details);
       if (mounted && !stopped) {
+        setState(
+          () => _errorMessage =
+              'The ride could not be ended for safety. Please try again.',
+        );
         CustomToast.show(
           context,
           'The ride could not be ended for safety. Please try again.',
@@ -418,6 +434,14 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
         );
       }
       return stopped;
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _errorMessage =
+              'The ride could not be ended for safety. Please try again.',
+        );
+      }
+      return false;
     } finally {
       if (mounted) setState(() => _isEmergencyStopping = false);
     }
@@ -441,15 +465,49 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
       final canceled = await BlocProvider.of<TrackDriverCubit>(context)
           .cancelTripRequest(reason: reason);
       if (mounted && !canceled) {
+        setState(() => _errorMessage = "Couldn't cancel the ride. Try again.");
         CustomToast.show(
           context,
           "Couldn't cancel the ride. Try again.",
           isError: true,
         );
       }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _errorMessage = "Couldn't cancel the ride. Try again.");
+      }
     } finally {
       if (mounted) setState(() => _isCancellingTrip = false);
     }
+  }
+
+  String _formatSubtitle({
+    required bool isInTransit,
+    required bool hasArrived,
+    required bool isTracking,
+    required double? durationMinutes,
+    required String dropoffName,
+  }) {
+    if (hasArrived) {
+      return 'Driver is waiting at pickup location';
+    }
+    if (durationMinutes != null && durationMinutes > 0) {
+      final mins = durationMinutes.round();
+      final arrivalTime = DateTime.now().add(Duration(minutes: mins));
+      final hour = arrivalTime.hour % 12 == 0 ? 12 : arrivalTime.hour % 12;
+      final minute = arrivalTime.minute.toString().padLeft(2, '0');
+      final period = arrivalTime.hour >= 12 ? 'PM' : 'AM';
+      return 'ETA $hour:$minute $period • $mins mins left';
+    }
+    if (isInTransit) {
+      return dropoffName.trim().isNotEmpty
+          ? 'Heading to ${dropoffName.trim()}'
+          : 'Heading to destination';
+    }
+    if (isTracking) {
+      return 'Driver is heading to pickup';
+    }
+    return 'Driver assigned to your trip';
   }
 
   Future<void> _handleBackNavigation() async {
@@ -593,19 +651,28 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                       final isInTransit = state.isInTransit;
                       final hasArrived = state.hasArrived;
                       final statusTitle = isInTransit
-                          ? 'Heading To Your Destination'
+                          ? (widget.ride.dropoffName.trim().isNotEmpty
+                                ? widget.ride.dropoffName.trim()
+                                : 'Your Destination')
+                          : (widget.ride.pickupName.trim().isNotEmpty
+                                ? widget.ride.pickupName.trim()
+                                : (hasArrived
+                                      ? 'Driver Has Arrived'
+                                      : 'Driver Is Picking You Up'));
+                      final statusBadgeText = isInTransit
+                          ? 'ON TRIP'
                           : hasArrived
-                          ? 'Driver Has Arrived'
+                          ? 'ARRIVED'
                           : state.isTracking
-                          ? 'Driver Is Picking You Up'
-                          : 'Driver Assigned';
-                      final statusSubtitle = isInTransit
-                          ? 'Heading To ${widget.ride.dropoffName}'
-                          : hasArrived
-                          ? 'Driver is waiting at pickup location'
-                          : state.isTracking
-                          ? 'Driver is heading to pickup'
-                          : 'Driver assigned to your trip';
+                          ? 'PICKING UP'
+                          : 'ASSIGNED';
+                      final statusSubtitle = _formatSubtitle(
+                        isInTransit: isInTransit,
+                        hasArrived: hasArrived,
+                        isTracking: state.isTracking,
+                        durationMinutes: widget.ride.durationMinutes,
+                        dropoffName: widget.ride.dropoffName,
+                      );
                       final etaText = switch (state) {
                         DriverEnRoute(:final eta) => eta,
                         TripInProgress(:final eta) => eta,
@@ -634,23 +701,30 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                               ride: widget.ride,
                               statusTitle: statusTitle,
                               statusSubtitle: statusSubtitle,
+                              statusBadgeText: statusBadgeText,
                               etaText: etaText,
                               driverName: driverName,
                               vehicleSummary: vehicleSummary,
                               unreadChatMessagesCount: _unreadChatMessagesCount,
-                              showContactActions: !isInTransit,
+                              showContactActions: true,
                               isCancellingTrip: _isCancellingTrip,
                               onCallDriverPressed: () async {
                                 try {
                                   final rideId = widget.ride.id.trim();
                                   if (rideId.isNotEmpty) {
                                     String phone = '';
-                                    (await widget.trackRepository
-                                            .fetchCounterpartyResult(rideId))
-                                        .fold(
-                                          (_) {},
-                                          (driver) => phone = driver.phone,
+                                    final result = await widget.trackRepository
+                                        .fetchCounterpartyResult(rideId);
+                                    result.fold((failure) {
+                                      if (mounted) {
+                                        setState(
+                                          () => _errorMessage =
+                                              failure.message.isNotEmpty
+                                              ? failure.message
+                                              : 'Unable to reach driver at this time.',
                                         );
+                                      }
+                                    }, (driver) => phone = driver.phone);
 
                                     if (phone.isNotEmpty) {
                                       final uri = Uri.parse('tel:$phone');
@@ -659,7 +733,13 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                                       }
                                     }
                                   }
-                                } catch (_) {}
+                                } catch (_) {
+                                  if (mounted) {
+                                    setState(
+                                      () => _errorMessage = 'Unable to reach driver at this time.',
+                                    );
+                                  }
+                                }
                               },
                               onChatDriverPressed: () async {
                                 final passengerId =
@@ -697,6 +777,18 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                   ),
                 ),
               ),
+              AppNetworkStatusBanner(
+                isVisible: _isTransportRetrying,
+                isActiveTracking: true,
+              ),
+              if (_errorMessage != null)
+                AppStatusBanner(
+                  isVisible: true,
+                  message: _errorMessage!,
+                  tone: AppStatusBannerTone.error,
+                  actionLabel: 'Dismiss',
+                  onAction: () => setState(() => _errorMessage = null),
+                ),
             ],
           ),
         ),

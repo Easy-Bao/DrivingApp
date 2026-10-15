@@ -1,7 +1,7 @@
 import 'dart:developer' as dev;
 
 import 'package:dio/dio.dart';
-import 'package:foundation/src/errors/network_error_diagnostic.dart';
+import 'package:foundation/src/errors/network_diagnostic.dart';
 
 class LoggingInterceptor extends Interceptor {
   @override

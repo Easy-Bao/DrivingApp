@@ -39,4 +39,14 @@ class DriverPerformanceCubit({
     if (isClosed) return;
     emit(DriverPerformanceFailure(stats: state.stats, message: message));
   }
+
+  void dismissError() {
+    if (isClosed || state.errorMessage == null) return;
+    final currentStats = state.stats;
+    if (currentStats != null) {
+      emit(DriverPerformanceLoaded(currentStats));
+    } else {
+      emit(const DriverPerformanceInitial());
+    }
+  }
 }

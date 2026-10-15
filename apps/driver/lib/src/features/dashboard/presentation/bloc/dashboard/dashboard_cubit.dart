@@ -44,6 +44,11 @@ class DashboardCubit({
     }
   }
 
+  void dismissError() {
+    if (isClosed) return;
+    emit(state.copyWith(errorMessage: null, statsErrorMessage: null));
+  }
+
   Future<void> _initialize() async {
     try {
       final onlineStatusResult = await _repository

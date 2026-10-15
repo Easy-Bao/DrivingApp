@@ -1041,6 +1041,9 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                   isVisible: true,
                   message: dashboardMessage,
                   tone: AppStatusBannerTone.error,
+                  actionLabel: 'Dismiss',
+                  onAction: () =>
+                      BlocProvider.of<DashboardCubit>(context).dismissError(),
                 ),
             ],
           );

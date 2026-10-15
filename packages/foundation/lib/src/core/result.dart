@@ -1,4 +1,4 @@
-import 'package:foundation/src/errors/failures.dart';
+import 'package:foundation/src/errors/failure.dart';
 
 typedef DomainFailure = Failure;
 

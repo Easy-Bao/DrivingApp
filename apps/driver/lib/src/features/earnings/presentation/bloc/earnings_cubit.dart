@@ -42,4 +42,9 @@ class DriverEarningsCubit({
     if (isClosed) return;
     emit(state.copyWith(isLoading: false, errorMessage: message));
   }
+
+  void dismissError() {
+    if (isClosed || state.errorMessage == null) return;
+    emit(state.copyWith(clearError: true));
+  }
 }

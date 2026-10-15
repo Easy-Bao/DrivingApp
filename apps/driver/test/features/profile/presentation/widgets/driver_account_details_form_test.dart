@@ -18,17 +18,12 @@ class _MockProfileDataSource extends Mock
 class _MockSessionService extends Mock implements DriverSessionStore {}
 
 void main() {
-  testWidgets('saves personal details before vehicle registration', (
+  testWidgets('displays personal details as read-only with no save action', (
     tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
     final preferences = await SharedPreferences.getInstance();
     final profileDataSource = _MockProfileDataSource();
-    when(
-      () => profileDataSource.updateProfile(
-        data: any<Map<String, dynamic>>(named: 'data'),
-      ),
-    ).thenAnswer((_) async => const {'name': 'Updated Driver'});
 
     final repository = DriverProfileRepositoryImpl(
       profileDataSource: profileDataSource,
@@ -38,7 +33,11 @@ void main() {
     final cubit = DriverAccountCubit(repository: repository)
       ..emit(
         const DriverAccountState(
-          account: DriverAccountSnapshot(name: 'Driver'),
+          account: DriverAccountSnapshot(
+            name: 'Driver Name',
+            phone: '+639170000001',
+            email: 'driver@example.com',
+          ),
         ),
       );
     addTearDown(cubit.close);
@@ -53,22 +52,34 @@ void main() {
       ),
     );
 
-    await tester.enterText(
-      find.byKey(const ValueKey<String>('driver-account-field-Full Name')),
-      'Updated Driver',
+    expect(
+      tester
+          .widget<TextField>(
+            find.byKey(const ValueKey<String>('driver-account-field-Full Name')),
+          )
+          .readOnly,
+      isTrue,
     );
-    await tester.pump();
-    await tester.tap(
+    expect(
+      tester
+          .widget<TextField>(
+            find.byKey(const ValueKey<String>('driver-personal-phone-number')),
+          )
+          .readOnly,
+      isTrue,
+    );
+    expect(
+      tester
+          .widget<TextField>(
+            find.byKey(const ValueKey<String>('driver-account-field-Email')),
+          )
+          .readOnly,
+      isTrue,
+    );
+    expect(
       find.byKey(const ValueKey<String>('driver-account-details-save')),
+      findsNothing,
     );
-    await tester.pumpAndSettle();
-
-    expect(cubit.state.account.name, 'Updated Driver');
-    expect(cubit.state.account.vehicleType, isEmpty);
-    expect(cubit.state.account.plateNumber, isEmpty);
-    verify(
-      () => profileDataSource.updateProfile(data: {'name': 'Updated Driver'}),
-    ).called(1);
     expect(tester.takeException(), isNull);
   });
 }

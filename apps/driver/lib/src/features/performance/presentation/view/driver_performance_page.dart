@@ -50,6 +50,9 @@ class const DriverPerformancePage({super.key, this.onBack, this.onRefresh})
                   onRetry: () => unawaited(
                     BlocProvider.of<DriverPerformanceCubit>(context).load(),
                   ),
+                  onDismiss: () =>
+                      BlocProvider.of<DriverPerformanceCubit>(context)
+                          .dismissError(),
                 ),
               ],
             ],

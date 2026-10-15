@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:foundation/src/errors/exceptions.dart';
-import 'package:foundation/src/errors/failures.dart';
+import 'package:foundation/src/errors/failure.dart';
 
 const _defaultServerMessage = 'Something went wrong. Try again.';
 const _defaultValidationMessage = 'Check the highlighted fields.';

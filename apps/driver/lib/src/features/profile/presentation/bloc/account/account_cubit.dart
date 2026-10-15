@@ -75,4 +75,9 @@ class DriverAccountCubit({required this._repository})
       },
     );
   }
+
+  void dismissError() {
+    if (isClosed || state.errorMessage == null) return;
+    emit(state.copyWith(clearError: true));
+  }
 }

@@ -702,7 +702,7 @@ func safeRideError(err error) string {
 	case errors.Is(err, domain.ErrArrivalCommand):
 		return "Confirm arrival from the pickup action with location enabled."
 	case errors.Is(err, domain.ErrArrivalLocation):
-		return "Move closer to the pickup point before confirming arrival."
+		return "The driver must be in the passenger's pickup area before confirming arrival."
 	case errors.Is(err, domain.ErrDriverLocationUnavailable):
 		return "Your live location is unavailable. Keep location sharing on and try again."
 	case errors.Is(err, domain.ErrDriverLocationStale):
@@ -712,7 +712,7 @@ func safeRideError(err error) string {
 	case errors.Is(err, domain.ErrTripCompletionCommand):
 		return "Complete the trip from the destination action."
 	case errors.Is(err, domain.ErrCompletionLocation):
-		return "Move closer to the destination before completing the trip."
+		return "The driver must be in the destination area before completing the trip."
 	case errors.Is(err, domain.ErrPassengerNoShowNotReady):
 		return "Keep waiting until the pickup timer finishes before marking a no-show."
 	case errors.Is(err, domain.ErrNoShowCommand):

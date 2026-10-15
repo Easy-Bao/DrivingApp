@@ -13,7 +13,11 @@ final class DriverEarningsRepositoryImpl({required this._dataSource})
     String driverId,
   ) async {
     try {
-      return Ok(await _dataSource.fetchEarningsSummary(driverId));
+      final raw = await _dataSource.fetchEarningsSummary(driverId);
+      final data = raw['data'] is Map
+          ? Map<String, dynamic>.from(raw['data'] as Map)
+          : raw;
+      return Ok(data);
     } catch (error) {
       return Err(_mapExceptionToFailure(error));
     }

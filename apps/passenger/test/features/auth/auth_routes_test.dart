@@ -19,7 +19,7 @@ void main() {
     expect(authRootRedirect(Uri.parse(AuthRoutes.signupPath)), isNull);
   });
 
-  test('auth form routes enter from opposite sides for the bottom links', () {
+  test('auth form routes enter from the right like driver transition', () {
     final routes = AuthModule().routes.whereType<ChildRoute>();
     final signInRoute = routes.singleWhere(
       (route) => route.name == AuthRoutes.signin,
@@ -27,12 +27,18 @@ void main() {
     final signUpRoute = routes.singleWhere(
       (route) => route.name == AuthRoutes.signup,
     );
+    final forgotPasswordRoute = routes.singleWhere(
+      (route) => route.name == AuthRoutes.forgotPassword,
+    );
 
     final signInTransition = signInRoute.transition! as CustomPageTransition;
     final signUpTransition = signUpRoute.transition! as CustomPageTransition;
+    final forgotPasswordTransition =
+        forgotPasswordRoute.transition! as CustomPageTransition;
 
-    expect(signInTransition.fromRight, isFalse);
+    expect(signInTransition.fromRight, isTrue);
     expect(signUpTransition.fromRight, isTrue);
+    expect(forgotPasswordTransition.fromRight, isTrue);
   });
 
   testWidgets('auth routes render their configured entry direction', (
@@ -91,7 +97,7 @@ void main() {
     _expectEntryOffset(
       tester,
       const ValueKey<String>('sign-in-page'),
-      horizontal: -1,
+      horizontal: 1,
     );
   });
 }

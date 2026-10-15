@@ -3,7 +3,7 @@ import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart' show kReleaseMode;
-import 'package:foundation/src/telemetry/request_correlation_id.dart';
+import 'package:foundation/src/telemetry/correlation_id.dart';
 
 final class const HttpRequestMetric({
   required this.method,

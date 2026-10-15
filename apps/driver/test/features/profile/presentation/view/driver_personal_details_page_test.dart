@@ -90,22 +90,13 @@ void main() {
       isTrue,
     );
     expect(
-      find.byKey(const ValueKey<String>('driver-account-details-save')),
-      findsNothing,
+      tester
+          .widget<TextField>(
+            find.byKey(const ValueKey<String>('driver-account-field-Full Name')),
+          )
+          .readOnly,
+      isTrue,
     );
-
-    await tester.enterText(
-      find.byKey(const ValueKey<String>('driver-account-field-Full Name')),
-      'Updated Driver',
-    );
-    await tester.pump();
-    await tester.tap(
-      find.byKey(const ValueKey<String>('driver-account-details-save')),
-    );
-    await tester.pumpAndSettle();
-
-    expect(repository.account.name, 'Updated Driver');
-    expect(repository.account.vehicleType, 'Sedan');
     expect(
       find.byKey(const ValueKey<String>('driver-account-details-save')),
       findsNothing,

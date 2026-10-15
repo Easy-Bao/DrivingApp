@@ -419,7 +419,7 @@ Failure _mapFailure(Object error, {required String action}) {
     }
     if (action == 'complete this trip' && statusCode == 422) {
       return const ValidationFailure(
-        'Move closer to the destination before completing the trip.',
+        'The driver must be in the destination area before completing the trip.',
       );
     }
     if (action == 'complete this trip' && statusCode == 503) {
@@ -430,12 +430,12 @@ Failure _mapFailure(Object error, {required String action}) {
     }
     if (action == 'confirm arrival' && statusCode == 422) {
       return const ValidationFailure(
-        'Move closer to the pickup location before confirming arrival.',
+        "The driver must be in the passenger's pickup area before confirming arrival.",
       );
     }
     if (action == 'start this trip' && statusCode == 422) {
       return const ValidationFailure(
-        'Move closer to the pickup location before starting the trip.',
+        "The driver must be in the passenger's pickup area before starting the trip.",
       );
     }
     if ((action == 'confirm arrival' || action == 'start this trip') &&

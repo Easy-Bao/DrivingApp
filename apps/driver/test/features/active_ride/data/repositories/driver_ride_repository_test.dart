@@ -230,7 +230,7 @@ void main() {
 
       expect(
         result.fold((failure) => failure.message, (_) => ''),
-        'Move closer to the pickup location before confirming arrival.',
+        "The driver must be in the passenger's pickup area before confirming arrival.",
       );
     },
   );
@@ -291,7 +291,7 @@ void main() {
 
     expect(
       result.fold((failure) => failure.message, (_) => ''),
-      'Move closer to the pickup location before starting the trip.',
+      "The driver must be in the passenger's pickup area before starting the trip.",
     );
   });
 

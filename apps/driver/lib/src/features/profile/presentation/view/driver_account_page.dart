@@ -66,6 +66,9 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                               BlocProvider.of<DriverAccountCubit>(context)
                                   .load(),
                             ),
+                            onDismiss: () =>
+                                BlocProvider.of<DriverAccountCubit>(context)
+                                    .dismissError(),
                           ),
                         ],
                         const SizedBox(height: EasyRideSpacing.xxl),
@@ -82,13 +85,6 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                                 ProfileRoutes.vehicleInformation,
                               ),
                             ),
-                          ),
-                          _DriverAccountMenuItem(
-                            icon: LucideIcons.file_check,
-                            title: 'Driver Documents',
-                            subtitle: 'Submit license and vehicle records',
-                            onTap: () =>
-                                context.pushNamed(ProfileRoutes.documents),
                           ),
                           _DriverAccountMenuItem(
                             icon: LucideIcons.wallet_cards,

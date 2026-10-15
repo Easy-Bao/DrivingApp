@@ -14,7 +14,10 @@ final class DriverPerformanceRepositoryImpl({required this._dataSource})
     String driverId,
   ) async {
     try {
-      final values = await _dataSource.fetchStats(driverId);
+      final raw = await _dataSource.fetchStats(driverId);
+      final values = raw['data'] is Map
+          ? Map<String, dynamic>.from(raw['data'] as Map)
+          : raw;
       return Ok(
         DriverPerformanceStats(
           todayEarningsAmount: _readNonNegativeInt(
@@ -175,7 +178,9 @@ int _readRatingCount(Object? value) {
 }
 
 int _readNonNegativeInt(Map<String, dynamic> values, String key) {
-  final value = SafeParse.toNullableDouble(values[key]);
+  final raw = values[key];
+  if (raw == null) return 0;
+  final value = SafeParse.toNullableDouble(raw);
   if (value == null ||
       !value.isFinite ||
       value < 0 ||
@@ -186,7 +191,9 @@ int _readNonNegativeInt(Map<String, dynamic> values, String key) {
 }
 
 double _readNonNegativeDouble(Map<String, dynamic> values, String key) {
-  final value = SafeParse.toNullableDouble(values[key]);
+  final raw = values[key];
+  if (raw == null) return 0.0;
+  final value = SafeParse.toNullableDouble(raw);
   if (value == null || !value.isFinite || value < 0) {
     throw DataParsingException(message: 'Driver statistic $key is invalid.');
   }

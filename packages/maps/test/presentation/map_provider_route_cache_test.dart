@@ -1,0 +1,194 @@
+import 'dart:async';
+
+import 'package:dio/dio.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:maps/maps.dart';
+
+import '../mocks/mock_location_remote_data_source.dart';
+
+void main() {
+  late _DelayedLocationRemoteDataSource apiClient;
+
+  setUpAll(() async {
+    apiClient = _DelayedLocationRemoteDataSource();
+    await MapProvider.initialize(
+      nativeService: MapNativeService(
+        placeServiceBaseUri: Uri(scheme: 'http', host: '127.0.0.1', port: 8089),
+        apiClient: apiClient,
+      ),
+    );
+  });
+
+  test('uses the fixed light map style', () {
+    expect(MapProvider.styleUriFor(), 'mapbox://styles/mapbox/streets-v12');
+  });
+
+  test('coalesces and reuses nearby place lookups', () async {
+    const lat = 10.123456;
+    const lng = 20.654321;
+
+    final first = MapProvider.getNearbyPOIs(lat: lat, lng: lng);
+    final second = MapProvider.getNearbyPOIs(lat: lat, lng: lng);
+
+    expect(await Future.wait([first, second]), everyElement(isNotEmpty));
+    expect(apiClient.nearbyCallCount, 1);
+
+    await MapProvider.getNearbyPOIs(lat: lat, lng: lng);
+    expect(apiClient.nearbyCallCount, 1);
+  });
+
+  test('clears lookup caches for a foreground refresh', () async {
+    const lat = 10.123456;
+    const lng = 20.654321;
+
+    MapProvider.clearLookupCaches();
+    await MapProvider.getNearbyPOIs(lat: lat, lng: lng);
+
+    expect(apiClient.nearbyCallCount, 2);
+  });
+
+  test('coalesces and reuses travel matrix lookups', () async {
+    const originLat = 11.123456;
+    const originLng = 21.654321;
+    const destinations = [
+      (lat: 11.130000, lng: 21.660000),
+      (lat: 11.140000, lng: 21.670000),
+    ];
+
+    final first = MapProvider.getDrivingDistances(
+      originLat: originLat,
+      originLng: originLng,
+      destinations: destinations,
+    );
+    final second = MapProvider.getDrivingDistances(
+      originLat: originLat,
+      originLng: originLng,
+      destinations: destinations,
+    );
+
+    expect(await Future.wait([first, second]), everyElement(isNotNull));
+    expect(apiClient.matrixCallCount, 1);
+
+    await MapProvider.getDrivingDistances(
+      originLat: originLat,
+      originLng: originLng,
+      destinations: destinations,
+    );
+    expect(apiClient.matrixCallCount, 1);
+  });
+
+  test(
+    'coalesces the same route request and keeps route preferences separate',
+    () async {
+      final first = MapProvider.getRoute(
+        7.82420001,
+        123.43500001,
+        7.83000001,
+        123.44000001,
+      );
+      final second = MapProvider.getRoute(
+        7.82420002,
+        123.43500002,
+        7.83000002,
+        123.44000002,
+      );
+
+      expect(apiClient.routeCallCount, 1);
+      apiClient.completePendingRoute();
+      expect(await Future.wait([first, second]), everyElement(isNotNull));
+
+      await MapProvider.getRoute(7.8242, 123.4350, 7.8300, 123.4400);
+      expect(apiClient.routeCallCount, 1);
+
+      await MapProvider.getRoute(
+        7.8242,
+        123.4350,
+        7.8300,
+        123.4400,
+        preference: RoutePreference.shortest,
+      );
+      expect(apiClient.routeCallCount, 2);
+    },
+  );
+
+  test('retries a transient route network failure once', () async {
+    final callsBeforeRetry = apiClient.routeCallCount;
+    apiClient.failNextRoute = true;
+
+    final route = await MapProvider.getRoute(
+      8.8242,
+      124.4350,
+      8.8300,
+      124.4400,
+    );
+
+    expect(route, isNotNull);
+    expect(apiClient.routeCallCount, callsBeforeRetry + 2);
+  });
+
+  test('evicts old route results after the bounded cache fills', () async {
+    MapProvider.clearLookupCaches();
+    final callsBeforeLookup = apiClient.routeCallCount;
+
+    for (var index = 0; index < 25; index++) {
+      final route = await MapProvider.getRoute(1 + index * 0.001, 2, 3, 4);
+      expect(route, isNotNull);
+    }
+    expect(apiClient.routeCallCount, callsBeforeLookup + 25);
+
+    await MapProvider.getRoute(1, 2, 3, 4);
+    expect(apiClient.routeCallCount, callsBeforeLookup + 26);
+    MapProvider.clearLookupCaches();
+  });
+}
+
+class _DelayedLocationRemoteDataSource extends MockLocationRemoteDataSource {
+  final Completer<Route> _pendingRoute = Completer<Route>();
+  int routeCallCount = 0;
+  int nearbyCallCount = 0;
+  int matrixCallCount = 0;
+  bool failNextRoute = false;
+
+  @override
+  Future<Map<String, dynamic>> getNearbyPois({
+    required double lat,
+    required double lng,
+    int page = 1,
+  }) {
+    nearbyCallCount++;
+    return super.getNearbyPois(lat: lat, lng: lng, page: page);
+  }
+
+  @override
+  Future<Map<String, dynamic>> getTravelMatrix({
+    required Map<String, dynamic> body,
+  }) {
+    matrixCallCount++;
+    return super.getTravelMatrix(body: body);
+  }
+
+  @override
+  Future<Route> getRoute({required Map<String, dynamic> body}) {
+    routeCallCount++;
+    if (failNextRoute) {
+      failNextRoute = false;
+      throw DioException(
+        requestOptions: RequestOptions(path: '/api/v1/location/route'),
+        type: DioExceptionType.connectionError,
+      );
+    }
+    if (routeCallCount == 1) return _pendingRoute.future;
+    return Future.value(_route);
+  }
+
+  void completePendingRoute() => _pendingRoute.complete(_route);
+
+  static const _route = Route(
+    polylinePoints: [
+      [123.4350, 7.8242],
+      [123.4400, 7.8300],
+    ],
+    distanceKm: 4.5,
+    durationSeconds: 720,
+  );
+}

@@ -55,7 +55,7 @@ void main() {
     await tester.tap(find.text('Emergency SOS'));
 
     expect(emergencyPressed, isTrue);
-    await tester.tap(find.text('Report driver or safety issue'));
+    await tester.tap(find.text('Report Issue'));
 
     expect(reportPressed, isTrue);
   });

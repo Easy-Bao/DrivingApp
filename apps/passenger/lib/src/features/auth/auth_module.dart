@@ -32,7 +32,7 @@ class AuthModule extends Module {
       AuthRoutes.signinPath,
       child: (context, GoRouterState state) =>
           SigninPage(signInBloc: Modular.get<SignInBloc>()),
-      transition: AppTransitions.push.toRight,
+      transition: AppTransitions.push.toLeft,
       transitionDuration: AppTransitions.pushDuration,
     ),
     ChildRoute(

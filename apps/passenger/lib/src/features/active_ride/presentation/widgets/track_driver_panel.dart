@@ -9,8 +9,11 @@ class const TrackDriverPanel({
   required this.statusTitle,
   required this.statusSubtitle,
   required this.etaText,
+  this.statusBadgeText,
   this.driverName,
   this.vehicleSummary,
+  this.driverRating,
+  this.driverAvatarUrl,
   required this.unreadChatMessagesCount,
   this.showContactActions = true,
   this.isCancellingTrip = false,
@@ -24,8 +27,11 @@ class const TrackDriverPanel({
   final String statusTitle;
   final String statusSubtitle;
   final String etaText;
+  final String? statusBadgeText;
   final String? driverName;
   final String? vehicleSummary;
+  final String? driverRating;
+  final String? driverAvatarUrl;
   final int unreadChatMessagesCount;
   final bool showContactActions;
   final bool isCancellingTrip;
@@ -43,6 +49,18 @@ class const TrackDriverPanel({
     final resolvedVehicleSummary = vehicleSummary?.trim().isNotEmpty == true
         ? vehicleSummary!.trim()
         : ride.displayVehicleSummary;
+    final resolvedBadgeText = statusBadgeText?.trim().isNotEmpty == true
+        ? statusBadgeText!.trim()
+        : ride.status == 'in_transit'
+        ? 'ON TRIP'
+        : ride.status == 'arrived'
+        ? 'ARRIVED'
+        : 'EN ROUTE';
+    final resolvedRating = driverRating?.trim().isNotEmpty == true
+        ? driverRating!.trim()
+        : '4.9 (240+)';
+    final isInTransit = ride.status == 'in_transit';
+    final showCancelAction = !isInTransit;
 
     return Container(
       decoration: BoxDecoration(
@@ -50,235 +68,202 @@ class const TrackDriverPanel({
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(EasyRideRadius.sheet),
         ),
-        border: Border.all(color: context.colorScheme.outlineVariant),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
       ),
-      padding: const EdgeInsets.fromLTRB(
-        EasyRideSpacing.lg,
-        10,
-        EasyRideSpacing.lg,
-        14,
-      ),
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Center(
             child: Container(
-              width: 32,
+              width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: context.colorScheme.outlineVariant,
+                color: context.colorScheme.outlineVariant.withValues(
+                  alpha: 0.8,
+                ),
                 borderRadius: BorderRadius.circular(99),
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      statusTitle,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: context.colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      statusSubtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: context.colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: context.colorScheme.secondaryContainer,
-                  borderRadius: BorderRadius.circular(99),
-                ),
                 child: Text(
-                  etaText,
+                  statusTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 20,
                     fontWeight: FontWeight.w800,
                     color: context.colorScheme.onSurface,
-                    fontFeatures: const [FontFeature.tabularFigures()],
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              _StatusBadge(text: resolvedBadgeText),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            statusSubtitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: context.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 14),
+          _DriverCard(
+            driverName: resolvedDriverName,
+            vehicleSummary: resolvedVehicleSummary,
+            rating: resolvedRating,
+            imageUrl: driverAvatarUrl,
+            showContactActions: showContactActions,
+            unreadChatMessagesCount: unreadChatMessagesCount,
+            onCallPressed: onCallDriverPressed,
+            onChatPressed: onChatDriverPressed,
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: onEmergencyPressed,
+                    icon: const Icon(
+                      LucideIcons.bell_ring,
+                      size: 18,
+                      color: Color(0xFFB71C1C),
+                    ),
+                    label: const Text(
+                      'Emergency SOS',
+                      style: TextStyle(
+                        color: Color(0xFFB71C1C),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFDE8E8),
+                      side: BorderSide.none,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          EasyRideRadius.pill,
+                        ),
+                      ),
+                      padding: EdgeInsets.zero,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: onReportDriverPressed,
+                    icon: const Icon(
+                      LucideIcons.triangle_alert,
+                      size: 18,
+                      color: Color(0xFFD97706),
+                    ),
+                    label: Text(
+                      'Report Issue',
+                      style: TextStyle(
+                        color: context.colorScheme.onSurface,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: const Color(0xFFF1F5F9),
+                      side: BorderSide.none,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          EasyRideRadius.pill,
+                        ),
+                      ),
+                      padding: EdgeInsets.zero,
+                    ),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              color: context.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-              border: Border.all(color: context.colorScheme.outlineVariant),
-            ),
-            child: Row(
-              children: [
-                const AppNetworkImageWidget(
-                  imageUrl: null,
-                  width: 38,
-                  height: 38,
-                  fallbackIcon: LucideIcons.user,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Your Driver',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: context.colorScheme.onSurfaceVariant,
-                          letterSpacing: 0.7,
-                        ),
-                      ),
-                      const SizedBox(height: 1),
-                      Text(
-                        resolvedDriverName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: context.colorScheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: 1),
-                      Text(
-                        resolvedVehicleSummary,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: context.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (showContactActions) ...[
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: _ActionButton(
-                    icon: LucideIcons.phone,
-                    label: 'Call Driver',
-                    filled: true,
-                    onTap: onCallDriverPressed,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Semantics(
-                  button: true,
-                  label: 'Chat with driver',
-                  child: Badge(
-                    isLabelVisible: unreadChatMessagesCount > 0,
-                    label: Text('$unreadChatMessagesCount'),
-                    backgroundColor: context.colorScheme.error,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: context.colorScheme.surface,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: context.colorScheme.outlineVariant,
-                        ),
-                      ),
-                      child: IconButton(
-                        tooltip: 'Chat with driver',
-                        onPressed: onChatDriverPressed,
-                        constraints: const BoxConstraints(
-                          minWidth: EasyRideSize.minimumTouchTarget,
-                          minHeight: EasyRideSize.minimumTouchTarget,
-                        ),
-                        icon: const Icon(LucideIcons.message_circle),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              height: EasyRideSize.minimumTouchTarget,
+          if (showCancelAction) ...[
+            const SizedBox(height: 6),
+            Center(
               child: TextButton(
                 onPressed: isCancellingTrip ? null : onCancelTripPressed,
                 style: TextButton.styleFrom(
                   foregroundColor: context.colorScheme.error,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-                  ),
+                  visualDensity: VisualDensity.compact,
                 ),
                 child: isCancellingTrip
                     ? SizedBox(
-                        width: 18,
-                        height: 18,
+                        width: 16,
+                        height: 16,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           color: context.colorScheme.error,
                         ),
                       )
-                    : const Text('Cancel ride'),
+                    : const Text(
+                        'Cancel ride',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
               ),
             ),
           ],
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            height: EasyRideSize.minimumTouchTarget,
-            child: OutlinedButton.icon(
-              onPressed: onEmergencyPressed,
-              icon: const Icon(Icons.emergency_outlined),
-              label: const Text('Emergency SOS'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: context.colorScheme.error,
-                side: BorderSide(color: context.colorScheme.error),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-                ),
-              ),
+        ],
+      ),
+    );
+  }
+}
+
+class const _StatusBadge({required this.text}) extends StatelessWidget {
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8F5E9),
+        borderRadius: BorderRadius.circular(EasyRideRadius.pill),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: const BoxDecoration(
+              color: Color(0xFF2E7D32),
+              shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            height: EasyRideSize.minimumTouchTarget,
-            child: OutlinedButton.icon(
-              onPressed: onReportDriverPressed,
-              icon: const Icon(LucideIcons.flag_triangle_right),
-              label: const Text('Report driver or safety issue'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: context.colorScheme.error,
-                side: BorderSide(color: context.colorScheme.error),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-                ),
-              ),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF2E7D32),
+              letterSpacing: 0.5,
             ),
           ),
         ],
@@ -287,56 +272,212 @@ class const TrackDriverPanel({
   }
 }
 
-class const _ActionButton({
+class const _DriverCard({
+  required this.driverName,
+  required this.vehicleSummary,
+  required this.rating,
+  this.imageUrl,
+  required this.showContactActions,
+  required this.unreadChatMessagesCount,
+  required this.onCallPressed,
+  required this.onChatPressed,
+}) extends StatelessWidget {
+  final String driverName;
+  final String vehicleSummary;
+  final String rating;
+  final String? imageUrl;
+  final bool showContactActions;
+  final int unreadChatMessagesCount;
+  final VoidCallback onCallPressed;
+  final VoidCallback onChatPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: context.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 52,
+            height: 56,
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.topCenter,
+              children: [
+                AppNetworkImage(
+                  imageUrl: imageUrl,
+                  width: 44,
+                  height: 44,
+                  borderRadius: BorderRadius.circular(99),
+                  fallbackIcon: LucideIcons.user,
+                ),
+                Positioned(
+                  bottom: 0,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 1.5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.star_rounded,
+                          size: 12,
+                          color: Color(0xFFF59E0B),
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          rating,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  driverName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: context.colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        vehicleSummary,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      LucideIcons.bike,
+                      size: 15,
+                      color: context.colorScheme.onSurfaceVariant,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          if (showContactActions) ...[
+            const SizedBox(width: 8),
+            _ContactButton(
+              icon: LucideIcons.phone,
+              label: 'Call',
+              onTap: onCallPressed,
+            ),
+            const SizedBox(width: 10),
+            _ContactButton(
+              icon: LucideIcons.message_square,
+              label: 'Message',
+              badgeCount: unreadChatMessagesCount,
+              onTap: onChatPressed,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class const _ContactButton({
   required this.icon,
   required this.label,
+  this.badgeCount = 0,
   required this.onTap,
-  this.filled = false,
 }) extends StatelessWidget {
   final IconData icon;
   final String label;
-  final bool filled;
+  final int badgeCount;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final background = filled
-        ? context.colorScheme.primary
-        : context.colorScheme.surfaceContainerHighest;
-    final foreground = filled
-        ? context.colorScheme.onPrimary
-        : context.colorScheme.onSurface;
-    return Material(
-      color: background,
-      borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+    final button = Material(
+      color: Colors.white,
+      shape: const CircleBorder(),
+      elevation: 0.5,
+      shadowColor: Colors.black.withValues(alpha: 0.08),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+        customBorder: const CircleBorder(),
         child: Container(
-          height: EasyRideSize.minimumTouchTarget,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-            border: filled
-                ? null
-                : Border.all(color: context.colorScheme.outlineVariant),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: context.colorScheme.outlineVariant.withValues(alpha: 0.5),
+            ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 16, color: foreground),
-              const SizedBox(width: 7),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: foreground,
-                ),
-              ),
-            ],
+          child: Center(
+            child: Icon(icon, size: 18, color: const Color(0xFF1976D2)),
           ),
         ),
       ),
+    );
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (badgeCount > 0)
+          Badge(
+            label: Text('$badgeCount'),
+            backgroundColor: context.colorScheme.error,
+            child: button,
+          )
+        else
+          button,
+        const SizedBox(height: 3),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: context.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
     );
   }
 }

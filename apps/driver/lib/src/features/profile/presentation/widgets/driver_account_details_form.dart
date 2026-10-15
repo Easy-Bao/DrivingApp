@@ -31,20 +31,10 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
   final _vehicleTypeController = TextEditingController();
   final _plateNumberController = TextEditingController();
 
-  DriverAccountSnapshot _initialAccount = const DriverAccountSnapshot();
-  bool _isApplyingAccount = false;
-  bool _isDirty = false;
-  String? _nameError;
-  String? _vehicleTypeError;
-  String? _plateNumberError;
-
   @override
   void initState() {
     super.initState();
     _applyAccount(BlocProvider.of<DriverAccountCubit>(context).state.account);
-    for (final controller in _controllers) {
-      controller.addListener(_handleDraftChanged);
-    }
   }
 
   List<TextEditingController> get _controllers => [
@@ -64,102 +54,11 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
   }
 
   void _applyAccount(DriverAccountSnapshot account) {
-    _isApplyingAccount = true;
     _nameController.text = account.name;
     _phoneController.text = _localPhoneNumber(account.phone);
     _emailController.text = account.email;
     _vehicleTypeController.text = account.vehicleType;
     _plateNumberController.text = account.plateNumber;
-    _initialAccount = account;
-    _isDirty = false;
-    _isApplyingAccount = false;
-  }
-
-  void _handleDraftChanged() {
-    if (_isApplyingAccount || !mounted) return;
-    setState(() => _isDirty = _draftHasChanges);
-  }
-
-  bool get _draftHasChanges {
-    return switch (widget.section) {
-      DriverAccountDetailsSection.personal =>
-        _nameController.text.trim() != _initialAccount.name.trim(),
-      DriverAccountDetailsSection.vehicle =>
-        _vehicleTypeController.text.trim() !=
-                _initialAccount.vehicleType.trim() ||
-            _plateNumberController.text.trim() !=
-                _initialAccount.plateNumber.trim(),
-    };
-  }
-
-  Future<void> _save() async {
-    final accountCubit = BlocProvider.of<DriverAccountCubit>(context);
-    if (!_isDirty || accountCubit.state.isSaving) return;
-
-    _clearErrors();
-    if (!_validate()) {
-      setState(() {});
-      return;
-    }
-
-    final current = accountCubit.state.account;
-    final didUpdate = await accountCubit.updateAccount(
-      name: widget.section == DriverAccountDetailsSection.personal
-          ? _nameController.text.trim()
-          : current.name,
-      vehicleType: widget.section == DriverAccountDetailsSection.vehicle
-          ? _vehicleTypeController.text.trim()
-          : current.vehicleType,
-      plateNumber: widget.section == DriverAccountDetailsSection.vehicle
-          ? _plateNumberController.text.trim()
-          : current.plateNumber,
-    );
-    if (!mounted) return;
-
-    if (!didUpdate) {
-      _showMessage(
-        accountCubit.state.errorMessage ??
-            "Couldn't update your details. Try again.",
-      );
-      return;
-    }
-
-    _applyAccount(accountCubit.state.account);
-    setState(() {});
-    _showMessage('$_pageTitle updated.');
-  }
-
-  bool _validate() {
-    switch (widget.section) {
-      case DriverAccountDetailsSection.personal:
-        if (_nameController.text.trim().isEmpty) {
-          _nameError = 'Enter your name.';
-        }
-      case DriverAccountDetailsSection.vehicle:
-        if (_vehicleTypeController.text.trim().isEmpty) {
-          _vehicleTypeError = 'Enter your vehicle type.';
-        }
-        if (_plateNumberController.text.trim().isEmpty) {
-          _plateNumberError = 'Enter your plate number.';
-        }
-    }
-    return [
-      _nameError,
-      _vehicleTypeError,
-      _plateNumberError,
-    ].every((error) => error == null);
-  }
-
-  void _clearErrors() {
-    _nameError = null;
-    _vehicleTypeError = null;
-    _plateNumberError = null;
-  }
-
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   String _localPhoneNumber(String value) {
@@ -179,10 +78,8 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
     return BlocListener<DriverAccountCubit, DriverAccountState>(
       listenWhen: (previous, current) => previous.account != current.account,
       listener: (_, state) {
-        if (!_isDirty && !state.isSaving) {
-          _applyAccount(state.account);
-          setState(() {});
-        }
+        _applyAccount(state.account);
+        setState(() {});
       },
       child: Scaffold(
         appBar: AppBar(
@@ -193,30 +90,8 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
           ),
           title: Text(_pageTitle),
           centerTitle: true,
-          actions: [
-            if (_isDirty)
-              BlocBuilder<DriverAccountCubit, DriverAccountState>(
-                buildWhen: (previous, current) =>
-                    previous.isSaving != current.isSaving,
-                builder: (context, state) => TextButton(
-                  key: const ValueKey<String>('driver-account-details-save'),
-                  style: TextButton.styleFrom(
-                    minimumSize: const Size(
-                      EasyRideSize.minimumTouchTarget,
-                      EasyRideSize.minimumTouchTarget,
-                    ),
-                  ),
-                  onPressed: state.isSaving ? null : _save,
-                  child: state.isSaving
-                      ? const SizedBox.square(
-                          dimension: 22,
-                          child: CircularProgressIndicator(strokeWidth: 2.4),
-                        )
-                      : const Text('Save'),
-                ),
-              )
-            else
-              const SizedBox(width: 24),
+          actions: const [
+            SizedBox(width: 24),
           ],
         ),
         body: Align(
@@ -293,7 +168,7 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
       _DriverProfileTextField(
         label: 'Full Name',
         controller: _nameController,
-        errorText: _nameError,
+        readOnly: true,
         textInputAction: TextInputAction.next,
       ),
       const SizedBox(height: 22),
@@ -309,7 +184,7 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
       ),
       const SizedBox(height: 10),
       Text(
-        'Email and phone changes require verification.',
+        'Driver personal information is verified and read-only.',
         style: Theme.of(context).textTheme.bodySmall
             ?.copyWith(color: context.colorScheme.onSurfaceVariant),
       ),
@@ -321,16 +196,22 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
       _DriverProfileTextField(
         label: 'Vehicle Type',
         controller: _vehicleTypeController,
-        errorText: _vehicleTypeError,
+        readOnly: true,
         textInputAction: TextInputAction.next,
       ),
       const SizedBox(height: 22),
       _DriverProfileTextField(
         label: 'Plate Number',
         controller: _plateNumberController,
-        errorText: _plateNumberError,
+        readOnly: true,
         textInputAction: TextInputAction.done,
         textCapitalization: TextCapitalization.characters,
+      ),
+      const SizedBox(height: 10),
+      Text(
+        'Vehicle information is verified upon registration and cannot be modified.',
+        style: Theme.of(context).textTheme.bodySmall
+            ?.copyWith(color: context.colorScheme.onSurfaceVariant),
       ),
     ];
   }
@@ -391,7 +272,6 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
 class const _DriverProfileTextField({
   required this.label,
   required this.controller,
-  this.errorText,
   this.readOnly = false,
   this.keyboardType,
   this.textInputAction,
@@ -399,7 +279,6 @@ class const _DriverProfileTextField({
 }) extends StatelessWidget {
   final String label;
   final TextEditingController controller;
-  final String? errorText;
   final bool readOnly;
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
@@ -420,7 +299,7 @@ class const _DriverProfileTextField({
           keyboardType: keyboardType,
           textInputAction: textInputAction,
           textCapitalization: textCapitalization,
-          decoration: _fieldDecoration(context, errorText: errorText),
+          decoration: _fieldDecoration(context),
         ),
       ],
     );
