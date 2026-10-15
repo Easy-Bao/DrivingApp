@@ -8,20 +8,10 @@ import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/driver_profile/domain/entities/driver_review.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
-import 'package:passenger/src/features/driver_profile/presentation/driver_profile_details_sheet.dart';
+import 'package:passenger/src/features/driver_profile/presentation/widgets/driver_profile_details_sheet.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-class const DriverDropdownCard({
-  super.key,
-  required this.driver,
-  required this.isNearestDriver,
-  this.isProfileVisible = false,
-  required this.onViewFullProfilePressed,
-  required this.onProfileBackPressed,
-  required this.onSelectDriverPressed,
-  required this.onCloseDropdownPressed,
-  required this.profileRepository,
-}) extends StatefulWidget {
+class DriverDropdownCard extends StatefulWidget {
   final DriverModel driver;
   final bool isNearestDriver;
   final bool isProfileVisible;
@@ -30,6 +20,20 @@ class const DriverDropdownCard({
   final VoidCallback onSelectDriverPressed;
   final VoidCallback onCloseDropdownPressed;
   final DriverProfileRepository profileRepository;
+  final BookingBloc? bookingBloc;
+
+  const DriverDropdownCard({
+    super.key,
+    required this.driver,
+    required this.isNearestDriver,
+    this.isProfileVisible = false,
+    required this.onViewFullProfilePressed,
+    required this.onProfileBackPressed,
+    required this.onSelectDriverPressed,
+    required this.onCloseDropdownPressed,
+    required this.profileRepository,
+    this.bookingBloc,
+  });
 
   @override
   State<DriverDropdownCard> createState() => _DriverDropdownCardState();
@@ -73,8 +77,17 @@ class _DriverDropdownCardState()
     if (oldWidget.driver.id != widget.driver.id) _requestDriverReviews();
   }
 
+  BookingBloc? get _bookingBloc {
+    if (widget.bookingBloc != null) return widget.bookingBloc;
+    try {
+      return context.read<BookingBloc>();
+    } catch (_) {
+      return null;
+    }
+  }
+
   void _requestDriverReviews() {
-    context.read<BookingBloc>().add(
+    _bookingBloc?.add(
       LoadDriverReviewsEvent(driverId: widget.driver.id),
     );
   }
@@ -112,7 +125,19 @@ class _DriverDropdownCardState()
   }
 
   Widget _buildReviewCountLabel() {
+    final bloc = _bookingBloc;
+    if (bloc == null) {
+      return Text(
+        'Reviews',
+        style: TextStyle(
+          fontSize: 11.0,
+          fontWeight: FontWeight.w600,
+          color: context.colorScheme.onSurfaceVariant,
+        ),
+      );
+    }
     return BlocBuilder<BookingBloc, BookingState>(
+      bloc: bloc,
       builder: (context, state) {
         final feedback = _feedbackForState(state);
         final label = feedback.isLoading
@@ -135,7 +160,20 @@ class _DriverDropdownCardState()
   }
 
   Widget _buildRecentFeedbackList() {
+    final bloc = _bookingBloc;
+    if (bloc == null) {
+      return Text(
+        'No Passenger Feedback Yet.',
+        style: TextStyle(
+          fontSize: 12,
+          color: context.colorScheme.onSurface.withValues(
+            alpha: 0.65,
+          ),
+        ),
+      );
+    }
     return BlocBuilder<BookingBloc, BookingState>(
+      bloc: bloc,
       builder: (context, state) {
         final feedback = _feedbackForState(state);
         return SizedBox(

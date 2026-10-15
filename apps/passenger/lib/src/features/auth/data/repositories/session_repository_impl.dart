@@ -1,7 +1,7 @@
 import 'package:foundation/foundation.dart';
-import 'package:passenger/src/features/auth/domain/entities/passenger_session.dart';
+import 'package:passenger/src/features/auth/domain/entities/session.dart';
 import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
-import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
+import 'package:passenger/src/core/session/session_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final class SessionRepositoryImpl({

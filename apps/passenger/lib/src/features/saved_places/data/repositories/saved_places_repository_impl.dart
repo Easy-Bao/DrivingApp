@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:foundation/foundation.dart';
-import 'package:passenger/src/features/saved_places/data/models/saved_place_model.dart';
+import 'package:passenger/src/features/saved_places/data/dto/saved_place_dto.dart';
 import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger/src/features/saved_places/domain/repositories/saved_places_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';

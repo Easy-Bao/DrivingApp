@@ -4,18 +4,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
-import 'package:passenger/src/features/ride_history/data/data_sources/passenger_ride_history_remote_data_source.dart';
+import 'package:passenger/src/features/ride_history/data/datasources/ride_history_remote_data_source.dart';
 import 'package:passenger/src/features/ride_history/data/repositories/ride_history_repository_impl.dart';
 import 'package:passenger/src/features/ride_history/domain/repositories/ride_history_repository.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_details/ride_details_cubit.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
-import 'package:passenger/src/features/ride_history/presentation/view/passenger_rating_page.dart';
-import 'package:passenger/src/features/ride_history/presentation/view/recent_activity_page.dart';
-import 'package:passenger/src/features/ride_history/presentation/view/ride_details_page.dart';
-import 'package:passenger/src/features/ride_history/presentation/view/ride_history_page.dart';
+import 'package:passenger/src/features/ride_history/presentation/pages/rating_page.dart';
+import 'package:passenger/src/features/ride_history/presentation/pages/recent_activity_page.dart';
+import 'package:passenger/src/features/ride_history/presentation/pages/ride_details_page.dart';
+import 'package:passenger/src/features/ride_history/presentation/pages/ride_history_page.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
 import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
-import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
+import 'package:passenger/src/core/session/session_store.dart';
 
 class RideHistoryModule._() {
   static void binds(Injector i) {

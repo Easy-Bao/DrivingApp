@@ -1,5 +1,5 @@
 import 'package:foundation/foundation.dart';
-import 'package:passenger/src/features/home/data/data_sources/public_driver_remote_data_source.dart';
+import 'package:passenger/src/features/home/data/datasources/public_driver_remote_data_source.dart';
 import 'package:passenger/src/features/home/domain/entities/public_driver_summary.dart';
 import 'package:passenger/src/features/home/domain/repositories/public_driver_summary_repository.dart';
 

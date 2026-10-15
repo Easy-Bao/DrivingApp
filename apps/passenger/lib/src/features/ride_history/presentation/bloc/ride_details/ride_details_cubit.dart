@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
-import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
+import 'package:passenger/src/core/session/session_store.dart';
 
 final class const RideDetailsState({
   this.rideId = '',

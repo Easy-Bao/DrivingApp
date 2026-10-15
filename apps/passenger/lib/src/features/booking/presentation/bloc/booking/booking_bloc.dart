@@ -17,9 +17,9 @@ import 'package:passenger/src/features/booking/domain/repositories/driver_reposi
 import 'package:passenger/src/features/driver_profile/domain/entities/driver_review.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
-import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
-import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
-import 'package:passenger/src/infrastructure/telemetry/passenger_background_telemetry.dart';
+import 'package:passenger/src/features/inbox/presentation/bloc/inbox_cubit.dart';
+import 'package:passenger/src/core/session/session_store.dart';
+import 'package:passenger/src/core/telemetry/background_telemetry.dart';
 
 part 'booking_event.dart';
 part 'booking_state.dart';

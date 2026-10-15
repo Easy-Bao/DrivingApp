@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
-import 'package:passenger/src/features/booking/data/data_sources/booking_remote_data_source.dart';
+import 'package:passenger/src/features/booking/data/datasources/booking_remote_data_source.dart';
 import 'package:passenger/src/features/booking/data/repositories/booking_repository_impl.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_session_request.dart';
 import 'package:passenger/src/features/booking/domain/repositories/booking_repository.dart';

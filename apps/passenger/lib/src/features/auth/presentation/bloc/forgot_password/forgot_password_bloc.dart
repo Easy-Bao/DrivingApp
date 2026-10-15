@@ -1,6 +1,6 @@
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger/src/features/auth/domain/repositories/passenger_auth_repository.dart';
+import 'package:passenger/src/features/auth/domain/repositories/auth_repository.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/forgot_password/forgot_password_event.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/forgot_password/forgot_password_state.dart';
 import 'package:passenger/src/features/auth/presentation/validation/auth_failure_message.dart';

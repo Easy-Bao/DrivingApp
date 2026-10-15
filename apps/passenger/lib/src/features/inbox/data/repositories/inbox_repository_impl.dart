@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
-import 'package:passenger/src/features/inbox/data/data_sources/inbox_remote_data_source.dart';
+import 'package:passenger/src/features/inbox/data/datasources/inbox_remote_data_source.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger/src/features/inbox/domain/repositories/inbox_repository.dart';
 

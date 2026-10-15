@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:passenger/src/features/auth/domain/repositories/passenger_auth_repository.dart';
+import 'package:passenger/src/features/auth/domain/repositories/auth_repository.dart';
 
 part 'verify_otp_event.dart';
 part 'verify_otp_state.dart';

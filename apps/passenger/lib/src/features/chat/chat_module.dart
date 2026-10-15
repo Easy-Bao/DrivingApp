@@ -5,7 +5,7 @@ import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/chat/chat_routes.dart';
-import 'package:passenger/src/features/chat/presentation/view/passenger_chat_page.dart';
+import 'package:passenger/src/features/chat/presentation/pages/chat_page.dart';
 
 class ChatModule._() {
   static void binds(Injector i) {

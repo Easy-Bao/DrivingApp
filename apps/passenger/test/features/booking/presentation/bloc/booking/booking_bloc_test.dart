@@ -13,9 +13,9 @@ import 'package:passenger/src/features/booking/presentation/bloc/booking/booking
 import 'package:passenger/src/features/driver_profile/domain/entities/driver_profile_stats.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/inbox/domain/repositories/inbox_repository.dart';
-import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
-import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_state.dart';
-import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
+import 'package:passenger/src/features/inbox/presentation/bloc/inbox_cubit.dart';
+import 'package:passenger/src/features/inbox/presentation/bloc/inbox_state.dart';
+import 'package:passenger/src/core/session/session_store.dart';
 
 class MockDriverRepo extends Mock implements DriverRepository {}
 

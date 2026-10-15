@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:passenger/src/features/profile/domain/entities/passenger_profile.dart';
+import 'package:passenger/src/features/profile/domain/entities/profile.dart';
 
 void main() {
   test('normalizes nested snake-case profile payloads', () {

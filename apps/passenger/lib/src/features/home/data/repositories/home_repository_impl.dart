@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
-import 'package:passenger/src/features/home/data/data_sources/home_remote_data_source.dart';
+import 'package:passenger/src/features/home/data/datasources/home_remote_data_source.dart';
 import 'package:passenger/src/features/home/domain/entities/home_data.dart';
 import 'package:passenger/src/features/home/domain/entities/recent_location.dart';
 import 'package:passenger/src/features/home/domain/repositories/home_repository.dart';

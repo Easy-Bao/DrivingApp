@@ -1,13 +1,13 @@
 import 'package:design_system/design_system.dart';
 import 'package:dio/dio.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger/src/features/inbox/data/data_sources/inbox_remote_data_source.dart';
+import 'package:passenger/src/features/inbox/data/datasources/inbox_remote_data_source.dart';
 import 'package:passenger/src/features/inbox/data/repositories/inbox_repository_impl.dart';
 import 'package:passenger/src/features/inbox/domain/repositories/inbox_repository.dart';
 import 'package:passenger/src/features/inbox/inbox_routes.dart';
-import 'package:passenger/src/features/inbox/presentation/bloc/inbox/inbox_cubit.dart';
-import 'package:passenger/src/features/inbox/presentation/view/inbox_page.dart';
-import 'package:passenger/src/infrastructure/session/passenger_session_store.dart';
+import 'package:passenger/src/features/inbox/presentation/bloc/inbox_cubit.dart';
+import 'package:passenger/src/features/inbox/presentation/pages/inbox_page.dart';
+import 'package:passenger/src/core/session/session_store.dart';
 
 class InboxModule._() {
   static void binds(Injector i) {

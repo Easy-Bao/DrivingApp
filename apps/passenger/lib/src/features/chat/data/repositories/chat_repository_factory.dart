@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:passenger/src/features/chat/data/data_sources/chat_remote_data_source.dart';
+import 'package:passenger/src/features/chat/data/datasources/chat_remote_data_source.dart';
 import 'package:passenger/src/features/chat/data/repositories/chat_repository_impl.dart';
 import 'package:passenger/src/features/chat/domain/repositories/chat_repository.dart';
 

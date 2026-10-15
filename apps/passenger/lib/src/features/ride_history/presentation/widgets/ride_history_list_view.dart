@@ -2,10 +2,10 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
-import 'package:passenger/src/features/ride_history/presentation/ride_history_presenter.dart';
+import 'package:passenger/src/features/ride_history/presentation/formatters/ride_history_presenter.dart';
 import 'package:passenger/src/features/ride_history/presentation/widgets/ride_history_controls.dart';
 import 'package:passenger/src/features/ride_history/presentation/widgets/ride_history_header.dart';
-import 'package:passenger/src/features/ride_history/presentation/widgets/ride_history_ride_card.dart';
+import 'package:passenger/src/features/ride_history/presentation/widgets/ride_card.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
 
 class RideHistoryListView extends StatefulWidget {

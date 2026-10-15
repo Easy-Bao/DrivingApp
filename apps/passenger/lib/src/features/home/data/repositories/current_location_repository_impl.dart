@@ -1,5 +1,5 @@
 import 'package:foundation/foundation.dart';
-import 'package:passenger/src/features/home/data/data_sources/current_location_remote_data_source.dart';
+import 'package:passenger/src/features/home/data/datasources/current_location_remote_data_source.dart';
 import 'package:passenger/src/features/home/domain/entities/current_location.dart';
 import 'package:passenger/src/features/home/domain/failures/current_location_failure.dart';
 import 'package:passenger/src/features/home/domain/repositories/current_location_repository.dart';

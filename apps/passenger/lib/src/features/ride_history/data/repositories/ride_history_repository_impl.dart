@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
-import 'package:passenger/src/features/ride_history/data/data_sources/passenger_ride_history_remote_data_source.dart';
+import 'package:passenger/src/features/ride_history/data/datasources/ride_history_remote_data_source.dart';
 import 'package:passenger/src/features/ride_history/domain/entities/ride_history_overview.dart';
 import 'package:passenger/src/features/ride_history/domain/repositories/ride_history_repository.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';

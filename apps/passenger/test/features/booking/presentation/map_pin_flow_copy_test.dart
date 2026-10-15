@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:passenger/src/features/booking/presentation/view/map_pin_page.dart';
+import 'package:passenger/src/features/booking/presentation/pages/map_pin_page.dart';
 
 void main() {
   test('keeps pickup copy for the booking map-pin flow', () {

@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
-import 'package:passenger/src/features/profile/domain/entities/passenger_profile.dart';
-import 'package:passenger/src/features/profile/domain/repositories/passenger_profile_repository.dart';
-import 'package:passenger/src/features/profile/presentation/bloc/profile/profile_cubit.dart';
+import 'package:passenger/src/features/profile/domain/entities/profile.dart';
+import 'package:passenger/src/features/profile/domain/repositories/profile_repository.dart';
+import 'package:passenger/src/features/profile/presentation/bloc/profile_cubit.dart';
 
 class _FakeProfileRepository implements PassengerProfileRepository {
   PassengerProfile cached = const PassengerProfile(

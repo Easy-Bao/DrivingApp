@@ -1,4 +1,4 @@
-import 'package:passenger/src/app/passenger_bootstrap.dart';
+import 'package:passenger/src/app/bootstrap.dart';
 
 Future<void> main() => bootstrapPassengerApp();
 

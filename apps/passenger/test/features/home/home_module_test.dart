@@ -1,7 +1,7 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger/src/app/passenger_router.dart';
+import 'package:passenger/src/app/router.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/saved_places/saved_places_routes.dart';
 
