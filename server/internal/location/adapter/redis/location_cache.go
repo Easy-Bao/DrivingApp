@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
-	locationports "github.com/Easy-Bao/DrivingApp/server/internal/location/ports"
+	locationports "github.com/Easy-Bao/DrivingApp/server/internal/location/app"
 	redisclient "github.com/redis/go-redis/v9"
 )
 

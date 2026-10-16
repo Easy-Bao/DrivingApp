@@ -1,9 +1,9 @@
 package http
 
 import (
-	"github.com/Easy-Bao/DrivingApp/server/internal/admin/application"
+	adminapp "github.com/Easy-Bao/DrivingApp/server/internal/admin/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )
@@ -15,7 +15,7 @@ type Router struct {
 }
 
 type RouterDependencies struct {
-	Service    *application.StatsService
+	Service    *adminapp.StatsService
 	Verifier   *security.TokenManager
 	Authorizer *security.AdminAuthorizer
 }

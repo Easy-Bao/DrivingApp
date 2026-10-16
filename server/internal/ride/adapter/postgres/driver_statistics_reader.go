@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
+	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
+	ports "github.com/Easy-Bao/DrivingApp/server/internal/ride/app"
 )
 
 var _ ports.DriverStatisticsReader = (*RideRepository)(nil)

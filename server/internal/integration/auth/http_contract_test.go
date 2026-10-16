@@ -13,7 +13,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/auth/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/verification"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )

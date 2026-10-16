@@ -8,8 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	adminapplication "github.com/Easy-Bao/DrivingApp/server/internal/admin/application"
-	adminports "github.com/Easy-Bao/DrivingApp/server/internal/admin/ports"
+	adminapp "github.com/Easy-Bao/DrivingApp/server/internal/admin/app"
 	adminhttp "github.com/Easy-Bao/DrivingApp/server/internal/admin/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/email"
 	authredis "github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/redis"
@@ -19,38 +18,34 @@ import (
 	authregistration "github.com/Easy-Bao/DrivingApp/server/internal/auth/registration"
 	authverification "github.com/Easy-Bao/DrivingApp/server/internal/auth/verification"
 	chatadapter "github.com/Easy-Bao/DrivingApp/server/internal/chat/adapter"
-	chatapplication "github.com/Easy-Bao/DrivingApp/server/internal/chat/application"
+	chatapplication "github.com/Easy-Bao/DrivingApp/server/internal/chat/app"
 	chathttp "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/http"
-	chatwebsocket "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/websocket"
-	dispatchapplication "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/application"
+	chatwebsocket "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/ws"
+	dispatchapplication "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/app"
 	assignment "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment"
-	dispatchports "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/ports"
 	dispatchhttp "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/transport/http"
-	documentapplication "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/application"
+	documentapplication "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/app"
 	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/mapbox"
 	locationredis "github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/redis"
-	locationapplication "github.com/Easy-Bao/DrivingApp/server/internal/location/application"
+	locationapplication "github.com/Easy-Bao/DrivingApp/server/internal/location/app"
 	locationdomain "github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
 	tracking "github.com/Easy-Bao/DrivingApp/server/internal/location/tracking"
 	locationhttp "github.com/Easy-Bao/DrivingApp/server/internal/location/transport/http"
 	passengerridecontext "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
-	eventadapter "github.com/Easy-Bao/DrivingApp/server/internal/platform/events/adapter"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
+	eventadapter "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	platformstorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage"
-	websockethub "github.com/Easy-Bao/DrivingApp/server/internal/platform/websocket"
-	reviewapplication "github.com/Easy-Bao/DrivingApp/server/internal/review/application"
-	reviewports "github.com/Easy-Bao/DrivingApp/server/internal/review/ports"
+	websockethub "github.com/Easy-Bao/DrivingApp/server/internal/platform/ws"
+	reviewapplication "github.com/Easy-Bao/DrivingApp/server/internal/review/app"
 	reviewhttp "github.com/Easy-Bao/DrivingApp/server/internal/review/transport/http"
-	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
+	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/app"
 	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
-	rideports "github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
 	ridehttp "github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/http"
-	ridewebsocket "github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/websocket"
-	userapplication "github.com/Easy-Bao/DrivingApp/server/internal/user/application"
-	userports "github.com/Easy-Bao/DrivingApp/server/internal/user/ports"
+	ridewebsocket "github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/ws"
+	userapplication "github.com/Easy-Bao/DrivingApp/server/internal/user/app"
 	userhttp "github.com/Easy-Bao/DrivingApp/server/internal/user/transport/http"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -58,13 +53,13 @@ import (
 )
 
 type rideRuntimeStore interface {
-	rideports.RideStore
+	rideapplication.RideStore
 	ActiveRidesForDriver(context.Context, int) ([]ridedomain.Ride, error)
 }
 
 type dispatchRuntimeStore interface {
-	dispatchports.BiddingStore
-	dispatchports.DriverAvailabilityReader
+	dispatchapplication.BiddingStore
+	dispatchapplication.DriverAvailabilityReader
 }
 
 type authRuntimeStore interface {
@@ -81,9 +76,9 @@ type httpRouterDependencies struct {
 	sessionStore       authports.SessionStore
 	rideStore          rideRuntimeStore
 	dispatchStore      dispatchRuntimeStore
-	reviewStore        reviewports.ReviewRepository
-	profileStore       userports.ProfileStore
-	statsReader        adminports.StatsReader
+	reviewStore        reviewapplication.ReviewRepository
+	profileStore       userapplication.ProfileStore
+	statsReader        adminapp.StatsReader
 	documentStore      documentapplication.DocumentStore
 	privateObjectStore platformstorage.ObjectStore
 	otpAttemptStore    middleware.CounterStore
@@ -245,16 +240,16 @@ func newHTTPRouter(
 			PricingConfig:   config.Pricing,
 			EventPublisher:  rideEventPublisher,
 			LifecycleConfig: config.RideLifecycle,
-			DriverLocation: rideports.DriverLocationReaderFunc(
-				func(ctx context.Context, driverID int) (rideports.DriverLocation, error) {
+			DriverLocation: rideapplication.DriverLocationReaderFunc(
+				func(ctx context.Context, driverID int) (rideapplication.DriverLocation, error) {
 					point, err := trackingService.Get(ctx, strconv.Itoa(driverID))
 					if err != nil {
-						return rideports.DriverLocation{}, err
+						return rideapplication.DriverLocation{}, err
 					}
 					if point.DriverID != strconv.Itoa(driverID) {
-						return rideports.DriverLocation{}, fmt.Errorf("driver location identity mismatch")
+						return rideapplication.DriverLocation{}, fmt.Errorf("driver location identity mismatch")
 					}
-					return rideports.DriverLocation{
+					return rideapplication.DriverLocation{
 						Latitude:   point.Latitude,
 						Longitude:  point.Longitude,
 						ObservedAt: point.ObservedAt,
@@ -274,7 +269,7 @@ func newHTTPRouter(
 			dropoffLongitude float64,
 			distanceKm float64,
 			durationMinutes float64,
-		) (dispatchports.RouteMetrics, error) {
+		) (dispatchapplication.RouteMetrics, error) {
 			metrics, _, err := ridesService.Fare(
 				ctx,
 				&pickupLatitude,
@@ -285,9 +280,9 @@ func newHTTPRouter(
 				durationMinutes,
 			)
 			if err != nil {
-				return dispatchports.RouteMetrics{}, err
+				return dispatchapplication.RouteMetrics{}, err
 			}
-			return dispatchports.RouteMetrics{
+			return dispatchapplication.RouteMetrics{
 				DistanceKm:      metrics.DistanceKm,
 				DurationMinutes: metrics.DurationMinutes,
 			}, nil
@@ -315,7 +310,7 @@ func newHTTPRouter(
 		RouteSecurity: routeSecurity,
 	})
 	adminRouter := adminhttp.NewRouter(adminhttp.RouterDependencies{
-		Service:    adminapplication.NewStatsService(statsReader),
+		Service:    adminapp.NewStatsService(statsReader),
 		Verifier:   verifier,
 		Authorizer: adminAuthorizer,
 	})

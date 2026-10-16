@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
+	application "github.com/Easy-Bao/DrivingApp/server/internal/ride/app"
 )
 
 //go:embed pricing_config.json

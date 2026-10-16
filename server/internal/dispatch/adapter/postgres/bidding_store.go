@@ -9,7 +9,7 @@ import (
 
 	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/domain"
 	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
-	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
+	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/jackc/pgx/v5/pgtype"
 )

@@ -6,13 +6,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
-	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
+	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/request"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
-	"github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
+	application "github.com/Easy-Bao/DrivingApp/server/internal/ride/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/http/dto"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -42,7 +41,7 @@ func (handler *Handler) CreateRide(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 401, "unauthorized")
 		return
 	}
-	var input dto.CreateRideRequest
+	var input CreateRideRequest
 	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil || input.FareAmount < 0 {
 		response.Error(w, 400, "invalid fare")
 		return
@@ -85,7 +84,7 @@ func (handler *Handler) MarkArrived(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusBadRequest, "invalid ride id")
 		return
 	}
-	var input dto.ArrivalRequest
+	var input ArrivalRequest
 	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil ||
 		input.Latitude == nil || input.Longitude == nil {
 		response.Error(w, http.StatusBadRequest, "driver location is required")
@@ -118,7 +117,7 @@ func (handler *Handler) StartTrip(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusBadRequest, "invalid ride id")
 		return
 	}
-	var input dto.TripLocationRequest
+	var input TripLocationRequest
 	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil ||
 		input.Latitude == nil || input.Longitude == nil {
 		response.Error(w, http.StatusBadRequest, "driver location is required")
@@ -149,7 +148,7 @@ func (handler *Handler) CompleteTrip(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusBadRequest, "invalid ride id")
 		return
 	}
-	var input dto.TripLocationRequest
+	var input TripLocationRequest
 	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil ||
 		input.Latitude == nil || input.Longitude == nil {
 		response.Error(w, http.StatusBadRequest, "driver location is required")
@@ -199,7 +198,7 @@ func (handler *Handler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 400, "invalid ride id")
 		return
 	}
-	var input dto.StatusRequest
+	var input StatusRequest
 	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil || input.Status == "" {
 		response.Error(w, 400, "invalid ride status")
 		return
@@ -228,7 +227,7 @@ func (handler *Handler) CancelRide(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusBadRequest, "invalid ride id")
 		return
 	}
-	var input dto.CancellationRequest
+	var input CancellationRequest
 	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil || strings.TrimSpace(input.Reason) == "" {
 		response.Error(w, http.StatusBadRequest, "a cancellation reason is required")
 		return
@@ -257,7 +256,7 @@ func (handler *Handler) EmergencyStop(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusBadRequest, "invalid ride id")
 		return
 	}
-	var input dto.EmergencyStopRequest
+	var input EmergencyStopRequest
 	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil || strings.TrimSpace(input.Reason) == "" {
 		response.Error(w, http.StatusBadRequest, "an emergency reason is required")
 		return
@@ -286,7 +285,7 @@ func (handler *Handler) SettleCash(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusBadRequest, "invalid ride id")
 		return
 	}
-	var input dto.CashSettlementRequest
+	var input CashSettlementRequest
 	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil {
 		response.Error(w, http.StatusBadRequest, "invalid cash settlement")
 		return
@@ -352,7 +351,7 @@ func (handler *Handler) Counterparty(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	response.JSON(w, http.StatusOK, dto.NewCounterpartyResponse(result))
+	response.JSON(w, http.StatusOK, NewCounterpartyResponse(result))
 }
 
 func (handler *Handler) PassengerRides(w http.ResponseWriter, r *http.Request) {
@@ -405,7 +404,7 @@ func (handler *Handler) PassengerActivitySummary(w http.ResponseWriter, r *http.
 		response.Error(w, http.StatusServiceUnavailable, "Passenger activity is temporarily unavailable.")
 		return
 	}
-	response.JSON(w, http.StatusOK, dto.NewPassengerActivitySummaryResponse(summary))
+	response.JSON(w, http.StatusOK, NewPassengerActivitySummaryResponse(summary))
 }
 
 func (handler *Handler) DriverStats(w http.ResponseWriter, r *http.Request) {
@@ -428,7 +427,7 @@ func (handler *Handler) DriverStats(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 500, "Driver statistics are temporarily unavailable.")
 		return
 	}
-	response.JSON(w, 200, dto.NewDriverStatsResponse(stats))
+	response.JSON(w, 200, NewDriverStatsResponse(stats))
 }
 
 func (handler *Handler) DriverEarnings(w http.ResponseWriter, r *http.Request) {
@@ -447,7 +446,7 @@ func (handler *Handler) DriverEarnings(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusServiceUnavailable, "Driver earnings are temporarily unavailable.")
 		return
 	}
-	response.JSON(w, http.StatusOK, dto.NewDriverEarningsResponse(summary))
+	response.JSON(w, http.StatusOK, NewDriverEarningsResponse(summary))
 }
 
 func (handler *Handler) DriverTrips(w http.ResponseWriter, r *http.Request) {
@@ -512,7 +511,7 @@ func (handler *Handler) CreateSafetyReport(w http.ResponseWriter, r *http.Reques
 		response.Error(w, http.StatusBadRequest, "invalid ride id")
 		return
 	}
-	var input dto.SafetyReportRequest
+	var input SafetyReportRequest
 	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil {
 		response.Error(w, http.StatusBadRequest, "invalid safety report")
 		return
@@ -528,11 +527,11 @@ func (handler *Handler) CreateSafetyReport(w http.ResponseWriter, r *http.Reques
 		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
-	response.JSON(w, http.StatusCreated, dto.NewSafetyReportResponse(item))
+	response.JSON(w, http.StatusCreated, NewSafetyReportResponse(item))
 }
 
 func (handler *Handler) Estimate(w http.ResponseWriter, r *http.Request) {
-	var input dto.FareEstimateRequest
+	var input FareEstimateRequest
 	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil {
 		response.Error(w, 400, "invalid fare input")
 		return
@@ -570,7 +569,7 @@ func (handler *Handler) RatingConfig(w http.ResponseWriter, _ *http.Request) {
 	response.JSON(w, 200, handler.service.PricingConfig().RatingConfigJSON())
 }
 func (handler *Handler) CalculateFinal(w http.ResponseWriter, r *http.Request) {
-	var input dto.FinalFareRequest
+	var input FinalFareRequest
 	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil {
 		response.Error(w, 400, "invalid final fare input")
 		return
@@ -606,7 +605,7 @@ func (handler *Handler) CalculateFinal(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func domainRide(passengerID int, input dto.CreateRideRequest) domain.Ride {
+func domainRide(passengerID int, input CreateRideRequest) domain.Ride {
 	rideType := input.RideType
 	if rideType == "" {
 		rideType = "solo"

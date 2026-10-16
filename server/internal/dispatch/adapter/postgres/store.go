@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/dispatch/ports"
-	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
+	"github.com/Easy-Bao/DrivingApp/server/internal/dispatch/app"
+	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -30,7 +30,7 @@ type StoreConfig struct {
 	AllowUnverifiedTestDrivers bool
 }
 
-var _ ports.BiddingStore = (*Store)(nil)
+var _ app.BiddingStore = (*Store)(nil)
 
 func NewStore(config StoreConfig) (*Store, error) {
 	if config.Pool == nil {

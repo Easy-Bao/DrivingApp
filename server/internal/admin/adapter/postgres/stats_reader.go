@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/admin/domain"
-	adminports "github.com/Easy-Bao/DrivingApp/server/internal/admin/ports"
-	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
+	adminapp "github.com/Easy-Bao/DrivingApp/server/internal/admin/app"
+	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -16,7 +16,7 @@ type StatsReader struct {
 	queries *databasepostgres.Queries
 }
 
-var _ adminports.StatsReader = (*StatsReader)(nil)
+var _ adminapp.StatsReader = (*StatsReader)(nil)
 
 func NewStatsReader(pool *pgxpool.Pool) (*StatsReader, error) {
 	if pool == nil {

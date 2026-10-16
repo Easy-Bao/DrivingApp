@@ -14,9 +14,8 @@ import (
 	"testing"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
-	"github.com/Easy-Bao/DrivingApp/server/internal/user/application"
+	application "github.com/Easy-Bao/DrivingApp/server/internal/user/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/user/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/user/ports"
 	userhttp "github.com/Easy-Bao/DrivingApp/server/internal/user/transport/http"
 	"github.com/go-chi/chi/v5"
 )
@@ -42,7 +41,7 @@ func newUserRouter(
 }
 
 func newProfileService(
-	repository ports.ProfileStore,
+	repository application.ProfileStore,
 	options ...application.ProfileServiceOption,
 ) *application.ProfileService {
 	return application.NewProfileService(

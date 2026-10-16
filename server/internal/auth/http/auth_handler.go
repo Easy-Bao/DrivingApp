@@ -9,8 +9,8 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/registration"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/session"
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/verification"
-	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
+	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/request"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 )
 

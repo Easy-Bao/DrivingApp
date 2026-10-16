@@ -9,7 +9,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
 	authports "github.com/Easy-Bao/DrivingApp/server/internal/auth/ports"
 	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
-	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
+	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"

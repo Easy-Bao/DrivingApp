@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	ridecontextdomain "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 )
 

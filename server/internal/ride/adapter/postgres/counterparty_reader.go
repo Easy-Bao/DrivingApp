@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
+	ports "github.com/Easy-Bao/DrivingApp/server/internal/ride/app"
 	"github.com/jackc/pgx/v5"
 )
 

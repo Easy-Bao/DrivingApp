@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/application"
+	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/domain"
-	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
+	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -21,7 +21,7 @@ type DocumentRepository struct {
 	queries *databasepostgres.Queries
 }
 
-var _ application.DocumentStore = (*DocumentRepository)(nil)
+var _ app.DocumentStore = (*DocumentRepository)(nil)
 
 func NewDocumentRepository(pool *pgxpool.Pool) (*DocumentRepository, error) {
 	if pool == nil {

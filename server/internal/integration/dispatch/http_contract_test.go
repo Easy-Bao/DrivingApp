@@ -12,9 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/dispatch/application"
+	application "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/dispatch/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/dispatch/ports"
 	dispatchhttp "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
@@ -44,7 +43,7 @@ func (reader *availabilityReader) PublicDriverSummaries(
 }
 
 func newAvailabilityRouter(
-	reader ports.DriverAvailabilityReader,
+	reader application.DriverAvailabilityReader,
 	verifier *security.TokenManager,
 ) *chi.Mux {
 	mux := chi.NewRouter()

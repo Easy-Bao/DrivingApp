@@ -1,9 +1,9 @@
 package http
 
 import (
-	"github.com/Easy-Bao/DrivingApp/server/internal/location/application"
+	locationapp "github.com/Easy-Bao/DrivingApp/server/internal/location/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )
@@ -15,7 +15,7 @@ type Router struct {
 }
 
 func NewRouter(
-	service *application.LocationService,
+	service *locationapp.LocationService,
 	verifier *security.TokenManager,
 	routeSecurity ...*middleware.RouteSecurity,
 ) *Router {

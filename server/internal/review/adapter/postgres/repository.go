@@ -7,9 +7,9 @@ import (
 	"math"
 	"time"
 
-	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
+	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/Easy-Bao/DrivingApp/server/internal/review/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/review/ports"
+	ports "github.com/Easy-Bao/DrivingApp/server/internal/review/app"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"

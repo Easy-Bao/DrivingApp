@@ -5,20 +5,19 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/location/application"
+	locationapp "github.com/Easy-Bao/DrivingApp/server/internal/location/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/location/transport/http/dto"
-	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
+	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/request"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
 )
 
 type Handler struct {
-	service *application.LocationService
+	service *locationapp.LocationService
 }
 
 const _maxRoutePayloadBytes = 16 << 10
 
-func NewHandler(service *application.LocationService) *Handler {
+func NewHandler(service *locationapp.LocationService) *Handler {
 	return &Handler{service: service}
 }
 
@@ -42,7 +41,7 @@ func (handler *Handler) Nearby(writer http.ResponseWriter, request *http.Request
 		writeServiceError(writer, err)
 		return
 	}
-	response.JSON(writer, http.StatusOK, map[string]any{"places": dto.NewPlaceResponses(places), "page": page})
+	response.JSON(writer, http.StatusOK, map[string]any{"places": NewPlaceResponses(places), "page": page})
 }
 
 func (handler *Handler) Search(writer http.ResponseWriter, request *http.Request) {
@@ -61,7 +60,7 @@ func (handler *Handler) Search(writer http.ResponseWriter, request *http.Request
 		writeServiceError(writer, err)
 		return
 	}
-	response.JSON(writer, http.StatusOK, map[string]any{"places": dto.NewPlaceResponses(places)})
+	response.JSON(writer, http.StatusOK, map[string]any{"places": NewPlaceResponses(places)})
 }
 
 func (handler *Handler) Reverse(writer http.ResponseWriter, request *http.Request) {
@@ -75,11 +74,11 @@ func (handler *Handler) Reverse(writer http.ResponseWriter, request *http.Reques
 		writeServiceError(writer, err)
 		return
 	}
-	response.JSON(writer, http.StatusOK, dto.NewPlaceResponse(place))
+	response.JSON(writer, http.StatusOK, NewPlaceResponse(place))
 }
 
 func (handler *Handler) Route(writer http.ResponseWriter, request *http.Request) {
-	var payload dto.RouteRequest
+	var payload RouteRequest
 	if err := decodeRouteRequest(writer, request, &payload); err != nil {
 		response.Error(writer, http.StatusBadRequest, "invalid route payload")
 		return
@@ -99,11 +98,11 @@ func (handler *Handler) Route(writer http.ResponseWriter, request *http.Request)
 		writeServiceError(writer, err)
 		return
 	}
-	response.JSON(writer, http.StatusOK, dto.NewRouteResponse(route))
+	response.JSON(writer, http.StatusOK, NewRouteResponse(route))
 }
 
 func (handler *Handler) Matrix(writer http.ResponseWriter, request *http.Request) {
-	var payload dto.MatrixRequest
+	var payload MatrixRequest
 	if sharedrequest.DecodeJSON(writer, request, &payload, _maxRoutePayloadBytes) != nil {
 		response.Error(writer, http.StatusBadRequest, "invalid matrix payload")
 		return
@@ -117,21 +116,21 @@ func (handler *Handler) Matrix(writer http.ResponseWriter, request *http.Request
 		writeServiceError(writer, err)
 		return
 	}
-	response.JSON(writer, http.StatusOK, dto.NewMatrixResponse(matrix))
+	response.JSON(writer, http.StatusOK, NewMatrixResponse(matrix))
 }
 
-func decodeRouteRequest(writer http.ResponseWriter, request *http.Request, payload *dto.RouteRequest) error {
+func decodeRouteRequest(writer http.ResponseWriter, request *http.Request, payload *RouteRequest) error {
 	return sharedrequest.DecodeJSON(writer, request, payload, _maxRoutePayloadBytes)
 }
 
 func writeServiceError(writer http.ResponseWriter, err error) {
 	switch {
-	case errors.Is(err, application.ErrEmptySearch),
-		errors.Is(err, application.ErrSearchTooLong),
-		errors.Is(err, application.ErrInvalidCoordinates),
-		errors.Is(err, application.ErrInvalidNearbyPage),
-		errors.Is(err, application.ErrInvalidRouteOptions),
-		errors.Is(err, application.ErrInvalidMatrix):
+	case errors.Is(err, locationapp.ErrEmptySearch),
+		errors.Is(err, locationapp.ErrSearchTooLong),
+		errors.Is(err, locationapp.ErrInvalidCoordinates),
+		errors.Is(err, locationapp.ErrInvalidNearbyPage),
+		errors.Is(err, locationapp.ErrInvalidRouteOptions),
+		errors.Is(err, locationapp.ErrInvalidMatrix):
 		response.Error(writer, http.StatusBadRequest, "The location request is invalid.")
 	default:
 		response.Error(writer, http.StatusBadGateway, "Nearby locations are temporarily unavailable.")

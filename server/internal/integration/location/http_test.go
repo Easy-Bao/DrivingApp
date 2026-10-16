@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/location/application"
+	application "github.com/Easy-Bao/DrivingApp/server/internal/location/app"
 	locationhttp "github.com/Easy-Bao/DrivingApp/server/internal/location/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"

@@ -10,17 +10,15 @@ import (
 	"strings"
 	"testing"
 
-	dispatchapplication "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/application"
+	dispatchapplication "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/app"
 	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/domain"
-	dispatchports "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/ports"
 	dispatchhttp "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/transport/http"
-	dispatchdto "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/transport/http/dto"
+	dispatchdto "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	rideconfig "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/config"
-	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
+	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/ride/ports"
 	ridehttp "github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/http"
 	"github.com/go-chi/chi/v5"
 )
@@ -31,7 +29,7 @@ type activeSessionsRepository struct {
 	requestedOfferID   int
 }
 
-func newRideService(repository ports.RideStore, config rideapplication.PricingConfig) *rideapplication.RideService {
+func newRideService(repository rideapplication.RideStore, config rideapplication.PricingConfig) *rideapplication.RideService {
 	return rideapplication.NewRideService(rideapplication.RideServiceDependencies{
 		Repository:    repository,
 		PricingConfig: config,
@@ -51,9 +49,9 @@ func (router *rideAndDispatchRouter) RegisterRoutes(mux chi.Router) {
 func newRideRouter(
 	service *rideapplication.RideService,
 	verifier *security.TokenManager,
-	stores ...dispatchports.BiddingStore,
+	stores ...dispatchapplication.BiddingStore,
 ) *rideAndDispatchRouter {
-	var store dispatchports.BiddingStore
+	var store dispatchapplication.BiddingStore
 	if len(stores) > 0 {
 		store = stores[0]
 	}
@@ -66,8 +64,8 @@ func newRideRouter(
 					_ context.Context,
 					_, _, _, _ float64,
 					distanceKm, durationMinutes float64,
-				) (dispatchports.RouteMetrics, error) {
-					return dispatchports.RouteMetrics{DistanceKm: distanceKm, DurationMinutes: durationMinutes}, nil
+				) (dispatchapplication.RouteMetrics, error) {
+					return dispatchapplication.RouteMetrics{DistanceKm: distanceKm, DurationMinutes: durationMinutes}, nil
 				},
 				CalculateFare: func(float64, float64) int64 { return 3500 },
 			}),
@@ -111,13 +109,13 @@ func (repository *activeSessionsRepository) AcceptOffer(
 	sessionID int,
 	offerID int,
 	passengerID int,
-) (dispatchports.OfferAcceptance, error) {
+) (dispatchapplication.OfferAcceptance, error) {
 	repository.requestedSessionID = sessionID
 	repository.requestedOfferID = offerID
 	session := dispatchdomain.BidSession{ID: sessionID, PassengerID: passengerID}
 	offer := dispatchdomain.BidOffer{ID: int64(offerID), SessionID: sessionID}
 	ride := domain.Ride{ID: 303, PassengerID: passengerID}
-	return dispatchports.OfferAcceptance{Session: session, Offer: offer, Ride: ride}, nil
+	return dispatchapplication.OfferAcceptance{Session: session, Offer: offer, Ride: ride}, nil
 }
 func (repository *activeSessionsRepository) CancelSession(
 	_ context.Context,

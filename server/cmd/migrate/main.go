@@ -9,9 +9,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	serverconfig "github.com/Easy-Bao/DrivingApp/server/internal/config"
+	"github.com/Easy-Bao/DrivingApp/server/db/migrations"
+	"github.com/Easy-Bao/DrivingApp/server/internal/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/migrations"
 	"github.com/golang-migrate/migrate/v4"
 )
 
@@ -26,7 +26,7 @@ func main() {
 }
 
 func run(ctx context.Context) error {
-	config, err := serverconfig.LoadMigration()
+	config, err := app.LoadMigration()
 	if err != nil {
 		return err
 	}

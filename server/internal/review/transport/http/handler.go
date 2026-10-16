@@ -5,13 +5,12 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
-	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
+	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/request"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
-	"github.com/Easy-Bao/DrivingApp/server/internal/review/application"
+	application "github.com/Easy-Bao/DrivingApp/server/internal/review/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/review/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/review/transport/http/dto"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -50,7 +49,7 @@ func (handler *Handler) DriverReviews(writer http.ResponseWriter, request *http.
 		response.Error(writer, http.StatusInternalServerError, "Driver reviews are temporarily unavailable.")
 		return
 	}
-	response.JSON(writer, http.StatusOK, dto.NewReviewResponses(items))
+	response.JSON(writer, http.StatusOK, NewReviewResponses(items))
 }
 
 func (handler *Handler) CreateReview(writer http.ResponseWriter, request *http.Request) {
@@ -64,7 +63,7 @@ func (handler *Handler) CreateReview(writer http.ResponseWriter, request *http.R
 		response.Error(writer, http.StatusBadRequest, "invalid driver id")
 		return
 	}
-	var input dto.ReviewRequest
+	var input ReviewRequest
 	if sharedrequest.DecodeJSONV2(writer, request, &input, 16<<10) != nil || input.RideID <= 0 {
 		response.Error(writer, http.StatusBadRequest, "invalid review")
 		return
@@ -80,7 +79,7 @@ func (handler *Handler) CreateReview(writer http.ResponseWriter, request *http.R
 		response.Error(writer, http.StatusBadRequest, safeReviewError(err))
 		return
 	}
-	response.JSON(writer, http.StatusCreated, dto.NewReviewResponse(item))
+	response.JSON(writer, http.StatusCreated, NewReviewResponse(item))
 }
 
 func (handler *Handler) CreatePassengerReview(writer http.ResponseWriter, request *http.Request) {
@@ -94,7 +93,7 @@ func (handler *Handler) CreatePassengerReview(writer http.ResponseWriter, reques
 		response.Error(writer, http.StatusBadRequest, "invalid passenger id")
 		return
 	}
-	var input dto.ReviewRequest
+	var input ReviewRequest
 	if sharedrequest.DecodeJSONV2(writer, request, &input, 16<<10) != nil || input.RideID <= 0 {
 		response.Error(writer, http.StatusBadRequest, "invalid review")
 		return
@@ -110,7 +109,7 @@ func (handler *Handler) CreatePassengerReview(writer http.ResponseWriter, reques
 		response.Error(writer, http.StatusBadRequest, safeReviewError(err))
 		return
 	}
-	response.JSON(writer, http.StatusCreated, dto.NewPassengerReviewResponse(item))
+	response.JSON(writer, http.StatusCreated, NewPassengerReviewResponse(item))
 }
 
 func safeReviewError(err error) string {

@@ -11,10 +11,10 @@ import (
 	"time"
 
 	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
-	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
+	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	platformstorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage"
+	"github.com/Easy-Bao/DrivingApp/server/internal/user/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/user/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/user/ports"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -31,9 +31,9 @@ type ProfileRepository struct {
 }
 
 var (
-	_ ports.ProfileStore      = (*ProfileRepository)(nil)
-	_ ports.AvatarStore       = (*ProfileRepository)(nil)
-	_ ports.NotificationStore = (*ProfileRepository)(nil)
+	_ app.ProfileStore      = (*ProfileRepository)(nil)
+	_ app.AvatarStore       = (*ProfileRepository)(nil)
+	_ app.NotificationStore = (*ProfileRepository)(nil)
 )
 
 type ProfileRepositoryDependencies struct {

@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/dispatch/ports"
-	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
+	"github.com/Easy-Bao/DrivingApp/server/internal/dispatch/app"
+	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 )
 
-var _ ports.DriverAvailabilityReader = (*Store)(nil)
+var _ app.DriverAvailabilityReader = (*Store)(nil)
 
 func (store *Store) OnlineDrivers(
 	ctx context.Context,

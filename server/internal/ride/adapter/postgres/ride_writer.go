@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
+	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/jackc/pgx/v5/pgtype"
 )

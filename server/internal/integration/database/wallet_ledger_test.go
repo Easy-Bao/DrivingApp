@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database/migrations"
-	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
+	"github.com/Easy-Bao/DrivingApp/server/db/migrations"
+	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5"
 )
 

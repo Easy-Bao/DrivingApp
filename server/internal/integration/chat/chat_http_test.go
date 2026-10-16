@@ -9,9 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	chatapplication "github.com/Easy-Bao/DrivingApp/server/internal/chat/application"
+	chatapplication "github.com/Easy-Bao/DrivingApp/server/internal/chat/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/chat/domain"
-	chatports "github.com/Easy-Bao/DrivingApp/server/internal/chat/ports"
 	chath "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
@@ -23,7 +22,7 @@ type roomHistory struct {
 	locked  bool
 }
 
-func newChatService(history chatports.RoomStore) *chatapplication.ChatService {
+func newChatService(history chatapplication.RoomStore) *chatapplication.ChatService {
 	return chatapplication.NewChatService(chatapplication.ChatServiceDependencies{History: history})
 }
 

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/domain"
-	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
+	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/admin/application"
+	adminapp "github.com/Easy-Bao/DrivingApp/server/internal/admin/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/admin/domain"
 )
 
@@ -18,7 +18,7 @@ func (reader statsReaderStub) Stats(context.Context) (domain.Stats, error) {
 }
 
 func TestStatsKeepsPublicJSONFieldNames(t *testing.T) {
-	handler := NewHandler(application.NewStatsService(statsReaderStub{
+	handler := NewHandler(adminapp.NewStatsService(statsReaderStub{
 		stats: domain.Stats{Users: 3, Rides: 5, DriverDocuments: 2},
 	}))
 	request := httptest.NewRequest(http.MethodGet, "/api/v1/admin/stats", nil)

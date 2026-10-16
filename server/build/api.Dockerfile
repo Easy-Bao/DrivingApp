@@ -1,0 +1,16 @@
+FROM golang:1.27 AS build
+WORKDIR /src
+COPY server/go.mod server/go.sum ./
+RUN go mod download
+COPY server ./
+RUN CGO_ENABLED=0 go build -o /out/api ./cmd/api
+RUN CGO_ENABLED=0 go build -o /out/migrate ./cmd/migrate
+RUN CGO_ENABLED=0 go build -o /out/storage-migrate ./cmd/storage-migrate
+
+FROM gcr.io/distroless/static-debian12
+COPY --from=build /out/api /app/api
+COPY --from=build /out/migrate /app/migrate
+COPY --from=build /out/storage-migrate /app/storage-migrate
+COPY --from=build /out/storage-migrate /app/objectstorage-migrate
+USER 65532:65532
+ENTRYPOINT ["/app/api"]

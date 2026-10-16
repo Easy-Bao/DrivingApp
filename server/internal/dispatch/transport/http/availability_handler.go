@@ -6,8 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/dispatch/transport/http/dto"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
 )
 
 func (handler *Handler) OnlineDrivers(w http.ResponseWriter, r *http.Request) {
@@ -25,7 +24,7 @@ func (handler *Handler) OnlineDrivers(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusServiceUnavailable, "driver availability unavailable")
 		return
 	}
-	response.JSON(w, http.StatusOK, dto.NewOnlineDriverResponses(items))
+	response.JSON(w, http.StatusOK, NewOnlineDriverResponses(items))
 }
 
 func (handler *Handler) PublicDriverSummaries(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +43,7 @@ func (handler *Handler) PublicDriverSummaries(w http.ResponseWriter, r *http.Req
 		response.Error(w, http.StatusServiceUnavailable, "driver availability unavailable")
 		return
 	}
-	response.JSON(w, http.StatusOK, dto.NewPublicDriverSummaryResponses(summaries))
+	response.JSON(w, http.StatusOK, NewPublicDriverSummaryResponses(summaries))
 }
 
 func driverIDsFromQuery(request *http.Request) ([]int, error) {

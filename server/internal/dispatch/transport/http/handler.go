@@ -6,27 +6,26 @@ import (
 	"strconv"
 	"strings"
 
-	dispatchapplication "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/application"
+	dispatchapp "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/app"
 	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/dispatch/transport/http/dto"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
-	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
+	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/request"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
-	ridedto "github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/http/dto"
+	ridedto "github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/http"
 	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
-	service      *dispatchapplication.Service
-	availability *dispatchapplication.AvailabilityService
+	service      *dispatchapp.Service
+	availability *dispatchapp.AvailabilityService
 	verifier     *security.TokenManager
 }
 
 type Dependencies struct {
-	Service       *dispatchapplication.Service
-	Availability  *dispatchapplication.AvailabilityService
+	Service       *dispatchapp.Service
+	Availability  *dispatchapp.AvailabilityService
 	Verifier      *security.TokenManager
 	RouteSecurity *middleware.RouteSecurity
 }
@@ -49,7 +48,7 @@ func (handler *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 401, "unauthorized")
 		return
 	}
-	var input dto.BidSessionRequest
+	var input BidSessionRequest
 	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil {
 		response.Error(w, 400, "invalid bid session")
 		return
@@ -73,7 +72,7 @@ func (handler *Handler) CreateSession(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, dispatchErrorStatus(err), safeDispatchError(err))
 		return
 	}
-	response.JSON(w, 201, dto.NewBidSessionResponse(session))
+	response.JSON(w, 201, NewBidSessionResponse(session))
 }
 
 func (handler *Handler) ActiveSessions(w http.ResponseWriter, r *http.Request) {
@@ -87,7 +86,7 @@ func (handler *Handler) ActiveSessions(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 500, "Incoming ride requests are temporarily unavailable.")
 		return
 	}
-	response.JSON(w, 200, dto.NewBidSessionResponses(sessions))
+	response.JSON(w, 200, NewBidSessionResponses(sessions))
 }
 
 func (handler *Handler) Session(w http.ResponseWriter, r *http.Request) {
@@ -110,7 +109,7 @@ func (handler *Handler) Session(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusForbidden, "forbidden")
 		return
 	}
-	response.JSON(w, 200, dto.NewBidSessionResponse(item))
+	response.JSON(w, 200, NewBidSessionResponse(item))
 }
 
 func (handler *Handler) Offers(w http.ResponseWriter, r *http.Request) {
@@ -134,7 +133,7 @@ func (handler *Handler) Offers(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 404, "bid session not found")
 		return
 	}
-	response.JSON(w, 200, dto.NewBidOfferResponses(items))
+	response.JSON(w, 200, NewBidOfferResponses(items))
 }
 
 func (handler *Handler) PlaceOffer(w http.ResponseWriter, r *http.Request) {
@@ -148,7 +147,7 @@ func (handler *Handler) PlaceOffer(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 400, "invalid session id")
 		return
 	}
-	var input dto.BidOfferRequest
+	var input BidOfferRequest
 	if sharedrequest.DecodeJSONV2(w, r, &input, 16<<10) != nil {
 		response.Error(w, 400, "invalid bid offer")
 		return
@@ -169,7 +168,7 @@ func (handler *Handler) PlaceOffer(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 409, safeDispatchError(err))
 		return
 	}
-	response.JSON(w, 201, dto.NewBidOfferResponse(offer))
+	response.JSON(w, 201, NewBidOfferResponse(offer))
 }
 
 func (handler *Handler) AcceptOffer(w http.ResponseWriter, r *http.Request) {
@@ -194,9 +193,9 @@ func (handler *Handler) AcceptOffer(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 409, "offer cannot be accepted")
 		return
 	}
-	response.JSON(w, http.StatusOK, dto.AcceptedOfferResponse{
-		Session: dto.NewBidSessionResponse(session),
-		Offer:   dto.NewBidOfferResponse(offer),
+	response.JSON(w, http.StatusOK, AcceptedOfferResponse{
+		Session: NewBidSessionResponse(session),
+		Offer:   NewBidOfferResponse(offer),
 		Ride:    ridedto.NewRideResponse(ride),
 		RideID:  ride.ID,
 	})
@@ -218,7 +217,7 @@ func (handler *Handler) CancelSession(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 409, "session cannot be canceled")
 		return
 	}
-	response.JSON(w, 200, dto.NewBidSessionResponse(item))
+	response.JSON(w, 200, NewBidSessionResponse(item))
 }
 
 func (handler *Handler) CancelOffer(w http.ResponseWriter, r *http.Request) {
@@ -237,7 +236,7 @@ func (handler *Handler) CancelOffer(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 404, "offer not found")
 		return
 	}
-	response.JSON(w, 200, dto.NewBidOfferResponse(item))
+	response.JSON(w, 200, NewBidOfferResponse(item))
 }
 
 func canViewSession(actorID int, session dispatchdomain.BidSession) bool {

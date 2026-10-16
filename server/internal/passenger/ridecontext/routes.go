@@ -2,7 +2,7 @@ package ridecontext
 
 import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
 	"github.com/go-chi/chi/v5"
 )
 

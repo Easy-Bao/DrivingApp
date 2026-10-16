@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
+	chatapp "github.com/Easy-Bao/DrivingApp/server/internal/chat/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/chat/domain"
-	chatports "github.com/Easy-Bao/DrivingApp/server/internal/chat/ports"
 	redis "github.com/redis/go-redis/v9"
 )
 
@@ -20,7 +20,7 @@ const (
 // ChatHistoryStore is the Redis adapter for the bounded chat-room history port.
 type ChatHistoryStore struct{ client *redis.Client }
 
-var _ chatports.RoomStore = (*ChatHistoryStore)(nil)
+var _ chatapp.RoomStore = (*ChatHistoryStore)(nil)
 
 func NewChatHistoryStore(client *redis.Client) *ChatHistoryStore {
 	return &ChatHistoryStore{client: client}

@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/domain"
-	trackingdto "github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/transport/http/dto"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
-	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
+	trackingdto "github.com/Easy-Bao/DrivingApp/server/internal/location/transport/http"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
+	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/request"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )

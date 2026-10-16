@@ -8,12 +8,11 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/application"
+	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/transport/http/dto"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
-	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
+	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/request"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -21,10 +20,10 @@ const _maxReviewPayloadBytes int64 = 1 << 10
 const _maxInt64 int64 = 1<<63 - 1
 
 type Handler struct {
-	service *application.DocumentService
+	service *app.DocumentService
 }
 
-func NewHandler(service *application.DocumentService) *Handler {
+func NewHandler(service *app.DocumentService) *Handler {
 	return &Handler{service: service}
 }
 
@@ -106,7 +105,7 @@ func (handler *Handler) upload(
 		writeServiceError(writer, err)
 		return
 	}
-	response.JSON(writer, http.StatusCreated, dto.NewDocumentResponse(item))
+	response.JSON(writer, http.StatusCreated, NewDocumentResponse(item))
 }
 
 func readMultipartDocument(request *http.Request, limit int64) ([]byte, string, bool, error) {
@@ -168,7 +167,7 @@ func (handler *Handler) Status(writer http.ResponseWriter, request *http.Request
 		return
 	}
 	response.JSON(writer, http.StatusOK, map[string]any{
-		"documents": dto.NewDocumentResponses(items),
+		"documents": NewDocumentResponses(items),
 	})
 }
 
@@ -211,7 +210,7 @@ func (handler *Handler) ReviewQueue(writer http.ResponseWriter, request *http.Re
 	response.JSON(
 		writer,
 		http.StatusOK,
-		response.NewOffsetPage(dto.NewDocumentResponses(items), page.Limit, page.Offset),
+		response.NewOffsetPage(NewDocumentResponses(items), page.Limit, page.Offset),
 	)
 }
 
@@ -226,7 +225,7 @@ func (handler *Handler) Review(writer http.ResponseWriter, request *http.Request
 		response.Error(writer, http.StatusBadRequest, "invalid document id")
 		return
 	}
-	var payload dto.ReviewRequest
+	var payload ReviewRequest
 	if sharedrequest.DecodeJSON(writer, request, &payload, _maxReviewPayloadBytes) != nil {
 		response.Error(writer, http.StatusBadRequest, "invalid review payload")
 		return
@@ -241,7 +240,7 @@ func (handler *Handler) Review(writer http.ResponseWriter, request *http.Request
 		writeServiceError(writer, err)
 		return
 	}
-	response.JSON(writer, http.StatusOK, dto.NewDocumentResponse(item))
+	response.JSON(writer, http.StatusOK, NewDocumentResponse(item))
 }
 
 func (handler *Handler) AdminContent(writer http.ResponseWriter, request *http.Request) {

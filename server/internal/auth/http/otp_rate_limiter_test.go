@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
 )
 
 func TestRouterOptionConfiguresOTPVerificationLimit(t *testing.T) {

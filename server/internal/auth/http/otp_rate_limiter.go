@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
 )
 
 const (

@@ -10,9 +10,8 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
-	"github.com/Easy-Bao/DrivingApp/server/internal/review/application"
+	application "github.com/Easy-Bao/DrivingApp/server/internal/review/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/review/domain"
-	reviewports "github.com/Easy-Bao/DrivingApp/server/internal/review/ports"
 	reviewhttp "github.com/Easy-Bao/DrivingApp/server/internal/review/transport/http"
 	"github.com/go-chi/chi/v5"
 )
@@ -49,7 +48,7 @@ func (reviewRepositoryStub) CreatePassengerReview(
 	return review, nil
 }
 
-var _ reviewports.ReviewRepository = reviewRepositoryStub{}
+var _ application.ReviewRepository = reviewRepositoryStub{}
 
 func TestReviewRoutesKeepPathsRolesAndResponseShapes(t *testing.T) {
 	driverID := 9

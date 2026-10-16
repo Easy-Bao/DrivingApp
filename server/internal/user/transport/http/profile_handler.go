@@ -8,24 +8,23 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
-	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
+	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/request"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
-	"github.com/Easy-Bao/DrivingApp/server/internal/user/application"
+	"github.com/Easy-Bao/DrivingApp/server/internal/user/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/user/domain"
-	"github.com/Easy-Bao/DrivingApp/server/internal/user/transport/http/dto"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 )
 
 type Handler struct {
-	service  *application.ProfileService
+	service  *app.ProfileService
 	verifier *security.TokenManager
 }
 
 type Dependencies struct {
-	Service       *application.ProfileService
+	Service       *app.ProfileService
 	Verifier      *security.TokenManager
 	RouteSecurity *middleware.RouteSecurity
 }
@@ -47,7 +46,7 @@ func (handler *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		writeProfileReadError(w, err)
 		return
 	}
-	response.JSON(w, 200, dto.NewProfileResponse(profile))
+	response.JSON(w, 200, NewProfileResponse(profile))
 }
 func (handler *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	id, ok := handler.identity(r)
@@ -55,7 +54,7 @@ func (handler *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 401, "unauthorized")
 		return
 	}
-	var input dto.UpdateProfileRequest
+	var input UpdateProfileRequest
 	if sharedrequest.DecodeJSON(w, r, &input, 16<<10) != nil {
 		response.Error(w, 400, "invalid JSON")
 		return
@@ -90,10 +89,10 @@ func (handler *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusInternalServerError, "Your profile is temporarily unavailable. Please try again.")
 		return
 	}
-	response.JSON(w, 200, dto.NewProfileResponse(profile))
+	response.JSON(w, 200, NewProfileResponse(profile))
 }
 
-func applyProfileUpdate(current domain.Profile, input dto.UpdateProfileRequest) domain.Profile {
+func applyProfileUpdate(current domain.Profile, input UpdateProfileRequest) domain.Profile {
 	if input.Name != nil {
 		current.Name = *input.Name
 	}
@@ -131,7 +130,7 @@ func (handler *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 		writeProfileReadError(w, err)
 		return
 	}
-	response.JSON(w, 200, dto.NewProfileResponse(profile))
+	response.JSON(w, 200, NewProfileResponse(profile))
 }
 
 func (handler *Handler) ProfileUpdate(w http.ResponseWriter, r *http.Request) {
@@ -220,7 +219,7 @@ func (handler *Handler) AvatarUpload(w http.ResponseWriter, r *http.Request) {
 		writeAvatarError(w, err)
 		return
 	}
-	response.JSON(w, http.StatusOK, dto.NewProfileResponse(profile))
+	response.JSON(w, http.StatusOK, NewProfileResponse(profile))
 }
 
 func (handler *Handler) profileTarget(r *http.Request) (int, int, bool) {
@@ -281,7 +280,7 @@ func (handler *Handler) Notifications(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 500, "Notifications are temporarily unavailable.")
 		return
 	}
-	response.JSON(w, 200, response.NewOffsetPage(dto.NewNotificationResponses(items), page.Limit, page.Offset))
+	response.JSON(w, 200, response.NewOffsetPage(NewNotificationResponses(items), page.Limit, page.Offset))
 }
 
 func (handler *Handler) DeleteNotification(w http.ResponseWriter, r *http.Request) {
@@ -359,5 +358,5 @@ func (handler *Handler) Online(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, 500, "could not update online status")
 		return
 	}
-	response.JSON(w, 200, dto.NewProfileResponse(updated))
+	response.JSON(w, 200, NewProfileResponse(updated))
 }

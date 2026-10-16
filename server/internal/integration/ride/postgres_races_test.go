@@ -15,7 +15,7 @@ import (
 	dispatchpostgres "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/adapter/postgres"
 	ridepostgres "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
-	ridelifecycle "github.com/Easy-Bao/DrivingApp/server/internal/ride/lifecycle"
+	ridelifecycle "github.com/Easy-Bao/DrivingApp/server/internal/ride/app"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -212,7 +212,7 @@ func TestRideCancellationRacingWithAcceptancePreservesAtomicState(t *testing.T) 
 	fixture.seedPassenger(t, ctx, passengerID)
 	fixture.seedDriver(t, ctx, driverID)
 	rideID := fixture.createRide(t, ctx, passengerID, 0, "requested", 2000)
-	service := ridelifecycle.NewService(ridelifecycle.Dependencies{Store: fixture.store})
+	service := ridelifecycle.NewLifecycleService(ridelifecycle.LifecycleDependencies{Store: fixture.store})
 
 	start := make(chan struct{})
 	type commandResult struct {
@@ -299,7 +299,7 @@ func TestStaleRideStateTransitionCannotOverwriteCancellation(t *testing.T) {
 	const passengerID = 109
 	fixture.seedPassenger(t, ctx, passengerID)
 	rideID := fixture.createRide(t, ctx, passengerID, 0, "requested", 2000)
-	service := ridelifecycle.NewService(ridelifecycle.Dependencies{Store: fixture.store})
+	service := ridelifecycle.NewLifecycleService(ridelifecycle.LifecycleDependencies{Store: fixture.store})
 	if _, err := service.Cancel(ctx, domain.CancellationRequest{
 		RideID:  rideID,
 		ActorID: passengerID,

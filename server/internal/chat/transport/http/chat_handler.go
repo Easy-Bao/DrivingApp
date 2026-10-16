@@ -4,12 +4,11 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/chat/application"
+	application "github.com/Easy-Bao/DrivingApp/server/internal/chat/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/chat/domain"
-	chatdto "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/http/dto"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
-	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/request"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/response"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
+	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/request"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )
@@ -64,7 +63,7 @@ func (handler *Handler) Messages(writer http.ResponseWriter, request *http.Reque
 		response.Error(writer, chatErrorStatus(err), "could not load chat messages")
 		return
 	}
-	response.JSON(writer, http.StatusOK, map[string]any{"messages": chatdto.NewMessageResponses(items)})
+	response.JSON(writer, http.StatusOK, map[string]any{"messages": NewMessageResponses(items)})
 }
 
 func (handler *Handler) Resolve(writer http.ResponseWriter, request *http.Request) {

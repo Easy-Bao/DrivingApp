@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
-	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
+	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 )

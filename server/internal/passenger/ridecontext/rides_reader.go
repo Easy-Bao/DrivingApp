@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	ridecontextdomain "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext/domain"
-	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/application"
+	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/app"
 )
 
 type RidesReader struct {

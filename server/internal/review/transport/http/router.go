@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )

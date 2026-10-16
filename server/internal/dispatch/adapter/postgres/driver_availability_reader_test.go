@@ -3,7 +3,7 @@ package postgres
 import (
 	"testing"
 
-	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/postgres"
+	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 )
 
 func TestOnlineDriverMappingPreservesAvailabilityDetails(t *testing.T) {

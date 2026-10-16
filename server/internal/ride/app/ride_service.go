@@ -1,0 +1,524 @@
+package app
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log/slog"
+	"math"
+	"slices"
+	"strings"
+	"time"
+
+	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
+)
+
+type RouteCalculator = RouteProvider
+type RouteCalculatorFunc = RouteProviderFunc
+
+var errRidePersistenceUnavailable = errors.New("ride persistence is unavailable")
+
+type RideServiceOption func(*RideService)
+
+func WithRouteCalculator(calculator RouteCalculator) RideServiceOption {
+	return func(service *RideService) {
+		service.routeCalculator = calculator
+	}
+}
+
+type RideService struct {
+	repository        RideStore
+	routeCalculator   RouteCalculator
+	pricingConfig     PricingConfig
+	eventPublisher    EventPublisher
+	bookingService    *BookingService
+	lifecycleService  *LifecycleService
+	settlementService *SettlementService
+	reportingLocation *time.Location
+	logger            *slog.Logger
+}
+
+type RideServiceDependencies struct {
+	Repository      RideStore
+	PricingConfig   PricingConfig
+	EventPublisher  EventPublisher
+	LifecycleConfig LifecycleConfig
+	DriverLocation  DriverLocationReader
+}
+
+func NewRideService(
+	dependencies RideServiceDependencies,
+	options ...RideServiceOption,
+) *RideService {
+	repository := dependencies.Repository
+	pricingConfig := dependencies.PricingConfig
+	activeRideChecker, lifecycleStore, settlementStore := optionalRideCapabilities(repository)
+	service := &RideService{
+		repository:        repository,
+		pricingConfig:     pricingConfig,
+		eventPublisher:    dependencies.EventPublisher,
+		reportingLocation: _defaultReportingLocation,
+		logger:            slog.Default(),
+	}
+	for _, option := range options {
+		if option != nil {
+			option(service)
+		}
+	}
+	service.bookingService = NewBookingService(BookingDependencies{
+		Writer:            repository,
+		ActiveRideChecker: activeRideChecker,
+		ResolveRoute:      service.authoritativeRoute,
+		CalculateFare:     pricingConfig.FareAmount,
+		PublishRide:       service.publishRide,
+		HasRouteProvider:  service.routeCalculator != nil,
+	})
+	service.lifecycleService = NewLifecycleService(LifecycleDependencies{
+		Store:          lifecycleStore,
+		DriverLocation: dependencies.DriverLocation,
+		PublishRide:    service.publishRide,
+		Config:         dependencies.LifecycleConfig,
+	})
+	service.settlementService = NewSettlementService(SettlementDependencies{
+		Store:       settlementStore,
+		PublishRide: service.publishRide,
+	})
+	return service
+}
+
+func optionalRideCapabilities(
+	repository RideStore,
+) (
+	PassengerActiveRideChecker,
+	RideLifecycleStore,
+	CashSettlementStore,
+) {
+	var activeRideChecker PassengerActiveRideChecker
+	if candidate, ok := repository.(PassengerActiveRideChecker); ok {
+		activeRideChecker = candidate
+	}
+
+	var lifecycleStore RideLifecycleStore
+	if candidate, ok := repository.(RideLifecycleStore); ok {
+		lifecycleStore = candidate
+	}
+
+	var settlementStore CashSettlementStore
+	if candidate, ok := repository.(CashSettlementStore); ok {
+		settlementStore = candidate
+	}
+
+	return activeRideChecker, lifecycleStore, settlementStore
+}
+
+func (service *RideService) WithLogger(logger *slog.Logger) *RideService {
+	if service != nil && logger != nil {
+		service.logger = logger
+	}
+	return service
+}
+
+func (service *RideService) log() *slog.Logger {
+	if service != nil && service.logger != nil {
+		return service.logger
+	}
+	return slog.Default()
+}
+
+func (service *RideService) PricingConfig() PricingConfig {
+	return service.pricingConfig
+}
+func (service *RideService) CreateRide(ctx context.Context, passengerID int, fareAmount int64) (domain.Ride, error) {
+	return service.bookingService.Create(ctx, passengerID, fareAmount)
+}
+func (service *RideService) Get(ctx context.Context, id int) (domain.Ride, error) {
+	if service.repository == nil {
+		return domain.Ride{}, errRidePersistenceUnavailable
+	}
+	ride, err := service.repository.Get(ctx, id)
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("get ride: %w", err)
+	}
+	return ride, nil
+}
+
+func (service *RideService) CreateRideWithDetails(ctx context.Context, ride domain.Ride) (domain.Ride, error) {
+	return service.bookingService.CreateWithDetails(ctx, ride)
+}
+
+func (service *RideService) Fare(
+	ctx context.Context,
+	originLat *float64,
+	originLng *float64,
+	destinationLat *float64,
+	destinationLng *float64,
+	distanceKm float64,
+	durationMinutes float64,
+) (RouteMetrics, int64, error) {
+	return service.bookingService.EstimateFare(
+		ctx,
+		originLat,
+		originLng,
+		destinationLat,
+		destinationLng,
+		distanceKm,
+		durationMinutes,
+	)
+}
+
+func (service *RideService) authoritativeRoute(
+	ctx context.Context,
+	pickupLatitude float64,
+	pickupLongitude float64,
+	dropoffLatitude float64,
+	dropoffLongitude float64,
+	distanceKm float64,
+	durationMinutes float64,
+) (RouteMetrics, error) {
+	if err := contextError(ctx); err != nil {
+		return RouteMetrics{}, err
+	}
+	if service.routeCalculator == nil {
+		if err := validateTrip(
+			pickupLatitude,
+			pickupLongitude,
+			dropoffLatitude,
+			dropoffLongitude,
+			distanceKm,
+			durationMinutes,
+		); err != nil {
+			return RouteMetrics{}, err
+		}
+		return RouteMetrics{DistanceKm: distanceKm, DurationMinutes: durationMinutes}, nil
+	}
+	if err := validateTrip(
+		pickupLatitude,
+		pickupLongitude,
+		dropoffLatitude,
+		dropoffLongitude,
+		0,
+		0,
+	); err != nil {
+		return RouteMetrics{}, err
+	}
+	metrics, err := service.routeCalculator.CalculateRoute(
+		ctx,
+		pickupLatitude,
+		pickupLongitude,
+		dropoffLatitude,
+		dropoffLongitude,
+	)
+	if err != nil {
+		if contextErr := contextError(ctx); contextErr != nil {
+			return RouteMetrics{}, contextErr
+		}
+		service.log().WarnContext(ctx, "authoritative route calculation failed", "error", err)
+		return RouteMetrics{}, domain.ErrRouteUnavailable
+	}
+	if err := contextError(ctx); err != nil {
+		return RouteMetrics{}, err
+	}
+	if err := validateTrip(
+		pickupLatitude,
+		pickupLongitude,
+		dropoffLatitude,
+		dropoffLongitude,
+		metrics.DistanceKm,
+		metrics.DurationMinutes,
+	); err != nil {
+		return RouteMetrics{}, domain.ErrRouteUnavailable
+	}
+	return metrics, nil
+}
+
+func contextError(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		return nil
+	}
+}
+
+func (service *RideService) AcceptRide(ctx context.Context, rideID, driverID int) (domain.Ride, error) {
+	return service.lifecycleService.AcceptRide(ctx, rideID, driverID)
+}
+
+func (service *RideService) SettleCash(ctx context.Context, request domain.CashSettlementRequest) (domain.Ride, error) {
+	return service.settlementService.SettleCash(ctx, request)
+}
+
+func (service *RideService) UpdateStatus(ctx context.Context, rideID, actorID int, next string) (domain.Ride, error) {
+	return service.lifecycleService.UpdateStatus(
+		ctx,
+		rideID,
+		actorID,
+		next,
+	)
+}
+
+func (service *RideService) CancelRide(
+	ctx context.Context,
+	request domain.CancellationRequest,
+) (domain.Ride, error) {
+	return service.lifecycleService.Cancel(ctx, request)
+}
+
+func (service *RideService) EmergencyStop(
+	ctx context.Context,
+	request domain.EmergencyStopRequest,
+) (domain.Ride, error) {
+	return service.lifecycleService.EmergencyStop(ctx, request)
+}
+
+func (service *RideService) MarkArrived(
+	ctx context.Context,
+	rideID, driverID int,
+	driverLatitude, driverLongitude float64,
+) (domain.Ride, error) {
+	return service.lifecycleService.MarkArrived(
+		ctx,
+		rideID,
+		driverID,
+		driverLatitude,
+		driverLongitude,
+	)
+}
+
+func (service *RideService) StartTrip(
+	ctx context.Context,
+	rideID, driverID int,
+	driverLatitude, driverLongitude float64,
+) (domain.Ride, error) {
+	return service.lifecycleService.StartTrip(
+		ctx,
+		rideID,
+		driverID,
+		driverLatitude,
+		driverLongitude,
+	)
+}
+
+func (service *RideService) CompleteTrip(
+	ctx context.Context,
+	rideID, driverID int,
+	driverLatitude, driverLongitude float64,
+) (domain.Ride, error) {
+	return service.lifecycleService.CompleteTrip(
+		ctx,
+		rideID,
+		driverID,
+		driverLatitude,
+		driverLongitude,
+	)
+}
+
+func (service *RideService) MarkPassengerNoShow(
+	ctx context.Context,
+	rideID, driverID int,
+) (domain.Ride, error) {
+	return service.lifecycleService.MarkPassengerNoShow(ctx, rideID, driverID)
+}
+
+func (service *RideService) CalculateFare(distanceKm, durationMinutes float64) int64 {
+	return service.pricingConfig.FareAmount(distanceKm, durationMinutes)
+}
+
+func validateTrip(
+	pickupLatitude float64,
+	pickupLongitude float64,
+	dropoffLatitude float64,
+	dropoffLongitude float64,
+	distanceKm float64,
+	durationMinutes float64,
+) error {
+	values := []float64{
+		pickupLatitude,
+		pickupLongitude,
+		dropoffLatitude,
+		dropoffLongitude,
+		distanceKm,
+		durationMinutes,
+	}
+	for _, value := range values {
+		if math.IsNaN(value) || math.IsInf(value, 0) {
+			return domain.ErrInvalidTrip
+		}
+	}
+	invalidPickupLatitude := pickupLatitude < -90 || pickupLatitude > 90
+	invalidDropoffLatitude := dropoffLatitude < -90 || dropoffLatitude > 90
+	invalidLatitude := invalidPickupLatitude || invalidDropoffLatitude
+	invalidPickupLongitude := pickupLongitude < -180 || pickupLongitude > 180
+	invalidDropoffLongitude := dropoffLongitude < -180 || dropoffLongitude > 180
+	invalidLongitude := invalidPickupLongitude || invalidDropoffLongitude
+	invalidMetrics := distanceKm < 0 || durationMinutes < 0
+	if invalidLatitude || invalidLongitude || invalidMetrics {
+		return domain.ErrInvalidTrip
+	}
+	return nil
+}
+
+func (service *RideService) DriverStats(ctx context.Context, driverID int) (domain.DriverStats, error) {
+	repository, ok := service.repository.(DriverStatisticsReader)
+	if !ok {
+		return domain.DriverStats{}, errors.New("driver analytics persistence is unavailable")
+	}
+	dayStart, dayEnd := service.reportingDayBounds(time.Now())
+	stats, err := repository.DriverStats(
+		ctx,
+		driverID,
+		dayStart,
+		dayEnd,
+	)
+	if err != nil {
+		return domain.DriverStats{}, fmt.Errorf("load driver statistics: %w", err)
+	}
+	return stats, nil
+}
+
+func (service *RideService) DriverEarnings(ctx context.Context, driverID int) (domain.DriverEarningsSummary, error) {
+	repository, ok := service.repository.(DriverEarningsReader)
+	if !ok {
+		return domain.DriverEarningsSummary{}, errors.New("driver earnings persistence is unavailable")
+	}
+	location := service.reportingLocation
+	if location == nil {
+		location = _defaultReportingLocation
+	}
+	now := time.Now().In(location)
+	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, location)
+	monthEnd := monthStart.AddDate(0, 1, 0)
+	entries, err := repository.DriverEarnings(
+		ctx,
+		driverID,
+		monthStart.UTC(),
+		monthEnd.UTC(),
+	)
+	if err != nil {
+		return domain.DriverEarningsSummary{}, fmt.Errorf("load driver earnings: %w", err)
+	}
+	return summarizeDriverEarnings(entries, now, location), nil
+}
+
+func (service *RideService) DriverTrips(
+	ctx context.Context,
+	driverID int,
+	query domain.TripHistoryQuery,
+) ([]domain.Ride, error) {
+	repository, ok := service.repository.(RideHistoryReader)
+	if !ok {
+		return nil, errors.New("driver trip persistence is unavailable")
+	}
+	if err := validateTripHistoryQuery(query); err != nil {
+		return nil, err
+	}
+	rides, err := repository.DriverTrips(ctx, driverID, query)
+	if err != nil {
+		return nil, fmt.Errorf("load driver trips: %w", err)
+	}
+	return slices.Clone(rides), nil
+}
+
+func (service *RideService) PassengerRides(
+	ctx context.Context,
+	passengerID int,
+	query domain.TripHistoryQuery,
+) ([]domain.Ride, error) {
+	repository, ok := service.repository.(RideHistoryReader)
+	if !ok {
+		return nil, errors.New("passenger ride persistence is unavailable")
+	}
+	if err := validateTripHistoryQuery(query); err != nil {
+		return nil, err
+	}
+	rides, err := repository.PassengerRides(ctx, passengerID, query)
+	if err != nil {
+		return nil, fmt.Errorf("load passenger rides: %w", err)
+	}
+	return slices.Clone(rides), nil
+}
+
+func (service *RideService) PassengerActivitySummary(
+	ctx context.Context,
+	passengerID int,
+) (domain.PassengerActivitySummary, error) {
+	repository, ok := service.repository.(PassengerActivityReader)
+	if !ok {
+		return domain.PassengerActivitySummary{}, errors.New("passenger activity persistence is unavailable")
+	}
+	weekStart, weekEnd := service.reportingWeekBounds(time.Now())
+	activity, err := repository.PassengerActivitySummary(
+		ctx,
+		passengerID,
+		weekStart,
+		weekEnd,
+	)
+	if err != nil {
+		return domain.PassengerActivitySummary{}, fmt.Errorf("load passenger activity summary: %w", err)
+	}
+	return activity, nil
+}
+
+func (service *RideService) PassengerRecentRides(ctx context.Context, passengerID, limit int) ([]domain.Ride, error) {
+	invalidPassengerID := passengerID <= 0
+	invalidLimit := limit <= 0 || limit > 100
+	if invalidPassengerID || invalidLimit {
+		return nil, errors.New("invalid passenger recent rides request")
+	}
+	if repository, ok := service.repository.(RecentPassengerRidesReader); ok {
+		rides, err := repository.PassengerRecentRides(ctx, passengerID, limit)
+		if err != nil {
+			return nil, fmt.Errorf("load recent passenger rides: %w", err)
+		}
+		return slices.Clone(rides), nil
+	}
+	rides, err := service.PassengerRides(ctx, passengerID, domain.TripHistoryQuery{Limit: limit, Offset: 0})
+	if err != nil {
+		return nil, fmt.Errorf("load recent passenger rides through trip history: %w", err)
+	}
+	if len(rides) > limit {
+		return slices.Clone(rides[:limit]), nil
+	}
+	return slices.Clone(rides), nil
+}
+
+func (service *RideService) CreateSafetyReport(
+	ctx context.Context,
+	report domain.SafetyReport,
+) (domain.SafetyReport, error) {
+	repository, ok := service.repository.(SafetyReportStore)
+	if !ok {
+		return domain.SafetyReport{}, errors.New("safety report persistence is unavailable")
+	}
+	report.ReporterRole = strings.ToLower(strings.TrimSpace(report.ReporterRole))
+	report.Category = domain.SafetyReportCategory(
+		strings.ToLower(strings.TrimSpace(string(report.Category))),
+	)
+	report.Description = strings.TrimSpace(report.Description)
+	severity, valid := domain.ValidateSafetyReport(
+		report.ReporterRole,
+		report.Category,
+		report.Description,
+	)
+	if !valid {
+		return domain.SafetyReport{}, domain.ErrSafetyReportInvalid
+	}
+	report.Severity = severity
+	created, err := repository.CreateSafetyReport(ctx, report)
+	if err != nil {
+		return domain.SafetyReport{}, fmt.Errorf("create safety report: %w", err)
+	}
+	return created, nil
+}
+
+func validateTripHistoryQuery(query domain.TripHistoryQuery) error {
+	invalidLimit := query.Limit <= 0 || query.Limit > 100
+	invalidOffset := query.Offset < 0 || query.Offset > 1_000_000
+	if invalidLimit || invalidOffset {
+		return errors.New("trip history pagination is invalid")
+	}
+	if query.ActiveOnly && query.Limit > 20 {
+		return errors.New("active trip history limit is invalid")
+	}
+	return nil
+}

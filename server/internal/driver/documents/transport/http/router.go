@@ -3,9 +3,9 @@ package http
 import (
 	"net/http"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/application"
+	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/middleware"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )
@@ -18,7 +18,7 @@ type Router struct {
 }
 
 type RouterDependencies struct {
-	Service       *application.DocumentService
+	Service       *app.DocumentService
 	Verifier      *security.TokenManager
 	Authorizer    *security.AdminAuthorizer
 	RouteSecurity *middleware.RouteSecurity
