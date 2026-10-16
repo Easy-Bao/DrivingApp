@@ -11,14 +11,16 @@ import (
 	"testing"
 	"time"
 
-	ridecontext "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext"
+	rideapp "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
+	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	ridehttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )
 
 type recentDestinationReader struct {
-	destinations []ridecontext.RecentDestination
+	destinations []ridedomain.RecentDestination
 	passengerID  int
 	limit        int
 }
@@ -26,7 +28,7 @@ type recentDestinationReader struct {
 func (reader *recentDestinationReader) ReadRecentDestinations(
 	_ context.Context,
 	passengerID, limit int,
-) ([]ridecontext.RecentDestination, error) {
+) ([]ridedomain.RecentDestination, error) {
 	reader.passengerID = passengerID
 	reader.limit = limit
 	return reader.destinations, nil
@@ -38,7 +40,7 @@ type addressResolver struct {
 
 func (resolver addressResolver) ResolveAddress(
 	context.Context,
-	ridecontext.Coordinates,
+	ridedomain.Coordinates,
 ) (string, error) {
 	return resolver.address, nil
 }
@@ -52,10 +54,10 @@ func (reader coordinatedRecentDestinationReader) ReadRecentDestinations(
 	context.Context,
 	int,
 	int,
-) ([]ridecontext.RecentDestination, error) {
+) ([]ridedomain.RecentDestination, error) {
 	close(reader.started)
 	<-reader.release
-	return []ridecontext.RecentDestination{{
+	return []ridedomain.RecentDestination{{
 		Status:   "completed",
 		Title:    "Aikido of Mountain View",
 		Subtitle: "Mountain View",
@@ -69,7 +71,7 @@ type coordinatedAddressResolver struct {
 
 func (resolver coordinatedAddressResolver) ResolveAddress(
 	context.Context,
-	ridecontext.Coordinates,
+	ridedomain.Coordinates,
 ) (string, error) {
 	close(resolver.started)
 	<-resolver.release
@@ -82,7 +84,7 @@ type contextBoundAddressResolver struct {
 
 func (resolver contextBoundAddressResolver) ResolveAddress(
 	ctx context.Context,
-	_ ridecontext.Coordinates,
+	_ ridedomain.Coordinates,
 ) (string, error) {
 	close(resolver.started)
 	<-ctx.Done()
@@ -120,7 +122,7 @@ func TestGuestDashboardReturnsLocationWithoutPassengerHistory(t *testing.T) {
 }
 
 func TestAuthenticatedDashboardFiltersRecentDestinations(t *testing.T) {
-	destinations := &recentDestinationReader{destinations: []ridecontext.RecentDestination{
+	destinations := &recentDestinationReader{destinations: []ridedomain.RecentDestination{
 		{Status: "in_transit", Title: "Active Place"},
 		{Status: "completed", Title: "Mall, Pagadian City", Subtitle: "Home"},
 		{Status: "completed", Title: "mall, pagadian city", Subtitle: "Office"},
@@ -191,8 +193,8 @@ func TestAuthenticatedDashboardLoadsLocationAndHistoryConcurrently(t *testing.T)
 	releaseAll := func() {
 		releaseOnce.Do(func() { close(release) })
 	}
-	service := ridecontext.NewQueryService(
-		ridecontext.QueryDependencies{
+	service := rideapp.NewQueryService(
+		rideapp.QueryDependencies{
 			RecentDestinations: coordinatedRecentDestinationReader{
 				started: destinationsStarted,
 				release: release,
@@ -205,17 +207,17 @@ func TestAuthenticatedDashboardLoadsLocationAndHistoryConcurrently(t *testing.T)
 	)
 
 	result := make(chan struct {
-		snapshot ridecontext.RideContextSnapshot
+		snapshot ridedomain.RideContextSnapshot
 		err      error
 	}, 1)
 	go func() {
 		snapshot, err := service.Load(
 			context.Background(),
 			intPointer(42),
-			&ridecontext.Coordinates{Latitude: 7.8, Longitude: 123.4},
+			&ridedomain.Coordinates{Latitude: 7.8, Longitude: 123.4},
 		)
 		result <- struct {
-			snapshot ridecontext.RideContextSnapshot
+			snapshot ridedomain.RideContextSnapshot
 			err      error
 		}{snapshot: snapshot, err: err}
 	}()
@@ -243,9 +245,9 @@ func TestAuthenticatedDashboardLoadsLocationAndHistoryConcurrently(t *testing.T)
 
 func TestAuthenticatedDashboardDoesNotWaitForUnboundedAddressResolution(t *testing.T) {
 	addressStarted := make(chan struct{})
-	service := ridecontext.NewQueryService(
-		ridecontext.QueryDependencies{
-			RecentDestinations: &recentDestinationReader{destinations: []ridecontext.RecentDestination{{
+	service := rideapp.NewQueryService(
+		rideapp.QueryDependencies{
+			RecentDestinations: &recentDestinationReader{destinations: []ridedomain.RecentDestination{{
 				Status: "completed",
 				Title:  "Aikido of Mountain View",
 			}}},
@@ -254,17 +256,17 @@ func TestAuthenticatedDashboardDoesNotWaitForUnboundedAddressResolution(t *testi
 	)
 
 	result := make(chan struct {
-		snapshot ridecontext.RideContextSnapshot
+		snapshot ridedomain.RideContextSnapshot
 		err      error
 	}, 1)
 	go func() {
 		snapshot, err := service.Load(
 			context.Background(),
 			intPointer(42),
-			&ridecontext.Coordinates{Latitude: 7.8, Longitude: 123.4},
+			&ridedomain.Coordinates{Latitude: 7.8, Longitude: 123.4},
 		)
 		result <- struct {
-			snapshot ridecontext.RideContextSnapshot
+			snapshot ridedomain.RideContextSnapshot
 			err      error
 		}{snapshot: snapshot, err: err}
 	}()
@@ -361,16 +363,16 @@ type recentLocationResponse struct {
 }
 
 func newRouter(
-	destinations ridecontext.RecentDestinationReader,
-	resolver ridecontext.AddressResolver,
+	destinations rideapp.RecentDestinationReader,
+	resolver rideapp.AddressResolver,
 ) *chi.Mux {
 	router := chi.NewRouter()
 	verifier := security.NewTokenManager("test-secret")
-	query := ridecontext.NewQueryService(ridecontext.QueryDependencies{
+	query := rideapp.NewQueryService(rideapp.QueryDependencies{
 		RecentDestinations: destinations,
 		AddressResolver:    resolver,
 	})
-	ridecontext.NewRouter(ridecontext.Dependencies{
+	ridehttp.NewPassengerContextRouter(ridehttp.PassengerContextDependencies{
 		Query:    query,
 		Verifier: verifier,
 	}).RegisterRoutes(router)

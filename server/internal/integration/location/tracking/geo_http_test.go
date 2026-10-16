@@ -10,9 +10,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment"
-	tracking "github.com/Easy-Bao/DrivingApp/server/internal/location/tracking"
-	"github.com/Easy-Bao/DrivingApp/server/internal/location/tracking/domain"
+	assignment "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
+	locationapp "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/app"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/location/domain"
+	locationhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )
@@ -22,18 +23,18 @@ type locationRepository struct{ point domain.DriverPoint }
 type locationAssignmentLookup struct{ value assignment.Assignment }
 
 func newTrackingRouter(
-	service *tracking.LocationTrackingService,
+	service *locationapp.LocationTrackingService,
 	auth *security.TokenManager,
-) *tracking.Router {
-	return tracking.NewRouter(tracking.Dependencies{Service: service, Auth: auth})
+) *locationhttp.TrackingRouter {
+	return locationhttp.NewTrackingRouter(locationhttp.TrackingDependencies{Service: service, Auth: auth})
 }
 
 func newTrackingService(
-	repository tracking.LocationStore,
-	options ...tracking.Option,
-) *tracking.LocationTrackingService {
-	return tracking.NewLocationTrackingService(
-		tracking.LocationTrackingDependencies{Repository: repository},
+	repository locationapp.LocationStore,
+	options ...locationapp.Option,
+) *locationapp.LocationTrackingService {
+	return locationapp.NewLocationTrackingService(
+		locationapp.LocationTrackingDependencies{Repository: repository},
 		options...,
 	)
 }
@@ -196,7 +197,7 @@ func TestPassengerReadsDriverLocationThroughItsRide(t *testing.T) {
 	}}
 	router := chi.NewRouter()
 	newTrackingRouter(
-		newTrackingService(repository, tracking.WithRideAssignments(assignments)),
+		newTrackingService(repository, locationapp.WithRideAssignments(assignments)),
 		tokenManager,
 	).RegisterRoutes(router)
 

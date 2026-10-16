@@ -6,7 +6,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 )
 
 type analyticsRepository struct{}

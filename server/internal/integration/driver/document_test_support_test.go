@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/driver/domain"
 )
 
 var validPDF = []byte("%PDF-1.7\nprivate driver document")

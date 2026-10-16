@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"time"
 
-	adminpostgres "github.com/Easy-Bao/DrivingApp/server/internal/admin/adapter/postgres"
-	authpostgres "github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/postgres"
-	dispatchpostgres "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/adapter/postgres"
-	documentpostgres "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/adapter/postgres"
+	adminpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/admin/adapter/postgres"
+	authpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/adapter/postgres"
+	dispatchpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/adapter/postgres"
+	documentpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/driver/adapter/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	eventadapter "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/logger"
@@ -19,9 +19,9 @@ import (
 	redisplatform "github.com/Easy-Bao/DrivingApp/server/internal/platform/redis"
 	miniostorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage/minio"
 	websockethub "github.com/Easy-Bao/DrivingApp/server/internal/platform/ws"
-	reviewpostgres "github.com/Easy-Bao/DrivingApp/server/internal/review/adapter/postgres"
-	ridepostgres "github.com/Easy-Bao/DrivingApp/server/internal/ride/adapter/postgres"
-	userpostgres "github.com/Easy-Bao/DrivingApp/server/internal/user/adapter/postgres"
+	reviewpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/review/adapter/postgres"
+	ridepostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/adapter/postgres"
+	userpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/user/adapter/postgres"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 

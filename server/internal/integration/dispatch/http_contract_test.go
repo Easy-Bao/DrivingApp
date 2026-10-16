@@ -12,9 +12,9 @@ import (
 	"strings"
 	"testing"
 
-	application "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/app"
-	"github.com/Easy-Bao/DrivingApp/server/internal/dispatch/domain"
-	dispatchhttp "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/transport/http"
+	application "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/domain"
+	dispatchhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"

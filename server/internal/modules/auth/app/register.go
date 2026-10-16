@@ -1,0 +1,241 @@
+package app
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"net/mail"
+	"regexp"
+	"strconv"
+	"strings"
+
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
+)
+
+type RegisterInput struct {
+	Email       string
+	Phone       string
+	Name        string
+	Password    string
+	VehicleType string
+	PlateNumber string
+}
+
+type RegisterService struct {
+	repository   UserStore
+	tokens       TokenIssuer
+	sessions     SessionStore
+	hashPassword func(string) (string, error)
+}
+
+var ErrRegistrationUnavailable = errors.New("registration is unavailable")
+
+type RegisterDependencies struct {
+	Repository   UserStore
+	Tokens       TokenIssuer
+	Sessions     SessionStore
+	HashPassword func(string) (string, error)
+}
+
+func NewRegisterService(dependencies RegisterDependencies) *RegisterService {
+	hashPassword := dependencies.HashPassword
+	if hashPassword == nil {
+		hashPassword = security.HashPassword
+	}
+	return &RegisterService{
+		repository:   dependencies.Repository,
+		tokens:       dependencies.Tokens,
+		sessions:     dependencies.Sessions,
+		hashPassword: hashPassword,
+	}
+}
+
+func (service *RegisterService) Passenger(ctx context.Context, input RegisterInput) (domain.User, string, error) {
+	return service.register(ctx, input, domain.Passenger)
+}
+
+func (service *RegisterService) Driver(ctx context.Context, input RegisterInput) (domain.User, string, error) {
+	return service.register(ctx, input, domain.Driver)
+}
+
+func (service *RegisterService) IssueRefreshToken(ctx context.Context, account domain.User) (string, error) {
+	if service == nil {
+		return "", ErrRegistrationUnavailable
+	}
+	return IssueRefreshToken(
+		ctx,
+		service.sessions,
+		strconv.Itoa(account.ID),
+		account.Role,
+	)
+}
+
+func (service *RegisterService) PreparePassenger(
+	ctx context.Context,
+	input RegisterInput,
+) (domain.PendingRegistration, error) {
+	if service == nil || service.repository == nil {
+		return domain.PendingRegistration{}, ErrRegistrationUnavailable
+	}
+	normalized, err := normalizeInput(input, domain.Passenger, service.hashPassword)
+	if err != nil {
+		return domain.PendingRegistration{}, fmt.Errorf("normalize passenger registration input: %w", err)
+	}
+	existing, err := service.repository.FindByEmail(ctx, normalized.Email)
+	if err == nil && existing.ID != 0 {
+		return domain.PendingRegistration{}, domain.ErrEmailTaken
+	}
+	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
+		return domain.PendingRegistration{}, fmt.Errorf("check existing passenger account: %w", err)
+	}
+	return domain.PendingRegistration{
+		Email:             normalized.Email,
+		Phone:             normalized.Phone,
+		Name:              normalized.Name,
+		PasswordHash:      normalized.PasswordHash,
+		Role:              normalized.Role,
+		VehicleType:       normalized.VehicleType,
+		PlateNumber:       normalized.PlateNumber,
+		PreferredRideType: normalized.PreferredRideType,
+	}, nil
+}
+
+func (service *RegisterService) CommitPendingPassenger(
+	ctx context.Context,
+	pending domain.PendingRegistration,
+) (domain.User, string, error) {
+	if service == nil || service.repository == nil {
+		return domain.User{}, "", ErrRegistrationUnavailable
+	}
+	invalidRole := pending.Role != domain.Passenger
+	missingEmail := pending.Email == ""
+	missingPasswordHash := pending.PasswordHash == ""
+	if invalidRole || missingEmail || missingPasswordHash {
+		return domain.User{}, "", domain.ErrInvalidCredentials
+	}
+	existing, err := service.repository.FindByEmail(ctx, pending.Email)
+	if err == nil && existing.ID != 0 {
+		return domain.User{}, "", domain.ErrEmailTaken
+	}
+	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
+		return domain.User{}, "", fmt.Errorf("check existing passenger account: %w", err)
+	}
+	return service.create(ctx, domain.User{
+		Email:             pending.Email,
+		Phone:             pending.Phone,
+		Name:              pending.Name,
+		Role:              pending.Role,
+		PasswordHash:      pending.PasswordHash,
+		IsVerified:        true,
+		VehicleType:       pending.VehicleType,
+		PlateNumber:       pending.PlateNumber,
+		PreferredRideType: pending.PreferredRideType,
+	})
+}
+
+func (service *RegisterService) register(
+	ctx context.Context,
+	input RegisterInput,
+	role domain.Role,
+) (domain.User, string, error) {
+	if service == nil || service.repository == nil {
+		return domain.User{}, "", ErrRegistrationUnavailable
+	}
+	normalized, err := normalizeInput(input, role, service.hashPassword)
+	if err != nil {
+		return domain.User{}, "", fmt.Errorf("normalize registration input: %w", err)
+	}
+	existing, err := service.repository.FindByEmail(ctx, normalized.Email)
+	if err == nil && existing.ID != 0 {
+		return domain.User{}, "", domain.ErrEmailTaken
+	}
+	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
+		return domain.User{}, "", fmt.Errorf("check existing account: %w", err)
+	}
+	return service.create(ctx, domain.User{
+		Email:             normalized.Email,
+		Phone:             normalized.Phone,
+		Name:              normalized.Name,
+		Role:              normalized.Role,
+		PasswordHash:      normalized.PasswordHash,
+		VehicleType:       normalized.VehicleType,
+		PlateNumber:       normalized.PlateNumber,
+		PreferredRideType: normalized.PreferredRideType,
+	})
+}
+
+type normalizedRegistration struct {
+	Email             string
+	Phone             string
+	Name              string
+	PasswordHash      string
+	Role              domain.Role
+	VehicleType       string
+	PlateNumber       string
+	PreferredRideType string
+}
+
+func normalizeInput(
+	input RegisterInput,
+	role domain.Role,
+	hashPassword func(string) (string, error),
+) (normalizedRegistration, error) {
+	email := strings.ToLower(strings.TrimSpace(input.Email))
+	name := strings.TrimSpace(input.Name)
+	phone := strings.TrimSpace(input.Phone)
+	vehicleType := strings.TrimSpace(input.VehicleType)
+	plateNumber := strings.TrimSpace(input.PlateNumber)
+	invalidEmail := !validEmail(email)
+	invalidName := name == "" || len([]rune(name)) > 100
+	invalidPhone := !_e164Phone.MatchString(phone)
+	invalidPassword := len(input.Password) < 8 || len([]byte(input.Password)) > 72
+	if invalidEmail || invalidName || invalidPhone || invalidPassword {
+		return normalizedRegistration{}, domain.ErrInvalidCredentials
+	}
+	invalidVehicleType := vehicleType == "" || len([]rune(vehicleType)) > 80
+	invalidPlateNumber := plateNumber == "" || len([]rune(plateNumber)) > 32
+	if role == domain.Driver && (invalidVehicleType || invalidPlateNumber) {
+		return normalizedRegistration{}, domain.ErrInvalidCredentials
+	}
+	passwordHash, err := hashPassword(input.Password)
+	if err != nil {
+		return normalizedRegistration{}, fmt.Errorf("hash registration password: %w", err)
+	}
+	//TODO: Remove PreferredRideType instead default solo
+	return normalizedRegistration{
+		Email:             email,
+		Phone:             phone,
+		Name:              name,
+		PasswordHash:      passwordHash,
+		Role:              role,
+		VehicleType:       vehicleType,
+		PlateNumber:       plateNumber,
+		PreferredRideType: "solo-ride",
+	}, nil
+}
+
+func (service *RegisterService) create(ctx context.Context, account domain.User) (domain.User, string, error) {
+	if service == nil || service.repository == nil {
+		return domain.User{}, "", ErrRegistrationUnavailable
+	}
+	created, err := service.repository.Create(ctx, account)
+	if err != nil {
+		return domain.User{}, "", fmt.Errorf("create account: %w", err)
+	}
+	token, err := IssueToken(service.tokens, strconv.Itoa(created.ID), created.Role)
+	if err != nil {
+		return domain.User{}, "", fmt.Errorf("issue account token: %w", err)
+	}
+	return created, token, nil
+}
+
+var _e164Phone = regexp.MustCompile(`^\+[1-9][0-9]{7,14}$`)
+
+func validEmail(value string) bool {
+	if value == "" || len(value) > 254 {
+		return false
+	}
+	address, err := mail.ParseAddress(value)
+	return err == nil && strings.EqualFold(address.Address, value)
+}

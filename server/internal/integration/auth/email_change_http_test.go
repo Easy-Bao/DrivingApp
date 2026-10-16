@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
-	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/auth/http"
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/verification"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/domain"
+	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/transport/http"
+	authapp "github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
@@ -82,7 +82,7 @@ func TestEmailChangeHTTPRequiresAuthenticationAndConfirmsNewAddress(t *testing.T
 	store := &resetOTPStore{}
 	gateway := &emailChangeGateway{}
 	notifier := &emailChangeNotifier{}
-	otp := verification.NewOTPService(verification.Dependencies{
+	otp := authapp.NewOTPService(authapp.OTPDependencies{
 		Users:         accounts,
 		EmailChanges:  accounts,
 		EmailNotifier: notifier,

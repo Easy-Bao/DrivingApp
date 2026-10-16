@@ -14,8 +14,8 @@ import (
 	"strings"
 	"testing"
 
-	documentapplication "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/app"
-	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/transport/http"
+	documentapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/driver/app"
+	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/driver/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )

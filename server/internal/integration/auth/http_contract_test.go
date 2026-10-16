@@ -9,10 +9,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/authentication"
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/domain"
-	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/auth/http"
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/verification"
+	authapp "github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/app"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/domain"
+	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
@@ -33,7 +32,7 @@ func TestRoleSpecificLoginRoutes(t *testing.T) {
 			PasswordHash: testPasswordHash(t, "secret"),
 		},
 	}}
-	authenticate := authentication.NewAuthenticateService(authentication.Dependencies{
+	authenticate := authapp.NewAuthenticateService(authapp.AuthenticateDependencies{
 		Repository:   repository,
 		Tokens:       issuer{},
 		Sessions:     newTestRefreshSessionStore(),
@@ -198,7 +197,7 @@ func TestLoginAndRefreshIssueRotatingSessionTokens(t *testing.T) {
 		},
 	}}
 	manager := security.NewTokenManager("refresh-http-test-secret")
-	authenticate := authentication.NewAuthenticateService(authentication.Dependencies{
+	authenticate := authapp.NewAuthenticateService(authapp.AuthenticateDependencies{
 		Repository:   repository,
 		Tokens:       manager,
 		Sessions:     newTestRefreshSessionStore(),
@@ -267,7 +266,7 @@ func TestLoginRejectsFieldsOutsideTheRequestContract(t *testing.T) {
 	mux := chi.NewRouter()
 	authhttp.NewRouter(
 		authhttp.RouterDependencies{
-			Authenticate: authentication.NewAuthenticateService(authentication.Dependencies{
+			Authenticate: authapp.NewAuthenticateService(authapp.AuthenticateDependencies{
 				Repository:   repository,
 				Tokens:       issuer{},
 				Sessions:     newTestRefreshSessionStore(),
@@ -322,7 +321,7 @@ func TestResetPasswordRoutesEnforceOTPAttemptLimit(t *testing.T) {
 				},
 			}}
 			otpStore := &resetOTPStore{code: "123456"}
-			otp := verification.NewOTPService(verification.Dependencies{
+			otp := authapp.NewOTPService(authapp.OTPDependencies{
 				Users:        repository,
 				Store:        otpStore,
 				Sessions:     newTestRefreshSessionStore(),
@@ -390,7 +389,7 @@ func TestResetPasswordRoutesAcceptValidOTP(t *testing.T) {
 			PasswordHash: testPasswordHash(t, "old-password"),
 		},
 	}}
-	otp := verification.NewOTPService(verification.Dependencies{
+	otp := authapp.NewOTPService(authapp.OTPDependencies{
 		Users:        repository,
 		Store:        &resetOTPStore{code: "654321"},
 		Sessions:     newTestRefreshSessionStore(),

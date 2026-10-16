@@ -1,0 +1,339 @@
+package postgres
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log/slog"
+	"time"
+
+	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	ports "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+const _maxPostgresRideID = 1<<31 - 1
+const _maxPostgresWaitSeconds = 1<<31 - 1
+const _defaultOnlinePresenceMaxAge = 45 * time.Second
+
+type RideRepository struct {
+	pool                       *pgxpool.Pool
+	queries                    *databasepostgres.Queries
+	logger                     *slog.Logger
+	platformCommissionBPS      int64
+	onlinePresenceMaxAge       time.Duration
+	allowUnverifiedTestDrivers bool
+}
+
+type RideStoreConfig struct {
+	Pool                       *pgxpool.Pool
+	Logger                     *slog.Logger
+	PlatformCommissionBPS      int64
+	OnlinePresenceMaxAge       time.Duration
+	AllowUnverifiedTestDrivers bool
+}
+
+var (
+	_ ports.RideStore                  = (*RideRepository)(nil)
+	_ ports.PassengerActiveRideChecker = (*RideRepository)(nil)
+	_ interface {
+		ActiveRidesForDriver(context.Context, int) ([]domain.Ride, error)
+	} = (*RideRepository)(nil)
+)
+
+func NewRideRepository(config RideStoreConfig) (*RideRepository, error) {
+	if config.Pool == nil {
+		return nil, errors.New("postgresql pool is required")
+	}
+	onlinePresenceMaxAge := config.OnlinePresenceMaxAge
+	if onlinePresenceMaxAge <= 0 {
+		onlinePresenceMaxAge = _defaultOnlinePresenceMaxAge
+	}
+	logger := config.Logger
+	if logger == nil {
+		logger = slog.Default()
+	}
+	return &RideRepository{
+		pool:                       config.Pool,
+		queries:                    databasepostgres.New(config.Pool),
+		logger:                     logger,
+		platformCommissionBPS:      config.PlatformCommissionBPS,
+		onlinePresenceMaxAge:       onlinePresenceMaxAge,
+		allowUnverifiedTestDrivers: config.AllowUnverifiedTestDrivers,
+	}, nil
+}
+
+func (repository *RideRepository) onlinePresenceCutoff() pgtype.Timestamptz {
+	maxAge := repository.onlinePresenceMaxAge
+	if maxAge <= 0 {
+		maxAge = _defaultOnlinePresenceMaxAge
+	}
+	return postgresTimestamp(time.Now().UTC().Add(-maxAge))
+}
+
+func postgresTimestamp(value time.Time) pgtype.Timestamptz {
+	return pgtype.Timestamptz{Time: value, Valid: true}
+}
+
+// RideStore is the canonical adapter name used by the ride composition root.
+// The repository constructor remains for existing internal callers.
+type RideStore = RideRepository
+
+func NewRideStore(config RideStoreConfig) (*RideStore, error) {
+	return NewRideRepository(config)
+}
+
+func toPostgresWaitSeconds(duration time.Duration) (int32, error) {
+	seconds := duration / time.Second
+	if duration <= 0 || duration%time.Second != 0 || seconds > _maxPostgresWaitSeconds {
+		return 0, errors.New("passenger wait duration must be a positive whole number of seconds")
+	}
+	return int32(seconds), nil
+}
+
+func (repository *RideRepository) Get(ctx context.Context, rideID int) (domain.Ride, error) {
+	if err := repository.validateNativeReadRepository(); err != nil {
+		return domain.Ride{}, err
+	}
+	dbRideID, err := toPostgresRideID(rideID, "ride id")
+	if err != nil {
+		return domain.Ride{}, err
+	}
+	item, err := repository.queries.GetRideByID(ctx, dbRideID)
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("find ride: %w", err)
+	}
+	ride, err := fromPostgresRideRow(item)
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("map ride: %w", err)
+	}
+	if ride.DriverID == nil {
+		return ride, nil
+	}
+
+	driverProfile, err := repository.queries.GetDriverProfileByUserID(ctx, int32(*ride.DriverID))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ride, nil
+	}
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("find ride driver profile: %w", err)
+	}
+	if ride.DriverName == "" {
+		ride.DriverName = driverProfile.Name
+	}
+	if ride.VehicleType == "" {
+		ride.VehicleType = driverProfile.VehicleType
+	}
+	if ride.PlateNumber == "" {
+		ride.PlateNumber = driverProfile.PlateNumber
+	}
+	return ride, nil
+}
+
+func (repository *RideRepository) ActiveRidesForDriver(ctx context.Context, driverID int) ([]domain.Ride, error) {
+	if err := repository.validateNativeReadRepository(); err != nil {
+		return nil, err
+	}
+	dbDriverID, err := toPostgresRideID(driverID, "driver id")
+	if err != nil {
+		return nil, err
+	}
+	items, err := repository.queries.ListActiveRidesForDriver(ctx, pgtype.Int4{Int32: dbDriverID, Valid: true})
+	if err != nil {
+		return nil, fmt.Errorf("list active driver rides: %w", err)
+	}
+	result := make([]domain.Ride, 0, len(items))
+	for _, item := range items {
+		ride, mappingErr := fromPostgresActiveRideRow(item)
+		if mappingErr != nil {
+			return nil, fmt.Errorf("map active ride: %w", mappingErr)
+		}
+		result = append(result, ride)
+	}
+	return result, nil
+}
+
+func (repository *RideRepository) HasActivePassengerRide(ctx context.Context, passengerID int) (bool, error) {
+	if err := repository.validateNativeReadRepository(); err != nil {
+		return false, err
+	}
+	dbPassengerID, err := toPostgresRideID(passengerID, "passenger id")
+	if err != nil {
+		return false, err
+	}
+	return repository.queries.HasActivePassengerRide(ctx, dbPassengerID)
+}
+
+func (repository *RideRepository) validateNativeReadRepository() error {
+	if repository == nil {
+		return errors.New("postgresql ride read repository is not initialized")
+	}
+	if repository.pool == nil || repository.queries == nil {
+		return errors.New("postgresql ride read repository is not initialized")
+	}
+	return nil
+}
+
+func fromPostgresRide(item databasepostgres.Ride) (domain.Ride, error) {
+	if !item.CreatedAt.Valid {
+		return domain.Ride{}, errors.New("ride creation time is null")
+	}
+	var driverID *int
+	if item.DriverID.Valid && item.DriverID.Int32 > 0 {
+		value := int(item.DriverID.Int32)
+		driverID = &value
+	}
+	return domain.Ride{
+		ID:                         int(item.ID),
+		PassengerID:                int(item.PassengerID),
+		DriverID:                   driverID,
+		Status:                     item.Status,
+		FareAmount:                 item.FareAmount,
+		RideType:                   item.RideType,
+		PickupLatitude:             rideFloatValue(item.PickupLatitude),
+		PickupLongitude:            rideFloatValue(item.PickupLongitude),
+		PickupName:                 rideTextValue(item.PickupName),
+		DropoffLatitude:            rideFloatValue(item.DropoffLatitude),
+		DropoffLongitude:           rideFloatValue(item.DropoffLongitude),
+		DropoffName:                rideTextValue(item.DropoffName),
+		DistanceKm:                 rideFloatValue(item.DistanceKm),
+		DurationMinutes:            rideFloatValue(item.DurationMinutes),
+		DriverName:                 rideTextValue(item.DriverName),
+		VehicleType:                rideTextValue(item.VehicleType),
+		PlateNumber:                rideTextValue(item.PlateNumber),
+		DriverRating:               rideFloatValue(item.DriverRating),
+		CreatedAt:                  rideTimestamp(item.CreatedAt),
+		CompletedAt:                rideTimestamp(item.CompletedAt),
+		ArrivedAt:                  rideTimestamp(item.ArrivedAt),
+		WaitingUntil:               rideTimestamp(item.WaitingUntil),
+		PaymentStatus:              "unpaid",
+		CashOutcome:                string(domain.CashOutcomeUnpaid),
+		CancelledBy:                rideOptionalInt(item.CancelledBy),
+		CancellationReason:         item.CancellationReason,
+		CancellationResponsibility: item.CancellationResponsibility,
+		CancellationDetails:        item.CancellationDetails,
+	}, nil
+}
+
+type rideSettlementProjection struct {
+	PaymentStatus      string
+	CashReceivedAmount int64
+	CashChangeAmount   int64
+	CashOutcome        string
+	CommissionBps      pgtype.Int4
+	CommissionAmount   int64
+	DriverPayoutAmount int64
+}
+
+func fromPostgresRideRow(item databasepostgres.GetRideByIDRow) (domain.Ride, error) {
+	return fromPostgresRideProjection(item.Ride, rideSettlementProjection{
+		PaymentStatus:      item.PaymentStatus,
+		CashReceivedAmount: item.CashReceivedAmount,
+		CashChangeAmount:   item.CashChangeAmount,
+		CashOutcome:        item.CashOutcome,
+		CommissionBps:      item.CommissionBps,
+		CommissionAmount:   item.CommissionAmount,
+		DriverPayoutAmount: item.DriverPayoutAmount,
+	})
+}
+
+func readRideProjection(
+	ctx context.Context,
+	queries *databasepostgres.Queries,
+	rideID int32,
+) (domain.Ride, error) {
+	item, err := queries.GetRideByID(ctx, rideID)
+	if err != nil {
+		return domain.Ride{}, fmt.Errorf("load ride with settlement: %w", err)
+	}
+	return fromPostgresRideRow(item)
+}
+
+func fromPostgresActiveRideRow(item databasepostgres.ListActiveRidesForDriverRow) (domain.Ride, error) {
+	return fromPostgresRideProjection(item.Ride, rideSettlementProjection{
+		PaymentStatus:      item.PaymentStatus,
+		CashReceivedAmount: item.CashReceivedAmount,
+		CashChangeAmount:   item.CashChangeAmount,
+		CashOutcome:        item.CashOutcome,
+		CommissionBps:      item.CommissionBps,
+		CommissionAmount:   item.CommissionAmount,
+		DriverPayoutAmount: item.DriverPayoutAmount,
+	})
+}
+
+func fromPostgresRideProjection(
+	item databasepostgres.Ride,
+	projection rideSettlementProjection,
+) (domain.Ride, error) {
+	ride, err := fromPostgresRide(item)
+	if err != nil {
+		return domain.Ride{}, err
+	}
+	if projection.PaymentStatus != "" {
+		ride.PaymentStatus = projection.PaymentStatus
+	}
+	ride.CashReceivedAmount = projection.CashReceivedAmount
+	ride.CashChangeAmount = projection.CashChangeAmount
+	if projection.CashOutcome != "" {
+		ride.CashOutcome = projection.CashOutcome
+	}
+	if projection.CommissionBps.Valid {
+		commissionBps := int64(projection.CommissionBps.Int32)
+		ride.CommissionBPS = &commissionBps
+	}
+	ride.CommissionAmount = projection.CommissionAmount
+	ride.DriverPayoutAmount = projection.DriverPayoutAmount
+	return ride, nil
+}
+
+func rideSettlementProjectionFromRecord(item databasepostgres.RideSettlement) rideSettlementProjection {
+	return rideSettlementProjection{
+		PaymentStatus:      item.PaymentStatus,
+		CashReceivedAmount: item.CashReceivedAmount,
+		CashChangeAmount:   item.CashChangeAmount,
+		CashOutcome:        item.CashOutcome,
+		CommissionBps:      item.CommissionBps,
+		CommissionAmount:   item.CommissionAmount,
+		DriverPayoutAmount: item.DriverPayoutAmount,
+	}
+}
+
+func rideTimestamp(value pgtype.Timestamptz) *string {
+	if !value.Valid {
+		return nil
+	}
+	formatted := value.Time.UTC().Format(time.RFC3339)
+	return &formatted
+}
+
+func rideTextValue(value pgtype.Text) string {
+	if !value.Valid {
+		return ""
+	}
+	return value.String
+}
+
+func rideFloatValue(value pgtype.Float8) float64 {
+	if !value.Valid {
+		return 0
+	}
+	return value.Float64
+}
+
+func rideOptionalInt(value pgtype.Int4) *int {
+	if !value.Valid || value.Int32 <= 0 {
+		return nil
+	}
+	result := int(value.Int32)
+	return &result
+}
+
+func toPostgresRideID(value int, field string) (int32, error) {
+	if value <= 0 || int64(value) > int64(_maxPostgresRideID) {
+		return 0, fmt.Errorf("%s %d is outside PostgreSQL integer range", field, value)
+	}
+	return int32(value), nil
+}

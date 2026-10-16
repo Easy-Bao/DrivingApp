@@ -1,0 +1,533 @@
+package postgres
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+
+	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
+	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
+	platformstorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/user/app"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/user/domain"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+const _maxPostgresProfileID = 1<<31 - 1
+
+type ProfileRepository struct {
+	pool                       *pgxpool.Pool
+	queries                    *databasepostgres.Queries
+	avatarStorage              platformstorage.ObjectStore
+	allowUnverifiedTestDrivers bool
+	logger                     *slog.Logger
+}
+
+var (
+	_ app.ProfileStore      = (*ProfileRepository)(nil)
+	_ app.AvatarStore       = (*ProfileRepository)(nil)
+	_ app.NotificationStore = (*ProfileRepository)(nil)
+)
+
+type ProfileRepositoryDependencies struct {
+	Pool                       *pgxpool.Pool
+	AvatarStorage              platformstorage.ObjectStore
+	AllowUnverifiedTestDrivers bool
+}
+
+func NewProfileRepository(dependencies ProfileRepositoryDependencies) (*ProfileRepository, error) {
+	if dependencies.Pool == nil {
+		return nil, errors.New("postgresql pool is required")
+	}
+	return &ProfileRepository{
+		pool:                       dependencies.Pool,
+		queries:                    databasepostgres.New(dependencies.Pool),
+		avatarStorage:              dependencies.AvatarStorage,
+		allowUnverifiedTestDrivers: dependencies.AllowUnverifiedTestDrivers,
+		logger:                     slog.Default(),
+	}, nil
+}
+
+// ProfileStore is the canonical adapter name used by the user composition
+// root. The repository constructor remains for existing internal callers.
+type ProfileStore = ProfileRepository
+
+func NewProfileStore(dependencies ProfileRepositoryDependencies) (*ProfileStore, error) {
+	return NewProfileRepository(dependencies)
+}
+
+func (repository *ProfileRepository) WithLogger(logger *slog.Logger) *ProfileRepository {
+	if repository != nil && logger != nil {
+		repository.logger = logger
+	}
+	return repository
+}
+
+func (repository *ProfileRepository) log() *slog.Logger {
+	if repository != nil && repository.logger != nil {
+		return repository.logger
+	}
+	return slog.Default()
+}
+
+func (repository *ProfileRepository) Get(ctx context.Context, userID int) (domain.Profile, error) {
+	if err := repository.validate(); err != nil {
+		return domain.Profile{}, fmt.Errorf("validate profile repository: %w", err)
+	}
+	dbUserID, err := toPostgresProfileID(userID, "user id")
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("convert profile user id: %w", err)
+	}
+
+	account, err := repository.queries.GetUserByID(ctx, dbUserID)
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("find profile account: %w", err)
+	}
+
+	driverProfile, err := repository.queries.GetDriverProfileByUserIDFull(ctx, dbUserID)
+	if err == nil {
+		return driverProfileFromPostgres(account, driverProfile), nil
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return domain.Profile{}, fmt.Errorf("find driver profile: %w", err)
+	}
+
+	passengerProfile, err := repository.queries.GetPassengerProfileByUserIDFull(ctx, dbUserID)
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("find passenger profile: %w", err)
+	}
+	return passengerProfileFromPostgres(account, passengerProfile), nil
+}
+
+func (repository *ProfileRepository) Save(ctx context.Context, profile domain.Profile) (domain.Profile, error) {
+	if err := repository.validate(); err != nil {
+		return domain.Profile{}, fmt.Errorf("validate profile repository: %w", err)
+	}
+	if profile.Role != "driver" && profile.Role != "passenger" {
+		return domain.Profile{}, fmt.Errorf("unsupported profile role %q", profile.Role)
+	}
+	dbUserID, err := toPostgresProfileID(profile.UserID, "user id")
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("convert profile user id: %w", err)
+	}
+	dbProfileID, err := toPostgresProfileID(profile.ID, "profile id")
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("convert profile id: %w", err)
+	}
+
+	transaction, err := repository.pool.Begin(ctx)
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("begin profile update transaction: %w", err)
+	}
+	defer func() {
+		platformdatabase.Rollback(ctx, transaction)
+	}()
+
+	transactionQueries := repository.queries.WithTx(transaction)
+	account, err := transactionQueries.UpdateUserProfile(ctx, databasepostgres.UpdateUserProfileParams{
+		ID:   dbUserID,
+		Name: toPostgresProfileText(profile.Name),
+	})
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("update profile account: %w", err)
+	}
+
+	var updated domain.Profile
+	switch profile.Role {
+	case "driver":
+		currentDriver, lockErr := transactionQueries.LockDriverProfileByUserID(ctx, dbUserID)
+		if lockErr != nil {
+			return domain.Profile{}, fmt.Errorf("lock driver profile: %w", lockErr)
+		}
+		if currentDriver.IsOnline &&
+			(currentDriver.VehicleType != profile.VehicleType ||
+				currentDriver.PlateNumber != profile.PlateNumber) {
+			return domain.Profile{}, domain.ErrDriverVehicleChangeWhileOnline
+		}
+		driverProfile, updateErr := transactionQueries.UpdateDriverProfile(ctx, databasepostgres.UpdateDriverProfileParams{
+			ID:          dbProfileID,
+			Name:        profile.Name,
+			VehicleType: profile.VehicleType,
+			PlateNumber: profile.PlateNumber,
+		})
+		if updateErr != nil {
+			return domain.Profile{}, fmt.Errorf("update driver profile: %w", updateErr)
+		}
+		updated = driverProfileFromPostgres(account, driverProfile)
+	case "passenger":
+		passengerProfile, updateErr := transactionQueries.UpdatePassengerProfile(
+			ctx,
+			databasepostgres.UpdatePassengerProfileParams{
+				ID:                dbProfileID,
+				Name:              profile.Name,
+				Address:           toPostgresProfileText(profile.Address),
+				Gender:            profile.Gender,
+				PreferredRideType: toPostgresProfileText(profile.PreferredRideType),
+			},
+		)
+		if updateErr != nil {
+			return domain.Profile{}, fmt.Errorf("update passenger profile: %w", updateErr)
+		}
+		updated = passengerProfileFromPostgres(account, passengerProfile)
+	}
+
+	if err := transaction.Commit(ctx); err != nil {
+		return domain.Profile{}, fmt.Errorf("commit profile update transaction: %w", err)
+	}
+	return updated, nil
+}
+
+func (repository *ProfileRepository) UpdateOnlineStatus(
+	ctx context.Context,
+	userID int,
+	targetID int,
+	isOnline bool,
+) (domain.Profile, error) {
+	if err := repository.validate(); err != nil {
+		return domain.Profile{}, fmt.Errorf("validate profile repository: %w", err)
+	}
+	dbUserID, err := toPostgresProfileID(userID, "user id")
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("convert profile user id: %w", err)
+	}
+	dbTargetID, err := toPostgresProfileID(targetID, "target id")
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("convert profile target id: %w", err)
+	}
+
+	transaction, err := repository.pool.Begin(ctx)
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("begin driver online status transaction: %w", err)
+	}
+	defer func() {
+		platformdatabase.Rollback(ctx, transaction)
+	}()
+
+	transactionQueries := repository.queries.WithTx(transaction)
+	lockedProfile, err := transactionQueries.LockDriverProfileForOnlineStatus(
+		ctx,
+		databasepostgres.LockDriverProfileForOnlineStatusParams{
+			UserID:   dbUserID,
+			TargetID: dbTargetID,
+		},
+	)
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("lock driver online status profile: %w", err)
+	}
+	if !isOnline {
+		activeRideCount, countErr := transactionQueries.CountActiveRidesForDriver(
+			ctx,
+			pgtype.Int4{Int32: lockedProfile.UserID, Valid: true},
+		)
+		if countErr != nil {
+			return domain.Profile{}, fmt.Errorf("count active driver rides: %w", countErr)
+		}
+		if activeRideCount > 0 {
+			return domain.Profile{}, domain.ErrDriverAvailabilityBlocked
+		}
+	}
+
+	profile, err := transactionQueries.UpdateDriverOnlineStatus(
+		ctx,
+		databasepostgres.UpdateDriverOnlineStatusParams{
+			UserID:                     dbUserID,
+			IsOnline:                   isOnline,
+			TargetID:                   dbTargetID,
+			AllowUnverifiedTestDrivers: repository.allowUnverifiedTestDrivers,
+		},
+	)
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("update driver online status: %w", err)
+	}
+	if err := transaction.Commit(ctx); err != nil {
+		return domain.Profile{}, fmt.Errorf("commit driver online status transaction: %w", err)
+	}
+	return domain.Profile{
+		ID:               int(profile.ID),
+		UserID:           int(profile.UserID),
+		Role:             "driver",
+		IsOnline:         profile.IsOnline,
+		OnlineLastSeenAt: onlineLastSeenAt(profile.OnlineLastSeenAt),
+	}, nil
+}
+
+func (repository *ProfileRepository) SaveAvatar(
+	ctx context.Context,
+	userID int,
+	content []byte,
+	contentType string,
+) (domain.Profile, error) {
+	if err := repository.validate(); err != nil {
+		return domain.Profile{}, fmt.Errorf("validate profile repository: %w", err)
+	}
+	if repository.avatarStorage == nil {
+		return domain.Profile{}, domain.ErrAvatarStorageUnavailable
+	}
+	dbUserID, err := toPostgresProfileID(userID, "user id")
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("convert profile user id: %w", err)
+	}
+
+	passengerProfile, err := repository.queries.GetPassengerProfileByUserIDFull(ctx, dbUserID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return domain.Profile{}, domain.ErrAvatarNotFound
+	}
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("find passenger avatar profile: %w", err)
+	}
+
+	storageKey, err := repository.avatarStorage.Store(ctx, content)
+	if err != nil {
+		return domain.Profile{}, fmt.Errorf("store passenger avatar: %w", err)
+	}
+	updatedRows, err := repository.queries.UpdatePassengerAvatar(ctx, databasepostgres.UpdatePassengerAvatarParams{
+		ID:                passengerProfile.ID,
+		AvatarStorageKey:  toPostgresProfileText(storageKey),
+		AvatarContentType: toPostgresProfileText(contentType),
+	})
+	if err != nil {
+		repository.cleanupAvatar(ctx, storageKey)
+		return domain.Profile{}, fmt.Errorf("update passenger avatar metadata: %w", err)
+	}
+	if updatedRows == 0 {
+		repository.cleanupAvatar(ctx, storageKey)
+		return domain.Profile{}, domain.ErrAvatarNotFound
+	}
+
+	oldStorageKey := strings.TrimSpace(profileTextValue(passengerProfile.AvatarStorageKey))
+	if oldStorageKey != "" && oldStorageKey != storageKey {
+		repository.cleanupAvatar(ctx, oldStorageKey)
+	}
+	return repository.Get(ctx, userID)
+}
+
+func (repository *ProfileRepository) cleanupAvatar(ctx context.Context, storageKey string) {
+	cleanupContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Second)
+	defer cancel()
+	if err := repository.avatarStorage.Delete(cleanupContext, storageKey); err != nil {
+		repository.log().WarnContext(ctx, "delete passenger avatar object failed", "error", err, "operation", "delete")
+	}
+}
+
+func (repository *ProfileRepository) GetAvatar(ctx context.Context, userID int) (domain.Avatar, error) {
+	if err := repository.validate(); err != nil {
+		return domain.Avatar{}, fmt.Errorf("validate profile repository: %w", err)
+	}
+	if repository.avatarStorage == nil {
+		return domain.Avatar{}, domain.ErrAvatarStorageUnavailable
+	}
+	dbUserID, err := toPostgresProfileID(userID, "user id")
+	if err != nil {
+		return domain.Avatar{}, fmt.Errorf("convert profile user id: %w", err)
+	}
+
+	passengerProfile, err := repository.queries.GetPassengerProfileByUserIDFull(ctx, dbUserID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return domain.Avatar{}, domain.ErrAvatarNotFound
+	}
+	if err != nil {
+		return domain.Avatar{}, fmt.Errorf("find passenger avatar profile: %w", err)
+	}
+	storageKey := strings.TrimSpace(profileTextValue(passengerProfile.AvatarStorageKey))
+	if storageKey == "" {
+		return domain.Avatar{}, domain.ErrAvatarNotFound
+	}
+
+	content, err := repository.avatarStorage.Read(ctx, storageKey, domain.MaxAvatarBytes)
+	if err != nil {
+		return domain.Avatar{}, errors.Join(
+			domain.ErrAvatarCorrupt,
+			fmt.Errorf("read passenger avatar: %w", err),
+		)
+	}
+	contentType := http.DetectContentType(content)
+	storedContentType := strings.TrimSpace(profileTextValue(passengerProfile.AvatarContentType))
+	invalidContentType := contentType != "image/jpeg" && contentType != "image/png"
+	contentTypeMismatch := storedContentType != "" && storedContentType != contentType
+	if invalidContentType || contentTypeMismatch {
+		return domain.Avatar{}, domain.ErrAvatarCorrupt
+	}
+	return domain.Avatar{Bytes: content, ContentType: contentType}, nil
+}
+
+func (repository *ProfileRepository) Notifications(
+	ctx context.Context,
+	userID int,
+	limit int,
+	offset int,
+) ([]domain.Notification, error) {
+	if err := repository.validate(); err != nil {
+		return nil, fmt.Errorf("validate profile repository: %w", err)
+	}
+	dbUserID, err := toPostgresProfileID(userID, "user id")
+	if err != nil {
+		return nil, fmt.Errorf("convert notification user id: %w", err)
+	}
+	if limit <= 0 {
+		return nil, errors.New("notification limit must be positive")
+	}
+	if limit == int(^uint(0)>>1) {
+		return nil, errors.New("notification limit exceeds native integer range")
+	}
+	dbLimit, err := toPostgresProfilePageValue(limit+1, "limit")
+	if err != nil {
+		return nil, fmt.Errorf("convert notification limit: %w", err)
+	}
+	dbOffset, err := toPostgresProfilePageValue(offset, "offset")
+	if err != nil {
+		return nil, fmt.Errorf("convert notification offset: %w", err)
+	}
+
+	items, err := repository.queries.ListNotifications(ctx, databasepostgres.ListNotificationsParams{
+		UserID: dbUserID,
+		Limit:  dbLimit,
+		Offset: dbOffset,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("list notifications: %w", err)
+	}
+	result := make([]domain.Notification, 0, len(items))
+	for _, item := range items {
+		notification, mappingErr := fromPostgresNotification(item)
+		if mappingErr != nil {
+			return nil, fmt.Errorf("map notification: %w", mappingErr)
+		}
+		result = append(result, notification)
+	}
+	return result, nil
+}
+
+func (repository *ProfileRepository) DeleteNotification(
+	ctx context.Context,
+	userID int,
+	notificationID int,
+) error {
+	if err := repository.validate(); err != nil {
+		return fmt.Errorf("validate profile repository: %w", err)
+	}
+	dbUserID, err := toPostgresProfileID(userID, "user id")
+	if err != nil {
+		return fmt.Errorf("convert notification user id: %w", err)
+	}
+	dbNotificationID, err := toPostgresProfileID(notificationID, "notification id")
+	if err != nil {
+		return fmt.Errorf("convert notification id: %w", err)
+	}
+	deleted, err := repository.queries.DeleteNotification(ctx, databasepostgres.DeleteNotificationParams{
+		ID:     dbNotificationID,
+		UserID: dbUserID,
+	})
+	if err != nil {
+		return fmt.Errorf("delete notification: %w", err)
+	}
+	if deleted == 0 {
+		return domain.ErrNotificationNotFound
+	}
+	return nil
+}
+
+func (repository *ProfileRepository) validate() error {
+	if repository == nil {
+		return errors.New("postgresql profile repository is not initialized")
+	}
+	if repository.pool == nil || repository.queries == nil {
+		return errors.New("postgresql profile repository is not initialized")
+	}
+	return nil
+}
+
+func driverProfileFromPostgres(account databasepostgres.User, profile databasepostgres.DriverProfile) domain.Profile {
+	return domain.Profile{
+		ID:               int(profile.ID),
+		UserID:           int(profile.UserID),
+		Role:             "driver",
+		Name:             profile.Name,
+		Phone:            account.Phone,
+		Email:            account.Email,
+		VehicleType:      profile.VehicleType,
+		PlateNumber:      profile.PlateNumber,
+		Rating:           profile.Rating,
+		IsOnline:         profile.IsOnline,
+		OnlineLastSeenAt: onlineLastSeenAt(profile.OnlineLastSeenAt),
+	}
+}
+
+func onlineLastSeenAt(value pgtype.Timestamptz) *time.Time {
+	if !value.Valid {
+		return nil
+	}
+	seenAt := value.Time
+	return &seenAt
+}
+
+func passengerProfileFromPostgres(
+	account databasepostgres.User,
+	profile databasepostgres.PassengerProfile,
+) domain.Profile {
+	return domain.Profile{
+		ID:                int(profile.ID),
+		UserID:            int(profile.UserID),
+		Role:              "passenger",
+		Name:              profile.Name,
+		Phone:             account.Phone,
+		Email:             account.Email,
+		Address:           profileTextValue(profile.Address),
+		Gender:            profile.Gender,
+		AvatarURL:         passengerAvatarURL(int(profile.UserID), profileTextValue(profile.AvatarStorageKey)),
+		PreferredRideType: profileTextValue(profile.PreferredRideType),
+	}
+}
+
+func passengerAvatarURL(userID int, storageKey string) string {
+	if userID <= 0 || strings.TrimSpace(storageKey) == "" {
+		return ""
+	}
+	return "/api/v1/passengers/" + strconv.Itoa(userID) + "/avatar"
+}
+
+func fromPostgresNotification(item databasepostgres.Notification) (domain.Notification, error) {
+	if !item.CreatedAt.Valid {
+		return domain.Notification{}, errors.New("notification creation time is null")
+	}
+	return domain.Notification{
+		ID:        int(item.ID),
+		UserID:    int(item.UserID),
+		Type:      item.Type,
+		Title:     item.Title,
+		Body:      item.Body,
+		IsRead:    item.IsRead,
+		CreatedAt: item.CreatedAt.Time.UTC().Format("2006-01-02T15:04:05Z07:00"),
+	}, nil
+}
+
+func toPostgresProfileID(value int, field string) (int32, error) {
+	if value <= 0 || int64(value) > int64(_maxPostgresProfileID) {
+		return 0, fmt.Errorf("%s %d is outside PostgreSQL integer range", field, value)
+	}
+	return int32(value), nil
+}
+
+func toPostgresProfilePageValue(value int, field string) (int32, error) {
+	if value < 0 || int64(value) > int64(_maxPostgresProfileID) {
+		return 0, fmt.Errorf("%s %d is outside PostgreSQL integer range", field, value)
+	}
+	return int32(value), nil
+}
+
+func toPostgresProfileText(value string) pgtype.Text {
+	return pgtype.Text{String: value, Valid: true}
+}
+
+func profileTextValue(value pgtype.Text) string {
+	if !value.Valid {
+		return ""
+	}
+	return value.String
+}

@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/email"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/adapter/email"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
-	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/app"
+	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
 )
 
 func TestAPIAddressDefaultsToLoopback(t *testing.T) {

@@ -5,7 +5,7 @@ package chat_test
 import (
 	"context"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment"
+	assignment "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
 )
 
 type chatAssignmentLookup struct {

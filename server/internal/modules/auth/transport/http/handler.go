@@ -1,0 +1,388 @@
+package http
+
+import (
+	"errors"
+	"net/http"
+
+	authapp "github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/app"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/domain"
+	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/request"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
+)
+
+type Handler struct {
+	register     *authapp.RegisterService
+	authenticate *authapp.AuthenticateService
+	otp          *authapp.OTPService
+	verifier     *security.TokenManager
+}
+
+type Dependencies struct {
+	Register     *authapp.RegisterService
+	Authenticate *authapp.AuthenticateService
+	OTP          *authapp.OTPService
+	Verifier     *security.TokenManager
+}
+
+func NewHandler(dependencies Dependencies) *Handler {
+	return &Handler{
+		register:     dependencies.Register,
+		authenticate: dependencies.Authenticate,
+		otp:          dependencies.OTP,
+		verifier:     dependencies.Verifier,
+	}
+}
+func (handler *Handler) PassengerRegister(w http.ResponseWriter, r *http.Request) {
+	handler.registerAccount(w, r, domain.Passenger)
+}
+func (handler *Handler) DriverRegister(w http.ResponseWriter, r *http.Request) {
+	handler.registerAccount(w, r, domain.Driver)
+}
+func (handler *Handler) registerAccount(w http.ResponseWriter, r *http.Request, role domain.Role) {
+	var input RegistrationRequest
+	if !decode(w, r, &input) {
+		return
+	}
+	handler.registerDecoded(w, r, input, role)
+}
+
+func (handler *Handler) GenericRegister(w http.ResponseWriter, r *http.Request) {
+	var input GenericRegistrationRequest
+	if !decode(w, r, &input) {
+		return
+	}
+	if input.Role != string(domain.Driver) && input.Role != string(domain.Passenger) {
+		response.Error(w, http.StatusBadRequest, "role must be passenger or driver")
+		return
+	}
+	handler.registerDecoded(
+		w,
+		r,
+		input.RegistrationRequest,
+		domain.Role(input.Role),
+	)
+}
+
+func (handler *Handler) registerDecoded(
+	w http.ResponseWriter,
+	r *http.Request,
+	input RegistrationRequest,
+	role domain.Role,
+) {
+	if role != domain.Passenger && role != domain.Driver {
+		response.Error(w, http.StatusBadRequest, "role must be passenger or driver")
+		return
+	}
+	if role == domain.Passenger {
+		if handler.otp == nil {
+			response.Error(w, http.StatusServiceUnavailable, "passenger verification is unavailable")
+			return
+		}
+		pending, err := handler.otp.RegisterPassenger(r.Context(), toRegisterInput(input))
+		if err != nil {
+			response.Error(w, registrationErrorStatus(err), safeAuthError(err))
+			return
+		}
+		response.JSON(w, http.StatusAccepted, map[string]any{
+			"success": true,
+			"data": map[string]any{
+				"email":             pending.Email,
+				"needsVerification": true,
+			},
+		})
+		return
+	}
+	account, token, err := handler.register.Driver(
+		r.Context(),
+		toRegisterInput(input),
+	)
+	if err != nil {
+		response.Error(w, registrationErrorStatus(err), safeAuthError(err))
+		return
+	}
+	refreshToken, err := handler.register.IssueRefreshToken(r.Context(), account)
+	if err != nil {
+		response.Error(w, http.StatusServiceUnavailable, safeAuthError(err))
+		return
+	}
+	response.JSON(w, http.StatusCreated, authSessionResponse(
+		account,
+		authapp.SessionTokens{AccessToken: token, RefreshToken: refreshToken},
+		!account.IsVerified,
+		false,
+	))
+}
+func (handler *Handler) Login(w http.ResponseWriter, r *http.Request) {
+	handler.login(w, r, "")
+}
+
+func (handler *Handler) PassengerLogin(w http.ResponseWriter, r *http.Request) {
+	handler.login(w, r, domain.Passenger)
+}
+
+func (handler *Handler) DriverLogin(w http.ResponseWriter, r *http.Request) {
+	handler.login(w, r, domain.Driver)
+}
+
+func (handler *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
+	var input RefreshToken
+	if !decode(w, r, &input) {
+		return
+	}
+	tokens, err := handler.authenticate.Refresh(r.Context(), input.Token)
+	if err != nil {
+		status := http.StatusServiceUnavailable
+		if errors.Is(err, domain.ErrInvalidRefreshToken) {
+			status = http.StatusUnauthorized
+		}
+		response.Error(w, status, safeAuthError(err))
+		return
+	}
+	response.JSON(w, http.StatusOK, map[string]any{
+		"success": true,
+		"data": map[string]any{
+			"token":        tokens.AccessToken,
+			"refreshToken": tokens.RefreshToken,
+		},
+	})
+}
+
+func (handler *Handler) Logout(w http.ResponseWriter, r *http.Request) {
+	var input RefreshToken
+	if !decode(w, r, &input) {
+		return
+	}
+	if err := handler.authenticate.Logout(r.Context(), input.Token); err != nil {
+		status := http.StatusServiceUnavailable
+		if errors.Is(err, domain.ErrInvalidRefreshToken) {
+			status = http.StatusUnauthorized
+		}
+		response.Error(w, status, safeAuthError(err))
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (handler *Handler) login(w http.ResponseWriter, r *http.Request, role domain.Role) {
+	var input LoginRequest
+	if !decode(w, r, &input) {
+		return
+	}
+	if input.Role != "" {
+		requestedRole := domain.Role(input.Role)
+		if (requestedRole != domain.Passenger && requestedRole != domain.Driver) ||
+			(role != "" && role != requestedRole) {
+			response.Error(w, http.StatusBadRequest, "role must match the login endpoint")
+			return
+		}
+		role = requestedRole
+	}
+	account, tokens, err := handler.authenticate.ExecuteSessionAs(r.Context(), input.Email, input.Password, role)
+	if err != nil {
+		response.Error(w, http.StatusUnauthorized, "email or password is incorrect")
+		return
+	}
+	response.JSON(w, http.StatusOK, authSessionResponse(
+		account,
+		tokens,
+		!account.IsVerified,
+		false,
+	))
+}
+
+func (handler *Handler) RequestOTP(w http.ResponseWriter, r *http.Request) {
+	if handler.otp == nil {
+		response.Error(w, http.StatusServiceUnavailable, "otp delivery is unavailable")
+		return
+	}
+	var input OTPRequest
+	if !decode(w, r, &input) {
+		return
+	}
+	if err := handler.otp.RequestVerification(r.Context(), input.Email); err != nil {
+		writeOTPError(w, err)
+		return
+	}
+	response.JSON(w, http.StatusAccepted, map[string]any{"success": true, "data": map[string]bool{"sent": true}})
+}
+
+func (handler *Handler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
+	if handler.otp == nil {
+		response.Error(w, http.StatusServiceUnavailable, "otp delivery is unavailable")
+		return
+	}
+	var input OTPVerification
+	if !decode(w, r, &input) {
+		return
+	}
+
+	account, token, err := handler.otp.VerifyPassenger(r.Context(), input.Email, input.Code)
+
+	if err != nil {
+		writeOTPError(w, err)
+		return
+	}
+	refreshToken, err := handler.otp.IssueRefreshToken(r.Context(), account)
+	if err != nil {
+		response.Error(w, http.StatusServiceUnavailable, safeAuthError(err))
+		return
+	}
+	response.JSON(w, http.StatusOK, authSessionResponse(
+		account,
+		authapp.SessionTokens{AccessToken: token, RefreshToken: refreshToken},
+		false,
+		true,
+	))
+}
+
+func (handler *Handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	handler.forgotPasswordForRole(w, r, domain.Passenger)
+}
+
+func (handler *Handler) DriverForgotPassword(w http.ResponseWriter, r *http.Request) {
+	handler.forgotPasswordForRole(w, r, domain.Driver)
+}
+
+func (handler *Handler) forgotPasswordForRole(w http.ResponseWriter, r *http.Request, role domain.Role) {
+	if handler.otp == nil {
+		response.Error(w, http.StatusServiceUnavailable, "otp delivery is unavailable")
+		return
+	}
+	var input OTPRequest
+	if !decode(w, r, &input) {
+		return
+	}
+	if err := handler.otp.RequestPasswordResetForRole(r.Context(), input.Email, role); err != nil {
+		writeOTPError(w, err)
+		return
+	}
+	response.JSON(w, http.StatusOK, map[string]any{"success": true, "data": map[string]bool{"success": true}})
+}
+
+func (handler *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	handler.resetPasswordForRole(w, r, domain.Passenger)
+}
+
+func (handler *Handler) DriverResetPassword(w http.ResponseWriter, r *http.Request) {
+	handler.resetPasswordForRole(w, r, domain.Driver)
+}
+
+func (handler *Handler) resetPasswordForRole(w http.ResponseWriter, r *http.Request, role domain.Role) {
+	if handler.otp == nil {
+		response.Error(w, http.StatusServiceUnavailable, "otp delivery is unavailable")
+		return
+	}
+	var input PasswordReset
+	if !decode(w, r, &input) {
+		return
+	}
+	if err := handler.otp.ResetPasswordForRole(
+		r.Context(),
+		input.Email,
+		input.Code,
+		input.NewPassword,
+		role,
+	); err != nil {
+		writeOTPError(w, err)
+		return
+	}
+	response.JSON(w, http.StatusOK, map[string]any{"success": true, "message": "password reset successful"})
+}
+
+func toRegisterInput(input RegistrationRequest) authapp.RegisterInput {
+	return authapp.RegisterInput{
+		Email:       input.Email,
+		Phone:       input.Phone,
+		Name:        input.Name,
+		Password:    input.Password,
+		VehicleType: input.VehicleType,
+		PlateNumber: input.PlateNumber,
+	}
+}
+
+func decode(w http.ResponseWriter, r *http.Request, value any) bool {
+	if sharedrequest.DecodeJSON(w, r, value, 16<<10) != nil {
+		response.Error(w, http.StatusBadRequest, "invalid JSON")
+		return false
+	}
+	return true
+}
+func safeAuthError(err error) string {
+	switch {
+	case errors.Is(err, domain.ErrEmailTaken):
+		return "That email is already registered."
+	case errors.Is(err, domain.ErrAccountConflict):
+		return "That email or phone number is already registered."
+	case errors.Is(err, domain.ErrInvalidCredentials):
+		return "The email or password is incorrect."
+	case errors.Is(err, domain.ErrInvalidRole):
+		return "Choose a valid account type."
+	case errors.Is(err, domain.ErrOTPRequired):
+		return "Enter the verification code to continue."
+	case errors.Is(err, domain.ErrInvalidOTP):
+		return "That verification code is invalid or expired."
+	case errors.Is(err, domain.ErrOTPMaxAttemptsExceeded):
+		return "Too many code attempts. Request a new verification code to try again."
+	case errors.Is(err, domain.ErrOTPUnavailable):
+		return "Verification is temporarily unavailable. Please try again."
+	case errors.Is(err, domain.ErrPendingRegistrationNotFound):
+		return "Your registration could not be found. Please start again."
+	case errors.Is(err, domain.ErrInvalidRefreshToken):
+		return "Your session has expired. Please sign in again."
+	case errors.Is(err, domain.ErrRefreshSessionUnavailable):
+		return "Authentication is temporarily unavailable. Please try again."
+	case errors.Is(err, authapp.ErrRegistrationUnavailable):
+		return "Registration is temporarily unavailable. Please try again."
+	default:
+		return "We could not complete that request. Please try again."
+	}
+}
+
+func registrationErrorStatus(err error) int {
+	switch {
+	case errors.Is(err, domain.ErrEmailTaken), errors.Is(err, domain.ErrAccountConflict):
+		return http.StatusConflict
+	case errors.Is(err, domain.ErrOTPUnavailable):
+		return http.StatusServiceUnavailable
+	case errors.Is(err, authapp.ErrRegistrationUnavailable):
+		return http.StatusServiceUnavailable
+	default:
+		return http.StatusBadRequest
+	}
+}
+
+func otpErrorStatus(err error) int {
+	if errors.Is(err, domain.ErrOTPMaxAttemptsExceeded) {
+		return http.StatusTooManyRequests
+	}
+	if errors.Is(err, domain.ErrOTPUnavailable) {
+		return http.StatusServiceUnavailable
+	}
+	return http.StatusBadRequest
+}
+
+func writeOTPError(writer http.ResponseWriter, err error) {
+	if errors.Is(err, domain.ErrOTPMaxAttemptsExceeded) {
+		writer.Header().Set("Retry-After", "900")
+	}
+	response.Error(writer, otpErrorStatus(err), safeAuthError(err))
+}
+
+func authSessionResponse(
+	account domain.User,
+	tokens authapp.SessionTokens,
+	needsVerification bool,
+	verified bool,
+) SessionResponse {
+	return SessionResponse{
+		Success: true,
+		Data: SessionData{
+			User:              NewAccountResponse(account),
+			Token:             tokens.AccessToken,
+			RefreshToken:      tokens.RefreshToken,
+			NeedsVerification: needsVerification,
+			Verified:          verified,
+		},
+	}
+}

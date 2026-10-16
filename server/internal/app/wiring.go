@@ -8,45 +8,41 @@ import (
 	"strconv"
 	"time"
 
-	adminapp "github.com/Easy-Bao/DrivingApp/server/internal/admin/app"
-	adminhttp "github.com/Easy-Bao/DrivingApp/server/internal/admin/transport/http"
-	"github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/email"
-	authredis "github.com/Easy-Bao/DrivingApp/server/internal/auth/adapter/redis"
-	authauthentication "github.com/Easy-Bao/DrivingApp/server/internal/auth/authentication"
-	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/auth/http"
-	authports "github.com/Easy-Bao/DrivingApp/server/internal/auth/ports"
-	authregistration "github.com/Easy-Bao/DrivingApp/server/internal/auth/registration"
-	authverification "github.com/Easy-Bao/DrivingApp/server/internal/auth/verification"
-	chatadapter "github.com/Easy-Bao/DrivingApp/server/internal/chat/adapter"
-	chatapplication "github.com/Easy-Bao/DrivingApp/server/internal/chat/app"
-	chathttp "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/http"
-	chatwebsocket "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/ws"
-	dispatchapplication "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/app"
-	assignment "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment"
-	dispatchhttp "github.com/Easy-Bao/DrivingApp/server/internal/dispatch/transport/http"
-	documentapplication "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/app"
-	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/driver/documents/transport/http"
-	"github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/mapbox"
-	locationredis "github.com/Easy-Bao/DrivingApp/server/internal/location/adapter/redis"
-	locationapplication "github.com/Easy-Bao/DrivingApp/server/internal/location/app"
-	locationdomain "github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
-	tracking "github.com/Easy-Bao/DrivingApp/server/internal/location/tracking"
-	locationhttp "github.com/Easy-Bao/DrivingApp/server/internal/location/transport/http"
-	passengerridecontext "github.com/Easy-Bao/DrivingApp/server/internal/passenger/ridecontext"
+	adminapp "github.com/Easy-Bao/DrivingApp/server/internal/modules/admin/app"
+	adminhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/admin/transport/http"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/adapter/email"
+	authredis "github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/adapter/redis"
+	authapp "github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/app"
+	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/transport/http"
+	chatpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/adapter/postgres"
+	chatapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/app"
+	chathttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/transport/http"
+	chatwebsocket "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/transport/ws"
+	dispatchapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
+	assignment "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
+	dispatchhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/transport/http"
+	documentapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/driver/app"
+	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/driver/transport/http"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/location/adapter/mapbox"
+	locationredis "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/adapter/redis"
+	locationapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/app"
+	locationdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/domain"
+	locationhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/transport/http"
+	ridepostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/adapter/postgres"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
 	eventadapter "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	platformstorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage"
 	websockethub "github.com/Easy-Bao/DrivingApp/server/internal/platform/ws"
-	reviewapplication "github.com/Easy-Bao/DrivingApp/server/internal/review/app"
-	reviewhttp "github.com/Easy-Bao/DrivingApp/server/internal/review/transport/http"
-	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/ride/app"
-	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/ride/domain"
-	ridehttp "github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/http"
-	ridewebsocket "github.com/Easy-Bao/DrivingApp/server/internal/ride/transport/ws"
-	userapplication "github.com/Easy-Bao/DrivingApp/server/internal/user/app"
-	userhttp "github.com/Easy-Bao/DrivingApp/server/internal/user/transport/http"
+	reviewapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/review/app"
+	reviewhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/review/transport/http"
+	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
+	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	ridehttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/transport/http"
+	ridewebsocket "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/transport/ws"
+	userapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/user/app"
+	userhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/user/transport/http"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	redisclient "github.com/redis/go-redis/v9"
@@ -63,8 +59,8 @@ type dispatchRuntimeStore interface {
 }
 
 type authRuntimeStore interface {
-	authports.VerifiedUserStore
-	authports.EmailChangeStore
+	authapp.VerifiedUserStore
+	authapp.EmailChangeStore
 }
 
 type httpRouterDependencies struct {
@@ -73,7 +69,7 @@ type httpRouterDependencies struct {
 	redisClient        *redisclient.Client
 	applicationLogger  *slog.Logger
 	authStore          authRuntimeStore
-	sessionStore       authports.SessionStore
+	sessionStore       authapp.SessionStore
 	rideStore          rideRuntimeStore
 	dispatchStore      dispatchRuntimeStore
 	reviewStore        reviewapplication.ReviewRepository
@@ -104,21 +100,21 @@ func newHTTPRouter(
 	verifier := security.NewTokenManager(config.JWTSecret)
 	adminAuthorizer := security.NewAdminAuthorizer(config.AdminUserIDs)
 
-	registerService := authregistration.NewRegisterService(authregistration.Dependencies{
+	registerService := authapp.NewRegisterService(authapp.RegisterDependencies{
 		Repository: authStore,
 		Tokens:     verifier,
 		Sessions:   sessionStore,
 	})
-	authenticateService := authauthentication.NewAuthenticateService(
-		authauthentication.Dependencies{
+	authenticateService := authapp.NewAuthenticateService(
+		authapp.AuthenticateDependencies{
 			Repository: authStore,
 			Tokens:     verifier,
 			Sessions:   sessionStore,
 		},
 	).WithLogger(applicationLogger)
 	emailGateway := email.NewGoMailGateway(config.Mail)
-	otpService := authverification.NewOTPService(
-		authverification.Dependencies{
+	otpService := authapp.NewOTPService(
+		authapp.OTPDependencies{
 			Users:         authStore,
 			EmailChanges:  authStore,
 			EmailNotifier: emailGateway,
@@ -127,7 +123,7 @@ func newHTTPRouter(
 			Tokens:        verifier,
 			Sessions:      sessionStore,
 		},
-		authverification.WithPendingRegistration(
+		authapp.WithPendingRegistration(
 			authredis.NewPendingRegistrationStore(redisClient),
 			registerService,
 		),
@@ -205,13 +201,13 @@ func newHTTPRouter(
 			Authority: assignment.NewRideLookup(rideStore),
 		},
 	)
-	trackingService := tracking.NewLocationTrackingService(
-		tracking.LocationTrackingDependencies{
-			Repository: tracking.NewDriverLocationStore(redisClient).WithLogger(applicationLogger),
+	trackingService := locationapplication.NewLocationTrackingService(
+		locationapplication.LocationTrackingDependencies{
+			Repository: locationredis.NewDriverLocationStore(redisClient).WithLogger(applicationLogger),
 			MaxAge:     config.RideLifecycle.DriverLocationMaxAge,
 		},
-		tracking.WithRideAssignments(rideAssignments),
-		tracking.WithDriverPresence(tracking.DriverPresenceReaderFunc(
+		locationapplication.WithRideAssignments(rideAssignments),
+		locationapplication.WithDriverPresence(locationapplication.DriverPresenceReaderFunc(
 			func(ctx context.Context, driverID string) (bool, error) {
 				parsedDriverID, err := strconv.Atoi(driverID)
 				if err != nil {
@@ -231,8 +227,8 @@ func newHTTPRouter(
 				return time.Since(*profile.OnlineLastSeenAt) <= maxAge, nil
 			},
 		)),
-		tracking.WithEventPublisher(eventPublisher),
-		tracking.WithLogger(applicationLogger),
+		locationapplication.WithEventPublisher(eventPublisher),
+		locationapplication.WithLogger(applicationLogger),
 	)
 	ridesService := rideapplication.NewRideService(
 		rideapplication.RideServiceDependencies{
@@ -318,10 +314,10 @@ func newHTTPRouter(
 		locationapplication.LocationServiceDependencies{Provider: mapboxProvider},
 		locationapplication.WithCache(locationredis.NewCache(redisClient)),
 	).WithLogger(applicationLogger)
-	passengerRideContextQuery := passengerridecontext.NewQueryService(
-		passengerridecontext.QueryDependencies{
-			RecentDestinations: passengerridecontext.NewRidesReader(ridesService),
-			AddressResolver:    passengerridecontext.NewLocationResolver(locationService),
+	passengerRideContextQuery := rideapplication.NewQueryService(
+		rideapplication.QueryDependencies{
+			RecentDestinations: ridepostgres.NewRidesReader(ridesService),
+			AddressResolver:    rideapplication.NewLocationResolver(locationService),
 		},
 	).WithLogger(applicationLogger)
 
@@ -342,13 +338,13 @@ func newHTTPRouter(
 		adminRouter.RegisterRoutes(admin)
 	})
 	locationhttp.NewRouter(locationService, verifier, routeSecurity).RegisterRoutes(router)
-	passengerridecontext.NewRouter(passengerridecontext.Dependencies{
+	ridehttp.NewPassengerContextRouter(ridehttp.PassengerContextDependencies{
 		Query:         passengerRideContextQuery,
 		Verifier:      verifier,
 		RouteSecurity: routeSecurity,
 	}).RegisterRoutes(router)
 
-	chatRoomStore := chatadapter.NewChatHistoryStore(redisClient)
+	chatRoomStore := chatpostgres.NewChatHistoryStore(redisClient)
 	chatService := chatapplication.NewChatService(chatapplication.ChatServiceDependencies{History: chatRoomStore}).
 		WithEventPublisher(eventPublisher).
 		WithRideAssignmentLookup(rideAssignments).
@@ -378,7 +374,7 @@ func newHTTPRouter(
 			websockethub.WithLogger(applicationLogger),
 		)),
 	)
-	tracking.NewRouter(tracking.Dependencies{
+	locationhttp.NewTrackingRouter(locationhttp.TrackingDependencies{
 		Service:       trackingService,
 		Auth:          verifier,
 		RouteSecurity: routeSecurity,

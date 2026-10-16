@@ -5,7 +5,7 @@ package location_test
 import (
 	"context"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/location/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/location/domain"
 )
 
 type providerStub struct{}

@@ -8,9 +8,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	adminapplication "github.com/Easy-Bao/DrivingApp/server/internal/admin/app"
-	"github.com/Easy-Bao/DrivingApp/server/internal/admin/domain"
-	adminhttp "github.com/Easy-Bao/DrivingApp/server/internal/admin/transport/http"
+	adminapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/admin/app"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/admin/domain"
+	adminhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/admin/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )

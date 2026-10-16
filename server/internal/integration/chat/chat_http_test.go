@@ -9,10 +9,10 @@ import (
 	"strings"
 	"testing"
 
-	chatapplication "github.com/Easy-Bao/DrivingApp/server/internal/chat/app"
-	"github.com/Easy-Bao/DrivingApp/server/internal/chat/domain"
-	chath "github.com/Easy-Bao/DrivingApp/server/internal/chat/transport/http"
-	"github.com/Easy-Bao/DrivingApp/server/internal/dispatch/assignment"
+	chatapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/app"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/domain"
+	chath "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/transport/http"
+	assignment "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )

@@ -1,0 +1,59 @@
+package postgres
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	ports "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
+var _ ports.DriverEarningsReader = (*RideRepository)(nil)
+
+func (repository *RideRepository) DriverEarnings(
+	ctx context.Context,
+	driverID int,
+	monthStart, monthEnd time.Time,
+) ([]domain.DriverEarning, error) {
+	if err := repository.validateNativeReadRepository(); err != nil {
+		return nil, err
+	}
+	dbDriverID, err := toPostgresRideID(driverID, "driver id")
+	if err != nil {
+		return nil, err
+	}
+	items, err := repository.queries.ListDriverEarnings(ctx, databasepostgres.ListDriverEarningsParams{
+		DriverID:   pgtype.Int4{Int32: dbDriverID, Valid: true},
+		MonthStart: postgresTimestamp(monthStart.UTC()),
+		MonthEnd:   postgresTimestamp(monthEnd.UTC()),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("list driver earnings: %w", err)
+	}
+	result := make([]domain.DriverEarning, 0, len(items))
+	for _, item := range items {
+		entry, mappingErr := fromPostgresDriverEarning(item)
+		if mappingErr != nil {
+			return nil, fmt.Errorf("map driver earning: %w", mappingErr)
+		}
+		result = append(result, entry)
+	}
+	return result, nil
+}
+
+func fromPostgresDriverEarning(item databasepostgres.ListDriverEarningsRow) (domain.DriverEarning, error) {
+	if !item.CreatedAt.Valid {
+		return domain.DriverEarning{}, fmt.Errorf("driver earning creation time is null")
+	}
+	completedAt := item.CreatedAt.Time
+	if item.CompletedAt.Valid {
+		completedAt = item.CompletedAt.Time
+	}
+	return domain.DriverEarning{
+		CompletedAt:  completedAt.UTC(),
+		PayoutAmount: item.DriverPayoutAmount,
+	}, nil
+}
