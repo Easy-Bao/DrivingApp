@@ -24,6 +24,10 @@ CREATE TABLE passenger_profiles (
     preferred_ride_type text,
     created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT passenger_profiles_gender_check
+        CHECK (gender IN ('Female', 'Male', 'Non-binary', 'Prefer not to say')),
+    CONSTRAINT passenger_profiles_avatar_content_type_check
+        CHECK (avatar_content_type IS NULL OR avatar_content_type IN ('image/jpeg', 'image/png')),
     CONSTRAINT passenger_profiles_user_fk
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );

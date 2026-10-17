@@ -29,6 +29,9 @@ CREATE TABLE rides (
     CONSTRAINT rides_status_check CHECK (
         status IN ('requested', 'assigned', 'accepted', 'arrived', 'in_transit', 'completed', 'cancelled')
     ),
+    CONSTRAINT rides_driver_assignment_check CHECK (
+        status IN ('requested', 'cancelled') OR (driver_id IS NOT NULL AND driver_id > 0)
+    ),
     CONSTRAINT rides_money_check CHECK (
         fare_amount >= 0
         AND cancellation_details IS NOT NULL
@@ -83,3 +86,8 @@ CREATE UNIQUE INDEX rides_one_active_ride_per_driver_idx
     ON rides (driver_id)
     WHERE driver_id IS NOT NULL
       AND status IN ('assigned', 'accepted', 'arrived', 'in_transit');
+
+CREATE INDEX rides_waiting_until_idx
+    ON rides (status, waiting_until)
+    WHERE status = 'arrived';
+
