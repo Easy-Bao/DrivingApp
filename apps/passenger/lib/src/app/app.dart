@@ -14,6 +14,7 @@ import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/b
 import 'package:passenger/src/core/location/location_access_cubit.dart';
 import 'package:passenger/src/core/location/location_access_state.dart';
 import 'package:passenger/src/core/session/session_store.dart';
+import 'package:passenger/src/core/telemetry/background_telemetry.dart';
 
 class const PassengerApp({super.key}) extends StatefulWidget {
   @override
@@ -42,6 +43,8 @@ class _PassengerAppState extends State<PassengerApp>
               repository: Modular.get<TrackRepository>(),
               sessionService: Modular.get<PassengerSessionStore>(),
               lifecycleCoordinator: _lifecycleCoordinator,
+              backgroundTelemetryService:
+                  Modular.get<PassengerBackgroundTelemetry>(),
             );
           },
         ),
