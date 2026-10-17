@@ -57,10 +57,10 @@ class _PassengerAppState extends State<PassengerApp>
                     stream: _networkAvailabilityCoordinator.changes,
                     initialData: _networkAvailabilityCoordinator.status,
                     builder: (context, snapshot) {
+                      final isUnavailable =
+                          snapshot.data != NetworkAvailabilityStatus.available;
                       return AppNetworkStatusScope(
-                        isUnavailable:
-                            snapshot.data !=
-                            NetworkAvailabilityStatus.available,
+                        isUnavailable: isUnavailable,
                         child: MultiBlocListener(
                           listeners: [
                             BlocListener<SessionBloc, SessionState>(
@@ -76,6 +76,7 @@ class _PassengerAppState extends State<PassengerApp>
                             context,
                             child,
                             locationState,
+                            isUnavailable,
                           ),
                         ),
                       );
@@ -172,11 +173,28 @@ class _PassengerAppState extends State<PassengerApp>
     BuildContext context,
     Widget? child,
     LocationAccessViewState locationState,
+    bool isUnavailable,
   ) {
     final overlay = _buildLocationOverlay(context, locationState);
-    return Stack(
+    final routeContent = Stack(
       fit: StackFit.expand,
       children: [child ?? const SizedBox.shrink(), ?overlay],
+    );
+
+    return Column(
+      children: [
+        if (isUnavailable)
+          const AppNetworkStatusBanner(isVisible: true, usePositioned: false),
+        Expanded(
+          child: isUnavailable
+              ? MediaQuery.removePadding(
+                  context: context,
+                  removeTop: true,
+                  child: routeContent,
+                )
+              : routeContent,
+        ),
+      ],
     );
   }
 }

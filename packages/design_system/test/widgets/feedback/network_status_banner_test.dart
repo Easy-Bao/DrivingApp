@@ -89,6 +89,30 @@ void main() {
     );
   });
 
+  testWidgets(
+    'shows network status banner when network is unavailable even outside active tracking',
+    (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: AppNetworkStatusScope(
+            isUnavailable: true,
+            child: Scaffold(
+              body: AppNetworkStatusBanner(
+                isVisible: false,
+                isActiveTracking: false,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(
+        find.text('Connection unavailable. Retrying automatically.'),
+        findsOneWidget,
+      );
+    },
+  );
+
   testWidgets('shares unavailable state with route-level surfaces', (
     tester,
   ) async {

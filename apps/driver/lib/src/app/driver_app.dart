@@ -110,14 +110,15 @@ class _DriverAppState extends State<DriverApp> with WidgetsBindingObserver {
                     stream: _networkAvailabilityCoordinator.changes,
                     initialData: _networkAvailabilityCoordinator.status,
                     builder: (context, snapshot) {
+                      final isUnavailable =
+                          snapshot.data != NetworkAvailabilityStatus.available;
                       return AppNetworkStatusScope(
-                        isUnavailable:
-                            snapshot.data !=
-                            NetworkAvailabilityStatus.available,
+                        isUnavailable: isUnavailable,
                         child: _buildRouteWithLocationOverlay(
                           context,
                           child,
                           locationState,
+                          isUnavailable,
                         ),
                       );
                     },
@@ -131,11 +132,28 @@ class _DriverAppState extends State<DriverApp> with WidgetsBindingObserver {
     BuildContext context,
     Widget? child,
     DriverLocationAccessViewState locationState,
+    bool isUnavailable,
   ) {
     final overlay = _buildLocationOverlay(context, locationState);
-    return Stack(
+    final routeContent = Stack(
       fit: StackFit.expand,
       children: [child ?? const SizedBox.shrink(), ?overlay],
+    );
+
+    return Column(
+      children: [
+        if (isUnavailable)
+          const AppNetworkStatusBanner(isVisible: true, usePositioned: false),
+        Expanded(
+          child: isUnavailable
+              ? MediaQuery.removePadding(
+                  context: context,
+                  removeTop: true,
+                  child: routeContent,
+                )
+              : routeContent,
+        ),
+      ],
     );
   }
 

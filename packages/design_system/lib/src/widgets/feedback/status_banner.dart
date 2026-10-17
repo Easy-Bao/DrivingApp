@@ -16,6 +16,7 @@ class const AppStatusBanner({
   this.actionLabel,
   this.onAction,
   this.usePositioned = false,
+  this.ignoreNetworkScope = false,
 }) extends StatelessWidget {
   final bool isVisible;
   final String message;
@@ -23,10 +24,13 @@ class const AppStatusBanner({
   final String? actionLabel;
   final VoidCallback? onAction;
   final bool usePositioned;
+  final bool ignoreNetworkScope;
 
   @override
   Widget build(BuildContext context) {
-    if (!isVisible || AppNetworkStatusScope.isUnavailableOf(context)) {
+    if (!isVisible ||
+        (!ignoreNetworkScope &&
+            AppNetworkStatusScope.isUnavailableOf(context))) {
       return const SizedBox.shrink();
     }
 

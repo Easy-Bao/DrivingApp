@@ -9,7 +9,7 @@ import 'package:design_system/src/widgets/feedback/network_status_scope.dart';
 /// without adding a second failure toast or page banner.
 class const AppNetworkStatusBanner({
   super.key,
-  required this.isVisible,
+  this.isVisible = true,
   this.isActiveTracking = true,
   this.usePositioned = false,
 }) extends StatelessWidget {
@@ -19,11 +19,12 @@ class const AppNetworkStatusBanner({
 
   @override
   Widget build(BuildContext context) {
+    final isNetworkUnavailable = AppNetworkStatusScope.isUnavailableOf(context);
+    final shouldShow = isNetworkUnavailable || (isVisible && isActiveTracking);
+
     return AppStatusBanner(
-      isVisible:
-          isVisible &&
-          isActiveTracking &&
-          !AppNetworkStatusScope.isUnavailableOf(context),
+      isVisible: shouldShow,
+      ignoreNetworkScope: true,
       message: 'Connection unavailable. Retrying automatically.',
       tone: AppStatusBannerTone.warning,
       usePositioned: usePositioned,

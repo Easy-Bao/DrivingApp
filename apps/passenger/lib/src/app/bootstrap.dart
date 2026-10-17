@@ -8,12 +8,12 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
-import 'package:passenger/src/app/navigation/navigation_observer.dart';
 import 'package:passenger/src/app/app.dart';
 import 'package:passenger/src/app/dependencies.dart';
-import 'package:passenger/src/features/home/home_routes.dart';
+import 'package:passenger/src/app/navigation/navigation_observer.dart';
 import 'package:passenger/src/core/config/env_config.dart';
 import 'package:passenger/src/core/telemetry/background_telemetry.dart';
+import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
