@@ -162,7 +162,7 @@ func (service *OTPService) RequestVerification(ctx context.Context, email string
 			return domain.ErrOTPUnavailable
 		}
 	}
-	return domain.ErrInvalidCredentials
+	return nil
 }
 
 func (service *OTPService) VerifyPassenger(ctx context.Context, email, code string) (domain.User, string, error) {
@@ -252,6 +252,9 @@ func (service *OTPService) RequestPasswordResetForRole(ctx context.Context, emai
 	}
 	account, err := service.accountForRole(ctx, email, role)
 	if err != nil {
+		if errors.Is(err, domain.ErrInvalidCredentials) {
+			return nil
+		}
 		return fmt.Errorf("find account for password reset: %w", err)
 	}
 	return service.requestCode(ctx, "reset", account.Email)

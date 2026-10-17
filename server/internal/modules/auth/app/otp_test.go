@@ -108,10 +108,11 @@ func TestDriverCannotUsePassengerVerificationOTP(t *testing.T) {
 func TestPasswordResetIsScopedToTheAccountRole(t *testing.T) {
 	repository := &otpRepository{account: domain.User{ID: 8, Email: "driver@example.test", Role: domain.Driver}}
 	store := &otpMemoryStore{values: map[string]string{}}
+	gateway := &otpGateway{}
 	service := authapp.NewOTPService(authapp.OTPDependencies{
 		Users:    repository,
 		Store:    store,
-		Gateway:  &otpGateway{},
+		Gateway:  gateway,
 		Tokens:   otpIssuer{},
 		Sessions: newTestRefreshSessionStore(),
 	})
@@ -120,9 +121,13 @@ func TestPasswordResetIsScopedToTheAccountRole(t *testing.T) {
 		context.Background(),
 		repository.account.Email,
 	)
-	if !errors.Is(err, domain.ErrInvalidCredentials) {
-		t.Fatalf("expected passenger reset route to reject driver account, got %v", err)
+	if err != nil {
+		t.Fatalf("expected silent success for enumeration protection, got %v", err)
 	}
+	if gateway.sent != "" {
+		t.Fatal("expected no OTP code sent when role does not match")
+	}
+
 	err = service.RequestPasswordResetForRole(
 		context.Background(),
 		repository.account.Email,
@@ -130,5 +135,27 @@ func TestPasswordResetIsScopedToTheAccountRole(t *testing.T) {
 	)
 	if err != nil {
 		t.Fatalf("driver reset request failed: %v", err)
+	}
+	if gateway.sent == "" {
+		t.Fatal("expected OTP code sent for matching role")
+	}
+}
+
+func TestRequestVerificationAntiEnumeration(t *testing.T) {
+	repository := &otpRepository{account: domain.User{}}
+	gateway := &otpGateway{}
+	service := authapp.NewOTPService(authapp.OTPDependencies{
+		Users:    repository,
+		Store:    &otpMemoryStore{values: map[string]string{}},
+		Gateway:  gateway,
+		Tokens:   otpIssuer{},
+		Sessions: newTestRefreshSessionStore(),
+	})
+	err := service.RequestVerification(context.Background(), "nonexistent@example.test")
+	if err != nil {
+		t.Fatalf("expected nil for non-existent account, got %v", err)
+	}
+	if gateway.sent != "" {
+		t.Fatal("expected no OTP sent for non-existent account")
 	}
 }
