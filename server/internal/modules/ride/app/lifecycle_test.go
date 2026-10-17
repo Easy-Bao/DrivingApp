@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
-	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	lifecycle "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
 type fakeLifecycleStore struct {
@@ -220,6 +220,30 @@ func TestStartTripRequiresPickupProximityAndSucceedsWithinRange(t *testing.T) {
 	}
 	if updated.Status != string(domain.RideInTransit) {
 		t.Fatalf("expected status %q, got %q", domain.RideInTransit, updated.Status)
+	}
+}
+
+func TestStartTripRejectsMissingOrStaleTelemetry(t *testing.T) {
+	driverID := 42
+	arrivedAt := time.Now().UTC().Add(-10 * time.Second).Format(time.RFC3339)
+	store := &fakeLifecycleStore{
+		ride: domain.Ride{
+			ID:              1,
+			PassengerID:     10,
+			DriverID:        &driverID,
+			Status:          string(domain.RideArrived),
+			PickupLatitude:  6.7000,
+			PickupLongitude: 122.1000,
+			ArrivedAt:       &arrivedAt,
+		},
+	}
+	service := lifecycle.NewLifecycleService(lifecycle.LifecycleDependencies{
+		Store:  store,
+		Config: lifecycle.LifecycleConfig{ArrivalRadiusMeters: 250},
+	})
+	_, err := service.StartTrip(context.Background(), 1, driverID, 6.7000, 122.1000)
+	if !errors.Is(err, domain.ErrDriverLocationUnavailable) {
+		t.Fatalf("expected ErrDriverLocationUnavailable, got %v", err)
 	}
 }
 

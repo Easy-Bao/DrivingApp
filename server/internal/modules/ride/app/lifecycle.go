@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
 var ErrPersistenceUnavailable = errors.New("ride lifecycle persistence is unavailable")
@@ -100,7 +100,7 @@ func (service *LifecycleService) StartTrip(
 	}
 	driverLat, driverLng, err := service.authoritativeDriverLocation(ctx, driverID)
 	if err != nil {
-		driverLat, driverLng = driverLatitude, driverLongitude
+		return domain.Ride{}, err
 	}
 	if err := domain.ValidateArrivalLocation(
 		current.PickupLatitude,
