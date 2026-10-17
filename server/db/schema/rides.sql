@@ -63,7 +63,9 @@ CREATE TABLE rides (
     CONSTRAINT rides_passenger_fk
         FOREIGN KEY (passenger_id) REFERENCES users (id) ON DELETE RESTRICT,
     CONSTRAINT rides_driver_fk
-        FOREIGN KEY (driver_id) REFERENCES users (id) ON DELETE RESTRICT
+        FOREIGN KEY (driver_id) REFERENCES users (id) ON DELETE RESTRICT,
+    CONSTRAINT rides_cancelled_by_fkey
+        FOREIGN KEY (cancelled_by) REFERENCES users (id) ON DELETE SET NULL
 );
 
 CREATE INDEX ride_passenger_id_created_at

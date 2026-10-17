@@ -10,7 +10,11 @@ CREATE TABLE ride_events (
     details text NOT NULL DEFAULT '',
     request_id text NOT NULL UNIQUE,
     created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT ride_events_details_length_check CHECK (char_length(details) <= 500)
+    CONSTRAINT ride_events_details_length_check CHECK (char_length(details) <= 500),
+    CONSTRAINT ride_events_ride_id_fkey
+        FOREIGN KEY (ride_id) REFERENCES rides (id) ON DELETE CASCADE,
+    CONSTRAINT ride_events_actor_id_fkey
+        FOREIGN KEY (actor_id) REFERENCES users (id) ON DELETE RESTRICT
 );
 
 CREATE INDEX ride_events_ride_id_created_at

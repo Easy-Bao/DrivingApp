@@ -32,7 +32,13 @@ CREATE TABLE ride_reports (
     ),
     CONSTRAINT ride_reports_participants_differ_check CHECK (
         reporter_id <> reported_user_id
-    )
+    ),
+    CONSTRAINT ride_reports_ride_id_fkey
+        FOREIGN KEY (ride_id) REFERENCES rides (id) ON DELETE CASCADE,
+    CONSTRAINT ride_reports_reporter_id_fkey
+        FOREIGN KEY (reporter_id) REFERENCES users (id) ON DELETE RESTRICT,
+    CONSTRAINT ride_reports_reported_user_id_fkey
+        FOREIGN KEY (reported_user_id) REFERENCES users (id) ON DELETE RESTRICT
 );
 
 CREATE UNIQUE INDEX ride_reports_reporter_ride_category
