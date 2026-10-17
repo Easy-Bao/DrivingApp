@@ -8,12 +8,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/user/app"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/user/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
-	"github.com/Easy-Bao/DrivingApp/server/internal/modules/user/app"
-	"github.com/Easy-Bao/DrivingApp/server/internal/modules/user/domain"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 )
@@ -121,7 +121,11 @@ func (handler *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil || id != actorID {
+	if err != nil || id <= 0 {
+		response.Error(w, http.StatusBadRequest, "invalid passenger id")
+		return
+	}
+	if id != actorID {
 		response.Error(w, 403, "forbidden")
 		return
 	}
@@ -135,12 +139,16 @@ func (handler *Handler) Profile(w http.ResponseWriter, r *http.Request) {
 
 func (handler *Handler) ProfileUpdate(w http.ResponseWriter, r *http.Request) {
 	actorID, ok := handler.identity(r)
-	targetID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if !ok {
 		response.Error(w, 401, "unauthorized")
 		return
 	}
-	if err != nil || actorID != targetID {
+	targetID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil || targetID <= 0 {
+		response.Error(w, http.StatusBadRequest, "invalid passenger id")
+		return
+	}
+	if actorID != targetID {
 		response.Error(w, 403, "forbidden")
 		return
 	}
@@ -148,9 +156,13 @@ func (handler *Handler) ProfileUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) Avatar(w http.ResponseWriter, r *http.Request) {
-	actorID, targetID, ok := handler.profileTarget(r)
+	actorID, targetID, ok, validTarget := handler.profileTarget(r)
 	if !ok {
 		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	if !validTarget {
+		response.Error(w, http.StatusBadRequest, "invalid passenger id")
 		return
 	}
 	if actorID != targetID {
@@ -172,9 +184,13 @@ func (handler *Handler) Avatar(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *Handler) AvatarUpload(w http.ResponseWriter, r *http.Request) {
-	actorID, targetID, ok := handler.profileTarget(r)
+	actorID, targetID, ok, validTarget := handler.profileTarget(r)
 	if !ok {
 		response.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	if !validTarget {
+		response.Error(w, http.StatusBadRequest, "invalid passenger id")
 		return
 	}
 	if actorID != targetID {
@@ -222,16 +238,16 @@ func (handler *Handler) AvatarUpload(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, NewProfileResponse(profile))
 }
 
-func (handler *Handler) profileTarget(r *http.Request) (int, int, bool) {
+func (handler *Handler) profileTarget(r *http.Request) (actorID, targetID int, authenticated bool, validTarget bool) {
 	actorID, ok := handler.identity(r)
 	if !ok {
-		return 0, 0, false
+		return 0, 0, false, false
 	}
 	targetID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil || targetID <= 0 {
-		return actorID, 0, true
+		return actorID, 0, true, false
 	}
-	return actorID, targetID, true
+	return actorID, targetID, true, true
 }
 
 func writeAvatarError(w http.ResponseWriter, err error) {
@@ -266,7 +282,11 @@ func (handler *Handler) Notifications(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	targetID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil || targetID != actorID {
+	if err != nil || targetID <= 0 {
+		response.Error(w, http.StatusBadRequest, "invalid passenger id")
+		return
+	}
+	if targetID != actorID {
 		response.Error(w, 403, "forbidden")
 		return
 	}
@@ -290,7 +310,11 @@ func (handler *Handler) DeleteNotification(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	targetID, err := strconv.Atoi(chi.URLParam(r, "id"))
-	if err != nil || targetID != actorID {
+	if err != nil || targetID <= 0 {
+		response.Error(w, http.StatusBadRequest, "invalid passenger id")
+		return
+	}
+	if targetID != actorID {
 		response.Error(w, http.StatusForbidden, "forbidden")
 		return
 	}
