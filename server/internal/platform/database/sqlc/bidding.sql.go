@@ -459,7 +459,7 @@ SELECT sessions.id, sessions.passenger_id, sessions.ride_type,
 FROM bid_sessions AS sessions
 WHERE sessions.status = 'open'
   AND sessions.expires_at > $1
-ORDER BY sessions.created_at
+ORDER BY sessions.created_at, sessions.id
 LIMIT 50
 `
 
@@ -507,7 +507,8 @@ SELECT id, session_id, driver_id, driver_name, plate_number, vehicle_type,
     proposed_fare, status, created_at
 FROM bid_offers
 WHERE session_id = $1
-ORDER BY created_at
+ORDER BY created_at, id
+LIMIT 100
 `
 
 func (q *Queries) ListBidOffersBySession(ctx context.Context, sessionID int32) ([]BidOffer, error) {
@@ -551,16 +552,18 @@ WHERE offers.driver_id = $1
   AND sessions.status = 'open'
   AND sessions.expires_at > $2
   AND (sessions.target_driver_id IS NULL OR sessions.target_driver_id = $1)
-ORDER BY sessions.created_at
+  AND offers.session_id = ANY($3::int[])
+ORDER BY sessions.created_at, sessions.id
 `
 
 type ListPendingBidOffersForDriverParams struct {
-	DriverID  int32              `db:"driver_id"`
-	ExpiresAt pgtype.Timestamptz `db:"expires_at"`
+	DriverID   int32              `db:"driver_id"`
+	ExpiresAt  pgtype.Timestamptz `db:"expires_at"`
+	SessionIds []int32            `db:"session_ids"`
 }
 
 func (q *Queries) ListPendingBidOffersForDriver(ctx context.Context, arg ListPendingBidOffersForDriverParams) ([]BidOffer, error) {
-	rows, err := q.db.Query(ctx, listPendingBidOffersForDriver, arg.DriverID, arg.ExpiresAt)
+	rows, err := q.db.Query(ctx, listPendingBidOffersForDriver, arg.DriverID, arg.ExpiresAt, arg.SessionIds)
 	if err != nil {
 		return nil, err
 	}
@@ -606,7 +609,7 @@ ORDER BY EXISTS (
     WHERE offers.session_id = sessions.id
       AND offers.driver_id = $2
       AND offers.status = 'pending'
-) DESC, sessions.created_at
+) DESC, sessions.created_at, sessions.id
 LIMIT 50
 `
 

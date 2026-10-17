@@ -107,7 +107,7 @@ SELECT sessions.id, sessions.passenger_id, sessions.ride_type,
 FROM bid_sessions AS sessions
 WHERE sessions.status = 'open'
   AND sessions.expires_at > $1
-ORDER BY sessions.created_at
+ORDER BY sessions.created_at, sessions.id
 LIMIT 50;
 
 -- name: ListTargetedActiveBidSessions :many
@@ -127,7 +127,7 @@ ORDER BY EXISTS (
     WHERE offers.session_id = sessions.id
       AND offers.driver_id = $2
       AND offers.status = 'pending'
-) DESC, sessions.created_at
+) DESC, sessions.created_at, sessions.id
 LIMIT 50;
 
 -- name: ListPendingBidOffersForDriver :many
@@ -141,7 +141,8 @@ WHERE offers.driver_id = $1
   AND sessions.status = 'open'
   AND sessions.expires_at > $2
   AND (sessions.target_driver_id IS NULL OR sessions.target_driver_id = $1)
-ORDER BY sessions.created_at;
+  AND offers.session_id = ANY(sqlc.arg('session_ids')::int[])
+ORDER BY sessions.created_at, sessions.id;
 
 -- name: GetBidSessionByID :one
 SELECT id, passenger_id, ride_type, pickup_latitude, pickup_longitude,
@@ -169,7 +170,8 @@ SELECT id, session_id, driver_id, driver_name, plate_number, vehicle_type,
     proposed_fare, status, created_at
 FROM bid_offers
 WHERE session_id = $1
-ORDER BY created_at;
+ORDER BY created_at, id
+LIMIT 100;
 
 -- name: HasPendingBidOffer :one
 SELECT EXISTS (

@@ -254,13 +254,18 @@ func (repository *Store) ActiveSessions(ctx context.Context, driverID *int) ([]d
 		result = append(result, session)
 	}
 	mappingDuration = measure(mappingStartedAt)
-	if driverID != nil {
+	if driverID != nil && len(items) > 0 {
+		sessionIDs := make([]int32, len(items))
+		for index, item := range items {
+			sessionIDs[index] = item.ID
+		}
 		pendingStartedAt := startTiming()
 		pendingRows, pendingErr := repository.queries.ListPendingBidOffersForDriver(
 			ctx,
 			databasepostgres.ListPendingBidOffersForDriverParams{
-				DriverID:  dbDriverID,
-				ExpiresAt: now,
+				DriverID:   dbDriverID,
+				ExpiresAt:  now,
+				SessionIds: sessionIDs,
 			},
 		)
 		if pendingErr != nil {
