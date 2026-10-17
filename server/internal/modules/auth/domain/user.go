@@ -18,4 +18,5 @@ type User struct {
 	VehicleType       string
 	PlateNumber       string
 	PreferredRideType string
+	AccountStatus     string
 }

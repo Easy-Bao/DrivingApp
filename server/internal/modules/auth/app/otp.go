@@ -487,6 +487,9 @@ func (service *OTPService) accountForRole(ctx context.Context, email string, rol
 	if account.Role != role {
 		return domain.User{}, domain.ErrInvalidCredentials
 	}
+	if account.AccountStatus != "" && account.AccountStatus != "active" {
+		return domain.User{}, domain.ErrAccountSuspended
+	}
 	return account, nil
 }
 

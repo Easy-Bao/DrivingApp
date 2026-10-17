@@ -152,3 +152,36 @@ func TestRefreshAllowsParallelRequestsDuringRotationGrace(t *testing.T) {
 		}
 	}
 }
+
+func TestRefreshRejectsSuspendedAccount(t *testing.T) {
+	user := domain.User{
+		ID:            12,
+		Email:         "active@example.test",
+		Role:          domain.Passenger,
+		PasswordHash:  testPasswordHash(t, "secret-12"),
+		AccountStatus: "active",
+	}
+	repository := &repository{users: map[string]domain.User{
+		"active@example.test": user,
+	}}
+	sessions := newTestRefreshSessionStore()
+	service := newTestAuthenticateService(authapp.AuthenticateDependencies{
+		Repository: repository,
+		Tokens:     security.NewTokenManager("session-test-secret"),
+		Sessions:   sessions,
+	})
+
+	_, issued, err := service.ExecuteSession(context.Background(), "active@example.test", "secret-12")
+	if err != nil {
+		t.Fatalf("issue session: %v", err)
+	}
+
+	// Suspend the user
+	user.AccountStatus = "suspended"
+	repository.users["active@example.test"] = user
+
+	_, err = service.Refresh(context.Background(), issued.RefreshToken)
+	if !errors.Is(err, domain.ErrAccountSuspended) {
+		t.Fatalf("expected ErrAccountSuspended on refresh, got %v", err)
+	}
+}

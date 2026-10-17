@@ -133,7 +133,9 @@ func (handler *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	tokens, err := handler.authenticate.Refresh(r.Context(), input.Token)
 	if err != nil {
 		status := http.StatusServiceUnavailable
-		if errors.Is(err, domain.ErrInvalidRefreshToken) {
+		if errors.Is(err, domain.ErrAccountSuspended) {
+			status = http.StatusForbidden
+		} else if errors.Is(err, domain.ErrInvalidRefreshToken) {
 			status = http.StatusUnauthorized
 		}
 		response.Error(w, status, safeAuthError(err))
@@ -180,6 +182,10 @@ func (handler *Handler) login(w http.ResponseWriter, r *http.Request, role domai
 	}
 	account, tokens, err := handler.authenticate.ExecuteSessionAs(r.Context(), input.Email, input.Password, role)
 	if err != nil {
+		if errors.Is(err, domain.ErrAccountSuspended) {
+			response.Error(w, http.StatusForbidden, safeAuthError(err))
+			return
+		}
 		response.Error(w, http.StatusUnauthorized, "email or password is incorrect")
 		return
 	}
@@ -334,6 +340,8 @@ func safeAuthError(err error) string {
 		return "Authentication is temporarily unavailable. Please try again."
 	case errors.Is(err, authapp.ErrRegistrationUnavailable):
 		return "Registration is temporarily unavailable. Please try again."
+	case errors.Is(err, domain.ErrAccountSuspended):
+		return "Your account has been suspended."
 	default:
 		return "We could not complete that request. Please try again."
 	}
@@ -353,6 +361,9 @@ func registrationErrorStatus(err error) int {
 }
 
 func otpErrorStatus(err error) int {
+	if errors.Is(err, domain.ErrAccountSuspended) {
+		return http.StatusForbidden
+	}
 	if errors.Is(err, domain.ErrOTPMaxAttemptsExceeded) {
 		return http.StatusTooManyRequests
 	}

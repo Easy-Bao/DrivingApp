@@ -176,3 +176,23 @@ func TestAuthenticationUpgradesLegacyPasswordHashAfterSuccessfulLogin(t *testing
 		t.Fatal("expected successful login to replace the legacy hash")
 	}
 }
+
+func TestAuthenticationRejectsSuspendedAccount(t *testing.T) {
+	repository := &repository{users: map[string]domain.User{
+		"suspended@example.test": {
+			ID:            10,
+			Email:         "suspended@example.test",
+			Role:          domain.Passenger,
+			PasswordHash:  testPasswordHash(t, "secret-8"),
+			AccountStatus: "suspended",
+		},
+	}}
+	authenticate := newTestAuthenticateService(authapp.AuthenticateDependencies{
+		Repository: repository,
+		Tokens:     issuer{},
+		Sessions:   newTestRefreshSessionStore(),
+	})
+	if _, _, err := authenticate.Execute(context.Background(), "suspended@example.test", "secret-8"); !errors.Is(err, domain.ErrAccountSuspended) {
+		t.Fatalf("expected ErrAccountSuspended, got %v", err)
+	}
+}

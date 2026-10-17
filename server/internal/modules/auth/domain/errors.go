@@ -20,4 +20,5 @@ var (
 	ErrOTPMaxAttemptsExceeded      = errors.New("maximum otp verification attempts exceeded")
 	ErrOTPUnavailable              = errors.New("otp delivery is unavailable")
 	ErrPendingRegistrationNotFound = errors.New("pending registration not found")
+	ErrAccountSuspended            = errors.New("account is suspended")
 )

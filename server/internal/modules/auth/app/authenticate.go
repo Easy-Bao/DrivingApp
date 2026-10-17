@@ -104,6 +104,9 @@ func (service *AuthenticateService) execute(
 	if role != "" && account.Role != role {
 		return domain.User{}, SessionTokens{}, domain.ErrInvalidCredentials
 	}
+	if account.AccountStatus != "" && account.AccountStatus != "active" {
+		return domain.User{}, SessionTokens{}, domain.ErrAccountSuspended
+	}
 	if security.IsLegacyPasswordHash(account.PasswordHash) {
 		upgradedHash, hashErr := service.hashPassword(password)
 		if hashErr != nil {
@@ -147,6 +150,9 @@ func (service *AuthenticateService) Refresh(ctx context.Context, rawToken string
 	}
 	if account.ID != current.UserID {
 		return SessionTokens{}, domain.ErrInvalidRefreshToken
+	}
+	if account.AccountStatus != "" && account.AccountStatus != "active" {
+		return SessionTokens{}, domain.ErrAccountSuspended
 	}
 
 	accessToken, err := IssueToken(service.tokens, strconv.Itoa(account.ID), account.Role)

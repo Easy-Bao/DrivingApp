@@ -277,13 +277,14 @@ func toPostgresUserID(userID int) (int32, error) {
 
 func fromPostgresUser(account databasepostgres.User) domain.User {
 	return domain.User{
-		ID:           int(account.ID),
-		Email:        account.Email,
-		Phone:        account.Phone,
-		Name:         textValue(account.Name),
-		Role:         domain.Role(account.Role),
-		PasswordHash: account.PasswordHash,
-		IsVerified:   account.IsVerified,
+		ID:            int(account.ID),
+		Email:         account.Email,
+		Phone:         account.Phone,
+		Name:          textValue(account.Name),
+		Role:          domain.Role(account.Role),
+		PasswordHash:  account.PasswordHash,
+		IsVerified:    account.IsVerified,
+		AccountStatus: account.AccountStatus,
 	}
 }
 
