@@ -58,7 +58,7 @@ class const TrackDriverPanel({
         : 'EN ROUTE';
     final resolvedRating = driverRating?.trim().isNotEmpty == true
         ? driverRating!.trim()
-        : '4.9 (240+)';
+        : ride.displayDriverRating;
     final isInTransit = ride.status == 'in_transit';
     final showCancelAction = !isInTransit;
 
@@ -275,7 +275,7 @@ class const _StatusBadge({required this.text}) extends StatelessWidget {
 class const _DriverCard({
   required this.driverName,
   required this.vehicleSummary,
-  required this.rating,
+  this.rating,
   this.imageUrl,
   required this.showContactActions,
   required this.unreadChatMessagesCount,
@@ -284,7 +284,7 @@ class const _DriverCard({
 }) extends StatelessWidget {
   final String driverName;
   final String vehicleSummary;
-  final String rating;
+  final String? rating;
   final String? imageUrl;
   final bool showContactActions;
   final int unreadChatMessagesCount;
@@ -315,45 +315,46 @@ class const _DriverCard({
                   borderRadius: BorderRadius.circular(99),
                   fallbackIcon: LucideIcons.user,
                 ),
-                Positioned(
-                  bottom: 0,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 5,
-                      vertical: 1.5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
-                          blurRadius: 4,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.star_rounded,
-                          size: 12,
-                          color: Color(0xFFF59E0B),
-                        ),
-                        const SizedBox(width: 2),
-                        Text(
-                          rating,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                if (rating != null && rating!.trim().isNotEmpty)
+                  Positioned(
+                    bottom: 0,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 1.5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.star_rounded,
+                            size: 12,
+                            color: Color(0xFFF59E0B),
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            rating!,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ),

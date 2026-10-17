@@ -100,4 +100,70 @@ void main() {
     expect(find.text('Emergency SOS'), findsOneWidget);
     expect(find.text('Cancel ride'), findsNothing);
   });
+
+  testWidgets('hides rating pill when no driver rating is available', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: EasyRideTheme.main,
+        home: Scaffold(
+          body: TrackDriverPanel(
+            ride: const RideSnapshot(
+              id: 'ride-1',
+              pickupName: 'Pickup',
+              dropoffName: 'Destination',
+              status: 'accepted',
+              driverName: 'Driver Name',
+            ),
+            statusTitle: 'Heading to destination',
+            statusSubtitle: 'Trip in progress',
+            etaText: '8 min',
+            unreadChatMessagesCount: 0,
+            onCallDriverPressed: () {},
+            onChatDriverPressed: () {},
+            onEmergencyPressed: () {},
+            onReportDriverPressed: () {},
+            onCancelTripPressed: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('4.9 (240+)'), findsNothing);
+    expect(find.byIcon(Icons.star_rounded), findsNothing);
+  });
+
+  testWidgets('displays driver rating badge when provided', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: EasyRideTheme.main,
+        home: Scaffold(
+          body: TrackDriverPanel(
+            ride: const RideSnapshot(
+              id: 'ride-1',
+              pickupName: 'Pickup',
+              dropoffName: 'Destination',
+              status: 'accepted',
+              driverName: 'Driver Name',
+              driverRating: 4.8,
+            ),
+            statusTitle: 'Heading to destination',
+            statusSubtitle: 'Trip in progress',
+            etaText: '8 min',
+            unreadChatMessagesCount: 0,
+            onCallDriverPressed: () {},
+            onChatDriverPressed: () {},
+            onEmergencyPressed: () {},
+            onReportDriverPressed: () {},
+            onCancelTripPressed: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('4.9 (240+)'), findsNothing);
+    expect(find.text('4.8'), findsOneWidget);
+    expect(find.byIcon(Icons.star_rounded), findsOneWidget);
+  });
 }

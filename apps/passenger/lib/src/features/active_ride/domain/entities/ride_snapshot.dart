@@ -19,6 +19,7 @@ final class const RideSnapshot({
   final double? distanceKm,
   final double? durationMinutes,
   final int? fareAmount,
+  final double? driverRating,
 }) extends Equatable {
   RideSnapshot copyWith({
     String? id,
@@ -38,6 +39,7 @@ final class const RideSnapshot({
     double? distanceKm,
     double? durationMinutes,
     int? fareAmount,
+    double? driverRating,
   }) => RideSnapshot(
     id: id ?? this.id,
     status: status ?? this.status,
@@ -56,6 +58,7 @@ final class const RideSnapshot({
     distanceKm: distanceKm ?? this.distanceKm,
     durationMinutes: durationMinutes ?? this.durationMinutes,
     fareAmount: fareAmount ?? this.fareAmount,
+    driverRating: driverRating ?? this.driverRating,
   );
 
   factory fromJson(Map<String, dynamic> json, {String? fallbackId}) {
@@ -70,6 +73,7 @@ final class const RideSnapshot({
       'driver_name': rawDriverName,
       'vehicle_type': rawVehicleType,
       'plate_number': rawPlateNumber,
+      'driver_rating': rawDriverRating,
       'pickup_latitude': rawPickupLatitude,
       'pickup_longitude': rawPickupLongitude,
       'dropoff_latitude': rawDropoffLatitude,
@@ -100,10 +104,17 @@ final class const RideSnapshot({
       distanceKm: SafeParse.toNullableDouble(rawDistanceKm),
       durationMinutes: SafeParse.toNullableDouble(rawDurationMinutes),
       fareAmount: _fareAmount(rawFareAmount, rawFare),
+      driverRating: SafeParse.toNullableDouble(rawDriverRating),
     );
   }
 
   double? get farePesos => fareAmount == null ? null : fareAmount! / 100;
+
+  String? get displayDriverRating {
+    final rating = driverRating;
+    if (rating == null || rating <= 0) return null;
+    return rating.toStringAsFixed(1);
+  }
 
   String get displayDriverName {
     final value = driverName?.trim() ?? '';
@@ -142,6 +153,7 @@ final class const RideSnapshot({
     distanceKm,
     durationMinutes,
     fareAmount,
+    driverRating,
   ];
 }
 
@@ -156,6 +168,7 @@ Map<String, Object?> _canonicalPayload(Map<String, dynamic> json) => {
   'driver_name': json['driver_name'] ?? json['driverName'],
   'vehicle_type': json['vehicle_type'] ?? json['vehicleType'],
   'plate_number': json['plate_number'] ?? json['plateNumber'],
+  'driver_rating': json['driver_rating'] ?? json['driverRating'],
   'pickup_latitude': json['pickup_latitude'] ?? json['pickupLat'],
   'pickup_longitude': json['pickup_longitude'] ?? json['pickupLng'],
   'dropoff_latitude':

@@ -21,6 +21,7 @@ void main() {
       'distance': '4.5',
       'durationMinutes': 12,
       'fare': '125.50',
+      'driver_rating': 4.85,
     });
 
     expect(snapshot.id, '303');
@@ -33,6 +34,8 @@ void main() {
     expect(snapshot.driverName, 'Nearby Driver');
     expect(snapshot.vehicleType, 'Bao Bao');
     expect(snapshot.plateNumber, 'ABC 1234');
+    expect(snapshot.driverRating, 4.85);
+    expect(snapshot.displayDriverRating, '4.8');
     expect(snapshot.pickupLatitude, 7.828);
     expect(snapshot.pickupLongitude, 123.434);
     expect(snapshot.dropoffLatitude, 7.9);

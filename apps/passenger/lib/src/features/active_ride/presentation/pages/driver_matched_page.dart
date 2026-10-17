@@ -114,6 +114,7 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
         'driver_name': widget.driverName ?? '',
         'vehicle_type': widget.vehicleType ?? '',
         'plate_number': widget.plateNumber ?? '',
+        'driver_rating': widget.driverRating,
         'pickup_latitude': widget.pickupLatitude,
         'pickup_longitude': widget.pickupLongitude,
         'dropoff_latitude': widget.destination.latitude,

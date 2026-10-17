@@ -734,6 +734,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                               etaText: etaText,
                               driverName: driverName,
                               vehicleSummary: vehicleSummary,
+                              driverRating: widget.ride.displayDriverRating,
                               unreadChatMessagesCount: _unreadChatMessagesCount,
                               showContactActions: true,
                               isCancellingTrip: _isCancellingTrip,
