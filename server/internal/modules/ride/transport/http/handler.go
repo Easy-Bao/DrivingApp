@@ -6,12 +6,12 @@ import (
 	"strconv"
 	"strings"
 
+	application "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
-	application "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
-	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -576,8 +576,7 @@ func (handler *Handler) CalculateFinal(w http.ResponseWriter, r *http.Request) {
 	}
 	invalidDistance := input.DistanceKm < 0
 	invalidDuration := input.DurationMinutes < 0
-	invalidCommission := input.CommissionBPS < 0 || input.CommissionBPS > 10000
-	if invalidDistance || invalidDuration || invalidCommission {
+	if invalidDistance || invalidDuration {
 		response.Error(w, 400, "invalid final fare input")
 		return
 	}

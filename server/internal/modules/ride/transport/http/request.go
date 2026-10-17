@@ -25,7 +25,6 @@ type FareEstimateRequest struct {
 type FinalFareRequest struct {
 	DistanceKm           float64  `json:"distance_km"`
 	DurationMinutes      float64  `json:"duration_minutes"`
-	CommissionBPS        int64    `json:"commission_bps"`
 	OriginLatitude       *float64 `json:"origin_latitude"`
 	OriginLongitude      *float64 `json:"origin_longitude"`
 	DestinationLatitude  *float64 `json:"destination_latitude"`
