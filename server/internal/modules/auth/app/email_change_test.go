@@ -238,3 +238,50 @@ func TestEmailChangeConsumesOTPBeforeUpdatingAccount(t *testing.T) {
 		t.Fatalf("replayed ConfirmEmailChange() error = %v, want invalid OTP", err)
 	}
 }
+
+func TestConfirmEmailChangeRevokesActiveRefreshSessions(t *testing.T) {
+	hash, err := bcrypt.GenerateFromPassword([]byte("current-password"), bcrypt.MinCost)
+	if err != nil {
+		t.Fatalf("hash password: %v", err)
+	}
+	users := &emailChangeUsers{accounts: map[int]domain.User{
+		42: {
+			ID:           42,
+			Email:        "old@example.test",
+			Role:         domain.Passenger,
+			PasswordHash: string(hash),
+			IsVerified:   true,
+		},
+	}}
+	sender := &emailChangeSender{}
+	notifier := &emailChangeNotifier{}
+	sessions := newTestRefreshSessionStore()
+	err = sessions.Create(context.Background(), domain.RefreshSession{
+		UserID:    42,
+		TokenHash: authapp.HashRefreshToken("token-for-user-42"),
+		ExpiresAt: time.Now().Add(time.Hour),
+	})
+	if err != nil {
+		t.Fatalf("create session: %v", err)
+	}
+	service := authapp.NewOTPService(authapp.OTPDependencies{
+		Users:         users,
+		EmailChanges:  users,
+		EmailNotifier: notifier,
+		Store:         &emailChangeOTPStore{},
+		Gateway:       sender,
+		Sessions:      sessions,
+	})
+
+	ctx := context.Background()
+	if err := service.RequestEmailChange(ctx, 42, "current-password", "new@example.test"); err != nil {
+		t.Fatalf("request email change: %v", err)
+	}
+	if err := service.ConfirmEmailChange(ctx, 42, "new@example.test", sender.code); err != nil {
+		t.Fatalf("confirm email change: %v", err)
+	}
+	_, err = sessions.FindActive(ctx, authapp.HashRefreshToken("token-for-user-42"), time.Now())
+	if !errors.Is(err, domain.ErrInvalidRefreshToken) {
+		t.Fatalf("expected session to be revoked after email change, got %v", err)
+	}
+}

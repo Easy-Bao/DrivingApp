@@ -409,6 +409,11 @@ func (service *OTPService) ConfirmEmailChange(
 		service.log().WarnContext(ctx, "update verified account email failed", "error", err)
 		return domain.ErrOTPUnavailable
 	}
+	if service.sessions != nil {
+		if err := service.sessions.RevokeAll(ctx, userID, time.Now().UTC()); err != nil {
+			return fmt.Errorf("revoke user sessions after email change: %w", err)
+		}
+	}
 	if service.emailNotifier != nil {
 		if err := service.emailNotifier.NotifyEmailChanged(ctx, account.Email, newEmail); err != nil {
 			service.log().WarnContext(ctx, "notify previous email after account change failed", "error", err)
