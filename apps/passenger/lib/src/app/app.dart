@@ -10,6 +10,7 @@ import 'package:passenger/src/app/navigation/app_routes.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver_cubit.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
+import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger/src/core/location/location_access_cubit.dart';
 import 'package:passenger/src/core/location/location_access_state.dart';
@@ -70,9 +71,25 @@ class _PassengerAppState extends State<PassengerApp>
                               listenWhen: (_, current) =>
                                   current is GuestSession ||
                                   current is SessionFailure,
-                              listener: (context, _) =>
-                                  BlocProvider.of<BookingDraftCubit>(context)
-                                      .clear(),
+                              listener: (context, _) {
+                                BlocProvider.of<BookingDraftCubit>(context)
+                                    .clear();
+                                unawaited(
+                                  BlocProvider.of<TrackDriverCubit>(context)
+                                      .resetTracking(),
+                                );
+                                try {
+                                  Modular.get<BookingBloc>().add(
+                                    const CancelBookingEvent(),
+                                  );
+                                } catch (_) {}
+                                try {
+                                  unawaited(
+                                    Modular.get<PassengerBackgroundTelemetry>()
+                                        .stopRideTelemetry(),
+                                  );
+                                } catch (_) {}
+                              },
                             ),
                           ],
                           child: _buildRouteWithLocationOverlay(
