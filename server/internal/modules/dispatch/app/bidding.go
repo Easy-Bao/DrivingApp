@@ -12,8 +12,8 @@ import (
 	"time"
 
 	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/domain"
-	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
 var ErrPersistenceUnavailable = errors.New("bidding persistence is unavailable")
@@ -169,9 +169,11 @@ func (service *Service) PlaceOffer(ctx context.Context, offer dispatchdomain.Bid
 	if offer.ProposedFareAmount == 0 {
 		offer.ProposedFareAmount = session.OfferedFareAmount
 	}
+	const minProposedFareCentavos = 50_00
+	const maxProposedFareCentavos = 5_000_00
 	baseFare := float64(session.OfferedFareAmount)
-	minFare := int64(math.Max(50, 0.70*baseFare))
-	maxFare := int64(math.Min(5000, 2.0*baseFare))
+	minFare := max(int64(minProposedFareCentavos), int64(math.Round(0.70*baseFare)))
+	maxFare := min(int64(maxProposedFareCentavos), int64(math.Round(2.0*baseFare)))
 	if maxFare < minFare {
 		maxFare = minFare
 	}
@@ -180,7 +182,7 @@ func (service *Service) PlaceOffer(ctx context.Context, offer dispatchdomain.Bid
 			return dispatchdomain.BidOffer{}, dispatchdomain.ErrInvalidFareOffer
 		}
 	} else {
-		if offer.ProposedFareAmount < 50 || offer.ProposedFareAmount > 5000 {
+		if offer.ProposedFareAmount < minProposedFareCentavos || offer.ProposedFareAmount > maxProposedFareCentavos {
 			return dispatchdomain.BidOffer{}, dispatchdomain.ErrInvalidFareOffer
 		}
 	}

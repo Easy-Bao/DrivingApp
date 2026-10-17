@@ -51,143 +51,143 @@ func TestChallengerPlaceOffer_BoundaryAndNegativeOffers(t *testing.T) {
 	t.Run("Base fare 200: exact boundary offers", func(t *testing.T) {
 		session := dispatchdomain.BidSession{
 			ID:                10,
-			OfferedFareAmount: 200,
+			OfferedFareAmount: 20000,
 		}
 		store := &challengerBiddingStoreStub{session: session}
 		service := dispatchapplication.NewService(dispatchapplication.Dependencies{Store: store})
 
-		// Boundary below lower bound (139 < 140)
+		// Boundary below lower bound (13999 < 14000)
 		_, err := service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
-			SessionID: 10, DriverID: 1, ProposedFareAmount: 139,
+			SessionID: 10, DriverID: 1, ProposedFareAmount: 13999,
 		})
 		if !errors.Is(err, dispatchdomain.ErrInvalidFareOffer) {
-			t.Fatalf("expected ErrInvalidFareOffer for 139, got %v", err)
+			t.Fatalf("expected ErrInvalidFareOffer for 13999, got %v", err)
 		}
 
-		// Exact lower bound (140)
+		// Exact lower bound (14000)
 		_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
-			SessionID: 10, DriverID: 1, ProposedFareAmount: 140,
+			SessionID: 10, DriverID: 1, ProposedFareAmount: 14000,
 		})
 		if err != nil {
-			t.Fatalf("expected success for exact min bound 140, got %v", err)
+			t.Fatalf("expected success for exact min bound 14000, got %v", err)
 		}
-		if store.lastOffer.ProposedFareAmount != 140 {
-			t.Fatalf("store received fare %d, want 140", store.lastOffer.ProposedFareAmount)
+		if store.lastOffer.ProposedFareAmount != 14000 {
+			t.Fatalf("store received fare %d, want 14000", store.lastOffer.ProposedFareAmount)
 		}
 
-		// Exact upper bound (400)
+		// Exact upper bound (40000)
 		_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
-			SessionID: 10, DriverID: 1, ProposedFareAmount: 400,
+			SessionID: 10, DriverID: 1, ProposedFareAmount: 40000,
 		})
 		if err != nil {
-			t.Fatalf("expected success for exact max bound 400, got %v", err)
+			t.Fatalf("expected success for exact max bound 40000, got %v", err)
 		}
-		if store.lastOffer.ProposedFareAmount != 400 {
-			t.Fatalf("store received fare %d, want 400", store.lastOffer.ProposedFareAmount)
+		if store.lastOffer.ProposedFareAmount != 40000 {
+			t.Fatalf("store received fare %d, want 40000", store.lastOffer.ProposedFareAmount)
 		}
 
-		// Boundary above upper bound (401 > 400)
+		// Boundary above upper bound (40001 > 40000)
 		_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
-			SessionID: 10, DriverID: 1, ProposedFareAmount: 401,
+			SessionID: 10, DriverID: 1, ProposedFareAmount: 40001,
 		})
 		if !errors.Is(err, dispatchdomain.ErrInvalidFareOffer) {
-			t.Fatalf("expected ErrInvalidFareOffer for 401, got %v", err)
+			t.Fatalf("expected ErrInvalidFareOffer for 40001, got %v", err)
 		}
 	})
 
 	t.Run("Floor clamp 50: base fare 60", func(t *testing.T) {
-		// 0.7 * 60 = 42 < 50 -> minFare clamped to 50
-		// maxFare = 2.0 * 60 = 120
+		// 0.7 * 6000 = 4200 < 5000 -> minFare clamped to 5000
+		// maxFare = 2.0 * 6000 = 12000
 		session := dispatchdomain.BidSession{
 			ID:                20,
-			OfferedFareAmount: 60,
+			OfferedFareAmount: 6000,
 		}
 		store := &challengerBiddingStoreStub{session: session}
 		service := dispatchapplication.NewService(dispatchapplication.Dependencies{Store: store})
 
-		// 49 rejected
+		// 4999 rejected
 		_, err := service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
-			SessionID: 20, DriverID: 1, ProposedFareAmount: 49,
+			SessionID: 20, DriverID: 1, ProposedFareAmount: 4999,
 		})
 		if !errors.Is(err, dispatchdomain.ErrInvalidFareOffer) {
-			t.Fatalf("expected ErrInvalidFareOffer for 49, got %v", err)
-		}
-
-		// 50 accepted
-		_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
-			SessionID: 20, DriverID: 1, ProposedFareAmount: 50,
-		})
-		if err != nil {
-			t.Fatalf("expected success for clamped floor min 50, got %v", err)
-		}
-		if store.lastOffer.ProposedFareAmount != 50 {
-			t.Fatalf("store received fare %d, want 50", store.lastOffer.ProposedFareAmount)
-		}
-
-		// 120 accepted
-		_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
-			SessionID: 20, DriverID: 1, ProposedFareAmount: 120,
-		})
-		if err != nil {
-			t.Fatalf("expected success for upper bound 120, got %v", err)
-		}
-
-		// 121 rejected
-		_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
-			SessionID: 20, DriverID: 1, ProposedFareAmount: 121,
-		})
-		if !errors.Is(err, dispatchdomain.ErrInvalidFareOffer) {
-			t.Fatalf("expected ErrInvalidFareOffer for 121, got %v", err)
-		}
-	})
-
-	t.Run("Ceiling clamp 5000: base fare 3500", func(t *testing.T) {
-		// minFare = 0.7 * 3500 = 2450
-		// 2.0 * 3500 = 7000 > 5000 -> maxFare clamped to 5000
-		session := dispatchdomain.BidSession{
-			ID:                30,
-			OfferedFareAmount: 3500,
-		}
-		store := &challengerBiddingStoreStub{session: session}
-		service := dispatchapplication.NewService(dispatchapplication.Dependencies{Store: store})
-
-		// 2449 rejected
-		_, err := service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
-			SessionID: 30, DriverID: 1, ProposedFareAmount: 2449,
-		})
-		if !errors.Is(err, dispatchdomain.ErrInvalidFareOffer) {
-			t.Fatalf("expected ErrInvalidFareOffer for 2449, got %v", err)
-		}
-
-		// 2450 accepted
-		_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
-			SessionID: 30, DriverID: 1, ProposedFareAmount: 2450,
-		})
-		if err != nil {
-			t.Fatalf("expected success for min bound 2450, got %v", err)
+			t.Fatalf("expected ErrInvalidFareOffer for 4999, got %v", err)
 		}
 
 		// 5000 accepted
 		_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
-			SessionID: 30, DriverID: 1, ProposedFareAmount: 5000,
+			SessionID: 20, DriverID: 1, ProposedFareAmount: 5000,
 		})
 		if err != nil {
-			t.Fatalf("expected success for clamped ceiling 5000, got %v", err)
+			t.Fatalf("expected success for clamped floor min 5000, got %v", err)
+		}
+		if store.lastOffer.ProposedFareAmount != 5000 {
+			t.Fatalf("store received fare %d, want 5000", store.lastOffer.ProposedFareAmount)
 		}
 
-		// 5001 rejected
+		// 12000 accepted
 		_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
-			SessionID: 30, DriverID: 1, ProposedFareAmount: 5001,
+			SessionID: 20, DriverID: 1, ProposedFareAmount: 12000,
+		})
+		if err != nil {
+			t.Fatalf("expected success for upper bound 12000, got %v", err)
+		}
+
+		// 12001 rejected
+		_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
+			SessionID: 20, DriverID: 1, ProposedFareAmount: 12001,
 		})
 		if !errors.Is(err, dispatchdomain.ErrInvalidFareOffer) {
-			t.Fatalf("expected ErrInvalidFareOffer for 5001, got %v", err)
+			t.Fatalf("expected ErrInvalidFareOffer for 12001, got %v", err)
+		}
+	})
+
+	t.Run("Ceiling clamp 5000: base fare 3500", func(t *testing.T) {
+		// minFare = 0.7 * 350000 = 245000
+		// 2.0 * 350000 = 700000 > 500000 -> maxFare clamped to 500000
+		session := dispatchdomain.BidSession{
+			ID:                30,
+			OfferedFareAmount: 350000,
+		}
+		store := &challengerBiddingStoreStub{session: session}
+		service := dispatchapplication.NewService(dispatchapplication.Dependencies{Store: store})
+
+		// 244999 rejected
+		_, err := service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
+			SessionID: 30, DriverID: 1, ProposedFareAmount: 244999,
+		})
+		if !errors.Is(err, dispatchdomain.ErrInvalidFareOffer) {
+			t.Fatalf("expected ErrInvalidFareOffer for 244999, got %v", err)
+		}
+
+		// 245000 accepted
+		_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
+			SessionID: 30, DriverID: 1, ProposedFareAmount: 245000,
+		})
+		if err != nil {
+			t.Fatalf("expected success for min bound 245000, got %v", err)
+		}
+
+		// 500000 accepted
+		_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
+			SessionID: 30, DriverID: 1, ProposedFareAmount: 500000,
+		})
+		if err != nil {
+			t.Fatalf("expected success for clamped ceiling 500000, got %v", err)
+		}
+
+		// 500001 rejected
+		_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
+			SessionID: 30, DriverID: 1, ProposedFareAmount: 500001,
+		})
+		if !errors.Is(err, dispatchdomain.ErrInvalidFareOffer) {
+			t.Fatalf("expected ErrInvalidFareOffer for 500001, got %v", err)
 		}
 	})
 
 	t.Run("Negative offers and zero offer", func(t *testing.T) {
 		session := dispatchdomain.BidSession{
 			ID:                40,
-			OfferedFareAmount: 300,
+			OfferedFareAmount: 30000,
 		}
 		store := &challengerBiddingStoreStub{session: session}
 		service := dispatchapplication.NewService(dispatchapplication.Dependencies{Store: store})
@@ -216,32 +216,32 @@ func TestChallengerPlaceOffer_BoundaryAndNegativeOffers(t *testing.T) {
 			t.Fatalf("expected ErrInvalidFareOffer for math.MinInt64, got %v", err)
 		}
 
-		// Zero offer inherits base fare (300) -> accepted
+		// Zero offer inherits base fare (30000) -> accepted
 		offer, err := service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 			SessionID: 40, DriverID: 1, ProposedFareAmount: 0,
 		})
 		if err != nil {
 			t.Fatalf("expected zero offer to inherit base fare, got %v", err)
 		}
-		if offer.ProposedFareAmount != 300 {
-			t.Fatalf("expected proposed fare 300, got %d", offer.ProposedFareAmount)
+		if offer.ProposedFareAmount != 30000 {
+			t.Fatalf("expected proposed fare 30000, got %d", offer.ProposedFareAmount)
 		}
-		if store.lastOffer.ProposedFareAmount != 300 {
-			t.Fatalf("expected store to receive fare 300, got %d", store.lastOffer.ProposedFareAmount)
+		if store.lastOffer.ProposedFareAmount != 30000 {
+			t.Fatalf("expected store to receive fare 30000, got %d", store.lastOffer.ProposedFareAmount)
 		}
 	})
 
 	t.Run("Invalid DriverID", func(t *testing.T) {
 		session := dispatchdomain.BidSession{
 			ID:                50,
-			OfferedFareAmount: 200,
+			OfferedFareAmount: 20000,
 		}
 		store := &challengerBiddingStoreStub{session: session}
 		service := dispatchapplication.NewService(dispatchapplication.Dependencies{Store: store})
 
 		for _, invalidDriverID := range []int{0, -1, -99} {
 			_, err := service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
-				SessionID: 50, DriverID: invalidDriverID, ProposedFareAmount: 200,
+				SessionID: 50, DriverID: invalidDriverID, ProposedFareAmount: 20000,
 			})
 			if !errors.Is(err, dispatchdomain.ErrInvalidFareOffer) {
 				t.Fatalf("expected ErrInvalidFareOffer for driverID %d, got %v", invalidDriverID, err)

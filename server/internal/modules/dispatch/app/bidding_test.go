@@ -8,8 +8,8 @@ import (
 
 	dispatchapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
 	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/domain"
-	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
 type eventPublisherStub struct {
@@ -307,7 +307,7 @@ func TestPlaceOfferRecoversAnIdempotentDuplicate(t *testing.T) {
 		ID:                 7,
 		SessionID:          10,
 		DriverID:           42,
-		ProposedFareAmount: 3500,
+		ProposedFareAmount: 5500,
 		Status:             "pending",
 	}
 	store := &biddingStoreStub{
@@ -334,7 +334,7 @@ func TestPlaceOfferKeepsDuplicateErrorForDifferentFare(t *testing.T) {
 		offers: []dispatchdomain.BidOffer{{
 			SessionID:          10,
 			DriverID:           42,
-			ProposedFareAmount: 3500,
+			ProposedFareAmount: 5500,
 			Status:             "pending",
 		}},
 		placeErr: dispatchdomain.ErrDuplicateBid,
@@ -344,7 +344,7 @@ func TestPlaceOfferKeepsDuplicateErrorForDifferentFare(t *testing.T) {
 	_, err := service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 		SessionID:          10,
 		DriverID:           42,
-		ProposedFareAmount: 4000,
+		ProposedFareAmount: 6000,
 	})
 	if !errors.Is(err, dispatchdomain.ErrDuplicateBid) {
 		t.Fatalf("PlaceOffer() error = %v, want %v", err, dispatchdomain.ErrDuplicateBid)
@@ -352,53 +352,53 @@ func TestPlaceOfferKeepsDuplicateErrorForDifferentFare(t *testing.T) {
 }
 
 func TestPlaceOfferEnforcesFareBounds(t *testing.T) {
-	// Base fare 200: lower bound = max(50, 0.70*200) = 140, upper bound = min(5000, 2.0*200) = 400
+	// Base fare 20000 (₱200.00): lower bound = max(5000, 0.70*20000) = 14000, upper bound = min(500000, 2.0*20000) = 40000
 	session := dispatchdomain.BidSession{
 		ID:                10,
-		OfferedFareAmount: 200,
+		OfferedFareAmount: 20000,
 	}
 	store := &biddingStoreStub{session: session}
 	service := dispatchapplication.NewService(dispatchapplication.Dependencies{Store: store})
 
-	// Offer below lower bound (100 < 140)
+	// Offer below lower bound (10000 < 14000)
 	_, err := service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 		SessionID:          10,
 		DriverID:           42,
-		ProposedFareAmount: 100,
+		ProposedFareAmount: 10000,
 	})
 	if !errors.Is(err, dispatchdomain.ErrInvalidFareOffer) {
 		t.Fatalf("expected ErrInvalidFareOffer for low bid, got %v", err)
 	}
 
-	// Offer above upper bound (450 > 400)
+	// Offer above upper bound (45000 > 40000)
 	_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 		SessionID:          10,
 		DriverID:           42,
-		ProposedFareAmount: 450,
+		ProposedFareAmount: 45000,
 	})
 	if !errors.Is(err, dispatchdomain.ErrInvalidFareOffer) {
 		t.Fatalf("expected ErrInvalidFareOffer for high bid, got %v", err)
 	}
 
-	// Offer within bounds (250)
+	// Offer within bounds (25000)
 	_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 		SessionID:          10,
 		DriverID:           42,
-		ProposedFareAmount: 250,
+		ProposedFareAmount: 25000,
 	})
 	if err != nil {
 		t.Fatalf("expected success for valid bid, got %v", err)
 	}
 
-	// Absolute cap test: base fare 3000: upper bound = min(5000, 2.0*3000) = 5000
-	store.session.OfferedFareAmount = 3000
+	// Absolute cap test: base fare 300000: upper bound = min(500000, 2.0*300000) = 500000
+	store.session.OfferedFareAmount = 300000
 	_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
 		SessionID:          10,
 		DriverID:           42,
-		ProposedFareAmount: 5500,
+		ProposedFareAmount: 550000,
 	})
 	if !errors.Is(err, dispatchdomain.ErrInvalidFareOffer) {
-		t.Fatalf("expected ErrInvalidFareOffer for exceeding absolute 5000 cap, got %v", err)
+		t.Fatalf("expected ErrInvalidFareOffer for exceeding absolute 500000 cap, got %v", err)
 	}
 }
 
