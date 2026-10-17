@@ -27,6 +27,10 @@ CREATE TABLE bid_sessions (
         AND dropoff_latitude BETWEEN -90 AND 90
         AND dropoff_longitude BETWEEN -180 AND 180
     ),
+    CONSTRAINT bid_sessions_pickup_dropoff_different_check CHECK (
+        (pickup_latitude IS DISTINCT FROM dropoff_latitude)
+        OR (pickup_longitude IS DISTINCT FROM dropoff_longitude)
+    ),
     CONSTRAINT bid_sessions_passenger_fk
         FOREIGN KEY (passenger_id) REFERENCES users (id) ON DELETE RESTRICT,
     CONSTRAINT bid_sessions_target_driver_fk

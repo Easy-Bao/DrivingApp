@@ -352,7 +352,9 @@ func validateTrip(
 	invalidDropoffLongitude := dropoffLongitude < -180 || dropoffLongitude > 180
 	invalidLongitude := invalidPickupLongitude || invalidDropoffLongitude
 	invalidMetrics := distanceKm < 0 || durationMinutes < 0
-	if invalidLatitude || invalidLongitude || invalidMetrics {
+	hasCoordinates := !(pickupLatitude == 0 && pickupLongitude == 0 && dropoffLatitude == 0 && dropoffLongitude == 0)
+	sameCoordinates := hasCoordinates && pickupLatitude == dropoffLatitude && pickupLongitude == dropoffLongitude
+	if invalidLatitude || invalidLongitude || invalidMetrics || sameCoordinates {
 		return domain.ErrInvalidTrip
 	}
 	return nil

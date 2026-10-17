@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
 var errUnavailable = errors.New("ride booking persistence is unavailable")
@@ -181,6 +181,9 @@ func (service *BookingService) EstimateFare(
 		missingOrigin := originLatitude == nil || originLongitude == nil
 		missingDestination := destinationLatitude == nil || destinationLongitude == nil
 		if missingOrigin || missingDestination {
+			return RouteMetrics{}, 0, domain.ErrInvalidTrip
+		}
+		if *originLatitude == *destinationLatitude && *originLongitude == *destinationLongitude {
 			return RouteMetrics{}, 0, domain.ErrInvalidTrip
 		}
 		if service.resolveRoute == nil {

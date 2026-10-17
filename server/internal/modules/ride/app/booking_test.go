@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	booking "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
 type rideWriterStub struct {
@@ -108,6 +108,19 @@ func TestServiceEstimateFareValidatesRouteInputs(t *testing.T) {
 	}
 	if metrics.DistanceKm != 2 || metrics.DurationMinutes != 10 || fare != 2500 {
 		t.Fatalf("fare result = %#v, %d", metrics, fare)
+	}
+
+	_, _, err = service.EstimateFare(
+		context.Background(),
+		floatPointer(1),
+		floatPointer(2),
+		floatPointer(1),
+		floatPointer(2),
+		0,
+		0,
+	)
+	if !errors.Is(err, domain.ErrInvalidTrip) {
+		t.Fatalf("identical coordinates error = %v, want invalid trip", err)
 	}
 }
 

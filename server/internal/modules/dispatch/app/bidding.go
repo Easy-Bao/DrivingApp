@@ -80,6 +80,9 @@ func (service *Service) CreateSession(ctx context.Context, session dispatchdomai
 	if service.resolveRoute == nil || service.calculateFare == nil {
 		return dispatchdomain.BidSession{}, ErrPersistenceUnavailable
 	}
+	if session.PickupLatitude == session.DropoffLatitude && session.PickupLongitude == session.DropoffLongitude {
+		return dispatchdomain.BidSession{}, ridedomain.ErrInvalidTrip
+	}
 	if service.activeRideChecker != nil {
 		hasActive, err := service.activeRideChecker.HasActivePassengerRide(ctx, session.PassengerID)
 		if err != nil {

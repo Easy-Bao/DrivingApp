@@ -188,6 +188,10 @@ func TestCreateSessionUsesAuthoritativeRouteAndCustomFare(t *testing.T) {
 
 	created, err := service.CreateSession(context.Background(), dispatchdomain.BidSession{
 		PassengerID:      101,
+		PickupLatitude:   14.5,
+		PickupLongitude:  121.0,
+		DropoffLatitude:  14.6,
+		DropoffLongitude: 121.1,
 		DistanceKm:       0.01,
 		DurationMinutes:  0.01,
 		CustomFareAmount: &customFare,
@@ -213,6 +217,10 @@ func TestCreateSessionRejectsCustomFareBelowMinimum(t *testing.T) {
 
 	_, err := service.CreateSession(context.Background(), dispatchdomain.BidSession{
 		PassengerID:      101,
+		PickupLatitude:   14.5,
+		PickupLongitude:  121.0,
+		DropoffLatitude:  14.6,
+		DropoffLongitude: 121.1,
 		CustomFareAmount: &customFare,
 	})
 	if !errors.Is(err, dispatchdomain.ErrInvalidFareOffer) {
@@ -233,7 +241,13 @@ func TestCreateSessionPreservesRouteResolutionError(t *testing.T) {
 		CalculateFare: func(float64, float64) int64 { return 4000 },
 	})
 
-	_, err := service.CreateSession(context.Background(), dispatchdomain.BidSession{PassengerID: 101})
+	_, err := service.CreateSession(context.Background(), dispatchdomain.BidSession{
+		PassengerID:      101,
+		PickupLatitude:   14.5,
+		PickupLongitude:  121.0,
+		DropoffLatitude:  14.6,
+		DropoffLongitude: 121.1,
+	})
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("CreateSession() error = %v, want context cancellation", err)
 	}
@@ -256,8 +270,12 @@ func TestCreateSessionPublishesToPassengerAndTargetDriver(t *testing.T) {
 	})
 
 	created, err := service.CreateSession(context.Background(), dispatchdomain.BidSession{
-		PassengerID:    101,
-		TargetDriverID: &targetDriverID,
+		PassengerID:      101,
+		PickupLatitude:   14.5,
+		PickupLongitude:  121.0,
+		DropoffLatitude:  14.6,
+		DropoffLongitude: 121.1,
+		TargetDriverID:   &targetDriverID,
 	})
 	if err != nil {
 		t.Fatalf("CreateSession() error = %v", err)
@@ -288,7 +306,13 @@ func TestCreateOpenSessionPublishesToDriverPool(t *testing.T) {
 		EventPublisher: publisher,
 	})
 
-	_, err := service.CreateSession(context.Background(), dispatchdomain.BidSession{PassengerID: 101})
+	_, err := service.CreateSession(context.Background(), dispatchdomain.BidSession{
+		PassengerID:      101,
+		PickupLatitude:   14.5,
+		PickupLongitude:  121.0,
+		DropoffLatitude:  14.6,
+		DropoffLongitude: 121.1,
+	})
 	if err != nil {
 		t.Fatalf("CreateSession() error = %v", err)
 	}
@@ -550,5 +574,26 @@ func TestCancelOfferRecoversAnAlreadyRejectedOffer(t *testing.T) {
 	}
 	if recovered != existing {
 		t.Fatalf("recovered offer = %+v, want %+v", recovered, existing)
+	}
+}
+
+func TestCreateSessionRejectsIdenticalPickupAndDropoff(t *testing.T) {
+	service := dispatchapplication.NewService(dispatchapplication.Dependencies{
+		Store: &biddingStoreStub{},
+		ResolveRoute: func(context.Context, float64, float64, float64, float64, float64, float64) (dispatchapplication.RouteMetrics, error) {
+			return dispatchapplication.RouteMetrics{DistanceKm: 0, DurationMinutes: 0}, nil
+		},
+		CalculateFare: func(float64, float64) int64 { return 2500 },
+	})
+
+	_, err := service.CreateSession(context.Background(), dispatchdomain.BidSession{
+		PassengerID:      101,
+		PickupLatitude:   14.5,
+		PickupLongitude:  121.0,
+		DropoffLatitude:  14.5,
+		DropoffLongitude: 121.0,
+	})
+	if !errors.Is(err, ridedomain.ErrInvalidTrip) {
+		t.Fatalf("CreateSession error = %v, want %v", err, ridedomain.ErrInvalidTrip)
 	}
 }
