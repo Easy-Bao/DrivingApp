@@ -157,6 +157,7 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 	if err != nil {
 		return
 	}
+	_ = connection.SetWriteDeadline(time.Time{})
 	var closeOnce sync.Once
 	debugMetricsEnabled := handler.logger.Enabled(request.Context(), slog.LevelDebug)
 	var startedAt time.Time
