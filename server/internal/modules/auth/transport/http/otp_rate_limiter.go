@@ -43,9 +43,13 @@ func (limiter *OTPVerificationRateLimiter) Middleware(next http.Handler) http.Ha
 			return
 		}
 
-		body, err := io.ReadAll(io.LimitReader(request.Body, _otpVerificationBodyLimit))
+		body, err := io.ReadAll(io.LimitReader(request.Body, _otpVerificationBodyLimit+1))
 		if err != nil {
-			next.ServeHTTP(writer, request)
+			response.Error(writer, http.StatusBadRequest, "invalid request body")
+			return
+		}
+		if int64(len(body)) > _otpVerificationBodyLimit {
+			response.Error(writer, http.StatusBadRequest, "request body is too large")
 			return
 		}
 		request.Body = io.NopCloser(bytes.NewReader(body))
@@ -53,10 +57,7 @@ func (limiter *OTPVerificationRateLimiter) Middleware(next http.Handler) http.Ha
 		var input struct {
 			Email string `json:"email"`
 		}
-		if err := json.Unmarshal(body, &input); err != nil {
-			next.ServeHTTP(writer, request)
-			return
-		}
+		_ = json.Unmarshal(body, &input)
 
 		buckets := []otpAttemptBucket{{
 			scope: "ip",

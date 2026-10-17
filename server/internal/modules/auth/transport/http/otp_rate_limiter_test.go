@@ -77,3 +77,44 @@ func serveOTPVerificationAttempt(handler http.Handler, email, remoteAddr string)
 	handler.ServeHTTP(response, request)
 	return response
 }
+
+func TestOTPVerificationRateLimiterRejectsOversizeBody(t *testing.T) {
+	limiter := NewOTPVerificationRateLimiter(middleware.NewMemoryCounterStore())
+	handler := limiter.Middleware(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		writer.WriteHeader(http.StatusNoContent)
+	}))
+
+	oversize := strings.Repeat(" ", int(_otpVerificationBodyLimit)+10)
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/auth/passenger/verify-otp", strings.NewReader(oversize))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("oversize status = %d, want %d", response.Code, http.StatusBadRequest)
+	}
+}
+
+func TestOTPVerificationRateLimiterThrottlesMalformedJSONByIP(t *testing.T) {
+	limiter := NewOTPVerificationRateLimiter(middleware.NewMemoryCounterStore())
+	handler := limiter.Middleware(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		writer.WriteHeader(http.StatusNoContent)
+	}))
+
+	for attempt := 0; attempt < 5; attempt++ {
+		request := httptest.NewRequest(http.MethodPost, "/api/v1/auth/passenger/verify-otp", strings.NewReader(`{invalid-json`))
+		request.RemoteAddr = "192.0.2.99:1234"
+		response := httptest.NewRecorder()
+		handler.ServeHTTP(response, request)
+		if response.Code != http.StatusNoContent {
+			t.Fatalf("attempt %d status = %d, want %d", attempt+1, response.Code, http.StatusNoContent)
+		}
+	}
+
+	// 6th attempt from same IP with malformed JSON must be throttled
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/auth/passenger/verify-otp", strings.NewReader(`{invalid-json`))
+	request.RemoteAddr = "192.0.2.99:1234"
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusTooManyRequests {
+		t.Fatalf("throttled status = %d, want %d", response.Code, http.StatusTooManyRequests)
+	}
+}
