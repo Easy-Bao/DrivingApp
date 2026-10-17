@@ -21,9 +21,9 @@ FROM reviews AS review
 LEFT JOIN users AS user_account ON user_account.id = review.passenger_id
 LEFT JOIN passenger_profiles AS passenger_profile ON passenger_profile.user_id = review.passenger_id
 WHERE review.driver_id = sqlc.arg('driver_id')
-ORDER BY review.id ASC
-LIMIT NULLIF(sqlc.arg('limit')::int, 0)
-OFFSET sqlc.arg('offset')::int;
+ORDER BY review.created_at DESC, review.id DESC
+OFFSET sqlc.arg('offset')::int
+LIMIT sqlc.arg('limit')::int;
 
 -- name: GetPassengerName :one
 SELECT COALESCE(

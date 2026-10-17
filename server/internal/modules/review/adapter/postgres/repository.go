@@ -7,9 +7,9 @@ import (
 	"math"
 	"time"
 
-	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
-	"github.com/Easy-Bao/DrivingApp/server/internal/modules/review/domain"
 	ports "github.com/Easy-Bao/DrivingApp/server/internal/modules/review/app"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/review/domain"
+	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -81,8 +81,8 @@ func (repository *ReviewRepository) DriverReviews(
 		return nil, fmt.Errorf("list driver reviews: %w", err)
 	}
 	result := make([]domain.Review, 0, len(items))
-	for index := len(items) - 1; index >= 0; index-- {
-		review, mappingErr := fromPostgresReview(items[index])
+	for _, item := range items {
+		review, mappingErr := fromPostgresReview(item)
 		if mappingErr != nil {
 			return nil, fmt.Errorf("map driver review: %w", mappingErr)
 		}

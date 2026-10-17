@@ -246,9 +246,9 @@ FROM reviews AS review
 LEFT JOIN users AS user_account ON user_account.id = review.passenger_id
 LEFT JOIN passenger_profiles AS passenger_profile ON passenger_profile.user_id = review.passenger_id
 WHERE review.driver_id = $1
-ORDER BY review.id ASC
-LIMIT NULLIF($3::int, 0)
+ORDER BY review.created_at DESC, review.id DESC
 OFFSET $2::int
+LIMIT $3::int
 `
 
 type ListDriverReviewsParams struct {

@@ -23,6 +23,9 @@ CREATE UNIQUE INDEX review_ride_id
 CREATE INDEX review_driver_id_created_at
     ON reviews (driver_id, created_at);
 
+CREATE INDEX reviews_driver_created_id_idx
+    ON reviews (driver_id, created_at DESC, id DESC);
+
 CREATE INDEX review_passenger_id_idx
     ON reviews (passenger_id);
 
