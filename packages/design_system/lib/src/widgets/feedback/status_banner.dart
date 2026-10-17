@@ -5,8 +5,9 @@ import 'package:design_system/src/widgets/feedback/network_status_scope.dart';
 
 enum AppStatusBannerTone { warning, error }
 
-/// Places a transient app status on the system edge instead of inside page
-/// content, so the message remains visible without changing page layout.
+/// Places a transient app status on the system edge. When rendered at the
+/// top of a layout, the message remains visible while allowing the app area
+/// to be offset below it so they never overlap.
 class const AppStatusBanner({
   super.key,
   required this.isVisible,
@@ -14,12 +15,14 @@ class const AppStatusBanner({
   required this.tone,
   this.actionLabel,
   this.onAction,
+  this.usePositioned = false,
 }) extends StatelessWidget {
   final bool isVisible;
   final String message;
   final AppStatusBannerTone tone;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final bool usePositioned;
 
   @override
   Widget build(BuildContext context) {
@@ -87,10 +90,8 @@ class const AppStatusBanner({
     );
     final statusSurface = canAct ? banner : IgnorePointer(child: banner);
 
-    return Positioned(
-      top: 0,
-      left: 0,
-      right: 0,
+    final content = SizedBox(
+      width: double.infinity,
       child: AnnotatedRegion<SystemUiOverlayStyle>(
         value: SystemUiOverlayStyle(
           statusBarColor: backgroundColor,
@@ -100,5 +101,11 @@ class const AppStatusBanner({
         child: statusSurface,
       ),
     );
+
+    if (usePositioned) {
+      return Positioned(top: 0, left: 0, right: 0, child: content);
+    }
+
+    return content;
   }
 }

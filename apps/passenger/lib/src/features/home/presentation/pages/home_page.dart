@@ -8,6 +8,9 @@ import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger/src/app/navigation/navigation_observer.dart';
+import 'package:passenger/src/core/location/location_access_cubit.dart';
+import 'package:passenger/src/core/location/location_access_state.dart';
+import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver_cubit.dart';
@@ -23,15 +26,12 @@ import 'package:passenger/src/features/home/presentation/widgets/pending_booking
 import 'package:passenger/src/features/home/presentation/widgets/recent_ride_history_empty_state.dart';
 import 'package:passenger/src/features/home/presentation/widgets/recent_ride_history_preview.dart';
 import 'package:passenger/src/features/home/presentation/widgets/saved_place_quick_actions.dart';
-import 'package:passenger/src/core/location/location_access_cubit.dart';
-import 'package:passenger/src/core/location/location_access_state.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
 import 'package:passenger/src/features/ride_history/ride_history_routes.dart';
 import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places_state.dart';
-import 'package:passenger/src/core/session/session_store.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 bool shouldStartHomeNavigation({
@@ -116,52 +116,54 @@ class _HomePageState extends State<HomePage> {
           },
         ),
       ],
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Scaffold(
-            body: SafeArea(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: EasyRideLayout.pageMaxWidth,
-                  ),
-                  child: Stack(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: EasyRideLayout.pagePadding,
+      child: Scaffold(
+        body: Column(
+          children: [
+            if (_serverErrorMessage != null)
+              AppStatusBanner(
+                isVisible: true,
+                message: _serverErrorMessage!,
+                tone: AppStatusBannerTone.error,
+                actionLabel: 'Dismiss',
+                onAction: () => setState(() => _serverErrorMessage = null),
+              ),
+            Expanded(
+              child: SafeArea(
+                top: _serverErrorMessage == null,
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: EasyRideLayout.pageMaxWidth,
+                    ),
+                    child: Stack(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: EasyRideLayout.pagePadding,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildHeader(),
+                              const SizedBox(height: 20),
+                              _buildSearchBar(),
+                              _buildPendingBookingBanner(),
+                              const SizedBox(height: 16),
+                              _buildChipRow(),
+                              const SizedBox(height: 24),
+                              _buildRecentRideHistoryHeader(),
+                              Expanded(child: _buildRecentRideHistoryList()),
+                            ],
+                          ),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildHeader(),
-                            const SizedBox(height: 20),
-                            _buildSearchBar(),
-                            _buildPendingBookingBanner(),
-                            const SizedBox(height: 16),
-                            _buildChipRow(),
-                            const SizedBox(height: 24),
-                            _buildRecentRideHistoryHeader(),
-                            Expanded(child: _buildRecentRideHistoryList()),
-                          ],
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          if (_serverErrorMessage != null)
-            AppStatusBanner(
-              isVisible: true,
-              message: _serverErrorMessage!,
-              tone: AppStatusBannerTone.error,
-              actionLabel: 'Dismiss',
-              onAction: () => setState(() => _serverErrorMessage = null),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

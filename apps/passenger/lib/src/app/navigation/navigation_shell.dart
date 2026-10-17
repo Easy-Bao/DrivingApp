@@ -224,83 +224,8 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
               .goBackToPreviousTab();
           widget.navigationShell.goBranch(previousIndex);
         },
-        child: Stack(
-          fit: StackFit.expand,
+        child: Column(
           children: [
-            Scaffold(
-              extendBody: true,
-              body: isWide && isAuthenticated
-                  ? Row(
-                      children: [
-                        PassengerNavigationRail(
-                          selectedIndex: sel,
-                          onDestinationSelected: _onItemTapped,
-                          inboxCubit: widget.inboxCubit,
-                        ),
-                        const VerticalDivider(width: 1),
-                        Expanded(child: widget.navigationShell),
-                      ],
-                    )
-                  : widget.navigationShell,
-              bottomNavigationBar:
-                  BlocSelector<SessionBloc, SessionState, bool>(
-                    selector: (state) => state.isAuthenticated,
-                    builder: (context, isAuthenticated) {
-                      if (!isAuthenticated) {
-                        return GuestActionBarWidget(
-                          onSignUp: () => context.pushNamed(AuthRoutes.signup),
-                          onSignIn: () => context.pushNamed(AuthRoutes.signin),
-                          onHelp: () =>
-                              context.pushNamed(ProfileRoutes.helpCenter),
-                        );
-                      }
-                      if (isWide) return const SizedBox.shrink();
-                      final bottomPadding = MediaQuery.of(context)
-                          .padding
-                          .bottom;
-                      final trackCubit = _resolveTrackDriverCubit(context);
-
-                      Widget floatingTabBar = PassengerFloatingTabBar(
-                        selectedIndex: sel,
-                        onDestinationSelected: _onItemTapped,
-                        inboxCubit: widget.inboxCubit,
-                        pagePosition: widget.navigationCoordinator.pagePosition,
-                      );
-
-                      if (trackCubit != null) {
-                        floatingTabBar =
-                            BlocBuilder<TrackDriverCubit, TrackDriverState>(
-                              bloc: trackCubit,
-                              builder: (context, trackState) {
-                                return PassengerFloatingTabBar(
-                                  selectedIndex: sel,
-                                  onDestinationSelected: _onItemTapped,
-                                  inboxCubit: widget.inboxCubit,
-                                  pagePosition:
-                                      widget.navigationCoordinator.pagePosition,
-                                  activeRideBanner:
-                                      _buildActiveRideBannerForTabBar(
-                                        context,
-                                        trackState,
-                                      ),
-                                );
-                              },
-                            );
-                      }
-
-                      return Padding(
-                        padding: EdgeInsets.only(bottom: bottomPadding + 10),
-                        child: FractionallySizedBox(
-                          widthFactor: 0.94,
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 520),
-                            child: floatingTabBar,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-            ),
             if (_sessionErrorMessage != null)
               AppStatusBanner(
                 isVisible: true,
@@ -309,6 +234,107 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
                 actionLabel: 'Dismiss',
                 onAction: () => setState(() => _sessionErrorMessage = null),
               ),
+            Expanded(
+              child: MediaQuery.removePadding(
+                context: context,
+                removeTop:
+                    _sessionErrorMessage != null &&
+                    !AppNetworkStatusScope.isUnavailableOf(context),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Scaffold(
+                      extendBody: true,
+                      body: isWide && isAuthenticated
+                          ? Row(
+                              children: [
+                                PassengerNavigationRail(
+                                  selectedIndex: sel,
+                                  onDestinationSelected: _onItemTapped,
+                                  inboxCubit: widget.inboxCubit,
+                                ),
+                                const VerticalDivider(width: 1),
+                                Expanded(child: widget.navigationShell),
+                              ],
+                            )
+                          : widget.navigationShell,
+                      bottomNavigationBar:
+                          BlocSelector<SessionBloc, SessionState, bool>(
+                            selector: (state) => state.isAuthenticated,
+                            builder: (context, isAuthenticated) {
+                              if (!isAuthenticated) {
+                                return GuestActionBarWidget(
+                                  onSignUp: () =>
+                                      context.pushNamed(AuthRoutes.signup),
+                                  onSignIn: () =>
+                                      context.pushNamed(AuthRoutes.signin),
+                                  onHelp: () => context.pushNamed(
+                                    ProfileRoutes.helpCenter,
+                                  ),
+                                );
+                              }
+                              if (isWide) return const SizedBox.shrink();
+                              final bottomPadding = MediaQuery.of(context)
+                                  .padding
+                                  .bottom;
+                              final trackCubit = _resolveTrackDriverCubit(
+                                context,
+                              );
+
+                              Widget floatingTabBar = PassengerFloatingTabBar(
+                                selectedIndex: sel,
+                                onDestinationSelected: _onItemTapped,
+                                inboxCubit: widget.inboxCubit,
+                                pagePosition:
+                                    widget.navigationCoordinator.pagePosition,
+                              );
+
+                              if (trackCubit != null) {
+                                floatingTabBar =
+                                    BlocBuilder<
+                                      TrackDriverCubit,
+                                      TrackDriverState
+                                    >(
+                                      bloc: trackCubit,
+                                      builder: (context, trackState) {
+                                        return PassengerFloatingTabBar(
+                                          selectedIndex: sel,
+                                          onDestinationSelected: _onItemTapped,
+                                          inboxCubit: widget.inboxCubit,
+                                          pagePosition: widget
+                                              .navigationCoordinator
+                                              .pagePosition,
+                                          activeRideBanner:
+                                              _buildActiveRideBannerForTabBar(
+                                                context,
+                                                trackState,
+                                              ),
+                                        );
+                                      },
+                                    );
+                              }
+
+                              return Padding(
+                                padding: EdgeInsets.only(
+                                  bottom: bottomPadding + 10,
+                                ),
+                                child: FractionallySizedBox(
+                                  widthFactor: 0.94,
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(
+                                      maxWidth: 520,
+                                    ),
+                                    child: floatingTabBar,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),

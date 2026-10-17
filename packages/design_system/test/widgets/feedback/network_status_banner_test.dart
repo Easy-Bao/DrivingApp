@@ -134,6 +134,38 @@ void main() {
       expect(find.text('Connection failed'), findsNothing);
     },
   );
+
+  testWidgets('offsets following content below the banner in a column layout', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Column(
+            children: [
+              const AppNetworkStatusBanner(
+                isVisible: true,
+                isActiveTracking: true,
+              ),
+              Container(
+                key: const ValueKey('app-content'),
+                height: 50,
+                color: Colors.blue,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final bannerBottom = tester
+        .getBottomLeft(find.byType(AppNetworkStatusBanner))
+        .dy;
+    final contentTop = tester
+        .getTopLeft(find.byKey(const ValueKey('app-content')))
+        .dy;
+    expect(contentTop, greaterThanOrEqualTo(bannerBottom));
+  });
 }
 
 void _noop() {}

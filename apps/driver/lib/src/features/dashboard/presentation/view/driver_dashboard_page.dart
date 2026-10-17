@@ -917,125 +917,8 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
               state.hasActiveRide ||
               (state.isOnline &&
                   (activeBids.isNotEmpty || submittedOffers.isNotEmpty));
-          return Stack(
-            fit: StackFit.expand,
+          return Column(
             children: [
-              Scaffold(
-                appBar: AppBar(
-                  automaticallyImplyLeading: false,
-                  backgroundColor: context.canvasColor,
-                  titleSpacing: 20,
-                  toolbarHeight: 76,
-                  title: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('EasyRide', style: context.textStyles.titleLarge),
-                      const SizedBox(height: EasyRideSpacing.sm / 2),
-                      Text('Driver', style: context.textStyles.labelMedium),
-                    ],
-                  ),
-                  actions: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 16),
-                      child: IconButton(
-                        constraints: const BoxConstraints(
-                          minWidth: EasyRideSize.minimumTouchTarget,
-                          minHeight: EasyRideSize.minimumTouchTarget,
-                        ),
-                        tooltip: 'Account',
-                        onPressed: () =>
-                            context.pushNamed(ProfileRoutes.account),
-                        icon: const Icon(LucideIcons.user_round),
-                        style: IconButton.styleFrom(
-                          backgroundColor: context.colorScheme.onSurface
-                              .withValues(alpha: 0.1),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                body: SafeArea(
-                  top: false,
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        maxWidth: EasyRideLayout.contentMaxWidth,
-                      ),
-                      child: Column(
-                        children: [
-                          const SizedBox(height: 8),
-                          _buildOnlineCardBanner(context, state),
-                          const SizedBox(height: 16),
-                          _buildStatsRow(context, state),
-                          const SizedBox(height: 16),
-                          if (showFeed)
-                            Expanded(
-                              child: ListView(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                ),
-                                physics: const BouncingScrollPhysics(),
-                                children: [
-                                  if (activeRide != null) ...[
-                                    const DriverDashboardSectionLabel(
-                                      label: 'Current Active Trip',
-                                    ),
-                                    const SizedBox(height: 10),
-                                    DriverActiveTripCard(
-                                      key: ValueKey<String>(activeRide.id),
-                                      trip: activeRide,
-                                      onResume: () => _resumeTrip(activeRide),
-                                    ),
-                                    const SizedBox(height: 24),
-                                  ],
-                                  if (submittedOffers.isNotEmpty) ...[
-                                    const DriverDashboardSectionLabel(
-                                      label: 'Your Submitted Offers',
-                                    ),
-                                    const SizedBox(height: 10),
-                                    ...submittedOffers.map(
-                                      (bid) => DriverPoolBidCard(
-                                        bid: bid,
-                                        submittingBidId: null,
-                                        onDecline: null,
-                                        onSubmitOffer: null,
-                                      ),
-                                    ),
-                                  ],
-                                  if (activeBids.isNotEmpty) ...[
-                                    const DriverDashboardSectionLabel(
-                                      label: 'Open Ride Offers',
-                                    ),
-                                    const SizedBox(height: 10),
-                                    ...activeBids.map(
-                                      (bid) => DriverPoolBidCard(
-                                        bid: bid,
-                                        submittingBidId: _submittingBidId,
-                                        onDecline: () =>
-                                            BlocProvider.of<DashboardCubit>(
-                                              context,
-                                            ).removeActiveBid(
-                                              driverValueAsString(bid['id']),
-                                            ),
-                                        onSubmitOffer: () => _submitBid(bid),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            )
-                          else ...[
-                            const Spacer(),
-                            _buildStatusIndicator(state),
-                            const Spacer(),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
               if (showDashboardError)
                 AppStatusBanner(
                   isVisible: true,
@@ -1045,6 +928,135 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
                   onAction: () =>
                       BlocProvider.of<DashboardCubit>(context).dismissError(),
                 ),
+              Expanded(
+                child: MediaQuery.removePadding(
+                  context: context,
+                  removeTop: showDashboardError,
+                  child: Scaffold(
+                    appBar: AppBar(
+                      automaticallyImplyLeading: false,
+                      backgroundColor: context.canvasColor,
+                      titleSpacing: 20,
+                      toolbarHeight: 76,
+                      title: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'EasyRide',
+                            style: context.textStyles.titleLarge,
+                          ),
+                          const SizedBox(height: EasyRideSpacing.sm / 2),
+                          Text('Driver', style: context.textStyles.labelMedium),
+                        ],
+                      ),
+                      actions: [
+                        Padding(
+                          padding: const EdgeInsets.only(right: 16),
+                          child: IconButton(
+                            constraints: const BoxConstraints(
+                              minWidth: EasyRideSize.minimumTouchTarget,
+                              minHeight: EasyRideSize.minimumTouchTarget,
+                            ),
+                            tooltip: 'Account',
+                            onPressed: () =>
+                                context.pushNamed(ProfileRoutes.account),
+                            icon: const Icon(LucideIcons.user_round),
+                            style: IconButton.styleFrom(
+                              backgroundColor: context.colorScheme.onSurface
+                                  .withValues(alpha: 0.1),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    body: SafeArea(
+                      top: false,
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            maxWidth: EasyRideLayout.contentMaxWidth,
+                          ),
+                          child: Column(
+                            children: [
+                              const SizedBox(height: 8),
+                              _buildOnlineCardBanner(context, state),
+                              const SizedBox(height: 16),
+                              _buildStatsRow(context, state),
+                              const SizedBox(height: 16),
+                              if (showFeed)
+                                Expanded(
+                                  child: ListView(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                    ),
+                                    physics: const BouncingScrollPhysics(),
+                                    children: [
+                                      if (activeRide != null) ...[
+                                        const DriverDashboardSectionLabel(
+                                          label: 'Current Active Trip',
+                                        ),
+                                        const SizedBox(height: 10),
+                                        DriverActiveTripCard(
+                                          key: ValueKey<String>(activeRide.id),
+                                          trip: activeRide,
+                                          onResume: () =>
+                                              _resumeTrip(activeRide),
+                                        ),
+                                        const SizedBox(height: 24),
+                                      ],
+                                      if (submittedOffers.isNotEmpty) ...[
+                                        const DriverDashboardSectionLabel(
+                                          label: 'Your Submitted Offers',
+                                        ),
+                                        const SizedBox(height: 10),
+                                        ...submittedOffers.map(
+                                          (bid) => DriverPoolBidCard(
+                                            bid: bid,
+                                            submittingBidId: null,
+                                            onDecline: null,
+                                            onSubmitOffer: null,
+                                          ),
+                                        ),
+                                      ],
+                                      if (activeBids.isNotEmpty) ...[
+                                        const DriverDashboardSectionLabel(
+                                          label: 'Open Ride Offers',
+                                        ),
+                                        const SizedBox(height: 10),
+                                        ...activeBids.map(
+                                          (bid) => DriverPoolBidCard(
+                                            bid: bid,
+                                            submittingBidId: _submittingBidId,
+                                            onDecline: () =>
+                                                BlocProvider.of<DashboardCubit>(
+                                                  context,
+                                                ).removeActiveBid(
+                                                  driverValueAsString(
+                                                    bid['id'],
+                                                  ),
+                                                ),
+                                            onSubmitOffer: () =>
+                                                _submitBid(bid),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                )
+                              else ...[
+                                const Spacer(),
+                                _buildStatusIndicator(state),
+                                const Spacer(),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ],
           );
         },

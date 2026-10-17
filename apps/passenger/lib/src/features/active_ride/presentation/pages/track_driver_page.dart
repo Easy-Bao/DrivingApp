@@ -541,6 +541,10 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
   Widget build(BuildContext context) {
     final passengerLat = widget.ride.pickupLatitude ?? 0.0;
     final passengerLng = widget.ride.pickupLongitude ?? 0.0;
+    final isNetworkUnavailable = AppNetworkStatusScope.isUnavailableOf(context);
+    final hasTopBanner =
+        (_isTransportRetrying || _errorMessage != null) &&
+        !isNetworkUnavailable;
 
     return BlocListener<TrackDriverCubit, TrackDriverState>(
       listener: (context, state) {
@@ -624,21 +628,46 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                 ),
               ),
 
-              SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildTripBackButton(
-                        context,
-                        () => unawaited(_handleBackNavigation()),
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AppNetworkStatusBanner(
+                      isVisible: _isTransportRetrying,
+                      isActiveTracking: true,
+                    ),
+                    if (_errorMessage != null)
+                      AppStatusBanner(
+                        isVisible: true,
+                        message: _errorMessage!,
+                        tone: AppStatusBannerTone.error,
+                        actionLabel: 'Dismiss',
+                        onAction: () => setState(() => _errorMessage = null),
                       ),
-                    ],
-                  ),
+                    SafeArea(
+                      top: !hasTopBanner,
+                      bottom: false,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildTripBackButton(
+                              context,
+                              () => unawaited(_handleBackNavigation()),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
@@ -777,18 +806,6 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                   ),
                 ),
               ),
-              AppNetworkStatusBanner(
-                isVisible: _isTransportRetrying,
-                isActiveTracking: true,
-              ),
-              if (_errorMessage != null)
-                AppStatusBanner(
-                  isVisible: true,
-                  message: _errorMessage!,
-                  tone: AppStatusBannerTone.error,
-                  actionLabel: 'Dismiss',
-                  onAction: () => setState(() => _errorMessage = null),
-                ),
             ],
           ),
         ),

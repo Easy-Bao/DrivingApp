@@ -11,9 +11,11 @@ class const AppNetworkStatusBanner({
   super.key,
   required this.isVisible,
   this.isActiveTracking = true,
+  this.usePositioned = false,
 }) extends StatelessWidget {
   final bool isVisible;
   final bool isActiveTracking;
+  final bool usePositioned;
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +26,7 @@ class const AppNetworkStatusBanner({
           !AppNetworkStatusScope.isUnavailableOf(context),
       message: 'Connection unavailable. Retrying automatically.',
       tone: AppStatusBannerTone.warning,
+      usePositioned: usePositioned,
     );
   }
 }
