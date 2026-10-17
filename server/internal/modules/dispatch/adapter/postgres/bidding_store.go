@@ -8,9 +8,9 @@ import (
 	"time"
 
 	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
-	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -465,16 +465,12 @@ func (repository *Store) CancelOffer(ctx context.Context, sessionID, driverID in
 	if err != nil {
 		return dispatchdomain.BidOffer{}, err
 	}
-	pending, err := repository.queries.GetPendingBidOffer(ctx, databasepostgres.GetPendingBidOfferParams{
+	item, err := repository.queries.CancelPendingBidOffer(ctx, databasepostgres.CancelPendingBidOfferParams{
 		SessionID: dbSessionID,
 		DriverID:  dbDriverID,
 	})
 	if err != nil {
-		return dispatchdomain.BidOffer{}, fmt.Errorf("find pending bid offer: %w", err)
-	}
-	item, err := repository.queries.RejectBidOffer(ctx, pending.ID)
-	if err != nil {
-		return dispatchdomain.BidOffer{}, fmt.Errorf("reject bid offer: %w", err)
+		return dispatchdomain.BidOffer{}, fmt.Errorf("cancel pending bid offer: %w", err)
 	}
 	offer, err := fromPostgresBidOffer(item)
 	if err != nil {

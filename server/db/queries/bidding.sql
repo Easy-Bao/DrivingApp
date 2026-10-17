@@ -216,3 +216,18 @@ WHERE id = $1
   AND status = 'pending'
 RETURNING id, session_id, driver_id, driver_name, plate_number, vehicle_type,
     proposed_fare, status, created_at;
+
+-- name: CancelPendingBidOffer :one
+UPDATE bid_offers
+SET status = 'rejected'
+WHERE session_id = $1
+  AND driver_id = $2
+  AND status = 'pending'
+  AND EXISTS (
+      SELECT 1 FROM bid_sessions
+      WHERE id = bid_offers.session_id
+        AND status = 'open'
+  )
+RETURNING id, session_id, driver_id, driver_name, plate_number, vehicle_type,
+    proposed_fare, status, created_at;
+

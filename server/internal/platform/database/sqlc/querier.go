@@ -14,6 +14,7 @@ type Querier interface {
 	AcceptRideFromRequest(ctx context.Context, arg AcceptRideFromRequestParams) (Ride, error)
 	AssignRideFromAcceptance(ctx context.Context, arg AssignRideFromAcceptanceParams) (Ride, error)
 	CancelBidSession(ctx context.Context, arg CancelBidSessionParams) (BidSession, error)
+	CancelPendingBidOffer(ctx context.Context, arg CancelPendingBidOfferParams) (BidOffer, error)
 	CompleteRide(ctx context.Context, arg CompleteRideParams) (Ride, error)
 	CountActiveRidesForAcceptance(ctx context.Context, driverID pgtype.Int4) (int64, error)
 	CountActiveRidesForDriver(ctx context.Context, driverID pgtype.Int4) (int64, error)

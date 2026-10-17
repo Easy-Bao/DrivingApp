@@ -54,6 +54,43 @@ func (q *Queries) CancelBidSession(ctx context.Context, arg CancelBidSessionPara
 	return i, err
 }
 
+const cancelPendingBidOffer = `-- name: CancelPendingBidOffer :one
+UPDATE bid_offers
+SET status = 'rejected'
+WHERE session_id = $1
+  AND driver_id = $2
+  AND status = 'pending'
+  AND EXISTS (
+      SELECT 1 FROM bid_sessions
+      WHERE id = bid_offers.session_id
+        AND status = 'open'
+  )
+RETURNING id, session_id, driver_id, driver_name, plate_number, vehicle_type,
+    proposed_fare, status, created_at
+`
+
+type CancelPendingBidOfferParams struct {
+	SessionID int32 `db:"session_id"`
+	DriverID  int32 `db:"driver_id"`
+}
+
+func (q *Queries) CancelPendingBidOffer(ctx context.Context, arg CancelPendingBidOfferParams) (BidOffer, error) {
+	row := q.db.QueryRow(ctx, cancelPendingBidOffer, arg.SessionID, arg.DriverID)
+	var i BidOffer
+	err := row.Scan(
+		&i.ID,
+		&i.SessionID,
+		&i.DriverID,
+		&i.DriverName,
+		&i.PlateNumber,
+		&i.VehicleType,
+		&i.ProposedFare,
+		&i.Status,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const countActiveRidesForDriver = `-- name: CountActiveRidesForDriver :one
 SELECT count(*)
 FROM rides
