@@ -3,9 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
-	"os"
 	"runtime"
-	"strconv"
 	"strings"
 	"time"
 
@@ -30,30 +28,10 @@ func DefaultPostgresNativePoolConfig() PostgresNativePoolConfig {
 	if cpuMax := int32(runtime.NumCPU() * 8); cpuMax > defaultMax {
 		defaultMax = cpuMax
 	}
-
-	maxConns := defaultMax
-	if val := strings.TrimSpace(os.Getenv("DATABASE_MAX_CONNS")); val != "" {
-		if n, err := strconv.Atoi(val); err == nil && n > 0 {
-			maxConns = int32(n)
-		}
-	}
-
 	minIdle := int32(10)
-	if val := strings.TrimSpace(os.Getenv("DATABASE_MIN_IDLE_CONNS")); val != "" {
-		if n, err := strconv.Atoi(val); err == nil && n >= 0 {
-			minIdle = int32(n)
-		}
-	} else if val := strings.TrimSpace(os.Getenv("DATABASE_MIN_CONNS")); val != "" {
-		if n, err := strconv.Atoi(val); err == nil && n >= 0 {
-			minIdle = int32(n)
-		}
-	}
-	if minIdle > maxConns {
-		minIdle = maxConns
-	}
 
 	return PostgresNativePoolConfig{
-		MaxConnections:        maxConns,
+		MaxConnections:        defaultMax,
 		MinConnections:        minIdle,
 		MinIdleConnections:    minIdle,
 		ConnectionMaxLifetime: 30 * time.Minute,

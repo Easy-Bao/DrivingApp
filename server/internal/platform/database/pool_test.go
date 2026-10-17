@@ -60,19 +60,16 @@ func TestDefaultPostgresNativePoolConfigWarmIdleAndDefaultMax(t *testing.T) {
 	}
 }
 
-func TestDefaultPostgresNativePoolConfigReadsEnv(t *testing.T) {
+func TestDefaultPostgresNativePoolConfigIgnoresEnv(t *testing.T) {
 	t.Setenv("DATABASE_MAX_CONNS", "120")
 	t.Setenv("DATABASE_MIN_IDLE_CONNS", "20")
 
 	config := DefaultPostgresNativePoolConfig()
 
-	if config.MaxConnections != 120 {
-		t.Fatalf("max connections = %d, want 120", config.MaxConnections)
+	if config.MaxConnections == 120 {
+		t.Fatalf("max connections should not read DATABASE_MAX_CONNS")
 	}
-	if config.MinIdleConnections != 20 {
-		t.Fatalf("min idle connections = %d, want 20", config.MinIdleConnections)
-	}
-	if config.MinConnections != 20 {
-		t.Fatalf("min connections = %d, want 20", config.MinConnections)
+	if config.MinIdleConnections == 20 {
+		t.Fatalf("min idle connections should not read DATABASE_MIN_IDLE_CONNS")
 	}
 }
