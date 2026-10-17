@@ -233,3 +233,71 @@ func TestIdempotencyScopesKeysToAuthorizationAndQuery(t *testing.T) {
 		t.Fatalf("scoped handler calls = %d, want 2", calls.Load())
 	}
 }
+
+func TestIdempotencyDoesNotCacheClientErrors(t *testing.T) {
+	var calls atomic.Int32
+	handler := newTestIdempotency(
+		NewMemoryIdempotencyStore(),
+		WithIdempotencyExpiration(time.Minute),
+	).Middleware(
+		http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+			count := calls.Add(1)
+			if count == 1 {
+				writer.WriteHeader(http.StatusBadRequest)
+				_, _ = writer.Write([]byte(`{"error":"bad request"}`))
+				return
+			}
+			writer.WriteHeader(http.StatusOK)
+			_, _ = writer.Write([]byte(`{"success":true}`))
+		}),
+	)
+
+	request1 := httptest.NewRequest(http.MethodPost, "/api/v1/rides", strings.NewReader(`{"fare_amount":100}`))
+	request1.Header.Set("Idempotency-Key", "retry-key-after-400")
+	res1 := httptest.NewRecorder()
+	handler.ServeHTTP(res1, request1)
+	if res1.Code != http.StatusBadRequest {
+		t.Fatalf("first request code = %d, want %d", res1.Code, http.StatusBadRequest)
+	}
+
+	request2 := httptest.NewRequest(http.MethodPost, "/api/v1/rides", strings.NewReader(`{"fare_amount":100}`))
+	request2.Header.Set("Idempotency-Key", "retry-key-after-400")
+	res2 := httptest.NewRecorder()
+	handler.ServeHTTP(res2, request2)
+	if res2.Code != http.StatusOK {
+		t.Fatalf("second request code = %d, want %d", res2.Code, http.StatusOK)
+	}
+	if calls.Load() != 2 {
+		t.Fatalf("expected 2 handler calls, got %d", calls.Load())
+	}
+}
+
+func TestIdempotencyScopesKeysToPrincipalIdentity(t *testing.T) {
+	var calls atomic.Int32
+	handler := newTestIdempotency(
+		NewMemoryIdempotencyStore(),
+		WithIdempotencyExpiration(time.Minute),
+	).Middleware(
+		http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+			calls.Add(1)
+			writer.WriteHeader(http.StatusOK)
+			_, _ = writer.Write([]byte(`{"ok":true}`))
+		}),
+	)
+
+	ctx := context.WithValue(context.Background(), _principalKey, Principal{UserID: 42, Role: "passenger"})
+	for _, token := range []string{"Bearer old-jwt", "Bearer refreshed-jwt"} {
+		request := httptest.NewRequest(http.MethodPost, "/api/v1/rides", strings.NewReader(`{"fare_amount":100}`))
+		request = request.WithContext(ctx)
+		request.Header.Set("Authorization", token)
+		request.Header.Set("Idempotency-Key", "principal-scoped-key")
+		res := httptest.NewRecorder()
+		handler.ServeHTTP(res, request)
+		if res.Code != http.StatusOK {
+			t.Fatalf("status = %d, want %d", res.Code, http.StatusOK)
+		}
+	}
+	if calls.Load() != 1 {
+		t.Fatalf("expected 1 call (cached replay), got %d", calls.Load())
+	}
+}

@@ -335,7 +335,7 @@ func (idempotency *Idempotency) Middleware(next http.Handler) http.Handler {
 
 		capture := &idempotentResponseWriter{ResponseWriter: writer}
 		next.ServeHTTP(capture, request)
-		if capture.status >= http.StatusOK && capture.status < http.StatusInternalServerError {
+		if capture.status >= http.StatusOK && capture.status < http.StatusMultipleChoices {
 			record, marshalErr := json.Marshal(idempotentResponse{
 				Fingerprint: fingerprint,
 				Status:      capture.status,
@@ -449,6 +449,10 @@ func replayIdempotentResponse(writer http.ResponseWriter, encoded []byte, finger
 }
 
 func authorizationScope(request *http.Request) string {
+	if principal, ok := PrincipalFromRequest(request); ok {
+		hash := sha256.Sum256([]byte(fmt.Sprintf("%s:%d", principal.Role, principal.UserID)))
+		return hex.EncodeToString(hash[:])
+	}
 	hash := sha256.Sum256([]byte(strings.TrimSpace(request.Header.Get("Authorization"))))
 	return hex.EncodeToString(hash[:])
 }
