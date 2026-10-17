@@ -448,13 +448,19 @@ func (q *Queries) MarkBidSessionAccepted(ctx context.Context, arg MarkBidSession
 }
 
 const rejectDriverPendingBidOffers = `-- name: RejectDriverPendingBidOffers :many
-UPDATE bid_offers
-SET status = 'rejected'
-WHERE driver_id = $1
-  AND status = 'pending'
-  AND id <> $2
-RETURNING id, session_id, driver_id, driver_name, plate_number, vehicle_type,
-    proposed_fare, status, created_at
+WITH rejected AS (
+    UPDATE bid_offers
+    SET status = 'rejected'
+    WHERE bid_offers.driver_id = $1
+      AND bid_offers.status = 'pending'
+      AND bid_offers.id <> $2
+    RETURNING bid_offers.id, bid_offers.session_id
+)
+SELECT bid_offers.id, bid_offers.session_id, bid_offers.driver_id, bid_offers.driver_name, bid_offers.plate_number, bid_offers.vehicle_type, bid_offers.proposed_fare, bid_offers.status, bid_offers.created_at, bid_sessions.id, bid_sessions.passenger_id, bid_sessions.ride_type, bid_sessions.pickup_latitude, bid_sessions.pickup_longitude, bid_sessions.pickup_name, bid_sessions.dropoff_latitude, bid_sessions.dropoff_longitude, bid_sessions.dropoff_name, bid_sessions.passenger_note, bid_sessions.distance_km, bid_sessions.duration_minutes, bid_sessions.offered_fare, bid_sessions.status, bid_sessions.target_driver_id, bid_sessions.accepted_driver_id, bid_sessions.expires_at, bid_sessions.created_at
+FROM rejected
+JOIN bid_offers ON bid_offers.id = rejected.id
+JOIN bid_sessions ON bid_sessions.id = rejected.session_id
+ORDER BY bid_offers.id
 `
 
 type RejectDriverPendingBidOffersParams struct {
@@ -462,25 +468,48 @@ type RejectDriverPendingBidOffersParams struct {
 	ID       int32 `db:"id"`
 }
 
-func (q *Queries) RejectDriverPendingBidOffers(ctx context.Context, arg RejectDriverPendingBidOffersParams) ([]BidOffer, error) {
+type RejectDriverPendingBidOffersRow struct {
+	BidOffer   BidOffer   `db:"bid_offer"`
+	BidSession BidSession `db:"bid_session"`
+}
+
+func (q *Queries) RejectDriverPendingBidOffers(ctx context.Context, arg RejectDriverPendingBidOffersParams) ([]RejectDriverPendingBidOffersRow, error) {
 	rows, err := q.db.Query(ctx, rejectDriverPendingBidOffers, arg.DriverID, arg.ID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []BidOffer{}
+	items := []RejectDriverPendingBidOffersRow{}
 	for rows.Next() {
-		var i BidOffer
+		var i RejectDriverPendingBidOffersRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.SessionID,
-			&i.DriverID,
-			&i.DriverName,
-			&i.PlateNumber,
-			&i.VehicleType,
-			&i.ProposedFare,
-			&i.Status,
-			&i.CreatedAt,
+			&i.BidOffer.ID,
+			&i.BidOffer.SessionID,
+			&i.BidOffer.DriverID,
+			&i.BidOffer.DriverName,
+			&i.BidOffer.PlateNumber,
+			&i.BidOffer.VehicleType,
+			&i.BidOffer.ProposedFare,
+			&i.BidOffer.Status,
+			&i.BidOffer.CreatedAt,
+			&i.BidSession.ID,
+			&i.BidSession.PassengerID,
+			&i.BidSession.RideType,
+			&i.BidSession.PickupLatitude,
+			&i.BidSession.PickupLongitude,
+			&i.BidSession.PickupName,
+			&i.BidSession.DropoffLatitude,
+			&i.BidSession.DropoffLongitude,
+			&i.BidSession.DropoffName,
+			&i.BidSession.PassengerNote,
+			&i.BidSession.DistanceKm,
+			&i.BidSession.DurationMinutes,
+			&i.BidSession.OfferedFare,
+			&i.BidSession.Status,
+			&i.BidSession.TargetDriverID,
+			&i.BidSession.AcceptedDriverID,
+			&i.BidSession.ExpiresAt,
+			&i.BidSession.CreatedAt,
 		); err != nil {
 			return nil, err
 		}

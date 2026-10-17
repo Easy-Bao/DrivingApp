@@ -54,13 +54,19 @@ RETURNING id, session_id, driver_id, driver_name, plate_number, vehicle_type,
     proposed_fare, status, created_at;
 
 -- name: RejectDriverPendingBidOffers :many
-UPDATE bid_offers
-SET status = 'rejected'
-WHERE driver_id = $1
-  AND status = 'pending'
-  AND id <> $2
-RETURNING id, session_id, driver_id, driver_name, plate_number, vehicle_type,
-    proposed_fare, status, created_at;
+WITH rejected AS (
+    UPDATE bid_offers
+    SET status = 'rejected'
+    WHERE bid_offers.driver_id = $1
+      AND bid_offers.status = 'pending'
+      AND bid_offers.id <> $2
+    RETURNING bid_offers.id, bid_offers.session_id
+)
+SELECT sqlc.embed(bid_offers), sqlc.embed(bid_sessions)
+FROM rejected
+JOIN bid_offers ON bid_offers.id = rejected.id
+JOIN bid_sessions ON bid_sessions.id = rejected.session_id
+ORDER BY bid_offers.id;
 
 -- name: MarkBidSessionAccepted :one
 UPDATE bid_sessions

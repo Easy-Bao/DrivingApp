@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/domain"
 	dispatchapp "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
+	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
-	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -179,7 +179,7 @@ func (repository *Store) AcceptOffer(
 	if err != nil {
 		return dispatchapp.OfferAcceptance{}, fmt.Errorf("reject driver's outstanding offers: %w", err)
 	}
-	withdrawnOffers, err := mapBidOfferWithdrawals(ctx, transactionQueries, withdrawnRows)
+	withdrawnOffers, err := mapBidOfferWithdrawals(withdrawnRows)
 	if err != nil {
 		return dispatchapp.OfferAcceptance{}, err
 	}
@@ -290,21 +290,15 @@ func (repository *Store) AcceptOffer(
 }
 
 func mapBidOfferWithdrawals(
-	ctx context.Context,
-	queries *databasepostgres.Queries,
-	offers []databasepostgres.BidOffer,
+	rows []databasepostgres.RejectDriverPendingBidOffersRow,
 ) ([]dispatchdomain.BidOfferWithdrawal, error) {
-	withdrawals := make([]dispatchdomain.BidOfferWithdrawal, 0, len(offers))
-	for _, item := range offers {
-		offer, err := fromPostgresBidOffer(item)
+	withdrawals := make([]dispatchdomain.BidOfferWithdrawal, 0, len(rows))
+	for _, item := range rows {
+		offer, err := fromPostgresBidOffer(item.BidOffer)
 		if err != nil {
 			return nil, fmt.Errorf("map withdrawn bid offer: %w", err)
 		}
-		sessionRow, err := queries.GetBidSessionByID(ctx, item.SessionID)
-		if err != nil {
-			return nil, fmt.Errorf("load withdrawn offer session: %w", err)
-		}
-		session, err := fromPostgresBidSession(sessionRow)
+		session, err := fromPostgresBidSession(item.BidSession)
 		if err != nil {
 			return nil, fmt.Errorf("map withdrawn offer session: %w", err)
 		}
