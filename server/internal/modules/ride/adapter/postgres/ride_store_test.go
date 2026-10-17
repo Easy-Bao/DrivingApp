@@ -74,13 +74,16 @@ func TestFromPostgresRideRowMapsSettlementProjection(t *testing.T) {
 				Valid: true,
 			},
 		},
-		PaymentStatus:      "paid",
-		CashReceivedAmount: 3500,
-		CashChangeAmount:   300,
-		CashOutcome:        "paid",
-		CommissionBps:      pgtype.Int4{Int32: 1500, Valid: true},
-		CommissionAmount:   480,
-		DriverPayoutAmount: 2720,
+		PaymentStatus:            "paid",
+		CashReceivedAmount:       3500,
+		CashChangeAmount:         300,
+		CashOutcome:              "paid",
+		CommissionBps:            pgtype.Int4{Int32: 1500, Valid: true},
+		CommissionAmount:         480,
+		DriverPayoutAmount:       2720,
+		DriverProfileName:        "Fallback Driver",
+		DriverProfileVehicleType: "Motorcycle",
+		DriverProfilePlateNumber: "XYZ-789",
 	}
 
 	ride, err := fromPostgresRideRow(item)
@@ -90,7 +93,9 @@ func TestFromPostgresRideRowMapsSettlementProjection(t *testing.T) {
 	if ride.PaymentStatus != "paid" || ride.CashOutcome != "paid" ||
 		ride.CashReceivedAmount != 3500 || ride.CashChangeAmount != 300 ||
 		ride.CommissionBPS == nil || *ride.CommissionBPS != 1500 ||
-		ride.CommissionAmount != 480 || ride.DriverPayoutAmount != 2720 {
+		ride.CommissionAmount != 480 || ride.DriverPayoutAmount != 2720 ||
+		ride.DriverName != "Fallback Driver" || ride.VehicleType != "Motorcycle" ||
+		ride.PlateNumber != "XYZ-789" {
 		t.Fatalf("mapped ride with settlement = %+v", ride)
 	}
 }

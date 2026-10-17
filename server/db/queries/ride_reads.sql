@@ -6,9 +6,13 @@ SELECT sqlc.embed(ride),
     COALESCE(settlement.cash_outcome, 'unpaid') AS cash_outcome,
     settlement.commission_bps,
     COALESCE(settlement.commission_amount, 0)::bigint AS commission_amount,
-    COALESCE(settlement.driver_payout_amount, 0)::bigint AS driver_payout_amount
+    COALESCE(settlement.driver_payout_amount, 0)::bigint AS driver_payout_amount,
+    COALESCE(driver_profile.name, '') AS driver_profile_name,
+    COALESCE(driver_profile.vehicle_type, '') AS driver_profile_vehicle_type,
+    COALESCE(driver_profile.plate_number, '') AS driver_profile_plate_number
 FROM rides AS ride
 LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = ride.id
+LEFT JOIN driver_profiles AS driver_profile ON driver_profile.user_id = ride.driver_id
 WHERE ride.id = $1
 LIMIT 1;
 

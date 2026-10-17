@@ -19,22 +19,29 @@ SELECT ride.id, ride.passenger_id, ride.driver_id, ride.status, ride.fare_amount
     COALESCE(settlement.cash_outcome, 'unpaid') AS cash_outcome,
     settlement.commission_bps,
     COALESCE(settlement.commission_amount, 0)::bigint AS commission_amount,
-    COALESCE(settlement.driver_payout_amount, 0)::bigint AS driver_payout_amount
+    COALESCE(settlement.driver_payout_amount, 0)::bigint AS driver_payout_amount,
+    COALESCE(driver_profile.name, '') AS driver_profile_name,
+    COALESCE(driver_profile.vehicle_type, '') AS driver_profile_vehicle_type,
+    COALESCE(driver_profile.plate_number, '') AS driver_profile_plate_number
 FROM rides AS ride
 LEFT JOIN ride_settlements AS settlement ON settlement.ride_id = ride.id
+LEFT JOIN driver_profiles AS driver_profile ON driver_profile.user_id = ride.driver_id
 WHERE ride.id = $1
 LIMIT 1
 `
 
 type GetRideByIDRow struct {
-	Ride               Ride        `db:"ride"`
-	PaymentStatus      string      `db:"payment_status"`
-	CashReceivedAmount int64       `db:"cash_received_amount"`
-	CashChangeAmount   int64       `db:"cash_change_amount"`
-	CashOutcome        string      `db:"cash_outcome"`
-	CommissionBps      pgtype.Int4 `db:"commission_bps"`
-	CommissionAmount   int64       `db:"commission_amount"`
-	DriverPayoutAmount int64       `db:"driver_payout_amount"`
+	Ride                     Ride        `db:"ride"`
+	PaymentStatus            string      `db:"payment_status"`
+	CashReceivedAmount       int64       `db:"cash_received_amount"`
+	CashChangeAmount         int64       `db:"cash_change_amount"`
+	CashOutcome              string      `db:"cash_outcome"`
+	CommissionBps            pgtype.Int4 `db:"commission_bps"`
+	CommissionAmount         int64       `db:"commission_amount"`
+	DriverPayoutAmount       int64       `db:"driver_payout_amount"`
+	DriverProfileName        string      `db:"driver_profile_name"`
+	DriverProfileVehicleType string      `db:"driver_profile_vehicle_type"`
+	DriverProfilePlateNumber string      `db:"driver_profile_plate_number"`
 }
 
 func (q *Queries) GetRideByID(ctx context.Context, id int32) (GetRideByIDRow, error) {
@@ -74,6 +81,9 @@ func (q *Queries) GetRideByID(ctx context.Context, id int32) (GetRideByIDRow, er
 		&i.CommissionBps,
 		&i.CommissionAmount,
 		&i.DriverPayoutAmount,
+		&i.DriverProfileName,
+		&i.DriverProfileVehicleType,
+		&i.DriverProfilePlateNumber,
 	)
 	return i, err
 }

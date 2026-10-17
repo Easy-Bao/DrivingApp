@@ -33,28 +33,20 @@ func (reader *StatsReader) Stats(ctx context.Context) (domain.Stats, error) {
 		return domain.Stats{}, err
 	}
 
-	users, err := reader.queries.CountUsers(ctx)
+	counts, err := reader.queries.GetAdminDashboardCounts(ctx)
 	if err != nil {
-		return domain.Stats{}, fmt.Errorf("count users: %w", err)
-	}
-	rides, err := reader.queries.CountRides(ctx)
-	if err != nil {
-		return domain.Stats{}, fmt.Errorf("count rides: %w", err)
-	}
-	documents, err := reader.queries.CountDriverDocuments(ctx)
-	if err != nil {
-		return domain.Stats{}, fmt.Errorf("count driver documents: %w", err)
+		return domain.Stats{}, fmt.Errorf("read dashboard counts: %w", err)
 	}
 
-	userCount, err := countToInt(users)
+	userCount, err := countToInt(counts.UsersCount)
 	if err != nil {
 		return domain.Stats{}, fmt.Errorf("map user count: %w", err)
 	}
-	rideCount, err := countToInt(rides)
+	rideCount, err := countToInt(counts.RidesCount)
 	if err != nil {
 		return domain.Stats{}, fmt.Errorf("map ride count: %w", err)
 	}
-	documentCount, err := countToInt(documents)
+	documentCount, err := countToInt(counts.DriverDocumentsCount)
 	if err != nil {
 		return domain.Stats{}, fmt.Errorf("map driver document count: %w", err)
 	}

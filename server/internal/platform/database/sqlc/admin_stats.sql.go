@@ -9,38 +9,22 @@ import (
 	"context"
 )
 
-const countDriverDocuments = `-- name: CountDriverDocuments :one
-SELECT count(*)
-FROM driver_documents
+const getAdminDashboardCounts = `-- name: GetAdminDashboardCounts :one
+SELECT
+    (SELECT count(*) FROM users) AS users_count,
+    (SELECT count(*) FROM rides) AS rides_count,
+    (SELECT count(*) FROM driver_documents) AS driver_documents_count
 `
 
-func (q *Queries) CountDriverDocuments(ctx context.Context) (int64, error) {
-	row := q.db.QueryRow(ctx, countDriverDocuments)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
+type GetAdminDashboardCountsRow struct {
+	UsersCount           int64 `db:"users_count"`
+	RidesCount           int64 `db:"rides_count"`
+	DriverDocumentsCount int64 `db:"driver_documents_count"`
 }
 
-const countRides = `-- name: CountRides :one
-SELECT count(*)
-FROM rides
-`
-
-func (q *Queries) CountRides(ctx context.Context) (int64, error) {
-	row := q.db.QueryRow(ctx, countRides)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const countUsers = `-- name: CountUsers :one
-SELECT count(*)
-FROM users
-`
-
-func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
-	row := q.db.QueryRow(ctx, countUsers)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
+func (q *Queries) GetAdminDashboardCounts(ctx context.Context) (GetAdminDashboardCountsRow, error) {
+	row := q.db.QueryRow(ctx, getAdminDashboardCounts)
+	var i GetAdminDashboardCountsRow
+	err := row.Scan(&i.UsersCount, &i.RidesCount, &i.DriverDocumentsCount)
+	return i, err
 }

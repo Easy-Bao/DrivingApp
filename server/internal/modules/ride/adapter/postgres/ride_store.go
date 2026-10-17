@@ -10,7 +10,6 @@ import (
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	ports "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -109,26 +108,6 @@ func (repository *RideRepository) Get(ctx context.Context, rideID int) (domain.R
 	ride, err := fromPostgresRideRow(item)
 	if err != nil {
 		return domain.Ride{}, fmt.Errorf("map ride: %w", err)
-	}
-	if ride.DriverID == nil {
-		return ride, nil
-	}
-
-	driverProfile, err := repository.queries.GetDriverProfileByUserID(ctx, int32(*ride.DriverID))
-	if errors.Is(err, pgx.ErrNoRows) {
-		return ride, nil
-	}
-	if err != nil {
-		return domain.Ride{}, fmt.Errorf("find ride driver profile: %w", err)
-	}
-	if ride.DriverName == "" {
-		ride.DriverName = driverProfile.Name
-	}
-	if ride.VehicleType == "" {
-		ride.VehicleType = driverProfile.VehicleType
-	}
-	if ride.PlateNumber == "" {
-		ride.PlateNumber = driverProfile.PlateNumber
 	}
 	return ride, nil
 }
@@ -229,15 +208,21 @@ type rideSettlementProjection struct {
 }
 
 func fromPostgresRideRow(item databasepostgres.GetRideByIDRow) (domain.Ride, error) {
-	return fromPostgresRideProjection(item.Ride, rideSettlementProjection{
-		PaymentStatus:      item.PaymentStatus,
-		CashReceivedAmount: item.CashReceivedAmount,
-		CashChangeAmount:   item.CashChangeAmount,
-		CashOutcome:        item.CashOutcome,
-		CommissionBps:      item.CommissionBps,
-		CommissionAmount:   item.CommissionAmount,
-		DriverPayoutAmount: item.DriverPayoutAmount,
-	})
+	return fromPostgresRideWithDriverProfile(
+		item.Ride,
+		rideSettlementProjection{
+			PaymentStatus:      item.PaymentStatus,
+			CashReceivedAmount: item.CashReceivedAmount,
+			CashChangeAmount:   item.CashChangeAmount,
+			CashOutcome:        item.CashOutcome,
+			CommissionBps:      item.CommissionBps,
+			CommissionAmount:   item.CommissionAmount,
+			DriverPayoutAmount: item.DriverPayoutAmount,
+		},
+		item.DriverProfileName,
+		item.DriverProfileVehicleType,
+		item.DriverProfilePlateNumber,
+	)
 }
 
 func readRideProjection(

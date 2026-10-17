@@ -1,11 +1,5 @@
--- name: CountUsers :one
-SELECT count(*)
-FROM users;
-
--- name: CountRides :one
-SELECT count(*)
-FROM rides;
-
--- name: CountDriverDocuments :one
-SELECT count(*)
-FROM driver_documents;
+-- name: GetAdminDashboardCounts :one
+SELECT
+    (SELECT count(*) FROM users) AS users_count,
+    (SELECT count(*) FROM rides) AS rides_count,
+    (SELECT count(*) FROM driver_documents) AS driver_documents_count;

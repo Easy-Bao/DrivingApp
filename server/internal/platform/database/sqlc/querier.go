@@ -18,10 +18,7 @@ type Querier interface {
 	CompleteRide(ctx context.Context, arg CompleteRideParams) (Ride, error)
 	CountActiveRidesForAcceptance(ctx context.Context, driverID pgtype.Int4) (int64, error)
 	CountActiveRidesForDriver(ctx context.Context, driverID pgtype.Int4) (int64, error)
-	CountDriverDocuments(ctx context.Context) (int64, error)
 	CountPrivateObjectsPendingExternalStorage(ctx context.Context) (int64, error)
-	CountRides(ctx context.Context) (int64, error)
-	CountUsers(ctx context.Context) (int64, error)
 	CreateAcceptedRide(ctx context.Context, arg CreateAcceptedRideParams) (Ride, error)
 	CreateAuditEvent(ctx context.Context, arg CreateAuditEventParams) (AuditEvent, error)
 	CreateBidOffer(ctx context.Context, arg CreateBidOfferParams) (BidOffer, error)
@@ -46,6 +43,7 @@ type Querier interface {
 	ExpireBidSessions(ctx context.Context, arg ExpireBidSessionsParams) error
 	GetActiveRefreshSession(ctx context.Context, arg GetActiveRefreshSessionParams) (GetActiveRefreshSessionRow, error)
 	GetActiveRefreshSessionForUpdate(ctx context.Context, arg GetActiveRefreshSessionForUpdateParams) (GetActiveRefreshSessionForUpdateRow, error)
+	GetAdminDashboardCounts(ctx context.Context) (GetAdminDashboardCountsRow, error)
 	GetBidOfferDriverForAcceptance(ctx context.Context, arg GetBidOfferDriverForAcceptanceParams) (int32, error)
 	GetBidSessionByID(ctx context.Context, id int32) (BidSession, error)
 	GetDriverDocumentByID(ctx context.Context, id int32) (DriverDocument, error)
