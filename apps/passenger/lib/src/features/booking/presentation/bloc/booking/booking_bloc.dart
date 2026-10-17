@@ -137,9 +137,13 @@ class BookingBloc({
   }
 
   @override
-  Future<void> close() {
-    this._cleanupSubscriptions();
-    unawaited(this._stopBackgroundTelemetry());
+  Future<void> close() async {
+    _cleanupSubscriptions();
+    await _realtimeEventsSubscription?.cancel();
+    _realtimeEventsSubscription = null;
+    await _realtimeStateSubscription?.cancel();
+    _realtimeStateSubscription = null;
+    await _stopBackgroundTelemetry();
     return super.close();
   }
 }
