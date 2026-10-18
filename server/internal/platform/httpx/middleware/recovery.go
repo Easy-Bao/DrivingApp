@@ -54,10 +54,11 @@ func Recovery(logger *slog.Logger) func(http.Handler) http.Handler {
 
 					if !rw.wroteHeader {
 						rw.Header().Set("Connection", "close")
-						response.JSON(rw, http.StatusInternalServerError, map[string]any{
-							"code":       "INTERNAL_SERVER_ERROR",
-							"message":    "An unexpected error occurred.",
-							"request_id": reqID,
+						response.WriteProblem(rw, response.Problem{
+							Status:    http.StatusInternalServerError,
+							Code:      "internal_error",
+							Message:   "An unexpected error occurred.",
+							RequestID: reqID,
 						})
 					}
 				}

@@ -47,13 +47,17 @@ func TestRecoveryCatchesPanicAndReturnsJSON500(t *testing.T) {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusInternalServerError)
 	}
 
+	if ct := rec.Header().Get("Content-Type"); ct != "application/problem+json" {
+		t.Fatalf("Content-Type = %q, want 'application/problem+json'", ct)
+	}
+
 	var body map[string]any
 	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
 		t.Fatalf("failed to parse JSON response: %v, raw: %s", err, rec.Body.String())
 	}
 
-	if body["code"] != "INTERNAL_SERVER_ERROR" {
-		t.Fatalf("code = %v, want 'INTERNAL_SERVER_ERROR'", body["code"])
+	if body["code"] != "internal_error" {
+		t.Fatalf("code = %v, want 'internal_error'", body["code"])
 	}
 	if body["request_id"] != "req-test-999" {
 		t.Fatalf("request_id = %v, want 'req-test-999'", body["request_id"])

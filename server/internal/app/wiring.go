@@ -18,8 +18,8 @@ import (
 	chatapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/app"
 	chathttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/transport/http"
 	chatwebsocket "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/transport/ws"
-	dispatchapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
 	assignment "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
+	dispatchapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
 	dispatchhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/transport/http"
 	documentapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/driver/app"
 	documenthttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/driver/transport/http"
@@ -28,21 +28,22 @@ import (
 	locationapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/app"
 	locationdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/domain"
 	locationhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/transport/http"
-	ridepostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/adapter/postgres"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
-	eventadapter "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
-	platformstorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage"
-	websockethub "github.com/Easy-Bao/DrivingApp/server/internal/platform/ws"
 	reviewapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/review/app"
 	reviewhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/review/transport/http"
+	ridepostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/adapter/postgres"
 	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
 	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	ridehttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/transport/http"
 	ridewebsocket "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/transport/ws"
 	userapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/user/app"
 	userhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/user/transport/http"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
+	eventadapter "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
+	platformstorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage"
+	websockethub "github.com/Easy-Bao/DrivingApp/server/internal/platform/ws"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	redisclient "github.com/redis/go-redis/v9"
@@ -322,12 +323,8 @@ func newHTTPRouter(
 	).WithLogger(applicationLogger)
 
 	router := chi.NewRouter()
-	router.NotFound(routeSecurity.Middleware(middleware.RouteDefault)(http.NotFoundHandler()).ServeHTTP)
-	router.MethodNotAllowed(routeSecurity.Middleware(middleware.RouteDefault)(http.HandlerFunc(
-		func(writer http.ResponseWriter, _ *http.Request) {
-			writer.WriteHeader(http.StatusMethodNotAllowed)
-		},
-	)).ServeHTTP)
+	router.NotFound(notFoundHandler(routeSecurity).ServeHTTP)
+	router.MethodNotAllowed(methodNotAllowedHandler(routeSecurity).ServeHTTP)
 	authRouter.RegisterRoutes(router)
 	usersRouter.RegisterRoutes(router)
 	documentRouter.RegisterRoutes(router)
@@ -387,4 +384,24 @@ func newHTTPRouter(
 	registerHealthRoutes(router, redisClient, postgresPool, routeSecurity)
 
 	return router, eventHub, eventSubscriber
+}
+
+func notFoundHandler(routeSecurity *middleware.RouteSecurity) http.Handler {
+	handler := http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		response.Error(writer, http.StatusNotFound, "Resource not found.")
+	})
+	if routeSecurity == nil {
+		return handler
+	}
+	return routeSecurity.Middleware(middleware.RouteDefault)(handler)
+}
+
+func methodNotAllowedHandler(routeSecurity *middleware.RouteSecurity) http.Handler {
+	handler := http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		response.Error(writer, http.StatusMethodNotAllowed, "Method not allowed.")
+	})
+	if routeSecurity == nil {
+		return handler
+	}
+	return routeSecurity.Middleware(middleware.RouteDefault)(handler)
 }
