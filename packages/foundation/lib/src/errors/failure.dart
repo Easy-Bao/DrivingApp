@@ -117,6 +117,15 @@ class const AppFailure({
       );
     }
 
+    if (error is UnexpectedFailure) {
+      return createFailure(
+        title: 'Something went wrong',
+        userMessage: error.message,
+        actionText: 'Retry',
+        type: ErrorType.unknown,
+      );
+    }
+
     if (error is Failure) {
       return createFailure(userMessage: error.message, type: ErrorType.unknown);
     }
@@ -261,3 +270,7 @@ class const ServerFailure([
 ]) extends Failure {
   const factory withStatusCode(String message, int statusCode) = ServerFailure;
 }
+
+class const UnexpectedFailure([
+  super.message = 'Something went wrong. Try again.',
+]) extends Failure {}

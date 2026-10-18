@@ -49,6 +49,28 @@ void main() {
       isA<_FeatureFailure>(),
     );
   });
+
+  test(
+    'maps non-network DioException with null status code to UnexpectedFailure',
+    () {
+      final cancelException = DioException(
+        requestOptions: RequestOptions(path: '/test'),
+        type: DioExceptionType.cancel,
+      );
+      final failure = FailureMapper.fromException(cancelException);
+      expect(failure, isA<UnexpectedFailure>());
+      expect(failure.message, 'Something went wrong. Try again.');
+
+      final badCertException = DioException(
+        requestOptions: RequestOptions(path: '/test'),
+        type: DioExceptionType.badCertificate,
+      );
+      expect(
+        FailureMapper.fromException(badCertException),
+        isA<UnexpectedFailure>(),
+      );
+    },
+  );
 }
 
 class const _FeatureFailure() extends Failure {

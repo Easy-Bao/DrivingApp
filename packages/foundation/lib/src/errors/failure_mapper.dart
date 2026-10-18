@@ -39,6 +39,7 @@ class FailureMapper._() {
       NetworkCircuitOpenException() => NetworkFailure(networkMessage),
       CacheFailure() || CacheException() => CacheFailure(cacheMessage),
       ValidationFailure() => ValidationFailure(validationMessage),
+      UnexpectedFailure() => error,
       final ServerFailure failure => mapStatus(failure.statusCode),
       final DioException dioError => _fromDioException(
         dioError,
@@ -80,7 +81,7 @@ class FailureMapper._() {
     required String timeoutMessage,
   }) {
     if (statusCode == null || statusCode == 0) {
-      return NetworkFailure(networkMessage);
+      return UnexpectedFailure(serverMessage);
     }
 
     return switch (statusCode) {
