@@ -238,6 +238,10 @@ extension _BookingBlocBidSession on BookingBloc {
       _activeBidSessionId = null;
       _cleanupSubscriptions();
       _activeTrip = null;
+      final fareAmount = acceptedBooking?.fareAmount;
+      final confirmedFare = (fareAmount != null && fareAmount > 0)
+          ? fareAmount.toDouble()
+          : event.proposedFare;
       emit(
         BookingDriverMatched(
           matchResult: DriverMatchResult(
@@ -245,7 +249,7 @@ extension _BookingBlocBidSession on BookingBloc {
             driverName: event.driverName,
             vehicleType: event.vehicleType,
             plateNumber: event.plateNumber,
-            proposedFare: event.proposedFare,
+            proposedFare: confirmedFare,
             driverRating: event.driverRating,
           ),
           rideId: rideId,
