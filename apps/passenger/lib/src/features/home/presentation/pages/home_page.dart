@@ -17,6 +17,7 @@ import 'package:passenger/src/features/active_ride/presentation/bloc/track_drive
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver_state.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
+import 'package:passenger/src/features/booking/domain/entities/booking_draft.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
@@ -343,35 +344,41 @@ class _HomePageState extends State<HomePage> {
           child: PendingBookingBanner(
             isAuthenticated: isAuthenticated,
             destinationName: draft.destination.name,
-            onContinue: () {
-              final pickupAddress = draft.pickupAddress;
-              final position = LocationService.lastPosition;
-              BlocProvider.of<BookingDraftCubit>(context).clear();
-              unawaited(
-                context.pushNamed(
-                  BookingRoutes.rideSelection,
-                  extra: {
-                    'destination': draft.destination,
-                    'tipAmount': draft.tipAmount,
-                    'notes': draft.notes,
-                  },
-                  queryParameters: {
-                    if (pickupAddress != null && pickupAddress.isNotEmpty)
-                      'pickupAddress': pickupAddress,
-                    if (position != null) ...{
-                      'pickupLat': position.latitude.toString(),
-                      'pickupLng': position.longitude.toString(),
-                    },
-                  },
-                ),
-              );
-            },
+            onContinue: () => unawaited(_continuePendingBooking(draft)),
             onDismiss: () =>
                 BlocProvider.of<BookingDraftCubit>(context).clear(),
           ),
         );
       },
     );
+  }
+
+  Future<void> _continuePendingBooking(BookingDraft draft) async {
+    if (!await _canStartOrContinueBooking() || !mounted) return;
+    _isNavigationInFlight = true;
+    try {
+      final pickupAddress = draft.pickupAddress;
+      final position = LocationService.lastPosition;
+      BlocProvider.of<BookingDraftCubit>(context).clear();
+      await context.pushNamed(
+        BookingRoutes.rideSelection,
+        extra: {
+          'destination': draft.destination,
+          'tipAmount': draft.tipAmount,
+          'notes': draft.notes,
+        },
+        queryParameters: {
+          if (pickupAddress != null && pickupAddress.isNotEmpty)
+            'pickupAddress': pickupAddress,
+          if (position != null) ...{
+            'pickupLat': position.latitude.toString(),
+            'pickupLng': position.longitude.toString(),
+          },
+        },
+      );
+    } finally {
+      _isNavigationInFlight = false;
+    }
   }
 
   Widget _buildHeader() {
@@ -660,22 +667,28 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future<void> _openDestinationFlow() async {
+  Future<bool> _canStartOrContinueBooking() async {
     if (!shouldStartHomeNavigation(
       isMounted: mounted,
       isNavigationInFlight: _isNavigationInFlight,
     )) {
-      return;
+      return false;
     }
-    _isNavigationInFlight = true;
-    try {
-      if (_hasActiveRide()) {
+    if (_hasActiveRide()) {
+      _isNavigationInFlight = true;
+      try {
         await _showActiveRideBlockedDialog();
-        return;
+      } finally {
+        _isNavigationInFlight = false;
       }
-      final activeSearch = _bookingBloc.activeDriverSearch;
-      if (activeSearch != null) {
+      return false;
+    }
+    final activeSearch = _bookingBloc.activeDriverSearch;
+    if (activeSearch != null) {
+      _isNavigationInFlight = true;
+      try {
         final trip = activeSearch.trip;
+        if (!mounted) return false;
         await context.pushNamed(
           BookingRoutes.findingDriver,
           extra: {
@@ -690,8 +703,18 @@ class _HomePageState extends State<HomePage> {
             'passengerNote': trip.passengerNote,
           },
         );
-        return;
+      } finally {
+        _isNavigationInFlight = false;
       }
+      return false;
+    }
+    return mounted;
+  }
+
+  Future<void> _openDestinationFlow() async {
+    if (!await _canStartOrContinueBooking() || !mounted) return;
+    _isNavigationInFlight = true;
+    try {
       final address = BlocProvider.of<HomeCubit>(context).state.currentAddress;
       await context.pushNamed(
         BookingRoutes.searchDestination,
@@ -703,19 +726,22 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _handleSavedPlaceTap(SavedPlace place) async {
-    if (!mounted) return;
+    if (!await _canStartOrContinueBooking() || !mounted) return;
     if (place.hasLocation) {
-      final syntheticPlace = Place(
-        id: 'saved_${place.label.toLowerCase().replaceAll(' ', '_')}',
-        name: place.label,
-        fullAddress: place.savedAddress ?? place.label,
-        latitude: place.latitude!,
-        longitude: place.longitude!,
-      );
-      final address = BlocProvider.of<HomeCubit>(context).state.currentAddress;
-      final position = LocationService.lastPosition;
-      unawaited(
-        context.pushNamed(
+      _isNavigationInFlight = true;
+      try {
+        final syntheticPlace = Place(
+          id: 'saved_${place.label.toLowerCase().replaceAll(' ', '_')}',
+          name: place.label,
+          fullAddress: place.savedAddress ?? place.label,
+          latitude: place.latitude!,
+          longitude: place.longitude!,
+        );
+        final address = BlocProvider.of<HomeCubit>(context)
+            .state
+            .currentAddress;
+        final position = LocationService.lastPosition;
+        await context.pushNamed(
           BookingRoutes.rideSelection,
           extra: syntheticPlace,
           queryParameters: {
@@ -725,8 +751,10 @@ class _HomePageState extends State<HomePage> {
               'pickupLng': position.longitude.toString(),
             },
           },
-        ),
-      );
+        );
+      } finally {
+        _isNavigationInFlight = false;
+      }
     } else {
       final cubit = BlocProvider.of<SavedPlacesCubit>(context);
       final selectedPlace = await context.pushNamed(
