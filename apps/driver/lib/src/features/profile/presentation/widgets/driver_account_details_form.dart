@@ -73,55 +73,82 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
     DriverAccountDetailsSection.vehicle => 'Vehicle Information',
   };
 
+  Future<void> _submitSave() async {
+    final cubit = BlocProvider.of<DriverAccountCubit>(context);
+    final currentAccount = cubit.state.account;
+    final isPersonal = widget.section == DriverAccountDetailsSection.personal;
+    final name = isPersonal ? _nameController.text.trim() : currentAccount.name;
+    final vehicleType = isPersonal
+        ? currentAccount.vehicleType
+        : _vehicleTypeController.text.trim();
+    final plateNumber = isPersonal
+        ? currentAccount.plateNumber
+        : _plateNumberController.text.trim();
+
+    final success = await cubit.updateAccount(
+      name: name,
+      vehicleType: vehicleType,
+      plateNumber: plateNumber,
+    );
+    if (!mounted || !context.mounted) return;
+    if (success) {
+      CustomToast.show(context, 'Details updated successfully.');
+      if (widget.onBack != null) {
+        widget.onBack!();
+      } else {
+        context.pop();
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return BlocListener<DriverAccountCubit, DriverAccountState>(
+    return BlocConsumer<DriverAccountCubit, DriverAccountState>(
       listenWhen: (previous, current) => previous.account != current.account,
       listener: (_, state) {
         _applyAccount(state.account);
-        setState(() {});
       },
-      child: Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-            onPressed: widget.onBack ?? () => context.pop(),
-            icon: const Icon(LucideIcons.arrow_left),
+      builder: (context, state) {
+        return Scaffold(
+          appBar: AppBar(
+            leading: IconButton(
+              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+              onPressed: widget.onBack ?? () => context.pop(),
+              icon: const Icon(LucideIcons.arrow_left),
+            ),
+            title: Text(_pageTitle),
+            centerTitle: true,
+            actions: const [SizedBox(width: 24)],
           ),
-          title: Text(_pageTitle),
-          centerTitle: true,
-          actions: const [
-            SizedBox(width: 24),
-          ],
-        ),
-        body: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(
-                EasyRideLayout.pagePaddingWide,
-                EasyRideLayout.pagePadding,
-                EasyRideLayout.pagePaddingWide,
-                EasyRideSpacing.xxl * 2,
-              ),
-              children: [
-                _buildHeader(),
-                const SizedBox(height: EasyRideSpacing.xxl),
-                EasyRideSurfaceCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children:
-                        widget.section == DriverAccountDetailsSection.personal
-                        ? _buildPersonalFields()
-                        : _buildVehicleFields(),
-                  ),
+          body: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(
+                  EasyRideLayout.pagePaddingWide,
+                  EasyRideLayout.pagePadding,
+                  EasyRideLayout.pagePaddingWide,
+                  EasyRideSpacing.xxl * 2,
                 ),
-              ],
+                children: [
+                  _buildHeader(),
+                  const SizedBox(height: EasyRideSpacing.xxl),
+                  EasyRideSurfaceCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children:
+                          widget.section == DriverAccountDetailsSection.personal
+                          ? _buildPersonalFields(state)
+                          : _buildVehicleFields(state),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -163,12 +190,12 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
     );
   }
 
-  List<Widget> _buildPersonalFields() {
+  List<Widget> _buildPersonalFields(DriverAccountState state) {
     return [
       _DriverProfileTextField(
         label: 'Full Name',
         controller: _nameController,
-        readOnly: true,
+        readOnly: state.isSaving,
         textInputAction: TextInputAction.next,
       ),
       const SizedBox(height: 22),
@@ -184,34 +211,90 @@ class _DriverAccountDetailsFormState extends State<DriverAccountDetailsForm> {
       ),
       const SizedBox(height: 10),
       Text(
-        'Driver personal information is verified and read-only.',
+        'Phone number and email are verified account identifiers.',
         style: Theme.of(context).textTheme.bodySmall
             ?.copyWith(color: context.colorScheme.onSurfaceVariant),
+      ),
+      if (state.errorMessage != null) ...[
+        const SizedBox(height: 12),
+        Text(
+          state.errorMessage!,
+          style: TextStyle(color: context.colorScheme.error, fontSize: 13),
+        ),
+      ],
+      const SizedBox(height: 24),
+      ElevatedButton(
+        key: const ValueKey<String>('driver-account-details-save'),
+        onPressed: state.isSaving ? null : _submitSave,
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(
+            double.infinity,
+            EasyRideSize.minimumTouchTarget,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+          ),
+        ),
+        child: state.isSaving
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Text('Save Changes'),
       ),
     ];
   }
 
-  List<Widget> _buildVehicleFields() {
+  List<Widget> _buildVehicleFields(DriverAccountState state) {
     return [
       _DriverProfileTextField(
         label: 'Vehicle Type',
         controller: _vehicleTypeController,
-        readOnly: true,
+        readOnly: state.isSaving,
         textInputAction: TextInputAction.next,
       ),
       const SizedBox(height: 22),
       _DriverProfileTextField(
         label: 'Plate Number',
         controller: _plateNumberController,
-        readOnly: true,
+        readOnly: state.isSaving,
         textInputAction: TextInputAction.done,
         textCapitalization: TextCapitalization.characters,
       ),
       const SizedBox(height: 10),
       Text(
-        'Vehicle information is verified upon registration and cannot be modified.',
+        'Vehicle information is updated in your active driver profile.',
         style: Theme.of(context).textTheme.bodySmall
             ?.copyWith(color: context.colorScheme.onSurfaceVariant),
+      ),
+      if (state.errorMessage != null) ...[
+        const SizedBox(height: 12),
+        Text(
+          state.errorMessage!,
+          style: TextStyle(color: context.colorScheme.error, fontSize: 13),
+        ),
+      ],
+      const SizedBox(height: 24),
+      ElevatedButton(
+        key: const ValueKey<String>('driver-account-details-save'),
+        onPressed: state.isSaving ? null : _submitSave,
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(
+            double.infinity,
+            EasyRideSize.minimumTouchTarget,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+          ),
+        ),
+        child: state.isSaving
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Text('Save Changes'),
       ),
     ];
   }

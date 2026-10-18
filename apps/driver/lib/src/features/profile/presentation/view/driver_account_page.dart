@@ -87,6 +87,18 @@ class _DriverAccountPageState extends State<DriverAccountPage> {
                             ),
                           ),
                           _DriverAccountMenuItem(
+                            icon: LucideIcons.file_text,
+                            title: 'Documents',
+                            subtitle:
+                                'Manage your driver verification documents',
+                            onTap: () => unawaited(
+                              _openEditableDestination(
+                                context,
+                                ProfileRoutes.documents,
+                              ),
+                            ),
+                          ),
+                          _DriverAccountMenuItem(
                             icon: LucideIcons.wallet_cards,
                             title: 'Performance',
                             subtitle: 'Ratings, trips, and earnings',

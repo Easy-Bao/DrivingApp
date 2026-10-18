@@ -81,7 +81,7 @@ void main() {
             ),
           )
           .readOnly,
-      isTrue,
+      isFalse,
     );
     expect(
       tester
@@ -91,11 +91,11 @@ void main() {
             ),
           )
           .readOnly,
-      isTrue,
+      isFalse,
     );
     expect(
       find.byKey(const ValueKey<String>('driver-account-details-save')),
-      findsNothing,
+      findsOneWidget,
     );
     expect(tester.takeException(), isNull);
   });

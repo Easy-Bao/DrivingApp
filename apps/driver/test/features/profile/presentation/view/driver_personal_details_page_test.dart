@@ -92,14 +92,16 @@ void main() {
     expect(
       tester
           .widget<TextField>(
-            find.byKey(const ValueKey<String>('driver-account-field-Full Name')),
+            find.byKey(
+              const ValueKey<String>('driver-account-field-Full Name'),
+            ),
           )
           .readOnly,
-      isTrue,
+      isFalse,
     );
     expect(
       find.byKey(const ValueKey<String>('driver-account-details-save')),
-      findsNothing,
+      findsOneWidget,
     );
     expect(tester.takeException(), isNull);
   });

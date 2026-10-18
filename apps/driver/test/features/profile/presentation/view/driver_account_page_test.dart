@@ -95,6 +95,11 @@ void main() {
     expect(find.textContaining('XYZ-123'), findsOneWidget);
     expect(find.text('Ratings, trips, and earnings'), findsOneWidget);
     expect(find.text('Performance'), findsOneWidget);
+    expect(find.text('Documents'), findsOneWidget);
+    expect(
+      find.text('Manage your driver verification documents'),
+      findsOneWidget,
+    );
     expect(find.text('App settings'), findsOneWidget);
     expect(find.text('Settings'), findsOneWidget);
     expect(find.text('Location, support, and app details'), findsOneWidget);

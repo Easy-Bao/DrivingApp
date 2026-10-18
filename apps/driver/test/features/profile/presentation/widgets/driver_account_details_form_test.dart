@@ -18,7 +18,7 @@ class _MockProfileDataSource extends Mock
 class _MockSessionService extends Mock implements DriverSessionStore {}
 
 void main() {
-  testWidgets('displays personal details as read-only with no save action', (
+  testWidgets('displays personal details with editable name and save action', (
     tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
@@ -55,10 +55,12 @@ void main() {
     expect(
       tester
           .widget<TextField>(
-            find.byKey(const ValueKey<String>('driver-account-field-Full Name')),
+            find.byKey(
+              const ValueKey<String>('driver-account-field-Full Name'),
+            ),
           )
           .readOnly,
-      isTrue,
+      isFalse,
     );
     expect(
       tester
@@ -78,7 +80,7 @@ void main() {
     );
     expect(
       find.byKey(const ValueKey<String>('driver-account-details-save')),
-      findsNothing,
+      findsOneWidget,
     );
     expect(tester.takeException(), isNull);
   });
