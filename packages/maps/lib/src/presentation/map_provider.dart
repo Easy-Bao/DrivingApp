@@ -309,6 +309,7 @@ class MapProvider._() {
       onMapIdle: onMapIdle,
       interactive: interactive,
       showUserLocation: showUserLocation,
+      padding: padding,
     );
   }
 
@@ -439,17 +440,20 @@ class MapProvider._() {
       MapAnnotationService.clearAnnotations(manager);
 }
 
-class const _AppMapView({
-  required this.latitude,
-  required this.longitude,
-  required this.styleUri,
-  required this.onMapCreated,
-  required this.onCameraChanged,
-  required this.onMapIdle,
-  required this.interactive,
-  required this.showUserLocation,
-  this.zoom = 14.0,
-}) extends StatefulWidget {
+class _AppMapView extends StatefulWidget {
+  const _AppMapView({
+    required this.latitude,
+    required this.longitude,
+    required this.styleUri,
+    required this.onMapCreated,
+    required this.onCameraChanged,
+    required this.onMapIdle,
+    required this.interactive,
+    required this.showUserLocation,
+    this.zoom = 14.0,
+    this.padding,
+  });
+
   final double latitude;
   final double longitude;
   final double zoom;
@@ -459,6 +463,7 @@ class const _AppMapView({
   final void Function(AppMapController controller)? onMapIdle;
   final bool interactive;
   final bool showUserLocation;
+  final EdgeInsets? padding;
 
   @override
   State<_AppMapView> createState() => _AppMapViewState();
@@ -487,6 +492,7 @@ class _AppMapViewState extends State<_AppMapView> {
           coordinates: mapbox.Position(widget.longitude, widget.latitude),
         ),
         zoom: widget.zoom,
+        padding: widget.padding,
       ),
       onCameraChangeListener: (cameraChangedEventData) {
         final currentController = _mapController;
@@ -571,4 +577,6 @@ String _drivingDistanceRequestKey(
 String _coordinateCacheKey(double? value) =>
     value?.toStringAsFixed(6) ?? 'none';
 
-class const _MapProviderLookupFailure() implements Exception {}
+class _MapProviderLookupFailure implements Exception {
+  const _MapProviderLookupFailure();
+}

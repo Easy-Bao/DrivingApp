@@ -1,19 +1,22 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:design_system/src/theme/theme_context.dart';
 import 'package:design_system/src/tokens/radius.dart';
 import 'package:design_system/src/tokens/size.dart';
 import 'package:design_system/src/tokens/spacing.dart';
 import 'package:design_system/src/widgets/navigation/swipe_tab_indicator.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
-typedef AppTabIconBuilder = Widget Function(
-  BuildContext context,
-  int index,
-  AppTabDestination destination,
-  Color color,
-);
+typedef AppTabIconBuilder =
+    Widget Function(
+      BuildContext context,
+      int index,
+      AppTabDestination destination,
+      Color color,
+    );
 
-class const AppTabDestination({required this.icon, required this.label}) {
+class AppTabDestination {
+  const AppTabDestination({required this.icon, required this.label});
+
   final IconData icon;
   final String label;
 }
@@ -23,21 +26,23 @@ class const AppTabDestination({required this.icon, required this.label}) {
 /// The tab bar owns the visual contract—slot sizing, active indicator
 /// geometry, selected color interpolation, and touch semantics—while an app
 /// may provide an icon builder for a destination-specific badge.
-class const AppFloatingTabBar({
-  super.key,
-  required this.destinations,
-  required this.selectedIndex,
-  required this.onDestinationSelected,
-  required this.itemKeyPrefix,
-  required this.indicatorKey,
-  this.pagePosition,
-  this.iconBuilder,
+class AppFloatingTabBar extends StatelessWidget {
+  const AppFloatingTabBar({
+    super.key,
+    required this.destinations,
+    required this.selectedIndex,
+    required this.onDestinationSelected,
+    required this.itemKeyPrefix,
+    required this.indicatorKey,
+    this.pagePosition,
+    this.iconBuilder,
 
-  /// When true the widget renders only the inner tab-row content with no outer
-  /// container decoration, border, or shadow. Use when a parent supplies the
-  /// shared surface (e.g. a merged active-ride + tab bar layout).
-  this.bare = false,
-}) extends StatelessWidget {
+    /// When true the widget renders only the inner tab-row content with no outer
+    /// container decoration, border, or shadow. Use when a parent supplies the
+    /// shared surface (e.g. a merged active-ride + tab bar layout).
+    this.bare = false,
+  }) : assert(destinations.length > 0);
+
   static const animationDuration = Duration(milliseconds: 280);
   static const height = EasyRideSize.navigationBarHeight;
 
@@ -49,8 +54,6 @@ class const AppFloatingTabBar({
   final String itemKeyPrefix;
   final String indicatorKey;
   final bool bare;
-
-  this : assert(destinations.length > 0);
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +102,6 @@ class const AppFloatingTabBar({
                 pagePosition: visualPagePosition,
                 itemCount: destinations.length,
                 color: colorScheme.surfaceContainerHighest,
-                capsuleKeyPrefix: indicatorKey,
               ),
             ),
             Row(
@@ -126,12 +128,13 @@ class const AppFloatingTabBar({
     if (bare) return inner;
 
     return Container(
-      height: height,
-      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(EasyRideRadius.pill),
-        border: Border.all(color: colorScheme.outlineVariant),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+          width: 0.5,
+        ),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0A000000),
@@ -150,15 +153,17 @@ class const AppFloatingTabBar({
   }
 }
 
-class const _AppFloatingTabItem({
-  required this.destination,
-  required this.index,
-  required this.isSelected,
-  required this.pagePosition,
-  required this.itemKeyPrefix,
-  required this.iconBuilder,
-  required this.onTap,
-}) extends StatelessWidget {
+class _AppFloatingTabItem extends StatelessWidget {
+  const _AppFloatingTabItem({
+    required this.destination,
+    required this.index,
+    required this.isSelected,
+    required this.pagePosition,
+    required this.itemKeyPrefix,
+    required this.iconBuilder,
+    required this.onTap,
+  });
+
   final AppTabDestination destination;
   final int index;
   final bool isSelected;
@@ -193,8 +198,7 @@ class const _AppFloatingTabItem({
         child: InkWell(
           key: ValueKey<String>('$itemKeyPrefix-$index'),
           borderRadius: BorderRadius.circular(EasyRideRadius.pill),
-          splashFactory: NoSplash.splashFactory,
-          overlayColor: WidgetStateProperty.resolveWith((states) {
+          overlayColor: WidgetStateProperty.resolveWith<Color>((states) {
             if (states.contains(WidgetState.pressed)) {
               return colorScheme.primary.withValues(alpha: 0.12);
             }
@@ -218,14 +222,19 @@ class const _AppFloatingTabItem({
                       color: targetColor,
                     ),
                 const SizedBox(height: EasyRideSpacing.sm / 2),
-                Text(
-                  destination.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.fade,
-                  softWrap: false,
-                  style: labelStyle.copyWith(
-                    color: targetColor,
-                    fontWeight: FontWeight.w500,
+                Flexible(
+                  child: Text(
+                    destination.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.fade,
+                    softWrap: false,
+                    textScaler: MediaQuery.textScalerOf(context).clamp(
+                      maxScaleFactor: 1.2,
+                    ),
+                    style: labelStyle.copyWith(
+                      color: targetColor,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ],

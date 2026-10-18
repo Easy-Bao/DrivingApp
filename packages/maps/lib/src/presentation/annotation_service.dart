@@ -67,6 +67,7 @@ class MapAnnotationService._() {
   static final Expando<mapbox.MapboxMap> _annotationManagerOwners = Expando(
     'MapAnnotationService.annotationManagerOwners',
   );
+  static final Map<String, int> _animationGenerationByManagerKey = {};
 
   static Future<mapbox.PointAnnotationManager> addMarker(
     AppMapController controller,
@@ -163,6 +164,9 @@ class MapAnnotationService._() {
     annotation.iconSize = options.iconSize;
     annotation.iconRotate = options.iconRotate;
     annotation.symbolSortKey = options.symbolSortKey;
+    final generation =
+        (_animationGenerationByManagerKey[annotationManager.id] ?? 0) + 1;
+    _animationGenerationByManagerKey[annotationManager.id] = generation;
     if (animate) {
       await traceTimelineStage(
         'maps.marker.animate_8_updates',
@@ -173,6 +177,7 @@ class MapAnnotationService._() {
           targetLat: lat,
           targetLng: lng,
           targetBearing: targetBearing,
+          generation: generation,
         ),
       );
     } else {
@@ -197,11 +202,16 @@ class MapAnnotationService._() {
     required double targetLat,
     required double targetLng,
     required double targetBearing,
+    required int generation,
   }) async {
     final startLat = annotation.geometry.coordinates.lat.toDouble();
     final startLng = annotation.geometry.coordinates.lng.toDouble();
     const frameCount = 8;
     for (var frame = 1; frame <= frameCount; frame++) {
+      if (_animationGenerationByManagerKey[annotationManager.id] !=
+          generation) {
+        return;
+      }
       final progress = Curves.easeInOut.transform(frame / frameCount);
       annotation.geometry = mapbox.Point(
         coordinates: mapbox.Position(
@@ -217,7 +227,14 @@ class MapAnnotationService._() {
       await annotationManager.update(annotation);
       if (frame < frameCount) {
         await Future<void>.delayed(const Duration(milliseconds: 50));
+        if (_animationGenerationByManagerKey[annotationManager.id] !=
+            generation) {
+          return;
+        }
       }
+    }
+    if (_animationGenerationByManagerKey[annotationManager.id] == generation) {
+      _animationGenerationByManagerKey.remove(annotationManager.id);
     }
   }
 
@@ -580,6 +597,7 @@ class MapAnnotationService._() {
     mapbox.BaseAnnotationManager? manager,
   ) async {
     if (manager == null) return;
+    _animationGenerationByManagerKey.remove(manager.id);
     try {
       final owner = _annotationManagerOwners[manager];
       if (owner != null) {
