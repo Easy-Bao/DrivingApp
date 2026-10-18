@@ -285,9 +285,9 @@ final class DashboardRepositoryImpl({
       // The availability response is the user-visible transition. Location
       // delivery and native service startup are retryable telemetry work and
       // must not serialize behind the switch.
+      await _persistOnlineState();
       unawaited(_publishInitialLocation(lat: lat, lng: lng));
       unawaited(_startBackgroundTelemetry());
-      unawaited(_persistOnlineState());
       return const Ok(null);
     } catch (error) {
       await _clearOnlinePresence(driverId: driverId, markServerOffline: true);

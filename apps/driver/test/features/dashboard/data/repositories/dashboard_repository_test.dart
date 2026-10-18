@@ -398,6 +398,45 @@ void main() {
     verify(() => sessionService.saveDriverOnlineStatus(true)).called(1);
   });
 
+  test('persists online state before starting background telemetry', () async {
+    final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
+    final sessionService = MockSecureSessionService();
+    final backgroundService = MockBackgroundTelemetryService();
+    final callOrder = <String>[];
+
+    when(() => sessionService.readDriverId())
+        .thenAnswer((_) async => 'driver-42');
+    when(
+      () => availabilityDataSource.updateOnlineStatus(
+        driverId: 'driver-42',
+        isOnline: true,
+      ),
+    ).thenAnswer((_) async {});
+    when(() => sessionService.saveDriverOnlineStatus(true))
+        .thenAnswer((_) async {
+          callOrder.add('persist');
+        });
+    when(() => backgroundService.start()).thenAnswer((_) async {
+      callOrder.add('start_telemetry');
+    });
+
+    final repository = _buildRepository(
+      availabilityDataSource: availabilityDataSource,
+      sessionService: sessionService,
+      backgroundTelemetryService: backgroundService,
+    );
+
+    final result = await repository.updateOnlineStatus(
+      isOnline: true,
+      lat: 0,
+      lng: 0,
+    );
+
+    expect(result, const Ok<void, Failure>(null));
+    await Future<void>.delayed(Duration.zero);
+    expect(callOrder, ['persist', 'start_telemetry']);
+  });
+
   test('removes the driver location when going offline', () async {
     final availabilityDataSource = MockDriverAvailabilityRemoteDataSource();
     final sessionService = MockSecureSessionService();
