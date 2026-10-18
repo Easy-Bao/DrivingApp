@@ -37,6 +37,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
   RideSnapshot? _detailedRideData;
   RideCounterparty? _counterpartyData;
   bool _showLostFoundChat = false;
+  bool _canContactCounterparty = false;
   String _passengerId = '';
   Future<Route?>? _routeFuture;
 
@@ -71,6 +72,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
     _passengerId = state.passengerId;
     _detailedRideData = state.ride;
     _counterpartyData = state.counterparty;
+    _canContactCounterparty = state.canContactCounterparty;
     _showLostFoundChat = state.canContactCounterparty;
   }
 
@@ -118,14 +120,38 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
     try {
       RideCounterparty? driverProfile = _counterpartyData;
       driverProfile ??= await _detailsCubit.loadCounterpartyIfNeeded(ride.id);
-      final phone = driverProfile?.phone ?? '';
-      if (phone.isNotEmpty) {
-        final uri = Uri.parse('tel:$phone');
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri);
+      if (driverProfile == null ||
+          !driverProfile.contactAllowed ||
+          driverProfile.phone.trim().isEmpty) {
+        if (mounted) {
+          CustomToast.show(
+            context,
+            'Driver contact is currently unavailable.',
+            isError: true,
+          );
         }
+        return;
       }
-    } catch (_) {}
+      final phone = driverProfile.phone.trim();
+      final uri = Uri.parse('tel:$phone');
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri);
+      } else if (mounted) {
+        CustomToast.show(
+          context,
+          'Unable to launch phone dialer.',
+          isError: true,
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        CustomToast.show(
+          context,
+          'Unable to reach driver at this time.',
+          isError: true,
+        );
+      }
+    }
   }
 
   String _driverInitials(String? name) {
@@ -337,31 +363,33 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Material(
-                    color: context.colorScheme.surface,
-                    shape: CircleBorder(
-                      side: BorderSide(
-                        color: context.colorScheme.outlineVariant.withValues(
-                          alpha: 0.4,
-                        ),
-                        width: 1.0,
-                      ),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: InkWell(
-                      onTap: _makeDriverCall,
-                      child: SizedBox(
-                        width: 40,
-                        height: 40,
-                        child: Icon(
-                          LucideIcons.phone,
-                          color: context.colorScheme.onSurface,
-                          size: 16,
+                  if (_canContactCounterparty) ...[
+                    const SizedBox(width: 8),
+                    Material(
+                      color: context.colorScheme.surface,
+                      shape: CircleBorder(
+                        side: BorderSide(
+                          color: context.colorScheme.outlineVariant.withValues(
+                            alpha: 0.4,
+                          ),
+                          width: 1.0,
                         ),
                       ),
+                      clipBehavior: Clip.antiAlias,
+                      child: InkWell(
+                        onTap: _makeDriverCall,
+                        child: SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: Icon(
+                            LucideIcons.phone,
+                            color: context.colorScheme.onSurface,
+                            size: 16,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                   if (status != 'completed' || _showLostFoundChat) ...[
                     const SizedBox(width: 8),
                     Material(

@@ -741,31 +741,67 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                                 try {
                                   final rideId = widget.ride.id.trim();
                                   if (rideId.isNotEmpty) {
-                                    String phone = '';
                                     final result = await widget.trackRepository
                                         .fetchCounterpartyResult(rideId);
-                                    result.fold((failure) {
-                                      if (mounted) {
-                                        setState(
-                                          () => _errorMessage =
-                                              failure.message.isNotEmpty
+                                    final (canCall, phone) = result.fold(
+                                      (failure) {
+                                        if (mounted) {
+                                          final msg = failure.message.isNotEmpty
                                               ? failure.message
-                                              : 'Unable to reach driver at this time.',
-                                        );
-                                      }
-                                    }, (driver) => phone = driver.phone);
+                                              : 'Unable to reach driver at this time.';
+                                          setState(() => _errorMessage = msg);
+                                          CustomToast.show(
+                                            context,
+                                            msg,
+                                            isError: true,
+                                          );
+                                        }
+                                        return (false, '');
+                                      },
+                                      (driver) {
+                                        if (!driver.contactAllowed ||
+                                            driver.phone.trim().isEmpty) {
+                                          if (mounted) {
+                                            const msg =
+                                                'Driver contact is currently unavailable.';
+                                            setState(() => _errorMessage = msg);
+                                            CustomToast.show(
+                                              context,
+                                              msg,
+                                              isError: true,
+                                            );
+                                          }
+                                          return (false, '');
+                                        }
+                                        return (true, driver.phone.trim());
+                                      },
+                                    );
 
-                                    if (phone.isNotEmpty) {
+                                    if (canCall && phone.isNotEmpty) {
                                       final uri = Uri.parse('tel:$phone');
                                       if (await canLaunchUrl(uri)) {
                                         await launchUrl(uri);
+                                      } else if (mounted) {
+                                        const msg =
+                                            'Unable to launch phone dialer.';
+                                        setState(() => _errorMessage = msg);
+                                        CustomToast.show(
+                                          context,
+                                          msg,
+                                          isError: true,
+                                        );
                                       }
                                     }
                                   }
                                 } catch (_) {
                                   if (mounted) {
-                                    setState(
-                                      () => _errorMessage = 'Unable to reach driver at this time.',
+                                    const msg =
+                                        'Unable to reach driver at this time.';
+                                    setState(() => _errorMessage = msg);
+                                    CustomToast.show(
+                                      context,
+                                      msg,
+                                      isError: true,
                                     );
                                   }
                                 }

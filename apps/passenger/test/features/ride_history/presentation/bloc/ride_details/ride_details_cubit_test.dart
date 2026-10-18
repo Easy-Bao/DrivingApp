@@ -64,4 +64,72 @@ void main() {
     expect(cubit.state.canContactCounterparty, isTrue);
     await cubit.close();
   });
+
+  test(
+    'canContactCounterparty is false when driver contact is not allowed',
+    () async {
+      const counterparty = RideCounterparty(
+        userId: 'driver-2',
+        name: 'Driver Two',
+        phone: '+639170000000',
+        contactAllowed: false,
+      );
+      when(() => repository.fetchRide('404')).thenAnswer(
+        (_) async => const Ok(
+          RideSnapshot(
+            id: '404',
+            status: 'completed',
+            pickupName: 'Pickup',
+            dropoffName: 'Dropoff',
+          ),
+        ),
+      );
+      when(() => repository.fetchCounterparty('404'))
+          .thenAnswer((_) async => const Ok(counterparty));
+
+      final cubit = RideDetailsCubit(
+        repository: repository,
+        sessionService: sessionService,
+      );
+      await cubit.load('404');
+
+      expect(cubit.state.counterparty, counterparty);
+      expect(cubit.state.canContactCounterparty, isFalse);
+      await cubit.close();
+    },
+  );
+
+  test(
+    'canContactCounterparty is false when counterparty has empty user ID',
+    () async {
+      const counterparty = RideCounterparty(
+        userId: '',
+        name: 'Driver Three',
+        phone: '+639170000000',
+        contactAllowed: true,
+      );
+      when(() => repository.fetchRide('505')).thenAnswer(
+        (_) async => const Ok(
+          RideSnapshot(
+            id: '505',
+            status: 'completed',
+            pickupName: 'Pickup',
+            dropoffName: 'Dropoff',
+          ),
+        ),
+      );
+      when(() => repository.fetchCounterparty('505'))
+          .thenAnswer((_) async => const Ok(counterparty));
+
+      final cubit = RideDetailsCubit(
+        repository: repository,
+        sessionService: sessionService,
+      );
+      await cubit.load('505');
+
+      expect(cubit.state.counterparty, counterparty);
+      expect(cubit.state.canContactCounterparty, isFalse);
+      await cubit.close();
+    },
+  );
 }
