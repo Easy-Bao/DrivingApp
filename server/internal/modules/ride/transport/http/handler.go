@@ -67,7 +67,7 @@ func (handler *Handler) AcceptRide(w http.ResponseWriter, r *http.Request) {
 	}
 	item, err := handler.service.AcceptRide(r.Context(), rideID, driverID)
 	if err != nil {
-		response.Error(w, 409, "ride cannot be accepted")
+		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
 	response.JSON(w, 200, rideResponseFromDomain(item))
@@ -210,7 +210,7 @@ func (handler *Handler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 		input.Status,
 	)
 	if err != nil {
-		response.Error(w, 409, safeRideError(err))
+		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
 	response.JSON(w, 200, rideResponseFromDomain(item))
@@ -316,7 +316,7 @@ func (handler *Handler) GetRide(w http.ResponseWriter, r *http.Request) {
 	}
 	ride, err := handler.service.Get(r.Context(), id)
 	if err != nil {
-		response.Error(w, 404, "ride not found")
+		response.Error(w, rideErrorStatus(err), safeRideError(err))
 		return
 	}
 	isPassenger := ride.PassengerID == actorID
@@ -627,6 +627,8 @@ func domainRide(passengerID int, input CreateRideRequest) domain.Ride {
 
 func rideErrorStatus(err error) int {
 	switch {
+	case errors.Is(err, domain.ErrRideNotFound):
+		return http.StatusNotFound
 	case errors.Is(err, domain.ErrInvalidTrip):
 		return 400
 	case errors.Is(err, domain.ErrInvalidSettlement):
@@ -671,6 +673,8 @@ func rideErrorStatus(err error) int {
 
 func safeRideError(err error) string {
 	switch {
+	case errors.Is(err, domain.ErrRideNotFound):
+		return "Ride not found."
 	case errors.Is(err, domain.ErrInvalidTrip):
 		return "The route details are invalid."
 	case errors.Is(err, domain.ErrInvalidSettlement):

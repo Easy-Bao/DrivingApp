@@ -30,4 +30,5 @@ var (
 	ErrSafetyReportNotAllowed    = errors.New("you cannot report this ride")
 	ErrSafetyReportInvalid       = errors.New("the safety report is invalid")
 	ErrSafetyReportAlreadySent   = errors.New("this report was already submitted")
+	ErrRideNotFound              = errors.New("ride not found")
 )

@@ -5,12 +5,12 @@ import (
 	"net/http"
 	"strconv"
 
+	application "github.com/Easy-Bao/DrivingApp/server/internal/modules/review/app"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/review/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
-	application "github.com/Easy-Bao/DrivingApp/server/internal/modules/review/app"
-	"github.com/Easy-Bao/DrivingApp/server/internal/modules/review/domain"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -76,7 +76,7 @@ func (handler *Handler) CreateReview(writer http.ResponseWriter, request *http.R
 		Comment:     input.Comment,
 	})
 	if err != nil {
-		response.Error(writer, http.StatusBadRequest, safeReviewError(err))
+		response.Error(writer, reviewErrorStatus(err), safeReviewError(err))
 		return
 	}
 	response.JSON(writer, http.StatusCreated, NewReviewResponse(item))
@@ -106,16 +106,31 @@ func (handler *Handler) CreatePassengerReview(writer http.ResponseWriter, reques
 		Comment:     input.Comment,
 	})
 	if err != nil {
-		response.Error(writer, http.StatusBadRequest, safeReviewError(err))
+		response.Error(writer, reviewErrorStatus(err), safeReviewError(err))
 		return
 	}
 	response.JSON(writer, http.StatusCreated, NewPassengerReviewResponse(item))
+}
+
+func reviewErrorStatus(err error) int {
+	switch {
+	case errors.Is(err, domain.ErrReviewNotAllowed), errors.Is(err, domain.ErrInvalidRating):
+		return http.StatusBadRequest
+	case errors.Is(err, application.ErrPersistenceUnavailable):
+		return http.StatusServiceUnavailable
+	default:
+		return http.StatusInternalServerError
+	}
 }
 
 func safeReviewError(err error) string {
 	switch {
 	case errors.Is(err, domain.ErrReviewNotAllowed):
 		return "Reviews are available after a completed ride."
+	case errors.Is(err, domain.ErrInvalidRating):
+		return "Rating must be between 1 and 5."
+	case errors.Is(err, application.ErrPersistenceUnavailable):
+		return "Review service is temporarily unavailable."
 	default:
 		return "The ride request could not be completed."
 	}

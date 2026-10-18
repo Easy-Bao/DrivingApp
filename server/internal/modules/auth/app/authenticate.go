@@ -95,6 +95,7 @@ func (service *AuthenticateService) execute(
 	if err != nil {
 		if !errors.Is(err, domain.ErrUserNotFound) {
 			service.log().WarnContext(ctx, "find account for authentication failed", "error", err)
+			return domain.User{}, SessionTokens{}, fmt.Errorf("lookup user account: %w", err)
 		}
 		return domain.User{}, SessionTokens{}, domain.ErrInvalidCredentials
 	}

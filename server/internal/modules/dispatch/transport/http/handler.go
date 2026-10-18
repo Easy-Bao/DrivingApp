@@ -8,12 +8,12 @@ import (
 
 	dispatchapp "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
 	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/domain"
+	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	ridedto "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/transport/http"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
 	sharedrequest "github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/request"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/response"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
-	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
-	ridedto "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/transport/http"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -102,7 +102,7 @@ func (handler *Handler) Session(w http.ResponseWriter, r *http.Request) {
 	}
 	item, err := handler.service.Session(r.Context(), id)
 	if err != nil {
-		response.Error(w, 404, "bid session not found")
+		response.Error(w, dispatchErrorStatus(err), safeDispatchError(err))
 		return
 	}
 	if !canViewSession(actorID, item) {
@@ -124,13 +124,17 @@ func (handler *Handler) Offers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	session, err := handler.service.Session(r.Context(), id)
-	if err != nil || session.PassengerID != actorID {
+	if err != nil {
+		response.Error(w, dispatchErrorStatus(err), safeDispatchError(err))
+		return
+	}
+	if session.PassengerID != actorID {
 		response.Error(w, http.StatusForbidden, "forbidden")
 		return
 	}
 	items, err := handler.service.Offers(r.Context(), id)
 	if err != nil {
-		response.Error(w, 404, "bid session not found")
+		response.Error(w, dispatchErrorStatus(err), safeDispatchError(err))
 		return
 	}
 	response.JSON(w, 200, NewBidOfferResponses(items))
@@ -165,7 +169,7 @@ func (handler *Handler) PlaceOffer(w http.ResponseWriter, r *http.Request) {
 		ProposedFareAmount: fare,
 	})
 	if err != nil {
-		response.Error(w, 409, safeDispatchError(err))
+		response.Error(w, dispatchErrorStatus(err), safeDispatchError(err))
 		return
 	}
 	response.JSON(w, 201, NewBidOfferResponse(offer))
@@ -190,7 +194,7 @@ func (handler *Handler) AcceptOffer(w http.ResponseWriter, r *http.Request) {
 		passengerID,
 	)
 	if err != nil {
-		response.Error(w, 409, "offer cannot be accepted")
+		response.Error(w, dispatchErrorStatus(err), safeDispatchError(err))
 		return
 	}
 	response.JSON(w, http.StatusOK, AcceptedOfferResponse{
@@ -214,7 +218,7 @@ func (handler *Handler) CancelSession(w http.ResponseWriter, r *http.Request) {
 	}
 	item, err := handler.service.CancelSession(r.Context(), id, passengerID)
 	if err != nil {
-		response.Error(w, 409, "session cannot be canceled")
+		response.Error(w, dispatchErrorStatus(err), safeDispatchError(err))
 		return
 	}
 	response.JSON(w, 200, NewBidSessionResponse(item))
@@ -233,7 +237,7 @@ func (handler *Handler) CancelOffer(w http.ResponseWriter, r *http.Request) {
 	}
 	item, err := handler.service.CancelOffer(r.Context(), id, driverID)
 	if err != nil {
-		response.Error(w, 404, "offer not found")
+		response.Error(w, dispatchErrorStatus(err), safeDispatchError(err))
 		return
 	}
 	response.JSON(w, 200, NewBidOfferResponse(item))
@@ -248,6 +252,8 @@ func canViewSession(actorID int, session dispatchdomain.BidSession) bool {
 
 func dispatchErrorStatus(err error) int {
 	switch {
+	case errors.Is(err, dispatchdomain.ErrSessionNotFound), errors.Is(err, dispatchdomain.ErrOfferNotFound):
+		return http.StatusNotFound
 	case errors.Is(err, ridedomain.ErrInvalidTrip), errors.Is(err, dispatchdomain.ErrInvalidFareOffer):
 		return http.StatusBadRequest
 	case errors.Is(err, ridedomain.ErrActiveBooking),
@@ -267,6 +273,10 @@ func dispatchErrorStatus(err error) int {
 
 func safeDispatchError(err error) string {
 	switch {
+	case errors.Is(err, dispatchdomain.ErrSessionNotFound):
+		return "Bid session not found."
+	case errors.Is(err, dispatchdomain.ErrOfferNotFound):
+		return "Offer not found."
 	case errors.Is(err, ridedomain.ErrInvalidTrip):
 		return "The route details are invalid."
 	case errors.Is(err, dispatchdomain.ErrInvalidFareOffer):

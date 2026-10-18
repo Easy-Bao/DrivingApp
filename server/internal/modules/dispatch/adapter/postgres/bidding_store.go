@@ -11,6 +11,7 @@ import (
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -449,6 +450,9 @@ func (repository *Store) CancelSession(
 		PassengerID: dbPassengerID,
 	})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return dispatchdomain.BidSession{}, dispatchdomain.ErrSessionNotFound
+		}
 		return dispatchdomain.BidSession{}, fmt.Errorf("cancel bid session: %w", err)
 	}
 	session, err := fromPostgresBidSession(item)
@@ -475,6 +479,9 @@ func (repository *Store) CancelOffer(ctx context.Context, sessionID, driverID in
 		DriverID:  dbDriverID,
 	})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return dispatchdomain.BidOffer{}, dispatchdomain.ErrOfferNotFound
+		}
 		return dispatchdomain.BidOffer{}, fmt.Errorf("cancel pending bid offer: %w", err)
 	}
 	offer, err := fromPostgresBidOffer(item)
@@ -494,6 +501,9 @@ func (repository *Store) Session(ctx context.Context, sessionID int) (dispatchdo
 	}
 	item, err := repository.queries.GetBidSessionByID(ctx, dbSessionID)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return dispatchdomain.BidSession{}, dispatchdomain.ErrSessionNotFound
+		}
 		return dispatchdomain.BidSession{}, fmt.Errorf("find bid session: %w", err)
 	}
 	session, err := fromPostgresBidSession(item)

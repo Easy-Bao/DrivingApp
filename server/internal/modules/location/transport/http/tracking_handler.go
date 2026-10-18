@@ -83,7 +83,11 @@ func (handler *TrackingHandler) GetDriverLocation(writer http.ResponseWriter, re
 	}
 	point, err := handler.service.Get(request.Context(), driverID)
 	if err != nil {
-		response.Error(writer, http.StatusNotFound, "location not found")
+		if errors.Is(err, domain.ErrLocationNotFound) {
+			response.Error(writer, http.StatusNotFound, "location not found")
+			return
+		}
+		response.Error(writer, http.StatusInternalServerError, "could not access location")
 		return
 	}
 	response.JSON(writer, http.StatusOK, NewDriverLocationResponse(point))

@@ -7,9 +7,10 @@ import (
 	"log/slog"
 	"time"
 
-	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
-	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	ports "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -103,6 +104,9 @@ func (repository *RideRepository) Get(ctx context.Context, rideID int) (domain.R
 	}
 	item, err := repository.queries.GetRideByID(ctx, dbRideID)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.Ride{}, domain.ErrRideNotFound
+		}
 		return domain.Ride{}, fmt.Errorf("find ride: %w", err)
 	}
 	ride, err := fromPostgresRideRow(item)

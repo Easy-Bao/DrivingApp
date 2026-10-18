@@ -182,11 +182,14 @@ func (handler *Handler) login(w http.ResponseWriter, r *http.Request, role domai
 	}
 	account, tokens, err := handler.authenticate.ExecuteSessionAs(r.Context(), input.Email, input.Password, role)
 	if err != nil {
-		if errors.Is(err, domain.ErrAccountSuspended) {
+		switch {
+		case errors.Is(err, domain.ErrAccountSuspended):
 			response.Error(w, http.StatusForbidden, safeAuthError(err))
-			return
+		case errors.Is(err, domain.ErrInvalidCredentials), errors.Is(err, domain.ErrUserNotFound):
+			response.Error(w, http.StatusUnauthorized, "email or password is incorrect")
+		default:
+			response.Error(w, http.StatusInternalServerError, "An unexpected error occurred.")
 		}
-		response.Error(w, http.StatusUnauthorized, "email or password is incorrect")
 		return
 	}
 	response.JSON(w, http.StatusOK, authSessionResponse(
@@ -351,26 +354,35 @@ func registrationErrorStatus(err error) int {
 	switch {
 	case errors.Is(err, domain.ErrEmailTaken), errors.Is(err, domain.ErrAccountConflict):
 		return http.StatusConflict
-	case errors.Is(err, domain.ErrOTPUnavailable):
+	case errors.Is(err, domain.ErrOTPUnavailable), errors.Is(err, authapp.ErrRegistrationUnavailable):
 		return http.StatusServiceUnavailable
-	case errors.Is(err, authapp.ErrRegistrationUnavailable):
-		return http.StatusServiceUnavailable
-	default:
+	case errors.Is(err, domain.ErrInvalidEmail),
+		errors.Is(err, domain.ErrInvalidRole),
+		errors.Is(err, domain.ErrOTPRequired),
+		errors.Is(err, domain.ErrInvalidOTP):
 		return http.StatusBadRequest
+	default:
+		return http.StatusInternalServerError
 	}
 }
 
 func otpErrorStatus(err error) int {
-	if errors.Is(err, domain.ErrAccountSuspended) {
+	switch {
+	case errors.Is(err, domain.ErrAccountSuspended):
 		return http.StatusForbidden
-	}
-	if errors.Is(err, domain.ErrOTPMaxAttemptsExceeded) {
+	case errors.Is(err, domain.ErrOTPMaxAttemptsExceeded):
 		return http.StatusTooManyRequests
-	}
-	if errors.Is(err, domain.ErrOTPUnavailable) {
+	case errors.Is(err, domain.ErrOTPUnavailable):
 		return http.StatusServiceUnavailable
+	case errors.Is(err, domain.ErrPendingRegistrationNotFound):
+		return http.StatusNotFound
+	case errors.Is(err, domain.ErrOTPRequired),
+		errors.Is(err, domain.ErrInvalidOTP),
+		errors.Is(err, domain.ErrInvalidEmail):
+		return http.StatusBadRequest
+	default:
+		return http.StatusInternalServerError
 	}
-	return http.StatusBadRequest
 }
 
 func writeOTPError(writer http.ResponseWriter, err error) {
