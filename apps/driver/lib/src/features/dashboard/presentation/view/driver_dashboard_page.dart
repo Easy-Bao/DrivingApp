@@ -751,9 +751,11 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
   Future<void> _resumeTrip(RideSnapshot trip) async {
     final rideId = trip.id;
+    final rideFlowCubit = BlocProvider.of<RideFlowCubit>(context);
     final resolvedTrip = await _authoritativeTrip(trip);
-    if (!mounted) return;
+    if (!mounted || !context.mounted) return;
     if (await _discardTerminalTrip(resolvedTrip, rideId)) return;
+    if (!mounted || !context.mounted) return;
     final fare = resolvedTrip.farePesos;
     final distance = resolvedTrip.distanceKm;
     final duration = resolvedTrip.durationMinutes;
@@ -773,7 +775,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       routeName = ActiveRideRoutes.inTransit;
     }
 
-    final resumed = await BlocProvider.of<RideFlowCubit>(context).resumeRide(
+    final resumed = await rideFlowCubit.resumeRide(
       rideId: rideId,
       status: resolvedTrip.status.isEmpty ? 'accepted' : resolvedTrip.status,
       passengerName: resolvedTrip.passengerName ?? 'Passenger',
@@ -786,7 +788,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       arrivedAt: resolvedTrip.arrivedAt,
       waitingUntil: resolvedTrip.waitingUntil,
     );
-    if (!resumed || !mounted) return;
+    if (!resumed || !mounted || !context.mounted) return;
 
     context.pushNamed(
       routeName,

@@ -1,5 +1,3 @@
-import 'dart:ui' show SemanticsFlag;
-
 import 'package:driver/src/features/active_ride/presentation/widgets/in_transit/in_transit_completion_slider.dart';
 import 'package:driver/src/features/active_ride/presentation/widgets/ride_confirmation_slider.dart';
 import 'package:flutter/material.dart';
@@ -37,7 +35,7 @@ void main() {
       find.bySemanticsLabel('Slide to complete trip'),
     );
 
-    expect(semanticsNode.hasFlag(SemanticsFlag.isSlider), isTrue);
+    expect(semanticsNode.flagsCollection.isSlider, isTrue);
     expect(find.text('Slide to complete trip'), findsOneWidget);
 
     await tester.tap(thumb);
