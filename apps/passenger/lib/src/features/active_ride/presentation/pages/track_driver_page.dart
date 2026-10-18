@@ -281,29 +281,27 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
         await MapProvider.clearAnnotations(_routeLineManager);
         _routeLineManager = null;
       }
-      final startLat = isInTransit ? driverLat : passengerLat;
-      final startLng = isInTransit ? driverLng : passengerLng;
-      final endLat = isInTransit ? targetLat : driverLat;
-      final endLng = isInTransit ? targetLng : driverLng;
+      final destinationLat = isInTransit ? targetLat : passengerLat;
+      final destinationLng = isInTransit ? targetLng : passengerLng;
       _passengerMarkerManager = await _upsertMarker(
         _passengerMarkerManager,
         mapController,
-        startLat,
-        startLng,
+        destinationLat,
+        destinationLng,
         isOrigin: true,
         color: isInTransit
             ? TripMapMarkerStyle.tripLocation
             : TripMapMarkerStyle.ownLocation,
-        animate: isInTransit,
+        animate: false,
       );
       _driverMarkerManager = await _upsertMarker(
         _driverMarkerManager,
         mapController,
-        endLat,
-        endLng,
+        driverLat,
+        driverLng,
         isOrigin: false,
         color: TripMapMarkerStyle.tripLocation,
-        animate: !isInTransit,
+        animate: true,
       );
       final now = DateTime.now();
       if (!_hasFittedInitialMap ||
