@@ -17,6 +17,7 @@ class const TrackDriverPanel({
   required this.unreadChatMessagesCount,
   this.showContactActions = true,
   this.isCancellingTrip = false,
+  this.isInTransit,
   required this.onCallDriverPressed,
   required this.onChatDriverPressed,
   required this.onEmergencyPressed,
@@ -35,6 +36,7 @@ class const TrackDriverPanel({
   final int unreadChatMessagesCount;
   final bool showContactActions;
   final bool isCancellingTrip;
+  final bool? isInTransit;
   final VoidCallback onCallDriverPressed;
   final VoidCallback onChatDriverPressed;
   final VoidCallback onEmergencyPressed;
@@ -51,7 +53,7 @@ class const TrackDriverPanel({
         : ride.displayVehicleSummary;
     final resolvedBadgeText = statusBadgeText?.trim().isNotEmpty == true
         ? statusBadgeText!.trim()
-        : ride.status == 'in_transit'
+        : (isInTransit == true || ride.status == 'in_transit')
         ? 'ON TRIP'
         : ride.status == 'arrived'
         ? 'ARRIVED'
@@ -59,8 +61,10 @@ class const TrackDriverPanel({
     final resolvedRating = driverRating?.trim().isNotEmpty == true
         ? driverRating!.trim()
         : ride.displayDriverRating;
-    final isInTransit = ride.status == 'in_transit';
-    final showCancelAction = !isInTransit;
+    final liveIsInTransit = isInTransit ??
+        (resolvedBadgeText.toUpperCase() == 'ON TRIP' ||
+            ride.status == 'in_transit');
+    final showCancelAction = !liveIsInTransit;
 
     return Container(
       decoration: BoxDecoration(

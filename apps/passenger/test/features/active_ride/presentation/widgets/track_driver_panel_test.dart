@@ -166,4 +166,38 @@ void main() {
     expect(find.text('4.8'), findsOneWidget);
     expect(find.byIcon(Icons.star_rounded), findsOneWidget);
   });
+
+  testWidgets(
+    'hides cancel action when isInTransit is true even if ride snapshot status is accepted',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: EasyRideTheme.main,
+          home: Scaffold(
+            body: TrackDriverPanel(
+              ride: const RideSnapshot(
+                id: 'ride-1',
+                pickupName: 'Pickup',
+                dropoffName: 'Destination',
+                status: 'accepted',
+                driverName: 'Driver Name',
+              ),
+              statusTitle: 'Heading to destination',
+              statusSubtitle: 'Trip in progress',
+              etaText: '8 min',
+              unreadChatMessagesCount: 0,
+              isInTransit: true,
+              onCallDriverPressed: () {},
+              onChatDriverPressed: () {},
+              onEmergencyPressed: () {},
+              onReportDriverPressed: () {},
+              onCancelTripPressed: () {},
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Cancel ride'), findsNothing);
+    },
+  );
 }

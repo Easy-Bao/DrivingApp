@@ -738,6 +738,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                               unreadChatMessagesCount: _unreadChatMessagesCount,
                               showContactActions: true,
                               isCancellingTrip: _isCancellingTrip,
+                              isInTransit: isInTransit,
                               onCallDriverPressed: () async {
                                 try {
                                   final rideId = widget.ride.id.trim();
