@@ -264,7 +264,7 @@ func (handler *Handler) readPump(
 		if protocolErr != nil {
 			handler.logger.WarnContext(request.Context(), "handle websocket client message failed", "error", protocolErr)
 			if len(responseMessage) == 0 {
-				responseMessage = []byte(`{"error":"event rejected"}`)
+				responseMessage = []byte(`{"type":"error","code":"event_rejected","reason":"event rejected","message":"event rejected"}`)
 			}
 		}
 		if len(responseMessage) > 0 {

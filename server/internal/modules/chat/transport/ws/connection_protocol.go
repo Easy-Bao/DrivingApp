@@ -86,23 +86,38 @@ func (protocol *ConnectionProtocol) HandleMessage(
 	message []byte,
 ) ([]byte, error) {
 	if !isText || !validEvent(message) {
-		return []byte(`{"error":"invalid event"}`), nil
+		return formatWebSocketError("error", "invalid_event", "invalid event"), nil
 	}
 	roomID := request.URL.Query().Get("roomId")
 	enriched := enrichChatEvent(message, roomID, identity.Subject)
 	if enriched == nil {
-		return []byte(`{"error":"invalid chat event"}`), nil
+		return formatWebSocketError("error", "invalid_chat_event", "invalid chat event"), nil
 	}
 	if protocol == nil || protocol.sink == nil {
-		return []byte(`{"error":"event rejected"}`), nil
+		return formatWebSocketError("error", "event_rejected", "event rejected"), nil
 	}
 	if err := protocol.sink.Handle(ctx, enriched); err != nil {
 		if errors.Is(err, domain.ErrRoomLocked) {
-			return []byte(`{"type":"room_locked","reason":"Chat is closed for this trip."}`), nil
+			return formatWebSocketError("room_locked", "room_locked", "Chat is closed for this trip."), nil
 		}
-		return []byte(`{"error":"event rejected"}`), nil
+		return formatWebSocketError("error", "event_rejected", "event rejected"), nil
 	}
 	return nil, nil
+}
+
+func formatWebSocketError(errorType, code, message string) []byte {
+	payload, _ := json.Marshal(struct {
+		Type    string `json:"type"`
+		Code    string `json:"code"`
+		Reason  string `json:"reason"`
+		Message string `json:"message"`
+	}{
+		Type:    errorType,
+		Code:    code,
+		Reason:  message,
+		Message: message,
+	})
+	return payload
 }
 
 func (protocol *ConnectionProtocol) EncodeEnvelope(envelope events.Envelope) ([]byte, error) {

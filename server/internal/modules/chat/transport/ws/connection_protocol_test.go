@@ -218,14 +218,14 @@ func TestConnectionProtocolRejectsInvalidAndFailedMessages(t *testing.T) {
 			name:     "binary frame",
 			protocol: NewConnectionProtocol(protocolEventSinkStub{}, nil),
 			message:  []byte(`{"type":"message","text":"hello"}`),
-			want:     `{"error":"invalid event"}`,
+			want:     `{"type":"error","code":"invalid_event","reason":"invalid event","message":"invalid event"}`,
 		},
 		{
 			name:     "unsupported event",
 			protocol: NewConnectionProtocol(protocolEventSinkStub{}, nil),
 			isText:   true,
 			message:  []byte(`{"type":"location"}`),
-			want:     `{"error":"invalid event"}`,
+			want:     `{"type":"error","code":"invalid_event","reason":"invalid event","message":"invalid event"}`,
 		},
 		{
 			name: "event service failure",
@@ -234,7 +234,7 @@ func TestConnectionProtocolRejectsInvalidAndFailedMessages(t *testing.T) {
 			}, nil),
 			isText:  true,
 			message: []byte(`{"type":"message","text":"hello"}`),
-			want:    `{"error":"event rejected"}`,
+			want:    `{"type":"error","code":"event_rejected","reason":"event rejected","message":"event rejected"}`,
 		},
 	}
 
