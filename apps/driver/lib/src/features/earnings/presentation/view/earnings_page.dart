@@ -1,14 +1,15 @@
+import 'package:design_system/design_system.dart';
+import 'package:driver/src/features/earnings/domain/entities/driver_earnings_summary.dart';
 import 'package:driver/src/features/earnings/presentation/bloc/earnings_cubit.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 import 'package:foundation/foundation.dart';
-import 'package:design_system/design_system.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
-enum _EarningsPeriod { daily, weekly, monthly }
+class DriverEarningsPage extends StatefulWidget {
+  const DriverEarningsPage({super.key});
 
-class const DriverEarningsPage({super.key}) extends StatefulWidget {
   @override
   State<DriverEarningsPage> createState() => _DriverEarningsPageState();
 }
@@ -16,143 +17,55 @@ class const DriverEarningsPage({super.key}) extends StatefulWidget {
 class _DriverEarningsPageState extends State<DriverEarningsPage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabCtrl;
-  _EarningsPeriod _selectedPeriod = _EarningsPeriod.weekly;
+  EarningsPeriod _selectedPeriod = EarningsPeriod.weekly;
 
   @override
   void initState() {
     super.initState();
     _tabCtrl = TabController(
-      length: _EarningsPeriod.values.length,
+      length: EarningsPeriod.values.length,
       initialIndex: _selectedPeriod.index,
       vsync: this,
     );
   }
 
   void _selectPeriod(int index) {
-    final period = _EarningsPeriod.values[index];
+    if (context.read<DriverEarningsCubit>().state.isLoading) return;
+    final period = EarningsPeriod.values[index];
     if (_selectedPeriod == period) return;
     setState(() => _selectedPeriod = period);
   }
 
-  Map<_EarningsPeriod, _EarningsSummary> _parseSummaries(
-    Map<String, dynamic> data,
-  ) {
-    final today = _parsePeriod(data['today']);
-    final week = _parsePeriod(data['this_week']);
-    final month = _parsePeriod(data['this_month']);
-    final now = DateTime.now();
-    final weekdays = _parseBuckets(
-      data['weekdays'],
-      (index, date) => _weekdayLabel(date?.weekday ?? index + 1),
-      now,
-    );
-    final monthWeeks = _parseBuckets(
-      data['month_weeks'],
-      (index, _) => 'W${index + 1}',
-      now,
-      currentIndex: (now.day - 1) ~/ 7,
-    );
-    return {
-      _EarningsPeriod.daily: _EarningsSummary(
-        total: today.total,
-        tripsCount: today.tripsCount,
-        days: [_EarnDay('Today', today.total, isCurrent: true)],
-      ),
-      _EarningsPeriod.weekly: _EarningsSummary(
-        total: week.total,
-        tripsCount: week.tripsCount,
-        days: weekdays,
-      ),
-      _EarningsPeriod.monthly: _EarningsSummary(
-        total: month.total,
-        tripsCount: month.tripsCount,
-        days: monthWeeks,
-      ),
-    };
-  }
-
-  _EarningsSummary _parsePeriod(Object? raw) {
-    final data = raw is Map
-        ? Map<String, dynamic>.from(raw)
-        : const <String, dynamic>{};
-    return _EarningsSummary(
-      total: SafeParse.toDouble(data['earnings_amount']) / 100,
-      tripsCount: SafeParse.toInt(data['completed_trips']),
-      days: const [],
-    );
-  }
-
-  List<_EarnDay> _parseBuckets(
-    Object? raw,
-    String Function(int index, DateTime? date) label,
-    DateTime now, {
-    int? currentIndex,
-  }) {
-    if (raw is! List) return const [];
-    return [
-      for (var index = 0; index < raw.length; index++)
-        if (raw[index] is Map)
-          _bucketDay(
-            Map<String, dynamic>.from(raw[index] as Map),
-            label,
-            index,
-            now,
-            currentIndex,
-          ),
-    ];
-  }
-
-  _EarnDay _bucketDay(
-    Map<String, dynamic> bucket,
-    String Function(int index, DateTime? date) label,
-    int index,
-    DateTime now,
-    int? currentIndex,
-  ) {
-    final date = DateTime.tryParse(
-      SafeParse.toStringValue(bucket['start_date']),
-    );
-    return _EarnDay(
-      label(index, date),
-      SafeParse.toDouble(bucket['earnings_amount']) / 100,
-      isCurrent: currentIndex == index || (date != null && _sameDay(date, now)),
-    );
-  }
-
-  String _weekdayLabel(int weekday) {
-    const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return labels[weekday - 1];
-  }
-
   String get _periodTitle {
     switch (_selectedPeriod) {
-      case _EarningsPeriod.daily:
+      case EarningsPeriod.daily:
         return 'Today';
-      case _EarningsPeriod.weekly:
+      case EarningsPeriod.weekly:
         return 'This Week';
-      case _EarningsPeriod.monthly:
+      case EarningsPeriod.monthly:
         return 'This Month';
     }
   }
 
   String get _breakdownTitle {
     switch (_selectedPeriod) {
-      case _EarningsPeriod.daily:
+      case EarningsPeriod.daily:
         return 'Today';
-      case _EarningsPeriod.weekly:
+      case EarningsPeriod.weekly:
         return 'Daily Breakdown';
-      case _EarningsPeriod.monthly:
+      case EarningsPeriod.monthly:
         return 'Weekly Breakdown';
     }
   }
 
   String get _breakdownDescription => switch (_selectedPeriod) {
-    _EarningsPeriod.daily => 'Your earnings from completed rides today.',
-    _EarningsPeriod.weekly => 'See how your total builds each day.',
-    _EarningsPeriod.monthly => 'See how your total builds each week.',
+    EarningsPeriod.daily => 'Your earnings from completed rides today.',
+    EarningsPeriod.weekly => 'See how your total builds each day.',
+    EarningsPeriod.monthly => 'See how your total builds each week.',
   };
 
-  String _averageFareLabel(_EarningsSummary summary) => summary.tripsCount == 0
+  String _averageFareLabel(EarningsPeriodSummary summary) =>
+      summary.tripsCount == 0
       ? '—'
       : formatPesoAmount(summary.total / summary.tripsCount);
 
@@ -165,10 +78,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
   @override
   Widget build(BuildContext context) {
     final state = context.watch<DriverEarningsCubit>().state;
-    final summaries = state.data == null
-        ? const <_EarningsPeriod, _EarningsSummary>{}
-        : _parseSummaries(state.data!);
-    final summary = summaries[_selectedPeriod];
+    final summary = state.data?.summaryFor(_selectedPeriod);
     final isNetworkUnavailable = AppNetworkStatusScope.isUnavailableOf(context);
 
     return Scaffold(
@@ -257,7 +167,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _buildSummaryCard(
-                        const _EarningsSummary(
+                        const EarningsPeriodSummary(
                           total: 0,
                           tripsCount: 0,
                           days: [],
@@ -282,7 +192,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
                             const SizedBox(height: 4),
                             const Bone.text(width: 220, fontSize: 10),
                             const SizedBox(height: 8),
-                            _buildPeriodTabs(),
+                            _buildPeriodTabs(enabled: false),
                             const SizedBox(height: 10),
                             const Center(
                               child: Bone.square(
@@ -348,7 +258,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     );
   }
 
-  Widget _buildSummaryCard(_EarningsSummary summary) {
+  Widget _buildSummaryCard(EarningsPeriodSummary summary) {
     final isNegative = summary.total < 0;
     final cardBgColor = isNegative
         ? context.colorScheme.error
@@ -520,12 +430,12 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     );
   }
 
-  Widget _buildPeriodTabs() {
+  Widget _buildPeriodTabs({bool enabled = true}) {
     return SizedBox(
       height: 44,
       child: TabBar(
         controller: _tabCtrl,
-        onTap: _selectPeriod,
+        onTap: enabled ? _selectPeriod : null,
         indicator: BoxDecoration(
           color: context.colorScheme.primary,
           borderRadius: BorderRadius.circular(EasyRideRadius.pill),
@@ -549,7 +459,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     );
   }
 
-  Widget _buildBarChart(List<_EarnDay> dailyData) {
+  Widget _buildBarChart(List<EarnDayBucket> dailyData) {
     return Container(
       decoration: BoxDecoration(
         color: context.colorScheme.surface,
@@ -600,8 +510,13 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     );
   }
 
-  BarChartData _barChartData(double availableWidth, List<_EarnDay> dailyData) {
-    final chartDays = dailyData.isEmpty ? const [_EarnDay('—', 0)] : dailyData;
+  BarChartData _barChartData(
+    double availableWidth,
+    List<EarnDayBucket> dailyData,
+  ) {
+    final chartDays = dailyData.isEmpty
+        ? const [EarnDayBucket(day: '—', amount: 0)]
+        : dailyData;
     final maxAmount = chartDays.fold<double>(0, (max, item) {
       final amount = item.amount.abs();
       if (!amount.isFinite || amount <= max) return max;
@@ -681,7 +596,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
   }
 
   BarChartGroupData _buildBarGroup(
-    _EarnDay day,
+    EarnDayBucket day,
     int index,
     double maxAmount,
     double placeholderHeight,
@@ -734,24 +649,3 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     );
   }
 }
-
-class const _EarningsSummary({
-  required this.total,
-  required this.tripsCount,
-  required this.days,
-}) {
-  final double total;
-  final int tripsCount;
-  final List<_EarnDay> days;
-}
-
-class const _EarnDay(this.day, this.amount, {this.isCurrent = false}) {
-  final String day;
-  final double amount;
-  final bool isCurrent;
-}
-
-bool _sameDay(DateTime left, DateTime right) =>
-    left.year == right.year &&
-    left.month == right.month &&
-    left.day == right.day;

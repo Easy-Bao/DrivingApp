@@ -1,17 +1,17 @@
-import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:driver/src/features/earnings/domain/repositories/driver_earnings_repository.dart';
 import 'package:driver/src/features/earnings/presentation/bloc/earnings_state.dart';
+import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 
-class DriverEarningsCubit({
-  required this._repository,
-  required this._sessionService,
-}) extends Cubit<DriverEarningsState> {
-  final DriverEarningsRepository _repository;
-  final DriverSessionStore _sessionService;
+class DriverEarningsCubit extends Cubit<DriverEarningsState> {
+  DriverEarningsCubit({
+    required this.repository,
+    required this.sessionService,
+  }) : super(const DriverEarningsState());
 
-  this : super(const DriverEarningsState());
+  final DriverEarningsRepository repository;
+  final DriverSessionStore sessionService;
 
   Future<void> load() async {
     if (isClosed || state.isLoading) return;
@@ -19,13 +19,13 @@ class DriverEarningsCubit({
     emit(state.copyWith(isLoading: true, clearError: true));
 
     try {
-      final driverId = await _sessionService.readDriverId() ?? '';
+      final driverId = await sessionService.readDriverId() ?? '';
       if (driverId.trim().isEmpty) {
         _emitFailure('Your driver session is unavailable.');
         return;
       }
 
-      final result = await _repository.fetchEarningsSummary(driverId);
+      final result = await repository.fetchEarningsSummary(driverId);
       if (isClosed) return;
       result.fold(
         (failure) => _emitFailure(ErrorHandler.getErrorMessage(failure)),

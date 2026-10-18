@@ -1,14 +1,15 @@
 import 'dart:async';
 
 import 'package:design_system/design_system.dart';
-import 'package:driver/src/infrastructure/session/driver_session_store.dart';
-import 'package:driver/src/features/earnings/presentation/bloc/earnings_cubit.dart';
+import 'package:driver/src/features/earnings/domain/entities/driver_earnings_summary.dart';
 import 'package:driver/src/features/earnings/domain/repositories/driver_earnings_repository.dart';
+import 'package:driver/src/features/earnings/presentation/bloc/earnings_cubit.dart';
 import 'package:driver/src/features/earnings/presentation/view/earnings_page.dart';
+import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
@@ -18,39 +19,50 @@ class _MockSecureStorage extends Mock implements FlutterSecureStorage {}
 
 class _FakeEarningsRepository implements DriverEarningsRepository {
   @override
-  Future<Result<Map<String, dynamic>, Failure>> fetchEarningsSummary(
+  Future<Result<DriverEarningsSummary, Failure>> fetchEarningsSummary(
     String driverId,
   ) async {
-    return const Ok({
-      'today': {'earnings_amount': 2973, 'completed_trips': 1},
-      'this_week': {'earnings_amount': 2973, 'completed_trips': 1},
-      'this_month': {'earnings_amount': 2973, 'completed_trips': 1},
-      'weekdays': [
-        {'start_date': '2026-08-17', 'earnings_amount': 2973},
-        {'start_date': '2026-08-18', 'earnings_amount': 0},
-        {'start_date': '2026-08-19', 'earnings_amount': 0},
-        {'start_date': '2026-08-20', 'earnings_amount': 0},
-        {'start_date': '2026-08-21', 'earnings_amount': 0},
-        {'start_date': '2026-08-22', 'earnings_amount': 0},
-        {'start_date': '2026-08-23', 'earnings_amount': 0},
-      ],
-      'month_weeks': [
-        {'start_date': '2026-08-01', 'earnings_amount': 2973},
-        {'start_date': '2026-08-08', 'earnings_amount': 0},
-        {'start_date': '2026-08-15', 'earnings_amount': 0},
-        {'start_date': '2026-08-22', 'earnings_amount': 0},
-        {'start_date': '2026-08-29', 'earnings_amount': 0},
-      ],
-    });
+    return Ok(
+      DriverEarningsSummary.fromJson(const {
+        'today': {'earnings_amount': 2973, 'completed_trips': 1},
+        'this_week': {'earnings_amount': 2973, 'completed_trips': 1},
+        'this_month': {'earnings_amount': 2973, 'completed_trips': 1},
+        'weekdays': [
+          {'start_date': '2026-08-17', 'earnings_amount': 2973},
+          {'start_date': '2026-08-18', 'earnings_amount': 0},
+          {'start_date': '2026-08-19', 'earnings_amount': 0},
+          {'start_date': '2026-08-20', 'earnings_amount': 0},
+          {'start_date': '2026-08-21', 'earnings_amount': 0},
+          {'start_date': '2026-08-22', 'earnings_amount': 0},
+          {'start_date': '2026-08-23', 'earnings_amount': 0},
+        ],
+        'month_weeks': [
+          {'start_date': '2026-08-01', 'earnings_amount': 2973},
+          {'start_date': '2026-08-08', 'earnings_amount': 0},
+          {'start_date': '2026-08-15', 'earnings_amount': 0},
+          {'start_date': '2026-08-22', 'earnings_amount': 0},
+          {'start_date': '2026-08-29', 'earnings_amount': 0},
+        ],
+      }),
+    );
   }
 }
 
+class _PendingEarningsRepository implements DriverEarningsRepository {
+  final completer = Completer<Result<DriverEarningsSummary, Failure>>();
+
+  @override
+  Future<Result<DriverEarningsSummary, Failure>> fetchEarningsSummary(
+    String driverId,
+  ) => completer.future;
+}
+
 class _ReloadingEarningsRepository extends _FakeEarningsRepository {
-  final reload = Completer<Result<Map<String, dynamic>, Failure>>();
+  final reload = Completer<Result<DriverEarningsSummary, Failure>>();
   var _requestCount = 0;
 
   @override
-  Future<Result<Map<String, dynamic>, Failure>> fetchEarningsSummary(
+  Future<Result<DriverEarningsSummary, Failure>> fetchEarningsSummary(
     String driverId,
   ) {
     if (_requestCount++ == 0) {
@@ -161,16 +173,55 @@ void main() {
     );
 
     repository.reload.complete(
-      const Ok({
-        'today': {'earnings_amount': 2973, 'completed_trips': 1},
-        'this_week': {'earnings_amount': 2973, 'completed_trips': 1},
-        'this_month': {'earnings_amount': 2973, 'completed_trips': 1},
-        'weekdays': <Map<String, Object>>[],
-        'month_weeks': <Map<String, Object>>[],
-      }),
+      Ok(
+        DriverEarningsSummary.fromJson(const {
+          'today': {'earnings_amount': 2973, 'completed_trips': 1},
+          'this_week': {'earnings_amount': 2973, 'completed_trips': 1},
+          'this_month': {'earnings_amount': 2973, 'completed_trips': 1},
+          'weekdays': <Map<String, Object>>[],
+          'month_weeks': <Map<String, Object>>[],
+        }),
+      ),
     );
     await refresh;
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('ignores tab selection while loading', (tester) async {
+    final repository = _PendingEarningsRepository();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: EasyRideTheme.main,
+        home: BlocProvider(
+          create: (_) => DriverEarningsCubit(
+            repository: repository,
+            sessionService: sessionService,
+          )..load(),
+          child: const DriverEarningsPage(),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // While loading skeleton is displayed, tapping tab should be ignored
+    await tester.tap(find.text('Daily'), warnIfMissed: false);
+    await tester.pump();
+
+    repository.completer.complete(
+      Ok(
+        DriverEarningsSummary.fromJson(const {
+          'today': {'earnings_amount': 2973, 'completed_trips': 1},
+          'this_week': {'earnings_amount': 2973, 'completed_trips': 1},
+          'this_month': {'earnings_amount': 2973, 'completed_trips': 1},
+          'weekdays': <Map<String, Object>>[],
+          'month_weeks': <Map<String, Object>>[],
+        }),
+      ),
+    );
+    await tester.pumpAndSettle();
+    // Default selected tab is This Week
+    expect(find.text('THIS WEEK'), findsOneWidget);
   });
 
   testWidgets(
@@ -190,7 +241,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('-₱50'), findsWidgets);
+      expect(find.text('-₱50.00'), findsWidgets);
       expect(find.text('Adjustment'), findsOneWidget);
       expect(
         find.text('Fee deductions or dispute adjustments applied'),
@@ -199,36 +250,38 @@ void main() {
 
       final barChart = tester.widget<BarChart>(find.byType(BarChart));
       final firstRod = barChart.data.barGroups.first.barRods.first;
-      expect(firstRod.label.text, '-₱50');
+      expect(firstRod.label.text, '-₱50.00');
     },
   );
 }
 
 class _FakeNegativeEarningsRepository implements DriverEarningsRepository {
   @override
-  Future<Result<Map<String, dynamic>, Failure>> fetchEarningsSummary(
+  Future<Result<DriverEarningsSummary, Failure>> fetchEarningsSummary(
     String driverId,
   ) async {
-    return const Ok({
-      'today': {'earnings_amount': -5000, 'completed_trips': 1},
-      'this_week': {'earnings_amount': -5000, 'completed_trips': 1},
-      'this_month': {'earnings_amount': -5000, 'completed_trips': 1},
-      'weekdays': [
-        {'start_date': '2026-08-17', 'earnings_amount': -5000},
-        {'start_date': '2026-08-18', 'earnings_amount': 0},
-        {'start_date': '2026-08-19', 'earnings_amount': 0},
-        {'start_date': '2026-08-20', 'earnings_amount': 0},
-        {'start_date': '2026-08-21', 'earnings_amount': 0},
-        {'start_date': '2026-08-22', 'earnings_amount': 0},
-        {'start_date': '2026-08-23', 'earnings_amount': 0},
-      ],
-      'month_weeks': [
-        {'start_date': '2026-08-01', 'earnings_amount': -5000},
-        {'start_date': '2026-08-08', 'earnings_amount': 0},
-        {'start_date': '2026-08-15', 'earnings_amount': 0},
-        {'start_date': '2026-08-22', 'earnings_amount': 0},
-        {'start_date': '2026-08-29', 'earnings_amount': 0},
-      ],
-    });
+    return Ok(
+      DriverEarningsSummary.fromJson(const {
+        'today': {'earnings_amount': -5000, 'completed_trips': 1},
+        'this_week': {'earnings_amount': -5000, 'completed_trips': 1},
+        'this_month': {'earnings_amount': -5000, 'completed_trips': 1},
+        'weekdays': [
+          {'start_date': '2026-08-17', 'earnings_amount': -5000},
+          {'start_date': '2026-08-18', 'earnings_amount': 0},
+          {'start_date': '2026-08-19', 'earnings_amount': 0},
+          {'start_date': '2026-08-20', 'earnings_amount': 0},
+          {'start_date': '2026-08-21', 'earnings_amount': 0},
+          {'start_date': '2026-08-22', 'earnings_amount': 0},
+          {'start_date': '2026-08-23', 'earnings_amount': 0},
+        ],
+        'month_weeks': [
+          {'start_date': '2026-08-01', 'earnings_amount': -5000},
+          {'start_date': '2026-08-08', 'earnings_amount': 0},
+          {'start_date': '2026-08-15', 'earnings_amount': 0},
+          {'start_date': '2026-08-22', 'earnings_amount': 0},
+          {'start_date': '2026-08-29', 'earnings_amount': 0},
+        ],
+      }),
+    );
   }
 }

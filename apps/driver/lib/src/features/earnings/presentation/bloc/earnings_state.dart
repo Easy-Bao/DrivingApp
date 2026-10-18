@@ -1,17 +1,20 @@
+import 'package:driver/src/features/earnings/domain/entities/driver_earnings_summary.dart';
 import 'package:equatable/equatable.dart';
 
-class const DriverEarningsState({
-  this.isLoading = false,
-  this.data,
-  this.errorMessage,
-}) extends Equatable {
+class DriverEarningsState extends Equatable {
+  const DriverEarningsState({
+    this.isLoading = false,
+    this.data,
+    this.errorMessage,
+  });
+
   final bool isLoading;
-  final Map<String, dynamic>? data;
+  final DriverEarningsSummary? data;
   final String? errorMessage;
 
   DriverEarningsState copyWith({
     bool? isLoading,
-    Map<String, dynamic>? data,
+    DriverEarningsSummary? data,
     bool clearData = false,
     String? errorMessage,
     bool clearError = false,

@@ -1,13 +1,14 @@
 import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
+import 'package:driver/src/features/earnings/domain/entities/driver_earnings_summary.dart';
 import 'package:driver/src/features/earnings/domain/repositories/driver_earnings_repository.dart';
 import 'package:driver/src/features/earnings/presentation/bloc/earnings_cubit.dart';
 import 'package:driver/src/features/earnings/presentation/bloc/earnings_state.dart';
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
 import 'package:foundation/foundation.dart';
+import 'package:mocktail/mocktail.dart';
 
 class _MockEarningsRepository extends Mock
     implements DriverEarningsRepository {}
@@ -17,6 +18,10 @@ class _MockSessionService extends Mock implements DriverSessionStore {}
 void main() {
   late _MockEarningsRepository repository;
   late _MockSessionService sessionService;
+
+  final testSummary = DriverEarningsSummary.fromJson(const {
+    'this_week': {'earnings_amount': 1200, 'completed_trips': 2},
+  });
 
   setUp(() {
     repository = _MockEarningsRepository();
@@ -29,7 +34,7 @@ void main() {
     'loads earnings through the repository boundary',
     build: () {
       when(() => repository.fetchEarningsSummary('driver-1'))
-          .thenAnswer((_) async => const Ok({'this_week': {}}));
+          .thenAnswer((_) async => Ok(testSummary));
       return DriverEarningsCubit(
         repository: repository,
         sessionService: sessionService,
@@ -40,14 +45,14 @@ void main() {
       const DriverEarningsState(isLoading: true),
       isA<DriverEarningsState>()
           .having((state) => state.isLoading, 'isLoading', isFalse)
-          .having((state) => state.data, 'data', {'this_week': {}}),
+          .having((state) => state.data, 'data', testSummary),
     ],
   );
 
   test(
     'ignores an overlapping load while the first request is active',
     () async {
-      final response = Completer<Result<Map<String, dynamic>, Failure>>();
+      final response = Completer<Result<DriverEarningsSummary, Failure>>();
       when(() => repository.fetchEarningsSummary('driver-1'))
           .thenAnswer((_) => response.future);
       final cubit = DriverEarningsCubit(
@@ -58,7 +63,7 @@ void main() {
       final first = cubit.load();
       await Future<void>.delayed(Duration.zero);
       final second = cubit.load();
-      response.complete(const Ok({'this_week': {}}));
+      response.complete(Ok(testSummary));
       await Future.wait([first, second]);
 
       verify(() => repository.fetchEarningsSummary('driver-1')).called(1);
@@ -67,10 +72,8 @@ void main() {
   );
 
   test('preserves cached earnings when a refresh fails', () async {
-    final responses = <Result<Map<String, dynamic>, Failure>>[
-      const Ok({
-        'this_week': {'earnings_amount': 1200},
-      }),
+    final responses = <Result<DriverEarningsSummary, Failure>>[
+      Ok(testSummary),
       const Err(NetworkFailure()),
     ];
     when(() => repository.fetchEarningsSummary('driver-1'))
@@ -83,9 +86,7 @@ void main() {
     await cubit.load();
     await cubit.load();
 
-    expect(cubit.state.data, {
-      'this_week': {'earnings_amount': 1200},
-    });
+    expect(cubit.state.data, testSummary);
     expect(cubit.state.isLoading, isFalse);
     expect(cubit.state.errorMessage, isNotNull);
     await cubit.close();
