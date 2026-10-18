@@ -138,8 +138,12 @@ final class DriverAuthRepositoryImpl({
       );
       return const Ok(null);
     } catch (error) {
-      return const Err(
-        ServerFailure('Failed to send reset link. Please try again.'),
+      return Err(
+        FailureMapper.fromException(
+          error,
+          serverMessage: 'Failed to send reset link. Please try again.',
+          networkMessage: 'Unable to reach driver auth services. Check your connection and try again.',
+        ),
       );
     }
   }

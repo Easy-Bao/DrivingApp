@@ -259,7 +259,13 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
       if (canceled) {
         context.pop();
       } else {
-        _showError('The ride could not be cancelled. Please try again.');
+        final failureMessage = BlocProvider.of<RideFlowCubit>(context)
+            .state
+            .failureMessage;
+        _showError(
+          failureMessage ??
+              'The ride could not be cancelled. Please try again.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isCancellingRide = false);
@@ -271,7 +277,13 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
     final stopped = await BlocProvider.of<RideFlowCubit>(context)
         .emergencyStop(reason: reason, details: details);
     if (!stopped && mounted) {
-      _showError('The ride could not be ended for safety. Please try again.');
+      final failureMessage = BlocProvider.of<RideFlowCubit>(context)
+          .state
+          .failureMessage;
+      _showError(
+        failureMessage ??
+            'The ride could not be ended for safety. Please try again.',
+      );
     }
     return stopped;
   }
@@ -519,21 +531,10 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
   }
 
   Widget _buildErrorBanner() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: context.colorScheme.error.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(EasyRideRadius.md),
-      ),
-      child: Text(
-        _errorMessage!,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: context.colorScheme.error,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+    return AppErrorBanner(
+      message: _errorMessage!,
+      onRetry: () => setState(() => _errorMessage = null),
+      onDismiss: () => setState(() => _errorMessage = null),
     );
   }
 }

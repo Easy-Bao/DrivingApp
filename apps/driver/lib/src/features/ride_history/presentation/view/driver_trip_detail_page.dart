@@ -287,31 +287,11 @@ class _DriverTripDetailPageState extends State<DriverTripDetailPage> {
   }
 
   Widget _buildChatFeedback() {
-    final color = context.colorScheme.error;
-    return Container(
+    return AppErrorBanner(
       key: const ValueKey('driver-trip-chat-feedback'),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(EasyRideRadius.md),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        children: [
-          Icon(LucideIcons.info, size: 18, color: color),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              _chatFeedbackMessage!,
-              style: TextStyle(
-                color: color,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
+      message: _chatFeedbackMessage!,
+      onRetry: () => setState(() => _chatFeedbackMessage = null),
+      onDismiss: () => setState(() => _chatFeedbackMessage = null),
     );
   }
 

@@ -498,29 +498,11 @@ class _DriverChatPageState extends State<DriverChatPage> {
         ),
       );
     }
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: context.colorScheme.errorContainer,
-        borderRadius: BorderRadius.circular(EasyRideRadius.md),
-        border: Border.all(color: context.colorScheme.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              state.errorMessage ?? 'Chat is unavailable right now.',
-              style: TextStyle(
-                color: context.colorScheme.onErrorContainer,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          TextButton(onPressed: _retryConnection, child: const Text('Retry')),
-        ],
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: AppErrorBanner(
+        message: state.errorMessage ?? 'Chat is unavailable right now.',
+        onRetry: _retryConnection,
       ),
     );
   }

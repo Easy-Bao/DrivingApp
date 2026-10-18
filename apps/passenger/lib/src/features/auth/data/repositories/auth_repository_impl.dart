@@ -240,8 +240,11 @@ final class PassengerAuthRepositoryImpl({
       }
       return const Ok(null);
     } catch (error) {
-      return const Err(
-        ServerFailure("Couldn't send the reset link. Try again."),
+      return Err(
+        FailureMapper.fromException(
+          error,
+          serverMessage: "Couldn't send the reset link. Try again.",
+        ),
       );
     }
   }
@@ -265,8 +268,11 @@ final class PassengerAuthRepositoryImpl({
       }
       return const Ok(null);
     } catch (error) {
-      return const Err(
-        ServerFailure('Password reset failed. Please try again.'),
+      return Err(
+        FailureMapper.fromException(
+          error,
+          serverMessage: 'Password reset failed. Please try again.',
+        ),
       );
     }
   }

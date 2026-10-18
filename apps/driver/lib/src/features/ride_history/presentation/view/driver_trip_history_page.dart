@@ -313,60 +313,9 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
   Widget _buildRefreshError(String message) {
     return Padding(
       padding: const EdgeInsets.only(top: 8, bottom: 4),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(14, 12, 10, 10),
-        decoration: BoxDecoration(
-          color: context.colorScheme.error.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(EasyRideRadius.md),
-          border: Border.all(
-            color: context.colorScheme.error.withValues(alpha: 0.2),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  LucideIcons.wifi_off,
-                  size: 17,
-                  color: context.colorScheme.error,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Couldn’t refresh trips',
-                  style: TextStyle(
-                    color: context.colorScheme.error,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              message,
-              style: TextStyle(
-                color: context.colorScheme.onSurfaceVariant,
-                fontSize: 12,
-                height: 1.3,
-              ),
-            ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: () =>
-                    BlocProvider.of<DriverTripHistoryCubit>(context).load(),
-                style: TextButton.styleFrom(
-                  foregroundColor: context.colorScheme.onSurface,
-                  visualDensity: VisualDensity.compact,
-                ),
-                icon: const Icon(LucideIcons.refresh_cw, size: 15),
-                label: const Text('Retry'),
-              ),
-            ),
-          ],
-        ),
+      child: AppErrorBanner(
+        message: message,
+        onRetry: () => BlocProvider.of<DriverTripHistoryCubit>(context).load(),
       ),
     );
   }

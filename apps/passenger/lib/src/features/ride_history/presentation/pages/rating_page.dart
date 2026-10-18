@@ -51,18 +51,14 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
       switch (result) {
         case Ok<void, DomainFailure>():
           if (mounted) context.goNamed(HomeRoutes.home);
-        case Err<void, DomainFailure>():
+        case Err<void, DomainFailure>(:final failure):
           if (mounted) {
-            setState(
-              () => _error = 'Unable to submit your rating. Please try again.',
-            );
+            setState(() => _error = ErrorHandler.getErrorMessage(failure));
           }
       }
-    } catch (_) {
+    } catch (error) {
       if (mounted) {
-        setState(
-          () => _error = 'Unable to submit your rating. Please try again.',
-        );
+        setState(() => _error = ErrorHandler.getErrorMessage(error));
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);

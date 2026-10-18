@@ -1,8 +1,9 @@
 import 'dart:async';
 
-import 'package:driver/src/features/dashboard/dashboard_routes.dart';
 import 'package:driver/src/features/active_ride/domain/services/ride_payment_completion_handler.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
+import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
+import 'package:driver/src/features/dashboard/dashboard_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
@@ -181,7 +182,9 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
       if (fare == null) {
         setState(() {
           _isSubmitting = false;
-          _error = 'Payment could not be confirmed. Please try again.';
+          _error =
+              cubit.state.failureMessage ??
+              'Payment could not be confirmed. Please try again.';
         });
         return;
       }
@@ -190,7 +193,9 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
       if (rideId == null || rideId.isEmpty) {
         setState(() {
           _isSubmitting = false;
-          _error = 'Payment could not be confirmed. Please try again.';
+          _error =
+              cubit.state.failureMessage ??
+              'Payment could not be confirmed. Please try again.';
         });
         return;
       }
@@ -718,22 +723,10 @@ class _FareSummaryPageState extends State<FareSummaryPage> {
   }
 
   Widget _buildError() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: context.colorScheme.error.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(EasyRideRadius.md),
-      ),
-      child: Text(
-        _error!,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: context.colorScheme.error,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
+    return AppErrorBanner(
+      message: _error!,
+      onRetry: _confirmCashPayment,
+      onDismiss: () => setState(() => _error = null),
     );
   }
 }

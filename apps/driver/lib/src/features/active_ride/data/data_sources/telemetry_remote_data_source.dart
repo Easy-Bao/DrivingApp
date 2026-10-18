@@ -57,8 +57,11 @@ class TelemetryRemoteDataSourceImpl(this._dio)
         'lat': data['lat'] ?? data['latitude'],
         'lng': data['lng'] ?? data['longitude'],
       };
-    } catch (_) {
-      return {};
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return {};
+      }
+      rethrow;
     }
   }
 }

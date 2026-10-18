@@ -65,7 +65,7 @@ void main() {
       isA<VerifyOtpResendFailure>().having(
         (state) => state.errorMessage,
         'error message',
-        "We couldn't send a new code right now. Please try again.",
+        'Mail service unavailable.',
       ),
     ],
   );

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/booking/domain/entities/fare_estimate.dart';
 import 'package:passenger/src/features/booking/domain/repositories/fare_repository.dart';
 
@@ -41,9 +42,6 @@ final class FareEstimateFailure extends FareEstimateState {
 class FareEstimateCubit extends Cubit<FareEstimateState> {
   FareEstimateCubit({required this._repository})
     : super(const FareEstimateInitial());
-
-  static const _failureMessage =
-      'We couldn’t calculate a fare for this route. Please try again.';
 
   final FareRepository _repository;
   Future<void>? _activeRequest;
@@ -116,12 +114,13 @@ class FareEstimateCubit extends Cubit<FareEstimateState> {
       );
       if (isClosed || revision != _requestRevision) return;
       result.fold(
-        (_) => emit(const FareEstimateFailure(_failureMessage)),
+        (failure) =>
+            emit(FareEstimateFailure(ErrorHandler.getErrorMessage(failure))),
         (value) => emit(FareEstimateLoaded(value)),
       );
-    } catch (_) {
+    } catch (error) {
       if (!isClosed && revision == _requestRevision) {
-        emit(const FareEstimateFailure(_failureMessage));
+        emit(FareEstimateFailure(ErrorHandler.getErrorMessage(error)));
       }
     }
   }

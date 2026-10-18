@@ -137,11 +137,10 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
 
     setState(() => _isSaving = false);
     if (!didUpdate) {
-      CustomToast.show(
-        context,
-        "Couldn't update your profile. Try again.",
-        isError: true,
-      );
+      final state = BlocProvider.of<ProfileCubit>(context).state;
+      final errorMessage =
+          state.errorMessage ?? "Couldn't update your profile. Try again.";
+      CustomToast.show(context, errorMessage, isError: true);
       return;
     }
 

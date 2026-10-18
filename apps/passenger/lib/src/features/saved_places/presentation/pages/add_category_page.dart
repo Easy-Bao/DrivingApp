@@ -73,21 +73,29 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
   }
 
   Future<void> _initLocation() async {
-    final position = await LocationService.getCurrentPosition();
-    if (position != null) {
-      if (!mounted) return;
-      setState(() {
-        _lat = position.latitude;
-        _lng = position.longitude;
-        _isLocationPinned = true;
-        _isLoadingLocation = false;
-      });
-      if (_mapController != null) {
-        await MapProvider.moveCamera(_mapController!, _lat, _lng, zoom: 14.0);
+    try {
+      final position = await LocationService.getCurrentPosition();
+      if (position != null) {
         if (!mounted) return;
-        await _syncPinnedMarker();
+        setState(() {
+          _lat = position.latitude;
+          _lng = position.longitude;
+          _isLocationPinned = true;
+          _isLoadingLocation = false;
+        });
+        if (_mapController != null) {
+          await MapProvider.moveCamera(_mapController!, _lat, _lng, zoom: 14.0);
+          if (!mounted) return;
+          await _syncPinnedMarker();
+        }
+      } else {
+        if (!mounted) return;
+        setState(() {
+          _isLocationPinned = false;
+          _isLoadingLocation = false;
+        });
       }
-    } else {
+    } catch (_) {
       if (!mounted) return;
       setState(() {
         _isLocationPinned = false;
@@ -415,6 +423,15 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
               fontSize: 14,
               fontWeight: FontWeight.w700,
             ),
+          ),
+          const SizedBox(height: 12),
+          TextButton.icon(
+            onPressed: () {
+              setState(() => _isLoadingLocation = true);
+              unawaited(_initLocation());
+            },
+            icon: const Icon(LucideIcons.refresh_cw, size: 16),
+            label: const Text('Retry'),
           ),
         ],
       ),

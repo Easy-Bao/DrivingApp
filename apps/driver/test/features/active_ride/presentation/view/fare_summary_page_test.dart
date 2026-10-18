@@ -10,7 +10,7 @@ final class const _NoOpRidePaymentCompletionHandler()
 }
 
 void main() {
-  testWidgets('displays trip fares as whole pesos', (tester) async {
+  testWidgets('displays trip fares with currency formatting', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: FareSummaryPage(
@@ -25,8 +25,7 @@ void main() {
       ),
     );
 
-    expect(find.text('₱30'), findsOneWidget);
-    expect(find.text('₱29.69'), findsNothing);
+    expect(find.text('₱29.69'), findsOneWidget);
   });
 
   testWidgets('lets the driver record an unpaid cash outcome', (tester) async {

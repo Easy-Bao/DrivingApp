@@ -158,7 +158,13 @@ class _MapPinPageState()
       _subAddress = '';
       _isGeocoding = true;
     });
-    final place = await MapProvider.getPlaceFromCoordinates(lat, lng);
+    final place = await () async {
+      try {
+        return await MapProvider.getPlaceFromCoordinates(lat, lng);
+      } catch (_) {
+        return null;
+      }
+    }();
     if (mounted && requestId == _geocodeRequestId) {
       final placeName = place?.displayName.trim() ?? '';
       final fullAddress = place?.fullAddress.trim() ?? '';
@@ -182,7 +188,13 @@ class _MapPinPageState()
   }
 
   Future<void> _useCurrentLocation() async {
-    final position = await LocationService.getCurrentPosition();
+    final position = await () async {
+      try {
+        return await LocationService.getCurrentPosition();
+      } catch (_) {
+        return null;
+      }
+    }();
     if (!mounted || position == null) return;
 
     _hasUserPannedMap = false;

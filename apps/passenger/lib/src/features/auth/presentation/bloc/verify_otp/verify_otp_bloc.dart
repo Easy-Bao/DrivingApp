@@ -74,9 +74,9 @@ class VerifyOtpBloc(this._authRepository)
     );
 
     result.fold(
-      (_) => emit(
-        const VerifyOtpFailure(
-          'That code is invalid or has expired. Request a new code and try again.',
+      (failure) => emit(
+        VerifyOtpFailure(
+          failure.message.isNotEmpty ? failure.message : 'That code is invalid or has expired. Request a new code and try again.',
         ),
       ),
       (_) => emit(const VerifyOtpSuccess()),
@@ -94,9 +94,11 @@ class VerifyOtpBloc(this._authRepository)
     );
 
     result.fold(
-      (_) => emit(
-        const VerifyOtpResendFailure(
-          "We couldn't send a new code right now. Please try again.",
+      (failure) => emit(
+        VerifyOtpResendFailure(
+          failure.message.isNotEmpty
+              ? failure.message
+              : "We couldn't send a new code right now. Please try again.",
         ),
       ),
       (_) {

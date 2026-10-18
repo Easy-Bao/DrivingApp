@@ -334,9 +334,13 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
       if (canceled) {
         context.pop();
       } else {
+        final failureMessage = BlocProvider.of<RideFlowCubit>(context)
+            .state
+            .failureMessage;
         CustomToast.show(
           context,
-          'The ride could not be cancelled. Please try again.',
+          failureMessage ??
+              'The ride could not be cancelled. Please try again.',
           isError: true,
         );
       }
@@ -350,9 +354,13 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
     final stopped = await BlocProvider.of<RideFlowCubit>(context)
         .emergencyStop(reason: reason, details: details);
     if (!stopped && mounted) {
+      final failureMessage = BlocProvider.of<RideFlowCubit>(context)
+          .state
+          .failureMessage;
       CustomToast.show(
         context,
-        'The ride could not be ended for safety. Please try again.',
+        failureMessage ??
+            'The ride could not be ended for safety. Please try again.',
         isError: true,
       );
     }
