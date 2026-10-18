@@ -26,7 +26,6 @@ import 'package:passenger/src/core/location/location_access_cubit.dart';
 import 'package:passenger/src/core/location/location_access_state.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
-import 'package:passenger/src/features/booking/domain/entities/booking_draft.dart';
 import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places_state.dart';

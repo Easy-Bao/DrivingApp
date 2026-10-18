@@ -87,9 +87,7 @@ class _DriverDropdownCardState()
   }
 
   void _requestDriverReviews() {
-    _bookingBloc?.add(
-      LoadDriverReviewsEvent(driverId: widget.driver.id),
-    );
+    _bookingBloc?.add(LoadDriverReviewsEvent(driverId: widget.driver.id));
   }
 
   ({List<DriverReview> reviews, bool isLoading}) _feedbackForState(
@@ -166,9 +164,7 @@ class _DriverDropdownCardState()
         'No Passenger Feedback Yet.',
         style: TextStyle(
           fontSize: 12,
-          color: context.colorScheme.onSurface.withValues(
-            alpha: 0.65,
-          ),
+          color: context.colorScheme.onSurface.withValues(alpha: 0.65),
         ),
       );
     }
@@ -599,7 +595,7 @@ class _DriverDropdownCardState()
                               const SizedBox(height: 12.0),
                               SizedBox(
                                 width: double.infinity,
-                                height: 44,
+                                height: 48,
                                 child: OutlinedButton(
                                   onPressed: widget.onViewFullProfilePressed,
                                   style: OutlinedButton.styleFrom(

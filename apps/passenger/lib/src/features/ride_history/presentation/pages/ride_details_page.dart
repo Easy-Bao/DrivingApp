@@ -376,15 +376,19 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                         ),
                       ),
                       clipBehavior: Clip.antiAlias,
-                      child: InkWell(
-                        onTap: _makeDriverCall,
-                        child: SizedBox(
-                          width: 40,
-                          height: 40,
-                          child: Icon(
-                            LucideIcons.phone,
-                            color: context.colorScheme.onSurface,
-                            size: 16,
+                      child: Semantics(
+                        button: true,
+                        label: 'Call driver',
+                        child: InkWell(
+                          onTap: _makeDriverCall,
+                          child: SizedBox(
+                            width: 48,
+                            height: 48,
+                            child: Icon(
+                              LucideIcons.phone,
+                              color: context.colorScheme.onSurface,
+                              size: 18,
+                            ),
                           ),
                         ),
                       ),
@@ -403,15 +407,19 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                         ),
                       ),
                       clipBehavior: Clip.antiAlias,
-                      child: InkWell(
-                        onTap: _initiateLostFoundChat,
-                        child: SizedBox(
-                          width: 40,
-                          height: 40,
-                          child: Icon(
-                            LucideIcons.message_square,
-                            color: context.colorScheme.onSurface,
-                            size: 16,
+                      child: Semantics(
+                        button: true,
+                        label: 'Chat with driver',
+                        child: InkWell(
+                          onTap: _initiateLostFoundChat,
+                          child: SizedBox(
+                            width: 48,
+                            height: 48,
+                            child: Icon(
+                              LucideIcons.message_square,
+                              color: context.colorScheme.onSurface,
+                              size: 18,
+                            ),
                           ),
                         ),
                       ),

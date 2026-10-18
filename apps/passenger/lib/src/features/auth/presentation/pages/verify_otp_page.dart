@@ -173,40 +173,47 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
                         }
                         final isFocused =
                             text.length == index && _focusNode.hasFocus;
-                        return Container(
-                          width: 46,
-                          height: 54,
-                          decoration: BoxDecoration(
-                            color: context.colorScheme.surface,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: isFocused
-                                  ? context.colorScheme.onSurface
-                                  : (errorMessage != null
-                                        ? context.colorScheme.error
-                                        : context.colorScheme.outlineVariant),
-                              width: isFocused ? 2 : 1,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: context.colorScheme.onSurface.withValues(
-                                  alpha: 0.03,
+                        return Expanded(
+                          child: Semantics(
+                            label:
+                                'Digit ${index + 1}${digit.isNotEmpty ? ': $digit' : ', empty'}',
+                            child: Container(
+                              height: 54,
+                              margin: const EdgeInsets.symmetric(horizontal: 3),
+                              decoration: BoxDecoration(
+                                color: context.colorScheme.surface,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: isFocused
+                                      ? context.colorScheme.onSurface
+                                      : (errorMessage != null
+                                            ? context.colorScheme.error
+                                            : context
+                                                  .colorScheme
+                                                  .outlineVariant),
+                                  width: isFocused ? 2 : 1,
                                 ),
-                                blurRadius: 10,
-                                offset: const Offset(0, 2),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: context.colorScheme.onSurface
+                                        .withValues(alpha: 0.03),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            digit,
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: context.colorScheme.onSurface,
-                              fontFeatures: const [
-                                FontFeature.tabularFigures(),
-                              ],
+                              alignment: Alignment.center,
+                              child: Text(
+                                digit,
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: context.colorScheme.onSurface,
+                                  fontFeatures: const [
+                                    FontFeature.tabularFigures(),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         );
@@ -242,48 +249,44 @@ class _VerifyOtpPageContentState extends State<_VerifyOtpPageContent> {
                   ],
                   const SizedBox(height: 32),
                   Material(
-                    child: Material(
-                      type: MaterialType.transparency,
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: (text.length == 6 && !isLoading)
-                              ? () => _triggerVerify(text)
-                              : null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: context.colorScheme.onSurface,
-                            foregroundColor: context.colorScheme.onPrimary,
-                            disabledBackgroundColor: context
-                                .colorScheme
-                                .onSurface
-                                .withValues(alpha: 0.3),
-                            disabledForegroundColor: context.colorScheme.surface
-                                .withValues(alpha: 0.5),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                EasyRideRadius.lg,
-                              ),
+                    type: MaterialType.transparency,
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: (text.length == 6 && !isLoading)
+                            ? () => _triggerVerify(text)
+                            : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: context.colorScheme.onSurface,
+                          foregroundColor: context.colorScheme.onPrimary,
+                          disabledBackgroundColor: context.colorScheme.onSurface
+                              .withValues(alpha: 0.3),
+                          disabledForegroundColor: context.colorScheme.surface
+                              .withValues(alpha: 0.5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              EasyRideRadius.lg,
                             ),
-                            elevation: 0,
                           ),
-                          child: isLoading
-                              ? SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    color: context.colorScheme.surface,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text(
-                                  'Verify',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
+                          elevation: 0,
                         ),
+                        child: isLoading
+                            ? SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  color: context.colorScheme.surface,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                'Verify',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                       ),
                     ),
                   ),

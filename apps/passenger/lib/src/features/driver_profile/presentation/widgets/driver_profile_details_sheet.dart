@@ -125,7 +125,10 @@ class _DriverProfileDetailsSheetState extends State<DriverProfileDetailsSheet> {
   @override
   Widget build(BuildContext context) {
     if (widget.embedded) {
-      return SizedBox(height: 470, child: _buildProfileContent());
+      return ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 470),
+        child: _buildProfileContent(),
+      );
     }
 
     return Center(

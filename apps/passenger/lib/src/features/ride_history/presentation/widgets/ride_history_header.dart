@@ -25,7 +25,7 @@ class RideHistoryHeader extends StatelessWidget {
               onPressed: () => Navigator.of(context).pop(),
               tooltip: 'Back',
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
               icon: Icon(
                 LucideIcons.arrow_left,
                 size: 19,
@@ -43,7 +43,7 @@ class RideHistoryHeader extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 40, height: 40),
+            const SizedBox(width: 48, height: 48),
           ],
         ),
       );

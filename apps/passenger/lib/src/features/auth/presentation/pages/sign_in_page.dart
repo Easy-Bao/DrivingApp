@@ -34,7 +34,6 @@ class _SigninPageContentState extends State<_SigninPageContent> {
   final TextEditingController _passwordController = TextEditingController();
 
   bool _isPasswordVisible = false;
-  bool isChecked = false;
 
   String? _emailError;
   String? _passwordError;
@@ -147,83 +146,78 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                               ),
                               const SizedBox(height: 8),
                               Material(
-                                child: Material(
-                                  type: MaterialType.transparency,
-                                  child: TextField(
-                                    controller: _emailController,
-                                    keyboardType: TextInputType.emailAddress,
-                                    textInputAction: TextInputAction.next,
-                                    style: TextStyle(
-                                      color: context.colorScheme.onSurface,
-                                      fontSize: 15,
+                                type: MaterialType.transparency,
+                                child: TextField(
+                                  controller: _emailController,
+                                  keyboardType: TextInputType.emailAddress,
+                                  textInputAction: TextInputAction.next,
+                                  style: TextStyle(
+                                    color: context.colorScheme.onSurface,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  onChanged: (_) {
+                                    if (_emailError != null ||
+                                        _submissionError != null) {
+                                      setState(() {
+                                        _emailError = null;
+                                        _submissionError = null;
+                                      });
+                                    }
+                                  },
+                                  decoration: InputDecoration(
+                                    hintText: 'Email',
+                                    errorText: effectiveEmailError,
+                                    errorStyle: TextStyle(
+                                      color: context.colorScheme.error,
+                                      fontSize: 13,
                                       fontWeight: FontWeight.w500,
                                     ),
-                                    onChanged: (_) {
-                                      if (_emailError != null ||
-                                          _submissionError != null) {
-                                        setState(() {
-                                          _emailError = null;
-                                          _submissionError = null;
-                                        });
-                                      }
-                                    },
-                                    decoration: InputDecoration(
-                                      hintText: 'Email',
-                                      errorText: effectiveEmailError,
-                                      errorStyle: TextStyle(
+                                    prefixIcon: Padding(
+                                      padding: const EdgeInsets.only(left: 10),
+                                      child: Icon(
+                                        LucideIcons.mail,
+                                        size: 20,
+                                        color: context
+                                            .colorScheme
+                                            .onSurfaceVariant,
+                                      ),
+                                    ),
+                                    filled: true,
+                                    fillColor: context.colorScheme.surface,
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        EasyRideRadius.lg,
+                                      ),
+                                      borderSide: BorderSide(
+                                        color:
+                                            context.colorScheme.outlineVariant,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        EasyRideRadius.lg,
+                                      ),
+                                      borderSide: BorderSide(
+                                        color: context.colorScheme.onSurface,
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    errorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        EasyRideRadius.lg,
+                                      ),
+                                      borderSide: BorderSide(
                                         color: context.colorScheme.error,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
                                       ),
-                                      prefixIcon: Padding(
-                                        padding: const EdgeInsets.only(
-                                          left: 10,
-                                        ),
-                                        child: Icon(
-                                          LucideIcons.mail,
-                                          size: 20,
-                                          color: context
-                                              .colorScheme
-                                              .onSurfaceVariant,
-                                        ),
+                                    ),
+                                    focusedErrorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        EasyRideRadius.lg,
                                       ),
-                                      filled: true,
-                                      fillColor: context.colorScheme.surface,
-                                      enabledBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          EasyRideRadius.lg,
-                                        ),
-                                        borderSide: BorderSide(
-                                          color: context
-                                              .colorScheme
-                                              .outlineVariant,
-                                        ),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          EasyRideRadius.lg,
-                                        ),
-                                        borderSide: BorderSide(
-                                          color: context.colorScheme.onSurface,
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                      errorBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          EasyRideRadius.lg,
-                                        ),
-                                        borderSide: BorderSide(
-                                          color: context.colorScheme.error,
-                                        ),
-                                      ),
-                                      focusedErrorBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          EasyRideRadius.lg,
-                                        ),
-                                        borderSide: BorderSide(
-                                          color: context.colorScheme.error,
-                                          width: 1.5,
-                                        ),
+                                      borderSide: BorderSide(
+                                        color: context.colorScheme.error,
+                                        width: 1.5,
                                       ),
                                     ),
                                   ),
@@ -244,189 +238,155 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                               ),
                               const SizedBox(height: 8),
                               Material(
-                                child: Material(
-                                  type: MaterialType.transparency,
-                                  child: TextField(
-                                    controller: _passwordController,
-                                    obscureText: !_isPasswordVisible,
-                                    textInputAction: TextInputAction.done,
-                                    onSubmitted: (_) => _submitSignIn(context),
-                                    style: TextStyle(
-                                      color: context.colorScheme.onSurface,
-                                      fontSize: 15,
+                                type: MaterialType.transparency,
+                                child: TextField(
+                                  controller: _passwordController,
+                                  obscureText: !_isPasswordVisible,
+                                  textInputAction: TextInputAction.done,
+                                  onSubmitted: (_) => _submitSignIn(context),
+                                  style: TextStyle(
+                                    color: context.colorScheme.onSurface,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  onChanged: (_) {
+                                    if (_passwordError != null ||
+                                        _submissionError != null) {
+                                      setState(() {
+                                        _passwordError = null;
+                                        _submissionError = null;
+                                      });
+                                    }
+                                  },
+                                  decoration: InputDecoration(
+                                    hintText: 'Password',
+                                    errorText: effectivePasswordError,
+                                    errorStyle: TextStyle(
+                                      color: context.colorScheme.error,
+                                      fontSize: 13,
                                       fontWeight: FontWeight.w500,
                                     ),
-                                    onChanged: (_) {
-                                      if (_passwordError != null ||
-                                          _submissionError != null) {
-                                        setState(() {
-                                          _passwordError = null;
-                                          _submissionError = null;
-                                        });
-                                      }
-                                    },
-                                    decoration: InputDecoration(
-                                      hintText: 'Password',
-                                      errorText: effectivePasswordError,
-                                      errorStyle: TextStyle(
+                                    prefixIcon: Padding(
+                                      padding: const EdgeInsets.only(left: 10),
+                                      child: Icon(
+                                        LucideIcons.lock,
+                                        size: 20,
+                                        color: context
+                                            .colorScheme
+                                            .onSurfaceVariant,
+                                      ),
+                                    ),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(
+                                        _isPasswordVisible
+                                            ? LucideIcons.eye
+                                            : LucideIcons.eye_off,
+                                        size: 20,
+                                        color: context
+                                            .colorScheme
+                                            .onSurfaceVariant,
+                                      ),
+                                      onPressed: () => setState(
+                                        () => _isPasswordVisible =
+                                            !_isPasswordVisible,
+                                      ),
+                                    ),
+                                    filled: true,
+                                    fillColor: context.colorScheme.surface,
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        EasyRideRadius.lg,
+                                      ),
+                                      borderSide: BorderSide(
+                                        color:
+                                            context.colorScheme.outlineVariant,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        EasyRideRadius.lg,
+                                      ),
+                                      borderSide: BorderSide(
+                                        color: context.colorScheme.onSurface,
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    errorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        EasyRideRadius.lg,
+                                      ),
+                                      borderSide: BorderSide(
                                         color: context.colorScheme.error,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
                                       ),
-                                      prefixIcon: Padding(
-                                        padding: const EdgeInsets.only(
-                                          left: 10,
-                                        ),
-                                        child: Icon(
-                                          LucideIcons.lock,
-                                          size: 20,
-                                          color: context
-                                              .colorScheme
-                                              .onSurfaceVariant,
-                                        ),
+                                    ),
+                                    focusedErrorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        EasyRideRadius.lg,
                                       ),
-                                      suffixIcon: IconButton(
-                                        icon: Icon(
-                                          _isPasswordVisible
-                                              ? LucideIcons.eye
-                                              : LucideIcons.eye_off,
-                                          size: 20,
-                                          color: context
-                                              .colorScheme
-                                              .onSurfaceVariant,
-                                        ),
-                                        onPressed: () => setState(
-                                          () => _isPasswordVisible =
-                                              !_isPasswordVisible,
-                                        ),
-                                      ),
-                                      filled: true,
-                                      fillColor: context.colorScheme.surface,
-                                      enabledBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          EasyRideRadius.lg,
-                                        ),
-                                        borderSide: BorderSide(
-                                          color: context
-                                              .colorScheme
-                                              .outlineVariant,
-                                        ),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          EasyRideRadius.lg,
-                                        ),
-                                        borderSide: BorderSide(
-                                          color: context.colorScheme.onSurface,
-                                          width: 1.5,
-                                        ),
-                                      ),
-                                      errorBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          EasyRideRadius.lg,
-                                        ),
-                                        borderSide: BorderSide(
-                                          color: context.colorScheme.error,
-                                        ),
-                                      ),
-                                      focusedErrorBorder: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          EasyRideRadius.lg,
-                                        ),
-                                        borderSide: BorderSide(
-                                          color: context.colorScheme.error,
-                                          width: 1.5,
-                                        ),
+                                      borderSide: BorderSide(
+                                        color: context.colorScheme.error,
+                                        width: 1.5,
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
                               const SizedBox(height: 10),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Checkbox(
-                                        value: isChecked,
-                                        activeColor:
-                                            context.colorScheme.onSurface,
-                                        onChanged: (bool? val) {
-                                          setState(() {
-                                            isChecked = val ?? false;
-                                          });
-                                        },
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton(
+                                  onPressed: () {
+                                    unawaited(
+                                      context.pushNamed(
+                                        AuthRoutes.forgotPassword,
                                       ),
-                                      Text(
-                                        'Remember me',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: context
-                                              .colorScheme
-                                              .onSurfaceVariant,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      unawaited(
-                                        context.pushNamed(
-                                          AuthRoutes.forgotPassword,
-                                        ),
-                                      );
-                                    },
-                                    child: Text(
-                                      'Forgot password?',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: context.colorScheme.onSurface,
-                                      ),
+                                    );
+                                  },
+                                  child: Text(
+                                    'Forgot password?',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: context.colorScheme.onSurface,
                                     ),
                                   ),
-                                ],
+                                ),
                               ),
                               const SizedBox(height: 24),
                               Material(
-                                child: Material(
-                                  type: MaterialType.transparency,
-                                  child: ElevatedButton(
-                                    onPressed: isLoading
-                                        ? null
-                                        : () => _submitSignIn(context),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          context.colorScheme.onSurface,
-                                      foregroundColor:
-                                          context.colorScheme.onPrimary,
-                                      minimumSize: const Size.fromHeight(56),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          EasyRideRadius.lg,
-                                        ),
+                                type: MaterialType.transparency,
+                                child: ElevatedButton(
+                                  onPressed: isLoading
+                                      ? null
+                                      : () => _submitSignIn(context),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        context.colorScheme.onSurface,
+                                    foregroundColor:
+                                        context.colorScheme.onPrimary,
+                                    minimumSize: const Size.fromHeight(56),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        EasyRideRadius.lg,
                                       ),
-                                      elevation: 0,
                                     ),
-                                    child: isLoading
-                                        ? SizedBox(
-                                            width: 24,
-                                            height: 24,
-                                            child: CircularProgressIndicator(
-                                              color:
-                                                  context.colorScheme.surface,
-                                              strokeWidth: 2,
-                                            ),
-                                          )
-                                        : const Text(
-                                            'Sign In',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
+                                    elevation: 0,
                                   ),
+                                  child: isLoading
+                                      ? SizedBox(
+                                          width: 24,
+                                          height: 24,
+                                          child: CircularProgressIndicator(
+                                            color: context.colorScheme.surface,
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Sign In',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
                                 ),
                               ),
 

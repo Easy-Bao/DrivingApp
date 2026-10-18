@@ -832,16 +832,20 @@ Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
       shadowColor: context.colorScheme.onSurface.withValues(alpha: 0.08),
       shape: const CircleBorder(),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onPressed,
-        customBorder: const CircleBorder(),
-        child: SizedBox(
-          width: 46,
-          height: 46,
-          child: Center(
-            child: Icon(
-              LucideIcons.arrow_left,
-              color: context.colorScheme.onSurface,
+      child: Semantics(
+        button: true,
+        label: 'Back',
+        child: InkWell(
+          onTap: onPressed,
+          customBorder: const CircleBorder(),
+          child: SizedBox(
+            width: 48,
+            height: 48,
+            child: Center(
+              child: Icon(
+                LucideIcons.arrow_left,
+                color: context.colorScheme.onSurface,
+              ),
             ),
           ),
         ),

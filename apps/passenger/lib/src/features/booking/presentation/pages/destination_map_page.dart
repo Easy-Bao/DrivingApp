@@ -178,141 +178,146 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
           ),
           Align(
             alignment: Alignment.bottomCenter,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(
-                EasyRideLayout.pagePaddingWide,
-                EasyRideSpacing.xxl,
-                EasyRideLayout.pagePaddingWide,
-                EasyRideSpacing.xxl,
-              ),
-              decoration: BoxDecoration(
-                color: context.colorScheme.surface,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(EasyRideRadius.sheet),
+            child: SafeArea(
+              top: false,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(
+                  EasyRideLayout.pagePaddingWide,
+                  EasyRideSpacing.xxl,
+                  EasyRideLayout.pagePaddingWide,
+                  EasyRideSpacing.xxl,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: context.colorScheme.onSurface.withValues(
-                      alpha: 0.08,
-                    ),
-                    blurRadius: 30,
-                    offset: const Offset(0, -10),
+                decoration: BoxDecoration(
+                  color: context.colorScheme.surface,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(EasyRideRadius.sheet),
                   ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: 20),
-                      decoration: BoxDecoration(
-                        color: context.colorScheme.outlineVariant,
-                        borderRadius: BorderRadius.circular(2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: context.colorScheme.onSurface.withValues(
+                        alpha: 0.08,
                       ),
+                      blurRadius: 30,
+                      offset: const Offset(0, -10),
                     ),
-                  ),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(14),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 20),
                         decoration: BoxDecoration(
-                          color: context.colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(
-                            EasyRideRadius.lg,
-                          ),
-                        ),
-                        child: Icon(
-                          LucideIcons.map_pin,
-                          color: context.colorScheme.onSurface,
-                          size: 22,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.placeName,
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                                color: context.colorScheme.onSurface,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _isLoading ? 'Loading...' : _fullAddress,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: context.colorScheme.onSurfaceVariant,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  CompactRouteTimelineWidget(
-                    pickup: 'Current Location',
-                    dropoff: widget.placeName,
-                    pickupLabel: 'From',
-                    dropoffLabel: 'Destination',
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    height: EasyRideSize.controlHeight,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        final place = Place(
-                          id: 'destination_place_${widget.placeName.replaceAll(' ', '_')}',
-                          name: widget.placeName,
-                          fullAddress: widget.placeSubtitle,
-                          latitude: widget.destinationLat,
-                          longitude: widget.destinationLng,
-                        );
-                        unawaited(
-                          context.pushNamed(
-                            BookingRoutes.rideSelection,
-                            extra: place,
-                            queryParameters: {
-                              if (_originCoordinate != null) ...{
-                                'pickupLat': _originCoordinate!.lat.toString(),
-                                'pickupLng': _originCoordinate!.lng.toString(),
-                              },
-                            },
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: context.colorScheme.primary,
-                        foregroundColor: context.colorScheme.onPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            EasyRideRadius.lg,
-                          ),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Book Ride',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
+                          color: context.colorScheme.outlineVariant,
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: context.colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(
+                              EasyRideRadius.lg,
+                            ),
+                          ),
+                          child: Icon(
+                            LucideIcons.map_pin,
+                            color: context.colorScheme.onSurface,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.placeName,
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
+                                  color: context.colorScheme.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _isLoading ? 'Loading...' : _fullAddress,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: context.colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    CompactRouteTimelineWidget(
+                      pickup: 'Current Location',
+                      dropoff: widget.placeName,
+                      pickupLabel: 'From',
+                      dropoffLabel: 'Destination',
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      height: EasyRideSize.controlHeight,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final place = Place(
+                            id: 'destination_place_${widget.placeName.replaceAll(' ', '_')}',
+                            name: widget.placeName,
+                            fullAddress: widget.placeSubtitle,
+                            latitude: widget.destinationLat,
+                            longitude: widget.destinationLng,
+                          );
+                          unawaited(
+                            context.pushNamed(
+                              BookingRoutes.rideSelection,
+                              extra: place,
+                              queryParameters: {
+                                if (_originCoordinate != null) ...{
+                                  'pickupLat': _originCoordinate!.lat
+                                      .toString(),
+                                  'pickupLng': _originCoordinate!.lng
+                                      .toString(),
+                                },
+                              },
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: context.colorScheme.primary,
+                          foregroundColor: context.colorScheme.onPrimary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              EasyRideRadius.lg,
+                            ),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Book Ride',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

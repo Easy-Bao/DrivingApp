@@ -218,7 +218,7 @@ class _RideHistoryFilterChip extends StatelessWidget {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
             curve: Curves.easeOutCubic,
-            constraints: const BoxConstraints(minHeight: 38, minWidth: 64),
+            constraints: const BoxConstraints(minHeight: 48, minWidth: 64),
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
             decoration: BoxDecoration(
               color: isSelected

@@ -448,8 +448,10 @@ class _MapPinPageState()
                     child: InkWell(
                       borderRadius: BorderRadius.circular(EasyRideRadius.sm),
                       onTap: _useCurrentLocation,
-                      child: SizedBox(
-                        height: 38,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          minHeight: EasyRideSize.minimumTouchTarget,
+                        ),
                         child: Row(
                           children: [
                             Text(

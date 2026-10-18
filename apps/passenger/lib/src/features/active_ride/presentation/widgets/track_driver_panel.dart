@@ -61,7 +61,8 @@ class const TrackDriverPanel({
     final resolvedRating = driverRating?.trim().isNotEmpty == true
         ? driverRating!.trim()
         : ride.displayDriverRating;
-    final liveIsInTransit = isInTransit ??
+    final liveIsInTransit =
+        isInTransit ??
         (resolvedBadgeText.toUpperCase() == 'ON TRIP' ||
             ride.status == 'in_transit');
     final showCancelAction = !liveIsInTransit;
@@ -74,7 +75,7 @@ class const TrackDriverPanel({
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: context.colorScheme.shadow.withValues(alpha: 0.08),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),
@@ -147,21 +148,21 @@ class const TrackDriverPanel({
                   height: 48,
                   child: OutlinedButton.icon(
                     onPressed: onEmergencyPressed,
-                    icon: const Icon(
+                    icon: Icon(
                       LucideIcons.bell_ring,
                       size: 18,
-                      color: Color(0xFFB71C1C),
+                      color: context.colorScheme.error,
                     ),
-                    label: const Text(
+                    label: Text(
                       'Emergency SOS',
                       style: TextStyle(
-                        color: Color(0xFFB71C1C),
+                        color: context.colorScheme.error,
                         fontWeight: FontWeight.w800,
                         fontSize: 14,
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFDE8E8),
+                      backgroundColor: context.colorScheme.errorContainer,
                       side: BorderSide.none,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(
@@ -179,10 +180,10 @@ class const TrackDriverPanel({
                   height: 48,
                   child: OutlinedButton.icon(
                     onPressed: onReportDriverPressed,
-                    icon: const Icon(
+                    icon: Icon(
                       LucideIcons.triangle_alert,
                       size: 18,
-                      color: Color(0xFFD97706),
+                      color: context.semanticColors.warning,
                     ),
                     label: Text(
                       'Report Issue',
@@ -193,7 +194,8 @@ class const TrackDriverPanel({
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF1F5F9),
+                      backgroundColor:
+                          context.colorScheme.surfaceContainerHighest,
                       side: BorderSide.none,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(
@@ -246,7 +248,7 @@ class const _StatusBadge({required this.text}) extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8F5E9),
+        color: context.semanticColors.success.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(EasyRideRadius.pill),
       ),
       child: Row(
@@ -255,18 +257,18 @@ class const _StatusBadge({required this.text}) extends StatelessWidget {
           Container(
             width: 6,
             height: 6,
-            decoration: const BoxDecoration(
-              color: Color(0xFF2E7D32),
+            decoration: BoxDecoration(
+              color: context.semanticColors.success,
               shape: BoxShape.circle,
             ),
           ),
           const SizedBox(width: 6),
           Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF2E7D32),
+              color: context.semanticColors.success,
               letterSpacing: 0.5,
             ),
           ),
@@ -328,11 +330,13 @@ class const _DriverCard({
                         vertical: 1.5,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: context.colorScheme.surface,
                         borderRadius: BorderRadius.circular(10),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
+                            color: context.colorScheme.shadow.withValues(
+                              alpha: 0.08,
+                            ),
                             blurRadius: 4,
                             offset: const Offset(0, 1),
                           ),
@@ -341,18 +345,18 @@ class const _DriverCard({
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.star_rounded,
                             size: 12,
-                            color: Color(0xFFF59E0B),
+                            color: context.semanticColors.warning,
                           ),
                           const SizedBox(width: 2),
                           Text(
                             rating!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: context.colorScheme.onSurface,
                             ),
                           ),
                         ],
@@ -438,25 +442,31 @@ class const _ContactButton({
 
   @override
   Widget build(BuildContext context) {
-    final button = Material(
-      color: Colors.white,
-      shape: const CircleBorder(),
-      elevation: 0.5,
-      shadowColor: Colors.black.withValues(alpha: 0.08),
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: context.colorScheme.outlineVariant.withValues(alpha: 0.5),
+    final button = Semantics(
+      button: true,
+      label: label,
+      child: Material(
+        color: context.colorScheme.surface,
+        shape: const CircleBorder(),
+        elevation: 0.5,
+        shadowColor: context.colorScheme.shadow.withValues(alpha: 0.08),
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: context.colorScheme.outlineVariant.withValues(
+                  alpha: 0.5,
+                ),
+              ),
             ),
-          ),
-          child: Center(
-            child: Icon(icon, size: 18, color: const Color(0xFF1976D2)),
+            child: Center(
+              child: Icon(icon, size: 20, color: context.colorScheme.primary),
+            ),
           ),
         ),
       ),

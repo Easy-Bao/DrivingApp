@@ -468,13 +468,17 @@ class _RideSelectionPageState() extends State<RideSelectionPage> {
         elevation: 4,
         shadowColor: context.colorScheme.onSurface.withValues(alpha: 0.12),
         shape: const CircleBorder(),
-        child: InkWell(
-          onTap: () => context.pop(),
-          customBorder: const CircleBorder(),
-          child: const SizedBox(
-            width: 46,
-            height: 46,
-            child: Center(child: Icon(LucideIcons.arrow_left, size: 20)),
+        child: Semantics(
+          button: true,
+          label: 'Back',
+          child: InkWell(
+            onTap: () => context.pop(),
+            customBorder: const CircleBorder(),
+            child: const SizedBox(
+              width: 48,
+              height: 48,
+              child: Center(child: Icon(LucideIcons.arrow_left, size: 20)),
+            ),
           ),
         ),
       ),

@@ -208,26 +208,31 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(5, (index) {
                         final isSelected = index < _selectedStars;
-                        return Material(
-                          color: context.colorScheme.surface.withValues(
-                            alpha: 0,
-                          ),
-                          shape: const CircleBorder(),
-                          child: InkWell(
-                            onTap: () => setState(() {
-                              _selectedStars = index + 1;
-                              _error = null;
-                            }),
-                            customBorder: const CircleBorder(),
-                            child: SizedBox(
-                              width: 48,
-                              height: 48,
-                              child: Icon(
-                                isSelected ? Icons.star : Icons.star_border,
-                                size: 30,
-                                color: isSelected
-                                    ? context.semanticColors.rating
-                                    : context.colorScheme.outlineVariant,
+                        return Semantics(
+                          button: true,
+                          label: '${index + 1} star${index == 0 ? '' : 's'}',
+                          selected: isSelected,
+                          child: Material(
+                            color: context.colorScheme.surface.withValues(
+                              alpha: 0,
+                            ),
+                            shape: const CircleBorder(),
+                            child: InkWell(
+                              onTap: () => setState(() {
+                                _selectedStars = index + 1;
+                                _error = null;
+                              }),
+                              customBorder: const CircleBorder(),
+                              child: SizedBox(
+                                width: 48,
+                                height: 48,
+                                child: Icon(
+                                  isSelected ? Icons.star : Icons.star_border,
+                                  size: 30,
+                                  color: isSelected
+                                      ? context.semanticColors.rating
+                                      : context.colorScheme.outlineVariant,
+                                ),
                               ),
                             ),
                           ),
@@ -235,36 +240,40 @@ class _PassengerRatingPageState extends State<PassengerRatingPage> {
                       }),
                     ),
                     const SizedBox(height: 18),
-                    Container(
-                      width: double.infinity,
-                      height: 116,
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      decoration: BoxDecoration(
-                        color: context.colorScheme.surface,
-                        borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-                        border: Border.all(
-                          color: context.colorScheme.outlineVariant,
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 116),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        decoration: BoxDecoration(
+                          color: context.colorScheme.surface,
+                          borderRadius: BorderRadius.circular(
+                            EasyRideRadius.lg,
+                          ),
+                          border: Border.all(
+                            color: context.colorScheme.outlineVariant,
+                          ),
                         ),
-                      ),
-                      child: TextField(
-                        controller: _feedbackController,
-                        minLines: 1,
-                        maxLines: 4,
-                        textCapitalization: TextCapitalization.sentences,
-                        style: TextStyle(
-                          color: context.colorScheme.onSurface,
-                          fontSize: 14,
-                        ),
-                        decoration: const InputDecoration(
-                          hintText: 'Leave feedback (optional)',
-                          isDense: true,
-                          filled: false,
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          errorBorder: InputBorder.none,
-                          focusedErrorBorder: InputBorder.none,
-                          contentPadding: EdgeInsets.only(top: 14),
+                        child: TextField(
+                          controller: _feedbackController,
+                          minLines: 1,
+                          maxLines: 4,
+                          textCapitalization: TextCapitalization.sentences,
+                          style: TextStyle(
+                            color: context.colorScheme.onSurface,
+                            fontSize: 14,
+                          ),
+                          decoration: const InputDecoration(
+                            hintText: 'Leave feedback (optional)',
+                            isDense: true,
+                            filled: false,
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            errorBorder: InputBorder.none,
+                            focusedErrorBorder: InputBorder.none,
+                            contentPadding: EdgeInsets.only(top: 14),
+                          ),
                         ),
                       ),
                     ),

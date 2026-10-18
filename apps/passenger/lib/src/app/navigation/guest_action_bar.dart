@@ -69,29 +69,33 @@ class const GuestActionBarWidget({
               ],
             ),
             const SizedBox(height: EasyRideSpacing.sm),
-            TextButton(
-              onPressed: onHelp,
-              style: TextButton.styleFrom(
-                foregroundColor: context.colorScheme.onSurface,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                minimumSize: const Size(0, 32),
-              ),
-              child: RichText(
-                text: TextSpan(
-                  style: TextStyle(
-                    color: context.colorScheme.onSurfaceVariant,
-                    fontSize: 14,
-                  ),
-                  children: [
-                    const TextSpan(text: 'Need help? '),
-                    TextSpan(
-                      text: 'Visit our Help Centre',
-                      style: TextStyle(
-                        color: context.colorScheme.onSurface,
-                        fontWeight: FontWeight.w700,
-                      ),
+            Semantics(
+              button: true,
+              label: 'Need help? Visit our Help Centre',
+              child: TextButton(
+                onPressed: onHelp,
+                style: TextButton.styleFrom(
+                  foregroundColor: context.colorScheme.onSurface,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  minimumSize: const Size(0, 48),
+                ),
+                child: RichText(
+                  text: TextSpan(
+                    style: TextStyle(
+                      color: context.colorScheme.onSurfaceVariant,
+                      fontSize: 14,
                     ),
-                  ],
+                    children: [
+                      const TextSpan(text: 'Need help? '),
+                      TextSpan(
+                        text: 'Visit our Help Centre',
+                        style: TextStyle(
+                          color: context.colorScheme.onSurface,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
