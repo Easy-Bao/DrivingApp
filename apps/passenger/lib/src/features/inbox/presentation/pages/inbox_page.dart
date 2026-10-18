@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/chat/chat_routes.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
@@ -12,7 +13,6 @@ import 'package:passenger/src/features/inbox/presentation/bloc/inbox_cubit.dart'
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox_state.dart';
 import 'package:passenger/src/features/inbox/presentation/widgets/inbox_empty_state.dart';
 import 'package:passenger/src/features/inbox/presentation/widgets/inbox_notification_card.dart';
-import 'package:passenger/src/core/session/session_store.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class InboxPage extends StatefulWidget {
@@ -207,7 +207,19 @@ class _InboxPageState extends State<InboxPage> {
             ]),
           ),
         ),
-        if (notifications.isEmpty)
+        if (state is InboxErrorState)
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: EasyRideLayout.pagePadding,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: AppErrorBanner(
+                message: state.message,
+                onRetry: () => unawaited(_initializeInbox()),
+              ),
+            ),
+          )
+        else if (notifications.isEmpty)
           SliverFillRemaining(
             hasScrollBody: false,
             child: InboxEmptyState(isGuest: isGuest),

@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
 import 'package:passenger/src/features/inbox/data/datasources/inbox_remote_data_source.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
@@ -53,8 +52,11 @@ final class InboxRepositoryImpl({required this.remoteDataSource})
         ),
       );
     } catch (error) {
-      return const Err(
-        ServerFailure('Notifications are temporarily unavailable.'),
+      return Err(
+        FailureMapper.fromException(
+          error,
+          serverMessage: 'Notifications are temporarily unavailable.',
+        ),
       );
     }
   }
@@ -67,15 +69,13 @@ final class InboxRepositoryImpl({required this.remoteDataSource})
     try {
       await remoteDataSource.deleteNotification(passengerId, notificationId);
       return const Ok(null);
-    } on DioException catch (error) {
+    } catch (error) {
       return Err(
-        ServerFailure.withStatusCode(
-          'The message could not be deleted.',
-          error.response?.statusCode ?? 500,
+        FailureMapper.fromException(
+          error,
+          serverMessage: 'The message could not be deleted.',
         ),
       );
-    } catch (_) {
-      return const Err(ServerFailure('The message could not be deleted.'));
     }
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
@@ -58,6 +60,33 @@ void main() {
       expect(notification.peerId, 'driver-456');
       expect(notification.peerName, 'Driver Dave');
       expect(notification.userId, 'passenger-1');
+    },
+  );
+
+  test(
+    'fetchPassengerNotificationsPage maps SocketException to NetworkFailure',
+    () async {
+      final remoteDataSource = MockInboxRemoteDataSource();
+      final repository = InboxRepositoryImpl(
+        remoteDataSource: remoteDataSource,
+      );
+
+      when(
+        () => remoteDataSource.fetchNotifications(
+          'passenger-1',
+          limit: any(named: 'limit'),
+          offset: any(named: 'offset'),
+        ),
+      ).thenThrow(const SocketException('connection refused'));
+
+      final result = await repository.fetchPassengerNotificationsPage(
+        'passenger-1',
+      );
+      expect(result.isErr, isTrue);
+      result.fold(
+        (failure) => expect(failure, isA<NetworkFailure>()),
+        (value) => fail('expected Err, got: $value'),
+      );
     },
   );
 }
