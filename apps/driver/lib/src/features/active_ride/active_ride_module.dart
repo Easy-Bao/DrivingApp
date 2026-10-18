@@ -1,5 +1,6 @@
 import 'package:driver/src/features/chat/chat.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 
 import 'package:driver/src/infrastructure/session/driver_session_store.dart';
@@ -30,17 +31,19 @@ class ActiveRideModule._() {
           RoutePayload.from(extra: state.extra),
         );
         if (data == null) return _tripDataUnavailable();
-        return PickupNavigationPage(
-          pickup: data.pickup,
-          dropoff: data.dropoff,
-          distance: data.distance,
-          fare: data.fare,
-          duration: data.duration,
-          rideRepository: Modular.get<DriverRideRepository>(),
-          chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
-          sessionService: Modular.get<DriverSessionStore>(),
-          lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
-          liveMapBloc: Modular.get<LiveMapBloc>(),
+        return BlocProvider<LiveMapBloc>(
+          create: (_) => Modular.get<LiveMapBloc>(),
+          child: PickupNavigationPage(
+            pickup: data.pickup,
+            dropoff: data.dropoff,
+            distance: data.distance,
+            fare: data.fare,
+            duration: data.duration,
+            rideRepository: Modular.get<DriverRideRepository>(),
+            chatRepositoryFactory: Modular.get<ChatRepositoryFactory>(),
+            sessionService: Modular.get<DriverSessionStore>(),
+            lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
+          ),
         );
       },
       transition: AppTransitions.push.toLeft,
@@ -77,15 +80,17 @@ class ActiveRideModule._() {
           RoutePayload.from(extra: state.extra),
         );
         if (data == null) return _tripDataUnavailable();
-        return InTransitPage(
-          pickup: data.pickup,
-          dropoff: data.dropoff,
-          distance: data.distance,
-          fare: data.fare,
-          duration: data.duration,
-          rideRepository: Modular.get<DriverRideRepository>(),
-          lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
-          liveMapBloc: Modular.get<LiveMapBloc>(),
+        return BlocProvider<LiveMapBloc>(
+          create: (_) => Modular.get<LiveMapBloc>(),
+          child: InTransitPage(
+            pickup: data.pickup,
+            dropoff: data.dropoff,
+            distance: data.distance,
+            fare: data.fare,
+            duration: data.duration,
+            rideRepository: Modular.get<DriverRideRepository>(),
+            lifecycleCoordinator: Modular.get<AppLifecycleCoordinator>(),
+          ),
         );
       },
       transition: AppTransitions.push.toLeft,

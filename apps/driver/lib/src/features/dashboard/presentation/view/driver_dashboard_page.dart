@@ -17,7 +17,6 @@ import 'package:driver/src/features/location/presentation/bloc/location_access/d
 import 'package:driver/src/features/location/presentation/bloc/location_access/driver_location_access_state.dart';
 import 'package:driver/src/features/profile/profile_routes.dart';
 import 'package:driver/src/infrastructure/notifications/driver_incoming_request_alert.dart';
-import 'package:driver/src/features/active_ride/presentation/bloc/live_map/live_map_bloc.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_cubit.dart';
 import 'package:driver/src/features/active_ride/presentation/bloc/ride_flow/ride_flow_state.dart';
 import 'package:driver/src/features/dashboard/dashboard_routes.dart';
@@ -46,11 +45,9 @@ bool shouldAnimateDriverStatusPulse({
 class const DriverDashboardPage({
   super.key,
   required this.lifecycleCoordinator,
-  required this.liveMapBloc,
   required this.realtimeClient,
 }) extends StatefulWidget {
   final AppLifecycleCoordinator lifecycleCoordinator;
-  final LiveMapBloc liveMapBloc;
   final RealtimeWebSocketClient realtimeClient;
 
   @override
@@ -68,7 +65,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
   StreamSubscription<RealtimeEvent>? _realtimeEventsSubscription;
   late final StreamSubscription<AppLifecycleStatus> _lifecycleSubscription;
   late final RealtimeWebSocketClient _realtimeClient;
-  LiveMapBloc? _liveMapBloc;
   bool _isTogglingOnline = false;
   bool _isResumingOnline = false;
   bool _isRefreshingPresence = false;
@@ -92,7 +88,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _lifecycleSubscription = widget.lifecycleCoordinator.changes.listen(
       _onLifecycleChanged,
     );
-    _liveMapBloc = widget.liveMapBloc;
     _realtimeClient = widget.realtimeClient;
     _realtimeClient.setActiveTripResyncHandler(_resyncActiveTrip);
     _realtimeEventsSubscription = _realtimeClient.events.listen(
@@ -132,7 +127,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     unawaited(_realtimeEventsSubscription?.cancel());
     _realtimeEventsSubscription = null;
     unawaited(_realtimeClient.stop());
-    unawaited(_liveMapBloc?.close());
     super.dispose();
   }
 
@@ -346,12 +340,11 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       final cubit = BlocProvider.of<DashboardCubit>(context);
       if (!cubit.state.isOnline || position == null) return;
 
-      final presenceRestored = await cubit.refreshOnlinePresence(
+      await cubit.refreshOnlinePresence(
         lat: position.latitude,
         lng: position.longitude,
       );
       if (!mounted || !cubit.state.isOnline) return;
-      if (presenceRestored) _publishCurrentLocation();
       // Keep the heartbeat alive after a transient refresh failure; the next
       // tick can reconcile the server without changing the driver's intent.
       _startPolling();
@@ -382,24 +375,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     );
   }
 
-  void _publishCurrentLocation() {
-    final position = LocationService.lastPosition;
-    if (position == null) return;
-    _liveMapBloc?.add(
-      DispatchTelemetryLocationEvent(
-        lat: position.latitude,
-        lng: position.longitude,
-      ),
-    );
-  }
-
-  Future<void> _requestAndPublishCurrentLocation() async {
-    final position = await LocationService.getCurrentPosition();
-    if (!mounted || position == null) return;
-    if (!BlocProvider.of<DashboardCubit>(context).state.isOnline) return;
-    _publishCurrentLocation();
-  }
-
   void _startPolling() {
     if (!_isForeground) return;
     final pollGeneration = ++_pollGeneration;
@@ -408,9 +383,6 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _locationSubscription = LocationService.getPositionStream().listen(
       (pos) {
         if (!mounted || pollGeneration != _pollGeneration) return;
-        _liveMapBloc?.add(
-          DispatchTelemetryLocationEvent(lat: pos.latitude, lng: pos.longitude),
-        );
       },
       onError: (Object error, StackTrace stackTrace) {
         dev.log(
@@ -696,7 +668,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
         if (resolvedOnline) {
           _startPolling();
           if (LocationService.lastPosition == null) {
-            unawaited(_requestAndPublishCurrentLocation());
+            unawaited(LocationService.getCurrentPosition());
           }
         }
         setState(() => _isTogglingOnline = false);
