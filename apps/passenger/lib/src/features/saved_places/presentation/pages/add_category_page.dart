@@ -84,6 +84,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
       });
       if (_mapController != null) {
         await MapProvider.moveCamera(_mapController!, _lat, _lng, zoom: 14.0);
+        if (!mounted) return;
         await _syncPinnedMarker();
       }
     } else {
@@ -107,6 +108,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
     if (!mounted || controller == null || !_isLocationPinned) return;
 
     final requestId = ++_pinRequestId;
+    final color = context.colorScheme.onSurface;
     final existingManager = _pinAnnotationManager;
     if (existingManager != null) {
       await MapProvider.replaceMarker(
@@ -114,7 +116,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
         _lat,
         _lng,
         isOrigin: false,
-        color: context.colorScheme.onSurface,
+        color: color,
       );
       return;
     }
@@ -124,7 +126,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
       _lat,
       _lng,
       isOrigin: false,
-      color: context.colorScheme.onSurface,
+      color: color,
     );
     if (!mounted || requestId != _pinRequestId) {
       await MapProvider.clearAnnotations(manager);

@@ -12,6 +12,8 @@ final class PassengerNavigationObserver extends NavigatorObserver {
 
   Stream<void> get routePopEvents => _routePopEvents.stream;
 
+  Future<void> dispose() => _routePopEvents.close();
+
   @override
   void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
     super.didPop(route, previousRoute);

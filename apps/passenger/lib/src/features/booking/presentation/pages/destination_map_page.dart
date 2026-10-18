@@ -116,6 +116,7 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
   }
 
   Future<void> _renderRouteData() async {
+    if (!mounted) return;
     final controller = _mapController;
     final origin = _originCoordinate;
     if (controller == null || origin == null) return;

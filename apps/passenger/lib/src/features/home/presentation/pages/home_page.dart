@@ -788,60 +788,67 @@ class _HomePageState extends State<HomePage> {
     await showModalBottomSheet(
       context: context,
       backgroundColor: context.colorScheme.surface.withValues(alpha: 0),
-      builder: (_) => Container(
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-        decoration: BoxDecoration(
-          color: context.colorScheme.surface,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: context.colorScheme.outlineVariant),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: context.colorScheme.outlineVariant,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: context.colorScheme.onSurface,
+      builder: (sheetContext) => SafeArea(
+        top: false,
+        child: Container(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          decoration: BoxDecoration(
+            color: sheetContext.colorScheme.surface,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: sheetContext.colorScheme.outlineVariant),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: sheetContext.colorScheme.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Divider(height: 1, color: context.colorScheme.outlineVariant),
-            ListTile(
-              leading: Icon(
-                LucideIcons.trash_2,
-                color: context.colorScheme.error,
-                size: 20,
-              ),
-              title: Text(
-                'Remove shortcut',
-                style: TextStyle(
-                  color: context.colorScheme.error,
-                  fontWeight: FontWeight.w600,
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: sheetContext.colorScheme.onSurface,
+                  ),
                 ),
               ),
-              onTap: () async {
-                Navigator.pop(context);
-                await BlocProvider.of<SavedPlacesCubit>(context)
-                    .removePlace(index);
-              },
-            ),
-            const SizedBox(height: 8),
-          ],
+              const SizedBox(height: 16),
+              Divider(
+                height: 1,
+                color: sheetContext.colorScheme.outlineVariant,
+              ),
+              ListTile(
+                leading: Icon(
+                  LucideIcons.trash_2,
+                  color: sheetContext.colorScheme.error,
+                  size: 20,
+                ),
+                title: Text(
+                  'Remove shortcut',
+                  style: TextStyle(
+                    color: sheetContext.colorScheme.error,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                onTap: () async {
+                  Navigator.of(sheetContext).pop();
+                  if (!mounted) return;
+                  await BlocProvider.of<SavedPlacesCubit>(context)
+                      .removePlace(index);
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
         ),
       ),
     );

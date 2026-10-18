@@ -372,23 +372,25 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
     return annotationManager;
   }
 
-  Future<mapbox.PolylineAnnotationManager> _upsertRoute(
+  Future<mapbox.PolylineAnnotationManager?> _upsertRoute(
     mapbox.PolylineAnnotationManager? annotationManager,
     AppMapController mapController,
     Float64List routeCoordinates,
   ) async {
+    if (!mounted) return annotationManager;
+    final color = context.colorScheme.onSurface;
     if (annotationManager == null) {
       return MapProvider.addPolylineBuffer(
         mapController,
         routeCoordinates,
-        color: context.colorScheme.onSurface,
+        color: color,
         width: 4.0,
       );
     }
     await MapProvider.replacePolylineBuffer(
       annotationManager,
       routeCoordinates,
-      color: context.colorScheme.onSurface,
+      color: color,
       width: 4.0,
     );
     return annotationManager;
