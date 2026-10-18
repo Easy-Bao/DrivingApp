@@ -1,12 +1,13 @@
+import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/auth/presentation/bloc/forgot_password/forgot_password_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:design_system/design_system.dart';
 
-class const ForgotPasswordPage({super.key, required this.forgotPasswordBloc})
-    extends StatelessWidget {
+class ForgotPasswordPage extends StatelessWidget {
+  const ForgotPasswordPage({super.key, required this.forgotPasswordBloc});
+
   final ForgotPasswordBloc forgotPasswordBloc;
 
   @override
@@ -18,7 +19,9 @@ class const ForgotPasswordPage({super.key, required this.forgotPasswordBloc})
   }
 }
 
-class const _ForgotPasswordPageContent() extends StatefulWidget {
+class _ForgotPasswordPageContent extends StatefulWidget {
+  const _ForgotPasswordPageContent();
+
   @override
   State<_ForgotPasswordPageContent> createState() =>
       _ForgotPasswordPageContentState();
@@ -38,7 +41,7 @@ class _ForgotPasswordPageContentState
     FocusScope.of(context).unfocus();
     final email = _emailController.text.trim();
     if (email.isEmpty) {
-      CustomToast.show(context, 'Enter your email address.');
+      CustomToast.show(context, 'Enter your email address.', isError: true);
       return;
     }
 
@@ -118,22 +121,9 @@ class _ForgotPasswordPageContentState
                             ),
                             const SizedBox(height: 40),
                             if (errorMessage != null) ...[
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: context.colorScheme.error.withValues(
-                                    alpha: 0.1,
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  errorMessage,
-                                  style: TextStyle(
-                                    color: context.colorScheme.error,
-                                    fontSize: 13,
-                                  ),
-                                ),
+                              AppErrorBanner(
+                                message: errorMessage,
+                                onRetry: () => _submitResetLink(context),
                               ),
                               const SizedBox(height: 16),
                             ],
@@ -150,38 +140,33 @@ class _ForgotPasswordPageContentState
                               ),
                             ),
                             const SizedBox(height: 8),
-                            Material(
-                              child: Material(
-                                type: MaterialType.transparency,
-                                child: TextField(
-                                  keyboardType: TextInputType.emailAddress,
-                                  controller: _emailController,
-                                  textInputAction: TextInputAction.done,
-                                  onSubmitted: (_) => _submitResetLink(context),
-                                  decoration: InputDecoration(
-                                    hintText: 'Email',
-                                    prefixIcon: const Padding(
-                                      padding: EdgeInsets.only(left: 10),
-                                      child: Icon(LucideIcons.mail, size: 20),
-                                    ),
-                                    filled: false,
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        EasyRideRadius.lg,
-                                      ),
-                                      borderSide: BorderSide(
-                                        color: context.colorScheme.outline,
-                                      ),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        EasyRideRadius.lg,
-                                      ),
-                                      borderSide: BorderSide(
-                                        color: context.colorScheme.onSurface,
-                                        width: 1.5,
-                                      ),
-                                    ),
+                            TextField(
+                              keyboardType: TextInputType.emailAddress,
+                              controller: _emailController,
+                              textInputAction: TextInputAction.done,
+                              onSubmitted: (_) => _submitResetLink(context),
+                              decoration: InputDecoration(
+                                hintText: 'Email',
+                                prefixIcon: const Padding(
+                                  padding: EdgeInsets.only(left: 10),
+                                  child: Icon(LucideIcons.mail, size: 20),
+                                ),
+                                filled: false,
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    EasyRideRadius.lg,
+                                  ),
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.outline,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    EasyRideRadius.lg,
+                                  ),
+                                  borderSide: BorderSide(
+                                    color: context.colorScheme.onSurface,
+                                    width: 1.5,
                                   ),
                                 ),
                               ),
@@ -192,49 +177,42 @@ class _ForgotPasswordPageContentState
                       const SizedBox(height: 20),
                       Column(
                         children: [
-                          Material(
-                            child: Material(
-                              type: MaterialType.transparency,
-                              child: ElevatedButton(
-                                onPressed: isLoading
-                                    ? null
-                                    : () => _submitResetLink(context),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: context.colorScheme.primary,
-                                  foregroundColor:
-                                      context.colorScheme.onPrimary,
-                                  minimumSize: const Size.fromHeight(60),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      EasyRideRadius.lg,
-                                    ),
-                                  ),
-                                  elevation: 0,
+                          ElevatedButton(
+                            onPressed: isLoading
+                                ? null
+                                : () => _submitResetLink(context),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: context.colorScheme.primary,
+                              foregroundColor: context.colorScheme.onPrimary,
+                              minimumSize: const Size.fromHeight(60),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  EasyRideRadius.lg,
                                 ),
-                                child: isLoading
-                                    ? SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: CircularProgressIndicator(
-                                          color: context.colorScheme.onPrimary,
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : const Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            'Send Reset Link',
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
                               ),
+                              elevation: 0,
                             ),
+                            child: isLoading
+                                ? SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      color: context.colorScheme.onPrimary,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        'Send Reset Link',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                           ),
                           const SizedBox(height: 10),
                           TextButton(
@@ -248,9 +226,8 @@ class _ForgotPasswordPageContentState
                             child: Text(
                               'Back to sign in',
                               style: TextStyle(
-                                color: context.colorScheme.onSurface,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                color: context.colorScheme.onSurface,
                               ),
                             ),
                           ),

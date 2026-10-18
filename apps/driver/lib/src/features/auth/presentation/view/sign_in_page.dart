@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:design_system/design_system.dart';
 import 'package:driver/src/features/auth/auth_routes.dart';
 import 'package:driver/src/features/auth/presentation/bloc/sign_in/sign_in_bloc.dart';
 import 'package:driver/src/features/dashboard/dashboard_routes.dart';
@@ -7,10 +8,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:design_system/design_system.dart';
 
-class const SigninPage({super.key, required this.signInBloc})
-    extends StatelessWidget {
+class SigninPage extends StatelessWidget {
+  const SigninPage({super.key, required this.signInBloc});
+
   final SignInBloc signInBloc;
 
   @override
@@ -22,7 +23,9 @@ class const SigninPage({super.key, required this.signInBloc})
   }
 }
 
-class const _SigninPageContent() extends StatefulWidget {
+class _SigninPageContent extends StatefulWidget {
+  const _SigninPageContent();
+
   @override
   State<_SigninPageContent> createState() => _SigninPageContentState();
 }
@@ -36,30 +39,14 @@ class _SigninPageContentState extends State<_SigninPageContent> {
   final TextEditingController _passwordController = TextEditingController();
 
   bool _isPasswordVisible = false;
-  bool _rememberMeChecked = false;
-
   String? _emailError;
   String? _passwordError;
-  Timer? _validationErrorTimer;
 
   @override
   void dispose() {
-    _validationErrorTimer?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  void _startErrorAutoDismissTimer() {
-    _validationErrorTimer?.cancel();
-    _validationErrorTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted) {
-        setState(() {
-          _emailError = null;
-          _passwordError = null;
-        });
-      }
-    });
   }
 
   void _submitSignIn(BuildContext context) {
@@ -79,7 +66,6 @@ class _SigninPageContentState extends State<_SigninPageContent> {
     });
 
     if (_emailError != null || _passwordError != null) {
-      _startErrorAutoDismissTimer();
       return;
     }
 
@@ -136,233 +122,196 @@ class _SigninPageContentState extends State<_SigninPageContent> {
                             color: context.colorScheme.onSurfaceVariant,
                           ),
                         ),
-                        const SizedBox(height: 36),
-                        Material(
-                          child: Material(
-                            type: MaterialType.transparency,
-                            child: TextField(
-                              controller: _emailController,
-                              keyboardType: TextInputType.emailAddress,
-                              textInputAction: TextInputAction.next,
-                              onChanged: (_) {
-                                if (_emailError != null) {
-                                  setState(() => _emailError = null);
-                                }
-                              },
-                              decoration: InputDecoration(
-                                hintText: 'Email',
-                                errorText: _emailError,
-                                prefixIcon: const Padding(
-                                  padding: EdgeInsets.only(left: 10),
-                                  child: Icon(LucideIcons.mail, size: 20),
-                                ),
-                                filled: false,
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    EasyRideRadius.lg,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.outline,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    EasyRideRadius.lg,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.onSurface,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                errorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    EasyRideRadius.lg,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.error,
-                                    width: 1.0,
-                                  ),
-                                ),
-                                focusedErrorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    EasyRideRadius.lg,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.error,
-                                    width: 1.5,
-                                  ),
-                                ),
+                        const SizedBox(height: 28),
+                        if (errorMessage != null) ...[
+                          AppErrorBanner(
+                            message: errorMessage,
+                            onRetry: () => _submitSignIn(context),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                        TextField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          onChanged: (_) {
+                            if (_emailError != null) {
+                              setState(() => _emailError = null);
+                            }
+                          },
+                          decoration: InputDecoration(
+                            hintText: 'Email',
+                            errorText: _emailError,
+                            prefixIcon: const Padding(
+                              padding: EdgeInsets.only(left: 10),
+                              child: Icon(LucideIcons.mail, size: 20),
+                            ),
+                            filled: false,
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                EasyRideRadius.lg,
+                              ),
+                              borderSide: BorderSide(
+                                color: context.colorScheme.outline,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                EasyRideRadius.lg,
+                              ),
+                              borderSide: BorderSide(
+                                color: context.colorScheme.onSurface,
+                                width: 1.5,
+                              ),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                EasyRideRadius.lg,
+                              ),
+                              borderSide: BorderSide(
+                                color: context.colorScheme.error,
+                                width: 1.0,
+                              ),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                EasyRideRadius.lg,
+                              ),
+                              borderSide: BorderSide(
+                                color: context.colorScheme.error,
+                                width: 1.5,
                               ),
                             ),
                           ),
                         ),
                         const SizedBox(height: 16),
-                        Material(
-                          child: Material(
-                            type: MaterialType.transparency,
-                            child: TextField(
-                              obscureText: !_isPasswordVisible,
-                              controller: _passwordController,
-                              textInputAction: TextInputAction.done,
-                              onSubmitted: (_) => _submitSignIn(context),
-                              onChanged: (_) {
-                                if (_passwordError != null) {
-                                  setState(() => _passwordError = null);
-                                }
-                              },
-                              decoration: InputDecoration(
-                                hintText: 'Password',
-                                errorText: _passwordError ?? errorMessage,
-                                prefixIcon: const Padding(
-                                  padding: EdgeInsets.only(left: 10),
-                                  child: Icon(LucideIcons.lock, size: 20),
-                                ),
-                                suffixIcon: IconButton(
-                                  constraints: const BoxConstraints(
-                                    minWidth: EasyRideSize.minimumTouchTarget,
-                                    minHeight: EasyRideSize.minimumTouchTarget,
-                                  ),
-                                  icon: Icon(
-                                    _isPasswordVisible
-                                        ? LucideIcons.eye
-                                        : LucideIcons.eye_off,
-                                    size: 20,
-                                  ),
-                                  onPressed: () => setState(
-                                    () => _isPasswordVisible =
-                                        !_isPasswordVisible,
-                                  ),
-                                ),
-                                filled: false,
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    EasyRideRadius.lg,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.outline,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    EasyRideRadius.lg,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.onSurface,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                errorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    EasyRideRadius.lg,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.error,
-                                    width: 1.0,
-                                  ),
-                                ),
-                                focusedErrorBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    EasyRideRadius.lg,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: context.colorScheme.error,
-                                    width: 1.5,
-                                  ),
-                                ),
+                        TextField(
+                          obscureText: !_isPasswordVisible,
+                          controller: _passwordController,
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _submitSignIn(context),
+                          onChanged: (_) {
+                            if (_passwordError != null) {
+                              setState(() => _passwordError = null);
+                            }
+                          },
+                          decoration: InputDecoration(
+                            hintText: 'Password',
+                            errorText: _passwordError,
+                            prefixIcon: const Padding(
+                              padding: EdgeInsets.only(left: 10),
+                              child: Icon(LucideIcons.lock, size: 20),
+                            ),
+                            suffixIcon: IconButton(
+                              constraints: const BoxConstraints(
+                                minWidth: EasyRideSize.minimumTouchTarget,
+                                minHeight: EasyRideSize.minimumTouchTarget,
+                              ),
+                              icon: Icon(
+                                _isPasswordVisible
+                                    ? LucideIcons.eye
+                                    : LucideIcons.eye_off,
+                                size: 20,
+                              ),
+                              onPressed: () => setState(
+                                () => _isPasswordVisible = !_isPasswordVisible,
+                              ),
+                            ),
+                            filled: false,
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                EasyRideRadius.lg,
+                              ),
+                              borderSide: BorderSide(
+                                color: context.colorScheme.outline,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                EasyRideRadius.lg,
+                              ),
+                              borderSide: BorderSide(
+                                color: context.colorScheme.onSurface,
+                                width: 1.5,
+                              ),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                EasyRideRadius.lg,
+                              ),
+                              borderSide: BorderSide(
+                                color: context.colorScheme.error,
+                                width: 1.0,
+                              ),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                EasyRideRadius.lg,
+                              ),
+                              borderSide: BorderSide(
+                                color: context.colorScheme.error,
+                                width: 1.5,
                               ),
                             ),
                           ),
                         ),
                         const SizedBox(height: 10),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: () {
-                                setState(() {
-                                  _rememberMeChecked = !_rememberMeChecked;
-                                });
-                              },
-                              child: Row(
-                                children: [
-                                  Checkbox(
-                                    value: _rememberMeChecked,
-                                    activeColor: context.colorScheme.onSurface,
-                                    onChanged: (bool? val) {
-                                      setState(() {
-                                        _rememberMeChecked = val ?? false;
-                                      });
-                                    },
-                                  ),
-                                  const Text(
-                                    'Remember me',
-                                    style: TextStyle(fontSize: 14),
-                                  ),
-                                ],
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            style: TextButton.styleFrom(
+                              minimumSize: const Size(
+                                EasyRideSize.minimumTouchTarget,
+                                EasyRideSize.minimumTouchTarget,
                               ),
                             ),
-                            TextButton(
-                              style: TextButton.styleFrom(
-                                minimumSize: const Size(
-                                  EasyRideSize.minimumTouchTarget,
-                                  EasyRideSize.minimumTouchTarget,
-                                ),
+                            onPressed: () {
+                              unawaited(
+                                context.pushNamed(AuthRoutes.forgotPassword),
+                              );
+                            },
+                            child: Text(
+                              'Forgot password?',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: context.colorScheme.onSurface,
                               ),
-                              onPressed: () {
-                                unawaited(
-                                  context.pushNamed(AuthRoutes.forgotPassword),
-                                );
-                              },
-                              child: Text(
-                                'Forgot password?',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: context.colorScheme.onSurface,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        Material(
-                          child: Material(
-                            type: MaterialType.transparency,
-                            child: ElevatedButton(
-                              onPressed: isLoading
-                                  ? null
-                                  : () => _submitSignIn(context),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: context.colorScheme.primary,
-                                foregroundColor: context.colorScheme.onPrimary,
-                                minimumSize: const Size.fromHeight(60),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    EasyRideRadius.lg,
-                                  ),
-                                ),
-                                elevation: 0,
-                              ),
-                              child: isLoading
-                                  ? SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(
-                                        color: context.colorScheme.onPrimary,
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Sign In',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
                             ),
                           ),
                         ),
-
+                        const SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: isLoading
+                              ? null
+                              : () => _submitSignIn(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: context.colorScheme.primary,
+                            foregroundColor: context.colorScheme.onPrimary,
+                            minimumSize: const Size.fromHeight(60),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                EasyRideRadius.lg,
+                              ),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: isLoading
+                              ? SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    color: context.colorScheme.onPrimary,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text(
+                                  'Sign In',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                        ),
                         const Spacer(),
                       ],
                     ),

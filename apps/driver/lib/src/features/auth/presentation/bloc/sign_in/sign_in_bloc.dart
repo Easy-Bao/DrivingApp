@@ -10,12 +10,12 @@ export 'sign_in_event.dart';
 
 part 'sign_in_state.dart';
 
-class SignInBloc(this._authRepository) extends Bloc<SignInEvent, SignInState> {
-  final DriverAuthRepository _authRepository;
-
-  this : super(const SignInInitial()) {
+class SignInBloc extends Bloc<SignInEvent, SignInState> {
+  SignInBloc(this._authRepository) : super(const SignInInitial()) {
     on<SignInSubmitted>(_onSignInSubmitted, transformer: droppable());
   }
+
+  final DriverAuthRepository _authRepository;
 
   Future<void> _onSignInSubmitted(
     SignInSubmitted event,
