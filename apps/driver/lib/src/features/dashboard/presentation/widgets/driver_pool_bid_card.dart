@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:design_system/design_system.dart';
 import 'package:driver/src/presentation/formatters/driver_value_formatters.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +23,113 @@ String formatCountdown(int seconds) {
   final minutes = seconds ~/ 60;
   final remainder = seconds % 60;
   return '$minutes:${remainder.toString().padLeft(2, '0')}';
+}
+
+class _BidCountdownHeader extends StatefulWidget {
+  const _BidCountdownHeader({
+    required this.bid,
+    required this.hasSubmittedOffer,
+    required this.bidId,
+  });
+
+  final Map<String, dynamic> bid;
+  final bool hasSubmittedOffer;
+  final String? bidId;
+
+  @override
+  State<_BidCountdownHeader> createState() => _BidCountdownHeaderState();
+}
+
+class _BidCountdownHeaderState extends State<_BidCountdownHeader> {
+  Timer? _timer;
+  int? _remainingSeconds;
+
+  @override
+  void initState() {
+    super.initState();
+    _remainingSeconds = remainingBidSeconds(widget.bid);
+    _startTimer();
+  }
+
+  @override
+  void didUpdateWidget(covariant _BidCountdownHeader oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.bid['expires_at'] != oldWidget.bid['expires_at']) {
+      _remainingSeconds = remainingBidSeconds(widget.bid);
+      _startTimer();
+    }
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    if (_remainingSeconds != null && _remainingSeconds! > 0) {
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (!mounted) {
+          timer.cancel();
+          return;
+        }
+        final updated = remainingBidSeconds(widget.bid);
+        if (updated != _remainingSeconds) {
+          setState(() {
+            _remainingSeconds = updated;
+          });
+        }
+        if (updated == null || updated <= 0) {
+          timer.cancel();
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final remainingSeconds = _remainingSeconds;
+    return Row(
+      children: [
+        Text(
+          widget.hasSubmittedOffer ? 'Offer Submitted' : 'Open Ride Offer',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+            color: context.colorScheme.onSurface,
+          ),
+        ),
+        const Spacer(),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: context.colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(EasyRideRadius.lg),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(LucideIcons.clock_3, size: 14),
+              const SizedBox(width: 5),
+              Text(
+                remainingSeconds == null
+                    ? '—'
+                    : formatCountdown(remainingSeconds),
+                key: ValueKey('request-countdown-${widget.bidId}'),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: context.colorScheme.onSurface,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class DriverPoolBidCard extends StatelessWidget {
@@ -47,7 +156,6 @@ class DriverPoolBidCard extends StatelessWidget {
     final bidId = driverValueAsString(bid['id']);
     final isSubmitting = bidId != null && submittingBidId == bidId;
     final hasSubmittedOffer = _hasPendingOffer(bid);
-    final remainingSeconds = remainingBidSeconds(bid);
     final passengerNote = driverValueAsString(bid['passenger_note']);
 
     return Container(
@@ -61,47 +169,10 @@ class DriverPoolBidCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                hasSubmittedOffer ? 'Offer Submitted' : 'Open Ride Offer',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: context.colorScheme.onSurface,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: context.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(EasyRideRadius.lg),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(LucideIcons.clock_3, size: 14),
-                    const SizedBox(width: 5),
-                    Text(
-                      remainingSeconds == null
-                          ? '—'
-                          : formatCountdown(remainingSeconds),
-                      key: ValueKey('request-countdown-$bidId'),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: context.colorScheme.onSurface,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          _BidCountdownHeader(
+            bid: bid,
+            hasSubmittedOffer: hasSubmittedOffer,
+            bidId: bidId,
           ),
           const SizedBox(height: 12),
           CompactRouteTimeline(pickup: pickup, dropoff: dropoff),

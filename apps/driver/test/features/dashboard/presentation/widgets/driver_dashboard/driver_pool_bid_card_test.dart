@@ -64,12 +64,42 @@ void main() {
     );
 
     expect(find.text('Offer Submitted'), findsOneWidget);
-    expect(find.text('₱275'), findsOneWidget);
+    expect(find.text('₱275.00'), findsOneWidget);
     expect(
       find.text('Waiting for the passenger to accept your offer.'),
       findsOneWidget,
     );
     expect(find.text('Submit Offer'), findsNothing);
     expect(find.text('Decline'), findsNothing);
+  });
+
+  testWidgets('ticks countdown once per second while active', (tester) async {
+    final tickingSession = {
+      ...session,
+      'expires_at': DateTime.now()
+          .add(const Duration(seconds: 45))
+          .toIso8601String(),
+    };
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: EasyRideTheme.main,
+        home: Scaffold(
+          body: DriverPoolBidCard(
+            bid: tickingSession,
+            submittingBidId: null,
+            onDecline: () {},
+            onSubmitOffer: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      find.byKey(const ValueKey('request-countdown-session-1')),
+      findsOneWidget,
+    );
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
   });
 }
