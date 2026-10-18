@@ -587,22 +587,19 @@ class DashboardCubit({
     return updateResult.fold((failure) async {
       if (isClosed) return false;
       if (_isAuthoritativeAvailabilityRejection(failure)) {
-        final offlineResult = await _repository.updateOnlineStatusResult(
+        await _repository.updateOnlineStatusResult(
           isOnline: false,
           lat: lat,
           lng: lng,
         );
         if (isClosed) return false;
-        final reconciled = offlineResult.fold((_) => false, (_) => true);
-        if (reconciled) {
-          emit(
-            state.copyWith(
-              isOnline: false,
-              errorMessage: ErrorHandler.getErrorMessage(failure),
-            ),
-          );
-          return false;
-        }
+        emit(
+          state.copyWith(
+            isOnline: false,
+            errorMessage: ErrorHandler.getErrorMessage(failure),
+          ),
+        );
+        return false;
       }
       emit(state.copyWith(errorMessage: ErrorHandler.getErrorMessage(failure)));
       return false;

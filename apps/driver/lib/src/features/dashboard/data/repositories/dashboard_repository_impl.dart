@@ -266,9 +266,10 @@ final class DashboardRepositoryImpl({
           isOnline: false,
         );
       } catch (error) {
-        // The server remains authoritative when the transition fails. Keep
-        // the current local online intent and telemetry alive until a later
-        // retry confirms that the driver is actually offline.
+        await _clearOnlinePresence(
+          driverId: driverId,
+          markServerOffline: false,
+        );
         return Err(_mapExceptionToFailure(error));
       }
       await _clearOnlinePresence(driverId: driverId, markServerOffline: false);
