@@ -55,8 +55,6 @@ func NewProfileRepository(dependencies ProfileRepositoryDependencies) (*ProfileR
 	}, nil
 }
 
-// ProfileStore is the canonical adapter name used by the user composition
-// root. The repository constructor remains for existing internal callers.
 type ProfileStore = ProfileRepository
 
 func NewProfileStore(dependencies ProfileRepositoryDependencies) (*ProfileStore, error) {

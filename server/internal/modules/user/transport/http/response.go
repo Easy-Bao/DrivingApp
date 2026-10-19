@@ -2,7 +2,6 @@ package http
 
 import "github.com/Easy-Bao/DrivingApp/server/internal/modules/user/domain"
 
-// ProfileResponse is the public profile representation returned by HTTP.
 type ProfileResponse struct {
 	ID                int     `json:"id"`
 	UserID            int     `json:"user_id"`
@@ -20,7 +19,6 @@ type ProfileResponse struct {
 	IsOnline          bool    `json:"is_online,omitempty"`
 }
 
-// NewProfileResponse projects a profile onto the public HTTP contract.
 func NewProfileResponse(profile domain.Profile) ProfileResponse {
 	return ProfileResponse{
 		ID:                profile.ID,

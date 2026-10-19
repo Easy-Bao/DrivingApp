@@ -34,8 +34,6 @@ func NewRefreshSessionRepository(pool *pgxpool.Pool) (*RefreshSessionRepository,
 	}, nil
 }
 
-// SessionStore is the canonical adapter name used by the auth composition
-// root. The repository constructor remains for existing internal callers.
 type SessionStore = RefreshSessionRepository
 
 func NewSessionStore(pool *pgxpool.Pool) (*SessionStore, error) {

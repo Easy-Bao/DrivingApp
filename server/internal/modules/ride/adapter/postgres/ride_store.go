@@ -78,8 +78,6 @@ func postgresTimestamp(value time.Time) pgtype.Timestamptz {
 	return pgtype.Timestamptz{Time: value, Valid: true}
 }
 
-// RideStore is the canonical adapter name used by the ride composition root.
-// The repository constructor remains for existing internal callers.
 type RideStore = RideRepository
 
 func NewRideStore(config RideStoreConfig) (*RideStore, error) {

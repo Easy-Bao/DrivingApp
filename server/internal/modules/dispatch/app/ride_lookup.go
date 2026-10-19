@@ -24,8 +24,6 @@ func NewRideRepositoryLookup(repository RideRepository) *RideRepositoryLookup {
 	return &RideRepositoryLookup{repository: repository}
 }
 
-// RideLookup is the canonical name for the assignment adapter. The original
-// type and constructor remain available for existing internal callers.
 type RideLookup = RideRepositoryLookup
 
 func NewRideLookup(source RideAuthority) *RideLookup {

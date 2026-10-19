@@ -38,8 +38,6 @@ func NewUserRepository(pool *pgxpool.Pool) (*UserRepository, error) {
 	}, nil
 }
 
-// UserStore is the canonical adapter name used by the auth composition root.
-// The repository alias and constructor remain for existing internal callers.
 type UserStore = UserRepository
 
 func NewUserStore(pool *pgxpool.Pool) (*UserStore, error) {

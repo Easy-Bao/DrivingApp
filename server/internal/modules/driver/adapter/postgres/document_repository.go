@@ -60,7 +60,6 @@ func (repository *DocumentRepository) Create(ctx context.Context, item domain.Do
 	return document, nil
 }
 
-// Get maps an absent database row to domain.ErrDocumentNotFound.
 func (repository *DocumentRepository) Get(ctx context.Context, id int) (domain.Document, error) {
 	if err := repository.validate(); err != nil {
 		return domain.Document{}, err
