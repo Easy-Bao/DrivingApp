@@ -10,12 +10,18 @@ import 'package:passenger/src/features/active_ride/presentation/bloc/track_drive
 import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/core/telemetry/background_telemetry.dart';
 
-class TrackDriverCubit({
-  required this._repository,
-  required this._sessionService,
-  required this._lifecycleCoordinator,
-  this._backgroundTelemetryService,
-}) extends Cubit<TrackDriverState> {
+class TrackDriverCubit extends Cubit<TrackDriverState> {
+  TrackDriverCubit({
+    required TrackRepository repository,
+    required PassengerSessionStore sessionService,
+    required AppLifecycleCoordinator lifecycleCoordinator,
+    PassengerBackgroundTelemetry? backgroundTelemetryService,
+  })  : _repository = repository,
+        _sessionService = sessionService,
+        _lifecycleCoordinator = lifecycleCoordinator,
+        _backgroundTelemetryService = backgroundTelemetryService,
+        super(const TrackDriverInitial());
+
   final TrackRepository _repository;
   final PassengerSessionStore _sessionService;
   final PassengerBackgroundTelemetry? _backgroundTelemetryService;
@@ -30,7 +36,17 @@ class TrackDriverCubit({
   bool _isCancellingTrip = false;
   bool _isEmergencyStopping = false;
 
-  this : super(const TrackDriverInitial());
+  Future<void> resetTracking() async {
+    if (isClosed) return;
+    ++_trackingGeneration;
+    _activeRideId = null;
+    _lastPassengerLocationPublishedAt = null;
+    unawaited(_trackingTask?.dispose());
+    _trackingTask = null;
+    _activeTripResync = null;
+    await _stopBackgroundTelemetry();
+    if (!isClosed) emit(const TrackDriverInitial());
+  }
 
   Future<void> startTracking({
     required double startLat,

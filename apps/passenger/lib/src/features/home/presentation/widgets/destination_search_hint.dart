@@ -69,7 +69,7 @@ class _HomeDestinationSearchHintState extends State<HomeDestinationSearchHint>
 
   void _startRotation() {
     if (_rotationTimer != null ||
-        HomeDestinationSearchHintWidget.searchExamples.length < 2) {
+        HomeDestinationSearchHint.searchExamples.length < 2) {
       return;
     }
     _rotationTimer = Timer.periodic(widget.changeInterval, (_) {
@@ -90,8 +90,7 @@ class _HomeDestinationSearchHintState extends State<HomeDestinationSearchHint>
 
     setState(() {
       _currentIndex =
-          (_currentIndex + 1) %
-          HomeDestinationSearchHintWidget.searchExamples.length;
+          (_currentIndex + 1) % HomeDestinationSearchHint.searchExamples.length;
     });
     _transitionController.value = 0;
   }
@@ -149,11 +148,11 @@ class _HomeDestinationSearchHintState extends State<HomeDestinationSearchHint>
   }
 
   String get _currentLabel =>
-      HomeDestinationSearchHintWidget.searchExamples[_currentIndex];
+      HomeDestinationSearchHint.searchExamples[_currentIndex];
 
   String get _nextLabel =>
-      HomeDestinationSearchHintWidget.searchExamples[(_currentIndex + 1) %
-          HomeDestinationSearchHintWidget.searchExamples.length];
+      HomeDestinationSearchHint.searchExamples[(_currentIndex + 1) %
+          HomeDestinationSearchHint.searchExamples.length];
 
   Widget _buildLabel(String label, TextStyle style) {
     return Align(
@@ -179,5 +178,3 @@ class _HomeDestinationSearchHintState extends State<HomeDestinationSearchHint>
     );
   }
 }
-
-typedef HomeDestinationSearchHintWidget = HomeDestinationSearchHint;

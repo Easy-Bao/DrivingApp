@@ -6,9 +6,9 @@ import (
 	"errors"
 	"testing"
 
-	events "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
-	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	ports "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	events "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
 type envelopePublisherStub struct {

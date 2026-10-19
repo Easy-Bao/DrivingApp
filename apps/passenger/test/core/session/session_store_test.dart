@@ -20,7 +20,7 @@ void main() {
     await sessionStore.clearAll();
 
     for (final key in const [
-      PassengerStorageKeys.jwtToken,
+      PassengerStorageKeys.accessToken,
       PassengerStorageKeys.refreshToken,
       PassengerStorageKeys.driverId,
       PassengerStorageKeys.passengerId,
@@ -41,7 +41,8 @@ void main() {
   test('keeps granular token deletion behavior', () async {
     await sessionStore.deleteToken();
 
-    verify(() => storage.delete(key: PassengerStorageKeys.jwtToken)).called(1);
+    verify(() => storage.delete(key: PassengerStorageKeys.accessToken))
+        .called(1);
   });
 
   test('persists and restores a chat read timestamp per ride', () async {

@@ -38,5 +38,3 @@ class const RecentRideHistoryEmptyState({required this.isGuest, super.key})
     );
   }
 }
-
-typedef RecentRideHistoryEmptyStateWidget = RecentRideHistoryEmptyState;

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
+	dispatchdomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/domain"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 )
 

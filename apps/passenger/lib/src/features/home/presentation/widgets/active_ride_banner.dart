@@ -153,5 +153,3 @@ class const _ResumeTripButton({required this.onResume})
     );
   }
 }
-
-typedef ActiveRideBannerWidget = ActiveRideBanner;

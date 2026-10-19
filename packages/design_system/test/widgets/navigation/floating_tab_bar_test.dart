@@ -18,9 +18,7 @@ void main() {
         MaterialApp(
           theme: EasyRideTheme.main,
           home: MediaQuery(
-            data: const MediaQueryData(
-              textScaler: TextScaler.linear(1.5),
-            ),
+            data: const MediaQueryData(textScaler: TextScaler.linear(1.5)),
             child: Scaffold(
               bottomNavigationBar: AppFloatingTabBar(
                 destinations: destinations,

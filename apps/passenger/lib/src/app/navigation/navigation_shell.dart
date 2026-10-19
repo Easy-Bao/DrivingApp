@@ -263,7 +263,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
                             selector: (state) => state.isAuthenticated,
                             builder: (context, isAuthenticated) {
                               if (!isAuthenticated) {
-                                return GuestActionBarWidget(
+                                return GuestActionBar(
                                   onSignUp: () =>
                                       context.pushNamed(AuthRoutes.signup),
                                   onSignIn: () =>

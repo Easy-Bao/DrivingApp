@@ -8,11 +8,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	application "github.com/Easy-Bao/DrivingApp/server/internal/modules/review/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/review/domain"
 	reviewhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/review/transport/http"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/api"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"
 )
 

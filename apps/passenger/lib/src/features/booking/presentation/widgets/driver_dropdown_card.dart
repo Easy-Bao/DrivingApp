@@ -728,5 +728,3 @@ class const _DriverLicensePlateBadge({required this.plateNumber})
     );
   }
 }
-
-typedef DriverDropdownCardWidget = DriverDropdownCard;

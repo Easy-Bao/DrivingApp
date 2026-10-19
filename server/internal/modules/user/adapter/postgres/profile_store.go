@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/user/app"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/user/domain"
 	platformdatabase "github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	platformstorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage"
-	"github.com/Easy-Bao/DrivingApp/server/internal/modules/user/app"
-	"github.com/Easy-Bao/DrivingApp/server/internal/modules/user/domain"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"

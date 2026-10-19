@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	lifecycle "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 )
 
 // Challenger Test Suite for StartTrip proximity and dwell guards

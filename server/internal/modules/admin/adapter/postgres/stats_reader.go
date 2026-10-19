@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/modules/admin/domain"
 	adminapp "github.com/Easy-Bao/DrivingApp/server/internal/modules/admin/app"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/admin/domain"
 	databasepostgres "github.com/Easy-Bao/DrivingApp/server/internal/platform/database/sqlc"
 	"github.com/jackc/pgx/v5/pgxpool"
 )

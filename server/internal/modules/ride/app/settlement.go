@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
 var ErrSettlementPersistenceUnavailable = errors.New("cash settlement persistence is unavailable")

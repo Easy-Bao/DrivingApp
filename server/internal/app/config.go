@@ -13,12 +13,12 @@ import (
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/adapter/email"
 	dispatchapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/app"
+	rideconfig "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/adapter/config"
+	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	miniostorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage/minio"
-	rideconfig "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/adapter/config"
-	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
 )
 
 const _serviceName = "api"

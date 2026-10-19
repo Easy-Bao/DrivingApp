@@ -350,5 +350,3 @@ class DriverPoolBidCard extends StatelessWidget {
     return fallback;
   }
 }
-
-typedef DriverPoolBidCardWidget = DriverPoolBidCard;

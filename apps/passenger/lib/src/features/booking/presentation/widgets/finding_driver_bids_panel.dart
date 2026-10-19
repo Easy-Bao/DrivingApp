@@ -254,5 +254,3 @@ class const FindingDriverBidsPanel({
     );
   }
 }
-
-typedef FindingDriverBidsPanelWidget = FindingDriverBidsPanel;

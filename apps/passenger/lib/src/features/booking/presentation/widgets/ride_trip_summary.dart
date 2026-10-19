@@ -286,5 +286,3 @@ Widget rideTripSummaryLongAddressPreview() {
     ),
   );
 }
-
-typedef RideTripSummaryWidget = RideTripSummary;

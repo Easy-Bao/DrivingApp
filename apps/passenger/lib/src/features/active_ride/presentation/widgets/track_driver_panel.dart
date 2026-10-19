@@ -496,5 +496,3 @@ class const _ContactButton({
     );
   }
 }
-
-typedef TrackDriverPanelWidget = TrackDriverPanel;

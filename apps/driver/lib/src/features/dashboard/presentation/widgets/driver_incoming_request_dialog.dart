@@ -325,10 +325,7 @@ class _DriverIncomingRequestDialogState
                         ],
                       ),
                       const SizedBox(height: 18),
-                      CompactRouteTimelineWidget(
-                        pickup: pickup,
-                        dropoff: dropoff,
-                      ),
+                      CompactRouteTimeline(pickup: pickup, dropoff: dropoff),
                       if (passengerNote != null) ...[
                         const SizedBox(height: 12),
                         Container(

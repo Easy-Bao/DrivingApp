@@ -39,5 +39,3 @@ class const FindingDriverSearchingPanel({
     );
   }
 }
-
-typedef FindingDriverSearchingPanelWidget = FindingDriverSearchingPanel;

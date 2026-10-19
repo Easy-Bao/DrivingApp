@@ -1,7 +1,7 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 
-class const GuestActionBarWidget({
+class const GuestActionBar({
   super.key,
   required this.onSignUp,
   required this.onSignIn,

@@ -5,30 +5,27 @@ import 'dart:io';
 import 'package:driver/src/features/chat/domain/entities/chat_connection_state.dart';
 
 abstract class ChatRemoteDataSource {
-  Future<void> establishWebSocketConnection(
-    Uri chatServiceUri, {
-    String? token,
-  });
+  Future<void> connect(Uri chatServiceUri, {String? token});
 
-  void sendWebSocketChatMessage(String messagePayload);
+  void sendMessage(String messagePayload);
 
-  void sendWebSocketTypingStatus(bool isTyping);
+  void sendTypingStatus(bool isTyping);
 
-  Future<void> terminateWebSocketConnection();
+  Future<void> disconnect();
 
-  Stream<String> get webSocketEventStream;
+  Stream<String> get eventStream;
 
   /// Connection changes are separate from chat payloads so a reconnect never
   /// has to be represented as a fake user message or a raw transport error.
   Stream<ChatConnectionState> get connectionStateStream =>
       const Stream<ChatConnectionState>.empty();
 
-  bool get isWebSocketConnected;
+  bool get isConnected;
 
   Future<void> dispose();
 }
 
-class WebSocketChatRemoteDataSource({
+class ChatRemoteDataSourceImpl({
   FutureOr<String?> Function()? tokenProvider,
   Future<String?> Function()? refreshTokenProvider,
 }) implements ChatRemoteDataSource {
@@ -54,24 +51,21 @@ class WebSocketChatRemoteDataSource({
       StreamController<ChatConnectionState>.broadcast();
 
   @override
-  Stream<String> get webSocketEventStream => _chatEventStreamController.stream;
+  Stream<String> get eventStream => _chatEventStreamController.stream;
 
   @override
   Stream<ChatConnectionState> get connectionStateStream =>
       _connectionStateController.stream;
 
   @override
-  bool get isWebSocketConnected {
+  bool get isConnected {
     final socket = _chatWebSocket;
     return socket != null && socket.readyState == WebSocket.open;
   }
 
   @override
-  Future<void> establishWebSocketConnection(
-    Uri chatServiceUri, {
-    String? token,
-  }) async {
-    await terminateWebSocketConnection();
+  Future<void> connect(Uri chatServiceUri, {String? token}) async {
+    await disconnect();
     _disposed = false;
     _shouldReconnect = true;
     _chatServiceUri = chatServiceUri;
@@ -81,7 +75,7 @@ class WebSocketChatRemoteDataSource({
   }
 
   @override
-  void sendWebSocketChatMessage(String messagePayload) {
+  void sendMessage(String messagePayload) {
     if (_disposed) {
       throw StateError('Chat connection is unavailable.');
     }
@@ -98,7 +92,7 @@ class WebSocketChatRemoteDataSource({
   }
 
   @override
-  void sendWebSocketTypingStatus(bool isTyping) {
+  void sendTypingStatus(bool isTyping) {
     final socket = _chatWebSocket;
     if (socket == null || socket.readyState != WebSocket.open) {
       throw StateError('Chat connection is unavailable.');
@@ -107,7 +101,7 @@ class WebSocketChatRemoteDataSource({
   }
 
   @override
-  Future<void> terminateWebSocketConnection() async {
+  Future<void> disconnect() async {
     _shouldReconnect = false;
     _connectionVersion++;
     _reconnectTimer?.cancel();
@@ -127,7 +121,7 @@ class WebSocketChatRemoteDataSource({
     _disposed = true;
     await _socketSubscription?.cancel();
     _socketSubscription = null;
-    await terminateWebSocketConnection();
+    await disconnect();
     await _chatEventStreamController.close();
     await _connectionStateController.close();
   }

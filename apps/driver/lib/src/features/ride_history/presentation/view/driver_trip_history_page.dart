@@ -446,7 +446,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                CompactRouteTimelineWidget(pickup: fromName, dropoff: toName),
+                CompactRouteTimeline(pickup: fromName, dropoff: toName),
                 const SizedBox(height: 14),
                 const Divider(height: 1),
                 const SizedBox(height: 12),

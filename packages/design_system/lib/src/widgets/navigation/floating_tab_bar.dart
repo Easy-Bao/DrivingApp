@@ -6,13 +6,12 @@ import 'package:design_system/src/widgets/navigation/swipe_tab_indicator.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-typedef AppTabIconBuilder =
-    Widget Function(
-      BuildContext context,
-      int index,
-      AppTabDestination destination,
-      Color color,
-    );
+typedef AppTabIconBuilder = Widget Function(
+  BuildContext context,
+  int index,
+  AppTabDestination destination,
+  Color color,
+);
 
 class AppTabDestination {
   const AppTabDestination({required this.icon, required this.label});
@@ -228,9 +227,8 @@ class _AppFloatingTabItem extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.fade,
                     softWrap: false,
-                    textScaler: MediaQuery.textScalerOf(context).clamp(
-                      maxScaleFactor: 1.2,
-                    ),
+                    textScaler: MediaQuery.textScalerOf(context)
+                        .clamp(maxScaleFactor: 1.2),
                     style: labelStyle.copyWith(
                       color: targetColor,
                       fontWeight: FontWeight.w500,

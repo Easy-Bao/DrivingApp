@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/domain"
-	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	ridedomain "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	event "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
 // BiddingStore persists bid-session state and the ride created by acceptance

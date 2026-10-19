@@ -12,16 +12,16 @@ import (
 	authpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/adapter/postgres"
 	dispatchpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/dispatch/adapter/postgres"
 	documentpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/driver/adapter/postgres"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
-	eventadapter "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/logger"
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
-	redisplatform "github.com/Easy-Bao/DrivingApp/server/internal/platform/redis"
-	miniostorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage/minio"
-	websockethub "github.com/Easy-Bao/DrivingApp/server/internal/platform/ws"
 	reviewpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/review/adapter/postgres"
 	ridepostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/adapter/postgres"
 	userpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/user/adapter/postgres"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
+	eventadapter "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/logger"
+	redisplatform "github.com/Easy-Bao/DrivingApp/server/internal/platform/redis"
+	miniostorage "github.com/Easy-Bao/DrivingApp/server/internal/platform/storage/minio"
+	websockethub "github.com/Easy-Bao/DrivingApp/server/internal/platform/ws"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -30,7 +30,7 @@ type Application struct {
 	postgresPool    *pgxpool.Pool
 	redisClient     redisClient
 	eventHub        *websockethub.Hub
-	eventSubscriber *eventadapter.RedisEventSubscriber
+	eventSubscriber *eventadapter.DistributedEventSubscriber
 	logger          *slog.Logger
 }
 
@@ -130,14 +130,14 @@ func NewApplication(ctx context.Context, config Config) (*Application, error) {
 	if err != nil {
 		return nil, fmt.Errorf("create review repository: %w", err)
 	}
-	rateCounterStore := middleware.NewRedisCounterStore(redisClient)
+	rateCounterStore := middleware.NewCacheCounterStore(redisClient)
 	rateLimiter := middleware.NewRateLimiter(middleware.RateLimiterDependencies{
 		Store:  rateCounterStore,
 		Config: config.RateLimits,
 	})
 	idempotency := middleware.NewIdempotency(
 		middleware.IdempotencyDependencies{
-			Store: middleware.NewRedisIdempotencyStore(redisClient),
+			Store: middleware.NewCacheIdempotencyStore(redisClient),
 		},
 		middleware.WithIdempotencyExpiration(10*time.Minute),
 	).WithLogger(applicationLogger)

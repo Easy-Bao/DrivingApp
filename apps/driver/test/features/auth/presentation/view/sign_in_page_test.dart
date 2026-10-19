@@ -25,9 +25,7 @@ void main() {
           email: 'driver@example.com',
           password: 'password123',
         ),
-      ).thenAnswer(
-        (_) async => const Err(InvalidCredentialsFailure()),
-      );
+      ).thenAnswer((_) async => const Err(InvalidCredentialsFailure()));
 
       final bloc = SignInBloc(repository);
       await tester.pumpWidget(
@@ -63,10 +61,7 @@ void main() {
         find.byType(TextField).first,
         'driver@example.com',
       );
-      await tester.enterText(
-        find.byType(TextField).last,
-        'password123',
-      );
+      await tester.enterText(find.byType(TextField).last, 'password123');
       await tester.pump();
 
       expect(find.text('Enter a valid email address.'), findsNothing);

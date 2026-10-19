@@ -9,11 +9,11 @@ class DriverSessionStore({FlutterSecureStorage? storage}) {
   this : _storage = storage ?? _defaultStorage;
 
   Future<void> saveToken(String token) async {
-    await _storage.write(key: DriverStorageKeys.jwtToken, value: token);
+    await _storage.write(key: DriverStorageKeys.accessToken, value: token);
   }
 
   Future<String?> readToken() async {
-    return _storage.read(key: DriverStorageKeys.jwtToken);
+    return _storage.read(key: DriverStorageKeys.accessToken);
   }
 
   Future<void> saveRefreshToken(String token) async {
@@ -83,7 +83,7 @@ class DriverSessionStore({FlutterSecureStorage? storage}) {
   Future<void> clearSession() async {
     await Future.wait(
       const [
-        DriverStorageKeys.jwtToken,
+        DriverStorageKeys.accessToken,
         DriverStorageKeys.refreshToken,
         DriverStorageKeys.driverId,
         DriverStorageKeys.driverOnlineStatus,

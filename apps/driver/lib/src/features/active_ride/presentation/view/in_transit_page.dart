@@ -370,7 +370,7 @@ class _InTransitPageState extends State<InTransitPage> {
                               ),
                             ),
                             const SizedBox(height: 10),
-                            CompactRouteTimelineWidget(
+                            CompactRouteTimeline(
                               pickup: widget.pickup,
                               dropoff: widget.dropoff,
                               pickupLabel: 'Pickup',

@@ -24,10 +24,10 @@ func TestMailConfigRejectsPartialSettings(t *testing.T) {
 	}
 }
 
-func TestGoMailGatewayBuildsVerificationDelivery(t *testing.T) {
+func TestMailGatewayBuildsVerificationDelivery(t *testing.T) {
 	config := validMailConfig()
 	var gotRecipient, gotSubject, gotBody string
-	gateway := email.NewGoMailGateway(
+	gateway := email.NewMailGateway(
 		config,
 		email.WithDelivery(func(
 			_ context.Context,
@@ -52,9 +52,9 @@ func TestGoMailGatewayBuildsVerificationDelivery(t *testing.T) {
 	}
 }
 
-func TestGoMailGatewayHonorsCanceledContext(t *testing.T) {
+func TestMailGatewayHonorsCanceledContext(t *testing.T) {
 	called := false
-	gateway := email.NewGoMailGateway(
+	gateway := email.NewMailGateway(
 		validMailConfig(),
 		email.WithDelivery(func(
 			context.Context,
@@ -79,8 +79,8 @@ func TestGoMailGatewayHonorsCanceledContext(t *testing.T) {
 	}
 }
 
-func TestGoMailGatewayRejectsEmptyRecipient(t *testing.T) {
-	gateway := email.NewGoMailGateway(
+func TestMailGatewayRejectsEmptyRecipient(t *testing.T) {
+	gateway := email.NewMailGateway(
 		validMailConfig(),
 		email.WithDelivery(func(
 			context.Context,
@@ -98,9 +98,9 @@ func TestGoMailGatewayRejectsEmptyRecipient(t *testing.T) {
 	}
 }
 
-func TestGoMailGatewayOpensCircuitAfterDeliveryFailures(t *testing.T) {
+func TestMailGatewayOpensCircuitAfterDeliveryFailures(t *testing.T) {
 	calls := 0
-	gateway := email.NewGoMailGateway(
+	gateway := email.NewMailGateway(
 		validMailConfig(),
 		email.WithDelivery(func(
 			context.Context,

@@ -8,8 +8,9 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:maps/maps.dart';
+import 'package:passenger/src/core/location/live_map_bloc.dart';
+import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
@@ -22,22 +23,37 @@ import 'package:passenger/src/features/active_ride/presentation/widgets/trip_can
 import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/chat/chat_routes.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
-import 'package:passenger/src/core/location/live_map_bloc.dart';
-import 'package:passenger/src/core/session/session_store.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class const _MapUpdateRequest({
-  required this.driverLat,
-  required this.driverLng,
-  required this.routeCoordinates,
-  required this.status,
-  required this.driverName,
-}) {
-  final double driverLat;
-  final double driverLng;
-  final Float64List? routeCoordinates;
-  final RideStatus status;
-  final String driverName;
+Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
+  return Tooltip(
+    message: MaterialLocalizations.of(context).backButtonTooltip,
+    child: Material(
+      color: context.colorScheme.surface,
+      elevation: 2,
+      shadowColor: context.colorScheme.onSurface.withValues(alpha: 0.08),
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: Semantics(
+        button: true,
+        label: 'Back',
+        child: InkWell(
+          onTap: onPressed,
+          customBorder: const CircleBorder(),
+          child: SizedBox(
+            width: 48,
+            height: 48,
+            child: Center(
+              child: Icon(
+                LucideIcons.arrow_left,
+                color: context.colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 class const TrackDriverPage({
@@ -64,6 +80,22 @@ class const TrackDriverPage({
   State<TrackDriverPage> createState() => _TrackDriverPageState();
 }
 
+class _MapUpdateRequest {
+  const _MapUpdateRequest({
+    required this.driverLat,
+    required this.driverLng,
+    required this.routeCoordinates,
+    required this.status,
+    required this.driverName,
+  });
+
+  final double driverLat;
+  final double driverLng;
+  final Float64List? routeCoordinates;
+  final RideStatus status;
+  final String driverName;
+}
+
 class _TrackDriverPageState extends State<TrackDriverPage> {
   AppMapController? _mapController;
   bool _initialized = false;
@@ -72,9 +104,9 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
   _MapUpdateRequest? _pendingMapUpdate;
   bool _hasHandledTerminalState = false;
   DateTime? _lastCameraFitAt;
-  mapbox.PointAnnotationManager? _passengerMarkerManager;
-  mapbox.PointAnnotationManager? _driverMarkerManager;
-  mapbox.PolylineAnnotationManager? _routeLineManager;
+  MapPointAnnotationManager? _passengerMarkerManager;
+  MapPointAnnotationManager? _driverMarkerManager;
+  MapPolylineAnnotationManager? _routeLineManager;
   StreamSubscription<Position>? _locationSubscription;
   LiveMapBloc? _liveMapBloc;
 
@@ -89,453 +121,6 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
   String? _errorMessage;
   StreamSubscription<RealtimeConnectionState>? _realtimeStateSubscription;
   bool _isTransportRetrying = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _liveMapBloc = widget.liveMapBloc;
-    widget.realtimeClient?.setActiveTripResyncHandler(_resyncActiveTrip);
-    _realtimeStateSubscription = widget.realtimeClient?.states.listen((state) {
-      if (!mounted) return;
-      final retrying =
-          state is RealtimeDisconnected || state is RealtimeConnecting;
-      if (_isTransportRetrying != retrying) {
-        setState(() => _isTransportRetrying = retrying);
-      }
-    });
-    _chatMessagesPollingTask = AppLifecyclePeriodicTask(
-      lifecycleCoordinator: widget.lifecycleCoordinator,
-      interval: const Duration(seconds: 4),
-      onTick: _updateUnreadMessagesCount,
-      runImmediately: true,
-    );
-    unawaited(_initializeChatRepository());
-    _chatMessagesPollingTask.start();
-  }
-
-  Future<void> _initializeChatRepository() async {
-    final passengerIdentifier =
-        await widget.sessionService.readPassengerId() ?? '';
-    if (!mounted || passengerIdentifier.isEmpty) return;
-    _passengerIdentifier = passengerIdentifier;
-    _chatReadAt = await widget.sessionService.readChatReadAt(widget.ride.id);
-    _chatRepository = widget.chatRepositoryFactory.create(
-      currentUserId: passengerIdentifier,
-    );
-    unawaited(_updateUnreadMessagesCount());
-  }
-
-  @override
-  void dispose() {
-    widget.realtimeClient?.setActiveTripResyncHandler(null);
-    unawaited(_realtimeStateSubscription?.cancel());
-    unawaited(_locationSubscription?.cancel());
-    unawaited(_chatMessagesPollingTask.dispose());
-    unawaited(_chatRepository?.dispose());
-    unawaited(_liveMapBloc?.close());
-    for (final manager in [
-      _routeLineManager,
-      _passengerMarkerManager,
-      _driverMarkerManager,
-    ]) {
-      unawaited(MapProvider.clearAnnotations(manager));
-    }
-    super.dispose();
-  }
-
-  Future<void> _resyncActiveTrip() async {
-    if (!mounted) return;
-    await BlocProvider.of<TrackDriverCubit>(context).resyncActiveTrip();
-  }
-
-  Future<void> _updateUnreadMessagesCount() async {
-    if (_isPollingChat) return;
-    _isPollingChat = true;
-    try {
-      final chatRepository = _chatRepository;
-      final passengerIdentifier = _passengerIdentifier;
-      if (chatRepository == null || passengerIdentifier.isEmpty) return;
-
-      final result = await chatRepository.fetchRoomMessages(widget.ride.id);
-
-      result.fold((_) => null, (List<ChatMessage> messages) {
-        final driverChatMessagesList = messages
-            .where((m) => m.senderId != passengerIdentifier)
-            .toList();
-        if (!mounted) return;
-        final readAt = _chatReadAt;
-        final unreadMessagesCount = driverChatMessagesList
-            .where(
-              (message) =>
-                  readAt == null || message.createdAt.toUtc().isAfter(readAt),
-            )
-            .length;
-        if (unreadMessagesCount != _unreadChatMessagesCount) {
-          setState(() => _unreadChatMessagesCount = unreadMessagesCount);
-        }
-      });
-    } catch (_) {
-      // A later bounded refresh can recover from a transient chat failure.
-    } finally {
-      _isPollingChat = false;
-    }
-  }
-
-  Future<void> _markChatMessagesRead() async {
-    final chatRepository = _chatRepository;
-    if (chatRepository == null) return;
-
-    var readAt = DateTime.now().toUtc();
-    final result = await chatRepository.fetchRoomMessages(widget.ride.id);
-    result.fold((_) {}, (messages) {
-      for (final message in messages) {
-        if (message.senderId == _passengerIdentifier) continue;
-        final createdAt = message.createdAt.toUtc();
-        if (createdAt.isAfter(readAt)) readAt = createdAt;
-      }
-    });
-    _chatReadAt = readAt;
-    await widget.sessionService.saveChatReadAt(widget.ride.id, readAt);
-    if (!mounted) return;
-    setState(() => _unreadChatMessagesCount = 0);
-  }
-
-  void _onMapCreated(AppMapController controller) {
-    _mapController = controller;
-    _flushPendingMapUpdate();
-    if (!_initialized) {
-      _initialized = true;
-      final passengerLat = widget.ride.pickupLatitude ?? 0.0;
-      final passengerLng = widget.ride.pickupLongitude ?? 0.0;
-
-      if (_locationSubscription != null) {
-        unawaited(_locationSubscription!.cancel());
-      }
-      final trackDriverCubit = BlocProvider.of<TrackDriverCubit>(context);
-      _locationSubscription = LocationService.getPositionStream().listen((pos) {
-        unawaited(
-          trackDriverCubit.publishPassengerLocation(
-            rideId: widget.ride.id,
-            latitude: pos.latitude,
-            longitude: pos.longitude,
-          ),
-        );
-      }, onError: (_) {});
-
-      unawaited(
-        BlocProvider.of<TrackDriverCubit>(context).startTracking(
-          startLat: passengerLat,
-          startLng: passengerLng,
-          endLat: passengerLat,
-          endLng: passengerLng,
-          rideId: widget.ride.id,
-          driverId: widget.ride.driverId ?? '',
-          driverName: widget.ride.driverName ?? '',
-          vehiclePlate: widget.ride.plateNumber ?? '',
-          vehicleType: widget.ride.vehicleType ?? '',
-          destinationLat: widget.ride.dropoffLatitude ?? 0.0,
-          destinationLng: widget.ride.dropoffLongitude ?? 0.0,
-        ),
-      );
-    }
-  }
-
-  Future<void> _updateMapElements(
-    double driverLat,
-    double driverLng,
-    Float64List? routeCoordinates,
-    RideStatus status,
-    String driverName,
-  ) async {
-    final mapController = _mapController;
-    final request = _MapUpdateRequest(
-      driverLat: driverLat,
-      driverLng: driverLng,
-      routeCoordinates: routeCoordinates,
-      status: status,
-      driverName: driverName,
-    );
-    if (mapController == null || _isUpdatingMap) {
-      _pendingMapUpdate = request;
-      return;
-    }
-    _isUpdatingMap = true;
-    final passengerLat = widget.ride.pickupLatitude ?? 0.0;
-    final passengerLng = widget.ride.pickupLongitude ?? 0.0;
-
-    try {
-      final isInTransit = status == RideStatus.inTransit;
-      final targetLat = isInTransit
-          ? (widget.ride.dropoffLatitude ?? 0.0)
-          : passengerLat;
-      final targetLng = isInTransit
-          ? (widget.ride.dropoffLongitude ?? 0.0)
-          : passengerLng;
-      if (routeCoordinates != null && routeCoordinates.length >= 4) {
-        _routeLineManager = await _upsertRoute(
-          _routeLineManager,
-          mapController,
-          routeCoordinates,
-        );
-      } else if (_routeLineManager != null) {
-        await MapProvider.clearAnnotations(_routeLineManager);
-        _routeLineManager = null;
-      }
-      final destinationLat = isInTransit ? targetLat : passengerLat;
-      final destinationLng = isInTransit ? targetLng : passengerLng;
-      _passengerMarkerManager = await _upsertMarker(
-        _passengerMarkerManager,
-        mapController,
-        destinationLat,
-        destinationLng,
-        isOrigin: true,
-        color: isInTransit
-            ? TripMapMarkerStyle.tripLocation
-            : TripMapMarkerStyle.ownLocation,
-        animate: false,
-      );
-      _driverMarkerManager = await _upsertMarker(
-        _driverMarkerManager,
-        mapController,
-        driverLat,
-        driverLng,
-        isOrigin: false,
-        color: TripMapMarkerStyle.tripLocation,
-        animate: true,
-      );
-      final now = DateTime.now();
-      if (!_hasFittedInitialMap ||
-          _lastCameraFitAt == null ||
-          now.difference(_lastCameraFitAt!) >= const Duration(seconds: 8)) {
-        await MapProvider.fitBounds(
-          mapController,
-          [LatLng(targetLat, targetLng), LatLng(driverLat, driverLng)],
-          padding: 72.0,
-          maxZoom: 15.0,
-        );
-        _hasFittedInitialMap = true;
-        _lastCameraFitAt = now;
-      }
-    } catch (error) {
-      debugPrint('Error updating track map: $error');
-    } finally {
-      _isUpdatingMap = false;
-      _flushPendingMapUpdate();
-    }
-  }
-
-  void _flushPendingMapUpdate() {
-    if (_mapController == null || _isUpdatingMap || !mounted) return;
-    final pending = _pendingMapUpdate;
-    if (pending == null) return;
-    _pendingMapUpdate = null;
-    unawaited(
-      _updateMapElements(
-        pending.driverLat,
-        pending.driverLng,
-        pending.routeCoordinates,
-        pending.status,
-        pending.driverName,
-      ),
-    );
-  }
-
-  Future<mapbox.PointAnnotationManager> _upsertMarker(
-    mapbox.PointAnnotationManager? annotationManager,
-    AppMapController mapController,
-    double lat,
-    double lng, {
-    required bool isOrigin,
-    required Color color,
-    String? label,
-    bool animate = false,
-  }) async {
-    if (annotationManager == null) {
-      return MapProvider.addMarker(
-        mapController,
-        lat,
-        lng,
-        isOrigin: isOrigin,
-        color: color,
-        label: label,
-      );
-    }
-    await MapProvider.replaceMarker(
-      annotationManager,
-      lat,
-      lng,
-      isOrigin: isOrigin,
-      color: color,
-      label: label,
-      animate: animate,
-    );
-    return annotationManager;
-  }
-
-  Future<mapbox.PolylineAnnotationManager?> _upsertRoute(
-    mapbox.PolylineAnnotationManager? annotationManager,
-    AppMapController mapController,
-    Float64List routeCoordinates,
-  ) async {
-    if (!mounted) return annotationManager;
-    final color = context.colorScheme.onSurface;
-    if (annotationManager == null) {
-      return MapProvider.addPolylineBuffer(
-        mapController,
-        routeCoordinates,
-        color: color,
-        width: 4.0,
-      );
-    }
-    await MapProvider.replacePolylineBuffer(
-      annotationManager,
-      routeCoordinates,
-      color: color,
-      width: 4.0,
-    );
-    return annotationManager;
-  }
-
-  Future<void> _handleCancelTrip() async {
-    if (_isCancellingTrip) return;
-    final reason = await showDialog<String>(
-      context: context,
-      barrierDismissible: true,
-      builder: (_) => const TripCancellationDialog(),
-    );
-    if (reason == null || !mounted) return;
-
-    await _cancelTripRequest(reason: reason);
-  }
-
-  Future<void> _handleEmergencyPressed() async {
-    await showPassengerEmergencyActionSheet(
-      context,
-      onEmergencyStop: _emergencyStop,
-    );
-  }
-
-  Future<bool> _emergencyStop(String reason, String details) async {
-    if (!mounted || _isEmergencyStopping) return false;
-
-    setState(() => _isEmergencyStopping = true);
-    try {
-      final stopped = await BlocProvider.of<TrackDriverCubit>(context)
-          .emergencyStopRequest(reason: reason, details: details);
-      if (mounted && !stopped) {
-        setState(
-          () => _errorMessage =
-              'The ride could not be ended for safety. Please try again.',
-        );
-        CustomToast.show(
-          context,
-          'The ride could not be ended for safety. Please try again.',
-          isError: true,
-        );
-      }
-      return stopped;
-    } catch (_) {
-      if (mounted) {
-        setState(
-          () => _errorMessage =
-              'The ride could not be ended for safety. Please try again.',
-        );
-      }
-      return false;
-    } finally {
-      if (mounted) setState(() => _isEmergencyStopping = false);
-    }
-  }
-
-  Future<void> _handleReportDriverPressed() async {
-    final submitted = await showPassengerSafetyReportSheet(
-      context,
-      rideId: widget.ride.id,
-      trackRepository: widget.trackRepository,
-    );
-    if (!mounted || !submitted) return;
-    CustomToast.show(context, 'Report submitted and linked to this ride.');
-  }
-
-  Future<void> _cancelTripRequest({required String reason}) async {
-    if (_isCancellingTrip || !mounted) return;
-
-    setState(() => _isCancellingTrip = true);
-    try {
-      final canceled = await BlocProvider.of<TrackDriverCubit>(context)
-          .cancelTripRequest(reason: reason);
-      if (mounted && !canceled) {
-        setState(() => _errorMessage = "Couldn't cancel the ride. Try again.");
-        CustomToast.show(
-          context,
-          "Couldn't cancel the ride. Try again.",
-          isError: true,
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() => _errorMessage = "Couldn't cancel the ride. Try again.");
-      }
-    } finally {
-      if (mounted) setState(() => _isCancellingTrip = false);
-    }
-  }
-
-  String _formatSubtitle({
-    required bool isInTransit,
-    required bool hasArrived,
-    required bool isTracking,
-    required double? durationMinutes,
-    required String dropoffName,
-  }) {
-    if (hasArrived) {
-      return 'Driver is waiting at pickup location';
-    }
-    if (durationMinutes != null && durationMinutes > 0) {
-      final mins = durationMinutes.round();
-      final arrivalTime = DateTime.now().add(Duration(minutes: mins));
-      final hour = arrivalTime.hour % 12 == 0 ? 12 : arrivalTime.hour % 12;
-      final minute = arrivalTime.minute.toString().padLeft(2, '0');
-      final period = arrivalTime.hour >= 12 ? 'PM' : 'AM';
-      return 'ETA $hour:$minute $period • $mins mins left';
-    }
-    if (isInTransit) {
-      return dropoffName.trim().isNotEmpty
-          ? 'Heading to ${dropoffName.trim()}'
-          : 'Heading to destination';
-    }
-    if (isTracking) {
-      return 'Driver is heading to pickup';
-    }
-    return 'Driver assigned to your trip';
-  }
-
-  Future<void> _handleBackNavigation() async {
-    final cubit = BlocProvider.of<TrackDriverCubit>(context);
-    if (!cubit.state.isTracking) {
-      if (mounted) context.goNamed(HomeRoutes.home);
-      return;
-    }
-
-    final driverName = cubit.state.activeDriverName.isNotEmpty
-        ? cubit.state.activeDriverName
-        : widget.ride.displayDriverName;
-
-    final action = await showDialog<ActiveTripExitAction>(
-      context: context,
-      builder: (_) => ActiveTripExitDialog(driverName: driverName),
-    );
-
-    if (!mounted || action == null) return;
-    switch (action) {
-      case ActiveTripExitAction.keepTracking:
-        return;
-      case ActiveTripExitAction.cancel:
-        await _handleCancelTrip();
-      case ActiveTripExitAction.minimize:
-        context.goNamed(HomeRoutes.home);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -850,35 +435,451 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
       ),
     );
   }
-}
 
-Widget _buildTripBackButton(BuildContext context, VoidCallback onPressed) {
-  return Tooltip(
-    message: MaterialLocalizations.of(context).backButtonTooltip,
-    child: Material(
-      color: context.colorScheme.surface,
-      elevation: 2,
-      shadowColor: context.colorScheme.onSurface.withValues(alpha: 0.08),
-      shape: const CircleBorder(),
-      clipBehavior: Clip.antiAlias,
-      child: Semantics(
-        button: true,
-        label: 'Back',
-        child: InkWell(
-          onTap: onPressed,
-          customBorder: const CircleBorder(),
-          child: SizedBox(
-            width: 48,
-            height: 48,
-            child: Center(
-              child: Icon(
-                LucideIcons.arrow_left,
-                color: context.colorScheme.onSurface,
-              ),
-            ),
-          ),
-        ),
+  @override
+  void dispose() {
+    widget.realtimeClient?.setActiveTripResyncHandler(null);
+    unawaited(_realtimeStateSubscription?.cancel());
+    unawaited(_locationSubscription?.cancel());
+    unawaited(_chatMessagesPollingTask.dispose());
+    unawaited(_chatRepository?.dispose());
+    unawaited(_liveMapBloc?.close());
+    for (final manager in [
+      _routeLineManager,
+      _passengerMarkerManager,
+      _driverMarkerManager,
+    ]) {
+      unawaited(MapProvider.clearAnnotations(manager));
+    }
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _liveMapBloc = widget.liveMapBloc;
+    widget.realtimeClient?.setActiveTripResyncHandler(_resyncActiveTrip);
+    _realtimeStateSubscription = widget.realtimeClient?.states.listen((state) {
+      if (!mounted) return;
+      final retrying =
+          state is RealtimeDisconnected || state is RealtimeConnecting;
+      if (_isTransportRetrying != retrying) {
+        setState(() => _isTransportRetrying = retrying);
+      }
+    });
+    _chatMessagesPollingTask = AppLifecyclePeriodicTask(
+      lifecycleCoordinator: widget.lifecycleCoordinator,
+      interval: const Duration(seconds: 4),
+      onTick: _updateUnreadMessagesCount,
+      runImmediately: true,
+    );
+    unawaited(_initializeChatRepository());
+    _chatMessagesPollingTask.start();
+  }
+
+  Future<void> _cancelTripRequest({required String reason}) async {
+    if (_isCancellingTrip || !mounted) return;
+
+    setState(() => _isCancellingTrip = true);
+    try {
+      final canceled = await BlocProvider.of<TrackDriverCubit>(context)
+          .cancelTripRequest(reason: reason);
+      if (mounted && !canceled) {
+        setState(() => _errorMessage = "Couldn't cancel the ride. Try again.");
+        CustomToast.show(
+          context,
+          "Couldn't cancel the ride. Try again.",
+          isError: true,
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _errorMessage = "Couldn't cancel the ride. Try again.");
+      }
+    } finally {
+      if (mounted) setState(() => _isCancellingTrip = false);
+    }
+  }
+
+  Future<bool> _emergencyStop(String reason, String details) async {
+    if (!mounted || _isEmergencyStopping) return false;
+
+    setState(() => _isEmergencyStopping = true);
+    try {
+      final stopped = await BlocProvider.of<TrackDriverCubit>(context)
+          .emergencyStopRequest(reason: reason, details: details);
+      if (mounted && !stopped) {
+        setState(
+          () => _errorMessage =
+              'The ride could not be ended for safety. Please try again.',
+        );
+        CustomToast.show(
+          context,
+          'The ride could not be ended for safety. Please try again.',
+          isError: true,
+        );
+      }
+      return stopped;
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _errorMessage =
+              'The ride could not be ended for safety. Please try again.',
+        );
+      }
+      return false;
+    } finally {
+      if (mounted) setState(() => _isEmergencyStopping = false);
+    }
+  }
+
+  void _flushPendingMapUpdate() {
+    if (_mapController == null || _isUpdatingMap || !mounted) return;
+    final pending = _pendingMapUpdate;
+    if (pending == null) return;
+    _pendingMapUpdate = null;
+    unawaited(
+      _updateMapElements(
+        pending.driverLat,
+        pending.driverLng,
+        pending.routeCoordinates,
+        pending.status,
+        pending.driverName,
       ),
-    ),
-  );
+    );
+  }
+
+  String _formatSubtitle({
+    required bool isInTransit,
+    required bool hasArrived,
+    required bool isTracking,
+    required double? durationMinutes,
+    required String dropoffName,
+  }) {
+    if (hasArrived) {
+      return 'Driver is waiting at pickup location';
+    }
+    if (durationMinutes != null && durationMinutes > 0) {
+      final mins = durationMinutes.round();
+      final arrivalTime = DateTime.now().add(Duration(minutes: mins));
+      final hour = arrivalTime.hour % 12 == 0 ? 12 : arrivalTime.hour % 12;
+      final minute = arrivalTime.minute.toString().padLeft(2, '0');
+      final period = arrivalTime.hour >= 12 ? 'PM' : 'AM';
+      return 'ETA $hour:$minute $period • $mins mins left';
+    }
+    if (isInTransit) {
+      return dropoffName.trim().isNotEmpty
+          ? 'Heading to ${dropoffName.trim()}'
+          : 'Heading to destination';
+    }
+    if (isTracking) {
+      return 'Driver is heading to pickup';
+    }
+    return 'Driver assigned to your trip';
+  }
+
+  Future<void> _handleBackNavigation() async {
+    final cubit = BlocProvider.of<TrackDriverCubit>(context);
+    if (!cubit.state.isTracking) {
+      if (mounted) context.goNamed(HomeRoutes.home);
+      return;
+    }
+
+    final driverName = cubit.state.activeDriverName.isNotEmpty
+        ? cubit.state.activeDriverName
+        : widget.ride.displayDriverName;
+
+    final action = await showDialog<ActiveTripExitAction>(
+      context: context,
+      builder: (_) => ActiveTripExitDialog(driverName: driverName),
+    );
+
+    if (!mounted || action == null) return;
+    switch (action) {
+      case ActiveTripExitAction.keepTracking:
+        return;
+      case ActiveTripExitAction.cancel:
+        await _handleCancelTrip();
+      case ActiveTripExitAction.minimize:
+        context.goNamed(HomeRoutes.home);
+    }
+  }
+
+  Future<void> _handleCancelTrip() async {
+    if (_isCancellingTrip) return;
+    final reason = await showDialog<String>(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => const TripCancellationDialog(),
+    );
+    if (reason == null || !mounted) return;
+
+    await _cancelTripRequest(reason: reason);
+  }
+
+  Future<void> _handleEmergencyPressed() async {
+    await showPassengerEmergencyActionSheet(
+      context,
+      onEmergencyStop: _emergencyStop,
+    );
+  }
+
+  Future<void> _handleReportDriverPressed() async {
+    final submitted = await showPassengerSafetyReportSheet(
+      context,
+      rideId: widget.ride.id,
+      trackRepository: widget.trackRepository,
+    );
+    if (!mounted || !submitted) return;
+    CustomToast.show(context, 'Report submitted and linked to this ride.');
+  }
+
+  Future<void> _initializeChatRepository() async {
+    final passengerIdentifier =
+        await widget.sessionService.readPassengerId() ?? '';
+    if (!mounted || passengerIdentifier.isEmpty) return;
+    _passengerIdentifier = passengerIdentifier;
+    _chatReadAt = await widget.sessionService.readChatReadAt(widget.ride.id);
+    _chatRepository = widget.chatRepositoryFactory.create(
+      currentUserId: passengerIdentifier,
+    );
+    unawaited(_updateUnreadMessagesCount());
+  }
+
+  Future<void> _markChatMessagesRead() async {
+    final chatRepository = _chatRepository;
+    if (chatRepository == null) return;
+
+    var readAt = DateTime.now().toUtc();
+    final result = await chatRepository.fetchRoomMessages(widget.ride.id);
+    result.fold((_) {}, (messages) {
+      for (final message in messages) {
+        if (message.senderId == _passengerIdentifier) continue;
+        final createdAt = message.createdAt.toUtc();
+        if (createdAt.isAfter(readAt)) readAt = createdAt;
+      }
+    });
+    _chatReadAt = readAt;
+    await widget.sessionService.saveChatReadAt(widget.ride.id, readAt);
+    if (!mounted) return;
+    setState(() => _unreadChatMessagesCount = 0);
+  }
+
+  void _onMapCreated(AppMapController controller) {
+    _mapController = controller;
+    _flushPendingMapUpdate();
+    if (!_initialized) {
+      _initialized = true;
+      final passengerLat = widget.ride.pickupLatitude ?? 0.0;
+      final passengerLng = widget.ride.pickupLongitude ?? 0.0;
+
+      if (_locationSubscription != null) {
+        unawaited(_locationSubscription!.cancel());
+      }
+      final trackDriverCubit = BlocProvider.of<TrackDriverCubit>(context);
+      _locationSubscription = LocationService.getPositionStream().listen((pos) {
+        unawaited(
+          trackDriverCubit.publishPassengerLocation(
+            rideId: widget.ride.id,
+            latitude: pos.latitude,
+            longitude: pos.longitude,
+          ),
+        );
+      }, onError: (_) {});
+
+      unawaited(
+        BlocProvider.of<TrackDriverCubit>(context).startTracking(
+          startLat: passengerLat,
+          startLng: passengerLng,
+          endLat: passengerLat,
+          endLng: passengerLng,
+          rideId: widget.ride.id,
+          driverId: widget.ride.driverId ?? '',
+          driverName: widget.ride.driverName ?? '',
+          vehiclePlate: widget.ride.plateNumber ?? '',
+          vehicleType: widget.ride.vehicleType ?? '',
+          destinationLat: widget.ride.dropoffLatitude ?? 0.0,
+          destinationLng: widget.ride.dropoffLongitude ?? 0.0,
+        ),
+      );
+    }
+  }
+
+  Future<void> _resyncActiveTrip() async {
+    if (!mounted) return;
+    await BlocProvider.of<TrackDriverCubit>(context).resyncActiveTrip();
+  }
+
+  Future<void> _updateMapElements(
+    double driverLat,
+    double driverLng,
+    Float64List? routeCoordinates,
+    RideStatus status,
+    String driverName,
+  ) async {
+    final mapController = _mapController;
+    final request = _MapUpdateRequest(
+      driverLat: driverLat,
+      driverLng: driverLng,
+      routeCoordinates: routeCoordinates,
+      status: status,
+      driverName: driverName,
+    );
+    if (mapController == null || _isUpdatingMap) {
+      _pendingMapUpdate = request;
+      return;
+    }
+    _isUpdatingMap = true;
+    final passengerLat = widget.ride.pickupLatitude ?? 0.0;
+    final passengerLng = widget.ride.pickupLongitude ?? 0.0;
+
+    try {
+      final isInTransit = status == RideStatus.inTransit;
+      final targetLat = isInTransit
+          ? (widget.ride.dropoffLatitude ?? 0.0)
+          : passengerLat;
+      final targetLng = isInTransit
+          ? (widget.ride.dropoffLongitude ?? 0.0)
+          : passengerLng;
+      if (routeCoordinates != null && routeCoordinates.length >= 4) {
+        _routeLineManager = await _upsertRoute(
+          _routeLineManager,
+          mapController,
+          routeCoordinates,
+        );
+      } else if (_routeLineManager != null) {
+        await MapProvider.clearAnnotations(_routeLineManager);
+        _routeLineManager = null;
+      }
+      final destinationLat = isInTransit ? targetLat : passengerLat;
+      final destinationLng = isInTransit ? targetLng : passengerLng;
+      _passengerMarkerManager = await _upsertMarker(
+        _passengerMarkerManager,
+        mapController,
+        destinationLat,
+        destinationLng,
+        isOrigin: true,
+        color: isInTransit
+            ? TripMapMarkerStyle.tripLocation
+            : TripMapMarkerStyle.ownLocation,
+        animate: false,
+      );
+      _driverMarkerManager = await _upsertMarker(
+        _driverMarkerManager,
+        mapController,
+        driverLat,
+        driverLng,
+        isOrigin: false,
+        color: TripMapMarkerStyle.tripLocation,
+        animate: true,
+      );
+      final now = DateTime.now();
+      if (!_hasFittedInitialMap ||
+          _lastCameraFitAt == null ||
+          now.difference(_lastCameraFitAt!) >= const Duration(seconds: 8)) {
+        await MapProvider.fitBounds(
+          mapController,
+          [LatLng(targetLat, targetLng), LatLng(driverLat, driverLng)],
+          padding: 72.0,
+          maxZoom: 15.0,
+        );
+        _hasFittedInitialMap = true;
+        _lastCameraFitAt = now;
+      }
+    } catch (error) {
+      debugPrint('Error updating track map: $error');
+    } finally {
+      _isUpdatingMap = false;
+      _flushPendingMapUpdate();
+    }
+  }
+
+  Future<void> _updateUnreadMessagesCount() async {
+    if (_isPollingChat) return;
+    _isPollingChat = true;
+    try {
+      final chatRepository = _chatRepository;
+      final passengerIdentifier = _passengerIdentifier;
+      if (chatRepository == null || passengerIdentifier.isEmpty) return;
+
+      final result = await chatRepository.fetchRoomMessages(widget.ride.id);
+
+      result.fold((_) => null, (List<ChatMessage> messages) {
+        final driverChatMessagesList = messages
+            .where((m) => m.senderId != passengerIdentifier)
+            .toList();
+        if (!mounted) return;
+        final readAt = _chatReadAt;
+        final unreadMessagesCount = driverChatMessagesList
+            .where(
+              (message) =>
+                  readAt == null || message.createdAt.toUtc().isAfter(readAt),
+            )
+            .length;
+        if (unreadMessagesCount != _unreadChatMessagesCount) {
+          setState(() => _unreadChatMessagesCount = unreadMessagesCount);
+        }
+      });
+    } catch (_) {
+      // A later bounded refresh can recover from a transient chat failure.
+    } finally {
+      _isPollingChat = false;
+    }
+  }
+
+  Future<MapPointAnnotationManager> _upsertMarker(
+    MapPointAnnotationManager? annotationManager,
+    AppMapController mapController,
+    double lat,
+    double lng, {
+    required bool isOrigin,
+    required Color color,
+    String? label,
+    bool animate = false,
+  }) async {
+    if (annotationManager == null) {
+      return MapProvider.addMarker(
+        mapController,
+        lat,
+        lng,
+        isOrigin: isOrigin,
+        color: color,
+        label: label,
+      );
+    }
+    await MapProvider.replaceMarker(
+      annotationManager,
+      lat,
+      lng,
+      isOrigin: isOrigin,
+      color: color,
+      label: label,
+      animate: animate,
+    );
+    return annotationManager;
+  }
+
+  Future<MapPolylineAnnotationManager?> _upsertRoute(
+    MapPolylineAnnotationManager? annotationManager,
+    AppMapController mapController,
+    Float64List routeCoordinates,
+  ) async {
+    if (!mounted) return annotationManager;
+    final color = context.colorScheme.onSurface;
+    if (annotationManager == null) {
+      return MapProvider.addPolylineBuffer(
+        mapController,
+        routeCoordinates,
+        color: color,
+        width: 4.0,
+      );
+    }
+    await MapProvider.replacePolylineBuffer(
+      annotationManager,
+      routeCoordinates,
+      color: color,
+      width: 4.0,
+    );
+    return annotationManager;
+  }
 }

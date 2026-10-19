@@ -11,7 +11,7 @@ class ChatModule._() {
   static void binds(Injector i) {
     i.addLazySingleton<ChatRepositoryFactory>(
       (i) => DefaultChatRepositoryFactory(
-        clientDio: i.get<Dio>(),
+        httpClient: i.get<Dio>(),
         tokenProvider: i.get<RefreshableTokenProvider>().getToken,
         refreshTokenProvider: i
             .get<RefreshableTokenProvider>()

@@ -82,5 +82,3 @@ class const RideTipSelector({
     );
   }
 }
-
-typedef RideTipSelectorWidget = RideTipSelector;

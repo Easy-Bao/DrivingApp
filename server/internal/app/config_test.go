@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/adapter/email"
+	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/database"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
-	rideapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
 )
 
 func TestAPIAddressDefaultsToLoopback(t *testing.T) {

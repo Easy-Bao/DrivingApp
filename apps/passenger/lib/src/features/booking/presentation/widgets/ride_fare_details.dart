@@ -294,5 +294,3 @@ class const RideFareDetails({
     );
   }
 }
-
-typedef RideFareDetailsWidget = RideFareDetails;

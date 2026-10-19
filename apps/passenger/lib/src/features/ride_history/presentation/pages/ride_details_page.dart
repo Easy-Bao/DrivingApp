@@ -495,7 +495,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                       color: context.colorScheme.outlineVariant,
                     ),
                   ),
-                  CompactRouteTimelineWidget(
+                  CompactRouteTimeline(
                     pickup: ride?.pickup ?? 'Pickup Location',
                     dropoff: ride?.destination ?? 'Destination Location',
                     pickupLabel: 'Pickup',

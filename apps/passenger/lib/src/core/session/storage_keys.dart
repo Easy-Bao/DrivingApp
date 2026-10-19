@@ -1,5 +1,5 @@
 extension type const PassengerStorageKeys._(int _) {
-  static const String jwtToken = 'jwt_token';
+  static const String accessToken = 'jwt_token';
   static const String refreshToken = 'refresh_token';
   static const String driverId = 'driver_id';
   static const String passengerId = 'passenger_id';

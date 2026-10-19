@@ -18,9 +18,9 @@ const (
 	_redisStablePeriod = time.Minute
 )
 
-// RedisEventSubscriber forwards events published by other application
+// DistributedEventSubscriber forwards events published by other application
 // processes to this process's sinks. It reconnects after Redis disconnects.
-type RedisEventSubscriber struct {
+type DistributedEventSubscriber struct {
 	client  *redisclient.Client
 	origin  string
 	channel string
@@ -30,14 +30,14 @@ type RedisEventSubscriber struct {
 	once    sync.Once
 }
 
-func (subscriber *RedisEventSubscriber) WithLogger(logger *slog.Logger) *RedisEventSubscriber {
+func (subscriber *DistributedEventSubscriber) WithLogger(logger *slog.Logger) *DistributedEventSubscriber {
 	if subscriber != nil && logger != nil {
 		subscriber.logger = logger
 	}
 	return subscriber
 }
 
-func (subscriber *RedisEventSubscriber) Ready() <-chan struct{} {
+func (subscriber *DistributedEventSubscriber) Ready() <-chan struct{} {
 	if subscriber == nil || subscriber.ready == nil {
 		closed := make(chan struct{})
 		close(closed)
@@ -49,7 +49,7 @@ func (subscriber *RedisEventSubscriber) Ready() <-chan struct{} {
 // Run blocks until ctx is canceled. The readiness channel closes after the
 // first successful subscription, allowing the HTTP server to start only after
 // this process can receive cross-node events.
-func (subscriber *RedisEventSubscriber) Run(ctx context.Context) error {
+func (subscriber *DistributedEventSubscriber) Run(ctx context.Context) error {
 	if subscriber == nil || subscriber.client == nil {
 		return errors.New("subscribe to realtime events: redis client is required")
 	}
@@ -102,7 +102,7 @@ func (subscriber *RedisEventSubscriber) Run(ctx context.Context) error {
 	return nil
 }
 
-func (subscriber *RedisEventSubscriber) receive(ctx context.Context, pubsub *redisclient.PubSub) error {
+func (subscriber *DistributedEventSubscriber) receive(ctx context.Context, pubsub *redisclient.PubSub) error {
 	for ctx.Err() == nil {
 		message, err := pubsub.ReceiveMessage(ctx)
 		if err != nil {
@@ -115,8 +115,8 @@ func (subscriber *RedisEventSubscriber) receive(ctx context.Context, pubsub *red
 	return ctx.Err()
 }
 
-func (subscriber *RedisEventSubscriber) dispatch(payload string) error {
-	var frame redisEventFrame
+func (subscriber *DistributedEventSubscriber) dispatch(payload string) error {
+	var frame serializedEventFrame
 	if err := json.Unmarshal([]byte(payload), &frame); err != nil {
 		return fmt.Errorf("decode redis realtime event frame: %w", err)
 	}
@@ -137,7 +137,7 @@ func (subscriber *RedisEventSubscriber) dispatch(payload string) error {
 	return nil
 }
 
-func (subscriber *RedisEventSubscriber) log() *slog.Logger {
+func (subscriber *DistributedEventSubscriber) log() *slog.Logger {
 	if subscriber != nil && subscriber.logger != nil {
 		return subscriber.logger
 	}

@@ -13,17 +13,19 @@ const _backgroundTelemetryInterval = Duration(seconds: 10);
 const _notificationChannelId = 'easyride_passenger_location';
 const _notificationId = 4802;
 
-class PassengerBackgroundTelemetry({
-  required this._apiBaseUri,
-  required this._lifecycleCoordinator,
-  FlutterBackgroundService? service,
-}) {
+class PassengerBackgroundTelemetry {
+  PassengerBackgroundTelemetry({
+    required Uri apiBaseUri,
+    required AppLifecycleCoordinator lifecycleCoordinator,
+    FlutterBackgroundService? service,
+  })  : _apiBaseUri = apiBaseUri,
+        _lifecycleCoordinator = lifecycleCoordinator,
+        _service = service ?? FlutterBackgroundService();
+
   final Uri _apiBaseUri;
   final FlutterBackgroundService _service;
   final AppLifecycleCoordinator _lifecycleCoordinator;
   bool _configured = false;
-
-  this : _service = service ?? FlutterBackgroundService();
 
   static Future<void> stopExistingServiceForStartup() async {
     await _stopRunningService(FlutterBackgroundService());
@@ -126,6 +128,8 @@ class PassengerBackgroundTelemetry({
       _service.invoke('stopService');
     }
   }
+
+  Future<void> stopRideTelemetry() => stop();
 }
 
 @pragma('vm:entry-point')

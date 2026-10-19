@@ -270,5 +270,3 @@ class const FindingDriverNearestPanel({
     );
   }
 }
-
-typedef FindingDriverNearestPanelWidget = FindingDriverNearestPanel;

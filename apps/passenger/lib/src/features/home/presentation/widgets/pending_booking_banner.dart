@@ -80,5 +80,3 @@ class const PendingBookingBanner({
     );
   }
 }
-
-typedef PendingBookingBannerWidget = PendingBookingBanner;

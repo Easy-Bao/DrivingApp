@@ -295,5 +295,3 @@ class _RideHistoryListViewState extends State<RideHistoryListView> {
     return slivers;
   }
 }
-
-typedef RideHistoryWidget = RideHistoryListView;

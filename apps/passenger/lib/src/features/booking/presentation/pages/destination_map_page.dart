@@ -263,7 +263,7 @@ class _DestinationMapPageState() extends State<DestinationMapPage> {
                       ],
                     ),
                     const SizedBox(height: 20),
-                    CompactRouteTimelineWidget(
+                    CompactRouteTimeline(
                       pickup: 'Current Location',
                       dropoff: widget.placeName,
                       pickupLabel: 'From',

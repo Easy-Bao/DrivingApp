@@ -231,6 +231,3 @@ class PassengerPastRideCard extends StatelessWidget {
     );
   }
 }
-
-typedef PassengerActiveRideCardWidget = PassengerActiveRideCard;
-typedef PassengerPastRideCardWidget = PassengerPastRideCard;

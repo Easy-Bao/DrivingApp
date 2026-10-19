@@ -227,5 +227,3 @@ class DriverDashboardStatsRow extends StatelessWidget {
     );
   }
 }
-
-typedef DriverDashboardStatsRowWidget = DriverDashboardStatsRow;

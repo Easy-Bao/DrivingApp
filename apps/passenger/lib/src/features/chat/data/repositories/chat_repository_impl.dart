@@ -14,17 +14,17 @@ import 'package:passenger/src/features/chat/domain/repositories/chat_repository.
 final class ChatRepositoryImpl({
   required this.remoteDataSource,
   required this.currentUserId,
-  required this.clientDio,
+  required this.httpClient,
   this.tokenProvider,
 }) implements ChatRepository {
   static const _maxMessageBytes = 4096;
   final ChatRemoteDataSource remoteDataSource;
   final String currentUserId;
-  final Dio clientDio;
+  final Dio httpClient;
   final Future<String?> Function()? tokenProvider;
 
   @override
-  bool get isSessionConnected => remoteDataSource.isWebSocketConnected;
+  bool get isSessionConnected => remoteDataSource.isConnected;
 
   @override
   Stream<ChatConnectionState> get connectionStateStream =>
@@ -40,10 +40,7 @@ final class ChatRepositoryImpl({
       final resolvedToken = tokenProvider == null
           ? token
           : await tokenProvider!.call();
-      await remoteDataSource.establishWebSocketConnection(
-        chatUri,
-        token: resolvedToken,
-      );
+      await remoteDataSource.connect(chatUri, token: resolvedToken);
       return const Ok(null);
     } catch (error) {
       return Err(_mapChatFailure(error, 'Unable to connect to chat server.'));
@@ -53,7 +50,7 @@ final class ChatRepositoryImpl({
   @override
   Future<Result<void, Failure>> terminateChatConnection() async {
     try {
-      await remoteDataSource.terminateWebSocketConnection();
+      await remoteDataSource.disconnect();
       return const Ok(null);
     } catch (error) {
       return const Err(NetworkFailure('Unable to disconnect chat session.'));
@@ -70,7 +67,7 @@ final class ChatRepositoryImpl({
     }
 
     try {
-      final response = await clientDio.post<void>(
+      final response = await httpClient.post<void>(
         '/api/v1/chat/rooms',
         data: {'ride_id': rideId},
       );
@@ -106,7 +103,7 @@ final class ChatRepositoryImpl({
     try {
       final payload = jsonEncode({'type': 'message', 'text': trimmed});
 
-      remoteDataSource.sendWebSocketChatMessage(payload);
+      remoteDataSource.sendMessage(payload);
       return const Ok(null);
     } catch (error) {
       return Err(_mapChatFailure(error, 'Unable to send chat message.'));
@@ -120,7 +117,7 @@ final class ChatRepositoryImpl({
     }
 
     try {
-      remoteDataSource.sendWebSocketTypingStatus(isTyping);
+      remoteDataSource.sendTypingStatus(isTyping);
       return const Ok(null);
     } catch (error) {
       return Err(_mapChatFailure(error, 'Unable to update chat status.'));
@@ -132,7 +129,7 @@ final class ChatRepositoryImpl({
     String roomId,
   ) async {
     try {
-      final response = await clientDio.get<Object?>(
+      final response = await httpClient.get<Object?>(
         '/api/v1/chat/rooms/${Uri.encodeComponent(roomId)}/messages',
       );
 
@@ -160,7 +157,7 @@ final class ChatRepositoryImpl({
 
   @override
   Stream<Result<ChatEvent, Failure>> get chatEventsStream {
-    return remoteDataSource.webSocketEventStream.map((rawString) {
+    return remoteDataSource.eventStream.map((rawString) {
       try {
         final decoded = decodeObjectMap(jsonDecode(rawString));
         final type = decoded['type'];

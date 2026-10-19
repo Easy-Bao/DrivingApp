@@ -26,17 +26,17 @@ type IdempotencyStore interface {
 	DeleteIfValue(ctx context.Context, key string, value []byte) error
 }
 
-type RedisIdempotencyStore struct {
+type CacheIdempotencyStore struct {
 	client *redisclient.Client
 }
 
-var _ IdempotencyStore = (*RedisIdempotencyStore)(nil)
+var _ IdempotencyStore = (*CacheIdempotencyStore)(nil)
 
-func NewRedisIdempotencyStore(client *redisclient.Client) *RedisIdempotencyStore {
-	return &RedisIdempotencyStore{client: client}
+func NewCacheIdempotencyStore(client *redisclient.Client) *CacheIdempotencyStore {
+	return &CacheIdempotencyStore{client: client}
 }
 
-func (store *RedisIdempotencyStore) Get(ctx context.Context, key string) ([]byte, error) {
+func (store *CacheIdempotencyStore) Get(ctx context.Context, key string) ([]byte, error) {
 	if store == nil || store.client == nil {
 		return nil, fmt.Errorf("redis idempotency store is not configured")
 	}
@@ -53,7 +53,7 @@ func (store *RedisIdempotencyStore) Get(ctx context.Context, key string) ([]byte
 	return value, nil
 }
 
-func (store *RedisIdempotencyStore) Set(ctx context.Context, key string, value []byte, expiration time.Duration) error {
+func (store *CacheIdempotencyStore) Set(ctx context.Context, key string, value []byte, expiration time.Duration) error {
 	if store == nil || store.client == nil {
 		return fmt.Errorf("redis idempotency store is not configured")
 	}
@@ -71,7 +71,7 @@ func (store *RedisIdempotencyStore) Set(ctx context.Context, key string, value [
 	return nil
 }
 
-func (store *RedisIdempotencyStore) SetNX(
+func (store *CacheIdempotencyStore) SetNX(
 	ctx context.Context,
 	key string,
 	value []byte,
@@ -95,7 +95,7 @@ func (store *RedisIdempotencyStore) SetNX(
 	return acquired, nil
 }
 
-func (store *RedisIdempotencyStore) DeleteIfValue(ctx context.Context, key string, value []byte) error {
+func (store *CacheIdempotencyStore) DeleteIfValue(ctx context.Context, key string, value []byte) error {
 	if store == nil || store.client == nil {
 		return fmt.Errorf("redis idempotency store is not configured")
 	}

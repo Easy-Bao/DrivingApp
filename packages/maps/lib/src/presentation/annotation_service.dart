@@ -11,6 +11,10 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
 import 'package:maps/src/presentation/camera_service.dart';
 
+typedef MapPointAnnotationManager = mapbox.PointAnnotationManager;
+typedef MapPolylineAnnotationManager = mapbox.PolylineAnnotationManager;
+typedef MapBaseAnnotationManager = mapbox.BaseAnnotationManager;
+
 class TripMapMarkerStyle._() {
   static const double pinIconSize = 1.22;
   static const Color ownLocation = EasyRidePalette.obsidian;

@@ -177,5 +177,3 @@ class const _DashedLinePainter({required this.color}) extends CustomPainter {
     return oldDelegate.color != color;
   }
 }
-
-typedef CompactRouteTimelineWidget = CompactRouteTimeline;

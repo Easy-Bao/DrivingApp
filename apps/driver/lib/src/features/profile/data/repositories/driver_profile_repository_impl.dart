@@ -37,7 +37,7 @@ final class DriverProfileRepositoryImpl({
       }
       final profileValues = await _profileDataSource.fetchProfile(driverId);
       final cached = getCachedAccount();
-      final profile = ProfileModel.fromJson(profileValues);
+      final profile = DriverProfile.fromJson(profileValues);
       final ratingValue = profile.rating;
       final snapshot = DriverAccountSnapshot(
         name: profile.name.isEmpty ? cached.name : profile.name,
@@ -96,7 +96,7 @@ final class DriverProfileRepositoryImpl({
             'plate_number': normalizedPlateNumber,
         },
       );
-      final profile = ProfileModel.fromJson(response);
+      final profile = DriverProfile.fromJson(response);
       final updated = DriverAccountSnapshot(
         name: profile.name.isEmpty ? normalizedName : profile.name,
         phone: profile.phone.isEmpty ? currentAccount.phone : profile.phone,

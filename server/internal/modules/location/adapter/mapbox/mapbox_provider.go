@@ -17,8 +17,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/modules/location/domain"
 	locationports "github.com/Easy-Bao/DrivingApp/server/internal/modules/location/app"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/location/domain"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/resilience"
 )
 
@@ -38,7 +38,7 @@ const (
 
 const _defaultNearbyCategoriesCSV = "food_and_drink,hotel,hospital,school,gas_station,bank,shopping_mall,park"
 
-type MapboxProvider struct {
+type RoutingProvider struct {
 	token            string
 	client           *http.Client
 	breaker          *resilience.CircuitBreaker
@@ -47,14 +47,14 @@ type MapboxProvider struct {
 	routeCache       map[string]routeCacheEntry
 }
 
-var _ locationports.Provider = (*MapboxProvider)(nil)
+var _ locationports.Provider = (*RoutingProvider)(nil)
 
 type routeCacheEntry struct {
-	routes    []mapboxRoute
+	routes    []cachedRoute
 	createdAt time.Time
 }
 
-func NewMapboxProvider(token string) *MapboxProvider {
+func NewRoutingProvider(token string) *RoutingProvider {
 	baseTransport, ok := http.DefaultTransport.(*http.Transport)
 	if !ok || baseTransport == nil {
 		baseTransport = &http.Transport{}
@@ -67,7 +67,7 @@ func NewMapboxProvider(token string) *MapboxProvider {
 	transport.DialContext = func(ctx context.Context, _, address string) (net.Conn, error) {
 		return dialer.DialContext(ctx, "tcp4", address)
 	}
-	return &MapboxProvider{
+	return &RoutingProvider{
 		token:  token,
 		client: &http.Client{Transport: transport, Timeout: _mapboxRequestTimeout},
 		breaker: resilience.NewCircuitBreaker(resilience.CircuitBreakerConfig{
@@ -115,7 +115,7 @@ type categoryResult struct {
 	err    error
 }
 
-func (provider *MapboxProvider) Search(
+func (provider *RoutingProvider) Search(
 	ctx context.Context,
 	query string,
 	origin domain.Coordinates,
@@ -146,7 +146,7 @@ func (provider *MapboxProvider) Search(
 	return places, nil
 }
 
-func (provider *MapboxProvider) Nearby(
+func (provider *RoutingProvider) Nearby(
 	ctx context.Context,
 	origin domain.Coordinates,
 	page int,
@@ -222,7 +222,7 @@ func paginateNearbyPlaces(places []domain.Place, page int) []domain.Place {
 	return places[start:end]
 }
 
-func (provider *MapboxProvider) nearbyCategory(
+func (provider *RoutingProvider) nearbyCategory(
 	ctx context.Context,
 	origin domain.Coordinates,
 	category string,
@@ -312,7 +312,7 @@ func uniqueNearbyPlaces(places []domain.Place) []domain.Place {
 	return unique
 }
 
-func (provider *MapboxProvider) ReverseGeocode(
+func (provider *RoutingProvider) ReverseGeocode(
 	ctx context.Context,
 	coordinates domain.Coordinates,
 ) (*domain.Place, error) {
@@ -542,7 +542,7 @@ func featureContextNames(candidate feature) map[string]string {
 }
 
 type directionsResponse struct {
-	Routes []mapboxRoute `json:"routes"`
+	Routes []cachedRoute `json:"routes"`
 }
 
 type matrixResponse struct {
@@ -551,7 +551,7 @@ type matrixResponse struct {
 	Durations [][]*float64 `json:"durations"`
 }
 
-type mapboxRoute struct {
+type cachedRoute struct {
 	Distance float64 `json:"distance"`
 	Duration float64 `json:"duration"`
 	Geometry struct {
@@ -559,7 +559,7 @@ type mapboxRoute struct {
 	} `json:"geometry"`
 }
 
-func (provider *MapboxProvider) Route(
+func (provider *RoutingProvider) Route(
 	ctx context.Context,
 	origin domain.Coordinates,
 	destination domain.Coordinates,
@@ -641,7 +641,7 @@ func routeCacheKey(origin, destination domain.Coordinates, options domain.RouteO
 func routeFromMapbox(
 	origin, destination domain.Coordinates,
 	options domain.RouteOptions,
-	routes []mapboxRoute,
+	routes []cachedRoute,
 ) *domain.Route {
 	selected := selectRoute(routes, options.Preference)
 	return &domain.Route{
@@ -655,7 +655,7 @@ func routeFromMapbox(
 	}
 }
 
-func (provider *MapboxProvider) cachedRoutes(key string) ([]mapboxRoute, bool) {
+func (provider *RoutingProvider) cachedRoutes(key string) ([]cachedRoute, bool) {
 	provider.routeCacheMu.Lock()
 	defer provider.routeCacheMu.Unlock()
 
@@ -667,10 +667,10 @@ func (provider *MapboxProvider) cachedRoutes(key string) ([]mapboxRoute, bool) {
 		delete(provider.routeCache, key)
 		return nil, false
 	}
-	return cloneMapboxRoutes(entry.routes), true
+	return cloneCachedRoutes(entry.routes), true
 }
 
-func (provider *MapboxProvider) storeRoutes(key string, routes []mapboxRoute) {
+func (provider *RoutingProvider) storeRoutes(key string, routes []cachedRoute) {
 	if len(routes) == 0 {
 		return
 	}
@@ -692,12 +692,12 @@ func (provider *MapboxProvider) storeRoutes(key string, routes []mapboxRoute) {
 		delete(provider.routeCache, oldestKey)
 	}
 	provider.routeCache[key] = routeCacheEntry{
-		routes:    cloneMapboxRoutes(routes),
+		routes:    cloneCachedRoutes(routes),
 		createdAt: time.Now(),
 	}
 }
 
-func cloneMapboxRoutes(routes []mapboxRoute) []mapboxRoute {
+func cloneCachedRoutes(routes []cachedRoute) []cachedRoute {
 	clones := slices.Clone(routes)
 	for index := range clones {
 		clones[index].Geometry.Coordinates = make([][]float64, len(routes[index].Geometry.Coordinates))
@@ -708,7 +708,7 @@ func cloneMapboxRoutes(routes []mapboxRoute) []mapboxRoute {
 	return clones
 }
 
-func (provider *MapboxProvider) Matrix(
+func (provider *RoutingProvider) Matrix(
 	ctx context.Context,
 	origin domain.Coordinates,
 	destinations []domain.Coordinates,
@@ -791,7 +791,7 @@ func (provider *MapboxProvider) Matrix(
 	return matrix, nil
 }
 
-func selectRoute(routes []mapboxRoute, preference domain.RoutePreference) mapboxRoute {
+func selectRoute(routes []cachedRoute, preference domain.RoutePreference) cachedRoute {
 	fastest := routes[0]
 	shortest := routes[0]
 	for _, candidate := range routes[1:] {
@@ -815,7 +815,7 @@ func selectRoute(routes []mapboxRoute, preference domain.RoutePreference) mapbox
 	return fastest
 }
 
-func (provider *MapboxProvider) getJSON(ctx context.Context, endpoint string, target any) error {
+func (provider *RoutingProvider) getJSON(ctx context.Context, endpoint string, target any) error {
 	if err := provider.validate(); err != nil {
 		return err
 	}
@@ -824,7 +824,7 @@ func (provider *MapboxProvider) getJSON(ctx context.Context, endpoint string, ta
 	})
 }
 
-func (provider *MapboxProvider) validate() error {
+func (provider *RoutingProvider) validate() error {
 	if provider == nil || provider.client == nil {
 		return fmt.Errorf("location provider is not configured")
 	}
@@ -834,7 +834,7 @@ func (provider *MapboxProvider) validate() error {
 	return nil
 }
 
-func (provider *MapboxProvider) fetchJSON(ctx context.Context, endpoint string, target any) (err error) {
+func (provider *RoutingProvider) fetchJSON(ctx context.Context, endpoint string, target any) (err error) {
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return fmt.Errorf("create location provider request: %w", err)

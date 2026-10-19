@@ -4,7 +4,6 @@ import 'dart:ui' show Color;
 
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:maps/maps.dart';
 
 part 'live_map_event.dart';
@@ -12,10 +11,10 @@ part 'live_map_state.dart';
 
 class LiveMapBloc() extends Bloc<LiveMapEvent, LiveMapState> {
   AppMapController? _mapController;
-  mapbox.PointAnnotationManager? _riderMarkerManager;
-  mapbox.PointAnnotationManager? _driverMarkerManager;
-  mapbox.PolylineAnnotationManager? _routePolylineManager;
-  final List<mapbox.PointAnnotationManager> _markerManagers = [];
+  MapPointAnnotationManager? _riderMarkerManager;
+  MapPointAnnotationManager? _driverMarkerManager;
+  MapPolylineAnnotationManager? _routePolylineManager;
+  final List<MapPointAnnotationManager> _markerManagers = [];
   final List<AddMapMarkerEvent> _pendingMarkers = [];
   DrawDriverToRiderRouteEvent? _pendingRoute;
   FitMapToCoordinatesEvent? _pendingCameraFit;
@@ -248,8 +247,8 @@ class LiveMapBloc() extends Bloc<LiveMapEvent, LiveMapState> {
     _markerManagers.clear();
   }
 
-  Future<mapbox.PointAnnotationManager> _upsertMarker(
-    mapbox.PointAnnotationManager? manager,
+  Future<MapPointAnnotationManager> _upsertMarker(
+    MapPointAnnotationManager? manager,
     AppMapController controller,
     double lat,
     double lng, {
@@ -280,8 +279,8 @@ class LiveMapBloc() extends Bloc<LiveMapEvent, LiveMapState> {
     return manager;
   }
 
-  Future<mapbox.PolylineAnnotationManager> _upsertPolyline(
-    mapbox.PolylineAnnotationManager? manager,
+  Future<MapPolylineAnnotationManager> _upsertPolyline(
+    MapPolylineAnnotationManager? manager,
     AppMapController controller,
     Float64List coordinates, {
     required Color color,
@@ -323,7 +322,7 @@ class LiveMapBloc() extends Bloc<LiveMapEvent, LiveMapState> {
   }
 
   Future<void> _clearAnnotations(
-    mapbox.BaseAnnotationManager? annotationManager,
+    MapBaseAnnotationManager? annotationManager,
   ) async {
     if (annotationManager == null) return;
     try {

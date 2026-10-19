@@ -18,7 +18,7 @@ void main() {
     () async {
       SharedPreferences.setMockInitialValues({});
       final storage = MockFlutterSecureStorage();
-      when(() => storage.read(key: PassengerStorageKeys.jwtToken))
+      when(() => storage.read(key: PassengerStorageKeys.accessToken))
           .thenAnswer((_) async => '   ');
       when(() => storage.read(key: PassengerStorageKeys.passengerId))
           .thenAnswer((_) async => '\t');

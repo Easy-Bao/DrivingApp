@@ -88,5 +88,3 @@ class const RecentRideHistoryPreview({
     );
   }
 }
-
-typedef RecentRideHistoryPreviewWidget = RecentRideHistoryPreview;

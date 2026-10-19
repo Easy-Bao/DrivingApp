@@ -133,5 +133,3 @@ class DriverActiveTripCard extends StatelessWidget {
     );
   }
 }
-
-typedef DriverActiveTripCardWidget = DriverActiveTripCard;

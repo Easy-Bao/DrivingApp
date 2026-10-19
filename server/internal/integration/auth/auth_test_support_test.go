@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/domain"
 	authports "github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/app"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/domain"
 	"golang.org/x/crypto/bcrypt"
 )
 

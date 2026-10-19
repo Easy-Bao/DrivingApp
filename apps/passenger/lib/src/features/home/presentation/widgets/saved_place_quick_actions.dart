@@ -176,5 +176,3 @@ class _AddPlaceChip extends StatelessWidget {
     );
   }
 }
-
-typedef SavedPlaceQuickActionsWidget = SavedPlaceQuickActions;

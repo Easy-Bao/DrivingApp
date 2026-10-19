@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
 type eventPublisherStub struct {

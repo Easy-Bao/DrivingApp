@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	ports "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
+	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
 	"github.com/jackc/pgx/v5"
 )
 

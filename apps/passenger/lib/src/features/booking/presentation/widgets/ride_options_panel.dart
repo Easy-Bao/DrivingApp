@@ -1083,5 +1083,3 @@ Widget rideOptionsPanelPreview() {
     ),
   );
 }
-
-typedef RideOptionsPanelWidget = RideOptionsPanel;

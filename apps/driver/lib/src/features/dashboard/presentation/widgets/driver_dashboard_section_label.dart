@@ -22,5 +22,3 @@ class DriverDashboardSectionLabel extends StatelessWidget {
     );
   }
 }
-
-typedef DriverDashboardSectionLabelWidget = DriverDashboardSectionLabel;

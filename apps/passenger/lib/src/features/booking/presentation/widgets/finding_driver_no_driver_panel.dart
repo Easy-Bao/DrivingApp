@@ -35,5 +35,3 @@ class const FindingDriverNoDriverPanel({
     );
   }
 }
-
-typedef FindingDriverNoDriverPanelWidget = FindingDriverNoDriverPanel;

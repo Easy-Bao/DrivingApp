@@ -25,7 +25,7 @@ void main() {
   test(
     'recognizes a persisted token and driver ID as an active session',
     () async {
-      when(() => storage.read(key: DriverStorageKeys.jwtToken))
+      when(() => storage.read(key: DriverStorageKeys.accessToken))
           .thenAnswer((_) async => 'jwt-token');
       when(() => storage.read(key: DriverStorageKeys.driverId))
           .thenAnswer((_) async => 'driver-1');
@@ -35,7 +35,7 @@ void main() {
   );
 
   test('rejects an incomplete persisted session', () async {
-    when(() => storage.read(key: DriverStorageKeys.jwtToken))
+    when(() => storage.read(key: DriverStorageKeys.accessToken))
         .thenAnswer((_) async => 'jwt-token');
     when(() => storage.read(key: DriverStorageKeys.driverId))
         .thenAnswer((_) async => '');
@@ -74,7 +74,7 @@ void main() {
     await sessionService.clearSession();
 
     for (final key in const [
-      DriverStorageKeys.jwtToken,
+      DriverStorageKeys.accessToken,
       DriverStorageKeys.refreshToken,
       DriverStorageKeys.driverId,
       DriverStorageKeys.driverOnlineStatus,

@@ -88,7 +88,7 @@ class _DriverCardHarnessState extends State<_DriverCardHarness> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: DriverDropdownCardWidget(
+      body: DriverDropdownCard(
         driver: driver,
         isNearestDriver: true,
         isProfileVisible: _isProfileVisible,

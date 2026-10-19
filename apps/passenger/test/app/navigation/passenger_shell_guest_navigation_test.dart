@@ -11,7 +11,7 @@ void main() {
         GoRoute(
           path: '/home',
           builder: (context, state) => Scaffold(
-            bottomNavigationBar: GuestActionBarWidget(
+            bottomNavigationBar: GuestActionBar(
               onSignUp: () => context.push('/auth/signup'),
               onSignIn: () => context.push('/auth/signin'),
               onHelp: () => context.push('/help'),

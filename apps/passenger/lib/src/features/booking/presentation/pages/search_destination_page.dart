@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:maps/maps.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/booking/presentation/formatters/search_destination_formatters.dart';
@@ -489,7 +488,7 @@ class _SearchDestinationPageState()
 
   Widget? _cachedMapView;
   AppMapController? _mapController;
-  mapbox.PointAnnotationManager? _currentLocationMarker;
+  MapPointAnnotationManager? _currentLocationMarker;
   int _locationMarkerRequestId = 0;
 
   Widget _getMapView(double lat, double lng) {

@@ -11,40 +11,40 @@ import (
 
 const _redisEventChannel = "driveapp:realtime:events:v1"
 
-type redisEventFrame struct {
+type serializedEventFrame struct {
 	Origin   string          `json:"origin"`
 	Envelope json.RawMessage `json:"envelope"`
 }
 
-// RedisEventPublisher delivers each event to local sinks and publishes it for
+// DistributedEventPublisher delivers each event to local sinks and publishes it for
 // every other application process subscribed to the realtime channel.
-type RedisEventPublisher struct {
+type DistributedEventPublisher struct {
 	client  *redisclient.Client
 	origin  string
 	channel string
 	sinks   []Sink
 }
 
-// NewRedisEventTransport builds the matching publisher and subscriber used by
+// NewDistributedEventTransport builds the matching publisher and subscriber used by
 // one application process. A process identifier prevents its subscriber from
 // delivering an event a second time after the publisher already notified local
 // sinks.
-func NewRedisEventTransport(
+func NewDistributedEventTransport(
 	client *redisclient.Client,
 	sinks ...Sink,
-) (*RedisEventPublisher, *RedisEventSubscriber) {
+) (*DistributedEventPublisher, *DistributedEventSubscriber) {
 	channel := _redisEventChannel
 	if client != nil {
 		channel = fmt.Sprintf("%s:%d", channel, client.Options().DB)
 	}
-	return newRedisEventTransport(client, channel, sinks...)
+	return newDistributedEventTransport(client, channel, sinks...)
 }
 
-func newRedisEventTransport(
+func newDistributedEventTransport(
 	client *redisclient.Client,
 	channel string,
 	sinks ...Sink,
-) (*RedisEventPublisher, *RedisEventSubscriber) {
+) (*DistributedEventPublisher, *DistributedEventSubscriber) {
 	origin := NewID()
 	filteredSinks := make([]Sink, 0, len(sinks))
 	for _, sink := range sinks {
@@ -53,12 +53,12 @@ func newRedisEventTransport(
 		}
 	}
 
-	return &RedisEventPublisher{
+	return &DistributedEventPublisher{
 		client:  client,
 		origin:  origin,
 		channel: channel,
 		sinks:   filteredSinks,
-	}, &RedisEventSubscriber{
+	}, &DistributedEventSubscriber{
 		client:  client,
 		origin:  origin,
 		channel: channel,
@@ -67,7 +67,7 @@ func newRedisEventTransport(
 	}
 }
 
-func (publisher *RedisEventPublisher) Publish(ctx context.Context, envelope Envelope) error {
+func (publisher *DistributedEventPublisher) Publish(ctx context.Context, envelope Envelope) error {
 	if publisher == nil || publisher.client == nil {
 		return errors.New("publish realtime event: redis client is required")
 	}
@@ -79,7 +79,7 @@ func (publisher *RedisEventPublisher) Publish(ctx context.Context, envelope Enve
 	if err != nil {
 		return fmt.Errorf("publish realtime event: %w", err)
 	}
-	encodedFrame, err := json.Marshal(redisEventFrame{
+	encodedFrame, err := json.Marshal(serializedEventFrame{
 		Origin:   publisher.origin,
 		Envelope: encodedEnvelope,
 	})

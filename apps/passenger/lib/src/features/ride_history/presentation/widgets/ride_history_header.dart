@@ -52,5 +52,3 @@ class RideHistoryHeader extends StatelessWidget {
     return EasyRidePageHeader(title: title, subtitle: subtitle);
   }
 }
-
-typedef RideHistoryHeaderWidget = RideHistoryHeader;

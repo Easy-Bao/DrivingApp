@@ -69,5 +69,3 @@ class const InTransitPassengerCard({super.key}) extends StatelessWidget {
     );
   }
 }
-
-typedef InTransitPassengerCardWidget = InTransitPassengerCard;

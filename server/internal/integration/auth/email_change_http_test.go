@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
+	authapp "github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/domain"
 	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/transport/http"
-	authapp "github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/app"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/httpx/middleware"
 	"github.com/Easy-Bao/DrivingApp/server/internal/platform/security"
 	"github.com/go-chi/chi/v5"

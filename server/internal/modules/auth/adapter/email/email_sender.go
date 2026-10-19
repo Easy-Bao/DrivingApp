@@ -20,19 +20,19 @@ type Delivery func(
 	string,
 ) error
 
-type GoMailGatewayOption func(*GoMailGateway)
+type MailGatewayOption func(*MailGateway)
 
-type GoMailGateway struct {
+type MailGateway struct {
 	config  Config
 	deliver Delivery
 	breaker *resilience.CircuitBreaker
 }
 
-var _ authports.OTPSender = (*GoMailGateway)(nil)
-var _ authports.EmailChangeNotifier = (*GoMailGateway)(nil)
+var _ authports.OTPSender = (*MailGateway)(nil)
+var _ authports.EmailChangeNotifier = (*MailGateway)(nil)
 
-func NewGoMailGateway(config Config, options ...GoMailGatewayOption) *GoMailGateway {
-	gateway := newGoMailGateway(config)
+func NewMailGateway(config Config, options ...MailGatewayOption) *MailGateway {
+	gateway := newMailGateway(config)
 	for _, option := range options {
 		if option != nil {
 			option(gateway)
@@ -41,16 +41,16 @@ func NewGoMailGateway(config Config, options ...GoMailGatewayOption) *GoMailGate
 	return gateway
 }
 
-func WithDelivery(deliver Delivery) GoMailGatewayOption {
-	return func(gateway *GoMailGateway) {
+func WithDelivery(deliver Delivery) MailGatewayOption {
+	return func(gateway *MailGateway) {
 		if deliver != nil {
 			gateway.deliver = deliver
 		}
 	}
 }
 
-func newGoMailGateway(config Config) *GoMailGateway {
-	return &GoMailGateway{
+func newMailGateway(config Config) *MailGateway {
+	return &MailGateway{
 		config:  config,
 		deliver: deliverWithGoMail,
 		breaker: resilience.NewCircuitBreaker(resilience.CircuitBreakerConfig{
@@ -60,7 +60,7 @@ func newGoMailGateway(config Config) *GoMailGateway {
 	}
 }
 
-func (gateway *GoMailGateway) Send(ctx context.Context, recipient, code string) error {
+func (gateway *MailGateway) Send(ctx context.Context, recipient, code string) error {
 	if gateway == nil || gateway.deliver == nil || gateway.breaker == nil {
 		return fmt.Errorf("%w: mail gateway is not configured", ErrInvalidConfig)
 	}
@@ -91,7 +91,7 @@ func (gateway *GoMailGateway) Send(ctx context.Context, recipient, code string) 
 	return nil
 }
 
-func (gateway *GoMailGateway) NotifyEmailChanged(ctx context.Context, previousEmail, newEmail string) error {
+func (gateway *MailGateway) NotifyEmailChanged(ctx context.Context, previousEmail, newEmail string) error {
 	if gateway == nil || gateway.deliver == nil || gateway.breaker == nil {
 		return fmt.Errorf("%w: mail gateway is not configured", ErrInvalidConfig)
 	}

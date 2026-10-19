@@ -15,7 +15,7 @@ void main() {
       MaterialApp(
         theme: EasyRideTheme.main,
         home: Scaffold(
-          bottomNavigationBar: GuestActionBarWidget(
+          bottomNavigationBar: GuestActionBar(
             onSignUp: () => signUpPressed = true,
             onSignIn: () => signInPressed = true,
             onHelp: () => helpPressed = true,

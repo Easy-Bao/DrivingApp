@@ -4,8 +4,8 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	"github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/domain"
+	"github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
 const (

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	events "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 	ports "github.com/Easy-Bao/DrivingApp/server/internal/modules/ride/app"
+	events "github.com/Easy-Bao/DrivingApp/server/internal/platform/events"
 )
 
 type EnvelopePublisher interface {

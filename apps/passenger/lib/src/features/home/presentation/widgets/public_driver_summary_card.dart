@@ -128,5 +128,3 @@ class const PublicDriverSummaryCard({super.key, required this.summaries})
     );
   }
 }
-
-typedef PublicDriverSummaryCardWidget = PublicDriverSummaryCard;

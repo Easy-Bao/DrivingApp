@@ -7,7 +7,6 @@ import 'dart:typed_data';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter/material.dart' show Color;
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:rxdart/rxdart.dart';
 
 import 'package:driver/src/features/active_ride/domain/repositories/driver_ride_repository.dart';
@@ -37,10 +36,10 @@ class LiveMapBloc({required this._rideRepository})
   final DriverRideRepository _rideRepository;
 
   AppMapController? _mapController;
-  mapbox.PointAnnotationManager? _driverMarkerManager;
-  mapbox.PointAnnotationManager? _passengerMarkerManager;
-  mapbox.PointAnnotationManager? _destinationMarkerManager;
-  mapbox.PolylineAnnotationManager? _routePolylineManager;
+  MapPointAnnotationManager? _driverMarkerManager;
+  MapPointAnnotationManager? _passengerMarkerManager;
+  MapPointAnnotationManager? _destinationMarkerManager;
+  MapPolylineAnnotationManager? _routePolylineManager;
   UpdateLocationsAndDrawRouteEvent? _pendingRouteUpdate;
   String? _routeTargetKey;
   double? _routeOriginLat;
@@ -353,8 +352,8 @@ class LiveMapBloc({required this._rideRepository})
     _hasFittedCamera = false;
   }
 
-  Future<mapbox.PointAnnotationManager> _upsertMarker(
-    mapbox.PointAnnotationManager? annotationManager,
+  Future<MapPointAnnotationManager> _upsertMarker(
+    MapPointAnnotationManager? annotationManager,
     AppMapController mapController,
     double lat,
     double lng, {
@@ -385,8 +384,8 @@ class LiveMapBloc({required this._rideRepository})
     return annotationManager;
   }
 
-  Future<mapbox.PolylineAnnotationManager> _upsertRoute(
-    mapbox.PolylineAnnotationManager? annotationManager,
+  Future<MapPolylineAnnotationManager> _upsertRoute(
+    MapPolylineAnnotationManager? annotationManager,
     AppMapController mapController,
     Float64List routeCoordinates,
   ) async {
@@ -408,7 +407,7 @@ class LiveMapBloc({required this._rideRepository})
   }
 
   Future<void> _clearAnnotations(
-    mapbox.BaseAnnotationManager? annotationManager,
+    MapBaseAnnotationManager? annotationManager,
   ) async {
     if (annotationManager == null) return;
     try {

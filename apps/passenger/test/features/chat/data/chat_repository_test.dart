@@ -12,39 +12,34 @@ class FakeChatRemoteDataSource implements ChatRemoteDataSource {
   String? typingPayload;
   String? connectionToken;
   bool disposed = false;
+  @override
   Stream<String> eventStream = const Stream.empty();
   Stream<ChatConnectionState> connectionStates = const Stream.empty();
 
   @override
-  Future<void> establishWebSocketConnection(
-    Uri chatServiceUri, {
-    String? token,
-  }) async {
+  Future<void> connect(Uri chatServiceUri, {String? token}) async {
     connectionToken = token;
   }
 
   @override
-  void sendWebSocketChatMessage(String messagePayload) {
+  void sendMessage(String messagePayload) {
     sent = true;
     sentPayload = messagePayload;
   }
 
   @override
-  void sendWebSocketTypingStatus(bool isTyping) {
+  void sendTypingStatus(bool isTyping) {
     typingPayload = jsonEncode({'type': 'typing', 'is_typing': isTyping});
   }
 
   @override
-  Future<void> terminateWebSocketConnection() async {}
-
-  @override
-  Stream<String> get webSocketEventStream => eventStream;
+  Future<void> disconnect() async {}
 
   @override
   Stream<ChatConnectionState> get connectionStateStream => connectionStates;
 
   @override
-  bool get isWebSocketConnected => true;
+  bool get isConnected => true;
 
   @override
   Future<void> dispose() async {
@@ -70,7 +65,7 @@ void main() {
         final repository = ChatRepositoryImpl(
           remoteDataSource: FakeChatRemoteDataSource(),
           currentUserId: '7',
-          clientDio: dio,
+          httpClient: dio,
         );
 
         final result = await repository.initializeChatRoom(roomId: '303');
@@ -96,7 +91,7 @@ void main() {
       final repository = ChatRepositoryImpl(
         remoteDataSource: FakeChatRemoteDataSource(),
         currentUserId: '7',
-        clientDio: dio,
+        httpClient: dio,
       );
 
       final result = await repository.fetchRoomMessages('303');
@@ -124,7 +119,7 @@ void main() {
     final repository = ChatRepositoryImpl(
       remoteDataSource: FakeChatRemoteDataSource(),
       currentUserId: '7',
-      clientDio: dio,
+      httpClient: dio,
     );
 
     final result = await repository.initializeChatRoom(roomId: '303');
@@ -139,7 +134,7 @@ void main() {
     final repository = ChatRepositoryImpl(
       remoteDataSource: remoteDataSource,
       currentUserId: '7',
-      clientDio: Dio(),
+      httpClient: Dio(),
       tokenProvider: () async => 'session-token',
     );
 
@@ -157,7 +152,7 @@ void main() {
     final repository = ChatRepositoryImpl(
       remoteDataSource: remoteDataSource,
       currentUserId: '7',
-      clientDio: Dio(),
+      httpClient: Dio(),
     );
 
     final empty = await repository.sendChatMessage('  ');
@@ -173,7 +168,7 @@ void main() {
     final repository = ChatRepositoryImpl(
       remoteDataSource: remoteDataSource,
       currentUserId: '7',
-      clientDio: Dio(),
+      httpClient: Dio(),
     );
 
     final result = await repository.sendChatMessage('On my way');
@@ -190,7 +185,7 @@ void main() {
     final repository = ChatRepositoryImpl(
       remoteDataSource: remoteDataSource,
       currentUserId: '7',
-      clientDio: Dio(),
+      httpClient: Dio(),
     );
 
     final result = await repository.sendTypingStatus(true);
@@ -215,7 +210,7 @@ void main() {
     final repository = ChatRepositoryImpl(
       remoteDataSource: remoteDataSource,
       currentUserId: '7',
-      clientDio: Dio(),
+      httpClient: Dio(),
     );
 
     final event = await repository.chatEventsStream.first;
@@ -239,7 +234,7 @@ void main() {
     final repository = ChatRepositoryImpl(
       remoteDataSource: remoteDataSource,
       currentUserId: '7',
-      clientDio: Dio(),
+      httpClient: Dio(),
     );
 
     final event = await repository.chatEventsStream.first;
@@ -255,7 +250,7 @@ void main() {
     final repository = ChatRepositoryImpl(
       remoteDataSource: remoteDataSource,
       currentUserId: '7',
-      clientDio: Dio(),
+      httpClient: Dio(),
     );
 
     await repository.dispose();

@@ -5,10 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 
 class DriverEarningsCubit extends Cubit<DriverEarningsState> {
-  DriverEarningsCubit({
-    required this.repository,
-    required this.sessionService,
-  }) : super(const DriverEarningsState());
+  DriverEarningsCubit({required this.repository, required this.sessionService})
+    : super(const DriverEarningsState());
 
   final DriverEarningsRepository repository;
   final DriverSessionStore sessionService;

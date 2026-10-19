@@ -79,7 +79,7 @@ class const PickupNavigationPanel({
             ],
           ),
           const SizedBox(height: 10),
-          CompactRouteTimelineWidget(pickup: pickup, dropoff: dropoff),
+          CompactRouteTimeline(pickup: pickup, dropoff: dropoff),
           const SizedBox(height: 10),
           _passengerRow(context),
           const SizedBox(height: 10),
@@ -285,5 +285,3 @@ class const PickupNavigationPanel({
     );
   }
 }
-
-typedef PickupNavigationPanelWidget = PickupNavigationPanel;

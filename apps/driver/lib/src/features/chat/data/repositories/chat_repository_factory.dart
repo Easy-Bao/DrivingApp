@@ -8,23 +8,23 @@ abstract interface class ChatRepositoryFactory {
 }
 
 final class DefaultChatRepositoryFactory({
-  required this._clientDio,
+  required this._httpClient,
   required this._tokenProvider,
   this._refreshTokenProvider,
 }) implements ChatRepositoryFactory {
-  final Dio _clientDio;
+  final Dio _httpClient;
   final Future<String?> Function() _tokenProvider;
   final Future<String?> Function()? _refreshTokenProvider;
 
   @override
   ChatRepository create({required String currentUserId}) {
     return ChatRepositoryImpl(
-      remoteDataSource: WebSocketChatRemoteDataSource(
+      remoteDataSource: ChatRemoteDataSourceImpl(
         tokenProvider: _tokenProvider,
         refreshTokenProvider: _refreshTokenProvider,
       ),
       currentUserId: currentUserId,
-      clientDio: _clientDio,
+      httpClient: _httpClient,
       tokenProvider: _tokenProvider,
     );
   }

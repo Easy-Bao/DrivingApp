@@ -80,5 +80,3 @@ class const BookingAuthBottomSheet({super.key}) extends StatelessWidget {
     );
   }
 }
-
-typedef BookingAuthBottomSheetWidget = BookingAuthBottomSheet;

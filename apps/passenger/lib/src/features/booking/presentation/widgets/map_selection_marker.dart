@@ -74,5 +74,3 @@ class const _MapSelectionMarkerPainter({
         oldDelegate.surfaceColor != surfaceColor;
   }
 }
-
-typedef MapSelectionMarkerWidget = MapSelectionMarker;

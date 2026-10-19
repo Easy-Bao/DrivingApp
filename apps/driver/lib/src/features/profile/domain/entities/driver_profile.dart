@@ -128,5 +128,3 @@ class const DriverProfile({
     return null;
   }
 }
-
-typedef ProfileModel = DriverProfile;

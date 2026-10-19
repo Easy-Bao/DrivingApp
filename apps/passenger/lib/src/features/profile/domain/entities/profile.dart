@@ -130,5 +130,3 @@ class PassengerProfile {
     return null;
   }
 }
-
-typedef ProfileModel = PassengerProfile;

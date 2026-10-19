@@ -16,11 +16,11 @@ type CounterStore interface {
 	Increment(ctx context.Context, key string, window time.Duration) (int64, error)
 }
 
-type RedisCounterStore struct {
+type CacheCounterStore struct {
 	client *redisclient.Client
 }
 
-var _ CounterStore = (*RedisCounterStore)(nil)
+var _ CounterStore = (*CacheCounterStore)(nil)
 
 const _atomicIncrementScript = `
 local count = redis.call('INCR', KEYS[1])
@@ -30,11 +30,11 @@ end
 return count
 `
 
-func NewRedisCounterStore(client *redisclient.Client) *RedisCounterStore {
-	return &RedisCounterStore{client: client}
+func NewCacheCounterStore(client *redisclient.Client) *CacheCounterStore {
+	return &CacheCounterStore{client: client}
 }
 
-func (store *RedisCounterStore) Increment(ctx context.Context, key string, window time.Duration) (int64, error) {
+func (store *CacheCounterStore) Increment(ctx context.Context, key string, window time.Duration) (int64, error) {
 	if store == nil || store.client == nil {
 		return 0, fmt.Errorf("redis counter store is not configured")
 	}

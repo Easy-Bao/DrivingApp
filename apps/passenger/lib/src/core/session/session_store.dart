@@ -9,15 +9,15 @@ class PassengerSessionStore({FlutterSecureStorage? storage}) {
   this : _storage = storage ?? _defaultStorage;
 
   Future<void> saveToken(String token) async {
-    await _storage.write(key: PassengerStorageKeys.jwtToken, value: token);
+    await _storage.write(key: PassengerStorageKeys.accessToken, value: token);
   }
 
   Future<String?> readToken() async {
-    return _storage.read(key: PassengerStorageKeys.jwtToken);
+    return _storage.read(key: PassengerStorageKeys.accessToken);
   }
 
   Future<void> deleteToken() async {
-    await _deleteKeys(const [PassengerStorageKeys.jwtToken]);
+    await _deleteKeys(const [PassengerStorageKeys.accessToken]);
   }
 
   Future<void> saveRefreshToken(String token) async {
@@ -95,7 +95,7 @@ class PassengerSessionStore({FlutterSecureStorage? storage}) {
 
   Future<void> clearAll() async {
     await _deleteKeys(const [
-      PassengerStorageKeys.jwtToken,
+      PassengerStorageKeys.accessToken,
       PassengerStorageKeys.refreshToken,
       PassengerStorageKeys.driverId,
       PassengerStorageKeys.passengerId,

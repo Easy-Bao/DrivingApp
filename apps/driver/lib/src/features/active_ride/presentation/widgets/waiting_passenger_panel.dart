@@ -78,7 +78,7 @@ class const WaitingPassengerPanel({
         const SizedBox(height: 16),
         Divider(height: 1, color: context.colorScheme.outlineVariant),
         const SizedBox(height: 14),
-        CompactRouteTimelineWidget(pickup: pickup, dropoff: dropoff),
+        CompactRouteTimeline(pickup: pickup, dropoff: dropoff),
         const SizedBox(height: 14),
         Divider(height: 1, color: context.colorScheme.outlineVariant),
         const SizedBox(height: 12),
@@ -273,5 +273,3 @@ class const WaitingPassengerStartTripButton({
     );
   }
 }
-
-typedef WaitingPassengerPanelWidget = WaitingPassengerPanel;
