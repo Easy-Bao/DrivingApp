@@ -19,7 +19,6 @@ void main() {
       await observer.dispose();
       expect(popCount, 1);
 
-      // After dispose, further didPop calls do not throw or emit
       observer.didPop(routeA, null);
       expect(popCount, 1);
 

@@ -4,10 +4,6 @@ typedef AccessStateStream<T> = Stream<T> Function();
 typedef AccessStateReader<T> = Future<T> Function();
 
 /// Coalesces access reads and deduplicates native service state updates.
-///
-/// The monitor contains no platform dependency; each client supplies its
-/// location adapter, so passenger and driver share lifecycle behavior without
-/// sharing app-specific state enums.
 final class AccessStateMonitor<T>({
   required AccessStateStream<T> stateChanges,
   required AccessStateReader<T> readState,

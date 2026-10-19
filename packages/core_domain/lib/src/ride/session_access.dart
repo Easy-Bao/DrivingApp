@@ -1,7 +1,3 @@
-/// Executes a ride command only when the immutable session has credentials.
-///
-/// The private final field is promoted directly by flow analysis after the
-/// null check; no nullable shadow variable or wrapper allocation is needed.
 final class RideSessionAccess {
   const RideSessionAccess(this._authorizationToken);
 

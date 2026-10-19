@@ -204,7 +204,6 @@ void main() {
     );
     await tester.pump();
 
-    // While loading skeleton is displayed, tapping tab should be ignored
     await tester.tap(find.text('Daily'), warnIfMissed: false);
     await tester.pump();
 
@@ -220,7 +219,6 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    // Default selected tab is This Week
     expect(find.text('THIS WEEK'), findsOneWidget);
   });
 

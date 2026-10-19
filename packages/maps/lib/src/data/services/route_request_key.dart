@@ -2,7 +2,6 @@ import 'package:equatable/equatable.dart';
 
 import 'package:maps/src/domain/entities/route.dart';
 
-/// Identifies a route request independently of its map implementation.
 class RouteRequestKey extends Equatable {
   RouteRequestKey({
     required double originLatitude,

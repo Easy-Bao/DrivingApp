@@ -2,8 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-/// Notifies persistent shell pages when a root-level flow is dismissed.
-///
 /// Booking pages are siblings of the stateful shell, so a route observer
 /// attached only to the home branch cannot see their pop. The home page uses
 /// this stream to refresh its pickup snapshot when the flow returns.

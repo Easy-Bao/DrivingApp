@@ -1,8 +1,3 @@
-/// Compile-time typed identifiers and values used by ride workflows.
-///
-/// Extension types preserve the representation of their underlying values at
-/// runtime while preventing accidental mixing of identifiers or units at the
-/// API boundary.
 extension type const PassengerId(String raw) {
   static PassengerId? tryParse(Object? value) {
     final normalized = _normalizedIdentifier(value);
@@ -58,8 +53,6 @@ extension type const RideId(String raw) {
   bool get isValid => normalized.isNotEmpty;
 }
 
-/// A named record keeps coordinates allocation-free while making latitude and
-/// longitude ordering explicit at call sites.
 typedef RideCoordinates = (double latitude, double longitude);
 
 extension type const DistanceKm(double value) {

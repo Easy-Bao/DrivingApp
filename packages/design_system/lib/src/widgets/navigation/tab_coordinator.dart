@@ -1,8 +1,5 @@
 import 'package:flutter/foundation.dart';
 
-/// Coordinates the committed tab selection, back history, and live page
-/// position used by a swipe-driven tab shell.
-///
 /// The committed index is intentionally separate from [pagePosition]. The
 /// former drives routing and accessibility semantics; the latter follows the
 /// [PageController] continuously while a page is being dragged or animated.

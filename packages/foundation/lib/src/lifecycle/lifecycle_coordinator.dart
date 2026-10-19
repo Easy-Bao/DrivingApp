@@ -2,8 +2,6 @@ import 'dart:async';
 
 enum AppLifecycleStatus { foreground, background }
 
-/// Owns the app lifecycle state shared by route-level work.
-///
 /// The Flutter application root is the only object that translates platform
 /// lifecycle callbacks into this coordinator. Feature pages subscribe to the
 /// resulting stream so timers, realtime sockets, and foreground refreshes do

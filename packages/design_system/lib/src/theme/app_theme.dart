@@ -7,7 +7,6 @@ import 'package:design_system/src/tokens/radius.dart';
 import 'package:design_system/src/tokens/size.dart';
 import 'package:flutter/material.dart';
 
-/// The single Material theme shared by every EasyRide application.
 abstract final class EasyRideTheme {
   static final ThemeData main = _build();
 

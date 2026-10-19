@@ -3,8 +3,6 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-/// Installs a non-diagnostic framework error surface for both client apps.
-///
 /// Technical details remain in internal logs while framework error widgets
 /// render a stable, presentation-safe message.
 void configureClientErrorBoundary({required String appName}) {

@@ -2,10 +2,6 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
-/// Compact resume-trip strip that lives inside the floating tab bar surface.
-///
-/// Rendered as a single-row banner above the tab items when an active ride
-/// is in progress. Tapping anywhere on the strip calls [onResume].
 class const ActiveRideBanner({
   required this.statusText,
   required this.driverName,

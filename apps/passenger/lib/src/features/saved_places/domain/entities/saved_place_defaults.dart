@@ -1,7 +1,5 @@
 import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
 
-/// Returns a copy of [places] with exactly one default when it is non-empty.
-///
 /// Existing order is preserved. If stored data has no default or several
 /// defaults, the first place wins so legacy data is repaired deterministically.
 List<SavedPlace> normalizeSavedPlaceDefaults(Iterable<SavedPlace> places) {

@@ -26,8 +26,6 @@ class const MapViewportBounds({
       minLongitude <= maxLongitude;
 }
 
-/// Loads demand cells by map zone so panning into a new zone triggers a fetch.
-///
 /// Completed tiles are retained for the lifetime of the coordinator. A failed
 /// tile is not marked as loaded, allowing the next map-idle event to retry it.
 final class DemandHeatmapViewportCoordinator<T> {

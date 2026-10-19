@@ -27,8 +27,6 @@ enum NetworkErrorCategory {
   unknown,
 }
 
-/// Safe, structured diagnostics for transport failures.
-///
 /// The category is intended for development logs and telemetry correlation.
 /// It deliberately contains no request URL, headers, response body, or socket
 /// text, so adding it to the shared logging boundary cannot expose credentials

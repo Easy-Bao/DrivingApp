@@ -8,8 +8,6 @@ import 'package:foundation/src/errors/network_diagnostic.dart';
 
 enum ErrorType { network, server, unauthorized, validation, location, unknown }
 
-/// Presentation-safe error data produced at the client boundary.
-///
 /// [technicalLog] and [stackTrace] are intentionally kept separate from the
 /// user copy. They are available to an internal logger and must never be
 /// rendered by a widget.

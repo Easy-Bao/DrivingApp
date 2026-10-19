@@ -16,7 +16,6 @@ class const AppLocationAccessPresentation({
   final AppLocationAccessTone tone;
 }
 
-/// A state-agnostic location access page shared by both app roots.
 class const AppLocationAccessStatusPage({
   super.key,
   required this.presentation,

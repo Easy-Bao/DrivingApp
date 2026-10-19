@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Raw colors reserved for application status and feedback states.
 abstract final class EasyRideStatusColors {
   static const success = Color(0xFF26845B);
   static const warning = Color(0xFFB45309);

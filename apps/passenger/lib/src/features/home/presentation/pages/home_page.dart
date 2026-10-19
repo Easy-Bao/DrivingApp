@@ -243,7 +243,6 @@ class _HomePageState extends State<HomePage> {
         },
       );
     } catch (_) {
-      // Best-effort active trip restoration on app launch.
     }
   }
 

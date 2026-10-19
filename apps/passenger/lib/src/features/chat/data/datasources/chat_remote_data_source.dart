@@ -15,8 +15,6 @@ abstract class ChatRemoteDataSource {
 
   Stream<String> get eventStream;
 
-  /// Connection changes are separate from chat payloads so a reconnect never
-  /// has to be represented as a fake user message or a raw transport error.
   Stream<ChatConnectionState> get connectionStateStream =>
       const Stream<ChatConnectionState>.empty();
 

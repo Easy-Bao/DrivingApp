@@ -35,28 +35,23 @@ void main() {
         ),
       );
 
-      // Verify no remember me checkbox exists
       expect(find.text('Remember me'), findsNothing);
       expect(find.byType(Checkbox), findsNothing);
 
-      // Attempt submit with empty fields
       await tester.tap(find.text('Sign In'));
       await tester.pumpAndSettle();
 
       expect(find.text('Enter your email address.'), findsOneWidget);
       expect(find.text('Enter your password.'), findsOneWidget);
 
-      // Typing in email clears email error
       await tester.enterText(find.byType(TextField).first, 'invalid-email');
       await tester.pump();
       expect(find.text('Enter your email address.'), findsNothing);
 
-      // Submit with invalid email format
       await tester.tap(find.text('Sign In'));
       await tester.pumpAndSettle();
       expect(find.text('Enter a valid email address.'), findsOneWidget);
 
-      // Enter valid email and password
       await tester.enterText(
         find.byType(TextField).first,
         'driver@example.com',
@@ -67,11 +62,9 @@ void main() {
       expect(find.text('Enter a valid email address.'), findsNothing);
       expect(find.text('Enter your password.'), findsNothing);
 
-      // Submit valid credentials that fail on server
       await tester.tap(find.text('Sign In'));
       await tester.pumpAndSettle();
 
-      // AppErrorBanner displays server error, not inline password errorText
       expect(find.byType(AppErrorBanner), findsOneWidget);
       expect(find.text('Incorrect email or password.'), findsOneWidget);
 

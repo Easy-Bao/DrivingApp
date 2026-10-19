@@ -139,15 +139,12 @@ void main() {
       onSessionExpired: () => sessionExpiredCalled = true,
     );
 
-    // Trigger 401 refresh failure during active mission
     expect(await provider.refreshAccessToken(), isNull);
 
-    // Session must NOT be cleared, onSessionExpired must NOT be called
     expect(clearCount, 0);
     expect(sessionExpiredCalled, false);
     expect(provider.isDeferredExpiryPending, true);
 
-    // End mission and flush deferred expiry
     isMissionActive = false;
     await provider.flushDeferredExpiry();
 

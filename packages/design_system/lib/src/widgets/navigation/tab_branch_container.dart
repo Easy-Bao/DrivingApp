@@ -2,13 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-/// Keeps a tab page view and its navigation state synchronized during taps,
-/// programmatic changes, and interactive swipes.
-///
-/// The route shell stays outside this module. Callers provide the current
-/// route index and a branch callback, while this implementation owns the
-/// gesture lifecycle and continuously reports the page position used by the
-/// active-tab indicator.
 class const AppTabBranchContainer({
   super.key,
   required this.currentIndex,

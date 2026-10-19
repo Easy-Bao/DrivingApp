@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:design_system/design_system.dart';
 
-/// A role-configured EasyRide about page with a real licenses destination.
 class const AppAboutPage({
   super.key,
   required this.applicationName,

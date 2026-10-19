@@ -5,8 +5,6 @@ import 'package:dio/dio.dart';
 
 import 'endpoints.dart';
 
-/// Supplies the current access token to HTTP and long-lived transports.
-///
 /// Access tokens are intentionally decoded only to read their expiry. The
 /// server remains responsible for validating the token signature and claims.
 /// A single refresh request is shared by concurrent callers so a foreground
@@ -40,10 +38,8 @@ final class RefreshableTokenProvider({
   bool _sessionExpiryNotified = false;
   bool _deferredExpiryPending = false;
 
-  /// Whether session expiration has been deferred because an active mission is in flight.
   bool get isDeferredExpiryPending => _deferredExpiryPending;
 
-  /// Registers or overrides the active mission checker.
   void registerActiveMissionChecker(FutureOr<bool> Function() checker) {
     _hasActiveMission = checker;
   }
@@ -167,7 +163,6 @@ final class RefreshableTokenProvider({
     }
   }
 
-  /// Flushes any deferred session expiration once the active mission has ended.
   Future<void> flushDeferredExpiry() async {
     if (!_deferredExpiryPending) return;
     await _expireSession();

@@ -357,8 +357,6 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
     }
   }
 
-  /// Builds the inline active-ride strip for the floating tab bar, or null
-  /// when no active ride is being tracked.
   Widget? _buildActiveRideBannerForTabBar(
     BuildContext context,
     TrackDriverState trackState,

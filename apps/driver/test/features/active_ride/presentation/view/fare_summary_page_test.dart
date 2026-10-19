@@ -105,20 +105,17 @@ void main() {
       ),
     );
 
-    // Initial state: received = 50.00, change = 0.00
     final receivedField = find.byKey(const ValueKey('cash-received-field'));
     final changeField = find.byKey(const ValueKey('cash-change-field'));
     expect(find.text('50.00'), findsOneWidget);
     expect(find.text('0.00'), findsOneWidget);
 
-    // Type 100 into cash-received
     await tester.enterText(receivedField, '100');
     await tester.pumpAndSettle();
 
     final changeInput = tester.widget<TextField>(changeField);
     expect(changeInput.controller?.text, '50.00');
 
-    // Tap Exact chip
     await tester.tap(find.byKey(const ValueKey('chip-exact-fare')));
     await tester.pumpAndSettle();
 
@@ -126,7 +123,6 @@ void main() {
     expect(receivedInput.controller?.text, '50.00');
     expect(tester.widget<TextField>(changeField).controller?.text, '0.00');
 
-    // Tap bill chip if available (e.g. ₱100)
     final bill100Chip = find.byKey(const ValueKey('chip-bill-100'));
     if (bill100Chip.evaluate().isNotEmpty) {
       await tester.tap(bill100Chip);

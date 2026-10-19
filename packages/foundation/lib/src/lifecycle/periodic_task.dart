@@ -5,8 +5,6 @@ import 'package:foundation/src/lifecycle/lifecycle_coordinator.dart';
 
 typedef AppLifecycleTaskCallback = FutureOr<void> Function();
 
-/// Runs one periodic foreground task without creating another platform
-/// lifecycle observer in the feature that owns the work.
 final class AppLifecyclePeriodicTask({
   required AppLifecycleCoordinator lifecycleCoordinator,
   required Duration interval,

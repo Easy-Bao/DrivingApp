@@ -238,8 +238,6 @@ class _FindingDriverPageContentState()
     );
     if (distanceNum == null || durationNum == null) return;
 
-    // Once a direct request is sent, the passenger should see the focused
-    // waiting state rather than the previously selected driver card.
     setState(() {
       _selectedDriver = null;
       _isViewingDriverProfile = false;

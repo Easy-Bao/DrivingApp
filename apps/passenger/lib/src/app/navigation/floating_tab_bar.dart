@@ -29,8 +29,6 @@ class const PassengerFloatingTabBar({
   final InboxCubit inboxCubit;
   final ValueListenable<double>? pagePosition;
 
-  /// Optional inline active-ride strip rendered above the tab destinations
-  /// inside the same floating pill surface.
   final Widget? activeRideBanner;
 
   @override

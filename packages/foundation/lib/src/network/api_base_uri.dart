@@ -1,8 +1,5 @@
 const _defaultAndroidEmulatorLoopbackHost = '10.0.2.2';
 
-/// Parses the one origin used by the mobile clients for HTTP and WebSocket
-/// traffic.
-///
 /// API paths belong to the individual data sources. Keeping this value to an
 /// origin prevents an accidental path, query string, or embedded credential
 /// from changing where authenticated requests are sent.

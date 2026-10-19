@@ -310,8 +310,6 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     }
   }
 
-  /// Reconciles the mounted trip against one authoritative status/location
-  /// snapshot after realtime transport recovery.
   Future<void> resyncActiveTrip() async {
     if (isClosed) return;
     final resync = _activeTripResync;

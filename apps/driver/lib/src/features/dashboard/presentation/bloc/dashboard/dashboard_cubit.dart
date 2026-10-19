@@ -272,8 +272,6 @@ class DashboardCubit({
     }
   }
 
-  /// Reconciles active offers and trips through one authoritative snapshot
-  /// after realtime transport recovery.
   Future<void> resyncActiveTrip() async {
     await loadDispatchSnapshot(includeOffers: true, silent: true, force: true);
   }

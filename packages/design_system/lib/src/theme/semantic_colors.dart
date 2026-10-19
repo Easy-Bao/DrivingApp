@@ -1,7 +1,6 @@
 import 'package:design_system/src/tokens/status_colors.dart';
 import 'package:flutter/material.dart';
 
-/// EasyRide-specific states that do not belong to [ColorScheme].
 @immutable
 class const EasyRideSemanticColors({
   required this.success,

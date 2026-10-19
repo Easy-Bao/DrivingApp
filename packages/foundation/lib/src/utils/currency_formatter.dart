@@ -1,8 +1,3 @@
-/// Formats a peso amount for client-facing fare and earnings labels.
-///
-/// Monetary values remain minor-unit accurate in transport and domain models;
-/// this formatter applies comma thousands separators and standard two-decimal
-/// centavo precision.
 String formatPesoAmount(num amount) {
   if (!amount.isFinite) return '₱—';
 

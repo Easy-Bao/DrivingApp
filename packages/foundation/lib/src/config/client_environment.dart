@@ -1,7 +1,5 @@
 import '../network/api_base_uri.dart';
 
-/// Resolves public client configuration without owning an environment file.
-///
 /// Applications provide the values loaded from their own bundled `.env` asset
 /// and any build-time `--dart-define` overrides. Keeping the source outside
 /// this package lets the shared package remain reusable by Passenger, Driver,

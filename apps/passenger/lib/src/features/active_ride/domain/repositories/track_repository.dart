@@ -48,8 +48,6 @@ abstract interface class TrackRepository {
 }
 
 extension TrackRepositoryResultAdapters on TrackRepository {
-  /// Converts the legacy repository contract into the strict result used by
-  /// active-trip synchronization without changing existing implementations.
   Future<Result<RideUpdate, DomainFailure>> getRideStatusResult(
     String rideId,
   ) async {
@@ -112,7 +110,6 @@ extension TrackRepositoryResultAdapters on TrackRepository {
     }
   }
 
-  /// Converts a location read into a strict result for active-trip recovery.
   Future<Result<DriverLocation, DomainFailure>> fetchDriverLocationResult(
     String rideId,
   ) async {

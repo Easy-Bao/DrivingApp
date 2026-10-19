@@ -69,7 +69,6 @@ final class const RealtimeConnecting(this.attempt)
 
 final class const RealtimeConnected() extends RealtimeConnectionState {}
 
-/// Maintains one authenticated event stream for a signed-in app session.
 /// The token provider is consulted for every connection attempt. An optional
 /// refresher handles failures that happen before a server can identify an
 /// expired or rotated access token during the WebSocket handshake. When a
@@ -127,14 +126,11 @@ final class RealtimeWebSocketClient({
   Stream<RealtimeConnectionState> get states => _states.stream;
   bool get isConnected => _socket != null;
 
-  /// Replaces the screen-scoped active-trip recovery owner without requiring
-  /// a new authenticated socket. Passing null detaches the current owner.
   void setActiveTripResyncHandler(RealtimeActiveTripResync? handler) {
     if (_disposed) return;
     _onResyncActiveTrip = handler;
   }
 
-  /// Runs the configured authoritative active-trip recovery once at a time.
   /// Concurrent callers share the same future instead of issuing duplicate
   /// status, location, and offer requests after a network transition.
   Future<void> resyncActiveTrip() {

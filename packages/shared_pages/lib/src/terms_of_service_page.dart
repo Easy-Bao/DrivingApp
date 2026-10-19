@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:design_system/design_system.dart';
 
-/// Shared service terms used by the passenger and driver clients.
 class const AppTermsOfServicePage({super.key, required this.onBack})
     extends StatelessWidget {
   final VoidCallback onBack;

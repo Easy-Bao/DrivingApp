@@ -6,7 +6,6 @@ import 'package:design_system/src/tokens/size.dart';
 import 'package:design_system/src/tokens/spacing.dart';
 import 'package:design_system/src/tokens/status_colors.dart';
 
-/// The small set of access states that the app-root location prompt renders.
 enum LocationAccessOverlayState {
   checking,
   permissionDenied,

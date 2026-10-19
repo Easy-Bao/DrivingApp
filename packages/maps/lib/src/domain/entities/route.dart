@@ -147,7 +147,6 @@ String _readString(Object? value, [String fallback = '']) {
 }
 
 extension RouteExtension on Route {
-  /// Returns only finite GeoJSON coordinates that Mapbox can render.
   /// Mapbox coordinates are ordered longitude first.
   List<List<double>> get validPolylinePoints => polylinePoints
       .where(_isValidPolylinePoint)
@@ -156,7 +155,6 @@ extension RouteExtension on Route {
 
   bool get hasGeometry => validPolylinePoints.length >= 2;
 
-  /// Returns the first valid point from the cached coordinate representation.
   /// Mapbox coordinates are ordered longitude first.
   ({double lat, double lng})? get bufferedStartCoordinate {
     final buffer = coordinateBuffer;
@@ -174,7 +172,6 @@ extension RouteExtension on Route {
 }
 
 extension RoutePolylinePointsApi on List<List<double>> {
-  /// Converts raw GeoJSON route points to the interleaved map buffer format.
   /// Invalid points are discarded so legacy tracking payloads remain safe to
   /// render without allocating intermediate `Position` objects.
   Float64List toCoordinateBuffer() =>

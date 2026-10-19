@@ -67,7 +67,6 @@ Future<void> bootstrapDriverApp() async {
         },
       );
 
-      // Finish independent platform and storage work before configuring routes.
       await Future.wait<void>([
         stopServiceTask,
         preferencesTask.then<void>((_) {}),

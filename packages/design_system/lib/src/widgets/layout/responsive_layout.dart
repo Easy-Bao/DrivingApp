@@ -7,10 +7,6 @@ import 'package:design_system/src/widgets/navigation/floating_tab_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 
-/// A consistent page heading for primary destinations and secondary flows.
-///
-/// Keeping the heading hierarchy here prevents each feature from inventing a
-/// slightly different title size, weight, or subtitle rhythm.
 class const EasyRidePageHeader({
   super.key,
   required this.title,
@@ -69,7 +65,6 @@ class const EasyRidePageHeader({
   }
 }
 
-/// A centered content frame that keeps wide layouts readable.
 class const EasyRidePageFrame({
   super.key,
   required this.child,
@@ -109,10 +104,6 @@ class const EasyRidePageFrame({
   }
 }
 
-/// A predictable shell for secondary destinations across both client apps.
-///
-/// Feature pages own their body layout while this shell keeps navigation
-/// chrome, back behavior, and readable content width consistent.
 class const EasyRideSecondaryPage({
   super.key,
   required this.title,
@@ -152,7 +143,6 @@ class const EasyRideSecondaryPage({
   }
 }
 
-/// A restrained surface container for cards and grouped content.
 class const EasyRideSurfaceCard({
   super.key,
   required this.child,
@@ -186,7 +176,6 @@ class const EasyRideSurfaceCard({
   }
 }
 
-/// Shared wide-screen navigation for both client shells.
 class const EasyRideNavigationRail({
   super.key,
   required this.destinations,

@@ -2,8 +2,6 @@ import 'dart:math' as math;
 
 import 'package:maps/src/domain/entities/place.dart';
 
-/// Resolves nearby places using server-provided distances when available.
-///
 /// Map providers may omit `distance_km` for valid results. Keeping the
 /// fallback here makes both clients apply the same radius and distance rules.
 class NearbyPlaceResolver._() {

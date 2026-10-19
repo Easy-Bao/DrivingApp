@@ -3,11 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 
-/// Shared status surface for the driver-discovery states.
-///
-/// Keeping the status visual, trip context, and recovery action in one shell
-/// makes the search feel like a focused transaction instead of three unrelated
-/// pages. The individual panels still own their public callbacks and copy.
 class FindingDriverStatusSheet extends StatelessWidget {
   const FindingDriverStatusSheet({
     super.key,

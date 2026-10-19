@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Draws one scaled active capsule per tab according to a continuous page
-/// position.
-///
 /// The active tab owns the full capsule at an exact page position. During a
 /// swipe, each participating capsule keeps its tab allocation, fades with its
 /// allocation, and scales from its center. This keeps the indicator in the
@@ -32,10 +29,6 @@ class const SwipeActiveTabIndicator({
 
   this : assert(itemCount > 0);
 
-  /// Returns how much a tab participates in the active page allocation.
-  ///
-  /// Adjacent tabs share the allocation linearly while the page is between
-  /// them. Tabs farther away remain collapsed at their center.
   static double selectionProgress(double pagePosition, int index) {
     final safePagePosition = pagePosition.isFinite ? pagePosition : 0.0;
     final progress = 1 - (safePagePosition - index).abs();

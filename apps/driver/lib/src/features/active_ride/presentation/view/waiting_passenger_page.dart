@@ -120,7 +120,6 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
         final currentPassengerMessagesCount = passengerChatMessagesList.length;
 
         if (!_isInitialChatMessagesCountFetched) {
-          // Existing passenger messages are unread until this chat is opened.
           _viewedPassengerMessagesCount = 0;
           _isInitialChatMessagesCountFetched = true;
         }

@@ -1,7 +1,5 @@
 typedef CacheClock = DateTime Function();
 
-/// Shares in-flight work and briefly reuses successful values.
-///
 /// Errors are never retained. Callers can also opt out of caching a resolved
 /// value, which is useful for nullable results where `null` means a transient
 /// failure.

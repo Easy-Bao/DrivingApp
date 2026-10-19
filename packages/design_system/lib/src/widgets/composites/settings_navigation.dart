@@ -6,7 +6,6 @@ import 'package:design_system/src/tokens/radius.dart';
 import 'package:design_system/src/tokens/spacing.dart';
 import 'package:design_system/src/widgets/layout/responsive_layout.dart';
 
-/// A centered settings page shell shared by both EasyRide clients.
 class const AppSettingsScaffold({
   super.key,
   required this.onBack,
@@ -49,7 +48,6 @@ class const AppSettingsScaffold({
   }
 }
 
-/// A labelled settings group with consistent section rhythm.
 class const AppSettingsSection({
   super.key,
   required this.label,
@@ -90,7 +88,6 @@ class const AppSettingsSection({
   }
 }
 
-/// A minimum-height navigation row for a completed settings destination.
 class const AppSettingsNavigationTile({
   super.key,
   required this.icon,

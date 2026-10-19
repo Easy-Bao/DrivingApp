@@ -20,11 +20,6 @@ class AppTabDestination {
   final String label;
 }
 
-/// Shared floating navigation surface used by both authenticated clients.
-///
-/// The tab bar owns the visual contract—slot sizing, active indicator
-/// geometry, selected color interpolation, and touch semantics—while an app
-/// may provide an icon builder for a destination-specific badge.
 class AppFloatingTabBar extends StatelessWidget {
   const AppFloatingTabBar({
     super.key,

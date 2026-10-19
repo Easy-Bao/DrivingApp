@@ -12,8 +12,6 @@ const _defaultNetworkMessage =
 const _defaultTimeoutMessage = 'The request took too long. Try again.';
 const _defaultCacheMessage = 'Saved information is unavailable. Try again.';
 
-/// Converts transport and storage exceptions into safe domain failures.
-///
 /// Data sources may contain backend-provided details, but those details must
 /// stay in technical logs. Repositories use this mapper before a failure can
 /// cross into a BLoC or view.

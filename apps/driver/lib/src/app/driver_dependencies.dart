@@ -134,7 +134,6 @@ Future<void> _navigateToDriverSignIn([
     final session = sessionService ?? Modular.get<DriverSessionStore>();
     final activeRideId = await session.readActiveRideId();
     if (activeRideId != null && activeRideId.trim().isNotEmpty) {
-      // Active mission in transit: defer login redirect until trip completion.
       return;
     }
   } catch (_) {}

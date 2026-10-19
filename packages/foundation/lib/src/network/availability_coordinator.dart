@@ -8,9 +8,6 @@ enum NetworkAvailabilityStatus { available, degraded, unavailable }
 
 typedef NetworkNow = DateTime Function();
 
-/// Tracks transport availability for one app process and briefly opens the
-/// circuit after consecutive network failures.
-///
 /// Only the Dio boundary calls [tryAcquireRequest], [recordSuccess], and
 /// [recordFailure]. UI consumers subscribe to [changes] for one deduplicated
 /// status stream instead of deriving connectivity from individual pages.
@@ -96,7 +93,6 @@ final class NetworkAvailabilityCoordinator({
   }
 }
 
-/// Applies the process-wide availability circuit to a Dio client.
 final class const NetworkAvailabilityInterceptor(this.coordinator)
     extends Interceptor {
   final NetworkAvailabilityCoordinator coordinator;

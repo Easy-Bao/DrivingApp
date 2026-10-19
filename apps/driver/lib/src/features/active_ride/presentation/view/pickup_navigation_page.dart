@@ -167,7 +167,6 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
         final currentPassengerMessagesCount = passengerChatMessagesList.length;
 
         if (!_isInitialChatMessagesCountFetched) {
-          // Existing passenger messages are unread until this chat is opened.
           _viewedPassengerMessagesCount = 0;
           _isInitialChatMessagesCountFetched = true;
         }

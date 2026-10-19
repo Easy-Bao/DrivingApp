@@ -12,7 +12,6 @@ class const AppHelpTopic({
   final String answer;
 }
 
-/// A searchable, role-configured help center without placeholder actions.
 class const AppHelpCenterPage({
   super.key,
   required this.topics,

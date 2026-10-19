@@ -5,9 +5,6 @@ import 'package:design_system/src/widgets/feedback/network_status_scope.dart';
 
 enum AppStatusBannerTone { warning, error }
 
-/// Places a transient app status on the system edge. When rendered at the
-/// top of a layout, the message remains visible while allowing the app area
-/// to be offset below it so they never overlap.
 class const AppStatusBanner({
   super.key,
   required this.isVisible,

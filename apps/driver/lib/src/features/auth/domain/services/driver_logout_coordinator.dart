@@ -2,8 +2,6 @@ import 'dart:developer' as developer;
 
 typedef DriverLogoutStep = Future<void> Function();
 
-/// Runs the driver cleanup sequence before the authenticated session ends.
-///
 /// Best-effort availability and telemetry cleanup must not prevent the session
 /// from being cleared. Session cleanup remains the final required step and its
 /// error is allowed to reach the caller.

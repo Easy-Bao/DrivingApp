@@ -18,7 +18,6 @@ void main() {
 
     await tester.pumpWidget(MaterialApp(home: Scaffold(body: mapView)));
 
-    // Mapbox MapWidget is in the tree
     expect(find.byType(Scaffold), findsOneWidget);
   });
 }
