@@ -5,8 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
-import 'package:passenger/src/app/navigation/guest_action_bar.dart';
 import 'package:passenger/src/app/navigation/floating_tab_bar.dart';
+import 'package:passenger/src/app/navigation/guest_action_bar.dart';
+import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver_cubit.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver_state.dart';
@@ -16,18 +17,19 @@ import 'package:passenger/src/features/home/presentation/widgets/active_ride_ban
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox_cubit.dart';
 import 'package:passenger/src/features/profile/profile_routes.dart';
-import 'package:passenger/src/core/session/session_store.dart';
 
 typedef PassengerTabNavigationCoordinator = TabNavigationCoordinator;
 
-class const PassengerTabBranchContainer({
-  super.key,
-  required this.navigationShell,
-  required this.children,
-  required this.onNavigationSettled,
-  required this.onPagePositionChanged,
-  this.allowUserNavigation = true,
-}) extends StatelessWidget {
+class PassengerTabBranchContainer extends StatelessWidget {
+  const PassengerTabBranchContainer({
+    super.key,
+    required this.navigationShell,
+    required this.children,
+    required this.onNavigationSettled,
+    required this.onPagePositionChanged,
+    this.allowUserNavigation = true,
+  });
+
   final StatefulNavigationShell navigationShell;
   final List<Widget> children;
   final ValueChanged<int> onNavigationSettled;
@@ -48,15 +50,16 @@ class const PassengerTabBranchContainer({
   );
 }
 
-class const PassengerShellLayout({
-  super.key,
-  required this.navigationShell,
-  required this.inboxCubit,
-  required this.realtimeClient,
-  required this.lifecycleCoordinator,
-  required this.navigationCoordinator,
-  this.trackDriverCubit,
-}) extends StatefulWidget {
+class PassengerShellLayout extends StatefulWidget {
+  const PassengerShellLayout({
+    super.key,
+    required this.navigationShell,
+    required this.inboxCubit,
+    required this.realtimeClient,
+    required this.lifecycleCoordinator,
+    required this.navigationCoordinator,
+    this.trackDriverCubit,
+  });
   final StatefulNavigationShell navigationShell;
   final InboxCubit inboxCubit;
   final RealtimeWebSocketClient realtimeClient;
@@ -177,7 +180,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
 
   @override
   Widget build(BuildContext context) {
-    final sel = widget.navigationCoordinator.selectedIndex;
+    final selectedIndex = widget.navigationCoordinator.selectedIndex;
     final isAuthenticated = context.select<SessionBloc, bool>(
       (bloc) => bloc.state.isAuthenticated,
     );
@@ -249,7 +252,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
                           ? Row(
                               children: [
                                 PassengerNavigationRail(
-                                  selectedIndex: sel,
+                                  selectedIndex: selectedIndex,
                                   onDestinationSelected: _onItemTapped,
                                   inboxCubit: widget.inboxCubit,
                                 ),
@@ -282,7 +285,7 @@ class _PassengerShellLayoutState extends State<PassengerShellLayout> {
                               );
 
                               Widget floatingTabBar = PassengerFloatingTabBar(
-                                selectedIndex: sel,
+                                selectedIndex: selectedIndex,
                                 onDestinationSelected: _onItemTapped,
                                 inboxCubit: widget.inboxCubit,
                                 pagePosition:

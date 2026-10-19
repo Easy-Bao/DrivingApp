@@ -4,15 +4,18 @@ import 'package:maps/src/domain/entities/route.dart';
 abstract class LocationRepository {
   Future<Map<String, dynamic>> searchPlaces({
     required String query,
-    double? userLat,
-    double? userLng,
+    double? userLatitude,
+    double? userLongitude,
   });
 
-  Future<Place> reverseGeocode({required double lat, required double lng});
+  Future<Place> reverseGeocode({
+    required double latitude,
+    required double longitude,
+  });
 
   Future<Map<String, dynamic>> getNearbyPois({
-    required double lat,
-    required double lng,
+    required double latitude,
+    required double longitude,
     int page = 1,
   });
 

@@ -168,15 +168,15 @@ func newHTTPRouter(
 	routeCalculator := rideapplication.RouteCalculatorFunc(
 		func(
 			ctx context.Context,
-			originLat float64,
-			originLng float64,
-			destinationLat float64,
-			destinationLng float64,
+			originLatitude float64,
+			originLongitude float64,
+			destinationLatitude float64,
+			destinationLongitude float64,
 		) (rideapplication.RouteMetrics, error) {
 			route, err := routingProvider.Route(
 				ctx,
-				locationdomain.Coordinates{Latitude: originLat, Longitude: originLng},
-				locationdomain.Coordinates{Latitude: destinationLat, Longitude: destinationLng},
+				locationdomain.Coordinates{Latitude: originLatitude, Longitude: originLongitude},
+				locationdomain.Coordinates{Latitude: destinationLatitude, Longitude: destinationLongitude},
 				locationdomain.RouteOptions{
 					Profile: locationdomain.RouteProfileDrivingTraffic,
 				},

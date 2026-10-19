@@ -5,6 +5,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
+import 'package:passenger/src/core/location/live_map_bloc.dart';
+import 'package:passenger/src/core/session/session_store.dart';
+import 'package:passenger/src/core/telemetry/background_telemetry.dart';
 import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/booking/data/datasources/booking_remote_data_source.dart';
 import 'package:passenger/src/features/booking/data/datasources/driver_discovery_remote_data_source.dart';
@@ -23,10 +26,7 @@ import 'package:passenger/src/features/booking/presentation/pages/ride_selection
 import 'package:passenger/src/features/booking/presentation/pages/search_destination_page.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox_cubit.dart';
-import 'package:passenger/src/core/location/live_map_bloc.dart';
 import 'package:passenger/src/features/profile/presentation/bloc/profile_cubit.dart';
-import 'package:passenger/src/core/session/session_store.dart';
-import 'package:passenger/src/core/telemetry/background_telemetry.dart';
 
 class BookingModule._() {
   static void binds(Injector i) {

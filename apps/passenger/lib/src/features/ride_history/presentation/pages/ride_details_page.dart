@@ -7,21 +7,22 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
+import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/chat/chat_routes.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_details/ride_details_cubit.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
-import 'package:passenger/src/core/session/session_store.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class const RideDetailsPage({
-  super.key,
-  required this.trackRepository,
-  required this.sessionService,
-  this.detailsCubit,
-  this.ride,
-}) extends StatefulWidget {
+class RideDetailsPage extends StatefulWidget {
+  const RideDetailsPage({
+    super.key,
+    required this.trackRepository,
+    required this.sessionService,
+    this.detailsCubit,
+    this.ride,
+  });
   final RideHistory? ride;
   final TrackRepository trackRepository;
   final PassengerSessionStore sessionService;

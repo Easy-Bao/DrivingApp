@@ -54,12 +54,12 @@ class const PickupNavigationPage({
 }
 
 class _PickupNavigationPageState extends State<PickupNavigationPage> {
-  double _sliderVal = 0;
+  double _sliderProgress = 0;
   bool _isLoading = true;
   bool _isConfirmingArrival = false;
   bool _isCancellingRide = false;
-  double? _pickupLat;
-  double? _pickupLng;
+  double? _pickupLatitude;
+  double? _pickupLongitude;
   late final AppLifecyclePeriodicTask _routeTrackingTask;
   late final LiveMapBloc _liveMapBloc;
   bool _isRefreshingRoute = false;
@@ -117,25 +117,27 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
       if (rideId == null || rideId.isEmpty) return;
 
       try {
-        final pos =
+        final position =
             LocationService.lastPosition ??
             await LocationService.getCurrentPosition();
-        if (pos != null) {
+        if (position != null) {
           if (mounted) {
             _liveMapBloc.add(
               DispatchTelemetryLocationEvent(
-                lat: pos.latitude,
-                lng: pos.longitude,
+                latitude: position.latitude,
+                longitude: position.longitude,
               ),
             );
           }
-          if (mounted && _pickupLat != null && _pickupLng != null) {
+          if (mounted &&
+              _pickupLatitude != null &&
+              _pickupLongitude != null) {
             _liveMapBloc.add(
               UpdateLocationsAndDrawRouteEvent(
-                driverLat: pos.latitude,
-                driverLng: pos.longitude,
-                passengerLat: _pickupLat!,
-                passengerLng: _pickupLng!,
+                driverLatitude: position.latitude,
+                driverLongitude: position.longitude,
+                passengerLatitude: _pickupLatitude!,
+                passengerLongitude: _pickupLongitude!,
               ),
             );
           }
@@ -155,9 +157,9 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
       final driverIdentifier = await widget.sessionService.readDriverId() ?? '';
       if (driverIdentifier.isEmpty) return;
 
-      final chatRepo = _chatRepository;
-      if (chatRepo == null) return;
-      final result = await chatRepo.fetchRoomMessages(rideId);
+      final chatRepository = _chatRepository;
+      if (chatRepository == null) return;
+      final result = await chatRepository.fetchRoomMessages(rideId);
       result.fold((_) => null, (List<ChatMessage> messages) {
         final passengerChatMessagesList = messages
             .where((m) => m.senderId != driverIdentifier)
@@ -186,28 +188,28 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
       // position. A location permission delay must not leave the map blank or
       // prevent the route from being drawn once telemetry becomes available.
       final rideState = BlocProvider.of<RideFlowCubit>(context).state;
-      final pickupLat = rideState.pickupLatitude;
-      final pickupLng = rideState.pickupLongitude;
-      if (pickupLat != null && pickupLng != null) {
-        _pickupLat = pickupLat;
-        _pickupLng = pickupLng;
+      final pickupLatitude = rideState.pickupLatitude;
+      final pickupLongitude = rideState.pickupLongitude;
+      if (pickupLatitude != null && pickupLongitude != null) {
+        _pickupLatitude = pickupLatitude;
+        _pickupLongitude = pickupLongitude;
       } else {
         final places = await MapProvider.searchPlaces(widget.pickup);
         if (places.isNotEmpty) {
-          _pickupLat = places.first.latitude;
-          _pickupLng = places.first.longitude;
+          _pickupLatitude = places.first.latitude;
+          _pickupLongitude = places.first.longitude;
         }
       }
 
       if (!mounted) return;
       setState(() => _isLoading = false);
 
-      final pos =
+      final position =
           LocationService.lastPosition ??
           await LocationService.getCurrentPosition();
       if (!mounted) return;
-      if (pos != null) {
-        _triggerDrawRoute(pos.latitude, pos.longitude);
+      if (position != null) {
+        _triggerDrawRoute(position.latitude, position.longitude);
       }
       _startRouteTracking();
     } catch (error, stackTrace) {
@@ -217,37 +219,37 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
     }
   }
 
-  void _triggerDrawRoute(double dLat, double dLng) {
-    final pickupLat = _pickupLat;
-    final pickupLng = _pickupLng;
-    if (pickupLat == null || pickupLng == null) return;
+  void _triggerDrawRoute(double driverLatitude, double driverLongitude) {
+    final pickupLatitude = _pickupLatitude;
+    final pickupLongitude = _pickupLongitude;
+    if (pickupLatitude == null || pickupLongitude == null) return;
     _liveMapBloc.add(
       UpdateLocationsAndDrawRouteEvent(
-        driverLat: dLat,
-        driverLng: dLng,
-        passengerLat: pickupLat,
-        passengerLng: pickupLng,
+        driverLatitude: driverLatitude,
+        driverLongitude: driverLongitude,
+        passengerLatitude: pickupLatitude,
+        passengerLongitude: pickupLongitude,
       ),
     );
   }
 
   void _onMapCreated(AppMapController controller) {
-    final pos = LocationService.lastPosition;
-    final defaultLat = pos?.latitude ?? _pickupLat;
-    final defaultLng = pos?.longitude ?? _pickupLng;
-    if (defaultLat == null || defaultLng == null) return;
+    final position = LocationService.lastPosition;
+    final defaultLatitude = position?.latitude ?? _pickupLatitude;
+    final defaultLongitude = position?.longitude ?? _pickupLongitude;
+    if (defaultLatitude == null || defaultLongitude == null) return;
 
     _liveMapBloc.add(
       InitializeMapEvent(
         controller: controller,
-        defaultLat: defaultLat,
-        defaultLng: defaultLng,
+        defaultLatitude: defaultLatitude,
+        defaultLongitude: defaultLongitude,
         routeColor: context.colorScheme.primary,
       ),
     );
 
     if (!_isLoading) {
-      _triggerDrawRoute(defaultLat, defaultLng);
+      _triggerDrawRoute(defaultLatitude, defaultLongitude);
     }
   }
 
@@ -255,9 +257,9 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
     if (_isConfirmingArrival) return;
     final state = BlocProvider.of<RideFlowCubit>(context).state;
     final passengerName = state.passengerNameOr('Passenger');
-    final pickupLat = state.pickupLatitude ?? _pickupLat;
-    final pickupLng = state.pickupLongitude ?? _pickupLng;
-    if (pickupLat == null || pickupLng == null) return;
+    final pickupLatitude = state.pickupLatitude ?? _pickupLatitude;
+    final pickupLongitude = state.pickupLongitude ?? _pickupLongitude;
+    if (pickupLatitude == null || pickupLongitude == null) return;
 
     setState(() => _isConfirmingArrival = true);
     final rideCubit = BlocProvider.of<RideFlowCubit>(context);
@@ -274,13 +276,13 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
       }
       await rideCubit.arriveAtPickup(
         passengerName,
-        driverLat: position.latitude,
-        driverLng: position.longitude,
+        driverLatitude: position.latitude,
+        driverLongitude: position.longitude,
         observedAt: position.timestamp,
-        pickupLat: pickupLat,
-        pickupLng: pickupLng,
-        destLat: state.destinationLatitude,
-        destLng: state.destinationLongitude,
+        pickupLatitude: pickupLatitude,
+        pickupLongitude: pickupLongitude,
+        destinationLatitude: state.destinationLatitude,
+        destinationLongitude: state.destinationLongitude,
       );
       if (!mounted) return;
       if (!rideCubit.state.isWaitingAtPickup) {
@@ -315,7 +317,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
       if (mounted) {
         setState(() {
           _isConfirmingArrival = false;
-          _sliderVal = 0;
+          _sliderProgress = 0;
         });
       }
     }
@@ -375,11 +377,11 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
         builder: (context) {
           final rideCubitState = BlocProvider.of<RideFlowCubit>(context).state;
           final position = LocationService.lastPosition;
-          final defaultLat =
+          final defaultLatitude =
               position?.latitude ?? rideCubitState.pickupLatitude;
-          final defaultLng =
+          final defaultLongitude =
               position?.longitude ?? rideCubitState.pickupLongitude;
-          if (defaultLat == null || defaultLng == null) {
+          if (defaultLatitude == null || defaultLongitude == null) {
             return const PopScope(
               canPop: false,
               child: Scaffold(
@@ -396,8 +398,8 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
                   Positioned.fill(
                     child: SizedBox.expand(
                       child: MapProvider.buildMapView(
-                        latitude: defaultLat,
-                        longitude: defaultLng,
+                        latitude: defaultLatitude,
+                        longitude: defaultLongitude,
                         zoom: 15.0,
                         onMapCreated: _onMapCreated,
                       ),
@@ -409,7 +411,7 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
                     child: SafeArea(
                       top: false,
                       child: LayoutBuilder(
-                        builder: (ctx, constraints) {
+                        builder: (layoutContext, constraints) {
                           final isWide = constraints.maxWidth > 600.0;
                           final rideState = BlocProvider.of<RideFlowCubit>(
                             context,
@@ -428,13 +430,13 @@ class _PickupNavigationPageState extends State<PickupNavigationPage> {
                               passengerName: passengerName,
                               distance: widget.distance,
                               fare: widget.fare,
-                              sliderValue: _sliderVal,
+                              sliderValue: _sliderProgress,
                               isConfirmingArrival: _isConfirmingArrival,
                               isCancelling: _isCancellingRide,
                               unreadChatMessagesCount: _unreadChatMessagesCount,
-                              onSliderChanged: (val) {
+                              onSliderChanged: (progress) {
                                 setState(() {
-                                  _sliderVal = val;
+                                  _sliderProgress = progress;
                                 });
                               },
                               onSliderCompleted: () => _confirmArrival(context),

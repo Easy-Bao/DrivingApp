@@ -17,16 +17,16 @@ part 'live_map_state.dart';
 const driverRouteRefreshDeviationMeters = 50.0;
 
 bool hasExceededRouteDeviation({
-  required double originLat,
-  required double originLng,
-  required double currentLat,
-  required double currentLng,
+  required double originLatitude,
+  required double originLongitude,
+  required double currentLatitude,
+  required double currentLongitude,
 }) {
   final distanceKm = MapNativeService.calculateHaversine(
-    originLat,
-    originLng,
-    currentLat,
-    currentLng,
+    originLatitude,
+    originLongitude,
+    currentLatitude,
+    currentLongitude,
   );
   return distanceKm * 1000 > driverRouteRefreshDeviationMeters;
 }
@@ -42,8 +42,8 @@ class LiveMapBloc({required this._rideRepository})
   MapPolylineAnnotationManager? _routePolylineManager;
   UpdateLocationsAndDrawRouteEvent? _pendingRouteUpdate;
   String? _routeTargetKey;
-  double? _routeOriginLat;
-  double? _routeOriginLng;
+  double? _routeOriginLatitude;
+  double? _routeOriginLongitude;
   DateTime? _lastCameraFitAt;
   bool _hasFittedCamera = false;
   Color _routeColor = TripMapMarkerStyle.ownLocation;
@@ -73,8 +73,8 @@ class LiveMapBloc({required this._rideRepository})
   Future<void> _publishLocation(DispatchTelemetryLocationEvent event) async {
     try {
       final result = await _rideRepository.publishDriverLocationResult(
-        latitude: event.lat,
-        longitude: event.lng,
+        latitude: event.latitude,
+        longitude: event.longitude,
       );
       result.fold(
         (failure) => dev.log(
@@ -103,14 +103,14 @@ class LiveMapBloc({required this._rideRepository})
         return;
       }
       _routeTargetKey = null;
-      _routeOriginLat = null;
-      _routeOriginLng = null;
+      _routeOriginLatitude = null;
+      _routeOriginLongitude = null;
       _lastCameraFitAt = null;
       _hasFittedCamera = false;
     }
     _mapController = event.controller;
     _routeColor = event.routeColor;
-    emit(LiveMapReady(event.defaultLat, event.defaultLng));
+    emit(LiveMapReady(event.defaultLatitude, event.defaultLongitude));
     final pendingRouteUpdate = _pendingRouteUpdate;
     _pendingRouteUpdate = null;
     if (pendingRouteUpdate != null) {
@@ -130,16 +130,18 @@ class LiveMapBloc({required this._rideRepository})
       return;
     }
 
-    final targetLat = event.routeTargetLat ?? event.passengerLat;
-    final targetLng = event.routeTargetLng ?? event.passengerLng;
-    if (targetLat == null || targetLng == null) return;
+    final targetLatitude =
+        event.routeTargetLatitude ?? event.passengerLatitude;
+    final targetLongitude =
+        event.routeTargetLongitude ?? event.passengerLongitude;
+    if (targetLatitude == null || targetLongitude == null) return;
 
     try {
       final driverMarkerManager = await _upsertMarker(
         _driverMarkerManager,
         mapController,
-        event.driverLat,
-        event.driverLng,
+        event.driverLatitude,
+        event.driverLongitude,
         isOrigin: true,
         color: TripMapMarkerStyle.ownLocation,
         animate: true,
@@ -156,14 +158,14 @@ class LiveMapBloc({required this._rideRepository})
       }
       _driverMarkerManager = driverMarkerManager;
 
-      if (event.routeTargetLat == null &&
-          event.passengerLat != null &&
-          event.passengerLng != null) {
+      if (event.routeTargetLatitude == null &&
+          event.passengerLatitude != null &&
+          event.passengerLongitude != null) {
         final passengerMarkerManager = await _upsertMarker(
           _passengerMarkerManager,
           mapController,
-          event.passengerLat!,
-          event.passengerLng!,
+          event.passengerLatitude!,
+          event.passengerLongitude!,
           color: TripMapMarkerStyle.tripLocation,
         );
         if (!_isCurrentRouteOperation(
@@ -189,12 +191,13 @@ class LiveMapBloc({required this._rideRepository})
         _passengerMarkerManager = null;
       }
 
-      if (event.routeTargetLat != null && event.routeTargetLng != null) {
+      if (event.routeTargetLatitude != null &&
+          event.routeTargetLongitude != null) {
         final destinationMarkerManager = await _upsertMarker(
           _destinationMarkerManager,
           mapController,
-          targetLat,
-          targetLng,
+          targetLatitude,
+          targetLongitude,
           color: TripMapMarkerStyle.tripLocation,
         );
         if (!_isCurrentRouteOperation(
@@ -227,8 +230,8 @@ class LiveMapBloc({required this._rideRepository})
         await MapProvider.fitBounds(
           mapController,
           [
-            LatLng(event.driverLat, event.driverLng),
-            LatLng(targetLat, targetLng),
+            LatLng(event.driverLatitude, event.driverLongitude),
+            LatLng(targetLatitude, targetLongitude),
           ],
           padding: 72.0,
           maxZoom: 15.0,
@@ -251,22 +254,22 @@ class LiveMapBloc({required this._rideRepository})
         return;
       }
 
-      final targetKey = '$targetLat:$targetLng';
+      final targetKey = '$targetLatitude:$targetLongitude';
       final shouldRefreshRoute =
           _routeTargetKey != targetKey ||
-          _routeOriginLat == null ||
+          _routeOriginLatitude == null ||
           hasExceededRouteDeviation(
-            originLat: _routeOriginLat!,
-            originLng: _routeOriginLng!,
-            currentLat: event.driverLat,
-            currentLng: event.driverLng,
+            originLatitude: _routeOriginLatitude!,
+            originLongitude: _routeOriginLongitude!,
+            currentLatitude: event.driverLatitude,
+            currentLongitude: event.driverLongitude,
           );
       if (shouldRefreshRoute) {
         final route = await MapProvider.getRoute(
-          event.driverLat,
-          event.driverLng,
-          targetLat,
-          targetLng,
+          event.driverLatitude,
+          event.driverLongitude,
+          targetLatitude,
+          targetLongitude,
         );
         if (!_isCurrentRouteOperation(
           routeOperationGeneration,
@@ -312,8 +315,8 @@ class LiveMapBloc({required this._rideRepository})
           return;
         }
         _routeTargetKey = targetKey;
-        _routeOriginLat = event.driverLat;
-        _routeOriginLng = event.driverLng;
+        _routeOriginLatitude = event.driverLatitude;
+        _routeOriginLongitude = event.driverLongitude;
       }
 
       if (_isCurrentRouteOperation(
@@ -323,10 +326,10 @@ class LiveMapBloc({required this._rideRepository})
       )) {
         emit(
           LiveMapRouteUpdated(
-            driverLat: event.driverLat,
-            driverLng: event.driverLng,
-            passengerLat: event.passengerLat,
-            passengerLng: event.passengerLng,
+            driverLatitude: event.driverLatitude,
+            driverLongitude: event.driverLongitude,
+            passengerLatitude: event.passengerLatitude,
+            passengerLongitude: event.passengerLongitude,
           ),
         );
       }
@@ -346,8 +349,8 @@ class LiveMapBloc({required this._rideRepository})
     _invalidateMapOperations();
     await _clearAllAnnotations();
     _routeTargetKey = null;
-    _routeOriginLat = null;
-    _routeOriginLng = null;
+    _routeOriginLatitude = null;
+    _routeOriginLongitude = null;
     _lastCameraFitAt = null;
     _hasFittedCamera = false;
   }

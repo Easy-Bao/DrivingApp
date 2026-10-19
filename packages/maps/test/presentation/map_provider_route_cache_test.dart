@@ -24,45 +24,57 @@ void main() {
   });
 
   test('coalesces and reuses nearby place lookups', () async {
-    const lat = 10.123456;
-    const lng = 20.654321;
+    const latitude = 10.123456;
+    const longitude = 20.654321;
 
-    final first = MapProvider.getNearbyPOIs(lat: lat, lng: lng);
-    final second = MapProvider.getNearbyPOIs(lat: lat, lng: lng);
+    final first = MapProvider.getNearbyPOIs(
+      latitude: latitude,
+      longitude: longitude,
+    );
+    final second = MapProvider.getNearbyPOIs(
+      latitude: latitude,
+      longitude: longitude,
+    );
 
     expect(await Future.wait([first, second]), everyElement(isNotEmpty));
     expect(apiClient.nearbyCallCount, 1);
 
-    await MapProvider.getNearbyPOIs(lat: lat, lng: lng);
+    await MapProvider.getNearbyPOIs(
+      latitude: latitude,
+      longitude: longitude,
+    );
     expect(apiClient.nearbyCallCount, 1);
   });
 
   test('clears lookup caches for a foreground refresh', () async {
-    const lat = 10.123456;
-    const lng = 20.654321;
+    const latitude = 10.123456;
+    const longitude = 20.654321;
 
     MapProvider.clearLookupCaches();
-    await MapProvider.getNearbyPOIs(lat: lat, lng: lng);
+    await MapProvider.getNearbyPOIs(
+      latitude: latitude,
+      longitude: longitude,
+    );
 
     expect(apiClient.nearbyCallCount, 2);
   });
 
   test('coalesces and reuses travel matrix lookups', () async {
-    const originLat = 11.123456;
-    const originLng = 21.654321;
+    const originLatitude = 11.123456;
+    const originLongitude = 21.654321;
     const destinations = [
-      (lat: 11.130000, lng: 21.660000),
-      (lat: 11.140000, lng: 21.670000),
+      (latitude: 11.130000, longitude: 21.660000),
+      (latitude: 11.140000, longitude: 21.670000),
     ];
 
     final first = MapProvider.getDrivingDistances(
-      originLat: originLat,
-      originLng: originLng,
+      originLatitude: originLatitude,
+      originLongitude: originLongitude,
       destinations: destinations,
     );
     final second = MapProvider.getDrivingDistances(
-      originLat: originLat,
-      originLng: originLng,
+      originLatitude: originLatitude,
+      originLongitude: originLongitude,
       destinations: destinations,
     );
 
@@ -70,8 +82,8 @@ void main() {
     expect(apiClient.matrixCallCount, 1);
 
     await MapProvider.getDrivingDistances(
-      originLat: originLat,
-      originLng: originLng,
+      originLatitude: originLatitude,
+      originLongitude: originLongitude,
       destinations: destinations,
     );
     expect(apiClient.matrixCallCount, 1);
@@ -151,12 +163,16 @@ class _DelayedLocationRemoteDataSource extends MockLocationRemoteDataSource {
 
   @override
   Future<Map<String, dynamic>> getNearbyPois({
-    required double lat,
-    required double lng,
+    required double latitude,
+    required double longitude,
     int page = 1,
   }) {
     nearbyCallCount++;
-    return super.getNearbyPois(lat: lat, lng: lng, page: page);
+    return super.getNearbyPois(
+      latitude: latitude,
+      longitude: longitude,
+      page: page,
+    );
   }
 
   @override

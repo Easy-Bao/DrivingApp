@@ -6,9 +6,10 @@ import 'package:core_domain/core_domain.dart';
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
+import 'package:passenger/src/core/session/session_store.dart';
+import 'package:passenger/src/core/telemetry/background_telemetry.dart';
 import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/booking/booking.dart';
-import 'package:passenger/src/features/booking/domain/entities/accepted_booking.dart';
 import 'package:passenger/src/features/booking/domain/entities/bid_session_trip.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_offer.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_session_request.dart';
@@ -18,8 +19,6 @@ import 'package:passenger/src/features/driver_profile/domain/entities/driver_rev
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/inbox/domain/entities/inbox_notification.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox_cubit.dart';
-import 'package:passenger/src/core/session/session_store.dart';
-import 'package:passenger/src/core/telemetry/background_telemetry.dart';
 
 part 'booking_event.dart';
 part 'booking_state.dart';
@@ -27,19 +26,7 @@ part 'booking_bloc_driver_discovery.dart';
 part 'booking_bloc_session_creation.dart';
 part 'booking_bloc_bid_session.dart';
 
-class BookingBloc({
-  required this._driverRepository,
-  required this._bookingRepository,
-  required this._driverProfileRepository,
-  required this._secureSessionService,
-  this._inboxCubit,
-  this._backgroundTelemetryService,
-  this._realtimeClient,
-  required this._lifecycleCoordinator,
-  int nearestDriverMaxAttempts = 1,
-  this._nearestDriverRetryDelay = const Duration(seconds: 2),
-  Duration offerRefreshInterval = const Duration(seconds: 3),
-}) extends Bloc<BookingEvent, BookingState> {
+class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final DriverRepository _driverRepository;
   final BookingRepository _bookingRepository;
   final DriverProfileRepository _driverProfileRepository;
@@ -72,33 +59,44 @@ class BookingBloc({
   double? _dropoffLat;
   double? _dropoffLng;
 
-  this
-    : assert(nearestDriverMaxAttempts > 0),
-      assert(offerRefreshInterval > Duration.zero),
-      _nearestDriverMaxAttempts = nearestDriverMaxAttempts,
-      _offerRefreshInterval = offerRefreshInterval,
-      super(const BookingInitial()) {
+  BookingBloc({
+    required this._driverRepository,
+    required this._bookingRepository,
+    required this._driverProfileRepository,
+    required this._secureSessionService,
+    this._inboxCubit,
+    this._backgroundTelemetryService,
+    this._realtimeClient,
+    required this._lifecycleCoordinator,
+    int nearestDriverMaxAttempts = 1,
+    this._nearestDriverRetryDelay = const Duration(seconds: 2),
+    Duration offerRefreshInterval = const Duration(seconds: 3),
+  })  : assert(nearestDriverMaxAttempts > 0),
+        assert(offerRefreshInterval > Duration.zero),
+        _nearestDriverMaxAttempts = nearestDriverMaxAttempts,
+        _offerRefreshInterval = offerRefreshInterval,
+        super(const BookingInitial()) {
     on<LocateNearestDriverEvent>(
-      this._onLocateNearestDriver,
+      _onLocateNearestDriver,
       transformer: droppable(),
     );
     on<LoadDriverReviewsEvent>(
-      this._onLoadDriverReviews,
+      _onLoadDriverReviews,
       transformer: restartable(),
     );
     on<StartDirectBookingEvent>(
-      this._onStartDirectBooking,
+      _onStartDirectBooking,
       transformer: droppable(),
     );
     on<StartOpenBookingEvent>(
-      this._onStartOpenBooking,
+      _onStartOpenBooking,
       transformer: droppable(),
     );
-    on<AcceptBidOfferEvent>(this._onAcceptBidOffer, transformer: droppable());
-    on<CancelBookingEvent>(this._onCancelBooking, transformer: droppable());
-    on<ResetBookingEvent>(this._onResetBooking);
-    on<UpdateOffersEvent>(this._onUpdateOffers);
-    on<DriverMatchedEvent>(this._onDriverMatched);
+    on<AcceptBidOfferEvent>(_onAcceptBidOffer, transformer: droppable());
+    on<CancelBookingEvent>(_onCancelBooking, transformer: droppable());
+    on<ResetBookingEvent>(_onResetBooking);
+    on<UpdateOffersEvent>(_onUpdateOffers);
+    on<DriverMatchedEvent>(_onDriverMatched);
   }
 
   bool get hasActiveDriverSearch =>

@@ -211,21 +211,21 @@ class _HomePageState extends State<HomePage> {
       final activeRideId = await session.readActiveRideId();
       if (activeRideId == null || activeRideId.trim().isEmpty) return;
 
-      TrackRepository? trackRepo = widget.trackRepository;
-      if (trackRepo == null) {
+      TrackRepository? trackRepository = widget.trackRepository;
+      if (trackRepository == null) {
         try {
-          trackRepo = Modular.get<TrackRepository>();
+          trackRepository = Modular.get<TrackRepository>();
         } catch (_) {
           return;
         }
       }
-      final result = await trackRepo.fetchRideResult(activeRideId.trim());
+      final result = await trackRepository.fetchRideResult(activeRideId.trim());
       await result.fold(
         (failure) async {
-          final msg = failure.message.toLowerCase();
+          final failureMessage = failure.message.toLowerCase();
           if ((failure is ServerFailure && failure.statusCode == 404) ||
-              msg.contains('not found') ||
-              msg.contains('incomplete')) {
+              failureMessage.contains('not found') ||
+              failureMessage.contains('incomplete')) {
             await session?.saveActiveRideId('');
           }
         },
@@ -588,7 +588,7 @@ class _HomePageState extends State<HomePage> {
 
     await showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(EasyRideRadius.lg),
         ),
@@ -596,24 +596,24 @@ class _HomePageState extends State<HomePage> {
           'Active Ride in Progress',
           style: TextStyle(
             fontWeight: FontWeight.w800,
-            color: ctx.colorScheme.onSurface,
+            color: dialogContext.colorScheme.onSurface,
           ),
         ),
         content: Text(
           'You already have an active trip with $driverName. Please complete or cancel your ongoing ride before booking another.',
           style: TextStyle(
-            color: ctx.colorScheme.onSurface.withValues(alpha: 0.7),
+            color: dialogContext.colorScheme.onSurface.withValues(alpha: 0.7),
             fontSize: 14,
           ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Dismiss'),
           ),
           FilledButton(
             onPressed: () {
-              Navigator.pop(ctx);
+              Navigator.pop(dialogContext);
               _resumeActiveRide();
             },
             child: const Text('Resume Trip'),

@@ -29,19 +29,19 @@ class TripMapMarkerStyle._() {
 
 abstract final class MapMarkerMotion {
   static double bearingBetween({
-    required double startLat,
-    required double startLng,
-    required double targetLat,
-    required double targetLng,
+    required double startLatitude,
+    required double startLongitude,
+    required double targetLatitude,
+    required double targetLongitude,
   }) {
-    final startLatitude = _radians(startLat);
-    final targetLatitude = _radians(targetLat);
-    final longitudeDelta = _radians(targetLng - startLng);
-    final x = math.sin(longitudeDelta) * math.cos(targetLatitude);
+    final startLatitudeRad = _radians(startLatitude);
+    final targetLatitudeRad = _radians(targetLatitude);
+    final longitudeDelta = _radians(targetLongitude - startLongitude);
+    final x = math.sin(longitudeDelta) * math.cos(targetLatitudeRad);
     final y =
-        math.cos(startLatitude) * math.sin(targetLatitude) -
-        math.sin(startLatitude) *
-            math.cos(targetLatitude) *
+        math.cos(startLatitudeRad) * math.sin(targetLatitudeRad) -
+        math.sin(startLatitudeRad) *
+            math.cos(targetLatitudeRad) *
             math.cos(longitudeDelta);
     if (x == 0 && y == 0) return 0;
     return _normalize(math.atan2(x, y) * 180 / math.pi);
@@ -75,23 +75,23 @@ class MapAnnotationService._() {
 
   static Future<mapbox.PointAnnotationManager> addMarker(
     AppMapController controller,
-    double lat,
-    double lng, {
+    double latitude,
+    double longitude, {
     String? label,
     bool isOrigin = false,
     Color? color,
     double? bearing,
     VoidCallback? onTap,
   }) => traceTimelineStage('maps.marker.add', () async {
-    final mapCtrl = controller.native;
-    final annotationManager = await mapCtrl.annotations
+    final mapController = controller.native;
+    final annotationManager = await mapController.annotations
         .createPointAnnotationManager();
-    _annotationManagerOwners[annotationManager] = mapCtrl;
+    _annotationManagerOwners[annotationManager] = mapController;
 
     try {
       final options = await _markerOptions(
-        lat,
-        lng,
+        latitude,
+        longitude,
         label: label,
         isOrigin: isOrigin,
         color: color,
@@ -113,8 +113,8 @@ class MapAnnotationService._() {
 
   static Future<void> replaceMarker(
     mapbox.PointAnnotationManager annotationManager,
-    double lat,
-    double lng, {
+    double latitude,
+    double longitude, {
     String? label,
     bool isOrigin = false,
     Color? color,
@@ -127,8 +127,8 @@ class MapAnnotationService._() {
     );
     if (annotations.isEmpty) {
       final options = await _markerOptions(
-        lat,
-        lng,
+        latitude,
+        longitude,
         label: label,
         isOrigin: isOrigin,
         color: color,
@@ -142,22 +142,23 @@ class MapAnnotationService._() {
     }
 
     final annotation = annotations.first;
-    final startLat = annotation.geometry.coordinates.lat.toDouble();
-    final startLng = annotation.geometry.coordinates.lng.toDouble();
+    final startLatitude = annotation.geometry.coordinates.lat.toDouble();
+    final startLongitude = annotation.geometry.coordinates.lng.toDouble();
     final startBearing = annotation.iconRotate ?? 0;
     final targetBearing =
         bearing ??
-        ((startLat - lat).abs() < 0.000001 && (startLng - lng).abs() < 0.000001
+        ((startLatitude - latitude).abs() < 0.000001 &&
+                (startLongitude - longitude).abs() < 0.000001
             ? annotation.iconRotate ?? 0
             : MapMarkerMotion.bearingBetween(
-                startLat: startLat,
-                startLng: startLng,
-                targetLat: lat,
-                targetLng: lng,
+                startLatitude: startLatitude,
+                startLongitude: startLongitude,
+                targetLatitude: latitude,
+                targetLongitude: longitude,
               ));
     final options = await _markerOptions(
-      lat,
-      lng,
+      latitude,
+      longitude,
       label: label,
       isOrigin: isOrigin,
       color: color,
@@ -178,8 +179,8 @@ class MapAnnotationService._() {
           annotationManager,
           annotation,
           startBearing: startBearing,
-          targetLat: lat,
-          targetLng: lng,
+          targetLatitude: latitude,
+          targetLongitude: longitude,
           targetBearing: targetBearing,
           generation: generation,
         ),
@@ -203,13 +204,13 @@ class MapAnnotationService._() {
     mapbox.PointAnnotationManager annotationManager,
     mapbox.PointAnnotation annotation, {
     required double startBearing,
-    required double targetLat,
-    required double targetLng,
+    required double targetLatitude,
+    required double targetLongitude,
     required double targetBearing,
     required int generation,
   }) async {
-    final startLat = annotation.geometry.coordinates.lat.toDouble();
-    final startLng = annotation.geometry.coordinates.lng.toDouble();
+    final startLatitude = annotation.geometry.coordinates.lat.toDouble();
+    final startLongitude = annotation.geometry.coordinates.lng.toDouble();
     const frameCount = 8;
     for (var frame = 1; frame <= frameCount; frame++) {
       if (_animationGenerationByManagerKey[annotationManager.id] !=
@@ -219,8 +220,8 @@ class MapAnnotationService._() {
       final progress = Curves.easeInOut.transform(frame / frameCount);
       annotation.geometry = mapbox.Point(
         coordinates: mapbox.Position(
-          ui.lerpDouble(startLng, targetLng, progress)!,
-          ui.lerpDouble(startLat, targetLat, progress)!,
+          ui.lerpDouble(startLongitude, targetLongitude, progress)!,
+          ui.lerpDouble(startLatitude, targetLatitude, progress)!,
         ),
       );
       annotation.iconRotate = MapMarkerMotion.interpolateBearing(
@@ -243,8 +244,8 @@ class MapAnnotationService._() {
   }
 
   static Future<mapbox.PointAnnotationOptions> _markerOptions(
-    double lat,
-    double lng, {
+    double latitude,
+    double longitude, {
     String? label,
     required bool isOrigin,
     Color? color,
@@ -253,7 +254,7 @@ class MapAnnotationService._() {
     final markerColor =
         color ?? TripMapMarkerStyle.colorFor(isOrigin: isOrigin);
     return mapbox.PointAnnotationOptions(
-      geometry: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
+      geometry: mapbox.Point(coordinates: mapbox.Position(longitude, latitude)),
       image: await _createMarkerImage(markerColor, label: label),
       iconAnchor: mapbox.IconAnchor.BOTTOM,
       iconRotate: bearing,
@@ -442,10 +443,10 @@ class MapAnnotationService._() {
       );
     }
 
-    final mapCtrl = controller.native;
-    final annotationManager = await mapCtrl.annotations
+    final mapController = controller.native;
+    final annotationManager = await mapController.annotations
         .createPolylineAnnotationManager();
-    _annotationManagerOwners[annotationManager] = mapCtrl;
+    _annotationManagerOwners[annotationManager] = mapController;
 
     final coordinates = validPoints
         .map((point) => mapbox.Position(point[0], point[1]))
@@ -474,10 +475,10 @@ class MapAnnotationService._() {
     double width = 4.0,
   }) async {
     final positions = _positionsFromBuffer(coordinates);
-    final mapCtrl = controller.native;
-    final annotationManager = await mapCtrl.annotations
+    final mapController = controller.native;
+    final annotationManager = await mapController.annotations
         .createPolylineAnnotationManager();
-    _annotationManagerOwners[annotationManager] = mapCtrl;
+    _annotationManagerOwners[annotationManager] = mapController;
 
     try {
       await annotationManager.create(

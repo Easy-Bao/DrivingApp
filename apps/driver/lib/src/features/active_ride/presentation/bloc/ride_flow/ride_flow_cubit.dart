@@ -181,11 +181,11 @@ class RideFlowCubit({
         emit(
           RideFlowInTransit(
             passengerName: currentState.passengerName,
-            destLat: currentState.destLat,
-            destLng: currentState.destLng,
+            destinationLatitude: currentState.destinationLatitude,
+            destinationLongitude: currentState.destinationLongitude,
             distanceKm: currentState.distanceKm,
-            passengerLat: location.$1,
-            passengerLng: location.$2,
+            passengerLatitude: location.$1,
+            passengerLongitude: location.$2,
           ),
         );
       });
@@ -200,10 +200,10 @@ class RideFlowCubit({
     required String passengerName,
     String? passengerId,
     double? distanceKm,
-    double? pickupLat,
-    double? pickupLng,
-    double? destLat,
-    double? destLng,
+    double? pickupLatitude,
+    double? pickupLongitude,
+    double? destinationLatitude,
+    double? destinationLongitude,
     DateTime? arrivedAt,
     DateTime? waitingUntil,
   }) async {
@@ -250,10 +250,10 @@ class RideFlowCubit({
       _startWaitTimer(
         actionGeneration: _actionGeneration,
         passengerName: passengerName,
-        pickupLat: pickupLat,
-        pickupLng: pickupLng,
-        destLat: destLat,
-        destLng: destLng,
+        pickupLatitude: pickupLatitude,
+        pickupLongitude: pickupLongitude,
+        destinationLatitude: destinationLatitude,
+        destinationLongitude: destinationLongitude,
       );
     } else if (status == 'in_transit') {
       _waitingUntil = null;
@@ -261,11 +261,11 @@ class RideFlowCubit({
       emit(
         RideFlowInTransit(
           passengerName: passengerName,
-          destLat: destLat,
-          destLng: destLng,
+          destinationLatitude: destinationLatitude,
+          destinationLongitude: destinationLongitude,
           distanceKm: distanceKm,
-          passengerLat: pickupLat,
-          passengerLng: pickupLng,
+          passengerLatitude: pickupLatitude,
+          passengerLongitude: pickupLongitude,
         ),
       );
     } else {
@@ -274,10 +274,10 @@ class RideFlowCubit({
       emit(
         RideFlowNavigatingToPickup(
           passengerName: passengerName,
-          pickupLat: pickupLat,
-          pickupLng: pickupLng,
-          destLat: destLat,
-          destLng: destLng,
+          pickupLatitude: pickupLatitude,
+          pickupLongitude: pickupLongitude,
+          destinationLatitude: destinationLatitude,
+          destinationLongitude: destinationLongitude,
         ),
       );
     }
@@ -301,10 +301,10 @@ class RideFlowCubit({
   Future<void> acceptRide({
     required String rideId,
     required String passengerName,
-    required double pickupLat,
-    required double pickupLng,
-    double? destLat,
-    double? destLng,
+    required double pickupLatitude,
+    required double pickupLongitude,
+    double? destinationLatitude,
+    double? destinationLongitude,
   }) async {
     if (_isActionInFlight) return;
     final typedRideId = RideId.tryParse(rideId);
@@ -351,10 +351,10 @@ class RideFlowCubit({
       emit(
         RideFlowNavigatingToPickup(
           passengerName: passengerName,
-          pickupLat: pickupLat,
-          pickupLng: pickupLng,
-          destLat: destLat,
-          destLng: destLng,
+          pickupLatitude: pickupLatitude,
+          pickupLongitude: pickupLongitude,
+          destinationLatitude: destinationLatitude,
+          destinationLongitude: destinationLongitude,
         ),
       );
       _startRideStatusSyncTimer();
@@ -369,13 +369,13 @@ class RideFlowCubit({
 
   Future<void> arriveAtPickup(
     String passengerName, {
-    required double driverLat,
-    required double driverLng,
+    required double driverLatitude,
+    required double driverLongitude,
     required DateTime observedAt,
-    double? pickupLat,
-    double? pickupLng,
-    double? destLat,
-    double? destLng,
+    double? pickupLatitude,
+    double? pickupLongitude,
+    double? destinationLatitude,
+    double? destinationLongitude,
   }) async {
     if (_isActionInFlight) return;
     final activeRideId = _activeRideId;
@@ -394,8 +394,8 @@ class RideFlowCubit({
       Failure? arrivalFailure;
       (await _rideRepository.markArrivedResult(
         rideId: activeRideId,
-        latitude: driverLat,
-        longitude: driverLng,
+        latitude: driverLatitude,
+        longitude: driverLongitude,
         observedAt: observedAt,
       )).fold(
         (failure) => arrivalFailure = failure,
@@ -416,10 +416,10 @@ class RideFlowCubit({
       _startWaitTimer(
         actionGeneration: actionGeneration,
         passengerName: passengerName,
-        pickupLat: pickupLat,
-        pickupLng: pickupLng,
-        destLat: destLat,
-        destLng: destLng,
+        pickupLatitude: pickupLatitude,
+        pickupLongitude: pickupLongitude,
+        destinationLatitude: destinationLatitude,
+        destinationLongitude: destinationLongitude,
       );
     } catch (error) {
       if (!_isCurrentAction(actionGeneration)) return;
@@ -548,10 +548,10 @@ class RideFlowCubit({
   void _startWaitTimer({
     required int actionGeneration,
     required String passengerName,
-    double? pickupLat,
-    double? pickupLng,
-    double? destLat,
-    double? destLng,
+    double? pickupLatitude,
+    double? pickupLongitude,
+    double? destinationLatitude,
+    double? destinationLongitude,
   }) {
     _waitTimer?.cancel();
     _waitStartedAt ??= DateTime.now().toUtc();
@@ -562,10 +562,10 @@ class RideFlowCubit({
         RideFlowWaitingPassenger(
           passengerName: passengerName,
           waitTimeSeconds: _elapsedWaitTime,
-          pickupLat: pickupLat,
-          pickupLng: pickupLng,
-          destLat: destLat,
-          destLng: destLng,
+          pickupLatitude: pickupLatitude,
+          pickupLongitude: pickupLongitude,
+          destinationLatitude: destinationLatitude,
+          destinationLongitude: destinationLongitude,
         ),
       );
     }
@@ -588,14 +588,14 @@ class RideFlowCubit({
 
   Future<bool> startRide({
     required String passengerName,
-    required double? destLat,
-    required double? destLng,
+    required double? destinationLatitude,
+    required double? destinationLongitude,
     required double distanceKm,
-    required double driverLat,
-    required double driverLng,
+    required double driverLatitude,
+    required double driverLongitude,
     required DateTime observedAt,
-    double? passengerLat,
-    double? passengerLng,
+    double? passengerLatitude,
+    double? passengerLongitude,
   }) async {
     if (_isActionInFlight) return false;
     final activeRideId = _activeRideId;
@@ -603,7 +603,7 @@ class RideFlowCubit({
       emit(const RideFlowError('This trip is no longer active.'));
       return false;
     }
-    if (!_isValidCoordinatePair(driverLat, driverLng)) {
+    if (!_isValidCoordinatePair(driverLatitude, driverLongitude)) {
       emit(
         RideFlowError(ErrorHandler.getErrorMessage(const LocationFailure())),
       );
@@ -616,16 +616,20 @@ class RideFlowCubit({
     _waitStartedAt = null;
 
     try {
-      var resolvedDestLat = destLat;
-      var resolvedDestLng = destLng;
-      if (resolvedDestLat == null || resolvedDestLng == null) {
+      var resolvedDestinationLatitude = destinationLatitude;
+      var resolvedDestinationLongitude = destinationLongitude;
+      if (resolvedDestinationLatitude == null ||
+          resolvedDestinationLongitude == null) {
         final recoveredDestination = await _loadActiveRideDestination();
         if (!_isCurrentAction(actionGeneration)) return false;
-        resolvedDestLat = recoveredDestination?.$1;
-        resolvedDestLng = recoveredDestination?.$2;
+        resolvedDestinationLatitude = recoveredDestination?.$1;
+        resolvedDestinationLongitude = recoveredDestination?.$2;
       }
 
-      if (!_isValidCoordinatePair(resolvedDestLat, resolvedDestLng)) {
+      if (!_isValidCoordinatePair(
+        resolvedDestinationLatitude,
+        resolvedDestinationLongitude,
+      )) {
         if (!_isCurrentAction(actionGeneration)) return false;
         emit(
           RideFlowError(
@@ -639,8 +643,8 @@ class RideFlowCubit({
       Failure? startFailure;
       (await _rideRepository.startRideResult(
         rideId: activeRideId,
-        latitude: driverLat,
-        longitude: driverLng,
+        latitude: driverLatitude,
+        longitude: driverLongitude,
         observedAt: observedAt,
       )).fold(
         (failure) => startFailure = failure,
@@ -661,11 +665,11 @@ class RideFlowCubit({
       emit(
         RideFlowInTransit(
           passengerName: passengerName,
-          destLat: resolvedDestLat,
-          destLng: resolvedDestLng,
+          destinationLatitude: resolvedDestinationLatitude,
+          destinationLongitude: resolvedDestinationLongitude,
           distanceKm: distanceKm,
-          passengerLat: passengerLat,
-          passengerLng: passengerLng,
+          passengerLatitude: passengerLatitude,
+          passengerLongitude: passengerLongitude,
         ),
       );
       return true;
@@ -715,8 +719,8 @@ class RideFlowCubit({
 
   Future<RideSnapshot?> _loadCompletedRide(
     int actionGeneration, {
-    required double driverLat,
-    required double driverLng,
+    required double driverLatitude,
+    required double driverLongitude,
   }) async {
     final rideId = _activeRideId;
     if (rideId == null || rideId.isEmpty) {
@@ -751,8 +755,8 @@ class RideFlowCubit({
         Failure? completionFailure;
         (await _rideRepository.completeRideResult(
           rideId: rideId,
-          latitude: driverLat,
-          longitude: driverLng,
+          latitude: driverLatitude,
+          longitude: driverLongitude,
         )).fold(
           (failure) => completionFailure = failure,
           (value) => completedRide = value,
@@ -780,8 +784,8 @@ class RideFlowCubit({
   }
 
   Future<double?> completeRide({
-    required double driverLat,
-    required double driverLng,
+    required double driverLatitude,
+    required double driverLongitude,
   }) async {
     if (_isActionInFlight) return null;
     final actionGeneration = ++_actionGeneration;
@@ -790,8 +794,8 @@ class RideFlowCubit({
     try {
       final ride = await _loadCompletedRide(
         actionGeneration,
-        driverLat: driverLat,
-        driverLng: driverLng,
+        driverLatitude: driverLatitude,
+        driverLongitude: driverLongitude,
       );
       if (!_isCurrentAction(actionGeneration) || ride == null) return null;
 
@@ -937,12 +941,12 @@ class RideFlowCubit({
   }
 
   Future<double?> endRide({
-    required double driverLat,
-    required double driverLng,
+    required double driverLatitude,
+    required double driverLongitude,
   }) async {
     final completedFare = await completeRide(
-      driverLat: driverLat,
-      driverLng: driverLng,
+      driverLatitude: driverLatitude,
+      driverLongitude: driverLongitude,
     );
     if (completedFare == null) return null;
     return confirmCashPayment();

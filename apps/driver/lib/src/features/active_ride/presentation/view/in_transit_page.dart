@@ -49,8 +49,8 @@ class _InTransitPageState extends State<InTransitPage> {
   bool _isLoading = true;
   bool _isCompletingTrip = false;
   double _completionSliderProgress = 0;
-  double? _destLat;
-  double? _destLng;
+  double? _destinationLatitude;
+  double? _destinationLongitude;
   late final AppLifecyclePeriodicTask _trackingTask;
   late final LiveMapBloc _liveMapBloc;
   bool _isTracking = false;
@@ -87,15 +87,15 @@ class _InTransitPageState extends State<InTransitPage> {
     try {
       final rideCubit = BlocProvider.of<RideFlowCubit>(context);
       await rideCubit.refreshPassengerLocation();
-      final pos =
+      final position =
           LocationService.lastPosition ??
           await LocationService.getCurrentPosition();
-      if (pos != null) {
+      if (position != null) {
         if (mounted) {
           _liveMapBloc.add(
             DispatchTelemetryLocationEvent(
-              lat: pos.latitude,
-              lng: pos.longitude,
+              latitude: position.latitude,
+              longitude: position.longitude,
             ),
           );
         }
@@ -103,12 +103,12 @@ class _InTransitPageState extends State<InTransitPage> {
           final rideState = rideCubit.state;
           _liveMapBloc.add(
             UpdateLocationsAndDrawRouteEvent(
-              driverLat: pos.latitude,
-              driverLng: pos.longitude,
-              passengerLat: rideState.passengerLatitude,
-              passengerLng: rideState.passengerLongitude,
-              routeTargetLat: _destLat,
-              routeTargetLng: _destLng,
+              driverLatitude: position.latitude,
+              driverLongitude: position.longitude,
+              passengerLatitude: rideState.passengerLatitude,
+              passengerLongitude: rideState.passengerLongitude,
+              routeTargetLatitude: _destinationLatitude,
+              routeTargetLongitude: _destinationLongitude,
             ),
           );
         }
@@ -131,13 +131,13 @@ class _InTransitPageState extends State<InTransitPage> {
       final destination = rideState.destinationCoordinates;
       if (destination != null) {
         final (destinationLat, destinationLng) = destination;
-        _destLat = destinationLat;
-        _destLng = destinationLng;
+        _destinationLatitude = destinationLat;
+        _destinationLongitude = destinationLng;
       } else {
         final places = await MapProvider.searchPlaces(widget.dropoff);
         if (places.isNotEmpty) {
-          _destLat = places.first.latitude;
-          _destLng = places.first.longitude;
+          _destinationLatitude = places.first.latitude;
+          _destinationLongitude = places.first.longitude;
         }
       }
       final rideId = rideCubit.activeRideId;
@@ -152,12 +152,12 @@ class _InTransitPageState extends State<InTransitPage> {
 
       if (!mounted) return;
       setState(() => _isLoading = false);
-      final pos =
+      final position =
           LocationService.lastPosition ??
           await LocationService.getCurrentPosition();
       if (!mounted) return;
-      if (pos != null) {
-        _triggerDrawRoute(pos.latitude, pos.longitude);
+      if (position != null) {
+        _triggerDrawRoute(position.latitude, position.longitude);
       }
       _startTracking();
     } catch (error, stackTrace) {
@@ -167,40 +167,40 @@ class _InTransitPageState extends State<InTransitPage> {
     }
   }
 
-  void _triggerDrawRoute(double dLat, double dLng) {
-    final destinationLat = _destLat;
-    final destinationLng = _destLng;
-    if (destinationLat == null || destinationLng == null) return;
+  void _triggerDrawRoute(double driverLatitude, double driverLongitude) {
+    final destinationLatitude = _destinationLatitude;
+    final destinationLongitude = _destinationLongitude;
+    if (destinationLatitude == null || destinationLongitude == null) return;
     final rideState = BlocProvider.of<RideFlowCubit>(context).state;
     _liveMapBloc.add(
       UpdateLocationsAndDrawRouteEvent(
-        driverLat: dLat,
-        driverLng: dLng,
-        passengerLat: rideState.passengerLatitude,
-        passengerLng: rideState.passengerLongitude,
-        routeTargetLat: destinationLat,
-        routeTargetLng: destinationLng,
+        driverLatitude: driverLatitude,
+        driverLongitude: driverLongitude,
+        passengerLatitude: rideState.passengerLatitude,
+        passengerLongitude: rideState.passengerLongitude,
+        routeTargetLatitude: destinationLatitude,
+        routeTargetLongitude: destinationLongitude,
       ),
     );
   }
 
   void _onMapCreated(AppMapController controller) {
-    final pos = LocationService.lastPosition;
-    final defaultLat = pos?.latitude ?? _destLat;
-    final defaultLng = pos?.longitude ?? _destLng;
-    if (defaultLat == null || defaultLng == null) return;
+    final position = LocationService.lastPosition;
+    final defaultLatitude = position?.latitude ?? _destinationLatitude;
+    final defaultLongitude = position?.longitude ?? _destinationLongitude;
+    if (defaultLatitude == null || defaultLongitude == null) return;
 
     _liveMapBloc.add(
       InitializeMapEvent(
         controller: controller,
-        defaultLat: defaultLat,
-        defaultLng: defaultLng,
+        defaultLatitude: defaultLatitude,
+        defaultLongitude: defaultLongitude,
         routeColor: context.colorScheme.primary,
       ),
     );
 
     if (!_isLoading) {
-      _triggerDrawRoute(defaultLat, defaultLng);
+      _triggerDrawRoute(defaultLatitude, defaultLongitude);
     }
   }
 
@@ -220,8 +220,8 @@ class _InTransitPageState extends State<InTransitPage> {
         return;
       }
       final finalFare = await rideCubit.completeRide(
-        driverLat: position.latitude,
-        driverLng: position.longitude,
+        driverLatitude: position.latitude,
+        driverLongitude: position.longitude,
       );
       if (finalFare == null) {
         if (mounted) {
@@ -283,15 +283,15 @@ class _InTransitPageState extends State<InTransitPage> {
         builder: (context) {
           final rideCubitState = BlocProvider.of<RideFlowCubit>(context).state;
           final position = LocationService.lastPosition;
-          final defaultLat =
+          final defaultLatitude =
               position?.latitude ??
               rideCubitState.destinationLatitude ??
-              _destLat;
-          final defaultLng =
+              _destinationLatitude;
+          final defaultLongitude =
               position?.longitude ??
               rideCubitState.destinationLongitude ??
-              _destLng;
-          if (defaultLat == null || defaultLng == null) {
+              _destinationLongitude;
+          if (defaultLatitude == null || defaultLongitude == null) {
             return const PopScope(
               canPop: false,
               child: Scaffold(
@@ -310,8 +310,8 @@ class _InTransitPageState extends State<InTransitPage> {
                   Positioned.fill(
                     child: SizedBox.expand(
                       child: MapProvider.buildMapView(
-                        latitude: defaultLat,
-                        longitude: defaultLng,
+                        latitude: defaultLatitude,
+                        longitude: defaultLongitude,
                         zoom: 15.0,
                         onMapCreated: _onMapCreated,
                       ),

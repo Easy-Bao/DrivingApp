@@ -3,41 +3,40 @@ import 'package:equatable/equatable.dart';
 import 'package:maps/src/domain/entities/route.dart';
 
 /// Identifies a route request independently of its map implementation.
-class RouteRequestKey({
-  required double originLat,
-  required double originLng,
-  required double destLat,
-  required double destLng,
-  required this.preference,
-  required this.profile,
-  required List<({double lat, double lng})> excludePoints,
-}) extends Equatable {
-  final String originLat;
-  final String originLng;
-  final String destLat;
-  final String destLng;
+class RouteRequestKey extends Equatable {
+  RouteRequestKey({
+    required double originLatitude,
+    required double originLongitude,
+    required double destinationLatitude,
+    required double destinationLongitude,
+    required this.preference,
+    required this.profile,
+    required List<({double latitude, double longitude})> excludePoints,
+  })  : originLatitude = _coordinateKey(originLatitude),
+        originLongitude = _coordinateKey(originLongitude),
+        destinationLatitude = _coordinateKey(destinationLatitude),
+        destinationLongitude = _coordinateKey(destinationLongitude),
+        excludePoints = excludePoints
+            .map(
+              (point) =>
+                  '${_coordinateKey(point.latitude)},${_coordinateKey(point.longitude)}',
+            )
+            .join(';');
+
+  final String originLatitude;
+  final String originLongitude;
+  final String destinationLatitude;
+  final String destinationLongitude;
   final RoutePreference preference;
   final RouteProfile profile;
   final String excludePoints;
 
-  this
-    : originLat = _coordinateKey(originLat),
-      originLng = _coordinateKey(originLng),
-      destLat = _coordinateKey(destLat),
-      destLng = _coordinateKey(destLng),
-      excludePoints = excludePoints
-          .map(
-            (point) =>
-                '${_coordinateKey(point.lat)},${_coordinateKey(point.lng)}',
-          )
-          .join(';');
-
   @override
   List<Object?> get props => [
-    originLat,
-    originLng,
-    destLat,
-    destLng,
+    originLatitude,
+    originLongitude,
+    destinationLatitude,
+    destinationLongitude,
     preference,
     profile,
     excludePoints,

@@ -111,15 +111,15 @@ final class TrackRepositoryImpl({required this._remoteDataSource})
     String rideId,
   ) async {
     try {
-      final locData = await _remoteDataSource.fetchDriverLocation(rideId);
+      final locationData = await _remoteDataSource.fetchDriverLocation(rideId);
       final latitude = SafeParse.toNullableDouble(
-        locData?['latitude'] ?? locData?['lat'],
+        locationData?['latitude'] ?? locationData?['lat'],
       );
       final longitude = SafeParse.toNullableDouble(
-        locData?['longitude'] ?? locData?['lng'],
+        locationData?['longitude'] ?? locationData?['lng'],
       );
       if (latitude != null && longitude != null) {
-        final rawObservedAt = locData?['observed_at'];
+        final rawObservedAt = locationData?['observed_at'];
         final observedAt = rawObservedAt is String
             ? DateTime.tryParse(rawObservedAt)
             : null;

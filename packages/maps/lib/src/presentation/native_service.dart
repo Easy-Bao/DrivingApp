@@ -38,40 +38,45 @@ class MapNativeService({
   static double _toRadians(double degree) => degree * math.pi / 180.0;
 
   static double calculateHaversine(
-    double lat1,
-    double lng1,
-    double lat2,
-    double lng2,
+    double latitude1,
+    double longitude1,
+    double latitude2,
+    double longitude2,
   ) {
     const double earthRadiusKm = 6371.0;
-    final double dLat = _toRadians(lat2 - lat1);
-    final double dLng = _toRadians(lng2 - lng1);
+    final double deltaLatitude = _toRadians(latitude2 - latitude1);
+    final double deltaLongitude = _toRadians(longitude2 - longitude1);
 
     final double haversineA =
-        math.sin(dLat / 2.0) * math.sin(dLat / 2.0) +
-        math.cos(_toRadians(lat1)) *
-            math.cos(_toRadians(lat2)) *
-            math.sin(dLng / 2.0) *
-            math.sin(dLng / 2.0);
+        math.sin(deltaLatitude / 2.0) * math.sin(deltaLatitude / 2.0) +
+        math.cos(_toRadians(latitude1)) *
+            math.cos(_toRadians(latitude2)) *
+            math.sin(deltaLongitude / 2.0) *
+            math.sin(deltaLongitude / 2.0);
 
     return earthRadiusKm * 2.0 * math.asin(math.sqrt(haversineA));
   }
 
   Future<double> haversineDistance({
-    required double lat1,
-    required double lng1,
-    required double lat2,
-    required double lng2,
+    required double latitude1,
+    required double longitude1,
+    required double latitude2,
+    required double longitude2,
   }) async {
-    return calculateHaversine(lat1, lng1, lat2, lng2);
+    return calculateHaversine(
+      latitude1,
+      longitude1,
+      latitude2,
+      longitude2,
+    );
   }
 
   Future<Result<List<Place>, PlaceFailure>> searchPlaces({
     required String query,
-    double? proximityLat,
-    double? proximityLng,
-    double? userLat,
-    double? userLng,
+    double? proximityLatitude,
+    double? proximityLongitude,
+    double? userLatitude,
+    double? userLongitude,
   }) async {
     final trimmed = query.trim();
     if (trimmed.isEmpty) {
@@ -84,8 +89,8 @@ class MapNativeService({
     try {
       final responseData = await _apiClient.searchPlaces(
         query: trimmed,
-        userLat: userLat ?? proximityLat,
-        userLng: userLng ?? proximityLng,
+        userLatitude: userLatitude ?? proximityLatitude,
+        userLongitude: userLongitude ?? proximityLongitude,
       );
 
       return Ok(_parsePlaces(responseData));
@@ -102,11 +107,14 @@ class MapNativeService({
   }
 
   Future<Result<Place, PlaceFailure>> reverseGeocode({
-    required double lat,
-    required double lng,
+    required double latitude,
+    required double longitude,
   }) async {
     try {
-      final place = await _apiClient.reverseGeocode(lat: lat, lng: lng);
+      final place = await _apiClient.reverseGeocode(
+        latitude: latitude,
+        longitude: longitude,
+      );
       return Ok(place);
     } on DioException catch (e) {
       dev.log(
@@ -121,18 +129,21 @@ class MapNativeService({
   }
 
   Future<Result<Route, PlaceFailure>> getRoute({
-    required double originLat,
-    required double originLng,
-    required double destLat,
-    required double destLng,
+    required double originLatitude,
+    required double originLongitude,
+    required double destinationLatitude,
+    required double destinationLongitude,
     RoutePreference preference = RoutePreference.fastest,
     RouteProfile profile = RouteProfile.driving,
-    List<({double lat, double lng})> excludePoints = const [],
+    List<({double latitude, double longitude})> excludePoints = const [],
   }) async {
     try {
       final body = <String, dynamic>{
-        'origin': {'lat': originLat, 'lng': originLng},
-        'destination': {'lat': destLat, 'lng': destLng},
+        'origin': {'lat': originLatitude, 'lng': originLongitude},
+        'destination': {
+          'lat': destinationLatitude,
+          'lng': destinationLongitude,
+        },
         'preference': preference.apiValue,
       };
       if (profile != RouteProfile.driving) {
@@ -140,7 +151,7 @@ class MapNativeService({
       }
       if (excludePoints.isNotEmpty) {
         body['exclude_points'] = excludePoints
-            .map((point) => {'lat': point.lat, 'lng': point.lng})
+            .map((point) => {'lat': point.latitude, 'lng': point.longitude})
             .toList();
       }
       final route = await _apiClient.getRoute(body: body);
@@ -158,16 +169,16 @@ class MapNativeService({
   }
 
   Future<Result<List<double>, PlaceFailure>> getDrivingDistances({
-    required double originLat,
-    required double originLng,
-    required List<({double lat, double lng})> destinations,
+    required double originLatitude,
+    required double originLongitude,
+    required List<({double latitude, double longitude})> destinations,
   }) async {
     try {
       final response = await _apiClient.getTravelMatrix(
         body: {
-          'origin': {'lat': originLat, 'lng': originLng},
+          'origin': {'lat': originLatitude, 'lng': originLongitude},
           'destinations': destinations
-              .map((point) => {'lat': point.lat, 'lng': point.lng})
+              .map((point) => {'lat': point.latitude, 'lng': point.longitude})
               .toList(),
         },
       );
@@ -193,14 +204,14 @@ class MapNativeService({
   }
 
   Future<Result<List<Place>, PlaceFailure>> getNearbyPois({
-    required double lat,
-    required double lng,
+    required double latitude,
+    required double longitude,
     int page = 1,
   }) async {
     try {
       final responseData = await _apiClient.getNearbyPois(
-        lat: lat,
-        lng: lng,
+        latitude: latitude,
+        longitude: longitude,
         page: page,
       );
 

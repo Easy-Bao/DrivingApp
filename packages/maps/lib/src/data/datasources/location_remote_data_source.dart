@@ -17,15 +17,15 @@ class LocationRemoteDataSource(this._dio) implements LocationRepository {
   @override
   Future<Map<String, dynamic>> searchPlaces({
     required String query,
-    double? userLat,
-    double? userLng,
+    double? userLatitude,
+    double? userLongitude,
   }) async {
     final response = await _dio.get<Map<String, dynamic>>(
       '/api/v1/location/search',
       queryParameters: {
         'query': query,
-        'userLat': ?userLat,
-        'userLng': ?userLng,
+        'userLat': ?userLatitude,
+        'userLng': ?userLongitude,
       },
       options: _transientReadOptions,
     );
@@ -34,12 +34,12 @@ class LocationRemoteDataSource(this._dio) implements LocationRepository {
 
   @override
   Future<Place> reverseGeocode({
-    required double lat,
-    required double lng,
+    required double latitude,
+    required double longitude,
   }) async {
     final response = await _dio.get<Map<String, dynamic>>(
       '/api/v1/location/reverse',
-      queryParameters: {'lat': lat, 'lng': lng},
+      queryParameters: {'lat': latitude, 'lng': longitude},
       options: _transientReadOptions,
     );
     return PlaceDto.fromJson(response.data ?? {}).toDomain();
@@ -47,13 +47,13 @@ class LocationRemoteDataSource(this._dio) implements LocationRepository {
 
   @override
   Future<Map<String, dynamic>> getNearbyPois({
-    required double lat,
-    required double lng,
+    required double latitude,
+    required double longitude,
     int page = 1,
   }) async {
     final response = await _dio.get<Map<String, dynamic>>(
       '/api/v1/location/nearby',
-      queryParameters: {'lat': lat, 'lng': lng, 'page': page},
+      queryParameters: {'lat': latitude, 'lng': longitude, 'page': page},
       options: _transientReadOptions,
     );
     return response.data ?? {};

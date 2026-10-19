@@ -110,9 +110,9 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
       final driverIdentifier = await widget.sessionService.readDriverId() ?? '';
       if (driverIdentifier.isEmpty) return;
 
-      final chatRepo = _chatRepository;
-      if (chatRepo == null) return;
-      final result = await chatRepo.fetchRoomMessages(rideId);
+      final chatRepository = _chatRepository;
+      if (chatRepository == null) return;
+      final result = await chatRepository.fetchRoomMessages(rideId);
       result.fold((_) => null, (List<ChatMessage> messages) {
         final passengerChatMessagesList = messages
             .where((m) => m.senderId != driverIdentifier)
@@ -176,14 +176,14 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
       final rideCubit = BlocProvider.of<RideFlowCubit>(context);
       final started = await rideCubit.startRide(
         passengerName: state.passengerNameOr('Passenger'),
-        destLat: state.destinationLatitude,
-        destLng: state.destinationLongitude,
+        destinationLatitude: state.destinationLatitude,
+        destinationLongitude: state.destinationLongitude,
         distanceKm: widget.distance,
-        driverLat: position.latitude,
-        driverLng: position.longitude,
+        driverLatitude: position.latitude,
+        driverLongitude: position.longitude,
         observedAt: position.timestamp,
-        passengerLat: state.pickupLatitude,
-        passengerLng: state.pickupLongitude,
+        passengerLatitude: state.pickupLatitude,
+        passengerLongitude: state.pickupLongitude,
       );
 
       if (mounted && !started) {
@@ -321,7 +321,7 @@ class _WaitingPassengerPageState extends State<WaitingPassengerPage> {
       child: Scaffold(
         body: SafeArea(
           child: LayoutBuilder(
-            builder: (ctx, constraints) {
+            builder: (layoutContext, constraints) {
               final isWide = constraints.maxWidth > 600.0;
               return Center(
                 child: ConstrainedBox(

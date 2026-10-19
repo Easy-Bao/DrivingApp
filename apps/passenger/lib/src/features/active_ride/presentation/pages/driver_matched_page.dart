@@ -48,8 +48,8 @@ class const DriverMatchedPage({
 
 class _DriverMatchedPageState extends State<DriverMatchedPage>
     with SingleTickerProviderStateMixin {
-  late AnimationController _scaleCtrl;
-  late Animation<double> _scaleAnim;
+  late AnimationController _scaleAnimationController;
+  late Animation<double> _scaleAnimation;
   Timer? _countdownTimer;
   int _secondsLeft = 4;
 
@@ -58,12 +58,15 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
   @override
   void initState() {
     super.initState();
-    _scaleCtrl = AnimationController(
+    _scaleAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    _scaleAnim = CurvedAnimation(parent: _scaleCtrl, curve: Curves.elasticOut);
-    unawaited(_scaleCtrl.forward());
+    _scaleAnimation = CurvedAnimation(
+      parent: _scaleAnimationController,
+      curve: Curves.elasticOut,
+    );
+    unawaited(_scaleAnimationController.forward());
     if (_rideId?.isNotEmpty == true) _startCountdown();
   }
 
@@ -90,7 +93,7 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
 
   @override
   void dispose() {
-    _scaleCtrl.dispose();
+    _scaleAnimationController.dispose();
     _countdownTimer?.cancel();
     super.dispose();
   }
@@ -153,7 +156,7 @@ class _DriverMatchedPageState extends State<DriverMatchedPage>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       ScaleTransition(
-                        scale: _scaleAnim,
+                        scale: _scaleAnimation,
                         child: Container(
                           width: 100,
                           height: 100,

@@ -14,7 +14,7 @@ extension _BookingBlocDriverDiscovery on BookingBloc {
     _activeTrip = event.trip;
     _pickupLat = event.pickupLat;
     _pickupLng = event.pickupLng;
-    _pickupName = this._pickupNameForTrip(event.trip);
+    _pickupName = _pickupNameForTrip(event.trip);
     _dropoffLat = event.trip.destination.latitude;
     _dropoffLng = event.trip.destination.longitude;
     emit(

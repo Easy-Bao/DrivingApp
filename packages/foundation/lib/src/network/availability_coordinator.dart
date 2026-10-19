@@ -126,10 +126,10 @@ final class const NetworkAvailabilityInterceptor(this.coordinator)
   }
 
   @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
-    if (NetworkAvailabilityCoordinator.isNetworkFailure(err)) {
+  void onError(DioException error, ErrorInterceptorHandler handler) {
+    if (NetworkAvailabilityCoordinator.isNetworkFailure(error)) {
       coordinator.recordFailure();
     }
-    handler.next(err);
+    handler.next(error);
   }
 }

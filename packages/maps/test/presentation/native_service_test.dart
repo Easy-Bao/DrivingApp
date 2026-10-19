@@ -49,8 +49,8 @@ void main() {
       });
 
       final result = await service.getNearbyPois(
-        lat: 7.8282,
-        lng: 123.4361,
+        latitude: 7.8282,
+        longitude: 123.4361,
         page: 1,
       );
 
@@ -167,7 +167,10 @@ void main() {
         return ResponseBody.fromString(jsonEncode({'error': 'Not found'}), 404);
       });
 
-      final result = await service.reverseGeocode(lat: 0.0, lng: 0.0);
+      final result = await service.reverseGeocode(
+        latitude: 0.0,
+        longitude: 0.0,
+      );
 
       expect(result.isErr, isTrue);
       result.fold((failure) {
@@ -199,7 +202,10 @@ void main() {
         return ResponseBody.fromString('Not Found', 404);
       });
 
-      final result = await service.reverseGeocode(lat: 7.8282, lng: 123.4361);
+      final result = await service.reverseGeocode(
+        latitude: 7.8282,
+        longitude: 123.4361,
+      );
 
       expect(result.isOk, isTrue);
       result.fold((failure) => fail('Expected a place: $failure'), (place) {
@@ -229,11 +235,11 @@ void main() {
       });
 
       final result = await service.getDrivingDistances(
-        originLat: 7.8282,
-        originLng: 123.4361,
+        originLatitude: 7.8282,
+        originLongitude: 123.4361,
         destinations: const [
-          (lat: 7.83, lng: 123.44),
-          (lat: 7.84, lng: 123.45),
+          (latitude: 7.83, longitude: 123.44),
+          (latitude: 7.84, longitude: 123.45),
         ],
       );
 
@@ -272,10 +278,10 @@ void main() {
         });
 
         final result = await service.getRoute(
-          originLat: 7.8242,
-          originLng: 123.435,
-          destLat: 7.83,
-          destLng: 123.44,
+          originLatitude: 7.8242,
+          originLongitude: 123.435,
+          destinationLatitude: 7.83,
+          destinationLongitude: 123.44,
         );
 
         expect(result.isOk, isTrue);

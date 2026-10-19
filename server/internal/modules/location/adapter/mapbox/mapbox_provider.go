@@ -362,15 +362,15 @@ type reverseMatch struct {
 }
 
 type reverseCandidateRank struct {
-	stage       int
-	prominence  int
-	distanceMtr float64
+	stage          int
+	prominence     int
+	distanceMeters float64
 }
 
 func mostSpecificReverseFeature(features []feature, origin domain.Coordinates) (feature, reverseMatch, bool) {
 	var selected feature
 	var selectedMatch reverseMatch
-	selectedRank := reverseCandidateRank{stage: math.MaxInt, prominence: -1, distanceMtr: math.MaxFloat64}
+	selectedRank := reverseCandidateRank{stage: math.MaxInt, prominence: -1, distanceMeters: math.MaxFloat64}
 	found := false
 	for _, candidate := range features {
 		longitude, latitude, ok := featureCoordinates(candidate)
@@ -383,7 +383,7 @@ func mostSpecificReverseFeature(features []feature, origin domain.Coordinates) (
 		isMoreProminent := rank.stage == selectedRank.stage && rank.prominence > selectedRank.prominence
 		isCloser := rank.stage == selectedRank.stage &&
 			rank.prominence == selectedRank.prominence &&
-			rank.distanceMtr < selectedRank.distanceMtr
+			rank.distanceMeters < selectedRank.distanceMeters
 		if !found || isEarlierStage || isMoreProminent || isCloser {
 			selected = candidate
 			selectedMatch = reverseMatchFor(candidate, distanceMeters)
@@ -408,9 +408,9 @@ func reverseCandidateRankFor(candidate feature, distanceMeters float64) reverseC
 		stage = 3
 	}
 	return reverseCandidateRank{
-		stage:       stage,
-		prominence:  reverseFeatureProminence(candidate),
-		distanceMtr: distanceMeters,
+		stage:          stage,
+		prominence:     reverseFeatureProminence(candidate),
+		distanceMeters: distanceMeters,
 	}
 }
 
@@ -873,13 +873,13 @@ func coordinate(value float64) string {
 	return strconv.FormatFloat(value, 'f', 6, 64)
 }
 
-func haversine(lat1, lng1, lat2, lng2 float64) float64 {
+func haversine(latitude1, longitude1, latitude2, longitude2 float64) float64 {
 	const earthRadiusKm = 6371.0
 	const radians = math.Pi / 180
-	dLat := (lat2 - lat1) * radians
-	dLng := (lng2 - lng1) * radians
-	a := math.Sin(dLat/2)*math.Sin(dLat/2) +
-		math.Cos(lat1*radians)*math.Cos(lat2*radians)*math.Sin(dLng/2)*math.Sin(dLng/2)
+	deltaLatitude := (latitude2 - latitude1) * radians
+	deltaLongitude := (longitude2 - longitude1) * radians
+	a := math.Sin(deltaLatitude/2)*math.Sin(deltaLatitude/2) +
+		math.Cos(latitude1*radians)*math.Cos(latitude2*radians)*math.Sin(deltaLongitude/2)*math.Sin(deltaLongitude/2)
 	a = min(1, max(0, a))
 	return earthRadiusKm * 2 * math.Asin(math.Sqrt(a))
 }

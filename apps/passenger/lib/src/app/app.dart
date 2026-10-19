@@ -7,17 +7,18 @@ import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
 import 'package:passenger/src/app/navigation/app_routes.dart';
+import 'package:passenger/src/core/location/location_access_cubit.dart';
+import 'package:passenger/src/core/location/location_access_state.dart';
+import 'package:passenger/src/core/session/session_store.dart';
+import 'package:passenger/src/core/telemetry/background_telemetry.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver_cubit.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
-import 'package:passenger/src/core/location/location_access_cubit.dart';
-import 'package:passenger/src/core/location/location_access_state.dart';
-import 'package:passenger/src/core/session/session_store.dart';
-import 'package:passenger/src/core/telemetry/background_telemetry.dart';
 
-class const PassengerApp({super.key}) extends StatefulWidget {
+class PassengerApp extends StatefulWidget {
+  const PassengerApp({super.key});
   @override
   State<PassengerApp> createState() => _PassengerAppState();
 }

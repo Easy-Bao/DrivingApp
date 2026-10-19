@@ -1,17 +1,18 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
-import 'package:passenger/src/core/session/session_store.dart';
 
-final class const RideDetailsState({
-  this.rideId = '',
-  this.isLoading = false,
-  this.ride,
-  this.counterparty,
-  this.passengerId = '',
-  this.errorMessage,
-}) extends Equatable {
+final class RideDetailsState extends Equatable {
+  const RideDetailsState({
+    this.rideId = '',
+    this.isLoading = false,
+    this.ride,
+    this.counterparty,
+    this.passengerId = '',
+    this.errorMessage,
+  });
   final String rideId;
   final bool isLoading;
   final RideSnapshot? ride;

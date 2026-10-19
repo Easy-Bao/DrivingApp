@@ -4,28 +4,30 @@ import 'dart:developer' as dev;
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
+import 'package:passenger/src/core/session/session_store.dart';
+import 'package:passenger/src/core/telemetry/background_telemetry.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/active_ride/presentation/bloc/track_driver_state.dart';
-import 'package:passenger/src/core/session/session_store.dart';
-import 'package:passenger/src/core/telemetry/background_telemetry.dart';
 
 class TrackDriverCubit extends Cubit<TrackDriverState> {
   TrackDriverCubit({
-    required TrackRepository repository,
-    required PassengerSessionStore sessionService,
-    required AppLifecycleCoordinator lifecycleCoordinator,
-    PassengerBackgroundTelemetry? backgroundTelemetryService,
-  })  : _repository = repository,
-        _sessionService = sessionService,
-        _lifecycleCoordinator = lifecycleCoordinator,
-        _backgroundTelemetryService = backgroundTelemetryService,
-        super(const TrackDriverInitial());
+    required this.repository,
+    required this.sessionService,
+    required this.lifecycleCoordinator,
+    this.backgroundTelemetryService,
+  }) : super(const TrackDriverInitial());
 
-  final TrackRepository _repository;
-  final PassengerSessionStore _sessionService;
-  final PassengerBackgroundTelemetry? _backgroundTelemetryService;
-  final AppLifecycleCoordinator _lifecycleCoordinator;
+  final TrackRepository repository;
+  final PassengerSessionStore sessionService;
+  final PassengerBackgroundTelemetry? backgroundTelemetryService;
+  final AppLifecycleCoordinator lifecycleCoordinator;
+
+  TrackRepository get _repository => repository;
+  PassengerSessionStore get _sessionService => sessionService;
+  PassengerBackgroundTelemetry? get _backgroundTelemetryService =>
+      backgroundTelemetryService;
+  AppLifecycleCoordinator get _lifecycleCoordinator => lifecycleCoordinator;
   AppLifecyclePeriodicTask? _trackingTask;
   Future<void> Function()? _activeTripResync;
   bool _isSyncing = false;
@@ -90,8 +92,8 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
     List<List<double>>? routePoints;
 
     double progress = 0.0;
-    var lastDriverLat = startLat;
-    var lastDriverLng = startLng;
+    var lastDriverLatitude = startLat;
+    var lastDriverLongitude = startLng;
     DateTime? lastDriverLocationObservedAt;
     DateTime? pickupRouteLastAttempt;
     DateTime? destinationRouteLastAttempt;
@@ -159,24 +161,24 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
               return;
             }
 
-            double? driverLat;
-            double? driverLng;
+            double? driverLatitude;
+            double? driverLongitude;
             DateTime? driverLocationObservedAt;
             bool locationFetched = false;
 
-            final locResult = await _repository.fetchDriverLocationResult(
+            final locationResult = await _repository.fetchDriverLocationResult(
               activeRideId,
             );
             if (!_isCurrentTrackingOperation(trackingGeneration)) return;
-            locResult.fold(
+            locationResult.fold(
               (failure) {
                 dev.log(
                   'Error fetching coordinate location: ${failure.message}',
                 );
               },
               (coordinate) {
-                driverLat = coordinate.latitude;
-                driverLng = coordinate.longitude;
+                driverLatitude = coordinate.latitude;
+                driverLongitude = coordinate.longitude;
                 driverLocationObservedAt = coordinate.observedAt;
                 locationFetched = true;
               },
@@ -185,18 +187,18 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
             // A status transition is authoritative even when the location
             // endpoint is temporarily unavailable. Keep the last known
             // coordinate so states such as `arrived` still reach the UI.
-            driverLat ??= lastDriverLat;
-            driverLng ??= lastDriverLng;
+            driverLatitude ??= lastDriverLatitude;
+            driverLongitude ??= lastDriverLongitude;
             if (locationFetched) {
-              lastDriverLat = driverLat!;
-              lastDriverLng = driverLng!;
+              lastDriverLatitude = driverLatitude!;
+              lastDriverLongitude = driverLongitude!;
               lastDriverLocationObservedAt = driverLocationObservedAt;
             }
 
-            final targetLat =
+            final targetLatitude =
                 rideUpdate.destinationLat ??
                 (destinationLat == 0 ? null : destinationLat);
-            final targetLng =
+            final targetLongitude =
                 rideUpdate.destinationLng ??
                 (destinationLng == 0 ? null : destinationLng);
             final now = DateTime.now();
@@ -205,8 +207,8 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
                 _canRetryRoute(pickupRouteLastAttempt, now)) {
               pickupRouteLastAttempt = now;
               final candidate = await _repository.getRoutePolyline(
-                startLat: driverLat!,
-                startLng: driverLng!,
+                startLat: driverLatitude!,
+                startLng: driverLongitude!,
                 endLat: endLat,
                 endLng: endLng,
               );
@@ -217,15 +219,15 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
             }
             if (locationFetched &&
                 rideUpdate.status == RideStatus.inTransit &&
-                targetLat != null &&
-                targetLng != null &&
+                targetLatitude != null &&
+                targetLongitude != null &&
                 _canRetryRoute(destinationRouteLastAttempt, now)) {
               destinationRouteLastAttempt = now;
               final candidate = await _repository.getRoutePolyline(
-                startLat: driverLat!,
-                startLng: driverLng!,
-                endLat: targetLat,
-                endLng: targetLng,
+                startLat: driverLatitude!,
+                startLng: driverLongitude!,
+                endLat: targetLatitude,
+                endLng: targetLongitude,
               );
               if (!_isCurrentTrackingOperation(trackingGeneration)) return;
               if (_hasRouteGeometry(candidate)) {
@@ -251,8 +253,8 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
               }
               final trackingState = rideUpdate.status == RideStatus.inTransit
                   ? TrackDriverTripInProgress(
-                      driverLat: driverLat!,
-                      driverLng: driverLng!,
+                      driverLat: driverLatitude!,
+                      driverLng: driverLongitude!,
                       progress: progress,
                       eta: eta,
                       routePoints: routePoints,
@@ -261,8 +263,8 @@ class TrackDriverCubit extends Cubit<TrackDriverState> {
                       vehicleType: rideUpdate.vehicleType,
                     )
                   : TrackDriverInProgress(
-                      driverLat: driverLat!,
-                      driverLng: driverLng!,
+                      driverLat: driverLatitude!,
+                      driverLng: driverLongitude!,
                       progress: progress,
                       eta: eta,
                       routePoints: routePoints,

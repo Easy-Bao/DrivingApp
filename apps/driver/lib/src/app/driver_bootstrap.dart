@@ -52,7 +52,7 @@ Future<void> bootstrapDriverApp() async {
         'driver.startup.stop_background_service',
         DriverBackgroundTelemetry.stopExistingServiceForStartup,
       );
-      final prefsTask = traceTimelineStage(
+      final preferencesTask = traceTimelineStage(
         'driver.startup.load_preferences',
         SharedPreferences.getInstance,
       );
@@ -70,11 +70,11 @@ Future<void> bootstrapDriverApp() async {
       // Finish independent platform and storage work before configuring routes.
       await Future.wait<void>([
         stopServiceTask,
-        prefsTask.then<void>((_) {}),
+        preferencesTask.then<void>((_) {}),
         sessionTask.then<void>((_) {}),
         environmentTask,
       ]);
-      final prefs = await prefsTask;
+      final preferences = await preferencesTask;
       final hasDriverSession = await sessionTask;
 
       await traceTimelineStage(
@@ -90,7 +90,7 @@ Future<void> bootstrapDriverApp() async {
               'driver.startup.configure_dependencies_and_router',
               () => Modular.configure(
                 appModule: DriverDependencies(
-                  prefs: prefs,
+                  preferences: preferences,
                   sessionService: sessionService,
                 ),
                 initialRoute: hasDriverSession

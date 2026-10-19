@@ -143,7 +143,7 @@ type RouteMetrics struct {
 
 // RouteProvider isolates route calculation from the mapping adapter.
 type RouteProvider interface {
-	CalculateRoute(ctx context.Context, originLat, originLng, destinationLat, destinationLng float64) (RouteMetrics, error)
+	CalculateRoute(ctx context.Context, originLatitude, originLongitude, destinationLatitude, destinationLongitude float64) (RouteMetrics, error)
 }
 
 // RouteProviderFunc adapts a route function without introducing a concrete
@@ -154,17 +154,17 @@ var _ RouteProvider = RouteProviderFunc(nil)
 
 func (provider RouteProviderFunc) CalculateRoute(
 	ctx context.Context,
-	originLat float64,
-	originLng float64,
-	destinationLat float64,
-	destinationLng float64,
+	originLatitude float64,
+	originLongitude float64,
+	destinationLatitude float64,
+	destinationLongitude float64,
 ) (RouteMetrics, error) {
 	return provider(
 		ctx,
-		originLat,
-		originLng,
-		destinationLat,
-		destinationLng,
+		originLatitude,
+		originLongitude,
+		destinationLatitude,
+		destinationLongitude,
 	)
 }
 

@@ -80,8 +80,8 @@ class _SearchDestinationPageState()
   final Map<String, double> _drivingDistances = {};
   final Set<String> _drivingDistanceRequests = {};
   int _searchRequestId = 0;
-  double? _userLat = LocationService.lastPosition?.latitude;
-  double? _userLng = LocationService.lastPosition?.longitude;
+  double? _userLatitude = LocationService.lastPosition?.latitude;
+  double? _userLongitude = LocationService.lastPosition?.longitude;
   late final StreamSubscription<AppLifecycleStatus> _lifecycleSubscription;
 
   @override
@@ -139,7 +139,7 @@ class _SearchDestinationPageState()
   Future<void> _reloadAfterForeground() async {
     if (!mounted) return;
     if (_searchController.text.trim().isEmpty) {
-      if (_userLat == null || _userLng == null) {
+      if (_userLatitude == null || _userLongitude == null) {
         await _initLocation();
         return;
       }
@@ -194,14 +194,18 @@ class _SearchDestinationPageState()
   }
 
   Future<void> _fetchMoreNearbyFromApi() async {
-    if (_userLat == null || _userLng == null || _isLoadingMoreNearby) return;
+    if (_userLatitude == null ||
+        _userLongitude == null ||
+        _isLoadingMoreNearby) {
+      return;
+    }
     setState(() => _isLoadingMoreNearby = true);
 
     final nextPage = _currentNearbyPage + 1;
     try {
       final moreResults = await MapProvider.getNearbyPOIs(
-        lat: _userLat!,
-        lng: _userLng!,
+        latitude: _userLatitude!,
+        longitude: _userLongitude!,
         page: nextPage,
       );
 
@@ -264,51 +268,51 @@ class _SearchDestinationPageState()
   }
 
   Future<void> _initLocation() async {
-    _userLat ??= LocationService.lastPosition?.latitude;
-    _userLng ??= LocationService.lastPosition?.longitude;
-    if (_userLat != null && _userLng != null) {
+    _userLatitude ??= LocationService.lastPosition?.latitude;
+    _userLongitude ??= LocationService.lastPosition?.longitude;
+    if (_userLatitude != null && _userLongitude != null) {
       unawaited(_loadNearbyPlaces());
     }
 
     final hasLocationAccess =
         await LocationService.getAccessState() == LocationAccessState.ready;
-    final pos = hasLocationAccess
+    final position = hasLocationAccess
         ? await LocationService.getCurrentPosition()
         : null;
-    if (pos != null && mounted) {
+    if (position != null && mounted) {
       setState(() {
-        _userLat = pos.latitude;
-        _userLng = pos.longitude;
+        _userLatitude = position.latitude;
+        _userLongitude = position.longitude;
         _isLoadingNearby = true;
       });
       if (_mapController != null) {
         await MapProvider.moveCamera(
           _mapController!,
-          pos.latitude,
-          pos.longitude,
+          position.latitude,
+          position.longitude,
           zoom: 14.5,
           animate: false,
         );
-        unawaited(_updateCurrentLocationMarker(pos.latitude, pos.longitude));
+        unawaited(_updateCurrentLocationMarker(position.latitude, position.longitude));
       }
       unawaited(_loadNearbyPlaces());
-    } else if (mounted && (_userLat == null || _userLng == null)) {
+    } else if (mounted && (_userLatitude == null || _userLongitude == null)) {
       setState(() => _isLoadingNearby = false);
     }
   }
 
   Future<void> _loadNearbyPlaces() async {
-    final lat = _userLat;
-    final lng = _userLng;
-    if (lat == null || lng == null) {
+    final latitude = _userLatitude;
+    final longitude = _userLongitude;
+    if (latitude == null || longitude == null) {
       if (mounted) setState(() => _isLoadingNearby = false);
       return;
     }
 
     try {
       final results = await MapProvider.getNearbyPOIs(
-        lat: lat,
-        lng: lng,
+        latitude: latitude,
+        longitude: longitude,
         page: 1,
       );
 
@@ -360,8 +364,8 @@ class _SearchDestinationPageState()
 
     final apiResults = await MapProvider.searchPlaces(
       query,
-      lat: _userLat,
-      lng: _userLng,
+      latitude: _userLatitude,
+      longitude: _userLongitude,
     );
 
     final mergedResults = mergeUniqueDestinationResults(
@@ -384,7 +388,7 @@ class _SearchDestinationPageState()
   }
 
   Future<void> _loadDrivingDistances(List<Place> places, int requestId) async {
-    if (_userLat == null || _userLng == null) return;
+    if (_userLatitude == null || _userLongitude == null) return;
 
     final pendingPlaces = <Place>[];
     final pendingKeys = <String>[];
@@ -402,11 +406,11 @@ class _SearchDestinationPageState()
 
     try {
       final distances = await MapProvider.getDrivingDistances(
-        originLat: _userLat!,
-        originLng: _userLng!,
+        originLatitude: _userLatitude!,
+        originLongitude: _userLongitude!,
         destinations: [
           for (final place in pendingPlaces)
-            (lat: place.latitude, lng: place.longitude),
+            (latitude: place.latitude, longitude: place.longitude),
         ],
       );
       if (distances == null || !mounted) return;
@@ -445,9 +449,9 @@ class _SearchDestinationPageState()
     if (widget.pickupAddress != null) {
       queryParams['pickupAddress'] = widget.pickupAddress!;
     }
-    if (_userLat != null && _userLng != null) {
-      queryParams['pickupLat'] = _userLat!.toString();
-      queryParams['pickupLng'] = _userLng!.toString();
+    if (_userLatitude != null && _userLongitude != null) {
+      queryParams['pickupLat'] = _userLatitude!.toString();
+      queryParams['pickupLng'] = _userLongitude!.toString();
     }
     try {
       await context.pushNamed(
@@ -532,8 +536,8 @@ class _SearchDestinationPageState()
 
   @override
   Widget build(BuildContext context) {
-    final defaultLat = _userLat;
-    final defaultLng = _userLng;
+    final defaultLatitude = _userLatitude;
+    final defaultLongitude = _userLongitude;
     final hasQuery = _searchController.text.trim().isNotEmpty;
     final displayList = hasQuery
         ? _results
@@ -590,8 +594,9 @@ class _SearchDestinationPageState()
                           }
                           unawaited(_expandController.reverse());
                         },
-                        child: defaultLat != null && defaultLng != null
-                            ? _getMapView(defaultLat, defaultLng)
+                        child:
+                            defaultLatitude != null && defaultLongitude != null
+                            ? _getMapView(defaultLatitude, defaultLongitude)
                             : ColoredBox(
                                 color:
                                     context.colorScheme.surfaceContainerHighest,

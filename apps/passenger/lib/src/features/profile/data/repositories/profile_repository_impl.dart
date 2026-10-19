@@ -3,11 +3,11 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:foundation/foundation.dart';
+import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/auth/domain/failures/auth_failures.dart';
 import 'package:passenger/src/features/profile/data/datasources/profile_remote_data_source.dart';
 import 'package:passenger/src/features/profile/domain/entities/profile.dart';
 import 'package:passenger/src/features/profile/domain/repositories/profile_repository.dart';
-import 'package:passenger/src/core/session/session_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final class PassengerProfileRepositoryImpl

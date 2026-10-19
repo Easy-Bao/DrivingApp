@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maps/maps.dart';
-import 'package:passenger/src/core/location/location_access_repository.dart';
 import 'package:passenger/src/core/location/location_access_cubit.dart';
+import 'package:passenger/src/core/location/location_access_repository.dart';
 import 'package:passenger/src/core/location/location_access_state.dart';
 
 void main() {

@@ -23,8 +23,8 @@ void main() {
   test('uses record coordinates for active destination data', () {
     const state = RideFlowInTransit(
       passengerName: 'Alex',
-      destLat: 8.06,
-      destLng: 123.746,
+      destinationLatitude: 8.06,
+      destinationLongitude: 123.746,
       distanceKm: 1.2,
     );
 

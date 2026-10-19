@@ -12,8 +12,8 @@ void main() {
       );
 
       final result = await mapService.reverseGeocode(
-        lat: 7.8242,
-        lng: 123.4350,
+        latitude: 7.8242,
+        longitude: 123.4350,
       );
 
       expect(result.isOk, isTrue);

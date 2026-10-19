@@ -115,10 +115,10 @@ class LocationService._() {
               distanceFilter: 5,
             ),
           )
-          .map((pos) {
-            _lastPosition = pos;
-            _recordStreamSample(pos);
-            return pos;
+          .map((position) {
+            _lastPosition = position;
+            _recordStreamSample(position);
+            return position;
           })
           .handleError((Object _) {});
     } catch (_) {
@@ -170,20 +170,20 @@ class LocationService._() {
   }
 
   static Future<double> distanceBetween(
-    double startLat,
-    double startLng,
-    double endLat,
-    double endLng,
+    double startLatitude,
+    double startLongitude,
+    double endLatitude,
+    double endLongitude,
   ) async {
     final nativeService = _nativeService;
     if (nativeService == null) {
       throw StateError('LocationService not initialized.');
     }
     return await nativeService.haversineDistance(
-      lat1: startLat,
-      lng1: startLng,
-      lat2: endLat,
-      lng2: endLng,
+      latitude1: startLatitude,
+      longitude1: startLongitude,
+      latitude2: endLatitude,
+      longitude2: endLongitude,
     );
   }
 }

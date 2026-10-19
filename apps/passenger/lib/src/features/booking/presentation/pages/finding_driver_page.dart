@@ -8,6 +8,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:maps/maps.dart';
+import 'package:passenger/src/core/location/live_map_bloc.dart';
 import 'package:passenger/src/features/active_ride/active_ride_routes.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/domain/entities/bid_session_trip.dart';
@@ -20,7 +21,6 @@ import 'package:passenger/src/features/booking/presentation/widgets/finding_driv
 import 'package:passenger/src/features/booking/presentation/widgets/finding_driver_searching_panel.dart';
 import 'package:passenger/src/features/driver_profile/domain/repositories/driver_profile_repository.dart';
 import 'package:passenger/src/features/home/home_routes.dart';
-import 'package:passenger/src/core/location/live_map_bloc.dart';
 
 bool shouldRebuildDriverDiscoveryOverlay(
   BookingState previous,
@@ -117,7 +117,7 @@ class const FindingDriverPageContent({
 class _FindingDriverPageContentState()
     extends State<FindingDriverPageContent>
     with TickerProviderStateMixin {
-  late AnimationController _dotCtrl;
+  late AnimationController _dotAnimationController;
   bool _initialized = false;
   DriverModel? _selectedDriver;
   List<DriverModel> _nearbyDrivers = [];
@@ -129,11 +129,11 @@ class _FindingDriverPageContentState()
   bool _locationUnavailable = false;
   bool _isViewingDriverProfile = false;
 
-  ({double lat, double lng})? get _pickupCoordinate {
+  ({double latitude, double longitude})? get _pickupCoordinate {
     final latitude = widget.pickupLatitude;
     final longitude = widget.pickupLongitude;
     if (latitude == null || longitude == null) return null;
-    return (lat: latitude, lng: longitude);
+    return (latitude: latitude, longitude: longitude);
   }
 
   List<DriverModel> _uniqueNearbyDrivers(NearestDriverFound state) {
@@ -149,26 +149,26 @@ class _FindingDriverPageContentState()
   @override
   void initState() {
     super.initState();
-    _dotCtrl = AnimationController(
+    _dotAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
-    unawaited(_dotCtrl.repeat());
+    unawaited(_dotAnimationController.repeat());
 
     final pickup = _pickupCoordinate;
     if (pickup == null) {
       _locationUnavailable = true;
       return;
     }
-    final lat = pickup.lat;
-    final lng = pickup.lng;
+    final latitude = pickup.latitude;
+    final longitude = pickup.longitude;
 
     final bookingBloc = BlocProvider.of<BookingBloc>(context);
     if (!bookingBloc.hasActiveDriverSearch) {
       bookingBloc.add(
         LocateNearestDriverEvent(
-          pickupLat: lat,
-          pickupLng: lng,
+          pickupLat: latitude,
+          pickupLng: longitude,
           trip: BidSessionTrip(
             rideType: widget.rideType,
             fare: widget.fare,
@@ -198,7 +198,7 @@ class _FindingDriverPageContentState()
 
   @override
   void dispose() {
-    _dotCtrl.dispose();
+    _dotAnimationController.dispose();
     super.dispose();
   }
 
@@ -207,14 +207,14 @@ class _FindingDriverPageContentState()
       _initialized = true;
       final pickup = _pickupCoordinate;
       if (pickup == null) return;
-      final lat = pickup.lat;
-      final lng = pickup.lng;
+      final latitude = pickup.latitude;
+      final longitude = pickup.longitude;
 
       BlocProvider.of<LiveMapBloc>(context).add(
         InitializeMapEvent(
           controller: controller,
-          defaultLat: lat,
-          defaultLng: lng,
+          defaultLat: latitude,
+          defaultLng: longitude,
           routeColor: context.colorScheme.primary,
         ),
       );
@@ -611,7 +611,7 @@ class _FindingDriverPageContentState()
                               fare: widget.fare,
                               destination: widget.destination,
                               pickupAddress: widget.pickupAddress,
-                              dotAnimation: _dotCtrl,
+                              dotAnimation: _dotAnimationController,
                               onCancelPressed: _handleCancel,
                               isCanceling: _isLeaving,
                             );
@@ -658,7 +658,7 @@ class _FindingDriverPageContentState()
                               fare: widget.fare,
                               destination: widget.destination,
                               pickupAddress: widget.pickupAddress,
-                              dotAnimation: _dotCtrl,
+                              dotAnimation: _dotAnimationController,
                               onCancelPressed: _handleCancel,
                               isCanceling: _isLeaving,
                             );
@@ -669,7 +669,7 @@ class _FindingDriverPageContentState()
                                 fare: widget.fare,
                                 destination: widget.destination,
                                 pickupAddress: widget.pickupAddress,
-                                dotAnimation: _dotCtrl,
+                                dotAnimation: _dotAnimationController,
                                 onCancelPressed: _handleCancel,
                                 isCanceling: _isLeaving,
                               );

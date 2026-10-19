@@ -3,23 +3,23 @@ import 'package:maps/maps.dart';
 class MockLocationRemoteDataSource implements LocationRemoteDataSource {
   @override
   Future<Place> reverseGeocode({
-    required double lat,
-    required double lng,
+    required double latitude,
+    required double longitude,
   }) async {
     return Place(
       id: 'mock_1',
       name: 'Central Plaza',
       fullAddress: '123 Main Street',
-      latitude: lat,
-      longitude: lng,
+      latitude: latitude,
+      longitude: longitude,
     );
   }
 
   @override
   Future<Map<String, dynamic>> searchPlaces({
     required String query,
-    double? userLat,
-    double? userLng,
+    double? userLatitude,
+    double? userLongitude,
   }) async {
     return {
       'places': [
@@ -27,8 +27,8 @@ class MockLocationRemoteDataSource implements LocationRemoteDataSource {
           'id': 'mock_1',
           'name': '$query Mall',
           'fullAddress': '456 Commercial Ave',
-          'latitude': userLat ?? 7.8242,
-          'longitude': userLng ?? 123.4350,
+          'latitude': userLatitude ?? 7.8242,
+          'longitude': userLongitude ?? 123.4350,
         },
       ],
     };
@@ -36,8 +36,8 @@ class MockLocationRemoteDataSource implements LocationRemoteDataSource {
 
   @override
   Future<Map<String, dynamic>> getNearbyPois({
-    required double lat,
-    required double lng,
+    required double latitude,
+    required double longitude,
     int page = 1,
   }) async {
     return {
@@ -46,8 +46,8 @@ class MockLocationRemoteDataSource implements LocationRemoteDataSource {
           'id': 'mock_nearby_1',
           'name': 'City Park',
           'fullAddress': '789 Park Blvd',
-          'latitude': lat,
-          'longitude': lng,
+          'latitude': latitude,
+          'longitude': longitude,
         },
       ],
     };

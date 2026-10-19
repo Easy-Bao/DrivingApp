@@ -36,9 +36,14 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
 
   Future<void> connectToChatRoom({
     required String roomId,
-    required Uri wsUri,
+    Uri? chatUri,
+    Uri? wsUri,
     String? token,
   }) async {
+    final effectiveUri = chatUri ?? wsUri;
+    if (effectiveUri == null) {
+      throw ArgumentError('chatUri or wsUri must be provided.');
+    }
     if (isClosed) return;
     _roomId = roomId;
     _historyRequested = false;
@@ -52,13 +57,14 @@ class ChatCubit({required this._chatRepository, this.currentUserId})
     emit(state.copyWith(isConnecting: true, errorMessage: null));
 
     try {
-      final connResult = await _chatRepository.establishChatConnectionResult(
-        roomId: roomId,
-        chatUri: wsUri,
-        token: token,
-      );
+      final connectionResult = await _chatRepository
+          .establishChatConnectionResult(
+            roomId: roomId,
+            chatUri: effectiveUri,
+            token: token,
+          );
 
-      connResult.fold(_handleChatFailure, (_) {
+      connectionResult.fold(_handleChatFailure, (_) {
         emit(state.copyWith(isConnecting: false, isConnected: true));
         _requestHistory(roomId);
       });

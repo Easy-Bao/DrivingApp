@@ -30,8 +30,8 @@ class const DriverChatPage({
 }
 
 class _DriverChatPageState extends State<DriverChatPage> {
-  final TextEditingController _msgCtrl = TextEditingController();
-  final ScrollController _scrollCtrl = ScrollController();
+  final TextEditingController _messageController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   Timer? _typingStopTimer;
   bool _isTyping = false;
   late ChatCubit _chatCubit;
@@ -71,11 +71,11 @@ class _DriverChatPageState extends State<DriverChatPage> {
   Future<void> _connectChat(String roomId, String userId) async {
     final initialized = await _chatCubit.initializeChatRoom(roomId: roomId);
     if (!initialized || !mounted) return;
-    final wsUri = DriverEnvConfig.webSocketBaseUri.replace(
+    final realtimeUri = DriverEnvConfig.webSocketBaseUri.replace(
       path: '/api/v1/chat/ws',
       queryParameters: {'roomId': roomId},
     );
-    await _chatCubit.connectToChatRoom(roomId: roomId, wsUri: wsUri);
+    await _chatCubit.connectToChatRoom(roomId: roomId, chatUri: realtimeUri);
   }
 
   Future<void> _retryConnection() async {
@@ -90,8 +90,8 @@ class _DriverChatPageState extends State<DriverChatPage> {
     _typingStopTimer?.cancel();
     _isTyping = false;
     unawaited(_chatCubit.close());
-    _msgCtrl.dispose();
-    _scrollCtrl.dispose();
+    _messageController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -101,7 +101,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
     final sent = await _chatCubit.sendMessage(text);
     if (!mounted) return;
     if (sent) {
-      _msgCtrl.clear();
+      _messageController.clear();
       _scrollDown();
     }
   }
@@ -134,10 +134,10 @@ class _DriverChatPageState extends State<DriverChatPage> {
 
   void _scrollDown() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollCtrl.hasClients) {
+      if (_scrollController.hasClients) {
         unawaited(
-          _scrollCtrl.animateTo(
-            _scrollCtrl.position.maxScrollExtent,
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOut,
           ),
@@ -146,7 +146,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
     });
   }
 
-  String _fmtTime(DateTime dateTime) {
+  String _formatMessageTime(DateTime dateTime) {
     final hourDisplay = dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12;
     return "$hourDisplay:${dateTime.minute.toString().padLeft(2, '0')} ${dateTime.hour >= 12 ? 'PM' : 'AM'}";
   }
@@ -202,7 +202,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
                   child: chatHistoryMessages.isEmpty && !state.isPeerTyping
                       ? _buildEmptyState(state)
                       : ListView.builder(
-                          controller: _scrollCtrl,
+                          controller: _scrollController,
                           padding: const EdgeInsets.all(16),
                           physics: const BouncingScrollPhysics(),
                           itemCount:
@@ -306,7 +306,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
                                 ),
                               ),
                               child: TextField(
-                                controller: _msgCtrl,
+                                controller: _messageController,
                                 readOnly: !canSendMessage,
                                 textInputAction: TextInputAction.send,
                                 style: TextStyle(
@@ -339,7 +339,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
                                 ),
                                 onChanged: _onDraftChanged,
                                 onSubmitted: (_) =>
-                                    unawaited(_send(_msgCtrl.text)),
+                                    unawaited(_send(_messageController.text)),
                               ),
                             ),
                           ),
@@ -365,7 +365,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
                                   : context.colorScheme.onPrimary,
                               onPressed: !canSendMessage
                                   ? null
-                                  : () => unawaited(_send(_msgCtrl.text)),
+                                  : () => unawaited(_send(_messageController.text)),
                             ),
                           ),
                         ],
@@ -509,7 +509,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
 
   Widget _buildBubble(ChatMessage msg, {required bool animate}) {
     final isMe = msg.senderId == widget.userId;
-    final timeStr = _fmtTime(msg.createdAt);
+    final formattedTime = _formatMessageTime(msg.createdAt);
 
     return AppChatMessageTransition(
       key: ValueKey<String>('chat-message-${msg.identityKey}'),
@@ -557,7 +557,7 @@ class _DriverChatPageState extends State<DriverChatPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    timeStr,
+                    formattedTime,
                     style: TextStyle(
                       fontSize: 11,
                       color: context.colorScheme.onSurfaceVariant,

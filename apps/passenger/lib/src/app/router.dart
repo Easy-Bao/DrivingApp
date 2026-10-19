@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:foundation/foundation.dart';
 import 'package:go_router_modular/go_router_modular.dart';
 import 'package:passenger/src/app/navigation/navigation_shell.dart';
+import 'package:passenger/src/core/config/env_config.dart';
+import 'package:passenger/src/core/location/live_map_bloc.dart';
 import 'package:passenger/src/features/active_ride/active_ride_module.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
 import 'package:passenger/src/features/booking/booking_module.dart';
@@ -13,12 +15,10 @@ import 'package:passenger/src/features/driver_profile/driver_profile_module.dart
 import 'package:passenger/src/features/home/home_module.dart';
 import 'package:passenger/src/features/inbox/inbox_module.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox_cubit.dart';
-import 'package:passenger/src/core/location/live_map_bloc.dart';
 import 'package:passenger/src/features/profile/profile_module.dart';
 import 'package:passenger/src/features/ride_history/ride_history_module.dart';
 import 'package:passenger/src/features/saved_places/saved_places_module.dart';
 import 'package:passenger/src/features/settings/settings_module.dart';
-import 'package:passenger/src/core/config/env_config.dart';
 
 class PassengerRouter extends Module {
   @override

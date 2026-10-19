@@ -23,10 +23,10 @@ void main() {
     );
     expect(
       MapMarkerMotion.bearingBetween(
-        startLat: 7.8,
-        startLng: 123.4,
-        targetLat: 7.8,
-        targetLng: 123.5,
+        startLatitude: 7.8,
+        startLongitude: 123.4,
+        targetLatitude: 7.8,
+        targetLongitude: 123.5,
       ),
       closeTo(89.99, 0.5),
     );

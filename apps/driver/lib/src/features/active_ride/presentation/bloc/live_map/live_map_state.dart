@@ -1,15 +1,28 @@
 part of 'live_map_bloc.dart';
 
-sealed class const LiveMapState() {}
+sealed class LiveMapState {
+  const LiveMapState();
+}
 
-final class LiveMapInitial() extends LiveMapState;
+final class LiveMapInitial extends LiveMapState {}
 
-final class const LiveMapReady(final double currentLat, final double currentLng)
-    extends LiveMapState;
+final class LiveMapReady extends LiveMapState {
+  const LiveMapReady(this.currentLatitude, this.currentLongitude);
 
-final class const LiveMapRouteUpdated({
-  required final double driverLat,
-  required final double driverLng,
-  required final double? passengerLat,
-  required final double? passengerLng,
-}) extends LiveMapState;
+  final double currentLatitude;
+  final double currentLongitude;
+}
+
+final class LiveMapRouteUpdated extends LiveMapState {
+  const LiveMapRouteUpdated({
+    required this.driverLatitude,
+    required this.driverLongitude,
+    required this.passengerLatitude,
+    required this.passengerLongitude,
+  });
+
+  final double driverLatitude;
+  final double driverLongitude;
+  final double? passengerLatitude;
+  final double? passengerLongitude;
+}

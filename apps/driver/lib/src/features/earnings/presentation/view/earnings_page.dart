@@ -16,13 +16,13 @@ class DriverEarningsPage extends StatefulWidget {
 
 class _DriverEarningsPageState extends State<DriverEarningsPage>
     with SingleTickerProviderStateMixin {
-  late final TabController _tabCtrl;
+  late final TabController _tabController;
   EarningsPeriod _selectedPeriod = EarningsPeriod.weekly;
 
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(
+    _tabController = TabController(
       length: EarningsPeriod.values.length,
       initialIndex: _selectedPeriod.index,
       vsync: this,
@@ -71,7 +71,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
 
   @override
   void dispose() {
-    _tabCtrl.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -434,7 +434,7 @@ class _DriverEarningsPageState extends State<DriverEarningsPage>
     return SizedBox(
       height: 44,
       child: TabBar(
-        controller: _tabCtrl,
+        controller: _tabController,
         onTap: enabled ? _selectPeriod : null,
         indicator: BoxDecoration(
           color: context.colorScheme.primary,

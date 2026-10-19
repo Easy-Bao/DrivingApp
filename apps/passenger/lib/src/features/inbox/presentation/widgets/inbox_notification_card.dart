@@ -24,12 +24,12 @@ class InboxNotificationCard extends StatelessWidget {
     );
 
     if (dateToCheck == today) {
-      final hourNum = timestamp.hour > 12
+      final twelveHourValue = timestamp.hour > 12
           ? timestamp.hour - 12
           : (timestamp.hour == 0 ? 12 : timestamp.hour);
-      final periodStr = timestamp.hour >= 12 ? 'PM' : 'AM';
-      final minuteStr = timestamp.minute.toString().padLeft(2, '0');
-      return '$hourNum:$minuteStr $periodStr';
+      final meridiemPeriod = timestamp.hour >= 12 ? 'PM' : 'AM';
+      final paddedMinute = timestamp.minute.toString().padLeft(2, '0');
+      return '$twelveHourValue:$paddedMinute $meridiemPeriod';
     } else if (dateToCheck == yesterday) {
       return 'Yesterday';
     } else {
@@ -59,20 +59,20 @@ class InboxNotificationCard extends StatelessWidget {
     final isDriverChat =
         notification.type == 'driver' || notification.type == 'chat';
 
-    final Color bgCircleColor;
+    final Color circleBackgroundColor;
     final Color iconColor;
     final IconData icon;
 
     if (isDriverChat) {
-      bgCircleColor = context.colorScheme.primaryContainer;
+      circleBackgroundColor = context.colorScheme.primaryContainer;
       iconColor = context.colorScheme.primary;
       icon = LucideIcons.user;
     } else if (isReceipt) {
-      bgCircleColor = context.colorScheme.tertiaryContainer;
+      circleBackgroundColor = context.colorScheme.tertiaryContainer;
       iconColor = context.colorScheme.onTertiaryContainer;
       icon = LucideIcons.receipt;
     } else {
-      bgCircleColor = context.colorScheme.surfaceContainerHighest;
+      circleBackgroundColor = context.colorScheme.surfaceContainerHighest;
       iconColor = context.colorScheme.onSurfaceVariant;
       icon = LucideIcons.bell;
     }
@@ -104,7 +104,7 @@ class InboxNotificationCard extends StatelessWidget {
                     width: EasyRideSize.minimumTouchTarget,
                     height: EasyRideSize.minimumTouchTarget,
                     decoration: BoxDecoration(
-                      color: bgCircleColor,
+                      color: circleBackgroundColor,
                       borderRadius: BorderRadius.circular(EasyRideRadius.md),
                     ),
                     alignment: Alignment.center,

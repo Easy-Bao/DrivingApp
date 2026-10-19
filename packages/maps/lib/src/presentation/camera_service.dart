@@ -18,13 +18,13 @@ class MapCameraService._() {
 
   static Future<void> moveCamera(
     AppMapController controller,
-    double lat,
-    double lng, {
+    double latitude,
+    double longitude, {
     double? zoom,
     bool animate = true,
   }) => traceTimelineStage('maps.camera.move', () async {
     final camera = mapbox.CameraOptions(
-      center: mapbox.Point(coordinates: mapbox.Position(lng, lat)),
+      center: mapbox.Point(coordinates: mapbox.Position(longitude, latitude)),
       zoom: zoom,
     );
 
@@ -56,11 +56,11 @@ class MapCameraService._() {
 
   static Future<Offset> getScreenCoordinate(
     AppMapController controller,
-    double lat,
-    double lng,
+    double latitude,
+    double longitude,
   ) => traceTimelineStage('maps.camera.project_coordinate', () async {
     final coordinate = await controller.native.pixelForCoordinate(
-      mapbox.Point(coordinates: mapbox.Position(lng, lat)),
+      mapbox.Point(coordinates: mapbox.Position(longitude, latitude)),
     );
     return Offset(coordinate.x, coordinate.y);
   });
@@ -73,21 +73,25 @@ class MapCameraService._() {
   }) => traceTimelineStage('maps.camera.fit_bounds', () async {
     if (points.isEmpty) return;
 
-    var minLat = points.first.latitude;
-    var maxLat = points.first.latitude;
-    var minLng = points.first.longitude;
-    var maxLng = points.first.longitude;
+    var minLatitude = points.first.latitude;
+    var maxLatitude = points.first.latitude;
+    var minLongitude = points.first.longitude;
+    var maxLongitude = points.first.longitude;
 
     for (final point in points) {
-      minLat = math.min(minLat, point.latitude);
-      maxLat = math.max(maxLat, point.latitude);
-      minLng = math.min(minLng, point.longitude);
-      maxLng = math.max(maxLng, point.longitude);
+      minLatitude = math.min(minLatitude, point.latitude);
+      maxLatitude = math.max(maxLatitude, point.latitude);
+      minLongitude = math.min(minLongitude, point.longitude);
+      maxLongitude = math.max(maxLongitude, point.longitude);
     }
 
     final bounds = mapbox.CoordinateBounds(
-      southwest: mapbox.Point(coordinates: mapbox.Position(minLng, minLat)),
-      northeast: mapbox.Point(coordinates: mapbox.Position(maxLng, maxLat)),
+      southwest: mapbox.Point(
+        coordinates: mapbox.Position(minLongitude, minLatitude),
+      ),
+      northeast: mapbox.Point(
+        coordinates: mapbox.Position(maxLongitude, maxLatitude),
+      ),
       infiniteBounds: false,
     );
 

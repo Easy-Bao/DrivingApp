@@ -7,6 +7,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:passenger/src/core/location/location_access_cubit.dart';
+import 'package:passenger/src/core/location/location_access_state.dart';
+import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
@@ -22,14 +25,11 @@ import 'package:passenger/src/features/home/presentation/bloc/public_driver_summ
 import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_state.dart';
 import 'package:passenger/src/features/home/presentation/pages/home_page.dart';
 import 'package:passenger/src/features/home/presentation/widgets/recent_ride_history_preview.dart';
-import 'package:passenger/src/core/location/location_access_cubit.dart';
-import 'package:passenger/src/core/location/location_access_state.dart';
 import 'package:passenger/src/features/ride_history/presentation/bloc/ride_history/ride_history_bloc.dart';
 import 'package:passenger/src/features/ride_history/ride_history.dart';
 import 'package:passenger/src/features/saved_places/domain/entities/saved_place.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places_cubit.dart';
 import 'package:passenger/src/features/saved_places/presentation/bloc/saved_places_state.dart';
-import 'package:passenger/src/core/session/session_store.dart';
 
 class _MockCurrentLocationRepository extends Mock
     implements CurrentLocationRepository {}

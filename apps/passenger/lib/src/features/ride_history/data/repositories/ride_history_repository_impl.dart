@@ -22,7 +22,7 @@ const List<String> _monthAbbreviations = <String>[
 ];
 
 String _shortenAddress(String fullAddress) {
-  final parts = fullAddress.split(',').map((p) => p.trim()).toList();
+  final parts = fullAddress.split(',').map((part) => part.trim()).toList();
   if (parts.length >= 2) {
     return '${parts[parts.length - 2]}, ${parts.last}';
   }
@@ -172,11 +172,13 @@ final class RideHistoryRepositoryImpl({required this._remoteDataSource})
   String _formatCreatedAt(Object? createdAt) {
     if (createdAt == null) return '';
     try {
-      final dt = DateTime.parse(createdAt.toString()).toLocal();
-      final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
-      final min = dt.minute.toString().padLeft(2, '0');
-      final ampm = dt.hour < 12 ? 'AM' : 'PM';
-      return '${_monthAbbreviations[dt.month - 1]} ${dt.day}, $hour:$min $ampm';
+      final createdDateTime = DateTime.parse(createdAt.toString()).toLocal();
+      final hour = createdDateTime.hour % 12 == 0
+          ? 12
+          : createdDateTime.hour % 12;
+      final paddedMinute = createdDateTime.minute.toString().padLeft(2, '0');
+      final meridiemPeriod = createdDateTime.hour < 12 ? 'AM' : 'PM';
+      return '${_monthAbbreviations[createdDateTime.month - 1]} ${createdDateTime.day}, $hour:$paddedMinute $meridiemPeriod';
     } catch (_) {
       return createdAt.toString();
     }

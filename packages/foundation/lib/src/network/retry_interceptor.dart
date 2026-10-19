@@ -24,10 +24,10 @@ class RetryInterceptor(
 
   @override
   Future<void> onError(
-    DioException err,
+    DioException error,
     ErrorInterceptorHandler handler,
   ) async {
-    final requestOptions = err.requestOptions;
+    final requestOptions = error.requestOptions;
     final retryPolicy =
         requestOptions.extra[requestRetryPolicyExtraKey] as RequestRetryPolicy?;
     final method = requestOptions.method.toUpperCase();
@@ -39,10 +39,10 @@ class RetryInterceptor(
         isSafeReadMethod ||
         (method == 'POST' && retryPolicy == RequestRetryPolicy.transientRead);
     final isNetworkError =
-        err.type == DioExceptionType.connectionError ||
-        err.type == DioExceptionType.connectionTimeout ||
-        err.type == DioExceptionType.receiveTimeout ||
-        err.error is SocketException;
+        error.type == DioExceptionType.connectionError ||
+        error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.receiveTimeout ||
+        error.error is SocketException;
     final retryAttempt = requestOptions.extra['retryAttempt'] as int? ?? 0;
 
     final shouldRetry =
@@ -59,7 +59,7 @@ class RetryInterceptor(
         return handler.resolve(response);
       } catch (_) {}
     }
-    super.onError(err, handler);
+    super.onError(error, handler);
   }
 
   static Duration _defaultRetryDelay(int retryAttempt) {

@@ -51,7 +51,7 @@ void main() {
     final cubit = ChatCubit(chatRepository: repository, currentUserId: '7');
     await cubit.connectToChatRoom(
       roomId: 'ride-1',
-      wsUri: Uri.parse('wss://example.test/chat/ride-1'),
+      chatUri: Uri.parse('wss://example.test/chat/ride-1'),
     );
 
     expect(cubit.state.isConnected, isTrue);
@@ -118,7 +118,7 @@ void main() {
 
       await cubit.connectToChatRoom(
         roomId: 'ride-1',
-        wsUri: Uri.parse('wss://example.test/chat/ride-1'),
+        chatUri: Uri.parse('wss://example.test/chat/ride-1'),
       );
       await Future<void>.delayed(Duration.zero);
 
@@ -155,7 +155,7 @@ void main() {
 
     await cubit.connectToChatRoom(
       roomId: 'ride-1',
-      wsUri: Uri.parse('wss://example.test/chat/ride-1'),
+      chatUri: Uri.parse('wss://example.test/chat/ride-1'),
     );
     connectionStates.add(const ChatConnected());
     await Future<void>.delayed(Duration.zero);

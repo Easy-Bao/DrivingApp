@@ -82,15 +82,15 @@ class const TrackDriverPage({
 
 class _MapUpdateRequest {
   const _MapUpdateRequest({
-    required this.driverLat,
-    required this.driverLng,
+    required this.driverLatitude,
+    required this.driverLongitude,
     required this.routeCoordinates,
     required this.status,
     required this.driverName,
   });
 
-  final double driverLat;
-  final double driverLng;
+  final double driverLatitude;
+  final double driverLongitude;
   final Float64List? routeCoordinates;
   final RideStatus status;
   final String driverName;
@@ -305,7 +305,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                           : null;
 
                       return LayoutBuilder(
-                        builder: (ctx, constraints) {
+                        builder: (context, constraints) {
                           final isWide = constraints.maxWidth > 600.0;
                           return ConstrainedBox(
                             constraints: BoxConstraints(
@@ -324,81 +324,14 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                               showContactActions: true,
                               isCancellingTrip: _isCancellingTrip,
                               isInTransit: isInTransit,
-                              onCallDriverPressed: () async {
-                                try {
-                                  final rideId = widget.ride.id.trim();
-                                  if (rideId.isNotEmpty) {
-                                    final result = await widget.trackRepository
-                                        .fetchCounterpartyResult(rideId);
-                                    final (canCall, phone) = result.fold(
-                                      (failure) {
-                                        if (mounted) {
-                                          final msg = failure.message.isNotEmpty
-                                              ? failure.message
-                                              : 'Unable to reach driver at this time.';
-                                          setState(() => _errorMessage = msg);
-                                          CustomToast.show(
-                                            context,
-                                            msg,
-                                            isError: true,
-                                          );
-                                        }
-                                        return (false, '');
-                                      },
-                                      (driver) {
-                                        if (!driver.contactAllowed ||
-                                            driver.phone.trim().isEmpty) {
-                                          if (mounted) {
-                                            const msg =
-                                                'Driver contact is currently unavailable.';
-                                            setState(() => _errorMessage = msg);
-                                            CustomToast.show(
-                                              context,
-                                              msg,
-                                              isError: true,
-                                            );
-                                          }
-                                          return (false, '');
-                                        }
-                                        return (true, driver.phone.trim());
-                                      },
-                                    );
-
-                                    if (canCall && phone.isNotEmpty) {
-                                      final uri = Uri.parse('tel:$phone');
-                                      if (await canLaunchUrl(uri)) {
-                                        await launchUrl(uri);
-                                      } else if (mounted) {
-                                        const msg =
-                                            'Unable to launch phone dialer.';
-                                        setState(() => _errorMessage = msg);
-                                        CustomToast.show(
-                                          context,
-                                          msg,
-                                          isError: true,
-                                        );
-                                      }
-                                    }
-                                  }
-                                } catch (_) {
-                                  if (mounted) {
-                                    const msg =
-                                        'Unable to reach driver at this time.';
-                                    setState(() => _errorMessage = msg);
-                                    CustomToast.show(
-                                      context,
-                                      msg,
-                                      isError: true,
-                                    );
-                                  }
-                                }
-                              },
+                              onCallDriverPressed: _handleCallDriver,
                               onChatDriverPressed: () async {
                                 final passengerId =
                                     await widget.sessionService
                                         .readPassengerId() ??
                                     '';
-                                final dName = state.activeDriverName.isNotEmpty
+                                final peerDriverName =
+                                    state.activeDriverName.isNotEmpty
                                     ? state.activeDriverName
                                     : widget.ride.displayDriverName;
                                 if (context.mounted) {
@@ -410,7 +343,7 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
                                       'roomId': widget.ride.id,
                                       'userId': passengerId,
                                       'peerId': widget.ride.driverId ?? '',
-                                      'peerName': dName,
+                                      'peerName': peerDriverName,
                                     },
                                   );
                                   await _updateUnreadMessagesCount();
@@ -540,8 +473,8 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
     _pendingMapUpdate = null;
     unawaited(
       _updateMapElements(
-        pending.driverLat,
-        pending.driverLng,
+        pending.driverLatitude,
+        pending.driverLongitude,
         pending.routeCoordinates,
         pending.status,
         pending.driverName,
@@ -576,6 +509,56 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
       return 'Driver is heading to pickup';
     }
     return 'Driver assigned to your trip';
+  }
+
+  Future<void> _handleCallDriver() async {
+    try {
+      final rideId = widget.ride.id.trim();
+      if (rideId.isEmpty) return;
+
+      final result =
+          await widget.trackRepository.fetchCounterpartyResult(rideId);
+      final (canCall, phone) = result.fold(
+        (failure) {
+          if (mounted) {
+            final message = failure.message.isNotEmpty
+                ? failure.message
+                : 'Unable to reach driver at this time.';
+            setState(() => _errorMessage = message);
+            CustomToast.show(context, message, isError: true);
+          }
+          return (false, '');
+        },
+        (driver) {
+          if (!driver.contactAllowed || driver.phone.trim().isEmpty) {
+            if (mounted) {
+              const message = 'Driver contact is currently unavailable.';
+              setState(() => _errorMessage = message);
+              CustomToast.show(context, message, isError: true);
+            }
+            return (false, '');
+          }
+          return (true, driver.phone.trim());
+        },
+      );
+
+      if (canCall && phone.isNotEmpty) {
+        final uri = Uri.parse('tel:$phone');
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri);
+        } else if (mounted) {
+          const message = 'Unable to launch phone dialer.';
+          setState(() => _errorMessage = message);
+          CustomToast.show(context, message, isError: true);
+        }
+      }
+    } catch (_) {
+      if (mounted) {
+        const message = 'Unable to reach driver at this time.';
+        setState(() => _errorMessage = message);
+        CustomToast.show(context, message, isError: true);
+      }
+    }
   }
 
   Future<void> _handleBackNavigation() async {
@@ -677,12 +660,14 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
         unawaited(_locationSubscription!.cancel());
       }
       final trackDriverCubit = BlocProvider.of<TrackDriverCubit>(context);
-      _locationSubscription = LocationService.getPositionStream().listen((pos) {
+      _locationSubscription = LocationService.getPositionStream().listen((
+        position,
+      ) {
         unawaited(
           trackDriverCubit.publishPassengerLocation(
             rideId: widget.ride.id,
-            latitude: pos.latitude,
-            longitude: pos.longitude,
+            latitude: position.latitude,
+            longitude: position.longitude,
           ),
         );
       }, onError: (_) {});
@@ -711,16 +696,16 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
   }
 
   Future<void> _updateMapElements(
-    double driverLat,
-    double driverLng,
+    double driverLatitude,
+    double driverLongitude,
     Float64List? routeCoordinates,
     RideStatus status,
     String driverName,
   ) async {
     final mapController = _mapController;
     final request = _MapUpdateRequest(
-      driverLat: driverLat,
-      driverLng: driverLng,
+      driverLatitude: driverLatitude,
+      driverLongitude: driverLongitude,
       routeCoordinates: routeCoordinates,
       status: status,
       driverName: driverName,
@@ -730,17 +715,17 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
       return;
     }
     _isUpdatingMap = true;
-    final passengerLat = widget.ride.pickupLatitude ?? 0.0;
-    final passengerLng = widget.ride.pickupLongitude ?? 0.0;
+    final passengerLatitude = widget.ride.pickupLatitude ?? 0.0;
+    final passengerLongitude = widget.ride.pickupLongitude ?? 0.0;
 
     try {
       final isInTransit = status == RideStatus.inTransit;
-      final targetLat = isInTransit
+      final targetLatitude = isInTransit
           ? (widget.ride.dropoffLatitude ?? 0.0)
-          : passengerLat;
-      final targetLng = isInTransit
+          : passengerLatitude;
+      final targetLongitude = isInTransit
           ? (widget.ride.dropoffLongitude ?? 0.0)
-          : passengerLng;
+          : passengerLongitude;
       if (routeCoordinates != null && routeCoordinates.length >= 4) {
         _routeLineManager = await _upsertRoute(
           _routeLineManager,
@@ -751,13 +736,17 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
         await MapProvider.clearAnnotations(_routeLineManager);
         _routeLineManager = null;
       }
-      final destinationLat = isInTransit ? targetLat : passengerLat;
-      final destinationLng = isInTransit ? targetLng : passengerLng;
+      final destinationLatitude = isInTransit
+          ? targetLatitude
+          : passengerLatitude;
+      final destinationLongitude = isInTransit
+          ? targetLongitude
+          : passengerLongitude;
       _passengerMarkerManager = await _upsertMarker(
         _passengerMarkerManager,
         mapController,
-        destinationLat,
-        destinationLng,
+        destinationLatitude,
+        destinationLongitude,
         isOrigin: true,
         color: isInTransit
             ? TripMapMarkerStyle.tripLocation
@@ -767,8 +756,8 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
       _driverMarkerManager = await _upsertMarker(
         _driverMarkerManager,
         mapController,
-        driverLat,
-        driverLng,
+        driverLatitude,
+        driverLongitude,
         isOrigin: false,
         color: TripMapMarkerStyle.tripLocation,
         animate: true,
@@ -779,7 +768,10 @@ class _TrackDriverPageState extends State<TrackDriverPage> {
           now.difference(_lastCameraFitAt!) >= const Duration(seconds: 8)) {
         await MapProvider.fitBounds(
           mapController,
-          [LatLng(targetLat, targetLng), LatLng(driverLat, driverLng)],
+          [
+            LatLng(targetLatitude, targetLongitude),
+            LatLng(driverLatitude, driverLongitude),
+          ],
           padding: 72.0,
           maxZoom: 15.0,
         );

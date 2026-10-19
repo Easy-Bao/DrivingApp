@@ -14,41 +14,69 @@ final class const SearchingDriver({final String? passengerName})
   List<Object?> get props => [passengerName];
 }
 
-final class const DriverEnRoute({
-  required final String passengerName,
-  final double? pickupLat,
-  final double? pickupLng,
-  final double? destLat,
-  final double? destLng,
-  final int? waitTimeSeconds,
-}) extends RideState {
+final class DriverEnRoute extends RideState {
+  const DriverEnRoute({
+    required this.passengerName,
+    this.pickupLatitude,
+    this.pickupLongitude,
+    this.destinationLatitude,
+    this.destinationLongitude,
+    this.waitTimeSeconds,
+  });
+
+  final String passengerName;
+  final double? pickupLatitude;
+  final double? pickupLongitude;
+  final double? destinationLatitude;
+  final double? destinationLongitude;
+  final int? waitTimeSeconds;
+
+  double? get pickupLat => pickupLatitude;
+  double? get pickupLng => pickupLongitude;
+  double? get destLat => destinationLatitude;
+  double? get destLng => destinationLongitude;
+
   @override
   List<Object?> get props => [
     passengerName,
-    pickupLat,
-    pickupLng,
-    destLat,
-    destLng,
+    pickupLatitude,
+    pickupLongitude,
+    destinationLatitude,
+    destinationLongitude,
     waitTimeSeconds,
   ];
 }
 
-final class const TripInProgress({
-  required final String passengerName,
-  final double? destLat,
-  final double? destLng,
-  final double? distanceKm,
-  final double? passengerLat,
-  final double? passengerLng,
-}) extends RideState {
+final class TripInProgress extends RideState {
+  const TripInProgress({
+    required this.passengerName,
+    this.destinationLatitude,
+    this.destinationLongitude,
+    this.distanceKm,
+    this.passengerLatitude,
+    this.passengerLongitude,
+  });
+
+  final String passengerName;
+  final double? destinationLatitude;
+  final double? destinationLongitude;
+  final double? distanceKm;
+  final double? passengerLatitude;
+  final double? passengerLongitude;
+
+  double? get destLat => destinationLatitude;
+  double? get destLng => destinationLongitude;
+  double? get passengerLat => passengerLatitude;
+  double? get passengerLng => passengerLongitude;
+
   @override
   List<Object?> get props => [
     passengerName,
-    destLat,
-    destLng,
+    destinationLatitude,
+    destinationLongitude,
     distanceKm,
-    passengerLat,
-    passengerLng,
+    passengerLatitude,
+    passengerLongitude,
   ];
 }
 
@@ -69,31 +97,37 @@ typedef RideFlowState = RideState;
 /// Compatibility wrappers retain the established public state constructors.
 final class const RideFlowInitial() extends Idle;
 
-final class const RideFlowNavigatingToPickup({
-  required super.passengerName,
-  super.pickupLat,
-  super.pickupLng,
-  super.destLat,
-  super.destLng,
-}) extends DriverEnRoute;
+final class RideFlowNavigatingToPickup extends DriverEnRoute {
+  const RideFlowNavigatingToPickup({
+    required super.passengerName,
+    super.pickupLatitude,
+    super.pickupLongitude,
+    super.destinationLatitude,
+    super.destinationLongitude,
+  });
+}
 
-final class const RideFlowWaitingPassenger({
-  required super.passengerName,
-  required super.waitTimeSeconds,
-  super.pickupLat,
-  super.pickupLng,
-  super.destLat,
-  super.destLng,
-}) extends DriverEnRoute;
+final class RideFlowWaitingPassenger extends DriverEnRoute {
+  const RideFlowWaitingPassenger({
+    required super.passengerName,
+    required super.waitTimeSeconds,
+    super.pickupLatitude,
+    super.pickupLongitude,
+    super.destinationLatitude,
+    super.destinationLongitude,
+  });
+}
 
-final class const RideFlowInTransit({
-  required super.passengerName,
-  super.destLat,
-  super.destLng,
-  super.distanceKm,
-  super.passengerLat,
-  super.passengerLng,
-}) extends TripInProgress;
+final class RideFlowInTransit extends TripInProgress {
+  const RideFlowInTransit({
+    required super.passengerName,
+    super.destinationLatitude,
+    super.destinationLongitude,
+    super.distanceKm,
+    super.passengerLatitude,
+    super.passengerLongitude,
+  });
+}
 
 final class RideFlowComplete extends TripCompleted {
   const RideFlowComplete({required super.fare});
@@ -167,7 +201,7 @@ extension RideStatePresentation on RideState {
     TripInProgress() ||
     TripCompleted() ||
     RideFailed() => null,
-    DriverEnRoute(:final pickupLat) => pickupLat,
+    DriverEnRoute(:final pickupLatitude) => pickupLatitude,
   };
 
   double? get pickupLongitude => switch (this) {
@@ -176,26 +210,34 @@ extension RideStatePresentation on RideState {
     TripInProgress() ||
     TripCompleted() ||
     RideFailed() => null,
-    DriverEnRoute(:final pickupLng) => pickupLng,
+    DriverEnRoute(:final pickupLongitude) => pickupLongitude,
   };
 
   double? get destinationLatitude => switch (this) {
     Idle() || SearchingDriver() || TripCompleted() || RideFailed() => null,
-    DriverEnRoute(:final destLat) || TripInProgress(:final destLat) => destLat,
+    DriverEnRoute(:final destinationLatitude) ||
+    TripInProgress(:final destinationLatitude) =>
+      destinationLatitude,
   };
 
   double? get destinationLongitude => switch (this) {
     Idle() || SearchingDriver() || TripCompleted() || RideFailed() => null,
-    DriverEnRoute(:final destLng) || TripInProgress(:final destLng) => destLng,
+    DriverEnRoute(:final destinationLongitude) ||
+    TripInProgress(:final destinationLongitude) =>
+      destinationLongitude,
   };
 
   RideCoordinates? get destinationCoordinates => switch (this) {
-    DriverEnRoute(:final destLat, :final destLng)
-        when destLat != null && destLng != null =>
-      (destLat, destLng),
-    TripInProgress(:final destLat, :final destLng)
-        when destLat != null && destLng != null =>
-      (destLat, destLng),
+    DriverEnRoute(
+      :final destinationLatitude,
+      :final destinationLongitude,
+    ) when destinationLatitude != null && destinationLongitude != null =>
+      (destinationLatitude, destinationLongitude),
+    TripInProgress(
+      :final destinationLatitude,
+      :final destinationLongitude,
+    ) when destinationLatitude != null && destinationLongitude != null =>
+      (destinationLatitude, destinationLongitude),
     _ => null,
   };
 
@@ -212,7 +254,7 @@ extension RideStatePresentation on RideState {
     DriverEnRoute() ||
     TripCompleted() ||
     RideFailed() => null,
-    TripInProgress(:final passengerLat) => passengerLat,
+    TripInProgress(:final passengerLatitude) => passengerLatitude,
   };
 
   double? get passengerLongitude => switch (this) {
@@ -221,7 +263,7 @@ extension RideStatePresentation on RideState {
     DriverEnRoute() ||
     TripCompleted() ||
     RideFailed() => null,
-    TripInProgress(:final passengerLng) => passengerLng,
+    TripInProgress(:final passengerLongitude) => passengerLongitude,
   };
 
   String? get failureMessage => switch (this) {

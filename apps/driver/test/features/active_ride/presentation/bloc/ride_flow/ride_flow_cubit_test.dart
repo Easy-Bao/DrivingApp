@@ -98,14 +98,14 @@ void main() {
       act: (cubit) => cubit.acceptRide(
         rideId: 'test-ride-id',
         passengerName: 'Juan Dela Cruz',
-        pickupLat: 7.82,
-        pickupLng: 123.43,
+        pickupLatitude: 7.82,
+        pickupLongitude: 123.43,
       ),
       expect: () => [
         const RideFlowNavigatingToPickup(
           passengerName: 'Juan Dela Cruz',
-          pickupLat: 7.82,
-          pickupLng: 123.43,
+          pickupLatitude: 7.82,
+          pickupLongitude: 123.43,
         ),
       ],
     );
@@ -129,8 +129,8 @@ void main() {
       final pendingAccept = cubit.acceptRide(
         rideId: 'test-ride-id',
         passengerName: 'Juan Dela Cruz',
-        pickupLat: 7.82,
-        pickupLng: 123.43,
+        pickupLatitude: 7.82,
+        pickupLongitude: 123.43,
       );
       await acceptStarted.future;
 
@@ -160,8 +160,8 @@ void main() {
         );
         await cubit.arriveAtPickup(
           'Juan Dela Cruz',
-          driverLat: 7.82,
-          driverLng: 123.43,
+          driverLatitude: 7.82,
+          driverLongitude: 123.43,
           observedAt: observedAt,
         );
       },
@@ -204,8 +204,8 @@ void main() {
       );
       await cubit.arriveAtPickup(
         'Juan Dela Cruz',
-        driverLat: 7.82,
-        driverLng: 123.43,
+        driverLatitude: 7.82,
+        driverLongitude: 123.43,
         observedAt: observedAt,
       );
 
@@ -228,11 +228,11 @@ void main() {
         );
         await cubit.startRide(
           passengerName: 'Juan Dela Cruz',
-          destLat: 7.85,
-          destLng: 123.45,
+          destinationLatitude: 7.85,
+          destinationLongitude: 123.45,
           distanceKm: 3.2,
-          driverLat: 7.82,
-          driverLng: 123.43,
+          driverLatitude: 7.82,
+          driverLongitude: 123.43,
           observedAt: observedAt,
         );
       },
@@ -243,8 +243,8 @@ void main() {
         ),
         const RideFlowInTransit(
           passengerName: 'Juan Dela Cruz',
-          destLat: 7.85,
-          destLng: 123.45,
+          destinationLatitude: 7.85,
+          destinationLongitude: 123.45,
           distanceKm: 3.2,
         ),
       ],
@@ -282,11 +282,11 @@ void main() {
       );
       final started = await cubit.startRide(
         passengerName: 'Juan Dela Cruz',
-        destLat: 7.85,
-        destLng: 123.45,
+        destinationLatitude: 7.85,
+        destinationLongitude: 123.45,
         distanceKm: 3.2,
-        driverLat: 7.82,
-        driverLng: 123.43,
+        driverLatitude: 7.82,
+        driverLongitude: 123.43,
         observedAt: observedAt,
       );
 
@@ -316,20 +316,20 @@ void main() {
           rideId: 'test-ride-id',
           status: 'arrived',
           passengerName: 'Juan Dela Cruz',
-          pickupLat: 7.82,
-          pickupLng: 123.43,
+          pickupLatitude: 7.82,
+          pickupLongitude: 123.43,
         );
 
         final started = await cubit.startRide(
           passengerName: 'Juan Dela Cruz',
-          destLat: null,
-          destLng: null,
+          destinationLatitude: null,
+          destinationLongitude: null,
           distanceKm: 3.2,
-          driverLat: 7.82,
-          driverLng: 123.43,
+          driverLatitude: 7.82,
+          driverLongitude: 123.43,
           observedAt: DateTime.utc(2026, 10, 11, 10),
-          passengerLat: 7.82,
-          passengerLng: 123.43,
+          passengerLatitude: 7.82,
+          passengerLongitude: 123.43,
         );
 
         expect(started, isTrue);
@@ -337,11 +337,11 @@ void main() {
           cubit.state,
           const RideFlowInTransit(
             passengerName: 'Juan Dela Cruz',
-            destLat: 7.85,
-            destLng: 123.45,
+            destinationLatitude: 7.85,
+            destinationLongitude: 123.45,
             distanceKm: 3.2,
-            passengerLat: 7.82,
-            passengerLng: 123.43,
+            passengerLatitude: 7.82,
+            passengerLongitude: 123.43,
           ),
         );
         verify(() => mockRideRepository.fetchRide('test-ride-id')).called(1);
@@ -358,19 +358,19 @@ void main() {
         rideId: 'test-ride-id',
         status: 'arrived',
         passengerName: 'Juan Dela Cruz',
-        pickupLat: 7.82,
-        pickupLng: 123.43,
-        destLat: 7.85,
-        destLng: 123.45,
+        pickupLatitude: 7.82,
+        pickupLongitude: 123.43,
+        destinationLatitude: 7.85,
+        destinationLongitude: 123.45,
       ),
       expect: () => [
         const RideFlowWaitingPassenger(
           passengerName: 'Juan Dela Cruz',
           waitTimeSeconds: 0,
-          pickupLat: 7.82,
-          pickupLng: 123.43,
-          destLat: 7.85,
-          destLng: 123.45,
+          pickupLatitude: 7.82,
+          pickupLongitude: 123.43,
+          destinationLatitude: 7.85,
+          destinationLongitude: 123.45,
         ),
       ],
     );
@@ -522,7 +522,10 @@ void main() {
         passengerName: 'Juan Dela Cruz',
       );
 
-      final fare = await cubit.completeRide(driverLat: 7.82, driverLng: 123.43);
+      final fare = await cubit.completeRide(
+        driverLatitude: 7.82,
+        driverLongitude: 123.43,
+      );
       await cubit.handleExternalTerminalRide(
         rideId: 'test-ride-id',
         status: ' COMPLETED ',

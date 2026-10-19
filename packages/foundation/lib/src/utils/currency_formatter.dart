@@ -7,23 +7,23 @@ String formatPesoAmount(num amount) {
   if (!amount.isFinite) return '₱—';
 
   final isNegative = amount < 0;
-  final absAmount = amount.abs();
-  final fixedStr = absAmount.toStringAsFixed(2);
-  final parts = fixedStr.split('.');
+  final absoluteAmount = amount.abs();
+  final fixedString = absoluteAmount.toStringAsFixed(2);
+  final parts = fixedString.split('.');
   final integerPart = parts[0];
   final decimalPart = parts[1];
 
   final buffer = StringBuffer();
-  final len = integerPart.length;
-  for (int i = 0; i < len; i++) {
-    if (i > 0 && (len - i) % 3 == 0) {
+  final length = integerPart.length;
+  for (int index = 0; index < length; index++) {
+    if (index > 0 && (length - index) % 3 == 0) {
       buffer.write(',');
     }
-    buffer.write(integerPart[i]);
+    buffer.write(integerPart[index]);
   }
 
   final formatted = '$buffer.$decimalPart';
-  if (isNegative && absAmount >= 0.005) {
+  if (isNegative && absoluteAmount >= 0.005) {
     return '-₱$formatted';
   }
   return '₱$formatted';

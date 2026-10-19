@@ -56,7 +56,7 @@ class const DriverDashboardPage({
 
 class _DriverDashboardPageState extends State<DriverDashboardPage>
     with TickerProviderStateMixin {
-  late final AnimationController _pulseCtrl;
+  late final AnimationController _pulseAnimationController;
   Timer? _rideTriggerTimer;
   Timer? _presenceHeartbeatTimer;
   Timer? _locationAccessPoller;
@@ -93,7 +93,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _realtimeEventsSubscription = _realtimeClient.events.listen(
       _handleRealtimeEvent,
     );
-    _pulseCtrl = AnimationController(
+    _pulseAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
     );
@@ -101,12 +101,12 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        final s = BlocProvider.of<DashboardCubit>(context).state;
-        _syncPulseAnimation(s.isOnline);
+        final dashboardState = BlocProvider.of<DashboardCubit>(context).state;
+        _syncPulseAnimation(dashboardState.isOnline);
         _startLocationAccessMonitoring();
         unawaited(_loadActiveTrips());
         unawaited(_restorePendingCashSettlement());
-        if (s.isOnline && _isForeground) {
+        if (dashboardState.isOnline && _isForeground) {
           unawaited(_resumeOnlineTelemetry());
         }
       }
@@ -118,7 +118,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _pollGeneration++;
     _realtimeClient.setActiveTripResyncHandler(null);
     unawaited(_lifecycleSubscription.cancel());
-    _pulseCtrl.dispose();
+    _pulseAnimationController.dispose();
     _rideTriggerTimer?.cancel();
     _presenceHeartbeatTimer?.cancel();
     _locationAccessPoller?.cancel();
@@ -144,12 +144,12 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       isForeground: _isForeground,
     );
     if (shouldPulse) {
-      if (!_pulseCtrl.isAnimating) {
-        _pulseCtrl.repeat(reverse: true);
+      if (!_pulseAnimationController.isAnimating) {
+        _pulseAnimationController.repeat(reverse: true);
       }
       return;
     }
-    _pulseCtrl.stop();
+    _pulseAnimationController.stop();
   }
 
   void _onLifecycleChanged(AppLifecycleStatus status) {
@@ -157,7 +157,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     if (!isForeground) {
       if (_isForeground) {
         _isForeground = false;
-        _pulseCtrl.stop();
+        _pulseAnimationController.stop();
         _suspendForegroundWork();
       }
       return;
@@ -381,7 +381,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     _startLocationAccessMonitoring();
     _cancelLocationSubscription();
     _locationSubscription = LocationService.getPositionStream().listen(
-      (pos) {
+      (position) {
         if (!mounted || pollGeneration != _pollGeneration) return;
       },
       onError: (Object error, StackTrace stackTrace) {
@@ -781,10 +781,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       passengerName: resolvedTrip.passengerName ?? 'Passenger',
       passengerId: resolvedTrip.passengerId,
       distanceKm: resolvedTrip.distanceKm,
-      pickupLat: resolvedTrip.pickupLatitude,
-      pickupLng: resolvedTrip.pickupLongitude,
-      destLat: resolvedTrip.dropoffLatitude,
-      destLng: resolvedTrip.dropoffLongitude,
+      pickupLatitude: resolvedTrip.pickupLatitude,
+      pickupLongitude: resolvedTrip.pickupLongitude,
+      destinationLatitude: resolvedTrip.dropoffLatitude,
+      destinationLongitude: resolvedTrip.dropoffLongitude,
       arrivedAt: resolvedTrip.arrivedAt,
       waitingUntil: resolvedTrip.waitingUntil,
     );
@@ -1047,7 +1047,7 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
       isOnline: isOnline,
       isToggling: _isTogglingOnline,
       hasActiveRide: state.activeRide != null,
-      statusPulse: _pulseCtrl,
+      statusPulse: _pulseAnimationController,
       onChanged: (locationReady || isOnline)
           ? (value) => unawaited(_toggleOnline(context, value))
           : null,
@@ -1070,9 +1070,10 @@ class _DriverDashboardPageState extends State<DriverDashboardPage>
     if (state.isOnline) {
       return RepaintBoundary(
         child: AnimatedBuilder(
-          animation: _pulseCtrl,
+          animation: _pulseAnimationController,
           builder: (_, _) {
-            final pulseOpacity = 0.3 + _pulseCtrl.value * 0.7;
+            final pulseOpacity =
+                0.3 + _pulseAnimationController.value * 0.7;
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [

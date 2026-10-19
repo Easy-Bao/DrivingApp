@@ -1,26 +1,51 @@
 part of 'live_map_bloc.dart';
 
-sealed class const LiveMapEvent() {}
+sealed class LiveMapEvent {
+  const LiveMapEvent();
+}
 
-final class const InitializeMapEvent({
-  required final AppMapController controller,
-  required final double defaultLat,
-  required final double defaultLng,
-  required final Color routeColor,
-}) extends LiveMapEvent;
+final class InitializeMapEvent extends LiveMapEvent {
+  const InitializeMapEvent({
+    required this.controller,
+    required this.defaultLatitude,
+    required this.defaultLongitude,
+    required this.routeColor,
+  });
 
-final class const UpdateLocationsAndDrawRouteEvent({
-  required final double driverLat,
-  required final double driverLng,
-  required final double? passengerLat,
-  required final double? passengerLng,
-  final double? routeTargetLat,
-  final double? routeTargetLng,
-}) extends LiveMapEvent;
+  final AppMapController controller;
+  final double defaultLatitude;
+  final double defaultLongitude;
+  final Color routeColor;
+}
 
-final class const ClearMapEvent() extends LiveMapEvent;
+final class UpdateLocationsAndDrawRouteEvent extends LiveMapEvent {
+  const UpdateLocationsAndDrawRouteEvent({
+    required this.driverLatitude,
+    required this.driverLongitude,
+    required this.passengerLatitude,
+    required this.passengerLongitude,
+    this.routeTargetLatitude,
+    this.routeTargetLongitude,
+  });
 
-final class const DispatchTelemetryLocationEvent({
-  required final double lat,
-  required final double lng,
-}) extends LiveMapEvent;
+  final double driverLatitude;
+  final double driverLongitude;
+  final double? passengerLatitude;
+  final double? passengerLongitude;
+  final double? routeTargetLatitude;
+  final double? routeTargetLongitude;
+}
+
+final class ClearMapEvent extends LiveMapEvent {
+  const ClearMapEvent();
+}
+
+final class DispatchTelemetryLocationEvent extends LiveMapEvent {
+  const DispatchTelemetryLocationEvent({
+    required this.latitude,
+    required this.longitude,
+  });
+
+  final double latitude;
+  final double longitude;
+}

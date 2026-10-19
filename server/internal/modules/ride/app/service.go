@@ -148,19 +148,19 @@ func (service *RideService) CreateRideWithDetails(ctx context.Context, ride doma
 
 func (service *RideService) Fare(
 	ctx context.Context,
-	originLat *float64,
-	originLng *float64,
-	destinationLat *float64,
-	destinationLng *float64,
+	originLatitude *float64,
+	originLongitude *float64,
+	destinationLatitude *float64,
+	destinationLongitude *float64,
 	distanceKm float64,
 	durationMinutes float64,
 ) (RouteMetrics, int64, error) {
 	return service.bookingService.EstimateFare(
 		ctx,
-		originLat,
-		originLng,
-		destinationLat,
-		destinationLng,
+		originLatitude,
+		originLongitude,
+		destinationLatitude,
+		destinationLongitude,
 		distanceKm,
 		durationMinutes,
 	)

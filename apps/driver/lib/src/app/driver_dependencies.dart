@@ -22,19 +22,19 @@ import 'package:go_router_modular/go_router_modular.dart';
 import 'package:foundation/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class DriverDependencies({
-  required this._prefs,
-  DriverSessionStore? sessionService,
-}) extends Module {
-  final SharedPreferences _prefs;
-  final DriverSessionStore _sessionService;
+class DriverDependencies extends Module {
+  DriverDependencies({
+    required this.preferences,
+    DriverSessionStore? sessionService,
+  })  : _sessionService = sessionService ?? DriverSessionStore();
 
-  this : _sessionService = sessionService ?? DriverSessionStore();
+  final SharedPreferences preferences;
+  final DriverSessionStore _sessionService;
 
   @override
   void binds(Injector i) {
     i
-      ..addSingleton<SharedPreferences>((i) => _prefs)
+      ..addSingleton<SharedPreferences>((i) => preferences)
       ..addLazySingleton<AppLifecycleCoordinator>(
         (_) => AppLifecycleCoordinator(),
       )

@@ -46,24 +46,24 @@ class _FakeLocationRepository implements maps.LocationRepository {
   @override
   Future<Map<String, dynamic>> searchPlaces({
     required String query,
-    double? userLat,
-    double? userLng,
+    double? userLatitude,
+    double? userLongitude,
   }) async => {
     'places': [for (final place in searchPlacesResult) place.toJson()],
   };
 
   @override
   Future<maps.Place> reverseGeocode({
-    required double lat,
-    required double lng,
+    required double latitude,
+    required double longitude,
   }) {
     throw UnimplementedError();
   }
 
   @override
   Future<Map<String, dynamic>> getNearbyPois({
-    required double lat,
-    required double lng,
+    required double latitude,
+    required double longitude,
     int page = 1,
   }) {
     final completer = nearbyPlacesCompleter;

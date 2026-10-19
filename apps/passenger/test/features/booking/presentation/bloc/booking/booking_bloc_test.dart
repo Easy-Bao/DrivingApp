@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:maps/maps.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/booking/booking.dart';
 import 'package:passenger/src/features/booking/domain/entities/bid_session_trip.dart';
 import 'package:passenger/src/features/booking/domain/entities/booking_offer.dart';
@@ -15,7 +16,6 @@ import 'package:passenger/src/features/driver_profile/domain/repositories/driver
 import 'package:passenger/src/features/inbox/domain/repositories/inbox_repository.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox_cubit.dart';
 import 'package:passenger/src/features/inbox/presentation/bloc/inbox_state.dart';
-import 'package:passenger/src/core/session/session_store.dart';
 
 class MockDriverRepo extends Mock implements DriverRepository {}
 

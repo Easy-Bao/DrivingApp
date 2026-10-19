@@ -1,13 +1,15 @@
 import 'package:foundation/foundation.dart';
+import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/auth/domain/entities/session.dart';
 import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
-import 'package:passenger/src/core/session/session_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final class SessionRepositoryImpl({
-  required this._secureSessionService,
-  required this._preferences,
-}) implements SessionRepository {
+final class SessionRepositoryImpl implements SessionRepository {
+  SessionRepositoryImpl({
+    required this._secureSessionService,
+    required this._preferences,
+  });
+
   final PassengerSessionStore _secureSessionService;
   final SharedPreferences _preferences;
   static const _profileCacheKeys = [

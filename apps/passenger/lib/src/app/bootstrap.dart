@@ -50,7 +50,7 @@ Future<void> bootstrapPassengerApp() async {
         'passenger.startup.stop_background_service',
         PassengerBackgroundTelemetry.stopExistingServiceForStartup,
       );
-      final prefs = await traceTimelineStage(
+      final preferences = await traceTimelineStage(
         'passenger.startup.load_preferences',
         SharedPreferences.getInstance,
       );
@@ -74,7 +74,7 @@ Future<void> bootstrapPassengerApp() async {
             await traceTimelineStage(
               'passenger.startup.configure_dependencies_and_router',
               () => Modular.configure(
-                appModule: PassengerDependencies(prefs: prefs),
+                appModule: PassengerDependencies(preferences: preferences),
                 initialRoute: HomeRoutes.fullHomePath,
                 debugLogDiagnostics: true,
                 debugLogDiagnosticsGoRouter: true,

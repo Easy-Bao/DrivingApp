@@ -65,8 +65,8 @@ class MapProvider._() {
 
   static Future<List<Place>> searchPlaces(
     String query, {
-    double? lat,
-    double? lng,
+    double? latitude,
+    double? longitude,
   }) async {
     if (query.trim().isEmpty) return [];
 
@@ -75,18 +75,19 @@ class MapProvider._() {
       throw StateError('MapProvider not initialized.');
     }
 
-    final userLat = lat ?? LocationService.lastPosition?.latitude;
-    final userLng = lng ?? LocationService.lastPosition?.longitude;
-    final key = _searchRequestKey(query, userLat, userLng);
+    final userLatitude = latitude ?? LocationService.lastPosition?.latitude;
+    final userLongitude =
+        longitude ?? LocationService.lastPosition?.longitude;
+    final key = _searchRequestKey(query, userLatitude, userLongitude);
 
     try {
       return await _searchCache.getOrLoad(key, () async {
         final result = await nativeService.searchPlaces(
           query: query,
-          proximityLat: lat,
-          proximityLng: lng,
-          userLat: userLat,
-          userLng: userLng,
+          proximityLatitude: latitude,
+          proximityLongitude: longitude,
+          userLatitude: userLatitude,
+          userLongitude: userLongitude,
         );
 
         return result.fold(
@@ -112,14 +113,20 @@ class MapProvider._() {
     }
   }
 
-  static Future<Place?> getPlaceFromCoordinates(double lat, double lng) async {
+  static Future<Place?> getPlaceFromCoordinates(
+    double latitude,
+    double longitude,
+  ) async {
     final nativeService = _nativeService;
     if (nativeService == null) {
       throw StateError('MapProvider not initialized.');
     }
 
     try {
-      final result = await nativeService.reverseGeocode(lat: lat, lng: lng);
+      final result = await nativeService.reverseGeocode(
+        latitude: latitude,
+        longitude: longitude,
+      );
       return await result.fold((failure) {
         debugPrint(
           'MapProvider.getPlaceFromCoordinates failure: ${failure.runtimeType}',
@@ -133,13 +140,13 @@ class MapProvider._() {
   }
 
   static Future<Route?> getRoute(
-    double originLat,
-    double originLng,
-    double destLat,
-    double destLng, {
+    double originLatitude,
+    double originLongitude,
+    double destinationLatitude,
+    double destinationLongitude, {
     RoutePreference preference = RoutePreference.fastest,
     RouteProfile profile = RouteProfile.driving,
-    List<({double lat, double lng})> excludePoints = const [],
+    List<({double latitude, double longitude})> excludePoints = const [],
   }) async {
     final nativeService = _nativeService;
     if (nativeService == null) {
@@ -147,10 +154,10 @@ class MapProvider._() {
     }
 
     final key = RouteRequestKey(
-      originLat: originLat,
-      originLng: originLng,
-      destLat: destLat,
-      destLng: destLng,
+      originLatitude: originLatitude,
+      originLongitude: originLongitude,
+      destinationLatitude: destinationLatitude,
+      destinationLongitude: destinationLongitude,
       preference: preference,
       profile: profile,
       excludePoints: excludePoints,
@@ -162,10 +169,10 @@ class MapProvider._() {
         key,
         () => _requestRoute(
           nativeService,
-          originLat: originLat,
-          originLng: originLng,
-          destLat: destLat,
-          destLng: destLng,
+          originLatitude: originLatitude,
+          originLongitude: originLongitude,
+          destinationLatitude: destinationLatitude,
+          destinationLongitude: destinationLongitude,
           preference: preference,
           profile: profile,
           excludePoints: excludePoints,
@@ -177,23 +184,23 @@ class MapProvider._() {
 
   static Future<Route?> _requestRoute(
     MapNativeService nativeService, {
-    required double originLat,
-    required double originLng,
-    required double destLat,
-    required double destLng,
+    required double originLatitude,
+    required double originLongitude,
+    required double destinationLatitude,
+    required double destinationLongitude,
     required RoutePreference preference,
     required RouteProfile profile,
-    required List<({double lat, double lng})> excludePoints,
+    required List<({double latitude, double longitude})> excludePoints,
   }) async {
     for (var attempt = 0; attempt < 2; attempt++) {
       try {
         final result = await traceTimelineStage(
           'maps.route.provider_request',
           () => nativeService.getRoute(
-            originLat: originLat,
-            originLng: originLng,
-            destLat: destLat,
-            destLng: destLng,
+            originLatitude: originLatitude,
+            originLongitude: originLongitude,
+            destinationLatitude: destinationLatitude,
+            destinationLongitude: destinationLongitude,
             preference: preference,
             profile: profile,
             excludePoints: excludePoints,
@@ -216,9 +223,9 @@ class MapProvider._() {
   }
 
   static Future<List<double>?> getDrivingDistances({
-    required double originLat,
-    required double originLng,
-    required List<({double lat, double lng})> destinations,
+    required double originLatitude,
+    required double originLongitude,
+    required List<({double latitude, double longitude})> destinations,
   }) async {
     final nativeService = _nativeService;
     if (nativeService == null) {
@@ -226,12 +233,16 @@ class MapProvider._() {
     }
     if (destinations.isEmpty) return const [];
 
-    final key = _drivingDistanceRequestKey(originLat, originLng, destinations);
+    final key = _drivingDistanceRequestKey(
+      originLatitude,
+      originLongitude,
+      destinations,
+    );
     try {
       return await _drivingDistanceCache.getOrLoad(key, () async {
         final result = await nativeService.getDrivingDistances(
-          originLat: originLat,
-          originLng: originLng,
+          originLatitude: originLatitude,
+          originLongitude: originLongitude,
           destinations: destinations,
         );
         return result.fold((failure) {
@@ -248,8 +259,8 @@ class MapProvider._() {
   }
 
   static Future<List<Place>> getNearbyPOIs({
-    required double lat,
-    required double lng,
+    required double latitude,
+    required double longitude,
     int page = 1,
   }) async {
     final nativeService = _nativeService;
@@ -257,12 +268,12 @@ class MapProvider._() {
       throw StateError('MapProvider not initialized.');
     }
 
-    final key = _nearbyRequestKey(lat, lng, page);
+    final key = _nearbyRequestKey(latitude, longitude, page);
     try {
       return await _nearbyCache.getOrLoad(key, () async {
         final result = await nativeService.getNearbyPois(
-          lat: lat,
-          lng: lng,
+          latitude: latitude,
+          longitude: longitude,
           page: page,
         );
         return result.fold(
@@ -274,8 +285,8 @@ class MapProvider._() {
           },
           (pois) => NearbyPlaceResolver.withinRadius(
             places: pois,
-            latitude: lat,
-            longitude: lng,
+            latitude: latitude,
+            longitude: longitude,
             radiusKm: nearbyRadiusKm,
           ),
         );
@@ -554,24 +565,28 @@ class _AppMapViewState extends State<_AppMapView> {
   }
 }
 
-String _searchRequestKey(String query, double? lat, double? lng) =>
-    '${query.trim().toLowerCase()}|${_coordinateCacheKey(lat)}|${_coordinateCacheKey(lng)}';
+String _searchRequestKey(
+  String query,
+  double? latitude,
+  double? longitude,
+) =>
+    '${query.trim().toLowerCase()}|${_coordinateCacheKey(latitude)}|${_coordinateCacheKey(longitude)}';
 
-String _nearbyRequestKey(double lat, double lng, int page) =>
-    '${_coordinateCacheKey(lat)}|${_coordinateCacheKey(lng)}|$page';
+String _nearbyRequestKey(double latitude, double longitude, int page) =>
+    '${_coordinateCacheKey(latitude)}|${_coordinateCacheKey(longitude)}|$page';
 
 String _drivingDistanceRequestKey(
-  double originLat,
-  double originLng,
-  List<({double lat, double lng})> destinations,
+  double originLatitude,
+  double originLongitude,
+  List<({double latitude, double longitude})> destinations,
 ) {
   final destinationKey = destinations
       .map(
         (destination) =>
-            '${_coordinateCacheKey(destination.lat)},${_coordinateCacheKey(destination.lng)}',
+            '${_coordinateCacheKey(destination.latitude)},${_coordinateCacheKey(destination.longitude)}',
       )
       .join(';');
-  return '${_coordinateCacheKey(originLat)},${_coordinateCacheKey(originLng)}|$destinationKey';
+  return '${_coordinateCacheKey(originLatitude)},${_coordinateCacheKey(originLongitude)}|$destinationKey';
 }
 
 String _coordinateCacheKey(double? value) =>

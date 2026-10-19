@@ -1,24 +1,32 @@
 part of 'booking_bloc.dart';
 
-sealed class const BookingState();
+sealed class BookingState {
+  const BookingState();
+}
 
-final class const BookingInitial() extends BookingState {}
+final class BookingInitial extends BookingState {
+  const BookingInitial();
+}
 
-final class const ActiveDriverSearch({
-  required this.trip,
-  required this.pickupLat,
-  required this.pickupLng,
-}) {
+final class ActiveDriverSearch {
+  const ActiveDriverSearch({
+    required this.trip,
+    required this.pickupLat,
+    required this.pickupLng,
+  });
+
   final BidSessionTrip trip;
   final double pickupLat;
   final double pickupLng;
 }
 
-final class const FindingNearestDriver({
-  required this.trip,
-  required this.pickupLat,
-  required this.pickupLng,
-}) extends BookingState {
+final class FindingNearestDriver extends BookingState {
+  const FindingNearestDriver({
+    required this.trip,
+    required this.pickupLat,
+    required this.pickupLng,
+  });
+
   final BidSessionTrip trip;
   final double pickupLat;
   final double pickupLng;
@@ -28,14 +36,14 @@ final class NearestDriverFound extends BookingState {
   const NearestDriverFound({
     required this.driver,
     this.nearbyDrivers = const [],
-    required this.totalTrips,
-    String? reviewsDriverId,
-    required this.reviews,
-    required this.isLoadingReviews,
+    this.totalTrips,
+    this._reviewsDriverId,
+    this.reviews = const [],
+    this.isLoadingReviews = false,
     required this.trip,
     required this.pickupLat,
     required this.pickupLng,
-  }) : _reviewsDriverId = reviewsDriverId;
+  });
 
   final DriverModel driver;
   final List<DriverModel> nearbyDrivers;
@@ -68,30 +76,35 @@ final class NearestDriverFound extends BookingState {
   }
 }
 
-final class const BookingSearching({required this.isDirect, this.targetDriver})
-    extends BookingState {
+final class BookingSearching extends BookingState {
+  const BookingSearching({required this.isDirect, this.targetDriver});
+
   final bool isDirect;
   final DriverModel? targetDriver;
 }
 
-final class const BookingOffersReceived({
-  required this.offers,
-  required this.isDirect,
-  this.targetDriver,
-}) extends BookingState {
+final class BookingOffersReceived extends BookingState {
+  const BookingOffersReceived({
+    required this.offers,
+    required this.isDirect,
+    this.targetDriver,
+  });
+
   final List<BookingOffer> offers;
   final bool isDirect;
   final DriverModel? targetDriver;
 }
 
-final class const DriverMatchResult({
-  required this.driverId,
-  required this.driverName,
-  required this.vehicleType,
-  required this.plateNumber,
-  required this.proposedFare,
-  this.driverRating,
-}) {
+final class DriverMatchResult {
+  const DriverMatchResult({
+    required this.driverId,
+    required this.driverName,
+    required this.vehicleType,
+    required this.plateNumber,
+    required this.proposedFare,
+    this.driverRating,
+  });
+
   final String driverId;
   final String driverName;
   final String vehicleType;
@@ -100,16 +113,20 @@ final class const DriverMatchResult({
   final String? driverRating;
 }
 
-final class const BookingDriverMatched({required this.matchResult, this.rideId})
-    extends BookingState {
+final class BookingDriverMatched extends BookingState {
+  const BookingDriverMatched({required this.matchResult, this.rideId});
+
   final DriverMatchResult matchResult;
   final String? rideId;
 }
 
-final class const BookingCanceled() extends BookingState {}
+final class BookingCanceled extends BookingState {
+  const BookingCanceled();
+}
 
-final class const BookingFailure(this.message, {this.isNoDriverFound = false})
-    extends BookingState {
+final class BookingFailure extends BookingState {
+  const BookingFailure(this.message, {this.isNoDriverFound = false});
+
   final String message;
   final bool isNoDriverFound;
 }

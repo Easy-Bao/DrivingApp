@@ -15,17 +15,18 @@ const _notificationId = 4802;
 
 class PassengerBackgroundTelemetry {
   PassengerBackgroundTelemetry({
-    required Uri apiBaseUri,
-    required AppLifecycleCoordinator lifecycleCoordinator,
+    required this.apiBaseUri,
+    required this.lifecycleCoordinator,
     FlutterBackgroundService? service,
-  })  : _apiBaseUri = apiBaseUri,
-        _lifecycleCoordinator = lifecycleCoordinator,
-        _service = service ?? FlutterBackgroundService();
+  })  : _service = service ?? FlutterBackgroundService();
 
-  final Uri _apiBaseUri;
+  final Uri apiBaseUri;
   final FlutterBackgroundService _service;
-  final AppLifecycleCoordinator _lifecycleCoordinator;
+  final AppLifecycleCoordinator lifecycleCoordinator;
   bool _configured = false;
+
+  Uri get _apiBaseUri => apiBaseUri;
+  AppLifecycleCoordinator get _lifecycleCoordinator => lifecycleCoordinator;
 
   static Future<void> stopExistingServiceForStartup() async {
     await _stopRunningService(FlutterBackgroundService());

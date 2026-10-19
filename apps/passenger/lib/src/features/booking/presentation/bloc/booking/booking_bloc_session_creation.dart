@@ -19,7 +19,7 @@ extension _BookingBlocSessionCreation on BookingBloc {
     _activeTrip = event.trip;
     _pickupLat = event.pickupLat;
     _pickupLng = event.pickupLng;
-    _pickupName = this._pickupNameForTrip(event.trip);
+    _pickupName = _pickupNameForTrip(event.trip);
     _dropoffLat = event.trip.destination.latitude;
     _dropoffLng = event.trip.destination.longitude;
     emit(BookingSearching(isDirect: true, targetDriver: targetDriver));
@@ -47,7 +47,7 @@ extension _BookingBlocSessionCreation on BookingBloc {
       if (sessionId == null) throw failure!;
       _activeBidSessionId = sessionId;
       unawaited(_secureSessionService.saveActiveBidSessionId(sessionId!));
-      this._subscribeToSession(sessionId!);
+      _subscribeToSession(sessionId!);
     } catch (error) {
       _activeTrip = null;
       emit(BookingFailure(ErrorHandler.getErrorMessage(error)));
@@ -62,7 +62,7 @@ extension _BookingBlocSessionCreation on BookingBloc {
     _activeTrip = event.trip;
     _pickupLat = event.pickupLat;
     _pickupLng = event.pickupLng;
-    _pickupName = this._pickupNameForTrip(event.trip);
+    _pickupName = _pickupNameForTrip(event.trip);
     _dropoffLat = event.trip.destination.latitude;
     _dropoffLng = event.trip.destination.longitude;
     emit(const BookingSearching(isDirect: false));
@@ -89,7 +89,7 @@ extension _BookingBlocSessionCreation on BookingBloc {
       if (sessionId == null) throw failure!;
       _activeBidSessionId = sessionId;
       unawaited(_secureSessionService.saveActiveBidSessionId(sessionId!));
-      this._subscribeToSession(sessionId!);
+      _subscribeToSession(sessionId!);
     } catch (error) {
       _activeTrip = null;
       emit(BookingFailure(ErrorHandler.getErrorMessage(error)));
@@ -108,7 +108,7 @@ extension _BookingBlocSessionCreation on BookingBloc {
       rideType: trip.rideType,
       pickupLatitude: pickupLat,
       pickupLongitude: pickupLng,
-      pickupName: _pickupName ?? this._pickupNameForTrip(trip),
+      pickupName: _pickupName ?? _pickupNameForTrip(trip),
       dropoffLatitude: trip.destination.latitude,
       dropoffLongitude: trip.destination.longitude,
       dropoffName: trip.destination.name,

@@ -1,6 +1,7 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger/src/core/session/session_store.dart';
 import 'package:passenger/src/features/auth/auth_routes.dart';
 import 'package:passenger/src/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:passenger/src/features/auth/data/repositories/auth_repository_impl.dart';
@@ -15,7 +16,6 @@ import 'package:passenger/src/features/auth/presentation/pages/reset_password_co
 import 'package:passenger/src/features/auth/presentation/pages/sign_in_page.dart';
 import 'package:passenger/src/features/auth/presentation/pages/sign_up_page.dart';
 import 'package:passenger/src/features/auth/presentation/pages/verify_otp_page.dart';
-import 'package:passenger/src/core/session/session_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthModule extends Module {

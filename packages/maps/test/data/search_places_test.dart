@@ -13,8 +13,8 @@ void main() {
 
       final result = await mapService.searchPlaces(
         query: 'Central',
-        userLat: 7.8242,
-        userLng: 123.4350,
+        userLatitude: 7.8242,
+        userLongitude: 123.4350,
       );
 
       expect(result.isOk, isTrue);

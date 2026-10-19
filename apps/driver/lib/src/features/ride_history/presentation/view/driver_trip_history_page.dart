@@ -35,11 +35,11 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
 
   String _formatDate(String isoString) {
     try {
-      final dt = DateTime.parse(isoString).toLocal();
+      final dateTime = DateTime.parse(isoString).toLocal();
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
       final yesterday = today.subtract(const Duration(days: 1));
-      final tripDate = DateTime(dt.year, dt.month, dt.day);
+      final tripDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
 
       if (tripDate == today) {
         return 'Today';
@@ -60,14 +60,14 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
           'Nov',
           'Dec',
         ];
-        return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
+        return '${months[dateTime.month - 1]} ${dateTime.day}, ${dateTime.year}';
       }
     } catch (_) {
       return 'Past Trip';
     }
   }
 
-  Future<void> _displayDriverTripHistoryFilterModalBottomSheet(
+  Future<void> _showTripFilterSheet(
     BuildContext context,
   ) async {
     final selectedFilter = switch (_selectedTripStatusFilter) {
@@ -93,13 +93,13 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
     List<Map<String, dynamic>> trips,
   ) {
     final map = <String, List<Map<String, dynamic>>>{};
-    for (final t in trips) {
-      final dateStr = _formatDate(
-        driverValueAsString(t['completed_at']) ??
-            driverValueAsString(t['created_at']) ??
+    for (final trip in trips) {
+      final formattedDate = _formatDate(
+        driverValueAsString(trip['completed_at']) ??
+            driverValueAsString(trip['created_at']) ??
             '',
       );
-      map.putIfAbsent(dateStr, () => []).add(t);
+      map.putIfAbsent(formattedDate, () => []).add(trip);
     }
     return map;
   }
@@ -132,7 +132,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
               color: context.colorScheme.onSurface,
             ),
             onPressed: () => unawaited(
-              _displayDriverTripHistoryFilterModalBottomSheet(context),
+              _showTripFilterSheet(context),
             ),
           ),
           const SizedBox(width: 8),
@@ -380,7 +380,7 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
         : driverSentenceCase(status, 'Canceled');
     final fromName = driverValueAsString(trip['pickup_name']) ?? 'Pickup';
     final toName = driverValueAsString(trip['dropoff_name']) ?? 'Drop-off';
-    final fareAmt = driverFareInPesos(trip);
+    final formattedFareAmount = driverFareInPesos(trip);
     final rideType = driverSentenceCase(trip['ride_type'], 'Solo ride');
     final distance =
         trip['distance_km'] is num &&
@@ -467,7 +467,9 @@ class _DriverTripHistoryPageState extends State<DriverTripHistoryPage> {
                       Expanded(
                         child: _tripMeta(
                           'Fare',
-                          fareAmt == null ? '—' : formatPesoAmount(fareAmt),
+                          formattedFareAmount == null
+                              ? '—'
+                              : formatPesoAmount(formattedFareAmount),
                         ),
                       ),
                     ],

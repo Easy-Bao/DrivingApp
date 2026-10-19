@@ -30,7 +30,7 @@ void main() {
 
     await Modular.configure(
       appModule: DriverDependencies(
-        prefs: preferences,
+        preferences: preferences,
         sessionService: session,
       ),
       initialRoute: DashboardRoutes.fullDashboardPath,

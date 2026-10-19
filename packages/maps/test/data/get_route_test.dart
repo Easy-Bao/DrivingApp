@@ -12,10 +12,10 @@ void main() {
       );
 
       final result = await mapService.getRoute(
-        originLat: 7.8242,
-        originLng: 123.4350,
-        destLat: 7.8300,
-        destLng: 123.4400,
+        originLatitude: 7.8242,
+        originLongitude: 123.4350,
+        destinationLatitude: 7.8300,
+        destinationLongitude: 123.4400,
       );
 
       expect(result.isOk, isTrue);

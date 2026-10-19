@@ -17,9 +17,9 @@ class LoggingInterceptor extends Interceptor {
   }
 
   @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
-    dev.log(HttpLogFormatter.error(err), name: 'HTTP');
-    handler.next(err);
+  void onError(DioException error, ErrorInterceptorHandler handler) {
+    dev.log(HttpLogFormatter.error(error), name: 'HTTP');
+    handler.next(error);
   }
 }
 

@@ -5,19 +5,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router_modular/go_router_modular.dart';
+import 'package:passenger/src/core/config/env_config.dart';
 import 'package:passenger/src/features/chat/chat.dart';
 import 'package:passenger/src/features/chat/presentation/bloc/chat_cubit.dart';
-import 'package:passenger/src/core/config/env_config.dart';
 
-class const PassengerChatPage({
-  super.key,
-  this.roomId,
-  this.userId,
-  this.peerId,
-  this.peerName,
-  required this.chatRepositoryFactory,
-  this.token,
-}) extends StatefulWidget {
+class PassengerChatPage extends StatefulWidget {
+  const PassengerChatPage({
+    super.key,
+    this.roomId,
+    this.userId,
+    this.peerId,
+    this.peerName,
+    required this.chatRepositoryFactory,
+    this.token,
+  });
   final String? roomId;
   final String? userId;
   final String? peerId;
@@ -30,8 +31,8 @@ class const PassengerChatPage({
 }
 
 class _PassengerChatPageState extends State<PassengerChatPage> {
-  final TextEditingController _msgCtrl = TextEditingController();
-  final ScrollController _scrollCtrl = ScrollController();
+  final TextEditingController _messageController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   Timer? _typingStopTimer;
   bool _isTyping = false;
   late ChatCubit _chatCubit;
@@ -73,13 +74,13 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
   Future<void> _connectChat(String roomId, String userId) async {
     final initialized = await _chatCubit.initializeChatRoom(roomId: roomId);
     if (!initialized || !mounted) return;
-    final wsUri = PassengerEnvConfig.webSocketBaseUri.replace(
+    final realtimeUri = PassengerEnvConfig.webSocketBaseUri.replace(
       path: '/api/v1/chat/ws',
       queryParameters: {'roomId': roomId},
     );
     await _chatCubit.connectToChatRoom(
       roomId: roomId,
-      wsUri: wsUri,
+      chatUri: realtimeUri,
       token: widget.token,
     );
   }
@@ -96,8 +97,8 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
     _typingStopTimer?.cancel();
     _isTyping = false;
     unawaited(_chatCubit.close());
-    _msgCtrl.dispose();
-    _scrollCtrl.dispose();
+    _messageController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -107,7 +108,7 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
     final sent = await _chatCubit.sendMessage(text);
     if (!mounted) return;
     if (sent) {
-      _msgCtrl.clear();
+      _messageController.clear();
       _scrollDown();
     }
   }
@@ -140,10 +141,10 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
 
   void _scrollDown() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollCtrl.hasClients) {
+      if (_scrollController.hasClients) {
         unawaited(
-          _scrollCtrl.animateTo(
-            _scrollCtrl.position.maxScrollExtent,
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOut,
           ),
@@ -152,7 +153,7 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
     });
   }
 
-  String _fmtTime(DateTime dateTime) {
+  String _formatMessageTime(DateTime dateTime) {
     final hourDisplay = dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12;
     return "$hourDisplay:${dateTime.minute.toString().padLeft(2, '0')} ${dateTime.hour >= 12 ? 'PM' : 'AM'}";
   }
@@ -215,14 +216,14 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                   child: chatHistoryMessages.isEmpty && !state.isPeerTyping
                       ? _buildEmptyState(state)
                       : ListView.builder(
-                          controller: _scrollCtrl,
+                          controller: _scrollController,
                           padding: const EdgeInsets.all(16),
                           physics: const BouncingScrollPhysics(),
                           itemCount:
                               chatHistoryMessages.length +
                               (state.isPeerTyping ? 1 : 0),
-                          itemBuilder: (ctx, i) {
-                            if (i == chatHistoryMessages.length &&
+                          itemBuilder: (context, index) {
+                            if (index == chatHistoryMessages.length &&
                                 state.isPeerTyping) {
                               return _buildTyping();
                             }
@@ -319,7 +320,7 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                                 ),
                               ),
                               child: TextField(
-                                controller: _msgCtrl,
+                                controller: _messageController,
                                 readOnly: !canSendMessage,
                                 textInputAction: TextInputAction.send,
                                 style: TextStyle(
@@ -352,7 +353,7 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                                 ),
                                 onChanged: _onDraftChanged,
                                 onSubmitted: (_) =>
-                                    unawaited(_send(_msgCtrl.text)),
+                                    unawaited(_send(_messageController.text)),
                               ),
                             ),
                           ),
@@ -378,7 +379,8 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                                   : context.colorScheme.onPrimary,
                               onPressed: !canSendMessage
                                   ? null
-                                  : () => unawaited(_send(_msgCtrl.text)),
+                                  : () =>
+                                      unawaited(_send(_messageController.text)),
                             ),
                           ),
                         ],
@@ -544,12 +546,12 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
     );
   }
 
-  Widget _buildBubble(ChatMessage msg, {required bool animate}) {
-    final isMe = msg.senderId == widget.userId;
-    final timeStr = _fmtTime(msg.createdAt);
+  Widget _buildBubble(ChatMessage message, {required bool animate}) {
+    final isMe = message.senderId == widget.userId;
+    final formattedTime = _formatMessageTime(message.createdAt);
 
     return AppChatMessageTransition(
-      key: ValueKey<String>('chat-message-${msg.identityKey}'),
+      key: ValueKey<String>('chat-message-${message.identityKey}'),
       animate: animate,
       isOutgoing: isMe,
       child: Align(
@@ -577,7 +579,7 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                 ),
               ),
               child: Text(
-                msg.text,
+                message.text,
                 style: TextStyle(
                   color: isMe
                       ? context.colorScheme.surface
@@ -594,7 +596,7 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    timeStr,
+                    formattedTime,
                     style: TextStyle(
                       fontSize: 11,
                       color: context.colorScheme.onSurfaceVariant,
@@ -606,13 +608,13 @@ class _PassengerChatPageState extends State<PassengerChatPage> {
                     const SizedBox(width: 4),
                     AppChatDeliveryIndicator(
                       isSending:
-                          msg.deliveryStatus ==
+                          message.deliveryStatus ==
                           ChatMessageDeliveryStatus.sending,
                       isDelivered:
-                          msg.deliveryStatus ==
+                          message.deliveryStatus ==
                           ChatMessageDeliveryStatus.delivered,
                       isFailed:
-                          msg.deliveryStatus ==
+                          message.deliveryStatus ==
                           ChatMessageDeliveryStatus.failed,
                       color: context.semanticColors.success,
                     ),

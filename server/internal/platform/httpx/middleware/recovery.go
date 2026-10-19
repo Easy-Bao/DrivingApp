@@ -14,14 +14,14 @@ type recoveryResponseWriter struct {
 	wroteHeader bool
 }
 
-func (rw *recoveryResponseWriter) WriteHeader(code int) {
-	rw.wroteHeader = true
-	rw.ResponseWriter.WriteHeader(code)
+func (responseWriter *recoveryResponseWriter) WriteHeader(code int) {
+	responseWriter.wroteHeader = true
+	responseWriter.ResponseWriter.WriteHeader(code)
 }
 
-func (rw *recoveryResponseWriter) Write(b []byte) (int, error) {
-	rw.wroteHeader = true
-	return rw.ResponseWriter.Write(b)
+func (responseWriter *recoveryResponseWriter) Write(payload []byte) (int, error) {
+	responseWriter.wroteHeader = true
+	return responseWriter.ResponseWriter.Write(payload)
 }
 
 // Recovery catches unhandled panics in downstream HTTP handlers, logs the stack trace
@@ -31,39 +31,39 @@ func Recovery(logger *slog.Logger) func(http.Handler) http.Handler {
 		logger = slog.Default()
 	}
 	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			rw := &recoveryResponseWriter{ResponseWriter: w}
+		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			responseWriter := &recoveryResponseWriter{ResponseWriter: writer}
 			defer func() {
-				if rec := recover(); rec != nil {
+				if recoveredPanic := recover(); recoveredPanic != nil {
 					stack := debug.Stack()
-					reqID := RequestIDFromRequest(r)
-					if reqID == "" {
-						reqID = r.Header.Get("X-Request-ID")
+					requestID := RequestIDFromRequest(request)
+					if requestID == "" {
+						requestID = request.Header.Get("X-Request-ID")
 					}
-					if reqID == "" {
-						reqID = rw.Header().Get("X-Request-ID")
+					if requestID == "" {
+						requestID = responseWriter.Header().Get("X-Request-ID")
 					}
 
-					logger.ErrorContext(r.Context(), "unhandled http panic recovered",
-						"error", fmt.Sprintf("%v", rec),
-						"request_id", reqID,
-						"path", r.URL.Path,
-						"method", r.Method,
+					logger.ErrorContext(request.Context(), "unhandled http panic recovered",
+						"error", fmt.Sprintf("%v", recoveredPanic),
+						"request_id", requestID,
+						"path", request.URL.Path,
+						"method", request.Method,
 						"stack", string(stack),
 					)
 
-					if !rw.wroteHeader {
-						rw.Header().Set("Connection", "close")
-						response.WriteProblem(rw, response.Problem{
+					if !responseWriter.wroteHeader {
+						responseWriter.Header().Set("Connection", "close")
+						response.WriteProblem(responseWriter, response.Problem{
 							Status:    http.StatusInternalServerError,
 							Code:      "internal_error",
 							Message:   "An unexpected error occurred.",
-							RequestID: reqID,
+							RequestID: requestID,
 						})
 					}
 				}
 			}()
-			next.ServeHTTP(rw, r)
+			next.ServeHTTP(responseWriter, request)
 		})
 	}
 }
