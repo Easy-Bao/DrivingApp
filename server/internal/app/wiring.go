@@ -14,7 +14,7 @@ import (
 	authredis "github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/adapter/redis"
 	authapp "github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/app"
 	authhttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/auth/transport/http"
-	chatpostgres "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/adapter/postgres"
+	chatredis "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/adapter/redis"
 	chatapplication "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/app"
 	chathttp "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/transport/http"
 	chatwebsocket "github.com/Easy-Bao/DrivingApp/server/internal/modules/chat/transport/ws"
@@ -341,7 +341,7 @@ func newHTTPRouter(
 		RouteSecurity: routeSecurity,
 	}).RegisterRoutes(router)
 
-	chatRoomStore := chatpostgres.NewChatHistoryStore(redisClient)
+	chatRoomStore := chatredis.NewChatHistoryStore(redisClient)
 	chatService := chatapplication.NewChatService(chatapplication.ChatServiceDependencies{History: chatRoomStore}).
 		WithEventPublisher(eventPublisher).
 		WithRideAssignmentLookup(rideAssignments).
