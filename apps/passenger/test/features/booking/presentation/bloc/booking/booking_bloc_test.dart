@@ -587,6 +587,7 @@ void main() {
         expect(state.matchResult.vehicleType, 'Sedan');
         expect(state.matchResult.plateNumber, 'ABC 1234');
         expect(state.rideId, '24');
+        expect(state.matchResult.proposedFare, 29.7);
         expect(fetchCount, greaterThanOrEqualTo(2));
         final fetchCountAtMatch = fetchCount;
         await Future<void>.delayed(const Duration(milliseconds: 20));

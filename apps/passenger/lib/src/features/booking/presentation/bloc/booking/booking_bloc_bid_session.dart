@@ -240,7 +240,7 @@ extension _BookingBlocBidSession on BookingBloc {
       _activeTrip = null;
       final fareAmount = acceptedBooking?.fareAmount;
       final confirmedFare = (fareAmount != null && fareAmount > 0)
-          ? fareAmount.toDouble()
+          ? fareAmount / 100
           : event.proposedFare;
       emit(
         BookingDriverMatched(
