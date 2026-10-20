@@ -175,7 +175,7 @@ func (service *Service) PlaceOffer(ctx context.Context, offer dispatchdomain.Bid
 	const minProposedFareCentavos = 50_00
 	const maxProposedFareCentavos = 5_000_00
 	baseFare := float64(session.OfferedFareAmount)
-	minFare := max(int64(minProposedFareCentavos), int64(math.Round(0.70*baseFare)))
+	minFare := min(session.OfferedFareAmount, max(int64(minProposedFareCentavos), int64(math.Round(0.70*baseFare))))
 	maxFare := min(int64(maxProposedFareCentavos), int64(math.Round(2.0*baseFare)))
 	if maxFare < minFare {
 		maxFare = minFare

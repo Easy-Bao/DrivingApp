@@ -42,8 +42,11 @@ func (stub *biddingStoreStub) ActiveSessions(context.Context, *int) ([]dispatchd
 func (stub *biddingStoreStub) Offers(context.Context, int) ([]dispatchdomain.BidOffer, error) {
 	return stub.offers, nil
 }
-func (stub *biddingStoreStub) PlaceOffer(context.Context, dispatchdomain.BidOffer) (dispatchdomain.BidOffer, error) {
-	return dispatchdomain.BidOffer{}, stub.placeErr
+func (stub *biddingStoreStub) PlaceOffer(_ context.Context, offer dispatchdomain.BidOffer) (dispatchdomain.BidOffer, error) {
+	if stub.placeErr != nil {
+		return dispatchdomain.BidOffer{}, stub.placeErr
+	}
+	return offer, nil
 }
 func (stub *biddingStoreStub) AcceptOffer(
 	context.Context,
@@ -423,6 +426,52 @@ func TestPlaceOfferEnforcesFareBounds(t *testing.T) {
 	})
 	if !errors.Is(err, dispatchdomain.ErrInvalidFareOffer) {
 		t.Fatalf("expected ErrInvalidFareOffer for exceeding absolute 500000 cap, got %v", err)
+	}
+}
+
+func TestPlaceOfferAllowsAdvertisedShortTripFare(t *testing.T) {
+	// A short trip can have an advertised fare below ₱50 (e.g. 2850 centavos = ₱28.50).
+	session := dispatchdomain.BidSession{
+		ID:                15,
+		OfferedFareAmount: 2850,
+	}
+	store := &biddingStoreStub{session: session}
+	service := dispatchapplication.NewService(dispatchapplication.Dependencies{Store: store})
+
+	// 1. Driver places offer at exact advertised fare (2850).
+	offer, err := service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
+		SessionID:          15,
+		DriverID:           42,
+		ProposedFareAmount: 2850,
+	})
+	if err != nil {
+		t.Fatalf("expected success when driver offers advertised short-trip fare 2850, got %v", err)
+	}
+	if offer.ProposedFareAmount != 2850 {
+		t.Fatalf("expected offer fare 2850, got %d", offer.ProposedFareAmount)
+	}
+
+	// 2. Driver submits zero/default fare, which defaults to session.OfferedFareAmount (2850).
+	defaultOffer, err := service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
+		SessionID:          15,
+		DriverID:           42,
+		ProposedFareAmount: 0,
+	})
+	if err != nil {
+		t.Fatalf("expected success when driver submits default zero fare on short-trip, got %v", err)
+	}
+	if defaultOffer.ProposedFareAmount != 2850 {
+		t.Fatalf("expected default offer fare to resolve to 2850, got %d", defaultOffer.ProposedFareAmount)
+	}
+
+	// 3. Driver counteroffers below the short-trip fare (e.g. 2500 < 2850).
+	_, err = service.PlaceOffer(context.Background(), dispatchdomain.BidOffer{
+		SessionID:          15,
+		DriverID:           42,
+		ProposedFareAmount: 2500,
+	})
+	if !errors.Is(err, dispatchdomain.ErrInvalidFareOffer) {
+		t.Fatalf("expected ErrInvalidFareOffer for offer below minimum fare, got %v", err)
 	}
 }
 
