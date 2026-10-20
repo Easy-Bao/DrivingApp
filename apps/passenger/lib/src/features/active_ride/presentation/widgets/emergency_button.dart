@@ -233,8 +233,9 @@ Future<void> showEmergencyContacts(BuildContext context) async {
   final emergencyUri = Uri(scheme: 'tel', path: _emergencyContactNumber);
   var launched = false;
   try {
-    launched =
-        await canLaunchUrl(emergencyUri) && await launchUrl(emergencyUri);
+    // canLaunchUrl is unreliable under Android 11+ package visibility, so
+    // launch directly and fall back to the manual-number dialog on failure.
+    launched = await launchUrl(emergencyUri);
   } catch (_) {
     launched = false;
   }
