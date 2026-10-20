@@ -13,6 +13,10 @@ class TripHistoryCubit({
   final RideHistoryRepository _repository;
   final SessionStore _sessionService;
 
+  /// Incremented by every first-page load so obsolete pagination responses
+  /// cannot merge into, or overwrite the metadata of, a refreshed list.
+  int _generation = 0;
+
   this : super(const TripHistoryState());
 
   Future<void> load() => _loadTrips();
@@ -35,6 +39,7 @@ class TripHistoryCubit({
     if (loadMore ? current.isLoadingMore : current.isLoading) return;
     final offset = current.nextOffset;
     if (loadMore && offset == null) return;
+    final generation = loadMore ? _generation : ++_generation;
 
     if (loadMore) {
       emit(current.copyWith(isLoadingMore: true, clearLoadMoreError: true));
@@ -55,6 +60,7 @@ class TripHistoryCubit({
 
     try {
       final driverId = await _sessionService.readDriverId() ?? '';
+      if (isClosed || generation != _generation) return;
       if (driverId.trim().isEmpty) {
         _emitInitialFailure('Your driver session is unavailable.');
         return;
@@ -65,7 +71,7 @@ class TripHistoryCubit({
         limit: pageSize,
         offset: loadMore ? offset! : 0,
       );
-      if (isClosed) return;
+      if (isClosed || generation != _generation) return;
 
       result.fold(
         (failure) => _emitLoadFailure(
@@ -91,6 +97,7 @@ class TripHistoryCubit({
         },
       );
     } catch (error) {
+      if (generation != _generation) return;
       _emitLoadFailure(ErrorHandler.getErrorMessage(error), loadMore: loadMore);
     }
   }
