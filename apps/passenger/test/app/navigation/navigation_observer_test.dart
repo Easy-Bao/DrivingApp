@@ -4,7 +4,7 @@ import 'package:passenger/src/app/navigation/navigation_observer.dart';
 
 void main() {
   test(
-    'PassengerNavigationObserver emits pop events and closes cleanly',
+    'PassengerNavigationObserver emits pop/removal events and closes cleanly',
     () async {
       final observer = PassengerNavigationObserver();
       var popCount = 0;
@@ -16,11 +16,15 @@ void main() {
       observer.didPop(routeB, routeA);
       expect(popCount, 1);
 
+      observer.didRemove(routeB, routeA);
+      expect(popCount, 2);
+
       await observer.dispose();
-      expect(popCount, 1);
+      expect(popCount, 2);
 
       observer.didPop(routeA, null);
-      expect(popCount, 1);
+      observer.didRemove(routeA, null);
+      expect(popCount, 2);
 
       await sub.cancel();
     },

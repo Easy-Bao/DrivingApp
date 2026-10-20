@@ -6,7 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:passenger/src/app/navigation/navigation_observer.dart';
 import 'package:passenger/src/core/location/location_access_cubit.dart';
 import 'package:passenger/src/core/location/location_access_state.dart';
 import 'package:passenger/src/core/session/session_store.dart';
@@ -14,12 +16,14 @@ import 'package:passenger/src/features/active_ride/active_ride.dart';
 import 'package:passenger/src/features/active_ride/domain/repositories/track_repository.dart';
 import 'package:passenger/src/features/auth/domain/repositories/session_repository.dart';
 import 'package:passenger/src/features/auth/presentation/bloc/session/session_bloc.dart';
+import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking/booking_bloc.dart';
 import 'package:passenger/src/features/booking/presentation/bloc/booking_draft/booking_draft_cubit.dart';
 import 'package:passenger/src/features/home/domain/entities/current_location.dart';
 import 'package:passenger/src/features/home/domain/entities/home_data.dart';
 import 'package:passenger/src/features/home/domain/repositories/current_location_repository.dart';
 import 'package:passenger/src/features/home/domain/repositories/home_repository.dart';
+import 'package:passenger/src/features/home/home_routes.dart';
 import 'package:passenger/src/features/home/presentation/bloc/home/home_cubit.dart';
 import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_cubit.dart';
 import 'package:passenger/src/features/home/presentation/bloc/public_driver_summary/public_driver_summary_state.dart';
@@ -59,6 +63,144 @@ class _MockPassengerSessionStore extends Mock
 class _MockTrackRepository extends Mock implements TrackRepository {}
 
 void main() {
+  testWidgets(
+    'search reopens after booking cancellation returns to retained Home',
+    (tester) async {
+      final locationRepository = _MockCurrentLocationRepository();
+      final homeRepository = _MockHomeRepository();
+      final homeCubit = HomeCubit(
+        repository: homeRepository,
+        currentLocationRepository: locationRepository,
+      );
+      final sessionBloc = SessionBloc(
+        sessionRepository: _MockSessionRepository(),
+      );
+      final locationAccess = _MockLocationAccessCubit();
+      final bookingBloc = _MockBookingBloc();
+      final publicDrivers = _MockPublicDriverSummaryCubit();
+      final history = _MockRideHistoryBloc();
+      final savedPlaces = _MockSavedPlacesCubit();
+      final draft = BookingDraftCubit();
+      final lifecycle = AppLifecycleCoordinator();
+
+      when(locationRepository.getCurrentLocation).thenAnswer(
+        (_) async => const Ok(CurrentLocation(latitude: 7.8, longitude: 123.4)),
+      );
+      when(locationRepository.watchCurrentLocation)
+          .thenAnswer((_) => const Stream.empty());
+      when(
+        () => homeRepository.loadHomeData(
+          lat: any(named: 'lat'),
+          lng: any(named: 'lng'),
+        ),
+      ).thenAnswer(
+        (_) async =>
+            const Ok(HomeData(currentAddress: 'Pickup', recentLocations: [])),
+      );
+      when(() => locationAccess.state).thenReturn(const LocationAccessReady());
+      when(() => bookingBloc.activeDriverSearch).thenReturn(null);
+      when(() => publicDrivers.state)
+          .thenReturn(const PublicDriverSummaryState());
+      when(() => history.state).thenReturn(const RideHistoryInitial());
+      when(() => savedPlaces.state).thenReturn(const SavedPlacesState());
+      when(savedPlaces.loadPlaces).thenAnswer((_) async {});
+
+      var searchVisits = 0;
+      final router = GoRouter(
+        initialLocation: '/home',
+        observers: [passengerNavigationObserver],
+        routes: [
+          StatefulShellRoute.indexedStack(
+            builder: (_, _, shell) => shell,
+            branches: [
+              StatefulShellBranch(
+                routes: [
+                  GoRoute(
+                    path: '/home',
+                    name: HomeRoutes.home,
+                    builder: (_, _) => HomePage(
+                      bookingBloc: bookingBloc,
+                      lifecycleCoordinator: lifecycle,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/search',
+            name: BookingRoutes.searchDestination,
+            builder: (context, _) {
+              searchVisits++;
+              return Scaffold(
+                body: TextButton(
+                  onPressed: () =>
+                      context.pushNamed(BookingRoutes.findingDriver),
+                  child: const Text('Start booking'),
+                ),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/finding',
+            name: BookingRoutes.findingDriver,
+            builder: (context, _) => Scaffold(
+              body: TextButton(
+                onPressed: () => context.goNamed(HomeRoutes.home),
+                child: const Text('Cancel booking'),
+              ),
+            ),
+          ),
+        ],
+      );
+      addTearDown(() async {
+        router.dispose();
+        await homeCubit.close();
+        await sessionBloc.close();
+        await draft.close();
+        await lifecycle.dispose();
+      });
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<SessionBloc>.value(value: sessionBloc),
+            BlocProvider<LocationAccessCubit>.value(value: locationAccess),
+            BlocProvider<HomeCubit>.value(value: homeCubit),
+            BlocProvider<BookingDraftCubit>.value(value: draft),
+            BlocProvider<PublicDriverSummaryCubit>.value(value: publicDrivers),
+            BlocProvider<RideHistoryBloc>.value(value: history),
+            BlocProvider<SavedPlacesCubit>.value(value: savedPlaces),
+          ],
+          child: MaterialApp.router(
+            theme: EasyRideTheme.main,
+            routerConfig: router,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final homeState = tester.state(find.byType(HomePage));
+      for (var attempt = 0; attempt < 2; attempt++) {
+        await tester.tap(
+          find.byWidgetPredicate(
+            (widget) => widget is Hero && widget.tag == 'search_bar_field',
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.text('Start booking'),
+          findsOneWidget,
+          reason: 'Search must open on attempt $attempt after returning Home',
+        );
+        await tester.tap(find.text('Start booking'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Cancel booking'));
+        await tester.pumpAndSettle();
+        expect(tester.state(find.byType(HomePage)), same(homeState));
+      }
+      expect(searchVisits, greaterThanOrEqualTo(2));
+    },
+  );
+
   testWidgets('syncs pickup location after session restoration completes', (
     tester,
   ) async {

@@ -174,9 +174,13 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _bookingBloc = widget.bookingBloc;
     _homeCubit = BlocProvider.of<HomeCubit>(context, listen: false);
-    _routePopSubscription = passengerNavigationObserver.routePopEvents.listen(
-      (_) => _refreshLocationSnapshot(),
-    );
+    _routePopSubscription = passengerNavigationObserver.routePopEvents.listen((
+      _,
+    ) {
+      if (!mounted) return;
+      _isNavigationInFlight = false;
+      _refreshLocationSnapshot();
+    });
     _lifecycleSubscription = widget.lifecycleCoordinator.changes.listen((
       status,
     ) {
@@ -242,8 +246,7 @@ class _HomePageState extends State<HomePage> {
           }
         },
       );
-    } catch (_) {
-    }
+    } catch (_) {}
   }
 
   @override
