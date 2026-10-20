@@ -25,31 +25,27 @@ func NewRouter(dependencies Dependencies) *Router {
 
 func (router *Router) RegisterRoutes(mux chi.Router) {
 	apiPrefix := api.V1Prefix
-	read := router.routeSecurity.Middleware(middleware.RouteRead)
-	command := router.routeSecurity.Middleware(middleware.RouteCommand)
 	authenticate := middleware.RequireAuth(router.verifier)
 	passengerOnly := middleware.RequireRole(security.RolePassenger)
 	driverOnly := middleware.RequireRole(security.RoleDriver)
 	withAuthenticatedPolicy := func(
-		policy func(http.Handler) http.Handler,
+		policy middleware.RoutePolicy,
 		guards ...func(http.Handler) http.Handler,
 	) chi.Router {
-		chain := []func(http.Handler) http.Handler{policy, authenticate}
-		chain = append(chain, guards...)
-		return mux.With(chain...)
+		return mux.With(router.routeSecurity.Authenticated(policy, authenticate, guards...)...)
 	}
 
-	withAuthenticatedPolicy(read).Get(apiPrefix+"/bids/{sessionID}", router.handler.Session)
-	mux.With(read).Get(apiPrefix+"/drivers/public/summaries", router.handler.PublicDriverSummaries)
-	withAuthenticatedPolicy(command, passengerOnly).Post(apiPrefix+"/bids", router.handler.CreateSession)
-	withAuthenticatedPolicy(read, passengerOnly).Get(apiPrefix+"/bids/{sessionID}/offers", router.handler.Offers)
-	withAuthenticatedPolicy(command, passengerOnly).Post(
+	withAuthenticatedPolicy(middleware.RouteRead).Get(apiPrefix+"/bids/{sessionID}", router.handler.Session)
+	mux.With(router.routeSecurity.Middleware(middleware.RouteRead)).Get(apiPrefix+"/drivers/public/summaries", router.handler.PublicDriverSummaries)
+	withAuthenticatedPolicy(middleware.RouteCommand, passengerOnly).Post(apiPrefix+"/bids", router.handler.CreateSession)
+	withAuthenticatedPolicy(middleware.RouteRead, passengerOnly).Get(apiPrefix+"/bids/{sessionID}/offers", router.handler.Offers)
+	withAuthenticatedPolicy(middleware.RouteCommand, passengerOnly).Post(
 		apiPrefix+"/bids/{sessionID}/offers/{offerID}/accept",
 		router.handler.AcceptOffer,
 	)
-	withAuthenticatedPolicy(command, passengerOnly).Post(apiPrefix+"/bids/{sessionID}/cancel", router.handler.CancelSession)
-	withAuthenticatedPolicy(read, driverOnly).Get(apiPrefix+"/bids/active", router.handler.ActiveSessions)
-	withAuthenticatedPolicy(read, passengerOnly).Get(apiPrefix+"/drivers/online", router.handler.OnlineDrivers)
-	withAuthenticatedPolicy(command, driverOnly).Post(apiPrefix+"/bids/{sessionID}/offer", router.handler.PlaceOffer)
-	withAuthenticatedPolicy(command, driverOnly).Post(apiPrefix+"/bids/{sessionID}/cancel-offer", router.handler.CancelOffer)
+	withAuthenticatedPolicy(middleware.RouteCommand, passengerOnly).Post(apiPrefix+"/bids/{sessionID}/cancel", router.handler.CancelSession)
+	withAuthenticatedPolicy(middleware.RouteRead, driverOnly).Get(apiPrefix+"/bids/active", router.handler.ActiveSessions)
+	withAuthenticatedPolicy(middleware.RouteRead, passengerOnly).Get(apiPrefix+"/drivers/online", router.handler.OnlineDrivers)
+	withAuthenticatedPolicy(middleware.RouteCommand, driverOnly).Post(apiPrefix+"/bids/{sessionID}/offer", router.handler.PlaceOffer)
+	withAuthenticatedPolicy(middleware.RouteCommand, driverOnly).Post(apiPrefix+"/bids/{sessionID}/cancel-offer", router.handler.CancelOffer)
 }

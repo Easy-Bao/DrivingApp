@@ -60,7 +60,6 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 	loginPath := api.V1Prefix + "/auth/login"
 	authentication := router.routeSecurity.Middleware(middleware.RouteAuthentication)
 	refresh := router.routeSecurity.Middleware(middleware.RouteRefresh)
-	command := router.routeSecurity.Middleware(middleware.RouteCommand)
 	mux.With(authentication).Post(registerPath, router.handler.GenericRegister)
 	mux.With(authentication).Post(loginPath, router.handler.Login)
 	mux.With(authentication, middleware.Deprecation(registerPath)).Post(
@@ -100,11 +99,11 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 		router.limitOTPAttempts(router.handler.DriverResetPassword),
 	)
 	protected := middleware.RequireAuth(router.handler.verifier)
-	mux.With(command, protected).Post(
+	mux.With(router.routeSecurity.Authenticated(middleware.RouteCommand, protected)...).Post(
 		api.V1Prefix+"/users/me/email/request",
 		router.handler.RequestEmailChange,
 	)
-	mux.With(command, protected).Method(
+	mux.With(router.routeSecurity.Authenticated(middleware.RouteCommand, protected)...).Method(
 		http.MethodPost,
 		api.V1Prefix+"/users/me/email/confirm",
 		router.limitOTPAttempts(router.handler.ConfirmEmailChange),

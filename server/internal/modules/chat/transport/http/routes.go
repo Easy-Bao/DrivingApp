@@ -23,15 +23,15 @@ func NewRouter(dependencies Dependencies) *Router {
 
 func (router *Router) RegisterRoutes(mux chi.Router) {
 	authenticate := middleware.RequireAuth(router.verifier)
-	mux.With(router.routeSecurity.Middleware(middleware.RouteCommand), authenticate).Post(
+	mux.With(router.routeSecurity.Authenticated(middleware.RouteCommand, authenticate)...).Post(
 		api.V1Prefix+"/chat/rooms",
 		router.handler.CreateRoom,
 	)
-	mux.With(router.routeSecurity.Middleware(middleware.RouteRead), authenticate).Get(
+	mux.With(router.routeSecurity.Authenticated(middleware.RouteRead, authenticate)...).Get(
 		api.V1Prefix+"/chat/rooms/{roomID}/messages",
 		router.handler.Messages,
 	)
-	mux.With(router.routeSecurity.Middleware(middleware.RouteCommand), authenticate).Post(
+	mux.With(router.routeSecurity.Authenticated(middleware.RouteCommand, authenticate)...).Post(
 		api.V1Prefix+"/chat/rooms/{roomID}/resolve",
 		router.handler.Resolve,
 	)

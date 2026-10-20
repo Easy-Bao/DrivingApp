@@ -29,9 +29,7 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 		passengerOnly := middleware.RequireRole(security.RolePassenger)
 		driverOnly := middleware.RequireRole(security.RoleDriver)
 		withPolicy := func(policy middleware.RoutePolicy, guards ...func(http.Handler) http.Handler) chi.Router {
-			chain := []func(http.Handler) http.Handler{router.routeSecurity.Middleware(policy), authenticate}
-			chain = append(chain, guards...)
-			return routes.With(chain...)
+			return routes.With(router.routeSecurity.Authenticated(policy, authenticate, guards...)...)
 		}
 		withPolicy(middleware.RouteRead).Get("/users/me", router.handler.Me)
 		withPolicy(middleware.RouteCommand).Patch("/users/me", router.handler.Update)

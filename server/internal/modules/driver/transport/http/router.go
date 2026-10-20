@@ -41,10 +41,7 @@ func (router *Router) RegisterRoutes(mux chi.Router) {
 		policy middleware.RoutePolicy,
 		guards ...func(http.Handler) http.Handler,
 	) chi.Router {
-		chain := []func(http.Handler) http.Handler{router.routeSecurity.Middleware(policy)}
-		chain = append(chain, authenticate)
-		chain = append(chain, guards...)
-		return mux.With(chain...)
+		return mux.With(router.routeSecurity.Authenticated(policy, authenticate, guards...)...)
 	}
 
 	legacyPath := api.V1Prefix + "/driver/documents"

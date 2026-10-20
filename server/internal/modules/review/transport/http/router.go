@@ -24,26 +24,22 @@ func NewRouter(dependencies Dependencies) *Router {
 }
 
 func (router *Router) RegisterRoutes(mux chi.Router) {
-	read := router.routeSecurity.Middleware(middleware.RouteRead)
-	command := router.routeSecurity.Middleware(middleware.RouteCommand)
 	authenticate := middleware.RequireAuth(router.verifier)
 	passengerOnly := middleware.RequireRole(security.RolePassenger)
 	driverOnly := middleware.RequireRole(security.RoleDriver)
 	withAuthenticatedPolicy := func(
-		policy func(http.Handler) http.Handler,
+		policy middleware.RoutePolicy,
 		guards ...func(http.Handler) http.Handler,
 	) chi.Router {
-		chain := []func(http.Handler) http.Handler{policy, authenticate}
-		chain = append(chain, guards...)
-		return mux.With(chain...)
+		return mux.With(router.routeSecurity.Authenticated(policy, authenticate, guards...)...)
 	}
 
-	withAuthenticatedPolicy(read).Get(api.V1Prefix+"/drivers/{id}/reviews", router.handler.DriverReviews)
-	withAuthenticatedPolicy(command, passengerOnly).Post(
+	withAuthenticatedPolicy(middleware.RouteRead).Get(api.V1Prefix+"/drivers/{id}/reviews", router.handler.DriverReviews)
+	withAuthenticatedPolicy(middleware.RouteCommand, passengerOnly).Post(
 		api.V1Prefix+"/drivers/{id}/reviews",
 		router.handler.CreateReview,
 	)
-	withAuthenticatedPolicy(command, driverOnly).Post(
+	withAuthenticatedPolicy(middleware.RouteCommand, driverOnly).Post(
 		api.V1Prefix+"/passengers/{id}/reviews",
 		router.handler.CreatePassengerReview,
 	)
