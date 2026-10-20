@@ -293,7 +293,9 @@ class _SearchDestinationPageState()
           zoom: 14.5,
           animate: false,
         );
-        unawaited(_updateCurrentLocationMarker(position.latitude, position.longitude));
+        unawaited(
+          _updateCurrentLocationMarker(position.latitude, position.longitude),
+        );
       }
       unawaited(_loadNearbyPlaces());
     } else if (mounted && (_userLatitude == null || _userLongitude == null)) {
@@ -492,6 +494,7 @@ class _SearchDestinationPageState()
 
   Widget? _cachedMapView;
   AppMapController? _mapController;
+  bool _mapReady = false;
   MapPointAnnotationManager? _currentLocationMarker;
   int _locationMarkerRequestId = 0;
 
@@ -503,7 +506,19 @@ class _SearchDestinationPageState()
       interactive: true,
       onMapCreated: (controller) {
         _mapController = controller;
-        unawaited(_updateCurrentLocationMarker(lat, lng));
+        _locationMarkerRequestId++;
+        _currentLocationMarker = null;
+        if (_mapReady) setState(() => _mapReady = false);
+      },
+      onMapLoaded: () {
+        if (!mounted) return;
+        setState(() => _mapReady = true);
+        unawaited(
+          _updateCurrentLocationMarker(
+            _userLatitude ?? lat,
+            _userLongitude ?? lng,
+          ),
+        );
       },
     );
     return _cachedMapView!;
@@ -511,7 +526,7 @@ class _SearchDestinationPageState()
 
   Future<void> _updateCurrentLocationMarker(double lat, double lng) async {
     final controller = _mapController;
-    if (controller == null) return;
+    if (controller == null || !_mapReady) return;
     final requestId = ++_locationMarkerRequestId;
 
     final previousMarker = _currentLocationMarker;
@@ -519,6 +534,7 @@ class _SearchDestinationPageState()
     if (previousMarker != null) {
       await MapProvider.clearAnnotations(previousMarker);
     }
+    if (!mounted || !_mapReady || requestId != _locationMarkerRequestId) return;
 
     final marker = await MapProvider.addMarker(
       controller,
@@ -600,6 +616,9 @@ class _SearchDestinationPageState()
                             : ColoredBox(
                                 color:
                                     context.colorScheme.surfaceContainerHighest,
+                                child: const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
                               ),
                       ),
                     ),
@@ -802,7 +821,7 @@ class _SearchDestinationPageState()
                                               ),
                                             ),
                                           ),
-                                        if (t >= 0.4)
+                                        if (t >= 0.4 && _mapReady)
                                           FadeTransition(
                                             opacity: _mapPinFadeAnimation,
                                             child: Transform.scale(
@@ -896,59 +915,63 @@ class _SearchDestinationPageState()
                                 ),
                               ),
                             ),
-                          Positioned(
-                            right: 0,
-                            top: 3,
-                            child: FadeTransition(
-                              opacity: _collapsedControlsFadeAnimation,
-                              child: Transform.scale(
-                                scale: (1.0 - t * 0.5).clamp(0.0, 1.0),
-                                child: GestureDetector(
-                                  key: const ValueKey(
-                                    'search-destination-map-pin',
-                                  ),
-                                  onTap: _openMapPin,
-                                  child: SizedBox(
-                                    width: EasyRideSize.minimumTouchTarget,
-                                    height: EasyRideSize.minimumTouchTarget,
-                                    child: Hero(
-                                      tag: BookingRoutes.mapPinHeroTag,
-                                      child: FittedBox(
-                                        child: Material(
-                                          color: context.colorScheme.surface
-                                              .withValues(alpha: 0),
-                                          child: Container(
-                                            width:
-                                                EasyRideSize.minimumTouchTarget,
-                                            height:
-                                                EasyRideSize.minimumTouchTarget,
-                                            decoration: BoxDecoration(
-                                              color:
-                                                  context.colorScheme.surface,
-                                              shape: BoxShape.circle,
-                                              border: Border.all(
-                                                color: context
-                                                    .colorScheme
-                                                    .outlineVariant,
-                                              ),
-                                              boxShadow: [
-                                                BoxShadow(
+                          if (_mapReady)
+                            Positioned(
+                              right: 0,
+                              top: 3,
+                              child: FadeTransition(
+                                opacity: _collapsedControlsFadeAnimation,
+                                child: Transform.scale(
+                                  scale: (1.0 - t * 0.5).clamp(0.0, 1.0),
+                                  child: GestureDetector(
+                                    key: const ValueKey(
+                                      'search-destination-map-pin',
+                                    ),
+                                    onTap: _openMapPin,
+                                    child: SizedBox(
+                                      width: EasyRideSize.minimumTouchTarget,
+                                      height: EasyRideSize.minimumTouchTarget,
+                                      child: Hero(
+                                        tag: BookingRoutes.mapPinHeroTag,
+                                        child: FittedBox(
+                                          child: Material(
+                                            color: context.colorScheme.surface
+                                                .withValues(alpha: 0),
+                                            child: Container(
+                                              width: EasyRideSize
+                                                  .minimumTouchTarget,
+                                              height: EasyRideSize
+                                                  .minimumTouchTarget,
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    context.colorScheme.surface,
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
                                                   color: context
                                                       .colorScheme
-                                                      .onSurface
-                                                      .withValues(alpha: 0.08),
-                                                  blurRadius: 15,
-                                                  offset: const Offset(0, 4),
+                                                      .outlineVariant,
                                                 ),
-                                              ],
-                                            ),
-                                            child: Center(
-                                              child: Icon(
-                                                LucideIcons.map_pin,
-                                                color: context
-                                                    .colorScheme
-                                                    .onSurface,
-                                                size: 20,
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: context
+                                                        .colorScheme
+                                                        .onSurface
+                                                        .withValues(
+                                                          alpha: 0.08,
+                                                        ),
+                                                    blurRadius: 15,
+                                                    offset: const Offset(0, 4),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: Center(
+                                                child: Icon(
+                                                  LucideIcons.map_pin,
+                                                  color: context
+                                                      .colorScheme
+                                                      .onSurface,
+                                                  size: 20,
+                                                ),
                                               ),
                                             ),
                                           ),
@@ -959,7 +982,6 @@ class _SearchDestinationPageState()
                                 ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                     ),

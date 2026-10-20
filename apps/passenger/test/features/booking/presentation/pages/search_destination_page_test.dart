@@ -1,12 +1,15 @@
 import 'dart:async';
 
 import 'package:design_system/design_system.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:foundation/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:go_router_modular/testing.dart';
+import 'package:mapbox_maps_flutter_platform_interface/mapbox_maps_flutter_platform_interface_internal.dart';
 import 'package:maps/maps.dart' as maps;
 import 'package:passenger/src/features/booking/booking_routes.dart';
 import 'package:passenger/src/features/booking/presentation/pages/search_destination_page.dart';
@@ -86,10 +89,13 @@ class _FakeLocationRepository implements maps.LocationRepository {
 
 void main() {
   late ModularTestScope scope;
+  late _TestMapPlatform mapPlatform;
   final locationRepository = _FakeLocationRepository();
   final originalGeolocatorPlatform = GeolocatorPlatform.instance;
 
   setUp(() async {
+    mapPlatform = _TestMapPlatform();
+    MapboxMapsFlutterPlatform.instance = mapPlatform;
     scope = ModularTestScope.fresh().withInstance(AppLifecycleCoordinator());
     scope.setUp();
     GeolocatorPlatform.instance = _FakeGeolocatorPlatform();
@@ -111,6 +117,33 @@ void main() {
     await scope.get<AppLifecycleCoordinator>().dispose();
     scope.tearDown();
   });
+
+  testWidgets(
+    'shows a circular loader and hides map pins until visible tiles render',
+    (tester) async {
+      mapPlatform.autoLoad = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: EasyRideTheme.main,
+          home: const SearchDestinationPage(),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('search-destination-map-pin')),
+        findsNothing,
+      );
+      mapPlatform.onMapEvent!(_loadedMapEvent());
+      await tester.pump();
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(
+        find.byKey(const ValueKey('search-destination-map-pin')),
+        findsOneWidget,
+      );
+    },
+  );
 
   test(
     'destination search keeps the rate-limit debounce at 300 milliseconds',
@@ -515,3 +548,42 @@ void main() {
     },
   );
 }
+
+final class _TestMapPlatform extends MapboxMapsFlutterPlatform {
+  bool autoLoad = true;
+  void Function(MapEvent)? onMapEvent;
+
+  @override
+  Widget buildView({
+    required String styleUri,
+    PlatformMapCreatedCallback? onMapCreated,
+    ViewportState? viewport,
+    ViewportTransition? viewportTransition,
+    void Function(bool)? viewportTransitionCompletion,
+    void Function(MapEvent)? onMapEvent,
+    MapOptions? mapOptions,
+    bool? textureView,
+    // ignore: experimental_member_use
+    required AndroidPlatformViewHostingMode androidHostingMode,
+    Set<Factory<OneSequenceGestureRecognizer>>? gestureRecognizers,
+    bool? isOpaque = true,
+  }) {
+    this.onMapEvent = onMapEvent;
+    if (autoLoad) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => onMapEvent?.call(_loadedMapEvent()),
+      );
+    }
+    return const SizedBox.expand();
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+MapLoadedEventData _loadedMapEvent() => MapLoadedEventData(
+  timeInterval: EventTimeInterval(
+    begin: DateTime.utc(2026),
+    end: DateTime.utc(2026),
+  ),
+);

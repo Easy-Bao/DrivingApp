@@ -76,8 +76,7 @@ class MapProvider._() {
     }
 
     final userLatitude = latitude ?? LocationService.lastPosition?.latitude;
-    final userLongitude =
-        longitude ?? LocationService.lastPosition?.longitude;
+    final userLongitude = longitude ?? LocationService.lastPosition?.longitude;
     final key = _searchRequestKey(query, userLatitude, userLongitude);
 
     try {
@@ -304,6 +303,7 @@ class MapProvider._() {
     required double longitude,
     double zoom = 14.0,
     void Function(AppMapController controller)? onMapCreated,
+    VoidCallback? onMapLoaded,
     void Function(AppMapController controller)? onCameraChanged,
     void Function(AppMapController controller)? onMapIdle,
     bool interactive = true,
@@ -316,6 +316,7 @@ class MapProvider._() {
       zoom: zoom,
       styleUri: styleUriFor(),
       onMapCreated: onMapCreated,
+      onMapLoaded: onMapLoaded,
       onCameraChanged: onCameraChanged,
       onMapIdle: onMapIdle,
       interactive: interactive,
@@ -457,6 +458,7 @@ class _AppMapView extends StatefulWidget {
     required this.longitude,
     required this.styleUri,
     required this.onMapCreated,
+    required this.onMapLoaded,
     required this.onCameraChanged,
     required this.onMapIdle,
     required this.interactive,
@@ -470,6 +472,7 @@ class _AppMapView extends StatefulWidget {
   final double zoom;
   final String styleUri;
   final void Function(AppMapController controller)? onMapCreated;
+  final VoidCallback? onMapLoaded;
   final void Function(AppMapController controller)? onCameraChanged;
   final void Function(AppMapController controller)? onMapIdle;
   final bool interactive;
@@ -482,19 +485,25 @@ class _AppMapView extends StatefulWidget {
 
 class _AppMapViewState extends State<_AppMapView> {
   AppMapController? _mapController;
+  bool _mapLoaded = false;
+  bool _mapLoadFailed = false;
+  int _mapGeneration = 0;
 
   @override
   void didUpdateWidget(_AppMapView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.styleUri != oldWidget.styleUri) {
       _mapController = null;
+      _mapLoaded = false;
+      _mapLoadFailed = false;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return mapbox.MapWidget(
-      key: ValueKey<String>(widget.styleUri),
+    final mapIdentity = (widget.styleUri, _mapGeneration);
+    final map = mapbox.MapWidget(
+      key: ValueKey(mapIdentity),
       // ignore: experimental_member_use
       androidHostingMode: mapbox.AndroidPlatformViewHostingMode.TLHC_HC,
       styleUri: widget.styleUri,
@@ -505,6 +514,25 @@ class _AppMapViewState extends State<_AppMapView> {
         zoom: widget.zoom,
         padding: widget.padding,
       ),
+      onMapLoadedListener: (_) {
+        if (!mounted ||
+            _mapLoaded ||
+            mapIdentity != (widget.styleUri, _mapGeneration))
+          return;
+        setState(() {
+          _mapLoaded = true;
+          _mapLoadFailed = false;
+        });
+        widget.onMapLoaded?.call();
+      },
+      onMapLoadErrorListener: (_) {
+        if (!mounted ||
+            _mapLoaded ||
+            _mapLoadFailed ||
+            mapIdentity != (widget.styleUri, _mapGeneration))
+          return;
+        setState(() => _mapLoadFailed = true);
+      },
       onCameraChangeListener: (cameraChangedEventData) {
         final currentController = _mapController;
         if (currentController != null) {
@@ -518,6 +546,8 @@ class _AppMapViewState extends State<_AppMapView> {
         }
       },
       onMapCreated: (controller) {
+        if (!mounted || mapIdentity != (widget.styleUri, _mapGeneration))
+          return;
         unawaited(
           controller.logo.updateSettings(mapbox.LogoSettings(enabled: false)),
         );
@@ -562,14 +592,51 @@ class _AppMapViewState extends State<_AppMapView> {
         widget.onMapCreated?.call(currentController);
       },
     );
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        map,
+        if (!_mapLoaded)
+          ColoredBox(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            child: Center(
+              child: Semantics(
+                liveRegion: true,
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_mapLoadFailed) ...[
+                        const Text(
+                          'Unable to load the map. Check your connection.',
+                        ),
+                        const SizedBox(height: 12),
+                        OutlinedButton(
+                          onPressed: () => setState(() {
+                            _mapController = null;
+                            _mapLoadFailed = false;
+                            _mapGeneration++;
+                          }),
+                          child: const Text('Retry'),
+                        ),
+                      ] else ...[
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 12),
+                        const Text('Loading map…'),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
   }
 }
 
-String _searchRequestKey(
-  String query,
-  double? latitude,
-  double? longitude,
-) =>
+String _searchRequestKey(String query, double? latitude, double? longitude) =>
     '${query.trim().toLowerCase()}|${_coordinateCacheKey(latitude)}|${_coordinateCacheKey(longitude)}';
 
 String _nearbyRequestKey(double latitude, double longitude, int page) =>
