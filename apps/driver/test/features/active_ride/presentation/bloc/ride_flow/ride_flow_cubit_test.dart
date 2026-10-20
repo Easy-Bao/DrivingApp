@@ -291,7 +291,10 @@ void main() {
       );
 
       expect(started, isFalse);
-      expect(cubit.state, const RideFlowError(message));
+      expect(cubit.lastStartFailureMessage, message);
+      // The ride is still arrived on the server, so the wait must be retryable.
+      expect(cubit.state.isWaitingAtPickup, isTrue);
+      expect(cubit.state, isA<RideFlowWaitingPassenger>());
       await cubit.close();
     });
 

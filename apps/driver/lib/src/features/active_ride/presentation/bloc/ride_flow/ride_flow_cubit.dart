@@ -28,6 +28,7 @@ class RideFlowCubit({
   DateTime? _waitingUntil;
   DateTime? _waitStartedAt;
   bool _isActionInFlight = false;
+  String? _lastStartFailureMessage;
   int _actionGeneration = 0;
   Future<void>? _passengerLocationRefresh;
   Future<void>? _rideStatusSync;
@@ -38,6 +39,10 @@ class RideFlowCubit({
   static const _noShowClockSkewBuffer = Duration(seconds: 5);
 
   this : super(const RideFlowInitial());
+
+  /// Message from the most recent rejected [startRide], kept because the
+  /// waiting snapshot is restored right after the error state is emitted.
+  String? get lastStartFailureMessage => _lastStartFailureMessage;
 
   String? get activeRideId => _activeRideId;
   String? get activePassengerId => _activePassengerId;
@@ -609,11 +614,31 @@ class RideFlowCubit({
       );
       return false;
     }
+    _lastStartFailureMessage = null;
     final actionGeneration = ++_actionGeneration;
     _isActionInFlight = true;
+    final waitingBeforeStart = state;
+    final waitingUntilBeforeStart = _waitingUntil;
+    final waitStartedAtBeforeStart = _waitStartedAt;
     _waitTimer?.cancel();
     _waitingUntil = null;
     _waitStartedAt = null;
+
+    // A rejected start leaves the ride arrived on the server, so the waiting
+    // snapshot, deadline and timer must survive to allow a retry or no-show.
+    void restoreWaitingAfterFailure() {
+      if (waitingBeforeStart is! RideFlowWaitingPassenger) return;
+      _waitingUntil = waitingUntilBeforeStart;
+      _waitStartedAt = waitStartedAtBeforeStart;
+      _startWaitTimer(
+        actionGeneration: actionGeneration,
+        passengerName: waitingBeforeStart.passengerName,
+        pickupLatitude: waitingBeforeStart.pickupLatitude,
+        pickupLongitude: waitingBeforeStart.pickupLongitude,
+        destinationLatitude: waitingBeforeStart.destinationLatitude,
+        destinationLongitude: waitingBeforeStart.destinationLongitude,
+      );
+    }
 
     try {
       var resolvedDestinationLatitude = destinationLatitude;
@@ -631,11 +656,12 @@ class RideFlowCubit({
         resolvedDestinationLongitude,
       )) {
         if (!_isCurrentAction(actionGeneration)) return false;
-        emit(
-          RideFlowError(
-            ErrorHandler.getErrorMessage(const RouteCalculationFailure()),
-          ),
+        final message = ErrorHandler.getErrorMessage(
+          const RouteCalculationFailure(),
         );
+        _lastStartFailureMessage = message;
+        emit(RideFlowError(message));
+        restoreWaitingAfterFailure();
         return false;
       }
 
@@ -652,12 +678,12 @@ class RideFlowCubit({
       );
       if (!_isCurrentAction(actionGeneration)) return false;
       if (startFailure != null || startedRide == null) {
-        emit(
-          RideFlowError(
+        final message =
             startFailure?.message ??
-                ErrorHandler.getErrorMessage(const ServerFailure()),
-          ),
-        );
+            ErrorHandler.getErrorMessage(const ServerFailure());
+        _lastStartFailureMessage = message;
+        emit(RideFlowError(message));
+        restoreWaitingAfterFailure();
         return false;
       }
 
@@ -676,7 +702,10 @@ class RideFlowCubit({
     } catch (error) {
       if (!_isCurrentAction(actionGeneration)) return false;
       dev.log('Error updating status to in_transit: $error');
-      emit(RideFlowError(ErrorHandler.getErrorMessage(const ServerFailure())));
+      final message = ErrorHandler.getErrorMessage(const ServerFailure());
+      _lastStartFailureMessage = message;
+      emit(RideFlowError(message));
+      restoreWaitingAfterFailure();
       return false;
     } finally {
       if (_actionGeneration == actionGeneration) _isActionInFlight = false;
