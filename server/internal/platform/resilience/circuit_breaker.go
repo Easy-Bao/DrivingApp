@@ -66,6 +66,11 @@ func (breaker *CircuitBreaker) Do(ctx context.Context, operation func(context.Co
 
 	err := operation(ctx)
 	if err != nil {
+		if errors.Is(err, context.Canceled) && errors.Is(ctx.Err(), context.Canceled) {
+			// Caller cancellation says nothing about downstream health.
+			breaker.release()
+			return fmt.Errorf("execute circuit-protected operation: %w", err)
+		}
 		breaker.recordFailure(time.Now())
 		return fmt.Errorf("execute circuit-protected operation: %w", err)
 	}
@@ -104,5 +109,11 @@ func (breaker *CircuitBreaker) recordSuccess() {
 	defer breaker.mu.Unlock()
 	breaker.failures = 0
 	breaker.openedAt = time.Time{}
+	breaker.halfOpen = false
+}
+
+func (breaker *CircuitBreaker) release() {
+	breaker.mu.Lock()
+	defer breaker.mu.Unlock()
 	breaker.halfOpen = false
 }

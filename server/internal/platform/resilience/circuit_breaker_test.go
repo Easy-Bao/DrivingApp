@@ -80,3 +80,22 @@ func TestCircuitBreakerRejectsMissingDependencies(t *testing.T) {
 		t.Fatalf("nil operation error = %v, want %v", err, ErrCircuitOperationNil)
 	}
 }
+
+func TestCircuitBreakerIgnoresCallerCancellation(t *testing.T) {
+	breaker := NewCircuitBreaker(CircuitBreakerConfig{FailureThreshold: 2, ResetAfter: time.Hour})
+
+	for range 5 {
+		ctx, cancel := context.WithCancel(context.Background())
+		err := breaker.Do(ctx, func(ctx context.Context) error {
+			cancel()
+			return ctx.Err()
+		})
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("Do() error = %v, want context cancellation", err)
+		}
+	}
+
+	if err := breaker.Do(context.Background(), func(context.Context) error { return nil }); err != nil {
+		t.Fatalf("healthy request rejected after cancellations: %v", err)
+	}
+}
